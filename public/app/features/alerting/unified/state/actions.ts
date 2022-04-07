@@ -21,6 +21,7 @@ import {
   StateHistoryItem,
 } from 'app/types/unified-alerting';
 import {
+  PostableRuleGrafanaRuleDTO,
   PostableRulerRuleGroupDTO,
   RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
@@ -49,7 +50,6 @@ import {
   deleteRulerRulesGroup,
   fetchRulerRules,
   fetchRulerRulesGroup,
-  fetchRulerRulesNamespace,
   FetchRulerRulesFilter,
   setRulerRuleGroup,
 } from '../api/ruler';
@@ -252,6 +252,7 @@ export const fetchEditableRuleAction = createAsyncThunk(
 
 async function deleteRule(ruleWithLocation: RuleWithLocation): Promise<void> {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
+
   // it was the last rule, delete the entire group
   if (group.rules.length === 1) {
     await deleteRulerRulesGroup(ruleSourceName, namespace, group.name);
@@ -361,95 +362,129 @@ async function saveLotexRule(values: RuleFormValues, existing?: RuleWithLocation
   }
 }
 
-async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocation): Promise<RuleIdentifier> {
-  const { folder, evaluateEvery } = values;
-  const formRule = formValuesToRulerGrafanaRuleDTO(values);
-
+async function saveGrafanaRule(values: RuleFormValues, existingRule?: RuleWithLocation): Promise<RuleIdentifier> {
+  const { folder, group } = values;
   if (!folder) {
     throw new Error('Folder must be specified');
   }
 
-  // updating an existing rule...
-  if (existing) {
-    // refetch it to be sure we have the latest
-    const freshExisting = await findEditableRule(ruleId.fromRuleWithLocation(existing));
-    if (!freshExisting) {
-      throw new Error('Rule not found.');
-    }
+  const newRule = formValuesToRulerGrafanaRuleDTO(values);
+  const namespace = folder.title;
 
-    // if same folder, repost the group with updated rule
-    const sameNamespace = freshExisting.namespace === folder.title;
-    if (sameNamespace) {
-      const uid = (freshExisting.rule as RulerGrafanaRuleDTO).grafana_alert.uid;
-      const ungroupedGroup = isUngroupedGroup(freshExisting.group as RulerRuleGroupDTO<RulerGrafanaRuleDTO>);
+  // here are a couple of scenarios we have to think about
+  // 1.1 if (existing) we are editing an existing rule
+  // 1.2 if we are storing it in a different namespace or group from before we have to remove it from the previous group / namespace
+  //
+  // 2.1 if we are creating a new rule we have to add it to a group that might already exist
+  if (existingRule) {
+    const sameNamespace = existingRule.namespace === namespace;
+    const sameGroup = existingRule.group.name === values.group;
 
-      formRule.grafana_alert.uid = uid;
-
-      const newRules = ungroupedGroup
-        ? [formRule]
-        : existing.group.rules
-            .filter((rule): rule is RulerGrafanaRuleDTO => 'grafana_alert' in rule)
-            .filter((rule) => rule.grafana_alert.uid !== uid)
-            .concat(formRule as RulerGrafanaRuleDTO);
-
-      await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, freshExisting.namespace, {
-        name: values.group,
-        interval: evaluateEvery,
-        // if we are updating an ungrouped group, replace the only rule and update the group name too
-        rules: newRules,
-      });
-
-      return { uid };
+    // we're update a rule in the same namespace and group
+    if (sameNamespace && sameGroup) {
+      return updateExistingGrafanaRule(existingRule, newRule);
+    } else if (sameNamespace && !sameGroup) {
+      // we're moving a rule in the same namespace to a different group
+      return moveGrafanaRuleToOtherGroup(group, existingRule, newRule);
+    } else if (!sameNamespace) {
+      // we're moving a rule to a different namespace entirely
+      return await moveGrafanaRuleToOtherNamespace(namespace, group, existingRule, newRule);
     }
   }
 
-  function isUngroupedGroup(group: RulerRuleGroupDTO<RulerGrafanaRuleDTO>) {
-    const hasOnlyOneRule = group.rules.length === 1;
-    const hasMatchingGroupNameAndRuleName = group.rules[0].grafana_alert.title === group.name;
-
-    return hasOnlyOneRule && hasMatchingGroupNameAndRuleName;
-  }
-
-  // if creating new rule or folder was changed, create rule in a new group
-  const targetFolderGroups = await fetchRulerRulesNamespace(GRAFANA_RULES_SOURCE_NAME, folder.title);
-
-  // set group name to rule name, but be super paranoid and check that this group does not already exist
-  const groupName = getUniqueGroupName(values.group, targetFolderGroups);
-  // formRule.grafana_alert.title = groupName;
-
-  const payload: PostableRulerRuleGroupDTO = {
-    name: groupName,
-    interval: evaluateEvery,
-    rules: [formRule],
-  };
-  await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, folder.title, payload);
-
-  // now refetch this group to get the uid, hah
-  const result = await fetchRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, folder.title, groupName);
-  const newUid = (result?.rules[0] as RulerGrafanaRuleDTO)?.grafana_alert?.uid;
-  if (newUid) {
-    // if folder has changed, delete the old one
-    if (existing) {
-      const freshExisting = await findEditableRule(ruleId.fromRuleWithLocation(existing));
-      if (freshExisting && freshExisting.namespace !== folder.title) {
-        await deleteRule(freshExisting);
-      }
-    }
-
-    return { uid: newUid };
-  } else {
-    throw new Error('Failed to fetch created rule.');
-  }
+  // if we got this far we're creating a completely new rule and adding it to a namespace / group
+  return await addRuleToNamespaceAndGroup(namespace, group, newRule);
 }
 
-export function getUniqueGroupName(currentGroupName: string, existingGroups: RulerRuleGroupDTO[]) {
-  let newGroupName = currentGroupName;
-  let idx = 1;
-  while (!!existingGroups.find((g) => g.name === newGroupName)) {
-    newGroupName = `${currentGroupName}-${++idx}`;
+// this function will move a single rule from one namespace to another
+// since this operation cannot be atomic we first add it to a new namespace / group before we
+// remove it from the old namespace / group
+async function moveGrafanaRuleToOtherNamespace(
+  namespace: string,
+  group: string,
+  existingRule: RuleWithLocation,
+  newRule: PostableRuleGrafanaRuleDTO
+): Promise<RuleIdentifier> {
+  // add to new namespace / group
+  await addRuleToNamespaceAndGroup(namespace, group, newRule);
+
+  // remove from old namespace / group
+  await deleteRule({
+    ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+    namespace: existingRule.namespace,
+    group: existingRule.group,
+    rule: existingRule.rule,
+  });
+
+  // TODO figure out how to get the newly created UID :(
+  return { uid: '' };
+}
+
+async function addRuleToNamespaceAndGroup(
+  namespace: string,
+  group: string,
+  newRule: PostableRuleGrafanaRuleDTO
+): Promise<RuleIdentifier> {
+  const existingGroup = await fetchRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, namespace, group);
+  if (!existingGroup) {
+    throw new Error('This group does not exist'); // TODO better error
   }
 
-  return newGroupName;
+  const payload: PostableRulerRuleGroupDTO = {
+    name: existingGroup.name,
+    interval: existingGroup.interval,
+    rules: existingGroup.rules.concat(newRule as RulerGrafanaRuleDTO),
+  };
+
+  await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, namespace, payload);
+
+  // TODO figure out how to get the newly created UID :(
+  return { uid: '' };
+}
+
+// we can't move the rule atomically so we have to
+// 1. add the rule to the new group
+// 2. remove the rule from the old one
+async function moveGrafanaRuleToOtherGroup(
+  group: string,
+  existingRule: RuleWithLocation,
+  newRule: PostableRuleGrafanaRuleDTO
+): Promise<RuleIdentifier> {
+  // add to new group
+  const identifier = await addRuleToNamespaceAndGroup(existingRule.namespace, group, newRule);
+
+  // remove from previous group
+  await deleteRule(existingRule);
+
+  return identifier;
+}
+
+async function updateExistingGrafanaRule(
+  existingRule: RuleWithLocation,
+  newRule: PostableRuleGrafanaRuleDTO
+): Promise<RuleIdentifier> {
+  // type guard to make sure we're working with a Grafana managed rule
+  if (!isGrafanaRulerRule(existingRule.rule)) {
+    throw new Error('The rule is not a Grafana managed rule');
+  }
+
+  // make sure our updated alert has the same UID as before
+  const uid = existingRule.rule.grafana_alert.uid;
+  newRule.grafana_alert.uid = uid;
+
+  // create the new array of rules we want to send to the group
+  const newRules = existingRule.group.rules
+    .filter((rule): rule is RulerGrafanaRuleDTO => isGrafanaRulerRule(rule))
+    .filter((rule) => rule.grafana_alert.uid !== uid)
+    .concat(newRule as RulerGrafanaRuleDTO); // TODO why type cast this?
+
+  await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, existingRule.namespace, {
+    name: existingRule.group.name,
+    interval: existingRule.group.interval,
+    rules: newRules,
+  });
+
+  return { uid };
 }
 
 export const saveRuleFormAction = createAsyncThunk(
