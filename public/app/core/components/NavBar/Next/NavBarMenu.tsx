@@ -126,7 +126,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   itemList: css({
     display: 'grid',
     gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
-    width: '300px',
+    minWidth: '300px',
   }),
   menuCollapseIcon: css({
     position: 'absolute',
