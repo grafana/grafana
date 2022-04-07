@@ -192,8 +192,7 @@ func TestCreateRoute(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			m := newTestMigration(t)
-			res, err := m.createRoute(tt.ruleUID, tt.filteredReceiverNames)
+			res, err := createRoute(tt.ruleUID, tt.filteredReceiverNames)
 			if tt.expErr != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.expErr.Error())
@@ -221,24 +220,17 @@ func createNotChannel(t *testing.T, uid string, id int64, name string) *notifica
 
 func TestCreateReceivers(t *testing.T) {
 	tc := []struct {
-		name                 string
-		amConfig             *PostableUserConfig
-		allChannels          []*notificationChannel
-		defaultChannels      []*notificationChannel
-		expected             map[uidOrID]*PostableApiReceiver
-		expAmConfigReceivers []*PostableApiReceiver
-		expErr               error
+		name            string
+		allChannels     []*notificationChannel
+		defaultChannels []*notificationChannel
+		expRecvMap      map[uidOrID]*PostableApiReceiver
+		expRecv         []*PostableApiReceiver
+		expErr          error
 	}{
 		{
-			name: "when given notification channels migrate them to receivers and add them to amConfig",
-			amConfig: &PostableUserConfig{
-				AlertmanagerConfig: PostableApiAlertingConfig{
-					Receivers: make([]*PostableApiReceiver, 0),
-				},
-			},
-			allChannels:     []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1"), createNotChannel(t, "uid2", int64(2), "name2")},
-			defaultChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1")},
-			expected: map[uidOrID]*PostableApiReceiver{
+			name:        "when given notification channels migrate them to receivers",
+			allChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1"), createNotChannel(t, "uid2", int64(2), "name2")},
+			expRecvMap: map[uidOrID]*PostableApiReceiver{
 				"uid1": {
 					Name:                    "name1",
 					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}},
@@ -256,7 +248,7 @@ func TestCreateReceivers(t *testing.T) {
 					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name2"}},
 				},
 			},
-			expAmConfigReceivers: []*PostableApiReceiver{
+			expRecv: []*PostableApiReceiver{
 				{
 					Name:                    "name1",
 					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}},
@@ -264,78 +256,6 @@ func TestCreateReceivers(t *testing.T) {
 				{
 					Name:                    "name2",
 					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name2"}},
-				},
-			},
-		},
-		{
-			name: "when given multiple default notification channels migrate them to a single receiver",
-			amConfig: &PostableUserConfig{
-				AlertmanagerConfig: PostableApiAlertingConfig{
-					Receivers: make([]*PostableApiReceiver, 0),
-				},
-			},
-			allChannels:     []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1"), createNotChannel(t, "uid2", int64(2), "name2")},
-			defaultChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1"), createNotChannel(t, "uid2", int64(2), "name2")},
-			expected: map[uidOrID]*PostableApiReceiver{
-				"uid1": {
-					Name:                    "name1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}},
-				},
-				"uid2": {
-					Name:                    "name2",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name2"}},
-				},
-				int64(1): {
-					Name:                    "name1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}},
-				},
-				int64(2): {
-					Name:                    "name2",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name2"}},
-				},
-			},
-			expAmConfigReceivers: []*PostableApiReceiver{
-				{
-					Name:                    "name1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}},
-				},
-				{
-					Name:                    "name2",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name2"}},
-				},
-				{
-					Name:                    "autogen-contact-point-default",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}, {Name: "name2"}},
-				},
-			},
-		},
-		{
-			name: "when given no default notification channels create a single empty receiver for default",
-			amConfig: &PostableUserConfig{
-				AlertmanagerConfig: PostableApiAlertingConfig{
-					Receivers: make([]*PostableApiReceiver, 0),
-				},
-			},
-			allChannels:     []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1")},
-			defaultChannels: []*notificationChannel{},
-			expected: map[uidOrID]*PostableApiReceiver{
-				"uid1": {
-					Name:                    "name1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}},
-				},
-				int64(1): {
-					Name:                    "name1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}},
-				},
-			},
-			expAmConfigReceivers: []*PostableApiReceiver{
-				{
-					Name:                    "name1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}},
-				},
-				{
-					Name:                    "autogen-contact-point-default",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
 				},
 			},
 		},
@@ -344,7 +264,7 @@ func TestCreateReceivers(t *testing.T) {
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			m := newTestMigration(t)
-			res, err := m.createReceivers(tt.amConfig, tt.allChannels, tt.defaultChannels)
+			recvMap, recvs, err := m.createReceivers(tt.allChannels)
 			if tt.expErr != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.expErr.Error())
@@ -354,16 +274,90 @@ func TestCreateReceivers(t *testing.T) {
 			require.NoError(t, err)
 
 			// We ignore certain fields for the purposes of this test
-			for _, uidOrID := range tt.amConfig.AlertmanagerConfig.Receivers {
-				for _, recv := range uidOrID.GrafanaManagedReceivers {
-					recv.UID = ""
-					recv.Settings = nil
-					recv.SecureSettings = nil
+			for _, recv := range recvs {
+				for _, not := range recv.GrafanaManagedReceivers {
+					not.UID = ""
+					not.Settings = nil
+					not.SecureSettings = nil
 				}
 			}
 
-			require.Equal(t, tt.expected, res)
-			require.ElementsMatch(t, tt.expAmConfigReceivers, tt.amConfig.AlertmanagerConfig.Receivers)
+			require.Equal(t, tt.expRecvMap, recvMap)
+			require.ElementsMatch(t, tt.expRecv, recvs)
+		})
+	}
+}
+
+func TestCreateDefaultRouteAndReceiver(t *testing.T) {
+	tc := []struct {
+		name            string
+		amConfig        *PostableUserConfig
+		defaultChannels []*notificationChannel
+		expRecv         *PostableApiReceiver
+		expRoute        *Route
+		expErr          error
+	}{
+		{
+			name:            "when given multiple default notification channels migrate them to a single receiver",
+			defaultChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1"), createNotChannel(t, "uid2", int64(2), "name2")},
+			expRecv: &PostableApiReceiver{
+				Name:                    "autogen-contact-point-default",
+				GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}, {Name: "name2"}},
+			},
+			expRoute: &Route{
+				Receiver:   "autogen-contact-point-default",
+				Routes:     make([]*Route, 0),
+				GroupByStr: []string{"..."},
+			},
+		},
+		{
+			name:            "when given no default notification channels create a single empty receiver for default",
+			defaultChannels: []*notificationChannel{},
+			expRecv: &PostableApiReceiver{
+				Name:                    "autogen-contact-point-default",
+				GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
+			},
+			expRoute: &Route{
+				Receiver:   "autogen-contact-point-default",
+				Routes:     make([]*Route, 0),
+				GroupByStr: []string{"..."},
+			},
+		},
+		{
+			name:            "when given a single default notification channels don't create a new default receiver",
+			defaultChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1")},
+			expRecv:         nil,
+			expRoute: &Route{
+				Receiver:   "name1",
+				Routes:     make([]*Route, 0),
+				GroupByStr: []string{"..."},
+			},
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			m := newTestMigration(t)
+			recv, route, err := m.createDefaultRouteAndReceiver(tt.defaultChannels)
+			if tt.expErr != nil {
+				require.Error(t, err)
+				require.EqualError(t, err, tt.expErr.Error())
+				return
+			}
+
+			require.NoError(t, err)
+
+			// We ignore certain fields for the purposes of this test
+			if recv != nil {
+				for _, not := range recv.GrafanaManagedReceivers {
+					not.UID = ""
+					not.Settings = nil
+					not.SecureSettings = nil
+				}
+			}
+
+			require.Equal(t, tt.expRecv, recv)
+			require.Equal(t, tt.expRoute, route)
 		})
 	}
 }
