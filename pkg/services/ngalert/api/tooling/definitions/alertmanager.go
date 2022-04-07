@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/pkg/errors"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -724,6 +723,10 @@ func (r *Route) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
+	return r.Validate()
+}
+
+func (r *Route) Validate() error {
 	for _, l := range r.GroupByStr {
 		if l == "..." {
 			r.GroupByAll = true
@@ -750,6 +753,16 @@ func (r *Route) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 	if r.RepeatInterval != nil && time.Duration(*r.RepeatInterval) == time.Duration(0) {
 		return fmt.Errorf("repeat_interval cannot be zero")
+	}
+
+	// Routes are a self-referential structure.
+	if r.Routes != nil {
+		for _, child := range r.Routes {
+			err := child.Validate()
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -837,15 +850,9 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("no routes provided")
 	}
 
-	// Route is a recursive structure that includes validation in the yaml unmarshaler.
-	// Therefore, we'll redirect json -> yaml to utilize these.
-	b, err := yaml.Marshal(c.Route)
+	err := c.Route.Validate()
 	if err != nil {
-		return errors.Wrap(err, "marshaling route to yaml for validation")
-	}
-	err = yaml.Unmarshal(b, c.Route)
-	if err != nil {
-		return errors.Wrap(err, "unmarshaling route for validations")
+		return err
 	}
 
 	if len(c.Route.Receiver) == 0 {
