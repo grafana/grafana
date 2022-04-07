@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { RichHistorySettingsTab, RichHistorySettingsProps } from './RichHistorySettings';
+import { RichHistorySettingsTab, RichHistorySettingsProps } from './RichHistorySettingsTab';
 
 const setup = (propOverrides?: Partial<RichHistorySettingsProps>) => {
   const props: RichHistorySettingsProps = {
