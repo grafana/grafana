@@ -54,7 +54,7 @@ describe('AddToDashboardButton', () => {
     };
 
     beforeEach(() => {
-      jest.spyOn(api, 'addPanelToDashboard').mockReturnValue(addToDashboardResponse);
+      jest.spyOn(api, 'setDashboardInLocalStorage').mockReturnValue(addToDashboardResponse);
     });
 
     afterEach(() => {
@@ -336,7 +336,7 @@ describe('AddToDashboardButton', () => {
     });
 
     it('Shows an error if fetching dashboard fails', async () => {
-      jest.spyOn(api, 'addPanelToDashboard').mockRejectedValue('SOME ERROR');
+      jest.spyOn(api, 'setDashboardInLocalStorage').mockRejectedValue('SOME ERROR');
 
       setup(<AddToDashboard exploreId={ExploreId.left} />);
 

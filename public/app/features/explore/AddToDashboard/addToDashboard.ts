@@ -27,7 +27,7 @@ function createDashboard(): DashboardDTO {
   return dto;
 }
 
-export async function addPanelToDashboard(options: AddPanelToDashboardOptions) {
+export async function setDashboardInLocalStorage(options: AddPanelToDashboardOptions) {
   const panelType = getPanelType(options.queries, options.queryResponse);
   const panel = {
     targets: options.queries,

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, locationUtil, SelectableValue } from '@grafana/data';
-import { addPanelToDashboard, AddToDashboardError } from './addToDashboard';
+import { setDashboardInLocalStorage, AddToDashboardError } from './addToDashboard';
 import { useSelector } from 'react-redux';
 import { ExploreId } from 'app/types';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
@@ -93,7 +93,7 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
     const dashboardUid = data.saveTarget === SaveTarget.ExistingDashboard ? data.dashboardUid : undefined;
 
     try {
-      await addPanelToDashboard({
+      await setDashboardInLocalStorage({
         dashboardUid,
         datasource: exploreItem.datasourceInstance?.getRef(),
         queries: exploreItem.queries,

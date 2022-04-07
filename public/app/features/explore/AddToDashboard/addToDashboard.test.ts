@@ -1,7 +1,7 @@
 import { DataQuery, MutableDataFrame } from '@grafana/data';
 import { ExplorePanelData } from 'app/types';
 import { createEmptyQueryResponse } from '../state/utils';
-import { addPanelToDashboard } from './addToDashboard';
+import { setDashboardInLocalStorage } from './addToDashboard';
 import * as api from 'app/features/dashboard/state/initDashboard';
 
 describe('addPanelToDashboard', () => {
@@ -15,7 +15,7 @@ describe('addPanelToDashboard', () => {
   });
 
   it('Correct datasource ref is used', async () => {
-    addPanelToDashboard({
+    setDashboardInLocalStorage({
       queries: [],
       queryResponse: createEmptyQueryResponse(),
       datasource: { type: 'loki', uid: 'someUid' },
@@ -32,7 +32,7 @@ describe('addPanelToDashboard', () => {
   it('All queries are correctly passed through', async () => {
     const queries: DataQuery[] = [{ refId: 'A' }, { refId: 'B', hide: true }];
 
-    addPanelToDashboard({
+    setDashboardInLocalStorage({
       queries,
       queryResponse: createEmptyQueryResponse(),
     });
@@ -64,7 +64,7 @@ describe('addPanelToDashboard', () => {
       ];
 
       it.each(cases)('%s', async (_, queries, queryResponse) => {
-        addPanelToDashboard({ queries, queryResponse });
+        setDashboardInLocalStorage({ queries, queryResponse });
         expect(spy).toHaveBeenCalledWith(
           expect.objectContaining({
             dashboard: expect.objectContaining({
@@ -98,7 +98,7 @@ describe('addPanelToDashboard', () => {
             [framesType]: [new MutableDataFrame({ refId: 'A', fields: [] })],
           };
 
-          addPanelToDashboard({ queries, queryResponse });
+          setDashboardInLocalStorage({ queries, queryResponse });
           expect(spy).toHaveBeenCalledWith(
             expect.objectContaining({
               dashboard: expect.objectContaining({
