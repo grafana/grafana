@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -182,7 +183,7 @@ type authScenarioContext struct {
 type authScenarioFunc func(sc *authScenarioContext)
 
 func mockLoginUsingGrafanaDB(err error, sc *authScenarioContext) {
-	loginUsingGrafanaDB = func(ctx context.Context, query *models.LoginUserQuery) error {
+	loginUsingGrafanaDB = func(ctx context.Context, query *models.LoginUserQuery, _ sqlstore.Store) error {
 		sc.grafanaLoginWasCalled = true
 		return err
 	}
@@ -196,14 +197,14 @@ func mockLoginUsingLDAP(enabled bool, err error, sc *authScenarioContext) {
 }
 
 func mockLoginAttemptValidation(err error, sc *authScenarioContext) {
-	validateLoginAttempts = func(context.Context, *models.LoginUserQuery) error {
+	validateLoginAttempts = func(context.Context, *models.LoginUserQuery, sqlstore.Store) error {
 		sc.loginAttemptValidationWasCalled = true
 		return err
 	}
 }
 
 func mockSaveInvalidLoginAttempt(sc *authScenarioContext) {
-	saveInvalidLoginAttempt = func(ctx context.Context, query *models.LoginUserQuery) error {
+	saveInvalidLoginAttempt = func(ctx context.Context, query *models.LoginUserQuery, _ sqlstore.Store) error {
 		sc.saveInvalidLoginAttemptWasCalled = true
 		return nil
 	}

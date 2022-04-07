@@ -306,7 +306,7 @@ describe('enhanceDataFrame', () => {
         [1, 1000],
         [0, 2000],
         [1, 4000],
-        [null, 7000],
+        [NaN, 7000],
         [Infinity, 8000],
         [-Infinity, 9000],
       ]);

@@ -93,6 +93,7 @@ export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: string 
 export interface CurrentUserDTO {
   isSignedIn: boolean;
   id: number;
+  externalUserId: string;
   login: string;
   email: string;
   name: string;
