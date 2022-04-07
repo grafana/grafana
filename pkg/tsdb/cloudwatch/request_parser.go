@@ -51,38 +51,50 @@ func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime
 	return requestQueries, nil
 }
 
-// migrateLegacyQuery migrates queries that has a `statistics` field to use the `statistic` field instead.
-// This migration is also done in the frontend, so this should only ever be needed for alerting queries
-// In case the query used more than one stat, the first stat in the slice will be used in the statistic field
-// Read more here https://github.com/grafana/grafana/issues/30629
+// migrateLegacyQuery is also done in the frontend, so this should only ever be needed for alerting queries
 func migrateLegacyQuery(queries []backend.DataQuery) ([]*backend.DataQuery, error) {
 	migratedQueries := []*backend.DataQuery{}
 	for _, q := range queries {
 		query := q
-		model, err := simplejson.NewJson(query.JSON)
+		queryJson, err := simplejson.NewJson(query.JSON)
 		if err != nil {
 			return nil, err
 		}
 
-		_, err = model.Get("statistic").String()
-		// If there's not a statistic property in the json, we know it's the legacy format and then it has to be migrated
+		withStatistic, err := migrateStatisticsToStatistic(queryJson)
 		if err != nil {
-			stats, err := model.Get("statistics").StringArray()
-			if err != nil {
-				return nil, fmt.Errorf("query must have either statistic or statistics field")
-			}
-			model.Del("statistics")
-			model.Set("statistic", stats[0])
-			query.JSON, err = model.MarshalJSON()
-			if err != nil {
-				return nil, err
-			}
+			return nil, err
+		}
+
+		withStatisticAndDynamicLabels := migrateAliasToDynamicLabel(withStatistic)
+
+		query.JSON, err = withStatisticAndDynamicLabels.MarshalJSON()
+		if err != nil {
+			return nil, err
 		}
 
 		migratedQueries = append(migratedQueries, &query)
 	}
 
-	return migrateAliasToDynamicLabel(migratedQueries)
+	return migratedQueries, nil
+}
+
+// migrateStatisticsToStatistic migrates queries that has a `statistics` field to use the `statistic` field instead.
+// In case the query used more than one stat, the first stat in the slice will be used in the statistic field
+// Read more here https://github.com/grafana/grafana/issues/30629
+func migrateStatisticsToStatistic(queryJson *simplejson.Json) (*simplejson.Json, error) {
+	_, err := queryJson.Get("statistic").String()
+	// If there's not a statistic property in the json, we know it's the legacy format and then it has to be migrated
+	if err != nil {
+		stats, err := queryJson.Get("statistics").StringArray()
+		if err != nil {
+			return nil, fmt.Errorf("query must have either statistic or statistics field")
+		}
+		queryJson.Del("statistics")
+		queryJson.Set("statistic", stats[0])
+	}
+
+	return queryJson, nil
 }
 
 var aliasPatterns = map[string]string{
@@ -94,38 +106,29 @@ var aliasPatterns = map[string]string{
 	"label":     `${LABEL}`,
 }
 
-var aliasRegexp = regexp.MustCompile(`{{\s*(.+?)\s*}}`)
+var legacyAliasRegexp = regexp.MustCompile(`{{\s*(.+?)\s*}}`)
 
-func migrateAliasToDynamicLabel(queries []*backend.DataQuery) ([]*backend.DataQuery, error) {
-	migratedQueries := []*backend.DataQuery{}
-
-	for _, query := range queries {
-		model, err := simplejson.NewJson(query.JSON)
-		if err != nil {
-			return nil, err
-		}
-
-		jsonAlias, err := model.Get("alias").String()
-
-		matches := aliasRegexp.FindAllStringSubmatch(jsonAlias, -1)
-		for _, m := range matches {
-			oldAlias := m[0]
-			group := m[1]
-			if dynamicLabel, ok := aliasPatterns[group]; ok {
-				jsonAlias = strings.ReplaceAll(jsonAlias, oldAlias, dynamicLabel)
-			} else {
-				jsonAlias = strings.ReplaceAll(jsonAlias, oldAlias, fmt.Sprintf(`$PROP{'Dim.%s'}`, group))
-			}
-
-		}
-
-		model.Set("alias", jsonAlias)
-		query.JSON, err = model.MarshalJSON()
-
-		migratedQueries = append(migratedQueries, query)
+func migrateAliasToDynamicLabel(queryJson *simplejson.Json) *simplejson.Json {
+	fullAliasField := queryJson.Get("alias").MustString()
+	if fullAliasField == "" {
+		return queryJson
 	}
 
-	return migratedQueries, nil
+	matches := legacyAliasRegexp.FindAllStringSubmatch(fullAliasField, -1)
+	// TODO: dynamic labels doc limited to 5 (in practice possibly 6)
+	for _, m := range matches {
+		aliasPattern := m[0]
+		alias := m[1]
+		if dynamicLabel, ok := aliasPatterns[alias]; ok {
+			fullAliasField = strings.ReplaceAll(fullAliasField, aliasPattern, dynamicLabel)
+		} else {
+			fullAliasField = strings.ReplaceAll(fullAliasField, aliasPattern, fmt.Sprintf(`$PROP{'Dim.%s'}`, alias))
+		}
+	}
+
+	queryJson.Set("alias", fullAliasField)
+
+	return queryJson
 }
 
 func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time, endTime time.Time) (*cloudWatchQuery, error) {
