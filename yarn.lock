@@ -20589,7 +20589,7 @@ __metadata:
     jest-canvas-mock: 2.3.1
     jest-date-mock: 1.0.8
     jest-fail-on-console: 2.3.0
-    jest-junit: 13.0.0
+    jest-junit: 13.1.0
     jest-matcher-utils: 27.5.1
     jest-mock-console: 1.2.3
     jquery: 3.6.0
@@ -23417,7 +23417,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-junit@npm:13.0.0, jest-junit@npm:^13.0.0":
+"jest-junit@npm:13.1.0":
+  version: 13.1.0
+  resolution: "jest-junit@npm:13.1.0"
+  dependencies:
+    mkdirp: ^1.0.4
+    strip-ansi: ^6.0.1
+    uuid: ^8.3.2
+    xml: ^1.0.1
+  checksum: a12ec522012cf9d0e97d4c665d8ca05b97dc3d25ef3cd0dbba2b095da4b68e1cabac9751a2718a9593b55c620a2b980e0b6c7dd7d33dfc4b73193bc67b9c9ae0
+  languageName: node
+  linkType: hard
+
+"jest-junit@npm:^13.0.0":
   version: 13.0.0
   resolution: "jest-junit@npm:13.0.0"
   dependencies:
