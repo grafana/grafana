@@ -204,9 +204,8 @@ func (m *migration) createDefaultRouteAndReceiver(defaultChannels []*notificatio
 	}
 
 	defaultRoute := &Route{
-		Receiver:   defaultReceiverName,
-		Routes:     make([]*Route, 0),
-		GroupByStr: []string{"..."}, // Root policy should have grouping disabled (group by all) to keep parity with pre-migration notifications.
+		Receiver: defaultReceiverName,
+		Routes:   make([]*Route, 0),
 	}
 
 	return defaultReceiver, defaultRoute, nil
@@ -424,11 +423,10 @@ type PostableApiAlertingConfig struct {
 }
 
 type Route struct {
-	Receiver   string   `yaml:"receiver,omitempty" json:"receiver,omitempty"`
-	Matchers   Matchers `yaml:"matchers,omitempty" json:"matchers,omitempty"`
-	Routes     []*Route `yaml:"routes,omitempty" json:"routes,omitempty"`
-	Continue   bool     `yaml:"continue,omitempty" json:"continue,omitempty"`
-	GroupByStr []string `yaml:"group_by,omitempty" json:"group_by,omitempty"`
+	Receiver string   `yaml:"receiver,omitempty" json:"receiver,omitempty"`
+	Matchers Matchers `yaml:"matchers,omitempty" json:"matchers,omitempty"`
+	Routes   []*Route `yaml:"routes,omitempty" json:"routes,omitempty"`
+	Continue bool     `yaml:"continue,omitempty" json:"continue,omitempty"`
 }
 
 type Matchers labels.Matchers

@@ -151,11 +151,10 @@ func TestCreateRoute(t *testing.T) {
 				"recv1": struct{}{},
 			},
 			expected: &Route{
-				Receiver:   "recv1",
-				Matchers:   Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
-				Routes:     nil,
-				Continue:   false,
-				GroupByStr: nil,
+				Receiver: "recv1",
+				Matchers: Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
+				Routes:   nil,
+				Continue: false,
 			},
 		},
 		{
@@ -170,22 +169,19 @@ func TestCreateRoute(t *testing.T) {
 				Matchers: Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
 				Routes: []*Route{
 					{
-						Receiver:   "recv1",
-						Matchers:   Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
-						Routes:     nil,
-						Continue:   true,
-						GroupByStr: nil,
+						Receiver: "recv1",
+						Matchers: Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
+						Routes:   nil,
+						Continue: true,
 					},
 					{
-						Receiver:   "recv2",
-						Matchers:   Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
-						Routes:     nil,
-						Continue:   true,
-						GroupByStr: nil,
+						Receiver: "recv2",
+						Matchers: Matchers{{Type: 0, Name: "rule_uid", Value: "r_uid1"}},
+						Routes:   nil,
+						Continue: true,
 					},
 				},
-				Continue:   false,
-				GroupByStr: nil,
+				Continue: false,
 			},
 		},
 	}
@@ -305,9 +301,8 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 				GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}, {Name: "name2"}},
 			},
 			expRoute: &Route{
-				Receiver:   "autogen-contact-point-default",
-				Routes:     make([]*Route, 0),
-				GroupByStr: []string{"..."},
+				Receiver: "autogen-contact-point-default",
+				Routes:   make([]*Route, 0),
 			},
 		},
 		{
@@ -318,9 +313,8 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 				GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
 			},
 			expRoute: &Route{
-				Receiver:   "autogen-contact-point-default",
-				Routes:     make([]*Route, 0),
-				GroupByStr: []string{"..."},
+				Receiver: "autogen-contact-point-default",
+				Routes:   make([]*Route, 0),
 			},
 		},
 		{
@@ -328,9 +322,8 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 			defaultChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1")},
 			expRecv:         nil,
 			expRoute: &Route{
-				Receiver:   "name1",
-				Routes:     make([]*Route, 0),
-				GroupByStr: []string{"..."},
+				Receiver: "name1",
+				Routes:   make([]*Route, 0),
 			},
 		},
 	}
