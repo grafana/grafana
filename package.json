@@ -219,7 +219,7 @@
     "prettier": "2.6.0",
     "raw-loader": "4.0.2",
     "react-refresh": "0.11.0",
-    "react-select-event": "^5.1.0",
+    "react-select-event": "5.5.0",
     "react-test-renderer": "17.0.2",
     "redux-mock-store": "1.5.4",
     "rimraf": "3.0.2",
