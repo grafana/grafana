@@ -37,6 +37,10 @@ type SQLAnnotationRepo struct {
 	sql *SQLStore
 }
 
+func NewSQLAnnotationRepo(sql *SQLStore) SQLAnnotationRepo {
+	return SQLAnnotationRepo{sql: sql}
+}
+
 func (r *SQLAnnotationRepo) Save(item *annotations.Item) error {
 	return inTransaction(func(sess *DBSession) error {
 		tags := models.ParseTagPairs(item.Tags)
