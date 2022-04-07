@@ -120,11 +120,14 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			}
 
 			if include.Type == "dashboard" && include.AddToNav {
-				link := &dtos.NavLink{
-					Url:  hs.Cfg.AppSubURL + include.GetSlugOrUIDLink(),
-					Text: include.Name,
+				dboardURL := include.DashboardURLPath()
+				if dboardURL != "" {
+					link := &dtos.NavLink{
+						Url:  path.Join(hs.Cfg.AppSubURL, dboardURL),
+						Text: include.Name,
+					}
+					appLink.Children = append(appLink.Children, link)
 				}
-				appLink.Children = append(appLink.Children, link)
 			}
 		}
 
@@ -653,6 +656,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 			IsSignedIn:                 c.IsSignedIn,
 			Login:                      c.Login,
 			Email:                      c.Email,
+			ExternalUserId:             c.SignedInUser.ExternalAuthId,
 			Name:                       c.Name,
 			OrgCount:                   c.OrgCount,
 			OrgId:                      c.OrgId,

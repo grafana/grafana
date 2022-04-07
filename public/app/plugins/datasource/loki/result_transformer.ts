@@ -209,10 +209,6 @@ export function lokiPointsToTimeseriesPoints(data: Array<[number, string]>): Tim
   for (const [time, value] of data) {
     let datapointValue: TimeSeriesValue = parsePrometheusFormatSampleValue(value);
 
-    if (isNaN(datapointValue)) {
-      datapointValue = null;
-    }
-
     const timestamp = time * 1000;
 
     datapoints.push([datapointValue, timestamp]);

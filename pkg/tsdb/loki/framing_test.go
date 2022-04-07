@@ -39,6 +39,9 @@ func TestSuccessResponse(t *testing.T) {
 		{name: "parse a matrix response with Infinity", filepath: "matrix_inf", query: matrixQuery},
 		{name: "parse a matrix response with very small step value", filepath: "matrix_small_step", query: matrixQuery},
 
+		// Prometheus handles the `__name__` label in a special way, but Loki should not.
+		{name: "parse a matrix response with __name__ label normally", filepath: "matrix_name", query: matrixQuery},
+
 		// loki adds stats to matrix-responses too
 		{name: "parse a matrix response with stats", filepath: "matrix_with_stats", query: matrixQuery},
 

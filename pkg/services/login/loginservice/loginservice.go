@@ -130,6 +130,46 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 	return nil
 }
 
+func (ls *Implementation) DisableExternalUser(ctx context.Context, username string) error {
+	// Check if external user exist in Grafana
+	userQuery := &models.GetExternalUserInfoByLoginQuery{
+		LoginOrEmail: username,
+	}
+
+	if err := ls.AuthInfoService.GetExternalUserInfoByLogin(ctx, userQuery); err != nil {
+		return err
+	}
+
+	userInfo := userQuery.Result
+	if userInfo.IsDisabled {
+		return nil
+	}
+
+	logger.Debug(
+		"Disabling external user",
+		"user",
+		userQuery.Result.Login,
+	)
+
+	// Mark user as disabled in grafana db
+	disableUserCmd := &models.DisableUserCommand{
+		UserId:     userQuery.Result.UserId,
+		IsDisabled: true,
+	}
+
+	if err := ls.SQLStore.DisableUser(ctx, disableUserCmd); err != nil {
+		logger.Debug(
+			"Error disabling external user",
+			"user",
+			userQuery.Result.Login,
+			"message",
+			err.Error(),
+		)
+		return err
+	}
+	return nil
+}
+
 // SetTeamSyncFunc sets the function received through args as the team sync function.
 func (ls *Implementation) SetTeamSyncFunc(teamSyncFunc login.TeamSyncFunc) {
 	ls.TeamSync = teamSyncFunc
