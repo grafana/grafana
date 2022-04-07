@@ -16,7 +16,7 @@ export const NavBarToggle = ({ className, isExpanded, onClick }: Props) => {
 
   return (
     <IconButton
-      aria-label={isExpanded ? 'Collapse navigation menu' : 'Expand navigation menu'}
+      aria-label={isExpanded ? 'Close navigation menu' : 'Open navigation menu'}
       name={isExpanded ? 'angle-left' : 'angle-right'}
       className={classnames(className, styles.icon)}
       size="xl"
