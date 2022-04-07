@@ -6,9 +6,3 @@ providers:
    type: file
    options:
      path: devenv/bulk-dashboards
- - name: 'Bulk dashboards 2'
-   folder: 'Bulk dashboards 2'
-   type: file
-   options:
-     path: devenv/dev-dashboards/panel-barchart
-
