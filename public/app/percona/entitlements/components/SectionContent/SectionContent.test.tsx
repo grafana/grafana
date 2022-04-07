@@ -27,7 +27,6 @@ describe('Entitlements Content', () => {
     expect(screen.getByText(/Tier 1/)).toBeInTheDocument();
     expect(screen.getByText(/3 MySQL Servers/)).toBeInTheDocument();
     expect(screen.getByText(/Customer/)).toBeInTheDocument();
-    expect(screen.getByText(/MySQL, Oracle/)).toBeInTheDocument();
     expect(screen.getByText(/28\/10\/2019/)).toBeInTheDocument();
     expect(screen.getByText(/08\/02\/2022/)).toBeInTheDocument();
   });

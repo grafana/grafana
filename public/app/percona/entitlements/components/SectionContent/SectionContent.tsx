@@ -7,9 +7,7 @@ export const SectionContent = ({ entitlement }: SectionContentProps) => {
     summary,
     tier,
     totalUnits,
-    unlimitedUnits,
     supportLevel,
-    softwareFamilies,
     startDate,
     endDate,
     platform: { securityAdvisor, configAdvisor },
@@ -20,16 +18,17 @@ export const SectionContent = ({ entitlement }: SectionContentProps) => {
       <p>
         <strong>{Messages.startDate}</strong>: {startDate} <br />
         <strong>{Messages.endDate}</strong>: {endDate} <br />
+      </p>
+      <p>
         <strong>{Messages.summary}</strong>: {summary} <br />
         <strong>{Messages.tier}</strong>: {tier} <br />
-        <strong>{Messages.totalUnits}</strong>: {unlimitedUnits ? Messages.unlimited : totalUnits}
+        <strong>{Messages.totalUnits}</strong>: {totalUnits}
         <br />
-        <strong>{Messages.softwareFamilies}</strong>: {softwareFamilies?.join(', ')} <br />
         <strong>{Messages.supportLevel}</strong>: {supportLevel} <br />
         <strong>{Messages.platform}</strong>:
+        <Advisor label={Messages.configAdvisor} hasAdvisor={configAdvisor} />
+        <Advisor label={Messages.securityAdvisor} hasAdvisor={securityAdvisor} />
       </p>
-      <Advisor label={Messages.configAdvisor} hasAdvisor={configAdvisor} />
-      <Advisor label={Messages.securityAdvisor} hasAdvisor={securityAdvisor} />
     </div>
   );
 };
