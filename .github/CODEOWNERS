@@ -164,3 +164,7 @@ lerna.json @grafana/frontend-ops
 
 # Cloud middleware
 /grafana-mixin/ @grafana/hosted-grafana-team
+
+# Grafana authentication and authorization
+/pkg/services/accesscontrol @grafana/grafana-enterprise-operations-team
+/pkg/services/serviceaccounts @grafana/grafana-enterprise-operations-team

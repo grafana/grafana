@@ -84,6 +84,7 @@ export {
   BigValueJustifyMode,
   BigValueTextMode,
 } from './BigValue/BigValue';
+export { Sparkline } from './Sparkline/Sparkline';
 
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
