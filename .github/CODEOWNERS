@@ -164,3 +164,9 @@ lerna.json @grafana/frontend-ops
 
 # Cloud middleware
 /grafana-mixin/ @grafana/hosted-grafana-team
+
+# Intent API
+/internal/coremodel/datasource/crd @grafana/cloud-middleware
+/internal/framework/kubecontroller @grafana/cloud-middleware
+/internal/intentapi @grafana/cloud-middleware
+/internal/k8sbridge @grafana/cloud-middleware
