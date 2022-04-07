@@ -411,8 +411,8 @@ func TestMetrics(t *testing.T) {
 			report, err := uss.GetUsageReport(context.Background())
 			require.NoError(t, err, "Expected no error")
 
-			assert.Equal(t, 1, report.Metrics["stats.features.feature1.count"])
-			assert.Equal(t, 1, report.Metrics["stats.features.feature2.count"])
+			assert.Equal(t, 1, report.Metrics["stats.features.feature_1.count"])
+			assert.Equal(t, 1, report.Metrics["stats.features.feature_2.count"])
 		})
 	})
 
