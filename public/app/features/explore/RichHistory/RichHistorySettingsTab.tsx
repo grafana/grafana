@@ -47,7 +47,7 @@ const retentionPeriodOptions = [
   { value: 14, label: '2 weeks' },
 ];
 
-export function RichHistorySettings(props: RichHistorySettingsProps) {
+export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
   const {
     retentionPeriod,
     starredTabAsFirstTab,

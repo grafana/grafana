@@ -5,6 +5,7 @@ import { DataQuery } from '@grafana/data';
 import { find, isEqual, omit } from 'lodash';
 import { createRetentionPeriodBoundary, RICH_HISTORY_SETTING_KEYS } from './richHistoryLocalStorageUtils';
 import { fromDTO, toDTO } from './localStorageConverter';
+import { RichHistorySettings } from '../utils/richHistoryTypes';
 
 export const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 export const MAX_HISTORY_ITEMS = 10000;
@@ -100,6 +101,22 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
 
   async updateComment(id: string, comment: string) {
     return updateRichHistory(id, (richHistoryDTO) => (richHistoryDTO.comment = comment));
+  }
+
+  async getSettings() {
+    return {
+      activeDatasourceOnly: store.getObject(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, false),
+      retentionPeriod: store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7),
+      starredTabAsFirstTab: store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false),
+      lastUsedDatasourceFilters: store.getObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, []),
+    };
+  }
+
+  updateSettings(settings: RichHistorySettings) {
+    store.set(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, settings.activeDatasourceOnly);
+    store.set(RICH_HISTORY_SETTING_KEYS.retentionPeriod, settings.retentionPeriod);
+    store.set(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, settings.starredTabAsFirstTab);
+    store.setObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, settings.lastUsedDatasourceFilters);
   }
 }
 

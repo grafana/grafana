@@ -9,6 +9,7 @@ import { getUrlStateFromPaneState, makeExplorePaneState } from './utils';
 import { ThunkResult } from '../../../types';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
+import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 
 //
 // Actions and Payloads
@@ -23,6 +24,12 @@ export const richHistoryUpdatedAction =
   createAction<{ richHistory: RichHistoryQuery[]; exploreId: ExploreId }>('explore/richHistoryUpdated');
 export const richHistoryStorageFullAction = createAction('explore/richHistoryStorageFullAction');
 export const richHistoryLimitExceededAction = createAction('explore/richHistoryLimitExceededAction');
+
+export const richHistorySettingsUpdatedAction = createAction<RichHistorySettings>('explore/richHistorySettingsUpdated');
+export const richHistorySearchFiltersUpdatedAction = createAction<{
+  exploreId: ExploreId;
+  filters: RichHistorySearchFilters;
+}>('explore/richHistorySearchFiltersUpdatedAction');
 
 /**
  * Resets state for explore.
@@ -243,6 +250,13 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
+  if (richHistorySettingsUpdatedAction.match(action)) {
+    const richHistorySettings = action.payload;
+    return {
+      ...state,
+      richHistorySettings,
+    };
+  }
   if (action.payload) {
     const { exploreId } = action.payload;
     if (exploreId !== undefined) {
