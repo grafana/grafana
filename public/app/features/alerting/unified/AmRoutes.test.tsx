@@ -20,9 +20,12 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import userEvent from '@testing-library/user-event';
 import { selectOptionInTest } from '@grafana/ui';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
 
 jest.mock('./api/alertmanager');
 jest.mock('./utils/config');
+jest.mock('app/core/services/context_srv');
 
 const mocks = {
   getAllDataSourcesMock: jest.mocked(getAllDataSources),
@@ -32,6 +35,7 @@ const mocks = {
     updateAlertManagerConfig: jest.mocked(updateAlertManagerConfig),
     fetchStatus: jest.mocked(fetchStatus),
   },
+  contextSrv: jest.mocked(contextSrv),
 };
 
 const renderAmRoutes = (alertManagerSourceName?: string) => {
@@ -177,6 +181,9 @@ describe('AmRoutes', () => {
 
   beforeEach(() => {
     mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
+    mocks.contextSrv.hasAccess.mockImplementation(() => true);
+    mocks.contextSrv.hasPermission.mockImplementation(() => true);
+    mocks.contextSrv.evaluatePermission.mockImplementation(() => []);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
   });
 
@@ -357,6 +364,18 @@ describe('AmRoutes', () => {
       },
       template_files: {},
     });
+  });
+
+  it('hides create and edit button if user does not have permission', () => {
+    mocks.contextSrv.hasAccess.mockImplementation((action) =>
+      [AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsRead].includes(
+        action as AccessControlAction
+      )
+    );
+
+    renderAmRoutes();
+    expect(ui.newPolicyButton.query()).not.toBeInTheDocument();
+    expect(ui.editButton.query()).not.toBeInTheDocument();
   });
 
   it('Show error message if loading Alertmanager config fails', async () => {
