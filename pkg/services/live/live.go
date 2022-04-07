@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -1368,7 +1369,6 @@ func (g *GrafanaLive) sampleLiveStats() {
 	numClients := g.node.Hub().NumClients()
 	numUsers := g.node.Hub().NumUsers()
 	numChannels := g.node.Hub().NumChannels()
-	numSubscriptions := g.node.Hub().NumSubscriptions()
 	var numNodes int
 	if info, err := g.node.Info(); err == nil {
 		numNodes = len(info.Nodes)
@@ -1382,16 +1382,8 @@ func (g *GrafanaLive) sampleLiveStats() {
 		g.usageStats.numClientsMax = numClients
 	}
 
-	if numClients < g.usageStats.numClientsMin {
-		g.usageStats.numClientsMin = numClients
-	}
-
 	if numUsers > g.usageStats.numUsersMax {
 		g.usageStats.numUsersMax = numUsers
-	}
-
-	if numUsers < g.usageStats.numUsersMin {
-		g.usageStats.numUsersMin = numUsers
 	}
 
 	if numNodes > g.usageStats.numNodesMax {
@@ -1401,14 +1393,19 @@ func (g *GrafanaLive) sampleLiveStats() {
 	if numChannels > g.usageStats.numChannelsMax {
 		g.usageStats.numChannelsMax = numChannels
 	}
-
-	if numSubscriptions > g.usageStats.numSubsMax {
-		g.usageStats.numSubsMax = numSubscriptions
-	}
 }
 
 func (g *GrafanaLive) resetLiveStats() {
 	g.usageStats = usageStats{}
+}
+
+func getHistogramMetric(val int, bounds []int, metricPrefix string) string {
+	for _, bound := range bounds {
+		if val <= bound {
+			return metricPrefix + "le_" + strconv.Itoa(bound)
+		}
+	}
+	return metricPrefix + "le_inf"
 }
 
 func (g *GrafanaLive) collectLiveStats(_ context.Context) (map[string]interface{}, error) {
@@ -1435,15 +1432,17 @@ func (g *GrafanaLive) collectLiveStats(_ context.Context) (map[string]interface{
 		"stats.live_ha_enabled.count":   liveHAEnabled,
 		"stats.live_samples.count":      g.usageStats.sampleCount,
 		"stats.live_users_max.count":    g.usageStats.numUsersMax,
-		"stats.live_users_min.count":    g.usageStats.numUsersMin,
 		"stats.live_users_avg.count":    liveUsersAvg,
 		"stats.live_clients_max.count":  g.usageStats.numClientsMax,
-		"stats.live_clients_min.count":  g.usageStats.numClientsMin,
 		"stats.live_clients_avg.count":  liveClientsAvg,
 		"stats.live_channels_max.count": g.usageStats.numChannelsMax,
-		"stats.live_subs_max.count":     g.usageStats.numSubsMax,
 		"stats.live_nodes_max.count":    g.usageStats.numNodesMax,
 	}
+
+	metrics[getHistogramMetric(g.usageStats.numClientsMax, []int{0, 10, 100, 1000, 10000, 100000}, "stats.live_clients_")] = 1
+	metrics[getHistogramMetric(g.usageStats.numUsersMax, []int{0, 10, 100, 1000, 10000, 100000}, "stats.live_users_")] = 1
+	metrics[getHistogramMetric(g.usageStats.numChannelsMax, []int{0, 10, 100, 1000, 10000, 100000}, "stats.live_channels_")] = 1
+	metrics[getHistogramMetric(g.usageStats.numNodesMax, []int{1, 3, 9}, "stats.live_nodes_")] = 1
 
 	return metrics, nil
 }
@@ -1455,13 +1454,10 @@ func (g *GrafanaLive) registerUsageMetrics() {
 
 type usageStats struct {
 	numClientsMax  int
-	numClientsMin  int
 	numClientsSum  int
 	numUsersMax    int
-	numUsersMin    int
 	numUsersSum    int
 	sampleCount    int
 	numNodesMax    int
 	numChannelsMax int
-	numSubsMax     int
 }
