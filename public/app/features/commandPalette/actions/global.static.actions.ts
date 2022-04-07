@@ -17,6 +17,7 @@ export default (navBarTree: NavModelItem[]) => {
       name: 'Go to dashboard...',
       keywords: 'navigate',
       section: 'Navigation',
+      priority: Priority.NORMAL,
     },
     {
       id: 'preferences/theme',
@@ -48,7 +49,8 @@ export default (navBarTree: NavModelItem[]) => {
     },
   ];
 
-  // this maps actions to navbar items for showing/hiding
+  // this maps actions to navbar by URL items for showing/hiding
+  // actions is an array for multiple child actions that would be under one navbar item
   const navBarActionMap = [
     {
       url: '/dashboard/new',
@@ -137,17 +139,14 @@ export default (navBarTree: NavModelItem[]) => {
     },
   ];
 
-  const navBarActions: Array<Action | undefined> = navBarActionMap
-    .flatMap((navBarAction) => {
-      const navBarItem = navBarTree.find((navBarItem) => navBarItem.url === navBarAction.url);
-      if (navBarItem && !navBarItem.hideFromNavbar) {
-        return navBarAction.actions;
-      }
-      return undefined;
-    })
-    .filter((action) => action !== undefined);
+  let navBarActions: Action[] = [];
 
-  console.log(navBarTree, navBarActions);
+  navBarActionMap.forEach((navBarAction) => {
+    const navBarItem = navBarTree.find((navBarItem) => navBarItem.url === navBarAction.url);
+    if (navBarItem && !navBarItem.hideFromNavbar) {
+      navBarActions.push(...navBarAction.actions);
+    }
+  });
 
   return [...globalActions, ...navBarActions];
 };
