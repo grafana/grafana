@@ -437,6 +437,55 @@ describe('dataFrameToLogsModel', () => {
     });
   });
 
+  it('given one series with labels-field it should work regardless the label-fields position', () => {
+    const labels = {
+      name: 'labels',
+      type: FieldType.other,
+      values: [
+        {
+          node: 'first',
+          mode: 'slow',
+        },
+      ],
+    };
+
+    const time = {
+      name: 'time',
+      type: FieldType.time,
+      values: ['2019-04-26T09:28:11.352440161Z'],
+    };
+
+    const line = {
+      name: 'line',
+      type: FieldType.string,
+      values: ['line1'],
+    };
+
+    const frame1 = new MutableDataFrame({
+      fields: [labels, time, line],
+    });
+
+    const frame2 = new MutableDataFrame({
+      fields: [time, labels, line],
+    });
+
+    const frame3 = new MutableDataFrame({
+      fields: [time, line, labels],
+    });
+
+    const logsModel1 = dataFrameToLogsModel([frame1], 1);
+    expect(logsModel1.rows).toHaveLength(1);
+    expect(logsModel1.rows[0].labels).toStrictEqual({ mode: 'slow', node: 'first' });
+
+    const logsModel2 = dataFrameToLogsModel([frame2], 1);
+    expect(logsModel2.rows).toHaveLength(1);
+    expect(logsModel2.rows[0].labels).toStrictEqual({ mode: 'slow', node: 'first' });
+
+    const logsModel3 = dataFrameToLogsModel([frame3], 1);
+    expect(logsModel3.rows).toHaveLength(1);
+    expect(logsModel3.rows[0].labels).toStrictEqual({ mode: 'slow', node: 'first' });
+  });
+
   it('given one series with error should return expected logs model', () => {
     const series: DataFrame[] = [
       new MutableDataFrame({
