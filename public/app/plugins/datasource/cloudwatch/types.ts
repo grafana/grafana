@@ -1,11 +1,7 @@
 import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
 import { DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 
-import {
-  QueryEditorArrayExpression,
-  QueryEditorFunctionExpression,
-  QueryEditorPropertyExpression,
-} from './expressions';
+import { QueryEditorArrayExpression, QueryEditorFunctionExpression, QueryEditorPropertyExpression } from './expressions';
 
 export interface Dimensions {
   [key: string]: string | string[];
@@ -96,14 +92,7 @@ export interface CloudWatchLogsQuery extends DataQuery {
   statsGroups?: string[];
 }
 
-export interface CloudWatchQuery extends <CloudWatchMetricsQuery | CloudWatchLogsQuery> {
-  enable?: boolean;
-  name?: string;
-  iconColor?: string;
-  prefixMatching?: boolean;
-  actionPrefix?: string;
-  alarmNamePrefix?: string;
-}
+export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery | CloudWatchAnnotationQuery;
 
 export const isCloudWatchLogsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchLogsQuery =>
   (cloudwatchQuery as CloudWatchLogsQuery).queryMode === 'Logs';
