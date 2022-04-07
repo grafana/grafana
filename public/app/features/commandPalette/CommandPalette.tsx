@@ -7,6 +7,7 @@ import {
   KBarSearch,
   useMatches,
   Action,
+  VisualState,
   useRegisterActions,
   useKBar,
 } from 'kbar';
@@ -18,6 +19,7 @@ import getDashboardNavActions from './actions/dashboard.nav.actions';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types';
 import { css } from '@emotion/css';
+import { keybindingSrv } from '../../core/services/keybindingSrv';
 
 /**
  * Wrap all the components from KBar here.
@@ -27,11 +29,20 @@ import { css } from '@emotion/css';
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
   const [actions, setActions] = useState<Action[]>([]);
-  const { query } = useKBar();
+  const { showing, query } = useKBar((state) => ({
+    showing: state.visualState !== VisualState.hidden,
+  }));
+
   const { navBarTree } = useSelector((state: StoreState) => {
     return {
       navBarTree: state.navBarTree,
     };
+  });
+
+  keybindingSrv.bind('esc', () => {
+    if (showing) {
+      query.setVisualState(VisualState.animatingOut);
+    }
   });
 
   useEffect(() => {
