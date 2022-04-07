@@ -5,7 +5,7 @@ import React, { ChangeEvent } from 'react';
 
 import { CloudWatchDatasource } from '../datasource';
 import { useRegions } from '../hooks';
-import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery, CloudWatchQuery } from '../types';
+import { CloudWatchMetricsQuery, CloudWatchQuery } from '../types';
 import { MetricStatEditor } from './MetricStatEditor';
 
 // datasource: DSType;
