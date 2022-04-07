@@ -43,7 +43,7 @@ groups:
       # system, which sends the contained CRD to the apiserver.
       ProvideKubeController:
         ruletype: goident
-        name: ProvideCoremodel
+        name: ProvideKubeController
         kind: func
       #   isa:
       #     - "github.com/grafana/grafana/internal/components.CoremodelProvider"
