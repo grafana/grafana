@@ -35,12 +35,12 @@ export const CommandPalette = () => {
   });
 
   useEffect(() => {
-    const addDashboardActions = async () => {
+    const setGlobalActions = async () => {
       const staticActions = getGlobalActions(navBarTree);
-      const dashAct = await getDashboardNavActions();
+      const dashAct = await getDashboardNavActions('go/dashboard');
       setActions([...staticActions, ...dashAct]);
     };
-    addDashboardActions();
+    setGlobalActions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -83,7 +83,7 @@ const RenderResults = () => {
 
 const getSearchStyles = (theme: GrafanaTheme2) => ({
   positioner: css({
-    zIndex: theme.zIndex.modal + 1,
+    zIndex: theme.zIndex.portal,
     marginTop: '0px',
   }),
   backdrop: css({
