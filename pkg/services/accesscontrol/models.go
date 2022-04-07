@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/annotations"
 )
 
 // RoleRegistration stores a role and its assignments to built-in roles
@@ -379,8 +381,8 @@ var (
 	ScopeAnnotationsProvider         = NewScopeProvider(ScopeAnnotationsRoot)
 	ScopeAnnotationsAll              = ScopeAnnotationsProvider.GetResourceAllScope()
 	ScopeAnnotationsID               = Scope(ScopeAnnotationsRoot, "id", Parameter(":annotationId"))
-	ScopeAnnotationsTypeDashboard    = ScopeAnnotationsProvider.GetResourceScopeType("dashboard")
-	ScopeAnnotationsTypeOrganization = ScopeAnnotationsProvider.GetResourceScopeType("organization")
+	ScopeAnnotationsTypeDashboard    = ScopeAnnotationsProvider.GetResourceScopeType(annotations.Dashboard.String())
+	ScopeAnnotationsTypeOrganization = ScopeAnnotationsProvider.GetResourceScopeType(annotations.Organization.String())
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
