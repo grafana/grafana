@@ -381,8 +381,6 @@ async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocati
     const sameNamespace = freshExisting.namespace === folder.title;
     if (sameNamespace) {
       const uid = (freshExisting.rule as RulerGrafanaRuleDTO).grafana_alert.uid;
-      const newName = values.name;
-
       const ungroupedGroup = isUngroupedGroup(freshExisting.group as RulerRuleGroupDTO<RulerGrafanaRuleDTO>);
 
       formRule.grafana_alert.uid = uid;
@@ -395,7 +393,7 @@ async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocati
             .concat(formRule as RulerGrafanaRuleDTO);
 
       await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, freshExisting.namespace, {
-        name: ungroupedGroup ? newName : existing.group.name,
+        name: values.group,
         interval: evaluateEvery,
         // if we are updating an ungrouped group, replace the only rule and update the group name too
         rules: newRules,
@@ -416,8 +414,8 @@ async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocati
   const targetFolderGroups = await fetchRulerRulesNamespace(GRAFANA_RULES_SOURCE_NAME, folder.title);
 
   // set group name to rule name, but be super paranoid and check that this group does not already exist
-  const groupName = getUniqueGroupName(values.name, targetFolderGroups);
-  formRule.grafana_alert.title = groupName;
+  const groupName = getUniqueGroupName(values.group, targetFolderGroups);
+  // formRule.grafana_alert.title = groupName;
 
   const payload: PostableRulerRuleGroupDTO = {
     name: groupName,

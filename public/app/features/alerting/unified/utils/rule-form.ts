@@ -43,6 +43,7 @@ export const getDefaultFormValues = (): RuleFormValues =>
     ],
     dataSourceName: null,
     type: !contextSrv.isEditor ? RuleFormType.grafana : undefined, // viewers can't create prom alerts
+    group: '',
 
     // grafana
     folder: null,
@@ -54,7 +55,6 @@ export const getDefaultFormValues = (): RuleFormValues =>
     evaluateFor: '5m',
 
     // cortex / loki
-    group: '',
     namespace: '',
     expression: '',
     forTime: 1,
@@ -115,6 +115,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         ...defaultFormValues,
         name: ga.title,
         type: RuleFormType.grafana,
+        group: group.name,
         evaluateFor: rule.for || '0',
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
         noDataState: ga.no_data_state,

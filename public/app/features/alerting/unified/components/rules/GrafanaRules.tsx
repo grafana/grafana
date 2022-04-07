@@ -23,7 +23,7 @@ export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
     (state) => state.promRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState
   );
 
-  const wantsGroupedView = queryParams['view'] === 'group';
+  const wantsGroupedView = queryParams['view'] === 'grouped';
   const namespacesFormat = wantsGroupedView ? namespaces : transformGrafanaManagedRules(namespaces);
 
   return (

@@ -14,13 +14,13 @@ import { Stack } from '@grafana/experimental';
 const ViewOptions: SelectableValue[] = [
   {
     icon: 'list-ul',
-    label: 'Default',
-    value: 'default',
+    label: 'List',
+    value: 'group',
   },
   {
     icon: 'folder',
-    label: 'Groups',
-    value: 'group',
+    label: 'Grouped',
+    value: 'grouped',
   },
   {
     icon: 'heart-rate',
@@ -152,7 +152,7 @@ const RulesFilter = () => {
             <Label>View as</Label>
             <RadioButtonGroup
               options={ViewOptions}
-              value={String(queryParams['view'] || 'default')}
+              value={String(queryParams['view'] ?? ViewOptions[0].value)}
               onChange={handleViewChange}
             />
           </div>
