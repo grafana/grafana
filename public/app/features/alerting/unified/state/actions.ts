@@ -371,55 +371,24 @@ async function saveGrafanaRule(values: RuleFormValues, existingRule?: RuleWithLo
   const newRule = formValuesToRulerGrafanaRuleDTO(values);
   const namespace = folder.title;
 
-  // here are a couple of scenarios we have to think about
-  // 1.1 if (existing) we are editing an existing rule
-  // 1.2 if we are storing it in a different namespace or group from before we have to remove it from the previous group / namespace
-  //
-  // 2.1 if we are creating a new rule we have to add it to a group that might already exist
-  if (existingRule) {
-    const sameNamespace = existingRule.namespace === namespace;
-    const sameGroup = existingRule.group.name === values.group;
-
-    // we're update a rule in the same namespace and group
-    if (sameNamespace && sameGroup) {
-      return updateExistingGrafanaRule(existingRule, newRule);
-    } else if (sameNamespace && !sameGroup) {
-      // we're moving a rule in the same namespace to a different group
-      return moveGrafanaRuleToOtherGroup(group, existingRule, newRule);
-    } else if (!sameNamespace) {
-      // we're moving a rule to a different namespace entirely
-      return await moveGrafanaRuleToOtherNamespace(namespace, group, existingRule, newRule);
-    }
+  if (!existingRule) {
+    return addRuleToNamespaceAndGroup(namespace, group, newRule);
   }
 
-  // if we got this far we're creating a completely new rule and adding it to a namespace / group
-  return await addRuleToNamespaceAndGroup(namespace, group, newRule);
+  const sameNamespace = existingRule.namespace === namespace;
+  const sameGroup = existingRule.group.name === values.group;
+  const sameLocation = sameNamespace && sameGroup;
+
+  if (sameLocation) {
+    // we're update a rule in the same namespace and group
+    return updateGrafanaRule(existingRule, newRule);
+  } else {
+    // we're moving a rule to either a different group or namespace
+    return moveGrafanaRule(namespace, group, existingRule, newRule);
+  }
 }
 
-// this function will move a single rule from one namespace to another
-// since this operation cannot be atomic we first add it to a new namespace / group before we
-// remove it from the old namespace / group
-async function moveGrafanaRuleToOtherNamespace(
-  namespace: string,
-  group: string,
-  existingRule: RuleWithLocation,
-  newRule: PostableRuleGrafanaRuleDTO
-): Promise<RuleIdentifier> {
-  // add to new namespace / group
-  await addRuleToNamespaceAndGroup(namespace, group, newRule);
-
-  // remove from old namespace / group
-  await deleteRule({
-    ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-    namespace: existingRule.namespace,
-    group: existingRule.group,
-    rule: existingRule.rule,
-  });
-
-  // TODO figure out how to get the newly created UID :(
-  return { uid: '' };
-}
-
+// add a rule to a namespace and group
 async function addRuleToNamespaceAndGroup(
   namespace: string,
   group: string,
@@ -433,7 +402,7 @@ async function addRuleToNamespaceAndGroup(
   const payload: PostableRulerRuleGroupDTO = {
     name: existingGroup.name,
     interval: existingGroup.interval,
-    rules: existingGroup.rules.concat(newRule as RulerGrafanaRuleDTO),
+    rules: (existingGroup.rules ?? []).concat(newRule as RulerGrafanaRuleDTO),
   };
 
   await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, namespace, payload);
@@ -445,21 +414,27 @@ async function addRuleToNamespaceAndGroup(
 // we can't move the rule atomically so we have to
 // 1. add the rule to the new group
 // 2. remove the rule from the old one
-async function moveGrafanaRuleToOtherGroup(
+async function moveGrafanaRule(
+  namespace: string,
   group: string,
   existingRule: RuleWithLocation,
   newRule: PostableRuleGrafanaRuleDTO
 ): Promise<RuleIdentifier> {
-  // add to new group
-  const identifier = await addRuleToNamespaceAndGroup(existingRule.namespace, group, newRule);
+  // add the new rule to the requested namespace and group
+  const identifier = await addRuleToNamespaceAndGroup(namespace, group, newRule);
 
-  // remove from previous group
-  await deleteRule(existingRule);
+  // remove the rule from the previous namespace and group
+  await deleteRule({
+    ruleSourceName: existingRule.ruleSourceName,
+    namespace: existingRule.namespace,
+    group: existingRule.group,
+    rule: newRule as RulerGrafanaRuleDTO,
+  });
 
   return identifier;
 }
 
-async function updateExistingGrafanaRule(
+async function updateGrafanaRule(
   existingRule: RuleWithLocation,
   newRule: PostableRuleGrafanaRuleDTO
 ): Promise<RuleIdentifier> {
