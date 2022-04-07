@@ -174,66 +174,6 @@ any
   {{- end }}
 {{- end }}
 
-{{/* spec top-level information block */}}
-{{- if .Info }}
-  {{- with .Info.Title }}
-# {{ . }}
-  {{- end }}
-
-  {{- with .Info.Description }}
-{{ . }}
-  {{- end }}
-  {{ template "externalDoc" . }}
-
-  {{- if or .Info.Version .Info.License .Info.Contact .Info.TermsOfService }}
-
-## Informations
-  {{- end }}
-
-  {{- with .Info.Version }}
-
-### Version
-
-{{ . }}
-  {{- end }}
-
-  {{- with .Info.License }}
-
-### License
-
-{{ if .Name }}[{{ .Name }}]({{ end}}{{ .URL }}{{ if .Name }}){{ end }}
-  {{- end }}
-
-  {{- with .Info.Contact }}
-
-### Contact
-
-{{ .Name }} {{ .Email }} {{ .URL }}
-  {{- end }}
-
-  {{- with .Info.TermsOfService }}
-
-### Terms Of Service
-
-{{ . }}
-  {{- end }}
-{{- else }}
-  {{ template "externalDoc" . }}
-{{- end }}
-
-{{- if .Tags }}
-
-## Tags
-  {{- range .Tags }}
-
-  ### <span id="tag-{{ dasherize .Name }}"></span>{{ if .ExternalDocs }}[{{ .Name }}]({{ .ExternalDocs.URL }}{{ if .ExternalDocs.Description }} {{ printf "%q" .ExternalDocs.Description }}{{ end }}){{ else }}{{ .Name }}{{ end }}
-    {{- if .Description }}
-
-{{ .Description }}
-    {{- end }}
-  {{- end }}
-{{- end }}
-
 {{- if or .Schemes .Consumes .Produces }}
 
 ## Content negotiation
@@ -249,25 +189,13 @@ any
   {{- end }}
 {{- end }}
 
-{{- if .Consumes }}
-
 ### Consumes
-  {{- range .Consumes }}
-    {{- range .AllSerializers }}
-  * {{ .MediaType }}
-    {{- end }}
-  {{- end }}
-{{- end }}{{/* end .Schemes */}}
 
-{{- if .Produces }}
+All the endpoints consume mainly `application/json`. However, some Grafana Alerting ones consume also `application/yaml`.
 
 ### Produces
-  {{- range .Produces }}
-    {{- range .AllSerializers }}
-  * {{ .MediaType }}
-    {{- end }}
-  {{- end }}
-{{- end }}
+
+All the endpoints produce mainly `application/json`. However, there are some that produce other media types.
 
 {{- if or .SecurityDefinitions .SecurityRequirements }}
 
@@ -331,7 +259,12 @@ Name | Description
 ###  {{ .PackageAlias }}
   {{- $pkg := .PackageAlias }}
   {{- range $alltags }}
+
     {{- if eq .Name $pkg }}
+      {{- if .Description }}
+
+  {{ .Description }}
+      {{- end }}
 
   {{ template "externalDoc" . }}
     {{- end }}
@@ -340,7 +273,7 @@ Name | Description
 | Method  | URI     | Name   | Summary |
 |---------|---------|--------|---------|
   {{- range .Operations }}
-| {{ upper .Method }} | {{ joinPath .BasePath .Path }} | [{{ humanize .Name }}](#{{ dasherize .Name }}) | {{ .Summary }} |
+| {{ upper .Method }} | {{ joinPath .BasePath .Path }} | [{{ .Name }}](#{{ dasherize .Name }}) | {{ .Summary }} |
   {{- end }}
   {{ printf "\n" }}
 {{- end }}
@@ -350,7 +283,7 @@ Name | Description
 {{- range .Operations }}
  {{- $opname := .Name }}
 
-### <span id="{{ dasherize .Name }}"></span> {{ if .Summary }}{{ trimSpace .Summary }}{{ else }}{{ humanize .Name }}{{ end }} (*{{ .Name }}*)
+### <span id="{{ dasherize .Name }}"></span> {{ if .Summary }}{{ trimSpace .Summary }}{{ else }}{{ .Name }}{{ end }} (*{{ .Name }}*)
 
 ```
 {{ upper .Method }} {{ joinPath .BasePath .Path }}

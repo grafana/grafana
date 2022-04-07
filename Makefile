@@ -36,6 +36,8 @@ node_modules: package.json yarn.lock ## Install node modules.
 SPEC_TARGET = public/api-spec.json
 MERGED_SPEC_TARGET := public/api-merged.json
 NGALERT_SPEC_TARGET = pkg/services/ngalert/api/tooling/post.json
+HTTP_API_DOCS_TARGET_DIR = docs/sources/http_api
+HTTP_API_DOCS_TARGET = $(HTTP_API_DOCS_TARGET_DIR)/markdown.md
 
 $(SPEC_TARGET): $(API_DEFINITION_FILES) ## Generate API spec
 	docker run --rm -it \
@@ -68,6 +70,32 @@ ensure_go-swagger_mac:
 	-i pkg/api/docs/tags.json
 
 swagger-api-spec-mac: gen-go --swagger-api-spec-mac $(MERGED_SPEC_TARGET)
+
+$(HTTP_API_DOCS_TARGET): $(MERGED_SPEC_TARGET) ## Generate HTTP API markdown
+	docker run -it \
+	-v $$(pwd):/grafana \
+	-v $$(pwd)/$(HTTP_API_DOCS_TARGET_DIR):/go \
+	quay.io/goswagger/swagger:$(SWAGGER_TAG) \
+	generate markdown \
+	--keep-spec-order \
+	--allow-template-override \
+	--dump-data  \
+	--template-dir=/grafana/pkg/api/docs \
+	-f /grafana/$(MERGED_SPEC_TARGET) 
+
+http-api-docs: $(HTTP_API_DOCS_TARGET)
+
+http-api-docs-mac: ensure_go-swagger_mac $(MERGED_SPEC_TARGET) ## Generate HTTP API markdown (for M1 Mac)
+	swagger generate markdown \
+	--keep-spec-order \
+	--allow-template-override \
+	--dump-data  \
+	--template-dir=pkg/api/docs \
+	-f $(MERGED_SPEC_TARGET) 
+	mv markdown.md $(HTTP_API_DOCS_TARGET)
+
+http-api-docs-clean:
+	rm $(HTTP_API_DOCS_TARGET)
 
 validate-api-spec: $(MERGED_SPEC_TARGET) ## Validate API spec
 	docker run --rm -it \
