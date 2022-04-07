@@ -580,7 +580,7 @@ func TestOSSAccessControlService_Evaluate(t *testing.T) {
 		},
 		Grants: []string{"Viewer"},
 	}
-	userLoginScopeSolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+	userLoginScopeSolver := func(ctx context.Context, user *models.SignedInUser, initialScope string) (string, error) {
 		if initialScope == "users:login:testUser" {
 			return "users:id:2", nil
 		}

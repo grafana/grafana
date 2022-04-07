@@ -20,17 +20,18 @@ import (
 
 func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 	query := &annotations.ItemQuery{
-		From:        c.QueryInt64("from"),
-		To:          c.QueryInt64("to"),
-		OrgId:       c.OrgId,
-		UserId:      c.QueryInt64("userId"),
-		AlertId:     c.QueryInt64("alertId"),
-		DashboardId: c.QueryInt64("dashboardId"),
-		PanelId:     c.QueryInt64("panelId"),
-		Limit:       c.QueryInt64("limit"),
-		Tags:        c.QueryStrings("tags"),
-		Type:        c.Query("type"),
-		MatchAny:    c.QueryBool("matchAny"),
+		From:         c.QueryInt64("from"),
+		To:           c.QueryInt64("to"),
+		OrgId:        c.OrgId,
+		UserId:       c.QueryInt64("userId"),
+		AlertId:      c.QueryInt64("alertId"),
+		DashboardId:  c.QueryInt64("dashboardId"),
+		PanelId:      c.QueryInt64("panelId"),
+		Limit:        c.QueryInt64("limit"),
+		Tags:         c.QueryStrings("tags"),
+		Type:         c.Query("type"),
+		MatchAny:     c.QueryBool("matchAny"),
+		SignedInUser: c.SignedInUser,
 	}
 
 	repo := annotations.GetRepository()
@@ -192,7 +193,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 
 	repo := annotations.GetRepository()
 
-	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.OrgId)
+	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.SignedInUser)
 	if resp != nil {
 		return resp
 	}
@@ -239,7 +240,7 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 
 	repo := annotations.GetRepository()
 
-	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.OrgId)
+	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.SignedInUser)
 	if resp != nil {
 		return resp
 	}
@@ -310,7 +311,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 		var dashboardId int64
 
 		if cmd.AnnotationId != 0 {
-			annotation, respErr := findAnnotationByID(c.Req.Context(), repo, cmd.AnnotationId, c.OrgId)
+			annotation, respErr := findAnnotationByID(c.Req.Context(), repo, cmd.AnnotationId, c.SignedInUser)
 			if respErr != nil {
 				return respErr
 			}
@@ -358,7 +359,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 
 	repo := annotations.GetRepository()
 
-	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.OrgId)
+	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.SignedInUser)
 	if resp != nil {
 		return resp
 	}
@@ -400,8 +401,13 @@ func canSaveOrganizationAnnotation(c *models.ReqContext) bool {
 	return c.SignedInUser.HasRole(models.ROLE_EDITOR)
 }
 
-func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, orgID int64) (*annotations.ItemDTO, response.Response) {
-	items, err := repo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgID})
+func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user *models.SignedInUser) (*annotations.ItemDTO, response.Response) {
+	query := &annotations.ItemQuery{
+		AnnotationId: annotationID,
+		OrgId:        user.OrgId,
+		SignedInUser: user,
+	}
+	items, err := repo.Find(ctx, query)
 
 	if err != nil {
 		return nil, response.Error(500, "Failed to find annotation", err)
@@ -434,7 +440,7 @@ func (hs *HTTPServer) GetAnnotationTags(c *models.ReqContext) response.Response 
 // resolve annotation types. Scope "annotations:id:<id>" will be translated to "annotations:type:<type>,
 // where <type> is the type of annotation with id <id>.
 func AnnotationTypeScopeResolver() (string, accesscontrol.AttributeScopeResolveFunc) {
-	annotationTypeResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+	annotationTypeResolver := func(ctx context.Context, user *models.SignedInUser, initialScope string) (string, error) {
 		scopeParts := strings.Split(initialScope, ":")
 		if scopeParts[0] != accesscontrol.ScopeAnnotationsRoot || len(scopeParts) != 3 {
 			return "", accesscontrol.ErrInvalidScope
@@ -446,7 +452,7 @@ func AnnotationTypeScopeResolver() (string, accesscontrol.AttributeScopeResolveF
 			return "", accesscontrol.ErrInvalidScope
 		}
 
-		annotation, resp := findAnnotationByID(ctx, annotations.GetRepository(), int64(annotationId), orgID)
+		annotation, resp := findAnnotationByID(ctx, annotations.GetRepository(), int64(annotationId), user)
 		if resp != nil {
 			return "", err
 		}

@@ -60,7 +60,7 @@ func TestResolveKeywordedScope(t *testing.T) {
 func TestScopeResolver_ResolveAttribute(t *testing.T) {
 	// Calls allow us to see how many times the fakeDataSourceResolution has been called
 	calls := 0
-	fakeDataSourceResolution := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+	fakeDataSourceResolution := func(ctx context.Context, user *models.SignedInUser, initialScope string) (string, error) {
 		calls++
 		if initialScope == "datasources:name:testds" {
 			return Scope("datasources", "id", "1"), nil
@@ -77,7 +77,6 @@ func TestScopeResolver_ResolveAttribute(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		orgID         int64
 		evaluator     Evaluator
 		wantEvaluator Evaluator
 		wantCalls     int
@@ -91,21 +90,18 @@ func TestScopeResolver_ResolveAttribute(t *testing.T) {
 		},
 		{
 			name:      "should handle an error",
-			orgID:     1,
 			evaluator: EvalPermission("datasources:read", Scope("datasources", "name", "testds3")),
 			wantErr:   models.ErrDataSourceNotFound,
 			wantCalls: 1,
 		},
 		{
 			name:          "should resolve a scope",
-			orgID:         1,
 			evaluator:     EvalPermission("datasources:read", Scope("datasources", "name", "testds")),
 			wantEvaluator: EvalPermission("datasources:read", Scope("datasources", "id", "1")),
 			wantCalls:     1,
 		},
 		{
-			name:  "should resolve nested scopes with cache",
-			orgID: 1,
+			name: "should resolve nested scopes with cache",
 			evaluator: EvalAll(
 				EvalPermission("datasources:read", Scope("datasources", "name", "testds")),
 				EvalAny(
@@ -124,14 +120,12 @@ func TestScopeResolver_ResolveAttribute(t *testing.T) {
 		},
 		{
 			name:          "should resolve name with colon",
-			orgID:         1,
 			evaluator:     EvalPermission("datasources:read", Scope("datasources", "name", "test:ds4")),
 			wantEvaluator: EvalPermission("datasources:read", Scope("datasources", "id", "4")),
 			wantCalls:     1,
 		},
 		{
 			name:          "should resolve names with '*'",
-			orgID:         1,
 			evaluator:     EvalPermission("datasources:read", Scope("datasources", "name", "testds5*")),
 			wantEvaluator: EvalPermission("datasources:read", Scope("datasources", "id", "5")),
 			wantCalls:     1,
@@ -146,7 +140,7 @@ func TestScopeResolver_ResolveAttribute(t *testing.T) {
 		resolver.AddAttributeResolver("datasources:name:", fakeDataSourceResolution)
 
 		// Test
-		scopeModifier := resolver.GetResolveAttributeScopeMutator(tt.orgID)
+		scopeModifier := resolver.GetResolveAttributeScopeMutator(testUser)
 		resolvedEvaluator, err := tt.evaluator.MutateScopes(context.TODO(), scopeModifier)
 		if tt.wantErr != nil {
 			assert.ErrorAs(t, err, &tt.wantErr, "expected an error during the resolution of the scope")

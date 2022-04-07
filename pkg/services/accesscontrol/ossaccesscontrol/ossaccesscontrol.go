@@ -91,7 +91,7 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 		user.Permissions[user.OrgId] = accesscontrol.GroupScopesByAction(permissions)
 	}
 
-	attributeMutator := ac.scopeResolver.GetResolveAttributeScopeMutator(user.OrgId)
+	attributeMutator := ac.scopeResolver.GetResolveAttributeScopeMutator(user)
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, attributeMutator)
 	if err != nil {
 		return false, err

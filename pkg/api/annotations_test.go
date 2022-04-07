@@ -777,7 +777,11 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			resolved, err := resolver(context.Background(), 1, tc.given)
+			testUser := &models.SignedInUser{
+				UserId: 2,
+				OrgId:  1,
+			}
+			resolved, err := resolver(context.Background(), testUser, tc.given)
 			if tc.wantErr != nil {
 				require.Error(t, err)
 				require.Equal(t, tc.wantErr, err)
