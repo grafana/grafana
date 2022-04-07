@@ -12,11 +12,9 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Portal, UPlotConfigBuilder, useStyles, VizTooltipContainer } from '@grafana/ui';
-import { DataHoverView } from '../../geomap/components/DataHoverView';
-import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { Portal, UPlotConfigBuilder, useStyles } from '@grafana/ui';
+import { ExemplarTooltip } from './ExemplarTooltip';
 // import { usePopper } from 'react-popper';
-const TOOLTIP_OFFSET = 10;
 
 interface ExemplarMarkerProps {
   timeZone: TimeZone;
@@ -101,22 +99,35 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
     //     timeZone,
     //   });
     // };
+    const fields = getFieldsInCell(
+      dataFrame.fields[0].values.get(dataFrameFieldIndex.fieldIndex),
+      dataFrame.fields[1].values.get(dataFrameFieldIndex.fieldIndex),
+      dataFrame.fields[2].values.get(dataFrameFieldIndex.fieldIndex),
+      dataFrameFieldIndex.fieldIndex
+    );
     return (
-      coords.x !== null &&
-      coords.y !== null && (
-        <VizTooltipContainer
-          position={{ x: coords.x, y: coords.y }}
-          offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
-          allowPointerEvents={isToolTipOpen.current}
-        >
-          {shouldDisplayCloseButton && (
-            <>
-              <CloseButton onClick={onCloseToolTip} />
-              <div className={styles.closeButtonSpacer} />
-            </>
-          )}
-          <DataHoverView data={dataFrame} rowIndex={0} columnIndex={0} />
-        </VizTooltipContainer>
+      coords.x &&
+      coords.y && (
+        <ExemplarTooltip
+          ttip={{
+            layers: [
+              {
+                name: 'test',
+                data: [
+                  {
+                    fields,
+                    length: fields.length,
+                  },
+                ],
+              },
+            ],
+            pageX: coords.x,
+            pageY: coords.y,
+            point: { hello: {} },
+          }}
+          isOpen={isToolTipOpen.current}
+          onClose={onCloseToolTip}
+        />
       )
     );
 
@@ -166,7 +177,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
     //     </div>
     //   </div>
     // );
-  }, [dataFrame, coords, shouldDisplayCloseButton, styles]);
+  }, [dataFrame, getFieldsInCell, dataFrameFieldIndex, coords]);
 
   return (
     <>

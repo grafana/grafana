@@ -1,5 +1,5 @@
 import { MutableRefObject, RefObject } from 'react';
-import { DataFrame, Field, GrafanaTheme2, PanelData, TimeRange } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, PanelData, TimeRange } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import uPlot from 'uplot';
@@ -461,53 +461,16 @@ export const countsToFills = (u: uPlot, seriesIdx: number, palette: string[]) =>
 
 export const findExemplarFrameInPanelData = (data: PanelData): DataFrame | undefined => {
   if (data.annotations) {
-    return data.annotations.find((frame: DataFrame) => frame.name === 'exemplar');
+    return data.annotations.find((frame: DataFrame) => frame.meta?.custom?.resultType === 'exemplar');
   }
 
   if (data.series) {
-    const exemplarFrame: DataFrame | undefined = data.series.find((frame: DataFrame) => frame.name === 'exemplar');
-    if (exemplarFrame && exemplarFrame.length > 1) {
-      // We have only 1 exemplar frame. Create a dataframe with only that one frame
-      const exemplarField: Field | undefined = exemplarFrame.fields.find((field: Field) => field.name === undefined);
-      if (exemplarField) {
-        return {
-          name: 'exemplar',
-          fields: [exemplarField],
-          length: 1,
-        };
-      }
-
-      // If we get here, we didn't find the exemplar field, and there for there is none. Fall to the default undefined case.
-    }
+    return data.series.find((frame: DataFrame) => frame.meta?.custom?.resultType === 'exemplar');
   }
 
   return undefined;
 };
 
 export const findDataFramesInPanelData = (data: PanelData): DataFrame[] | undefined => {
-  if (data.series?.length) {
-    const series: DataFrame[] | undefined = data.series.filter((frame: DataFrame) => frame.name !== 'exemplar');
-    if (series) {
-      return series;
-    }
-
-    // We may have series in an exemplar frame. In the case where the series is in an exemplar frame, the frame
-    // name will be 'exemplar', and the field for exemplars will be 'undefined'. Take all other fields.
-    const exemplarFrame: DataFrame | undefined = data.series.find((frame: DataFrame) => frame.name === 'exemplar');
-
-    if (exemplarFrame) {
-      // Find everything that's not undefined.
-      const fields: Field[] | undefined = exemplarFrame.fields.filter((field: Field) => field.name !== undefined);
-      if (fields) {
-        return [
-          {
-            fields,
-            length: fields.length,
-          },
-        ];
-      }
-    }
-  }
-
-  return undefined;
+  return data.series?.filter((frame: DataFrame) => frame.meta?.custom?.resultType !== 'exemplar');
 };
