@@ -41,7 +41,7 @@ groups:
       # Requires that each kubecontroller component define a wire-friendly func
       # that makes the kubecontroller available for use, e.g. by the k8sbridge
       # system, which sends the contained CRD to the apiserver.
-      ProvidesCoremodel:
+      ProvideKubeController:
         ruletype: goident
         name: ProvideCoremodel
         kind: func
