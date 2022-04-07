@@ -20,7 +20,7 @@ func TestFeatureUsageStats(t *testing.T) {
 		"feature.with.a.dot",
 	)
 
-	require.Equal(t, map[string]int{
+	require.Equal(t, map[string]interface{}{
 		"stats.features.trim_defaults.count":                 1,
 		"stats.features.httpclientprovider_azure_auth.count": 1,
 		"stats.features.service_accounts.count":              1,
