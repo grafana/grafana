@@ -1,4 +1,4 @@
-import { from, merge, Observable, of } from 'rxjs';
+import { from, merge, Observable, of, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
 import {
@@ -67,6 +67,12 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
           break;
         case 'raw_frame':
           streams.push(this.rawFrameQuery(target, options));
+          break;
+        case 'server_error_500':
+          // this now has an option where it can return/throw an error from the frontend.
+          // if it doesn't, send it to the backend where it might panic there :)
+          const query = this.serverErrorQuery(target, options);
+          query ? streams.push(query) : backendQueries.push(target);
           break;
         // Unusable since 7, removed in 8
         case 'manual_entry': {
@@ -201,6 +207,29 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
     } catch (ex) {
       return of({ data: [], error: ex }).pipe(delay(100));
     }
+  }
+
+  serverErrorQuery(
+    target: TestDataQuery,
+    options: DataQueryRequest<TestDataQuery>
+  ): Observable<DataQueryResponse> | null {
+    const { errorType } = target;
+    console.log("we're here!", target);
+
+    if (errorType === 'server_panic') {
+      return null;
+    }
+
+    const stringInput = target.stringInput ?? '';
+    if (stringInput === '') {
+      if (errorType === 'frontend_exception') {
+        throw new Error('Scenario threw an exception in the frontend because the input was empty.');
+      } else {
+        return throwError(() => new Error('Scenario returned an error because the input was empty.'));
+      }
+    }
+
+    return null;
   }
 }
 
