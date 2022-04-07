@@ -6,6 +6,10 @@ function getAMversion(alertManagerSourceName: string) {
   return isGrafanaRulesSource(alertManagerSourceName) ? 'grafana' : 'external';
 }
 
+function getDSVersion(alertManagerSourceName: string) {
+  return isGrafanaRulesSource(alertManagerSourceName) ? 'grafana' : 'external';
+}
+
 export function getInstancesPermissions(alertManagerSourceName: string) {
   const amVersion = getAMversion(alertManagerSourceName);
 
@@ -68,6 +72,36 @@ export function getNotificationsPermissions(alertManagerSourceName: string) {
     create: permissions.create[amVersion],
     update: permissions.update[amVersion],
     delete: permissions.delete[amVersion],
+  };
+}
+
+export function getRulesPermissions(dataSourceName: string) {
+  const dsVersion = getDSVersion(dataSourceName);
+
+  const permissions = {
+    read: {
+      grafana: AccessControlAction.AlertingRuleRead,
+      external: AccessControlAction.AlertingRuleExternalRead,
+    },
+    create: {
+      grafana: AccessControlAction.AlertingRuleCreate,
+      external: AccessControlAction.AlertingRuleExternalWrite,
+    },
+    update: {
+      grafana: AccessControlAction.AlertingRuleUpdate,
+      external: AccessControlAction.AlertingRuleExternalWrite,
+    },
+    delete: {
+      grafana: AccessControlAction.AlertingRuleDelete,
+      external: AccessControlAction.AlertingRuleExternalWrite,
+    },
+  };
+
+  return {
+    read: permissions.read[dsVersion],
+    create: permissions.create[dsVersion],
+    update: permissions.update[dsVersion],
+    delete: permissions.delete[dsVersion],
   };
 }
 

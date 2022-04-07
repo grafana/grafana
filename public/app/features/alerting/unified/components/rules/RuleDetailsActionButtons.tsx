@@ -4,7 +4,7 @@ import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getRulesPermissions } from 'app/features/alerting/accessControl';
+import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 import { RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
