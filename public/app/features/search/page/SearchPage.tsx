@@ -63,13 +63,7 @@ export default function SearchPage() {
         {results.loading && <Spinner />}
         {results.value?.body && (
           <div>
-            <TagFilter
-              isClearable
-              tags={query.tag}
-              tagOptions={getTagOptions}
-              onChange={onTagChange}
-              updateOptionsDynamically
-            />
+            <TagFilter isClearable tags={query.tag} tagOptions={getTagOptions} onChange={onTagChange} />
             <br />
             {query.datasource && (
               <Button

@@ -1,7 +1,6 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { components } from 'react-select';
-import debounce from 'debounce-promise';
 import { Icon, AsyncMultiSelect, useStyles2 } from '@grafana/ui';
 import { escapeStringForRegex, GrafanaTheme2 } from '@grafana/data';
 
@@ -24,7 +23,6 @@ export interface Props {
   formatCreateLabel?: (input: string) => string;
   /** Do not show selected values inside Select. Useful when the values need to be shown in some other components */
   hideValues?: boolean;
-  updateOptionsDynamically?: boolean;
   inputId?: string;
   isClearable?: boolean;
   onChange: (tags: string[]) => void;
@@ -43,7 +41,6 @@ export const TagFilter: FC<Props> = ({
   allowCustomValue = false,
   formatCreateLabel,
   hideValues,
-  updateOptionsDynamically,
   inputId,
   isClearable,
   onChange,
@@ -57,17 +54,9 @@ export const TagFilter: FC<Props> = ({
   const currentlySelectedTags = tags.map((tag) => ({ value: tag, label: tag, count: 0 }));
   const [options, setOptions] = useState<TagSelectOption[]>(currentlySelectedTags);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectKey, setSelectKey] = useState<string>(JSON.stringify(tags));
-  const [previousTags, setPreviousTags] = useState(tags);
 
-  useEffect(() => {
-    if (updateOptionsDynamically && previousTags !== tags) {
-      setPreviousTags(tags);
-      // Slight delay necessary to ensure query results are most up to date
-      // Key switching approach seems to be best way to ensure consistent update of tag options
-      setTimeout(() => setSelectKey(JSON.stringify(tags)), 100);
-    }
-  }, [previousTags, tags, updateOptionsDynamically]);
+  // Necessary to force re-render to keep tag options up to date / relevant
+  const selectKey = useMemo(() => tags.join(), [tags]);
 
   const onLoadOptions = async () => {
     const options = await tagOptions();
@@ -77,8 +66,6 @@ export const TagFilter: FC<Props> = ({
       count: option.count,
     }));
   };
-
-  const debouncedLoadOptions = debounce(onLoadOptions, 300);
 
   const onTagChange = (newTags: any[]) => {
     // On remove with 1 item returns null, so we need to make sure it's an empty array in that case
@@ -94,8 +81,10 @@ export const TagFilter: FC<Props> = ({
   };
 
   const selectOptions = {
-    ...(updateOptionsDynamically && { onFocus, isLoading, options, key: selectKey }),
-    ...(!updateOptionsDynamically && { loadOptions: debouncedLoadOptions }),
+    key: selectKey,
+    onFocus,
+    isLoading,
+    options,
     allowCreateWhileLoading: true,
     allowCustomValue,
     formatCreateLabel,
