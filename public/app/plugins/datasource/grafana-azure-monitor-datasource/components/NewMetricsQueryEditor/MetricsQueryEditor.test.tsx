@@ -98,6 +98,64 @@ describe('MetricsQueryEditor', () => {
     );
   });
 
+  it('should reset metric namespace, metric name, and aggregation fields after selecting a new resource when a valid query has already been set', async () => {
+    const mockDatasource = createMockDatasource({ resourcePickerData });
+    const query = createMockQuery();
+    const onChange = jest.fn();
+
+    render(
+      <MetricsQueryEditor
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    const resourcePickerButton = await screen.findByRole('button', { name: /grafanastaging/ });
+
+    expect(screen.getByText('Microsoft.Compute/virtualMachines')).toBeInTheDocument();
+    expect(screen.getByText('Metric A')).toBeInTheDocument();
+    expect(screen.getByText('Average')).toBeInTheDocument();
+
+    expect(resourcePickerButton).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Expand Primary Subscription' })).not.toBeInTheDocument();
+    resourcePickerButton.click();
+
+    const subscriptionButton = await screen.findByRole('button', { name: 'Expand Dev Subscription' });
+    expect(subscriptionButton).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Expand Development 3' })).not.toBeInTheDocument();
+    subscriptionButton.click();
+
+    const resourceGroupButton = await screen.findByRole('button', { name: 'Expand Development 3' });
+    expect(resourceGroupButton).toBeInTheDocument();
+    expect(screen.queryByLabelText('db-server')).not.toBeInTheDocument();
+    resourceGroupButton.click();
+
+    const checkbox = await screen.findByLabelText('db-server');
+    expect(checkbox).toBeInTheDocument();
+    expect(checkbox).not.toBeChecked();
+    userEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+    userEvent.click(await screen.findByRole('button', { name: 'Apply' }));
+
+    expect(onChange).toBeCalledTimes(1);
+    expect(onChange).toBeCalledWith(
+      expect.objectContaining({
+        azureMonitor: expect.objectContaining({
+          resourceUri:
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/db-server',
+          metricNamespace: undefined,
+          metricName: undefined,
+          aggregation: undefined,
+          timeGrain: '',
+          dimensionFilters: [],
+        }),
+      })
+    );
+  });
+
   it('should change the metric name when selected', async () => {
     const mockDatasource = createMockDatasource({ resourcePickerData });
     const onChange = jest.fn();
