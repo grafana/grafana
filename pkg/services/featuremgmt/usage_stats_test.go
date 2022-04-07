@@ -8,11 +8,6 @@ import (
 )
 
 func TestFeatureUsageStats(t *testing.T) {
-	features := make([]interface{}, 0)
-	for _, feature := range standardFeatureFlags {
-		features = append(features, feature.Name)
-	}
-
 	featureManagerWithAllFeatures := WithFeatures(
 		"trimDefaults",
 		"httpclientprovider_azure_auth",
