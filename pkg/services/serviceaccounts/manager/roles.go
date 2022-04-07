@@ -29,6 +29,21 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 					Action: serviceaccounts.ActionDelete,
 					Scope:  serviceaccounts.ScopeAll,
 				},
+				{
+					Action: serviceaccounts.TokenActionRead,
+					Scope:  serviceaccounts.TokenScopeAll,
+				},
+				{
+					Action: serviceaccounts.TokenActionWrite,
+					Scope:  serviceaccounts.TokenScopeAll,
+				},
+				{
+					Action: serviceaccounts.TokenActionCreate,
+				},
+				{
+					Action: serviceaccounts.TokenActionDelete,
+					Scope:  serviceaccounts.TokenScopeAll,
+				},
 			},
 		},
 		Grants: []string{"Admin"},

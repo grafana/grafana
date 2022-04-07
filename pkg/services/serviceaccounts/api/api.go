@@ -72,11 +72,11 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 		// serviceAccountsRoute.Post("/convert/:keyId", auth(middleware.ReqOrgAdmin,
 		// 	accesscontrol.EvalPermission(serviceaccounts.ActionCreate, serviceaccounts.ScopeID)), routing.Wrap(api.ConvertToServiceAccount))
 		serviceAccountsRoute.Get("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
+			accesscontrol.EvalPermission(serviceaccounts.TokenActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
 		serviceAccountsRoute.Post("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.CreateToken))
+			accesscontrol.EvalPermission(serviceaccounts.TokenActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.CreateToken))
 		serviceAccountsRoute.Delete("/:serviceAccountId/tokens/:tokenId", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteToken))
+			accesscontrol.EvalPermission(serviceaccounts.TokenActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteToken))
 	})
 }
 

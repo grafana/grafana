@@ -8,15 +8,20 @@ import (
 )
 
 var (
-	ScopeAll = "serviceaccounts:*"
-	ScopeID  = accesscontrol.Scope("serviceaccounts", "id", accesscontrol.Parameter(":serviceAccountId"))
+	ScopeAll      = "serviceaccounts:*"
+	ScopeID       = accesscontrol.Scope("serviceaccounts", "id", accesscontrol.Parameter(":serviceAccountId"))
+	TokenScopeAll = "serviceaccounttokens:*"
 )
 
 const (
-	ActionRead   = "serviceaccounts:read"
-	ActionWrite  = "serviceaccounts:write"
-	ActionCreate = "serviceaccounts:create"
-	ActionDelete = "serviceaccounts:delete"
+	ActionRead        = "serviceaccounts:read"
+	ActionWrite       = "serviceaccounts:write"
+	ActionCreate      = "serviceaccounts:create"
+	ActionDelete      = "serviceaccounts:delete"
+	TokenActionRead   = "serviceaccounttokens:read"
+	TokenActionWrite  = "serviceaccounttokens:write"
+	TokenActionCreate = "serviceaccounttokens:create"
+	TokenActionDelete = "serviceaccounttokens:delete"
 )
 
 type ServiceAccount struct {
