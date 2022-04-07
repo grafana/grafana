@@ -47,3 +47,4 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 
 - [CHANGE] Prometheus Compatible API: Use float-like values for `api/prometheus/grafana/api/v1/alerts` and `api/prometheus/grafana/api/v1/rules` instead of the evaluation string #47216
 - [ENHANCEMENT] Templates: Enable the use of classic condition values in templates #46971
+- [ENHANCEMENT] Migration: Migrate each legacy notification channel to its own contact point, use nested routes to reproduce multi-channel alerts #47291
