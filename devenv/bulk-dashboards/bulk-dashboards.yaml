@@ -6,3 +6,4 @@ providers:
    type: file
    options:
      path: devenv/bulk-dashboards
+
