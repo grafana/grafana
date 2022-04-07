@@ -1,20 +1,19 @@
-import React, { useState } from 'react';
-import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2, locationUtil, SelectableValue } from '@grafana/data';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup } from '@grafana/ui';
+import { locationUtil, SelectableValue } from '@grafana/data';
 import { setDashboardInLocalStorage, AddToDashboardError } from './addToDashboard';
 import { useSelector } from 'react-redux';
 import { ExploreId } from 'app/types';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { DeepMap, FieldError, useForm } from 'react-hook-form';
-import { css } from '@emotion/css';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { getExploreItemSelector } from '../state/selectors';
 import { partial } from 'lodash';
 import { removeDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
 
 enum SaveTarget {
-  NewDashboard,
-  ExistingDashboard,
+  NewDashboard = 'new-dashboard',
+  ExistingDashboard = 'existing-dashboard',
 }
 
 const SAVE_TARGETS: Array<SelectableValue<SaveTarget>> = [
@@ -54,12 +53,6 @@ function getDashboardURL(dashboardUid?: string) {
   return dashboardUid ? `d/${dashboardUid}` : 'dashboard/new';
 }
 
-function getStyles(theme: GrafanaTheme2) {
-  return css`
-    margin-bottom: ${theme.spacing(2)};
-  `;
-}
-
 enum GenericError {
   UNKNOWN = 'unknown-error',
   NAVIGATION = 'navigation-error',
@@ -87,11 +80,16 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
     defaultValues: { saveTarget: SaveTarget.NewDashboard },
   });
   const saveTarget = watch('saveTarget');
-  const radioGroupStyles = useStyles2(getStyles);
 
   const onSubmit = async (openInNewTab: boolean, data: FormDTO) => {
     setSubmissionError(undefined);
     const dashboardUid = data.saveTarget === SaveTarget.ExistingDashboard ? data.dashboardUid : undefined;
+
+    reportInteraction('e2d_submit', {
+      newTab: openInNewTab,
+      saveTarget: data.saveTarget,
+      queries: exploreItem.queries.length,
+    });
 
     try {
       await setDashboardInLocalStorage({
@@ -133,13 +131,24 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
     onClose();
   };
 
+  const handleClose = useCallback(() => {
+    reportInteraction('e2d_cancel');
+    onClose();
+  }, [onClose]);
+
+  useEffect(() => {
+    reportInteraction('e2d_open');
+  }, []);
+
   return (
     <Modal title="Add panel to dashboard" onDismiss={onClose} isOpen>
       <form>
         <InputControl
           control={control}
           render={({ field: { ref, ...field } }) => (
-            <RadioButtonGroup options={SAVE_TARGETS} {...field} className={radioGroupStyles} />
+            <Field label="Target dashboard" description="Start a new dashboard or save the panel in an existing one.">
+              <RadioButtonGroup options={SAVE_TARGETS} {...field} id="e2d-save-target" />
+            </Field>
           )}
           name="saveTarget"
         />
@@ -179,7 +188,7 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
         )}
 
         <Modal.ButtonRow>
-          <Button type="reset" onClick={onClose} fill="outline" variant="secondary">
+          <Button type="reset" onClick={handleClose} fill="outline" variant="secondary">
             Cancel
           </Button>
           <Button
