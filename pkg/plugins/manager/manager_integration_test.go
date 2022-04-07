@@ -127,7 +127,6 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"news":           {},
 		"nodeGraph":      {},
 		"piechart":       {},
-		"pluginlist":     {},
 		"stat":           {},
 		"state-timeline": {},
 		"status-history": {},

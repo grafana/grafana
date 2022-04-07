@@ -7219,9 +7219,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@reduxjs/toolkit@npm:1.7.2":
-  version: 1.7.2
-  resolution: "@reduxjs/toolkit@npm:1.7.2"
+"@reduxjs/toolkit@npm:1.8.0":
+  version: 1.8.0
+  resolution: "@reduxjs/toolkit@npm:1.8.0"
   dependencies:
     immer: ^9.0.7
     redux: ^4.1.2
@@ -7235,7 +7235,7 @@ __metadata:
       optional: true
     react-redux:
       optional: true
-  checksum: 41c17c660f7c95d776658b9a101f9803c37589b2c08861e90283abe5fab70f99c37af064fae0c5b7501f67308946fa072504f6a801e272f157b9f7427a5e571e
+  checksum: e229571b80d7f5c4407af2050ac2a26a22472541fef1705d5e8b73b93bfb2884072d79e1cea2cd81d89939cc6b6073ef3ddf1680950aac66ba34cd202a6cf371
   languageName: node
   linkType: hard
 
@@ -20454,7 +20454,7 @@ __metadata:
     "@react-types/menu": 3.5.2
     "@react-types/overlays": 3.5.4
     "@react-types/shared": 3.11.2
-    "@reduxjs/toolkit": 1.7.2
+    "@reduxjs/toolkit": 1.8.0
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
     "@sentry/browser": 6.19.1
     "@sentry/types": 6.19.1

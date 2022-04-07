@@ -29,10 +29,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
-			query.Result = &models.ApiKey{OrgId: orgID, Role: models.ROLE_EDITOR, Key: keyhash}
-			return nil
-		})
+		sc.mockSQLStore.ExpectedAPIKey = &models.ApiKey{OrgId: orgID, Role: models.ROLE_EDITOR, Key: keyhash}
 
 		authHeader := util.GetBasicAuthHeader("api_key", "eyJrIjoidjVuQXdwTWFmRlA2em5hUzR1cmhkV0RMUzU1MTFNNDIiLCJuIjoiYXNkIiwiaWQiOjF9")
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
@@ -61,11 +58,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			t.Log("Handling GetSignedInUserQuery")
-			query.Result = &models.SignedInUser{OrgId: orgID, UserId: id}
-			return nil
-		})
+		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: id}
 
 		authHeader := util.GetBasicAuthHeader("myUser", password)
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
@@ -85,10 +78,6 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		sc.mockSQLStore.ExpectedUser = &models.User{Password: encoded, Id: id, Salt: salt}
 		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: id}
 		login.ProvideService(sc.mockSQLStore, &logintest.LoginServiceFake{})
-		bus.AddHandler("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{UserId: query.UserId}
-			return nil
-		})
 
 		authHeader := util.GetBasicAuthHeader("myUser", password)
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
