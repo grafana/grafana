@@ -118,6 +118,12 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 		if dashboardID == 0 {
 			return false, nil
 		}
+		if c.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+			evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsWrite, accesscontrol.ScopeAnnotationsTypeDashboard)
+			if canEdit, err := c.accessControl.Evaluate(ctx, signedInUser, evaluator); err != nil || !canEdit {
+				return canEdit, err
+			}
+		}
 		dash, err := c.getDashboardById(ctx, orgId, dashboardID)
 		if err != nil {
 			return false, nil
