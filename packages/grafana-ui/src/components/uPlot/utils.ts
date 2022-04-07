@@ -60,7 +60,7 @@ export function getStackingBands(group: StackingGroup) {
       bands.push({
         series: [si, nextIdx],
         // fill direction is inverted from stack direction
-        dir: -1 * dir,
+        dir: (-1 * dir) as 1 | -1,
       });
     }
   });
@@ -153,7 +153,7 @@ export function preparePlotData2(
   stackingGroups: StackingGroup[],
   onStackMeta?: (meta: StackMeta) => void
 ) {
-  let data: AlignedData = Array(frame.fields.length);
+  let data = Array(frame.fields.length) as AlignedData;
 
   let dataLen = frame.length;
   let zeroArr = Array(dataLen).fill(0);
@@ -216,13 +216,13 @@ export function preparePlotData2(
   });
 
   if (onStackMeta) {
-    let accumsBySeriesIdx: AlignedData = data.map((vals, i) => {
+    let accumsBySeriesIdx = data.map((vals, i) => {
       let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
       return stackIdx !== -1 ? accums[stackIdx] : vals;
     });
 
     onStackMeta({
-      totals: accumsBySeriesIdx,
+      totals: accumsBySeriesIdx as AlignedData,
     });
   }
 

@@ -31,7 +31,7 @@ import { getConfig, TimelineCoreOptions } from './timeline';
 import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import { TimelineFieldConfig, TimelineOptions } from './types';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
-import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import { preparePlotData2, getStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 import uPlot from 'uplot';
 
 const defaultConfig: TimelineFieldConfig = {
@@ -153,7 +153,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
 
   builder.setTooltipInterpolator(interpolateTooltip);
 
-  builder.setPrepData(preparePlotData);
+  builder.setPrepData((frames) => preparePlotData2(frames[0], getStackingGroups(frames[0])));
 
   builder.setCursor(coreConfig.cursor);
 

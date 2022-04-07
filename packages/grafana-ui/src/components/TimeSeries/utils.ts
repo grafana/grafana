@@ -23,7 +23,6 @@ import {
   VisibilityMode,
   ScaleDirection,
   ScaleOrientation,
-  VizLegendOptions,
   StackingMode,
 } from '@grafana/schema';
 import { getStackingGroups, preparePlotData2 } from '../uPlot/utils';
@@ -40,7 +39,6 @@ const defaultConfig: GraphFieldConfig = {
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   sync?: () => DashboardCursorSync;
-  legend?: VizLegendOptions;
 }> = ({
   frame,
   theme,
@@ -50,7 +48,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   sync,
   allFrames,
   renderers,
-  legend,
   tweakScale = (opts) => opts,
   tweakAxis = (opts) => opts,
 }) => {

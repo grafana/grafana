@@ -11,11 +11,7 @@ import {
   VizTextDisplayOptions,
   VizLegendOptions,
 } from '@grafana/schema';
-import {
-  preparePlotData,
-  preparePlotData2,
-  StackingGroup,
-} from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+import { preparePlotData2, StackingGroup } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 
