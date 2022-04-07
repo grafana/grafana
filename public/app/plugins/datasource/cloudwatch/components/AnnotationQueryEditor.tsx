@@ -16,7 +16,7 @@ import { MetricStatEditor } from './MetricStatEditor';
 export type Props = {
   query: CloudWatchQuery;
   datasource: CloudWatchDatasource;
-  onChange: (value: CloudWatchAnnotationQuery) => void;
+  onChange: (value: CloudWatchQuery) => void;
   data?: PanelData;
 };
 

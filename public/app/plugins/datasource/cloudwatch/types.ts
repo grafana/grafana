@@ -96,7 +96,7 @@ export interface CloudWatchLogsQuery extends DataQuery {
   statsGroups?: string[];
 }
 
-export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery | CloudWatchAnnotationQuery;
+export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery;
 
 export const isCloudWatchLogsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchLogsQuery =>
   (cloudwatchQuery as CloudWatchLogsQuery).queryMode === 'Logs';
