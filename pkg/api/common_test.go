@@ -400,8 +400,9 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		require.NoError(t, err)
 		hs.teamPermissionsService = teamPermissionService
 	} else {
-		ac := ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t},
+		ac, errInitAc := ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t},
 			database.ProvideService(db), routing.NewRouteRegister())
+		require.NoError(t, errInitAc)
 		hs.AccessControl = ac
 		// Perform role registration
 		err := hs.declareFixedRoles()

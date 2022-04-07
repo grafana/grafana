@@ -21,11 +21,25 @@ export interface Props {
   children?: ReactNode;
   className?: string;
   isFullscreen?: boolean;
+  'aria-label'?: string;
 }
 
 /** @alpha */
 export const PageToolbar: FC<Props> = React.memo(
-  ({ title, parent, pageIcon, onGoBack, children, titleHref, parentHref, leftItems, isFullscreen, className }) => {
+  ({
+    title,
+    parent,
+    pageIcon,
+    onGoBack,
+    children,
+    titleHref,
+    parentHref,
+    leftItems,
+    isFullscreen,
+    className,
+    /** main nav-container aria-label **/
+    'aria-label': ariaLabel,
+  }) => {
     const styles = useStyles2(getStyles);
 
     /**
@@ -44,7 +58,7 @@ export const PageToolbar: FC<Props> = React.memo(
     );
 
     return (
-      <div className={mainStyle}>
+      <nav className={mainStyle} aria-label={ariaLabel}>
         {pageIcon && !onGoBack && (
           <div className={styles.pageIcon}>
             <Icon name={pageIcon} size="lg" aria-hidden />
@@ -110,7 +124,7 @@ export const PageToolbar: FC<Props> = React.memo(
               </div>
             );
           })}
-      </div>
+      </nav>
     );
   }
 );

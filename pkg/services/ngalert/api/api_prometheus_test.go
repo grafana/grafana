@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -19,6 +20,64 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 )
+
+func Test_FormatValues(t *testing.T) {
+	val1 := 1.1
+	val2 := 1.4
+
+	tc := []struct {
+		name       string
+		alertState *state.State
+		expected   string
+	}{
+		{
+			name: "with no value, it renders the evaluation string",
+			alertState: &state.State{
+				LastEvaluationString: "[ var='A' metric='vector(10) + time() % 50' labels={} value=1.1 ]",
+				Results: []state.Evaluation{
+					{Condition: "A", Values: map[string]*float64{}},
+				},
+			},
+			expected: "[ var='A' metric='vector(10) + time() % 50' labels={} value=1.1 ]",
+		},
+		{
+			name: "with one value, it renders the single value",
+			alertState: &state.State{
+				LastEvaluationString: "[ var='A' metric='vector(10) + time() % 50' labels={} value=1.1 ]",
+				Results: []state.Evaluation{
+					{Condition: "A", Values: map[string]*float64{"A": &val1}},
+				},
+			},
+			expected: "1.1e+00",
+		},
+		{
+			name: "with two values, it renders the value based on their refID and position",
+			alertState: &state.State{
+				LastEvaluationString: "[ var='B0' metric='vector(10) + time() % 50' labels={} value=1.1 ], [ var='B1' metric='vector(10) + time() % 50' labels={} value=1.4 ]",
+				Results: []state.Evaluation{
+					{Condition: "B", Values: map[string]*float64{"B0": &val1, "B1": &val2}},
+				},
+			},
+			expected: "B0: 1.1e+00, B1: 1.4e+00",
+		},
+		{
+			name: "with a high number of values, it renders the value based on their refID and position using a natural order",
+			alertState: &state.State{
+				LastEvaluationString: "[ var='B0' metric='vector(10) + time() % 50' labels={} value=1.1 ], [ var='B1' metric='vector(10) + time() % 50' labels={} value=1.4 ]",
+				Results: []state.Evaluation{
+					{Condition: "B", Values: map[string]*float64{"B0": &val1, "B1": &val2, "B2": &val1, "B10": &val2, "B11": &val1}},
+				},
+			},
+			expected: "B0: 1.1e+00, B10: 1.4e+00, B11: 1.1e+00, B1: 1.4e+00, B2: 1.1e+00",
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, formatValues(tt.alertState))
+		})
+	}
+}
 
 func TestRouteGetAlertStatuses(t *testing.T) {
 	orgID := int64(1)
@@ -83,6 +142,48 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 }`, string(r.Body()))
 	})
 
+	t.Run("with two firing alerts", func(t *testing.T) {
+		_, fakeAIM, api := setupAPI(t)
+		fakeAIM.GenerateAlertInstances(1, util.GenerateShortUID(), 2, withAlertingState())
+		req, err := http.NewRequest("GET", "/api/v1/alerts", nil)
+		require.NoError(t, err)
+		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}}
+
+		r := api.RouteGetAlertStatuses(c)
+		require.Equal(t, http.StatusOK, r.Status())
+		require.JSONEq(t, `
+{
+	"status": "success",
+	"data": {
+		"alerts": [{
+			"labels": {
+				"alertname": "test_title_0",
+				"instance_label": "test",
+				"label": "test"
+			},
+			"annotations": {
+				"annotation": "test"
+			},
+			"state": "Alerting",
+			"activeAt": "0001-01-01T00:00:00Z",
+			"value": "1.1e+00"
+		}, {
+			"labels": {
+				"alertname": "test_title_1",
+				"instance_label": "test",
+				"label": "test"
+			},
+			"annotations": {
+				"annotation": "test"
+			},
+			"state": "Alerting",
+			"activeAt": "0001-01-01T00:00:00Z",
+			"value": "1.1e+00"
+		}]
+	}
+}`, string(r.Body()))
+	})
+
 	t.Run("with the inclusion of internal labels", func(t *testing.T) {
 		_, fakeAIM, api := setupAPI(t)
 		fakeAIM.GenerateAlertInstances(orgID, util.GenerateShortUID(), 2)
@@ -128,6 +229,20 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 	}
 }`, string(r.Body()))
 	})
+}
+
+func withAlertingState() forEachState {
+	return func(s *state.State) *state.State {
+		s.State = eval.Alerting
+		value := float64(1.1)
+		s.Results = append(s.Results, state.Evaluation{
+			EvaluationState: eval.Alerting,
+			EvaluationTime:  timeNow(),
+			Values:          map[string]*float64{"B": &value},
+			Condition:       "B",
+		})
+		return s
+	}
 }
 
 func TestRouteGetRuleStatuses(t *testing.T) {

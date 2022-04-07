@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -150,10 +149,7 @@ func TestMiddlewareContext(t *testing.T) {
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
-			query.Result = &models.ApiKey{OrgId: orgID, Role: models.ROLE_EDITOR, Key: keyhash}
-			return nil
-		})
+		sc.mockSQLStore.ExpectedAPIKey = &models.ApiKey{OrgId: orgID, Role: models.ROLE_EDITOR, Key: keyhash}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -166,11 +162,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "Valid API key, but does not match DB hash", func(t *testing.T, sc *scenarioContext) {
 		const keyhash = "Something_not_matching"
-
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
-			query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash}
-			return nil
-		})
+		sc.mockSQLStore.ExpectedAPIKey = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -184,13 +176,8 @@ func TestMiddlewareContext(t *testing.T) {
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
-			// api key expired one second before
-			expires := sc.contextHandler.GetTime().Add(-1 * time.Second).Unix()
-			query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash,
-				Expires: &expires}
-			return nil
-		})
+		expires := sc.contextHandler.GetTime().Add(-1 * time.Second).Unix()
+		sc.mockSQLStore.ExpectedAPIKey = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash, Expires: &expires}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -203,11 +190,7 @@ func TestMiddlewareContext(t *testing.T) {
 		const userID int64 = 12
 
 		sc.withTokenSessionCookie("token")
-
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{OrgId: 2, UserId: userID}
-			return nil
-		})
+		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: 2, UserId: userID}
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{
@@ -231,11 +214,7 @@ func TestMiddlewareContext(t *testing.T) {
 		const userID int64 = 12
 
 		sc.withTokenSessionCookie("token")
-
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{OrgId: 2, UserId: userID}
-			return nil
-		})
+		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: 2, UserId: userID}
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{
@@ -332,7 +311,8 @@ func TestMiddlewareContext(t *testing.T) {
 	})
 
 	middlewareScenario(t, "When anonymous access is enabled", func(t *testing.T, sc *scenarioContext) {
-		org, err := sc.sqlStore.CreateOrgWithMember(sc.cfg.AnonymousOrgName, 1)
+		sc.mockSQLStore.ExpectedOrg = &models.Org{Id: 1, Name: sc.cfg.AnonymousOrgName}
+		org, err := sc.mockSQLStore.CreateOrgWithMember(sc.cfg.AnonymousOrgName, 1)
 		require.NoError(t, err)
 		sc.fakeReq("GET", "/").exec()
 
@@ -651,7 +631,6 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.SQLStoreMock, loginService *loginservice.LoginServiceMock) *contexthandler.ContextHandler {
 	t.Helper()
 
-	sqlStore := sqlstore.InitTestDB(t)
 	if cfg == nil {
 		cfg = setting.NewCfg()
 	}
@@ -666,7 +645,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.S
 	tracer, err := tracing.InitializeTracerForTest()
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, mockSQLStore)
 	require.NoError(t, err)
-	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy)
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy)
 }
 
 type fakeRenderService struct {
