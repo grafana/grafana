@@ -236,7 +236,6 @@ export class CloudWatchDatasource
 
   filterQuery(query: CloudWatchQuery): boolean {
     if (query.queryMode === 'Logs') {
-      console.log("hello")
       return !!query.logGroupNames?.length;
     }
     const { region, metricQueryType, metricEditorMode, expression, metricName, namespace, sqlExpression, statistic } =
