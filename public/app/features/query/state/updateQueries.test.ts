@@ -1,4 +1,9 @@
-import { DataSourceApi, DataSourceWithQueryExportSupport, DataSourceWithQueryImportSupport } from '@grafana/data';
+import {
+  DataQuery,
+  DataSourceApi,
+  DataSourceWithQueryExportSupport,
+  DataSourceWithQueryImportSupport,
+} from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { updateQueries } from './updateQueries';
@@ -192,189 +197,327 @@ describe('updateQueries', () => {
 });
 
 describe('updateQueries with import', () => {
-  it('should migrate abstract queries', async () => {
-    const exportSpy = jest.fn();
-    const importSpy = jest.fn();
+  describe('abstract queries support', () => {
+    it('should migrate abstract queries', async () => {
+      const exportSpy = jest.fn();
+      const importSpy = jest.fn();
 
-    setDataSourceSrv({
-      get: (uid: string) => {
-        if (uid === 'new-uid') {
+      setDataSourceSrv({
+        get: (uid: string) => {
+          if (uid === 'new-uid') {
+            return Promise.resolve({
+              uid,
+              type: 'new-type',
+              meta: {
+                id: 'new-type',
+              },
+              importFromAbstractQueries: (queries) => {
+                importSpy(queries);
+                const importedQueries = queries.map((q) => ({ ...q, imported: true }));
+                return Promise.resolve(importedQueries);
+              },
+            } as DataSourceWithQueryImportSupport<any>);
+          }
+
+          if (uid === 'old-uid') {
+            return Promise.resolve({
+              uid,
+              type: 'old-type',
+              meta: {
+                id: 'old-type',
+              },
+              exportToAbstractQueries: (queries) => {
+                exportSpy(queries);
+                const exportedQueries = queries.map((q) => ({ ...q, exported: true }));
+                return Promise.resolve(exportedQueries);
+              },
+            } as DataSourceWithQueryExportSupport<any>);
+          }
+
           return Promise.resolve({
             uid,
-            type: 'new-type',
-            meta: {
-              id: 'new-type',
-            },
-            importFromAbstractQueries: (queries) => {
-              importSpy(queries);
-              const importedQueries = queries.map((q) => ({ ...q, imported: true }));
-              return Promise.resolve(importedQueries);
-            },
-          } as DataSourceWithQueryImportSupport<any>);
-        }
+          } as DataSourceApi);
+        },
+      } as DataSourceSrv);
 
-        if (uid === 'old-uid') {
-          return Promise.resolve({
-            uid,
+      const queries = [
+        {
+          refId: 'A',
+          datasource: {
+            uid: 'old-uid',
             type: 'old-type',
-            meta: {
-              id: 'old-type',
-            },
-            exportToAbstractQueries: (queries) => {
-              exportSpy(queries);
-              const exportedQueries = queries.map((q) => ({ ...q, exported: true }));
-              return Promise.resolve(exportedQueries);
-            },
-          } as DataSourceWithQueryExportSupport<any>);
-        }
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            uid: 'other-uid',
+            type: 'other-type',
+          },
+        },
+      ];
 
-        return Promise.resolve({
-          uid,
-        } as DataSourceApi);
-      },
-    } as DataSourceSrv);
-
-    const queries = [
-      {
-        refId: 'A',
-        datasource: {
+      const updated = await updateQueries(
+        {
+          uid: 'new-uid',
+          type: 'new-type',
+        } as any,
+        queries,
+        {
           uid: 'old-uid',
           type: 'old-type',
-        },
-      },
-      {
-        refId: 'B',
-        datasource: {
-          uid: 'other-uid',
-          type: 'other-type',
-        },
-      },
-    ];
+        } as any
+      );
 
-    const updated = await updateQueries(
-      {
-        uid: 'new-uid',
-        type: 'new-type',
-      } as any,
-      queries,
-      {
-        uid: 'old-uid',
-        type: 'old-type',
-      } as any
-    );
+      expect(exportSpy).toBeCalledWith(queries);
+      expect(importSpy).toBeCalledWith(queries.map((q) => ({ ...q, exported: true })));
 
-    expect(exportSpy).toBeCalledWith(queries);
-    expect(importSpy).toBeCalledWith(queries.map((q) => ({ ...q, exported: true })));
-
-    expect(updated).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "datasource": Object {
-            "type": "new-type",
-            "uid": "new-uid",
+      expect(updated).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "datasource": Object {
+              "type": "new-type",
+              "uid": "new-uid",
+            },
+            "exported": true,
+            "imported": true,
+            "refId": "A",
           },
-          "exported": true,
-          "imported": true,
-          "refId": "A",
-        },
-        Object {
-          "datasource": Object {
-            "type": "new-type",
-            "uid": "new-uid",
+          Object {
+            "datasource": Object {
+              "type": "new-type",
+              "uid": "new-uid",
+            },
+            "exported": true,
+            "imported": true,
+            "refId": "B",
           },
-          "exported": true,
-          "imported": true,
-          "refId": "B",
+        ]
+      `);
+    });
+
+    it('should clear queries when no queries were imported', async () => {
+      setDataSourceSrv({
+        get: (uid: string) => {
+          if (uid === 'new-uid') {
+            return Promise.resolve({
+              uid,
+              type: 'new-type',
+              meta: {
+                id: 'new-type',
+              },
+              importFromAbstractQueries: (queries) => {
+                return Promise.resolve([]);
+              },
+            } as DataSourceWithQueryImportSupport<any>);
+          }
+
+          if (uid === 'old-uid') {
+            return Promise.resolve({
+              uid,
+              type: 'old-type',
+              meta: {
+                id: 'old-type',
+              },
+              exportToAbstractQueries: (queries) => {
+                const exportedQueries = queries.map((q) => ({ ...q, exported: true }));
+                return Promise.resolve(exportedQueries);
+              },
+            } as DataSourceWithQueryExportSupport<any>);
+          }
+
+          return Promise.resolve({
+            uid,
+          } as DataSourceApi);
         },
-      ]
-    `);
+      } as DataSourceSrv);
+
+      const queries = [
+        {
+          refId: 'A',
+          datasource: {
+            uid: 'old-uid',
+            type: 'old-type',
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            uid: 'other-uid',
+            type: 'other-type',
+          },
+        },
+      ];
+
+      const updated = await updateQueries(
+        {
+          uid: 'new-uid',
+          type: 'new-type',
+        } as any,
+        queries,
+        {
+          uid: 'old-uid',
+          type: 'old-type',
+        } as any
+      );
+
+      expect(updated.length).toEqual(1);
+      expect(updated[0].datasource).toEqual({ type: 'new-type', uid: 'new-uid' });
+    });
   });
 
-  it('should import queries when abstract queries are not supported by datasources', async () => {
-    const importSpy = jest.fn();
-    setDataSourceSrv({
-      get: (uid: string) => {
-        if (uid === 'new-uid') {
-          return Promise.resolve({
-            uid,
-            type: 'new-type',
-            meta: {
-              id: 'new-type',
-            },
-            importQueries: (queries, origin) => {
-              importSpy(queries, origin);
-              const importedQueries = queries.map((q) => ({ ...q, imported: true }));
-              return Promise.resolve(importedQueries);
-            },
-          } as DataSourceApi<any>);
-        }
+  describe('importQueries support', () => {
+    it('should import queries when abstract queries are not supported by datasources', async () => {
+      const importSpy = jest.fn();
+      setDataSourceSrv({
+        get: (uid: string) => {
+          if (uid === 'new-uid') {
+            return Promise.resolve({
+              uid,
+              type: 'new-type',
+              meta: {
+                id: 'new-type',
+              },
+              importQueries: (queries, origin) => {
+                importSpy(queries, origin);
+                const importedQueries = queries.map((q) => ({ ...q, imported: true }));
+                return Promise.resolve(importedQueries);
+              },
+            } as DataSourceApi<any>);
+          }
 
-        if (uid === 'old-uid') {
+          if (uid === 'old-uid') {
+            return Promise.resolve({
+              uid,
+              type: 'old-type',
+              meta: {
+                id: 'old-type',
+              },
+            } as DataSourceApi);
+          }
+
           return Promise.resolve({
             uid,
-            type: 'old-type',
-            meta: {
-              id: 'old-type',
-            },
           } as DataSourceApi);
-        }
+        },
+      } as DataSourceSrv);
 
-        return Promise.resolve({
-          uid,
-        } as DataSourceApi);
-      },
-    } as DataSourceSrv);
+      const queries = [
+        {
+          refId: 'A',
+          datasource: {
+            uid: 'old-uid',
+            type: 'old-type',
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            uid: 'other-uid',
+            type: 'other-type',
+          },
+        },
+      ];
 
-    const queries = [
-      {
-        refId: 'A',
-        datasource: {
+      const updated = await updateQueries(
+        {
+          uid: 'new-uid',
+          type: 'new-type',
+        } as any,
+        queries,
+        {
           uid: 'old-uid',
           type: 'old-type',
-        },
-      },
-      {
-        refId: 'B',
-        datasource: {
-          uid: 'other-uid',
-          type: 'other-type',
-        },
-      },
-    ];
+        } as any
+      );
 
-    const updated = await updateQueries(
-      {
-        uid: 'new-uid',
-        type: 'new-type',
-      } as any,
-      queries,
-      {
-        uid: 'old-uid',
-        type: 'old-type',
-      } as any
-    );
+      expect(importSpy).toBeCalledWith(queries, { uid: 'old-uid', type: 'old-type', meta: { id: 'old-type' } });
 
-    expect(importSpy).toBeCalledWith(queries, { uid: 'old-uid', type: 'old-type', meta: { id: 'old-type' } });
-
-    expect(updated).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "datasource": Object {
-            "type": "new-type",
-            "uid": "new-uid",
+      expect(updated).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "datasource": Object {
+              "type": "new-type",
+              "uid": "new-uid",
+            },
+            "imported": true,
+            "refId": "A",
           },
-          "imported": true,
-          "refId": "A",
-        },
-        Object {
-          "datasource": Object {
-            "type": "new-type",
-            "uid": "new-uid",
+          Object {
+            "datasource": Object {
+              "type": "new-type",
+              "uid": "new-uid",
+            },
+            "imported": true,
+            "refId": "B",
           },
-          "imported": true,
-          "refId": "B",
+        ]
+      `);
+    });
+
+    it('should clear queries when no queries were imported', async () => {
+      setDataSourceSrv({
+        get: (uid: string) => {
+          if (uid === 'new-uid') {
+            return Promise.resolve({
+              uid,
+              type: 'new-type',
+              meta: {
+                id: 'new-type',
+              },
+              importQueries: (queries, origin) => {
+                return Promise.resolve([] as DataQuery[]);
+              },
+            } as DataSourceApi<any>);
+          }
+
+          if (uid === 'old-uid') {
+            return Promise.resolve({
+              uid,
+              type: 'old-type',
+              meta: {
+                id: 'old-type',
+              },
+            } as DataSourceApi);
+          }
+
+          return Promise.resolve({
+            uid,
+          } as DataSourceApi);
         },
-      ]
-    `);
+      } as DataSourceSrv);
+
+      const queries = [
+        {
+          refId: 'A',
+          datasource: {
+            uid: 'old-uid',
+            type: 'old-type',
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            uid: 'other-uid',
+            type: 'other-type',
+          },
+        },
+      ];
+
+      const updated = await updateQueries(
+        {
+          uid: 'new-uid',
+          type: 'new-type',
+        } as any,
+        queries,
+        {
+          uid: 'old-uid',
+          type: 'old-type',
+        } as any
+      );
+
+      expect(updated.length).toEqual(1);
+      expect(updated[0].datasource).toEqual({ type: 'new-type', uid: 'new-uid' });
+    });
   });
 });

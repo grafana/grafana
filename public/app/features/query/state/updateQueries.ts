@@ -43,6 +43,10 @@ export async function updateQueries(
     }
   }
 
+  if (nextQueries.length === 0) {
+    return [{ refId: 'A', datasource }];
+  }
+
   // Set data source on all queries except expression queries
   return nextQueries.map((query) => {
     if (!isExpressionReference(query.datasource) && !nextDS.meta.mixed) {
