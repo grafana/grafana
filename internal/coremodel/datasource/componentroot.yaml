@@ -1,4 +1,5 @@
 groups:
   - "coremodel"
+  - "kubecontroller"
 owners:
   - "@grafana/backend-platform"

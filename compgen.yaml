@@ -1,22 +1,49 @@
 groups:
   coremodel:
     must:
-      # Requires that each coremodel component define a struct named
-      # "Coremodel", and that that struct implements the generic interface
-      # defined by the coremodel framework.
+      # Requires that each coremodel component define a struct named "Coremodel"
+      # that implements the generic interface defined by the coremodel
+      # framework.
       DefinesCoremodel:
         ruletype: goident
         name: Coremodel
         kind: struct
         implements:
-          - "github.com/grafana/grafana/internal/components.Coremodel"
+          - "github.com/grafana/grafana/internal/framework/coremodel.Interface"
+      # Requires that each coremodel component define a standard Thema
+      # LineageFactory func.
+      OffersLineageFactory:
+        ruletype: goident
+        name: Lineage
+        kind: func
+        implements:
+          - "github.com/grafana/thema.LineageFactory"
       # Requires that each coremodel component define a func, usable by wire,
       # that makes the coremodel available for use by things depending on the
-      # coremodel framework - e.g., the k8sbridge, which tells the underlying
-      # k8s apiserver about Grafana's resources.
+      # coremodel framework.
       ProvidesCoremodel:
         ruletype: goident
         name: ProvideCoremodel
         kind: func
+      #   isa:
+      #     - "github.com/grafana/grafana/internal/components.CoremodelProvider"
+  kubecontroller:
+    must:
+      # Requires that each kubecontroller component define a struct named
+      # "KubeController" that implements the general interface defined by the
+      # kubecontroller framework.
+      DefinesKubeController:
+        ruletype: goident
+        name: KubeController
+        kind: struct
         implements:
-          - "github.com/grafana/grafana/internal/components.CoremodelProvider"
+          - "github.com/grafana/grafana/internal/framework/kubecontroller.Interface"
+      # Requires that each kubecontroller component define a wire-friendly func
+      # that makes the kubecontroller available for use, e.g. by the k8sbridge
+      # system, which sends the contained CRD to the apiserver.
+      ProvidesCoremodel:
+        ruletype: goident
+        name: ProvideCoremodel
+        kind: func
+      #   isa:
+      #     - "github.com/grafana/grafana/internal/components.CoremodelProvider"
