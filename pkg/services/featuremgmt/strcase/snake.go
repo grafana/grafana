@@ -65,6 +65,7 @@ func ToDelimited(s string, delimiter uint8) string {
 // (in this case `delimiter = '.'; screaming = true`)
 // or delimited.snake.case
 // (in this case `delimiter = '.'; screaming = false`)
+//nolint: gocyclo
 func ToScreamingDelimited(s string, delimiter uint8, ignore string, screaming bool) string {
 	s = strings.TrimSpace(s)
 	n := strings.Builder{}
