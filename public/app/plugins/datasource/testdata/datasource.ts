@@ -81,10 +81,6 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
         }
 
         default:
-          if (target.alias) {
-            target.alias = this.templateSrv.replace(target.alias, options.scopedVars);
-          }
-
           backendQueries.push(target);
       }
     }
@@ -105,7 +101,24 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   }
 
   resolveTemplateVariables(query: TestDataQuery, scopedVars: ScopedVars) {
-    query.labels = this.templateSrv.replace(query.labels!, scopedVars);
+    if (query.labels) {
+      query.labels = this.templateSrv.replace(query.labels, scopedVars);
+    }
+    if (query.alias) {
+      query.alias = this.templateSrv.replace(query.alias, scopedVars);
+    }
+    if (query.scenarioId) {
+      query.scenarioId = this.templateSrv.replace(query.scenarioId, scopedVars);
+    }
+    if (query.stringInput) {
+      query.stringInput = this.templateSrv.replace(query.stringInput, scopedVars);
+    }
+    if (query.csvContent) {
+      query.csvContent = this.templateSrv.replace(query.csvContent, scopedVars);
+    }
+    if (query.rawFrameContent) {
+      query.rawFrameContent = this.templateSrv.replace(query.rawFrameContent, scopedVars);
+    }
   }
 
   annotationDataTopicTest(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
@@ -139,10 +152,13 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   }
 
   getQueryDisplayText(query: TestDataQuery) {
+    const scenario = query.scenarioId ?? 'Default scenario';
+
     if (query.alias) {
-      return query.scenarioId + ' as ' + query.alias;
+      return scenario + ' as ' + query.alias;
     }
-    return query.scenarioId;
+
+    return scenario;
   }
 
   testDatasource() {
