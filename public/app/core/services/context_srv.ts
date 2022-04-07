@@ -11,6 +11,7 @@ export class User implements CurrentUserInternal {
   login: string;
   email: string;
   name: string;
+  externalUserId: string;
   lightTheme: boolean;
   orgCount: number;
   orgId: number;
@@ -34,6 +35,7 @@ export class User implements CurrentUserInternal {
     this.orgId = 0;
     this.orgName = '';
     this.login = '';
+    this.externalUserId = '';
     this.orgCount = 0;
     this.timezone = '';
     this.fiscalYearStartMonth = 0;

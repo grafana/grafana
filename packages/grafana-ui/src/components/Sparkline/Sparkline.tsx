@@ -43,6 +43,7 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Hidden,
 };
 
+/** @internal */
 export class Sparkline extends PureComponent<SparklineProps, State> {
   constructor(props: SparklineProps) {
     super(props);

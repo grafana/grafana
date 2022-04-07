@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,28 +27,6 @@ const (
 	nonExistingOrgID  = 1000
 	existingTestLogin = "existing@example.com"
 )
-
-type mockAuthInfoService struct {
-	LatestUserID  int64
-	ExpectedError error
-}
-
-func (m *mockAuthInfoService) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*models.User, error) {
-	m.LatestUserID = query.UserId
-	return nil, m.ExpectedError
-}
-func (m *mockAuthInfoService) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
-	m.LatestUserID = query.UserId
-	return m.ExpectedError
-}
-
-func (m *mockAuthInfoService) SetAuthInfo(ctx context.Context, query *models.SetAuthInfoCommand) error {
-	return m.ExpectedError
-}
-
-func (m *mockAuthInfoService) UpdateAuthInfo(ctx context.Context, query *models.UpdateAuthInfoCommand) error {
-	return m.ExpectedError
-}
 
 func TestAdminAPIEndpoint(t *testing.T) {
 	const role = models.ROLE_ADMIN
@@ -282,7 +261,7 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 		hs := &HTTPServer{
 			Cfg:             setting.NewCfg(),
 			SQLStore:        sqlStore,
-			authInfoService: &mockAuthInfoService{},
+			authInfoService: &logintest.AuthInfoServiceFake{},
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -397,7 +376,7 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
-		authInfoService := &mockAuthInfoService{}
+		authInfoService := &logintest.AuthInfoServiceFake{}
 
 		hs := HTTPServer{
 			Bus:              bus.GetBus(),
@@ -435,7 +414,7 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = hs.SQLStore
-		sc.authInfoService = &mockAuthInfoService{}
+		sc.authInfoService = &logintest.AuthInfoServiceFake{}
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID

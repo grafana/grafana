@@ -36,7 +36,6 @@ type testfunc func(*testing.T, schema.VersionedCueSchema, []byte, fs.FileInfo, s
 // TODO: remove validdir once we can test directly with devenv folder
 var doTestAgainstDevenv = func(sch schema.VersionedCueSchema, validdir string, fn testfunc) func(t *testing.T) {
 	return func(t *testing.T) {
-		t.Parallel()
 		require.NoError(t, filepath.Walk(validdir, func(path string, d fs.FileInfo, err error) error {
 			require.NoError(t, err)
 

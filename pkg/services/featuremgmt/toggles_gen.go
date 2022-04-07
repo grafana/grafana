@@ -150,4 +150,8 @@ const (
 	// FlagAzureMonitorResourcePickerForMetrics
 	// New UI for Azure Monitor Metrics Query
 	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
+
+	// FlagExplore2Dashboard
+	// Experimental Explore to Dashboard workflow
+	FlagExplore2Dashboard = "explore2Dashboard"
 )
