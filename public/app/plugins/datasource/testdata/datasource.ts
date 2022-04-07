@@ -107,12 +107,24 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   }
 
   resolveTemplateVariables(query: TestDataQuery, scopedVars: ScopedVars) {
-    query.labels = this.templateSrv.replace(query.labels, scopedVars);
-    query.alias = this.templateSrv.replace(query.alias, scopedVars);
-    query.scenarioId = this.templateSrv.replace(query.scenarioId, scopedVars);
-    query.stringInput = this.templateSrv.replace(query.stringInput, scopedVars);
-    query.csvContent = this.templateSrv.replace(query.csvContent, scopedVars);
-    query.rawFrameContent = this.templateSrv.replace(query.rawFrameContent, scopedVars);
+    if (query.labels) {
+      query.labels = this.templateSrv.replace(query.labels, scopedVars);
+    }
+    if (query.alias) {
+      query.alias = this.templateSrv.replace(query.alias, scopedVars);
+    }
+    if (query.scenarioId) {
+      query.scenarioId = this.templateSrv.replace(query.scenarioId, scopedVars);
+    }
+    if (query.stringInput) {
+      query.stringInput = this.templateSrv.replace(query.stringInput, scopedVars);
+    }
+    if (query.csvContent) {
+      query.csvContent = this.templateSrv.replace(query.csvContent, scopedVars);
+    }
+    if (query.rawFrameContent) {
+      query.rawFrameContent = this.templateSrv.replace(query.rawFrameContent, scopedVars);
+    }
   }
 
   annotationDataTopicTest(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
