@@ -15,8 +15,8 @@ For more information about creating service accounts via the API, refer to [Crea
 
 ## Before you begin
 
-- Ensure you have added the feature toggle for service accounts `service-accounts`. [Enable service accounts]({{< relref "./enable-service-accounts.md#">}})
-- Ensure you have permission to create and edit service accounts, for more information refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#">}})
+- Ensure you have added the feature toggle for service accounts `service-accounts`. For more information about adding the `service-account` feature toggle, refer to [Enable service accounts]({{< relref "./enable-service-accounts.md#">}}).
+- Ensure you have permission to create and edit service accounts. For more information about user permissions, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#">}}).
 
 **To create a service account:**
 
@@ -25,8 +25,8 @@ For more information about creating service accounts via the API, refer to [Crea
 1. Click **New service account**.
 1. Enter a display name.
 
-- This name needs to be unique to start with, as it determines the id.
+  - The display name must be unique as it determines the ID associated with the service account.
   - We recommend that you use a consistent naming convention when you name service accounts. A consistent naming convention can help you scale and maintain service accounts in the future.
-- Do not worry about the naming you can change this name later.
+  - You can change the display name at any time.
 
 1. Click **Create service account**.
