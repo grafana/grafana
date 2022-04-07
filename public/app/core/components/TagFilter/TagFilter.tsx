@@ -1,7 +1,7 @@
 import React, { FC, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { components } from 'react-select';
-import { Icon, AsyncMultiSelect, useStyles2 } from '@grafana/ui';
+import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
 import { escapeStringForRegex, GrafanaTheme2 } from '@grafana/data';
 
 import { TagOption } from './TagOption';
@@ -60,16 +60,28 @@ export const TagFilter: FC<Props> = ({
 
   const onLoadOptions = async () => {
     const options = await tagOptions();
-    return options.map((option) => ({
-      value: option.term,
-      label: option.term,
-      count: option.count,
-    }));
+    return options.map((option) => {
+      if (tags.includes(option.term)) {
+        return {
+          value: option.term,
+          label: option.term,
+          count: 0,
+        };
+      } else {
+        return {
+          value: option.term,
+          label: option.term,
+          count: option.count,
+        };
+      }
+    });
   };
 
   const onTagChange = (newTags: any[]) => {
     // On remove with 1 item returns null, so we need to make sure it's an empty array in that case
     // https://github.com/JedWatson/react-select/issues/3632
+    newTags.forEach((tag) => (tag.count = 0));
+
     onChange((newTags || []).map((tag) => tag.value));
   };
 
@@ -125,7 +137,7 @@ export const TagFilter: FC<Props> = ({
           Clear tags
         </span>
       )}
-      <AsyncMultiSelect menuShouldPortal {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
+      <MultiSelect menuShouldPortal {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
     </div>
   );
 };
