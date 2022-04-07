@@ -1,4 +1,4 @@
-import React, { FC, useMemo, useState } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { components } from 'react-select';
 import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
@@ -54,11 +54,12 @@ export const TagFilter: FC<Props> = ({
   const currentlySelectedTags = tags.map((tag) => ({ value: tag, label: tag, count: 0 }));
   const [options, setOptions] = useState<TagSelectOption[]>(currentlySelectedTags);
   const [isLoading, setIsLoading] = useState(false);
+  const [previousTags, setPreviousTags] = useState(tags);
 
   // Necessary to force re-render to keep tag options up to date / relevant
   const selectKey = useMemo(() => tags.join(), [tags]);
 
-  const onLoadOptions = async () => {
+  const onLoadOptions = useCallback(async () => {
     const options = await tagOptions();
     return options.map((option) => {
       if (tags.includes(option.term)) {
@@ -75,7 +76,29 @@ export const TagFilter: FC<Props> = ({
         };
       }
     });
-  };
+  }, [tagOptions, tags]);
+
+  const onFocus = useCallback(async () => {
+    setIsLoading(true);
+    const results = await onLoadOptions();
+    setOptions(results);
+    setIsLoading(false);
+  }, [onLoadOptions]);
+
+  useEffect(() => {
+    // Load options when tag is selected externally
+    if (tags.length > 0 && options.length === 0) {
+      onFocus();
+    }
+  }, [onFocus, options.length, tags.length]);
+
+  useEffect(() => {
+    // Update selected tags to not include (counts) when selected externally
+    if (tags !== previousTags) {
+      setPreviousTags(tags);
+      onFocus();
+    }
+  }, [onFocus, previousTags, tags]);
 
   const onTagChange = (newTags: any[]) => {
     // On remove with 1 item returns null, so we need to make sure it's an empty array in that case
@@ -83,13 +106,6 @@ export const TagFilter: FC<Props> = ({
     newTags.forEach((tag) => (tag.count = 0));
 
     onChange((newTags || []).map((tag) => tag.value));
-  };
-
-  const onFocus = async () => {
-    setIsLoading(true);
-    const results = await onLoadOptions();
-    setOptions(results);
-    setIsLoading(false);
   };
 
   const selectOptions = {
