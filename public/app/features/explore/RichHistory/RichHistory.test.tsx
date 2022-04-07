@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { GrafanaTheme } from '@grafana/data';
 import { ExploreId } from '../../../types/explore';
 import { RichHistory, RichHistoryProps, Tabs } from './RichHistory';
+import { SortOrder } from '../../../core/utils/richHistoryTypes';
 
 jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
 
@@ -16,6 +17,21 @@ const setup = (propOverrides?: Partial<RichHistoryProps>) => {
     firstTab: Tabs.RichHistory,
     deleteRichHistory: jest.fn(),
     onClose: jest.fn(),
+    richHistorySearchFilters: {
+      search: '',
+      sortOrder: SortOrder.Descending,
+      datasourceFilters: [],
+      from: 0,
+      to: 7,
+    },
+    richHistorySettings: {
+      retentionPeriod: 0,
+      starredTabAsFirstTab: false,
+      activeDatasourceOnly: true,
+      lastUsedDatasourceFilters: [],
+    },
+    updateHistorySearchFilters: jest.fn(),
+    updateHistorySettings: jest.fn(),
   };
 
   Object.assign(props, propOverrides);
