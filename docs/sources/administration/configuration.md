@@ -461,7 +461,13 @@ value is `true`.
 
 ### check_for_updates
 
-Set to false to disable all checks to https://grafana.com for new versions of installed plugins and to the Grafana GitHub repository to check for a newer version of Grafana. The version information is used in some UI views to notify that a new Grafana update or a plugin update exists. This option does not cause any auto updates, nor send any sensitive information. The check is run every 10 minutes.
+Set to false, disables checking for new versions of Grafana from Grafana's GitHub repository. When enabled, the check for a new version runs every 10 minutes. It will notify, via the UI, when a new version is available. The check itself will not prompt any auto-updates of the Grafana software, nor will it send any sensitive information.
+
+### check_for_plugin_updates
+
+> **Note**: Available in Grafana v8.5.0 and later versions.
+
+Set to false disables checking for new versions of installed plugins from https://grafana.com. When enabled, the check for a new plugin runs every 10 minutes. It will notify, via the UI, when a new plugin update exists. The check itself will not prompt any auto-updates of the plugin, nor will it send any sensitive information.
 
 ### google_analytics_ua_id
 
@@ -1344,6 +1350,22 @@ For more information about this feature, refer to [Explore]({{< relref "../explo
 ### enabled
 
 Enable or disable the Explore section. Default is `enabled`.
+
+## [help]
+
+Configures the help section.
+
+### enabled
+
+Enable or disable the Help section. Default is `enabled`.
+
+## [profile]
+
+Configures the Profile section.
+
+### enabled
+
+Enable or disable the Profile section. Default is `enabled`.
 
 ## [metrics]
 

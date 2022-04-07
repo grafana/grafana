@@ -811,6 +811,9 @@ export function lokiSpecialRegexEscape(value: any) {
  * Sometimes important to know that before we actually do the query.
  */
 export function isMetricsQuery(query: string): boolean {
+  if (!query) {
+    return false;
+  }
   const tokens = Prism.tokenize(query, syntax);
   return tokens.some((t) => {
     // Not sure in which cases it can be string maybe if nothing matched which means it should not be a function
@@ -837,5 +840,3 @@ function getLogLevelFromLabels(labels: Labels): LogLevel {
   }
   return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
 }
-
-export default LokiDatasource;

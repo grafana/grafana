@@ -120,7 +120,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		if err != nil {
 			return response.Error(500, "Error while checking dashboard permissions", err)
 		}
-		if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgId, dash.Id, false, items, old); err != nil {
+		if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgId, dash.Uid, false, items, old); err != nil {
 			return response.Error(500, "Failed to update permissions", err)
 		}
 		return response.Success("Dashboard permissions updated")
@@ -138,7 +138,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 }
 
 // updateDashboardAccessControl is used for api backward compatibility
-func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID, dashID int64, isFolder bool, items []*models.DashboardAcl, old []*models.DashboardAclInfoDTO) error {
+func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID int64, uid string, isFolder bool, items []*models.DashboardAcl, old []*models.DashboardAclInfoDTO) error {
 	commands := []accesscontrol.SetResourcePermissionCommand{}
 	for _, item := range items {
 		permissions := item.Permission.String()
@@ -191,7 +191,7 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID, d
 		svc = hs.permissionServices.GetFolderService()
 	}
 
-	_, err := svc.SetPermissions(ctx, orgID, strconv.FormatInt(dashID, 10), commands...)
+	_, err := svc.SetPermissions(ctx, orgID, uid, commands...)
 	return err
 }
 

@@ -1,5 +1,6 @@
 import { merge } from 'lodash';
 import {
+  BootData,
   BuildInfo,
   createTheme,
   DataSourceInstanceSettings,
@@ -28,9 +29,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   appUrl = '';
   appSubUrl = '';
   windowTitlePrefix = '';
-  buildInfo: BuildInfo = {} as BuildInfo;
+  buildInfo: BuildInfo;
   newPanelTitle = '';
-  bootData: any;
+  bootData: BootData;
   externalUserMngLinkUrl = '';
   externalUserMngLinkName = '';
   externalUserMngInfo = '';
@@ -44,6 +45,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
+  helpEnabled = false;
+  profileEnabled = false;
   ldapEnabled = false;
   sigV4AuthEnabled = false;
   samlEnabled = false;
@@ -52,9 +55,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   verifyEmailEnabled = false;
   oauth: OAuthSettings = {};
   disableUserSignUp = false;
-  loginHint: any;
-  passwordHint: any;
-  loginError: any;
+  loginHint = '';
+  passwordHint = '';
+  loginError = undefined;
   navTree: any;
   viewersCanEdit = false;
   editorsCanAdmin = false;
@@ -115,6 +118,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';
     this.theme2 = createTheme({ colors: { mode } });
     this.theme = this.theme2.v1;
+    this.bootData = options.bootData;
+    this.buildInfo = options.buildInfo;
 
     const defaults = {
       datasources: {},

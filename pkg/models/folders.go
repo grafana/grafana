@@ -12,6 +12,7 @@ var (
 	ErrFolderVersionMismatch         = errors.New("the folder has been changed by someone else")
 	ErrFolderTitleEmpty              = errors.New("folder title cannot be empty")
 	ErrFolderWithSameUIDExists       = errors.New("a folder/dashboard with the same uid already exists")
+	ErrFolderInvalidUID              = errors.New("invalid uid for folder provided")
 	ErrFolderSameNameExists          = errors.New("a folder or dashboard in the general folder with the same name already exists")
 	ErrFolderFailedGenerateUniqueUid = errors.New("failed to generate unique folder ID")
 	ErrFolderAccessDenied            = errors.New("access denied to folder")
