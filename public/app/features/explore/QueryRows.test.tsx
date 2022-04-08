@@ -44,12 +44,12 @@ function setup(queries: DataQuery[]) {
   const initialState: ExploreState = {
     left: {
       ...leftState,
+      richHistory: [],
       datasourceInstance: datasources['someDs-uid'],
       queries,
     },
     syncedTimes: false,
     right: undefined,
-    richHistory: [],
     richHistoryStorageFull: false,
     richHistoryLimitExceededWarningShown: false,
   };

@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.31'
+grabpl_version = 'v2.9.32'
 build_image = 'grafana/build-container:1.5.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -273,8 +273,8 @@ def store_storybook_step(edition, ver_mode, trigger=None):
                         'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
                         'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
                     ] + [
-                        'gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{}'.format(
-                            c)
+                        'gsutil -m rm -r gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{} || true && gsutil -m cp -r ./packages/grafana-ui/dist/storybook/* gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{}'.format(
+                            c, c)
                         for c in channels
                     ])
 

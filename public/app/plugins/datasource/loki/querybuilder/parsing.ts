@@ -20,8 +20,8 @@ interface Context {
 
 interface ParsingError {
   text: string;
-  from: number;
-  to: number;
+  from?: number;
+  to?: number;
   parentType?: string;
 }
 
@@ -36,12 +36,25 @@ export function buildVisualQueryFromString(expr: string): Context {
     operations: [],
   };
 
-  const context = {
+  const context: Context = {
     query: visQuery,
     errors: [],
   };
 
-  handleExpression(replacedExpr, node, context);
+  try {
+    handleExpression(replacedExpr, node, context);
+  } catch (err) {
+    // Not ideal to log it here, but otherwise we would lose the stack trace.
+    console.error(err);
+    context.errors.push({
+      text: err.message,
+    });
+  }
+
+  // If we have empty query, we want to reset errors
+  if (isEmptyQuery(context.query)) {
+    context.errors = [];
+  }
   return context;
 }
 
@@ -495,4 +508,11 @@ function createNotSupportedError(expr: string, node: SyntaxNode, error: string) 
   const err = makeError(expr, node);
   err.text = `${error}: ${err.text}`;
   return err;
+}
+
+function isEmptyQuery(query: LokiVisualQuery) {
+  if (query.labels.length === 0 && query.operations.length === 0) {
+    return true;
+  }
+  return false;
 }
