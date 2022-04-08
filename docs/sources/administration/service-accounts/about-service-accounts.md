@@ -26,7 +26,7 @@ You can associate a service account with multiple tokens. This is because a serv
 - can be used by multiple team members and therefore can generate their own token each
 - can be used across multiple tenants and each tenant can have its own token
 
-We recommend starting off by creating one service account per use case.
+We recommend the you begin by creating one service account for each use case.
 
 > **Note:** Service accounts can only act in the organization they are created for. If you have the same task that is needed for multiple organizations, we recommend creating service accounts in each organization.
 
@@ -44,9 +44,9 @@ Service account access tokens inherit permissions from service account directly.
 
 When creating a token for a service account, we call them service account token; which are essentially a Grafana API key.
 
-The added benefits of service accounts to API keys are:
+The added benefits of service accounts to API keys include:
 
-- Service accounts act like users in Grafana and can be enabled/disabled, granted specific permissions, and remain active until deleted or disabled whereas API keys only live until their expiry date.
+- Service accounts resemble Grafana users and can be enabled/disabled, granted specific permissions, and remain active until they are deleted or disabled. API keys are only valid until their expiry date.
 - Service accounts can be associated with multiple tokens.
 - Unlike API keys, service account tokens are not associated with a specific user, which means that applications can be authenticated even if a Grafana user is deleted.
 - You can grant granular permissions to service accounts by leveraging [fine-grained access control]({{< relref "../../enterprise/access-control">}}). For more information about permissions, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#">}}).
