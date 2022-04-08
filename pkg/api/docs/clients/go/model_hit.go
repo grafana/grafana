@@ -22,7 +22,7 @@ type Hit struct {
 	SortMetaName string   `json:"sortMetaName,omitempty"`
 	Tags         []string `json:"tags,omitempty"`
 	Title        string   `json:"title,omitempty"`
-	Type_        *HitType `json:"type,omitempty"`
+	Type_        string   `json:"type,omitempty"`
 	Uid          string   `json:"uid,omitempty"`
 	Uri          string   `json:"uri,omitempty"`
 	Url          string   `json:"url,omitempty"`

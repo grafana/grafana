@@ -45,10 +45,10 @@ SearchApiService
 
 type SearchApiSearchOpts struct {
 	Query        string
-	Tag          interface{}
+	Tag          []string
 	Type_        string
-	DashboardIds interface{}
-	FolderIds    interface{}
+	DashboardIds []int64
+	FolderIds    []int64
 	Starred      bool
 	Limit        int64
 	Page         int64
@@ -56,13 +56,13 @@ type SearchApiSearchOpts struct {
 	Sort         string
 }
 
-func (a *SearchApiService) Search(ctx context.Context, localVarOptionals *SearchApiSearchOpts) (HitList, *http.Response, error) {
+func (a *SearchApiService) Search(ctx context.Context, localVarOptionals *SearchApiSearchOpts) ([]Hit, *http.Response, error) {
 	var (
 		localVarHttpMethod  = strings.ToUpper("Get")
 		localVarPostBody    interface{}
 		localVarFileName    string
 		localVarFileBytes   []byte
-		localVarReturnValue HitList
+		localVarReturnValue []Hit
 	)
 
 	// create path and map variables
@@ -75,16 +75,16 @@ func (a *SearchApiService) Search(ctx context.Context, localVarOptionals *Search
 	if localVarOptionals != nil {
 		localVarQueryParams.Add("query", parameterToString(localVarOptionals.Query, ""))
 	}
-	if localVarOptionals != nil {
-		localVarQueryParams.Add("tag", parameterToString(localVarOptionals.Tag, "multi"))
+	if localVarOptionals != nil && len(localVarOptionals.Tag) > 0 {
+		localVarQueryParams.Add("tag", parameterToString(localVarOptionals.Tag, "csv"))
 	}
 	if localVarOptionals != nil {
 		localVarQueryParams.Add("type", parameterToString(localVarOptionals.Type_, ""))
 	}
-	if localVarOptionals != nil {
+	if localVarOptionals != nil && len(localVarOptionals.DashboardIds) > 0 {
 		localVarQueryParams.Add("dashboardIds", parameterToString(localVarOptionals.DashboardIds, "csv"))
 	}
-	if localVarOptionals != nil {
+	if localVarOptionals != nil && len(localVarOptionals.FolderIds) > 0 {
 		localVarQueryParams.Add("folderIds", parameterToString(localVarOptionals.FolderIds, "csv"))
 	}
 	if localVarOptionals != nil {

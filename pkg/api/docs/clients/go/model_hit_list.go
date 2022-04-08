@@ -10,5 +10,4 @@
 
 package swagger
 
-type HitList struct {
-}
+type HitList []Hit
