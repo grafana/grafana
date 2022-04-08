@@ -30,6 +30,7 @@ type AlertStore interface {
 	GetDashboardUIDById(context.Context, *models.GetDashboardRefByIdQuery) error
 	SetAlertNotificationStateToCompleteCommand(context.Context, *models.SetAlertNotificationStateToCompleteCommand) error
 	SetAlertNotificationStateToPendingCommand(context.Context, *models.SetAlertNotificationStateToPendingCommand) error
+	GetAlertNotificationUidWithId(context.Context, *models.GetAlertNotificationUidQuery) error
 	GetAlertNotificationsWithUidToSend(context.Context, *models.GetAlertNotificationsWithUidToSendQuery) error
 	GetOrCreateAlertNotificationState(context.Context, *models.GetOrCreateNotificationStateQuery) error
 	SetAlertState(context.Context, *models.SetAlertStateCommand) error
