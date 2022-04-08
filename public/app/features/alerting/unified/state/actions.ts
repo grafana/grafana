@@ -363,16 +363,17 @@ async function saveLotexRule(values: RuleFormValues, existing?: RuleWithLocation
 }
 
 async function saveGrafanaRule(values: RuleFormValues, existingRule?: RuleWithLocation): Promise<RuleIdentifier> {
-  const { folder, group } = values;
+  const { folder, group, evaluateEvery } = values;
   if (!folder) {
     throw new Error('Folder must be specified');
   }
 
   const newRule = formValuesToRulerGrafanaRuleDTO(values);
   const namespace = folder.title;
+  const groupSpec = { name: group, interval: evaluateEvery };
 
   if (!existingRule) {
-    return addRuleToNamespaceAndGroup(namespace, group, newRule);
+    return addRuleToNamespaceAndGroup(namespace, groupSpec, newRule);
   }
 
   const sameNamespace = existingRule.namespace === namespace;
@@ -381,27 +382,27 @@ async function saveGrafanaRule(values: RuleFormValues, existingRule?: RuleWithLo
 
   if (sameLocation) {
     // we're update a rule in the same namespace and group
-    return updateGrafanaRule(existingRule, newRule);
+    return updateGrafanaRule(existingRule, newRule, evaluateEvery);
   } else {
     // we're moving a rule to either a different group or namespace
-    return moveGrafanaRule(namespace, group, existingRule, newRule);
+    return moveGrafanaRule(namespace, groupSpec, existingRule, newRule);
   }
 }
 
 // add a rule to a namespace and group
 async function addRuleToNamespaceAndGroup(
   namespace: string,
-  group: string,
+  group: { name: string; interval: string },
   newRule: PostableRuleGrafanaRuleDTO
 ): Promise<RuleIdentifier> {
-  const existingGroup = await fetchRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, namespace, group);
+  const existingGroup = await fetchRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, namespace, group.name);
   if (!existingGroup) {
-    throw new Error(`No group found with name "${group}"`);
+    throw new Error(`No group found with name "${group.name}"`);
   }
 
   const payload: PostableRulerRuleGroupDTO = {
-    name: existingGroup.name,
-    interval: existingGroup.interval,
+    name: group.name,
+    interval: group.interval,
     rules: (existingGroup.rules ?? []).concat(newRule as RulerGrafanaRuleDTO),
   };
 
@@ -416,7 +417,7 @@ async function addRuleToNamespaceAndGroup(
 // 2. remove the rule from the old one
 async function moveGrafanaRule(
   namespace: string,
-  group: string,
+  group: { name: string; interval: string },
   existingRule: RuleWithLocation,
   newRule: PostableRuleGrafanaRuleDTO
 ): Promise<RuleIdentifier> {
@@ -436,7 +437,8 @@ async function moveGrafanaRule(
 
 async function updateGrafanaRule(
   existingRule: RuleWithLocation,
-  newRule: PostableRuleGrafanaRuleDTO
+  newRule: PostableRuleGrafanaRuleDTO,
+  interval: string
 ): Promise<RuleIdentifier> {
   // type guard to make sure we're working with a Grafana managed rule
   if (!isGrafanaRulerRule(existingRule.rule)) {
@@ -455,7 +457,7 @@ async function updateGrafanaRule(
 
   await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, existingRule.namespace, {
     name: existingRule.group.name,
-    interval: existingRule.group.interval,
+    interval: interval,
     rules: newRules,
   });
 
