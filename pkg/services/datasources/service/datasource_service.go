@@ -312,6 +312,7 @@ func (s *Service) httpClientOptions(ds *models.DataSource) (*sdkhttpclient.Optio
 		Timeouts: timeouts,
 		Headers:  s.getCustomHeaders(ds.JsonData, s.DecryptedValues(ds)),
 		Labels: map[string]string{
+			"datasource_type": ds.Type,
 			"datasource_name": ds.Name,
 			"datasource_uid":  ds.Uid,
 		},
