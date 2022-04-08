@@ -93,7 +93,6 @@ func TestReverseProxy(t *testing.T) {
 
 				resp := rec.Result()
 				require.Equal(t, tc.expectedStatusCode, resp.StatusCode)
-				require.Equal(t, "", resp.Status)
 				require.NoError(t, resp.Body.Close())
 			})
 		}
