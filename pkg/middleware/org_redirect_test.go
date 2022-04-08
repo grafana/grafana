@@ -46,12 +46,8 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 	for _, tc := range testCases {
 		middlewareScenario(t, tc.desc, func(t *testing.T, sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
+			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: 1, UserId: 12}
 			bus.AddHandler("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
-				return nil
-			})
-
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-				query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
 				return nil
 			})
 
@@ -75,11 +71,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		bus.AddHandler("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
 			return fmt.Errorf("")
 		})
-
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
-			return nil
-		})
+		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: 1, UserId: 12}
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{

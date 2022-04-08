@@ -1,6 +1,6 @@
 {
   "name": "@jaegertracing/jaeger-ui-components",
-  "version": "8.5.0-pre",
+  "version": "9.0.0-pre",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "license": "Apache-2.0",
@@ -14,7 +14,7 @@
     "@types/deep-freeze": "^0.1.1",
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5",
     "@types/hoist-non-react-statics": "^3.3.1",
-    "@types/lodash": "4.14.149",
+    "@types/lodash": "4.14.181",
     "@types/prop-types": "^15",
     "@types/react": "17.0.42",
     "@types/react-icons": "2.2.7",
@@ -26,8 +26,8 @@
   },
   "dependencies": {
     "@emotion/css": "11.7.1",
-    "@grafana/data": "8.5.0-pre",
-    "@grafana/ui": "8.5.0-pre",
+    "@grafana/data": "9.0.0-pre",
+    "@grafana/ui": "9.0.0-pre",
     "chance": "^1.0.10",
     "classnames": "^2.2.5",
     "combokeys": "^3.0.0",

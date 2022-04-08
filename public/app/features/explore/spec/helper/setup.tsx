@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { EnhancedStore } from '@reduxjs/toolkit';
+import { within } from '@testing-library/dom';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
 import { fromPairs } from 'lodash';
@@ -16,6 +16,7 @@ import { initialUserState } from '../../../profile/state/reducers';
 
 import { LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../../../plugins/datasource/loki/types';
+import { ExploreId } from '../../../../types';
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
 
@@ -29,8 +30,9 @@ type SetupOptions = {
 
 export function setupExplore(options?: SetupOptions): {
   datasources: { [name: string]: DataSourceApi };
-  store: EnhancedStore;
+  store: ReturnType<typeof configureStore>;
   unmount: () => void;
+  container: HTMLElement;
 } {
   // Clear this up otherwise it persists data source selection
   // TODO: probably add test for that too
@@ -87,7 +89,7 @@ export function setupExplore(options?: SetupOptions): {
 
   const route = { component: Wrapper };
 
-  const { unmount } = render(
+  const { unmount, container } = render(
     <Provider store={store}>
       <Router history={locationService.getHistory()}>
         <Route path="/explore" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
@@ -95,7 +97,7 @@ export function setupExplore(options?: SetupOptions): {
     </Provider>
   );
 
-  return { datasources: fromPairs(dsSettings.map((d) => [d.api.name, d.api])), store, unmount };
+  return { datasources: fromPairs(dsSettings.map((d) => [d.api.name, d.api])), store, unmount, container };
 }
 
 function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: number } = {}): DatasourceSetup {
@@ -137,16 +139,21 @@ function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: nu
       name: name,
       uid: name,
       query: jest.fn(),
-      getRef: jest.fn(),
+      getRef: jest.fn().mockReturnValue(name),
       meta,
     } as any,
   };
 }
 
-export const waitForExplore = async () => {
-  await screen.findByText(/Editor/i);
+export const waitForExplore = async (exploreId: ExploreId = ExploreId.left) => {
+  return await withinExplore(exploreId).findByText(/Editor/i);
 };
 
 export const tearDown = () => {
   window.localStorage.clear();
+};
+
+export const withinExplore = (exploreId: ExploreId) => {
+  const container = screen.getAllByTestId('data-testid Explore');
+  return within(container[exploreId === ExploreId.left ? 0 : 1]);
 };
