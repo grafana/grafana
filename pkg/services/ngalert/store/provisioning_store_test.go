@@ -73,12 +73,12 @@ func TestProvisioningStore(t *testing.T) {
 		err = store.SetProvenance(context.Background(), &ruleOrg3, models.ProvenanceFile)
 		require.NoError(t, err)
 
-		err = store.SetProvenance(context.Background(), &ruleOrg2, models.ProvenanceApi)
+		err = store.SetProvenance(context.Background(), &ruleOrg2, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		p, err := store.GetProvenance(context.Background(), &ruleOrg2)
 		require.NoError(t, err)
-		require.Equal(t, models.ProvenanceApi, p)
+		require.Equal(t, models.ProvenanceAPI, p)
 		p, err = store.GetProvenance(context.Background(), &ruleOrg3)
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceFile, p)

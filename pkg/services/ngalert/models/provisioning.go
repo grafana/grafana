@@ -4,7 +4,7 @@ type Provenance string
 
 const (
 	ProvenanceNone Provenance = ""
-	ProvenanceApi  Provenance = "api"
+	ProvenanceAPI  Provenance = "api"
 	ProvenanceFile Provenance = "file"
 )
 

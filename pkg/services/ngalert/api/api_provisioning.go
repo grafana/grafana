@@ -24,7 +24,7 @@ type ProvisioningSrv struct {
 
 type ContactpointService interface {
 	GetContactPoints(ctx context.Context, orgID int64) ([]apimodels.EmbeddedContactPoint, error)
-	CreateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint) (apimodels.EmbeddedContactPoint, error)
+	CreateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint, p alerting_models.Provenance) (apimodels.EmbeddedContactPoint, error)
 	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint) error
 	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error
 }
@@ -48,7 +48,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Re
 
 func (srv *ProvisioningSrv) RoutePostPolicyTree(c *models.ReqContext, tree apimodels.Route) response.Response {
 	// TODO: lift validation out of definitions.Rotue.UnmarshalJSON and friends into a dedicated validator.
-	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgId, tree, alerting_models.ProvenanceApi)
+	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgId, tree, alerting_models.ProvenanceAPI)
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
 	}
@@ -68,9 +68,8 @@ func (srv *ProvisioningSrv) RouteGetContactpoints(c *models.ReqContext) response
 }
 
 func (srv *ProvisioningSrv) RoutePostContactpoint(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
-	// TODO: hardcoded for now, change it later to make it more flexible
-	cp.Provenance = string(alerting_models.ProvenanceApi)
-	contactPoint, err := srv.contactpointService.CreateContactPoint(c.Req.Context(), c.OrgId, cp)
+	// TODO: provenance is hardcoded for now, change it later to make it more flexible
+	contactPoint, err := srv.contactpointService.CreateContactPoint(c.Req.Context(), c.OrgId, cp, alerting_models.ProvenanceAPI)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}

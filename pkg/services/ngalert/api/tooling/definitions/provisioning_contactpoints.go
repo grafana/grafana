@@ -143,3 +143,11 @@ func (e *EmbeddedContactPoint) ExtractSecrtes() (map[string]string, error) {
 	}
 	return secrets, nil
 }
+
+func (e *EmbeddedContactPoint) ResourceID() string {
+	return e.UID
+}
+
+func (e *EmbeddedContactPoint) ResourceType() string {
+	return "contactpoint"
+}
