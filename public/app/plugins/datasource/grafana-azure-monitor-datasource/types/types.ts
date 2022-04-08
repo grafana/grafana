@@ -95,6 +95,23 @@ export interface AzureMonitorMetricMetadataItem {
   metricAvailabilities?: AzureMonitorMetricAvailabilityMetadata[];
 }
 
+export interface AzureMonitorMetricNamespacesResponse {
+  value: AzureMonitorMetricNamespaceItem[];
+}
+
+export interface AzureMonitorMetricNamespaceItem {
+  name: string;
+  properties: { metricNamespacename: string };
+}
+
+export interface AzureMonitorMetricNamesResponse {
+  value: AzureMonitorMetricNameItem[];
+}
+
+export interface AzureMonitorMetricNameItem {
+  name: { value: string; localizedValue: string };
+}
+
 export interface AzureMonitorMetricAvailabilityMetadata {
   timeGrain: string;
   retention: string;
