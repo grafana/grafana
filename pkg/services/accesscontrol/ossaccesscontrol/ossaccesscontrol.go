@@ -33,43 +33,6 @@ func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.S
 	return s, errDeclareRoles
 }
 
-func macroRoles() map[string]*accesscontrol.RoleDTO {
-	return map[string]*accesscontrol.RoleDTO{
-		string(models.ROLE_ADMIN): {
-			Name:        "fixed:builtins:admin",
-			DisplayName: string(models.ROLE_ADMIN),
-			Description: "Admin role",
-			Group:       "Basic",
-			Version:     1,
-			Permissions: []accesscontrol.Permission{},
-		},
-		string(models.ROLE_EDITOR): {
-			Name:        "fixed:builtins:editor",
-			DisplayName: string(models.ROLE_EDITOR),
-			Description: "Editor role",
-			Group:       "Basic",
-			Version:     1,
-			Permissions: []accesscontrol.Permission{},
-		},
-		string(models.ROLE_VIEWER): {
-			Name:        "fixed:builtins:viewer",
-			DisplayName: string(models.ROLE_VIEWER),
-			Description: "Viewer role",
-			Group:       "Basic",
-			Version:     1,
-			Permissions: []accesscontrol.Permission{},
-		},
-		accesscontrol.RoleGrafanaAdmin: {
-			Name:        "fixed:builtins:grafana_admin",
-			DisplayName: accesscontrol.RoleGrafanaAdmin,
-			Description: "Grafana Admin role",
-			Group:       "Basic",
-			Version:     1,
-			Permissions: []accesscontrol.Permission{},
-		},
-	}
-}
-
 // ProvideOSSAccessControl creates an oss implementation of access control without usage stats registration
 func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
 	s := &OSSAccessControlService{
@@ -77,7 +40,7 @@ func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider acces
 		provider:      provider,
 		log:           log.New("accesscontrol"),
 		scopeResolver: accesscontrol.NewScopeResolver(),
-		roles:         macroRoles(),
+		roles:         accesscontrol.BuildMacroRoleDefinitions(),
 	}
 
 	return s

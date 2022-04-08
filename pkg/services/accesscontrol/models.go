@@ -82,6 +82,7 @@ func (r RoleDTO) Role() Role {
 		ID:          r.ID,
 		OrgID:       r.OrgID,
 		UID:         r.UID,
+		Version:     r.Version,
 		Name:        r.Name,
 		DisplayName: r.DisplayName,
 		Group:       r.Group,

@@ -276,3 +276,48 @@ func (m *RegistrationList) Range(f func(registration RoleRegistration) bool) {
 		}
 	}
 }
+
+func BuildMacroRoleDefinitions() map[string]*RoleDTO {
+	return map[string]*RoleDTO{
+		string(models.ROLE_ADMIN): {
+			Name:        "grafana:builtins:admin",
+			UID:         "grafana_builtins_admin",
+			OrgID:       GlobalOrgID,
+			Version:     1,
+			DisplayName: string(models.ROLE_ADMIN),
+			Description: "Admin role",
+			Group:       "Basic",
+			Permissions: []Permission{},
+		},
+		string(models.ROLE_EDITOR): {
+			Name:        "grafana:builtins:editor",
+			UID:         "grafana_builtins_editor",
+			OrgID:       GlobalOrgID,
+			Version:     1,
+			DisplayName: string(models.ROLE_EDITOR),
+			Description: "Editor role",
+			Group:       "Basic",
+			Permissions: []Permission{},
+		},
+		string(models.ROLE_VIEWER): {
+			Name:        "grafana:builtins:viewer",
+			UID:         "grafana_builtins_viewer",
+			OrgID:       GlobalOrgID,
+			Version:     1,
+			DisplayName: string(models.ROLE_VIEWER),
+			Description: "Viewer role",
+			Group:       "Basic",
+			Permissions: []Permission{},
+		},
+		RoleGrafanaAdmin: {
+			Name:        "grafana:builtins:grafana_admin",
+			UID:         "grafana_builtins_grafana_admin",
+			OrgID:       GlobalOrgID,
+			Version:     1,
+			DisplayName: RoleGrafanaAdmin,
+			Description: "Grafana Admin role",
+			Group:       "Basic",
+			Permissions: []Permission{},
+		},
+	}
+}
