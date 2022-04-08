@@ -3,7 +3,6 @@ package cloudwatch
 import (
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -150,11 +149,10 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 				timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []*time.Time{})
 				valueField := data.NewField(data.TimeSeriesValueFieldName, labels, []*float64{})
 
-				frameName := formatAlias(query, query.Statistic, labels, label)
-				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: frameName, Links: createDataLinks(deepLink)})
+				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: label, Links: createDataLinks(deepLink)})
 
 				emptyFrame := data.Frame{
-					Name: frameName,
+					Name: label,
 					Fields: []*data.Field{
 						timeField,
 						valueField,
@@ -179,11 +177,10 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 		timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, timestamps)
 		valueField := data.NewField(data.TimeSeriesValueFieldName, labels, points)
 
-		frameName := formatAlias(query, query.Statistic, labels, label)
-		valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: frameName, Links: createDataLinks(deepLink)})
+		valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: label, Links: createDataLinks(deepLink)})
 
 		frame := data.Frame{
-			Name: frameName,
+			Name: label,
 			Fields: []*data.Field{
 				timeField,
 				valueField,
@@ -218,66 +215,6 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 	}
 
 	return frames, nil
-}
-
-func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]string, label string) string {
-	region := query.Region
-	namespace := query.Namespace
-	metricName := query.MetricName
-	period := strconv.Itoa(query.Period)
-
-	if query.isUserDefinedSearchExpression() {
-		pIndex := strings.LastIndex(query.Expression, ",")
-		period = strings.Trim(query.Expression[pIndex+1:], " )")
-		sIndex := strings.LastIndex(query.Expression[:pIndex], ",")
-		stat = strings.Trim(query.Expression[sIndex+1:pIndex], " '")
-	}
-
-	if len(query.Alias) == 0 && query.isMathExpression() {
-		return query.Id
-	}
-	if len(query.Alias) == 0 && query.isInferredSearchExpression() && !query.isMultiValuedDimensionExpression() {
-		return label
-	}
-	if len(query.Alias) == 0 && query.MetricQueryType == MetricQueryTypeQuery {
-		return label
-	}
-
-	// common fields
-	data := map[string]string{
-		"region": region,
-		"period": period,
-	}
-	if len(label) != 0 {
-		data["label"] = label
-	}
-
-	// since the SQL query string is not (yet) parsed, we don't know what namespace, metric, statistic and labels it's using at this point
-	if query.MetricQueryType != MetricQueryTypeQuery {
-		data["namespace"] = namespace
-		data["metric"] = metricName
-		data["stat"] = stat
-		for k, v := range dimensions {
-			data[k] = v
-		}
-	}
-
-	result := aliasFormat.ReplaceAllFunc([]byte(query.Alias), func(in []byte) []byte {
-		labelName := strings.Replace(string(in), "{{", "", 1)
-		labelName = strings.Replace(labelName, "}}", "", 1)
-		labelName = strings.TrimSpace(labelName)
-		if val, exists := data[labelName]; exists {
-			return []byte(val)
-		}
-
-		return in
-	})
-
-	if string(result) == "" {
-		return metricName + "_" + stat
-	}
-
-	return string(result)
 }
 
 func createDataLinks(link string) []data.DataLink {
