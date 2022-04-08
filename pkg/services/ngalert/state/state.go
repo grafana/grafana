@@ -2,6 +2,7 @@ package state
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -36,6 +37,8 @@ type Evaluation struct {
 	// Classic conditions can have different values for the same RefID as they can include multiple conditions.
 	// For these, we use the index of the condition in addition RefID as the key e.g. "A0, A1, A2, etc.".
 	Values map[string]*float64
+	// Condition is the refID specified as the condition in the alerting rule at the time of the evaluation.
+	Condition string
 }
 
 // NewEvaluationValues returns the labels and values for each RefID in the capture.
@@ -202,4 +205,21 @@ func (a *State) GetLabels(opts ...ngModels.LabelOption) map[string]string {
 	}
 
 	return labels
+}
+
+func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
+	if len(a.Results) <= 0 {
+		return nil
+	}
+
+	lastResult := a.Results[len(a.Results)-1]
+	r := make(map[string]float64, len(lastResult.Values))
+
+	for refID, value := range lastResult.Values {
+		if strings.Contains(refID, lastResult.Condition) {
+			r[refID] = *value
+		}
+	}
+
+	return r
 }

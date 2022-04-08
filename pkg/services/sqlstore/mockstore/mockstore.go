@@ -12,8 +12,9 @@ type OrgListResponse []struct {
 	Response error
 }
 type SQLStoreMock struct {
-	LastGetAlertsQuery *models.GetAlertsQuery
-	LatestUserId       int64
+	LastGetAlertsQuery      *models.GetAlertsQuery
+	LastLoginAttemptCommand *models.CreateLoginAttemptCommand
+	LatestUserId            int64
 
 	ExpectedUser                   *models.User
 	ExpectedDatasource             *models.DataSource
@@ -39,8 +40,12 @@ type SQLStoreMock struct {
 	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
 	ExpectedPersistedDashboards    models.HitList
 	ExpectedSignedInUser           *models.SignedInUser
+	ExpectedAPIKey                 *models.ApiKey
 	ExpectedUserStars              map[int64]bool
-	ExpectedError                  error
+	ExpectedLoginAttempts          int64
+
+	ExpectedError            error
+	ExpectedSetUsingOrgError error
 }
 
 func NewSQLStoreMock() *SQLStoreMock {
@@ -130,6 +135,12 @@ func (m SQLStoreMock) DeleteOrphanedProvisionedDashboards(ctx context.Context, c
 }
 
 func (m *SQLStoreMock) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
+	m.LastLoginAttemptCommand = cmd
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error {
+	query.Result = m.ExpectedLoginAttempts
 	return m.ExpectedError
 }
 
@@ -147,6 +158,7 @@ func (m *SQLStoreMock) GetUserById(ctx context.Context, query *models.GetUserByI
 }
 
 func (m *SQLStoreMock) GetUserByLogin(ctx context.Context, query *models.GetUserByLoginQuery) error {
+	query.Result = m.ExpectedUser
 	return m.ExpectedError
 }
 
@@ -167,7 +179,7 @@ func (m *SQLStoreMock) UpdateUserLastSeenAt(ctx context.Context, cmd *models.Upd
 }
 
 func (m *SQLStoreMock) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
-	return m.ExpectedError
+	return m.ExpectedSetUsingOrgError
 }
 
 func (m *SQLStoreMock) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
@@ -612,6 +624,7 @@ func (m *SQLStoreMock) GetApiKeyById(ctx context.Context, query *models.GetApiKe
 }
 
 func (m *SQLStoreMock) GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
+	query.Result = m.ExpectedAPIKey
 	return m.ExpectedError
 }
 

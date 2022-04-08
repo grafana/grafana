@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "grafana",
-  "version": "8.5.0-pre",
+  "version": "9.0.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
@@ -32,7 +32,6 @@
     "packages:publishLatest": "lerna publish from-package --contents dist --yes --no-verify-access",
     "packages:publishNext": "lerna publish from-package --contents dist --dist-tag next --yes --no-verify-access",
     "packages:publishTest": "lerna publish from-package --contents dist --dist-tag test --yes --no-verify-access",
-    "packages:publishPrevious": "lerna publish from-package --contents dist --dist-tag previous --yes --no-verify-access",
     "packages:publishDev": "lerna publish from-package --contents dist --dist-tag dev --yes --registry http://grafana-npm.local:4873 --force-publish=*",
     "packages:typecheck": "lerna run typecheck",
     "packages:clean": "lerna run clean",
@@ -58,7 +57,7 @@
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts"
   },
   "grafana": {
-    "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-4/",
+    "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-5/",
     "releaseNotesUrl": "https://grafana.com/docs/grafana/next/release-notes/"
   },
   "lint-staged": {
@@ -72,6 +71,9 @@
     ],
     "*pkg/**/*.go": [
       "gofmt -w -s"
+    ],
+    "*.{star}": [
+      "make drone"
     ]
   },
   "devDependencies": {
@@ -107,7 +109,7 @@
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@swc/core": "1.2.160",
     "@swc/helpers": "0.3.8",
-    "@testing-library/dom": "8.12.0",
+    "@testing-library/dom": "8.13.0",
     "@testing-library/jest-dom": "5.16.2",
     "@testing-library/react": "12.1.4",
     "@testing-library/react-hooks": "7.0.2",
@@ -200,7 +202,7 @@
     "jest-canvas-mock": "2.3.1",
     "jest-date-mock": "1.0.8",
     "jest-fail-on-console": "2.3.0",
-    "jest-junit": "13.0.0",
+    "jest-junit": "13.1.0",
     "jest-matcher-utils": "27.5.1",
     "jest-mock-console": "1.2.3",
     "lerna": "^4.0.0",
@@ -235,7 +237,7 @@
     "ts-node": "10.7.0",
     "typescript": "4.4.4",
     "wait-on": "6.0.1",
-    "webpack": "5.70.0",
+    "webpack": "5.72.0",
     "webpack-bundle-analyzer": "4.5.0",
     "webpack-cli": "4.9.2",
     "webpack-dev-server": "4.7.4",
@@ -274,7 +276,7 @@
     "@react-stately/collections": "3.3.7",
     "@react-stately/menu": "3.2.6",
     "@react-stately/tree": "3.2.3",
-    "@reduxjs/toolkit": "1.7.2",
+    "@reduxjs/toolkit": "1.8.0",
     "@sentry/browser": "6.19.1",
     "@sentry/types": "6.19.1",
     "@sentry/utils": "6.19.1",
@@ -329,7 +331,7 @@
     "monaco-promql": "^1.7.2",
     "mousetrap": "1.6.5",
     "mousetrap-global-bind": "1.1.0",
-    "moveable": "0.27.3",
+    "moveable": "0.28.0",
     "ol": "6.14.1",
     "papaparse": "5.3.2",
     "pluralize": "^8.0.0",
@@ -390,11 +392,12 @@
   "resolutions": {
     "underscore": "1.13.2",
     "@types/slate": "0.47.2",
-    "@microsoft/api-extractor-model": "7.15.4",
+    "@microsoft/api-extractor-model": "7.16.0",
     "@rushstack/node-core-library": "3.45.1",
     "@rushstack/rig-package": "0.3.8",
     "@rushstack/ts-command-line": "4.10.7",
-    "@storybook/react/webpack": "5.70.0"
+    "@storybook/react/webpack": "5.72.0",
+    "node-fetch": "2.6.7"
   },
   "workspaces": {
     "packages": [
