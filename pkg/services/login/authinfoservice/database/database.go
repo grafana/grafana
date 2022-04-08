@@ -28,16 +28,7 @@ func ProvideAuthInfoStore(sqlStore sqlstore.Store, bus bus.Bus, secretsService s
 		secretsService: secretsService,
 		logger:         log.New("login.authinfo.store"),
 	}
-	store.registerBusHandlers()
 	return store
-}
-
-func (s *AuthInfoStore) registerBusHandlers() {
-	s.bus.AddHandler(s.GetExternalUserInfoByLogin)
-	s.bus.AddHandler(s.GetAuthInfo)
-	s.bus.AddHandler(s.SetAuthInfo)
-	s.bus.AddHandler(s.UpdateAuthInfo)
-	s.bus.AddHandler(s.DeleteAuthInfo)
 }
 
 func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {

@@ -9,7 +9,7 @@ export interface Scenario {
 
 export interface TestDataQuery extends DataQuery {
   alias?: string;
-  scenarioId: string;
+  scenarioId?: string;
   stringInput?: string;
   stream?: StreamingQuery;
   pulseWave?: PulseWaveQuery;
