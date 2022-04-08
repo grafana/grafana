@@ -57,7 +57,10 @@ export const GrafanaConditionsStep: FC = () => {
   return (
     <RuleEditorSection stepNo={3} title="Define alert conditions">
       <ConditionField />
-      <Field label="Evaluate" description="The evaluation inverval will apply to every rule within the group.">
+      <Field
+        label="Evaluate"
+        description="The evaluation inverval will apply to every rule within the group and may overwrite the interval of existing alert rules."
+      >
         <div className={styles.flexRow}>
           <InlineLabel
             htmlFor={evaluateEveryId}
