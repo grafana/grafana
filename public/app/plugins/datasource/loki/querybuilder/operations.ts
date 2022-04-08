@@ -29,6 +29,20 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     })
   );
 
+  const aggregationsWithParam = [LokiOperationId.TopK, LokiOperationId.BottomK].flatMap((opId) => {
+    return createAggregationOperationWithParam(
+      opId,
+      {
+        params: [{ name: 'K-value', type: 'number' }],
+        defaultParams: [5],
+      },
+      {
+        addOperationHandler: addLokiOperation,
+        orderRank: LokiOperationOrder.Last,
+      }
+    );
+  });
+
   const list: QueryBuilderOperationDef[] = [
     createRangeOperation(LokiOperationId.Rate),
     createRangeOperation(LokiOperationId.CountOverTime),
@@ -45,14 +59,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     createRangeOperation(LokiOperationId.StddevOverTime),
     createRangeOperation(LokiOperationId.QuantileOverTime),
     ...aggregations,
-    ...createAggregationOperationWithParam(LokiOperationId.TopK, {
-      params: [{ name: 'K-value', type: 'number' }],
-      defaultParams: [5],
-    }),
-    ...createAggregationOperationWithParam(LokiOperationId.BottomK, {
-      params: [{ name: 'K-value', type: 'number' }],
-      defaultParams: [5],
-    }),
+    ...aggregationsWithParam,
     {
       id: LokiOperationId.Json,
       name: 'Json',
@@ -175,7 +182,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       renderer: (model, def, innerExpr) => `${innerExpr} | label_format ${model.params[1]}=\`${model.params[0]}\``,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
-        `This will change name of label to desired new label. In the example below, label "error_level" will be renamed to "level". 
+        `This will change name of label to desired new label. In the example below, label "error_level" will be renamed to "level".
 
         Example: error_level=\`level\`
 
