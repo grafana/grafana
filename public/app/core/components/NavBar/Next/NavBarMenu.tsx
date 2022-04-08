@@ -96,7 +96,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     bottom: 0,
     flexDirection: 'column',
     left: 0,
-    whiteSpace: 'nowrap',
     paddingTop: theme.spacing(1),
     marginRight: theme.spacing(1.5),
     right: 0,
@@ -406,7 +405,6 @@ const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
     paddingRight: theme.spacing(4.25),
     minHeight: theme.spacing(6),
     overflowWrap: 'anywhere',
-    whiteSpace: 'normal',
     alignItems: 'center',
     color: theme.colors.text.secondary,
     '&:hover, &:focus-within': {
