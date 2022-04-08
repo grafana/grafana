@@ -520,13 +520,12 @@ export function processRangeQueryResponse(
   responseListLength: number,
   limit: number,
   config: LokiOptions,
-  scopedVars: ScopedVars,
-  reverse = false
+  scopedVars: ScopedVars
 ) {
   switch (response.data.resultType) {
     case LokiResultType.Stream:
       return of({
-        data: lokiStreamsToDataFrames(response as LokiStreamResponse, target, limit, config, reverse),
+        data: lokiStreamsToDataFrames(response as LokiStreamResponse, target, limit, config),
         key: `${target.refId}_log`,
       });
 
