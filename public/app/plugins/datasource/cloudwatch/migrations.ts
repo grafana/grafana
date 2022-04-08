@@ -169,8 +169,6 @@ const aliasPatterns: Record<string, string> = {
   label: `LABEL`,
 };
 
-// test combination (multiple)
-
 export function migrateQueryAliasFormat(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
   if (!query.alias) {
     return query;
