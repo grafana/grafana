@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
@@ -36,7 +36,7 @@ const ServiceName = "ContextHandler"
 
 func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
 	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore sqlstore.Store,
-	tracer tracing.Tracer, authProxy *authproxy.AuthProxy) *ContextHandler {
+	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service, authenticator loginpkg.Authenticator) *ContextHandler {
 	return &ContextHandler{
 		Cfg:              cfg,
 		AuthTokenService: tokenService,
@@ -46,6 +46,8 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 		SQLStore:         sqlStore,
 		tracer:           tracer,
 		authProxy:        authProxy,
+		authenticator:    authenticator,
+		loginService:     loginService,
 	}
 }
 
@@ -59,6 +61,8 @@ type ContextHandler struct {
 	SQLStore         sqlstore.Store
 	tracer           tracing.Tracer
 	authProxy        *authproxy.AuthProxy
+	authenticator    loginpkg.Authenticator
+	loginService     login.Service
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -291,7 +295,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		Password: password,
 		Cfg:      h.Cfg,
 	}
-	if err := bus.Dispatch(reqContext.Req.Context(), &authQuery); err != nil {
+	if err := h.authenticator.AuthenticateUser(reqContext.Req.Context(), &authQuery); err != nil {
 		reqContext.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,

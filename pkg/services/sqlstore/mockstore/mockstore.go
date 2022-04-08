@@ -44,7 +44,8 @@ type SQLStoreMock struct {
 	ExpectedUserStars              map[int64]bool
 	ExpectedLoginAttempts          int64
 
-	ExpectedError error
+	ExpectedError            error
+	ExpectedSetUsingOrgError error
 }
 
 func NewSQLStoreMock() *SQLStoreMock {
@@ -178,7 +179,7 @@ func (m *SQLStoreMock) UpdateUserLastSeenAt(ctx context.Context, cmd *models.Upd
 }
 
 func (m *SQLStoreMock) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
-	return m.ExpectedError
+	return m.ExpectedSetUsingOrgError
 }
 
 func (m *SQLStoreMock) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
