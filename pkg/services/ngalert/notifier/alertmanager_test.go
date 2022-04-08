@@ -386,10 +386,10 @@ func TestSilenceCleanup(t *testing.T) {
 		makeSilence("", "tests", dt(now.Add(5*time.Hour)), dt(now.Add(6*time.Hour)), matchers),
 		// Active now
 		makeSilence("", "tests", dt(now.Add(-5*time.Hour)), dt(now.Add(6*time.Hour)), matchers),
-		// Expiring soon
-		makeSilence("", "tests", dt(now.Add(-5*time.Hour)), dt(now.Add(2*time.Second)), matchers),
+		// Expiring soon.
+		makeSilence("", "tests", dt(now.Add(-5*time.Hour)), dt(now.Add(5*time.Second)), matchers),
 		// Expiring *very* soon
-		makeSilence("", "tests", dt(now.Add(-5*time.Hour)), dt(now.Add(20*time.Millisecond)), matchers),
+		makeSilence("", "tests", dt(now.Add(-5*time.Hour)), dt(now.Add(2*time.Second)), matchers),
 	}
 
 	for _, s := range silences {
@@ -403,12 +403,12 @@ func TestSilenceCleanup(t *testing.T) {
 		found, err := am.ListSilences(nil)
 		require.NoError(err)
 		return len(found) == 3
-	}, 1500*time.Millisecond, 150*time.Millisecond)
+	}, 3*time.Second, 150*time.Millisecond)
 
 	// Wait again for another silence to expire.
 	require.Eventually(func() bool {
 		found, err := am.ListSilences(nil)
 		require.NoError(err)
 		return len(found) == 2
-	}, 2*time.Second, 150*time.Millisecond)
+	}, 6*time.Second, 150*time.Millisecond)
 }

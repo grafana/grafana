@@ -16,7 +16,7 @@ const (
 	FlagEnvelopeEncryption = "envelopeEncryption"
 
 	// FlagHttpclientproviderAzureAuth
-	// use http client for azure auth
+	// Experimental. Allow datasources to configure Azure authentication directly via JsonData
 	FlagHttpclientproviderAzureAuth = "httpclientprovider_azure_auth"
 
 	// FlagServiceAccounts
@@ -84,7 +84,7 @@ const (
 	FlagAccesscontrolBuiltins = "accesscontrol-builtins"
 
 	// FlagPrometheusAzureAuth
-	// Use azure authentication for prometheus datasource
+	// Experimental. Azure authentication for Prometheus datasource
 	FlagPrometheusAzureAuth = "prometheus_azure_auth"
 
 	// FlagInfluxdbBackendMigration
@@ -106,6 +106,10 @@ const (
 	// FlagValidatedQueries
 	// only execute the query saved in a panel
 	FlagValidatedQueries = "validatedQueries"
+
+	// FlagPublicDashboards
+	// enables public access to dashboards
+	FlagPublicDashboards = "publicDashboards"
 
 	// FlagLokiLive
 	// support websocket streaming for loki (early prototype)
@@ -150,4 +154,8 @@ const (
 	// FlagAzureMonitorResourcePickerForMetrics
 	// New UI for Azure Monitor Metrics Query
 	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
+
+	// FlagExplore2Dashboard
+	// Experimental Explore to Dashboard workflow
+	FlagExplore2Dashboard = "explore2Dashboard"
 )

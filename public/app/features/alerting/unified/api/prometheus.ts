@@ -10,25 +10,53 @@ export interface FetchPromRulesFilter {
   panelId?: number;
 }
 
-export async function fetchRules(dataSourceName: string, filter?: FetchPromRulesFilter): Promise<RuleNamespace[]> {
-  if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-    throw new Error('Filtering by dashboard UID is not supported for cloud rules sources.');
-  }
+export interface PrometheusDataSourceConfig {
+  dataSourceName: string;
+}
 
-  const params: Record<string, string> = {};
+export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfig) {
+  const { dataSourceName } = dataSourceConfig;
+
+  return {
+    rules: (filter?: FetchPromRulesFilter) => {
+      const searchParams = new URLSearchParams();
+      const params = prepareRulesFilterQueryParams(searchParams, filter);
+
+      return {
+        url: `/api/prometheus/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
+        params: params,
+      };
+    },
+  };
+}
+
+export function prepareRulesFilterQueryParams(
+  params: URLSearchParams,
+  filter?: FetchPromRulesFilter
+): Record<string, string> {
   if (filter?.dashboardUID) {
-    params['dashboard_uid'] = filter.dashboardUID;
-    if (filter.panelId) {
-      params['panel_id'] = String(filter.panelId);
+    params.set('dashboard_uid', filter.dashboardUID);
+    if (filter?.panelId) {
+      params.set('panel_id', String(filter.panelId));
     }
   }
 
+  return Object.fromEntries(params);
+}
+
+export async function fetchRules(dataSourceName: string, filter?: FetchPromRulesFilter): Promise<RuleNamespace[]> {
+  if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
+    throw new Error('Filtering by dashboard UID is only supported for Grafana Managed rules.');
+  }
+
+  const { url, params } = prometheusUrlBuilder({ dataSourceName }).rules(filter);
+
   const response = await lastValueFrom(
     getBackendSrv().fetch<PromRulesResponse>({
-      url: `/api/prometheus/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
+      url,
+      params,
       showErrorAlert: false,
       showSuccessAlert: false,
-      params,
     })
   ).catch((e) => {
     if ('status' in e && e.status === 404) {

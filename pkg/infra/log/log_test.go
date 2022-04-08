@@ -30,8 +30,9 @@ func TestLogger(t *testing.T) {
 		log4 := log3.New("key", "value")
 		err = log4.Log("msg", "hello 4")
 		require.NoError(t, err)
+		log3.Error("hello 3 again")
 
-		require.Len(t, ctx.loggedArgs, 4)
+		require.Len(t, ctx.loggedArgs, 5)
 		require.Len(t, ctx.loggedArgs[0], 4)
 		require.Equal(t, "logger", ctx.loggedArgs[0][0].(string))
 		require.Equal(t, "one", ctx.loggedArgs[0][1].(string))
@@ -62,6 +63,16 @@ func TestLogger(t *testing.T) {
 		require.Equal(t, "msg", ctx.loggedArgs[3][4].(string))
 		require.Equal(t, "hello 4", ctx.loggedArgs[3][5].(string))
 
+		require.Len(t, ctx.loggedArgs[4], 8)
+		require.Equal(t, "logger", ctx.loggedArgs[4][0].(string))
+		require.Equal(t, "three", ctx.loggedArgs[4][1].(string))
+		require.Equal(t, "t", ctx.loggedArgs[4][2].(string))
+		require.Equal(t, ctx.mockedTime.Format("2006-01-02T15:04:05.99-0700"), ctx.loggedArgs[4][3].(fmt.Stringer).String())
+		require.Equal(t, "lvl", ctx.loggedArgs[4][4].(string))
+		require.Equal(t, level.ErrorValue(), ctx.loggedArgs[4][5].(level.Value))
+		require.Equal(t, "msg", ctx.loggedArgs[4][6].(string))
+		require.Equal(t, "hello 3 again", ctx.loggedArgs[4][7].(string))
+
 		t.Run("When initializing root logger should swap loggers as expected", func(t *testing.T) {
 			swappedLoggedArgs := [][]interface{}{}
 			swapLogger := gokitlog.LoggerFunc(func(i ...interface{}) error {
@@ -87,7 +98,7 @@ func TestLogger(t *testing.T) {
 			log3.Error("hello 3")
 			log3.Debug("debug")
 
-			require.Len(t, ctx.loggedArgs, 4)
+			require.Len(t, ctx.loggedArgs, 5)
 			require.Len(t, swappedLoggedArgs, 7, "expected 4 messages for AllowAll logger and 3 messages for AllowInfo logger")
 		})
 	})
