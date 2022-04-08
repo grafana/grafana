@@ -401,6 +401,13 @@ Grafana Alerting Prometheus-compatible endpoints
 | GET    | /api/prometheus/grafana/api/v1/rules      | [RouteGetGrafanaRuleStatuses](#route-get-grafana-rule-statuses)   |         |
 | GET    | /api/prometheus/{Recipient}/api/v1/rules  | [RouteGetRuleStatuses](#route-get-rule-statuses)                  |         |
 
+### provisioning
+
+| Method | URI                        | Name                                           | Summary                            |
+| ------ | -------------------------- | ---------------------------------------------- | ---------------------------------- |
+| GET    | /api/provisioning/policies | [RouteGetPolicyTree](#route-get-policy-tree)   | Get the notification policy tree.  |
+| POST   | /api/provisioning/policies | [RoutePostPolicyTree](#route-post-policy-tree) | Sets the notification policy tree. |
+
 ### recording_rules
 
 | Method | URI                                    | Name                                                                  | Summary                      |
@@ -1680,6 +1687,37 @@ Status: Accepted
 
 [NamespaceConfigResponse](#namespace-config-response)
 
+### <span id="route-get-policy-tree"></span> Get the notification policy tree. (_RouteGetPolicyTree_)
+
+```
+GET /api/provisioning/policies
+```
+
+#### All responses
+
+| Code                              | Status      | Description     | Has headers | Schema                                      |
+| --------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------- |
+| [200](#route-get-policy-tree-200) | OK          | Route           |             | [schema](#route-get-policy-tree-200-schema) |
+| [400](#route-get-policy-tree-400) | Bad Request | ValidationError |             | [schema](#route-get-policy-tree-400-schema) |
+
+#### Responses
+
+##### <span id="route-get-policy-tree-200"></span> 200 - Route
+
+Status: OK
+
+###### <span id="route-get-policy-tree-200-schema"></span> Schema
+
+[Route](#route)
+
+##### <span id="route-get-policy-tree-400"></span> 400 - ValidationError
+
+Status: Bad Request
+
+###### <span id="route-get-policy-tree-400-schema"></span> Schema
+
+[ValidationError](#validation-error)
+
 ### <span id="route-get-rule-statuses"></span> RouteGetRuleStatuses (_RouteGetRuleStatuses_)
 
 ```
@@ -2133,6 +2171,47 @@ Status: Accepted
 ###### <span id="route-post-name-rules-config-202-schema"></span> Schema
 
 [Ack](#ack)
+
+### <span id="route-post-policy-tree"></span> Sets the notification policy tree. (_RoutePostPolicyTree_)
+
+```
+POST /api/provisioning/policies
+```
+
+#### Consumes
+
+- application/json
+
+#### Parameters
+
+| Name | Source | Type            | Go type        | Separator | Required | Default | Description |
+| ---- | ------ | --------------- | -------------- | --------- | :------: | ------- | ----------- |
+| Body | `body` | [Route](#route) | `models.Route` |           |          |         |             |
+
+#### All responses
+
+| Code                               | Status      | Description     | Has headers | Schema                                       |
+| ---------------------------------- | ----------- | --------------- | :---------: | -------------------------------------------- |
+| [202](#route-post-policy-tree-202) | Accepted    | Ack             |             | [schema](#route-post-policy-tree-202-schema) |
+| [400](#route-post-policy-tree-400) | Bad Request | ValidationError |             | [schema](#route-post-policy-tree-400-schema) |
+
+#### Responses
+
+##### <span id="route-post-policy-tree-202"></span> 202 - Ack
+
+Status: Accepted
+
+###### <span id="route-post-policy-tree-202-schema"></span> Schema
+
+[Ack](#ack)
+
+##### <span id="route-post-policy-tree-400"></span> 400 - ValidationError
+
+Status: Bad Request
+
+###### <span id="route-post-policy-tree-400-schema"></span> Schema
+
+[ValidationError](#validation-error)
 
 ### <span id="route-post-test-grafana-receivers"></span> Test Grafana managed receivers without saving them. (_RoutePostTestGrafanaReceivers_)
 
@@ -16333,18 +16412,6 @@ Status: Internal Server Error
 
 ### <span id="alert"></span> Alert
 
-> Alert alert
-
-**Properties**
-
-| Name         | Type                   | Go type      | Required | Default | Description   | Example |
-| ------------ | ---------------------- | ------------ | :------: | ------- | ------------- | ------- |
-| GeneratorURL | uri (formatted string) | `strfmt.URI` |          |         | generator URL |
-| Format: uri  |                        |
-| labels       | [LabelSet](#label-set) | `LabelSet`   |    ✓     |         |               |         |
-
-### <span id="alert"></span> Alert
-
 **Properties**
 
 | Name        | Type                               | Go type           | Required | Default | Description | Example |
@@ -16355,6 +16422,18 @@ Status: Internal Server Error
 | annotations | [OverrideLabels](#override-labels) | `OverrideLabels`  |    ✓     |         |             |         |
 | labels      | [OverrideLabels](#override-labels) | `OverrideLabels`  |    ✓     |         |             |         |
 
+### <span id="alert"></span> Alert
+
+> Alert alert
+
+**Properties**
+
+| Name         | Type                   | Go type      | Required | Default | Description   | Example |
+| ------------ | ---------------------- | ------------ | :------: | ------- | ------------- | ------- |
+| GeneratorURL | uri (formatted string) | `strfmt.URI` |          |         | generator URL |
+| Format: uri  |                        |
+| labels       | [LabelSet](#label-set) | `LabelSet`   |    ✓     |         |               |         |
+
 ### <span id="alert-discovery"></span> AlertDiscovery
 
 **Properties**
@@ -16362,6 +16441,16 @@ Status: Internal Server Error
 | Name   | Type              | Go type    | Required | Default | Description | Example |
 | ------ | ----------------- | ---------- | :------: | ------- | ----------- | ------- |
 | Alerts | [][alert](#alert) | `[]*Alert` |    ✓     |         |             |         |
+
+### <span id="alert-group"></span> AlertGroup
+
+**Properties**
+
+| Name     | Type                               | Go type            | Required | Default | Description | Example |
+| -------- | ---------------------------------- | ------------------ | :------: | ------- | ----------- | ------- |
+| Alerts   | [][gettablealert](#gettable-alert) | `[]*GettableAlert` |    ✓     |         | alerts      |         |
+| labels   | [LabelSet](#label-set)             | `LabelSet`         |    ✓     |         |             |         |
+| receiver | [Receiver](#receiver)              | `Receiver`         |    ✓     |         |             |         |
 
 ### <span id="alert-groups"></span> AlertGroups
 
@@ -17416,6 +17505,23 @@ For example, a 412 Precondition Failed error may include additional information 
 | ----------- | ------ | -------- | :------: | ------- | ----------- | ------- |
 | RedirectUri | string | `string` |          |         |             |         |
 
+### <span id="gettable-alert"></span> GettableAlert
+
+**Properties**
+
+| Name         | Type                         | Go type           | Required | Default | Description   | Example |
+| ------------ | ---------------------------- | ----------------- | :------: | ------- | ------------- | ------- |
+| EndsAt       | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | ends at       |         |
+| Fingerprint  | string                       | `string`          |    ✓     |         | fingerprint   |         |
+| GeneratorURL | uri (formatted string)       | `strfmt.URI`      |          |         | generator URL |
+| Format: uri  |                              |
+| Receivers    | [][receiver](#receiver)      | `[]*Receiver`     |    ✓     |         | receivers     |         |
+| StartsAt     | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | starts at     |         |
+| UpdatedAt    | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | updated at    |         |
+| annotations  | [LabelSet](#label-set)       | `LabelSet`        |    ✓     |         |               |         |
+| labels       | [LabelSet](#label-set)       | `LabelSet`        |    ✓     |         |               |         |
+| status       | [AlertStatus](#alert-status) | `AlertStatus`     |    ✓     |         |               |         |
+
 ### <span id="gettable-alertmanagers"></span> GettableAlertmanagers
 
 **Properties**
@@ -17531,6 +17637,21 @@ For example, a 412 Precondition Failed error may include additional information 
 | Rules         | [][gettableextendedrulenode](#gettable-extended-rule-node) | `[]*GettableExtendedRuleNode` |          |         |             |         |
 | SourceTenants | []string                                                   | `[]string`                    |          |         |             |         |
 | interval      | [Duration](#duration)                                      | `Duration`                    |          |         |             |         |
+
+### <span id="gettable-silence"></span> GettableSilence
+
+**Properties**
+
+| Name      | Type                             | Go type           | Required | Default | Description | Example |
+| --------- | -------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
+| Comment   | string                           | `string`          |    ✓     |         | comment     |         |
+| CreatedBy | string                           | `string`          |    ✓     |         | created by  |         |
+| EndsAt    | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | ends at     |         |
+| ID        | string                           | `string`          |    ✓     |         | id          |         |
+| StartsAt  | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | starts at   |         |
+| UpdatedAt | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | updated at  |         |
+| matchers  | [Matchers](#matchers)            | `Matchers`        |    ✓     |         |             |         |
+| status    | [SilenceStatus](#silence-status) | `SilenceStatus`   |    ✓     |         |             |         |
 
 ### <span id="gettable-silences"></span> GettableSilences
 
@@ -17927,15 +18048,15 @@ marshalled configuration when set to false. | |
 
 ### <span id="matchers"></span> Matchers
 
-> Matchers matchers
+> Matchers is a slice of Matchers that is sortable, implements Stringer, and
+> provides a Matches method to match a LabelSet against all Matchers in the
+> slice. Note that some users of Matchers might require it to be sorted.
 
 [][matcher](#matcher)
 
 ### <span id="matchers"></span> Matchers
 
-> Matchers is a slice of Matchers that is sortable, implements Stringer, and
-> provides a Matches method to match a LabelSet against all Matchers in the
-> slice. Note that some users of Matchers might require it to be sorted.
+> Matchers matchers
 
 [][matcher](#matcher)
 
@@ -18499,6 +18620,14 @@ Description:
 
 **Properties**
 
+| Name | Type   | Go type  | Required | Default | Description | Example |
+| ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
+| Name | string | `string` |    ✓     |         | name        |         |
+
+### <span id="receiver"></span> Receiver
+
+**Properties**
+
 | Name             | Type                                    | Go type              | Required | Default | Description                            | Example |
 | ---------------- | --------------------------------------- | -------------------- | :------: | ------- | -------------------------------------- | ------- |
 | EmailConfigs     | [][emailconfig](#email-config)          | `[]*EmailConfig`     |          |         |                                        |         |
@@ -18511,14 +18640,6 @@ Description:
 | VictorOpsConfigs | [][victoropsconfig](#victor-ops-config) | `[]*VictorOpsConfig` |          |         |                                        |         |
 | WebhookConfigs   | [][webhookconfig](#webhook-config)      | `[]*WebhookConfig`   |          |         |                                        |         |
 | WechatConfigs    | [][wechatconfig](#wechat-config)        | `[]*WechatConfig`    |          |         |                                        |         |
-
-### <span id="receiver"></span> Receiver
-
-**Properties**
-
-| Name | Type   | Go type  | Required | Default | Description | Example |
-| ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Name | string | `string` |    ✓     |         | name        |         |
 
 ### <span id="recording-rule-json"></span> RecordingRuleJSON
 
@@ -19242,23 +19363,6 @@ same array. | |
 
 ### <span id="url"></span> URL
 
-> The general form represented is:
-
-[scheme:]//[userinfo@]host][/]path[?query][#fragment]
-
-URLs that do not start with a slash after the scheme are interpreted as:
-
-scheme:opaque[?query][#fragment]
-
-Note that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.
-A consequence is that it is impossible to tell which slashes in the Path were
-slashes in the raw URL and which were %2f. This distinction is rarely important,
-but when it is, the code should use RawPath, an optional field which only gets
-set if the default encoding is different from Path.
-
-URL's String method uses the EscapedPath method to obtain the path. See the
-EscapedPath method for more details.
-
 **Properties**
 
 | Name        | Type                  | Go type    | Required | Default | Description | Example |
@@ -19673,59 +19777,11 @@ allows an unlimited number of alerts. | |
 | Begin | int64 (formatted integer) | `int64` |          |         |             |         |
 | End   | int64 (formatted integer) | `int64` |          |         |             |         |
 
-### <span id="alert-group"></span> alertGroup
-
-> AlertGroup alert group
-
-**Properties**
-
-| Name     | Type                               | Go type            | Required | Default | Description | Example |
-| -------- | ---------------------------------- | ------------------ | :------: | ------- | ----------- | ------- |
-| Alerts   | [][gettablealert](#gettable-alert) | `[]*GettableAlert` |    ✓     |         | alerts      |         |
-| labels   | [LabelSet](#label-set)             | `LabelSet`         |    ✓     |         |             |         |
-| receiver | [Receiver](#receiver)              | `Receiver`         |    ✓     |         |             |         |
-
-### <span id="gettable-alert"></span> gettableAlert
-
-> GettableAlert gettable alert
-
-**Properties**
-
-| Name         | Type                         | Go type           | Required | Default | Description   | Example |
-| ------------ | ---------------------------- | ----------------- | :------: | ------- | ------------- | ------- |
-| EndsAt       | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | ends at       |         |
-| Fingerprint  | string                       | `string`          |    ✓     |         | fingerprint   |         |
-| GeneratorURL | uri (formatted string)       | `strfmt.URI`      |          |         | generator URL |
-| Format: uri  |                              |
-| Receivers    | [][receiver](#receiver)      | `[]*Receiver`     |    ✓     |         | receivers     |         |
-| StartsAt     | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | starts at     |         |
-| UpdatedAt    | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | updated at    |         |
-| annotations  | [LabelSet](#label-set)       | `LabelSet`        |    ✓     |         |               |         |
-| labels       | [LabelSet](#label-set)       | `LabelSet`        |    ✓     |         |               |         |
-| status       | [AlertStatus](#alert-status) | `AlertStatus`     |    ✓     |         |               |         |
-
 ### <span id="gettable-alerts"></span> gettableAlerts
 
 > GettableAlerts gettable alerts
 
 [][gettablealert](#gettable-alert)
-
-### <span id="gettable-silence"></span> gettableSilence
-
-> GettableSilence gettable silence
-
-**Properties**
-
-| Name      | Type                             | Go type           | Required | Default | Description | Example |
-| --------- | -------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Comment   | string                           | `string`          |    ✓     |         | comment     |         |
-| CreatedBy | string                           | `string`          |    ✓     |         | created by  |         |
-| EndsAt    | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | ends at     |         |
-| ID        | string                           | `string`          |    ✓     |         | id          |         |
-| StartsAt  | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | starts at   |         |
-| UpdatedAt | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | updated at  |         |
-| matchers  | [Matchers](#matchers)            | `Matchers`        |    ✓     |         |             |         |
-| status    | [SilenceStatus](#silence-status) | `SilenceStatus`   |    ✓     |         |             |         |
 
 ### <span id="override-labels"></span> overrideLabels
 

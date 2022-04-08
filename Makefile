@@ -71,7 +71,7 @@ ensure_go-swagger_mac:
 
 swagger-api-spec-mac: gen-go --swagger-api-spec-mac $(MERGED_SPEC_TARGET)
 
-$(HTTP_API_DOCS_TARGET): $(MERGED_SPEC_TARGET) ## Generate HTTP API markdown
+$(HTTP_API_DOCS_TARGET): swagger-api-spec ## Generate HTTP API markdown
 	docker run -it \
 	-v $$(pwd):/grafana \
 	-v $$(pwd)/$(HTTP_API_DOCS_TARGET_DIR):/go \
@@ -85,7 +85,7 @@ $(HTTP_API_DOCS_TARGET): $(MERGED_SPEC_TARGET) ## Generate HTTP API markdown
 
 http-api-docs: $(HTTP_API_DOCS_TARGET)
 
-http-api-docs-mac: ensure_go-swagger_mac $(MERGED_SPEC_TARGET) ## Generate HTTP API markdown (for M1 Mac)
+http-api-docs-mac: ensure_go-swagger_mac swagger-api-spec-mac ## Generate HTTP API markdown (for M1 Mac)
 	swagger generate markdown \
 	--keep-spec-order \
 	--allow-template-override \

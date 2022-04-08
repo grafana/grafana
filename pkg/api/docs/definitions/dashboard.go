@@ -192,7 +192,7 @@ type PostDashboardResponse struct {
 		// Version The version of the dashboard.
 		// required: true
 		// example: 2
-		Verion int64 `json:"version"`
+		Version int64 `json:"version"`
 
 		// ID The unique identifier (id) of the created/updated dashboard.
 		// required: true
