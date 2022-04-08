@@ -10,8 +10,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -37,11 +35,6 @@ func TestService(t *testing.T) {
 		dataService:    me,
 		secretsService: secretsService,
 	}
-
-	bus.AddHandler("test", func(_ context.Context, query *models.GetDataSourceQuery) error {
-		query.Result = &models.DataSource{Uid: "1", OrgId: 1, Type: "test", JsonData: simplejson.New()}
-		return nil
-	})
 
 	queries := []Query{
 		{

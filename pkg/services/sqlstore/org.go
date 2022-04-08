@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -14,16 +13,6 @@ import (
 
 // MainOrgName is the name of the main organization.
 const MainOrgName = "Main Org."
-
-func (ss *SQLStore) addOrgQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetOrgById)
-	bus.AddHandler("sql", CreateOrg)
-	bus.AddHandler("sql", ss.UpdateOrg)
-	bus.AddHandler("sql", ss.UpdateOrgAddress)
-	bus.AddHandler("sql", ss.GetOrgByNameHandler)
-	bus.AddHandler("sql", ss.SearchOrgs)
-	bus.AddHandler("sql", ss.DeleteOrg)
-}
 
 func (ss *SQLStore) SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error {
 	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {

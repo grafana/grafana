@@ -23,7 +23,6 @@ func ProvideService(sqlStore sqlstore.Store, bus bus.Bus, quotaService *quota.Qu
 		QuotaService:    quotaService,
 		AuthInfoService: authInfoService,
 	}
-	bus.AddHandler(s.UpsertUser)
 	return s
 }
 
