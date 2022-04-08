@@ -40,7 +40,6 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 
 	middlewareScenario(t, "Handle auth", func(t *testing.T, sc *scenarioContext) {
 		const password = "MyPass"
-		const salt = "Salt"
 		const orgID int64 = 2
 
 		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: id}
