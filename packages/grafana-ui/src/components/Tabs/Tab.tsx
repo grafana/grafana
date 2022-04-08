@@ -45,6 +45,8 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
           {...otherProps}
           onClick={onChangeTab}
           aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
+          aria-selected={active}
+          role="tab"
           ref={ref}
         >
           {content()}

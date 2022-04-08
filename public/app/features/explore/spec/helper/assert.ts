@@ -30,3 +30,20 @@ export const assertQueryHistoryIsStarred = async (expectedStars: boolean[], expl
     })
   );
 };
+
+export const assertQueryHistoryTabIsSelected = (
+  tabName: 'Query history' | 'Starred' | 'Settings',
+  exploreId: ExploreId = ExploreId.left
+) => {
+  const selectedTab = withinExplore(exploreId).getByRole('tab', { name: /Tab.*/, selected: true });
+  expect(selectedTab).toHaveTextContent(tabName);
+};
+
+export const assertDataSourceFilterVisibility = (visible: boolean, exploreId: ExploreId = ExploreId.left) => {
+  const filterInput = withinExplore(exploreId).queryByLabelText('Filter queries for data sources(s)');
+  if (visible) {
+    expect(filterInput).toBeInTheDocument();
+  } else {
+    expect(filterInput).not.toBeInTheDocument();
+  }
+};

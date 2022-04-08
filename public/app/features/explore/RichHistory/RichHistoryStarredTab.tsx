@@ -123,6 +123,7 @@ export function RichHistoryStarredTab(props: Props) {
                 options={listOfDatasources}
                 value={datasourceFilters}
                 placeholder="Filter queries for specific data sources(s)"
+                aria-label="Filter queries for specific data sources(s)"
                 onChange={onSelectDatasourceFilters}
               />
             </div>

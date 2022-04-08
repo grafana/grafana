@@ -94,13 +94,21 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
       </Field>
       <Field label="Default active tab" description=" " className="space-between">
         <div className={styles.switch}>
-          <Switch value={starredTabAsFirstTab} onChange={toggleStarredTabAsFirstTab}></Switch>
+          <Switch
+            aria-label="Change the default active tab from “Query history” to “Starred”"
+            value={starredTabAsFirstTab}
+            onChange={toggleStarredTabAsFirstTab}
+          ></Switch>
           <div className={styles.label}>Change the default active tab from “Query history” to “Starred”</div>
         </div>
       </Field>
       <Field label="Data source behaviour" description=" " className="space-between">
         <div className={styles.switch}>
-          <Switch value={activeDatasourceOnly} onChange={toggleactiveDatasourceOnly}></Switch>
+          <Switch
+            aria-label="Only show queries for data source currently active in Explore"
+            value={activeDatasourceOnly}
+            onChange={toggleactiveDatasourceOnly}
+          ></Switch>
           <div className={styles.label}>Only show queries for data source currently active in Explore</div>
         </div>
       </Field>
