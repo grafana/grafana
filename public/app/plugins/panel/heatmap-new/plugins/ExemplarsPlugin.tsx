@@ -1,27 +1,20 @@
-import { DataFrame, DataFrameFieldIndex, Field, LinkModel, TimeZone } from '@grafana/data';
+import { DataFrame, DataFrameFieldIndex, TimeZone } from '@grafana/data';
 import { EventsCanvas, FIXED_UNIT, UPlotConfigBuilder } from '@grafana/ui';
 import React, { useCallback, useLayoutEffect, useRef } from 'react';
 import { ExemplarMarker } from './ExemplarMarker';
 import uPlot from 'uplot';
 import { HeatmapData } from '../fields';
+import { HeatmapLookup } from '../types';
 
 interface ExemplarsPluginProps {
   config: UPlotConfigBuilder;
   exemplars: HeatmapData;
   timeZone: TimeZone;
-  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  getFieldsInCell: (x: Field, y: Field, column: number, row: number) => Field[];
+  getValuesInCell: (lookupRange: HeatmapLookup) => DataFrame[] | undefined;
 }
 
-export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
-  exemplars,
-  timeZone,
-  getFieldLinks,
-  getFieldsInCell,
-  config,
-}) => {
+export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, timeZone, getValuesInCell, config }) => {
   const plotInstance = useRef<uPlot>();
-  // console.log('in exemplars plugin', exemplars);
   useLayoutEffect(() => {
     config.addHook('init', (u: uPlot) => {
       plotInstance.current = u;
@@ -83,18 +76,43 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
 
   const renderMarker = useCallback(
     (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
+      const xMin: number | undefined = dataFrame.fields
+        .find((f) => f.name === 'xMin')
+        ?.values.get(dataFrameFieldIndex.fieldIndex);
+      const yMin: number | undefined = dataFrame.fields
+        .find((f) => f.name === 'yMin')
+        ?.values.get(dataFrameFieldIndex.fieldIndex);
+      const count: number | undefined = dataFrame.fields
+        .find((f) => f.name === 'count')
+        ?.values.get(dataFrameFieldIndex.fieldIndex);
       return (
-        <ExemplarMarker
-          timeZone={timeZone}
-          getFieldsInCell={getFieldsInCell}
-          getFieldLinks={getFieldLinks}
-          dataFrame={dataFrame}
-          dataFrameFieldIndex={dataFrameFieldIndex}
-          config={config}
-        />
+        xMin != null &&
+        yMin != null &&
+        count != null &&
+        exemplars.xBucketSize != null &&
+        exemplars.yBucketSize != null && (
+          <ExemplarMarker
+            timeZone={timeZone}
+            getValuesInCell={getValuesInCell}
+            lookupRange={{
+              xRange: {
+                min: xMin,
+                max: xMin + exemplars.xBucketSize,
+                delta: exemplars.xBucketSize || 0,
+              },
+              yRange: {
+                min: yMin,
+                max: yMin + exemplars.yBucketSize,
+                delta: exemplars.yBucketSize || 0,
+              },
+              count,
+            }}
+            config={config}
+          />
+        )
       );
     },
-    [config, timeZone, getFieldLinks, getFieldsInCell]
+    [config, timeZone, getValuesInCell, exemplars]
   );
 
   return (

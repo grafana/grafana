@@ -1,66 +1,25 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import {
-  DataFrame,
-  DataFrameFieldIndex,
-  // dateTimeFormat,
-  Field,
-  // FieldType,
-  GrafanaTheme,
-  LinkModel,
-  // systemDateFormats,
-  TimeZone,
-} from '@grafana/data';
+import { DataFrame, GrafanaTheme, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Portal, UPlotConfigBuilder, useStyles } from '@grafana/ui';
 import { ExemplarTooltip } from './ExemplarTooltip';
-// import { usePopper } from 'react-popper';
+import { HeatmapLookup } from '../types';
 
 interface ExemplarMarkerProps {
   timeZone: TimeZone;
-  dataFrame: DataFrame;
-  dataFrameFieldIndex: DataFrameFieldIndex;
+  lookupRange: HeatmapLookup;
   config: UPlotConfigBuilder;
-  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  getFieldsInCell: (x: Field, y: Field, column: number, row: number) => Field[];
+  getValuesInCell: (lookupRange: HeatmapLookup) => DataFrame[] | undefined;
 }
 
-export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
-  timeZone,
-  dataFrame,
-  dataFrameFieldIndex,
-  config,
-  getFieldLinks,
-  getFieldsInCell,
-}) => {
+export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ lookupRange, getValuesInCell }) => {
   const styles = useStyles(getExemplarMarkerStyles);
   const [coords, setCoords] = useState<{ x: number | null; y: number | null }>({ x: null, y: null });
   const isToolTipOpen = useRef<boolean>(false);
 
-  // const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
-  // const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
-
-  // const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement);
   const popoverRenderTimeout = useRef<NodeJS.Timer>();
-
-  const getSymbol = () => {
-    const symbols = [
-      <rect key="diamond" x="3.38672" width="4.78985" height="4.78985" transform="rotate(45 3.38672 0)" />,
-      <path
-        key="x"
-        d="M1.94444 3.49988L0 5.44432L1.55552 6.99984L3.49996 5.05539L5.4444 6.99983L6.99992 5.44431L5.05548 3.49988L6.99983 1.55552L5.44431 0L3.49996 1.94436L1.5556 0L8.42584e-05 1.55552L1.94444 3.49988Z"
-      />,
-      <path key="triangle" d="M4 0L7.4641 6H0.535898L4 0Z" />,
-      <rect key="rectangle" width="5" height="5" />,
-      <path key="pentagon" d="M3 0.5L5.85317 2.57295L4.76336 5.92705H1.23664L0.146831 2.57295L3 0.5Z" />,
-      <path
-        key="plus"
-        d="m2.35672,4.2425l0,2.357l1.88558,0l0,-2.357l2.3572,0l0,-1.88558l-2.3572,0l0,-2.35692l-1.88558,0l0,2.35692l-2.35672,0l0,1.88558l2.35672,0z"
-      />,
-    ];
-    return symbols[dataFrameFieldIndex.frameIndex % symbols.length];
-  };
 
   const onCloseToolTip = () => {
     isToolTipOpen.current = false;
@@ -73,7 +32,6 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
       if (popoverRenderTimeout.current) {
         clearTimeout(popoverRenderTimeout.current);
       }
-      console.log('setting coords', e.pageX, e.pageY);
       setCoords({ x: e.pageX, y: e.pageY });
     },
     [setCoords]
@@ -93,96 +51,33 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
   }, [isToolTipOpen]);
 
   const renderMarker = useCallback(() => {
-    // const timeFormatter = (value: number) => {
-    //   return dateTimeFormat(value, {
-    //     format: systemDateFormats.fullDate,
-    //     timeZone,
-    //   });
-    // };
-    const fields = getFieldsInCell(
-      dataFrame.fields[0].values.get(dataFrameFieldIndex.fieldIndex),
-      dataFrame.fields[1].values.get(dataFrameFieldIndex.fieldIndex),
-      dataFrame.fields[2].values.get(dataFrameFieldIndex.fieldIndex),
-      dataFrameFieldIndex.fieldIndex
-    );
+    const data: DataFrame[] | undefined = getValuesInCell(lookupRange);
     return (
       coords.x &&
-      coords.y && (
+      coords.y &&
+      data && (
         <ExemplarTooltip
           ttip={{
             layers: [
               {
-                name: 'test',
-                data: [
-                  {
-                    fields,
-                    length: fields.length,
-                  },
-                ],
+                name: 'Exemplar',
+                data,
               },
             ],
             pageX: coords.x,
             pageY: coords.y,
-            point: { hello: {} },
+            point: {},
           }}
           isOpen={isToolTipOpen.current}
           onClose={onCloseToolTip}
         />
       )
     );
-
-    // return (
-    //   <div
-    //     onMouseEnter={onMouseEnter}
-    //     onMouseLeave={onMouseLeave}
-    //     className={styles.tooltip}
-    //     ref={setPopperElement}
-    //     style={popperStyles.popper}
-    //     {...attributes.popper}
-    //   >
-    //     <div className={styles.wrapper}>
-    //       <div className={styles.header}>
-    //         <span className={styles.title}>Exemplar</span>
-    //       </div>
-    //       <div className={styles.body}>
-    //         <div>
-    //           <table className={styles.exemplarsTable}>
-    //             <tbody>
-    //               {getFieldsInCell(
-    //                 dataFrame.fields[0].values.get(dataFrameFieldIndex.fieldIndex),
-    //                 dataFrame.fields[1].values.get(dataFrameFieldIndex.fieldIndex),
-    //                 dataFrame.fields[2].values.get(dataFrameFieldIndex.fieldIndex),
-    //                 dataFrameFieldIndex.fieldIndex).map((field, i) => {
-    //                   console.log('field', field);
-    //                 const value = field.values.get(dataFrameFieldIndex.fieldIndex);
-    //                 const links = field.config.links?.length
-    //                   ? getFieldLinks(field, dataFrameFieldIndex.fieldIndex)
-    //                   : undefined;
-    //                 return (
-    //                   <tr key={i}>
-    //                     <td valign="top">{field.name}</td>
-    //                     <td>
-    //                       <div className={styles.valueWrapper}>
-    //                         <span>{field.type === FieldType.time ? timeFormatter(value) : value}</span>
-    //                         {links && <FieldLinkList links={links} />}
-    //                       </div>
-    //                     </td>
-    //                   </tr>
-    //                 );
-    //               })}
-    //             </tbody>
-    //           </table>
-    //         </div>
-    //       </div>
-    //     </div>
-    //   </div>
-    // );
-  }, [dataFrame, getFieldsInCell, dataFrameFieldIndex, coords]);
+  }, [getValuesInCell, lookupRange, coords]);
 
   return (
     <>
       <div
-        // ref={setMarkerElement}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onClick={onClick}
@@ -199,7 +94,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
           }}
           className={cx(styles.marble, coords.x !== null && styles.activeMarble)}
         >
-          {getSymbol()}
+          <rect key="diamond" x="3.38672" width="4.78985" height="4.78985" transform="rotate(45 3.38672 0)" />
         </svg>
       </div>
       {coords.x !== null && <Portal>{renderMarker()}</Portal>}

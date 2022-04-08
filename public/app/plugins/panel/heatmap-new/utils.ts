@@ -1,5 +1,13 @@
 import { MutableRefObject, RefObject } from 'react';
-import { DataFrame, GrafanaTheme2, PanelData, TimeRange } from '@grafana/data';
+import {
+  DataFrame,
+  dateTimeFormat,
+  GrafanaTheme2,
+  PanelData,
+  systemDateFormats,
+  TimeRange,
+  TimeZone,
+} from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import uPlot from 'uplot';
@@ -473,4 +481,11 @@ export const findExemplarFrameInPanelData = (data: PanelData): DataFrame | undef
 
 export const findDataFramesInPanelData = (data: PanelData): DataFrame[] | undefined => {
   return data.series?.filter((frame: DataFrame) => frame.meta?.custom?.resultType !== 'exemplar');
+};
+
+export const timeFormatter = (value: number, timeZone: TimeZone) => {
+  return dateTimeFormat(value, {
+    format: systemDateFormats.fullDate,
+    timeZone,
+  });
 };

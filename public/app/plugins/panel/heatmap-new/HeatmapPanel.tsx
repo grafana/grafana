@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import {
+  ArrayVector,
   DataFrame,
   Field,
   formattedValueToString,
@@ -8,8 +9,8 @@ import {
   PanelProps,
   reduceField,
   ReducerID,
-  //dateTime,
   TimeRange,
+  ValueLinkConfig,
 } from '@grafana/data';
 import {
   Portal,
@@ -26,13 +27,20 @@ import { PanelDataErrorView } from '@grafana/runtime';
 import { HeatmapData, prepareHeatmapData } from './fields';
 import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
-import { findExemplarFrameInPanelData, findDataFramesInPanelData, HeatmapHoverEvent, prepConfig } from './utils';
+import {
+  findExemplarFrameInPanelData,
+  findDataFramesInPanelData,
+  HeatmapHoverEvent,
+  prepConfig,
+  timeFormatter,
+} from './utils';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from './ColorScale';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { HeatmapCalculationMode } from 'app/features/transformers/calculateHeatmap/models.gen';
+import { HeatmapLookup } from './types';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -55,7 +63,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
 
-  console.log('data', data);
   const info = useMemo(
     () => prepareHeatmapData(findDataFramesInPanelData(data), options, theme),
     [data, options, theme]
@@ -79,7 +86,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     }
     return undefined;
   }, [data, info, options, theme]);
-  console.log('info', info);
   const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
   const { onSplitOpen } = usePanelContext();
 
@@ -135,37 +141,58 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
 
-  const getFieldLinks = (field: Field, rowIndex: number) => {
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
-  };
+  const getValuesInCell = (lookupRange: HeatmapLookup): DataFrame[] | undefined => {
+    const timeField: Field | undefined = data.annotations?.[0].fields.find((f: Field) => f.type === 'time');
+    const valueField: Field | undefined = data.annotations?.[0].fields.find((f: Field) => f.type === 'number');
+    if (timeField && valueField) {
+      const minIndex: number = timeField.values
+        .toArray()
+        .findIndex((value: number) => value >= lookupRange.xRange.min!);
+      const count: number = timeField.values
+        .toArray()
+        .slice(minIndex)
+        .findIndex((value: number) => value >= lookupRange.xRange.max!);
 
-  const getFieldsInCell = (xField: Field, yField: Field, column: number, row: number) => {
-    return data.annotations?.[0].fields || [];
-    // Find the timerange for this cell
-    // if (xField.type !== 'time') {
-    //   console.error('Only time supported for xFields. Got', xField.type);
-    //   return undefined;
-    // }
+      // Now find the relevant values in the value field.
+      const indicies: number[] = valueField.values
+        .toArray()
+        .slice(minIndex, minIndex + count)
+        .reduce((tally: number[], curr: number, i: number) => {
+          if (curr >= lookupRange.yRange?.min! && curr < lookupRange.yRange?.max!) {
+            tally.push(i + minIndex);
+          }
+          return tally;
+        }, []);
 
-    // const xMatch: Field | undefined = exemplars?.heatmap?.fields.find((f) => f.name === xField.name);
-    // const yMatch: Field | undefined = exemplars?.heatmap?.fields.find((f) => f.name === yField.name);
-
-    // if (yMatch && xMatch && exemplars) {
-    //   const xOrig: Field | undefined = data.annotations?.[0].fields.find((f) => f.name === xMatch.config.custom.originalName);
-    //   // Get the indicies in the original data. Then use that to find the proper
-
-    //   const startIndex = (xMatch.values.get(row) - xOrig?.values.get(0)) / data.request?.intervalMs!;
-    //   const endIndex =
-    //     (xMatch?.values.get(row) + exemplars?.xBucketSize - xOrig?.values.get(0)) / data.request?.intervalMs!;
-    //   console.log('startIndex', startIndex, 'endIndex', endIndex);
-    //   if (data.annotations) {
-    //     return data.annotations[0].fields.map((field: Field) => {
-    //       return getFieldLinksForExplore({ field, rowIndex: startIndex, splitOpenFn: onSplitOpen, range: timeRange });
-    //     }).flat();
-    //   }
-    //   return undefined;
-    // }
-    // return undefined;
+      return indicies.map((annotationIndex: number, index: number) => {
+        return {
+          name: `${index}`,
+          fields: (data.annotations?.[0].fields || []).map((f: Field, rowIndex: number) => {
+            const newField: Field = {
+              ...f,
+              values: new ArrayVector([f.values.get(annotationIndex)]),
+            };
+            if (f.config.links?.length) {
+              // We have links to configure. Add a getLinks function to the field
+              newField.getLinks = (config: ValueLinkConfig) => {
+                return getFieldLinksForExplore({ field: f, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
+              };
+            }
+            if (f.type === 'time') {
+              newField.display = (value: number) => {
+                return {
+                  numeric: value,
+                  text: timeFormatter(value, timeZone),
+                };
+              };
+            }
+            return newField;
+          }),
+          length: 1,
+        };
+      });
+    }
+    return undefined;
   };
 
   const renderLegend = () => {
@@ -205,8 +232,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
                 config={builder}
                 exemplars={exemplars}
                 timeZone={timeZone}
-                getFieldsInCell={getFieldsInCell}
-                getFieldLinks={getFieldLinks}
+                getValuesInCell={getValuesInCell}
               />
             )}
           </UPlotChart>

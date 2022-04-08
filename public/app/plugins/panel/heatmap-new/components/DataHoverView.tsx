@@ -56,6 +56,11 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder }: Props)
     displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a[1], b[1]));
   }
 
+  //                     <td>
+  //                       <div className={styles.valueWrapper}>
+  //                         <span>{field.type === FieldType.time ? timeFormatter(value) : value}</span>
+  //                         {links && <FieldLinkList links={links} />}
+  //                       </div>
   return (
     <table className={styles.infoWrap}>
       <tbody>
