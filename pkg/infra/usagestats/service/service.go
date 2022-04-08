@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,6 +23,7 @@ type UsageStats struct {
 	SocialService social.Service
 	kvStore       *kvstore.NamespacedKVStore
 	RouteRegister routing.RouteRegister
+	features      *featuremgmt.FeatureManager
 
 	log log.Logger
 
@@ -33,11 +35,12 @@ type UsageStats struct {
 }
 
 func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginStore plugins.Store,
-	socialService social.Service, kvStore kvstore.KVStore, routeRegister routing.RouteRegister,
+	socialService social.Service, kvStore kvstore.KVStore, routeRegister routing.RouteRegister, features *featuremgmt.FeatureManager,
 ) *UsageStats {
 	s := &UsageStats{
 		Cfg:            cfg,
 		SQLStore:       sqlStore,
+		features:       features,
 		oauthProviders: socialService.GetOAuthProviders(),
 		RouteRegister:  routeRegister,
 		pluginStore:    pluginStore,
