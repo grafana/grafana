@@ -310,8 +310,7 @@ export class LokiDatasource
           responseListLength,
           maxDataPoints,
           this.instanceSettings.jsonData,
-          (options as DataQueryRequest<LokiQuery>).scopedVars,
-          (options as DataQueryRequest<LokiQuery>).reverse
+          (options as DataQueryRequest<LokiQuery>).scopedVars
         )
       )
     );
