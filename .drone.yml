@@ -748,7 +748,8 @@ steps:
       - .drone.yml
     repo:
     - grafana/grafana
-- image: grafana/drone-downstream
+- depends_on: []
+  image: grafana/drone-downstream
   name: trigger-enterprise-downstream
   settings:
     params:
@@ -4476,6 +4477,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 9b87d4bb17d422973023c6ad1a59980c37832ae60ba6bb0d11ee024ea1e35b1a
+hmac: b8459751eb80714ffd7e004d3ae6cabee94c6d964aaac909afc24886e70ec4ba
 
 ...
