@@ -510,10 +510,6 @@ func (ffi FakeFileInfo) Sys() interface{} {
 	return nil
 }
 
-func mockGetDashboardQuery(_ context.Context, _ *models.GetDashboardQuery) error {
-	return models.ErrDashboardNotFound
-}
-
 type fakeDashboardStore struct{}
 
 func (fds *fakeDashboardStore) GetDashboard(_ context.Context, _ *models.GetDashboardQuery) error {
