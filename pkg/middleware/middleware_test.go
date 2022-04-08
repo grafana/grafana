@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -602,7 +603,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.sqlStore = ctxHdlr.SQLStore
 		sc.contextHandler = ctxHdlr
 		sc.m.Use(ctxHdlr.Middleware)
-		sc.m.Use(OrgRedirect(sc.cfg))
+		sc.m.Use(OrgRedirect(sc.cfg, sc.mockSQLStore))
 
 		sc.userAuthTokenService = ctxHdlr.AuthTokenService.(*auth.FakeUserAuthTokenService)
 		sc.jwtAuthService = ctxHdlr.JWTAuthService.(*models.FakeJWTService)
@@ -644,8 +645,9 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.S
 	authJWTSvc := models.NewFakeJWTService()
 	tracer, err := tracing.InitializeTracerForTest()
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, mockSQLStore)
+	authenticator := &logintest.AuthenticatorFake{ExpectedUser: &models.User{}}
 	require.NoError(t, err)
-	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy)
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy, loginService, authenticator)
 }
 
 type fakeRenderService struct {
