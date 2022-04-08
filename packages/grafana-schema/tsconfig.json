@@ -3,7 +3,6 @@
     "declarationDir": "dist",
     "outDir": "compiled",
     "rootDirs": ["."],
-    "incremental": true,
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo"
   },
   "exclude": ["dist", "node_modules"],
