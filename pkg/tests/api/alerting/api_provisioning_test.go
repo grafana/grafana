@@ -146,7 +146,8 @@ func TestProvisioning(t *testing.T) {
 			"name": "my-contactpoint",
 			"type": "slack",
 			"settings": {
-				"key": "value"
+				"recipient": "value_recipient", 
+				"token": "value_token"
 			}
 		}`
 

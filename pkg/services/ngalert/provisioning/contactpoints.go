@@ -26,8 +26,8 @@ func NewEmbeddedContactPointService(store store.AlertingStore, encryptionService
 	}
 }
 
-func (ecp *EmbeddedContactPointService) GetContactPoints(orgID int64) ([]apimodels.EmbeddedContactPoint, error) {
-	cfg, _, err := ecp.getCurrentConfig(orgID)
+func (ecp *EmbeddedContactPointService) GetContactPoints(ctx context.Context, orgID int64) ([]apimodels.EmbeddedContactPoint, error) {
+	cfg, _, err := ecp.getCurrentConfig(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +57,8 @@ func (ecp *EmbeddedContactPointService) GetContactPoints(orgID int64) ([]apimode
 }
 
 // internal only
-func (ecp *EmbeddedContactPointService) getContactPointUncrypted(orgID int64, uid string) (apimodels.EmbeddedContactPoint, error) {
-	cfg, _, err := ecp.getCurrentConfig(orgID)
+func (ecp *EmbeddedContactPointService) getContactPointUncrypted(ctx context.Context, orgID int64, uid string) (apimodels.EmbeddedContactPoint, error) {
+	cfg, _, err := ecp.getCurrentConfig(ctx, orgID)
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
 	}
@@ -90,11 +90,11 @@ func (ecp *EmbeddedContactPointService) getContactPointUncrypted(orgID int64, ui
 	return apimodels.EmbeddedContactPoint{}, fmt.Errorf("contact point with uid '%s' not found", uid)
 }
 
-func (ecp *EmbeddedContactPointService) CreateContactPoint(orgID int64, contactPoint apimodels.EmbeddedContactPoint) (apimodels.EmbeddedContactPoint, error) {
+func (ecp *EmbeddedContactPointService) CreateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint) (apimodels.EmbeddedContactPoint, error) {
 	if err := contactPoint.IsValid(ecp.encryptionService.GetDecryptedValue); err != nil {
 		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("contact point is not valid: %w", err)
 	}
-	cfg, fetchedHash, err := ecp.getCurrentConfig(orgID)
+	cfg, fetchedHash, err := ecp.getCurrentConfig(ctx, orgID)
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
 	}
@@ -148,9 +148,9 @@ func (ecp *EmbeddedContactPointService) CreateContactPoint(orgID int64, contactP
 	})
 }
 
-func (ecp *EmbeddedContactPointService) UpdateContactPoint(orgID int64, contactPoint apimodels.EmbeddedContactPoint) error {
+func (ecp *EmbeddedContactPointService) UpdateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint) error {
 	// set all redacted values with the latest known value from the store
-	rawContactPoint, err := ecp.getContactPointUncrypted(orgID, contactPoint.UID)
+	rawContactPoint, err := ecp.getContactPointUncrypted(ctx, orgID, contactPoint.UID)
 	if err != nil {
 		return err
 	}
@@ -190,7 +190,7 @@ func (ecp *EmbeddedContactPointService) UpdateContactPoint(orgID int64, contactP
 		SecureSettings:        extracedSecrets,
 	}
 	// save to store
-	cfg, fetchedHash, err := ecp.getCurrentConfig(orgID)
+	cfg, fetchedHash, err := ecp.getCurrentConfig(ctx, orgID)
 	if err != nil {
 		return err
 	}
@@ -222,8 +222,8 @@ func (ecp *EmbeddedContactPointService) UpdateContactPoint(orgID int64, contactP
 	})
 }
 
-func (ecp *EmbeddedContactPointService) DeleteContactPoint(orgID int64, uid string) error {
-	cfg, fetchedHash, err := ecp.getCurrentConfig(orgID)
+func (ecp *EmbeddedContactPointService) DeleteContactPoint(ctx context.Context, orgID int64, uid string) error {
+	cfg, fetchedHash, err := ecp.getCurrentConfig(ctx, orgID)
 	if err != nil {
 		return err
 	}
@@ -248,7 +248,7 @@ func (ecp *EmbeddedContactPointService) DeleteContactPoint(orgID int64, uid stri
 	})
 }
 
-func (ecp *EmbeddedContactPointService) getCurrentConfig(orgID int64) (*apimodels.PostableUserConfig, string, error) {
+func (ecp *EmbeddedContactPointService) getCurrentConfig(ctx context.Context, orgID int64) (*apimodels.PostableUserConfig, string, error) {
 	query := &models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
 	}

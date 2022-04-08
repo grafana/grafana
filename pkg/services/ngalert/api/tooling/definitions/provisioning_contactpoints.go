@@ -76,10 +76,11 @@ func (e *EmbeddedContactPoint) IsValid(decryptFunc channels.GetDecryptedValueFn)
 	}
 	factory, exists := channels.Factory(e.Type)
 	if !exists {
-		return fmt.Errorf("unkown type '%s'", e.Type)
+		return fmt.Errorf("unknown type '%s'", e.Type)
 	}
 	cfg, _ := channels.NewFactoryConfig(&channels.NotificationChannelConfig{
 		Settings: e.Settings,
+		Type:     e.Type,
 	}, nil, decryptFunc, nil)
 	if _, err := factory(cfg); err != nil {
 		return err

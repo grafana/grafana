@@ -23,10 +23,10 @@ type ProvisioningSrv struct {
 }
 
 type ContactpointService interface {
-	GetContactPoints(orgID int64) ([]apimodels.EmbeddedContactPoint, error)
-	CreateContactPoint(orgID int64, contactPoint apimodels.EmbeddedContactPoint) (apimodels.EmbeddedContactPoint, error)
-	UpdateContactPoint(orgID int64, contactPoint apimodels.EmbeddedContactPoint) error
-	DeleteContactPoint(orgID int64, uid string) error
+	GetContactPoints(ctx context.Context, orgID int64) ([]apimodels.EmbeddedContactPoint, error)
+	CreateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint) (apimodels.EmbeddedContactPoint, error)
+	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint) error
+	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error
 }
 
 type NotificationPolicyService interface {
@@ -60,7 +60,7 @@ func (srv *ProvisioningSrv) RoutePostPolicyTree(c *models.ReqContext, tree apimo
 }
 
 func (srv *ProvisioningSrv) RouteGetContactpoints(c *models.ReqContext) response.Response {
-	cps, err := srv.contactpointService.GetContactPoints(c.OrgId)
+	cps, err := srv.contactpointService.GetContactPoints(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -68,26 +68,28 @@ func (srv *ProvisioningSrv) RouteGetContactpoints(c *models.ReqContext) response
 }
 
 func (srv *ProvisioningSrv) RoutePostContactpoint(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
-	contactPoint, err := srv.contactpointService.CreateContactPoint(c.OrgId, cp)
+	// TODO: hardcoded for now, change it later to make it more flexible
+	cp.Provenance = string(alerting_models.ProvenanceApi)
+	contactPoint, err := srv.contactpointService.CreateContactPoint(c.Req.Context(), c.OrgId, cp)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, contactPoint)
+	return response.JSON(http.StatusAccepted, contactPoint)
 }
 
 func (srv *ProvisioningSrv) RoutePutContactpoints(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
-	err := srv.contactpointService.UpdateContactPoint(c.OrgId, cp)
+	err := srv.contactpointService.UpdateContactPoint(c.Req.Context(), c.OrgId, cp)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, "")
+	return response.JSON(http.StatusAccepted, util.DynMap{"message": "contactpoint updated"})
 }
 
 func (srv *ProvisioningSrv) RouteDeleteContactpoint(c *models.ReqContext) response.Response {
 	cpID := web.Params(c.Req)[":ID"]
-	err := srv.contactpointService.DeleteContactPoint(c.OrgId, cpID)
+	err := srv.contactpointService.DeleteContactPoint(c.Req.Context(), c.OrgId, cpID)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, "")
+	return response.JSON(http.StatusAccepted, util.DynMap{"message": "contactpoint deleted"})
 }
