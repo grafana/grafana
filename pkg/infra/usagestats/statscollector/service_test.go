@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -69,6 +71,18 @@ func TestTotalStatsUpdate(t *testing.T) {
 			assert.Equal(t, tc.ExpectedUpdate, s.updateTotalStats(context.Background()))
 		})
 	}
+}
+
+func TestFeatureUsageStats(t *testing.T) {
+	store := mockstore.NewSQLStoreMock()
+	mockSystemStats(store)
+	s := createService(t, setting.NewCfg(), store)
+
+	m, err := s.collect(context.Background())
+	require.NoError(t, err, "Expected no error")
+
+	assert.Equal(t, 1, m["stats.features.feature_1.count"])
+	assert.Equal(t, 1, m["stats.features.feature_2.count"])
 }
 
 func TestCollectingUsageStats(t *testing.T) {
@@ -343,5 +357,6 @@ func createService(t testing.TB, cfg *setting.Cfg, store sqlstore.Store) *Servic
 		store,
 		&mockSocial{},
 		&fakePluginStore{},
+		featuremgmt.WithFeatures("feature1", "feature2"),
 	)
 }

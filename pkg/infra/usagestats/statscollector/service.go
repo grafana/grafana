@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -23,6 +25,7 @@ type Service struct {
 	plugins    plugins.Store
 	social     social.Service
 	usageStats usagestats.Service
+	features   *featuremgmt.FeatureManager
 
 	log log.Logger
 
@@ -30,13 +33,21 @@ type Service struct {
 	concurrentUserStatsCache memoConcurrentUserStats
 }
 
-func ProvideService(usagestats usagestats.Service, cfg *setting.Cfg, store sqlstore.Store, social social.Service, plugins plugins.Store) *Service {
+func ProvideService(
+	usagestats usagestats.Service,
+	cfg *setting.Cfg,
+	store sqlstore.Store,
+	social social.Service,
+	plugins plugins.Store,
+	features *featuremgmt.FeatureManager,
+) *Service {
 	s := &Service{
 		cfg:        cfg,
 		sqlstore:   store,
 		plugins:    plugins,
 		social:     social,
 		usageStats: usagestats,
+		features:   features,
 
 		startTime: time.Now(),
 		log:       log.New("infra.usagestats.collector"),
@@ -247,6 +258,11 @@ func (s *Service) collect(ctx context.Context) (map[string]interface{}, error) {
 	m["stats.auth_token_per_user_le_inf"] = concurrentUsersStats.BucketLEInf
 
 	m["stats.uptime"] = int64(time.Since(s.startTime).Seconds())
+
+	featureUsageStats := s.features.GetUsageStats(ctx)
+	for k, v := range featureUsageStats {
+		m[k] = v
+	}
 
 	return m, nil
 }
