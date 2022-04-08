@@ -221,7 +221,7 @@ const unifiedRoutes: RouteDescriptor[] = [
     path: '/alerting/groups/',
     roles: evaluateAccess(
       [AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingInstancesExternalRead],
-      [OrgRole.Editor, OrgRole.Admin]
+      [OrgRole.Viewer, OrgRole.Editor, OrgRole.Admin]
     ),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertGroups" */ 'app/features/alerting/unified/AlertGroups')

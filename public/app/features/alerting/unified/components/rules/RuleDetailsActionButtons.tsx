@@ -44,6 +44,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const rulesPermissions = getRulesPermissions(rulesSourceName);
   const hasEditPermission = contextSrv.hasPermission(rulesPermissions.update);
   const hasDeletePermission = contextSrv.hasPermission(rulesPermissions.delete);
+  const hasExplorePermission = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
 
   const leftButtons: JSX.Element[] = [];
   const rightButtons: JSX.Element[] = [];
@@ -80,7 +81,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
 
   // explore does not support grafana rule queries atm
   // neither do "federated rules"
-  if (isCloudRulesSource(rulesSource) && contextSrv.isEditor && !isFederated) {
+  if (isCloudRulesSource(rulesSource) && hasExplorePermission && !isFederated) {
     leftButtons.push(
       <LinkButton
         className={style.button}
