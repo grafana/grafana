@@ -83,6 +83,28 @@ func TestProvisioningStore(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceFile, p)
 	})
+
+	t.Run("Store should return all provenances by type", func(t *testing.T) {
+		const orgID = 123
+		ruleOrg1 := models.AlertRule{
+			UID:   "789",
+			OrgID: orgID,
+		}
+		ruleOrg2 := models.AlertRule{
+			UID:   "790",
+			OrgID: orgID,
+		}
+		err := store.SetProvenance(context.Background(), &ruleOrg1, models.ProvenanceFile)
+		require.NoError(t, err)
+		err = store.SetProvenance(context.Background(), &ruleOrg2, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		p, err := store.GetProvenances(context.Background(), orgID, ruleOrg1.ResourceType())
+		require.NoError(t, err)
+		require.Len(t, p, 2)
+		require.Equal(t, models.ProvenanceFile, p[ruleOrg1.UID])
+		require.Equal(t, models.ProvenanceAPI, p[ruleOrg2.UID])
+	})
 }
 
 func createProvisioningStoreSut(_ *ngalert.AlertNG, db *store.DBstore) provisioning.ProvisioningStore {

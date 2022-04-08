@@ -39,6 +39,11 @@ func (ecp *EmbeddedContactPointService) GetContactPoints(ctx context.Context, or
 	if err != nil {
 		return nil, err
 	}
+	provenances, err := ecp.provenanceStore.GetProvenances(ctx, orgID, "contactpoint")
+	if err != nil {
+		return nil, err
+	}
+	ecp.log.Info("provenances", "map", provenances)
 	contactPoints := []apimodels.EmbeddedContactPoint{}
 	for _, contactPoint := range cfg.GetGrafanaReceiverMap() {
 		embeddedContactPoint := apimodels.EmbeddedContactPoint{
@@ -47,6 +52,9 @@ func (ecp *EmbeddedContactPointService) GetContactPoints(ctx context.Context, or
 			Name:                  contactPoint.Name,
 			DisableResolveMessage: contactPoint.DisableResolveMessage,
 			Settings:              contactPoint.Settings,
+		}
+		if val, exists := provenances[embeddedContactPoint.UID]; exists && val != "" {
+			embeddedContactPoint.Provenance = string(val)
 		}
 		for k, v := range contactPoint.SecureSettings {
 			decryptedValue, err := ecp.decrypteValue(v)
@@ -176,6 +184,7 @@ func (ecp *EmbeddedContactPointService) CreateContactPoint(ctx context.Context, 
 		if err != nil {
 			return err
 		}
+		contactPoint.Provenance = string(provenance)
 		return nil
 	})
 	if err != nil {

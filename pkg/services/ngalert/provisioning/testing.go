@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -99,11 +100,23 @@ func newFakeProvisioningStore() *fakeProvisioningStore {
 
 func (f *fakeProvisioningStore) GetProvenance(ctx context.Context, o models.Provisionable) (models.Provenance, error) {
 	if val, ok := f.records[o.ResourceOrgID()]; ok {
-		if prov, ok := val[o.ResourceID()]; ok {
+		if prov, ok := val[o.ResourceID()+o.ResourceType()]; ok {
 			return prov, nil
 		}
 	}
 	return models.ProvenanceNone, nil
+}
+
+func (f *fakeProvisioningStore) GetProvenances(ctx context.Context, orgID int64, resourceType string) (map[string]models.Provenance, error) {
+	results := make(map[string]models.Provenance)
+	if val, ok := f.records[orgID]; ok {
+		for k, v := range val {
+			if strings.HasSuffix(k, resourceType) {
+				results[strings.TrimSuffix(k, resourceType)] = v
+			}
+		}
+	}
+	return results, nil
 }
 
 func (f *fakeProvisioningStore) SetProvenance(ctx context.Context, o models.Provisionable, p models.Provenance) error {
@@ -111,7 +124,7 @@ func (f *fakeProvisioningStore) SetProvenance(ctx context.Context, o models.Prov
 	if _, ok := f.records[orgID]; !ok {
 		f.records[orgID] = map[string]models.Provenance{}
 	}
-	f.records[orgID][o.ResourceID()] = p
+	f.records[orgID][o.ResourceID()+o.ResourceType()] = p
 	return nil
 }
 
