@@ -88,10 +88,6 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ lookupRange, get
           viewBox="0 0 7 7"
           width="7"
           height="7"
-          style={{
-            fill: 'rgb(115, 191, 105)',
-            stroke: 'rgb(0, 0, 0)',
-          }}
           className={cx(styles.marble, coords.x !== null && styles.activeMarble)}
         >
           <rect key="diamond" x="3.38672" width="4.78985" height="4.78985" transform="rotate(45 3.38672 0)" />
@@ -123,6 +119,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
         }
       }
     `,
+
     marker: css`
       width: 0;
       height: 0;
@@ -194,11 +191,15 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       display: block;
       opacity: 0.5;
       transition: transform 0.15s ease-out;
+      stroke: 'rgb(0, 0, 0)';
+      fill: ${theme.palette.greenShade};
     `,
     activeMarble: css`
       transform: scale(1.3);
       opacity: 1;
       filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.5));
+      stroke: 'rgb(0, 0, 0)';
+      fill: ${theme.palette.greenBase};
     `,
     closeButtonSpacer: css`
       margin-bottom: 15px;
