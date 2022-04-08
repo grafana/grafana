@@ -22,15 +22,10 @@ func HTTPLoggerMiddleware(cfg setting.PluginSettings) sdkhttpclient.Middleware {
 			return next
 		}
 
-		hl := httplogger.
-			NewHTTPLogger(datasourceType, next).
-			WithEnabledCheck(func() bool { return true })
-
-		if path != "" {
-			hl = hl.WithPath(path)
-		}
-
-		return hl
+		return httplogger.NewHTTPLogger(datasourceType, next, httplogger.Options{
+			Path:      path,
+			EnabledFn: func() bool { return true },
+		})
 	})
 }
 
