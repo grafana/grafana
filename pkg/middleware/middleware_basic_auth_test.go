@@ -1,11 +1,9 @@
 package middleware
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -44,19 +42,6 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		const password = "MyPass"
 		const salt = "Salt"
 		const orgID int64 = 2
-
-		bus.AddHandler("grafana-auth", func(ctx context.Context, query *models.LoginUserQuery) error {
-			t.Log("Handling LoginUserQuery")
-			encoded, err := util.EncodePassword(password, salt)
-			if err != nil {
-				return err
-			}
-			query.User = &models.User{
-				Password: encoded,
-				Salt:     salt,
-			}
-			return nil
-		})
 
 		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: id}
 

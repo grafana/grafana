@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 
@@ -19,13 +18,7 @@ import (
 
 func TestAlertNotificationSQLAccess(t *testing.T) {
 	var sqlStore *SQLStore
-	setup := func() {
-		sqlStore = InitTestDB(t)
-		// Set up bus handlers
-		bus.AddHandler("deleteAlertNotification", func(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error {
-			return sqlStore.DeleteAlertNotification(ctx, cmd)
-		})
-	}
+	setup := func() { sqlStore = InitTestDB(t) }
 
 	t.Run("Alert notification state", func(t *testing.T) {
 		setup()
