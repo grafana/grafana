@@ -29,6 +29,8 @@ Fine-grained access control is available for the following capabilities:
 
 - [Use Explore mode]({{< relref "../../explore/_index.md" >}})
 - [Manage users]({{< relref "../../administration/manage-users-and-permissions/manage-server-users/_index.md" >}})
+- [Service accounts]({{< relref "../../administration/service-accounts/_index.md" >}})
+- [API keys]({{< relref "../../administration/api-keys/_index.md" >}})
 - [Manage LDAP authentication]({{< relref "../../auth/ldap/_index.md" >}})
 - [Manage data sources]({{< relref "../../datasources/_index.md" >}})
 - [Manage data source permissions]({{< relref "../datasource_permissions.md" >}})
