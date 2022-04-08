@@ -481,7 +481,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   intervalMs: number;
   maxDataPoints?: number;
   range: TimeRange;
-  reverse?: boolean;
   scopedVars: ScopedVars;
   targets: TQuery[];
   timezone: string;

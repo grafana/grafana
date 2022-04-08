@@ -2,11 +2,11 @@ package store_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 	"github.com/stretchr/testify/require"
@@ -15,7 +15,7 @@ import (
 const testAlertingIntervalSeconds = 10
 
 func TestProvisioningStore(t *testing.T) {
-	store, xact := createSut(tests.SetupTestEnv(t, testAlertingIntervalSeconds))
+	store := createProvisioningStoreSut(tests.SetupTestEnv(t, testAlertingIntervalSeconds))
 
 	t.Run("Default provenance of a known type is None", func(t *testing.T) {
 		rule := models.AlertRule{
@@ -83,39 +83,8 @@ func TestProvisioningStore(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceFile, p)
 	})
-
-	t.Run("Store saves provenance type when contextual transaction is applied", func(t *testing.T) {
-		rule := models.AlertRule{
-			UID: "456",
-		}
-
-		err := xact.InTransaction(context.Background(), func(ctx context.Context) error {
-			return store.SetProvenance(ctx, &rule, models.ProvenanceFile)
-		})
-		require.NoError(t, err)
-
-		provenance, err := store.GetProvenance(context.Background(), &rule)
-		require.NoError(t, err)
-		require.Equal(t, models.ProvenanceFile, provenance)
-	})
-
-	t.Run("Contextual transaction which errors before saving rolls back type update", func(t *testing.T) {
-		rule := models.AlertRule{
-			UID: "789",
-		}
-
-		_ = xact.InTransaction(context.Background(), func(ctx context.Context) error {
-			err := store.SetProvenance(ctx, &rule, models.ProvenanceFile)
-			require.NoError(t, err)
-			return fmt.Errorf("something happened!")
-		})
-
-		provenance, err := store.GetProvenance(context.Background(), &rule)
-		require.NoError(t, err)
-		require.Equal(t, models.ProvenanceNone, provenance)
-	})
 }
 
-func createSut(_ *ngalert.AlertNG, db *store.DBstore) (store.ProvisioningStore, store.TransactionManager) {
-	return db, db
+func createProvisioningStoreSut(_ *ngalert.AlertNG, db *store.DBstore) provisioning.ProvisioningStore {
+	return db
 }

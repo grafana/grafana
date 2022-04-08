@@ -197,7 +197,9 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, sqlStore)
-	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy)
+	loginService := &logintest.LoginServiceFake{}
+	authenticator := &logintest.AuthenticatorFake{}
+	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, authenticator)
 
 	return ctxHdlr
 }
@@ -400,8 +402,9 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		require.NoError(t, err)
 		hs.teamPermissionsService = teamPermissionService
 	} else {
-		ac := ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t},
+		ac, errInitAc := ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t},
 			database.ProvideService(db), routing.NewRouteRegister())
+		require.NoError(t, errInitAc)
 		hs.AccessControl = ac
 		// Perform role registration
 		err := hs.declareFixedRoles()
