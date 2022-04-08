@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -569,8 +568,6 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		logger := log.New("test")
 
 		loginMaxLifetime, err := gtime.ParseDuration("30d")

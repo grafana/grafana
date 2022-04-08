@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -49,11 +48,6 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		mock := mockstore.NewSQLStoreMock()
 		adminLogoutUserScenario(t, "Should not be allowed when calling POST on",
 			"/api/admin/users/1/logout", "/api/admin/users/:id/logout", func(sc *scenarioContext) {
-				bus.AddHandler("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
-					cmd.Result = &models.User{Id: testUserID}
-					return nil
-				})
-
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 400, sc.resp.Code)
 			}, mock)
@@ -182,8 +176,6 @@ func TestAdminAPIEndpoint(t *testing.T) {
 			}
 
 			adminCreateUserScenario(t, "Should create the user", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
-				bus.ClearBusHandlers()
-
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 200, sc.resp.Code)
 
@@ -202,8 +194,6 @@ func TestAdminAPIEndpoint(t *testing.T) {
 			}
 
 			adminCreateUserScenario(t, "Should create the user", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
-				bus.ClearBusHandlers()
-
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 200, sc.resp.Code)
 
@@ -222,8 +212,6 @@ func TestAdminAPIEndpoint(t *testing.T) {
 			}
 
 			adminCreateUserScenario(t, "Should create the user", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
-				bus.ClearBusHandlers()
-
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 400, sc.resp.Code)
 
@@ -241,8 +229,6 @@ func TestAdminAPIEndpoint(t *testing.T) {
 		}
 
 		adminCreateUserScenario(t, "Should return an error", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
-			bus.ClearBusHandlers()
-
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 			assert.Equal(t, 412, sc.resp.Code)
 
@@ -256,8 +242,6 @@ func TestAdminAPIEndpoint(t *testing.T) {
 func putAdminScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
 	cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		hs := &HTTPServer{
 			Cfg:             setting.NewCfg(),
 			SQLStore:        sqlStore,
@@ -284,8 +268,6 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 
 func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		hs := HTTPServer{
 			Bus:              bus.GetBus(),
 			AuthTokenService: auth.NewFakeUserAuthTokenService(),
@@ -312,8 +294,6 @@ func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern
 
 func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd models.RevokeAuthTokenCmd, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
@@ -343,8 +323,6 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 
 func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
@@ -372,8 +350,6 @@ func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, route
 
 func adminDisableUserScenario(t *testing.T, desc string, action string, url string, routePattern string, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		authInfoService := &logintest.AuthInfoServiceFake{}
@@ -410,8 +386,6 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 		SQLStore: mockstore.NewSQLStoreMock(),
 	}
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = hs.SQLStore
 		sc.authInfoService = &logintest.AuthInfoServiceFake{}
@@ -430,8 +404,6 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 
 func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.AdminCreateUserForm, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		hs := HTTPServer{
 			Bus: bus.GetBus(),
 			Login: loginservice.LoginServiceMock{

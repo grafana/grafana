@@ -80,8 +80,6 @@ func Test_teamSync(t *testing.T) {
 		Login: "test_user",
 	}
 	authInfoMock.ExpectedUser = expectedUser
-	bus.ClearBusHandlers()
-	t.Cleanup(func() { bus.ClearBusHandlers() })
 
 	var actualUser *models.User
 	var actualExternalUser *models.ExternalUserInfo
