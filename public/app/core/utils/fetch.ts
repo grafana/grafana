@@ -109,7 +109,7 @@ export async function parseResponseBody<T>(
           return await response.json();
         } catch (err) {
           console.warn(`${response.url} returned an invalid JSON -`, err);
-          return {} as unknown as T;
+          return response.text() as any;
         }
 
       case 'text':
