@@ -75,6 +75,7 @@ async function getTestContext(
 
   await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalled());
   expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1);
+  jest.clearAllMocks();
 
   return { rerender, getLibraryPanelsSpy, getSpy, getAllPanelPluginMetaSpy };
 }
@@ -91,7 +92,6 @@ describe('LibraryPanelsSearch', () => {
     describe('and user searches for library panel by name or description', () => {
       it('should call api with correct params', async () => {
         const { getLibraryPanelsSpy } = await getTestContext();
-        getLibraryPanelsSpy.mockClear();
 
         await userEvent.type(screen.getByPlaceholderText(/search by name/i), 'a');
         await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalled());
@@ -119,7 +119,6 @@ describe('LibraryPanelsSearch', () => {
     describe('and user changes sorting', () => {
       it('should call api with correct params', async () => {
         const { getLibraryPanelsSpy } = await getTestContext({ showSort: true });
-        getLibraryPanelsSpy.mockClear();
 
         await userEvent.type(screen.getByText(/sort \(default a–z\)/i), 'Desc{enter}');
         await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1));
@@ -147,7 +146,6 @@ describe('LibraryPanelsSearch', () => {
     describe('and user changes panel filter', () => {
       it('should call api with correct params', async () => {
         const { getLibraryPanelsSpy } = await getTestContext({ showPanelFilter: true });
-        getLibraryPanelsSpy.mockClear();
 
         await userEvent.type(screen.getByRole('combobox', { name: /panel type filter/i }), 'Graph{enter}');
         await userEvent.type(screen.getByRole('combobox', { name: /panel type filter/i }), 'Time Series{enter}');
@@ -175,7 +173,6 @@ describe('LibraryPanelsSearch', () => {
     describe('and user changes folder filter', () => {
       it('should call api with correct params', async () => {
         const { getLibraryPanelsSpy } = await getTestContext({ showFolderFilter: true });
-        getLibraryPanelsSpy.mockClear();
 
         await userEvent.click(screen.getByRole('combobox', { name: /folder filter/i }));
         await userEvent.type(screen.getByRole('combobox', { name: /folder filter/i }), '{enter}', {

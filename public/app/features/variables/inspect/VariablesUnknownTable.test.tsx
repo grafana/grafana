@@ -1,6 +1,6 @@
 import React from 'react';
 import * as runtime from '@grafana/runtime';
-import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariablesUnknownTable, VariablesUnknownTableProps } from './VariablesUnknownTable';
@@ -36,13 +36,6 @@ describe('VariablesUnknownTable', () => {
   });
 
   describe('when expanding the section', () => {
-    it('then it should show loading spinner', async () => {
-      await getTestContext();
-
-      await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
-      await waitFor(() => expect(screen.getByText('Loading...')).toBeInTheDocument());
-    });
-
     it('then it should call getUnknownsNetwork', async () => {
       const { getUnknownsNetworkSpy } = await getTestContext();
 
@@ -54,7 +47,6 @@ describe('VariablesUnknownTable', () => {
       const { reportInteractionSpy } = await getTestContext();
 
       await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
-      await waitFor(() => expect(screen.getByText('Loading...')).toBeInTheDocument());
 
       expect(reportInteractionSpy).toHaveBeenCalledTimes(1);
       expect(reportInteractionSpy).toHaveBeenCalledWith('Unknown variables section expanded');
@@ -83,7 +75,6 @@ describe('VariablesUnknownTable', () => {
         await getTestContext();
 
         await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
-        await waitForElementToBeRemoved(() => screen.getByText('Loading...'));
 
         expect(screen.getByText('No renamed or missing variables found.')).toBeInTheDocument();
       });
@@ -96,7 +87,6 @@ describe('VariablesUnknownTable', () => {
         const { reportInteractionSpy } = await getTestContext({}, usages);
 
         await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
-        await waitForElementToBeRemoved(() => screen.getByText('Loading...'));
 
         expect(screen.queryByText('No renamed or missing variables found.')).not.toBeInTheDocument();
         expect(screen.getByText('Renamed Variable')).toBeInTheDocument();
@@ -117,13 +107,19 @@ describe('VariablesUnknownTable', () => {
         it('then it should report slow expansion', async () => {
           const variable = customBuilder().withId('Renamed Variable').withName('Renamed Variable').build();
           const usages = [{ variable, nodes: [], edges: [], showGraph: false }];
-          const { reportInteractionSpy } = await getTestContext({}, usages);
+          const { reportInteractionSpy, rerender } = await getTestContext({}, usages);
           const dateNowStart = 1000;
           const dateNowStop = 2000;
           Date.now = jest.fn().mockReturnValueOnce(dateNowStart).mockReturnValue(dateNowStop);
 
           await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
-          await waitForElementToBeRemoved(() => screen.getByText('Loading...'));
+          const props: VariablesUnknownTableProps = {
+            variables: [],
+            dashboard: null,
+          };
+          await act(async () => {
+            rerender(<VariablesUnknownTable {...props} />);
+          });
 
           // make sure we report the interaction for slow expansion
           expect(reportInteractionSpy).toHaveBeenCalledTimes(2);
