@@ -11,6 +11,40 @@ import (
 )
 
 func TestRequestParser(t *testing.T) {
+	t.Run("Query migration ", func(t *testing.T) {
+		t.Run("legacy statistics field is migrated", func(t *testing.T) {
+			oldQuery := &backend.DataQuery{
+				MaxDataPoints: 0,
+				QueryType:     "timeSeriesQuery",
+				Interval:      0,
+			}
+			oldQuery.RefID = "A"
+			oldQuery.JSON = []byte(`{
+				"region": "us-east-1",
+				"namespace": "ec2",
+				"metricName": "CPUUtilization",
+				"dimensions": {
+				  "InstanceId": ["test"]
+				},
+				"statistics": ["Average", "Sum"],
+				"period": "600",
+				"hide": false
+			  }`)
+			migratedQueries, err := migrateLegacyQuery([]backend.DataQuery{*oldQuery})
+			require.NoError(t, err)
+			assert.Equal(t, 1, len(migratedQueries))
+
+			migratedQuery := migratedQueries[0]
+			assert.Equal(t, "A", migratedQuery.RefID)
+			model, err := simplejson.NewJson(migratedQuery.JSON)
+			require.NoError(t, err)
+			assert.Equal(t, "Average", model.Get("statistic").MustString())
+			res, err := model.Get("statistic").Array()
+			assert.Error(t, err)
+			assert.Nil(t, res)
+		})
+	})
+
 	t.Run("New dimensions structure", func(t *testing.T) {
 		query := simplejson.NewFromAny(map[string]interface{}{
 			"refId":      "ref1",
@@ -288,38 +322,6 @@ func getBaseJsonQuery() *simplejson.Json {
 }
 
 func Test_migrateLegacyQuery(t *testing.T) {
-	t.Run("legacy statistics field is migrated", func(t *testing.T) {
-		oldQuery := &backend.DataQuery{
-			MaxDataPoints: 0,
-			QueryType:     "timeSeriesQuery",
-			Interval:      0,
-		}
-		oldQuery.RefID = "A"
-		oldQuery.JSON = []byte(`{
-				"region": "us-east-1",
-				"namespace": "ec2",
-				"metricName": "CPUUtilization",
-				"dimensions": {
-				  "InstanceId": ["test"]
-				},
-				"statistics": ["Average", "Sum"],
-				"period": "600",
-				"hide": false
-			  }`)
-		migratedQueries, err := migrateLegacyQuery([]backend.DataQuery{*oldQuery})
-		require.NoError(t, err)
-		assert.Equal(t, 1, len(migratedQueries))
-
-		migratedQuery := migratedQueries[0]
-		assert.Equal(t, "A", migratedQuery.RefID)
-		model, err := simplejson.NewJson(migratedQuery.JSON)
-		require.NoError(t, err)
-		assert.Equal(t, "Average", model.Get("statistic").MustString())
-		res, err := model.Get("statistic").Array()
-		assert.Error(t, err)
-		assert.Nil(t, res)
-	})
-
 	t.Run("alias field is migrated to dynamic labels for single query", func(t *testing.T) {
 		migratedQueries, err := migrateLegacyQuery(
 			[]backend.DataQuery{
