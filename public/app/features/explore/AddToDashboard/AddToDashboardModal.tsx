@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup } from '@grafana/ui';
 import { locationUtil, SelectableValue } from '@grafana/data';
 import { setDashboardInLocalStorage, AddToDashboardError } from './addToDashboard';
@@ -131,11 +131,6 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
     onClose();
   };
 
-  const handleClose = useCallback(() => {
-    reportInteraction('e2d_cancel');
-    onClose();
-  }, [onClose]);
-
   useEffect(() => {
     reportInteraction('e2d_open');
   }, []);
@@ -188,7 +183,7 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
         )}
 
         <Modal.ButtonRow>
-          <Button type="reset" onClick={handleClose} fill="outline" variant="secondary">
+          <Button type="reset" onClick={onClose} fill="outline" variant="secondary">
             Cancel
           </Button>
           <Button

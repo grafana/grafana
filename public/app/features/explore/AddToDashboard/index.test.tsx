@@ -6,12 +6,13 @@ import { ExploreId, ExploreState } from 'app/types';
 import { Provider } from 'react-redux';
 import { AddToDashboard } from '.';
 import * as api from './addToDashboard';
-import { locationService } from '@grafana/runtime';
+import { locationService, setEchoSrv } from '@grafana/runtime';
 import * as initDashboard from 'app/features/dashboard/state/initDashboard';
 import { DataQuery } from '@grafana/data';
 import { createEmptyQueryResponse } from '../state/utils';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchItemType } from 'app/features/search/types';
+import { Echo } from 'app/core/services/echo/Echo';
 
 const setup = (children: ReactNode, queries: DataQuery[] = [{ refId: 'A' }]) => {
   const store = configureStore({
@@ -33,6 +34,10 @@ const openModal = async () => {
 };
 
 describe('AddToDashboardButton', () => {
+  beforeAll(() => {
+    setEchoSrv(new Echo());
+  });
+
   it('Is disabled if explore pane has no queries', async () => {
     setup(<AddToDashboard exploreId={ExploreId.left} />, []);
 
