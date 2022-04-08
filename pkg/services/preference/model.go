@@ -66,6 +66,21 @@ type PatchPreferenceCommand struct {
 	Navbar          *NavbarPreference `json:"navbar,omitempty"`
 }
 
+type UpsertPreference struct {
+	Id              int64
+	OrgID           int64 `xorm:"org_id"`
+	UserID          int64 `xorm:"user_id"`
+	TeamID          int64 `xorm:"team_id"`
+	Version         int
+	HomeDashboardID int64 `xorm:"home_dashboard_id"`
+	Timezone        string
+	WeekStart       string
+	Theme           string
+	Created         time.Time
+	Updated         time.Time
+	JsonData        *PreferencesJsonData
+}
+
 type NavLink struct {
 	ID     string `json:"id,omitempty"`
 	Text   string `json:"text,omitempty"`
@@ -95,4 +110,5 @@ func (j *PreferencesJsonData) ToDB() ([]byte, error) {
 	return json.Marshal(j)
 }
 
-func (p Preference) TableName() string { return "preferences" }
+func (p Preference) TableName() string       { return "preferences" }
+func (p UpsertPreference) TableName() string { return "preferences" }

@@ -53,6 +53,6 @@ func (f *FakePreferenceStore) Set(ctx context.Context, cmd *pref.SavePreferenceC
 	return f.ExpectedError
 }
 
-func (f *FakePreferenceStore) Upsert(ctx context.Context, cmd *pref.Preference, exist bool) error {
+func (f *FakePreferenceStore) Upsert(ctx context.Context, cmd *pref.UpsertPreference, exist bool) error {
 	return f.ExpectedError
 }

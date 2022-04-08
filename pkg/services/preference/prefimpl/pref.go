@@ -66,11 +66,46 @@ func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pre
 }
 
 func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) error {
-	return s.store.Set(ctx, cmd)
+	var exist bool
+	var preference *pref.UpsertPreference
+	prefs, err := s.store.Get(ctx, &pref.GetPreferenceQuery{
+		OrgID:  cmd.OrgID,
+		UserID: cmd.UserID,
+		TeamID: cmd.TeamID,
+	})
+	if err != nil {
+		if errors.Is(err, pref.ErrPrefNotFound) {
+			preference = &pref.UpsertPreference{
+				UserID:          cmd.UserID,
+				OrgID:           cmd.OrgID,
+				TeamID:          cmd.TeamID,
+				HomeDashboardID: cmd.HomeDashboardID,
+				Timezone:        cmd.Timezone,
+				WeekStart:       cmd.WeekStart,
+				Theme:           cmd.Theme,
+				Created:         time.Now(),
+				Updated:         time.Now(),
+			}
+		}
+		return err
+	} else {
+		exist = true
+		preference = (*pref.UpsertPreference)(prefs)
+		preference.Timezone = cmd.Timezone
+		preference.WeekStart = cmd.WeekStart
+		preference.Theme = cmd.Theme
+		preference.Updated = time.Now()
+		preference.Version += 1
+		preference.JsonData = &pref.PreferencesJsonData{}
+		if cmd.Navbar != nil {
+			preference.JsonData.Navbar = *cmd.Navbar
+		}
+	}
+	return s.store.Upsert(ctx, preference, exist)
 }
 
 func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) error {
-	var preference *pref.Preference
+	var preference *pref.UpsertPreference
 	var exist bool
 	prefs, err := s.store.Get(ctx, &pref.GetPreferenceQuery{
 		OrgID:  cmd.OrgID,
@@ -82,7 +117,7 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 	}
 
 	if errors.Is(err, pref.ErrPrefNotFound) {
-		preference = &pref.Preference{
+		preference = &pref.UpsertPreference{
 			UserID:   cmd.UserID,
 			OrgID:    cmd.OrgID,
 			TeamID:   cmd.TeamID,
