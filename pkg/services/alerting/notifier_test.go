@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/imguploader"
@@ -204,14 +203,6 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			}
 			return nil
 		}
-
-		bus.AddHandler("test", func(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error {
-			return nil
-		})
-
-		bus.AddHandler("test", func(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error {
-			return nil
-		})
 
 		setting.AlertingNotificationTimeout = 30 * time.Second
 
