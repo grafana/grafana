@@ -45,9 +45,9 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
     } catch (e) {
       throw AddToDashboardError.FETCH_DASHBOARD;
     }
+  } else {
+    dto = createDashboard();
   }
-
-  dto = createDashboard();
 
   dto.dashboard.panels = [panel, ...(dto.dashboard.panels ?? [])];
 

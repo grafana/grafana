@@ -271,6 +271,7 @@ describe('AddToDashboardButton', () => {
     afterEach(() => {
       jest.restoreAllMocks();
     });
+
     it('Shows an error if opening a new tab fails', async () => {
       jest.spyOn(global, 'open').mockReturnValue(null);
       const removeDashboardSpy = jest.spyOn(initDashboard, 'removeDashboardToFetchFromLocalStorage');

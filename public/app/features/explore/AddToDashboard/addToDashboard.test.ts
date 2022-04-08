@@ -3,10 +3,11 @@ import { ExplorePanelData } from 'app/types';
 import { createEmptyQueryResponse } from '../state/utils';
 import { setDashboardInLocalStorage } from './addToDashboard';
 import * as api from 'app/features/dashboard/state/initDashboard';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 describe('addPanelToDashboard', () => {
   let spy: jest.SpyInstance;
-  beforeEach(() => {
+  beforeAll(() => {
     spy = jest.spyOn(api, 'setDashboardToFetchFromLocalStorage');
   });
 
@@ -15,7 +16,7 @@ describe('addPanelToDashboard', () => {
   });
 
   it('Correct datasource ref is used', async () => {
-    setDashboardInLocalStorage({
+    await setDashboardInLocalStorage({
       queries: [],
       queryResponse: createEmptyQueryResponse(),
       datasource: { type: 'loki', uid: 'someUid' },
@@ -32,7 +33,7 @@ describe('addPanelToDashboard', () => {
   it('All queries are correctly passed through', async () => {
     const queries: DataQuery[] = [{ refId: 'A' }, { refId: 'B', hide: true }];
 
-    setDashboardInLocalStorage({
+    await setDashboardInLocalStorage({
       queries,
       queryResponse: createEmptyQueryResponse(),
     });
@@ -40,6 +41,38 @@ describe('addPanelToDashboard', () => {
       expect.objectContaining({
         dashboard: expect.objectContaining({
           panels: expect.arrayContaining([expect.objectContaining({ targets: expect.arrayContaining(queries) })]),
+        }),
+      })
+    );
+  });
+
+  it('Previous panels should not be removed', async () => {
+    const queries: DataQuery[] = [{ refId: 'A' }];
+    const existingPanel = { prop: 'this should be kept' };
+    jest.spyOn(backendSrv, 'getDashboardByUid').mockResolvedValue({
+      dashboard: {
+        templating: { list: [] },
+        title: 'Previous panels should not be removed',
+        uid: 'someUid',
+        panels: [existingPanel],
+      },
+      meta: {},
+    });
+
+    await setDashboardInLocalStorage({
+      queries,
+      queryResponse: createEmptyQueryResponse(),
+      dashboardUid: 'someUid',
+      datasource: { type: '' },
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dashboard: expect.objectContaining({
+          panels: expect.arrayContaining([
+            expect.objectContaining({ targets: expect.arrayContaining(queries) }),
+            existingPanel,
+          ]),
         }),
       })
     );
@@ -64,7 +97,7 @@ describe('addPanelToDashboard', () => {
       ];
 
       it.each(cases)('%s', async (_, queries, queryResponse) => {
-        setDashboardInLocalStorage({ queries, queryResponse });
+        await setDashboardInLocalStorage({ queries, queryResponse });
         expect(spy).toHaveBeenCalledWith(
           expect.objectContaining({
             dashboard: expect.objectContaining({
@@ -98,7 +131,7 @@ describe('addPanelToDashboard', () => {
             [framesType]: [new MutableDataFrame({ refId: 'A', fields: [] })],
           };
 
-          setDashboardInLocalStorage({ queries, queryResponse });
+          await setDashboardInLocalStorage({ queries, queryResponse });
           expect(spy).toHaveBeenCalledWith(
             expect.objectContaining({
               dashboard: expect.objectContaining({
