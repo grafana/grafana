@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"time"
 
-
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
