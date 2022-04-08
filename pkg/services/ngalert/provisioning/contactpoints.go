@@ -211,9 +211,8 @@ func (ecp *EmbeddedContactPointService) UpdateContactPoint(ctx context.Context, 
 	}
 	// validate merged values
 	if err := contactPoint.IsValid(ecp.encryptionService.GetDecryptedValue); err != nil {
-		return fmt.Errorf("contact point is not valid: %w", err)
+		return err
 	}
-	fmt.Printf("%+v\n", *contactPoint.Settings)
 	// transform to internal model
 	extracedSecrets, err := contactPoint.ExtractSecrtes()
 	if err != nil {
@@ -258,7 +257,7 @@ func (ecp *EmbeddedContactPointService) UpdateContactPoint(ctx context.Context, 
 	if err != nil {
 		return err
 	}
-	return ecp.amStore.UpdateAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+	return ecp.amStore.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(data),
 		FetchedConfigurationHash:  fetchedHash,
 		ConfigurationVersion:      "v1",
@@ -284,12 +283,20 @@ func (ecp *EmbeddedContactPointService) DeleteContactPoint(ctx context.Context, 
 	if err != nil {
 		return err
 	}
-	return ecp.amStore.UpdateAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: string(data),
-		FetchedConfigurationHash:  fetchedHash,
-		ConfigurationVersion:      "v1",
-		Default:                   false,
-		OrgID:                     orgID,
+	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
+		err := ecp.provenanceStore.DeleteProvenance(ctx, orgID, &apimodels.EmbeddedContactPoint{
+			UID: uid,
+		})
+		if err != nil {
+			return err
+		}
+		return ecp.amStore.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+			AlertmanagerConfiguration: string(data),
+			FetchedConfigurationHash:  fetchedHash,
+			ConfigurationVersion:      "v1",
+			Default:                   false,
+			OrgID:                     orgID,
+		})
 	})
 }
 
@@ -297,7 +304,7 @@ func (ecp *EmbeddedContactPointService) getCurrentConfig(ctx context.Context, or
 	query := &models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
 	}
-	err := ecp.amStore.GetLatestAlertmanagerConfiguration(context.Background(), query)
+	err := ecp.amStore.GetLatestAlertmanagerConfiguration(ctx, query)
 	if err != nil {
 		return nil, "", err
 	}

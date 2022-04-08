@@ -128,6 +128,10 @@ func (f *fakeProvisioningStore) SetProvenance(ctx context.Context, o models.Prov
 	return nil
 }
 
+func (f *fakeProvisioningStore) DeleteProvenance(ctx context.Context, orgID int64, o models.ProvisionableInOrg) error {
+	return nil
+}
+
 type nopTransactionManager struct{}
 
 func newNopTransactionManager() *nopTransactionManager {
