@@ -1,5 +1,5 @@
 ---
-title: 'Fine-grained access control fixed role definitions'
+title: 'Role-based access control fixed role definitions'
 menuTitle: 'Fixed role definitions'
 description: 'xxx.'
 aliases: [xxx]
@@ -8,7 +8,7 @@ keywords:
   - xxx
 ---
 
-# Fine-grained access control fixed role definitions
+# Role-based access control fixed role definitions
 
 The following table lists permissions associated with each fixed role.
 

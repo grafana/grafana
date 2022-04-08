@@ -14,7 +14,7 @@ Before you assign fine-grained access control to Grafana users, you must enable 
 
 You can enable fine-grained access control by:
 
-- add a feature toggle to the Grafana configuration file, or
+- adding a feature toggle to the Grafana configuration file, or
 - adding an environment variable to the Grafana configuration file
 
 This topic includes instructions for both methods of enabling fine-grained access control, and steps for how to verify that it is enabled.

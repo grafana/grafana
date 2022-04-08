@@ -70,7 +70,9 @@ Fine-grained access control is available for the following capabilities:
 - [Teams]({{< relref "../../administration/manage-users-permissions/manage-teams/_index.md" >}})
 - [Users]({{< relref "../../administration/manage-users-and-permissions/manage-server-users/_index.md" >}})
 
-To learn more about the permissions associated with each fixed role, refer to [Fine-grained access control fixed role definitions]({{< relref "./fgac-fixed-role-definitions.md" >}}).
+To learn more about the permissions associated with each fixed role, refer to [Fine-grained access control fixed role definitions]({{< relref "./rbac-fixed-role-definitions.md" >}}).
+
+To learn how to assign fixed roles to a user or team, refer to [Assign and manage fixed roles]({{< relref "./assign-manage-fixed-roles.md" >}})
 
 ### Fixed role constraints
 
@@ -80,43 +82,23 @@ Consider the following constraints when you assign fixed roles to users or teams
 - You cannot change or delete a fixed role.
 - All fixed roles begin with the prefix `fixed:`.
 
-
 ## Custom roles
 
-If you are a Grafana Enterprise customer, you also have the ability to create custom roles. Custom roles contain unique combinations of permissions _actions_ and _scopes_. An action defines the action a use can perform on a Grafana resource. For example, the `teams.roles:list` action means that the use can see a list of role associated with each team.
+If you are a Grafana Enterprise customer, you also have the ability to create custom roles that enable you to manage access to your users the way you want.
+
+Custom roles contain unique combinations of permissions _actions_ and _scopes_. An action defines the action a use can perform on a Grafana resource. For example, the `teams.roles:list` action means that the use can see a list of role associated with each team.
 
 A scope describes where an action can be performed. For example, the `teams*:` scope restricts the user's action to teams. When paired with the `teams.roles:list` action, this permission prohibits the user from viewing roles associated with any other Grafana resource, for example, organizations.
 
+Consider creating a custom role when:
 
+- xxx.
+- xxx.
+- xxx.
 
+### Custom role creation
 
+You can create and manage custom role by using either of the following methods:
 
-
-# Roles
-
-A role represents set of permissions that allow you to perform specific actions on Grafana resources. Refer to [About users and permissions]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md" >}}) to understand how permissions work.
-
-There are two types of roles:
-
-- [Fixed roles]({{< relref "./roles.md#fixed-roles" >}}), which provide granular access for specific resources within Grafana and are managed by the Grafana itself.
-- [Custom roles]({{< relref "./roles.md#custom-roles.md" >}}), which provide granular access based on the user specified set of permissions.
-
-You can use [Fine-grained access control API]({{< relref "../../http_api/access_control.md" >}}) to list available roles and permissions.
-
-
-## Custom roles
-
-Custom roles allow you to manage access to your users the way you want, by mapping [fine-grained permissions]({{< relref "./permissions.md" >}}) to it and creating [built-in role assignments]({{< ref "#built-in-role-assignments.md" >}}).
-
-To create, update or delete a custom role, you can use the [Fine-grained access control API]({{< relref "../../http_api/access_control.md" >}}) or [Grafana Provisioning]({{< relref "./provisioning.md" >}}).
-
-## Assign roles
-
-[Custom roles]({{< ref "#custom-roles" >}}) and [Fixed roles]({{< ref "#fixed-roles" >}}) can be assigned to users, the existing [Organization roles]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md#organization-users-and-permissions" >}}) and to the [Grafana Server Admin]({{< relref "../../administration/manage-users-and-permissions/about-users-and-permissions.md#grafana-server-administrators" >}}) role.
-
-Visit [Manage role assignments]({{< relref "manage-role-assignments/_index.md" >}}) page for more details.
-
-### Scope of assignments
-
-A role assignment can be either _global_ or _organization local_. _Global_ assignments are not mapped to any specific organization and will be applied to all organizations, whereas _organization local_ assignments are only applied for that specific organization.
-You can only create _organization local_ assignments for _organization local_ roles.
+- [Create, update, or delete custom roles using Grafana provisioning({{< relref "../provision-custom-roles.md" >}}).
+- [Fine-grained access control API]({{< relref "../../http_api/access_control.md" >}})

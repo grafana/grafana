@@ -10,9 +10,19 @@ keywords:
 
 # Create, update, or delete a custom role using Grafana provisioning
 
+You can create a custom role when the default roles and fixed roles do not meet you permissions requirements.
+
+Update a custom role when you want to change permissions associated with the custom role. Delete a custom role when you no longer need it.
+
+When you delete a custom role...what happens? What
+
 Need more info here on when to create a custom role and when to update a custom role.
 
-When you update a role, the existing role inside Grafana is altered to be exactly what is specified in the YAML file, including permissions.
+
+By default, Grafana Server Admin has a [built-in role assignment]({{< ref "#built-in-role-assignments" >}}) which allows a user to create, update, or delete custom roles.
+If a Grafana Server Admin wants to delegate that privilege to other users, they can create a custom role with relevant [permissions]({{< relref "./permissions.md" >}}) and `permissions:delegate` scope will allow those users to manage roles themselves.
+
+Note that you won't be able to create, update or delete a custom role with permissions which you yourself do not have. For example, if the only permission you have is a `users:create`, you won't be able to create a role with other permissions.
 
 ## Create or update a custom role
 
@@ -20,8 +30,9 @@ Create a custom role when the fixed roles that Grafana provides do not meet your
 
 ### Before you begin
 
-- xxxx
-- xxxx
+- [Enable Grafana to provision custom roles]({{< relref "./enable-provisioning.md" >}})
+- Ensure that you have permissions to create, update, or delete a custom role.
+  - By default, the Grafana Admin role has permission to create and update custom roles
 
 **To create or update a custom role:**
 

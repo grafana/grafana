@@ -87,7 +87,7 @@ Not sure what to do with this prose: Assignments to built-in roles will be ignor
 | `name`        | Enter the name of the custom role.                                                                                                                                                                                                                           |
 | `version`     | Enter the custom role version number. Assignments are updated if the version of the role is greater then or equal to the version number stored internally. If you are updating a role assignment, you are not required to increment the role version number. |
 | `global`      | Enter `true` or `false`                                                                                                                                                                                                                                      |
-| `permissions` | enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [LINK]                                                                                                                                |
+| `permissions` | Enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [LINK]                                                                                                                                |
 | `teams`       | Enter the team or teams to which you are adding the custom role.                                                                                                                                                                                             |
 | `orgId`       | Because teams belong to organizations, you must add the `orgId` value.                                                                                                                                                                                       |
 
@@ -95,7 +95,7 @@ Not sure what to do with this prose: Assignments to built-in roles will be ignor
 
    For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
 
-The following example assigns the custom `users:writer` role to the `user editors` and `user admins` teams:
+The following example assigns the `custom:users:writer` role to the `user editors` and `user admins` teams:
 
 ```yaml
 # config file version

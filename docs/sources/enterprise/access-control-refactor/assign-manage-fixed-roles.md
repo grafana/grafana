@@ -1,6 +1,6 @@
 ---
-title: 'Assign and manage fine-grained acces control permissions'
-menuTitle: 'Assign and manage fine-grained acces control permissions'
+title: 'Assign and manage fixed roles'
+menuTitle: 'Assign and manage fixed roles'
 description: 'xxx.'
 aliases: [xxx]
 weight: 40
@@ -8,12 +8,12 @@ keywords:
   - xxx
 ---
 
-# Assign and manage fine-grained access control permissions
+# Assign and manage fixed roles
 
 This topic describes how to:
 
-- Assign a fine-grained access control role to a user within the context of an organization
-- Assign a fine-grained access control role to a user to multiple organizations, within the context of a server administration.
+- Assign a fixed role to a user within the context of an organization administrator.
+- Assign a fixed role to a user within the context of a server administration. This approach enables you to assign a fixed role to a user who belongs to multiple organizations.
 
 In both cases, the assignment applies only to the user role within the affected organization, and no other organizations. For example, if you grant the user the **Data source editor** role in the **Main** organization, then the user can edit data sources in the **Main** organization, but not in other organizations.
 
@@ -22,9 +22,9 @@ In both cases, the assignment applies only to the user role within the affected 
 ### Before you begin
 
 - [Plan your fine-grained rollout strategy](./plan-fgac-rollout-strategy.md).
-- Identify the fine-grained access control role that you want to assign to the user.
+- Identify the fixed roles that you want to assign to the user.
 
-  For more information about available fine-grained access control roles, refer to [LINK]
+  For more information about available fixed roles, refer to [Role-based access control fixed role definitions](./rbac-fixed-role-definitions.md)
 
 - Ensure that your Grafana user is assigned one of the following roles:
   - The admininstrator built-in role.
@@ -42,7 +42,7 @@ In both cases, the assignment applies only to the user role within the affected 
 
 1. Hover your cursor over **Configuration** (the gear icon) in the left navigation menu, and click **Users**.
 1. Click the **Role** associated with the user.
-1. Select the role that you want to assign to the user.
+1. Select the fixed role that you want to assign to the user.
 1. Click **Update**.
 
 ![User role picker in an organization](/static/img/docs/enterprise/user_role_picker_global.png)

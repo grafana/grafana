@@ -1,6 +1,6 @@
 ---
-title: 'Fine-grained access control permissions actions and scopes'
-menuTitle: 'Permissions actions and scopes'
+title: 'Role-based access control permissions actions and scopes'
+menuTitle: 'RBAC permissions actions and scopes'
 description: 'xxx.'
 aliases: [xxx]
 weight: 100
@@ -8,7 +8,7 @@ keywords:
   - xxx
 ---
 
-# Fine-grained access control permissions actions and scopes
+# Role-based access control permissions actions and scopes
 
 A permission is an action and a scope. When creating a fine-grained access control, consider what specific action a user should be allowed to perform, and on what resources (its scope).
 

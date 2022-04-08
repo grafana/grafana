@@ -10,28 +10,35 @@ keywords:
 
 # About creating or updating custom roles using Grafana provisioning
 
-You can create, change or remove [Custom roles]({{< relref "./roles.md#custom-roles" >}}) and create or remove [built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}), by adding one or more YAML configuration files in the [`provisioning/access-control/`]({{< relref "../../administration/configuration/#provisioning" >}}) directory.
-Refer to [Grafana provisioning]({{< relref "../../administration/configuration/#provisioning" >}}) to learn more about provisioning.
+You can create a custom role when the default roles and fixed roles do not meet your permissions requirements. A custom role enables you to manage user permissions to best suit your needs.
 
-If you want to manage roles and built-in role assignments by API, refer to the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control/" >}}).
+You can use Grafana provisioning to:
 
-+++++++++++++++++++++++
-Fine-grained access control determines _who_ has access (an `identity`), the actions they can perform, and on which _Grafana resource_ (`role`) they can act.
-+++++++++++++++++++++++
+- Create, update, and delete a custom role
+- Assign a custom role to a team
+- Assign a custom role to a default role
+- Assign a fixed role to a team
 
-++++++++++++
-You can create, update and delete custom roles by using the [Access Control HTTP API]({{< relref "../../http_api/access_control.md" >}}) or by using [Grafana Provisioning]({{< relref "./provisioning.md" >}}).
+> **Note:** You can also create, update and delete custom roles by using the [Access Control HTTP API]({{< relref "../../../http_api/access_control.md" >}})
 
-By default, Grafana Server Admin has a [built-in role assignment]({{< ref "#built-in-role-assignments" >}}) which allows a user to create, update, or delete custom roles.
-If a Grafana Server Admin wants to delegate that privilege to other users, they can create a custom role with relevant [permissions]({{< relref "./permissions.md" >}}) and `permissions:delegate` scope will allow those users to manage roles themselves.
+## Custom role actions and scopes
 
-Note that you won't be able to create, update or delete a custom role with permissions which you yourself do not have. For example, if the only permission you have is a `users:create`, you won't be able to create a role with other permissions.
+Custom roles contain unique combinations of permissions _actions_ and _scopes_. An action defines the action a use can perform on a Grafana resource. For example, the `teams.roles:list` action means that the use can see a list of role associated with each team.
+
+A scope describes where an action can be performed. For example, the `teams*:` scope restricts the user's action to teams. When paired with the `teams.roles:list` action, this permission prohibits the user from viewing roles associated with any other Grafana resource, for example, organizations.
+
+For more information about custom role actions and scopes, refer to [Role-based access control permissions actions and scopes]({{< relref "../custom-role-actions-scopes.md" >}}).
 
 ### Custom role assignment
 
-hidden roles
-global roles
+When you create a custom role, the role appears in the UI along with the default RBAC roles. As with default roles, you use the role picker to assign a custom role to a user. For more information about assigning default roles, refer to [Change a user's organization permissions]({{< relref "../../../administration/manage-users-and-permissions/manage-org-users/change-user-org-permissions.md" >}}).
 
-## Role scopes
 
-A role can be either _global_ or _organization local_. _Global_ roles are not mapped to any specific organization and can be reused across multiple organizations, whereas _organization local_ roles are only available for that specific organization.
+## Global vs local custom roles
+
+A custom role can be either _global_ or _organization local_. Global roles are not associated with any specific organization, which means that you can reuse them across all organizations. Organization local roles are only available for the organization you specify.
+
+
+## Hidden roles
+
+What is this and when would a user hide a role?
