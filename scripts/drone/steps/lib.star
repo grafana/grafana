@@ -208,9 +208,9 @@ def enterprise_downstream_step(edition, ver_mode):
     else:
         repo += 'main'
 
-    dependencies = []
-    if ver_mode == 'pr':
-        dependencies = [ 'init-enterprise-downstream' ]
+    # dependencies = []
+    # if ver_mode == 'pr':
+    #     dependencies = [ 'init-enterprise-downstream' ]
 
     return {
         'name': 'trigger-enterprise-downstream',
@@ -227,7 +227,7 @@ def enterprise_downstream_step(edition, ver_mode):
                 'OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}',
             ],
         },
-        'depends_on': dependencies,
+        # 'depends_on': dependencies,
     }
 
 

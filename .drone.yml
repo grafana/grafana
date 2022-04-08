@@ -128,18 +128,7 @@ steps:
   - yarn install --immutable
   image: grafana/build-container:1.5.3
   name: initialize
-- commands:
-  - ./bin/grabpl init-enterprise-downstream --github-token $$env:GITHUB_TOKEN
-  depends_on:
-  - initialize
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/build-container:1.5.3
-  name: init-enterprise-downstream
-- depends_on:
-  - init-enterprise-downstream
-  image: grafana/drone-downstream
+- image: grafana/drone-downstream
   name: trigger-enterprise-downstream
   settings:
     params:
@@ -748,8 +737,7 @@ steps:
       - .drone.yml
     repo:
     - grafana/grafana
-- depends_on: []
-  image: grafana/drone-downstream
+- image: grafana/drone-downstream
   name: trigger-enterprise-downstream
   settings:
     params:
@@ -4477,6 +4465,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 427a83cfcda192e7b5dc25330ec38c8f177f9e88256cfc115e87e932c9cead2b
+hmac: d6a112eb93e688be144b5b2c7d3c39f444f939fb96c07dd951c567bc2e1f0533
 
 ...

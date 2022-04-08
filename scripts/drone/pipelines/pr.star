@@ -72,7 +72,7 @@ def pr_pipelines(edition):
         test_frontend_step(),
     ]
     build_steps = [
-        enterprise_init_downstream_step(edition=edition),
+        # enterprise_init_downstream_step(edition=edition),
         enterprise_downstream_step(edition=edition, ver_mode=ver_mode),
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
