@@ -18,9 +18,13 @@ func HTTPLoggerMiddleware(cfg setting.PluginSettings) sdkhttpclient.Middleware {
 		}
 
 		enabled, path := getLoggerSettings(datasourceType, cfg)
+		if !enabled {
+			return next
+		}
+
 		hl := httplogger.
 			NewHTTPLogger(datasourceType, next).
-			WithEnabledCheck(func() bool { return enabled })
+			WithEnabledCheck(func() bool { return true })
 
 		if path != "" {
 			hl = hl.WithPath(path)
@@ -28,6 +32,15 @@ func HTTPLoggerMiddleware(cfg setting.PluginSettings) sdkhttpclient.Middleware {
 
 		return hl
 	})
+}
+
+func httpLoggingEnabled(cfg setting.PluginSettings) bool {
+	for _, settings := range cfg {
+		if enabled := settings["har_log_enabled"]; enabled == "true" {
+			return true
+		}
+	}
+	return false
 }
 
 func getLoggerSettings(datasourceType string, cfg setting.PluginSettings) (enabled bool, path string) {

@@ -23,7 +23,6 @@ func New(cfg *setting.Cfg, tracer tracing.Tracer) *sdkhttpclient.Provider {
 	middlewares := []sdkhttpclient.Middleware{
 		TracingMiddleware(logger, tracer),
 		DataSourceMetricsMiddleware(),
-		HTTPLoggerMiddleware(cfg.PluginSettings),
 		SetUserAgentMiddleware(userAgent),
 		sdkhttpclient.BasicAuthenticationMiddleware(),
 		sdkhttpclient.CustomHeadersMiddleware(),
@@ -32,6 +31,10 @@ func New(cfg *setting.Cfg, tracer tracing.Tracer) *sdkhttpclient.Provider {
 
 	if cfg.SigV4AuthEnabled {
 		middlewares = append(middlewares, SigV4Middleware(cfg.SigV4VerboseLogging))
+	}
+
+	if httpLoggingEnabled(cfg.PluginSettings) {
+		middlewares = append(middlewares, HTTPLoggerMiddleware(cfg.PluginSettings))
 	}
 
 	setDefaultTimeoutOptions(cfg)
