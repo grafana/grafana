@@ -6,7 +6,13 @@ import React, { ChangeEvent, PureComponent } from 'react';
 import { CloudWatchDatasource } from '../datasource';
 import { isMetricsQuery } from '../guards';
 import { migrateQueryAliasFormat } from '../migrations';
-import { CloudWatchJsonData, CloudWatchMetricsQuery, CloudWatchQuery, MetricEditorMode, MetricQueryType } from '../types';
+import {
+  CloudWatchJsonData,
+  CloudWatchMetricsQuery,
+  CloudWatchQuery,
+  MetricEditorMode,
+  MetricQueryType,
+} from '../types';
 import { Alias, MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor, SQLCodeEditor } from './';
 import QueryHeader from './QueryHeader';
 

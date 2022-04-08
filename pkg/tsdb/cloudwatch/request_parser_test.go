@@ -327,21 +327,21 @@ func Test_migrateLegacyQuery(t *testing.T) {
 	t.Run("alias field is migrated to dynamic labels for single query", func(t *testing.T) {
 		migratedQueries, err := migrateLegacyQuery(
 			[]backend.DataQuery{
-				*&backend.DataQuery{
+				{
 					RefID:     "A",
 					QueryType: "timeSeriesQuery",
 					JSON: []byte(`{
-				"region": "us-east-1",
-				"namespace": "ec2",
-				"metricName": "CPUUtilization",
-				"alias": "{{period}} {{any_other_word}}",
-				"dimensions": {
-				  "InstanceId": ["test"]
-				},
-				"statistics": ["Average", "Sum"],
-				"period": "600",
-				"hide": false
-			  }`),
+						"region": "us-east-1",
+						"namespace": "ec2",
+						"metricName": "CPUUtilization",
+						"alias": "{{period}} {{any_other_word}}",
+						"dimensions": {
+						  "InstanceId": ["test"]
+						},
+						"statistics": ["Average", "Sum"],
+						"period": "600",
+						"hide": false
+				  }`),
 				},
 			},
 			time.Now(), time.Now())
@@ -369,37 +369,37 @@ func Test_migrateLegacyQuery(t *testing.T) {
 	t.Run("alias field is migrated to dynamic labels for multiple queries", func(t *testing.T) {
 		migratedQueries, err := migrateLegacyQuery(
 			[]backend.DataQuery{
-				*&backend.DataQuery{
+				{
 					RefID:     "A",
 					QueryType: "timeSeriesQuery",
 					JSON: []byte(`{
-				"region": "us-east-1",
-				"namespace": "ec2",
-				"metricName": "CPUUtilization",
-				"alias": "{{period}} {{any_other_word}}",
-				"dimensions": {
-				  "InstanceId": ["test"]
+					"region": "us-east-1",
+					"namespace": "ec2",
+					"metricName": "CPUUtilization",
+					"alias": "{{period}} {{any_other_word}}",
+					"dimensions": {
+					  "InstanceId": ["test"]
+					},
+					"statistics": ["Average", "Sum"],
+					"period": "600",
+					"hide": false
+				  }`),
 				},
-				"statistics": ["Average", "Sum"],
-				"period": "600",
-				"hide": false
-			  }`),
-				},
-				*&backend.DataQuery{
+				{
 					RefID:     "B",
 					QueryType: "timeSeriesQuery",
 					JSON: []byte(`{
-				"region": "us-east-1",
-				"namespace": "ec2",
-				"metricName": "CPUUtilization",
-				"alias": "{{  label }}",
-				"dimensions": {
-				  "InstanceId": ["test"]
-				},
-				"statistics": ["Average", "Sum"],
-				"period": "600",
-				"hide": false
-			  }`),
+					"region": "us-east-1",
+					"namespace": "ec2",
+					"metricName": "CPUUtilization",
+					"alias": "{{  label }}",
+					"dimensions": {
+					  "InstanceId": ["test"]
+					},
+					"statistics": ["Average", "Sum"],
+					"period": "600",
+					"hide": false
+				  }`),
 				},
 			},
 			time.Now(), time.Now())

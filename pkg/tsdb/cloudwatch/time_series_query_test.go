@@ -136,7 +136,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 		assert.EqualError(t, err, "invalid time range: start time must be before end time")
 	})
 
-	t.Run("GetMetricDataWithContext passes query alias input label", func(t *testing.T) {
+	t.Run("GetMetricDataWithContext passes query alias as label", func(t *testing.T) {
 		cwClient = fakeCWClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
