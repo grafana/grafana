@@ -5,8 +5,7 @@
     "rootDirs": ["."],
     "paths": {
       "@grafana/data": ["."]
-    },
-    "tsBuildInfoFile": "./tsconfig.tsbuildinfo"
+    }
   },
   "exclude": ["dist", "node_modules"],
   "extends": "@grafana/tsconfig",

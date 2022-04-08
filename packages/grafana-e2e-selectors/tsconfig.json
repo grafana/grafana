@@ -2,8 +2,7 @@
   "compilerOptions": {
     "declarationDir": "dist",
     "outDir": "compiled",
-    "rootDirs": ["."],
-    "tsBuildInfoFile": "./tsconfig.tsbuildinfo"
+    "rootDirs": ["."]
   },
   "exclude": ["dist", "node_modules"],
   "extends": "@grafana/tsconfig",
