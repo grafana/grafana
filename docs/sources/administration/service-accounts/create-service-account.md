@@ -23,7 +23,7 @@ Before you begin:
 1. Sign in to Grafana and hover your cursor over the organization icon in the sidebar.
 1. Click **Service accounts**.
 1. Click **New service account**.
-1. Enter a display name.
+1. Enter a **Display name**.
 
 - This name needs to be unique to start with, as it determines the id.
 - We recommend that you use a consistent naming convention when you name service accounts. A consistent naming convention can help you scale and maintain service accounts in the future.
