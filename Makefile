@@ -81,6 +81,82 @@ validate-api-spec: $(MERGED_SPEC_TARGET) ## Validate API spec
 clean-api-spec:
 	rm $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
 
+client-go:
+	docker run --rm \
+	-e GOPATH=${HOME}/go:/go \
+	--user $$(id -u):$$(id -g) \
+	-v ${HOME}/go:${HOME}/go \
+	-v $$(pwd)/:${HOME}/grafana \
+	swaggerapi/swagger-codegen-cli generate \
+	-i ${HOME}/grafana/public/api-merged.json \
+	-l go \
+	-DdebugOperations \
+	-o ${HOME}/grafana/pkg/api/docs/clients/go \
+	-t ${HOME}/grafana/pkg/api/docs/templates/go \
+	--type-mappings SaveDashboardCommand=models.SaveDashboardCommand \
+	--import-mappings SaveDashboardCommand=models.SaveDashboardCommand \
+	--type-mappings AddApiKeyCommand=models.AddApiKeyCommand \
+	--import-mappings AddApiKeyCommand=models.AddApiKeyCommand \
+	--type-mappings ApiKeyDTO=models.ApiKeyDTO \
+	--import-mappings ApiKeyDTO=models.ApiKeyDTO \
+	--type-mappings TrimDashboardCommand=models.TrimDashboardCommand \
+	--import-mappings TrimDashboardCommand=models.TrimDashboardCommand \
+	--type-mappings DashboardTagCloudItem=models.DashboardTagCloudItem \
+	--import-mappings DashboardTagCloudItem=models.DashboardTagCloudItem \
+	--type-mappings DashboardAclInfoDTO=models.DashboardAclInfoDTO \
+	--import-mappings DashboardAclInfoDTO=models.DashboardAclInfoDTO \
+	--type-mappings DashboardVersionMeta=models.DashboardVersionMeta \
+	--import-mappings DashboardVersionMeta=models.DashboardVersionMeta \
+	--type-mappings AddDataSourceCommand=models.AddDataSourceCommand \
+	--import-mappings AddDataSourceCommand=models.AddDataSourceCommand \
+	--type-mappings UpdateDataSourceCommand=models.UpdateDataSourceCommand \
+	--import-mappings UpdateDataSourceCommand=models.UpdateDataSourceCommand \
+	--type-mappings CreateFolderCommand=models.CreateFolderCommand \
+	--import-mappings CreateFolderCommand=models.CreateFolderCommand \
+	--type-mappings UpdateFolderCommand=models.UpdateFolderCommand \
+	--import-mappings UpdateFolderCommand=models.UpdateFolderCommand \
+	--type-mappings DashboardSnapshotDTO=models.DashboardSnapshotDTO \
+	--import-mappings DashboardSnapshotDTO=models.DashboardSnapshotDTO \
+	--type-mappings UpdateUserCommand=models.UpdateUserCommand \
+	--import-mappings UpdateUserCommand=models.UpdateUserCommand \
+	--type-mappings SearchUserQueryResult=models.SearchUserQueryResult \
+	--import-mappings SearchUserQueryResult=models.SearchUserQueryResult \
+	--type-mappings UserOrgDTO=models.UserOrgDTO \
+	--import-mappings UserOrgDTO=models.UserOrgDTO \
+	--type-mappings TeamDTO=models.TeamDTO \
+	--import-mappings TeamDTO=models.TeamDTO \
+	--type-mappings NewApiKeyResult=dtos.NewApiKeyResult \
+	--import-mappings NewApiKeyResult=dtos.NewApiKeyResult \
+	--type-mappings CalculateDiffTarget=dtos.CalculateDiffTarget \
+	--import-mappings CalculateDiffTarget=dtos.CalculateDiffTarget \
+	--type-mappings ImportDashboardCommand=dtos.ImportDashboardCommand \
+	--import-mappings ImportDashboardCommand=dtos.ImportDashboardCommand \
+	--type-mappings DashboardFullWithMeta=dtos.DashboardFullWithMeta \
+	--import-mappings DashboardFullWithMeta=dtos.DashboardFullWithMeta \
+	--type-mappings TrimDashboardFullWithMeta=dtos.TrimDashboardFullWithMeta \
+	--import-mappings TrimDashboardFullWithMeta=dtos.TrimDashboardFullWithMeta \
+	--type-mappings DashboardFullWithMeta=dtos.DashboardFullWithMeta \
+	--import-mappings DashboardFullWithMeta=dtos.DashboardFullWithMeta \
+	--type-mappings DashboardRedirect=dtos.DashboardRedirect \
+	--import-mappings DashboardRedirect=dtos.DashboardRedirect \
+	--type-mappings DataSourceList=dtos.DataSourceList \
+	--import-mappings DataSourceList=dtos.DataSourceList \
+	--type-mappings DataSource=dtos.DataSource \
+	--import-mappings DataSource=dtos.DataSource \
+	--type-mappings FolderSearchHit=dtos.FolderSearchHit \
+	--import-mappings FolderSearchHit=dtos.FolderSearchHit \
+	--type-mappings Folder=dtos.Folder \
+	--import-mappings Folder=dtos.Folder \
+	--type-mappings Prefs=dtos.Prefs \
+	--import-mappings Prefs=dtos.Prefs \
+	--type-mappings CreateDashboardSnapshotCommand=models.CreateDashboardSnapshotCommand \
+	--import-mappings CreateDashboardSnapshotCommand=models.CreateDashboardSnapshotCommand \
+	--type-mappings DashboardAclUpdateItem=dtos.DashboardAclUpdateItem \
+	--import-mappings DashboardAclUpdateItem=dtos.DashboardAclUpdateItem \
+	--type-mappings DashboardAclUpdateItem=dtos.DashboardAclUpdateItem \
+	--import-mappings DashboardAclUpdateItem=dtos.DashboardAclUpdateItem
+	goimports -w -v pkg/api/docs/clients/go
+
 ##@ Building
 
 gen-go: $(WIRE)
