@@ -12,6 +12,12 @@ import (
 	glog "github.com/grafana/grafana/pkg/infra/log"
 )
 
+// StatusClientClosedRequest A non-standard status code introduced by nginx
+// for the case when a client closes the connection while nginx is processing
+// the request.
+// https://httpstatus.in/499/
+const StatusClientClosedRequest = 499
+
 // ReverseProxyOption reverse proxy option to configure a httputil.ReverseProxy.
 type ReverseProxyOption func(*httputil.ReverseProxy)
 
@@ -83,11 +89,16 @@ type timeoutError interface {
 	Timeout() bool
 }
 
+// errorHandler handles any errors happening while proxying a request and enforces
+// certain HTTP status based on the kind of error.
+// If client cancel/close the request we return 499 StatusClientClosedRequest.
+// If timeout happens while communicating with upstream server we return http.StatusGatewayTimeout.
+// If any other error we return http.StatusBadGateway.
 func errorHandler(logger glog.Logger) func(http.ResponseWriter, *http.Request, error) {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
 		if errors.Is(err, context.Canceled) {
-			logger.Debug("Proxy request cancelled")
-			w.WriteHeader(http.StatusBadRequest)
+			logger.Debug("Proxy request cancelled by client")
+			w.WriteHeader(StatusClientClosedRequest)
 			return
 		}
 

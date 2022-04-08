@@ -59,9 +59,9 @@ func TestReverseProxy(t *testing.T) {
 			expectedStatusCode int
 		}{
 			{
-				desc:               "Cancelled request should return 400 Bad request",
+				desc:               "Cancelled request should return 499 Client closed request",
 				transport:          &cancelledRoundTripper{},
-				expectedStatusCode: http.StatusBadRequest,
+				expectedStatusCode: StatusClientClosedRequest,
 			},
 			{
 				desc:               "Timed out request should return 504 Gateway timeout",
@@ -93,6 +93,7 @@ func TestReverseProxy(t *testing.T) {
 
 				resp := rec.Result()
 				require.Equal(t, tc.expectedStatusCode, resp.StatusCode)
+				require.Equal(t, "", resp.Status)
 				require.NoError(t, resp.Body.Close())
 			})
 		}
