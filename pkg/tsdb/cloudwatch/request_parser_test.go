@@ -350,7 +350,7 @@ func Test_migrateLegacyQuery(t *testing.T) {
 
 		assert.JSONEq(t,
 			`{
-					   "alias":"${PROP('Period')} $PROP{'Dim.any_other_word'}",
+					   "alias":"${PROP('Period')} ${PROP('Dim.any_other_word')}",
 					   "dimensions":{
 						  "InstanceId":[
 							 "test"
@@ -408,7 +408,7 @@ func Test_migrateLegacyQuery(t *testing.T) {
 
 		assert.JSONEq(t,
 			`{
-					   "alias":"${PROP('Period')} $PROP{'Dim.any_other_word'}",
+					   "alias":"${PROP('Period')} ${PROP('Dim.any_other_word')}",
 					   "dimensions":{
 						  "InstanceId":[
 							 "test"

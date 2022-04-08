@@ -122,7 +122,7 @@ func migrateAliasToDynamicLabel(queryJson *simplejson.Json) *simplejson.Json {
 		if dynamicLabel, ok := aliasPatterns[alias]; ok {
 			fullAliasField = strings.ReplaceAll(fullAliasField, aliasPattern, dynamicLabel)
 		} else {
-			fullAliasField = strings.ReplaceAll(fullAliasField, aliasPattern, fmt.Sprintf(`$PROP{'Dim.%s'}`, alias))
+			fullAliasField = strings.ReplaceAll(fullAliasField, aliasPattern, fmt.Sprintf(`${PROP('Dim.%s')}`, alias))
 		}
 	}
 
