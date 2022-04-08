@@ -356,8 +356,9 @@ def publish_artifacts_step(mode):
         'image': publish_image,
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
+            'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
         },
-        'commands': ['./bin/grabpl artifacts publish {}--tag ${{TAG}} --src-bucket grafana-prerelease'.format(security)],
+        'commands': ['./bin/grabpl artifacts publish {}--tag ${{TAG}} --src-bucket $${{PRERELEASE_BUCKET}}'.format(security)],
         'depends_on': ['grabpl'],
     }
 
