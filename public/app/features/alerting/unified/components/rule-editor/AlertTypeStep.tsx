@@ -121,6 +121,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
         <div className={styles.flexRow}>
           <Field
             label="Folder"
+            description="Folders allow you to specify access control to multiple rules."
             className={styles.formInput}
             error={errors.folder?.message}
             invalid={!!errors.folder?.message}
@@ -141,6 +142,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           </Field>
           <Field
             label="Group"
+            description="All rules within the same group will be evaluated at the same interval."
             className={styles.formInput}
             error={errors.group?.message}
             invalid={!!errors.group?.message}
@@ -170,5 +172,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
+    align-items: flex-end;
   `,
 });
