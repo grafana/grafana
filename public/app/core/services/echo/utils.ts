@@ -19,6 +19,4 @@ export function getUserIdentifier(user: CurrentUserDTO) {
 export const echoLogger = createLogger('EchoSrv');
 export const echoLog = echoLogger.logger;
 
-echoLogger.enable();
-
 attachDebugger('echo', undefined, echoLogger);
