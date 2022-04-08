@@ -31,7 +31,7 @@ export const TabsBar = React.forwardRef<HTMLDivElement, Props>(({ children, clas
   const tabsStyles = getTabsBarStyles(theme, hideBorder);
 
   return (
-    <div className={cx(tabsStyles.tabsWrapper, className)} ref={ref}>
+    <div className={cx(tabsStyles.tabsWrapper, className)} ref={ref} role="tablist">
       <ul className={tabsStyles.tabs}>{children}</ul>
     </div>
   );
