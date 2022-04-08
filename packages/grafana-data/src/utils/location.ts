@@ -7,22 +7,43 @@ let grafanaConfig: GrafanaConfig = { appSubUrl: '' } as any;
 let getTimeRangeUrlParams: () => RawTimeRange;
 let getVariablesUrlParams: (scopedVars?: ScopedVars) => UrlQueryMap;
 
+const maybeParseUrl = (input: string): URL | undefined => {
+  try {
+    return new URL(input);
+  } catch {
+    return undefined;
+  }
+};
+
 /**
  *
  * @param url
  * @internal
  */
-const stripBaseFromUrl = (url: string): string => {
+const stripBaseFromUrl = (urlOrPath: string): string => {
+  // Will only return a URL object if the input is actually a valid URL
+  const parsedUrl = maybeParseUrl(urlOrPath);
+  if (parsedUrl) {
+    // If the input is a URL, and for a different origin that we're on, just bail
+    // and return it. There's no need to strip anything from it
+    if (parsedUrl.origin !== window.location.origin) {
+      return urlOrPath;
+    }
+  }
+
   const appSubUrl = grafanaConfig.appSubUrl ?? '';
   const stripExtraChars = appSubUrl.endsWith('/') ? 1 : 0;
-  const isAbsoluteUrl = url.startsWith('http');
+  const isAbsoluteUrl = urlOrPath.startsWith('http');
+
   let segmentToStrip = appSubUrl;
 
-  if (!url.startsWith('/') || isAbsoluteUrl) {
+  if (!urlOrPath.startsWith('/') || isAbsoluteUrl) {
     segmentToStrip = `${window.location.origin}${appSubUrl}`;
   }
 
-  return url.length > 0 && url.indexOf(segmentToStrip) === 0 ? url.slice(segmentToStrip.length - stripExtraChars) : url;
+  return urlOrPath.length > 0 && urlOrPath.indexOf(segmentToStrip) === 0
+    ? urlOrPath.slice(segmentToStrip.length - stripExtraChars)
+    : urlOrPath;
 };
 
 /**
