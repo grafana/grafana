@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
 )
@@ -47,10 +46,6 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		middlewareScenario(t, tc.desc, func(t *testing.T, sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
 			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: 1, UserId: 12}
-			bus.AddHandler("test", func(ctx context.Context, query *models.SetUsingOrgCommand) error {
-				return nil
-			})
-
 			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 				return &models.UserToken{
 					UserId:        0,
