@@ -217,7 +217,6 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo types
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("Failed to create request", err)
 	}
-	req.URL.Path = "/subscriptions"
 	req.Header.Set("Content-Type", "application/json")
 
 	return req, nil
