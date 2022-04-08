@@ -230,6 +230,11 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 
 	metrics["stats.uptime"] = int64(time.Since(uss.startTime).Seconds())
 
+	featureUsageStats := uss.features.GetUsageStats(ctx)
+	for name, val := range featureUsageStats {
+		metrics[name] = val
+	}
+
 	return report, nil
 }
 

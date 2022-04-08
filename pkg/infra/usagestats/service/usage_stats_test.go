@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -405,6 +406,14 @@ func TestMetrics(t *testing.T) {
 			metric := report.Metrics[metricName]
 			assert.Equal(t, 1, metric)
 		})
+
+		t.Run("Should include feature usage stats", func(t *testing.T) {
+			report, err := uss.GetUsageReport(context.Background())
+			require.NoError(t, err, "Expected no error")
+
+			assert.Equal(t, 1, report.Metrics["stats.features.feature_1.count"])
+			assert.Equal(t, 1, report.Metrics["stats.features.feature_2.count"])
+		})
 	})
 
 	t.Run("When registering external metrics", func(t *testing.T) {
@@ -511,5 +520,6 @@ func createService(t *testing.T, cfg setting.Cfg, sqlStore sqlstore.Store, withD
 		log:             log.New("infra.usagestats"),
 		startTime:       time.Now().Add(-1 * time.Minute),
 		RouteRegister:   routing.NewRouteRegister(),
+		features:        featuremgmt.WithFeatures("feature1", "feature2"),
 	}
 }
