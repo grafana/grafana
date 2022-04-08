@@ -112,7 +112,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
     };
   }
 
-  updateSettings(settings: RichHistorySettings) {
+  async updateSettings(settings: RichHistorySettings) {
     store.set(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, settings.activeDatasourceOnly);
     store.set(RICH_HISTORY_SETTING_KEYS.retentionPeriod, settings.retentionPeriod);
     store.set(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, settings.starredTabAsFirstTab);
