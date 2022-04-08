@@ -8,8 +8,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const HTTPLoggerMiddlewareName = "http-logger"
+
 func HTTPLoggerMiddleware(cfg setting.PluginSettings) sdkhttpclient.Middleware {
-	return sdkhttpclient.NamedMiddlewareFunc("http-logger", func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
+	return sdkhttpclient.NamedMiddlewareFunc(HTTPLoggerMiddlewareName, func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 		datasourceType, exists := opts.Labels["datasource_type"]
 		if !exists {
 			return next
@@ -33,14 +35,11 @@ func getLoggerSettings(datasourceType string, cfg setting.PluginSettings) (enabl
 	if !ok {
 		return
 	}
-
 	if e, ok := settings["har_log_enabled"]; ok {
 		enabled = e == "true"
 	}
-
 	if p, ok := settings["har_log_path"]; ok {
 		path = p
 	}
-
 	return
 }
