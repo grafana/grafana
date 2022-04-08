@@ -149,7 +149,7 @@ func TestAlertRuleModel(t *testing.T) {
 			EvalData: evalDataJSON,
 		}
 
-		alertRule, err := NewRuleFromDBAlert(context.Background(), alert, false)
+		alertRule, err := NewRuleFromDBAlert(context.Background(), sqlStore, alert, false)
 		require.Nil(t, err)
 
 		require.Len(t, alertRule.Conditions, 1)
@@ -195,7 +195,7 @@ func TestAlertRuleModel(t *testing.T) {
 			Settings: alertJSON,
 		}
 
-		alertRule, err := NewRuleFromDBAlert(context.Background(), alert, false)
+		alertRule, err := NewRuleFromDBAlert(context.Background(), sqlStore, alert, false)
 		require.Nil(t, err)
 		require.NotContains(t, alertRule.Notifications, "999")
 		require.Contains(t, alertRule.Notifications, "notifier2")
@@ -226,7 +226,7 @@ func TestAlertRuleModel(t *testing.T) {
 			Settings: alertJSON,
 		}
 
-		alertRule, err := NewRuleFromDBAlert(context.Background(), alert, false)
+		alertRule, err := NewRuleFromDBAlert(context.Background(), sqlStore, alert, false)
 		require.Nil(t, err)
 		require.EqualValues(t, alertRule.Frequency, 60)
 	})
@@ -264,7 +264,7 @@ func TestAlertRuleModel(t *testing.T) {
 			Settings: alertJSON,
 		}
 
-		_, err := NewRuleFromDBAlert(context.Background(), alert, false)
+		_, err := NewRuleFromDBAlert(context.Background(), sqlStore, alert, false)
 		require.NotNil(t, err)
 		require.EqualValues(t, err.Error(), "alert validation error: Neither id nor uid is specified in 'notifications' block, type assertion to string failed AlertId: 1 PanelId: 1 DashboardId: 1")
 	})
