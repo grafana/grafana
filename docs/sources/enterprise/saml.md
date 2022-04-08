@@ -145,7 +145,7 @@ Grafana provides configuration options that let you modify which keys to look at
 
 ### Allow new user signups
 
-By default, any new Grafana user who authenticates with SAML will have an account created for them automatically. To decouple authentication and account creation and ensure only users with existing accounts can log in with SAML, set the `allow_sign_up` option to false.
+By default, new Grafana users using SAML authentication will have an account created for them automatically. To decouple authentication and account creation and ensure only users with existing accounts can log in with SAML, set the `allow_sign_up` option to false.
 
 ### Configure team sync
 
