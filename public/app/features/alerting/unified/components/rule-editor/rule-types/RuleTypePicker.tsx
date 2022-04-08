@@ -1,4 +1,9 @@
+import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data/src';
+import { Stack } from '@grafana/experimental';
 import { useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
 import { isEmpty } from 'lodash';
 import React, { FC } from 'react';
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
@@ -6,16 +11,15 @@ import { RuleFormType } from '../../../types/rule-form';
 import { GrafanaManagedRuleType } from './GrafanaManagedAlert';
 import { MimirFlavoredType } from './MimirOrLokiAlert';
 import { RecordingRuleType } from './MimirOrLokiRecordingRule';
-import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data/src';
-import { Stack } from '@grafana/experimental';
 
 interface RuleTypePickerProps {
   onChange: (value: RuleFormType) => void;
   selected: RuleFormType;
+  enableGrafana: boolean;
+  enableCloud: boolean;
 }
 
-const RuleTypePicker: FC<RuleTypePickerProps> = ({ selected, onChange }) => {
+const RuleTypePicker: FC<RuleTypePickerProps> = ({ selected, onChange, enableCloud, enableGrafana }) => {
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
   const hasLotexDatasources = !isEmpty(rulesSourcesWithRuler);
 
@@ -24,22 +28,28 @@ const RuleTypePicker: FC<RuleTypePickerProps> = ({ selected, onChange }) => {
   return (
     <>
       <Stack direction="row" gap={2}>
-        <GrafanaManagedRuleType selected={selected === RuleFormType.grafana} onClick={onChange} />
-        <MimirFlavoredType
-          selected={selected === RuleFormType.cloudAlerting}
-          onClick={onChange}
-          disabled={!hasLotexDatasources}
-        />
-        <RecordingRuleType
-          selected={selected === RuleFormType.cloudRecording}
-          onClick={onChange}
-          disabled={!hasLotexDatasources}
-        />
+        {enableGrafana && <GrafanaManagedRuleType selected={selected === RuleFormType.grafana} onClick={onChange} />}
+        {enableCloud && (
+          <>
+            <MimirFlavoredType
+              selected={selected === RuleFormType.cloudAlerting}
+              onClick={onChange}
+              disabled={!hasLotexDatasources}
+            />
+            <RecordingRuleType
+              selected={selected === RuleFormType.cloudRecording}
+              onClick={onChange}
+              disabled={!hasLotexDatasources}
+            />
+          </>
+        )}
       </Stack>
-      <small className={styles.meta}>
-        Select &ldquo;Grafana managed&rdquo; unless you have a Mimir, Loki or Cortex data source with the Ruler API
-        enabled.
-      </small>
+      {enableGrafana && enableCloud && (
+        <small className={styles.meta}>
+          Select &ldquo;Grafana managed&rdquo; unless you have a Mimir, Loki or Cortex data source with the Ruler API
+          enabled.
+        </small>
+      )}
     </>
   );
 };

@@ -10,6 +10,8 @@ import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import { CloudRulesSourcePicker } from './CloudRulesSourcePicker';
 import { checkForPathSeparator } from './util';
 import { RuleTypePicker } from './rule-types/RuleTypePicker';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
 
 interface Props {
   editingExistingRule: boolean;
@@ -23,6 +25,10 @@ const recordingRuleNameValidationPattern = {
 
 export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   const styles = useStyles2(getStyles);
+
+  const canCreateGrafanaRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate);
+  const canCreateCloudRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
+  const defaultRuleType = canCreateGrafanaRules ? RuleFormType.grafana : RuleFormType.cloudAlerting;
 
   const {
     register,
@@ -48,8 +54,10 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           render={({ field: { onChange } }) => (
             <RuleTypePicker
               aria-label="Rule type"
-              selected={getValues('type') ?? RuleFormType.grafana}
+              selected={getValues('type') ?? defaultRuleType}
               onChange={onChange}
+              enableGrafana={canCreateGrafanaRules}
+              enableCloud={canCreateCloudRules}
             />
           )}
           name="type"

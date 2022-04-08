@@ -1,12 +1,11 @@
-import React from 'react';
-import { Redirect } from 'react-router-dom';
+import { OrgRole } from '@grafana/data';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { RouteDescriptor } from 'app/core/navigation/types';
-import { uniq } from 'lodash';
-import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
-import { OrgRole } from '@grafana/data';
+import { uniq } from 'lodash';
+import React from 'react';
+import { Redirect } from 'react-router-dom';
 import { evaluateAccess } from './unified/utils/access-control';
 
 const commonRoutes: RouteDescriptor[] = [
