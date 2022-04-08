@@ -13,6 +13,8 @@ import (
 func TestRequestParser(t *testing.T) {
 	t.Run("Query migration ", func(t *testing.T) {
 		t.Run("legacy statistics field is migrated", func(t *testing.T) {
+			startTime := time.Now()
+			endTime := startTime.Add(2 * time.Hour)
 			oldQuery := &backend.DataQuery{
 				MaxDataPoints: 0,
 				QueryType:     "timeSeriesQuery",
@@ -30,7 +32,7 @@ func TestRequestParser(t *testing.T) {
 				"period": "600",
 				"hide": false
 			  }`)
-			migratedQueries, err := migrateLegacyQuery([]backend.DataQuery{*oldQuery})
+			migratedQueries, err := migrateLegacyQuery([]backend.DataQuery{*oldQuery}, startTime, endTime)
 			require.NoError(t, err)
 			assert.Equal(t, 1, len(migratedQueries))
 
@@ -342,7 +344,7 @@ func Test_migrateLegacyQuery(t *testing.T) {
 			  }`),
 				},
 			},
-		)
+			time.Now(), time.Now())
 		require.NoError(t, err)
 		require.Equal(t, 1, len(migratedQueries))
 
@@ -400,7 +402,7 @@ func Test_migrateLegacyQuery(t *testing.T) {
 			  }`),
 				},
 			},
-		)
+			time.Now(), time.Now())
 		require.NoError(t, err)
 		require.Equal(t, 2, len(migratedQueries))
 
