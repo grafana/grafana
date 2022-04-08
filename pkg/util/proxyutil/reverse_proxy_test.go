@@ -3,7 +3,6 @@ package proxyutil
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -32,7 +31,6 @@ func TestReverseProxy(t *testing.T) {
 		req.RemoteAddr = "10.0.0.1"
 
 		rp := NewReverseProxy(log.New("test"), func(req *http.Request) {
-			fmt.Println(req.Header.Get("X-Forwarded-For"))
 			req.Header.Set("X-KEY", "value")
 		})
 		rp.ServeHTTP(rec, req)
