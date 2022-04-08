@@ -132,7 +132,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         const idx = idToIdx.get(feature.getId() as string);
         const dims = style.dims;
 
-        if (idx != null && dims !== undefined) {
+        if (idx && dims) {
           return new Style({
             fill: new Fill({ color: dims.color?.get(idx) }),
             stroke: new Stroke({ color: style.base.color, width: style.base.lineWidth ?? 1 }),
