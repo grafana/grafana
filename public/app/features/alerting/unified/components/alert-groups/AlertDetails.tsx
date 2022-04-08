@@ -7,7 +7,7 @@ import React, { FC } from 'react';
 import { makeAMLink, makeLabelBasedSilenceLink } from '../../utils/misc';
 import { AnnotationDetailsField } from '../AnnotationDetailsField';
 import { Authorize } from '../Authorize';
-import { getInstancesPermissions } from '../../utils/access-control';
+import { getInstancesPermissions, getRulesPermissions } from '../../utils/access-control';
 
 interface AmNotificationsAlertDetailsProps {
   alertManagerSourceName: string;
@@ -16,11 +16,13 @@ interface AmNotificationsAlertDetailsProps {
 
 export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, alertManagerSourceName }) => {
   const styles = useStyles2(getStyles);
-  const permissions = getInstancesPermissions(alertManagerSourceName);
+  const instancePermissions = getInstancesPermissions(alertManagerSourceName);
+  const rulePermissions = getRulesPermissions(alertManagerSourceName);
+
   return (
     <>
       <div className={styles.actionsRow}>
-        <Authorize actions={[permissions.update, permissions.create]} fallback={contextSrv.isEditor}>
+        <Authorize actions={[instancePermissions.update, instancePermissions.create]} fallback={contextSrv.isEditor}>
           {alert.status.state === AlertState.Suppressed && (
             <LinkButton
               href={`${makeAMLink(
@@ -45,7 +47,8 @@ export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, aler
             </LinkButton>
           )}
         </Authorize>
-        <Authorize actions={[permissions.viewSource]}>
+        {/* Generator URL points to the alert rule edit page, so update permission is required */}
+        <Authorize actions={[rulePermissions.update]}>
           {alert.generatorURL && (
             <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
               See source

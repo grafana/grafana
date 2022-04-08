@@ -219,6 +219,10 @@ const unifiedRoutes: RouteDescriptor[] = [
   },
   {
     path: '/alerting/groups/',
+    roles: evaluateAccess(
+      [AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingInstancesExternalRead],
+      [OrgRole.Editor, OrgRole.Admin]
+    ),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertGroups" */ 'app/features/alerting/unified/AlertGroups')
     ),
@@ -226,6 +230,10 @@ const unifiedRoutes: RouteDescriptor[] = [
   {
     path: '/alerting/new',
     pageClass: 'page-alerting',
+    roles: evaluateAccess(
+      [AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite],
+      [OrgRole.Editor, OrgRole.Admin]
+    ),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleEditor')
     ),

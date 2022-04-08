@@ -2,16 +2,14 @@ import { AccessControlAction } from 'app/types';
 import { isGrafanaRulesSource } from './datasource';
 import { contextSrv } from 'app/core/services/context_srv';
 
-function getAMversion(alertManagerSourceName: string) {
+type RulesSourceType = 'grafana' | 'external';
+
+function getRulesSourceType(alertManagerSourceName: string): RulesSourceType {
   return isGrafanaRulesSource(alertManagerSourceName) ? 'grafana' : 'external';
 }
 
-function getDSVersion(alertManagerSourceName: string) {
-  return isGrafanaRulesSource(alertManagerSourceName) ? 'grafana' : 'external';
-}
-
-export function getInstancesPermissions(alertManagerSourceName: string) {
-  const amVersion = getAMversion(alertManagerSourceName);
+export function getInstancesPermissions(rulesSourceName: string) {
+  const sourceType = getRulesSourceType(rulesSourceName);
 
   const permissions = {
     read: {
@@ -30,23 +28,18 @@ export function getInstancesPermissions(alertManagerSourceName: string) {
       grafana: AccessControlAction.AlertingInstanceUpdate,
       external: AccessControlAction.AlertingInstancesExternalWrite,
     },
-    viewSource: {
-      grafana: AccessControlAction.AlertingInstanceRead,
-      external: AccessControlAction.DataSourcesExplore,
-    },
   };
 
   return {
-    read: permissions.read[amVersion],
-    create: permissions.create[amVersion],
-    update: permissions.update[amVersion],
-    delete: permissions.delete[amVersion],
-    viewSource: permissions.viewSource[amVersion],
+    read: permissions.read[sourceType],
+    create: permissions.create[sourceType],
+    update: permissions.update[sourceType],
+    delete: permissions.delete[sourceType],
   };
 }
 
-export function getNotificationsPermissions(alertManagerSourceName: string) {
-  const amVersion = getAMversion(alertManagerSourceName);
+export function getNotificationsPermissions(rulesSourceName: string) {
+  const sourceType = getRulesSourceType(rulesSourceName);
 
   const permissions = {
     read: {
@@ -68,15 +61,15 @@ export function getNotificationsPermissions(alertManagerSourceName: string) {
   };
 
   return {
-    read: permissions.read[amVersion],
-    create: permissions.create[amVersion],
-    update: permissions.update[amVersion],
-    delete: permissions.delete[amVersion],
+    read: permissions.read[sourceType],
+    create: permissions.create[sourceType],
+    update: permissions.update[sourceType],
+    delete: permissions.delete[sourceType],
   };
 }
 
-export function getRulesPermissions(dataSourceName: string) {
-  const dsVersion = getDSVersion(dataSourceName);
+export function getRulesPermissions(rulesSourceName: string) {
+  const sourceType = getRulesSourceType(rulesSourceName);
 
   const permissions = {
     read: {
@@ -98,10 +91,10 @@ export function getRulesPermissions(dataSourceName: string) {
   };
 
   return {
-    read: permissions.read[dsVersion],
-    create: permissions.create[dsVersion],
-    update: permissions.update[dsVersion],
-    delete: permissions.delete[dsVersion],
+    read: permissions.read[sourceType],
+    create: permissions.create[sourceType],
+    update: permissions.update[sourceType],
+    delete: permissions.delete[sourceType],
   };
 }
 
