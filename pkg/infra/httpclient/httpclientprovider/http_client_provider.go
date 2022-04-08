@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	httplogger "github.com/grafana/grafana-plugin-sdk-go/experimental/http_logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -23,6 +25,7 @@ func New(cfg *setting.Cfg, tracer tracing.Tracer) *sdkhttpclient.Provider {
 	middlewares := []sdkhttpclient.Middleware{
 		TracingMiddleware(logger, tracer),
 		DataSourceMetricsMiddleware(),
+		httpLoggerMiddleware(),
 		SetUserAgentMiddleware(userAgent),
 		sdkhttpclient.BasicAuthenticationMiddleware(),
 		sdkhttpclient.CustomHeadersMiddleware(),
@@ -60,6 +63,31 @@ func newConntrackRoundTripper(name string, transport *http.Transport) *http.Tran
 		conntrack.DialWithDialContextFunc(transport.DialContext),
 	)
 	return transport
+}
+
+func httpLoggerMiddleware() httpclient.Middleware {
+	return httpclient.NamedMiddlewareFunc("http-logger", func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
+		datasourceName, exists := opts.Labels["datasource_name"]
+		if !exists {
+			return next
+		}
+
+		harLogEnabled, exists := opts.Labels["har_log_enabled"]
+		if !exists || harLogEnabled != "true" {
+			return next
+		}
+
+		hl := httplogger.
+			NewHTTPLogger(datasourceName, next).
+			WithEnabledCheck(func() bool { return true })
+
+		harLogPath, exists := opts.Labels["har_log_path"]
+		if exists {
+			hl = hl.WithPath(harLogPath)
+		}
+
+		return hl
+	})
 }
 
 // setDefaultTimeoutOptions overrides the default timeout options for the SDK.
