@@ -490,8 +490,14 @@ export const saveRuleFormAction = createAsyncThunk(
           if (redirectOnSave) {
             locationService.push(redirectOnSave);
           } else {
+            // if the identifier comes up empty (this happens when Grafana managed rule moves to another namespace or group)
+            const stringifiedIdentifier = ruleId.stringifyIdentifier(identifier);
+            if (!stringifiedIdentifier) {
+              locationService.push('/alerting/list');
+              return;
+            }
             // redirect to edit page
-            const newLocation = `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`;
+            const newLocation = `/alerting/${encodeURIComponent(stringifiedIdentifier)}/edit`;
             if (locationService.getLocation().pathname !== newLocation) {
               locationService.replace(newLocation);
             }
