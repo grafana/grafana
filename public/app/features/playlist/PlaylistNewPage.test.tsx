@@ -19,6 +19,12 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
+jest.mock('../../core/components/TagFilter/TagFilter', () => ({
+  TagFilter: () => {
+    return <>mocked-tag-filter</>;
+  },
+}));
+
 function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
   jest.clearAllMocks();
   const playlist = { name, items, interval } as unknown as Playlist;
