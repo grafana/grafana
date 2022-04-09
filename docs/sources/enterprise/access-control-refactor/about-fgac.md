@@ -53,7 +53,7 @@ Assign fixed roles when the built-in roles do not meet your permission requireme
 
 Fine-grained access control is available for the following capabilities:
 
-- [Annotations]({{< relref "../../dashboards/annotations.md" >}}) 
+- [Annotations]({{< relref "../../dashboards/annotations.md" >}})
 - [API keys]({{< relref "../../administration/api-keys/_index.md" >}})
 - [Dashboards]({{< relref "../../dashboards/_index.md" >}})
 - [Data sources]({{< relref "../../datasources/_index.md" >}})

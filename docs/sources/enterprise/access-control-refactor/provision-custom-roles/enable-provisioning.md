@@ -10,7 +10,7 @@ keywords:
 
 # Enable Grafana to provision custom roles
 
-Before you create or update custom roles, you must enable custom role provisioning in Grafana. 
+Before you create or update custom roles, you must enable custom role provisioning in Grafana.
 
 Grafana performs provisioning during startup. After you make a change to the configuration file, you can reload it during runtime. You do not need to restart the Grafana server for your changes to take effect.
 

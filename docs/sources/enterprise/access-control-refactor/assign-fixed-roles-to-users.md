@@ -27,7 +27,7 @@ In both cases, the assignment applies only to the user role within the affected 
   For more information about available fixed roles, refer to [Role-based access control fixed role definitions](./rbac-fixed-role-definitions.md)
 
 - Ensure that your Grafana user is assigned one of the following roles:
-  - The admininstrator built-in role.
+  - The administrator built-in role.
   - The Grafana server administrator role.
   - The `fixed:roles:writer` fixed role that is assigned to the same organization to which you are assigning a user's fine-grained access control.
   - A custom role with `users.roles:add` and `users.roles:remove` permissions.

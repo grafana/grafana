@@ -41,6 +41,7 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
     ]
 }'
 ```
+
 </br>
 
 ### Example response

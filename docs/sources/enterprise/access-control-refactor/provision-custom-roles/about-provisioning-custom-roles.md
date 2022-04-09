@@ -33,7 +33,6 @@ For more information about custom role actions and scopes, refer to [Role-based 
 
 When you create a custom role, the role appears in the UI along with the default RBAC roles. As with default roles, you use the role picker to assign a custom role to a user. For more information about assigning default roles, refer to [Change a user's organization permissions]({{< relref "../../../administration/manage-users-and-permissions/manage-org-users/change-user-org-permissions.md" >}}).
 
-
 ## Global vs local custom roles
 
 A custom role can be either _global_ or _organization local_. Global roles are not associated with any specific organization, which means that you can reuse them across all organizations. Organization local roles are only available for the organization you specify.
@@ -41,7 +40,6 @@ A custom role can be either _global_ or _organization local_. Global roles are n
 ## Org IDs
 
 Mitch, there is guidance about what to enter for `OrgId` in the create task, but it feels like the Org concept, and how it applies to custom roles could be expanded in this section? I wonder if there are additional configuration tasks we need to surface for users?
-
 
 ## Hidden roles
 

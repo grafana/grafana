@@ -20,7 +20,7 @@ Prose here on why and when a user would want to do this. What are the benefits?
 
 - Determine which built-in role and fixed role you want to restore
 
-**To remove a default built-in or fixed role assigment:**
+**To remove a default built-in or fixed role assignment:**
 
 1. Open the YAML configuration file and locate the `removeDefaultAssignments` section.
 
@@ -55,7 +55,7 @@ Prose here on why and when a user would want to do this. What are the benefits?
 
 - Determine which built-in role and fixed role you want to restore
 
-**To restore a default built-in or fixed role assigment:**
+**To restore a default built-in or fixed role assignment:**
 
 1. Open the YAML configuration file and locate the `addDefaultAssignments` section.
 
