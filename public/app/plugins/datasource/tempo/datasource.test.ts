@@ -12,7 +12,7 @@ import {
 
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
-import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery, TempoQueryType } from './datasource';
+import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './datasource';
 import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
@@ -44,7 +44,7 @@ describe('Tempo data source', () => {
           interpolationVar: { text: text, value: text },
         }
       );
-      expect(templateSrv.replace).toBeCalledTimes(1);
+      expect(templateSrv.replace).toBeCalledTimes(2);
       expect(queries[0].query).toBe(text);
     });
 
@@ -55,13 +55,23 @@ describe('Tempo data source', () => {
       templateSrv.replace.mockReturnValue(text);
 
       const resp = ds.applyTemplateVariables(
-        { targets: [{ refId: 'x', queryType: 'traceId', query: '$interpolationVar' } as Partial<TempoQuery>] } as any,
+        {
+          targets: [
+            {
+              refId: 'x',
+              queryType: 'traceId',
+              query: '$interpolationVar',
+              search: '$interpolationVar',
+            } as Partial<TempoQuery>,
+          ],
+        } as any,
         {
           interpolationVar: { text: text, value: text },
         }
       );
-      expect(templateSrv.replace).toBeCalledTimes(1);
+      expect(templateSrv.replace).toBeCalledTimes(2);
       expect(resp.query).toBe(text);
+      expect(resp.search).toBe(text);
     });
   });
 
@@ -186,7 +196,10 @@ describe('Tempo data source', () => {
   });
 
   it('should build search query correctly', () => {
-    const ds = new TempoDatasource(defaultSettings);
+    const templateSrv: any = { replace: jest.fn() };
+    const ds = new TempoDatasource(defaultSettings, templateSrv);
+    const durationText = '10ms';
+    templateSrv.replace.mockReturnValue(durationText);
     const tempoQuery: TempoQuery = {
       queryType: 'search',
       refId: 'A',
@@ -194,15 +207,15 @@ describe('Tempo data source', () => {
       serviceName: 'frontend',
       spanName: '/config',
       search: 'root.http.status_code=500',
-      minDuration: '1ms',
-      maxDuration: '100s',
+      minDuration: '$interpolationVar',
+      maxDuration: '$interpolationVar',
       limit: 10,
     };
     const builtQuery = ds.buildSearchQuery(tempoQuery);
     expect(builtQuery).toStrictEqual({
       tags: 'root.http.status_code=500 service.name="frontend" name="/config"',
-      minDuration: '1ms',
-      maxDuration: '100s',
+      minDuration: durationText,
+      maxDuration: durationText,
       limit: 10,
     });
   });
