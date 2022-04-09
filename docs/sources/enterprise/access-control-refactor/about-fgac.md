@@ -28,7 +28,7 @@ Built-in roles are the standard roles that are available in Grafana OSS. If you 
 Grafana includes the following built-in roles:
 
 - Grafana administrator
-- Organization admininstrator
+- Organization administrator
 - Editor
 - Viewer
 
