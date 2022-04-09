@@ -1,6 +1,6 @@
 ---
 title: 'Manage fine-grained access control assignments using the HTTP API'
-menuTitle: 'Manage assignments using the HTTP API'
+menuTitle: 'Manage role assignments using the HTTP API'
 description: 'xxx.'
 aliases: [xxx]
 weight: 60

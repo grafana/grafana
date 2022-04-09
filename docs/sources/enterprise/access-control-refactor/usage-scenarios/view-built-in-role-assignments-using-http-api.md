@@ -10,20 +10,24 @@ keywords:
 
 # View built-in role assignments using the HTTP API
 
-You can use the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md#get-all-built-in-role-assignments" >}}) to see all available built-in role assignments.
+You can use the [Access control HTTP API]({{< relref "../../../http_api/access_control.md#get-all-built-in-role-assignments" >}}) to see all available built-in role assignments.
 The response contains a mapping between one of the organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin` to the custom or fixed roles.
 
-Before you get started, make sure to [enable fine-grained access control]({{< relref "./_index.md#enable-fine-grained-access-control" >}}).
+## Before you begin
 
-Example request:
+- [Enable role-based access control]({{< relref "../enable-rbac.md" >}}).
+
+## View built-in role example
+
+You must enter the base64 username:password Basic Authorization here. You cannot use authorization tokens in the request.
+
+### Example request
 
 ```
 curl --location --request GET '<grafana_url>/api/access-control/builtin-roles' --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ='
 ```
 
-You must use the base64 username:password Basic Authorization here. Auth tokens are not applicable here.
-
-Example response:
+### Example response
 
 ```
 {
@@ -78,15 +82,17 @@ Example response:
 }
 ```
 
-To see what permissions each of the assigned roles have, you can a [Get a role]({{< relref "../../http_api/access_control.md#get-a-role" >}}) by using an HTTP API.
+### List permissions associated with roles example
 
-Example request:
+Use a `GET` command to see the actions and scopes associated with a role. For more information about seeing a list of permissions for each role, refer to [Get a role]({{< relref "../../../http_api/access_control.md#get-a-role" >}}).
+
+#### Example request
 
 ```
 curl --location --request GET '<grafana_url>/api/access-control/roles/qQui_LCMk' --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ='
 ```
 
-Example response:
+#### Example response
 
 ```
 {

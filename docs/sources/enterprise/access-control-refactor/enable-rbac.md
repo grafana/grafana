@@ -1,6 +1,6 @@
 ---
-title: 'Enable fine-grained acces control in Grafana'
-menuTitle: 'Enable fine-grained acces control'
+title: 'Enable role-based access control in Grafana'
+menuTitle: 'Enable role-based access control control'
 description: 'xxx.'
 aliases: [xxx]
 weight: 30
@@ -8,7 +8,7 @@ keywords:
   - xxx
 ---
 
-# Enable fine-grained access control in Grafana
+# Enable role-based access control
 
 Before you assign fine-grained access control to Grafana users, you must enable it.
 

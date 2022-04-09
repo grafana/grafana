@@ -1,6 +1,6 @@
 ---
-title: 'Assign and manage fixed roles'
-menuTitle: 'Assign and manage fixed roles'
+title: 'Assign fixed roles to users'
+menuTitle: 'Assign fixed roles to users'
 description: 'xxx.'
 aliases: [xxx]
 weight: 40
@@ -8,7 +8,7 @@ keywords:
   - xxx
 ---
 
-# Assign and manage fixed roles
+# Assign fixed roles to users
 
 This topic describes how to:
 

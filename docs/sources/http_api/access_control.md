@@ -1,6 +1,6 @@
 +++
-title = "Fine-grained access control HTTP API "
-description = "Fine-grained access control API"
+title = "Role-based access control HTTP API"
+description = "RBAC access control API"
 keywords = ["grafana", "http", "documentation", "api", "fine-grained-access-control", "acl", "enterprise"]
 aliases = ["/docs/grafana/latest/http_api/accesscontrol/"]
 +++

@@ -12,50 +12,45 @@ keywords:
 
 You can create a custom role when the default roles and fixed roles do not meet you permissions requirements.
 
-Update a custom role when you want to change permissions associated with the custom role. Delete a custom role when you no longer need it.
+Update a custom role when you want to change permissions associated with the custom role. Delete a custom role when you no longer need it. You cannot create or modify `fixed:` roles.
 
-When you delete a custom role...what happens? What
+When you delete a custom role...what happens? Need to articulate impact.
 
-Need more info here on when to create a custom role and when to update a custom role.
-
-
-By default, Grafana Server Admin has a [built-in role assignment]({{< ref "#built-in-role-assignments" >}}) which allows a user to create, update, or delete custom roles.
-If a Grafana Server Admin wants to delegate that privilege to other users, they can create a custom role with relevant [permissions]({{< relref "./permissions.md" >}}) and `permissions:delegate` scope will allow those users to manage roles themselves.
-
-Note that you won't be able to create, update or delete a custom role with permissions which you yourself do not have. For example, if the only permission you have is a `users:create`, you won't be able to create a role with other permissions.
+> **Note:** You cannot create, update, or delete a custom role with permissions that you do not have. For example, if the only have `users:create` permissions, then you cannot create a role that includes other permissions.
 
 ## Create or update a custom role
 
-Create a custom role when the fixed roles that Grafana provides do not meet your need.
+Create a custom role when the fixed roles that Grafana provides do not meet your needs.
 
 ### Before you begin
 
-- [Enable Grafana to provision custom roles]({{< relref "./enable-provisioning.md" >}})
+- [Enable Grafana to provision custom roles]({{< relref "./enable-provisioning.md" >}}).
 - Ensure that you have permissions to create, update, or delete a custom role.
-  - By default, the Grafana Admin role has permission to create and update custom roles
+  - By default, the Grafana Admin role has permission to create, update, and delete custom roles.
+  - A Grafana Admin can delegate the custom role privilege to another user by creating a custom role with the relevant permissions and adding the `permissions:delegate` scope.
 
 **To create or update a custom role:**
 
-1. Open the YAML configuration file and locate the `roles` section.
+1. Open the YAML configuration file and locate the `roles` section. Where is the YAML file?
 
 1. Refer to the following table to add attributes and values.
 
    | Attribute           | Description                                                                                                                                                                                                                                                                                                                                                                                                                        |
    | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `name`              | A human-friendly identifier for the role that helps administrators understand the purpose of a role. `name` is required and cannot be longer than 190 characters. We recommend that you use ASCII characters. Role names must be unique within an organization. You cannot create or modify `fixed:` roles.                                                                                                                        |
+   | `name`              | A human-friendly identifier for the role that helps administrators understand the purpose of a role. `name` is required and cannot be longer than 190 characters. We recommend that you use ASCII characters. Role names must be unique within an organization.                                                                                                                         |
    | `Role display name` | Human-friendly text that is displayed in the UI. Role display name cannot be longer than 190 ASCII-based characters. For fixed roles, the display name is shown as specified. If you do not set a display name the display name replaces a `:` (a colon) with ` ` (a space).                                                                                                                                                       |
-   | `Display name`      | A human-friendly identifier that appears in the role picker UI. `Display name` helps user to understand the purpose of the role.                                                                                                                                                                                                                                                                                                   |
-   | `Group`             | Organizes roles in the role picker in the UI.                                                                                                                                                                                                                                                                                                                                                                                      |
-   | `version`           | A positive integer that defines the current version of the role. When you update a role, you can either omit the version field to increment the previous value by 1, or set a new version which must be larger than the previous version for the update to succeed.                                                                                                                                                                |
-   | `permissions`       | Provides users access to Grafana resources. For a list of permissions refer to [Action definitions]({{< relref "XXXXXXXXX" >}}) to roles. You can create and assign roles without any permissions as placeholders.                                                                                                                                                                                                                 |
-   | `Role UID`          | Each custom role has a UID defined which is a unique identifier associated with the role, which enables you to change or delete the role. You can either generate a UID yourself, or let Grafana generate a UID for you. The same UID cannot be used for roles in different organizations within the same Grafana instance.                                                                                                        |
-   | `orgId`             | Identifies the organization to which the role belongs. If you do not specify `orgId`, the `orgId` is inherited from `role`. For global roles, the default `orgId` is used. `orgId` in the `role` and in the assignment must be the same for non-global roles. The [default org ID]({{< relref "../../administration/configuration#auto_assign_org_id" >}}) is used if `orgId` is not specified in any of the configuration blocks. |
+   | `Display name`      | A human-friendly identifier that appears in the role picker UI. `Display name` helps the user to understand the purpose of the role.                                                                                                                                                                                                                                                                                                   |
+   | `Group`             | Organizes roles in the role picker.                                                                                                                                                                                                                                                                                                                                                                                      |
+   | `version`           | A positive integer that defines the current version of the role. When you update a role, you can either omit the version field to increment the previous value by 1, or set a new version which must be larger than the previous version.                                                                                                                                                                |
+   | `permissions`       | Provides users access to Grafana resources. For a list of permissions, refer to [Role-based access control permissions actions and scopes]({{< relref "../../rbac-fixed-role-definitions.md" >}}). If you do not know which permissions to assign, you can create and assign roles without any permissions as a placeholder.                                                                                                                                                                                                                 |
+   | `Role UID`          | A unique identifier associated with the role. The UID enables you to change or delete the role. You can either generate a UID yourself, or let Grafana generate one for you. You cannot use the same UID within the same Grafana instance.                                                                                                        |
+   | `orgId`             | Identifies the organization to which the role belongs. If you do not specify `orgId`, the `orgId` is inherited from `role`. For global roles, the default `orgId` is used. `orgId` in the `role` and in the assignment must be the same for non-global roles. The [default org ID]({{< relref "../../../administration/configuration#auto_assign_org_id" >}}) is used if you do not specify `orgId`. |
    | `global`            | Makes the role available to all organizations. This setting overrides `orgId`.                                                                                                                                                                                                                                                                                                                                                     |
    | `hidden`            | Hides the role from the role picker.                                                                                                                                                                                                                                                                                                                                                                                               |
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../http_api/admin/#reload-provisioning-configurations" >}}).
 
 The following example creates a local role with a set of user permissions:
 
@@ -104,7 +99,7 @@ roles:
 
 Delete a custom role when you no longer need it. When you delete a custom role [impact statement here of what happends when a custom role is deleted.]
 
-> **Note:** Any role in the `deleteRoles` section is deleted before any role in the `roles` section is saved.
+> **Note:** The system deletes roles identified in the `deleteRoles` section before it adds roles identified in the `roles` section. 
 
 ### Before you begin
 
@@ -121,11 +116,11 @@ Delete a custom role when you no longer need it. When you delete a custom role [
    | --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
    | `name`    | The name of the custom role you want to delete. You can add a `uid` instead of a role name. The role `name` or the `uid` are required. |
    | `orgId`   | Identifies the organization to which the role belongs.                                                                                 |
-   | `force`   | xxxxx.                                                                                                                                 |
+   | `force`   | What does this do?                                                                                                                                 |
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../http_api/admin/#reload-provisioning-configurations" >}}).
 
 The following example deletes a custom role:
 

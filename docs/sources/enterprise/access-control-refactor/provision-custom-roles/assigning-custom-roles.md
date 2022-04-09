@@ -20,7 +20,8 @@ Information here about why a user would want to do this. What are the benefits?
 
 ### Before you begin
 
-- xxx
+- [Enable Grafana to provision custom roles]({{< relref "./enable-provisioning.md" >}}).
+- [Add a custom role]({{< relref "./create-update-delete-custom-role.md" >}})
 
 **To assign a custom role to a built-in role:**
 
@@ -33,7 +34,7 @@ Information here about why a user would want to do this. What are the benefits?
 | `name`         | Enter the name of the custom role.                                                                                                                                                                                                                           |
 | `version`      | Enter the custom role version number. Assignments are updated if the version of the role is greater than or equal to the version number stored internally. If you are updating a role assignment, you are not required to increment the role version number. |
 | `orgId`        | If you do not enter an `orgId`, it inherits the `orgId` from `role`. For global roles the default `orgId` is used. `orgId` in the `role` and in the assignment must be the same for non-global roles.                                                        |
-| `permissions`  | enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [LINK]                                                                                                                                |
+| `permissions`  | Enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [LINK]                                                                                                                                |
 | `builtInRoles` | Enter the `name` of an organization role, for example `Viewer`, `Editor`, or `Admin`, or enter `Grafana Admin`.                                                                                                                                              |
 
 1. Reload the provisioning configuration file.

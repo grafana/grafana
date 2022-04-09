@@ -38,6 +38,10 @@ When you create a custom role, the role appears in the UI along with the default
 
 A custom role can be either _global_ or _organization local_. Global roles are not associated with any specific organization, which means that you can reuse them across all organizations. Organization local roles are only available for the organization you specify.
 
+## Org IDs
+
+Mitch, there is guidance about what to enter for `OrgId` in the create task, but it feels like the Org concept, and how it applies to custom roles could be expanded in this section? I wonder if there are additional configuration tasks we need to surface for users?
+
 
 ## Hidden roles
 

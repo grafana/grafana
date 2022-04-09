@@ -8,9 +8,9 @@ keywords:
   - xxx
 ---
 
-# Remove or restore a built-in role using Grafana provisioning
+# Remove or restore a built-in role using provisioning
 
-During startup, Grafana creates [default built-in role assignments]({{< relref "./roles#default-built-in-role-assignments" >}}) with [fixed roles]({{< relref "./roles#fixed-roles" >}}). You can remove and later restore those assignments with provisioning.
+You can remove and later restore those assignments with provisioning.
 
 ## Remove a default built-in or fixed role assignment
 
@@ -20,7 +20,7 @@ Prose here on why and when a user would want to do this. What are the benefits?
 
 - Determine which built-in role and fixed role you want to restore
 
-**To restore a default built-in or fixed role assigment:**
+**To remove a default built-in or fixed role assigment:**
 
 1. Open the YAML configuration file and locate the `removeDefaultAssignments` section.
 
@@ -33,7 +33,7 @@ Prose here on why and when a user would want to do this. What are the benefits?
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../http_api/admin/#reload-provisioning-configurations" >}}).
 
 The following example removes a built-in and fixed role assignment.
 
@@ -68,7 +68,7 @@ Prose here on why and when a user would want to do this. What are the benefits?
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../http_api/admin/#reload-provisioning-configurations" >}}).
 
 The following example restores a default built-in and fixed role assignment.
 

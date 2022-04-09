@@ -1,6 +1,6 @@
 ---
-title: 'Create a custom role using the HTTP API'
-menuTitle: 'Create a custom role using the HTTP API'
+title: 'Create and assign a custom role using the Grafana HTTP API'
+menuTitle: 'Create and assign a custom role using the HTTP API'
 description: 'xxx.'
 aliases: [xxx]
 weight: 10
@@ -8,14 +8,20 @@ keywords:
   - xxx
 ---
 
-# Create a custom role using the HTTP API
+# Create and assign a custom role using the HTTP API
 
-You can create your custom role by either using an [HTTP API]({{< relref "../../http_api/access_control.md#create-a-new-custom-role" >}}) or by using [Grafana provisioning]({{< relref "./provisioning.md" >}}).
-You can take a look at [actions and scopes]({{< relref "./provisioning.md#action-definitions" >}}) to decide what permissions would you like to map to your role.
+The following examples show you how to create a custom role using the Grafana HTTP API. For more information about the HTTP API, refer to [Create a new custom role]({{< relref "../../../http_api/access_control.md#create-a-new-custom-role" >}}).
 
-Before you get started, make sure to [enable fine-grained access control]({{< relref "./_index.md#enable-fine-grained-access-control" >}}).
+## Before you begin
 
-Example HTTP request:
+- [Enable role-based access control]({{< relref "../enable-rbac.md" >}}).
+- Determine which actions and scopes you want to add to the custom role. To see a list of actions and scope, refer to [Role-based access control permissions actions and scopes]({{< relref "../custom-role-actions-scopes.md" >}}).
+
+## Create custom role example
+
+The following example creates a `custom:users:admin` role and assigns the `users:create` action to it.
+
+### Example request
 
 ```
 curl --location --request POST '<grafana_url>/api/access-control/roles/' \
@@ -35,8 +41,9 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
     ]
 }'
 ```
+</br>
 
-Example response:
+### Example response
 
 ```
 {
@@ -58,10 +65,11 @@ Example response:
 }
 ```
 
-Once the custom role is created, you can create a built-in role assignment by using an [HTTP API]({{< relref "../../http_api/access_control.md#create-a-built-in-role-assignment" >}}).
-If you created your role using [Grafana provisioning]({{< relref "./provisioning.md" >}}), you can also create the assignment with it.
+## Assign a custom role to a built-in role example
 
-Example HTTP request:
+After you create a custom role, you can assign it to a built-in role. For more information about the HTTP API, refer to [Create a built-in role assignment]({{< relref "../../../http_api/access_control.md#create-a-built-in-role-assignment" >}}).
+
+### Example request
 
 ```
 curl --location --request POST '<grafana_url>/api/access-control/builtin-roles' \
@@ -74,7 +82,7 @@ curl --location --request POST '<grafana_url>/api/access-control/builtin-roles' 
 }'
 ```
 
-Example response:
+#### Example response
 
 ```
 {

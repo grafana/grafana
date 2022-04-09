@@ -54,7 +54,7 @@ Assign fixed roles when the built-in roles do not meet your permission requireme
 Fine-grained access control is available for the following capabilities:
 
 - [Annotations]({{< relref "../../dashboards/annotations.md" >}}) 
-- API keys
+- [API keys]({{< relref "../../administration/api-keys/_index.md" >}})
 - [Dashboards]({{< relref "../../dashboards/_index.md" >}})
 - [Data sources]({{< relref "../../datasources/_index.md" >}})
 - [Explore]({{< relref "../../explore/_index.md" >}})
@@ -66,6 +66,7 @@ Fine-grained access control is available for the following capabilities:
 - [Reports]({{< relref "../reporting.md" >}})
 - [Roles]({{< relref "../../administration/manage-users-permissions/_index.md" >}})
 - [Settings]({{< relref "../settings-updates.md" >}})
+- [Service accounts]({{< relref "../../administration/service-accounts/_index.md" >}})
 - Statistics
 - [Teams]({{< relref "../../administration/manage-users-permissions/manage-teams/_index.md" >}})
 - [Users]({{< relref "../../administration/manage-users-and-permissions/manage-server-users/_index.md" >}})
