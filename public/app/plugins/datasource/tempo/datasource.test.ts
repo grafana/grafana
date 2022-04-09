@@ -12,7 +12,7 @@ import {
 
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
-import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './datasource';
+import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery, TempoQueryType } from './datasource';
 import mockJson from './mockJsonResponse.json';
 
 describe('Tempo data source', () => {
@@ -29,6 +29,40 @@ describe('Tempo data source', () => {
       { defaultValue: 'empty' }
     );
     expect(response).toBe('empty');
+  });
+
+  describe('Variables should be interpolated correctly', () => {
+    it('when traceId query for dashboard->explore', async () => {
+      const templateSrv: any = { replace: jest.fn() };
+      const ds = new TempoDatasource(defaultSettings, templateSrv);
+      const text = 'interpolationText';
+      templateSrv.replace.mockReturnValue(text);
+
+      const queries = ds.interpolateVariablesInQueries(
+        [{ targets: [{ refId: 'x', queryType: 'traceId', query: '$interpolationVar' } as Partial<TempoQuery>] } as any],
+        {
+          interpolationVar: { text: text, value: text },
+        }
+      );
+      expect(templateSrv.replace).toBeCalledTimes(1);
+      expect(queries[0].query).toBe(text);
+    });
+
+    it('when traceId query for template variable', async () => {
+      const templateSrv: any = { replace: jest.fn() };
+      const ds = new TempoDatasource(defaultSettings, templateSrv);
+      const text = 'interpolationText';
+      templateSrv.replace.mockReturnValue(text);
+
+      const resp = ds.applyTemplateVariables(
+        { targets: [{ refId: 'x', queryType: 'traceId', query: '$interpolationVar' } as Partial<TempoQuery>] } as any,
+        {
+          interpolationVar: { text: text, value: text },
+        }
+      );
+      expect(templateSrv.replace).toBeCalledTimes(1);
+      expect(resp.query).toBe(text);
+    });
   });
 
   it('parses json fields from backend', async () => {
@@ -48,7 +82,8 @@ describe('Tempo data source', () => {
         ],
       })
     );
-    const ds = new TempoDatasource(defaultSettings);
+    const templateSrv: any = { replace: jest.fn() };
+    const ds = new TempoDatasource(defaultSettings, templateSrv);
     const response = await lastValueFrom(ds.query({ targets: [{ refId: 'refid1', query: '12345' }] } as any));
 
     expect(
