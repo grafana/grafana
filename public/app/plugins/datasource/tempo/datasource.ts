@@ -158,7 +158,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         const timeRange = config.featureToggles.tempoBackendSearch
           ? { startTime: options.range.from.unix(), endTime: options.range.to.unix() }
           : undefined;
-        const searchQuery = this.buildSearchQuery(targets.nativeSearch[0], timeRange);
+        const query = this.applyVariables(targets.nativeSearch[0], options.scopedVars);
+        const searchQuery = this.buildSearchQuery(query, timeRange);
         subQueries.push(
           this._request('/api/search', searchQuery).pipe(
             map((response) => {
@@ -201,7 +202,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   applyTemplateVariables(query: TempoQuery, scopedVars: ScopedVars): Record<string, any> {
-    return this.applyVariables(query, scopedVars, scopedVars);
+    return this.applyVariables(query, scopedVars);
   }
 
   interpolateVariablesInQueries(queries: TempoQuery[], scopedVars: ScopedVars): TempoQuery[] {
@@ -213,17 +214,18 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       return {
         ...query,
         datasource: this.getRef(),
-        ...this.applyVariables(query, scopedVars, scopedVars),
+        ...this.applyVariables(query, scopedVars),
       };
     });
   }
 
-  applyVariables(query: TempoQuery, scopedVars: ScopedVars, rest: ScopedVars) {
+  applyVariables(query: TempoQuery, scopedVars: ScopedVars) {
     const expandedQuery = { ...query };
 
     return {
       ...expandedQuery,
-      query: this.templateSrv.replace(query.query ?? '', rest),
+      query: this.templateSrv.replace(query.query ?? '', scopedVars),
+      search: this.templateSrv.replace(query.search ?? '', scopedVars),
     };
   }
 
@@ -312,12 +314,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     // Validate query inputs and remove spaces if valid
     if (tempoQuery.minDuration) {
+      tempoQuery.minDuration = this.templateSrv.replace(tempoQuery.minDuration ?? '');
       if (!isValidGoDuration(tempoQuery.minDuration)) {
         throw new Error('Please enter a valid min duration.');
       }
       tempoQuery.minDuration = tempoQuery.minDuration.replace(/\s/g, '');
     }
     if (tempoQuery.maxDuration) {
+      tempoQuery.maxDuration = this.templateSrv.replace(tempoQuery.maxDuration ?? '');
       if (!isValidGoDuration(tempoQuery.maxDuration)) {
         throw new Error('Please enter a valid max duration.');
       }
