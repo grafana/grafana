@@ -32,20 +32,36 @@ describe('Tempo data source', () => {
   });
 
   describe('Variables should be interpolated correctly', () => {
+    function getQuery(): TempoQuery {
+      return {
+        refId: 'x',
+        queryType: 'traceId',
+        linkedQuery: {
+          refId: 'linked',
+          expr: '{instance="$interpolationVar"}',
+        },
+        query: '$interpolationVar',
+        search: '$interpolationVar',
+        minDuration: '$interpolationVar',
+        maxDuration: '$interpolationVar',
+      };
+    }
+
     it('when traceId query for dashboard->explore', async () => {
       const templateSrv: any = { replace: jest.fn() };
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       const text = 'interpolationText';
       templateSrv.replace.mockReturnValue(text);
 
-      const queries = ds.interpolateVariablesInQueries(
-        [{ targets: [{ refId: 'x', queryType: 'traceId', query: '$interpolationVar' } as Partial<TempoQuery>] } as any],
-        {
-          interpolationVar: { text: text, value: text },
-        }
-      );
-      expect(templateSrv.replace).toBeCalledTimes(2);
+      const queries = ds.interpolateVariablesInQueries([getQuery()], {
+        interpolationVar: { text: text, value: text },
+      });
+      expect(templateSrv.replace).toBeCalledTimes(5);
+      expect(queries[0].linkedQuery?.expr).toBe(text);
       expect(queries[0].query).toBe(text);
+      expect(queries[0].search).toBe(text);
+      expect(queries[0].minDuration).toBe(text);
+      expect(queries[0].maxDuration).toBe(text);
     });
 
     it('when traceId query for template variable', async () => {
@@ -54,24 +70,15 @@ describe('Tempo data source', () => {
       const text = 'interpolationText';
       templateSrv.replace.mockReturnValue(text);
 
-      const resp = ds.applyTemplateVariables(
-        {
-          targets: [
-            {
-              refId: 'x',
-              queryType: 'traceId',
-              query: '$interpolationVar',
-              search: '$interpolationVar',
-            } as Partial<TempoQuery>,
-          ],
-        } as any,
-        {
-          interpolationVar: { text: text, value: text },
-        }
-      );
-      expect(templateSrv.replace).toBeCalledTimes(2);
+      const resp = ds.applyTemplateVariables(getQuery(), {
+        interpolationVar: { text: text, value: text },
+      });
+      expect(templateSrv.replace).toBeCalledTimes(5);
+      expect(resp.linkedQuery?.expr).toBe(text);
       expect(resp.query).toBe(text);
       expect(resp.search).toBe(text);
+      expect(resp.minDuration).toBe(text);
+      expect(resp.maxDuration).toBe(text);
     });
   });
 
@@ -198,8 +205,8 @@ describe('Tempo data source', () => {
   it('should build search query correctly', () => {
     const templateSrv: any = { replace: jest.fn() };
     const ds = new TempoDatasource(defaultSettings, templateSrv);
-    const durationText = '10ms';
-    templateSrv.replace.mockReturnValue(durationText);
+    const duration = '10ms';
+    templateSrv.replace.mockReturnValue(duration);
     const tempoQuery: TempoQuery = {
       queryType: 'search',
       refId: 'A',
@@ -214,8 +221,8 @@ describe('Tempo data source', () => {
     const builtQuery = ds.buildSearchQuery(tempoQuery);
     expect(builtQuery).toStrictEqual({
       tags: 'root.http.status_code=500 service.name="frontend" name="/config"',
-      minDuration: durationText,
-      maxDuration: durationText,
+      minDuration: duration,
+      maxDuration: duration,
       limit: 10,
     });
   });

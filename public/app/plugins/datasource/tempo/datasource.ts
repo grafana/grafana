@@ -222,10 +222,19 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   applyVariables(query: TempoQuery, scopedVars: ScopedVars) {
     const expandedQuery = { ...query };
 
+    if (query.linkedQuery) {
+      expandedQuery.linkedQuery = {
+        ...query.linkedQuery,
+        expr: this.templateSrv.replace(query.linkedQuery?.expr ?? '', scopedVars),
+      };
+    }
+
     return {
       ...expandedQuery,
       query: this.templateSrv.replace(query.query ?? '', scopedVars),
       search: this.templateSrv.replace(query.search ?? '', scopedVars),
+      minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
+      maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
     };
   }
 
