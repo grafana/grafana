@@ -117,7 +117,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
           metricNamespace && metricNamespace !== defaultDropdownValue ? metricNamespace : metricDefinition,
         aggregation: aggregation,
         dimensionFilters,
-        top: top || '10',
+        top,
         alias: item.alias,
       },
     };

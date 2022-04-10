@@ -12,6 +12,9 @@ const prepareQuery = (query: AzureMonitorQuery) => {
   // Note: _.defaults does not apply default values deeply.
   const withDefaults = defaults({}, query, DEFAULT_QUERY);
   const migratedQuery = migrateQuery(withDefaults);
+  if (migratedQuery.azureMonitor && !migratedQuery.azureMonitor.top) {
+    migratedQuery.azureMonitor.top = '10';
+  }
 
   // If we didn't make any changes to the object, then return the original object to keep the
   // identity the same, and not trigger any other useEffects or anything.
