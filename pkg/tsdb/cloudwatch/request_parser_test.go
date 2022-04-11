@@ -338,14 +338,14 @@ func Test_migrateLegacyQuery(t *testing.T) {
 						"dimensions": {
 						  "InstanceId": ["test"]
 						},
-						"statistics": ["Average", "Sum"],
+						"statistic": "Average",
 						"period": "600",
 						"hide": false
 				  }`),
 				},
 			},
 			time.Now(), time.Now())
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		require.Equal(t, 1, len(migratedQueries))
 
 		assert.JSONEq(t,
@@ -380,7 +380,7 @@ func Test_migrateLegacyQuery(t *testing.T) {
 					"dimensions": {
 					  "InstanceId": ["test"]
 					},
-					"statistics": ["Average", "Sum"],
+					"statistic": "Average",
 					"period": "600",
 					"hide": false
 				  }`),
@@ -396,7 +396,7 @@ func Test_migrateLegacyQuery(t *testing.T) {
 					"dimensions": {
 					  "InstanceId": ["test"]
 					},
-					"statistics": ["Average", "Sum"],
+					"statistic": "Average",
 					"period": "600",
 					"hide": false
 				  }`),
