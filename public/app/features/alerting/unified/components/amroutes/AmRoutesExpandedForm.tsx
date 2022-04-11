@@ -56,7 +56,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
           <FieldArray name="object_matchers" control={control}>
             {({ fields, append, remove }) => (
               <>
-                <div>Matching labels</div>
+                <div>{fields.length === 0 ? <i>Matches All Alerts by Default</i> : <span>Matching Labels</span>}</div>
                 <div className={styles.matchersContainer}>
                   {fields.map((field, index) => {
                     const localPath = `object_matchers[${index}]`;
