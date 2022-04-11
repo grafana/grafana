@@ -32,7 +32,7 @@ type UpsertRule struct {
 	New      ngmodels.AlertRule
 }
 
-// Store is the interface for persisting alert rules and instances
+// RuleStore is the interface for persisting alert rules and instances
 type RuleStore interface {
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
 	DeleteAlertInstancesByRuleUID(ctx context.Context, orgID int64, ruleUID string) error
@@ -43,7 +43,6 @@ type RuleStore interface {
 	GetAlertRules(ctx context.Context, query *ngmodels.GetAlertRulesQuery) error
 	GetUserVisibleNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
-	GetOrgRuleGroups(ctx context.Context, query *ngmodels.ListOrgRuleGroupsQuery) error
 	UpsertAlertRules(ctx context.Context, rule []UpsertRule) error
 }
 
@@ -404,51 +403,4 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 	}
 
 	return nil
-}
-
-func (st DBstore) GetOrgRuleGroups(ctx context.Context, query *ngmodels.ListOrgRuleGroupsQuery) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		var ruleGroups [][]string
-		q := `
-SELECT DISTINCT
-	rule_group,
-	namespace_uid,
-	(
-		SELECT title
-		FROM dashboard
-		WHERE
-			org_id = alert_rule.org_id AND
-			uid = alert_rule.namespace_uid
-	) AS namespace_title
-FROM alert_rule
-WHERE org_id = ?`
-		params := []interface{}{query.OrgID}
-
-		if len(query.NamespaceUIDs) > 0 {
-			placeholders := make([]string, 0, len(query.NamespaceUIDs))
-			for _, folderUID := range query.NamespaceUIDs {
-				params = append(params, folderUID)
-				placeholders = append(placeholders, "?")
-			}
-			q = fmt.Sprintf(" %s AND namespace_uid IN (%s)", q, strings.Join(placeholders, ","))
-		}
-
-		if query.DashboardUID != "" {
-			q = fmt.Sprintf("%s and dashboard_uid = ?", q)
-			params = append(params, query.DashboardUID)
-			if query.PanelID != 0 {
-				q = fmt.Sprintf("%s and panel_id = ?", q)
-				params = append(params, query.PanelID)
-			}
-		}
-
-		q = fmt.Sprintf(" %s ORDER BY namespace_title", q)
-
-		if err := sess.SQL(q, params...).Find(&ruleGroups); err != nil {
-			return err
-		}
-
-		query.Result = ruleGroups
-		return nil
-	})
 }

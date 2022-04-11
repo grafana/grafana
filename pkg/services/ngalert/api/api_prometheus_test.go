@@ -270,16 +270,17 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	t.Run("with a rule that only has one query", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
 		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery())
+		folder := fakeStore.Folders[orgID][0]
 
 		r := api.RouteGetRuleStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
-		require.JSONEq(t, `
+		require.JSONEq(t, fmt.Sprintf(`
 {
 	"status": "success",
 	"data": {
 		"groups": [{
 			"name": "rule-group",
-			"file": "namespaceUID",
+			"file": "%s",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
@@ -306,16 +307,17 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			}],
 			"interval": 60,
 			"lastEvaluation": "2022-03-10T14:01:00Z",
-			"evaluationTime": 0
+			"evaluationTime": 60
 		}]
 	}
 }
-`, string(r.Body()))
+`, folder.Title), string(r.Body()))
 	})
 
 	t.Run("with the inclusion of internal Labels", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
 		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery())
+		folder := fakeStore.Folders[orgID][0]
 
 		req, err := http.NewRequest("GET", "/api/v1/rules?includeInternalLabels=true", nil)
 		require.NoError(t, err)
@@ -323,13 +325,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 		r := api.RouteGetRuleStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
-		require.JSONEq(t, `
+		require.JSONEq(t, fmt.Sprintf(`
 {
 	"status": "success",
 	"data": {
 		"groups": [{
 			"name": "rule-group",
-			"file": "namespaceUID",
+			"file": "%s",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
@@ -359,26 +361,27 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			}],
 			"interval": 60,
 			"lastEvaluation": "2022-03-10T14:01:00Z",
-			"evaluationTime": 0
+			"evaluationTime": 60
 		}]
 	}
 }
-`, string(r.Body()))
+`, folder.Title), string(r.Body()))
 	})
 
 	t.Run("with a rule that has multiple queries", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
 		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withExpressionsMultiQuery())
+		folder := fakeStore.Folders[orgID][0]
 
 		r := api.RouteGetRuleStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
-		require.JSONEq(t, `
+		require.JSONEq(t, fmt.Sprintf(`
 {
 	"status": "success",
 	"data": {
 		"groups": [{
 			"name": "rule-group",
-			"file": "namespaceUID",
+			"file": "%s",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
@@ -405,11 +408,11 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			}],
 			"interval": 60,
 			"lastEvaluation": "2022-03-10T14:01:00Z",
-			"evaluationTime": 0
+			"evaluationTime": 60
 		}]
 	}
 }
-`, string(r.Body()))
+`, folder.Title), string(r.Body()))
 	})
 }
 
