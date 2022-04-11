@@ -390,11 +390,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         margin-left: ${theme.spacing(1.5)};
       }
     `,
-    labelMatchersContainer: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${theme.spacing(2)};
-    `,
     noMatchersWarning: css`
       padding: ${theme.spacing(1)} ${theme.spacing(2)};
     `,
