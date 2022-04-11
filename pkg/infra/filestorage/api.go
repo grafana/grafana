@@ -51,9 +51,12 @@ type Paging struct {
 }
 
 type UpsertFileCommand struct {
-	Path       string
-	MimeType   string
-	Contents   []byte
+	Path     string
+	MimeType string
+
+	// Contents of an existing file won't be modified if cmd.Contents is nil
+	Contents []byte
+	// Properties of an existing file won't be modified if cmd.Properties is nil
 	Properties map[string]string
 }
 
