@@ -42,8 +42,6 @@ Service account access tokens inherit permissions from service account directly.
 
 ### Service accounts benefits
 
-When creating a token for a service account, we call them service account token; which are essentially a Grafana API key.
-
 The added benefits of service accounts to API keys include:
 
 - Service accounts resemble Grafana users and can be enabled/disabled, granted specific permissions, and remain active until they are deleted or disabled. API keys are only valid until their expiry date.
