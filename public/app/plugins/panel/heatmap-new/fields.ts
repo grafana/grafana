@@ -89,6 +89,7 @@ const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => 
     return { heatmap: frame };
   }
 
+  // Y field values (display is used in the axis)
   if (!frame.fields[1].display) {
     frame.fields[1].display = getDisplayProcessor({ field: frame.fields[1], theme });
   }
@@ -110,7 +111,8 @@ const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => 
   let yBinIncr = ys[1] - ys[0];
   let xBinIncr = xs[yBinQty] - xs[0];
 
-  const disp = frame.fields[1].display ?? getValueFormat('short');
+  // The "count" field
+  const disp = frame.fields[2].display ?? getValueFormat('short');
   return {
     heatmap: frame,
     xBucketSize: xBinIncr,

@@ -82,7 +82,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     return prepConfig({
       dataRef,
       theme,
-      onhover: options.tooltip.show ? onhover : null,
+      onhover: onhover,
       onclick: options.tooltip.show ? onclick : null,
       onzoom: (evt) => {
         onChangeTimeRange({ from: evt.xMin, to: evt.xMax });
@@ -132,7 +132,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
         )}
       </VizLayout>
       <Portal>
-        {hover && (
+        {hover && options.tooltip.show && (
           <VizTooltipContainer
             position={{ x: hover.pageX, y: hover.pageY }}
             offset={{ x: 10, y: 10 }}
