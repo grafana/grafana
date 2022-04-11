@@ -200,7 +200,7 @@ export function RichHistoryQueriesTab(props: Props) {
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
           {!activeDatasourceOnly && (
-            <div aria-label="Filter datasources" className={styles.multiselect}>
+            <div className={styles.multiselect}>
               <MultiSelect
                 menuShouldPortal
                 options={listOfDatasources}
