@@ -138,8 +138,6 @@ func callCreateFolder(sc *scenarioContext) {
 func createFolderScenario(t *testing.T, desc string, url string, routePattern string, folderService dashboards.FolderService,
 	cmd models.CreateFolderCommand, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		hs := HTTPServer{
 			Bus:           bus.GetBus(),
 			Cfg:           setting.NewCfg(),
@@ -170,8 +168,6 @@ func callUpdateFolder(sc *scenarioContext) {
 func updateFolderScenario(t *testing.T, desc string, url string, routePattern string, folderService dashboards.FolderService,
 	cmd models.UpdateFolderCommand, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
 		hs := HTTPServer{
 			Cfg:           setting.NewCfg(),
 			folderService: folderService,

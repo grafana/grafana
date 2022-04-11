@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -491,7 +490,7 @@ func (hs *HTTPServer) NotificationTest(c *models.ReqContext) response.Response {
 		SecureSettings: dto.SecureSettings,
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), cmd); err != nil {
+	if err := hs.AlertNotificationService.HandleNotificationTestCommand(c.Req.Context(), cmd); err != nil {
 		if errors.Is(err, models.ErrSmtpNotEnabled) {
 			return response.Error(412, err.Error(), err)
 		}
