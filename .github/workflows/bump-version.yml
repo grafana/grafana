@@ -50,7 +50,7 @@ jobs:
           example: 7.4.3 or 7.4.3-beta1"
           exit 1
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set intermedia variables
         id: intermedia
@@ -59,12 +59,6 @@ jobs:
           echo "::set-output name=check_passed::false"
           echo "::set-output name=branch_name::v${{steps.regex-match.outputs.group1}}"
           echo "::set-output name=branch_exist::$(git ls-remote --heads https://github.com/grafana/grafana.git v${{ steps.regex-match.outputs.group1 }}.x | wc -l)"
-
-      - name: Check input version is aligned with branch(not main)
-        if: ${{ github.event.inputs.version != '' && steps.intermedia.outputs.branch_exist != '0' && !contains(steps.intermedia.outputs.short_ref, steps.intermedia.outputs.branch_name) }}
-        run: |
-          echo " You need to run the workflow on branch v${{steps.regex-match.outputs.group1}}.x
-          exit 1
 
       - name: Check input version is aligned with branch(main)
         if: ${{ github.event.inputs.version != '' && steps.intermedia.outputs.branch_exist == '0' && !contains(steps.intermedia.outputs.short_ref, 'main') }}
@@ -75,7 +69,7 @@ jobs:
           exit 1
 
       - name: Checkout Actions
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions

@@ -6,6 +6,12 @@ import userEvent from '@testing-library/user-event';
 import { Playlist } from './types';
 import { PlaylistForm } from './PlaylistForm';
 
+jest.mock('../../core/components/TagFilter/TagFilter', () => ({
+  TagFilter: () => {
+    return <>mocked-tag-filter</>;
+  },
+}));
+
 function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
   const onSubmitMock = jest.fn();
   const playlist = { name, items, interval } as unknown as Playlist;

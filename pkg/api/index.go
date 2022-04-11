@@ -120,11 +120,14 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			}
 
 			if include.Type == "dashboard" && include.AddToNav {
-				link := &dtos.NavLink{
-					Url:  hs.Cfg.AppSubURL + include.GetSlugOrUIDLink(),
-					Text: include.Name,
+				dboardURL := include.DashboardURLPath()
+				if dboardURL != "" {
+					link := &dtos.NavLink{
+						Url:  path.Join(hs.Cfg.AppSubURL, dboardURL),
+						Text: include.Name,
+					}
+					appLink.Children = append(appLink.Children, link)
 				}
-				appLink.Children = append(appLink.Children, link)
 			}
 		}
 
@@ -221,9 +224,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if c.IsSignedIn {
-		navTree = append(navTree, hs.getProfileNode(c))
-	}
+	navTree = hs.addProfile(navTree, c)
 
 	_, uaIsDisabledForOrg := hs.Cfg.UnifiedAlerting.DisabledOrgs[c.OrgId]
 	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
@@ -306,7 +307,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Id:          "serviceaccounts",
 			Description: "Manage service accounts",
 			// TODO: change icon to "key-skeleton-alt" when it's available
-			Icon: "key-skeleton-alt",
+			Icon: "keyhole-circle",
 			Url:  hs.Cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}
@@ -364,23 +365,37 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		navTree = append(navTree, serverAdminNode)
 	}
 
-	helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
-	if hs.Cfg.AnonymousHideVersion && !c.IsSignedIn {
-		helpVersion = setting.ApplicationName
-	}
-
-	navTree = append(navTree, &dtos.NavLink{
-		Text:       "Help",
-		SubTitle:   helpVersion,
-		Id:         "help",
-		Url:        "#",
-		Icon:       "question-circle",
-		SortWeight: dtos.WeightHelp,
-		Section:    dtos.NavSectionConfig,
-		Children:   []*dtos.NavLink{},
-	})
+	navTree = hs.addHelpLinks(navTree, c)
 
 	return navTree, nil
+}
+
+func (hs *HTTPServer) addProfile(navTree []*dtos.NavLink, c *models.ReqContext) []*dtos.NavLink {
+	if setting.ProfileEnabled && c.IsSignedIn {
+		navTree = append(navTree, hs.getProfileNode(c))
+	}
+	return navTree
+}
+
+func (hs *HTTPServer) addHelpLinks(navTree []*dtos.NavLink, c *models.ReqContext) []*dtos.NavLink {
+	if setting.HelpEnabled {
+		helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
+		if hs.Cfg.AnonymousHideVersion && !c.IsSignedIn {
+			helpVersion = setting.ApplicationName
+		}
+
+		navTree = append(navTree, &dtos.NavLink{
+			Text:       "Help",
+			SubTitle:   helpVersion,
+			Id:         "help",
+			Url:        "#",
+			Icon:       "question-circle",
+			SortWeight: dtos.WeightHelp,
+			Section:    dtos.NavSectionConfig,
+			Children:   []*dtos.NavLink{},
+		})
+	}
+	return navTree
 }
 
 func (hs *HTTPServer) buildSavedItemsNavLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
@@ -641,6 +656,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 			IsSignedIn:                 c.IsSignedIn,
 			Login:                      c.Login,
 			Email:                      c.Email,
+			ExternalUserId:             c.SignedInUser.ExternalAuthId,
 			Name:                       c.Name,
 			OrgCount:                   c.OrgCount,
 			OrgId:                      c.OrgId,

@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Datasource from '../../datasource';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import { hasOption, toOption } from '../../utils/common';
+import { useAsyncState } from '../../utils/useAsyncState';
 import { setMetricNamespace, setSubscriptionID } from './setQueryValue';
 
 export interface MetricMetadata {
@@ -25,29 +26,6 @@ export type DataHook = (
   onChange: OnChangeFn,
   setError: SetErrorFn
 ) => AzureMonitorOption[];
-
-export function useAsyncState<T>(asyncFn: () => Promise<T>, setError: Function, dependencies: unknown[]) {
-  // Use the lazy initial state functionality of useState to assign a random ID to the API call
-  // to track where errors come from. See useLastError.
-  const [errorSource] = useState(() => Math.random());
-  const [value, setValue] = useState<T>();
-
-  const finalValue = useMemo(() => value ?? [], [value]);
-
-  useEffect(() => {
-    asyncFn()
-      .then((results) => {
-        setValue(results);
-        setError(errorSource, undefined);
-      })
-      .catch((err) => {
-        setError(errorSource, err);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, dependencies);
-
-  return finalValue;
-}
 
 export const updateSubscriptions = (
   query: AzureMonitorQuery,

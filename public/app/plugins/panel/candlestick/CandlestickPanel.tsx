@@ -244,39 +244,49 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
             )}
             {/* Enables annotations creation*/}
-            <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
-              {({ startAnnotating }) => {
-                return (
-                  <ContextMenuPlugin
-                    data={alignedDataFrame}
-                    config={config}
-                    timeZone={timeZone}
-                    replaceVariables={replaceVariables}
-                    defaultItems={
-                      enableAnnotationCreation
-                        ? [
-                            {
-                              items: [
-                                {
-                                  label: 'Add annotation',
-                                  ariaLabel: 'Add annotation',
-                                  icon: 'comment-alt',
-                                  onClick: (e, p) => {
-                                    if (!p) {
-                                      return;
-                                    }
-                                    startAnnotating({ coords: p.coords });
+            {enableAnnotationCreation ? (
+              <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
+                {({ startAnnotating }) => {
+                  return (
+                    <ContextMenuPlugin
+                      data={alignedDataFrame}
+                      config={config}
+                      timeZone={timeZone}
+                      replaceVariables={replaceVariables}
+                      defaultItems={
+                        enableAnnotationCreation
+                          ? [
+                              {
+                                items: [
+                                  {
+                                    label: 'Add annotation',
+                                    ariaLabel: 'Add annotation',
+                                    icon: 'comment-alt',
+                                    onClick: (e, p) => {
+                                      if (!p) {
+                                        return;
+                                      }
+                                      startAnnotating({ coords: p.coords });
+                                    },
                                   },
-                                },
-                              ],
-                            },
-                          ]
-                        : []
-                    }
-                  />
-                );
-              }}
-            </AnnotationEditorPlugin>
+                                ],
+                              },
+                            ]
+                          : []
+                      }
+                    />
+                  );
+                }}
+              </AnnotationEditorPlugin>
+            ) : (
+              <ContextMenuPlugin
+                data={alignedDataFrame}
+                config={config}
+                timeZone={timeZone}
+                replaceVariables={replaceVariables}
+                defaultItems={[]}
+              />
+            )}
             {data.annotations && (
               <ExemplarsPlugin
                 config={config}

@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "grafana",
-  "version": "8.5.0-pre",
+  "version": "9.0.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
@@ -32,13 +32,12 @@
     "packages:publishLatest": "lerna publish from-package --contents dist --yes --no-verify-access",
     "packages:publishNext": "lerna publish from-package --contents dist --dist-tag next --yes --no-verify-access",
     "packages:publishTest": "lerna publish from-package --contents dist --dist-tag test --yes --no-verify-access",
-    "packages:publishPrevious": "lerna publish from-package --contents dist --dist-tag previous --yes --no-verify-access",
     "packages:publishDev": "lerna publish from-package --contents dist --dist-tag dev --yes --registry http://grafana-npm.local:4873 --force-publish=*",
     "packages:typecheck": "lerna run typecheck",
     "packages:clean": "lerna run clean",
     "precommit": "yarn run lint-staged",
     "prettier:check": "prettier --check --list-different=false --loglevel=warn \"**/*.{ts,tsx,scss,md,mdx}\"",
-    "prettier:checkDocs": "prettier --check --list-different=false --loglevel=warn \"docs/**.md\" \"packages/**.{ts,tsx,scss,md,mdx}\"",
+    "prettier:checkDocs": "prettier --check --list-different=false --loglevel=warn \"docs/**/*.md\" \"packages/**/*.{ts,tsx,scss,md,mdx}\"",
     "prettier:write": "prettier --list-different \"**/*.{js,ts,tsx,scss,md,mdx}\" --write",
     "start": "yarn themes:generate && yarn dev --watch",
     "start:noTsCheck": "yarn start --env noTsCheck=1",
@@ -54,10 +53,11 @@
     "i18n:extract": "lingui extract",
     "i18n:compile": "lingui compile",
     "postinstall": "husky install",
-    "betterer": "betterer"
+    "betterer": "betterer",
+    "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts"
   },
   "grafana": {
-    "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-4/",
+    "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-5/",
     "releaseNotesUrl": "https://grafana.com/docs/grafana/next/release-notes/"
   },
   "lint-staged": {
@@ -71,6 +71,9 @@
     ],
     "*pkg/**/*.go": [
       "gofmt -w -s"
+    ],
+    "*.{star}": [
+      "make drone"
     ]
   },
   "devDependencies": {
@@ -86,6 +89,7 @@
     "@babel/preset-env": "7.16.11",
     "@babel/preset-react": "7.16.7",
     "@babel/preset-typescript": "7.16.7",
+    "@betterer/betterer": "5.1.7",
     "@betterer/cli": "5.1.7",
     "@betterer/regexp": "5.1.7",
     "@emotion/eslint-plugin": "11.7.0",
@@ -105,7 +109,7 @@
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@swc/core": "1.2.160",
     "@swc/helpers": "0.3.8",
-    "@testing-library/dom": "8.11.3",
+    "@testing-library/dom": "8.13.0",
     "@testing-library/jest-dom": "5.16.2",
     "@testing-library/react": "12.1.4",
     "@testing-library/react-hooks": "7.0.2",
@@ -128,11 +132,12 @@
     "@types/hoist-non-react-statics": "3.3.1",
     "@types/jest": "27.4.1",
     "@types/jquery": "3.5.14",
+    "@types/js-yaml": "^4.0.5",
     "@types/jsurl": "^1.2.28",
     "@types/lingui__macro": "^3",
-    "@types/lodash": "4.14.149",
+    "@types/lodash": "4.14.181",
     "@types/logfmt": "^1.2.1",
-    "@types/mousetrap": "1.6.3",
+    "@types/mousetrap": "1.6.9",
     "@types/node": "16.11.26",
     "@types/papaparse": "5.3.2",
     "@types/pluralize": "^0.0.29",
@@ -146,6 +151,7 @@
     "@types/react-loadable": "5.5.6",
     "@types/react-redux": "7.1.23",
     "@types/react-router-dom": "5.3.3",
+    "@types/react-table": "^7",
     "@types/react-test-renderer": "17.0.1",
     "@types/react-transition-group": "4.4.4",
     "@types/react-virtualized-auto-sizer": "1.0.1",
@@ -196,7 +202,7 @@
     "jest-canvas-mock": "2.3.1",
     "jest-date-mock": "1.0.8",
     "jest-fail-on-console": "2.3.0",
-    "jest-junit": "13.0.0",
+    "jest-junit": "13.1.0",
     "jest-matcher-utils": "27.5.1",
     "jest-mock-console": "1.2.3",
     "lerna": "^4.0.0",
@@ -231,7 +237,7 @@
     "ts-node": "10.7.0",
     "typescript": "4.4.4",
     "wait-on": "6.0.1",
-    "webpack": "5.70.0",
+    "webpack": "5.72.0",
     "webpack-bundle-analyzer": "4.5.0",
     "webpack-cli": "4.9.2",
     "webpack-dev-server": "4.7.4",
@@ -245,6 +251,7 @@
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/experimental": "0.0.2-canary.22",
     "@grafana/google-sdk": "0.0.3",
+    "@grafana/lezer-logql": "^0.0.11",
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
     "@grafana/slate-react": "0.22.10-grafana",
@@ -269,7 +276,7 @@
     "@react-stately/collections": "3.3.7",
     "@react-stately/menu": "3.2.6",
     "@react-stately/tree": "3.2.3",
-    "@reduxjs/toolkit": "1.7.2",
+    "@reduxjs/toolkit": "1.8.0",
     "@sentry/browser": "6.19.1",
     "@sentry/types": "6.19.1",
     "@sentry/utils": "6.19.1",
@@ -309,6 +316,7 @@
     "immer": "9.0.12",
     "immutable": "4.0.0",
     "jquery": "3.6.0",
+    "js-yaml": "^4.1.0",
     "json-source-map": "0.6.1",
     "jsurl": "^0.1.5",
     "lezer-promql": "0.22.0",
@@ -323,8 +331,8 @@
     "monaco-promql": "^1.7.2",
     "mousetrap": "1.6.5",
     "mousetrap-global-bind": "1.1.0",
-    "moveable": "0.27.3",
-    "ol": "6.13.0",
+    "moveable": "0.28.0",
+    "ol": "6.14.1",
     "papaparse": "5.3.2",
     "pluralize": "^8.0.0",
     "prismjs": "1.27.0",
@@ -353,6 +361,7 @@
     "react-router-dom": "^5.2.0",
     "react-select": "5.2.2",
     "react-split-pane": "0.1.92",
+    "react-table": "^7.7.0",
     "react-transition-group": "4.4.2",
     "react-use": "17.3.2",
     "react-virtualized-auto-sizer": "1.0.6",
@@ -383,11 +392,12 @@
   "resolutions": {
     "underscore": "1.13.2",
     "@types/slate": "0.47.2",
-    "@microsoft/api-extractor-model": "7.15.4",
+    "@microsoft/api-extractor-model": "7.16.0",
     "@rushstack/node-core-library": "3.45.1",
     "@rushstack/rig-package": "0.3.8",
     "@rushstack/ts-command-line": "4.10.7",
-    "@storybook/react/webpack": "5.70.0"
+    "@storybook/react/webpack": "5.72.0",
+    "node-fetch": "2.6.7"
   },
   "workspaces": {
     "packages": [

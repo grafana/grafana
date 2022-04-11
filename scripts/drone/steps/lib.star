@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.27'
+grabpl_version = 'v2.9.32'
 build_image = 'grafana/build-container:1.5.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -8,9 +8,15 @@ alpine_image = 'alpine:3.15'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
-test_release_ver = 'v7.3.0-test'
 
 disable_tests = False
+trigger_oss = {
+    'when': {
+        'repo': [
+            'grafana/grafana',
+        ]
+    }
+}
 
 def slack_step(channel, template, secret):
     return {
@@ -253,7 +259,7 @@ def build_storybook_step(edition, ver_mode):
     }
 
 
-def store_storybook_step(edition, ver_mode):
+def store_storybook_step(edition, ver_mode, trigger=None):
     if edition in ('enterprise', 'enterprise2'):
         return None
 
@@ -267,12 +273,12 @@ def store_storybook_step(edition, ver_mode):
                         'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
                         'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
                     ] + [
-                        'gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{}'.format(
-                            c)
+                        'gsutil -m rm -r gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{} || true && gsutil -m cp -r ./packages/grafana-ui/dist/storybook/* gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{}'.format(
+                            c, c)
                         for c in channels
                     ])
 
-    return {
+    step = {
         'name': 'store-storybook',
         'image': publish_image,
         'depends_on': ['build-storybook',] + end_to_end_tests_deps(edition),
@@ -282,6 +288,9 @@ def store_storybook_step(edition, ver_mode):
         },
         'commands': commands,
     }
+    if trigger and ver_mode in ("release-branch", "main"):
+        step.update(trigger)
+    return step
 
 def e2e_tests_artifacts(edition):
     return {
@@ -322,7 +331,7 @@ def e2e_tests_artifacts(edition):
     }
 
 
-def upload_cdn_step(edition, ver_mode):
+def upload_cdn_step(edition, ver_mode, trigger=None):
     src_dir = ''
     if ver_mode == "release":
         bucket = "$${PRERELEASE_BUCKET}"
@@ -340,7 +349,7 @@ def upload_cdn_step(edition, ver_mode):
             'grafana-server',
         ])
 
-    return {
+    step = {
         'name': 'upload-cdn-assets' + enterprise2_suffix(edition),
         'image': publish_image,
         'depends_on': deps,
@@ -352,6 +361,9 @@ def upload_cdn_step(edition, ver_mode):
             './bin/grabpl upload-cdn --edition {} --src-bucket "{}"{}'.format(edition, bucket, src_dir),
         ],
     }
+    if trigger and ver_mode in ("release-branch", "main"):
+        step.update(trigger)
+    return step
 
 
 def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
@@ -365,7 +377,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
             'GITHUB_TOKEN': from_secret(github_token),
         }
         cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise ${{DRONE_TAG}}'.format(
+            './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} ${{DRONE_TAG}}'.format(
                 edition,
             ),
         ]
@@ -376,7 +388,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
             build_no = '$${SOURCE_BUILD_NUMBER}'
         env = {}
         cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} --build-id {}{} --no-pull-enterprise'.format(
+            './bin/grabpl build-backend --jobs 8 --edition {} --build-id {}{}'.format(
                 edition, build_no, variants_str,
             ),
         ]
@@ -402,12 +414,12 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'release':
         cmds = [
             './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} ' + \
-            '--edition {} --no-pull-enterprise ${{DRONE_TAG}}'.format(edition),
+            '--edition {} ${{DRONE_TAG}}'.format(edition),
         ]
     else:
         cmds = [
             './bin/grabpl build-frontend --jobs 8 --edition {} '.format(edition) + \
-            '--build-id {} --no-pull-enterprise'.format(build_no),
+            '--build-id {}'.format(build_no),
         ]
 
     return {
@@ -432,12 +444,12 @@ def build_frontend_package_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'release':
         cmds = [
             './bin/grabpl build-frontend-packages --jobs 8 --github-token $${GITHUB_TOKEN} ' + \
-            '--edition {} --no-pull-enterprise ${{DRONE_TAG}}'.format(edition),
+            '--edition {} ${{DRONE_TAG}}'.format(edition),
             ]
     else:
         cmds = [
             './bin/grabpl build-frontend-packages --jobs 8 --edition {} '.format(edition) + \
-            '--build-id {} --no-pull-enterprise'.format(build_no),
+            '--build-id {}'.format(build_no),
             ]
 
     return {
@@ -581,11 +593,11 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
     }
 
 
-def frontend_metrics_step(edition):
+def frontend_metrics_step(edition, trigger=None):
     if edition in ('enterprise', 'enterprise2'):
         return None
 
-    return {
+    step = {
         'name': 'publish-frontend-metrics',
         'image': build_image,
         'depends_on': [
@@ -599,6 +611,9 @@ def frontend_metrics_step(edition):
             './scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}',
         ],
     }
+    if trigger:
+        step.update(trigger)
+    return step
 
 
 def codespell_step():
@@ -666,7 +681,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
     if ver_mode == 'release':
         cmds = [
             '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
-            '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} ${{DRONE_TAG}}'.format(
+            '--github-token $${{GITHUB_TOKEN}}{} ${{DRONE_TAG}}'.format(
                 sign_args
             ),
         ]
@@ -677,7 +692,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
             build_no = '$${SOURCE_BUILD_NUMBER}'
         cmds = [
             '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
-            '--build-id {} --no-pull-enterprise{}{}'.format(build_no, variants_str, sign_args),
+            '--build-id {}{}{}'.format(build_no, variants_str, sign_args),
         ]
 
     return {
@@ -798,7 +813,7 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
         },
     }
 
-def publish_images_step(edition, ver_mode, mode, docker_repo, ubuntu=False):
+def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
     if mode == 'security':
         mode = '--{} '.format(mode)
     else:
@@ -812,7 +827,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, ubuntu=False):
     else:
         deps = ['build-docker-images', 'build-docker-images-ubuntu']
 
-    return {
+    step = {
         'name': 'publish-images-{}'.format(docker_repo),
         'image': 'google/cloud-sdk',
         'environment': {
@@ -827,6 +842,10 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, ubuntu=False):
             'path': '/var/run/docker.sock'
         }],
     }
+    if trigger and ver_mode in ("release-branch", "main"):
+        step.update(trigger)
+
+    return step
 
 
 def postgres_integration_tests_step(edition, ver_mode):
@@ -923,11 +942,11 @@ def memcached_integration_tests_step(edition, ver_mode):
     }
 
 
-def release_canary_npm_packages_step(edition):
+def release_canary_npm_packages_step(edition, trigger=None):
     if edition in ('enterprise', 'enterprise2'):
         return None
 
-    return {
+    step = {
         'name': 'release-canary-npm-packages',
         'image': build_image,
         'depends_on': end_to_end_tests_deps(edition),
@@ -938,6 +957,9 @@ def release_canary_npm_packages_step(edition):
             './scripts/circle-release-canary-packages.sh',
         ],
     }
+    if trigger:
+        step.update(trigger)
+    return step
 
 
 def enterprise2_suffix(edition):
@@ -946,7 +968,7 @@ def enterprise2_suffix(edition):
     return ''
 
 
-def upload_packages_step(edition, ver_mode, is_downstream=False):
+def upload_packages_step(edition, ver_mode, is_downstream=False, trigger=None):
     if ver_mode == 'main' and edition in ('enterprise', 'enterprise2') and not is_downstream:
         return None
 
@@ -966,7 +988,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     else:
         deps.extend(end_to_end_tests_deps(edition))
 
-    return {
+    step = {
         'name': 'upload-packages' + enterprise2_suffix(edition),
         'image': publish_image,
         'depends_on': deps,
@@ -976,6 +998,9 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         },
         'commands': [cmd, ],
     }
+    if trigger and ver_mode in ("release-branch", "main"):
+        step.update(trigger)
+    return step
 
 
 def store_packages_step(edition, ver_mode, is_downstream=False):

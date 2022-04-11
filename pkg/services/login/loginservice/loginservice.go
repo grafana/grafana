@@ -23,7 +23,6 @@ func ProvideService(sqlStore sqlstore.Store, bus bus.Bus, quotaService *quota.Qu
 		QuotaService:    quotaService,
 		AuthInfoService: authInfoService,
 	}
-	bus.AddHandler(s.UpsertUser)
 	return s
 }
 
@@ -57,7 +56,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 		}
 		if !cmd.SignupAllowed {
 			cmd.ReqContext.Logger.Warn("Not allowing login, user not found in internal user database and allow signup = false", "authmode", extUser.AuthModule)
-			return login.ErrInvalidCredentials
+			return login.ErrSignupNotAllowed
 		}
 
 		limitReached, err := ls.QuotaService.QuotaReached(cmd.ReqContext, "user")
@@ -127,6 +126,46 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 		}
 	}
 
+	return nil
+}
+
+func (ls *Implementation) DisableExternalUser(ctx context.Context, username string) error {
+	// Check if external user exist in Grafana
+	userQuery := &models.GetExternalUserInfoByLoginQuery{
+		LoginOrEmail: username,
+	}
+
+	if err := ls.AuthInfoService.GetExternalUserInfoByLogin(ctx, userQuery); err != nil {
+		return err
+	}
+
+	userInfo := userQuery.Result
+	if userInfo.IsDisabled {
+		return nil
+	}
+
+	logger.Debug(
+		"Disabling external user",
+		"user",
+		userQuery.Result.Login,
+	)
+
+	// Mark user as disabled in grafana db
+	disableUserCmd := &models.DisableUserCommand{
+		UserId:     userQuery.Result.UserId,
+		IsDisabled: true,
+	}
+
+	if err := ls.SQLStore.DisableUser(ctx, disableUserCmd); err != nil {
+		logger.Debug(
+			"Error disabling external user",
+			"user",
+			userQuery.Result.Login,
+			"message",
+			err.Error(),
+		)
+		return err
+	}
 	return nil
 }
 

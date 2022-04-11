@@ -22,9 +22,9 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
       break;
     }
     // Drop terms for negative filters
-    const filterOperator = expression.substr(filterStart, 2);
-    const skip = expression.substr(filterStart).search(/!=|!~/) === 0;
-    expression = expression.substr(filterStart + 2);
+    const filterOperator = expression.slice(filterStart, filterStart + 2);
+    const skip = expression.slice(filterStart).search(/!=|!~/) === 0;
+    expression = expression.slice(filterStart + 2);
     if (skip) {
       continue;
     }
@@ -34,8 +34,8 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
     if (filterEnd === -1) {
       filterTerm = expression.trim();
     } else {
-      filterTerm = expression.substr(0, filterEnd).trim();
-      expression = expression.substr(filterEnd);
+      filterTerm = expression.slice(0, filterEnd).trim();
+      expression = expression.slice(filterEnd);
     }
 
     const quotedTerm = filterTerm.match(/"(.*?)"/);

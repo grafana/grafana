@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/annotations"
 )
 
 // RoleRegistration stores a role and its assignments to built-in roles
@@ -241,7 +243,8 @@ type SetResourcePermissionCommand struct {
 }
 
 const (
-	GlobalOrgID = 0
+	GlobalOrgID      = 0
+	GeneralFolderUID = "general"
 
 	// Permission actions
 
@@ -319,11 +322,10 @@ const (
 	ScopeTeamsAll = "teams:*"
 
 	// Annotations related actions
-	ActionAnnotationsCreate   = "annotations:create"
-	ActionAnnotationsDelete   = "annotations:delete"
-	ActionAnnotationsRead     = "annotations:read"
-	ActionAnnotationsWrite    = "annotations:write"
-	ActionAnnotationsTagsRead = "annotations.tags:read"
+	ActionAnnotationsCreate = "annotations:create"
+	ActionAnnotationsDelete = "annotations:delete"
+	ActionAnnotationsRead   = "annotations:read"
+	ActionAnnotationsWrite  = "annotations:write"
 
 	// Dashboard actions
 	ActionDashboardsCreate           = "dashboards:create"
@@ -379,11 +381,8 @@ var (
 	ScopeAnnotationsProvider         = NewScopeProvider(ScopeAnnotationsRoot)
 	ScopeAnnotationsAll              = ScopeAnnotationsProvider.GetResourceAllScope()
 	ScopeAnnotationsID               = Scope(ScopeAnnotationsRoot, "id", Parameter(":annotationId"))
-	ScopeAnnotationsTypeDashboard    = ScopeAnnotationsProvider.GetResourceScopeType("dashboard")
-	ScopeAnnotationsTypeOrganization = ScopeAnnotationsProvider.GetResourceScopeType("organization")
-
-	// Annotation tag scopes
-	ScopeAnnotationsTagsAll = "annotations:tags:*"
+	ScopeAnnotationsTypeDashboard    = ScopeAnnotationsProvider.GetResourceScopeType(annotations.Dashboard.String())
+	ScopeAnnotationsTypeOrganization = ScopeAnnotationsProvider.GetResourceScopeType(annotations.Organization.String())
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

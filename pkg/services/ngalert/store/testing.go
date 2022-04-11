@@ -3,18 +3,19 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/util"
 
 	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
@@ -29,6 +30,7 @@ func NewFakeRuleStore(t *testing.T) *FakeRuleStore {
 		Hook: func(interface{}) error {
 			return nil
 		},
+		Folders: map[int64][]*models2.Folder{},
 	}
 }
 
@@ -40,6 +42,12 @@ type FakeRuleStore struct {
 	Rules       map[int64][]*models.AlertRule
 	Hook        func(cmd interface{}) error // use Hook if you need to intercept some query and return an error
 	RecordedOps []interface{}
+	Folders     map[int64][]*models2.Folder
+}
+
+type GenericRecordedQuery struct {
+	Name   string
+	Params []interface{}
 }
 
 // PutRule puts the rule in the Rules map. If there are existing rule in the same namespace, they will be overwritten
@@ -57,6 +65,23 @@ mainloop:
 		}
 		rgs = append(rgs, r)
 		f.Rules[r.OrgID] = rgs
+
+		var existing *models2.Folder
+		folders := f.Folders[r.OrgID]
+		for _, folder := range folders {
+			if folder.Uid == r.NamespaceUID {
+				existing = folder
+				break
+			}
+		}
+		if existing == nil {
+			folders = append(folders, &models2.Folder{
+				Id:    rand.Int63(),
+				Uid:   r.NamespaceUID,
+				Title: "TEST-FOLDER-" + util.GenerateShortUID(),
+			})
+			f.Folders[r.OrgID] = folders
+		}
 	}
 }
 
@@ -76,15 +101,33 @@ func (f *FakeRuleStore) GetRecordedCommands(predicate func(cmd interface{}) (int
 	return result
 }
 
-func (f *FakeRuleStore) DeleteAlertRulesByUID(_ context.Context, _ int64, _ ...string) error {
+func (f *FakeRuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UIDs ...string) error {
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "DeleteAlertRulesByUID",
+		Params: []interface{}{orgID, UIDs},
+	})
+
+	rules := f.Rules[orgID]
+
+	var result = make([]*models.AlertRule, 0, len(rules))
+
+	for _, rule := range rules {
+		add := true
+		for _, UID := range UIDs {
+			if rule.UID == UID {
+				add = false
+				break
+			}
+		}
+		if add {
+			result = append(result, rule)
+		}
+	}
+
+	f.Rules[orgID] = result
 	return nil
 }
-func (f *FakeRuleStore) DeleteNamespaceAlertRules(_ context.Context, _ int64, _ string) ([]string, error) {
-	return []string{}, nil
-}
-func (f *FakeRuleStore) DeleteRuleGroupAlertRules(_ context.Context, _ int64, _ string, _ string) ([]string, error) {
-	return []string{}, nil
-}
+
 func (f *FakeRuleStore) DeleteAlertInstancesByRuleUID(_ context.Context, _ int64, _ string) error {
 	return nil
 }
@@ -165,7 +208,7 @@ func (f *FakeRuleStore) GetAlertRules(_ context.Context, q *models.GetAlertRules
 	q.Result = result
 	return nil
 }
-func (f *FakeRuleStore) GetNamespaces(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
+func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
@@ -181,8 +224,14 @@ func (f *FakeRuleStore) GetNamespaces(_ context.Context, orgID int64, _ *models2
 	}
 	return namespacesMap, nil
 }
-func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, _ string, _ int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
-	return nil, nil
+func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
+	folders := f.Folders[orgID]
+	for _, folder := range folders {
+		if folder.Title == title {
+			return folder, nil
+		}
+	}
+	return nil, fmt.Errorf("not found")
 }
 func (f *FakeRuleStore) GetOrgRuleGroups(_ context.Context, q *models.ListOrgRuleGroupsQuery) error {
 	f.mtx.Lock()
@@ -220,59 +269,6 @@ func (f *FakeRuleStore) UpsertAlertRules(_ context.Context, q []UpsertRule) erro
 	if err := f.Hook(q); err != nil {
 		return err
 	}
-	return nil
-}
-
-func (f *FakeRuleStore) UpdateRuleGroup(_ context.Context, cmd UpdateRuleGroupCmd) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, cmd)
-	if err := f.Hook(cmd); err != nil {
-		return err
-	}
-	existingRules := f.Rules[cmd.OrgID]
-
-	for _, r := range cmd.RuleGroupConfig.Rules {
-		// TODO: Not sure why this is not being set properly, where is the code that sets this?
-		for i := range r.GrafanaManagedAlert.Data {
-			r.GrafanaManagedAlert.Data[i].DatasourceUID = "-100"
-		}
-
-		newRule := &models.AlertRule{
-			OrgID:           cmd.OrgID,
-			Title:           r.GrafanaManagedAlert.Title,
-			Condition:       r.GrafanaManagedAlert.Condition,
-			Data:            r.GrafanaManagedAlert.Data,
-			UID:             util.GenerateShortUID(),
-			IntervalSeconds: int64(time.Duration(cmd.RuleGroupConfig.Interval).Seconds()),
-			NamespaceUID:    cmd.NamespaceUID,
-			RuleGroup:       cmd.RuleGroupConfig.Name,
-			NoDataState:     models.NoDataState(r.GrafanaManagedAlert.NoDataState),
-			ExecErrState:    models.ExecutionErrorState(r.GrafanaManagedAlert.ExecErrState),
-			Version:         1,
-		}
-
-		if r.ApiRuleNode != nil {
-			newRule.For = time.Duration(r.ApiRuleNode.For)
-			newRule.Annotations = r.ApiRuleNode.Annotations
-			newRule.Labels = r.ApiRuleNode.Labels
-		}
-
-		if newRule.NoDataState == "" {
-			newRule.NoDataState = models.NoData
-		}
-
-		if newRule.ExecErrState == "" {
-			newRule.ExecErrState = models.AlertingErrState
-		}
-
-		err := newRule.PreSave(time.Now)
-		require.NoError(f.t, err)
-
-		existingRules = append(existingRules, newRule)
-	}
-
-	f.Rules[cmd.OrgID] = existingRules
 	return nil
 }
 
@@ -440,7 +436,7 @@ func (repo *FakeAnnotationsRepo) Len() int {
 	return len(repo.Items)
 }
 
-func (repo *FakeAnnotationsRepo) Delete(params *annotations.DeleteParams) error {
+func (repo *FakeAnnotationsRepo) Delete(_ context.Context, params *annotations.DeleteParams) error {
 	return nil
 }
 
@@ -460,7 +456,7 @@ func (repo *FakeAnnotationsRepo) Find(_ context.Context, query *annotations.Item
 	return annotations, nil
 }
 
-func (repo *FakeAnnotationsRepo) FindTags(query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+func (repo *FakeAnnotationsRepo) FindTags(_ context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	result := annotations.FindTagsResult{
 		Tags: []*annotations.TagsDTO{},
 	}

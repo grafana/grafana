@@ -108,6 +108,7 @@ export class TablePanel extends Component<Props> {
         onColumnResize={this.onColumnResize}
         onCellFilterAdded={this.onCellFilterAdded}
         footerValues={footerValues}
+        enablePagination={options.footer?.enablePagination}
       />
     );
   }
