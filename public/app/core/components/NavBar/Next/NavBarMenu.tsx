@@ -1,9 +1,10 @@
 import React, { useRef } from 'react';
+import CSSTransition from 'react-transition-group/CSSTransition';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { CollapsableSection, CustomScrollbar, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, CustomScrollbar, Icon, IconButton, IconName, useStyles2, useTheme2 } from '@grafana/ui';
 import { FocusScope } from '@react-aria/focus';
 import { useDialog } from '@react-aria/dialog';
-import { useOverlay } from '@react-aria/overlays';
+import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import { css, cx } from '@emotion/css';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
@@ -15,14 +16,18 @@ export interface Props {
   activeItem?: NavModelItem;
   isOpen: boolean;
   navItems: NavModelItem[];
+  setMenuAnimationInProgress: (isInProgress: boolean) => void;
   onClose: () => void;
 }
 
-export function NavBarMenu({ activeItem, isOpen, navItems, onClose }: Props) {
-  const styles = useStyles2(getStyles);
+export function NavBarMenu({ activeItem, isOpen, navItems, onClose, setMenuAnimationInProgress }: Props) {
+  const theme = useTheme2();
+  const styles = getStyles(theme);
+  const ANIMATION_DURATION = theme.transitions.duration.standard;
+  const animStyles = getAnimStyles(theme, ANIMATION_DURATION);
   const ref = useRef(null);
   const { dialogProps } = useDialog({}, ref);
-  const { overlayProps } = useOverlay(
+  const { overlayProps, underlayProps } = useOverlay(
     {
       isDismissable: true,
       isOpen,
@@ -32,37 +37,71 @@ export function NavBarMenu({ activeItem, isOpen, navItems, onClose }: Props) {
   );
 
   return (
-    <div data-testid="navbarmenu" className={styles.container}>
+    <OverlayContainer>
       <FocusScope contain restoreFocus autoFocus>
-        <nav className={styles.content} ref={ref} {...overlayProps} {...dialogProps}>
-          <NavBarToggle className={styles.menuCollapseIcon} isExpanded={isOpen} onClick={onClose} />
-          <CustomScrollbar hideHorizontalTrack>
-            <ul className={styles.itemList}>
-              {navItems.map((link) => (
-                <NavItem link={link} onClose={onClose} activeItem={activeItem} key={link.text} />
-              ))}
-            </ul>
-          </CustomScrollbar>
-        </nav>
+        <CSSTransition
+          onEnter={() => setMenuAnimationInProgress(true)}
+          onExited={() => setMenuAnimationInProgress(false)}
+          appear={isOpen}
+          in={isOpen}
+          classNames={animStyles.overlay}
+          timeout={ANIMATION_DURATION}
+        >
+          <div data-testid="navbarmenu" ref={ref} {...overlayProps} {...dialogProps} className={styles.container}>
+            <div className={styles.mobileHeader}>
+              <Icon name="bars" size="xl" />
+              <IconButton
+                aria-label="Close navigation menu"
+                name="times"
+                onClick={onClose}
+                size="xl"
+                variant="secondary"
+              />
+            </div>
+            <NavBarToggle className={styles.menuCollapseIcon} isExpanded={isOpen} onClick={onClose} />
+            <nav className={styles.content}>
+              <CustomScrollbar hideHorizontalTrack>
+                <ul className={styles.itemList}>
+                  {navItems.map((link) => (
+                    <NavItem link={link} onClose={onClose} activeItem={activeItem} key={link.text} />
+                  ))}
+                </ul>
+              </CustomScrollbar>
+            </nav>
+          </div>
+        </CSSTransition>
       </FocusScope>
-    </div>
+      <CSSTransition appear={isOpen} in={isOpen} classNames={animStyles.backdrop} timeout={ANIMATION_DURATION}>
+        <div className={styles.backdrop} {...underlayProps} />
+      </CSSTransition>
+    </OverlayContainer>
   );
 }
 
 NavBarMenu.displayName = 'NavBarMenu';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
+  backdrop: css({
+    backdropFilter: 'blur(1px)',
+    backgroundColor: theme.components.overlay.background,
     bottom: 0,
+    left: 0,
+    position: 'fixed',
+    right: 0,
+    top: 0,
+    zIndex: theme.zIndex.modalBackdrop,
+  }),
+  container: css({
     display: 'flex',
+    bottom: 0,
     flexDirection: 'column',
     left: 0,
     whiteSpace: 'nowrap',
     paddingTop: theme.spacing(1),
     marginRight: theme.spacing(1.5),
-    overflow: 'hidden',
     right: 0,
-    zIndex: theme.zIndex.sidemenu,
+    zIndex: theme.zIndex.modal,
+    position: 'fixed',
     top: 0,
     boxSizing: 'content-box',
     [theme.breakpoints.up('md')]: {
@@ -75,6 +114,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     overflow: 'auto',
   }),
+  mobileHeader: css({
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: theme.spacing(1, 2, 2),
+    [theme.breakpoints.up('md')]: {
+      display: 'none',
+    },
+  }),
   itemList: css({
     display: 'grid',
     gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
@@ -83,8 +131,72 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'absolute',
     top: '43px',
     right: '0px',
+    transform: `translateX(50%)`,
   }),
 });
+
+const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
+  const commonTransition = {
+    transitionDuration: `${animationDuration}ms`,
+    transitionTimingFunction: theme.transitions.easing.easeInOut,
+    [theme.breakpoints.down('md')]: {
+      overflow: 'hidden',
+    },
+  };
+
+  const overlayTransition = {
+    ...commonTransition,
+    transitionProperty: 'background-color, box-shadow, width',
+  };
+
+  const backdropTransition = {
+    ...commonTransition,
+    transitionProperty: 'opacity',
+  };
+
+  const overlayOpen = {
+    backgroundColor: theme.colors.background.canvas,
+    boxShadow: theme.shadows.z3,
+    width: '100%',
+    [theme.breakpoints.up('md')]: {
+      width: '300px',
+    },
+  };
+
+  const overlayClosed = {
+    boxShadow: 'none',
+    width: 0,
+    [theme.breakpoints.up('md')]: {
+      backgroundColor: theme.colors.background.primary,
+      width: theme.spacing(7),
+    },
+  };
+
+  const backdropOpen = {
+    opacity: 1,
+  };
+
+  const backdropClosed = {
+    opacity: 0,
+  };
+
+  return {
+    backdrop: {
+      appear: css(backdropClosed),
+      appearActive: css(backdropTransition, backdropOpen),
+      appearDone: css(backdropOpen),
+      exit: css(backdropOpen),
+      exitActive: css(backdropTransition, backdropClosed),
+    },
+    overlay: {
+      appear: css(overlayClosed),
+      appearActive: css(overlayTransition, overlayOpen),
+      appearDone: css(overlayOpen),
+      exit: css(overlayOpen),
+      exitActive: css(overlayTransition, overlayClosed),
+    },
+  };
+};
 
 function NavItem({
   link,
@@ -99,8 +211,8 @@ function NavItem({
 
   if (linkHasChildren(link)) {
     return (
-      <CollapsibleNavItem link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
-        <ul>
+      <CollapsibleNavItem onClose={onClose} link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
+        <ul className={styles.children}>
           {link.children.map(
             (childLink) =>
               !childLink.divider && (
@@ -125,7 +237,12 @@ function NavItem({
     );
   } else if (link.id === 'saved-items') {
     return (
-      <CollapsibleNavItem link={link} isActive={isMatchOrChildMatch(link, activeItem)} className={styles.savedItems}>
+      <CollapsibleNavItem
+        onClose={onClose}
+        link={link}
+        isActive={isMatchOrChildMatch(link, activeItem)}
+        className={styles.savedItems}
+      >
         <em className={styles.savedItemsText}>No saved items</em>
       </CollapsibleNavItem>
     );
@@ -160,8 +277,12 @@ function NavItem({
 }
 
 const getNavItemStyles = (theme: GrafanaTheme2) => ({
+  children: css({
+    display: 'flex',
+    flexDirection: 'column',
+  }),
   item: css({
-    padding: `${theme.spacing(1)} 0`,
+    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
     whiteSpace: 'normal',
     '&::before': {
       display: 'none',
@@ -203,6 +324,7 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
   linkText: css({
     fontSize: theme.typography.pxToRem(14),
     justifySelf: 'start',
+    paddingLeft: theme.spacing(0.5),
   }),
 });
 
@@ -211,11 +333,13 @@ function CollapsibleNavItem({
   isActive,
   children,
   className,
+  onClose,
 }: {
   link: NavModelItem;
   isActive?: boolean;
   children: React.ReactNode;
   className?: string;
+  onClose: () => void;
 }) {
   const styles = useStyles2(getCollapsibleStyles);
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(`grafana.navigation.expanded[${link.text}]`, false);
@@ -227,7 +351,10 @@ function CollapsibleNavItem({
         label={link.text}
         url={link.url}
         target={link.target}
-        onClick={link.onClick}
+        onClick={() => {
+          link.onClick?.();
+          onClose();
+        }}
         className={styles.collapsibleMenuItem}
       >
         {link.img && (
@@ -274,18 +401,27 @@ const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
   }),
   collapseWrapper: css({
-    borderRadius: theme.shape.borderRadius(2),
+    paddingLeft: theme.spacing(0.5),
     paddingRight: theme.spacing(4.25),
     height: theme.spacing(6),
     alignItems: 'center',
+    color: theme.colors.text.secondary,
+    '&:hover, &:focus-within': {
+      backgroundColor: theme.colors.action.hover,
+      color: theme.colors.text.primary,
+    },
+    '&:focus-within': {
+      boxShadow: 'none',
+      outline: `2px solid ${theme.colors.primary.main}`,
+      outlineOffset: '-2px',
+      transition: 'none',
+    },
   }),
   collapseContent: css({
     padding: 0,
-    paddingLeft: theme.spacing(1.25),
   }),
   labelWrapper: css({
     fontSize: '15px',
-    color: theme.colors.text.secondary,
   }),
   primary: css({
     color: theme.colors.text.primary,

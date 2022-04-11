@@ -38,6 +38,7 @@ export const createDefaultInitialState = () => {
           value: 0,
         },
         cache: [],
+        richHistory: [],
       },
     },
   };

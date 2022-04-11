@@ -65,6 +65,10 @@ func (a *AlertStoreMock) GetAllAlertQueryHandler(c context.Context, cmd *models.
 	return nil
 }
 
+func (a *AlertStoreMock) GetAlertNotificationUidWithId(c context.Context, query *models.GetAlertNotificationUidQuery) error {
+	return nil
+}
+
 func (a *AlertStoreMock) GetAlertNotificationsWithUidToSend(c context.Context, cmd *models.GetAlertNotificationsWithUidToSendQuery) error {
 	if a.getAlertNotificationsWithUidToSend != nil {
 		return a.getAlertNotificationsWithUidToSend(c, cmd)

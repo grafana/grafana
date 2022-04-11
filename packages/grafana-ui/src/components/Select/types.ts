@@ -61,6 +61,7 @@ export interface SelectCommonProps<T> {
   onInputChange?: (value: string, actionMeta: InputActionMeta) => void;
   onKeyDown?: (event: React.KeyboardEvent) => void;
   onOpenMenu?: () => void;
+  onFocus?: () => void;
   openMenuOnFocus?: boolean;
   options?: Array<SelectableValue<T>>;
   placeholder?: string;
