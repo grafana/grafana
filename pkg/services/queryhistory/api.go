@@ -19,6 +19,8 @@ func (s *QueryHistoryService) registerAPIEndpoints() {
 		entities.Post("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.starHandler))
 		entities.Delete("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.unstarHandler))
 		entities.Patch("/:uid", middleware.ReqSignedIn, routing.Wrap(s.patchCommentHandler))
+		// Remove migrate endpoint in Grafana v10 as breaking change
+		entities.Post("/migrate", middleware.ReqSignedIn, routing.Wrap(s.migrateHandler))
 	})
 }
 
@@ -116,4 +118,18 @@ func (s *QueryHistoryService) unstarHandler(c *models.ReqContext) response.Respo
 	}
 
 	return response.JSON(http.StatusOK, QueryHistoryResponse{Result: query})
+}
+
+func (s *QueryHistoryService) migrateHandler(c *models.ReqContext) response.Response {
+	cmd := MigrateQueriesToQueryHistoryCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	queries, err := s.MigrateQueriesToQueryHistory(c.Req.Context(), c.SignedInUser, cmd)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to migrate query history", err)
+	}
+
+	return response.JSON(http.StatusOK, QueryHistoryMigrationResponse{Result: queries})
 }

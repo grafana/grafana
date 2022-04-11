@@ -265,3 +265,71 @@ func (s QueryHistoryService) unstarQuery(ctx context.Context, user *models.Signe
 
 	return dto, nil
 }
+
+func (s QueryHistoryService) migrateQueries(ctx context.Context, user *models.SignedInUser, cmd MigrateQueriesToQueryHistoryCommand) ([]QueryHistoryDTO, error) {
+	var dtos []QueryHistoryDTO
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+		var instertError error
+
+		for _, query := range cmd.Queries {
+			// At the beginning of the loop check if there was any error and if so, break and return error
+			if instertError != nil {
+				break
+			}
+			// First add query to query history table
+			queryHistory := QueryHistory{
+				OrgID:         user.OrgId,
+				UID:           util.GenerateShortUID(),
+				Queries:       query.Queries,
+				DatasourceUID: query.DatasourceUID,
+				CreatedBy:     user.UserId,
+				CreatedAt:     query.CreatedAt,
+				Comment:       query.Comment,
+			}
+
+			_, err := session.Insert(&queryHistory)
+
+			if err != nil {
+				instertError = err
+				break
+			}
+
+			// Check if it should be starred and star it
+			if query.Starred {
+				queryHistoryStar := QueryHistoryStar{
+					UserID:   user.UserId,
+					QueryUID: queryHistory.UID,
+				}
+
+				_, err = session.Insert(&queryHistoryStar)
+
+				if err != nil {
+					if s.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+						instertError = ErrQueryAlreadyStarred
+						break
+					}
+					instertError = err
+					break
+				}
+			}
+
+			dto := QueryHistoryDTO{
+				UID:           queryHistory.UID,
+				DatasourceUID: queryHistory.DatasourceUID,
+				CreatedBy:     queryHistory.CreatedBy,
+				CreatedAt:     queryHistory.CreatedAt,
+				Comment:       queryHistory.Comment,
+				Queries:       queryHistory.Queries,
+				Starred:       query.Starred,
+			}
+			dtos = append(dtos, dto)
+		}
+		return instertError
+	})
+
+	if err != nil {
+		return []QueryHistoryDTO{}, err
+	}
+
+	return dtos, nil
+}
