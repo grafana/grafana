@@ -31,7 +31,7 @@ var (
 	loggersToReload []ReloadableHandler
 	root            *logManager
 	now             = time.Now
-	logTimeFormat   = "2006-01-02T15:04:05.00-0700"
+	logTimeFormat   = "2006-01-02T15:04:05.99-0700"
 )
 
 const (
@@ -75,7 +75,7 @@ func (lm *logManager) initialize(loggers []logWithFilters) {
 	if lm.gokitLogActivated {
 		level.SetLevelKeyAndValuesToGokitLog()
 		term.SetTimeFormatGokitLog()
-		logTimeFormat = "2006-01-02T15:04:05.000-0700"
+		logTimeFormat = time.RFC3339Nano
 	}
 
 	defaultLoggers := make([]gokitlog.Logger, len(loggers))
@@ -465,7 +465,7 @@ func isNewLoggerActivated(cfg *ini.File) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return toggles["gokitlogActivated"], nil
+	return toggles["newlog"], nil
 }
 
 func readFeatureTogglesFromInitFile(featureTogglesSection *ini.Section) (map[string]bool, error) {

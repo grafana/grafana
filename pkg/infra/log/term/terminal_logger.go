@@ -53,7 +53,10 @@ func (l terminalLogger) Log(keyvals ...interface{}) error {
 	r := getRecord(keyvals)
 
 	b := &bytes.Buffer{}
-	lvl := strings.ToUpper(r.level.String())
+
+	// To make the log output more readable, we make all log levels 5 characters long
+	lvl := fmt.Sprintf("%-5s", strings.ToUpper(r.level.String()))
+
 	if r.color > 0 {
 		fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m[%s] %s ", r.color, lvl, r.time.Format(termTimeFormat), r.msg) // lgtm[go/log-injection]
 	} else {
