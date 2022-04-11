@@ -1,10 +1,10 @@
 import React, { Dispatch, SetStateAction } from 'react';
 import { Tab, TabsBar } from '@grafana/ui';
 
-import { ExemplarLayerHover } from '../event';
+import { HeatmapLayerHover } from '../types';
 
 type Props = {
-  layers?: ExemplarLayerHover[];
+  layers?: HeatmapLayerHover[];
   setActiveTabIndex: Dispatch<SetStateAction<number>>;
   activeTabIndex: number;
 };
@@ -13,17 +13,20 @@ export const DataHoverTabs = ({ layers, setActiveTabIndex, activeTabIndex }: Pro
   return (
     <TabsBar>
       {layers &&
-        layers.map((g, index) => (
-          <Tab
-            key={index}
-            label={g.name}
-            active={index === activeTabIndex}
-            counter={g.data.length > 1 ? g.data.length : null}
-            onChangeTab={() => {
-              setActiveTabIndex(index);
-            }}
-          />
-        ))}
+        layers.map(
+          (g, index) =>
+            g.data.length > 0 && (
+              <Tab
+                key={index}
+                label={g.name}
+                active={index === activeTabIndex}
+                counter={g.data.length > 1 ? g.data.length : null}
+                onChangeTab={() => {
+                  setActiveTabIndex(index);
+                }}
+              />
+            )
+        )}
     </TabsBar>
   );
 };

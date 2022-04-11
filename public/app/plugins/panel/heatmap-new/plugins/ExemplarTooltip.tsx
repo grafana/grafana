@@ -4,10 +4,10 @@ import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
 
 import { ComplexDataHoverView } from '../components/ComplexDataHoverView';
-import { ExemplarHoverPayload } from '../event';
+import { HeatmapHoverPayload } from '../types';
 
 interface Props {
-  ttip?: ExemplarHoverPayload;
+  ttip?: HeatmapHoverPayload;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -20,7 +20,11 @@ export const ExemplarTooltip = ({ ttip, onClose, isOpen }: Props) => {
   return (
     <>
       {ttip && ttip.layers && (
-        <VizTooltipContainer position={{ x: ttip.pageX, y: ttip.pageY }} offset={{ x: 10, y: 10 }} allowPointerEvents>
+        <VizTooltipContainer
+          position={{ x: ttip.hover.pageX, y: ttip.hover.pageY }}
+          offset={{ x: 10, y: 10 }}
+          allowPointerEvents
+        >
           <section ref={ref} {...overlayProps} {...dialogProps}>
             <ComplexDataHoverView layers={ttip.layers} isOpen={isOpen} onClose={onClose} />
           </section>

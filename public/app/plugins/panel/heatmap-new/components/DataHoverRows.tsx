@@ -3,11 +3,11 @@ import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 
-import { ExemplarLayerHover } from '../event';
+import { HeatmapLayerHover } from '../types';
 import { DataHoverRow } from './DataHoverRow';
 
 type Props = {
-  layers: ExemplarLayerHover[];
+  layers: HeatmapLayerHover[];
   activeTabIndex: number;
 };
 

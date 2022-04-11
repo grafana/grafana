@@ -64,8 +64,11 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ lookupRange, get
                 data,
               },
             ],
-            pageX: coords.x,
-            pageY: coords.y,
+            hover: {
+              pageX: coords.x,
+              pageY: coords.y,
+              index: -1,
+            },
             point: {},
           }}
           isOpen={isToolTipOpen.current}

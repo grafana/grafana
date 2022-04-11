@@ -1,27 +1,16 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { css } from '@emotion/css';
 import {
   ArrayVector,
   DataFrame,
   Field,
   formattedValueToString,
-  GrafanaTheme2,
   PanelProps,
   reduceField,
   ReducerID,
   TimeRange,
   ValueLinkConfig,
 } from '@grafana/data';
-import {
-  Portal,
-  UPlotChart,
-  useStyles2,
-  useTheme2,
-  VizLayout,
-  VizTooltipContainer,
-  LegendDisplayMode,
-  usePanelContext,
-} from '@grafana/ui';
+import { Portal, UPlotChart, useTheme2, VizLayout, LegendDisplayMode, usePanelContext } from '@grafana/ui';
 import { PanelDataErrorView } from '@grafana/runtime';
 
 import { HeatmapData, prepareHeatmapData } from './fields';
@@ -35,12 +24,13 @@ import {
   timeFormatter,
 } from './utils';
 import { HeatmapHoverView } from './HeatmapHoverView';
-import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from './ColorScale';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { HeatmapCalculationMode } from 'app/features/transformers/calculateHeatmap/models.gen';
 import { HeatmapLookup } from './types';
+import { heatmapLayer } from './layers/HeatmapLayer';
+import { exemplarLayer } from './layers/ExemplarLayer';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -57,7 +47,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   replaceVariables,
 }) => {
   const theme = useTheme2();
-  const styles = useStyles2(getStyles);
 
   // ugh
   let timeRangeRef = useRef<TimeRange>(timeRange);
@@ -94,20 +83,15 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
   const [hover, setHover] = useState<HeatmapHoverEvent | undefined>(undefined);
-  const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
   const isToolTipOpen = useRef<boolean>(false);
 
   const onCloseToolTip = () => {
     isToolTipOpen.current = false;
-    setShouldDisplayCloseButton(false);
     onhover(null);
   };
 
   const onclick = () => {
     isToolTipOpen.current = !isToolTipOpen.current;
-
-    // Linking into useState required to re-render tooltip
-    setShouldDisplayCloseButton(isToolTipOpen.current);
   };
 
   const onhover = useCallback(
@@ -226,7 +210,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight} timeRange={timeRange}>
-            {/*children ? children(config, alignedFrame) : null*/}
             {exemplars && (
               <ExemplarsPlugin
                 config={builder}
@@ -240,27 +223,20 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       </VizLayout>
       <Portal>
         {hover && (
-          <VizTooltipContainer
-            position={{ x: hover.pageX, y: hover.pageY }}
-            offset={{ x: 10, y: 10 }}
-            allowPointerEvents={isToolTipOpen.current}
-          >
-            {shouldDisplayCloseButton && (
-              <>
-                <CloseButton onClick={onCloseToolTip} />
-                <div className={styles.closeButtonSpacer} />
-              </>
-            )}
-            <HeatmapHoverView data={info} hover={hover} showHistogram={options.tooltip.yHistogram} />
-          </VizTooltipContainer>
+          <HeatmapHoverView
+            ttip={{
+              layers: [
+                heatmapLayer({ data: info, index: hover.index }),
+                exemplarLayer({ data: exemplars!, index: hover.index }),
+              ],
+              hover,
+              point: {},
+            }}
+            isOpen={isToolTipOpen.current}
+            onClose={onCloseToolTip}
+          />
         )}
       </Portal>
     </>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  closeButtonSpacer: css`
-    margin-bottom: 15px;
-  `,
-});

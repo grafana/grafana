@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import { DataHoverTabs } from './DataHoverTabs';
 import { DataHoverRows } from './DataHoverRows';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
-import { ExemplarLayerHover } from '../event';
+import { HeatmapLayerHover } from '../types';
 
 export interface Props {
-  layers?: ExemplarLayerHover[];
+  layers?: HeatmapLayerHover[];
   isOpen: boolean;
   onClose: () => void;
 }

@@ -4,6 +4,7 @@ import {
   arrayUtils,
   DataFrame,
   Field,
+  FieldConfig,
   formattedValueToString,
   getFieldDisplayName,
   GrafanaTheme2,
@@ -11,6 +12,7 @@ import {
 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { SortOrder } from '@grafana/schema';
+import { RenderCallback } from '../types';
 
 export interface Props {
   data?: DataFrame; // source data
@@ -32,12 +34,17 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder }: Props)
     return null;
   }
 
-  const displayValues: Array<[string, any, string]> = [];
+  const displayValues: Array<[string, any, string | JSX.Element]> = [];
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
   for (const f of visibleFields) {
     const v = f.values.get(rowIndex);
+    const config: FieldConfig<RenderCallback> = f.config;
+    if (config.custom?.render) {
+      displayValues.push([getFieldDisplayName(f, data), v, config.custom.render()]);
+      continue;
+    }
     const disp = f.display ? f.display(v) : { text: `${v}`, numeric: +v };
     if (f.getLinks) {
       f.getLinks({ calculatedValue: disp, valueRowIndex: rowIndex }).forEach((link) => {
@@ -56,11 +63,6 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder }: Props)
     displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a[1], b[1]));
   }
 
-  //                     <td>
-  //                       <div className={styles.valueWrapper}>
-  //                         <span>{field.type === FieldType.time ? timeFormatter(value) : value}</span>
-  //                         {links && <FieldLinkList links={links} />}
-  //                       </div>
   return (
     <table className={styles.infoWrap}>
       <tbody>
