@@ -123,7 +123,7 @@ func (s *ScopeResolver) GetResolveKeywordScopeMutator(user *models.SignedInUser)
 	}
 }
 
-type AttributeScopeResolveFunc func(ctx context.Context, user *models.SignedInUser, initialScope string) (string, error)
+type AttributeScopeResolveFunc func(ctx context.Context, orgID int64, initialScope string) (string, error)
 
 // getCacheKey creates an identifier to fetch and store resolution of scopes in the cache
 func getCacheKey(orgID int64, scope string) string {
@@ -131,10 +131,10 @@ func getCacheKey(orgID int64, scope string) string {
 }
 
 // GetResolveAttributeScopeMutator returns a function to resolve scopes with attributes such as `name` or `uid` into `id` based scopes
-func (s *ScopeResolver) GetResolveAttributeScopeMutator(user *models.SignedInUser) ScopeMutator {
+func (s *ScopeResolver) GetResolveAttributeScopeMutator(orgID int64) ScopeMutator {
 	return func(ctx context.Context, scope string) (string, error) {
 		// Check cache before computing the scope
-		if cachedScope, ok := s.cache.Get(getCacheKey(user.OrgId, scope)); ok {
+		if cachedScope, ok := s.cache.Get(getCacheKey(orgID, scope)); ok {
 			resolvedScope := cachedScope.(string)
 			s.log.Debug("used cache to resolve '%v' to '%v'", scope, resolvedScope)
 			return resolvedScope, nil
@@ -145,12 +145,12 @@ func (s *ScopeResolver) GetResolveAttributeScopeMutator(user *models.SignedInUse
 		resolvedScope := scope
 		prefix := ScopePrefix(scope)
 		if fn, ok := s.attributeResolvers[prefix]; ok {
-			resolvedScope, err = fn(ctx, user, scope)
+			resolvedScope, err = fn(ctx, orgID, scope)
 			if err != nil {
 				return "", fmt.Errorf("could not resolve %v: %w", scope, err)
 			}
 			// Cache result
-			s.cache.Set(getCacheKey(user.OrgId, scope), resolvedScope, ttl)
+			s.cache.Set(getCacheKey(orgID, scope), resolvedScope, ttl)
 			s.log.Debug("resolved '%v' to '%v'", scope, resolvedScope)
 		}
 		return resolvedScope, nil

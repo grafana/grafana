@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -32,7 +31,7 @@ var (
 // NewNameScopeResolver provides an AttributeScopeResolver that is able to convert a scope prefixed with "folders:name:" into an uid based scope.
 func NewNameScopeResolver(db Store) (string, ac.AttributeScopeResolveFunc) {
 	prefix := ScopeFoldersProvider.GetResourceScopeName("")
-	resolver := func(ctx context.Context, user *models.SignedInUser, scope string) (string, error) {
+	resolver := func(ctx context.Context, orgID int64, scope string) (string, error) {
 		if !strings.HasPrefix(scope, prefix) {
 			return "", ac.ErrInvalidScope
 		}
@@ -40,7 +39,7 @@ func NewNameScopeResolver(db Store) (string, ac.AttributeScopeResolveFunc) {
 		if len(nsName) == 0 {
 			return "", ac.ErrInvalidScope
 		}
-		folder, err := db.GetFolderByTitle(ctx, user.OrgId, nsName)
+		folder, err := db.GetFolderByTitle(ctx, orgID, nsName)
 		if err != nil {
 			return "", err
 		}
@@ -52,7 +51,7 @@ func NewNameScopeResolver(db Store) (string, ac.AttributeScopeResolveFunc) {
 // NewIDScopeResolver provides an AttributeScopeResolver that is able to convert a scope prefixed with "folders:id:" into an uid based scope.
 func NewIDScopeResolver(db Store) (string, ac.AttributeScopeResolveFunc) {
 	prefix := ScopeFoldersProvider.GetResourceScope("")
-	resolver := func(ctx context.Context, user *models.SignedInUser, scope string) (string, error) {
+	resolver := func(ctx context.Context, orgID int64, scope string) (string, error) {
 		if !strings.HasPrefix(scope, prefix) {
 			return "", ac.ErrInvalidScope
 		}
@@ -66,7 +65,7 @@ func NewIDScopeResolver(db Store) (string, ac.AttributeScopeResolveFunc) {
 			return ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID), nil
 		}
 
-		folder, err := db.GetFolderByID(ctx, user.OrgId, id)
+		folder, err := db.GetFolderByID(ctx, orgID, id)
 		if err != nil {
 			return "", err
 		}

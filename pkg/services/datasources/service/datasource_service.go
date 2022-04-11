@@ -79,14 +79,6 @@ func ProvideService(
 		permissionsService: permissionsServices.GetDataSourceService(),
 	}
 
-	s.Bus.AddHandler(s.GetDataSources)
-	s.Bus.AddHandler(s.GetDataSourcesByType)
-	s.Bus.AddHandler(s.GetDataSource)
-	s.Bus.AddHandler(s.AddDataSource)
-	s.Bus.AddHandler(s.DeleteDataSource)
-	s.Bus.AddHandler(s.UpdateDataSource)
-	s.Bus.AddHandler(s.GetDefaultDataSource)
-
 	ac.RegisterAttributeScopeResolver(NewNameScopeResolver(store))
 	ac.RegisterAttributeScopeResolver(NewIDScopeResolver(store))
 
@@ -103,7 +95,7 @@ type DataSourceRetriever interface {
 // translate a scope prefixed with "datasources:name:" into an uid based scope.
 func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
 	prefix := datasources.ScopeProvider.GetResourceScopeName("")
-	return prefix, func(ctx context.Context, user *models.SignedInUser, initialScope string) (string, error) {
+	return prefix, func(ctx context.Context, orgID int64, initialScope string) (string, error) {
 		if !strings.HasPrefix(initialScope, prefix) {
 			return "", accesscontrol.ErrInvalidScope
 		}
@@ -113,7 +105,7 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.Attribu
 			return "", accesscontrol.ErrInvalidScope
 		}
 
-		query := models.GetDataSourceQuery{Name: dsName, OrgId: user.OrgId}
+		query := models.GetDataSourceQuery{Name: dsName, OrgId: orgID}
 		if err := db.GetDataSource(ctx, &query); err != nil {
 			return "", err
 		}
@@ -126,7 +118,7 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.Attribu
 // translate a scope prefixed with "datasources:id:" into an uid based scope.
 func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
 	prefix := datasources.ScopeProvider.GetResourceScope("")
-	return prefix, func(ctx context.Context, user *models.SignedInUser, initialScope string) (string, error) {
+	return prefix, func(ctx context.Context, orgID int64, initialScope string) (string, error) {
 		if !strings.HasPrefix(initialScope, prefix) {
 			return "", accesscontrol.ErrInvalidScope
 		}
@@ -141,7 +133,7 @@ func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.Attribute
 			return "", accesscontrol.ErrInvalidScope
 		}
 
-		query := models.GetDataSourceQuery{Id: dsID, OrgId: user.OrgId}
+		query := models.GetDataSourceQuery{Id: dsID, OrgId: orgID}
 		if err := db.GetDataSource(ctx, &query); err != nil {
 			return "", err
 		}

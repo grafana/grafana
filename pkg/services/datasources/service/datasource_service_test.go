@@ -153,11 +153,7 @@ func TestService_NameScopeResolver(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			testUser := &models.SignedInUser{
-				UserId: 2,
-				OrgId:  1,
-			}
-			resolved, err := resolver(context.Background(), testUser, tc.given)
+			resolved, err := resolver(context.Background(), 1, tc.given)
 			if tc.wantErr != nil {
 				require.Error(t, err)
 				require.Equal(t, tc.wantErr, err)
@@ -212,11 +208,7 @@ func TestService_IDScopeResolver(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			testUser := &models.SignedInUser{
-				UserId: 2,
-				OrgId:  1,
-			}
-			resolved, err := resolver(context.Background(), testUser, tc.given)
+			resolved, err := resolver(context.Background(), 1, tc.given)
 			if tc.wantErr != nil {
 				require.Error(t, err)
 				require.Equal(t, tc.wantErr, err)
