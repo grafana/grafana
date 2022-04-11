@@ -53,7 +53,7 @@ type Paging struct {
 type UpsertFileCommand struct {
 	Path       string
 	MimeType   string
-	Contents   *[]byte
+	Contents   []byte
 	Properties map[string]string
 }
 

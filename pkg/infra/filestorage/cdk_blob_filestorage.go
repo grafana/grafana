@@ -98,7 +98,7 @@ func (c cdkBlobStorage) Upsert(ctx context.Context, command *UpsertFileCommand) 
 		if command.Contents == nil {
 			contents = make([]byte, 0)
 		} else {
-			contents = *command.Contents
+			contents = command.Contents
 		}
 
 		metadata = make(map[string]string)
@@ -115,7 +115,7 @@ func (c cdkBlobStorage) Upsert(ctx context.Context, command *UpsertFileCommand) 
 
 	contents = existing.Contents
 	if command.Contents != nil {
-		contents = *command.Contents
+		contents = command.Contents
 	}
 
 	if command.Properties != nil {
