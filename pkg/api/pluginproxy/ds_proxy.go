@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"strconv"
 	"strings"
@@ -48,33 +46,8 @@ type DataSourceProxy struct {
 	secretsService     secrets.Service
 }
 
-type handleResponseTransport struct {
-	transport http.RoundTripper
-}
-
-func (t *handleResponseTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	res, err := t.transport.RoundTrip(req)
-	if err != nil {
-		return nil, err
-	}
-	res.Header.Del("Set-Cookie")
-	proxyutil.SetProxyResponseHeaders(res.Header)
-	return res, nil
-}
-
 type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
-}
-
-type logWrapper struct {
-	logger glog.Logger
-}
-
-// Write writes log messages as bytes from proxy
-func (lw *logWrapper) Write(p []byte) (n int, err error) {
-	withoutNewline := strings.TrimSuffix(string(p), "\n")
-	lw.logger.Error("Data proxy error", "error", withoutNewline)
-	return len(p), nil
 }
 
 // NewDataSourceProxy creates a new Datasource proxy
@@ -115,8 +88,14 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		return
 	}
 
-	proxyErrorLogger := logger.New("userId", proxy.ctx.UserId, "orgId", proxy.ctx.OrgId, "uname", proxy.ctx.Login,
-		"path", proxy.ctx.Req.URL.Path, "remote_addr", proxy.ctx.RemoteAddr(), "referer", proxy.ctx.Req.Referer())
+	proxyErrorLogger := logger.New(
+		"userId", proxy.ctx.UserId,
+		"orgId", proxy.ctx.OrgId,
+		"uname", proxy.ctx.Login,
+		"path", proxy.ctx.Req.URL.Path,
+		"remote_addr", proxy.ctx.RemoteAddr(),
+		"referer", proxy.ctx.Req.Referer(),
+	)
 
 	transport, err := proxy.dataSourcesService.GetHTTPTransport(proxy.ds, proxy.clientProvider)
 	if err != nil {
@@ -124,35 +103,35 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		return
 	}
 
-	reverseProxy := &httputil.ReverseProxy{
-		Director:      proxy.director,
-		FlushInterval: time.Millisecond * 200,
-		ErrorLog:      log.New(&logWrapper{logger: proxyErrorLogger}, "", 0),
-		Transport: &handleResponseTransport{
-			transport: transport,
-		},
-		ModifyResponse: func(resp *http.Response) error {
-			if resp.StatusCode == 401 {
-				// The data source rejected the request as unauthorized, convert to 400 (bad request)
-				body, err := ioutil.ReadAll(resp.Body)
-				if err != nil {
-					return fmt.Errorf("failed to read data source response body: %w", err)
-				}
-				_ = resp.Body.Close()
-
-				proxyErrorLogger.Info("Authentication to data source failed", "body", string(body), "statusCode",
-					resp.StatusCode)
-				msg := "Authentication to data source failed"
-				*resp = http.Response{
-					StatusCode:    400,
-					Status:        "Bad Request",
-					Body:          ioutil.NopCloser(strings.NewReader(msg)),
-					ContentLength: int64(len(msg)),
-				}
+	modifyResponse := func(resp *http.Response) error {
+		if resp.StatusCode == 401 {
+			// The data source rejected the request as unauthorized, convert to 400 (bad request)
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return fmt.Errorf("failed to read data source response body: %w", err)
 			}
-			return nil
-		},
+			_ = resp.Body.Close()
+
+			proxyErrorLogger.Info("Authentication to data source failed", "body", string(body), "statusCode",
+				resp.StatusCode)
+			msg := "Authentication to data source failed"
+			*resp = http.Response{
+				StatusCode:    400,
+				Status:        "Bad Request",
+				Body:          ioutil.NopCloser(strings.NewReader(msg)),
+				ContentLength: int64(len(msg)),
+				Header:        http.Header{},
+			}
+		}
+		return nil
 	}
+
+	reverseProxy := proxyutil.NewReverseProxy(
+		proxyErrorLogger,
+		proxy.director,
+		proxyutil.WithTransport(transport),
+		proxyutil.WithModifyResponse(modifyResponse),
+	)
 
 	proxy.logRequest()
 	ctx, span := proxy.tracer.Start(proxy.ctx.Req.Context(), "datasource reverse proxy")
@@ -236,13 +215,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	}
 
 	proxyutil.ClearCookieHeader(req, keepCookieNames)
-	proxyutil.PrepareProxyRequest(req)
-
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-
-	// Clear Origin and Referer to avoid CORS issues
-	req.Header.Del("Origin")
-	req.Header.Del("Referer")
 
 	jsonData := make(map[string]interface{})
 	if proxy.ds.JsonData != nil {
