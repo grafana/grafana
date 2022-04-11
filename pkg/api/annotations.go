@@ -466,7 +466,7 @@ func AnnotationTypeScopeResolver() (string, accesscontrol.AttributeScopeResolveF
 
 		annotation, resp := findAnnotationByID(ctx, annotations.GetRepository(), int64(annotationId), tempUser)
 		if resp != nil {
-			return "", err
+			return "", errors.New("could not resolve annotation type")
 		}
 
 		if annotation.GetType() == annotations.Organization {
