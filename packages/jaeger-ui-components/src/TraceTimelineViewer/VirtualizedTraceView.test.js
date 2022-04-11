@@ -30,6 +30,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
   let instance;
 
   const trace = transformTraceData(traceGenerator.trace({ numberOfSpans: 10 }));
+  const topOfExploreViewRef = jest.fn();
   const props = {
     childrenHiddenIDs: new Set(),
     childrenToggle: jest.fn(),
@@ -50,6 +51,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
     spanNameColumnWidth: 0.5,
     trace,
     uiFind: 'uiFind',
+    topOfExploreViewRef,
   };
 
   function expandRow(rowIndex) {
@@ -106,6 +108,10 @@ describe('<VirtualizedTraceViewImpl>', () => {
 
   it('renders a ListView', () => {
     expect(wrapper.find(ListView)).toBeDefined();
+  });
+
+  it('renders scrollToTopButton', () => {
+    expect(wrapper.find({ title: 'Scroll to top' }).exists()).toBeTruthy();
   });
 
   it('sets the trace for global state.traceTimeline', () => {

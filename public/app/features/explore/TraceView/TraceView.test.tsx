@@ -61,10 +61,10 @@ describe('TraceView', () => {
     expect(prettyDOM(baseElement)).toEqual(prettyDOM(baseElementOld));
   });
 
-  it('does not render anything on missing trace', () => {
+  it('only renders noDataMsg on missing trace', () => {
     // Simulating Explore's access to empty response data
     const { container } = renderTraceView([]);
-    expect(container.hasChildNodes()).toBeFalsy();
+    expect(container.childNodes.length === 1).toBeTruthy();
   });
 
   it('toggles detailState', async () => {

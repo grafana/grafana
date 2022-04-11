@@ -33,10 +33,12 @@ describe('<SpanDetail>', () => {
   const span = transformTraceData(traceGenerator.trace({ numberOfSpans: 1 })).spans[0];
   const detailState = new DetailState().toggleLogs().toggleProcess().toggleReferences().toggleTags();
   const traceStartTime = 5;
+  const topOfExploreViewRef = jest.fn();
   const props = {
     detailState,
     span,
     traceStartTime,
+    topOfExploreViewRef,
     logItemToggle: jest.fn(),
     logsToggle: jest.fn(),
     processToggle: jest.fn(),

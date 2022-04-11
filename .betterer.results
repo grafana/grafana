@@ -125,7 +125,7 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/TextList.test.js:3713828679": [
       [15, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/index.test.js:3788127934": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/index.test.js:968645150": [
       [17, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetailRow.test.js:1119974018": [
@@ -149,7 +149,7 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.test.js:3714128222": [
       [15, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.test.js:2249890922": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.test.js:2786339008": [
       [14, 26, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/index.test.js:4107025050": [
