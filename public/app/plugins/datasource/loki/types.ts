@@ -36,7 +36,6 @@ export interface LokiQuery extends DataQuery {
   query?: string;
   format?: string;
   legendFormat?: string;
-  valueWithRefId?: boolean;
   maxLines?: number;
   resolution?: number;
   /** Used in range queries */
@@ -144,5 +143,4 @@ export interface TransformerOptions {
   refId: string;
   scopedVars: ScopedVars;
   meta?: QueryResultMeta;
-  valueWithRefId?: boolean;
 }

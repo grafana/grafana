@@ -469,7 +469,6 @@ function rangeQueryResponseToTimeSeries(
     responseListLength,
     refId: target.refId,
     meta,
-    valueWithRefId: target.valueWithRefId,
     scopedVars,
   };
 
