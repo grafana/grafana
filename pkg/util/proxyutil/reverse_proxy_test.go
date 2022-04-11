@@ -33,6 +33,8 @@ func TestReverseProxy(t *testing.T) {
 		rp := NewReverseProxy(log.New("test"), func(req *http.Request) {
 			req.Header.Set("X-KEY", "value")
 		})
+		require.NotNil(t, rp)
+		require.NotNil(t, rp.ModifyResponse)
 		rp.ServeHTTP(rec, req)
 
 		require.NotNil(t, actualReq)
@@ -46,6 +48,39 @@ func TestReverseProxy(t *testing.T) {
 		resp := rec.Result()
 		require.Empty(t, resp.Cookies())
 		require.Equal(t, "sandbox", resp.Header.Get("Content-Security-Policy"))
+		require.NoError(t, resp.Body.Close())
+	})
+
+	t.Run("When proxying a request using WithModifyResponse should call it before default ModifyResponse func", func(t *testing.T) {
+		var actualReq *http.Request
+		upstream := newUpstreamServer(t, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			actualReq = req
+			http.SetCookie(w, &http.Cookie{Name: "test"})
+			w.WriteHeader(http.StatusOK)
+		}))
+		t.Cleanup(upstream.Close)
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, upstream.URL, nil)
+		rp := NewReverseProxy(
+			log.New("test"),
+			func(req *http.Request) {
+				req.Header.Set("X-KEY", "value")
+			},
+			WithModifyResponse(func(r *http.Response) error {
+				r.Header.Set("X-KEY2", "value2")
+				return nil
+			}),
+		)
+		require.NotNil(t, rp)
+		require.NotNil(t, rp.ModifyResponse)
+		rp.ServeHTTP(rec, req)
+
+		require.NotNil(t, actualReq)
+		require.Equal(t, "value", actualReq.Header.Get("X-KEY"))
+		resp := rec.Result()
+		require.Empty(t, resp.Cookies())
+		require.Equal(t, "sandbox", resp.Header.Get("Content-Security-Policy"))
+		require.Equal(t, "value2", resp.Header.Get("X-KEY2"))
 		require.NoError(t, resp.Body.Close())
 	})
 
@@ -89,6 +124,9 @@ func TestReverseProxy(t *testing.T) {
 					func(req *http.Request) {},
 					WithTransport(tc.transport),
 				)
+				require.NotNil(t, rp)
+				require.NotNil(t, rp.Transport)
+				require.Same(t, tc.transport, rp.Transport)
 				rp.ServeHTTP(rec, req)
 
 				resp := rec.Result()
