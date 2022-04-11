@@ -39,7 +39,7 @@ Information here about why a user would want to do this. What are the benefits?
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../http_api/admin/#reload-provisioning-configurations" >}}).
 
 The following example assigns the `users:editor` custom role to the built in editor and admin roles.
 
@@ -75,7 +75,7 @@ Not sure what to do with this prose: Assignments to built-in roles will be ignor
 
 ### Before you begin
 
-- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../administration/manage-users-and-permissions/manage-teams/_index.md">}}).
+- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../../administration/manage-users-and-permissions/manage-teams/_index.md">}}).
 
 **To assign a custom role to a team:**
 
@@ -94,7 +94,7 @@ Not sure what to do with this prose: Assignments to built-in roles will be ignor
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../http_api/admin/#reload-provisioning-configurations" >}}).
 
 The following example assigns the `custom:users:writer` role to the `user editors` and `user admins` teams:
 
@@ -128,7 +128,7 @@ Need information here on why a user would want to complete this task. What are t
 
 ### Before you begin
 
-- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../administration/manage-users-and-permissions/manage-teams/_index.md">}}).
+- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../../administration/manage-users-and-permissions/manage-teams/_index.md">}}).
 
 **To assign a fixed role to a team:**
 
@@ -145,7 +145,7 @@ Need information here on why a user would want to complete this task. What are t
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../http_api/admin/#reload-provisioning-configurations" >}}).
 
 The following example assigns the `users:writer` fixed role to the `user editors` and `user admins` teams:
 

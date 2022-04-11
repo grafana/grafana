@@ -21,7 +21,7 @@ In both cases, the assignment applies only to the user role within the affected 
 
 ### Before you begin
 
-- [Plan your fine-grained rollout strategy](./plan-fgac-rollout-strategy.md).
+- [Plan your fine-grained rollout strategy]({{< relref "./plan-fgac-rollout-strategy.md" >}})
 - Identify the fixed roles that you want to assign to the user.
 
   For more information about available fixed roles, refer to [Role-based access control fixed role definitions](./rbac-fixed-role-definitions.md)
