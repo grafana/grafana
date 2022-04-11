@@ -9,7 +9,6 @@ export interface Props<R extends ChannelValues> {
   defaultValues: R;
   selectedChannelOptions: NotificationChannelOption[];
   secureFields: NotificationChannelSecureFields;
-  channelIndex: number;
 
   onResetSecureField: (key: string) => void;
   errors?: FieldErrors<R>;
@@ -23,7 +22,6 @@ export function ChannelOptions<R extends ChannelValues>({
   onResetSecureField,
   secureFields,
   errors,
-  channelIndex,
   pathPrefix = '',
   readOnly = false,
 }: Props<R>): JSX.Element {
@@ -49,12 +47,7 @@ export function ChannelOptions<R extends ChannelValues>({
                 value="Configured"
                 suffix={
                   readOnly ? null : (
-                    <Button
-                      onClick={() => onResetSecureField(option.propertyName)}
-                      variant="link"
-                      type="button"
-                      size="sm"
-                    >
+                    <Button onClick={() => onResetSecureField(option.propertyName)} fill="text" type="button" size="sm">
                       Clear
                     </Button>
                   )
@@ -78,7 +71,6 @@ export function ChannelOptions<R extends ChannelValues>({
             error={error}
             pathPrefix={option.secure ? `${pathPrefix}secureSettings.` : `${pathPrefix}settings.`}
             option={option}
-            channelIndex={channelIndex}
           />
         );
       })}

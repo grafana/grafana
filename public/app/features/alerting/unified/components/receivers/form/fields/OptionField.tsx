@@ -2,7 +2,6 @@ import React, { FC, useEffect } from 'react';
 import { Checkbox, Field, Input, InputControl, Select, TextArea } from '@grafana/ui';
 import { NotificationChannelOption } from 'app/types';
 import { useFormContext, FieldError, DeepMap } from 'react-hook-form';
-import { isEmpty } from 'lodash';
 import { SubformField } from './SubformField';
 import { css } from '@emotion/css';
 import { KeyValueMapInput } from './KeyValueMapInput';
@@ -12,22 +11,13 @@ import { StringArrayInput } from './StringArrayInput';
 interface Props {
   defaultValue: any;
   option: NotificationChannelOption;
-  channelIndex: number;
   invalid?: boolean;
   pathPrefix: string;
   error?: FieldError | DeepMap<any, FieldError>;
   readOnly?: boolean;
 }
 
-export const OptionField: FC<Props> = ({
-  option,
-  invalid,
-  pathPrefix,
-  error,
-  defaultValue,
-  channelIndex,
-  readOnly = false,
-}) => {
+export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, defaultValue, readOnly = false }) => {
   if (option.element === 'subform') {
     return (
       <SubformField
@@ -64,22 +54,15 @@ export const OptionField: FC<Props> = ({
         invalid={invalid}
         pathPrefix={pathPrefix}
         readOnly={readOnly}
-        channelIndex={channelIndex}
       />
     </Field>
   );
 };
 
-const OptionInput: FC<Props & { id: string }> = ({
-  option,
-  invalid,
-  id,
-  channelIndex,
-  pathPrefix = '',
-  readOnly = false,
-}) => {
+const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPrefix = '', readOnly = false }) => {
   const { control, register, unregister, getValues } = useFormContext();
   const name = `${pathPrefix}${option.propertyName}`;
+
   // workaround for https://github.com/react-hook-form/react-hook-form/issues/4993#issuecomment-829012506
   useEffect(
     () => () => {
@@ -108,7 +91,7 @@ const OptionInput: FC<Props & { id: string }> = ({
           invalid={invalid}
           type={option.inputType}
           {...register(name, {
-            required: determineRequired(option, getValues, channelIndex),
+            required: determineRequired(option, getValues),
             validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
           })}
           placeholder={option.placeholder}
@@ -182,19 +165,13 @@ const validateOption = (value: string, validationRule: string) => {
   return RegExp(validationRule).test(value) ? true : 'Invalid format';
 };
 
-const determineRequired = (option: NotificationChannelOption, getValues: any, channelIndex: number) => {
+const determineRequired = (option: NotificationChannelOption, getValues: any) => {
   if (!option.dependsOn) {
     return option.required ? 'Required' : false;
   }
-
-  let dependentOn = '';
-  if (isEmpty(getValues(`items${channelIndex}.secureSettings`))) {
-    dependentOn = getValues(`items[${channelIndex}].secureFields.${option.dependsOn}`);
-  } else {
-    dependentOn = getValues(`items[${channelIndex}].secureSettings.${option.dependsOn}`);
-  }
-
-  return !dependentOn && option.required ? 'Required' : false;
+  const dependentOn = getValues(`items[0].${option.dependsOn}`);
+  console.log(dependentOn);
+  return !Boolean(dependentOn) && option.required ? 'Required' : false;
 };
 
 const determineReadOnly = (option: NotificationChannelOption, getValues: any) => {
