@@ -1,5 +1,6 @@
 import React, { FC, useEffect } from 'react';
 import { Checkbox, Field, Input, InputControl, Select, TextArea } from '@grafana/ui';
+import { isEmpty } from 'lodash';
 import { NotificationChannelOption } from 'app/types';
 import { useFormContext, FieldError, DeepMap } from 'react-hook-form';
 import { SubformField } from './SubformField';
@@ -169,8 +170,12 @@ const determineRequired = (option: NotificationChannelOption, getValues: any) =>
   if (!option.dependsOn) {
     return option.required ? 'Required' : false;
   }
-  const dependentOn = getValues(`items[0].${option.dependsOn}`);
-  console.log(dependentOn);
+  let dependentOn = '';
+  if (isEmpty(getValues(`items[0].secureSettings`))) {
+    dependentOn = getValues(`items[0].secureFields.${option.dependsOn}`);
+  } else {
+    dependentOn = getValues(`items[0].secureSettings.${option.dependsOn}`);
+  }
   return !Boolean(dependentOn) && option.required ? 'Required' : false;
 };
 
