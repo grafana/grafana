@@ -23,7 +23,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	}
 
 	t.Run("create request", func(t *testing.T) {
-		req, err := service.createRequest(context.TODO(), &datasourceInfo{}, OpenTsdbQuery{})
+		req, err := service.createRequest(context.Background(), &datasourceInfo{}, OpenTsdbQuery{})
 		require.NoError(t, err)
 
 		assert.Equal(t, "POST", req.Method)
