@@ -2,8 +2,6 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { Stack } from '@grafana/experimental';
 import { useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
 import { isEmpty } from 'lodash';
 import React, { FC } from 'react';
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
