@@ -899,10 +899,7 @@ steps:
   image: grafana/build-container:1.5.3
   name: build-storybook
 - commands:
-  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-  - gsutil -m rm -r gs://$${PRERELEASE_BUCKET}/artifacts/storybook/canary || true
-    && gsutil -m cp -r ./packages/grafana-ui/dist/storybook/* gs://$${PRERELEASE_BUCKET}/artifacts/storybook/canary
+  - ./bin/grabpl store-storybook --deployment canary --src-bucket grafana-storybook
   depends_on:
   - build-storybook
   - end-to-end-tests-dashboards-suite
@@ -1592,12 +1589,10 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-packages
 - commands:
-  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-  - gsutil -m rm -r gs://$${PRERELEASE_BUCKET}/artifacts/storybook/latest || true
-    && gsutil -m cp -r ./packages/grafana-ui/dist/storybook/* gs://$${PRERELEASE_BUCKET}/artifacts/storybook/latest
-  - gsutil -m rm -r gs://$${PRERELEASE_BUCKET}/artifacts/storybook/${DRONE_TAG} ||
-    true && gsutil -m cp -r ./packages/grafana-ui/dist/storybook/* gs://$${PRERELEASE_BUCKET}/artifacts/storybook/${DRONE_TAG}
+  - ./bin/grabpl store-storybook --deployment latest --src-bucket grafana-prerelease
+    --src-dir artifacts/storybook
+  - ./bin/grabpl store-storybook --deployment ${DRONE_TAG} --src-bucket grafana-prerelease
+    --src-dir artifacts/storybook
   depends_on:
   - build-storybook
   - end-to-end-tests-dashboards-suite
@@ -4452,6 +4447,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 9b87d4bb17d422973023c6ad1a59980c37832ae60ba6bb0d11ee024ea1e35b1a
+hmac: 180c5f1ef345e10b22b46bfd5bb5e3eae14496c1609fc8cff7036cb780eb70a1
 
 ...
