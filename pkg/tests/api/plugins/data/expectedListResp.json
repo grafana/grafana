@@ -1441,6 +1441,42 @@
     "signatureOrg": ""
   },
   {
+    "name": "Traces",
+    "type": "panel",
+    "id": "traces",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/traces/img/icn-singlestat-panel.svg",
+        "large": "public/app/plugins/panel/traces/img/icn-singlestat-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/traces/",
+    "category": "",
+    "state": "beta",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
     "name": "Welcome",
     "type": "panel",
     "id": "welcome",
