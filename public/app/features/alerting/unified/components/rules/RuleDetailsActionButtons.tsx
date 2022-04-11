@@ -4,7 +4,6 @@ import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 import { RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
@@ -41,16 +40,13 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     : getAlertmanagerByUid(rulesSource.jsonData.alertmanagerUid)?.name;
   const rulesSourceName = getRulesSourceName(rulesSource);
 
-  const rulesPermissions = getRulesPermissions(rulesSourceName);
-  const hasEditPermission = contextSrv.hasPermission(rulesPermissions.update);
-  const hasDeletePermission = contextSrv.hasPermission(rulesPermissions.delete);
   const hasExplorePermission = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
 
   const leftButtons: JSX.Element[] = [];
   const rightButtons: JSX.Element[] = [];
 
   const isFederated = isFederatedRuleGroup(group);
-  const { isEditable } = useIsRuleEditable(rulesSourceName, rulerRule);
+  const { isEditable, isRemovable } = useIsRuleEditable(rulesSourceName, rulerRule);
   const returnTo = location.pathname + location.search;
   const isViewMode = inViewMode(location.pathname);
 
@@ -187,7 +183,6 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     );
   }
 
-  // TODO Maybe there is a way to unify isEditable with FGAC permissions
   if (isEditable && rulerRule && !isFederated) {
     const sourceName = getRulesSourceName(rulesSource);
     const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
@@ -218,29 +213,29 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
       );
     }
 
-    if (hasEditPermission) {
-      rightButtons.push(
-        <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
-          Edit
-        </LinkButton>
-      );
-    }
-    if (hasDeletePermission) {
-      rightButtons.push(
-        <Button
-          className={style.button}
-          size="xs"
-          type="button"
-          key="delete"
-          variant="secondary"
-          icon="trash-alt"
-          onClick={() => setRuleToDelete(rule)}
-        >
-          Delete
-        </Button>
-      );
-    }
+    rightButtons.push(
+      <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
+        Edit
+      </LinkButton>
+    );
   }
+
+  if (isRemovable && rulerRule && !isFederated) {
+    rightButtons.push(
+      <Button
+        className={style.button}
+        size="xs"
+        type="button"
+        key="delete"
+        variant="secondary"
+        icon="trash-alt"
+        onClick={() => setRuleToDelete(rule)}
+      >
+        Delete
+      </Button>
+    );
+  }
+
   if (leftButtons.length || rightButtons.length) {
     return (
       <>
