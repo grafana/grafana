@@ -18,17 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalResponse {
-	if errors.Is(err, models.ErrDataSourceAccessDenied) {
-		return response.Error(http.StatusForbidden, "Access denied to data source", err)
-	}
-	var badQuery *query.ErrBadQuery
-	if errors.As(err, &badQuery) {
-		return response.Error(http.StatusBadRequest, util.Capitalize(badQuery.Message), err)
-	}
-	return response.Error(http.StatusInternalServerError, "Query data error", err)
-}
-
 // QueryMetricsV2 returns query metrics.
 // POST /api/ds/query   DataSource query w/ expressions
 func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
@@ -42,6 +31,20 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 		return hs.handleQueryMetricsError(err)
 	}
 	return toJsonStreamingResponse(resp)
+}
+
+func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalResponse {
+	if errors.Is(err, models.ErrDataSourceAccessDenied) {
+		return response.Error(http.StatusForbidden, "Access denied to data source", err)
+	}
+	if errors.Is(err, models.ErrDataSourceNotFound) {
+		return response.Error(http.StatusNotFound, "Data source not found", err)
+	}
+	var badQuery *query.ErrBadQuery
+	if errors.As(err, &badQuery) {
+		return response.Error(http.StatusBadRequest, util.Capitalize(badQuery.Message), err)
+	}
+	return response.Error(http.StatusInternalServerError, "Query data error", err)
 }
 
 func parseDashboardQueryParams(params map[string]string) (models.GetDashboardQuery, int64, error) {
@@ -101,8 +104,8 @@ func checkDashboardAndPanel(ctx context.Context, ss sqlstore.Store, query models
 	return models.ErrDashboardPanelNotFound
 }
 
-// QueryMetricsV2 returns query metrics.
-// POST /api/ds/query   DataSource query w/ expressions
+// QueryMetricsFromDashboard returns query metrics.
+// POST /dashboards/org/:orgId/uid/:dashboardUid/panels/:panelId/query   DataSource query w/ expressions
 func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.Response {
 	// check feature flag
 	if !hs.Features.IsEnabled(featuremgmt.FlagValidatedQueries) {
