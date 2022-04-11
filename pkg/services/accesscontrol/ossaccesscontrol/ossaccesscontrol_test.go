@@ -350,19 +350,8 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 
 			// Check
 			for _, registration := range tt.registrations {
-				// Prepare list of builtin roles to check
-				brAndParents := map[string]struct{}{}
-				for _, br := range registration.Grants {
-					brAndParents[br] = struct{}{}
-					if br != accesscontrol.RoleGrafanaAdmin {
-						for _, parent := range models.RoleType(br).Parents() {
-							brAndParents[string(parent)] = struct{}{}
-						}
-					}
-				}
-
 				// Check builtin roles (parents included) have been granted with the permissions
-				for br := range brAndParents {
+				for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
 					builtinRole, ok := ac.roles[br]
 					assert.True(t, ok)
 					for _, expectedPermission := range registration.Role.Permissions {

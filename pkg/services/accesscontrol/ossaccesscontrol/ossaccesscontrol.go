@@ -188,18 +188,7 @@ func (ac *OSSAccessControlService) RegisterFixedRoles(ctx context.Context) error
 
 // RegisterFixedRole saves a fixed role and assigns it to built-in roles
 func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) {
-	// Inheritance
-	brs := map[string]struct{}{}
-	for _, builtInRole := range builtInRoles {
-		brs[builtInRole] = struct{}{}
-		if builtInRole != accesscontrol.RoleGrafanaAdmin {
-			for _, parent := range models.RoleType(builtInRole).Parents() {
-				brs[string(parent)] = struct{}{}
-			}
-		}
-	}
-
-	for br := range brs {
+	for br := range accesscontrol.BuiltInRolesWithParents(builtInRoles) {
 		if macroRole, ok := ac.roles[br]; ok {
 			macroRole.Permissions = append(macroRole.Permissions, role.Permissions...)
 		} else {
