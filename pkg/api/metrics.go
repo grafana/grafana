@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -44,6 +45,24 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 	if errors.As(err, &badQuery) {
 		return response.Error(http.StatusBadRequest, util.Capitalize(badQuery.Message), err)
 	}
+
+	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
+		return response.Error(http.StatusNotFound, "Plugin not found", err)
+	}
+
+	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
+		return response.Error(http.StatusBadRequest, "Plugin functionality not implemented", err) // or 404
+	}
+
+	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
+		return response.Error(http.StatusBadGateway, "Plugin unavailable", err)
+	}
+
+	var failedQuery *backendplugin.ErrFailedQuery
+	if errors.As(err, &failedQuery) {
+		return response.Error(http.StatusBadGateway, "Data source query failed", err)
+	}
+
 	return response.Error(http.StatusInternalServerError, "Query data error", err)
 }
 

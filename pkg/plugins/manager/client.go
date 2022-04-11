@@ -28,11 +28,11 @@ func (m *PluginManager) QueryData(ctx context.Context, req *backend.QueryDataReq
 			return nil, err
 		}
 
-		if errors.Is(err, backendplugin.ErrPluginUnavailable) {
+		if errors.Is(err, backendplugin.ErrPluginUnavailable) { // plugin connection broken / can't reach plugin
 			return nil, err
 		}
 
-		return nil, errutil.Wrap("failed to query data", err)
+		return nil, backendplugin.NewErrFailedQuery(err)
 	}
 
 	for refID, res := range resp.Responses {

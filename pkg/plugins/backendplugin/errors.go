@@ -1,6 +1,9 @@
 package backendplugin
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var (
 	// ErrPluginNotRegistered error returned when plugin not registered.
@@ -12,3 +15,15 @@ var (
 	// ErrMethodNotImplemented error returned when plugin method not implemented.
 	ErrMethodNotImplemented = errors.New("method not implemented")
 )
+
+type ErrFailedQuery struct {
+	err error
+}
+
+func NewErrFailedQuery(err error) *ErrFailedQuery {
+	return &ErrFailedQuery{err: err}
+}
+
+func (e ErrFailedQuery) Error() string {
+	return fmt.Sprintf("query failure: %v", e.err)
+}
