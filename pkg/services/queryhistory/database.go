@@ -276,10 +276,6 @@ func (s QueryHistoryService) migrateQueries(ctx context.Context, user *models.Si
 				break
 			}
 
-			if query.CreatedAt == 0 {
-				query.CreatedAt = time.Now().Unix()
-			}
-
 			// First add query to query history table
 			queryHistory := QueryHistory{
 				OrgID:         user.OrgId,
