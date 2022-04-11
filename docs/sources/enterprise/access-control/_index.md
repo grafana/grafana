@@ -58,7 +58,7 @@ enable = accesscontrol
 
 You can use `GF_FEATURE_TOGGLES_ENABLE = accesscontrol` environment variable to override the config file configuration and enable fine-grained access control.
 
-Refer to [Configuring with environment variables]({{< relref "../../administration/configuration.md#configure-with-environment-variables" >}}) for more information.
+Refer to [Configuring with environment variables]({{< relref "../../administration/configuration.md#/#override-configuration-with-environment-variables" >}}) for more information.
 
 ### Verify if enabled
 
