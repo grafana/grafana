@@ -50,7 +50,7 @@ jobs:
           example: 7.4.3 or 7.4.3-beta1"
           exit 1
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set intermedia variables
         id: intermedia
@@ -69,7 +69,7 @@ jobs:
           exit 1
 
       - name: Checkout Actions
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions

@@ -28,20 +28,6 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService enc
 		NotificationService: notificationService,
 	}
 
-	s.Bus.AddHandler(s.GetAlertNotifications)
-	s.Bus.AddHandler(s.CreateAlertNotificationCommand)
-	s.Bus.AddHandler(s.UpdateAlertNotification)
-	s.Bus.AddHandler(s.DeleteAlertNotification)
-	s.Bus.AddHandler(s.GetAllAlertNotifications)
-	s.Bus.AddHandler(s.GetOrCreateAlertNotificationState)
-	s.Bus.AddHandler(s.SetAlertNotificationStateToCompleteCommand)
-	s.Bus.AddHandler(s.SetAlertNotificationStateToPendingCommand)
-	s.Bus.AddHandler(s.GetAlertNotificationsWithUid)
-	s.Bus.AddHandler(s.UpdateAlertNotificationWithUid)
-	s.Bus.AddHandler(s.DeleteAlertNotificationWithUid)
-	s.Bus.AddHandler(s.GetAlertNotificationsWithUidToSend)
-	s.Bus.AddHandler(s.HandleNotificationTestCommand)
-
 	return s
 }
 

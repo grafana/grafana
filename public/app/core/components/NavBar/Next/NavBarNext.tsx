@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import CSSTransition from 'react-transition-group/CSSTransition';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { Icon, IconName, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { config, locationService } from '@grafana/runtime';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { KioskMode, StoreState } from 'app/types';
@@ -41,7 +40,6 @@ export const NavBarNext = React.memo(() => {
   const navBarTree = useSelector((state: StoreState) => state.navBarTree);
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const animStyles = useStyles2(getAnimStyles);
   const location = useLocation();
   const kiosk = getKioskMode();
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
@@ -60,7 +58,8 @@ export const NavBarNext = React.memo(() => {
   );
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuIdOpen, setMenuIdOpen] = useState<string | null>(null);
+  const [menuAnimationInProgress, setMenuAnimationInProgress] = useState(false);
+  const [menuIdOpen, setMenuIdOpen] = useState<string | undefined>(undefined);
 
   if (kiosk !== KioskMode.Off) {
     return null;
@@ -135,16 +134,17 @@ export const NavBarNext = React.memo(() => {
         </NavBarContext.Provider>
       </nav>
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
-      <div className={styles.menuWrapper}>
-        <CSSTransition in={menuOpen} classNames={animStyles} timeout={150} unmountOnExit>
+      {(menuOpen || menuAnimationInProgress) && (
+        <div className={styles.menuWrapper}>
           <NavBarMenu
             activeItem={activeItem}
             isOpen={menuOpen}
+            setMenuAnimationInProgress={setMenuAnimationInProgress}
             navItems={[homeItem, searchItem, ...coreItems, ...pluginItems, ...configItems]}
             onClose={() => setMenuOpen(false)}
           />
-        </CSSTransition>
-      </div>
+        </div>
+      )}
     </div>
   );
 });
@@ -242,41 +242,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     transform: `translateX(50%)`,
   }),
 });
-
-const getAnimStyles = (theme: GrafanaTheme2) => {
-  const transitionProps = {
-    transitionProperty: 'width, background-color',
-    transitionDuration: '150ms',
-    transitionTimingFunction: 'ease-in-out',
-  };
-
-  const openStyles = {
-    backgroundColor: theme.colors.background.canvas,
-    width: '300px',
-  };
-
-  const closedStyles = {
-    backgroundColor: theme.colors.background.primary,
-    width: theme.spacing(7),
-  };
-
-  return {
-    enter: css({
-      ...closedStyles,
-    }),
-    enterActive: css({
-      ...transitionProps,
-      ...openStyles,
-    }),
-    enterDone: css({
-      ...openStyles,
-    }),
-    exit: css({
-      ...openStyles,
-    }),
-    exitActive: css({
-      ...transitionProps,
-      ...closedStyles,
-    }),
-  };
-};

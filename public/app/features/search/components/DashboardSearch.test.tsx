@@ -112,9 +112,10 @@ describe('DashboardSearch', () => {
     await waitFor(() => screen.getByLabelText('Tag filter'));
 
     const tagComponent = screen.getByLabelText('Tag filter');
-    await selectOptionInTest(tagComponent, 'tag1');
-
     expect(tagComponent).toBeInTheDocument();
+
+    tagComponent.focus();
+    await waitFor(() => selectOptionInTest(tagComponent, 'tag1'));
 
     await waitFor(() =>
       expect(mockSearch).toHaveBeenCalledWith({

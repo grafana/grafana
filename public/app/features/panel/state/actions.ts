@@ -2,7 +2,13 @@ import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPlugi
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
 import { ThunkResult } from 'app/types';
-import { cleanUpAngularComponent, panelModelAndPluginReady, removePanel, removePanels } from './reducers';
+import {
+  changePanelKey,
+  cleanUpAngularComponent,
+  panelModelAndPluginReady,
+  removePanel,
+  removePanels,
+} from './reducers';
 import { LibraryElementDTO } from 'app/features/library-panels/types';
 import { toPanelModelLibraryPanel } from 'app/features/library-panels/utils';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
@@ -132,6 +138,12 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
       panel.generateNewKey();
 
       await dispatch(panelModelAndPluginReady({ key: panel.key, plugin, cleanUpKey: oldKey }));
+    } else {
+      // Even if the plugin is the same, we want to change the key
+      // to force a rerender
+      const oldKey = panel.key;
+      panel.generateNewKey();
+      dispatch(changePanelKey({ oldKey, newKey: panel.key }));
     }
 
     panel.configRev = 0;

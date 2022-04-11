@@ -196,6 +196,14 @@ var (
 	debugValue = &levelValue{level: levelDebug, name: "dbug"}
 )
 
+func SetLevelKeyAndValuesToGokitLog() {
+	key = "level"
+	errorValue = &levelValue{level: levelError, name: "error"}
+	warnValue = &levelValue{level: levelWarn, name: "warn"}
+	infoValue = &levelValue{level: levelInfo, name: "info"}
+	debugValue = &levelValue{level: levelDebug, name: "debug"}
+}
+
 type level byte
 
 const (

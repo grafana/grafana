@@ -143,23 +143,23 @@ types of template variables.
 
 ### Query variable
 
-The Elasticsearch data source supports two types of queries you can use in the _Query_ field of _Query_ variables. The query is written using a custom JSON string.
+The Elasticsearch data source supports two types of queries you can use in the _Query_ field of _Query_ variables. The query is written using a custom JSON string. The field should be mapped as a [keyword](https://www.elastic.co/guide/en/elasticsearch/reference/current/keyword.html#keyword) in the Elasticsearch index mapping. If it is [multi-field](https://www.elastic.co/guide/en/elasticsearch/reference/current/multi-fields.html) with both a `text` and `keyword` type, then use `"field":"fieldname.keyword"`(sometimes`fieldname.raw`) to specify the keyword field in your query.
 
-| Query                                                                | Description                                                                                                                                                           |
-| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `{"find": "fields", "type": "keyword"}`                              | Returns a list of field names with the index type `keyword`.                                                                                                          |
-| `{"find": "terms", "field": "@hostname", "size": 1000}`              | Returns a list of values for a field using term aggregation. Query will use current dashboard time range as time range for query.                                     |
-| `{"find": "terms", "field": "@hostname", "query": '<lucene query>'}` | Returns a list of values for a field using term aggregation and a specified lucene query filter. Query will use current dashboard time range as time range for query. |
+| Query                                                               | Description                                                                                                                                                                   |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{"find": "fields", "type": "keyword"}`                             | Returns a list of field names with the index type `keyword`.                                                                                                                  |
+| `{"find": "terms", "field": "hostname.keyword", "size": 1000}`      | Returns a list of values for a keyword using term aggregation. Query will use current dashboard time range as time range query.                                               |
+| `{"find": "terms", "field": "hostname", "query": '<lucene query>'}` | Returns a list of values for a keyword field using term aggregation and a specified lucene query filter. Query will use current dashboard time range as time range for query. |
 
 There is a default size limit of 500 on terms queries. Set the size property in your query to set a custom limit.
 You can use other variables inside the query. Example query definition for a variable named `$host`.
 
 ```
-{"find": "terms", "field": "@hostname", "query": "@source:$source"}
+{"find": "terms", "field": "hostname", "query": "source:$source"}
 ```
 
-In the above example, we use another variable named `$source` inside the query definition. Whenever you change, via the dropdown, the current value of the ` $source` variable, it will trigger an update of the `$host` variable so it now only contains hostnames filtered by in this case the
-`@source` document property.
+In the above example, we use another variable named `$source` inside the query definition. Whenever you change, via the dropdown, the current value of the `$source` variable, it will trigger an update of the `$host` variable so it now only contains hostnames filtered by in this case the
+`source` document property.
 
 These queries by default return results in term order (which can then be sorted alphabetically or numerically as for any variable).
 To produce a list of terms sorted by doc count (a top-N values list), add an `orderBy` property of "doc_count".
@@ -167,22 +167,22 @@ This automatically selects a descending sort; using "asc" with doc_count (a bott
 To keep terms in the doc count order, set the variable's Sort dropdown to **Disabled**; you might alternatively still want to use e.g. **Alphabetical** to re-sort them.
 
 ```
-{"find": "terms", "field": "@hostname", "orderBy": "doc_count"}
+{"find": "terms", "field": "hostname", "orderBy": "doc_count"}
 ```
 
 ### Using variables in queries
 
 There are two syntaxes:
 
-- `$<varname>` Example: @hostname:$hostname
-- `[[varname]]` Example: @hostname:[[hostname]]
+- `$<varname>` Example: hostname:$hostname
+- `[[varname]]` Example: hostname:[[hostname]]
 
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the _Multi-value_ or _Include all value_
 options are enabled, Grafana converts the labels from plain text to a lucene compatible condition.
 
 ![Query with template variables](/static/img/docs/elasticsearch/elastic-templating-query-7-4.png)
 
-In the above example, we have a lucene query that filters documents based on the `@hostname` property using a variable named `$hostname`. It is also using
+In the above example, we have a lucene query that filters documents based on the `hostname` property using a variable named `$hostname`. It is also using
 a variable in the _Terms_ group by field input box. This allows you to use a variable to quickly change how the data is grouped.
 
 Example dashboard:
