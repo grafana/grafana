@@ -8,7 +8,7 @@ weight = 1
 
 Grafana provides many ways to authenticate users. Some authentication integrations also enable syncing user permissions and org memberships.
 
-Here is a table showing all supported authentication providers and the features available for them. [Team sync]({{< relref "../enterprise/team-sync.md" >}}) and [active sync]({{< relref "../enterprise/enhanced_ldap.md#active-ldap-synchronization" >}}) are only available in Grafana Enterprise.
+The following table shows all supported authentication providers and the features available for them. [Team sync]({{< relref "../enterprise/team-sync.md" >}}) and [active sync]({{< relref "../enterprise/enhanced_ldap.md#active-ldap-synchronization" >}}) are only available in Grafana Enterprise.
 
 | Provider                                                       | Support | Role mapping | Team sync<br> _(Enterprise only)_ | Active sync<br> _(Enterprise only)_ |
 | -------------------------------------------------------------- | :-----: | :----------: | :-------------------------------: | :---------------------------------: |
