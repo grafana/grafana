@@ -5380,7 +5380,7 @@ DELETE /api/datasources/{datasource_id}
 ```
 
 If you are running Grafana Enterprise and have Fine-grained access control enabled
-you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).
 
 #### Parameters
 
@@ -6353,7 +6353,7 @@ Status: Internal Server Error
 DELETE /api/admin/users/{user_id}
 ```
 
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global:users:*`.
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global.users:*`.
 
 #### Security Requirements
 
@@ -6513,7 +6513,7 @@ Status: Internal Server Error
 POST /api/admin/users/{user_id}/disable
 ```
 
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global:users:1` (userIDScope).
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global.users:1` (userIDScope).
 
 #### Security Requirements
 
@@ -6675,7 +6675,7 @@ Status: Internal Server Error
 POST /api/admin/users/{user_id}/enable
 ```
 
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global:users:1` (userIDScope).
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global.users:1` (userIDScope).
 
 #### Security Requirements
 
@@ -7299,7 +7299,7 @@ Status: Internal Server Error
 GET /api/admin/users/{user_id}/auth-tokens
 ```
 
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global:users:*`.
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global.users:*`.
 
 #### Security Requirements
 
@@ -7778,7 +7778,7 @@ GET /api/datasources/{datasource_id}
 ```
 
 If you are running Grafana Enterprise and have Fine-grained access control enabled
-you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).
 
 #### Parameters
 
@@ -10612,7 +10612,7 @@ Status: Internal Server Error
 GET /api/admin/users/{user_id}/quotas
 ```
 
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:list` and scope `global:users:1` (userIDScope).
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:list` and scope `global.users:1` (userIDScope).
 
 #### Security Requirements
 
@@ -11095,7 +11095,7 @@ Status: Internal Server Error
 POST /api/admin/users/{user_id}/logout
 ```
 
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global:users:*`.
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global.users:*`.
 
 #### Security Requirements
 
@@ -11287,9 +11287,9 @@ POST /api/annotations/mass-delete
 
 #### Parameters
 
-| Name | Source | Type                                            | Go type                       | Separator | Required | Default | Description |
-| ---- | ------ | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
-| body | `body` | [DeleteAnnotationsCmd](#delete-annotations-cmd) | `models.DeleteAnnotationsCmd` |           |    ✓     |         |             |
+| Name | Source | Type                                                     | Go type                           | Separator | Required | Default | Description |
+| ---- | ------ | -------------------------------------------------------- | --------------------------------- | --------- | :------: | ------- | ----------- |
+| body | `body` | [MassDeleteAnnotationsCmd](#mass-delete-annotations-cmd) | `models.MassDeleteAnnotationsCmd` |           |    ✓     |         |             |
 
 #### All responses
 
@@ -11890,14 +11890,14 @@ Status: Internal Server Error
 
 **Properties**
 
-| Name   | Type                      | Go type  | Required | Default | Description                                                       | Example                     |
-| ------ | ------------------------- | -------- | :------: | ------- | ----------------------------------------------------------------- | --------------------------- |
-| ID     | string                    | `string` |    ✓     |         | ID The unique identifier (id) of the created/updated dashboard.   | `1`                         |
-| Slug   | string                    | `string` |    ✓     |         | Slug The slug of the dashboard.                                   | `my-dashboard`              |
-| Status | string                    | `string` |    ✓     |         | Status status of the response.                                    | `success`                   |
-| UID    | string                    | `string` |    ✓     |         | UID The unique identifier (uid) of the created/updated dashboard. | `nHz3SXiiz`                 |
-| URL    | string                    | `string` |    ✓     |         | URL The relative URL for accessing the created/updated dashboard. | `/d/nHz3SXiiz/my-dashboard` |
-| Verion | int64 (formatted integer) | `int64`  |    ✓     |         | Version The version of the dashboard.                             | `2`                         |
+| Name    | Type                      | Go type  | Required | Default | Description                                                       | Example                     |
+| ------- | ------------------------- | -------- | :------: | ------- | ----------------------------------------------------------------- | --------------------------- |
+| ID      | string                    | `string` |    ✓     |         | ID The unique identifier (id) of the created/updated dashboard.   | `1`                         |
+| Slug    | string                    | `string` |    ✓     |         | Slug The slug of the dashboard.                                   | `my-dashboard`              |
+| Status  | string                    | `string` |    ✓     |         | Status status of the response.                                    | `success`                   |
+| UID     | string                    | `string` |    ✓     |         | UID The unique identifier (uid) of the created/updated dashboard. | `nHz3SXiiz`                 |
+| URL     | string                    | `string` |    ✓     |         | URL The relative URL for accessing the created/updated dashboard. | `/d/nHz3SXiiz/my-dashboard` |
+| Version | int64 (formatted integer) | `int64`  |    ✓     |         | Version The version of the dashboard.                             | `2`                         |
 
 ### <span id="post-dashboard-permissions"></span> Updates permissions for a dashboard. (_postDashboardPermissions_)
 
@@ -13110,14 +13110,14 @@ Status: Internal Server Error
 
 **Properties**
 
-| Name   | Type                      | Go type  | Required | Default | Description                                                       | Example                     |
-| ------ | ------------------------- | -------- | :------: | ------- | ----------------------------------------------------------------- | --------------------------- |
-| ID     | string                    | `string` |    ✓     |         | ID The unique identifier (id) of the created/updated dashboard.   | `1`                         |
-| Slug   | string                    | `string` |    ✓     |         | Slug The slug of the dashboard.                                   | `my-dashboard`              |
-| Status | string                    | `string` |    ✓     |         | Status status of the response.                                    | `success`                   |
-| UID    | string                    | `string` |    ✓     |         | UID The unique identifier (uid) of the created/updated dashboard. | `nHz3SXiiz`                 |
-| URL    | string                    | `string` |    ✓     |         | URL The relative URL for accessing the created/updated dashboard. | `/d/nHz3SXiiz/my-dashboard` |
-| Verion | int64 (formatted integer) | `int64`  |    ✓     |         | Version The version of the dashboard.                             | `2`                         |
+| Name    | Type                      | Go type  | Required | Default | Description                                                       | Example                     |
+| ------- | ------------------------- | -------- | :------: | ------- | ----------------------------------------------------------------- | --------------------------- |
+| ID      | string                    | `string` |    ✓     |         | ID The unique identifier (id) of the created/updated dashboard.   | `1`                         |
+| Slug    | string                    | `string` |    ✓     |         | Slug The slug of the dashboard.                                   | `my-dashboard`              |
+| Status  | string                    | `string` |    ✓     |         | Status status of the response.                                    | `success`                   |
+| UID     | string                    | `string` |    ✓     |         | UID The unique identifier (uid) of the created/updated dashboard. | `nHz3SXiiz`                 |
+| URL     | string                    | `string` |    ✓     |         | URL The relative URL for accessing the created/updated dashboard. | `/d/nHz3SXiiz/my-dashboard` |
+| Version | int64 (formatted integer) | `int64`  |    ✓     |         | Version The version of the dashboard.                             | `2`                         |
 
 ### <span id="revoke-auth-token"></span> Revoke auth token for user. (_revokeAuthToken_)
 
@@ -13126,7 +13126,7 @@ POST /api/admin/users/{user_id}/revoke-auth-token
 ```
 
 Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global:users:*`.
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global.users:*`.
 
 #### Security Requirements
 
@@ -13986,7 +13986,7 @@ Status: Internal Server Error
 PUT /api/admin/users/{user_id}/password
 ```
 
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global:users:*`.
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global.users:*`.
 
 #### Security Requirements
 
@@ -14058,7 +14058,7 @@ PUT /api/admin/users/{user_id}/permissions
 ```
 
 Only works with Basic Authentication (username and password). See introduction for an explanation.
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.permissions:update` and scope `global:users:*`.
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.permissions:update` and scope `global.users:*`.
 
 #### Parameters
 
@@ -14842,7 +14842,7 @@ secureJsonData in order to be stored securely as an encrypted blob in the databa
 encrypted fields are listed under secureJsonFields section in the response.
 
 If you are running Grafana Enterprise and have Fine-grained access control enabled
-you need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+you need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).
 
 #### Parameters
 
@@ -16076,7 +16076,7 @@ Status: Internal Server Error
 PUT /api/admin/users/{user_id}/quotas/{quota_target}
 ```
 
-If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global:users:1` (userIDScope).
+If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global.users:1` (userIDScope).
 
 #### Security Requirements
 
@@ -16412,18 +16412,6 @@ Status: Internal Server Error
 
 ### <span id="alert"></span> Alert
 
-**Properties**
-
-| Name        | Type                               | Go type           | Required | Default | Description | Example |
-| ----------- | ---------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| ActiveAt    | date-time (formatted string)       | `strfmt.DateTime` |          |         |             |         |
-| State       | string                             | `string`          |    ✓     |         |             |         |
-| Value       | string                             | `string`          |    ✓     |         |             |         |
-| annotations | [OverrideLabels](#override-labels) | `OverrideLabels`  |    ✓     |         |             |         |
-| labels      | [OverrideLabels](#override-labels) | `OverrideLabels`  |    ✓     |         |             |         |
-
-### <span id="alert"></span> Alert
-
 > Alert alert
 
 **Properties**
@@ -16433,6 +16421,18 @@ Status: Internal Server Error
 | GeneratorURL | uri (formatted string) | `strfmt.URI` |          |         | generator URL |
 | Format: uri  |                        |
 | labels       | [LabelSet](#label-set) | `LabelSet`   |    ✓     |         |               |         |
+
+### <span id="alert"></span> Alert
+
+**Properties**
+
+| Name        | Type                               | Go type           | Required | Default | Description | Example |
+| ----------- | ---------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
+| ActiveAt    | date-time (formatted string)       | `strfmt.DateTime` |          |         |             |         |
+| State       | string                             | `string`          |    ✓     |         |             |         |
+| Value       | string                             | `string`          |    ✓     |         |             |         |
+| annotations | [OverrideLabels](#override-labels) | `OverrideLabels`  |    ✓     |         |             |         |
+| labels      | [OverrideLabels](#override-labels) | `OverrideLabels`  |    ✓     |         |             |         |
 
 ### <span id="alert-discovery"></span> AlertDiscovery
 
@@ -16669,6 +16669,25 @@ Status: Internal Server Error
 | cluster     | [ClusterStatus](#cluster-status)           | `ClusterStatus`      |    ✓     |         |             |         |
 | config      | [AlertmanagerConfig](#alertmanager-config) | `AlertmanagerConfig` |    ✓     |         |             |         |
 | versionInfo | [VersionInfo](#version-info)               | `VersionInfo`        |    ✓     |         |             |         |
+
+### <span id="annotation-actions"></span> AnnotationActions
+
+**Properties**
+
+| Name      | Type    | Go type | Required | Default | Description | Example |
+| --------- | ------- | ------- | :------: | ------- | ----------- | ------- |
+| CanAdd    | boolean | `bool`  |          |         |             |         |
+| CanDelete | boolean | `bool`  |          |         |             |         |
+| CanEdit   | boolean | `bool`  |          |         |             |         |
+
+### <span id="annotation-permission"></span> AnnotationPermission
+
+**Properties**
+
+| Name         | Type                                     | Go type             | Required | Default | Description | Example |
+| ------------ | ---------------------------------------- | ------------------- | :------: | ------- | ----------- | ------- |
+| dashboard    | [AnnotationActions](#annotation-actions) | `AnnotationActions` |          |         |             |         |
+| organization | [AnnotationActions](#annotation-actions) | `AnnotationActions` |          |         |             |         |
 
 ### <span id="api-key-d-t-o"></span> ApiKeyDTO
 
@@ -16977,33 +16996,34 @@ Description:
 
 **Properties**
 
-| Name                  | Type                         | Go type           | Required | Default | Description | Example |
-| --------------------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| CanAdmin              | boolean                      | `bool`            |          |         |             |         |
-| CanDelete             | boolean                      | `bool`            |          |         |             |         |
-| CanEdit               | boolean                      | `bool`            |          |         |             |         |
-| CanSave               | boolean                      | `bool`            |          |         |             |         |
-| CanStar               | boolean                      | `bool`            |          |         |             |         |
-| Created               | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| CreatedBy             | string                       | `string`          |          |         |             |         |
-| Expires               | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| FolderId              | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| FolderTitle           | string                       | `string`          |          |         |             |         |
-| FolderUid             | string                       | `string`          |          |         |             |         |
-| FolderUrl             | string                       | `string`          |          |         |             |         |
-| HasAcl                | boolean                      | `bool`            |          |         |             |         |
-| IsFolder              | boolean                      | `bool`            |          |         |             |         |
-| IsHome                | boolean                      | `bool`            |          |         |             |         |
-| IsSnapshot            | boolean                      | `bool`            |          |         |             |         |
-| IsStarred             | boolean                      | `bool`            |          |         |             |         |
-| Provisioned           | boolean                      | `bool`            |          |         |             |         |
-| ProvisionedExternalId | string                       | `string`          |          |         |             |         |
-| Slug                  | string                       | `string`          |          |         |             |         |
-| Type                  | string                       | `string`          |          |         |             |         |
-| Updated               | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| UpdatedBy             | string                       | `string`          |          |         |             |         |
-| Url                   | string                       | `string`          |          |         |             |         |
-| Version               | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| Name                   | Type                                           | Go type                | Required | Default | Description | Example |
+| ---------------------- | ---------------------------------------------- | ---------------------- | :------: | ------- | ----------- | ------- |
+| CanAdmin               | boolean                                        | `bool`                 |          |         |             |         |
+| CanDelete              | boolean                                        | `bool`                 |          |         |             |         |
+| CanEdit                | boolean                                        | `bool`                 |          |         |             |         |
+| CanSave                | boolean                                        | `bool`                 |          |         |             |         |
+| CanStar                | boolean                                        | `bool`                 |          |         |             |         |
+| Created                | date-time (formatted string)                   | `strfmt.DateTime`      |          |         |             |         |
+| CreatedBy              | string                                         | `string`               |          |         |             |         |
+| Expires                | date-time (formatted string)                   | `strfmt.DateTime`      |          |         |             |         |
+| FolderId               | int64 (formatted integer)                      | `int64`                |          |         |             |         |
+| FolderTitle            | string                                         | `string`               |          |         |             |         |
+| FolderUid              | string                                         | `string`               |          |         |             |         |
+| FolderUrl              | string                                         | `string`               |          |         |             |         |
+| HasAcl                 | boolean                                        | `bool`                 |          |         |             |         |
+| IsFolder               | boolean                                        | `bool`                 |          |         |             |         |
+| IsHome                 | boolean                                        | `bool`                 |          |         |             |         |
+| IsSnapshot             | boolean                                        | `bool`                 |          |         |             |         |
+| IsStarred              | boolean                                        | `bool`                 |          |         |             |         |
+| Provisioned            | boolean                                        | `bool`                 |          |         |             |         |
+| ProvisionedExternalId  | string                                         | `string`               |          |         |             |         |
+| Slug                   | string                                         | `string`               |          |         |             |         |
+| Type                   | string                                         | `string`               |          |         |             |         |
+| Updated                | date-time (formatted string)                   | `strfmt.DateTime`      |          |         |             |         |
+| UpdatedBy              | string                                         | `string`               |          |         |             |         |
+| Url                    | string                                         | `string`               |          |         |             |         |
+| Version                | int64 (formatted integer)                      | `int64`                |          |         |             |         |
+| annotationsPermissions | [AnnotationPermission](#annotation-permission) | `AnnotationPermission` |          |         |             |         |
 
 ### <span id="dashboard-redirect"></span> DashboardRedirect
 
@@ -17258,17 +17278,6 @@ This just tries to make it worry-free. | |
 | Begin | int64 (formatted integer) | `int64` |          |         |             |         |
 | End   | int64 (formatted integer) | `int64` |          |         |             |         |
 
-### <span id="delete-annotations-cmd"></span> DeleteAnnotationsCmd
-
-**Properties**
-
-| Name         | Type                      | Go type | Required | Default | Description | Example |
-| ------------ | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
-| AlertId      | int64 (formatted integer) | `int64` |          |         |             |         |
-| AnnotationId | int64 (formatted integer) | `int64` |          |         |             |         |
-| DashboardId  | int64 (formatted integer) | `int64` |          |         |             |         |
-| PanelId      | int64 (formatted integer) | `int64` |          |         |             |         |
-
 ### <span id="delete-token-command"></span> DeleteTokenCommand
 
 **Properties**
@@ -17312,15 +17321,15 @@ Enum: 0,1 | |
 
 ### <span id="duration"></span> Duration
 
-| Name     | Type                      | Go type | Default | Description | Example |
-| -------- | ------------------------- | ------- | ------- | ----------- | ------- |
-| Duration | int64 (formatted integer) | int64   |         |             |         |
-
-### <span id="duration"></span> Duration
-
 [Duration](#duration)
 
 #### Inlined models
+
+### <span id="duration"></span> Duration
+
+| Name     | Type                      | Go type | Default | Description | Example |
+| -------- | ------------------------- | ------- | ------- | ----------- | ------- |
+| Duration | int64 (formatted integer) | int64   |         |             |         |
 
 ### <span id="email-config"></span> EmailConfig
 
@@ -18013,6 +18022,16 @@ marshalled configuration when set to false. | |
 | PerPage    | int64 (formatted integer)                     | `int64`                |          |         |             |         |
 | TotalCount | int64 (formatted integer)                     | `int64`                |          |         |             |         |
 
+### <span id="mass-delete-annotations-cmd"></span> MassDeleteAnnotationsCmd
+
+**Properties**
+
+| Name         | Type                      | Go type | Required | Default | Description | Example |
+| ------------ | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
+| AnnotationId | int64 (formatted integer) | `int64` |          |         |             |         |
+| DashboardId  | int64 (formatted integer) | `int64` |          |         |             |         |
+| PanelId      | int64 (formatted integer) | `int64` |          |         |             |         |
+
 ### <span id="match-regexps"></span> MatchRegexps
 
 [MatchRegexps](#match-regexps)
@@ -18022,6 +18041,16 @@ marshalled configuration when set to false. | |
 | Name      | Type                      | Go type | Default | Description | Example |
 | --------- | ------------------------- | ------- | ------- | ----------- | ------- |
 | MatchType | int64 (formatted integer) | int64   |         |             |         |
+
+### <span id="matcher"></span> Matcher
+
+**Properties**
+
+| Name  | Type                     | Go type     | Required | Default | Description | Example |
+| ----- | ------------------------ | ----------- | :------: | ------- | ----------- | ------- |
+| Name  | string                   | `string`    |          |         |             |         |
+| Type  | [MatchType](#match-type) | `MatchType` |          |         |             |         |
+| Value | string                   | `string`    |          |         |             |         |
 
 ### <span id="matcher"></span> Matcher
 
@@ -18036,27 +18065,17 @@ marshalled configuration when set to false. | |
 | Name    | string  | `string` |    ✓     |         | name        |         |
 | Value   | string  | `string` |    ✓     |         | value       |         |
 
-### <span id="matcher"></span> Matcher
+### <span id="matchers"></span> Matchers
 
-**Properties**
+> Matchers matchers
 
-| Name  | Type                     | Go type     | Required | Default | Description | Example |
-| ----- | ------------------------ | ----------- | :------: | ------- | ----------- | ------- |
-| Name  | string                   | `string`    |          |         |             |         |
-| Type  | [MatchType](#match-type) | `MatchType` |          |         |             |         |
-| Value | string                   | `string`    |          |         |             |         |
+[][matcher](#matcher)
 
 ### <span id="matchers"></span> Matchers
 
 > Matchers is a slice of Matchers that is sortable, implements Stringer, and
 > provides a Matches method to match a LabelSet against all Matchers in the
 > slice. Note that some users of Matchers might require it to be sorted.
-
-[][matcher](#matcher)
-
-### <span id="matchers"></span> Matchers
-
-> Matchers matchers
 
 [][matcher](#matcher)
 
@@ -18620,14 +18639,6 @@ Description:
 
 **Properties**
 
-| Name | Type   | Go type  | Required | Default | Description | Example |
-| ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Name | string | `string` |    ✓     |         | name        |         |
-
-### <span id="receiver"></span> Receiver
-
-**Properties**
-
 | Name             | Type                                    | Go type              | Required | Default | Description                            | Example |
 | ---------------- | --------------------------------------- | -------------------- | :------: | ------- | -------------------------------------- | ------- |
 | EmailConfigs     | [][emailconfig](#email-config)          | `[]*EmailConfig`     |          |         |                                        |         |
@@ -18640,6 +18651,14 @@ Description:
 | VictorOpsConfigs | [][victoropsconfig](#victor-ops-config) | `[]*VictorOpsConfig` |          |         |                                        |         |
 | WebhookConfigs   | [][webhookconfig](#webhook-config)      | `[]*WebhookConfig`   |          |         |                                        |         |
 | WechatConfigs    | [][wechatconfig](#wechat-config)        | `[]*WechatConfig`    |          |         |                                        |         |
+
+### <span id="receiver"></span> Receiver
+
+**Properties**
+
+| Name | Type   | Go type  | Required | Default | Description | Example |
+| ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
+| Name | string | `string` |    ✓     |         | name        |         |
 
 ### <span id="recording-rule-json"></span> RecordingRuleJSON
 

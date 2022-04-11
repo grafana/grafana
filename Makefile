@@ -13,7 +13,7 @@ GO = go
 GO_FILES ?= ./pkg/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 API_DEFINITION_FILES = $(shell find ./pkg/api/docs/definitions -name '*.go' -print)
-SWAGGER_TAG ?= latest
+SWAGGER_TAG ?= v0.29.0
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 
@@ -52,7 +52,7 @@ $(SPEC_TARGET): $(API_DEFINITION_FILES) ## Generate API spec
 	-x "github.com/prometheus/alertmanager" \
 	-i /grafana/pkg/api/docs/tags.json
 
-swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
+swagger-api-spec: build-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
 
 $(NGALERT_SPEC_TARGET):
 	+$(MAKE) -C pkg/services/ngalert/api/tooling post.json
@@ -69,7 +69,7 @@ ensure_go-swagger_mac:
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/docs/tags.json
 
-swagger-api-spec-mac: gen-go --swagger-api-spec-mac $(MERGED_SPEC_TARGET)
+swagger-api-spec-mac: build-go --swagger-api-spec-mac $(MERGED_SPEC_TARGET)
 
 $(HTTP_API_DOCS_TARGET): swagger-api-spec ## Generate HTTP API markdown
 	docker run -it \
@@ -115,7 +115,7 @@ gen-go: $(WIRE)
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 
-build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
+build-go: gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
