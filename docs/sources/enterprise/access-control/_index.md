@@ -63,3 +63,8 @@ Refer to [Configuring with environment variables]({{< relref "../../administrati
 ### Verify if enabled
 
 You can verify if fine-grained access control is enabled or not by sending an HTTP request to the [Check endpoint]({{< relref "../../http_api/access_control.md#check-if-enabled" >}}).
+
+## Caveats
+
+If you have created a folder with unique identifier (uid) set to "general", you will not be able to manage its permissions with fine-grained access control.
+Any [folder permissions]({{< relref "../../administration/manage-users-and-permissions/manage-dashboard-permissions/_index.md" >}}) set for this folder will be disregarded when fine-grained access control is enabled.
