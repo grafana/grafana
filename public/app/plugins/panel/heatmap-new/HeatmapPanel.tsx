@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { formattedValueToString, GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
+import { GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
 import {
   Portal,
   UPlotChart,
@@ -104,7 +104,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
     const field = info.heatmap.fields[2];
     const { min, max } = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
-    const display = field.display ? (v: number) => formattedValueToString(field.display!(v)) : (v: number) => `${v}`;
 
     let hoverValue: number | undefined = undefined;
     if (hover && info.heatmap.fields) {
@@ -114,7 +113,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
-        <ColorScale hoverValue={hoverValue} colorPalette={palette} min={min} max={max} display={display} />
+        <ColorScale hoverValue={hoverValue} colorPalette={palette} min={min} max={max} display={info.display} />
       </VizLayout.Legend>
     );
   };

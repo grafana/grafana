@@ -2,8 +2,10 @@ import {
   DataFrame,
   DataFrameType,
   FieldType,
+  formattedValueToString,
   getDisplayProcessor,
   getFieldDisplayName,
+  getValueFormat,
   GrafanaTheme2,
 } from '@grafana/data';
 import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
@@ -28,6 +30,9 @@ export interface HeatmapData {
 
   xLayout?: BucketLayout;
   yLayout?: BucketLayout;
+
+  // Print a heatmap cell value
+  display?: (v: number) => string;
 
   // Errors
   warning?: string;
@@ -105,14 +110,18 @@ const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => 
   let yBinIncr = ys[1] - ys[0];
   let xBinIncr = xs[yBinQty] - xs[0];
 
+  const disp = frame.fields[1].display ?? getValueFormat('short');
   return {
     heatmap: frame,
     xBucketSize: xBinIncr,
     yBucketSize: yBinIncr,
     xBucketCount: xBinQty,
     yBucketCount: yBinQty,
+
     // TODO: improve heuristic
     xLayout: frame.fields[0].name === 'xMax' ? BucketLayout.le : BucketLayout.ge,
     yLayout: frame.fields[1].name === 'yMax' ? BucketLayout.le : BucketLayout.ge,
+
+    display: (v) => formattedValueToString(disp(v)),
   };
 };

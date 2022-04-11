@@ -26,7 +26,7 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
       const dashboard = getDashboardSrv().getCurrent();
       return dashboard?.formatDate(v, tooltipTimeFormat);
     }
-    return `${v}XX`;
+    return `${v}`;
   };
 
   const xVals = xField?.values.toArray();
@@ -45,7 +45,7 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
       if (yField?.display) {
         return formattedValueToString(yField.display(v));
       }
-      return `${v}YYY`;
+      return `${v}`;
     };
   }
 
