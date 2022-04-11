@@ -522,15 +522,7 @@ export function processRangeQueryResponse(
     case LokiResultType.Vector:
     case LokiResultType.Matrix:
       return of({
-        data: rangeQueryResponseToDataFrames(
-          response,
-          query,
-          {
-            ...target,
-            format: 'time_series',
-          },
-          scopedVars
-        ),
+        data: rangeQueryResponseToDataFrames(response, query, target, scopedVars),
         key: target.refId,
       });
     default:
