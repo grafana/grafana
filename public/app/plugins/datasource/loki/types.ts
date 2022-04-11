@@ -33,7 +33,6 @@ export enum LokiQueryType {
 export interface LokiQuery extends DataQuery {
   queryType?: LokiQueryType;
   expr: string;
-  query?: string;
   legendFormat?: string;
   maxLines?: number;
   resolution?: number;
