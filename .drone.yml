@@ -136,7 +136,7 @@ steps:
     - SOURCE_COMMIT=${DRONE_COMMIT}
     - OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}
     repositories:
-    - grafana/grafana-enterprise@${DRONE_SOURCE_BRANCH}
+    - grafana/grafana-enterprise@test-at-branch-not-exist
     server: https://drone.grafana.net
     token:
       from_secret: drone_token
@@ -4465,6 +4465,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 68ead2778a744253e86135b64556102c00b7198cda4d84b6ec9063dc66559567
+hmac: ef8131742bfada7f6e2a1bb542594145fd33b48920c8cf71e895f0396bd0ffa4
 
 ...

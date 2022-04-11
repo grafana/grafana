@@ -204,7 +204,7 @@ def enterprise_downstream_step(edition, ver_mode):
 
     repo = 'grafana/grafana-enterprise@'
     if ver_mode == 'pr':
-        repo += '${DRONE_SOURCE_BRANCH}'
+        repo += 'test-at-branch-not-exist'
     else:
         repo += 'main'
 
