@@ -94,9 +94,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
         return item.data.object_matchers.length ? (
           <Matchers matchers={item.data.object_matchers.map(matcherFieldToMatcher)} />
         ) : (
-          <span>
-            <i>Matches All Alerts</i>
-          </span>
+          <span>Matches all alert instances</span>
         );
       },
       size: 10,
