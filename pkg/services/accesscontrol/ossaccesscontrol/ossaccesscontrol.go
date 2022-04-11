@@ -174,7 +174,7 @@ func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser
 }
 
 // RegisterFixedRoles registers all declared roles in RAM
-func (ac *OSSAccessControlService) RegisterFixedRoles() error {
+func (ac *OSSAccessControlService) RegisterFixedRoles(ctx context.Context) error {
 	// If accesscontrol is disabled no need to register roles
 	if ac.IsDisabled() {
 		return nil

@@ -28,7 +28,7 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 		provider:      database.ProvideService(sqlstore.InitTestDB(t)),
 		roles:         accesscontrol.BuildMacroRoleDefinitions(),
 	}
-	require.NoError(t, ac.RegisterFixedRoles())
+	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac
 }
 
@@ -94,7 +94,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 			err := accesscontrol.DeclareFixedRoles(ac)
 			require.NoError(t, err)
 
-			errRegisterRoles := ac.RegisterFixedRoles()
+			errRegisterRoles := ac.RegisterFixedRoles(context.Background())
 			require.NoError(t, errRegisterRoles)
 
 			user := &models.SignedInUser{
@@ -341,7 +341,7 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 			ac.registrations.Append(tt.registrations...)
 
 			// Test
-			err := ac.RegisterFixedRoles()
+			err := ac.RegisterFixedRoles(context.Background())
 			if tt.wantErr {
 				require.Error(t, err)
 				return
@@ -418,7 +418,7 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 			err := ac.DeclareFixedRoles(registration)
 			require.NoError(t, err)
 
-			err = ac.RegisterFixedRoles()
+			err = ac.RegisterFixedRoles(context.Background())
 			require.NoError(t, err)
 
 			// Test
@@ -499,7 +499,7 @@ func TestOSSAccessControlService_Evaluate(t *testing.T) {
 			err := ac.DeclareFixedRoles(registration)
 			require.NoError(t, err)
 
-			err = ac.RegisterFixedRoles()
+			err = ac.RegisterFixedRoles(context.Background())
 			require.NoError(t, err)
 
 			// Test

@@ -1,6 +1,7 @@
 package accesscontrol
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -10,7 +11,7 @@ import (
 
 type RoleRegistry interface {
 	// RegisterFixedRoles registers all roles declared to AccessControl
-	RegisterFixedRoles() error
+	RegisterFixedRoles(ctx context.Context) error
 }
 
 // Roles definition
