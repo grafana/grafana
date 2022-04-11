@@ -179,7 +179,7 @@ export function migrateQueryAliasFormat(query: CloudWatchMetricsQuery): CloudWat
     if (aliasPatterns.hasOwnProperty(value)) {
       return `\${${aliasPatterns[value]}}`;
     }
-    return `\$PROP{'Dim.${value}'}`;
+    return `\${PROP('Dim.${value}')}`;
   });
 
   return query;

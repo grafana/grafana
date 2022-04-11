@@ -251,14 +251,14 @@ describe('migration', () => {
         ['{{region}}', "${PROP('Region')}"],
         ['{{stat}}', "${PROP('Stat')}"],
         ['{{label}}', '${LABEL}'],
-        ['{{anything_else}}', "$PROP{'Dim.anything_else'}"],
+        ['{{anything_else}}', "${PROP('Dim.anything_else')}"],
         [
           'some {{combination}} of {{label}} and {{metric}}',
-          "some $PROP{'Dim.combination'} of ${LABEL} and ${PROP('MetricName')}",
+          "some ${PROP('Dim.combination')} of ${LABEL} and ${PROP('MetricName')}",
         ],
         [
           'some {{combination  }}{{ label}} and {{metric}}',
-          "some $PROP{'Dim.combination'}${LABEL} and ${PROP('MetricName')}",
+          "some ${PROP('Dim.combination')}${LABEL} and ${PROP('MetricName')}",
         ],
       ];
       test.each(cases)('given old alias %p, it should return %p', (oldAlias, expectedResult) => {
