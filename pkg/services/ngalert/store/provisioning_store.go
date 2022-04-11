@@ -20,13 +20,6 @@ func (pr provenanceRecord) TableName() string {
 	return "provenance_type"
 }
 
-// ProvisioningStore is a store of provisioning data for arbitrary objects.
-type ProvisioningStore interface {
-	GetProvenance(ctx context.Context, o models.Provisionable) (models.Provenance, error)
-	// TODO: API to query all provenances for a specific type?
-	SetProvenance(ctx context.Context, o models.Provisionable, p models.Provenance) error
-}
-
 // GetProvenance gets the provenance status for a provisionable object.
 func (st DBstore) GetProvenance(ctx context.Context, o models.Provisionable) (models.Provenance, error) {
 	recordType := o.ResourceType()

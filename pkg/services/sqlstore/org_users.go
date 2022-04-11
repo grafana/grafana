@@ -6,19 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-func (ss *SQLStore) addOrgUsersQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.AddOrgUser)
-	bus.AddHandler("sql", ss.RemoveOrgUser)
-	bus.AddHandler("sql", ss.GetOrgUsers)
-	bus.AddHandler("sql", ss.UpdateOrgUser)
-}
 
 func (ss *SQLStore) AddOrgUser(ctx context.Context, cmd *models.AddOrgUserCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
@@ -307,6 +299,12 @@ func (ss *SQLStore) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUser
 			}
 
 			cmd.UserWasDeleted = true
+		} else {
+			// no orgs, but keep the user -> clean up orgId
+			err = removeUserOrg(sess, user.Id)
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil

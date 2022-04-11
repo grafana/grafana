@@ -30,7 +30,7 @@ export function makeError(expr: string, node: SyntaxNode) {
 const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
 
 /**
- * As variables with $ are creating parsing errors, we first replace them with magic string that is parseable and at
+ * As variables with $ are creating parsing errors, we first replace them with magic string that is parsable and at
  * the same time we can get the variable and it's format back from it.
  * @param expr
  */

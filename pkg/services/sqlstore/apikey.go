@@ -6,17 +6,8 @@ import (
 
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
-
-func (ss *SQLStore) addAPIKeysQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetAPIKeys)
-	bus.AddHandler("sql", ss.GetApiKeyById)
-	bus.AddHandler("sql", ss.GetApiKeyByName)
-	bus.AddHandler("sql", ss.DeleteApiKey)
-	bus.AddHandler("sql", ss.AddAPIKey)
-}
 
 // GetAPIKeys queries the database based
 // on input on GetApiKeysQuery

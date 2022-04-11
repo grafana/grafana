@@ -46,6 +46,11 @@ export function buildVisualQueryFromString(expr: string): Context {
       text: err.message,
     });
   }
+
+  // If we have empty query, we want to reset errors
+  if (isEmptyQuery(context.query)) {
+    context.errors = [];
+  }
   return context;
 }
 
@@ -372,4 +377,11 @@ function getBinaryModifier(
       matchType: matcher.getChild('On') ? 'on' : 'ignoring',
     };
   }
+}
+
+function isEmptyQuery(query: PromVisualQuery) {
+  if (query.labels.length === 0 && query.operations.length === 0 && !query.metric) {
+    return true;
+  }
+  return false;
 }

@@ -120,11 +120,14 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			}
 
 			if include.Type == "dashboard" && include.AddToNav {
-				link := &dtos.NavLink{
-					Url:  hs.Cfg.AppSubURL + include.GetSlugOrUIDLink(),
-					Text: include.Name,
+				dboardURL := include.DashboardURLPath()
+				if dboardURL != "" {
+					link := &dtos.NavLink{
+						Url:  path.Join(hs.Cfg.AppSubURL, dboardURL),
+						Text: include.Name,
+					}
+					appLink.Children = append(appLink.Children, link)
 				}
-				appLink.Children = append(appLink.Children, link)
 			}
 		}
 
@@ -304,7 +307,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Id:          "serviceaccounts",
 			Description: "Manage service accounts",
 			// TODO: change icon to "key-skeleton-alt" when it's available
-			Icon: "key-skeleton-alt",
+			Icon: "keyhole-circle",
 			Url:  hs.Cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}

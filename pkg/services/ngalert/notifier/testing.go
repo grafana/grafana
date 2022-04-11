@@ -70,7 +70,7 @@ func (f *FakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Co
 	return nil
 }
 
-func (f *FakeConfigStore) UpdateAlertManagerConfiguration(cmd *models.SaveAlertmanagerConfigurationCmd) error {
+func (f *FakeConfigStore) UpdateAlertmanagerConfiguration(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
 	if config, exists := f.configs[cmd.OrgID]; exists && config.ConfigurationHash == cmd.FetchedConfigurationHash {
 		f.configs[cmd.OrgID] = &models.AlertConfiguration{
 			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,

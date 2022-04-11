@@ -1,6 +1,7 @@
 package expr
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -8,7 +9,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/net/context"
 )
 
 var (

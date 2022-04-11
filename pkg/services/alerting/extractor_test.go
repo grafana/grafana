@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,7 +37,8 @@ func TestAlertRuleExtraction(t *testing.T) {
 	}
 
 	dsService := &fakeDatasourceService{ExpectedDatasource: defaultDs}
-	extractor := ProvideDashAlertExtractorService(dsPermissions, dsService)
+	store := mockstore.NewSQLStoreMock()
+	extractor := ProvideDashAlertExtractorService(dsPermissions, dsService, store)
 
 	t.Run("Parsing alert rules from dashboard json", func(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
@@ -312,7 +314,7 @@ func TestFilterPermissionsErrors(t *testing.T) {
 
 	dsPermissions := permissions.NewMockDatasourcePermissionService()
 	dsService := &fakeDatasourceService{ExpectedDatasource: defaultDs}
-	extractor := ProvideDashAlertExtractorService(dsPermissions, dsService)
+	extractor := ProvideDashAlertExtractorService(dsPermissions, dsService, nil)
 
 	tc := []struct {
 		name        string
