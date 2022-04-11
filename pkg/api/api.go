@@ -4,7 +4,6 @@ package api
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -15,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var plog = log.New("api")
@@ -418,7 +418,14 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/states-for-dashboard", routing.Wrap(hs.GetAlertStatesForDashboard))
 		})
 
-		apiRoute.Get("/alert-notifiers", reqEditorRole, routing.Wrap(
+		var notifiersAuthHandler web.Handler
+		if hs.Cfg.UnifiedAlerting.IsEnabled() {
+			notifiersAuthHandler = reqSignedIn
+		} else {
+			notifiersAuthHandler = reqEditorRole
+		}
+
+		apiRoute.Get("/alert-notifiers", notifiersAuthHandler, routing.Wrap(
 			hs.GetAlertNotifiers(hs.Cfg.UnifiedAlerting.IsEnabled())),
 		)
 
@@ -448,7 +455,7 @@ func (hs *HTTPServer) registerRoutes() {
 			annotationsRoute.Put("/:annotationId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsWrite, ac.ScopeAnnotationsID)), routing.Wrap(hs.UpdateAnnotation))
 			annotationsRoute.Patch("/:annotationId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsWrite, ac.ScopeAnnotationsID)), routing.Wrap(hs.PatchAnnotation))
 			annotationsRoute.Post("/graphite", authorize(reqEditorRole, ac.EvalPermission(ac.ActionAnnotationsCreate, ac.ScopeAnnotationsTypeOrganization)), routing.Wrap(hs.PostGraphiteAnnotation))
-			annotationsRoute.Get("/tags", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsTagsRead, ac.ScopeAnnotationsTagsAll)), routing.Wrap(hs.GetAnnotationTags))
+			annotationsRoute.Get("/tags", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsRead)), routing.Wrap(hs.GetAnnotationTags))
 		})
 
 		apiRoute.Post("/frontend-metrics", routing.Wrap(hs.PostFrontendMetrics))
@@ -542,8 +549,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Any("/api/gnet/*", reqSignedIn, hs.ProxyGnetRequest)
 
 	// Gravatar service.
-	avatarCacheServer := avatar.NewCacheServer(hs.Cfg)
-	r.Get("/avatar/:hash", avatarCacheServer.Handler)
+	r.Get("/avatar/:hash", hs.AvatarCacheServer.Handler)
 
 	// Snapshots
 	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, hs.CreateDashboardSnapshot)

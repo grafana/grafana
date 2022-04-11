@@ -3,13 +3,8 @@ package sqlstore
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
-
-func (ss *SQLStore) addDashboardACLQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetDashboardAclInfoList)
-}
 
 // GetDashboardAclInfoList returns a list of permissions for a dashboard. They can be fetched from three
 // different places.

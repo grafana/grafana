@@ -72,16 +72,8 @@ export function transformV2(
   const [tableFrames, framesWithoutTable] = partition<DataFrame>(response.data, (df) => isTableResult(df, request));
   const processedTableFrames = transformDFToTable(tableFrames);
 
-  const [heatmapResults, framesWithoutTableAndHeatmaps] = partition<DataFrame>(framesWithoutTable, (df) =>
-    isHeatmapResult(df, request)
-  );
-
-  const processedHeatmapFrames = mergeHeatmapFrames(
-    transformToHistogramOverTime(heatmapResults.sort(sortSeriesByLabel))
-  );
-
-  const [exemplarFrames, framesWithoutTableHeatmapsAndExemplars] = partition<DataFrame>(
-    framesWithoutTableAndHeatmaps,
+  const [exemplarFrames, framesWithoutTableAndExemplars] = partition<DataFrame>(
+    framesWithoutTable,
     (df) => df.meta?.custom?.resultType === 'exemplar'
   );
 
@@ -102,6 +94,15 @@ export function transformV2(
 
     return { ...dataFrame, meta: { ...dataFrame.meta, dataTopic: DataTopic.Annotations } };
   });
+
+  const [heatmapResults, framesWithoutTableHeatmapsAndExemplars] = partition<DataFrame>(
+    framesWithoutTableAndExemplars,
+    (df) => isHeatmapResult(df, request)
+  );
+
+  const processedHeatmapFrames = mergeHeatmapFrames(
+    transformToHistogramOverTime(heatmapResults.sort(sortSeriesByLabel))
+  );
 
   // Everything else is processed as time_series result and graph preferredVisualisationType
   const otherFrames = framesWithoutTableHeatmapsAndExemplars.map((dataFrame) => {

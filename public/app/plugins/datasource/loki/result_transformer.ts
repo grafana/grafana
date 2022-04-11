@@ -43,15 +43,10 @@ import { renderLegendFormat } from '../prometheus/legend';
 const UUID_NAMESPACE = '6ec946da-0f49-47a8-983a-1d76d17e7c92';
 
 /**
- * Transforms LokiStreamResult structure into a dataFrame. Used when doing standard queries and newer version of Loki.
+ * Transforms LokiStreamResult structure into a dataFrame. Used when doing standard queries
  */
-export function lokiStreamResultToDataFrame(stream: LokiStreamResult, reverse?: boolean, refId?: string): DataFrame {
-  const labels: Labels = stream.stream;
-  const labelsString = Object.entries(labels)
-    .map(([key, val]) => `${key}="${val}"`)
-    .sort()
-    .join('');
-
+export function lokiStreamsToRawDataFrame(streams: LokiStreamResult[], reverse?: boolean, refId?: string): DataFrame {
+  const labels = new ArrayVector<{}>([]);
   const times = new ArrayVector<string>([]);
   const timesNs = new ArrayVector<string>([]);
   const lines = new ArrayVector<string>([]);
@@ -60,12 +55,21 @@ export function lokiStreamResultToDataFrame(stream: LokiStreamResult, reverse?: 
   // We need to store and track all used uids to ensure that uids are unique
   const usedUids: { string?: number } = {};
 
-  for (const [ts, line] of stream.values) {
-    // num ns epoch in string, we convert it to iso string here so it matches old format
-    times.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
-    timesNs.add(ts);
-    lines.add(line);
-    uids.add(createUid(ts, labelsString, line, usedUids, refId));
+  for (const stream of streams) {
+    const streamLabels: Labels = stream.stream;
+    const labelsString = Object.entries(streamLabels)
+      .map(([key, val]) => `${key}="${val}"`)
+      .sort()
+      .join('');
+
+    for (const [ts, line] of stream.values) {
+      labels.add(streamLabels);
+      // num ns epoch in string, we convert it to iso string here so it matches old format
+      times.add(new Date(parseInt(ts.slice(0, -6), 10)).toISOString());
+      timesNs.add(ts);
+      lines.add(line);
+      uids.add(createUid(ts, labelsString, line, usedUids, refId));
+    }
   }
 
   return constructDataFrame(times, timesNs, lines, uids, labels, reverse, refId);
@@ -79,17 +83,18 @@ function constructDataFrame(
   timesNs: ArrayVector<string>,
   lines: ArrayVector<string>,
   uids: ArrayVector<string>,
-  labels: Labels,
+  labels: ArrayVector<{}>,
   reverse?: boolean,
   refId?: string
 ) {
   const dataFrame = {
     refId,
     fields: [
+      { name: 'labels', type: FieldType.other, config: {}, values: labels },
       { name: 'ts', type: FieldType.time, config: { displayName: 'Time' }, values: times }, // Time
-      { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line - needs to be the first field with string type
-      { name: 'id', type: FieldType.string, config: {}, values: uids },
+      { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line - needs to be the first field with string type
       { name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' }, values: timesNs }, // Time
+      { name: 'id', type: FieldType.string, config: {}, values: uids },
     ],
     length: times.length,
   };
@@ -128,11 +133,11 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
     }
   }
 
-  const tsField = data.fields[0];
-  const tsNsField = data.fields[1];
+  const labelsField = data.fields[0];
+  const tsField = data.fields[1];
   const lineField = data.fields[2];
-  const labelsField = data.fields[3];
-  const idField = data.fields[4];
+  const idField = data.fields[3];
+  const tsNsField = data.fields[4];
 
   // We are comparing used ids only within the received stream. This could be a problem if the same line + labels + nanosecond timestamp came in 2 separate batches.
   // As this is very unlikely, and the result would only affect live-tailing css animation we have decided to not compare all received uids from data param as this would slow down processing.
@@ -148,7 +153,7 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
 
     // Add each line
     for (const [ts, line] of stream.values) {
-      tsField.values.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
+      tsField.values.add(new Date(parseInt(ts.slice(0, -6), 10)).toISOString());
       tsNsField.values.add(ts);
       lineField.values.add(line);
       labelsField.values.add(unique);
@@ -208,10 +213,6 @@ export function lokiPointsToTimeseriesPoints(data: Array<[number, string]>): Tim
 
   for (const [time, value] of data) {
     let datapointValue: TimeSeriesValue = parsePrometheusFormatSampleValue(value);
-
-    if (isNaN(datapointValue)) {
-      datapointValue = null;
-    }
 
     const timestamp = time * 1000;
 
@@ -290,12 +291,10 @@ export function createMetricLabel(labelData: { [key: string]: string }, options?
 }
 
 function getOriginalMetricName(labelData: { [key: string]: string }) {
-  const metricName = labelData.__name__ || '';
-  delete labelData.__name__;
   const labelPart = Object.entries(labelData)
     .map((label) => `${label[0]}="${label[1]}"`)
     .join(',');
-  return `${metricName}{${labelPart}}`;
+  return `{${labelPart}}`;
 }
 
 export function decamelize(s: string): string {
@@ -352,20 +351,12 @@ export function lokiStreamsToDataFrames(
     preferredVisualisationType: 'logs',
   };
 
-  const series: DataFrame[] = data.map((stream) => {
-    const dataFrame = lokiStreamResultToDataFrame(stream, reverse, target.refId);
-    enhanceDataFrame(dataFrame, config);
+  const dataFrame = lokiStreamsToRawDataFrame(data, reverse, target.refId);
+  enhanceDataFrame(dataFrame, config);
 
-    if (meta.custom && dataFrame.fields.some((f) => f.labels && Object.keys(f.labels).some((l) => l === '__error__'))) {
-      meta.custom.error = 'Error when parsing some of the logs';
-    }
-
-    return {
-      ...dataFrame,
-      refId: target.refId,
-      meta,
-    };
-  });
+  if (meta.custom && dataFrame.fields.some((f) => f.labels && Object.keys(f.labels).some((l) => l === '__error__'))) {
+    meta.custom.error = 'Error when parsing some of the logs';
+  }
 
   if (stats.length && !data.length) {
     return [
@@ -378,7 +369,13 @@ export function lokiStreamsToDataFrames(
     ];
   }
 
-  return series;
+  return [
+    {
+      ...dataFrame,
+      refId: target.refId,
+      meta,
+    },
+  ];
 }
 
 /**
@@ -523,13 +520,12 @@ export function processRangeQueryResponse(
   responseListLength: number,
   limit: number,
   config: LokiOptions,
-  scopedVars: ScopedVars,
-  reverse = false
+  scopedVars: ScopedVars
 ) {
   switch (response.data.resultType) {
     case LokiResultType.Stream:
       return of({
-        data: lokiStreamsToDataFrames(response as LokiStreamResponse, target, limit, config, reverse),
+        data: lokiStreamsToDataFrames(response as LokiStreamResponse, target, limit, config),
         key: `${target.refId}_log`,
       });
 

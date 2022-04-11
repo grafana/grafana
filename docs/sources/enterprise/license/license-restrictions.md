@@ -29,7 +29,7 @@ Your Grafana license includes a maximum number of _Viewer_ and _Editor/Admin_ ac
 
 - An _active user_ is a user who has signed in to Grafana within the last 30 days. This is a rolling window that is updated daily.
 - When you reach the number of maximum active viewers or editor/admins, only currently active users can sign in; new users and non-active users cannot sign in when you reach the limit.
-- Grafana applies sign-in restrictions separately for viewers and editor/admins. If your Grafana license reaches its limit of active viewers but not its limit of active editor/ddmins, new editors and admins can still sign in.
+- Grafana applies sign-in restrictions separately for viewers and editor/admins. If your Grafana license reaches its limit of active viewers but not its limit of active editor/admins, new editors and admins can still sign in.
 - The number of dashboards that a user can view or edit, and the number of organizations that they can access does not affect the active user count. A user with editor permissions for many dashboards across many different organizations counts as one editor.
 - A license limit banner appears to administrators when Grafana reaches its active user limit; editors and viewers do not see the banner.
   To change user roles to make better use of your licenses, refer to [Optimize your tiered license](#optimize-your-tiered-license).
@@ -123,7 +123,7 @@ After you apply the token, Grafana Enterprise resets your license and updates th
 
 > If you are running Grafana Enterprise 8.2 or earlier, the license grants you the total number of licensed users _for each user type_.
 
-For example, if your current license includes 60 viewers and 40 dditor/admins, the new license includes 100 viewers and 100 editor/admins. Grafana Enterprise 8.3 removes the distinction between viewers and editor/admins as shown on the **Utilization** panel.
+For example, if your current license includes 60 viewers and 40 editor/admins, the new license includes 100 viewers and 100 editor/admins. Grafana Enterprise 8.3 removes the distinction between viewers and editor/admins as shown on the **Utilization** panel.
 
 Before you upgrade to Grafana 8.3, ensure that the total number of active users in Grafana does not exceed the number of users in your combined license. If it does, then new users cannot sign in to Grafana 8.3 until the active user count returns below the licensed limit.
 

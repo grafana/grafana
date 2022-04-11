@@ -414,6 +414,46 @@ describe('Date display options', () => {
     expect(processor('2020-08-01T08:48:43.783337Z').text).toEqual('2020-08-01 08:48:43');
   });
 
+  it('should handle ISO string dates when in other timezones than UTC', () => {
+    const processor = getDisplayProcessor({
+      timeZone: 'CET',
+      field: {
+        type: FieldType.time,
+        config: {},
+      },
+      theme: createTheme(),
+    });
+
+    expect(processor('2020-08-01T08:48:43.783337Z').text).toEqual('2020-08-01 10:48:43'); //DST
+    expect(processor('2020-12-01T08:48:43.783337Z').text).toEqual('2020-12-01 09:48:43'); //STD
+  });
+
+  it('should handle ISO string dates with timezone offset', () => {
+    const processor = getDisplayProcessor({
+      timeZone: 'utc',
+      field: {
+        type: FieldType.time,
+        config: {},
+      },
+      theme: createTheme(),
+    });
+
+    expect(processor('2020-12-01T08:48:43.783337+02:00').text).toEqual('2020-12-01 06:48:43');
+  });
+
+  it('should handle ISO string dates without timezone qualifier by assuming UTC', () => {
+    const processor = getDisplayProcessor({
+      timeZone: 'CET',
+      field: {
+        type: FieldType.time,
+        config: {},
+      },
+      theme: createTheme(),
+    });
+
+    expect(processor('2020-12-01T08:48:43.783337').text).toEqual('2020-12-01 09:48:43');
+  });
+
   describe('number formatting for string values', () => {
     it('should preserve string unchanged if unit is strings', () => {
       const processor = getDisplayProcessor({

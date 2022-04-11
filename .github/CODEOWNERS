@@ -28,6 +28,7 @@ go.sum @grafana/backend-platform
 .drone.yml @grafana/grafana-release-eng
 .drone.star @grafana/grafana-release-eng
 /scripts/drone/ @grafana/grafana-release-eng
+/pkg/build/ @grafana/grafana-release-eng
 
 # Cloud Datasources backend code
 /pkg/tsdb/cloudwatch @grafana/cloud-datasources
@@ -63,6 +64,7 @@ go.sum @grafana/backend-platform
 /pkg/services/ngalert @grafana/alerting-squad-backend
 /pkg/services/sqlstore/migrations/ualert @grafana/alerting-squad-backend
 /pkg/services/alerting @grafana/alerting-squad-backend
+/pkg/tests/api/alerting @grafana/alerting-squad-backend
 /public/app/features/alerting @grafana/alerting-squad-frontend
 
 # Library Services
@@ -163,3 +165,7 @@ lerna.json @grafana/frontend-ops
 
 # Cloud middleware
 /grafana-mixin/ @grafana/hosted-grafana-team
+
+# Grafana authentication and authorization
+/pkg/services/accesscontrol @grafana/grafana-enterprise-operations-team
+/pkg/services/serviceaccounts @grafana/grafana-enterprise-operations-team

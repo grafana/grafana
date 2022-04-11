@@ -25,10 +25,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { selectOptionInTest } from '@grafana/ui';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
+import { AccessControlAction } from 'app/types';
 
 jest.mock('./api/alertmanager');
 jest.mock('./api/grafana');
 jest.mock('./utils/config');
+jest.mock('app/core/services/context_srv');
 
 const mocks = {
   getAllDataSources: jest.mocked(getAllDataSources),
@@ -40,6 +42,7 @@ const mocks = {
     fetchNotifiers: jest.mocked(fetchNotifiers),
     testReceivers: jest.mocked(testReceivers),
   },
+  contextSrv: jest.mocked(contextSrv),
 };
 
 const renderReceivers = (alertManagerSourceName?: string) => {
@@ -125,8 +128,23 @@ describe('Receivers', () => {
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.fetchNotifiers.mockResolvedValue(grafanaNotifiersMock);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
-    contextSrv.isEditor = true;
+    mocks.contextSrv.isEditor = true;
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
+
+    mocks.contextSrv.evaluatePermission.mockImplementation(() => []);
+    mocks.contextSrv.hasPermission.mockImplementation((action) => {
+      const permissions = [
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsCreate,
+        AccessControlAction.AlertingNotificationsUpdate,
+        AccessControlAction.AlertingNotificationsDelete,
+        AccessControlAction.AlertingNotificationsExternalRead,
+        AccessControlAction.AlertingNotificationsExternalWrite,
+      ];
+      return permissions.includes(action as AccessControlAction);
+    });
+
+    mocks.contextSrv.hasAccess.mockImplementation(() => true);
   });
 
   it('Template and receiver tables are rendered, alertmanager can be selected', async () => {
@@ -293,6 +311,19 @@ describe('Receivers', () => {
         ],
       },
     });
+  });
+
+  it('Hides create contact point button for users without permission', () => {
+    mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
+    mocks.api.updateConfig.mockResolvedValue();
+    mocks.contextSrv.hasAccess.mockImplementation((action) =>
+      [AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsExternalRead].some(
+        (a) => a === action
+      )
+    );
+    renderReceivers();
+
+    expect(ui.newContactPointButton.query()).not.toBeInTheDocument();
   });
 
   it('Cloud alertmanager receiver can be edited', async () => {

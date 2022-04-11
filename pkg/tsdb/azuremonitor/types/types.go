@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 const (
@@ -121,9 +121,12 @@ type AzureMonitorJSONQuery struct {
 
 		// Legecy "resource" fields from before the resource picker provided just a single ResourceURI
 		// These are used for pre-resource picker queries to reconstruct a resource URI
+		// Deprecated
 		MetricDefinition string `json:"metricDefinition"`
-		ResourceGroup    string `json:"resourceGroup"`
-		ResourceName     string `json:"resourceName"`
+		// Deprecated
+		ResourceGroup string `json:"resourceGroup"`
+		// Deprecated
+		ResourceName string `json:"resourceName"`
 
 		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
 		Dimension           string  `json:"dimension"`       // old model
