@@ -16,38 +16,81 @@ import (
 )
 
 func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.Service,
-	provider accesscontrol.PermissionsProvider, routeRegister routing.RouteRegister) *OSSAccessControlService {
-	s := ProvideOSSAccessControl(features, usageStats, provider)
-	s.registerUsageMetrics()
+	provider accesscontrol.PermissionsProvider, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
+	var errDeclareRoles error
+	s := ProvideOSSAccessControl(features, provider)
+	s.registerUsageMetrics(usageStats)
 	if !s.IsDisabled() {
 		api := api.AccessControlAPI{
 			RouteRegister: routeRegister,
 			AccessControl: s,
 		}
 		api.RegisterAPIEndpoints()
+
+		errDeclareRoles = accesscontrol.DeclareFixedRoles(s)
 	}
-	return s
+
+	return s, errDeclareRoles
+}
+
+func macroRoles() map[string]*accesscontrol.RoleDTO {
+	return map[string]*accesscontrol.RoleDTO{
+		string(models.ROLE_ADMIN): {
+			Name:        "fixed:builtins:admin",
+			DisplayName: string(models.ROLE_ADMIN),
+			Description: "Admin role",
+			Group:       "Basic",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{},
+		},
+		string(models.ROLE_EDITOR): {
+			Name:        "fixed:builtins:editor",
+			DisplayName: string(models.ROLE_EDITOR),
+			Description: "Editor role",
+			Group:       "Basic",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{},
+		},
+		string(models.ROLE_VIEWER): {
+			Name:        "fixed:builtins:viewer",
+			DisplayName: string(models.ROLE_VIEWER),
+			Description: "Viewer role",
+			Group:       "Basic",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{},
+		},
+		accesscontrol.RoleGrafanaAdmin: {
+			Name:        "fixed:builtins:grafana_admin",
+			DisplayName: accesscontrol.RoleGrafanaAdmin,
+			Description: "Grafana Admin role",
+			Group:       "Basic",
+			Version:     1,
+			Permissions: []accesscontrol.Permission{},
+		},
+	}
 }
 
 // ProvideOSSAccessControl creates an oss implementation of access control without usage stats registration
-func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, usageStats usagestats.Service, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
-	return &OSSAccessControlService{
+func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
+	s := &OSSAccessControlService{
 		features:      features,
 		provider:      provider,
-		usageStats:    usageStats,
 		log:           log.New("accesscontrol"),
 		scopeResolver: accesscontrol.NewScopeResolver(),
+		roles:         macroRoles(),
 	}
+
+	return s
 }
 
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
 	log           log.Logger
-	usageStats    usagestats.Service
 	features      featuremgmt.FeatureToggles
 	scopeResolver accesscontrol.ScopeResolver
 	provider      accesscontrol.PermissionsProvider
 	registrations accesscontrol.RegistrationList
+	roles         map[string]*accesscontrol.RoleDTO
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
@@ -57,8 +100,8 @@ func (ac *OSSAccessControlService) IsDisabled() bool {
 	return !ac.features.IsEnabled(featuremgmt.FlagAccesscontrol)
 }
 
-func (ac *OSSAccessControlService) registerUsageMetrics() {
-	ac.usageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
+func (ac *OSSAccessControlService) registerUsageMetrics(usageStats usagestats.Service) {
+	usageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
 		return map[string]interface{}{
 			"stats.oss.accesscontrol.enabled.count": ac.getUsageMetrics(),
 		}, nil
@@ -140,15 +183,9 @@ func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user
 	permissions := make([]*accesscontrol.Permission, 0)
 
 	for _, builtin := range ac.GetUserBuiltInRoles(user) {
-		if roleNames, ok := accesscontrol.FixedRoleGrants[builtin]; ok {
-			for _, name := range roleNames {
-				role, exists := accesscontrol.FixedRoles[name]
-				if !exists {
-					continue
-				}
-				for i := range role.Permissions {
-					permissions = append(permissions, &role.Permissions[i])
-				}
+		if macroRole, ok := ac.roles[builtin]; ok {
+			for i := range macroRole.Permissions {
+				permissions = append(permissions, &macroRole.Permissions[i])
 			}
 		}
 	}
@@ -157,49 +194,20 @@ func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user
 }
 
 func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser) []string {
-	roles := []string{string(user.OrgRole)}
-	for _, role := range user.OrgRole.Children() {
-		roles = append(roles, string(role))
+	builtInRoles := []string{string(user.OrgRole)}
+
+	// With built-in role simplifying, inheritance is performed upon role registration.
+	if !ac.features.IsEnabled(featuremgmt.FlagAccesscontrolBuiltins) {
+		for _, br := range user.OrgRole.Children() {
+			builtInRoles = append(builtInRoles, string(br))
+		}
 	}
+
 	if user.IsGrafanaAdmin {
-		roles = append(roles, accesscontrol.RoleGrafanaAdmin)
+		builtInRoles = append(builtInRoles, accesscontrol.RoleGrafanaAdmin)
 	}
 
-	return roles
-}
-
-func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) {
-	if storedRole, ok := accesscontrol.FixedRoles[role.Name]; ok {
-		// If a package wants to override another package's role, the version
-		// needs to be increased. Hence, we don't overwrite a role with a
-		// greater version.
-		if storedRole.Version >= role.Version {
-			ac.log.Debug("the role has already been stored in a greater version, skipping registration", "role", role.Name)
-			return
-		}
-	}
-	// Save role
-	accesscontrol.FixedRoles[role.Name] = role
-}
-
-func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) {
-	for _, builtInRole := range builtInRoles {
-		// Only record new assignments
-		alreadyAssigned := false
-		assignments, ok := accesscontrol.FixedRoleGrants[builtInRole]
-		if ok {
-			for _, assignedRole := range assignments {
-				if assignedRole == role.Name {
-					ac.log.Debug("the role has already been assigned", "rolename", role.Name, "build_in_role", builtInRole)
-					alreadyAssigned = true
-				}
-			}
-		}
-		if !alreadyAssigned {
-			assignments = append(assignments, role.Name)
-			accesscontrol.FixedRoleGrants[builtInRole] = assignments
-		}
-	}
+	return builtInRoles
 }
 
 // RegisterFixedRoles registers all declared roles in RAM
@@ -208,18 +216,33 @@ func (ac *OSSAccessControlService) RegisterFixedRoles() error {
 	if ac.IsDisabled() {
 		return nil
 	}
-	var err error
 	ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
 		ac.registerFixedRole(registration.Role, registration.Grants)
 		return true
 	})
-	return err
+	return nil
 }
 
 // RegisterFixedRole saves a fixed role and assigns it to built-in roles
 func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) {
-	ac.saveFixedRole(role)
-	ac.assignFixedRole(role, builtInRoles)
+	// Inheritance
+	brs := map[string]struct{}{}
+	for _, builtInRole := range builtInRoles {
+		brs[builtInRole] = struct{}{}
+		if builtInRole != accesscontrol.RoleGrafanaAdmin {
+			for _, parent := range models.RoleType(builtInRole).Parents() {
+				brs[string(parent)] = struct{}{}
+			}
+		}
+	}
+
+	for br := range brs {
+		if macroRole, ok := ac.roles[br]; ok {
+			macroRole.Permissions = append(macroRole.Permissions, role.Permissions...)
+		} else {
+			ac.log.Error("Unknown builtin role", "builtInRole", br)
+		}
+	}
 }
 
 // DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their assignments

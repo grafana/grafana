@@ -2,6 +2,7 @@ package usagestats
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -29,8 +30,8 @@ func (usm *UsageStatsMock) GetUsageReport(ctx context.Context) (Report, error) {
 	return Report{Metrics: all}, nil
 }
 
-func (usm *UsageStatsMock) ShouldBeReported(_ context.Context, _ string) bool {
-	return true
+func (usm *UsageStatsMock) ShouldBeReported(_ context.Context, s string) bool {
+	return !strings.HasPrefix(s, "unknown")
 }
 
 func (usm *UsageStatsMock) RegisterSendReportCallback(_ SendReportCallbackFunc) {}
