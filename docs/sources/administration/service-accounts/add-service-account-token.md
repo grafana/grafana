@@ -25,10 +25,7 @@ You can create a service account token using the Grafana UI or via the API. For 
 1. Click the service account to which you want to add a token.
 1. Click **Add token**.
 1. Enter a name for the token.
-1. (recommended) Enter an expiry date and expiry date for the token or leave it on no expiry date option. 
-
-    - The expiry date specifies how long you want the key to be valid.
-
-    - If you are unsure of an expiration date, we recommend that you set the token to expire after a short time, such as a few hours or less. This limits the risk associated with a token that is valid for a long time.
-
+1. (recommended) Enter an expiry date and expiry date for the token or leave it on no expiry date option.
+   - The expiry date specifies how long you want the key to be valid.
+   - If you are unsure of an expiration date, we recommend that you set the token to expire after a short time, such as a few hours or less. This limits the risk associated with a token that is valid for a long time.
 1. Click **Generate service account token**.
