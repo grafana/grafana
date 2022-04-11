@@ -94,7 +94,7 @@ func (m *Mock) Evaluate(ctx context.Context, user *models.SignedInUser, evaluato
 		return false, err
 	}
 
-	attributeMutator := m.scopeResolver.GetResolveAttributeScopeMutator(user)
+	attributeMutator := m.scopeResolver.GetResolveAttributeScopeMutator(user.OrgId)
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, attributeMutator)
 	if err != nil {
 		return false, err

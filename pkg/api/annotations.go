@@ -440,7 +440,7 @@ func (hs *HTTPServer) GetAnnotationTags(c *models.ReqContext) response.Response 
 // resolve annotation types. Scope "annotations:id:<id>" will be translated to "annotations:type:<type>,
 // where <type> is the type of annotation with id <id>.
 func AnnotationTypeScopeResolver() (string, accesscontrol.AttributeScopeResolveFunc) {
-	annotationTypeResolver := func(ctx context.Context, orgId int64, initialScope string) (string, error) {
+	annotationTypeResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
 		scopeParts := strings.Split(initialScope, ":")
 		if scopeParts[0] != accesscontrol.ScopeAnnotationsRoot || len(scopeParts) != 3 {
 			return "", accesscontrol.ErrInvalidScope
@@ -455,9 +455,9 @@ func AnnotationTypeScopeResolver() (string, accesscontrol.AttributeScopeResolveF
 		// tempUser is used to resolve annotation type.
 		// The annotation doesn't get returned to the real user, so real user's permissions don't matter here.
 		tempUser := &models.SignedInUser{
-			OrgId: orgId,
+			OrgId: orgID,
 			Permissions: map[int64]map[string][]string{
-				orgId: {
+				orgID: {
 					accesscontrol.ActionDashboardsRead:  {accesscontrol.ScopeDashboardsAll},
 					accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsAll},
 				},
