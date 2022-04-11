@@ -5,7 +5,6 @@ import createMockDatasource from './__mocks__/datasource';
 import { invalidSubscriptionError } from './__mocks__/errors';
 import { AzureMonitorQuery, AzureQueryType } from './types';
 import { VariableSupport } from './variables';
-import { it } from 'test/lib/common';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
