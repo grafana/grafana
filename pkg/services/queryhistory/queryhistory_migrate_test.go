@@ -34,7 +34,7 @@ func TestMigrateQueriesToQueryHistory(t *testing.T) {
 			err := json.Unmarshal(resp.Body(), &response)
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
-			require.Equal(t, 1, len(response.Result))
+			require.Equal(t, "Query history successfully migrated", response.Message)
 		})
 
 	testScenario(t, "When users tries to migrate multiple queries in query history it should succeed",
@@ -76,31 +76,7 @@ func TestMigrateQueriesToQueryHistory(t *testing.T) {
 			err := json.Unmarshal(resp.Body(), &response)
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
-			require.Equal(t, 3, len(response.Result))
-		})
-	testScenario(t, "When users tries to migrate starred query in query history it should succeed",
-		func(t *testing.T, sc scenarioContext) {
-			command := MigrateQueriesToQueryHistoryCommand{
-				Queries: []QueryToMigrate{
-					{
-						DatasourceUID: "NCzh67i",
-						Queries: simplejson.NewFromAny(map[string]interface{}{
-							"expr": "test1",
-						}),
-						Comment:   "",
-						Starred:   true,
-						CreatedAt: time.Now().Unix(),
-					},
-				},
-			}
-			sc.reqContext.Req.Body = mockRequestBody(command)
-			resp := sc.service.migrateHandler(sc.reqContext)
-			var response QueryHistoryMigrationResponse
-			err := json.Unmarshal(resp.Body(), &response)
-			require.NoError(t, err)
-			require.Equal(t, 200, resp.Status())
-			require.Equal(t, 1, len(response.Result))
-			require.Equal(t, true, response.Result[0].Starred)
+			require.Equal(t, "Query history successfully migrated", response.Message)
 		})
 
 	testScenario(t, "When users tries to migrate starred and not starred query in query history it should succeed",
@@ -133,8 +109,6 @@ func TestMigrateQueriesToQueryHistory(t *testing.T) {
 			err := json.Unmarshal(resp.Body(), &response)
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
-			require.Equal(t, 2, len(response.Result))
-			require.Equal(t, true, response.Result[0].Starred)
-			require.Equal(t, false, response.Result[1].Starred)
+			require.Equal(t, "Query history successfully migrated", response.Message)
 		})
 }

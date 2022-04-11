@@ -266,8 +266,7 @@ func (s QueryHistoryService) unstarQuery(ctx context.Context, user *models.Signe
 	return dto, nil
 }
 
-func (s QueryHistoryService) migrateQueries(ctx context.Context, user *models.SignedInUser, cmd MigrateQueriesToQueryHistoryCommand) ([]QueryHistoryDTO, error) {
-	var dtos []QueryHistoryDTO
+func (s QueryHistoryService) migrateQueries(ctx context.Context, user *models.SignedInUser, cmd MigrateQueriesToQueryHistoryCommand) error {
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
 		var instertError error
 
@@ -317,24 +316,9 @@ func (s QueryHistoryService) migrateQueries(ctx context.Context, user *models.Si
 					break
 				}
 			}
-
-			dto := QueryHistoryDTO{
-				UID:           queryHistory.UID,
-				DatasourceUID: queryHistory.DatasourceUID,
-				CreatedBy:     queryHistory.CreatedBy,
-				CreatedAt:     queryHistory.CreatedAt,
-				Comment:       queryHistory.Comment,
-				Queries:       queryHistory.Queries,
-				Starred:       query.Starred,
-			}
-			dtos = append(dtos, dto)
 		}
 		return instertError
 	})
 
-	if err != nil {
-		return []QueryHistoryDTO{}, err
-	}
-
-	return dtos, nil
+	return err
 }

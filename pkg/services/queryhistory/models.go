@@ -92,5 +92,5 @@ type QueryToMigrate struct {
 }
 
 type QueryHistoryMigrationResponse struct {
-	Result []QueryHistoryDTO `json:"result"`
+	Message string `json:"message"`
 }
