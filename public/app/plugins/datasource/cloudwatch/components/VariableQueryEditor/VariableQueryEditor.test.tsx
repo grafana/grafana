@@ -110,6 +110,7 @@ describe('VariableEditor', () => {
         region: 'a1',
         metricName: 'i3',
         dimensionKey: 's4',
+        valueDimensions: { s4: 'foo' },
       };
       render(<VariableQueryEditor {...props} />);
 
@@ -132,8 +133,9 @@ describe('VariableEditor', () => {
         region: 'b1',
         // metricName i3 exists in the new region and should not be removed
         metricName: 'i3',
-        // dimensionKey s4 does not exist in the new region and should be removed
+        // dimensionKey s4 and valueDimension do not exist in the new region and should be removed
         dimensionKey: '',
+        valueDimensions: {},
       });
     });
   });

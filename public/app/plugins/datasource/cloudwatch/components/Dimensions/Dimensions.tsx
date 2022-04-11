@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { EditorList } from '@grafana/experimental';
 import { CloudWatchDatasource } from '../../datasource';
@@ -43,8 +43,8 @@ const filterConditionsToDimensions = (filters: DimensionFilterCondition[]) => {
 };
 
 export const Dimensions: React.FC<Props> = ({ query, datasource, dimensionKeys, disableExpressions, onChange }) => {
-  const dimensionFilters = useMemo(() => dimensionsToFilterConditions(query.dimensions), [query.dimensions]);
-  const [items, setItems] = useState<DimensionFilterCondition[]>(dimensionFilters);
+  const [items, setItems] = useState<DimensionFilterCondition[]>([]);
+  useEffect(() => setItems(dimensionsToFilterConditions(query.dimensions)), [query.dimensions]);
   const onDimensionsChange = (newItems: Array<Partial<DimensionFilterCondition>>) => {
     setItems(newItems);
 

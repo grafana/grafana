@@ -59,7 +59,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
 
   // Reset dimensionValue parameters if namespace or region change
   const sanitizeQuery = async (query: VariableQuery) => {
-    let { metricName, dimensionKey, namespace, region } = query;
+    let { metricName, dimensionKey, valueDimensions, namespace, region } = query;
     if (metricName) {
       await datasource.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((metric) => metric.value === metricName)) {
@@ -71,10 +71,11 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
       await datasource.getDimensionKeys(namespace, region).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((key) => key.value === dimensionKey)) {
           dimensionKey = '';
+          valueDimensions = {};
         }
       });
     }
-    return { ...query, metricName, dimensionKey };
+    return { ...query, metricName, dimensionKey, valueDimensions };
   };
 
   const hasRegionField = [
@@ -130,11 +131,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             onChange={(value: string) => onQueryChange({ ...parsedQuery, dimensionKey: value })}
             label="Dimension Key"
           />
-          <InlineField
-            label="Dimensions"
-            labelWidth={20}
-            tooltip="A JSON object representing dimensions and the values to filter on"
-          >
+          <InlineField label="Dimensions" labelWidth={20} tooltip="Dimensions to filter the returned values on">
             <Dimensions
               query={{ ...parsedQuery, dimensions: parsedQuery.valueDimensions }}
               onChange={(dimensions) => {

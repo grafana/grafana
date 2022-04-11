@@ -17,7 +17,6 @@ export interface Props {
   disableExpressions: boolean;
   onChange: (value: DimensionFilterCondition) => void;
   onDelete: () => void;
-  multi?: boolean;
 }
 
 const wildcardOption = { value: '*', label: '*' };
