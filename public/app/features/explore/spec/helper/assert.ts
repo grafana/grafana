@@ -35,8 +35,7 @@ export const assertQueryHistoryTabIsSelected = (
   tabName: 'Query history' | 'Starred' | 'Settings',
   exploreId: ExploreId = ExploreId.left
 ) => {
-  const selectedTab = withinExplore(exploreId).getByRole('tab', { name: /Tab.*/, selected: true });
-  expect(selectedTab).toHaveTextContent(tabName);
+  expect(withinExplore(exploreId).getByRole('tab', { name: `Tab ${tabName}`, selected: true })).toBeInTheDocument();
 };
 
 export const assertDataSourceFilterVisibility = (visible: boolean, exploreId: ExploreId = ExploreId.left) => {
