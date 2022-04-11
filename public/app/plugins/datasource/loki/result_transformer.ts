@@ -226,8 +226,7 @@ export function lokiResultsToTableModel(
   lokiResults: Array<LokiMatrixResult | LokiVectorResult>,
   resultCount: number,
   refId: string,
-  meta: QueryResultMeta,
-  valueWithRefId?: boolean
+  meta: QueryResultMeta
 ): TableModel {
   if (!lokiResults || lokiResults.length === 0) {
     return new TableModel();
@@ -246,7 +245,7 @@ export function lokiResultsToTableModel(
   table.columns = [
     { text: 'Time', type: FieldType.time },
     ...sortedLabels.map((label) => ({ text: label, filterable: true, type: FieldType.string })),
-    { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: FieldType.number },
+    { text: `Value #${refId}`, type: FieldType.number },
   ];
 
   // Populate rows, set value to empty string when label not present.

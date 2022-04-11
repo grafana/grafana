@@ -234,7 +234,7 @@ export class LokiDatasource
         }
 
         return {
-          data: [lokiResultsToTableModel(response.data.data.result, responseListLength, target.refId, meta, true)],
+          data: [lokiResultsToTableModel(response.data.data.result, responseListLength, target.refId, meta)],
           key: `${target.refId}_instant`,
         };
       }),
