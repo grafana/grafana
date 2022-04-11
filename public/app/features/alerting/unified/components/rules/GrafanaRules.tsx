@@ -7,7 +7,7 @@ import { RulesGroup } from './RulesGroup';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { transformGrafanaManagedRules } from '../../hooks/useCombinedRuleNamespaces';
+import { flattenGrafanaManagedRules } from '../../hooks/useCombinedRuleNamespaces';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 interface Props {
@@ -24,7 +24,7 @@ export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
   );
 
   const wantsGroupedView = queryParams['view'] === 'grouped';
-  const namespacesFormat = wantsGroupedView ? namespaces : transformGrafanaManagedRules(namespaces);
+  const namespacesFormat = wantsGroupedView ? namespaces : flattenGrafanaManagedRules(namespaces);
 
   return (
     <section className={styles.wrapper}>

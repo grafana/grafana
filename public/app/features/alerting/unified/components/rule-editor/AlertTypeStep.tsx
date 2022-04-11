@@ -139,11 +139,11 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           </Field>
           <Field
             label="Group"
+            data-testid="group-picker"
             description="All rules within the same group will be evaluated at the same interval."
             className={styles.formInput}
             error={errors.group?.message}
             invalid={!!errors.group?.message}
-            data-testid="group"
           >
             <Input
               id="group"

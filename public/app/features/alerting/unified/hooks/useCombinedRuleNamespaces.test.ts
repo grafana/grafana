@@ -1,7 +1,7 @@
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
-import { sortRulesByName, transformGrafanaManagedRules } from './useCombinedRuleNamespaces';
+import { sortRulesByName, flattenGrafanaManagedRules } from './useCombinedRuleNamespaces';
 
-describe('transformGrafanaManagedRules', () => {
+describe('flattenGrafanaManagedRules', () => {
   it('should properly transform grafana managed namespaces', () => {
     // the rules from both ungrouped groups should go in the default group
     const ungroupedGroup1 = {
@@ -38,20 +38,12 @@ describe('transformGrafanaManagedRules', () => {
     };
 
     const input = [namespace1, namespace2] as CombinedRuleNamespace[];
-    const [ns1, ns2] = transformGrafanaManagedRules(input);
+    const [ns1, ns2] = flattenGrafanaManagedRules(input);
 
     expect(ns1.groups).toEqual([
       {
-        name: 'group1',
-        rules: group1.rules,
-      },
-      {
-        name: 'group2',
-        rules: group2.rules,
-      },
-      {
         name: 'default',
-        rules: sortRulesByName([...ungroupedGroup1.rules, ...ungroupedGroup2.rules]),
+        rules: sortRulesByName([...ungroupedGroup1.rules, ...ungroupedGroup2.rules, ...group1.rules, ...group2.rules]),
       },
     ]);
 

@@ -91,7 +91,7 @@ export function useCombinedRuleNamespaces(rulesSourceName?: string): CombinedRul
 }
 
 // merge all groups in case of grafana managed, essentially treating namespaces (folders) as gorups
-export function transformGrafanaManagedRules(namespaces: CombinedRuleNamespace[]) {
+export function flattenGrafanaManagedRules(namespaces: CombinedRuleNamespace[]) {
   return namespaces.map((namespace) => {
     const newNamespace: CombinedRuleNamespace = {
       ...namespace,
