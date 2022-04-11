@@ -60,7 +60,7 @@ export const CollapsableSection: FC<Props> = ({
           {loading ? (
             <Spinner className={styles.spinner} />
           ) : (
-            <Icon name={open ? 'angle-down' : 'angle-right'} className={styles.icon} />
+            <Icon name={open ? 'angle-up' : 'angle-down'} className={styles.icon} />
           )}
         </button>
         <div className={styles.label} id={`collapse-label-${id}`}>

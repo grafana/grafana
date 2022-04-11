@@ -5,16 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
-
-func (ss *SQLStore) addPreferencesQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetPreferences)
-	bus.AddHandler("sql", ss.GetPreferencesWithDefaults)
-	bus.AddHandler("sql", ss.SavePreferences)
-	bus.AddHandler("sql", ss.PatchPreferences)
-}
 
 func (ss *SQLStore) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
 	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
