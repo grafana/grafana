@@ -117,26 +117,8 @@ func TestAlertRuleModel(t *testing.T) {
 					]
 				}
 				`
-		evalDataRawJSON := `
-				{
-					"evalMatches": [
-						{
-							"value": 123.5,
-							"metric": "test",
-							"tags": { "key": "value", "instance": "host.docker.internal:3000", "job": "grafana" }
-						},
-						{
-							"value": 50,
-							"metric": "test2",
-							"tags": {"__name__": "test2", "instance": "localhost:9090", "job": "prometheus"}
-						}
-					]
-				}
-		`
 
 		settingsJSON, jsonErr := simplejson.NewJson([]byte(settingsRawJSON))
-		require.Nil(t, jsonErr)
-		evalDataJSON, jsonErr := simplejson.NewJson([]byte(evalDataRawJSON))
 		require.Nil(t, jsonErr)
 
 		alert := &models.Alert{
@@ -146,7 +128,6 @@ func TestAlertRuleModel(t *testing.T) {
 			PanelId:     1,
 
 			Settings: settingsJSON,
-			EvalData: evalDataJSON,
 		}
 
 		alertRule, err := NewRuleFromDBAlert(context.Background(), sqlStore, alert, false)
@@ -154,13 +135,6 @@ func TestAlertRuleModel(t *testing.T) {
 
 		require.Len(t, alertRule.Conditions, 1)
 		require.Len(t, alertRule.Notifications, 2)
-		require.Len(t, alertRule.EvalMatches, 2)
-
-		if len(alertRule.EvalMatches) > 0 {
-			require.Equal(t, alertRule.EvalMatches[0].Value.Float64, 123.5)
-			require.Equal(t, alertRule.EvalMatches[0].Metric, "test")
-			require.Equal(t, alertRule.EvalMatches[0].Tags["key"], "value")
-		}
 
 		require.Contains(t, alertRule.Notifications, "notifier2")
 		require.Contains(t, alertRule.Notifications, "notifier1")

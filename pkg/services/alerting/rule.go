@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -55,7 +54,6 @@ type Rule struct {
 	Conditions          []Condition
 	Notifications       []string
 	AlertRuleTags       []*models.Tag
-	EvalMatches         []*EvalMatch
 
 	StateChanges int64
 }
@@ -207,32 +205,6 @@ func NewRuleFromDBAlert(ctx context.Context, store AlertStore, ruleDef *models.A
 
 	if len(model.Conditions) == 0 {
 		return nil, ValidationError{Reason: "Alert is missing conditions"}
-	}
-
-	if ruleDef.EvalData != nil {
-		for _, v := range ruleDef.EvalData.Get("evalMatches").MustArray() {
-			evalMatch := simplejson.NewFromAny(v)
-			var value null.Float
-			if v, err := evalMatch.Get("value").Float64(); err == nil {
-				value = null.FloatFrom(v)
-			}
-
-			jsonTags := evalMatch.Get("tags").MustMap()
-			tags := make(map[string]string, len(jsonTags))
-
-			for k, v := range jsonTags {
-				tag := simplejson.NewFromAny(v)
-				tags[k] = tag.MustString()
-			}
-
-			em := EvalMatch{
-				Value:  value,
-				Metric: evalMatch.Get("metric").MustString(),
-				Tags:   tags,
-			}
-
-			model.EvalMatches = append(model.EvalMatches, &em)
-		}
 	}
 
 	return model, nil

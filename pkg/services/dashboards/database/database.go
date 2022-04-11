@@ -564,7 +564,6 @@ func updateAlerts(existingAlerts []*models.Alert, alerts []*models.Alert, sess *
 				update = true
 				alert.Id = k.Id
 				alertToUpdate = k
-				alert.EvalData = k.EvalData
 				break
 			}
 		}

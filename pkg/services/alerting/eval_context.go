@@ -17,6 +17,7 @@ type EvalContext struct {
 	IsTestRun      bool
 	IsDebug        bool
 	EvalMatches    []*EvalMatch
+	AllSeries      []*EvalMatch
 	Logs           []*ResultLogEntry
 	Error          error
 	ConditionEvals string
@@ -31,7 +32,6 @@ type EvalContext struct {
 	ImageOnDiskPath string
 	NoDataFound     bool
 	PrevAlertState  models.AlertStateType
-	PrevEvalMatches []*EvalMatch
 
 	RequestValidator models.PluginRequestValidator
 
@@ -42,15 +42,13 @@ type EvalContext struct {
 
 // NewEvalContext is the EvalContext constructor.
 func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator, sqlStore AlertStore) *EvalContext {
-	prevEvalMatches := rule.EvalMatches
-
 	return &EvalContext{
 		Ctx:              alertCtx,
 		StartTime:        time.Now(),
 		Rule:             rule,
 		Logs:             make([]*ResultLogEntry, 0),
 		EvalMatches:      make([]*EvalMatch, 0),
-		PrevEvalMatches:  prevEvalMatches,
+		AllSeries:        make([]*EvalMatch, 0),
 		Log:              log.New("alerting.evalContext"),
 		PrevAlertState:   rule.State,
 		RequestValidator: requestValidator,
@@ -194,10 +192,10 @@ func getNewStateInternal(c *EvalContext) models.AlertStateType {
 func (c *EvalContext) evaluateNotificationTemplateFields() error {
 	matches := c.EvalMatches
 	if len(c.EvalMatches) < 1 {
-		if len(c.PrevEvalMatches) < 1 {
+		if len(c.AllSeries) < 1 {
 			return nil
 		}
-		matches = c.PrevEvalMatches
+		matches = c.AllSeries
 	}
 
 	templateDataMap, err := buildTemplateDataMap(matches)

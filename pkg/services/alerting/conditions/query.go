@@ -57,6 +57,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler lega
 	emptySeriesCount := 0
 	evalMatchCount := 0
 	var matches []*alerting.EvalMatch
+	var allSeries []*alerting.EvalMatch
 
 	for _, series := range seriesList {
 		reducedValue := c.Reducer.Reduce(series)
@@ -81,6 +82,12 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler lega
 				Tags:   series.Tags,
 			})
 		}
+
+		allSeries = append(allSeries, &alerting.EvalMatch{
+			Metric: series.Name,
+			Value:  reducedValue,
+			Tags:   series.Tags,
+		})
 	}
 
 	// handle no series special case
@@ -105,6 +112,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler lega
 		NoDataFound: emptySeriesCount == len(seriesList),
 		Operator:    c.Operator,
 		EvalMatches: matches,
+		AllSeries:   allSeries,
 	}, nil
 }
 

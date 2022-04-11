@@ -340,3 +340,66 @@ func TestEvaluateTemplate(t *testing.T) {
 		})
 	}
 }
+
+func TestEvaluateNotificationTemplateFields(t *testing.T) {
+	tests := []struct {
+		name            string
+		evalMatches     []*EvalMatch
+		allSeries       []*EvalMatch
+		expectedName    string
+		expectedMessage string
+	}{
+		{
+			"with evaluation matches",
+			[]*EvalMatch{{
+				Tags: map[string]string{"value1": "test1", "value2": "test2"},
+			}},
+			[]*EvalMatch{{
+				Tags: map[string]string{"value1": "test1", "value2": "test2"},
+			}},
+			"Rule name: test1",
+			"Rule message: test2",
+		},
+		{
+			"missing key",
+			[]*EvalMatch{{
+				Tags: map[string]string{"value1": "test1", "value3": "test2"},
+			}},
+			[]*EvalMatch{{
+				Tags: map[string]string{"value1": "test1", "value3": "test2"},
+			}},
+			"Rule name: test1",
+			"Rule message: ${value2}",
+		},
+		{
+			"no evaluation matches, with series",
+			[]*EvalMatch{},
+			[]*EvalMatch{{
+				Tags: map[string]string{"value1": "test1", "value2": "test2"},
+			}},
+			"Rule name: test1",
+			"Rule message: test2",
+		},
+		{
+			"no evaluation matches, no series",
+			[]*EvalMatch{},
+			[]*EvalMatch{},
+			"Rule name: ${value1}",
+			"Rule message: ${value2}",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(tt *testing.T) {
+			evalContext := NewEvalContext(context.Background(), &Rule{Name: "Rule name: ${value1}", Message: "Rule message: ${value2}", Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil)
+			evalContext.EvalMatches = test.evalMatches
+			evalContext.AllSeries = test.allSeries
+
+			err := evalContext.evaluateNotificationTemplateFields()
+
+			require.NoError(tt, err)
+			require.Equal(tt, test.expectedName, evalContext.Rule.Name)
+			require.Equal(tt, test.expectedMessage, evalContext.Rule.Message)
+		})
+	}
+}

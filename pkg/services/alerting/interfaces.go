@@ -56,6 +56,7 @@ type ConditionResult struct {
 	NoDataFound bool
 	Operator    string
 	EvalMatches []*EvalMatch
+	AllSeries   []*EvalMatch
 }
 
 // Condition is responsible for evaluating an alert condition.
