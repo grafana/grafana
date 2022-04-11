@@ -156,7 +156,7 @@ describe('runRequest', () => {
     });
   });
 
-  runRequestScenario('After tree responses, 2 with different keys', (ctx) => {
+  runRequestScenario('After three responses, 2 with different keys', (ctx) => {
     ctx.setup(() => {
       ctx.start();
       ctx.emitPacket({
@@ -183,6 +183,40 @@ describe('runRequest', () => {
 
     it('should have loading state Done', () => {
       expect(ctx.results[2].state).toEqual(LoadingState.Done);
+    });
+  });
+
+  runRequestScenario('When the key is defined in refId', (ctx) => {
+    ctx.setup(() => {
+      ctx.start();
+      ctx.emitPacket({
+        data: [{ name: 'DataX-1', refId: 'X' } as DataFrame],
+      });
+      ctx.emitPacket({
+        data: [{ name: 'DataY-1', refId: 'Y' } as DataFrame],
+      });
+      ctx.emitPacket({
+        data: [{ name: 'DataY-2', refId: 'Y' } as DataFrame],
+      });
+    });
+
+    it('should emit 3 separate results', () => {
+      expect(ctx.results.length).toBe(3);
+    });
+
+    it('should keep data for X and Y', () => {
+      expect(ctx.results[2].series).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "name": "DataX-1",
+            "refId": "X",
+          },
+          Object {
+            "name": "DataY-2",
+            "refId": "Y",
+          },
+        ]
+      `);
     });
   });
 
