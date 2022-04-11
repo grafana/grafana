@@ -315,4 +315,15 @@ func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 }
 ```
 
+The `Authorization` and `X-ID-Token` headers will also be available on the `CallResourceRequest` object on the `CallResource` request in your backend data source when `jsonData.oauthPassThru` is `true`.
+
+```go
+func (ds *dataSource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+  token := req.Headers["Authorization"]
+  idToken := req.Headers["X-ID-Token"] // present if user's token includes an ID token
+
+  // ...
+}
+```
+
 > **Note:** Due to a bug in Grafana, using this feature with PostgreSQL can cause a deadlock. For more information, refer to [Grafana causes deadlocks in PostgreSQL, while trying to refresh users token](https://github.com/grafana/grafana/issues/20515).

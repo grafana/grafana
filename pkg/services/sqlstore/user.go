@@ -8,32 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-func (ss *SQLStore) addUserQueryAndCommandHandlers() {
-	ss.Bus.AddHandler(ss.GetSignedInUserWithCacheCtx)
-
-	bus.AddHandler("sql", ss.GetUserById)
-	bus.AddHandler("sql", ss.UpdateUser)
-	bus.AddHandler("sql", ss.ChangeUserPassword)
-	bus.AddHandler("sql", ss.GetUserByLogin)
-	bus.AddHandler("sql", ss.GetUserByEmail)
-	bus.AddHandler("sql", ss.SetUsingOrg)
-	bus.AddHandler("sql", ss.UpdateUserLastSeenAt)
-	bus.AddHandler("sql", ss.GetUserProfile)
-	bus.AddHandler("sql", ss.SearchUsers)
-	bus.AddHandler("sql", ss.GetUserOrgList)
-	bus.AddHandler("sql", ss.DisableUser)
-	bus.AddHandler("sql", ss.BatchDisableUsers)
-	bus.AddHandler("sql", ss.DeleteUser)
-	bus.AddHandler("sql", ss.SetUserHelpFlag)
-}
 
 func getOrgIdForNewUser(sess *DBSession, cmd models.CreateUserCommand) (int64, error) {
 	if cmd.SkipOrgSetup {
@@ -445,6 +425,16 @@ func setUsingOrgInTransaction(sess *DBSession, userID int64, orgID int64) error 
 	return err
 }
 
+func removeUserOrg(sess *DBSession, userID int64) error {
+	user := models.User{
+		Id:    userID,
+		OrgId: 0,
+	}
+
+	_, err := sess.ID(userID).MustCols("org_id").Update(&user)
+	return err
+}
+
 func (ss *SQLStore) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		var user models.User
@@ -540,18 +530,21 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		}
 
 		var rawSQL = `SELECT
-		u.id             as user_id,
-		u.is_admin       as is_grafana_admin,
-		u.email          as email,
-		u.login          as login,
-		u.name           as name,
-		u.help_flags1    as help_flags1,
-		u.last_seen_at   as last_seen_at,
+		u.id                  as user_id,
+		u.is_admin            as is_grafana_admin,
+		u.email               as email,
+		u.login               as login,
+		u.name                as name,
+		u.help_flags1         as help_flags1,
+		u.last_seen_at        as last_seen_at,
 		(SELECT COUNT(*) FROM org_user where org_user.user_id = u.id) as org_count,
-		org.name         as org_name,
-		org_user.role    as org_role,
-		org.id           as org_id
+		user_auth.auth_module as external_auth_module,
+		user_auth.auth_id     as external_auth_id,
+		org.name              as org_name,
+		org_user.role         as org_role,
+		org.id                as org_id
 		FROM ` + dialect.Quote("user") + ` as u
+		LEFT OUTER JOIN user_auth on user_auth.user_id = u.id
 		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
 		LEFT OUTER JOIN org on org.id = org_user.org_id `
 
@@ -577,6 +570,10 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		if user.OrgRole == "" {
 			user.OrgId = -1
 			user.OrgName = "Org missing"
+		}
+
+		if user.ExternalAuthModule != "oauth_grafana_com" {
+			user.ExternalAuthId = ""
 		}
 
 		getTeamsByUserQuery := &models.GetTeamsByUserQuery{OrgId: user.OrgId, UserId: user.UserId}
