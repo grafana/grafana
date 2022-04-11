@@ -1,21 +1,19 @@
 import React from 'react';
-import { LokiVisualQuery } from '../types';
 import { useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import Prism from 'prismjs';
 import { lokiGrammar } from '../../syntax';
-import { lokiQueryModeller } from '../LokiQueryModeller';
 
 export interface Props {
-  query: LokiVisualQuery;
+  query: string;
 }
 
 export function QueryPreview({ query }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const hightlighted = Prism.highlight(lokiQueryModeller.renderQuery(query), lokiGrammar, 'lokiql');
+  const highlighted = Prism.highlight(query, lokiGrammar, 'lokiql');
 
   return (
     <EditorFieldGroup>
@@ -23,7 +21,7 @@ export function QueryPreview({ query }: Props) {
         <div
           className={cx(styles.editorField, 'prism-syntax-highlight')}
           aria-label="selector"
-          dangerouslySetInnerHTML={{ __html: hightlighted }}
+          dangerouslySetInnerHTML={{ __html: highlighted }}
         />
       </EditorField>
     </EditorFieldGroup>
