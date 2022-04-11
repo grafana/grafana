@@ -1,6 +1,13 @@
 import UrlBuilder from './url_builder';
 
 describe('AzureMonitorUrlBuilder', () => {
+  describe('buildResourceUri', () => {
+    it('builds a resource uri when the required properties are provided', () => {
+      expect(UrlBuilder.buildResourceUri('sub', 'group', 'Microsoft.NetApp/netAppAccounts', 'name')).toEqual(
+        '/subscriptions/sub/resourceGroups/group/providers/Microsoft.NetApp/netAppAccounts/name'
+      );
+    });
+  });
   describe('when a resource uri is provided', () => {
     it('builds a getMetricNamesnamespace url', () => {
       const url = UrlBuilder.newBuildAzureMonitorGetMetricNamespacesUrl(

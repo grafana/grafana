@@ -19,6 +19,8 @@ const modernMetricsQuery: AzureMonitorQuery = {
     metricNamespace: 'microsoft.insights/components',
     resourceGroup: 'cloud-datasources',
     resourceName: 'AppInsightsTestData',
+    resourceUri:
+      '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/microsoft.insights/components/AppInsightsTestData',
     timeGrain: 'PT5M',
     top: '10',
   },
@@ -36,5 +38,13 @@ describe('AzureMonitor: migrateQuery', () => {
 
     // MUST use .toBe because we want to assert that the identity of unmigrated queries remains the same
     expect(modernMetricsQuery).toBe(result);
+  });
+
+  it('should migrate queries to include a resourceUri', () => {
+    const queryWithoutResourceUri = { ...modernMetricsQuery, azureMonitor: { ...modernMetricsQuery.azureMonitor } };
+    delete queryWithoutResourceUri?.azureMonitor?.resourceUri;
+
+    const result = migrateQuery(queryWithoutResourceUri);
+    expect(result).toEqual(modernMetricsQuery);
   });
 });

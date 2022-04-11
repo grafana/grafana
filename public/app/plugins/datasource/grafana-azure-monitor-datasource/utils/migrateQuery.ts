@@ -4,6 +4,7 @@ import {
   setTimeGrain as setMetricsTimeGrain,
 } from '../components/MetricsQueryEditor/setQueryValue';
 import TimegrainConverter from '../time_grain_converter';
+import UrlBuilder from '../azure_monitor/url_builder';
 import { AzureMonitorQuery, AzureQueryType, DeprecatedAzureQueryType } from '../types';
 
 const OLD_DEFAULT_DROPDOWN_VALUE = 'select';
@@ -21,6 +22,7 @@ export default function migrateQuery(query: AzureMonitorQuery): AzureMonitorQuer
   workingQuery = migrateToDefaultNamespace(workingQuery);
   workingQuery = migrateApplicationInsightsDimensions(workingQuery);
   workingQuery = migrateMetricsDimensionFilters(workingQuery);
+  workingQuery = migrateResourceUri(workingQuery);
 
   return workingQuery;
 }
@@ -121,7 +123,6 @@ function migrateApplicationInsightsDimensions(query: AzureMonitorQuery): AzureMo
   return query;
 }
 
-// Exported because its also used directly in the datasource.ts for some reason
 function migrateMetricsDimensionFilters(query: AzureMonitorQuery): AzureMonitorQuery {
   let workingQuery = query;
 
@@ -131,6 +132,30 @@ function migrateMetricsDimensionFilters(query: AzureMonitorQuery): AzureMonitorQ
   }
 
   return workingQuery;
+}
+
+function migrateResourceUri(query: AzureMonitorQuery): AzureMonitorQuery {
+  const azureMonitorQuery = query.azureMonitor;
+
+  if (!azureMonitorQuery || azureMonitorQuery.resourceUri) {
+    return query;
+  }
+
+  const { subscription } = query;
+  const { resourceGroup, metricDefinition, resourceName } = azureMonitorQuery;
+  if (!(subscription && resourceGroup && metricDefinition && resourceName)) {
+    return query;
+  }
+
+  const resourceUri = UrlBuilder.buildResourceUri(subscription, resourceGroup, metricDefinition, resourceName);
+
+  return {
+    ...query,
+    azureMonitor: {
+      ...azureMonitorQuery,
+      resourceUri,
+    },
+  };
 }
 
 // datasource.ts also contains some migrations, which have been moved to here. Unsure whether
@@ -159,6 +184,7 @@ export function datasourceMigrations(query: AzureMonitorQuery): AzureMonitorQuer
 
   if (workingQuery.queryType === AzureQueryType.AzureMonitor && workingQuery.azureMonitor) {
     workingQuery = migrateMetricsDimensionFilters(workingQuery);
+    workingQuery = migrateResourceUri(workingQuery);
   }
 
   return workingQuery;

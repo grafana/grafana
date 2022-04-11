@@ -1,4 +1,21 @@
 export default class UrlBuilder {
+  static buildResourceUri(
+    subscriptionId: string,
+    resourceGroup: string,
+    metricDefinition: string,
+    resourceName: string
+  ) {
+    const metricDefinitionArray = metricDefinition.split('/');
+    const resourceNameArray = resourceName.split('/');
+    const provider = metricDefinitionArray.shift();
+    const urlArray = ['/subscriptions', subscriptionId, 'resourceGroups', resourceGroup, 'providers', provider];
+    for (const i in metricDefinitionArray) {
+      urlArray.push(metricDefinitionArray[i]);
+      urlArray.push(resourceNameArray[i]);
+    }
+    return urlArray.join('/');
+  }
+
   static buildAzureMonitorGetMetricNamespacesUrl(
     baseUrl: string,
     subscriptionId: string,
@@ -7,16 +24,8 @@ export default class UrlBuilder {
     resourceName: string,
     apiVersion: string
   ) {
-    const metricDefinitionArray = metricDefinition.split('/');
-    const resourceNameArray = resourceName.split('/');
-    const provider = metricDefinitionArray.shift();
-    const urlArray = [baseUrl, 'subscriptions', subscriptionId, 'resourceGroups', resourceGroup, 'providers', provider];
-    for (const i in metricDefinitionArray) {
-      urlArray.push(metricDefinitionArray[i]);
-      urlArray.push(resourceNameArray[i]);
-    }
-    const urlPrefix = urlArray.join('/');
-    return `${urlPrefix}/providers/microsoft.insights/metricNamespaces?api-version=${apiVersion}`;
+    const urlPrefix = UrlBuilder.buildResourceUri(subscriptionId, resourceGroup, metricDefinition, resourceName);
+    return `${baseUrl}${urlPrefix}/providers/microsoft.insights/metricNamespaces?api-version=${apiVersion}`;
   }
 
   static buildAzureMonitorGetMetricNamesUrl(
@@ -28,17 +37,9 @@ export default class UrlBuilder {
     metricNamespace: string,
     apiVersion: string
   ) {
-    const metricDefinitionArray = metricDefinition.split('/');
-    const resourceNameArray = resourceName.split('/');
-    const provider = metricDefinitionArray.shift();
-    const urlArray = [baseUrl, 'subscriptions', subscriptionId, 'resourceGroups', resourceGroup, 'providers', provider];
-    for (const i in metricDefinitionArray) {
-      urlArray.push(metricDefinitionArray[i]);
-      urlArray.push(resourceNameArray[i]);
-    }
-    const urlPrefix = urlArray.join('/');
+    const urlPrefix = UrlBuilder.buildResourceUri(subscriptionId, resourceGroup, metricDefinition, resourceName);
     return (
-      `${urlPrefix}/providers/microsoft.insights/metricdefinitions?api-version=${apiVersion}` +
+      `${baseUrl}${urlPrefix}/providers/microsoft.insights/metricdefinitions?api-version=${apiVersion}` +
       `&metricnamespace=${encodeURIComponent(metricNamespace)}`
     );
   }
