@@ -420,7 +420,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
-		t.Run("should return only rules the user can query all data sources", func(t *testing.T) {
+		t.Run("should return only rules if the user can query all data sources", func(t *testing.T) {
 			ruleStore := store.NewFakeRuleStore(t)
 			fakeAIM := NewFakeAlertInstanceManager(t)
 

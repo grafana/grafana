@@ -478,7 +478,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 	t.Run("fine-grained access is enabled", func(t *testing.T) {
-		t.Run("should return rules user has access to data source", func(t *testing.T) {
+		t.Run("should return rules for which user has access to data source", func(t *testing.T) {
 			orgID := rand.Int63()
 			folder := randFolder()
 			ruleStore := store.NewFakeRuleStore(t)
