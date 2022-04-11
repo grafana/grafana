@@ -244,7 +244,8 @@ export const getStandardOptionEditors = () => {
     name: 'Radio',
     description: 'Allows option selection',
     editor(props) {
-      return <RadioButtonGroup {...props} options={props.item.settings?.options} />;
+      const value = props.value === undefined ? props.item.defaultValue : props.value;
+      return <RadioButtonGroup {...props} value={value} options={props.item.settings?.options} />;
     },
   };
 

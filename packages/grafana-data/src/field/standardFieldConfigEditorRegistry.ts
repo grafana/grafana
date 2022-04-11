@@ -24,6 +24,7 @@ export interface StandardEditorProps<TValue = any, TSettings = any, TOptions = a
 export interface StandardEditorsRegistryItem<TValue = any, TSettings = any> extends RegistryItem {
   editor: ComponentType<StandardEditorProps<TValue, TSettings>>;
   settings?: TSettings;
+  defaultValue?: TValue;
 }
 export const standardFieldConfigEditorRegistry = new FieldConfigOptionsRegistry();
 
