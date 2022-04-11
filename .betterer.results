@@ -230,7 +230,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/explore/LiveLogs.test.tsx:1667605379": [
       [2, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/explore/RichHistory/RichHistoryStarredTab.test.tsx:3948011811": [
+    "public/app/features/explore/RichHistory/RichHistoryStarredTab.test.tsx:492930613": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/explore/RunButton.test.tsx:138299098": [

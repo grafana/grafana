@@ -117,16 +117,15 @@ export function RichHistoryStarredTab(props: Props) {
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
           {!activeDatasourceOnly && (
-            <div aria-label="Filter datasources" className={styles.multiselect}>
-              <MultiSelect
-                menuShouldPortal
-                options={listOfDatasources}
-                value={datasourceFilters}
-                placeholder="Filter queries for specific data sources(s)"
-                aria-label="Filter queries for specific data sources(s)"
-                onChange={onSelectDatasourceFilters}
-              />
-            </div>
+            <MultiSelect
+              className={styles.multiselect}
+              menuShouldPortal
+              options={listOfDatasources}
+              value={datasourceFilters}
+              placeholder="Filter queries for data sources(s)"
+              aria-label="Filter queries for data sources(s)"
+              onChange={onSelectDatasourceFilters}
+            />
           )}
           <div className={styles.filterInput}>
             <FilterInput
