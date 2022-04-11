@@ -179,7 +179,7 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
-	cmd := &serviceaccounts.UpdateServiceAccountForm{}
+	var cmd serviceaccounts.UpdateServiceAccountForm
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
@@ -188,7 +188,7 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
 	}
 
-	resp, err := api.store.UpdateServiceAccount(c.Req.Context(), c.OrgId, scopeID, cmd)
+	resp, err := api.store.UpdateServiceAccount(c.Req.Context(), c.OrgId, scopeID, &cmd)
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
