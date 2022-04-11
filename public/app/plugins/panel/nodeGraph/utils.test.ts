@@ -69,14 +69,14 @@ describe('processNodes', () => {
         mainStat: {
           config: {},
           index: 3,
-          name: 'mainStat',
+          name: 'mainstat',
           type: 'number',
           values: new ArrayVector([0.1, 0.1, 0.1]),
         },
         secondaryStat: {
           config: {},
           index: 4,
-          name: 'secondaryStat',
+          name: 'secondarystat',
           type: 'number',
           values: new ArrayVector([2, 2, 2]),
         },
@@ -113,14 +113,14 @@ describe('processNodes', () => {
         mainStat: {
           config: {},
           index: 3,
-          name: 'mainStat',
+          name: 'mainstat',
           type: 'number',
           values: new ArrayVector([0.1, 0.1, 0.1]),
         },
         secondaryStat: {
           config: {},
           index: 4,
-          name: 'secondaryStat',
+          name: 'secondarystat',
           type: 'number',
           values: new ArrayVector([2, 2, 2]),
         },
@@ -157,14 +157,14 @@ describe('processNodes', () => {
         mainStat: {
           config: {},
           index: 3,
-          name: 'mainStat',
+          name: 'mainstat',
           type: 'number',
           values: new ArrayVector([0.1, 0.1, 0.1]),
         },
         secondaryStat: {
           config: {},
           index: 4,
-          name: 'secondaryStat',
+          name: 'secondarystat',
           type: 'number',
           values: new ArrayVector([2, 2, 2]),
         },
@@ -256,15 +256,15 @@ describe('processNodes', () => {
     expect(nodeGraphFrames).toEqual(validFrames);
   });
 
-  it('get lowercase field names as fallback', () => {
+  it('getting fields is case insensitive', () => {
     const nodeFrame = new MutableDataFrame({
       refId: 'nodes',
       fields: [
         { name: 'id', type: FieldType.string, values: ['id'] },
         { name: 'title', type: FieldType.string, values: ['title'] },
-        { name: 'subtitle', type: FieldType.string, values: ['subTitle'] },
+        { name: 'SUBTITLE', type: FieldType.string, values: ['subTitle'] },
         { name: 'mainstat', type: FieldType.string, values: ['mainStat'] },
-        { name: 'secondarystat', type: FieldType.string, values: ['secondaryStat'] },
+        { name: 'seconDarysTat', type: FieldType.string, values: ['secondaryStat'] },
       ],
     });
 
@@ -280,7 +280,7 @@ describe('processNodes', () => {
       fields: [
         { name: 'id', type: FieldType.string, values: ['id'] },
         { name: 'source', type: FieldType.string, values: ['title'] },
-        { name: 'target', type: FieldType.string, values: ['subTitle'] },
+        { name: 'TARGET', type: FieldType.string, values: ['subTitle'] },
         { name: 'mainstat', type: FieldType.string, values: ['mainStat'] },
         { name: 'secondarystat', type: FieldType.string, values: ['secondaryStat'] },
       ],
