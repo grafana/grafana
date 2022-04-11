@@ -133,13 +133,8 @@ export type DerivedFieldConfig = {
 };
 
 export interface TransformerOptions {
-  format?: string;
   legendFormat?: string;
-  step: number;
-  start: number;
-  end: number;
   query: string;
-  responseListLength: number;
   refId: string;
   scopedVars: ScopedVars;
   meta?: QueryResultMeta;

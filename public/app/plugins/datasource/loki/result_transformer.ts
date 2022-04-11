@@ -452,7 +452,6 @@ function rangeQueryResponseToTimeSeries(
   response: LokiResponse,
   query: LokiRangeQueryRequest,
   target: LokiQuery,
-  responseListLength: number,
   scopedVars: ScopedVars
 ): TimeSeries[] {
   /** Show results of Loki metric queries only in graph */
@@ -460,13 +459,8 @@ function rangeQueryResponseToTimeSeries(
     preferredVisualisationType: 'graph',
   };
   const transformerOptions: TransformerOptions = {
-    format: target.format,
     legendFormat: target.legendFormat ?? '',
-    start: query.start!,
-    end: query.end!,
-    step: query.step!,
     query: query.query,
-    responseListLength,
     refId: target.refId,
     meta,
     scopedVars,
@@ -488,10 +482,9 @@ export function rangeQueryResponseToDataFrames(
   response: LokiResponse,
   query: LokiRangeQueryRequest,
   target: LokiQuery,
-  responseListLength: number,
   scopedVars: ScopedVars
 ): DataFrame[] {
-  const series = rangeQueryResponseToTimeSeries(response, query, target, responseListLength, scopedVars);
+  const series = rangeQueryResponseToTimeSeries(response, query, target, scopedVars);
   const frames = series.map((s) => toDataFrame(s));
 
   const { step } = query;
@@ -515,7 +508,6 @@ export function processRangeQueryResponse(
   response: LokiResponse,
   target: LokiQuery,
   query: LokiRangeQueryRequest,
-  responseListLength: number,
   limit: number,
   config: LokiOptions,
   scopedVars: ScopedVars
@@ -537,7 +529,6 @@ export function processRangeQueryResponse(
             ...target,
             format: 'time_series',
           },
-          responseListLength,
           scopedVars
         ),
         key: target.refId,
