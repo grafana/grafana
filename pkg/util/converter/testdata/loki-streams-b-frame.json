@@ -6,34 +6,34 @@
           "custom": {
             "stats": {
               "summary": {
-                "execTime": 0.002216125,
                 "bytesProcessedPerSecond": 3507022,
                 "linesProcessedPerSecond": 24818,
                 "totalBytesProcessed": 7772,
-                "totalLinesProcessed": 55
+                "totalLinesProcessed": 55,
+                "execTime": 0.002216125
               },
               "store": {
+                "totalChunksDownloaded": 2,
                 "headChunkBytes": 0,
+                "decompressedBytes": 7772,
                 "decompressedLines": 55,
+                "totalChunksRef": 2,
+                "headChunkLines": 0,
                 "compressedBytes": 31432,
                 "totalDuplicates": 0,
-                "totalChunksDownloaded": 2,
-                "chunksDownloadTime": 0.000390958,
-                "headChunkLines": 0,
-                "decompressedBytes": 7772,
-                "totalChunksRef": 2
+                "chunksDownloadTime": 0.000390958
               },
               "ingester": {
-                "headChunkBytes": 0,
-                "decompressedBytes": 0,
-                "totalBatches": 0,
                 "totalLinesSent": 0,
+                "headChunkBytes": 0,
                 "headChunkLines": 0,
+                "totalChunksMatched": 0,
+                "totalBatches": 0,
                 "decompressedLines": 0,
                 "compressedBytes": 0,
                 "totalDuplicates": 0,
                 "totalReached": 0,
-                "totalChunksMatched": 0
+                "decompressedBytes": 0
               }
             }
           }
@@ -44,6 +44,11 @@
             "type": "string",
             "typeInfo": {
               "frame": "string"
+            },
+            "config": {
+              "custom": {
+                "json": true
+              }
             }
           },
           {
@@ -72,7 +77,7 @@
       "data": {
         "values": [
           [
-            "level=error, location=moon","level=info, location=moon","level=info, location=moon","level=info, location=moon","level=info, location=moon"
+            "[[\"level\",\"error\"],[\"location\",\"moon\"]]","[[\"level\",\"info\"],[\"location\",\"moon\"]]","[[\"level\",\"info\"],[\"location\",\"moon\"]]","[[\"level\",\"info\"],[\"location\",\"moon\"]]","[[\"level\",\"info\"],[\"location\",\"moon\"]]"
           ],
           [
             1645030244810,1645030247027,1645030246277,1645030245539,1645030244091
