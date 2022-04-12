@@ -43,7 +43,9 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
     ...state.packets,
   };
 
-  packets[packet.key || 'A'] = packet;
+  // updates to the same key will replace previous values
+  const key = packet.key ?? packet.data?.[0]?.refId ?? 'A';
+  packets[key] = packet;
 
   let loadingState = packet.state || LoadingState.Done;
   let error: DataQueryError | undefined = undefined;
