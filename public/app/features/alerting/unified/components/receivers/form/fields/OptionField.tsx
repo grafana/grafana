@@ -188,13 +188,13 @@ const determineRequired = (option: NotificationChannelOption, getValues: any, pa
   }
 };
 
-const determineReadOnly = (option: NotificationChannelOption, getValues: any) => {
+const determineReadOnly = (option: NotificationChannelOption, getValues: any, pathIndex: string) => {
   if (!option.dependsOn) {
     return false;
   }
-  if (isEmpty(getValues(`items[0].secureSettings`))) {
-    return getValues(`items[0].secureFields.${option.dependsOn}`);
+  if (isEmpty(getValues(`${pathIndex}secureFields`))) {
+    return getValues(`${pathIndex}secureSettings.${option.dependsOn}`);
   } else {
-    return getValues(`items[0].secureSettings.${option.dependsOn}`);
+    return getValues(`${pathIndex}secureFields.${option.dependsOn}`);
   }
 };
