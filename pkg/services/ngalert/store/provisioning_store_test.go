@@ -105,6 +105,26 @@ func TestProvisioningStore(t *testing.T) {
 		require.Equal(t, models.ProvenanceFile, p[ruleOrg1.UID])
 		require.Equal(t, models.ProvenanceAPI, p[ruleOrg2.UID])
 	})
+
+	t.Run("Store should delete provenance correctly", func(t *testing.T) {
+		const orgID = 1234
+		ruleOrg := models.AlertRule{
+			UID:   "7834539",
+			OrgID: orgID,
+		}
+		err := store.SetProvenance(context.Background(), &ruleOrg, models.ProvenanceFile)
+		require.NoError(t, err)
+		p, err := store.GetProvenance(context.Background(), &ruleOrg)
+		require.NoError(t, err)
+		require.Equal(t, models.ProvenanceFile, p)
+
+		err = store.DeleteProvenance(context.Background(), orgID, &ruleOrg)
+		require.NoError(t, err)
+
+		p, err = store.GetProvenance(context.Background(), &ruleOrg)
+		require.NoError(t, err)
+		require.Equal(t, models.ProvenanceNone, p)
+	})
 }
 
 func createProvisioningStoreSut(_ *ngalert.AlertNG, db *store.DBstore) provisioning.ProvisioningStore {
