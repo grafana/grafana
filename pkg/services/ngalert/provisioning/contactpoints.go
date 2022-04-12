@@ -57,7 +57,7 @@ func (ecp *EmbeddedContactPointService) GetContactPoints(ctx context.Context, or
 			embeddedContactPoint.Provenance = string(val)
 		}
 		for k, v := range contactPoint.SecureSettings {
-			decryptedValue, err := ecp.decrypteValue(v)
+			decryptedValue, err := ecp.decryptValue(v)
 			if err != nil {
 				// TODO(JP): log a warning
 				continue
@@ -90,7 +90,7 @@ func (ecp *EmbeddedContactPointService) getContactPointUncrypted(ctx context.Con
 			Settings:              receiver.Settings,
 		}
 		for k, v := range receiver.SecureSettings {
-			decryptedValue, err := ecp.decrypteValue(v)
+			decryptedValue, err := ecp.decryptValue(v)
 			if err != nil {
 				// TODO(JP): log a warning
 				continue
@@ -118,17 +118,17 @@ func (ecp *EmbeddedContactPointService) CreateContactPoint(ctx context.Context, 
 		return apimodels.EmbeddedContactPoint{}, err
 	}
 
-	extracedSecrets, err := contactPoint.ExtractSecrets()
+	extractedSecrets, err := contactPoint.ExtractSecrets()
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
 	}
 
-	for k, v := range extracedSecrets {
+	for k, v := range extractedSecrets {
 		encryptedValue, err := ecp.encryptValue(v)
 		if err != nil {
 			return apimodels.EmbeddedContactPoint{}, err
 		}
-		extracedSecrets[k] = encryptedValue
+		extractedSecrets[k] = encryptedValue
 	}
 
 	contactPoint.UID = util.GenerateShortUID()
@@ -138,7 +138,7 @@ func (ecp *EmbeddedContactPointService) CreateContactPoint(ctx context.Context, 
 		Type:                  contactPoint.Type,
 		DisableResolveMessage: contactPoint.DisableResolveMessage,
 		Settings:              contactPoint.Settings,
-		SecureSettings:        extracedSecrets,
+		SecureSettings:        extractedSecrets,
 	}
 
 	receiverFound := false
@@ -214,16 +214,16 @@ func (ecp *EmbeddedContactPointService) UpdateContactPoint(ctx context.Context, 
 		return err
 	}
 	// transform to internal model
-	extracedSecrets, err := contactPoint.ExtractSecrets()
+	extractedSecrets, err := contactPoint.ExtractSecrets()
 	if err != nil {
 		return err
 	}
-	for k, v := range extracedSecrets {
+	for k, v := range extractedSecrets {
 		encryptedValue, err := ecp.encryptValue(v)
 		if err != nil {
 			return err
 		}
-		extracedSecrets[k] = encryptedValue
+		extractedSecrets[k] = encryptedValue
 	}
 	mergedReceiver := &apimodels.PostableGrafanaReceiver{
 		UID:                   contactPoint.UID,
@@ -231,7 +231,7 @@ func (ecp *EmbeddedContactPointService) UpdateContactPoint(ctx context.Context, 
 		Type:                  contactPoint.Type,
 		DisableResolveMessage: contactPoint.DisableResolveMessage,
 		Settings:              contactPoint.Settings,
-		SecureSettings:        extracedSecrets,
+		SecureSettings:        extractedSecrets,
 	}
 	// save to store
 	cfg, fetchedHash, err := ecp.getCurrentConfig(ctx, orgID)
@@ -315,7 +315,7 @@ func (ecp *EmbeddedContactPointService) getCurrentConfig(ctx context.Context, or
 	return cfg, query.Result.ConfigurationHash, nil
 }
 
-func (ecp *EmbeddedContactPointService) decrypteValue(value string) (string, error) {
+func (ecp *EmbeddedContactPointService) decryptValue(value string) (string, error) {
 	decodeValue, err := base64.StdEncoding.DecodeString(value)
 	if err != nil {
 		return "", err
