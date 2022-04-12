@@ -24,6 +24,23 @@ When user is using Github OAuth, GitHub login is showed as both Grafana login an
 
 The meaning of the default data source has now changed from being a persisted property in a panel. Before when you selected the default data source for a panel and later changed the default data source to another data source it would change all panels who were configured to use the default data source. From now on the default data source is just the default for new panels and changing the default will not impact any currently saved dashboards. Issue [#45132](https://github.com/grafana/grafana/issues/45132)
 
+<!-- 8.4.6 START -->
+
+# 8.4.6 (unreleased)
+
+### Features and enhancements
+
+- **CloudWatch:** Added missing MemoryDB Namespace metrics. [#47290](https://github.com/grafana/grafana/pull/47290), [@james-deee](https://github.com/james-deee)
+- **Histogram Panel:** Take decimal into consideration. [#47330](https://github.com/grafana/grafana/pull/47330), [@mdvictor](https://github.com/mdvictor)
+- **TimeSeries:** Sort tooltip values based on raw values. [#46738](https://github.com/grafana/grafana/pull/46738), [@dprokop](https://github.com/dprokop)
+- **[v8.4.x] Access Control:** Generate different cache key for api keys and users. (Enterprise)
+
+### Bug fixes
+
+- **API:** Fixes request logging middleware to include userId, orgId, uname. [#47183](https://github.com/grafana/grafana/pull/47183), [@marefr](https://github.com/marefr)
+- **Elasticsearch:** fix using. the maxConcurrentShardRequests setting. [#47120](https://github.com/grafana/grafana/pull/47120), [@alexandrst88](https://github.com/alexandrst88)
+
+<!-- 8.4.6 END -->
 <!-- 8.5.0-beta1 END -->
 <!-- 8.4.5 START -->
 
