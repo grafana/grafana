@@ -21,19 +21,19 @@ In both cases, the assignment applies only to the user role within the affected 
 
 ### Before you begin
 
-- [Plan your fine-grained rollout strategy]({{< relref "./plan-fgac-rollout-strategy.md" >}})
+- [Plan your role-based access control rollout strategy]({{< relref "./plan-rbac-rollout-strategy.md" >}})
 - Identify the fixed roles that you want to assign to the user.
 
-  For more information about available fixed roles, refer to [Role-based access control fixed role definitions](./rbac-fixed-role-definitions.md)
+  For more information about available fixed roles, refer to [Role-based access control fixed role definitions]({{< relref "./rbac-fixed-role-definitions.md" >}}).
 
 - Ensure that your Grafana user is assigned one of the following roles:
-  - The administrator built-in role.
+  - The administrator basic role.
   - The Grafana server administrator role.
-  - The `fixed:roles:writer` fixed role that is assigned to the same organization to which you are assigning a user's fine-grained access control.
+  - The `fixed:roles:writer` fixed role that is assigned to the same organization to which you are assigning RBAC to a user.
   - A custom role with `users.roles:add` and `users.roles:remove` permissions.
 - Ensure that you have the permissions granted by the roles that you want to assign or revoke.
 
-**To assign a fine-grained access control role to a user within the context of an organization**
+**To assign a fixed role to a user within the context of an organization**
 
 1. Sign in to Grafana.
 1. Switch to the organization of which the user is a member.
@@ -49,7 +49,7 @@ In both cases, the assignment applies only to the user role within the affected 
 
 <br/>
 
-**To assign a fine-grained access control role within the context of a server administrator**
+**To assign a fixed role within the context of a server administrator**
 
 1. Sign in to Grafana, hover your cursor over **Server Admin** (the shield icon) in the left navigation menu, and click **Users**.
 1. Click a user.

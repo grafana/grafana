@@ -66,9 +66,9 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
 }
 ```
 
-## Assign a custom role to a built-in role example
+## Assign a custom role to a basic role example
 
-After you create a custom role, you can assign it to a built-in role. For more information about the HTTP API, refer to [Create a built-in role assignment]({{< relref "../../../http_api/access_control.md#create-a-built-in-role-assignment" >}}).
+After you create a custom role, you can assign it to a basic role. For more information about the HTTP API, refer to [Create a basic role assignment]({{< relref "../../../http_api/access_control.md#create-a-basic-role-assignment" >}}).
 
 ### Example request
 

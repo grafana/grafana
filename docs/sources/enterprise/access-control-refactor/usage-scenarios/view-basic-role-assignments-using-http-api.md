@@ -1,6 +1,6 @@
 ---
-title: 'View built-in role assignments using the HTTP API'
-menuTitle: 'View built-in role assignments using the HTTP API'
+title: 'View basic role assignments using the HTTP API'
+menuTitle: 'View basic role assignments using the HTTP API'
 description: 'xxx.'
 aliases: [xxx]
 weight: 50
@@ -8,16 +8,16 @@ keywords:
   - xxx
 ---
 
-# View built-in role assignments using the HTTP API
+# View basic role assignments using the HTTP API
 
-You can use the [Access control HTTP API]({{< relref "../../../http_api/access_control.md#get-all-built-in-role-assignments" >}}) to see all available built-in role assignments.
+You can use the [Access control HTTP API]({{< relref "../../../http_api/access_control.md#get-all-built-in-role-assignments" >}}) to see all available basic role assignments.
 The response contains a mapping between one of the organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin` to the custom or fixed roles.
 
 ## Before you begin
 
 - [Enable role-based access control]({{< relref "../enable-rbac.md" >}}).
 
-## View built-in role example
+## View basic role example
 
 You must enter the base64 username:password Basic Authorization here. You cannot use authorization tokens in the request.
 

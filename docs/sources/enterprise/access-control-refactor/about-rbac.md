@@ -1,6 +1,6 @@
 ---
-title: 'About fine-grained access control'
-menuTitle: 'About fine-grained access control'
+title: 'About role-based access control'
+menuTitle: 'About role-based access control'
 description: 'xxx.'
 aliases: [xxx]
 weight: 10
@@ -8,54 +8,54 @@ keywords:
   - xxx
 ---
 
-# About fine-grained access control
+# About role-based access control
 
-Fine-grained access control provides a standardized way of granting, changing, and revoking access so that users can view and modify Grafana resources, such as users and reports.
-Fine-grained access control extends Grafana permissions that are included in Grafana OSS, and enables you more granular control of users’ actions.
+Role-based access control (RBAC) provides a standardized way of granting, changing, and revoking access so that users can view and modify Grafana resources, such as users and reports.
+RBAC extends Grafana basic roles that are included in Grafana OSS, and enables you more granular control of users’ actions.
 
-> **Note:** Fine-grained access control is in beta, so you can expect changes in future releases.
+> **Note:** RBAC is in beta, so you can expect changes in future releases.
 
-By using fine-grained access control you can provide users with permissions that extend beyond the permissions available with Grafana OSS roles. For example, you can use fine-grained access control to:
+By using RBAC you can provide users with permissions that extend beyond the permissions available with Grafana OSS roles. For example, you can use RBAC to:
 
 - Enable an editor to create reports
 - Prevent a Grafana Admin from creating and inviting users to an organization
 - Enable a viewer to create users
 
-## Built-in roles
+## Basic roles
 
-Built-in roles are the standard roles that are available in Grafana OSS. If you have purchased a Grafana Enterprise license, you also receive built-in roles.
+Basic roles are the standard roles that are available in Grafana OSS. If you have purchased a Grafana Enterprise license, you also receive basic roles.
 
-Grafana includes the following built-in roles:
+Grafana includes the following basic roles:
 
 - Grafana administrator
 - Organization administrator
 - Editor
 - Viewer
 
-Each built-in role is comprised of a number of _fixed roles_ that control the permissions a built-in role has. For example, the Viewer built-in role contains the following fixed roles:
+Each basic role is comprised of a number of _fixed roles_ that control the permissions a basic role has. For example, the Viewer basic role contains the following fixed roles:
 
 - `fixed:datasources:id:reader`: Enables the viewer to see the ID of a data source.
 - `fixed:organization:reader`: Enables the viewer to see a list of organizations.
 - `fixed:annotations:reader`: Enables the viewer to see annotations that other users have added to a dashboard.
 - `fixed:annotations.dashboard:writer`: Enables the viewer to add annotations to a dashboard.
 
-For more information about the fixed role associated with each built-in role, refer to [Built-in role definitions]({{< relref "./built-in-role-definitions.md" >}}).
+For more information about the fixed role associated with each basic role, refer to [Basic role definitions]({{< relref "./basic-role-definitions.md" >}}).
 
-> **Note:** You must assign each Grafana user a built-in role.
+> **Note:** You must assign each Grafana user a basic role.
 
 ## Fixed roles
 
 Grafana Enterprise includes the ability for you to assign discrete fixed roles to users and teams, which enables you fine-grained control over user permissions. Grafana Labs manages fixed role definitions.
 
-Assign fixed roles when the built-in roles do not meet your permission requirements. For example, you might want the built-in viewer role to also edit dashboards. Or you might want the editor role to also create and manage users. To meet your needs, you can use fixed roles to extend built-in roles and provide users more granular access to create, view, and update Grafana resources.
+Assign fixed roles when the basic roles do not meet your permission requirements. For example, you might want the basic viewer role to also edit dashboards. Or you might want the editor role to also create and manage users. To meet your needs, you can use fixed roles to extend basic roles and provide users more granular access to create, view, and update Grafana resources.
 
-### Resources with fine-grained permissions
+### Resources with RBAC permissions
 
-Fine-grained access control is available for the following capabilities:
+You apply RBAC to the following Grafana resources:
 
 - [Annotations]({{< relref "../../dashboards/annotations.md" >}})
 - [API keys]({{< relref "../../administration/api-keys/_index.md" >}})
-- [Dashboards]({{< relref "../../dashboards/_index.md" >}})
+- [Dashboards and folders]({{< relref "../../dashboards/_index.md" >}})
 - [Data sources]({{< relref "../../datasources/_index.md" >}})
 - [Explore]({{< relref "../../explore/_index.md" >}})
 - [Folders]({{< relref "../../dashboards/dashboard_folders.md" >}})
@@ -71,7 +71,7 @@ Fine-grained access control is available for the following capabilities:
 - [Teams]({{< relref "../../administration/manage-users-permissions/manage-teams/_index.md" >}})
 - [Users]({{< relref "../../administration/manage-users-and-permissions/manage-server-users/_index.md" >}})
 
-To learn more about the permissions associated with each fixed role, refer to [Fine-grained access control fixed role definitions]({{< relref "./rbac-fixed-role-definitions.md" >}}).
+To learn more about the permissions associated with each fixed role, refer to [Role-based access control fixed role definitions]({{< relref "./rbac-fixed-role-definitions.md" >}}).
 
 To learn how to assign fixed roles to a user or team, refer to [Assign and manage fixed roles]({{< relref "./assign-manage-fixed-roles.md" >}})
 
@@ -91,15 +91,11 @@ Custom roles contain unique combinations of permissions _actions_ and _scopes_. 
 
 A scope describes where an action can be performed. For example, the `teams*:` scope restricts the user's action to teams. When paired with the `teams.roles:list` action, this permission prohibits the user from viewing roles associated with any other Grafana resource, for example, organizations.
 
-Consider creating a custom role when:
-
-- xxx.
-- xxx.
-- xxx.
+Consider creating a custom role when you don't want to modify basic roles, and when fixed roles do not meet your permissions requirements.
 
 ### Custom role creation
 
 You can create and manage custom role by using either of the following methods:
 
 - [Create, update, or delete custom roles using Grafana provisioning({{< relref "../provision-custom-roles.md" >}}).
-- [Fine-grained access control API]({{< relref "../../http_api/access_control.md" >}})
+- [Role-based access control API]({{< relref "../../http_api/access_control.md" >}})

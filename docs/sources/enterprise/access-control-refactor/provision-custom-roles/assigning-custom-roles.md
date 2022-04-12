@@ -1,6 +1,6 @@
 ---
-title: 'Assign a custom role to a built-in role, a team, or a fixed role'
-menuTitle: 'Assign a custom role to a built-in role, a team, or a fixed role'
+title: 'Assign a custom role to a basic role, a team, or a fixed role'
+menuTitle: 'Assign a custom role to a basic role, a team, or a fixed role'
 description: 'xxx.'
 aliases: [xxx]
 weight: 40
@@ -8,13 +8,13 @@ keywords:
   - xxx
 ---
 
-# Assign a custom role to a built-in role, a team, or a fixed role
+# Assign a custom role to a basic role, a team, or a fixed role
 
-Complete the following instructions when you want to assign a custom role to a built-in role, a team, or a fixed role.
+Complete the following instructions when you want to assign a custom role to a basic role, a team, or a fixed role.
 
 > **Note:** If you want to remove a custom role assignment from a team, remove it from the YAML file, save your changes, and restart Grafana.
 
-## Assign a custom role to a built-in role
+## Assign a custom role to a basic role
 
 Information here about why a user would want to do this. What are the benefits?
 
@@ -23,7 +23,7 @@ Information here about why a user would want to do this. What are the benefits?
 - [Enable Grafana to provision custom roles]({{< relref "./enable-provisioning.md" >}}).
 - [Add a custom role]({{< relref "./create-update-delete-custom-role.md" >}})
 
-**To assign a custom role to a built-in role:**
+**To assign a custom role to a basic role:**
 
 1. Open the YAML configuration file and locate the `builtInRoles` section.
 
@@ -41,7 +41,7 @@ Information here about why a user would want to do this. What are the benefits?
 
    For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../http_api/admin/#reload-provisioning-configurations" >}}).
 
-The following example assigns the `users:editor` custom role to the built in editor and admin roles.
+The following example assigns the `users:editor` custom role to the basic editor and admin roles.
 
 ```yaml
 # config file version
@@ -69,7 +69,7 @@ roles:
 
 Need information here on why a user would want to complete this task. What are the benefits?
 
-Not sure what to do with this prose: Assignments to built-in roles will be ignored. Use `addDefaultAssignments` and `removeDefaultAssignments` instead.
+Not sure what to do with this prose: Assignments to basic roles will be ignored. Use `addDefaultAssignments` and `removeDefaultAssignments` instead.
 
 > **Note:** If you want to remove a custom role assignment from a team, remove it from the YAML file, save your changes, and restart Grafana.
 

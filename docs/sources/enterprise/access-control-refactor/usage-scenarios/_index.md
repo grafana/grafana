@@ -1,5 +1,5 @@
 ---
-title: 'Fine-grained access control usage scenarios'
+title: 'RBAC usage scenarios'
 menuTitle: 'Usage scenarios'
 description: 'xxx.'
 aliases: [xxx]
@@ -8,6 +8,8 @@ keywords:
   - xxx
 ---
 
-# Fine-grained access control usage scenarios
+# RBAC access control usage scenarios
 
-This guide contains several examples and usage scenarios of using fine-grained roles and permissions for controlling access to Grafana resources.
+This section contains examples of using RBAC roles to control user access to Grafana resources.
+
+{{< section >}}

@@ -67,3 +67,9 @@ This topic includes instructions for both methods of enabling fine-grained acces
 To verify that fine-grained access control is enabled, send an HTTP request to the check endpoint.
 
 For more information about sending an HTTP request to the check endpoint, refer to [Check endpoint]({{< relref "../../http_api/access_control.md#check-if-enabled" >}}).
+
+## Limitation
+
+If you have created a folder with the name `General` or `general`, you cannot manage its permissions with RBAC.
+
+If you set [folder permissions]({{< relref "../../administration/manage-users-and-permissions/manage-dashboard-permissions/_index.md" >}}) for a folder named `General` or `general`, the system disregards the folder when RBAC is enabled.

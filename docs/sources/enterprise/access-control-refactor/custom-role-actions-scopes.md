@@ -10,14 +10,12 @@ keywords:
 
 # Role-based access control permissions actions and scopes
 
-A permission is an action and a scope. When creating a fine-grained access control, consider what specific action a user should be allowed to perform, and on what resources (its scope).
+A permission is an action and a scope. When creating an RBAC, consider the actions can perform and on which resources.
 
-To grant permissions to a user, you create a built-in role assignment to map a role to a built-in role. A built-in role assignment _modifies_ to one of the existing built-in roles in Grafana (Viewer, Editor, Admin). For more information, refer to [Built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}).
-
-To learn more about which permissions are used for which resources, refer to [Resources with fine-grained permissions]({{< relref "./_index.md#resources-with-fine-grained-permissions" >}}).
+To learn more about which permissions are used for which resources, refer to [Resources with RBAC permissions]({{< relref "./about-rbac.md#resources-with-rbac-permissions" >}}).
 
 action
-: The specific action on a resource defines what a user is allowed to perform if they have permission with the relevant action assigned to it.
+: The action on a resource defines what a user is allowed to perform if they have permission with the relevant action assigned to it.
 
 scope
 : The scope describes where an action can be performed, such as reading a specific user profile. In such case, a permission is associated with the scope `users:<userId>` to the relevant role.
@@ -32,9 +30,9 @@ The following list contains fine-grained access control actions.
 | `roles:read`                    | `roles:*` <br> `roles:uid:*`                                                                | Read a specific role with its permissions.                                                                                                                 |
 | `roles:write`                   | `permissions:delegate`                                                                      | Create or update a custom role.                                                                                                                            |
 | `roles:delete`                  | `permissions:delegate`                                                                      | Delete a custom role.                                                                                                                                      |
-| `roles.builtin:list`            | `roles:*`                                                                                   | List built-in role assignments.                                                                                                                            |
-| `roles.builtin:add`             | `permissions:delegate`                                                                      | Create a built-in role assignment.                                                                                                                         |
-| `roles.builtin:remove`          | `permissions:delegate`                                                                      | Delete a built-in role assignment.                                                                                                                         |
+| `roles.builtin:list`            | `roles:*`                                                                                   | List basic role assignments.                                                                                                                               |
+| `roles.builtin:add`             | `permissions:delegate`                                                                      | Create a basic role assignment.                                                                                                                            |
+| `roles.builtin:remove`          | `permissions:delegate`                                                                      | Delete a basic role assignment.                                                                                                                            |
 | `reports.admin:create`          | n/a                                                                                         | Create reports.                                                                                                                                            |
 | `reports.admin:write`           | `reports:*` <br> `reports:id:*`                                                             | Update reports.                                                                                                                                            |
 | `reports:delete`                | `reports:*` <br> `reports:id:*`                                                             | Delete reports.                                                                                                                                            |

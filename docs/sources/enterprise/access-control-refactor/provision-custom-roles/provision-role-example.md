@@ -15,7 +15,7 @@ The following example shows a complete YAML configuration file that:
 - Removes a default role assignment
 - Adds a default role assignment
 - Deletes custom roles
-- Adds custom roles to built-in roles
+- Adds custom roles to basic roles
 - Adds a custom role to a fixed role
 
 ## Example
@@ -24,14 +24,14 @@ The following example shows a complete YAML configuration file that:
 # config file version
 apiVersion: 1
 
-# list of default built-in role assignments that should be removed
+# list of default basic role assignments that should be removed
 removeDefaultAssignments:
   # <string>, must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`
   - builtInRole: 'Grafana Admin'
     # <string>, must be one of the existing fixed roles
     fixedRole: 'fixed:permissions:admin'
 
-# list of default built-in role assignments that should be added back
+# list of default basic role assignments that should be added back
 addDefaultAssignments:
   # <string>, must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`
   - builtInRole: 'Admin'
@@ -76,9 +76,9 @@ roles:
         scope: 'users:*'
       - action: 'users:create'
         scope: 'users:*'
-    # <list> list of builtIn roles the role should be assigned to
+    # <list> list of basic roles the role should be assigned to
     builtInRoles:
-      # <string, required> name of the builtin role you want to assign the role to
+      # <string, required> name of the basic role you want to assign the role to
       - name: 'Editor'
         # <int> org id. will default to the role org id
         orgId: 1

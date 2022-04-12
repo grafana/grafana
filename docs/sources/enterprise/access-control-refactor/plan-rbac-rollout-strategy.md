@@ -10,24 +10,24 @@ keywords:
 
 # Plan your role-based access control rollout strategy
 
-An RBAC rollout strategy includes the planning you undertake and the decisions you make prior to assign RBAC roles to user, teams, and folders.
+An RBAC rollout strategy includes the planning and the decisions you make prior to assigning RBAC roles to user and teams.
 
 Your rollout strategy should help you answer the following questions:
 
-- Should I assign default roles to users, or should I assign fixed roles or custom roles to users?
+- Should I assign basic roles to users, or should I assign fixed roles or custom roles to users?
 - When should I create custom roles?
-- To what entities should I apply fixed and custom roles? Should I apply them to users, teams, or to built-in roles?
+- To what entities should I apply fixed and custom roles? Should I apply them to users, teams, or to basic roles?
 - How do I roll out permissions in a way that makes them easy to manage?
 - What options do I have when assigning roles?
 
-## Review built-in role and fixed role definitions
+## Review basic role and fixed role definitions
 
-As a first step in determining your permissions rollout strategy, we recommend that you become familiar with built-in role and fixed role defintions. In addition to assigning fixed roles to any user and team, you can also assign fixed roles to built-in roles and custom roles. This flexibilty means that there are many combinations of fixed role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use.
+As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role defintions. In addition to assigning fixed roles to any user and team, you can also assign fixed roles to basic roles and custom roles. This flexibilty means that there are many combinations of fixed role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use.
 
-To learn more about built-in roles and fixed role, refer to the following documentation:
+To learn more about basic roles and fixed role, refer to the following documentation:
 
-- [Built-in role definitions](LINK)
-- [Fixed role definitions](LINK)
+- [Basic role definitions]({{< relref "./basic-role-definitions.md" >}})
+- [Fixed role definitions]({{< relref "./rbac-fixed-role-definitions.md" >}})
 
 ## User and team considerations
 
@@ -55,15 +55,15 @@ For example:
 
 1. In Grafana, assign RBAC permissions to roles and teams.
 
-## When to modify built-in roles or create custom roles
+## When to modify basic roles or create custom roles
 
-Consider the following guidelines when you determine if you should modify built-in roles or create custom roles.
+Consider the following guidelines when you determine if you should modify basic roles or create custom roles.
 
-- **Modify built-in roles** when Grafana's definitions of what viewers, editors, and admins can do does not match your definition of these roles. You can add or remove fixed roles from any built-in role.
+- **Modify basic roles** when Grafana's definitions of what viewers, editors, and admins can do does not match your definition of these roles. You can add or remove fixed roles from any basic role.
 
-  > **Note:** Changes that you make to built-in roles are _global_ and impact the role definition across the Grafana instance. For example, when you assign the `fixed:users:writer` role to the viewer built-in role, all viewers in the Grafana instance can create users.
+  > **Note:** Changes that you make to basic roles are _global_ and impact the role definition across the Grafana instance. For example, when you assign the `fixed:users:writer` role to the viewer basic role, all viewers in the Grafana instance can create users.
 
-- **Create custom roles** when you don't want to modify built-in roles, and when fixed role definitions don't meet you permissions requirements.
+- **Create custom roles** when you don't want to modify basic roles, and when fixed role definitions don't meet you permissions requirements.
 
 ## How to assign RBAC roles
 
@@ -83,16 +83,16 @@ We've compiled the following permissions rollout scenarios based on current Graf
 1. In Grafana, create a team with the name `Internal employees`.
 1. Assign the `fixed:datasources:querier`role to the `Internal employees` team.
 1. Assign internal employees to the `Internal employees` team.
-1. Assign the viewer role to both internal employees and contractors
+1. Assign the viewer role to both internal employees and contractors.
 
 ### Limit viewer, editor, or admin permissions
 
-1. Review the list of fixed roles associated with the built-in role.
-1. Remove the fixed roles from the built-in role.
+1. Review the list of fixed roles associated with the basic role.
+1. Remove the fixed roles from the basic role.
 
-### Limit users (regardless of their built-in role) ability to access the Alert Manager, while providing that ability to other users
+### Limit users (regardless of their basic role) the ability to access the Alert Manager, while providing that ability to other users
 
-1. Remove the following fixed roles from all built-in roles:
+1. Remove the following fixed roles from all basic roles:
    - fixed:alerts:reader
    - fixed:alerts:writer
 1. Create an `Alert Managers` team, and assign the following fixed roles:

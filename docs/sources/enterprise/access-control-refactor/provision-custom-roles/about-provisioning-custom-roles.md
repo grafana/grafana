@@ -8,7 +8,7 @@ keywords:
   - xxx
 ---
 
-# About creating or updating custom roles using Grafana provisioning
+# About creating or updating custom roles using provisioning
 
 You can create a custom role when the default roles and fixed roles do not meet your permissions requirements. A custom role enables you to manage user permissions to best suit your needs.
 

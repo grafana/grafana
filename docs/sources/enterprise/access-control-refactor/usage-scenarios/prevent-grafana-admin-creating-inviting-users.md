@@ -18,6 +18,6 @@ This topic describes how to remove the `users:create` permissions from the Grafa
 
 **To prevent a user from creating and inviting users:**
 
-1. [View built-in role assignments]({{< relref "../built-in-role-definitions.md" >}}) to determine which built-in role assignments are available.
+1. [View basic role assignments]({{< relref "../basic-role-definitions.md" >}}) to determine which basic role assignments are available.
 1. To determine which role provides `users:create` permission, refer to refer to [fixed roles]({{< relref "../rbac-fixed-role-definitions.md" >}}).
-1. Use the [Role-based access control HTTP API]({{< relref "../../../http_api/access_control.md" >}}) or Grafana provisioning to [remove the built-in role assignment]({{< relref "../provision-custom-roles/remove-restore-built-in-role.md" >}}).
+1. Use the [Role-based access control HTTP API]({{< relref "../../../http_api/access_control.md" >}}) or Grafana provisioning to [remove the basic role assignment]({{< relref "../provision-custom-roles/remove-restore-basic-role.md" >}}).
