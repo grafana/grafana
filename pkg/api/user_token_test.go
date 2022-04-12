@@ -79,11 +79,6 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 		token := &models.UserToken{Id: 2}
 		mock := mockstore.NewSQLStoreMock()
 		revokeUserAuthTokenInternalScenario(t, "Should not be successful", cmd, testUserID, token, func(sc *scenarioContext) {
-			bus.AddHandler("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
-				cmd.Result = &models.User{Id: testUserID}
-				return nil
-			})
-
 			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*models.UserToken, error) {
 				return token, nil
 			}
@@ -153,8 +148,6 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd models.RevokeAuthTokenCmd,
 	userId int64, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
@@ -183,8 +176,6 @@ func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePat
 
 func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePattern string, userId int64, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
@@ -212,8 +203,6 @@ func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePatte
 
 func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId int64, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(desc, func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		hs := HTTPServer{
 			Bus:              bus.GetBus(),
 			AuthTokenService: auth.NewFakeUserAuthTokenService(),
@@ -239,8 +228,6 @@ func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId 
 func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd models.RevokeAuthTokenCmd, userId int64,
 	token *models.UserToken, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(desc, func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
@@ -267,8 +254,6 @@ func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd models.R
 
 func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *models.UserToken, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(desc, func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{

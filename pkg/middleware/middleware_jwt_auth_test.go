@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
@@ -109,14 +108,6 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 			}, nil
 		}
 		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: id, OrgId: orgID, Email: myEmail}
-		bus.AddHandler("upsert-user", func(ctx context.Context, command *models.UpsertUserCommand) error {
-			command.Result = &models.User{
-				Id:    id,
-				Name:  command.ExternalUser.Name,
-				Email: command.ExternalUser.Email,
-			}
-			return nil
-		})
 
 		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
 		assert.Equal(t, verifiedToken, token)

@@ -201,7 +201,7 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 	}
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil)
+	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	service := dashboardservice.ProvideDashboardService(
 		setting.NewCfg(), dashboardStore, dashAlertExtractor,
 		featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),

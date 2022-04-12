@@ -8,32 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-func (ss *SQLStore) addUserQueryAndCommandHandlers() {
-	ss.Bus.AddHandler(ss.GetSignedInUserWithCacheCtx)
-
-	bus.AddHandler("sql", ss.GetUserById)
-	bus.AddHandler("sql", ss.UpdateUser)
-	bus.AddHandler("sql", ss.ChangeUserPassword)
-	bus.AddHandler("sql", ss.GetUserByLogin)
-	bus.AddHandler("sql", ss.GetUserByEmail)
-	bus.AddHandler("sql", ss.SetUsingOrg)
-	bus.AddHandler("sql", ss.UpdateUserLastSeenAt)
-	bus.AddHandler("sql", ss.GetUserProfile)
-	bus.AddHandler("sql", ss.SearchUsers)
-	bus.AddHandler("sql", ss.GetUserOrgList)
-	bus.AddHandler("sql", ss.DisableUser)
-	bus.AddHandler("sql", ss.BatchDisableUsers)
-	bus.AddHandler("sql", ss.DeleteUser)
-	bus.AddHandler("sql", ss.SetUserHelpFlag)
-}
 
 func getOrgIdForNewUser(sess *DBSession, cmd models.CreateUserCommand) (int64, error) {
 	if cmd.SkipOrgSetup {

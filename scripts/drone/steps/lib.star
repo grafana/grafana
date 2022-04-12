@@ -295,17 +295,14 @@ def store_storybook_step(edition, ver_mode, trigger=None):
 
     commands = []
     if ver_mode == 'release':
-        channels = ['latest', '${DRONE_TAG}', ]
+        commands.extend([
+            './bin/grabpl store-storybook --deployment latest --src-bucket grafana-prerelease --src-dir artifacts/storybook',
+            './bin/grabpl store-storybook --deployment ${DRONE_TAG} --src-bucket grafana-prerelease --src-dir artifacts/storybook',
+        ])
+
     else:
-        channels = ['canary', ]
-    commands.extend([
-                        'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
-                        'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
-                    ] + [
-                        'gsutil -m rm -r gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{} || true && gsutil -m cp -r ./packages/grafana-ui/dist/storybook/* gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{}'.format(
-                            c, c)
-                        for c in channels
-                    ])
+        # main pipelines should deploy storybook to grafana-storybook/canary public bucket
+        commands = ['./bin/grabpl store-storybook --deployment canary --src-bucket grafana-storybook',]
 
     step = {
         'name': 'store-storybook',
