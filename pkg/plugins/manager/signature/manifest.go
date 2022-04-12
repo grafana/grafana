@@ -82,7 +82,7 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 	}
 
 	// Convert to a well typed object
-	manifest := &pluginManifest{}
+	var manifest pluginManifest
 	err := json.Unmarshal(block.Plaintext, &manifest)
 	if err != nil {
 		return nil, errutil.Wrap("Error parsing manifest JSON", err)
@@ -99,7 +99,7 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 		return nil, errutil.Wrap("failed to check signature", err)
 	}
 
-	return manifest, nil
+	return &manifest, nil
 }
 
 func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, error) {

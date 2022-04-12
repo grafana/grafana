@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -26,6 +27,7 @@ type PrometheusSrv struct {
 	log     log.Logger
 	manager state.AlertInstanceManager
 	store   store.RuleStore
+	ac      accesscontrol.AccessControl
 }
 
 const queryIncludeInternalLabels = "includeInternalLabels"
@@ -151,10 +153,16 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
 		return response.JSON(http.StatusInternalServerError, ruleResponse)
 	}
+	hasAccess := func(evaluator accesscontrol.Evaluator) bool {
+		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqSignedIn, evaluator)
+	}
 
 	groupMap := make(map[string]*apimodels.RuleGroup)
 
 	for _, rule := range alertRuleQuery.Result {
+		if !authorizeDatasourceAccessForRule(rule, hasAccess) {
+			continue
+		}
 		groupKey := rule.RuleGroup + "-" + rule.NamespaceUID
 		newGroup, ok := groupMap[groupKey]
 		if !ok {
