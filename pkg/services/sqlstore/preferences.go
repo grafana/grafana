@@ -109,6 +109,11 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 			if cmd.Navbar != nil {
 				prefs.JsonData.Navbar = *cmd.Navbar
 			}
+
+			if cmd.QueryHistory != nil {
+				prefs.JsonData.QueryHistory = *cmd.QueryHistory
+			}
+
 			_, err = sess.Insert(&prefs)
 			return err
 		}
@@ -121,6 +126,16 @@ func (ss *SQLStore) SavePreferences(ctx context.Context, cmd *models.SavePrefere
 				prefs.JsonData.Navbar.SavedItems = cmd.Navbar.SavedItems
 			}
 		}
+
+		if cmd.QueryHistory != nil {
+			if prefs.JsonData == nil {
+				prefs.JsonData = &models.PreferencesJsonData{}
+			}
+			if cmd.QueryHistory.HomeTab != "" {
+				prefs.JsonData.QueryHistory.HomeTab = cmd.QueryHistory.HomeTab
+			}
+		}
+
 		prefs.HomeDashboardId = cmd.HomeDashboardId
 		prefs.Timezone = cmd.Timezone
 		prefs.WeekStart = cmd.WeekStart
@@ -156,6 +171,15 @@ func (ss *SQLStore) PatchPreferences(ctx context.Context, cmd *models.PatchPrefe
 			}
 			if cmd.Navbar.SavedItems != nil {
 				prefs.JsonData.Navbar.SavedItems = cmd.Navbar.SavedItems
+			}
+		}
+
+		if cmd.QueryHistory != nil {
+			if prefs.JsonData == nil {
+				prefs.JsonData = &models.PreferencesJsonData{}
+			}
+			if cmd.QueryHistory.HomeTab != "" {
+				prefs.JsonData.QueryHistory.HomeTab = cmd.QueryHistory.HomeTab
 			}
 		}
 
