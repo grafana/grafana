@@ -56,22 +56,24 @@ type crawlerScheduleOptions struct {
 	maxCrawlDuration time.Duration
 	crawlerMode      CrawlerMode
 	thumbnailKind    models.ThumbnailKind
-	auth             rendering.AuthOpts
 	themes           []models.Theme
+	auth             CrawlerAuth
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockService *serverlock.ServerLockService, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore) Service {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockService *serverlock.ServerLockService, renderService rendering.Service, gl *live.GrafanaLive, store *sqlstore.SQLStore, authSetupService CrawlerAuthSetupService) Service {
 	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
 		return &dummyService{}
 	}
+	logger := log.New("thumbnails_service")
 
 	thumbnailRepo := newThumbnailRepo(store)
 
-	authOpts := rendering.AuthOpts{
-		OrgID:   0,
-		UserID:  0,
-		OrgRole: models.ROLE_ADMIN,
+	crawlerAuth, err := authSetupService.Setup(context.Background())
+	if err != nil {
+		logger.Error("Failed to setup auth for the dashboard previews crawler", "err", err)
+		return &dummyService{}
 	}
+
 	return &thumbService{
 		renderingService:           renderService,
 		renderer:                   newSimpleCrawler(renderService, gl, thumbnailRepo),
@@ -80,7 +82,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 		features:                   features,
 		lockService:                lockService,
 		crawlLockServiceActionName: "dashboard-crawler",
-		log:                        log.New("thumbnails_service"),
+		log:                        logger,
 
 		scheduleOptions: crawlerScheduleOptions{
 			tickerInterval:   time.Hour,
@@ -89,7 +91,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 			crawlerMode:      CrawlerModeThumbs,
 			thumbnailKind:    models.ThumbnailKindDefault,
 			themes:           []models.Theme{models.ThemeDark, models.ThemeLight},
-			auth:             authOpts,
+			auth:             crawlerAuth,
 		},
 	}
 }
@@ -377,7 +379,7 @@ func (hs *thumbService) runOnDemandCrawl(parentCtx context.Context, theme models
 	// wait for at least a minute after the last completed run
 	interval := time.Minute
 	err := hs.lockService.LockAndExecute(crawlerCtx, hs.crawlLockServiceActionName, interval, func(ctx context.Context) {
-		if err := hs.renderer.Run(crawlerCtx, authOpts, mode, theme, kind); err != nil {
+		if err := hs.renderer.Run(crawlerCtx, hs.scheduleOptions.auth, mode, theme, kind); err != nil {
 			hs.log.Error("On demand crawl error", "mode", mode, "theme", theme, "kind", kind, "userId", authOpts.UserID, "orgId", authOpts.OrgID, "orgRole", authOpts.OrgRole)
 		}
 	})
