@@ -168,7 +168,6 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     }
   };
 
-  // add a rule to a namespace and group
   const addRuleToNamespaceAndGroup = async (
     namespace: string,
     group: { name: string; interval: string },
