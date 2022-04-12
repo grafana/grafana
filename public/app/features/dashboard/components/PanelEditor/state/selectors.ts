@@ -2,6 +2,8 @@ import memoizeOne from 'memoize-one';
 import { PanelPlugin } from '@grafana/data';
 import { PanelEditorTab, PanelEditorTabId } from '../types';
 import { getConfig } from 'app/core/config';
+import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
+import { contextSrv } from 'app/core/services/context_srv';
 
 export const getPanelEditorTabs = memoizeOne((tab?: string, plugin?: PanelPlugin) => {
   const tabs: PanelEditorTab[] = [];
@@ -35,7 +37,9 @@ export const getPanelEditorTabs = memoizeOne((tab?: string, plugin?: PanelPlugin
   }
 
   if (
-    ((getConfig().alertingEnabled || getConfig().unifiedAlertingEnabled) && plugin.meta.id === 'graph') ||
+    ((getConfig().alertingEnabled ||
+      (getConfig().unifiedAlertingEnabled && contextSrv.hasPermission(getRulesPermissions('grafana').read))) &&
+      plugin.meta.id === 'graph') ||
     plugin.meta.id === 'timeseries'
   ) {
     tabs.push({
