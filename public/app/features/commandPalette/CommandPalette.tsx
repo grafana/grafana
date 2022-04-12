@@ -20,6 +20,7 @@ import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types';
 import { css } from '@emotion/css';
 import { keybindingSrv } from '../../core/services/keybindingSrv';
+import { reportInteraction } from '@grafana/runtime';
 
 /**
  * Wrap all the components from KBar here.
@@ -29,8 +30,9 @@ import { keybindingSrv } from '../../core/services/keybindingSrv';
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
   const [actions, setActions] = useState<Action[]>([]);
-  const { showing, query } = useKBar((state) => ({
-    showing: state.visualState !== VisualState.hidden,
+  const { notHidden, query, showing } = useKBar((state) => ({
+    notHidden: state.visualState !== VisualState.hidden,
+    showing: state.visualState === VisualState.showing,
   }));
 
   const { navBarTree } = useSelector((state: StoreState) => {
@@ -40,7 +42,7 @@ export const CommandPalette = () => {
   });
 
   keybindingSrv.bind('esc', () => {
-    if (showing) {
+    if (notHidden) {
       query.setVisualState(VisualState.animatingOut);
     }
   });
@@ -53,6 +55,12 @@ export const CommandPalette = () => {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (showing) {
+      reportInteraction('commandPalette_opened');
+    }
+  }, [showing]);
 
   useRegisterActions(!query ? [] : actions, [actions, query]);
 

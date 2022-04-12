@@ -1,6 +1,6 @@
 import React, { ComponentType } from 'react';
 import { Router, Route, Redirect, Switch } from 'react-router-dom';
-import { config, locationService, navigationLogger } from '@grafana/runtime';
+import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { Provider } from 'react-redux';
 import { store } from 'app/store/store';
 import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider, PortalContainer } from '@grafana/ui';
@@ -15,7 +15,7 @@ import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
-import { KBarProvider } from 'kbar';
+import { Action, KBarProvider } from 'kbar';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { I18nProvider } from './core/localisation';
 import { AngularRoot } from './angular/AngularRoot';
@@ -87,13 +87,22 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
     const newNavigationEnabled = Boolean(config.featureToggles.newNavigation);
 
+    const commandPaletteActionSelected = (action: Action) => {
+      reportInteraction('commandPalette_action_selected', {
+        actionId: action.id,
+      });
+    };
+
     return (
       <Provider store={store}>
         <I18nProvider>
           <ErrorBoundaryAlert style="page">
             <ConfigContext.Provider value={config}>
               <ThemeProvider>
-                <KBarProvider actions={[]} options={{ enableHistory: true }}>
+                <KBarProvider
+                  actions={[]}
+                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                >
                   <ModalsProvider>
                     <GlobalStyles />
                     {config.featureToggles.commandPalette && contextSrv.isSignedIn && <CommandPalette />}
