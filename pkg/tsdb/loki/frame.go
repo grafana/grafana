@@ -5,7 +5,6 @@ import (
 	"hash/fnv"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
@@ -56,6 +55,9 @@ func adjustMetricFrame(frame *data.Frame, query *lokiQuery) error {
 		frame.Meta = &data.FrameMeta{}
 	}
 
+	frame.Meta.Stats = parseStats(frame.Meta.Custom)
+	frame.Meta.Custom = nil
+
 	if isMetricRange {
 		frame.Meta.ExecutedQueryString = "Expr: " + query.Expr + "\n" + "Step: " + query.Step.String()
 	} else {
@@ -74,57 +76,62 @@ func adjustMetricFrame(frame *data.Frame, query *lokiQuery) error {
 	}
 	valueField.Config.DisplayNameFromDS = name
 
+	// FIXME: temporary change, to be able to switch to the new loki-parser
+	// without changes to the dataframe-test-snapshots.
+	// these will be removed in a separate commit.
+	timeField.Name = "time"
+	valueField.Name = "value"
+	frame.Meta.Type = ""
+
 	return nil
 }
 
 func adjustLogsFrame(frame *data.Frame, query *lokiQuery) error {
 	// we check if the fields are of correct type and length
 	fields := frame.Fields
-	if len(fields) != 3 {
+	if len(fields) != 4 {
 		return fmt.Errorf("invalid fields in logs frame")
 	}
 
 	labelsField := fields[0]
 	timeField := fields[1]
 	lineField := fields[2]
+	stringTimeField := fields[3]
 
-	if (timeField.Type() != data.FieldTypeTime) || (lineField.Type() != data.FieldTypeString) || (labelsField.Type() != data.FieldTypeString) {
+	if (timeField.Type() != data.FieldTypeTime) || (lineField.Type() != data.FieldTypeString) || (labelsField.Type() != data.FieldTypeString) || (stringTimeField.Type() != data.FieldTypeString) {
 		return fmt.Errorf("invalid fields in metric frame")
 	}
 
-	if (timeField.Len() != lineField.Len()) || (timeField.Len() != labelsField.Len()) {
+	if (timeField.Len() != lineField.Len()) || (timeField.Len() != labelsField.Len()) || (timeField.Len() != stringTimeField.Len()) {
 		return fmt.Errorf("invalid fields in metric frame")
 	}
+
+	labelsField.Name = "labels"
+	timeField.Name = "ts"
+	lineField.Name = "line"
+	stringTimeField.Name = "tsNs"
 
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
+
+	frame.Meta.Stats = parseStats(frame.Meta.Custom)
+	frame.Meta.Custom = nil
 
 	frame.Meta.ExecutedQueryString = "Expr: " + query.Expr
 
 	// we need to send to the browser the nanosecond-precision timestamp too.
 	// usually timestamps become javascript-date-objects in the browser automatically, which only
 	// have millisecond-precision.
-	// so we send a separate timestamp-as-string field too.
-	stringTimeField := makeStringTimeField(timeField)
+	// so we send a separate timestamp-as-string field too. it is provided by the
+	// loki-json-parser-code
 
 	idField, err := makeIdField(stringTimeField, lineField, labelsField, frame.RefID)
 	if err != nil {
 		return err
 	}
-	frame.Fields = append(frame.Fields, stringTimeField, idField)
+	frame.Fields = append(frame.Fields, idField)
 	return nil
-}
-
-func makeStringTimeField(timeField *data.Field) *data.Field {
-	length := timeField.Len()
-	stringTimestamps := make([]string, length)
-
-	for i := 0; i < length; i++ {
-		nsNumber := timeField.At(i).(time.Time).UnixNano()
-		stringTimestamps[i] = fmt.Sprintf("%d", nsNumber)
-	}
-	return data.NewField("tsNs", timeField.Labels.Copy(), stringTimestamps)
 }
 
 func calculateCheckSum(time string, line string, labels string) (string, error) {
@@ -208,4 +215,76 @@ func getFrameLabels(frame *data.Frame) map[string]string {
 	}
 
 	return labels
+}
+
+func parseStats(frameMetaCustom interface{}) []data.QueryStat {
+	customMap, ok := frameMetaCustom.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	rawStats, ok := customMap["stats"].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	var stats []data.QueryStat
+
+	summary, ok := rawStats["summary"].(map[string]interface{})
+	if ok {
+		stats = append(stats,
+			makeStat("Summary: bytes processed per second", summary["bytesProcessedPerSecond"], "Bps"),
+			makeStat("Summary: lines processed per second", summary["linesProcessedPerSecond"], ""),
+			makeStat("Summary: total bytes processed", summary["totalBytesProcessed"], "decbytes"),
+			makeStat("Summary: total lines processed", summary["totalLinesProcessed"], ""),
+			makeStat("Summary: exec time", summary["execTime"], "s"))
+	}
+
+	store, ok := rawStats["store"].(map[string]interface{})
+	if ok {
+		stats = append(stats,
+			makeStat("Store: total chunks ref", store["totalChunksRef"], ""),
+			makeStat("Store: total chunks downloaded", store["totalChunksDownloaded"], ""),
+			makeStat("Store: chunks download time", store["chunksDownloadTime"], "s"),
+			makeStat("Store: head chunk bytes", store["headChunkBytes"], "decbytes"),
+			makeStat("Store: head chunk lines", store["headChunkLines"], ""),
+			makeStat("Store: decompressed bytes", store["decompressedBytes"], "decbytes"),
+			makeStat("Store: decompressed lines", store["decompressedLines"], ""),
+			makeStat("Store: compressed bytes", store["compressedBytes"], "decbytes"),
+			makeStat("Store: total duplicates", store["totalDuplicates"], ""))
+	}
+
+	ingester, ok := rawStats["ingester"].(map[string]interface{})
+	if ok {
+		stats = append(stats,
+			makeStat("Ingester: total reached", ingester["totalReached"], ""),
+			makeStat("Ingester: total chunks matched", ingester["totalChunksMatched"], ""),
+			makeStat("Ingester: total batches", ingester["totalBatches"], ""),
+			makeStat("Ingester: total lines sent", ingester["totalLinesSent"], ""),
+			makeStat("Ingester: head chunk bytes", ingester["headChunkBytes"], "decbytes"),
+			makeStat("Ingester: head chunk lines", ingester["headChunkLines"], ""),
+			makeStat("Ingester: decompressed bytes", ingester["decompressedBytes"], "decbytes"),
+			makeStat("Ingester: decompressed lines", ingester["decompressedLines"], ""),
+			makeStat("Ingester: compressed bytes", ingester["compressedBytes"], "decbytes"),
+			makeStat("Ingester: total duplicates", ingester["totalDuplicates"], ""))
+	}
+
+	return stats
+}
+
+func makeStat(name string, interfaceValue interface{}, unit string) data.QueryStat {
+	var value float64
+	switch v := interfaceValue.(type) {
+	case float64:
+		value = v
+	case int:
+		value = float64(v)
+	}
+
+	return data.QueryStat{
+		FieldConfig: data.FieldConfig{
+			DisplayName: name,
+			Unit:        unit,
+		},
+		Value: value,
+	}
 }

@@ -135,4 +135,85 @@ func TestAdjustFrame(t *testing.T) {
 		require.NotNil(t, timeFieldConfig)
 		require.Equal(t, float64(42000), timeFieldConfig.Interval)
 	})
+
+	t.Run("should parse response stats", func(t *testing.T) {
+		stats := map[string]interface{}{
+			"summary": map[string]interface{}{
+				"bytesProcessedPerSecond": 1,
+				"linesProcessedPerSecond": 2,
+				"totalBytesProcessed":     3,
+				"totalLinesProcessed":     4,
+				"execTime":                5.5,
+			},
+
+			"store": map[string]interface{}{
+				"totalChunksRef":        6,
+				"totalChunksDownloaded": 7,
+				"chunksDownloadTime":    8.8,
+				"headChunkBytes":        9,
+				"headChunkLines":        10,
+				"decompressedBytes":     11,
+				"decompressedLines":     12,
+				"compressedBytes":       13,
+				"totalDuplicates":       14,
+			},
+
+			"ingester": map[string]interface{}{
+				"totalReached":       15,
+				"totalChunksMatched": 16,
+				"totalBatches":       17,
+				"totalLinesSent":     18,
+				"headChunkBytes":     19,
+				"headChunkLines":     20,
+				"decompressedBytes":  21,
+				"decompressedLines":  22,
+				"compressedBytes":    23,
+				"totalDuplicates":    24,
+			},
+		}
+
+		meta := data.FrameMeta{
+			Custom: map[string]interface{}{
+				"stats": stats,
+			},
+		}
+
+		expected := []data.QueryStat{
+			{FieldConfig: data.FieldConfig{DisplayName: "Summary: bytes processed per second", Unit: "Bps"}, Value: 1},
+			{FieldConfig: data.FieldConfig{DisplayName: "Summary: lines processed per second", Unit: ""}, Value: 2},
+			{FieldConfig: data.FieldConfig{DisplayName: "Summary: total bytes processed", Unit: "decbytes"}, Value: 3},
+			{FieldConfig: data.FieldConfig{DisplayName: "Summary: total lines processed", Unit: ""}, Value: 4},
+			{FieldConfig: data.FieldConfig{DisplayName: "Summary: exec time", Unit: "s"}, Value: 5.5},
+
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: total chunks ref", Unit: ""}, Value: 6},
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: total chunks downloaded", Unit: ""}, Value: 7},
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: chunks download time", Unit: "s"}, Value: 8.8},
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: head chunk bytes", Unit: "decbytes"}, Value: 9},
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: head chunk lines", Unit: ""}, Value: 10},
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: decompressed bytes", Unit: "decbytes"}, Value: 11},
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: decompressed lines", Unit: ""}, Value: 12},
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: compressed bytes", Unit: "decbytes"}, Value: 13},
+			{FieldConfig: data.FieldConfig{DisplayName: "Store: total duplicates", Unit: ""}, Value: 14},
+
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: total reached", Unit: ""}, Value: 15},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: total chunks matched", Unit: ""}, Value: 16},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: total batches", Unit: ""}, Value: 17},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: total lines sent", Unit: ""}, Value: 18},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: head chunk bytes", Unit: "decbytes"}, Value: 19},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: head chunk lines", Unit: ""}, Value: 20},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: decompressed bytes", Unit: "decbytes"}, Value: 21},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: decompressed lines", Unit: ""}, Value: 22},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: compressed bytes", Unit: "decbytes"}, Value: 23},
+			{FieldConfig: data.FieldConfig{DisplayName: "Ingester: total duplicates", Unit: ""}, Value: 24},
+		}
+
+		result := parseStats(meta.Custom)
+
+		// NOTE: i compare it item-by-item otherwise the test-fail-error-message is very hard to read
+		require.Len(t, result, len(expected))
+
+		for i := 0; i < len(result); i++ {
+			require.Equal(t, expected[i], result[i])
+		}
+	})
 }

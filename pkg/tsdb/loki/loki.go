@@ -128,12 +128,25 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 // we extracted this part of the functionality to make it easy to unit-test it
 func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery) (data.Frames, error) {
-	value, err := api.Query(ctx, *query)
+	response, err := api.Query(ctx, *query)
 	if err != nil {
 		return data.Frames{}, err
 	}
 
-	return parseResponse(value, query)
+	if response.Error != nil {
+		return data.Frames{}, err
+	}
+
+	frames := response.Frames
+
+	for _, frame := range frames {
+		err = adjustFrame(frame, query)
+		if err != nil {
+			return data.Frames{}, err
+		}
+	}
+
+	return frames, nil
 }
 
 func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
