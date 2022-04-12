@@ -214,7 +214,7 @@ def enterprise_downstream_step(edition, ver_mode):
 
     return {
         'name': 'trigger-enterprise-downstream',
-        'image': 'grafana/drone-downstream',
+        'image': 'agnest/drone-downstream-test',
         'settings': {
             'server': 'https://drone.grafana.net',
             'token': from_secret(drone_token),

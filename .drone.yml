@@ -128,7 +128,7 @@ steps:
   - yarn install --immutable
   image: grafana/build-container:1.5.3
   name: initialize
-- image: grafana/drone-downstream
+- image: agnest/drone-downstream-test
   name: trigger-enterprise-downstream
   settings:
     params:
@@ -737,7 +737,7 @@ steps:
       - .drone.yml
     repo:
     - grafana/grafana
-- image: grafana/drone-downstream
+- image: agnest/drone-downstream-test
   name: trigger-enterprise-downstream
   settings:
     params:
@@ -4465,6 +4465,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: ef8131742bfada7f6e2a1bb542594145fd33b48920c8cf71e895f0396bd0ffa4
+hmac: 17f1c8ed4147db732269c564fecb98f9a7a7259e90699fe33a17dc24dccd7ed0
 
 ...
