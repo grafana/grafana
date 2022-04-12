@@ -10,9 +10,9 @@ interface VariableQueryFieldProps<T> {
   options: SelectableValue[];
   value: T | null;
   label: string;
+  inputId: string;
   allowCustomValue?: boolean;
   isLoading?: boolean;
-  inputId?: string;
 }
 
 export const VariableQueryField = <T extends string | VariableQueryType>({
@@ -22,9 +22,10 @@ export const VariableQueryField = <T extends string | VariableQueryType>({
   options,
   allowCustomValue = false,
   isLoading = false,
+  inputId,
 }: VariableQueryFieldProps<T>) => {
   return (
-    <InlineField label={label} labelWidth={LABEL_WIDTH} htmlFor={label}>
+    <InlineField label={label} labelWidth={LABEL_WIDTH} htmlFor={inputId}>
       <Select
         menuShouldPortal
         aria-label={label}
@@ -34,7 +35,7 @@ export const VariableQueryField = <T extends string | VariableQueryType>({
         onChange={({ value }) => onChange(value!)}
         options={options}
         isLoading={isLoading}
-        inputId={label}
+        inputId={inputId}
       />
     </InlineField>
   );

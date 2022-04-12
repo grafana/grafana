@@ -32,7 +32,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, region, namespace);
   const dimensionKeys = useDimensionKeys(datasource, region, namespace, metricName);
-  const valueDimensionKeys = useDimensionKeys(datasource, region, namespace, metricName, valueDimensions ?? {});
+  const keysForDimensionFilter = useDimensionKeys(datasource, region, namespace, metricName, valueDimensions ?? {});
 
   const onRegionChange = async (region: string) => {
     const validatedQuery = await sanitizeQuery({
@@ -91,7 +91,6 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     VariableQueryType.DimensionKeys,
     VariableQueryType.DimensionValues,
   ].includes(parsedQuery.queryType);
-
   return (
     <>
       <VariableQueryField
@@ -99,6 +98,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
         options={queryTypes}
         onChange={(value: VariableQueryType) => onQueryChange({ ...parsedQuery, queryType: value })}
         label="Query Type"
+        inputId={`variable-query-type-${query.refId}`}
       />
       {hasRegionField && (
         <VariableQueryField
@@ -107,6 +107,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           onChange={(value: string) => onRegionChange(value)}
           label="Region"
           isLoading={regionIsLoading}
+          inputId={`variable-query-region-${query.refId}`}
         />
       )}
       {hasNamespaceField && (
@@ -115,6 +116,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           options={namespaces}
           onChange={(value: string) => onNamespaceChange(value)}
           label="Namespace"
+          inputId={`variable-query-namespace-${query.refId}`}
         />
       )}
       {parsedQuery.queryType === VariableQueryType.DimensionValues && (
@@ -124,12 +126,14 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             options={metrics}
             onChange={(value: string) => onQueryChange({ ...parsedQuery, metricName: value })}
             label="Metric"
+            inputId={`variable-query-metric-${query.refId}`}
           />
           <VariableQueryField
             value={dimensionKey || null}
             options={dimensionKeys}
             onChange={(value: string) => onQueryChange({ ...parsedQuery, dimensionKey: value })}
             label="Dimension Key"
+            inputId={`variable-query-dimension-key-${query.refId}`}
           />
           <InlineField label="Dimensions" labelWidth={20} tooltip="Dimensions to filter the returned values on">
             <Dimensions
@@ -137,7 +141,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
               onChange={(dimensions) => {
                 onChange({ ...parsedQuery, valueDimensions: dimensions });
               }}
-              dimensionKeys={valueDimensionKeys}
+              dimensionKeys={keysForDimensionFilter}
               disableExpressions={true}
               datasource={datasource}
             />

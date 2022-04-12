@@ -122,7 +122,14 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.namespace = dimensionValuesQuery[2];
     newQuery.metricName = dimensionValuesQuery[3];
     newQuery.dimensionKey = dimensionValuesQuery[4];
-    newQuery.valueDimensions = dimensionValuesQuery[6] ? JSON.parse(dimensionValuesQuery[6]) : {};
+    newQuery.valueDimensions = {};
+    if (!!dimensionValuesQuery[6]) {
+      try {
+        newQuery.valueDimensions = JSON.parse(dimensionValuesQuery[6]);
+      } catch {
+        throw new Error(`unable to migrate poorly formed filters: ${dimensionValuesQuery[6]}`);
+      }
+    }
     return newQuery;
   }
 

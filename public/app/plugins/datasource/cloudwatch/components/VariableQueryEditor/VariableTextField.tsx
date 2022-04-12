@@ -14,7 +14,7 @@ interface VariableTextFieldProps {
 export const VariableTextField: FC<VariableTextFieldProps> = ({ label, onBlur, placeholder, value, tooltip }) => {
   const [localValue, setLocalValue] = useState(value);
   return (
-    <InlineField label={label} labelWidth={LABEL_WIDTH} tooltip={tooltip} grow={true}>
+    <InlineField label={label} labelWidth={LABEL_WIDTH} tooltip={tooltip} grow>
       <Input
         aria-label={label}
         placeholder={placeholder}
