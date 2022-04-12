@@ -1,3 +1,10 @@
+<!-- 8.4.6 START -->
+
+# 8.4.6 (2022-04-12)
+
+- **Security:** Fixes CVE-2022-24812. For more information, see our [blog](https://grafana.com/blog/2022/04/12/grafana-enterprise-8.4.6-released-with-high-severity-security-fix/)
+
+<!-- 8.4.6 END -->
 <!-- 8.4.5 START -->
 
 # 8.4.5 (2022-03-31)
