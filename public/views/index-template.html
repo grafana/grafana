@@ -20,10 +20,12 @@
     <link rel="icon" type="image/png" href="[[.FavIcon]]" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
     <link rel="mask-icon" href="[[.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
-    <link
-      rel="stylesheet"
-      href="[[.ContentDeliveryURL]]public/build/grafana.[[ .Theme ]].<%= compilation.hash %>.css"
-    />
+
+    [[ if eq .Theme "light" ]]
+    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>" />
+    [[ else ]]
+    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>" />
+    [[ end ]]
 
     <script nonce="[[.Nonce]]">
       performance.mark('frontend_boot_css_time_seconds');

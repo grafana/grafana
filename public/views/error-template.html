@@ -10,7 +10,11 @@
 
     <base href="[[.AppSubUrl]]/" />
 
-    <link rel="stylesheet" href="public/build/grafana.[[ .Theme ]].<%= compilation.hash %>.css" />
+    [[ if eq .Theme "light" ]]
+    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>" />
+    [[ else ]]
+    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>" />
+    [[ end ]]
 
     <link rel="icon" type="image/png" href="public/img/fav32.png" />
     <link rel="mask-icon" href="public/img/grafana_mask_icon.svg" color="#F05A28" />
