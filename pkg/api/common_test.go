@@ -405,7 +405,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		// Perform role registration
 		err := hs.declareFixedRoles()
 		require.NoError(t, err)
-		err = ac.RegisterFixedRoles()
+		err = ac.RegisterFixedRoles(context.Background())
 		require.NoError(t, err)
 		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, database.ProvideService(db))
 		require.NoError(t, err)

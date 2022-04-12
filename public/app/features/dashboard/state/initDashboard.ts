@@ -19,6 +19,7 @@ import { config, locationService } from '@grafana/runtime';
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { getIfExistsLastKey } from '../../variables/state/selectors';
 import { toStateKey } from 'app/features/variables/utils';
+import store from 'app/core/store';
 
 export interface InitDashboardArgs {
   urlUid?: string;
@@ -34,6 +35,13 @@ async function fetchDashboard(
   dispatch: ThunkDispatch,
   getState: () => StoreState
 ): Promise<DashboardDTO | null> {
+  // When creating new or adding panels to a dashboard from explore we load it from local storage
+  const model = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
+  if (model) {
+    removeDashboardToFetchFromLocalStorage();
+    return model;
+  }
+
   try {
     switch (args.routeName) {
       case DashboardRoutes.Home: {
@@ -200,7 +208,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   };
 }
 
-function getNewDashboardModelData(urlFolderId?: string | null): any {
+export function getNewDashboardModelData(urlFolderId?: string | null): any {
   const data = {
     meta: {
       canStar: false,
@@ -225,4 +233,14 @@ function getNewDashboardModelData(urlFolderId?: string | null): any {
   }
 
   return data;
+}
+
+const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
+
+export function setDashboardToFetchFromLocalStorage(model: DashboardDTO) {
+  store.setObject(DASHBOARD_FROM_LS_KEY, model);
+}
+
+export function removeDashboardToFetchFromLocalStorage() {
+  store.delete(DASHBOARD_FROM_LS_KEY);
 }

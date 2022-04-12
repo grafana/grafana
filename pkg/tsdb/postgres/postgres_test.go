@@ -74,7 +74,7 @@ func TestGenerateConnectionString(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='[::1]' dbname='database' sslmode='verify-full'",
+			expConnStr:  "user='user' password='password' host='::1' dbname='database' sslmode='verify-full'",
 		},
 		{
 			desc:        "Ipv6/port host",
@@ -83,7 +83,7 @@ func TestGenerateConnectionString(t *testing.T) {
 			password:    "password",
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
-			expConnStr:  "user='user' password='password' host='[::1]' dbname='database' port=1234 sslmode='verify-full'",
+			expConnStr:  "user='user' password='password' host='::1' dbname='database' port=1234 sslmode='verify-full'",
 		},
 		{
 			desc:        "Invalid port",
