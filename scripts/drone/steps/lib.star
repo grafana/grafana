@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.32'
+grabpl_version = 'v2.9.33'
 build_image = 'grafana/build-container:1.5.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -266,17 +266,14 @@ def store_storybook_step(edition, ver_mode, trigger=None):
 
     commands = []
     if ver_mode == 'release':
-        channels = ['latest', '${DRONE_TAG}', ]
+        commands.extend([
+            './bin/grabpl store-storybook --deployment latest --src-bucket grafana-prerelease --src-dir artifacts/storybook',
+            './bin/grabpl store-storybook --deployment ${DRONE_TAG} --src-bucket grafana-prerelease --src-dir artifacts/storybook',
+        ])
+
     else:
-        channels = ['canary', ]
-    commands.extend([
-                        'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
-                        'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
-                    ] + [
-                        'gsutil -m rm -r gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{} && gsutil -m cp -r ./packages/grafana-ui/dist/storybook/* gs://$${{PRERELEASE_BUCKET}}/artifacts/storybook/{}'.format(
-                            c, c)
-                        for c in channels
-                    ])
+        # main pipelines should deploy storybook to grafana-storybook/canary public bucket
+        commands = ['./bin/grabpl store-storybook --deployment canary --src-bucket grafana-storybook',]
 
     step = {
         'name': 'store-storybook',

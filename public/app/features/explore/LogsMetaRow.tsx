@@ -71,7 +71,7 @@ export const LogsMetaRow: React.FC<Props> = React.memo(
         label: 'Your logs might have incorrectly escaped content',
         value: (
           <Tooltip
-            content="We suggest to try to fix the escaping of your log lines first. This is an experimental feature, your logs might not be correctly escaped."
+            content="Fix incorrectly escaped newline and tab sequences in log lines. Manually review the results to confirm that the replacements are correct."
             placement="right"
           >
             <Button variant="secondary" size="sm" onClick={onEscapeNewlines}>

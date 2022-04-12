@@ -456,25 +456,10 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		assert.Equal(t, "http://host/root/path/to/folder/", req.URL.String())
 
-		assert.Empty(t, req.Header.Get("Origin"))
-		assert.Empty(t, req.Header.Get("Referer"))
 		assert.Equal(t, "stillthere", req.Header.Get("X-Canary"))
 	})
 
 	t.Run("When proxying a datasource that has OAuth token pass-through enabled", func(t *testing.T) {
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetAuthInfoQuery) error {
-			query.Result = &models.UserAuth{
-				Id:                1,
-				UserId:            1,
-				AuthModule:        "generic_oauth",
-				OAuthAccessToken:  "testtoken",
-				OAuthRefreshToken: "testrefreshtoken",
-				OAuthTokenType:    "Bearer",
-				OAuthExpiry:       time.Now().AddDate(0, 0, 1),
-			}
-			return nil
-		})
-
 		ds := &models.DataSource{
 			Type: "custom-datasource",
 			Url:  "http://host/root/",

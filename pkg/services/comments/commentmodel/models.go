@@ -56,9 +56,9 @@ func (s Settings) Value() (driver.Value, error) {
 func (s *Settings) Scan(value interface{}) error {
 	switch v := value.(type) {
 	case string:
-		return json.Unmarshal([]byte(v), &s)
+		return json.Unmarshal([]byte(v), s)
 	case []uint8:
-		return json.Unmarshal(v, &s)
+		return json.Unmarshal(v, s)
 	default:
 		return fmt.Errorf("type assertion on scan failed: got %T", value)
 	}

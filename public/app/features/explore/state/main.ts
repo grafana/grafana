@@ -2,7 +2,7 @@ import { AnyAction } from 'redux';
 import { DataSourceSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { ExploreUrlState, serializeStateToUrlParam, SplitOpen, UrlQueryMap } from '@grafana/data';
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
-import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreState, RichHistoryQuery } from 'app/types/explore';
 import { paneReducer } from './explorePane';
 import { createAction } from '@reduxjs/toolkit';
 import { getUrlStateFromPaneState, makeExplorePaneState } from './utils';
@@ -19,7 +19,8 @@ export interface SyncTimesPayload {
 }
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
 
-export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
+export const richHistoryUpdatedAction =
+  createAction<{ richHistory: RichHistoryQuery[]; exploreId: ExploreId }>('explore/richHistoryUpdated');
 export const richHistoryStorageFullAction = createAction('explore/richHistoryStorageFullAction');
 export const richHistoryLimitExceededAction = createAction('explore/richHistoryLimitExceededAction');
 
@@ -157,7 +158,6 @@ export const initialExploreState: ExploreState = {
   syncedTimes: false,
   left: initialExploreItemState,
   right: undefined,
-  richHistory: [],
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
 };
@@ -205,13 +205,6 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
 
   if (syncTimesAction.match(action)) {
     return { ...state, syncedTimes: action.payload.syncedTimes };
-  }
-
-  if (richHistoryUpdatedAction.match(action)) {
-    return {
-      ...state,
-      richHistory: action.payload.richHistory,
-    };
   }
 
   if (richHistoryStorageFullAction.match(action)) {

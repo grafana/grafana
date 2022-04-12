@@ -83,6 +83,7 @@ describe('SearchResultsFilter', () => {
       query: { ...searchQuery, tag: [] },
     });
     const tagComponent = await screen.findByLabelText('Tag filter');
+    await tagComponent.focus();
     await selectOptionInTest(tagComponent, 'tag1');
 
     expect(mockFilterByTags).toHaveBeenCalledTimes(1);

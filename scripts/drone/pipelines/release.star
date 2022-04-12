@@ -56,27 +56,12 @@ load(
 )
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-
-def build_npm_packages_step(edition, ver_mode):
-    if edition == 'enterprise' or ver_mode != 'release':
-        return None
-
-    return {
-        'name': 'build-npm-packages',
-        'image': build_image,
-        'depends_on': [
-            # Has to run after store-storybook since this step cleans the files publish-storybook depends on
-            'store-storybook',
-        ],
-        'commands': ['./scripts/build/build-npm-packages.sh ${DRONE_TAG}'],
-    }
-
 def store_npm_packages_step():
     return {
         'name': 'store-npm-packages',
         'image': publish_image,
         'depends_on': [
-            'build-npm-packages',
+            'build-frontend-packages',
         ],
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
@@ -231,12 +216,10 @@ def get_steps(edition, ver_mode):
         publish_steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss))
     if should_publish:
         publish_step = store_storybook_step(edition=edition, ver_mode=ver_mode)
-        build_npm_step = build_npm_packages_step(edition=edition, ver_mode=ver_mode)
         store_npm_step = store_npm_packages_step()
         if publish_step:
             publish_steps.append(publish_step)
-        if build_npm_step and store_npm_step:
-            publish_steps.append(build_npm_step)
+        if store_npm_step:
             publish_steps.append(store_npm_step)
     windows_package_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
 
@@ -356,8 +339,9 @@ def publish_artifacts_step(mode):
         'image': publish_image,
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
+            'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
         },
-        'commands': ['./bin/grabpl artifacts publish {}--tag ${{TAG}} --src-bucket grafana-prerelease'.format(security)],
+        'commands': ['./bin/grabpl artifacts publish {}--tag ${{TAG}} --src-bucket $${{PRERELEASE_BUCKET}}'.format(security)],
         'depends_on': ['grabpl'],
     }
 

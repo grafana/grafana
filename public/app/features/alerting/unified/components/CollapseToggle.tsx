@@ -34,7 +34,9 @@ export const CollapseToggle: FC<Props> = ({
       icon={isCollapsed ? 'angle-right' : 'angle-down'}
       onClick={() => onToggle(!isCollapsed)}
       {...restOfProps}
-    />
+    >
+      {text}
+    </Button>
   );
 };
 
