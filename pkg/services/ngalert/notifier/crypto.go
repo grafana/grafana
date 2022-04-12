@@ -31,7 +31,7 @@ func NewCrypto(secrets secrets.Service, configs configurationStore) Crypto {
 }
 
 func (e *encryption) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error {
-	// Get the last known working configuration
+	// Get the last known working configuration.
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: orgId}
 	if err := e.configs.GetLatestAlertmanagerConfiguration(ctx, &query); err != nil {
 		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
@@ -58,12 +58,12 @@ func (e *encryption) LoadSecureSettings(ctx context.Context, orgId int64, receiv
 
 			cgmr, ok := currentReceiverMap[gr.UID]
 			if !ok {
-				// it tries to update a receiver that didn't previously exist
+				// It tries to update a receiver that didn't previously exist
 				return UnknownReceiverError{UID: gr.UID}
 			}
 
-			// frontend sends only the secure settings that have to be updated
-			// therefore we have to copy from the last configuration only those secure settings not included in the request
+			// Frontend sends only the secure settings that have to be updated
+			// Therefore we have to copy from the last configuration only those secure settings not included in the request
 			for key := range cgmr.SecureSettings {
 				_, ok := gr.SecureSettings[key]
 				if !ok {
@@ -103,6 +103,7 @@ func (e *encryption) getDecryptedSecret(r *definitions.PostableGrafanaReceiver, 
 	return string(decryptedValue), nil
 }
 
+// Encrypt delegates encryption to secrets.Service.
 func (e *encryption) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
 	return e.secrets.Encrypt(ctx, payload, opt)
 }
