@@ -257,7 +257,7 @@
     "@grafana/slate-react": "0.22.10-grafana",
     "@grafana/ui": "workspace:*",
     "@jaegertracing/jaeger-ui-components": "workspace:*",
-    "@kusto/monaco-kusto": "4.1.6",
+    "@kusto/monaco-kusto": "5.0.0",
     "@lezer/common": "0.15.12",
     "@lezer/lr": "0.15.8",
     "@lingui/core": "3.13.2",
