@@ -35,7 +35,6 @@ func Test_PluginClient(t *testing.T) {
 	newScenario(t, []func(plugin *plugins.Plugin){}, func(t *testing.T, ctx *scenarioCtx) {
 		t.Run("Implemented handlers", func(t *testing.T) {
 			t.Run("Collect metrics should return expected result", func(t *testing.T) {
-
 				ctx.pluginClient.CollectMetricsHandlerFunc = func(_ context.Context, _ *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 					return &backend.CollectMetricsResult{
 						PrometheusMetrics: []byte("hello"),
