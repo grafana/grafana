@@ -112,7 +112,6 @@ module.exports = {
   },
   // https://webpack.js.org/plugins/split-chunks-plugin/#split-chunks-example-3
   optimization: {
-    moduleIds: 'named',
     runtimeChunk: 'single',
     splitChunks: {
       chunks: 'all',
