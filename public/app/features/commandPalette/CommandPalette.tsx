@@ -76,7 +76,7 @@ const RenderResults = () => {
   const styles = useStyles2(getSearchStyles);
 
   return (
-    <div style={{ padding: `8px 0` }}>
+    <div className={styles.resultsContainer}>
       <KBarResults
         items={results}
         onRender={({ item, active }) =>
@@ -140,5 +140,8 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
     fontSize: theme.typography.h6.fontSize,
     fontWeight: theme.typography.body.fontWeight,
     color: theme.colors.text.secondary,
+  }),
+  resultsContainer: css({
+    padding: theme.spacing(2, 0),
   }),
 });
