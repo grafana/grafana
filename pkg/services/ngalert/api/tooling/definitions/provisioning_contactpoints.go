@@ -17,7 +17,7 @@ import (
 
 // swagger:route POST /api/provisioning/contactpoints provisioning RoutePostContactpoints
 //
-// Create a contactpoint
+// Create a contactpoint.
 //
 //     Consumes:
 //     - application/json
@@ -28,7 +28,7 @@ import (
 
 // swagger:route PUT /api/provisioning/contactpoints provisioning RoutePutContactpoints
 //
-// Create a contactpoint
+// Update an existing contactpoint.
 //
 //     Consumes:
 //     - application/json
@@ -39,7 +39,7 @@ import (
 
 // swagger:route DELETE /api/provisioning/contactpoints/{ID} provisioning RouteDeleteContactpoints
 //
-// Create a contactpoint
+// Delete a contactpoint.
 //
 //     Consumes:
 //     - application/json
@@ -149,5 +149,5 @@ func (e *EmbeddedContactPoint) ResourceID() string {
 }
 
 func (e *EmbeddedContactPoint) ResourceType() string {
-	return "contactpoint"
+	return "contactPoint"
 }
