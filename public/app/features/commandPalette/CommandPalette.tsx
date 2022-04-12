@@ -46,12 +46,11 @@ export const CommandPalette = () => {
   });
 
   useEffect(() => {
-    const setGlobalActions = async () => {
+    (async () => {
       const staticActions = getGlobalActions(navBarTree);
       const dashAct = await getDashboardNavActions('go/dashboard');
       setActions([...staticActions, ...dashAct]);
-    };
-    setGlobalActions();
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
