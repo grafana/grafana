@@ -7,6 +7,4 @@ hide_menu = true
 
 # Release notes for Grafana 8.4.6
 
-### Features and enhancements
-
-- **[v8.4.x] Access Control:** Generate different cache key for api keys and users. (Enterprise)
+- **Security:** Fixes CVE-2022-24812. For more information, see our [blog](https://grafana.com/blog/2022/04/12/grafana-enterprise-8.4.6-released-with-high-severity-security-fix/)
