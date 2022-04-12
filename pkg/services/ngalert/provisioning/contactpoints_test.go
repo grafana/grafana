@@ -144,6 +144,37 @@ func TestContactPointService(t *testing.T) {
 	})
 }
 
+func TestContactPointInUse(t *testing.T) {
+	result := isContactPointInUse("test", []*definitions.Route{
+		{
+			Receiver: "not-test",
+			Routes: []*definitions.Route{
+				{
+					Receiver: "not-test",
+				},
+				{
+					Receiver: "test",
+				},
+			},
+		},
+	})
+	require.True(t, result)
+	result = isContactPointInUse("test", []*definitions.Route{
+		{
+			Receiver: "not-test",
+			Routes: []*definitions.Route{
+				{
+					Receiver: "not-test",
+				},
+				{
+					Receiver: "not-test",
+				},
+			},
+		},
+	})
+	require.False(t, result)
+}
+
 func createContactPointServiceSut(secretService secrets.Service) *ContactPointService {
 	return &ContactPointService{
 		amStore:           newFakeAMConfigStore(),

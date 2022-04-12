@@ -301,16 +301,29 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 	if err != nil {
 		return err
 	}
-	// TODO: only delete if not used by any notification policy,
-	//       otherwise it results in a invalid config.
-	for _, receiver := range cfg.AlertmanagerConfig.Receivers {
-		for index, grafanaReceiver := range receiver.GrafanaManagedReceivers {
+	// Indicates if the full contact point is removed or just one of the
+	// configurations, as a contactpoint can consist of any number of
+	// configurations.
+	fullRemoval := false
+	// Name of the contact point that will be removed, might be used if a
+	// full removal is done to check if it's referenced in any route.
+	name := ""
+	for i, receiver := range cfg.AlertmanagerConfig.Receivers {
+		for j, grafanaReceiver := range receiver.GrafanaManagedReceivers {
 			if grafanaReceiver.UID == uid {
-				receiver.GrafanaManagedReceivers = append(receiver.GrafanaManagedReceivers[:index], receiver.GrafanaManagedReceivers[index+1:]...)
+				name = grafanaReceiver.Name
+				receiver.GrafanaManagedReceivers = append(receiver.GrafanaManagedReceivers[:j], receiver.GrafanaManagedReceivers[j+1:]...)
+				// if this was the last receiver we removed, we remove the whole receiver
+				if len(receiver.GrafanaManagedReceivers) == 0 {
+					fullRemoval = true
+					cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers[:i], cfg.AlertmanagerConfig.Receivers[i+1:]...)
+				}
 				break
 			}
 		}
-		// TODO: if it was the last element in the slice, delete the whole contact point.
+	}
+	if fullRemoval && isContactPointInUse(name, []*apimodels.Route{cfg.AlertmanagerConfig.Route}) {
+		return fmt.Errorf("contact point '%s' is currently used by a notification policy", name)
 	}
 	data, err := json.Marshal(cfg)
 	if err != nil {
@@ -349,6 +362,21 @@ func (ecp *ContactPointService) getCurrentConfig(ctx context.Context, orgID int6
 		return nil, "", err
 	}
 	return cfg, query.Result.ConfigurationHash, nil
+}
+
+func isContactPointInUse(name string, routes []*apimodels.Route) bool {
+	if len(routes) == 0 {
+		return false
+	}
+	for _, route := range routes {
+		if route.Receiver == name {
+			return true
+		}
+		if isContactPointInUse(name, route.Routes) {
+			return true
+		}
+	}
+	return false
 }
 
 func (ecp *ContactPointService) decryptValue(value string) (string, error) {
