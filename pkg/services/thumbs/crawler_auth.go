@@ -35,5 +35,7 @@ func (o *staticCrawlerAuth) GetUserId(orgId int64) int64 {
 }
 
 func (o *OSSCrawlerAuthSetupService) Setup(ctx context.Context) (CrawlerAuth, error) {
+	// userId:0 and ROLE_ADMIN grants the crawler process permissions to view all dashboards in all folders & orgs
+	// the process doesn't and shouldn't actually need to edit/modify any resources from the UI
 	return &staticCrawlerAuth{userId: 0, orgRole: models.ROLE_ADMIN}, nil
 }
