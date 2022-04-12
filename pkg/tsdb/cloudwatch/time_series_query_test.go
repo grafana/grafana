@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -135,24 +136,40 @@ func TestTimeSeriesQuery(t *testing.T) {
 		}}}})
 		assert.EqualError(t, err, "invalid time range: start time must be before end time")
 	})
+}
 
-	t.Run("GetMetricDataWithContext passes query alias as label", func(t *testing.T) {
-		cwClient = fakeCWClient{}
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
-		})
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext_passes_query_alias_as_label(t *testing.T) {
+	origNewCWClient := NewCWClient
+	t.Cleanup(func() {
+		NewCWClient = origNewCWClient
+	})
+	var cwClient fakeCWClient
+	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+		return &cwClient
+	}
 
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
-			Queries: []backend.DataQuery{
-				{
-					RefID: "A",
-					TimeRange: backend.TimeRange{
-						From: time.Now().Add(time.Hour * -2),
-						To:   time.Now().Add(time.Hour * -1),
-					},
-					JSON: json.RawMessage(`{
+	testCases := map[string]string{
+		"not-yet-migrated legacy alias": "{{ period  }} some words {{   InstanceId }}",
+		"migrated dynamic labels alias": "${PROP('Period')} some words ${PROP('Dim.InstanceId')}",
+	}
+	for name, inputAlias := range testCases {
+		t.Run(name, func(t *testing.T) {
+			cwClient = fakeCWClient{}
+			im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+				return datasourceInfo{}, nil
+			})
+			executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+
+			_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+				Queries: []backend.DataQuery{
+					{
+						RefID: "A",
+						TimeRange: backend.TimeRange{
+							From: time.Now().Add(time.Hour * -2),
+							To:   time.Now().Add(time.Hour * -1),
+						},
+						JSON: json.RawMessage(fmt.Sprintf(`{
 						"type":      "timeSeriesQuery",
 						"subtype":   "metrics",
 						"namespace": "AWS/EC2",
@@ -163,7 +180,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 						},
 						"region": "us-east-2",
 						"id": "a",
-						"alias": "${PROP('Period')} some words ${PROP('Dim.InstanceId')}",
+						"alias": "%s",
 						"statistics": [
 						  "Maximum"
 						],
@@ -171,16 +188,17 @@ func TestTimeSeriesQuery(t *testing.T) {
 						"hide": false,
 						"matchExact": true,
 						"refId": "A"
-					}`),
+					}`, inputAlias)),
+					},
 				},
-			},
+			})
+
+			assert.NoError(t, err)
+			assert.Len(t, cwClient.calls.getMetricDataWithContext, 1)
+			assert.Len(t, cwClient.calls.getMetricDataWithContext[0].MetricDataQueries, 1)
+			require.NotNil(t, cwClient.calls.getMetricDataWithContext[0].MetricDataQueries[0].Label)
+
+			assert.Equal(t, "${PROP('Period')} some words ${PROP('Dim.InstanceId')}", *cwClient.calls.getMetricDataWithContext[0].MetricDataQueries[0].Label)
 		})
-
-		assert.NoError(t, err)
-		assert.Len(t, cwClient.calls.getMetricDataWithContext, 1)
-		assert.Len(t, cwClient.calls.getMetricDataWithContext[0].MetricDataQueries, 1)
-		require.NotNil(t, cwClient.calls.getMetricDataWithContext[0].MetricDataQueries[0].Label)
-
-		assert.Equal(t, "${PROP('Period')} some words ${PROP('Dim.InstanceId')}", *cwClient.calls.getMetricDataWithContext[0].MetricDataQueries[0].Label)
-	})
+	}
 }
