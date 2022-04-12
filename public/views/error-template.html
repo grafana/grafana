@@ -11,9 +11,9 @@
     <base href="[[.AppSubUrl]]/" />
 
     [[ if eq .Theme "light" ]]
-    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>" />
+    <link rel="stylesheet" href="public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>" />
     [[ else ]]
-    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>" />
+    <link rel="stylesheet" href="public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>" />
     [[ end ]]
 
     <link rel="icon" type="image/png" href="public/img/fav32.png" />
