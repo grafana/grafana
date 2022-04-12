@@ -26,6 +26,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.background.secondary,
     color: theme.colors.error.text,
     fontFamily: theme.typography.fontFamilyMonospace,
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
   icon: css({
     marginRight: theme.spacing(1),
