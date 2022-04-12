@@ -2,7 +2,7 @@
 
 API_DIR = definitions
 GO_PKG_FILES = $(shell find $(API_DIR) -name *.go -print)
-SWAGGER_TAG ?= v0.29.0
+SWAGGER_TAG ?= latest
 
 PATH_DOWN = pkg/services/ngalert/api/tooling
 PATH_UP = ../../../../..
@@ -11,11 +11,7 @@ PATH_UP = ../../../../..
 
 GENERATED_GO_MATCHERS = ./go/*.go
 
-UNAME_S := $(shell uname -s)
-
 spec.json: $(GO_PKG_FILES)
-ifeq ($(UNAME_S), Linux)
-	@echo "Running on Linux"
 	# this is slow because this image does not use the cache
 	# https://github.com/go-swagger/go-swagger/blob/v0.27.0/Dockerfile#L5
 	docker run --rm -it \
@@ -23,19 +19,18 @@ ifeq ($(UNAME_S), Linux)
 		-v $$(pwd)/$(PATH_UP):/src \
 		quay.io/goswagger/swagger:$(SWAGGER_TAG) \
 		generate spec -m -o $@
-endif
-ifeq ($(UNAME_S), Darwin)
-	# right now there is no compatible macos docker image
-	@echo "Running on MacOS"
+
+ensure_go-swagger_mac:
 	@hash swagger &>/dev/null || (brew tap go-swagger/go-swagger && brew install go-swagger)
+
+spec.json-mac: ensure_go-swagger_mac $(GO_PKG_FILES)
 	swagger generate spec -m -w $(API_DIR) -o spec.json
-endif
 
 post.json: spec.json
 	go run cmd/clean-swagger/main.go -if $(<) -of $@
 
 swagger-codegen-api:
-	docker run --rm -v $$(pwd):/local --user $$(id -u):$$(id -g) swagger-codegen:local generate \
+	docker run --rm -v $$(pwd):/local --user $$(id -u):$$(id -g) swaggerapi/swagger-codegen-cli generate \
 	-i /local/post.json \
 	-l go-server \
 	-Dapis \
@@ -58,6 +53,6 @@ clean:
 	rm -rf ./go
 
 serve: post.json
-	docker run --rm -p 80:8080 -v $$(pwd):/tmp -e SWAGGER_FILE=/tmp/$(<) swaggerapi/swagger-editor:v4.2.2
+	docker run --rm -p 80:8080 -v $$(pwd):/tmp -e SWAGGER_FILE=/tmp/$(<) swaggerapi/swagger-editor
 
 all: post.json swagger-codegen-api fix copy-files clean	
