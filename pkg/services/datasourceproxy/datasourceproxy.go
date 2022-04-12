@@ -54,7 +54,7 @@ type DataSourceProxyService struct {
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
-		p.ProxyDatasourceRequestWithUID(c)
+		c.JsonApiErr(http.StatusBadRequest, "id is invalid", err)
 		return
 	}
 	p.ProxyDatasourceRequestWithID(c, id)
@@ -63,7 +63,7 @@ func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
 func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *models.ReqContext) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
-	dsUID := web.Params(c.Req)[":id"]
+	dsUID := web.Params(c.Req)[":uid"]
 	if !util.IsValidShortUID(dsUID) {
 		c.JsonApiErr(http.StatusBadRequest, "UID is invalid", nil)
 		return
@@ -128,7 +128,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *models.ReqContext, ds
 	proxy.HandleRequest()
 }
 
-var proxyPathRegexp = regexp.MustCompile(`^\/api\/datasources\/proxy\/[\w]+\/?`)
+var proxyPathRegexp = regexp.MustCompile(`^\/api\/datasources\/proxy\/([\d]+|uid\/[\w]+)\/?`)
 
 func extractProxyPath(originalRawPath string) string {
 	return proxyPathRegexp.ReplaceAllString(originalRawPath, "")

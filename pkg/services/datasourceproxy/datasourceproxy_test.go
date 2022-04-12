@@ -25,15 +25,15 @@ func TestDataProxy(t *testing.T) {
 				"api/services/afsd%2Fafsd/operations",
 			},
 			{
-				"/api/datasources/proxy/26MI0wZ7k",
+				"/api/datasources/proxy/uid/26MI0wZ7k",
 				"",
 			},
 			{
-				"/api/datasources/proxy/26MI0wZ7k/some/thing",
+				"/api/datasources/proxy/uid/26MI0wZ7k/some/thing",
 				"some/thing",
 			},
 			{
-				"/api/datasources/proxy/26MI0wZ7k/api/services/afsd%2Fafsd/operations",
+				"/api/datasources/proxy/uid/26MI0wZ7k/api/services/afsd%2Fafsd/operations",
 				"api/services/afsd%2Fafsd/operations",
 			},
 		}
