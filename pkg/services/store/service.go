@@ -110,7 +110,7 @@ func (s *standardStorageService) Read(ctx context.Context, user *models.SignedIn
 }
 
 func isFileTypeValid(filetype string) bool {
-	if (filetype == "image/jpeg") || (filetype == "image/jpg") || (filetype == "image/gif") || (filetype == "image/png") || (filetype != "image/svg+xml") || (filetype != "image/webp") {
+	if (filetype == "image/jpeg") || (filetype == "image/jpg") || (filetype == "image/gif") || (filetype == "image/png") || (filetype == "image/svg+xml") || (filetype == "image/webp") {
 		return true
 	}
 	return false
