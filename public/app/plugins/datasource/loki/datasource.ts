@@ -162,23 +162,6 @@ export class LokiDatasource
     });
   }
 
-  _querySingle(query: LokiQuery, range: TimeRange, app: CoreApp, requestId: string): Observable<DataQueryResponse> {
-    const intervalInfo = rangeUtil.calculateInterval(range, 1);
-    const request: DataQueryRequest<LokiQuery> = {
-      targets: [query],
-      requestId,
-      interval: intervalInfo.interval,
-      intervalMs: intervalInfo.intervalMs,
-      range: range,
-      scopedVars: {},
-      timezone: 'UTC',
-      app,
-      startTime: Date.now(),
-    };
-
-    return this.query(request);
-  }
-
   query(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     const subQueries: Array<Observable<DataQueryResponse>> = [];
     const scopedVars = {
