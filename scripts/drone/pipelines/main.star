@@ -241,42 +241,15 @@ def main_pipelines(edition):
             name='notify-drone-changes', slack_channel='slack-webhooks-test', trigger=drone_change_trigger, template=drone_change_template, secret='drone-changes-webhook',
         ),
     ]
-    if edition != 'enterprise':
-        pipelines.append(pipeline(
-            name='publish-main', edition=edition, trigger=dict(trigger, repo = ['grafana/grafana']),
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, install_deps=False) + store_steps,
-            depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'windows-main',],
-        ))
+    pipelines.append(pipeline(
+        name='publish-main', edition=edition, trigger=dict(trigger, repo = ['grafana/grafana']),
+        steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, install_deps=False) + store_steps,
+        depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'windows-main',],
+    ))
 
-        pipelines.append(notify_pipeline(
-            name='notify-main', slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
-            depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'windows-main', 'publish-main'], template=failure_template, secret='slack_webhook'
-        ))
-    else:
-        # Add downstream enterprise pipelines triggerable from OSS builds
-        trigger = {
-            'event': ['custom',],
-        }
-        test_steps, build_steps, integration_test_steps, windows_steps, store_steps = get_steps(edition=edition, is_downstream=True)
-        pipelines.append(pipeline(
-            name='build-main-downstream', edition=edition, trigger=trigger, services=services,
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, is_downstream=True) + test_steps + build_steps + integration_test_steps,
-            volumes=volumes,
-        ))
-        pipelines.append(pipeline(
-            name='windows-main-downstream', edition=edition, trigger=trigger,
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='windows', ver_mode=ver_mode, is_downstream=True) + windows_steps,
-            platform='windows', depends_on=['build-main-downstream'],
-        ))
-        pipelines.append(pipeline(
-            name='publish-main-downstream', edition=edition, trigger=trigger,
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, is_downstream=True, install_deps=False) + store_steps,
-            depends_on=['build-main-downstream', 'windows-main-downstream'],
-        ))
-
-        pipelines.append(notify_pipeline(
-            name='notify-main-downstream', slack_channel='grafana-enterprise-ci-notifications', trigger=dict(trigger, status = ['failure']),
-            depends_on=['build-main-downstream', 'windows-main-downstream', 'publish-main-downstream'], template=failure_template, secret='slack_webhook',
-        ))
+    pipelines.append(notify_pipeline(
+        name='notify-main', slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
+        depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'windows-main', 'publish-main'], template=failure_template, secret='slack_webhook'
+    ))
 
     return pipelines
