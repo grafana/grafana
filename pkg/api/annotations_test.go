@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -293,8 +292,6 @@ var fakeAnnoRepo *fakeAnnotationsRepo
 func postAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
 	cmd dtos.PostAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		hs := setupSimpleHTTPServer(nil)
 		store := sqlstore.InitTestDB(t)
 		store.Cfg = hs.Cfg
@@ -324,8 +321,6 @@ func postAnnotationScenario(t *testing.T, desc string, url string, routePattern 
 func putAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
 	cmd dtos.UpdateAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		hs := setupSimpleHTTPServer(nil)
 		store := sqlstore.InitTestDB(t)
 		store.Cfg = hs.Cfg
@@ -354,8 +349,6 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 
 func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType, cmd dtos.PatchAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
 		hs := setupSimpleHTTPServer(nil)
 		store := sqlstore.InitTestDB(t)
 		store.Cfg = hs.Cfg
@@ -385,8 +378,6 @@ func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern
 func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
 	cmd dtos.MassDeleteAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
 		hs := setupSimpleHTTPServer(nil)
 		store := sqlstore.InitTestDB(t)
 		store.Cfg = hs.Cfg

@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -124,18 +123,12 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 }
 
 func callPauseAlert(sc *scenarioContext) {
-	bus.AddHandler("test", func(ctx context.Context, cmd *models.PauseAlertCommand) error {
-		return nil
-	})
-
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
 func postAlertScenario(t *testing.T, hs *HTTPServer, desc string, url string, routePattern string, role models.RoleType,
 	cmd dtos.PauseAlertCommand, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
