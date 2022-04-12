@@ -73,21 +73,18 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler lega
 			})
 		}
 
-		if evalMatch {
-			evalMatchCount++
-
-			matches = append(matches, &alerting.EvalMatch{
-				Metric: series.Name,
-				Value:  reducedValue,
-				Tags:   series.Tags,
-			})
-		}
-
-		allSeries = append(allSeries, &alerting.EvalMatch{
+		em := alerting.EvalMatch{
 			Metric: series.Name,
 			Value:  reducedValue,
 			Tags:   series.Tags,
-		})
+		}
+
+		allSeries = append(allSeries, &em)
+
+		if evalMatch {
+			evalMatchCount++
+			matches = append(matches, &em)
+		}
 	}
 
 	// handle no series special case
