@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { connect, ConnectedProps } from 'react-redux';
 import { locationService } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
-import { CustomScrollbar, stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
+import { CustomScrollbar, ScrollbarPosition, stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { Branding } from 'app/core/components/Branding/Branding';
@@ -78,6 +78,7 @@ export interface State {
   showLoadingState: boolean;
   panelNotFound: boolean;
   editPanelAccessDenied: boolean;
+  scrollTop: number;
 }
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
@@ -90,6 +91,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       viewPanel: null,
       showLoadingState: false,
       rememberScrollTop: 0,
+      scrollTop: 0,
       panelNotFound: false,
       editPanelAccessDenied: false,
     };
@@ -224,14 +226,14 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       }
 
       if (dashboard.canEditPanel(panel)) {
-        return { ...state, editPanel: panel };
+        return { ...state, editPanel: panel, rememberScrollTop: state.scrollTop };
       } else {
         return { ...state, editPanelAccessDenied: true };
       }
     }
     // Leaving edit mode
     else if (state.editPanel && !urlEditPanelId) {
-      return { ...state, editPanel: null };
+      return { ...state, editPanel: null, updateScrollTop: state.rememberScrollTop };
     }
 
     // Entering view mode
@@ -290,6 +292,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     this.setState({ updateScrollTop: 0 });
   };
 
+  setScrollTop = ({ scrollTop }: ScrollbarPosition): void => {
+    this.setState({ scrollTop, updateScrollTop: undefined });
+  };
+
   getInspectPanel() {
     const { dashboard, queryParams } = this.props;
 
@@ -346,6 +352,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         <div className={styles.dashboardScroll}>
           <CustomScrollbar
             autoHeightMin="100%"
+            setScrollTop={this.setScrollTop}
             scrollTop={updateScrollTop}
             hideHorizontalTrack={true}
             updateAfterMountMs={500}
