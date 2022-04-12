@@ -1,21 +1,27 @@
 package ualert
 
-type dsUIDLookup map[[2]int64]string
+type dsUIDLookup map[[2]int64]dsLookupValue
 
-// GetUID fetch thes datasource UID based on orgID+datasourceID
-func (d dsUIDLookup) GetUID(orgID, datasourceID int64) string {
+type dsLookupValue struct {
+	UID  string
+	Type string
+}
+
+// Get fetch the dsLookupValue based on orgID+datasourceID
+func (d dsUIDLookup) Get(orgID, datasourceID int64) dsLookupValue {
 	return d[[2]int64{orgID, datasourceID}]
 }
 
 // slurpDSIDs returns a map of [orgID, dataSourceId] -> UID.
 func (m *migration) slurpDSIDs() (dsUIDLookup, error) {
-	dsIDs := []struct {
+	var dsIDs []struct {
 		OrgID int64  `xorm:"org_id"`
 		ID    int64  `xorm:"id"`
 		UID   string `xorm:"uid"`
-	}{}
+		Type  string `xorm:"type"`
+	}
 
-	err := m.sess.SQL(`SELECT org_id, id, uid FROM data_source`).Find(&dsIDs)
+	err := m.sess.SQL(`SELECT org_id, id, uid, type FROM data_source`).Find(&dsIDs)
 
 	if err != nil {
 		return nil, err
@@ -24,7 +30,10 @@ func (m *migration) slurpDSIDs() (dsUIDLookup, error) {
 	idToUID := make(dsUIDLookup, len(dsIDs))
 
 	for _, ds := range dsIDs {
-		idToUID[[2]int64{ds.OrgID, ds.ID}] = ds.UID
+		idToUID[[2]int64{ds.OrgID, ds.ID}] = dsLookupValue{
+			UID:  ds.UID,
+			Type: ds.Type,
+		}
 	}
 
 	return idToUID, nil

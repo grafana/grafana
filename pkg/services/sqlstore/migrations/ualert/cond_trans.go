@@ -120,7 +120,7 @@ func transConditions(set dashAlertSettings, orgID int64, dsUIDMap dsUIDLookup) (
 			}
 
 			// one could have an alert saved but datasource deleted, so can not require match.
-			dsUID := dsUIDMap.GetUID(orgID, set.Conditions[condIdx].Query.DatasourceID)
+			ds := dsUIDMap.Get(orgID, set.Conditions[condIdx].Query.DatasourceID)
 			queryObj["refId"] = refID
 
 			encodedObj, err := json.Marshal(queryObj)
@@ -140,8 +140,9 @@ func transConditions(set dashAlertSettings, orgID int64, dsUIDMap dsUIDLookup) (
 				RefID:             refID,
 				Model:             encodedObj,
 				RelativeTimeRange: *rTR,
-				DatasourceUID:     dsUID,
+				DatasourceUID:     ds.UID,
 				QueryType:         queryType,
+				datasourceType:    ds.Type,
 			}
 			newCond.Data = append(newCond.Data, alertQuery)
 		}

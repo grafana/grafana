@@ -198,6 +198,9 @@ type alertQuery struct {
 
 	// JSON is the raw JSON query and includes the above properties as well as custom properties.
 	Model json.RawMessage `json:"model"`
+
+	// datasourceType is a type of data source. Omitted during serialization.
+	datasourceType string
 }
 
 // RelativeTimeRange is the per query start and end time
