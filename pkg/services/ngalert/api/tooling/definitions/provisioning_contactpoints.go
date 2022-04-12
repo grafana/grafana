@@ -71,7 +71,7 @@ type EmbeddedContactPoint struct {
 
 const RedactedValue = "[REDACTED]"
 
-func (e *EmbeddedContactPoint) IsValid(decryptFunc channels.GetDecryptedValueFn) error {
+func (e *EmbeddedContactPoint) Valid(decryptFunc channels.GetDecryptedValueFn) error {
 	if e.Type == "" {
 		return fmt.Errorf("type should not be an empty string")
 	}

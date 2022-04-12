@@ -110,7 +110,7 @@ func (ecp *ContactPointService) getContactPointUncrypted(ctx context.Context, or
 
 func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID int64,
 	contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) (apimodels.EmbeddedContactPoint, error) {
-	if err := contactPoint.IsValid(ecp.encryptionService.GetDecryptedValue); err != nil {
+	if err := contactPoint.Valid(ecp.encryptionService.GetDecryptedValue); err != nil {
 		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("contact point is not valid: %w", err)
 	}
 
@@ -214,7 +214,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		}
 	}
 	// validate merged values
-	if err := contactPoint.IsValid(ecp.encryptionService.GetDecryptedValue); err != nil {
+	if err := contactPoint.Valid(ecp.encryptionService.GetDecryptedValue); err != nil {
 		return err
 	}
 	// check that provenance is not changed in a invalid way
