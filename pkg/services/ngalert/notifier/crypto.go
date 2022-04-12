@@ -30,6 +30,7 @@ func NewCrypto(secrets secrets.Service, configs configurationStore) Crypto {
 	}
 }
 
+// LoadSecureSettings adds the corresponding unencrypted secrets stored to the list of input receivers.
 func (e *encryption) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error {
 	// Get the last known working configuration.
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: orgId}
