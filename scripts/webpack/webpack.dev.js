@@ -8,6 +8,7 @@ const path = require('path');
 const { DefinePlugin } = require('webpack');
 const { merge } = require('webpack-merge');
 
+const HTMLWebpackCSSChunks = require('./plugins/HTMLWebpackCSSChunks');
 const common = require('./webpack.common.js');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
@@ -51,7 +52,6 @@ module.exports = (env = {}) =>
     // https://webpack.js.org/guides/build-performance/#output-without-path-info
     output: {
       pathinfo: false,
-      filename: '[name].js',
     },
 
     // https://webpack.js.org/guides/build-performance/#avoid-extra-optimization-steps
@@ -104,11 +104,11 @@ module.exports = (env = {}) =>
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/index.html'),
         template: path.resolve(__dirname, '../../public/views/index-template.html'),
-        hash: true,
         inject: false,
         chunksSortMode: 'none',
         excludeChunks: ['dark', 'light'],
       }),
+      new HTMLWebpackCSSChunks(),
       new DefinePlugin({
         'process.env': {
           NODE_ENV: JSON.stringify('development'),

@@ -7,6 +7,7 @@ const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
 const { merge } = require('webpack-merge');
 
+const HTMLWebpackCSSChunks = require('./plugins/HTMLWebpackCSSChunks');
 const common = require('./webpack.common.js');
 
 module.exports = (env = {}) =>
@@ -79,6 +80,7 @@ module.exports = (env = {}) =>
         excludeChunks: ['manifest', 'dark', 'light'],
         chunksSortMode: 'none',
       }),
+      new HTMLWebpackCSSChunks(),
       function () {
         this.hooks.done.tap('Done', function (stats) {
           if (stats.compilation.errors && stats.compilation.errors.length) {
