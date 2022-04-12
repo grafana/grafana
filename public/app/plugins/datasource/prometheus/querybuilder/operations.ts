@@ -156,12 +156,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       category: PromVisualQueryOperationCategory.Trigonometric,
     }),
     createFunction({
-      id: PromOperationId.CountValues,
-      params: [{ name: 'Identifier', type: 'string' }],
-      defaultParams: ['count'],
-      renderer: functionRendererLeft,
-    }),
-    createFunction({
       id: PromOperationId.DayOfMonth,
       category: PromVisualQueryOperationCategory.Time,
     }),
