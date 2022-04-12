@@ -118,7 +118,7 @@ func TestProvisioningStore(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceFile, p)
 
-		err = store.DeleteProvenance(context.Background(), orgID, &ruleOrg)
+		err = store.DeleteProvenance(context.Background(), &ruleOrg)
 		require.NoError(t, err)
 
 		p, err = store.GetProvenance(context.Background(), &ruleOrg)

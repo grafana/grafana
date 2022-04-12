@@ -95,12 +95,12 @@ func (st DBstore) SetProvenance(ctx context.Context, o models.Provisionable, p m
 }
 
 // DeleteProvenance deletes the provenance record from the table
-func (st DBstore) DeleteProvenance(ctx context.Context, orgID int64, o models.ProvisionableInOrg) error {
+func (st DBstore) DeleteProvenance(ctx context.Context, o models.Provisionable) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Delete(provenanceRecord{
 			RecordKey:  o.ResourceID(),
 			RecordType: o.ResourceType(),
-			OrgID:      orgID,
+			OrgID:      o.ResourceOrgID(),
 		})
 		return err
 	})

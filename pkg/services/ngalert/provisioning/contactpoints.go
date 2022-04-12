@@ -317,8 +317,11 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 		return err
 	}
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err := ecp.provenanceStore.DeleteProvenance(ctx, orgID, &apimodels.EmbeddedContactPoint{
-			UID: uid,
+		err := ecp.provenanceStore.DeleteProvenance(ctx, provenanceOrgAdapter{
+			inner: &apimodels.EmbeddedContactPoint{
+				UID: uid,
+			},
+			orgID: orgID,
 		})
 		if err != nil {
 			return err
