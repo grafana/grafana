@@ -15,7 +15,7 @@ export function BetaBadge({ feedbackUrl }: Props) {
       <a
         href={feedbackUrl}
         className={styles.link}
-        title="This query builder is new, please let us know how we can improve it."
+        title="This query builder is new, please let us know how we can improve it"
       >
         <Icon name="comment-alt-message" /> Give feedback
       </a>
