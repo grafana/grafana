@@ -25,64 +25,78 @@ func TestPreferencesDataAccess(t *testing.T) {
 	}
 
 	t.Run("Get with saved org and user home dashboard should return user home dashboard", func(t *testing.T) {
-		err := prefStore.Set(context.Background(), &pref.SavePreferenceCommand{OrgID: 1, UserID: 1, HomeDashboardID: 4})
+		err := prefStore.Insert(context.Background(),
+			&pref.InsertPreferenceQuery{
+				OrgID:           1,
+				UserID:          1,
+				HomeDashboardID: 4,
+				TeamID:          2,
+				Created:         time.Now(),
+				Updated:         time.Now(),
+			})
 		require.NoError(t, err)
 
-		query := &pref.GetPreferenceQuery{OrgID: 1, UserID: 1}
+		query := &pref.GetPreferenceQuery{OrgID: 1, UserID: 1, TeamID: 2}
 		prefs, err := prefStore.Get(context.Background(), query)
 		require.NoError(t, err)
 		require.Equal(t, int64(4), prefs.HomeDashboardID)
 	})
 
 	t.Run("List with saved org and user home dashboard should return user home dashboard", func(t *testing.T) {
-		err := prefStore.Set(context.Background(), &pref.SavePreferenceCommand{OrgID: 1, HomeDashboardID: 1})
-		require.NoError(t, err)
-		err = prefStore.Set(context.Background(), &pref.SavePreferenceCommand{OrgID: 1, UserID: 1, HomeDashboardID: 4})
+		err := prefStore.Insert(context.Background(),
+			&pref.InsertPreferenceQuery{
+				OrgID:           1,
+				UserID:          1,
+				TeamID:          3,
+				HomeDashboardID: 1,
+				Created:         time.Now(),
+				Updated:         time.Now(),
+			})
 		require.NoError(t, err)
 
-		query := &pref.ListPreferenceQuery{OrgID: 1, UserID: 1}
+		query := &pref.ListPreferenceQuery{OrgID: 1, UserID: 1, Teams: []int64{2}}
 		prefs, err := prefStore.List(context.Background(), query)
 		require.NoError(t, err)
-		require.Equal(t, int64(1), prefs[0].HomeDashboardID)
-		require.Equal(t, int64(4), prefs[1].HomeDashboardID)
+		require.Equal(t, int64(4), prefs[0].HomeDashboardID)
 	})
 
 	t.Run("List with saved org and other user home dashboard should return org home dashboard", func(t *testing.T) {
-		err := prefStore.Set(context.Background(), &pref.SavePreferenceCommand{OrgID: 1, HomeDashboardID: 1})
-		require.NoError(t, err)
-		err = prefStore.Set(context.Background(), &pref.SavePreferenceCommand{OrgID: 1, UserID: 1, HomeDashboardID: 4})
+		err := prefStore.Insert(context.Background(),
+			&pref.InsertPreferenceQuery{
+				OrgID:           1,
+				UserID:          2,
+				TeamID:          3,
+				HomeDashboardID: 1,
+				Created:         time.Now(),
+				Updated:         time.Now(),
+			})
 		require.NoError(t, err)
 
-		query := &pref.ListPreferenceQuery{OrgID: 1, UserID: 2}
+		query := &pref.ListPreferenceQuery{OrgID: 1, UserID: 1, Teams: []int64{3}}
 		prefs, err := prefStore.List(context.Background(), query)
 		require.NoError(t, err)
+		fmt.Printf("prefs %v, 0: %v, 1: %v \n", len(prefs), prefs[0], prefs[1])
 		require.Equal(t, int64(1), prefs[0].HomeDashboardID)
+		require.Equal(t, int64(1), prefs[1].HomeDashboardID)
 	})
 
 	t.Run("List with saved org and teams home dashboard should return last team home dashboard", func(t *testing.T) {
-		err := prefStore.Set(context.Background(), &pref.SavePreferenceCommand{OrgID: 1, HomeDashboardID: 1})
-		require.NoError(t, err)
-		err = prefStore.Set(context.Background(), &pref.SavePreferenceCommand{OrgID: 1, TeamID: 2, HomeDashboardID: 2})
-		require.NoError(t, err)
-		err = prefStore.Set(context.Background(), &pref.SavePreferenceCommand{OrgID: 1, TeamID: 3, HomeDashboardID: 3})
-		require.NoError(t, err)
-
 		query := &pref.ListPreferenceQuery{
 			OrgID: 1, Teams: []int64{2, 3},
 		}
 		prefs, err := prefStore.List(context.Background(), query)
 		require.NoError(t, err)
-		require.Equal(t, int64(1), prefs[0].HomeDashboardID)
-		require.Equal(t, int64(2), prefs[1].HomeDashboardID)
-		require.Equal(t, int64(3), prefs[2].HomeDashboardID)
+		require.Equal(t, int64(4), prefs[0].HomeDashboardID)
+		require.Equal(t, int64(1), prefs[1].HomeDashboardID)
+		require.Equal(t, int64(1), prefs[2].HomeDashboardID)
 	})
 
 	t.Run("List with saved org and other teams home dashboard should return org home dashboard", func(t *testing.T) {
-		err := prefStore.Set(context.Background(), &pref.SavePreferenceCommand{OrgID: 1, HomeDashboardID: 1})
+		err := prefStore.Insert(context.Background(), &pref.InsertPreferenceQuery{OrgID: 1, HomeDashboardID: 1, Created: time.Now(), Updated: time.Now()})
 		require.NoError(t, err)
-		err = prefStore.Set(context.Background(), &pref.SavePreferenceCommand{OrgID: 1, TeamID: 2, HomeDashboardID: 2})
+		err = prefStore.Insert(context.Background(), &pref.InsertPreferenceQuery{OrgID: 1, TeamID: 2, HomeDashboardID: 2, Created: time.Now(), Updated: time.Now()})
 		require.NoError(t, err)
-		err = prefStore.Set(context.Background(), &pref.SavePreferenceCommand{OrgID: 1, TeamID: 3, HomeDashboardID: 3})
+		err = prefStore.Insert(context.Background(), &pref.InsertPreferenceQuery{OrgID: 1, TeamID: 3, HomeDashboardID: 3, Created: time.Now(), Updated: time.Now()})
 		require.NoError(t, err)
 
 		query := &pref.ListPreferenceQuery{OrgID: 1}
@@ -91,16 +105,25 @@ func TestPreferencesDataAccess(t *testing.T) {
 		require.Equal(t, int64(1), prefs[0].HomeDashboardID)
 	})
 
-	t.Run("Patch for a user should only modify a single value", func(t *testing.T) {
-		err := prefStore.Set(context.Background(), &pref.SavePreferenceCommand{UserID: models.SignedInUser{}.UserId, Theme: "dark", Timezone: "browser", HomeDashboardID: 5, WeekStart: "1", Navbar: &orgNavbarPreferences})
+	t.Run("Update for a user should only modify a single value", func(t *testing.T) {
+		err := prefStore.Insert(context.Background(), &pref.InsertPreferenceQuery{
+			UserID:          models.SignedInUser{}.UserId,
+			Theme:           "dark",
+			Timezone:        "browser",
+			HomeDashboardID: 5,
+			WeekStart:       "1",
+			JSONData:        &pref.PreferencesJSONData{Navbar: orgNavbarPreferences},
+			Created:         time.Now(),
+			Updated:         time.Now(),
+		})
 		require.NoError(t, err)
 
-		err = prefStore.Upsert(
-			context.Background(),
-			&pref.Preference{
-				UserID:   models.SignedInUser{}.UserId,
-				JsonData: &pref.PreferencesJsonData{},
-			}, true)
+		err = prefStore.Update(context.Background(), &pref.UpdatePreferenceQuery{
+			UserID:   models.SignedInUser{}.UserId,
+			Created:  time.Now(),
+			Updated:  time.Now(),
+			JSONData: &pref.PreferencesJSONData{},
+		})
 		require.NoError(t, err)
 		query := &pref.ListPreferenceQuery{}
 		prefs, err := prefStore.List(context.Background(), query)
@@ -112,24 +135,23 @@ func TestPreferencesDataAccess(t *testing.T) {
 			Timezone:        "browser",
 			WeekStart:       "1",
 			Theme:           "dark",
-			JsonData:        prefs[0].JsonData,
+			JSONData:        prefs[0].JSONData,
 			Created:         prefs[0].Created,
 			Updated:         prefs[0].Updated,
 		}
-		fmt.Println(prefs[0].JsonData)
+		fmt.Println(prefs[0].JSONData)
 		if diff := cmp.Diff(expected, prefs[0]); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 		}
 	})
-	t.Run("upsert preference that does not exist", func(t *testing.T) {
-		err := prefStore.Upsert(context.Background(),
-			&pref.Preference{
+	t.Run("insert preference that does not exist", func(t *testing.T) {
+		err := prefStore.Insert(context.Background(),
+			&pref.InsertPreferenceQuery{
 				UserID:   models.SignedInUser{}.UserId,
 				Created:  time.Now(),
 				Updated:  time.Now(),
-				JsonData: &pref.PreferencesJsonData{},
-			},
-			false)
+				JSONData: &pref.PreferencesJSONData{},
+			})
 		require.NoError(t, err)
 	})
 }

@@ -49,8 +49,8 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 		if p.HomeDashboardID != 0 {
 			res.HomeDashboardID = p.HomeDashboardID
 		}
-		if p.JsonData != nil {
-			res.JsonData = p.JsonData
+		if p.JSONData != nil {
+			res.JSONData = p.JSONData
 		}
 	}
 
@@ -66,8 +66,6 @@ func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pre
 }
 
 func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) error {
-	var exist bool
-	var preference *pref.UpsertPreference
 	prefs, err := s.store.Get(ctx, &pref.GetPreferenceQuery{
 		OrgID:  cmd.OrgID,
 		UserID: cmd.UserID,
@@ -75,7 +73,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	})
 	if err != nil {
 		if errors.Is(err, pref.ErrPrefNotFound) {
-			preference = &pref.UpsertPreference{
+			preference := &pref.InsertPreferenceQuery{
 				UserID:          cmd.UserID,
 				OrgID:           cmd.OrgID,
 				TeamID:          cmd.TeamID,
@@ -86,27 +84,30 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 				Created:         time.Now(),
 				Updated:         time.Now(),
 			}
+			return s.store.Insert(ctx, preference)
 		}
 		return err
-	} else {
-		exist = true
-		preference = (*pref.UpsertPreference)(prefs)
-		preference.Timezone = cmd.Timezone
-		preference.WeekStart = cmd.WeekStart
-		preference.Theme = cmd.Theme
-		preference.Updated = time.Now()
-		preference.Version += 1
-		preference.JsonData = &pref.PreferencesJsonData{}
-		if cmd.Navbar != nil {
-			preference.JsonData.Navbar = *cmd.Navbar
-		}
 	}
-	return s.store.Upsert(ctx, preference, exist)
+	preference := (*pref.UpdatePreferenceQuery)(prefs)
+	preference.Timezone = cmd.Timezone
+	preference.WeekStart = cmd.WeekStart
+	preference.Theme = cmd.Theme
+	preference.Updated = time.Now()
+	preference.Version += 1
+	preference.JSONData = &pref.PreferencesJSONData{}
+
+	if cmd.Navbar != nil {
+		preference.JSONData.Navbar = *cmd.Navbar
+	}
+	if cmd.QueryHistory != nil {
+		prefs.JSONData.QueryHistory = *cmd.QueryHistory
+	}
+	return s.store.Update(ctx, preference)
 }
 
 func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) error {
-	var preference *pref.UpsertPreference
-	var exist bool
+	var preference *pref.Preference
+	var exists bool
 	prefs, err := s.store.Get(ctx, &pref.GetPreferenceQuery{
 		OrgID:  cmd.OrgID,
 		UserID: cmd.UserID,
@@ -117,23 +118,23 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 	}
 
 	if errors.Is(err, pref.ErrPrefNotFound) {
-		preference = &pref.UpsertPreference{
+		preference = &pref.Preference{
 			UserID:   cmd.UserID,
 			OrgID:    cmd.OrgID,
 			TeamID:   cmd.TeamID,
 			Created:  time.Now(),
-			JsonData: &pref.PreferencesJsonData{},
+			JSONData: &pref.PreferencesJSONData{},
 		}
 	} else {
-		exist = true
+		exists = true
 	}
 
 	if cmd.Navbar != nil {
-		if preference.JsonData == nil {
-			preference.JsonData = &pref.PreferencesJsonData{}
+		if preference.JSONData == nil {
+			preference.JSONData = &pref.PreferencesJSONData{}
 		}
 		if cmd.Navbar.SavedItems != nil {
-			preference.JsonData.Navbar.SavedItems = cmd.Navbar.SavedItems
+			preference.JSONData.Navbar.SavedItems = cmd.Navbar.SavedItems
 		}
 	}
 
@@ -158,15 +159,22 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 
 	// Wrap this in an if statement to maintain backwards compatibility
 	if cmd.Navbar != nil {
-		if preference.JsonData == nil {
-			preference.JsonData = &pref.PreferencesJsonData{}
+		if preference.JSONData == nil {
+			preference.JSONData = &pref.PreferencesJSONData{}
 		}
 		if cmd.Navbar.SavedItems != nil {
-			preference.JsonData.Navbar.SavedItems = cmd.Navbar.SavedItems
+			preference.JSONData.Navbar.SavedItems = cmd.Navbar.SavedItems
 		}
 	}
 
-	return s.store.Upsert(ctx, preference, exist)
+	if exists {
+		prefs := (*pref.UpdatePreferenceQuery)(preference)
+		err = s.store.Update(ctx, prefs)
+	} else {
+		prefs := (*pref.InsertPreferenceQuery)(preference)
+		err = s.store.Insert(ctx, prefs)
+	}
+	return err
 }
 
 func (s *Service) GetDefaults() *pref.Preference {
@@ -175,7 +183,7 @@ func (s *Service) GetDefaults() *pref.Preference {
 		Timezone:        s.cfg.DateFormats.DefaultTimezone,
 		WeekStart:       s.cfg.DateFormats.DefaultWeekStart,
 		HomeDashboardID: 0,
-		JsonData:        &pref.PreferencesJsonData{},
+		JSONData:        &pref.PreferencesJSONData{},
 	}
 
 	return defaults

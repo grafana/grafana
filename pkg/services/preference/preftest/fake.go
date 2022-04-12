@@ -49,10 +49,10 @@ func (f *FakePreferenceStore) Get(ctx context.Context, query *pref.GetPreference
 	return f.ExpectedPreference, f.ExpectedError
 }
 
-func (f *FakePreferenceStore) Set(ctx context.Context, cmd *pref.SavePreferenceCommand) error {
+func (f *FakePreferenceStore) Insert(ctx context.Context, cmd *pref.InsertPreferenceQuery) error {
 	return f.ExpectedError
 }
 
-func (f *FakePreferenceStore) Upsert(ctx context.Context, cmd *pref.UpsertPreference, exist bool) error {
+func (f *FakePreferenceStore) Update(ctx context.Context, cmd *pref.UpdatePreferenceQuery) error {
 	return f.ExpectedError
 }

@@ -10,7 +10,7 @@ import (
 var ErrPrefNotFound = errors.New("preference not found")
 
 type Preference struct {
-	Id              int64
+	Id              int64 `xorm:"id"`
 	OrgID           int64 `xorm:"org_id"`
 	UserID          int64 `xorm:"user_id"`
 	TeamID          int64 `xorm:"team_id"`
@@ -21,7 +21,8 @@ type Preference struct {
 	Theme           string
 	Created         time.Time
 	Updated         time.Time
-	JsonData        *PreferencesJsonData
+	JSONData        *PreferencesJSONData    `xorm:"json_data"`
+	QueryHistory    *QueryHistoryPreference `json:"queryHistory,omitempty"`
 }
 
 type GetPreferenceWithDefaultsQuery struct {
@@ -41,11 +42,12 @@ type SavePreferenceCommand struct {
 	OrgID  int64
 	TeamID int64
 
-	HomeDashboardID int64             `json:"homeDashboardId,omitempty"`
-	Timezone        string            `json:"timezone,omitempty"`
-	WeekStart       string            `json:"weekStart,omitempty"`
-	Theme           string            `json:"theme,omitempty"`
-	Navbar          *NavbarPreference `json:"navbar,omitempty"`
+	HomeDashboardID int64                   `json:"homeDashboardId,omitempty"`
+	Timezone        string                  `json:"timezone,omitempty"`
+	WeekStart       string                  `json:"weekStart,omitempty"`
+	Theme           string                  `json:"theme,omitempty"`
+	Navbar          *NavbarPreference       `json:"navbar,omitempty"`
+	QueryHistory    *QueryHistoryPreference `json:"queryHistory,omitempty"`
 }
 
 type ListPreferenceQuery struct {
@@ -59,14 +61,15 @@ type PatchPreferenceCommand struct {
 	OrgID  int64
 	TeamID int64
 
-	HomeDashboardID *int64            `json:"homeDashboardId,omitempty"`
-	Timezone        *string           `json:"timezone,omitempty"`
-	WeekStart       *string           `json:"weekStart,omitempty"`
-	Theme           *string           `json:"theme,omitempty"`
-	Navbar          *NavbarPreference `json:"navbar,omitempty"`
+	HomeDashboardID *int64                  `json:"homeDashboardId,omitempty"`
+	Timezone        *string                 `json:"timezone,omitempty"`
+	WeekStart       *string                 `json:"weekStart,omitempty"`
+	Theme           *string                 `json:"theme,omitempty"`
+	Navbar          *NavbarPreference       `json:"navbar,omitempty"`
+	QueryHistory    *QueryHistoryPreference `json:"queryHistory,omitempty"`
 }
 
-type UpsertPreference struct {
+type UpdatePreferenceQuery struct {
 	Id              int64
 	OrgID           int64 `xorm:"org_id"`
 	UserID          int64 `xorm:"user_id"`
@@ -78,7 +81,24 @@ type UpsertPreference struct {
 	Theme           string
 	Created         time.Time
 	Updated         time.Time
-	JsonData        *PreferencesJsonData
+	JSONData        *PreferencesJSONData    `xorm:"json_data"`
+	QueryHistory    *QueryHistoryPreference `json:"queryHistory,omitempty"`
+}
+
+type InsertPreferenceQuery struct {
+	Id              int64
+	OrgID           int64 `xorm:"org_id"`
+	UserID          int64 `xorm:"user_id"`
+	TeamID          int64 `xorm:"team_id"`
+	Version         int
+	HomeDashboardID int64 `xorm:"home_dashboard_id"`
+	Timezone        string
+	WeekStart       string
+	Theme           string
+	Created         time.Time
+	Updated         time.Time
+	JSONData        *PreferencesJSONData    `xorm:"json_data"`
+	QueryHistory    *QueryHistoryPreference `json:"queryHistory,omitempty"`
 }
 
 type NavLink struct {
@@ -92,17 +112,22 @@ type NavbarPreference struct {
 	SavedItems []NavLink `json:"savedItems"`
 }
 
-type PreferencesJsonData struct {
-	Navbar NavbarPreference `json:"navbar"`
+type PreferencesJSONData struct {
+	Navbar       NavbarPreference       `json:"navbar"`
+	QueryHistory QueryHistoryPreference `json:"queryHistory"`
 }
 
-func (j *PreferencesJsonData) FromDB(data []byte) error {
+type QueryHistoryPreference struct {
+	HomeTab string `json:"homeTab"`
+}
+
+func (j *PreferencesJSONData) FromDB(data []byte) error {
 	dec := json.NewDecoder(bytes.NewBuffer(data))
 	dec.UseNumber()
 	return dec.Decode(j)
 }
 
-func (j *PreferencesJsonData) ToDB() ([]byte, error) {
+func (j *PreferencesJSONData) ToDB() ([]byte, error) {
 	if j == nil {
 		return nil, nil
 	}
@@ -110,5 +135,6 @@ func (j *PreferencesJsonData) ToDB() ([]byte, error) {
 	return json.Marshal(j)
 }
 
-func (p Preference) TableName() string       { return "preferences" }
-func (p UpsertPreference) TableName() string { return "preferences" }
+func (p Preference) TableName() string            { return "preferences" }
+func (p InsertPreferenceQuery) TableName() string { return "preferences" }
+func (p UpdatePreferenceQuery) TableName() string { return "preferences" }

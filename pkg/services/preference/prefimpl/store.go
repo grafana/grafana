@@ -2,6 +2,7 @@ package prefimpl
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -12,8 +13,8 @@ import (
 type store interface {
 	Get(context.Context, *pref.GetPreferenceQuery) (*pref.Preference, error)
 	List(context.Context, *pref.ListPreferenceQuery) ([]*pref.Preference, error)
-	// Set(context.Context, *pref.SavePreferenceCommand) error
-	Upsert(context.Context, *pref.UpsertPreference, bool) error
+	Insert(context.Context, *pref.InsertPreferenceQuery) error
+	Update(context.Context, *pref.UpdatePreferenceQuery) error
 }
 
 type sqlStore struct {
@@ -70,53 +71,17 @@ func (s *sqlStore) List(ctx context.Context, query *pref.ListPreferenceQuery) ([
 	return prefs, err
 }
 
-// func (s *sqlStore) Set(ctx context.Context, cmd *pref.SavePreferenceCommand) error {
-// 	var preference pref.Preference
-// 	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-// 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgID, cmd.UserID, cmd.TeamID).Get(&preference)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		if !exists {
-// 			preference = pref.Preference{
-// 				UserID:          cmd.UserID,
-// 				OrgID:           cmd.OrgID,
-// 				TeamID:          cmd.TeamID,
-// 				HomeDashboardID: cmd.HomeDashboardID,
-// 				Timezone:        cmd.Timezone,
-// 				WeekStart:       cmd.WeekStart,
-// 				Theme:           cmd.Theme,
-// 				Created:         time.Now(),
-// 				Updated:         time.Now(),
-// 			}
-// 			_, err = sess.Insert(&preference)
-// 			return err
-// 		}
-// 		preference.HomeDashboardID = cmd.HomeDashboardID
-// 		preference.Timezone = cmd.Timezone
-// 		preference.WeekStart = cmd.WeekStart
-// 		preference.Theme = cmd.Theme
-// 		preference.Updated = time.Now()
-// 		preference.Version += 1
-// 		preference.JsonData = &pref.PreferencesJsonData{}
-
-// 		if cmd.Navbar != nil {
-// 			preference.JsonData.Navbar = *cmd.Navbar
-// 		}
-
-// 		_, err = sess.ID(preference.Id).AllCols().Update(&preference)
-// 		return err
-// 	})
-// }
-
-func (s *sqlStore) Upsert(ctx context.Context, cmd *pref.UpsertPreference, exist bool) error {
+func (s *sqlStore) Update(ctx context.Context, cmd *pref.UpdatePreferenceQuery) error {
 	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		var err error
-		if exist {
-			_, err = sess.ID(&cmd.Id).AllCols().Update(cmd)
-		} else {
-			_, err = sess.Insert(cmd)
-		}
+		_, err := sess.ID(&cmd.Id).AllCols().Update(cmd)
+		return err
+	})
+}
+
+func (s *sqlStore) Insert(ctx context.Context, cmd *pref.InsertPreferenceQuery) error {
+	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		fmt.Println(cmd)
+		_, err := sess.Insert(cmd)
 		return err
 	})
 }

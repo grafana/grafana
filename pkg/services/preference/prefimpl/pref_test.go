@@ -47,19 +47,19 @@ func TestPreferencesService(t *testing.T) {
 		}},
 	}
 
-	emptyPreferencesJsonData := pref.PreferencesJsonData{
+	emptyPreferencesJsonData := pref.PreferencesJSONData{
 		Navbar: emptyNavbarPreferences,
 	}
-	userPreferencesJsonData := pref.PreferencesJsonData{
+	userPreferencesJsonData := pref.PreferencesJSONData{
 		Navbar: userNavbarPreferences,
 	}
-	orgPreferencesJsonData := pref.PreferencesJsonData{
+	orgPreferencesJsonData := pref.PreferencesJSONData{
 		Navbar: orgNavbarPreferences,
 	}
-	team2PreferencesJsonData := pref.PreferencesJsonData{
+	team2PreferencesJsonData := pref.PreferencesJSONData{
 		Navbar: team2NavbarPreferences,
 	}
-	team1PreferencesJsonData := pref.PreferencesJsonData{
+	team1PreferencesJsonData := pref.PreferencesJSONData{
 		Navbar: team1NavbarPreferences,
 	}
 
@@ -73,7 +73,7 @@ func TestPreferencesService(t *testing.T) {
 			Theme:           "light",
 			Timezone:        "UTC",
 			HomeDashboardID: 0,
-			JsonData:        &pref.PreferencesJsonData{},
+			JSONData:        &pref.PreferencesJSONData{},
 		}
 		if diff := cmp.Diff(expected, preferences); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -92,7 +92,7 @@ func TestPreferencesService(t *testing.T) {
 			Theme:           "light",
 			Timezone:        "UTC",
 			HomeDashboardID: 0,
-			JsonData:        &emptyPreferencesJsonData,
+			JSONData:        &emptyPreferencesJsonData,
 		}
 		if diff := cmp.Diff(expected, preferences); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -124,7 +124,7 @@ func TestPreferencesService(t *testing.T) {
 			Timezone:        "UTC",
 			WeekStart:       "1",
 			HomeDashboardID: 4,
-			JsonData:        &pref.PreferencesJsonData{},
+			JSONData:        &pref.PreferencesJSONData{},
 		}
 		if diff := cmp.Diff(expected, preferences); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -159,7 +159,7 @@ func TestPreferencesService(t *testing.T) {
 			Timezone:        "browser",
 			WeekStart:       "2",
 			HomeDashboardID: 4,
-			JsonData:        &pref.PreferencesJsonData{},
+			JSONData:        &pref.PreferencesJSONData{},
 		}
 		if diff := cmp.Diff(expected, preferences); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -171,12 +171,12 @@ func TestPreferencesService(t *testing.T) {
 		prefStoreFake.ExpectedListPreferences = []*pref.Preference{
 			{
 				OrgID:    1,
-				JsonData: &orgPreferencesJsonData,
+				JSONData: &orgPreferencesJsonData,
 			},
 			{
 				OrgID:    1,
 				UserID:   1,
-				JsonData: &userPreferencesJsonData,
+				JSONData: &userPreferencesJsonData,
 			},
 		}
 		query := &pref.GetPreferenceWithDefaultsQuery{OrgID: 1, UserID: 1}
@@ -184,7 +184,7 @@ func TestPreferencesService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, &pref.Preference{
 			Theme:    "light",
-			JsonData: &userPreferencesJsonData,
+			JSONData: &userPreferencesJsonData,
 			Timezone: "UTC",
 		}, preference)
 	})
@@ -211,7 +211,6 @@ func TestPreferencesService(t *testing.T) {
 	// 			HomeDashboardId: 4,
 	// 		},
 	// 	}
-
 	// 	query := &pref.GetPreferenceWithDefaultsQuery{
 	// 		OrgID: 1, UserID: 2,
 	// 	}
@@ -225,17 +224,17 @@ func TestPreferencesService(t *testing.T) {
 		prefStoreFake.ExpectedListPreferences = []*pref.Preference{
 			{
 				OrgID:    1,
-				JsonData: &orgPreferencesJsonData,
+				JSONData: &orgPreferencesJsonData,
 			},
 			{
 				OrgID:    1,
 				TeamID:   2,
-				JsonData: &team1PreferencesJsonData,
+				JSONData: &team1PreferencesJsonData,
 			},
 			{
 				OrgID:    1,
 				TeamID:   3,
-				JsonData: &team2PreferencesJsonData,
+				JSONData: &team2PreferencesJsonData,
 			},
 		}
 		query := &pref.GetPreferenceWithDefaultsQuery{
@@ -246,7 +245,7 @@ func TestPreferencesService(t *testing.T) {
 		require.Equal(t, &pref.Preference{
 			Timezone: "UTC",
 			Theme:    "light",
-			JsonData: &team2PreferencesJsonData,
+			JSONData: &team2PreferencesJsonData,
 		}, preference)
 	})
 
@@ -281,7 +280,7 @@ func TestPreferencesService(t *testing.T) {
 			Timezone:        "browser",
 			WeekStart:       "2",
 			HomeDashboardID: 4,
-			JsonData:        &pref.PreferencesJsonData{},
+			JSONData:        &pref.PreferencesJSONData{},
 		}
 		if diff := cmp.Diff(expected, preferences); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -290,6 +289,10 @@ func TestPreferencesService(t *testing.T) {
 
 	t.Run("SavePreferences for a user should store correct values", func(t *testing.T) {
 		prefStoreFake.ExpectedPreference = &pref.Preference{
+			Id:              1,
+			OrgID:           1,
+			UserID:          3,
+			TeamID:          6,
 			HomeDashboardID: 5,
 			Timezone:        "browser",
 			WeekStart:       "1",
