@@ -750,6 +750,7 @@ export class GraphiteDatasource
     const httpOptions = {
       method: 'GET',
       url: '/functions',
+      responseType: 'text',
     };
 
     return lastValueFrom(
