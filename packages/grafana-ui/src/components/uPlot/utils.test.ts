@@ -546,11 +546,11 @@ describe('preparePlotData2', () => {
             Array [
               0,
               null,
-              10,
+              null,
             ],
             Array [
               20,
-              null,
+              undefined,
               30,
             ],
           ]
@@ -602,17 +602,17 @@ describe('preparePlotData2', () => {
             ],
             Array [
               -10,
-              null,
+              undefined,
               10,
             ],
             Array [
               0,
-              null,
+              undefined,
               20,
             ],
             Array [
               20,
-              null,
+              undefined,
               40,
             ],
             Array [
