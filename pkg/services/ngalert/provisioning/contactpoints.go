@@ -44,7 +44,6 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, orgID int6
 	if err != nil {
 		return nil, err
 	}
-	ecp.log.Info("provenances", "map", provenances)
 	contactPoints := []apimodels.EmbeddedContactPoint{}
 	for _, contactPoint := range cfg.GetGrafanaReceiverMap() {
 		embeddedContactPoint := apimodels.EmbeddedContactPoint{
@@ -96,7 +95,7 @@ func (ecp *ContactPointService) getContactPointUncrypted(ctx context.Context, or
 		for k, v := range receiver.SecureSettings {
 			decryptedValue, err := ecp.decryptValue(v)
 			if err != nil {
-				// TODO(JP): log a warning
+				ecp.log.Warn("decrypting value failed", "err", err.Error())
 				continue
 			}
 			if decryptedValue == "" {
@@ -217,6 +216,17 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	// validate merged values
 	if err := contactPoint.IsValid(ecp.encryptionService.GetDecryptedValue); err != nil {
 		return err
+	}
+	// check that provenance is not changed in a invalid way
+	storedProvenance, err := ecp.provenanceStore.GetProvenance(ctx, provenanceOrgAdapter{
+		inner: &contactPoint,
+		orgID: orgID,
+	})
+	if err != nil {
+		return err
+	}
+	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
+		return fmt.Errorf("cannot changed provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
 	// transform to internal model
 	extractedSecrets, err := contactPoint.ExtractSecrets()

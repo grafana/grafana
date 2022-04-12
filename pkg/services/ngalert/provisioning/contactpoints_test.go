@@ -72,6 +72,59 @@ func TestContactPointService(t *testing.T) {
 		require.Equal(t, models.ProvenanceAPI, models.Provenance(cps[1].Provenance))
 	})
 
+	t.Run("it's possible to update provenance from none to File", func(t *testing.T) {
+		sut := createContactPointServiceSut(secretsService)
+		newCp := createTestContactPoint()
+
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceNone)
+		require.NoError(t, err)
+
+		cps, err := sut.GetContactPoints(context.Background(), 1)
+		require.NoError(t, err)
+		require.Equal(t, newCp.UID, cps[1].UID)
+		require.Equal(t, models.ProvenanceNone, models.Provenance(cps[1].Provenance))
+
+		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceFile)
+		require.NoError(t, err)
+
+		cps, err = sut.GetContactPoints(context.Background(), 1)
+		require.NoError(t, err)
+		require.Equal(t, newCp.UID, cps[1].UID)
+		require.Equal(t, models.ProvenanceFile, models.Provenance(cps[1].Provenance))
+	})
+
+	t.Run("it's not possible to update provenance from File to API", func(t *testing.T) {
+		sut := createContactPointServiceSut(secretsService)
+		newCp := createTestContactPoint()
+
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceFile)
+		require.NoError(t, err)
+
+		cps, err := sut.GetContactPoints(context.Background(), 1)
+		require.NoError(t, err)
+		require.Equal(t, newCp.UID, cps[1].UID)
+		require.Equal(t, models.ProvenanceFile, models.Provenance(cps[1].Provenance))
+
+		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.Error(t, err)
+	})
+
+	t.Run("it's not possible to update provenance from API to File", func(t *testing.T) {
+		sut := createContactPointServiceSut(secretsService)
+		newCp := createTestContactPoint()
+
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		cps, err := sut.GetContactPoints(context.Background(), 1)
+		require.NoError(t, err)
+		require.Equal(t, newCp.UID, cps[1].UID)
+		require.Equal(t, models.ProvenanceAPI, models.Provenance(cps[1].Provenance))
+
+		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceFile)
+		require.Error(t, err)
+	})
+
 	t.Run("service respects concurrency token when updating", func(t *testing.T) {
 		sut := createContactPointServiceSut(secretsService)
 		newCp := createTestContactPoint()
