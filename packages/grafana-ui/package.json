@@ -168,6 +168,7 @@
     "rimraf": "3.0.2",
     "rollup": "2.70.1",
     "rollup-plugin-sourcemaps": "0.6.3",
+    "rollup-plugin-svg-import": "^1.6.0",
     "rollup-plugin-terser": "7.0.2",
     "sass-loader": "12.6.0",
     "storybook-dark-mode": "1.0.9",
