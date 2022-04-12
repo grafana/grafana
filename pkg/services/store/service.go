@@ -165,7 +165,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		}
 		err = upload.Upsert(ctx, &filestorage.UpsertFileCommand{
 			Path:     "/" + fileHeader.Filename,
-			Contents: &data,
+			Contents: data,
 		})
 		if err != nil {
 			return nil, err

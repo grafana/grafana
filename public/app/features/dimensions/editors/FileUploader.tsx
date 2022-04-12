@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useState } from 'react';
+import React, { Dispatch, SetStateAction } from 'react';
 import { FileDropzone, useTheme2, Icon, Button, DropzoneFile } from '@grafana/ui';
 import { getBackendSrv, config } from '@grafana/runtime';
 import { GrafanaTheme2 } from '@grafana/data';
