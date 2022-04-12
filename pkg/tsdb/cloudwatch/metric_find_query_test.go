@@ -32,7 +32,7 @@ func TestQuery_Metrics(t *testing.T) {
 	var cwClient fakeCWClient
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
-		return cwClient
+		return &cwClient
 	}
 
 	t.Run("Custom metrics", func(t *testing.T) {
@@ -403,7 +403,7 @@ func TestQuery_GetDimensionKeys(t *testing.T) {
 	var client fakeCWClient
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
-		return client
+		return &client
 	}
 
 	metrics := []*cloudwatch.Metric{
@@ -527,7 +527,7 @@ func TestQuery_ListMetricsPagination(t *testing.T) {
 	var client fakeCWClient
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
-		return client
+		return &client
 	}
 
 	metrics := []*cloudwatch.Metric{
