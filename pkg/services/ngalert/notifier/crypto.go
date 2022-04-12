@@ -35,7 +35,7 @@ func (e *encryption) LoadSecureSettings(ctx context.Context, orgId int64, receiv
 	// Get the last known working configuration.
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: orgId}
 	if err := e.configs.GetLatestAlertmanagerConfiguration(ctx, &query); err != nil {
-		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
+		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one.
 		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return fmt.Errorf("failed to get latest configuration: %w", err)
 		}
@@ -50,7 +50,7 @@ func (e *encryption) LoadSecureSettings(ctx context.Context, orgId int64, receiv
 		currentReceiverMap = currentConfig.GetGrafanaReceiverMap()
 	}
 
-	// Copy the previously known secure settings
+	// Copy the previously known secure settings.
 	for i, r := range receivers {
 		for j, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
 			if gr.UID == "" { // new receiver
