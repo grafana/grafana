@@ -204,7 +204,7 @@ export function formatTime(
   let format = systemDateFormats.interval.year;
 
   if (foundIncr < timeUnitSize.second) {
-    format = systemDateFormats.interval.second.replace('ss', 'ss.SS');
+    format = systemDateFormats.interval.millisecond;
   } else if (foundIncr <= timeUnitSize.minute) {
     format = systemDateFormats.interval.second;
   } else if (range <= timeUnitSize.day) {
