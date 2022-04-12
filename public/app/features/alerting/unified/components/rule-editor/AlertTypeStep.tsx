@@ -44,29 +44,26 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
 
   return (
     <RuleEditorSection stepNo={1} title="Rule type">
-      <Field
-        disabled={editingExistingRule}
-        error={errors.type?.message}
-        invalid={!!errors.type?.message}
-        data-testid="alert-type-picker"
-      >
-        <InputControl
-          render={({ field: { onChange } }) => (
-            <RuleTypePicker
-              aria-label="Rule type"
-              selected={getValues('type') ?? defaultRuleType}
-              onChange={onChange}
-              enableGrafana={canCreateGrafanaRules}
-              enableCloud={canCreateCloudRules}
-            />
-          )}
-          name="type"
-          control={control}
-          rules={{
-            required: { value: true, message: 'Please select alert type' },
-          }}
-        />
-      </Field>
+      {!editingExistingRule && (
+        <Field error={errors.type?.message} invalid={!!errors.type?.message} data-testid="alert-type-picker">
+          <InputControl
+            render={({ field: { onChange } }) => (
+              <RuleTypePicker
+                aria-label="Rule type"
+                selected={getValues('type') ?? defaultRuleType}
+                onChange={onChange}
+                enableGrafana={canCreateGrafanaRules}
+                enableCloud={canCreateCloudRules}
+              />
+            )}
+            name="type"
+            control={control}
+            rules={{
+              required: { value: true, message: 'Please select alert type' },
+            }}
+          />
+        </Field>
+      )}
 
       <Field
         className={styles.formInput}

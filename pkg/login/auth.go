@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
@@ -41,7 +40,6 @@ func ProvideService(store sqlstore.Store, loginService login.Service) *Authentic
 		store:        store,
 		loginService: loginService,
 	}
-	bus.AddHandler("auth", a.AuthenticateUser)
 	return a
 }
 
