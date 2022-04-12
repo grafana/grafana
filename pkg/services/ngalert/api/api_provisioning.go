@@ -19,10 +19,10 @@ import (
 type ProvisioningSrv struct {
 	log                 log.Logger
 	policies            NotificationPolicyService
-	contactpointService ContactpointService
+	contactPointService ContactPointService
 }
 
-type ContactpointService interface {
+type ContactPointService interface {
 	GetContactPoints(ctx context.Context, orgID int64) ([]apimodels.EmbeddedContactPoint, error)
 	CreateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint, p alerting_models.Provenance) (apimodels.EmbeddedContactPoint, error)
 	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint) error
@@ -60,7 +60,7 @@ func (srv *ProvisioningSrv) RoutePostPolicyTree(c *models.ReqContext, tree apimo
 }
 
 func (srv *ProvisioningSrv) RouteGetContactpoints(c *models.ReqContext) response.Response {
-	cps, err := srv.contactpointService.GetContactPoints(c.Req.Context(), c.OrgId)
+	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -69,7 +69,7 @@ func (srv *ProvisioningSrv) RouteGetContactpoints(c *models.ReqContext) response
 
 func (srv *ProvisioningSrv) RoutePostContactpoint(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
 	// TODO: provenance is hardcoded for now, change it later to make it more flexible
-	contactPoint, err := srv.contactpointService.CreateContactPoint(c.Req.Context(), c.OrgId, cp, alerting_models.ProvenanceAPI)
+	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.OrgId, cp, alerting_models.ProvenanceAPI)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -77,7 +77,7 @@ func (srv *ProvisioningSrv) RoutePostContactpoint(c *models.ReqContext, cp apimo
 }
 
 func (srv *ProvisioningSrv) RoutePutContactpoints(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
-	err := srv.contactpointService.UpdateContactPoint(c.Req.Context(), c.OrgId, cp)
+	err := srv.contactPointService.UpdateContactPoint(c.Req.Context(), c.OrgId, cp)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -86,7 +86,7 @@ func (srv *ProvisioningSrv) RoutePutContactpoints(c *models.ReqContext, cp apimo
 
 func (srv *ProvisioningSrv) RouteDeleteContactpoint(c *models.ReqContext) response.Response {
 	cpID := web.Params(c.Req)[":ID"]
-	err := srv.contactpointService.DeleteContactPoint(c.Req.Context(), c.OrgId, cpID)
+	err := srv.contactPointService.DeleteContactPoint(c.Req.Context(), c.OrgId, cpID)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}

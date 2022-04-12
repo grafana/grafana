@@ -67,21 +67,21 @@ func (f *ForkedProvisioningApi) RoutePutContactpoints(ctx *models.ReqContext) re
 func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
-			toMacaronPath("/api/provisioning/contactpoints/{ID}"),
-			api.authorize(http.MethodDelete, "/api/provisioning/contactpoints/{ID}"),
+			toMacaronPath("/api/provisioning/contact-points/{ID}"),
+			api.authorize(http.MethodDelete, "/api/provisioning/contact-points/{ID}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/provisioning/contactpoints/{ID}",
+				"/api/provisioning/contact-points/{ID}",
 				srv.RouteDeleteContactpoints,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/contactpoints"),
-			api.authorize(http.MethodGet, "/api/provisioning/contactpoints"),
+			toMacaronPath("/api/provisioning/contact-points"),
+			api.authorize(http.MethodGet, "/api/provisioning/contact-points"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/contactpoints",
+				"/api/provisioning/contact-points",
 				srv.RouteGetContactpoints,
 				m,
 			),
@@ -97,11 +97,11 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/provisioning/contactpoints"),
-			api.authorize(http.MethodPost, "/api/provisioning/contactpoints"),
+			toMacaronPath("/api/provisioning/contact-points"),
+			api.authorize(http.MethodPost, "/api/provisioning/contact-points"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/provisioning/contactpoints",
+				"/api/provisioning/contact-points",
 				srv.RoutePostContactpoints,
 				m,
 			),
@@ -117,11 +117,11 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/provisioning/contactpoints"),
-			api.authorize(http.MethodPut, "/api/provisioning/contactpoints"),
+			toMacaronPath("/api/provisioning/contact-points"),
+			api.authorize(http.MethodPut, "/api/provisioning/contact-points"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/contactpoints",
+				"/api/provisioning/contact-points",
 				srv.RoutePutContactpoints,
 				m,
 			),

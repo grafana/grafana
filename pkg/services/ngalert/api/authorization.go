@@ -182,13 +182,13 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Grafana-only Provisioning Read Paths
 	case http.MethodGet + "/api/provisioning/policies",
-		http.MethodGet + "/api/provisioning/contactpoints":
+		http.MethodGet + "/api/provisioning/contact-points":
 		return middleware.ReqSignedIn
 
 	case http.MethodPost + "/api/provisioning/policies",
-		http.MethodPost + "/api/provisioning/contactpoints",
-		http.MethodPut + "/api/provisioning/contactpoints",
-		http.MethodDelete + "/api/provisioning/contactpoints/{ID}":
+		http.MethodPost + "/api/provisioning/contact-points",
+		http.MethodPut + "/api/provisioning/contact-points",
+		http.MethodDelete + "/api/provisioning/contact-points/{ID}":
 		return middleware.ReqEditorRole
 	}
 

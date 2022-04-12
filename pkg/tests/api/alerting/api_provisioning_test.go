@@ -140,10 +140,10 @@ func TestProvisioning(t *testing.T) {
 		})
 	})
 	t.Run("when provisioning contactpoints", func(t *testing.T) {
-		url := fmt.Sprintf("http://%s/api/provisioning/contactpoints", grafanaListedAddr)
+		url := fmt.Sprintf("http://%s/api/provisioning/contact-points", grafanaListedAddr)
 		body := `
 		{
-			"name": "my-contactpoint",
+			"name": "my-contact-point",
 			"type": "slack",
 			"settings": {
 				"recipient": "value_recipient", 

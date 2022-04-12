@@ -77,7 +77,7 @@ type API struct {
 	SecretsService       secrets.Service
 	AccessControl        accesscontrol.AccessControl
 	Policies             *provisioning.NotificationPolicyService
-	ContactpointService  *provisioning.EmbeddedContactPointService
+	ContactPointService  *provisioning.EmbeddedContactPointService
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -135,7 +135,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.RegisterProvisioningApiEndpoints(NewForkedProvisioningApi(&ProvisioningSrv{
 			log:                 logger,
 			policies:            api.Policies,
-			contactpointService: api.ContactpointService,
+			contactPointService: api.ContactPointService,
 		}), m)
 	}
 }
