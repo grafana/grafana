@@ -18,7 +18,7 @@ import { AppEvents, DataQueryErrorType } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { FolderDTO } from 'app/types';
+import { DashboardDTO, FolderDTO } from 'app/types';
 import { ContextSrv, contextSrv } from './context_srv';
 import {
   isContentTypeApplicationJson,
@@ -423,7 +423,7 @@ export class BackendSrv implements BackendService {
   }
 
   getDashboardByUid(uid: string) {
-    return this.get(`/api/dashboards/uid/${uid}`);
+    return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
   }
 
   getFolderByUid(uid: string) {

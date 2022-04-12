@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -491,7 +490,7 @@ func (hs *HTTPServer) NotificationTest(c *models.ReqContext) response.Response {
 		SecureSettings: dto.SecureSettings,
 	}
 
-	if err := bus.Dispatch(c.Req.Context(), cmd); err != nil {
+	if err := hs.AlertNotificationService.HandleNotificationTestCommand(c.Req.Context(), cmd); err != nil {
 		if errors.Is(err, models.ErrSmtpNotEnabled) {
 			return response.Error(412, err.Error(), err)
 		}
@@ -554,7 +553,7 @@ func (hs *HTTPServer) PauseAlert(c *models.ReqContext) response.Response {
 		return response.Error(500, "", err)
 	}
 
-	var resp models.AlertStateType = models.AlertStateUnknown
+	resp := models.AlertStateUnknown
 	pausedState := "un-paused"
 	if cmd.Paused {
 		resp = models.AlertStatePaused
@@ -580,7 +579,7 @@ func (hs *HTTPServer) PauseAllAlerts(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to pause alerts", err)
 	}
 
-	var resp models.AlertStateType = models.AlertStatePending
+	resp := models.AlertStatePending
 	pausedState := "un paused"
 	if updateCmd.Paused {
 		resp = models.AlertStatePaused

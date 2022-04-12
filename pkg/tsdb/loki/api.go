@@ -51,7 +51,13 @@ func makeRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.
 			// is ignored, so it would be nicer to not send it in such cases,
 			// but we cannot detect that situation, so we always send it.
 			// it should not break anything.
-			qs.Set("step", query.Step.String())
+			// NOTE2: we do this at millisecond precision for two reasons:
+			//  a. Loki cannot do steps with better precision anyway,
+			//     so the microsecond & nanosecond part can be ignored.
+			//  b. having it always be number+'ms' makes it more robust and
+			//     precise, as Loki does not support step with float number
+			//     and time-specifier, like "1.5s"
+			qs.Set("step", fmt.Sprintf("%dms", query.Step.Milliseconds()))
 			lokiUrl.Path = "/loki/api/v1/query_range"
 		}
 	case QueryTypeInstant:

@@ -37,7 +37,56 @@ func TestFormatName(t *testing.T) {
 }
 
 func TestAdjustFrame(t *testing.T) {
-	t.Run("response should be parsed normally", func(t *testing.T) {
+	t.Run("logs-frame metadata should be set correctly", func(t *testing.T) {
+		frame := data.NewFrame("",
+			data.NewField("labels", nil, []string{
+				`{"level":"info"}`,
+				`{"level":"error"}`,
+				`{"level":"error"}`,
+				`{"level":"info"}`,
+			}),
+			data.NewField("time", nil, []time.Time{
+				time.Date(2022, 1, 2, 3, 4, 5, 6, time.UTC),
+				time.Date(2022, 1, 2, 3, 5, 5, 6, time.UTC),
+				time.Date(2022, 1, 2, 3, 5, 5, 6, time.UTC),
+				time.Date(2022, 1, 2, 3, 6, 5, 6, time.UTC),
+			}),
+			data.NewField("line", nil, []string{"line1", "line2", "line2", "line3"}),
+		)
+
+		frame.RefID = "A"
+
+		query := &lokiQuery{
+			Expr:      `{type="important"}`,
+			QueryType: QueryTypeRange,
+		}
+
+		err := adjustFrame(frame, query)
+		require.NoError(t, err)
+
+		fields := frame.Fields
+
+		require.Equal(t, 5, len(fields))
+		tsNsField := fields[3]
+		require.Equal(t, "tsNs", tsNsField.Name)
+		require.Equal(t, data.FieldTypeString, tsNsField.Type())
+		require.Equal(t, 4, tsNsField.Len())
+		require.Equal(t, "1641092645000000006", tsNsField.At(0))
+		require.Equal(t, "1641092705000000006", tsNsField.At(1))
+		require.Equal(t, "1641092705000000006", tsNsField.At(2))
+		require.Equal(t, "1641092765000000006", tsNsField.At(3))
+
+		idField := fields[4]
+		require.Equal(t, "id", idField.Name)
+		require.Equal(t, data.FieldTypeString, idField.Type())
+		require.Equal(t, 4, idField.Len())
+		require.Equal(t, "1641092645000000006_a36f4e1b_A", idField.At(0))
+		require.Equal(t, "1641092705000000006_1d77c9ca_A", idField.At(1))
+		require.Equal(t, "1641092705000000006_1d77c9ca_1_A", idField.At(2))
+		require.Equal(t, "1641092765000000006_948c1a7d_A", idField.At(3))
+	})
+
+	t.Run("logs-frame id and string-time fields should be created", func(t *testing.T) {
 		field1 := data.NewField("", nil, make([]time.Time, 0))
 		field2 := data.NewField("", nil, make([]float64, 0))
 		field2.Labels = data.Labels{"app": "Application", "tag2": "tag2"}
@@ -52,7 +101,8 @@ func TestAdjustFrame(t *testing.T) {
 			Step:         time.Second * 42,
 		}
 
-		adjustFrame(frame, query)
+		err := adjustFrame(frame, query)
+		require.NoError(t, err)
 
 		require.Equal(t, frame.Name, "legend Application")
 		require.Equal(t, frame.Meta.ExecutedQueryString, "Expr: up(ALERTS)\nStep: 42s")
@@ -72,7 +122,8 @@ func TestAdjustFrame(t *testing.T) {
 		frame := data.NewFrame("test", field1, field2)
 		frame.SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMany})
 
-		adjustFrame(frame, query)
+		err := adjustFrame(frame, query)
+		require.NoError(t, err)
 
 		// to keep the test simple, we assume the
 		// first field is the time-field

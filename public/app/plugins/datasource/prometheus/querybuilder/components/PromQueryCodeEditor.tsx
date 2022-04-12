@@ -6,7 +6,15 @@ import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
-export function PromQueryCodeEditor({ query, datasource, range, onRunQuery, onChange, data }: PromQueryEditorProps) {
+export function PromQueryCodeEditor({
+  query,
+  datasource,
+  range,
+  onRunQuery,
+  onChange,
+  data,
+  app,
+}: PromQueryEditorProps) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -20,6 +28,7 @@ export function PromQueryCodeEditor({ query, datasource, range, onRunQuery, onCh
         history={[]}
         data={data}
         data-testid={testIds.editor}
+        app={app}
       />
     </div>
   );
