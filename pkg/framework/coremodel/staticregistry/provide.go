@@ -1,8 +1,8 @@
 package staticregistry
 
 import (
-	"github.com/grafana/grafana/internal/coremodel/datasource"
-	"github.com/grafana/grafana/internal/framework/coremodel"
+	"github.com/grafana/grafana/pkg/coremodel/datasource"
+	"github.com/grafana/grafana/pkg/framework/coremodel"
 )
 
 // ProvideRegistry provides a simple static Registry for coremodels.
