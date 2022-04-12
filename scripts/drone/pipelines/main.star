@@ -216,40 +216,34 @@ def main_pipelines(edition):
         services.append(ldap_service())
         integration_test_steps.append(benchmark_ldap_step())
 
-    pipelines = [
-        docs_pipelines(edition, ver_mode, trigger),
-        pipeline(
-            name='main-test', edition=edition, trigger=trigger, services=[],
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + test_steps,
-            volumes=[],
-        ),
-        pipeline(
-            name='main-build-e2e-publish', edition=edition, trigger=trigger, services=[],
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + build_steps,
-            volumes=volumes,
-        ),
-        pipeline(
-            name='main-integration-tests', edition=edition, trigger=trigger, services=services,
-            steps=[download_grabpl_step()] + integration_test_steps,
-            volumes=volumes,
-        ),
-        pipeline(
-            name='windows-main', edition=edition, trigger=dict(trigger, repo = ['grafana/grafana']),
-            steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_steps,
-            depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests'], platform='windows',
-        ), notify_pipeline(
-            name='notify-drone-changes', slack_channel='slack-webhooks-test', trigger=drone_change_trigger, template=drone_change_template, secret='drone-changes-webhook',
-        ),
-    ]
-    pipelines.append(pipeline(
-        name='publish-main', edition=edition, trigger=dict(trigger, repo = ['grafana/grafana']),
-        steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode, install_deps=False) + store_steps,
-        depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'windows-main',],
-    ))
-
-    pipelines.append(notify_pipeline(
-        name='notify-main', slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
-        depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'windows-main', 'publish-main'], template=failure_template, secret='slack_webhook'
-    ))
+    pipelines = [docs_pipelines(edition, ver_mode, trigger), pipeline(
+        name='main-test', edition=edition, trigger=trigger, services=[],
+        steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + test_steps,
+        volumes=[],
+    ), pipeline(
+        name='main-build-e2e-publish', edition=edition, trigger=trigger, services=[],
+        steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) + build_steps,
+        volumes=volumes,
+    ), pipeline(
+        name='main-integration-tests', edition=edition, trigger=trigger, services=services,
+        steps=[download_grabpl_step()] + integration_test_steps,
+        volumes=volumes,
+    ), pipeline(
+        name='windows-main', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
+        steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_steps,
+        depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests'], platform='windows',
+    ), notify_pipeline(
+        name='notify-drone-changes', slack_channel='slack-webhooks-test', trigger=drone_change_trigger,
+        template=drone_change_template, secret='drone-changes-webhook',
+    ), pipeline(
+        name='publish-main', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
+        steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode,
+                                                         install_deps=False) + store_steps,
+        depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'windows-main', ],
+    ), notify_pipeline(
+        name='notify-main', slack_channel='grafana-ci-notifications', trigger=dict(trigger, status=['failure']),
+        depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'windows-main', 'publish-main'],
+        template=failure_template, secret='slack_webhook'
+    )]
 
     return pipelines
