@@ -20,8 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-
-	"golang.org/x/net/context/ctxhttp"
 )
 
 type DatasourceInfo struct {
@@ -161,9 +159,9 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 
 	var req *http.Request
 	if method == http.MethodPost {
-		req, err = http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer(body))
+		req, err = http.NewRequestWithContext(c.ctx, http.MethodPost, u.String(), bytes.NewBuffer(body))
 	} else {
-		req, err = http.NewRequest(http.MethodGet, u.String(), nil)
+		req, err = http.NewRequestWithContext(c.ctx, http.MethodGet, u.String(), nil)
 	}
 	if err != nil {
 		return nil, err
@@ -193,7 +191,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		clientLog.Debug("Executed request", "took", elapsed)
 	}()
 	//nolint:bodyclose
-	resp, err := ctxhttp.Do(c.ctx, httpClient, req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

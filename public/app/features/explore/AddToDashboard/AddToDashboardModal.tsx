@@ -1,136 +1,201 @@
-import React, { useState } from 'react';
-import { Alert, Button, Field, Input, InputControl, Modal } from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { useForm } from 'react-hook-form';
-import { SaveToNewDashboardDTO } from './addToDashboard';
+import React, { useEffect, useState } from 'react';
+import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup } from '@grafana/ui';
+import { locationUtil, SelectableValue } from '@grafana/data';
+import { setDashboardInLocalStorage, AddToDashboardError } from './addToDashboard';
+import { useSelector } from 'react-redux';
+import { ExploreId } from 'app/types';
+import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
+import { DeepMap, FieldError, useForm } from 'react-hook-form';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { getExploreItemSelector } from '../state/selectors';
+import { partial } from 'lodash';
+import { removeDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
 
-export interface ErrorResponse {
-  status: string;
-  message?: string;
+enum SaveTarget {
+  NewDashboard = 'new-dashboard',
+  ExistingDashboard = 'existing-dashboard',
 }
 
-const ERRORS = {
-  NAME_REQUIRED: 'Dashboard name is required.',
-  NAME_EXISTS: 'A dashboard with the same name already exists in this folder.',
-  INVALID_FIELD: 'This field is invalid.',
-  UNKNOWN_ERROR: 'An unknown error occurred while saving the dashboard. Please try again.',
-  INVALID_FOLDER: 'Select a valid folder to save your dashboard in.',
-};
+const SAVE_TARGETS: Array<SelectableValue<SaveTarget>> = [
+  {
+    label: 'New Dashboard',
+    value: SaveTarget.NewDashboard,
+  },
+  {
+    label: 'Existing Dashboard',
+    value: SaveTarget.ExistingDashboard,
+  },
+];
 
-type FormDTO = SaveToNewDashboardDTO;
+interface SaveTargetDTO {
+  saveTarget: SaveTarget;
+}
+interface SaveToNewDashboardDTO extends SaveTargetDTO {
+  saveTarget: SaveTarget.NewDashboard;
+}
+
+interface SaveToExistingDashboard extends SaveTargetDTO {
+  saveTarget: SaveTarget.ExistingDashboard;
+  dashboardUid: string;
+}
+
+type FormDTO = SaveToNewDashboardDTO | SaveToExistingDashboard;
+
+function assertIsSaveToExistingDashboardError(
+  errors: DeepMap<FormDTO, FieldError>
+): asserts errors is DeepMap<SaveToExistingDashboard, FieldError> {
+  // the shape of the errors object is always compatible with the type above, but we need to
+  // explicitly assert its type so that TS can narrow down FormDTO to SaveToExistingDashboard
+  // when we use it in the form.
+}
+
+function getDashboardURL(dashboardUid?: string) {
+  return dashboardUid ? `d/${dashboardUid}` : 'dashboard/new';
+}
+
+enum GenericError {
+  UNKNOWN = 'unknown-error',
+  NAVIGATION = 'navigation-error',
+}
+
+interface SubmissionError {
+  error: AddToDashboardError | GenericError;
+  message: string;
+}
 
 interface Props {
   onClose: () => void;
-  onSave: (data: FormDTO, redirect: boolean) => Promise<void | ErrorResponse>;
+  exploreId: ExploreId;
 }
 
-function withRedirect<T extends any[]>(fn: (redirect: boolean, ...args: T) => {}, redirect: boolean) {
-  return async (...args: T) => fn(redirect, ...args);
-}
-
-export const AddToDashboardModal = ({ onClose, onSave }: Props) => {
-  const [submissionError, setSubmissionError] = useState<string>();
+export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
+  const exploreItem = useSelector(getExploreItemSelector(exploreId))!;
+  const [submissionError, setSubmissionError] = useState<SubmissionError | undefined>();
   const {
-    register,
     handleSubmit,
     control,
-    formState: { errors, isSubmitting },
-    setError,
-  } = useForm<FormDTO>();
+    formState: { errors },
+    watch,
+  } = useForm<FormDTO>({
+    defaultValues: { saveTarget: SaveTarget.NewDashboard },
+  });
+  const saveTarget = watch('saveTarget');
 
-  const onSubmit = async (withRedirect: boolean, data: FormDTO) => {
+  const onSubmit = async (openInNewTab: boolean, data: FormDTO) => {
     setSubmissionError(undefined);
-    const error = await onSave(data, withRedirect);
+    const dashboardUid = data.saveTarget === SaveTarget.ExistingDashboard ? data.dashboardUid : undefined;
 
-    if (error) {
-      switch (error.status) {
-        case 'name-match':
-          // error.message should always be defined here
-          setError('dashboardName', { message: error.message ?? ERRORS.INVALID_FIELD });
+    reportInteraction('e2d_submit', {
+      newTab: openInNewTab,
+      saveTarget: data.saveTarget,
+      queries: exploreItem.queries.length,
+    });
+
+    try {
+      await setDashboardInLocalStorage({
+        dashboardUid,
+        datasource: exploreItem.datasourceInstance?.getRef(),
+        queries: exploreItem.queries,
+        queryResponse: exploreItem.queryResponse,
+      });
+    } catch (error) {
+      switch (error) {
+        case AddToDashboardError.FETCH_DASHBOARD:
+          setSubmissionError({ error, message: 'Could not fetch dashboard information. Please try again.' });
           break;
-        case 'empty-name':
-          setError('dashboardName', { message: ERRORS.NAME_REQUIRED });
-          break;
-        case 'name-exists':
-          setError('dashboardName', { message: ERRORS.NAME_EXISTS });
+        case AddToDashboardError.SET_DASHBOARD_LS:
+          setSubmissionError({ error, message: 'Could not add panel to dashboard. Please try again.' });
           break;
         default:
-          setSubmissionError(error.message ?? ERRORS.UNKNOWN_ERROR);
+          setSubmissionError({ error: GenericError.UNKNOWN, message: 'Something went wrong. Please try again.' });
       }
+      return;
     }
+
+    const dashboardURL = getDashboardURL(dashboardUid);
+    if (!openInNewTab) {
+      onClose();
+      locationService.push(locationUtil.stripBaseFromUrl(dashboardURL));
+      return;
+    }
+
+    const didTabOpen = !!global.open(config.appUrl + dashboardURL, '_blank');
+    if (!didTabOpen) {
+      setSubmissionError({
+        error: GenericError.NAVIGATION,
+        message: 'Could not navigate to the selected dashboard. Please try again.',
+      });
+      removeDashboardToFetchFromLocalStorage();
+      return;
+    }
+    onClose();
   };
+
+  useEffect(() => {
+    reportInteraction('e2d_open');
+  }, []);
 
   return (
     <Modal title="Add panel to dashboard" onDismiss={onClose} isOpen>
       <form>
-        <p>Create a new dashboard and add a panel with the explored queries.</p>
+        <InputControl
+          control={control}
+          render={({ field: { ref, ...field } }) => (
+            <Field label="Target dashboard" description="Start a new dashboard or save the panel in an existing one.">
+              <RadioButtonGroup options={SAVE_TARGETS} {...field} id="e2d-save-target" />
+            </Field>
+          )}
+          name="saveTarget"
+        />
 
-        <Field
-          label="Dashboard name"
-          description="Choose a name for the new dashboard."
-          error={errors.dashboardName?.message}
-          invalid={!!errors.dashboardName}
-        >
-          <Input
-            id="dashboard_name"
-            {...register('dashboardName', {
-              shouldUnregister: true,
-              required: { value: true, message: ERRORS.NAME_REQUIRED },
-              setValueAs(value: string) {
-                return value.trim();
-              },
-            })}
-            // we set default value here instead of in useForm because this input will be unregistered when switching
-            // to "Existing Dashboard" and default values are not populated with manually registered
-            // inputs (ie. when switching back to "New Dashboard")
-            defaultValue="New dashboard (Explore)"
-          />
-        </Field>
-
-        <Field
-          label="Folder"
-          description="Select where the dashboard will be created."
-          error={errors.folderId?.message}
-          invalid={!!errors.folderId}
-        >
-          <InputControl
-            render={({ field: { ref, onChange, ...field } }) => (
-              <FolderPicker onChange={(e) => onChange(e.id)} {...field} enableCreateNew inputId="folder" />
-            )}
-            control={control}
-            name="folderId"
-            shouldUnregister
-            rules={{ required: { value: true, message: ERRORS.INVALID_FOLDER } }}
-          />
-        </Field>
+        {saveTarget === SaveTarget.ExistingDashboard &&
+          (() => {
+            assertIsSaveToExistingDashboardError(errors);
+            return (
+              <InputControl
+                render={({ field: { ref, value, onChange, ...field } }) => (
+                  <Field
+                    label="Dashboard"
+                    description="Select in which dashboard the panel will be created."
+                    error={errors.dashboardUid?.message}
+                    invalid={!!errors.dashboardUid}
+                  >
+                    <DashboardPicker
+                      {...field}
+                      inputId="e2d-dashboard-picker"
+                      defaultOptions
+                      onChange={(d) => onChange(d?.uid)}
+                    />
+                  </Field>
+                )}
+                control={control}
+                name="dashboardUid"
+                shouldUnregister
+                rules={{ required: { value: true, message: 'This field is required.' } }}
+              />
+            );
+          })()}
 
         {submissionError && (
-          <Alert severity="error" title="Unknown error">
-            {submissionError}
+          <Alert severity="error" title="Error adding the panel">
+            {submissionError.message}
           </Alert>
         )}
 
         <Modal.ButtonRow>
-          <Button type="reset" onClick={onClose} fill="outline" variant="secondary" disabled={isSubmitting}>
+          <Button type="reset" onClick={onClose} fill="outline" variant="secondary">
             Cancel
           </Button>
           <Button
             type="submit"
-            onClick={handleSubmit(withRedirect(onSubmit, false))}
             variant="secondary"
-            icon="compass"
-            disabled={isSubmitting}
+            onClick={handleSubmit(partial(onSubmit, true))}
+            icon="external-link-alt"
           >
-            Save and keep exploring
+            Open in new tab
           </Button>
-          <Button
-            type="submit"
-            onClick={handleSubmit(withRedirect(onSubmit, true))}
-            variant="primary"
-            icon="apps"
-            disabled={isSubmitting}
-          >
-            Save and go to dashboard
+          <Button type="submit" variant="primary" onClick={handleSubmit(partial(onSubmit, false))} icon="apps">
+            Open
           </Button>
         </Modal.ButtonRow>
       </form>

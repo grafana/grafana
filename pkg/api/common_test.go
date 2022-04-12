@@ -53,8 +53,6 @@ func loggedInUserScenario(t *testing.T, desc string, url string, routePattern st
 
 func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = sqlStore
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -82,8 +80,6 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 
 func anonymousUserScenario(t *testing.T, desc string, method string, url string, routePattern string, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
@@ -197,7 +193,9 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, sqlStore)
-	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy)
+	loginService := &logintest.LoginServiceFake{}
+	authenticator := &logintest.AuthenticatorFake{}
+	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, authenticator)
 
 	return ctxHdlr
 }
@@ -400,13 +398,14 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		require.NoError(t, err)
 		hs.teamPermissionsService = teamPermissionService
 	} else {
-		ac := ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t},
+		ac, errInitAc := ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t},
 			database.ProvideService(db), routing.NewRouteRegister())
+		require.NoError(t, errInitAc)
 		hs.AccessControl = ac
 		// Perform role registration
 		err := hs.declareFixedRoles()
 		require.NoError(t, err)
-		err = ac.RegisterFixedRoles()
+		err = ac.RegisterFixedRoles(context.Background())
 		require.NoError(t, err)
 		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, database.ProvideService(db))
 		require.NoError(t, err)

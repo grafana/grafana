@@ -43,15 +43,10 @@ import { renderLegendFormat } from '../prometheus/legend';
 const UUID_NAMESPACE = '6ec946da-0f49-47a8-983a-1d76d17e7c92';
 
 /**
- * Transforms LokiStreamResult structure into a dataFrame. Used when doing standard queries and newer version of Loki.
+ * Transforms LokiStreamResult structure into a dataFrame. Used when doing standard queries
  */
-export function lokiStreamResultToDataFrame(stream: LokiStreamResult, reverse?: boolean, refId?: string): DataFrame {
-  const labels: Labels = stream.stream;
-  const labelsString = Object.entries(labels)
-    .map(([key, val]) => `${key}="${val}"`)
-    .sort()
-    .join('');
-
+export function lokiStreamsToRawDataFrame(streams: LokiStreamResult[], reverse?: boolean, refId?: string): DataFrame {
+  const labels = new ArrayVector<{}>([]);
   const times = new ArrayVector<string>([]);
   const timesNs = new ArrayVector<string>([]);
   const lines = new ArrayVector<string>([]);
@@ -60,12 +55,21 @@ export function lokiStreamResultToDataFrame(stream: LokiStreamResult, reverse?: 
   // We need to store and track all used uids to ensure that uids are unique
   const usedUids: { string?: number } = {};
 
-  for (const [ts, line] of stream.values) {
-    // num ns epoch in string, we convert it to iso string here so it matches old format
-    times.add(new Date(parseInt(ts.slice(0, -6), 10)).toISOString());
-    timesNs.add(ts);
-    lines.add(line);
-    uids.add(createUid(ts, labelsString, line, usedUids, refId));
+  for (const stream of streams) {
+    const streamLabels: Labels = stream.stream;
+    const labelsString = Object.entries(streamLabels)
+      .map(([key, val]) => `${key}="${val}"`)
+      .sort()
+      .join('');
+
+    for (const [ts, line] of stream.values) {
+      labels.add(streamLabels);
+      // num ns epoch in string, we convert it to iso string here so it matches old format
+      times.add(new Date(parseInt(ts.slice(0, -6), 10)).toISOString());
+      timesNs.add(ts);
+      lines.add(line);
+      uids.add(createUid(ts, labelsString, line, usedUids, refId));
+    }
   }
 
   return constructDataFrame(times, timesNs, lines, uids, labels, reverse, refId);
@@ -79,17 +83,18 @@ function constructDataFrame(
   timesNs: ArrayVector<string>,
   lines: ArrayVector<string>,
   uids: ArrayVector<string>,
-  labels: Labels,
+  labels: ArrayVector<{}>,
   reverse?: boolean,
   refId?: string
 ) {
   const dataFrame = {
     refId,
     fields: [
+      { name: 'labels', type: FieldType.other, config: {}, values: labels },
       { name: 'ts', type: FieldType.time, config: { displayName: 'Time' }, values: times }, // Time
-      { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line - needs to be the first field with string type
-      { name: 'id', type: FieldType.string, config: {}, values: uids },
+      { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line - needs to be the first field with string type
       { name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' }, values: timesNs }, // Time
+      { name: 'id', type: FieldType.string, config: {}, values: uids },
     ],
     length: times.length,
   };
@@ -128,11 +133,11 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
     }
   }
 
-  const tsField = data.fields[0];
-  const tsNsField = data.fields[1];
+  const labelsField = data.fields[0];
+  const tsField = data.fields[1];
   const lineField = data.fields[2];
-  const labelsField = data.fields[3];
-  const idField = data.fields[4];
+  const idField = data.fields[3];
+  const tsNsField = data.fields[4];
 
   // We are comparing used ids only within the received stream. This could be a problem if the same line + labels + nanosecond timestamp came in 2 separate batches.
   // As this is very unlikely, and the result would only affect live-tailing css animation we have decided to not compare all received uids from data param as this would slow down processing.
@@ -209,10 +214,6 @@ export function lokiPointsToTimeseriesPoints(data: Array<[number, string]>): Tim
   for (const [time, value] of data) {
     let datapointValue: TimeSeriesValue = parsePrometheusFormatSampleValue(value);
 
-    if (isNaN(datapointValue)) {
-      datapointValue = null;
-    }
-
     const timestamp = time * 1000;
 
     datapoints.push([datapointValue, timestamp]);
@@ -225,8 +226,7 @@ export function lokiResultsToTableModel(
   lokiResults: Array<LokiMatrixResult | LokiVectorResult>,
   resultCount: number,
   refId: string,
-  meta: QueryResultMeta,
-  valueWithRefId?: boolean
+  meta: QueryResultMeta
 ): TableModel {
   if (!lokiResults || lokiResults.length === 0) {
     return new TableModel();
@@ -245,7 +245,7 @@ export function lokiResultsToTableModel(
   table.columns = [
     { text: 'Time', type: FieldType.time },
     ...sortedLabels.map((label) => ({ text: label, filterable: true, type: FieldType.string })),
-    { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: FieldType.number },
+    { text: `Value #${refId}`, type: FieldType.number },
   ];
 
   // Populate rows, set value to empty string when label not present.
@@ -350,20 +350,12 @@ export function lokiStreamsToDataFrames(
     preferredVisualisationType: 'logs',
   };
 
-  const series: DataFrame[] = data.map((stream) => {
-    const dataFrame = lokiStreamResultToDataFrame(stream, reverse, target.refId);
-    enhanceDataFrame(dataFrame, config);
+  const dataFrame = lokiStreamsToRawDataFrame(data, reverse, target.refId);
+  enhanceDataFrame(dataFrame, config);
 
-    if (meta.custom && dataFrame.fields.some((f) => f.labels && Object.keys(f.labels).some((l) => l === '__error__'))) {
-      meta.custom.error = 'Error when parsing some of the logs';
-    }
-
-    return {
-      ...dataFrame,
-      refId: target.refId,
-      meta,
-    };
-  });
+  if (meta.custom && dataFrame.fields.some((f) => f.labels && Object.keys(f.labels).some((l) => l === '__error__'))) {
+    meta.custom.error = 'Error when parsing some of the logs';
+  }
 
   if (stats.length && !data.length) {
     return [
@@ -376,7 +368,13 @@ export function lokiStreamsToDataFrames(
     ];
   }
 
-  return series;
+  return [
+    {
+      ...dataFrame,
+      refId: target.refId,
+      meta,
+    },
+  ];
 }
 
 /**
@@ -454,7 +452,6 @@ function rangeQueryResponseToTimeSeries(
   response: LokiResponse,
   query: LokiRangeQueryRequest,
   target: LokiQuery,
-  responseListLength: number,
   scopedVars: ScopedVars
 ): TimeSeries[] {
   /** Show results of Loki metric queries only in graph */
@@ -462,16 +459,10 @@ function rangeQueryResponseToTimeSeries(
     preferredVisualisationType: 'graph',
   };
   const transformerOptions: TransformerOptions = {
-    format: target.format,
     legendFormat: target.legendFormat ?? '',
-    start: query.start!,
-    end: query.end!,
-    step: query.step!,
     query: query.query,
-    responseListLength,
     refId: target.refId,
     meta,
-    valueWithRefId: target.valueWithRefId,
     scopedVars,
   };
 
@@ -491,10 +482,9 @@ export function rangeQueryResponseToDataFrames(
   response: LokiResponse,
   query: LokiRangeQueryRequest,
   target: LokiQuery,
-  responseListLength: number,
   scopedVars: ScopedVars
 ): DataFrame[] {
-  const series = rangeQueryResponseToTimeSeries(response, query, target, responseListLength, scopedVars);
+  const series = rangeQueryResponseToTimeSeries(response, query, target, scopedVars);
   const frames = series.map((s) => toDataFrame(s));
 
   const { step } = query;
@@ -518,32 +508,21 @@ export function processRangeQueryResponse(
   response: LokiResponse,
   target: LokiQuery,
   query: LokiRangeQueryRequest,
-  responseListLength: number,
   limit: number,
   config: LokiOptions,
-  scopedVars: ScopedVars,
-  reverse = false
+  scopedVars: ScopedVars
 ) {
   switch (response.data.resultType) {
     case LokiResultType.Stream:
       return of({
-        data: lokiStreamsToDataFrames(response as LokiStreamResponse, target, limit, config, reverse),
+        data: lokiStreamsToDataFrames(response as LokiStreamResponse, target, limit, config),
         key: `${target.refId}_log`,
       });
 
     case LokiResultType.Vector:
     case LokiResultType.Matrix:
       return of({
-        data: rangeQueryResponseToDataFrames(
-          response,
-          query,
-          {
-            ...target,
-            format: 'time_series',
-          },
-          responseListLength,
-          scopedVars
-        ),
+        data: rangeQueryResponseToDataFrames(response, query, target, scopedVars),
         key: target.refId,
       });
     default:

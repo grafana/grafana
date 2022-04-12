@@ -96,9 +96,9 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], hasIcon: b
     flex: 1,
     fontSize: 'inherit',
     height: '100%',
+    overflowWrap: 'anywhere',
     padding: !hasIcon ? `${theme.spacing(0.5, 2)}` : '5px 12px 5px 10px',
     textAlign: 'left',
-    whiteSpace: 'nowrap',
     '&:hover, &:focus-visible': {
       backgroundColor: theme.colors.action.hover,
       color: theme.colors.text.primary,

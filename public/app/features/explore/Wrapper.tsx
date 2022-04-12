@@ -3,7 +3,6 @@ import { connect, ConnectedProps } from 'react-redux';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 import { ErrorBoundaryAlert } from '@grafana/ui';
 import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
-import { getRichHistory } from '../../core/utils/richHistory';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { Branding } from '../../core/components/Branding/Branding';
@@ -52,10 +51,6 @@ class WrapperUnconnected extends PureComponent<Props> {
     if (searchParams.from || searchParams.to) {
       locationService.partial({ from: undefined, to: undefined }, true);
     }
-
-    getRichHistory().then((richHistory) => {
-      this.props.richHistoryUpdatedAction({ richHistory });
-    });
   }
 
   componentDidUpdate(prevProps: Props) {
