@@ -49,7 +49,7 @@ func TestReadDashboard(t *testing.T) {
 		require.NoError(t, err)
 
 		update := false
-		savedPath := "testdata/" + input + "-info.json"
+		savedPath := filepath.Join("testdata/", input+"-info.json")
 		saved, err := os.ReadFile(savedPath)
 		if err != nil {
 			update = true
