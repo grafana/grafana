@@ -88,6 +88,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 	}, configure)
 
 	middlewareScenario(t, "Should return error if user is not found", func(t *testing.T, sc *scenarioContext) {
+		sc.mockSQLStore.ExpectedError = models.ErrUserNotFound
 		sc.fakeReq("GET", "/")
 		sc.req.SetBasicAuth("user", "password")
 		sc.exec()
@@ -100,10 +101,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 	}, configure)
 
 	middlewareScenario(t, "Should return error if user & password do not match", func(t *testing.T, sc *scenarioContext) {
-		bus.AddHandler("user-query", func(ctx context.Context, loginUserQuery *models.GetUserByLoginQuery) error {
-			return nil
-		})
-
+		sc.mockSQLStore.ExpectedError = models.ErrUserNotFound
 		sc.fakeReq("GET", "/")
 		sc.req.SetBasicAuth("killa", "gorilla")
 		sc.exec()
