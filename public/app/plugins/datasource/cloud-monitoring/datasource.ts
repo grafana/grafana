@@ -1,26 +1,21 @@
-import { chunk, flatten, isString, isArray } from 'lodash';
+import { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings, ScopedVars, SelectableValue } from '@grafana/data';
+import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { chunk, flatten, isArray, isString } from 'lodash';
 import { from, lastValueFrom, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
-import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  ScopedVars,
-  SelectableValue,
-} from '@grafana/data';
-import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import {
+  Aggregation,
   CloudMonitoringOptions,
   CloudMonitoringQuery,
   EditorMode,
   Filter,
   MetricDescriptor,
-  QueryType,
   PostResponse,
-  Aggregation,
+  QueryType,
 } from './types';
 import { CloudMonitoringVariableSupport } from './variables';
 
@@ -40,6 +35,19 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.variables = new CloudMonitoringVariableSupport(this);
     this.intervalMs = 0;
+
+    // This will support annotation queries for 7.2+
+    this.annotations = {
+      prepareAnnotation: (json: any) => {
+        if (!json.target) {
+          return json;
+        }
+        console.log({ json });
+        return json;
+      },
+
+      QueryEditor: AnnotationQueryEditor,
+    };
   }
 
   getVariables() {
