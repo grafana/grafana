@@ -43,7 +43,7 @@ const (
 	StatusNotImplemented CoreStatus = "Not implemented"
 )
 
-type Status interface {
+type StatusReason interface {
 	Status() CoreStatus
 }
 
