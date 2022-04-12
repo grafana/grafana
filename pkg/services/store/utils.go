@@ -1,11 +1,7 @@
 package store
 
 import (
-	"path/filepath"
 	"strings"
-
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 func splitFirstSegment(path string) (string, string) {
@@ -21,11 +17,11 @@ func splitFirstSegment(path string) (string, string) {
 	return path, ""
 }
 
-func getPathAndScope(c *models.ReqContext) (string, string) {
-	params := web.Params(c.Req)
-	path := params["*"]
-	if path == "" {
-		return "", ""
-	}
-	return splitFirstSegment(filepath.Clean(path))
-}
+// func getPathAndScope(c *models.ReqContext) (string, string) {
+// 	params := web.Params(c.Req)
+// 	path := params["*"]
+// 	if path == "" {
+// 		return "", ""
+// 	}
+// 	return splitFirstSegment(filepath.Clean(path))
+// }
