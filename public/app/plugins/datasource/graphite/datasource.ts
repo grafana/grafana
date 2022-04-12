@@ -750,6 +750,7 @@ export class GraphiteDatasource
     const httpOptions = {
       method: 'GET',
       url: '/functions',
+      // to work around Graphite returning invalid JSON
       responseType: 'text',
     };
 
