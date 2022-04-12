@@ -78,7 +78,7 @@ export interface State {
   showLoadingState: boolean;
   panelNotFound: boolean;
   editPanelAccessDenied: boolean;
-  scrollTop: number;
+  scrollElement?: HTMLDivElement;
 }
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
@@ -91,7 +91,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       viewPanel: null,
       showLoadingState: false,
       rememberScrollTop: 0,
-      scrollTop: 0,
       panelNotFound: false,
       editPanelAccessDenied: false,
     };
@@ -226,7 +225,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       }
 
       if (dashboard.canEditPanel(panel)) {
-        return { ...state, editPanel: panel, rememberScrollTop: state.scrollTop };
+        return { ...state, editPanel: panel, rememberScrollTop: state.scrollElement?.scrollTop };
       } else {
         return { ...state, editPanelAccessDenied: true };
       }
@@ -247,11 +246,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       // Should move this state out of dashboard in the future
       dashboard.initViewPanel(panel);
 
-      return {
-        ...state,
-        viewPanel: panel,
-        updateScrollTop: 0,
-      };
+      return { ...state, viewPanel: panel, rememberScrollTop: state.scrollElement?.scrollTop, updateScrollTop: 0 };
     }
     // Leaving view mode
     else if (state.viewPanel && !urlViewPanelId) {
@@ -292,8 +287,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     this.setState({ updateScrollTop: 0 });
   };
 
-  setScrollTop = ({ scrollTop }: ScrollbarPosition): void => {
-    this.setState({ scrollTop, updateScrollTop: undefined });
+  setScrollRef = (scrollElement: HTMLDivElement): void => {
+    this.setState({ scrollElement });
   };
 
   getInspectPanel() {
@@ -352,7 +347,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         <div className={styles.dashboardScroll}>
           <CustomScrollbar
             autoHeightMin="100%"
-            setScrollTop={this.setScrollTop}
+            scrollRefCallback={this.setScrollRef}
             scrollTop={updateScrollTop}
             hideHorizontalTrack={true}
             updateAfterMountMs={500}
