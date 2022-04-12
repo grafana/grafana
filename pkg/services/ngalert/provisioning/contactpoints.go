@@ -118,7 +118,7 @@ func (ecp *EmbeddedContactPointService) CreateContactPoint(ctx context.Context, 
 		return apimodels.EmbeddedContactPoint{}, err
 	}
 
-	extracedSecrets, err := contactPoint.ExtractSecrtes()
+	extracedSecrets, err := contactPoint.ExtractSecrets()
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
 	}
@@ -214,7 +214,7 @@ func (ecp *EmbeddedContactPointService) UpdateContactPoint(ctx context.Context, 
 		return err
 	}
 	// transform to internal model
-	extracedSecrets, err := contactPoint.ExtractSecrtes()
+	extracedSecrets, err := contactPoint.ExtractSecrets()
 	if err != nil {
 		return err
 	}

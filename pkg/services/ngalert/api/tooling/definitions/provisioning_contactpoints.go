@@ -130,7 +130,7 @@ func (e *EmbeddedContactPoint) SecretKeys() ([]string, error) {
 	return nil, fmt.Errorf("no secrets configured for type '%s'", e.Type)
 }
 
-func (e *EmbeddedContactPoint) ExtractSecrtes() (map[string]string, error) {
+func (e *EmbeddedContactPoint) ExtractSecrets() (map[string]string, error) {
 	secrets := map[string]string{}
 	secretKeys, err := e.SecretKeys()
 	if err != nil {
