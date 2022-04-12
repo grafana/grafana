@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -15,8 +16,8 @@ import (
 	"github.com/prometheus/alertmanager/config"
 )
 
-type EmbeddedContactPointService struct {
-	amStore           store.AlertingStore
+type ContactPointService struct {
+	amStore           AMConfigStore
 	encryptionService secrets.Service
 	provenanceStore   ProvisioningStore
 	xact              TransactionManager
@@ -24,8 +25,8 @@ type EmbeddedContactPointService struct {
 }
 
 func NewContactPointService(store store.AlertingStore, encryptionService secrets.Service,
-	provenanceStore ProvisioningStore, xact TransactionManager, log log.Logger) *EmbeddedContactPointService {
-	return &EmbeddedContactPointService{
+	provenanceStore ProvisioningStore, xact TransactionManager, log log.Logger) *ContactPointService {
+	return &ContactPointService{
 		amStore:           store,
 		encryptionService: encryptionService,
 		provenanceStore:   provenanceStore,
@@ -34,12 +35,12 @@ func NewContactPointService(store store.AlertingStore, encryptionService secrets
 	}
 }
 
-func (ecp *EmbeddedContactPointService) GetContactPoints(ctx context.Context, orgID int64) ([]apimodels.EmbeddedContactPoint, error) {
+func (ecp *ContactPointService) GetContactPoints(ctx context.Context, orgID int64) ([]apimodels.EmbeddedContactPoint, error) {
 	cfg, _, err := ecp.getCurrentConfig(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
-	provenances, err := ecp.provenanceStore.GetProvenances(ctx, orgID, "contactpoint")
+	provenances, err := ecp.provenanceStore.GetProvenances(ctx, orgID, "contactPoint")
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func (ecp *EmbeddedContactPointService) GetContactPoints(ctx context.Context, or
 		for k, v := range contactPoint.SecureSettings {
 			decryptedValue, err := ecp.decryptValue(v)
 			if err != nil {
-				// TODO(JP): log a warning
+				ecp.log.Warn("decrypting value failed", "err", err.Error())
 				continue
 			}
 			if decryptedValue == "" {
@@ -69,11 +70,14 @@ func (ecp *EmbeddedContactPointService) GetContactPoints(ctx context.Context, or
 		}
 		contactPoints = append(contactPoints, embeddedContactPoint)
 	}
+	sort.SliceStable(contactPoints, func(i, j int) bool {
+		return contactPoints[i].Name < contactPoints[j].Name
+	})
 	return contactPoints, nil
 }
 
 // internal only
-func (ecp *EmbeddedContactPointService) getContactPointUncrypted(ctx context.Context, orgID int64, uid string) (apimodels.EmbeddedContactPoint, error) {
+func (ecp *ContactPointService) getContactPointUncrypted(ctx context.Context, orgID int64, uid string) (apimodels.EmbeddedContactPoint, error) {
 	cfg, _, err := ecp.getCurrentConfig(ctx, orgID)
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
@@ -106,7 +110,7 @@ func (ecp *EmbeddedContactPointService) getContactPointUncrypted(ctx context.Con
 	return apimodels.EmbeddedContactPoint{}, fmt.Errorf("contact point with uid '%s' not found", uid)
 }
 
-func (ecp *EmbeddedContactPointService) CreateContactPoint(ctx context.Context, orgID int64,
+func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID int64,
 	contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) (apimodels.EmbeddedContactPoint, error) {
 
 	if err := contactPoint.IsValid(ecp.encryptionService.GetDecryptedValue); err != nil {
@@ -190,10 +194,13 @@ func (ecp *EmbeddedContactPointService) CreateContactPoint(ctx context.Context, 
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
 	}
+	for k := range extractedSecrets {
+		contactPoint.Settings.Set(k, apimodels.RedactedValue)
+	}
 	return contactPoint, nil
 }
 
-func (ecp *EmbeddedContactPointService) UpdateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint) error {
+func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) error {
 	// set all redacted values with the latest known value from the store
 	rawContactPoint, err := ecp.getContactPointUncrypted(ctx, orgID, contactPoint.UID)
 	if err != nil {
@@ -257,20 +264,37 @@ func (ecp *EmbeddedContactPointService) UpdateContactPoint(ctx context.Context, 
 	if err != nil {
 		return err
 	}
-	return ecp.amStore.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: string(data),
-		FetchedConfigurationHash:  fetchedHash,
-		ConfigurationVersion:      "v1",
-		Default:                   false,
-		OrgID:                     orgID,
+	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
+		err = ecp.amStore.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+			AlertmanagerConfiguration: string(data),
+			FetchedConfigurationHash:  fetchedHash,
+			ConfigurationVersion:      "v1",
+			Default:                   false,
+			OrgID:                     orgID,
+		})
+		if err != nil {
+			return err
+		}
+		adapter := provenanceOrgAdapter{
+			inner: &contactPoint,
+			orgID: orgID,
+		}
+		err = ecp.provenanceStore.SetProvenance(ctx, adapter, provenance)
+		if err != nil {
+			return err
+		}
+		contactPoint.Provenance = string(provenance)
+		return nil
 	})
 }
 
-func (ecp *EmbeddedContactPointService) DeleteContactPoint(ctx context.Context, orgID int64, uid string) error {
+func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID int64, uid string) error {
 	cfg, fetchedHash, err := ecp.getCurrentConfig(ctx, orgID)
 	if err != nil {
 		return err
 	}
+	// TODO: only delete if not used by any notification policy,
+	//       otherwise it results in a invalid config.
 	for _, receiver := range cfg.AlertmanagerConfig.Receivers {
 		for index, grafanaReceiver := range receiver.GrafanaManagedReceivers {
 			if grafanaReceiver.UID == uid {
@@ -278,6 +302,7 @@ func (ecp *EmbeddedContactPointService) DeleteContactPoint(ctx context.Context, 
 				break
 			}
 		}
+		// TODO: if it was the last element in the slice, delete the whole contact point.
 	}
 	data, err := json.Marshal(cfg)
 	if err != nil {
@@ -300,7 +325,7 @@ func (ecp *EmbeddedContactPointService) DeleteContactPoint(ctx context.Context, 
 	})
 }
 
-func (ecp *EmbeddedContactPointService) getCurrentConfig(ctx context.Context, orgID int64) (*apimodels.PostableUserConfig, string, error) {
+func (ecp *ContactPointService) getCurrentConfig(ctx context.Context, orgID int64) (*apimodels.PostableUserConfig, string, error) {
 	query := &models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
 	}
@@ -315,7 +340,7 @@ func (ecp *EmbeddedContactPointService) getCurrentConfig(ctx context.Context, or
 	return cfg, query.Result.ConfigurationHash, nil
 }
 
-func (ecp *EmbeddedContactPointService) decryptValue(value string) (string, error) {
+func (ecp *ContactPointService) decryptValue(value string) (string, error) {
 	decodeValue, err := base64.StdEncoding.DecodeString(value)
 	if err != nil {
 		return "", err
@@ -329,7 +354,7 @@ func (ecp *EmbeddedContactPointService) decryptValue(value string) (string, erro
 	return string(decryptedValue), nil
 }
 
-func (ecp *EmbeddedContactPointService) encryptValue(value string) (string, error) {
+func (ecp *ContactPointService) encryptValue(value string) (string, error) {
 	encryptedData, err := ecp.encryptionService.Encrypt(context.Background(), []byte(value), secrets.WithoutScope())
 	if err != nil {
 		return "", fmt.Errorf("failed to encrypt secure settings: %w", err)

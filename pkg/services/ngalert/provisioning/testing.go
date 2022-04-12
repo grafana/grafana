@@ -124,11 +124,15 @@ func (f *fakeProvisioningStore) SetProvenance(ctx context.Context, o models.Prov
 	if _, ok := f.records[orgID]; !ok {
 		f.records[orgID] = map[string]models.Provenance{}
 	}
+	f.DeleteProvenance(ctx, o.ResourceOrgID(), o) // delete old entries first
 	f.records[orgID][o.ResourceID()+o.ResourceType()] = p
 	return nil
 }
 
 func (f *fakeProvisioningStore) DeleteProvenance(ctx context.Context, orgID int64, o models.ProvisionableInOrg) error {
+	if val, ok := f.records[orgID]; ok {
+		delete(val, o.ResourceID()+o.ResourceType())
+	}
 	return nil
 }
 

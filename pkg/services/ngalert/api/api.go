@@ -77,7 +77,7 @@ type API struct {
 	SecretsService       secrets.Service
 	AccessControl        accesscontrol.AccessControl
 	Policies             *provisioning.NotificationPolicyService
-	ContactPointService  *provisioning.EmbeddedContactPointService
+	ContactPointService  *provisioning.ContactPointService
 }
 
 // RegisterAPIEndpoints registers API handlers
