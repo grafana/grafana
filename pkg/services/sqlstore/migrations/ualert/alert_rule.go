@@ -3,6 +3,8 @@ package ualert
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/expr"
@@ -98,7 +100,7 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 
 	data, err := migrateAlertRuleQueries(cond.Data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to migrate alert rule queries: %w", err)
+		return nil, fmt.Errorf("failed to migrate queries of alert rule [%s] that belongs to a panel [%d] of dashboard [%s]: %w", da.Name, da.PanelId, da.DashboardUID, err)
 	}
 
 	ar := &alertRule{
@@ -160,7 +162,11 @@ func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
 		if err != nil {
 			return nil, err
 		}
-		fixedData = fixGraphiteReferencedSubQueries(fixedData)
+		fixedData = convertQueryData(fixedData)
+		err = validateQueryData(d, fixedData)
+		if err != nil {
+			return nil, err
+		}
 		updatedModel, err := json.Marshal(fixedData)
 		if err != nil {
 			return nil, err
@@ -171,9 +177,30 @@ func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
 	return result, nil
 }
 
-// fixGraphiteReferencedSubQueries attempts to fix graphite referenced sub queries, given unified alerting does not support this.
-// targetFull of Graphite data source contains the expanded version of field 'target', so let's copy that.
-func fixGraphiteReferencedSubQueries(queryData map[string]json.RawMessage) map[string]json.RawMessage {
+// verifyQuery creates a validation function that checks whether the
+func validateQueryData(query alertQuery, queryData map[string]json.RawMessage) error {
+	if strings.ToLower(query.datasourceType) != "graphite" {
+		return nil
+	}
+	target, ok := queryData[graphite.TargetModelField]
+	if !ok {
+		return nil
+	}
+	// similar pattern is used for expanding nested references https://github.com/grafana/grafana/blob/712b239d5ae685db7e8f9d01d5c8aecca611f0b3/public/app/plugins/datasource/graphite/graphite_query.ts#L207
+	const pattern = `#[A-Z]`
+	match, err := regexp.Match(pattern, target)
+	if err != nil {
+		return fmt.Errorf("failed check query query [%s] for nested references that match regular expression [%s]: %w", target, pattern, err)
+	}
+	if match {
+		return fmt.Errorf("query to data source contains unexpanded references to other queries: %s", target)
+	}
+	return nil
+}
+
+// convertQueryData looks for field `targetFull` in the query data, and if it exists, overrides field `target`, and then checks whether the target contains references to other queries.
+// If the field `targetFull`, which contains expanded query without references to other queries, exists then it means that `target` has not expanded query, which is not supported by the Grafana 8 alerting engine.
+func convertQueryData(queryData map[string]json.RawMessage) map[string]json.RawMessage {
 	fullQuery, ok := queryData[graphite.TargetFullModelField]
 	if ok {
 		delete(queryData, graphite.TargetFullModelField)
