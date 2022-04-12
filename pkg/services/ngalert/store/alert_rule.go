@@ -39,7 +39,6 @@ type RuleStore interface {
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
 	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
 	GetOrgAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
-	GetNamespaceAlertRules(ctx context.Context, query *ngmodels.ListNamespaceAlertRulesQuery) error
 	GetAlertRules(ctx context.Context, query *ngmodels.GetAlertRulesQuery) error
 	GetUserVisibleNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
@@ -221,21 +220,6 @@ func (st DBstore) GetOrgAlertRules(ctx context.Context, query *ngmodels.ListAler
 		q = fmt.Sprintf("%s ORDER BY id ASC", q)
 
 		if err := sess.SQL(q, params...).Find(&alertRules); err != nil {
-			return err
-		}
-
-		query.Result = alertRules
-		return nil
-	})
-}
-
-// GetNamespaceAlertRules is a handler for retrieving namespace alert rules of specific organisation.
-func (st DBstore) GetNamespaceAlertRules(ctx context.Context, query *ngmodels.ListNamespaceAlertRulesQuery) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		alertRules := make([]*ngmodels.AlertRule, 0)
-		// TODO rewrite using group by namespace_uid, rule_group
-		q := "SELECT * FROM alert_rule WHERE org_id = ? and namespace_uid = ?"
-		if err := sess.SQL(q, query.OrgID, query.NamespaceUID).Find(&alertRules); err != nil {
 			return err
 		}
 

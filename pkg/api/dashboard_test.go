@@ -96,7 +96,7 @@ func newTestLive(t *testing.T, store *sqlstore.SQLStore) *live.GrafanaLive {
 		nil,
 		&usagestats.UsageStatsMock{T: t},
 		nil,
-		features, nil)
+		features, nil, accesscontrolmock.New())
 	require.NoError(t, err)
 	return gLive
 }
@@ -1095,8 +1095,8 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 }
 
 func (sc *scenarioContext) ToJSON() *simplejson.Json {
-	var result *simplejson.Json
-	err := json.NewDecoder(sc.resp.Body).Decode(&result)
+	result := simplejson.New()
+	err := json.NewDecoder(sc.resp.Body).Decode(result)
 	require.NoError(sc.t, err)
 	return result
 }
