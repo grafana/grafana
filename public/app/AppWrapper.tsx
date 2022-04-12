@@ -3,7 +3,7 @@ import { Router, Route, Redirect, Switch } from 'react-router-dom';
 import { config, locationService, navigationLogger } from '@grafana/runtime';
 import { Provider } from 'react-redux';
 import { store } from 'app/store/store';
-import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider } from '@grafana/ui';
+import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider, PortalContainer } from '@grafana/ui';
 import { GrafanaApp } from './app';
 import { getAppRoutes } from 'app/routes/routes';
 import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
@@ -113,7 +113,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                   </div>
                   <LiveConnectionWarning />
                   <ModalRoot />
-                  <div id="portalRoot" />
+                  <PortalContainer />
                 </ModalsProvider>
               </ThemeProvider>
             </ConfigContext.Provider>
