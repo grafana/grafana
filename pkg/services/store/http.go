@@ -60,13 +60,16 @@ func (s *httpStorage) Read(c *models.ReqContext) response.Response {
 }
 
 func (s *httpStorage) Delete(c *models.ReqContext) response.Response {
-	action := "Delete"
-	scope, path := getPathAndScope(c)
-
+	// full path is api/storage/delete/upload/example.jpg, but we only want the part after upload
+	indexOfPath := strings.Index(c.Req.RequestURI, "upload") + 6
+	path := c.Req.RequestURI[indexOfPath:]
+	err := s.store.Delete(c.Req.Context(), c.SignedInUser, path)
+	if err != nil {
+		return response.Error(400, "cannot call delete", err)
+	}
 	return response.JSON(200, map[string]string{
-		"action": action,
-		"scope":  scope,
-		"path":   path,
+		"message": "Removed file from storage",
+		"path":    path,
 	})
 }
 
