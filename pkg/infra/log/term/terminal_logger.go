@@ -14,13 +14,21 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/level"
 )
 
-const (
+var (
 	timeFormat     = "2006-01-02T15:04:05-0700"
 	termTimeFormat = "01-02|15:04:05"
-	floatFormat    = 'f'
-	termMsgJust    = 40
-	errorKey       = "LOG15_ERROR"
 )
+
+const (
+	floatFormat = 'f'
+	termMsgJust = 40
+	errorKey    = "LOG15_ERROR"
+)
+
+func SetTimeFormatGokitLog() {
+	timeFormat = "2006-01-02T15:04:05.000-0700"
+	termTimeFormat = "01-02|15:04:05.000"
+}
 
 type terminalLogger struct {
 	w io.Writer
@@ -45,7 +53,10 @@ func (l terminalLogger) Log(keyvals ...interface{}) error {
 	r := getRecord(keyvals)
 
 	b := &bytes.Buffer{}
-	lvl := strings.ToUpper(r.level.String())
+
+	// To make the log output more readable, we make all log levels 5 characters long
+	lvl := fmt.Sprintf("%-5s", strings.ToUpper(r.level.String()))
+
 	if r.color > 0 {
 		fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m[%s] %s ", r.color, lvl, r.time.Format(termTimeFormat), r.msg) // lgtm[go/log-injection]
 	} else {
