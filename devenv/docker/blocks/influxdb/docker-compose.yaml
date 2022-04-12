@@ -12,7 +12,6 @@
       DOCKER_INFLUXDB_INIT_BUCKET: 'mybucket'
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: 'mytoken'
     volumes:
-      - ./docker/blocks/influxdb/config.yaml:/etc/influxdb2/config.yaml
       - ./docker/blocks/influxdb/setup_influxql.sh:/docker-entrypoint-initdb.d/setup_influxql.sh
 
   telegraf:
