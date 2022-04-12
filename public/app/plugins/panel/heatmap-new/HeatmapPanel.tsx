@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { formattedValueToString, GrafanaTheme2, PanelProps, reduceField, ReducerID } from '@grafana/data';
+import { formattedValueToString, GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
 import {
   Portal,
   UPlotChart,
@@ -37,6 +37,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
+  // ugh
+  let timeRangeRef = useRef<TimeRange>(timeRange);
+  timeRangeRef.current = timeRange;
+
   const info = useMemo(() => prepareHeatmapData(data.series, options, theme), [data, options, theme]);
 
   const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
@@ -70,19 +74,22 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     [options, data.structureRev]
   );
 
+  // ugh
   const dataRef = useRef<HeatmapData>(info);
-
   dataRef.current = info;
 
   const builder = useMemo(() => {
     return prepConfig({
       dataRef,
       theme,
-      onhover: options.tooltip.show ? onhover : () => {},
-      onclick: options.tooltip.show ? onclick : () => {},
+      onhover: options.tooltip.show ? onhover : null,
+      onclick: options.tooltip.show ? onclick : null,
+      onzoom: (evt) => {
+        onChangeTimeRange({ from: evt.xMin, to: evt.xMax });
+      },
       isToolTipOpen,
       timeZone,
-      timeRange,
+      getTimeRange: () => timeRangeRef.current,
       palette,
       cellGap: options.cellGap,
       hideThreshold: options.hideThreshold,

@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 const (
@@ -109,21 +109,29 @@ type AzureResponseTable struct {
 // AzureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.
 type AzureMonitorJSONQuery struct {
 	AzureMonitor struct {
-		Aggregation         string  `json:"aggregation"`
-		Alias               string  `json:"alias"`
+		ResourceURI     string `json:"resourceUri"`
+		MetricNamespace string `json:"metricNamespace"`
+		MetricName      string `json:"metricName"`
+
+		Aggregation      string                        `json:"aggregation"`
+		Alias            string                        `json:"alias"`
+		DimensionFilters []AzureMonitorDimensionFilter `json:"dimensionFilters"` // new model
+		TimeGrain        string                        `json:"timeGrain"`
+		Top              string                        `json:"top"`
+
+		// Legecy "resource" fields from before the resource picker provided just a single ResourceURI
+		// These are used for pre-resource picker queries to reconstruct a resource URI
+		// Deprecated
+		MetricDefinition string `json:"metricDefinition"`
+		// Deprecated
+		ResourceGroup string `json:"resourceGroup"`
+		// Deprecated
+		ResourceName string `json:"resourceName"`
+
 		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
 		Dimension           string  `json:"dimension"`       // old model
 		DimensionFilter     string  `json:"dimensionFilter"` // old model
 		Format              string  `json:"format"`
-		MetricDefinition    string  `json:"metricDefinition"`
-		MetricName          string  `json:"metricName"`
-		MetricNamespace     string  `json:"metricNamespace"`
-		ResourceGroup       string  `json:"resourceGroup"`
-		ResourceName        string  `json:"resourceName"`
-		TimeGrain           string  `json:"timeGrain"`
-		Top                 string  `json:"top"`
-
-		DimensionFilters []AzureMonitorDimensionFilter `json:"dimensionFilters"` // new model
 	} `json:"azureMonitor"`
 	Subscription string `json:"subscription"`
 }

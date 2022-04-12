@@ -1,3 +1,8 @@
+// To change feature flags, edit:
+//  pkg/services/featuremgmt/registry.go
+// Then run tests in:
+//  pkg/services/featuremgmt/toggles_gen_test.go
+
 package featuremgmt
 
 var (
@@ -15,7 +20,7 @@ var (
 		},
 		{
 			Name:        "httpclientprovider_azure_auth",
-			Description: "use http client for azure auth",
+			Description: "Experimental. Allow datasources to configure Azure authentication directly via JsonData",
 			State:       FeatureStateBeta,
 		},
 		{
@@ -107,7 +112,7 @@ var (
 		},
 		{
 			Name:        "prometheus_azure_auth",
-			Description: "Use azure authentication for prometheus datasource",
+			Description: "Experimental. Azure authentication for Prometheus datasource",
 			State:       FeatureStateBeta,
 		},
 		{
@@ -135,6 +140,12 @@ var (
 		{
 			Name:            "validatedQueries",
 			Description:     "only execute the query saved in a panel",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:            "publicDashboards",
+			Description:     "enables public access to dashboards",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
@@ -179,6 +190,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "alertProvisioning",
+			Description: "Provisioning-friendly routes for alerting",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:            "storageLocalUpload",
 			Description:     "allow uploads to local storage",
 			State:           FeatureStateAlpha,
@@ -190,6 +206,12 @@ var (
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 			FrontendOnly:    true,
+		},
+		{
+			Name:         "explore2Dashboard",
+			Description:  "Experimental Explore to Dashboard workflow",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
 		},
 	}
 )

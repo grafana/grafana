@@ -66,10 +66,18 @@ export function ServiceAccountProfile({
 
   return (
     <>
-      <h3 className="page-heading">Information</h3>
-      <a href="org/serviceaccounts">
-        <Button variant="link" icon="backward" />
-      </a>
+      <div style={{ marginBottom: '10px' }}>
+        <a href="org/serviceaccounts" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+          <Button variant="link" icon="backward" />
+        </a>
+        <h1
+          className="page-heading"
+          style={{ display: 'inline-block', verticalAlign: 'middle', margin: '0!important', marginBottom: '0px' }}
+        >
+          {serviceAccount.name}
+        </h1>
+      </div>
+      <span style={{ marginBottom: '10px' }}>Information</span>
       <div className="gf-form-group">
         <div className="gf-form">
           <table className="filter-table form-inline">
@@ -87,7 +95,7 @@ export function ServiceAccountProfile({
                 builtInRoles={builtInRoles}
                 roleOptions={roleOptions}
               />
-              <ServiceAccountProfileRow label="Teams" value={serviceAccount.teams.join(', ')} />
+              {/* <ServiceAccountProfileRow label="Teams" value={serviceAccount.teams.join(', ')} /> */}
               <ServiceAccountProfileRow
                 label="Creation date"
                 value={dateTimeFormat(serviceAccount.createdAt, { timeZone })}

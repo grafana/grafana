@@ -178,12 +178,6 @@ func (f *FakeRuleStore) GetOrgAlertRules(_ context.Context, q *models.ListAlertR
 	q.Result = rules
 	return nil
 }
-func (f *FakeRuleStore) GetNamespaceAlertRules(_ context.Context, q *models.ListNamespaceAlertRulesQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	return nil
-}
 func (f *FakeRuleStore) GetAlertRules(_ context.Context, q *models.GetAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -208,7 +202,7 @@ func (f *FakeRuleStore) GetAlertRules(_ context.Context, q *models.GetAlertRules
 	q.Result = result
 	return nil
 }
-func (f *FakeRuleStore) GetNamespaces(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
+func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
@@ -219,8 +213,8 @@ func (f *FakeRuleStore) GetNamespaces(_ context.Context, orgID int64, _ *models2
 		return namespacesMap, nil
 	}
 
-	for _, rule := range f.Rules[orgID] {
-		namespacesMap[rule.NamespaceUID] = &models2.Folder{}
+	for _, folder := range f.Folders[orgID] {
+		namespacesMap[folder.Uid] = folder
 	}
 	return namespacesMap, nil
 }
@@ -232,34 +226,6 @@ func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, org
 		}
 	}
 	return nil, fmt.Errorf("not found")
-}
-func (f *FakeRuleStore) GetOrgRuleGroups(_ context.Context, q *models.ListOrgRuleGroupsQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	if err := f.Hook(*q); err != nil {
-		return err
-	}
-
-	// If we have namespaces, we want to try and retrieve the list of rules stored.
-	if len(q.NamespaceUIDs) != 0 {
-		rules, ok := f.Rules[q.OrgID]
-		if !ok {
-			return nil
-		}
-
-		var ruleGroups [][]string
-		for _, rule := range rules {
-			for _, namespace := range q.NamespaceUIDs {
-				if rule.NamespaceUID == namespace { // if they match, they should go in.
-					ruleGroups = append(ruleGroups, []string{rule.RuleGroup, rule.NamespaceUID, rule.NamespaceUID})
-				}
-			}
-		}
-
-		q.Result = ruleGroups
-	}
-	return nil
 }
 
 func (f *FakeRuleStore) UpsertAlertRules(_ context.Context, q []UpsertRule) error {

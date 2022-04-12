@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -514,11 +515,13 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	cfg.AWSAllowedAuthProviders = []string{"keys", "credentials"}
 	cfg.AWSAssumeRoleEnabled = true
 
-	cfg.Azure.ManagedIdentityEnabled = true
-	cfg.Azure.Cloud = "AzureCloud"
-	cfg.Azure.ManagedIdentityClientId = "client-id"
+	cfg.Azure = &azsettings.AzureSettings{
+		ManagedIdentityEnabled:  true,
+		Cloud:                   "AzureCloud",
+		ManagedIdentityClientId: "client-id",
+	}
 
-	pluginRegistry := registry.NewPluginRegistry(cfg)
+	pluginRegistry := registry.NewInMemory(cfg)
 	manager := New(cfg, pluginRegistry, nil, &fakeLoader{}, &fakePluginInstaller{},
 		process.ProvideProcessManager(pluginRegistry))
 	ctx := &managerScenarioCtx{

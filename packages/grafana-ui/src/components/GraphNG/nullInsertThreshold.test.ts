@@ -112,6 +112,22 @@ describe('nullInsertThreshold Transformer', () => {
     expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 10, 11]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, 8, null]);
     expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, 'c', null]);
+
+    // should work for frames with 1 datapoint
+    const df2 = new MutableDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [1] },
+        { name: 'One', type: FieldType.number, values: [1] },
+        { name: 'Two', type: FieldType.string, values: ['a'] },
+      ],
+    });
+
+    const result2 = applyNullInsertThreshold(df2, null, 13);
+
+    expect(result2.fields[0].values.toArray()).toStrictEqual([1, 2]);
+    expect(result2.fields[1].values.toArray()).toStrictEqual([1, null]);
+    expect(result2.fields[2].values.toArray()).toStrictEqual(['a', null]);
   });
 
   // TODO: make this work
@@ -132,12 +148,12 @@ describe('nullInsertThreshold Transformer', () => {
     expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, 'c']);
   });
 
-  test('should noop on fewer than two values', () => {
+  test('should noop on 0 datapoints', () => {
     const df = new MutableDataFrame({
       refId: 'A',
       fields: [
-        { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [1] },
-        { name: 'Value', type: FieldType.number, values: [1] },
+        { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [] },
+        { name: 'Value', type: FieldType.number, values: [] },
       ],
     });
 

@@ -11,8 +11,6 @@ import (
 	"net/http"
 	"time"
 
-	"golang.org/x/net/context/ctxhttp"
-
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -42,17 +40,17 @@ var netClient = &http.Client{
 }
 
 func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
-	ns.log.Debug("Sending webhook", "url", webhook.Url, "http method", webhook.HttpMethod)
-
 	if webhook.HttpMethod == "" {
 		webhook.HttpMethod = http.MethodPost
 	}
+
+	ns.log.Debug("Sending webhook", "url", webhook.Url, "http method", webhook.HttpMethod)
 
 	if webhook.HttpMethod != http.MethodPost && webhook.HttpMethod != http.MethodPut {
 		return fmt.Errorf("webhook only supports HTTP methods PUT or POST")
 	}
 
-	request, err := http.NewRequest(webhook.HttpMethod, webhook.Url, bytes.NewReader([]byte(webhook.Body)))
+	request, err := http.NewRequestWithContext(ctx, webhook.HttpMethod, webhook.Url, bytes.NewReader([]byte(webhook.Body)))
 	if err != nil {
 		return err
 	}
@@ -72,7 +70,7 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 		request.Header.Set(k, v)
 	}
 
-	resp, err := ctxhttp.Do(ctx, netClient, request)
+	resp, err := netClient.Do(request)
 	if err != nil {
 		return err
 	}

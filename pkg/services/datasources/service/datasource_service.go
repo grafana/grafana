@@ -5,11 +5,15 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"net/url"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -22,13 +26,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 type Service struct {
 	Bus                bus.Bus
 	SQLStore           *sqlstore.SQLStore
 	SecretsService     secrets.Service
+	cfg                *setting.Cfg
 	features           featuremgmt.FeatureToggles
 	permissionsService accesscontrol.PermissionsService
 
@@ -57,7 +61,7 @@ type cachedDecryptedJSON struct {
 }
 
 func ProvideService(
-	bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, features featuremgmt.FeatureToggles,
+	bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
 ) *Service {
 	s := &Service{
@@ -70,17 +74,10 @@ func ProvideService(
 		dsDecryptionCache: secureJSONDecryptionCache{
 			cache: make(map[int64]cachedDecryptedJSON),
 		},
+		cfg:                cfg,
 		features:           features,
 		permissionsService: permissionsServices.GetDataSourceService(),
 	}
-
-	s.Bus.AddHandler(s.GetDataSources)
-	s.Bus.AddHandler(s.GetDataSourcesByType)
-	s.Bus.AddHandler(s.GetDataSource)
-	s.Bus.AddHandler(s.AddDataSource)
-	s.Bus.AddHandler(s.DeleteDataSource)
-	s.Bus.AddHandler(s.UpdateDataSource)
-	s.Bus.AddHandler(s.GetDefaultDataSource)
 
 	ac.RegisterAttributeScopeResolver(NewNameScopeResolver(store))
 	ac.RegisterAttributeScopeResolver(NewIDScopeResolver(store))
@@ -233,7 +230,7 @@ func (s *Service) GetHTTPTransport(ds *models.DataSource, provider httpclient.Pr
 		return nil, err
 	}
 
-	opts.Middlewares = customMiddlewares
+	opts.Middlewares = append(opts.Middlewares, customMiddlewares...)
 
 	rt, err := provider.GetTransport(*opts)
 	if err != nil {
@@ -337,7 +334,8 @@ func (s *Service) httpClientOptions(ds *models.DataSource) (*sdkhttpclient.Optio
 		}
 	}
 
-	if ds.JsonData != nil {
+	// Azure authentication
+	if ds.JsonData != nil && s.features.IsEnabled(featuremgmt.FlagHttpclientproviderAzureAuth) {
 		credentials, err := azcredentials.FromDatasourceData(ds.JsonData.MustMap(), s.DecryptedValues(ds))
 		if err != nil {
 			err = fmt.Errorf("invalid Azure credentials: %s", err)
@@ -345,7 +343,22 @@ func (s *Service) httpClientOptions(ds *models.DataSource) (*sdkhttpclient.Optio
 		}
 
 		if credentials != nil {
-			opts.CustomOptions["_azureCredentials"] = credentials
+			resourceIdStr := ds.JsonData.Get("azureEndpointResourceId").MustString()
+			if resourceIdStr == "" {
+				err := fmt.Errorf("endpoint resource ID (audience) not provided")
+				return nil, err
+			}
+
+			resourceId, err := url.Parse(resourceIdStr)
+			if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
+				err := fmt.Errorf("endpoint resource ID (audience) '%s' invalid", resourceIdStr)
+				return nil, err
+			}
+
+			resourceId.Path = path.Join(resourceId.Path, ".default")
+			scopes := []string{resourceId.String()}
+
+			azhttpclient.AddAzureAuthentication(opts, s.cfg.Azure, credentials, scopes)
 		}
 	}
 

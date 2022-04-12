@@ -1,7 +1,6 @@
 import React from 'react';
-import { mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import { RichHistorySettings, RichHistorySettingsProps } from './RichHistorySettings';
-import { Select, Switch } from '@grafana/ui';
 
 const setup = (propOverrides?: Partial<RichHistorySettingsProps>) => {
   const props: RichHistorySettingsProps = {
@@ -16,21 +15,19 @@ const setup = (propOverrides?: Partial<RichHistorySettingsProps>) => {
 
   Object.assign(props, propOverrides);
 
-  const wrapper = mount(<RichHistorySettings {...props} />);
-  return wrapper;
+  return render(<RichHistorySettings {...props} />);
 };
 
 describe('RichHistorySettings', () => {
   it('should render component with correct retention period', () => {
-    const wrapper = setup();
-    expect(wrapper.find(Select).text()).toEqual('2 weeks');
+    setup();
+    expect(screen.queryByText('2 weeks')).toBeInTheDocument();
   });
-  it('should render component with correctly checked starredTabAsFirstTab settings', () => {
-    const wrapper = setup();
-    expect(wrapper.find(Switch).at(0).prop('value')).toBe(true);
-  });
-  it('should render component with correctly not checked toggleactiveDatasourceOnly settings', () => {
-    const wrapper = setup();
-    expect(wrapper.find(Switch).at(1).prop('value')).toBe(false);
+  it('should render component with correctly checked starredTabAsFirstTab and uncheched toggleActiveDatasourceOnly settings', () => {
+    setup();
+    const checkboxes = screen.getAllByRole('checkbox');
+    expect(checkboxes.length).toBe(2);
+    expect(checkboxes[0]).toHaveAttribute('checked');
+    expect(checkboxes[1]).not.toHaveAttribute('checked');
   });
 });

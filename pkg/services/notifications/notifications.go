@@ -45,13 +45,6 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUser
 		store:        store,
 	}
 
-	ns.Bus.AddHandler(ns.SendResetPasswordEmail)
-	ns.Bus.AddHandler(ns.ValidateResetPasswordCode)
-	ns.Bus.AddHandler(ns.SendEmailCommandHandler)
-
-	ns.Bus.AddHandler(ns.SendEmailCommandHandlerSync)
-	ns.Bus.AddHandler(ns.SendWebhookSync)
-
 	ns.Bus.AddEventListener(ns.signUpStartedHandler)
 	ns.Bus.AddEventListener(ns.signUpCompletedHandler)
 

@@ -14,7 +14,8 @@ export const generateColumns = (
   availableWidth: number,
   styles: { [key: string]: string },
   tags: string[],
-  onTagFilterChange: (tags: string[]) => void
+  onTagFilterChange: (tags: string[]) => void,
+  onDatasourceChange: (datasource?: string) => void
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
   const urlField = data.fields.url!;
@@ -64,6 +65,7 @@ export const generateColumns = (
   const DATASOURCE_COLUMN_WIDTH = 200;
   const INFO_COLUMN_WIDTH = 100;
   const LOCATION_COLUMN_WIDTH = 200;
+  const TAGS_COLUMN_WIDTH = 200;
 
   width = TYPE_COLUMN_WIDTH;
   if (isDashboardList) {
@@ -91,12 +93,28 @@ export const generateColumns = (
   // Show datasources if we have any
   if (access.datasource && hasFieldValue(access.datasource)) {
     width = DATASOURCE_COLUMN_WIDTH;
-    columns.push(makeDataSourceColumn(access.datasource, width, styles.typeIcon));
+    columns.push(
+      makeDataSourceColumn(
+        access.datasource,
+        width,
+        styles.typeIcon,
+        styles.datasourceItem,
+        styles.invalidDatasourceItem,
+        onDatasourceChange
+      )
+    );
+    availableWidth -= width;
+  }
+
+  // Show tags if we have any
+  if (access.tags && hasFieldValue(access.tags)) {
+    width = TAGS_COLUMN_WIDTH;
+    columns.push(makeTagsColumn(access.tags, width, styles.tagList, tags, onTagFilterChange));
     availableWidth -= width;
   }
 
   if (isDashboardList) {
-    width = INFO_COLUMN_WIDTH;
+    width = Math.max(availableWidth, INFO_COLUMN_WIDTH);
     columns.push({
       Cell: DefaultCell,
       id: `column-info`,
@@ -108,8 +126,8 @@ export const generateColumns = (
       },
       width: width,
     });
-    availableWidth -= width;
   } else {
+    width = Math.max(availableWidth, LOCATION_COLUMN_WIDTH);
     columns.push({
       Cell: DefaultCell,
       id: `column-location`,
@@ -137,15 +155,8 @@ export const generateColumns = (
         }
         return null;
       },
-      width: LOCATION_COLUMN_WIDTH,
+      width: width,
     });
-    availableWidth -= width;
-  }
-
-  // Show tags if we have any
-  if (access.tags && hasFieldValue(access.tags)) {
-    width = Math.max(availableWidth, 250);
-    columns.push(makeTagsColumn(access.tags, width, styles.tagList, tags, onTagFilterChange));
   }
 
   return columns;
@@ -171,7 +182,14 @@ function getIconForKind(v: string): IconName {
   return 'question-circle';
 }
 
-function makeDataSourceColumn(field: Field<DataSourceRef[]>, width: number, iconClass: string): TableColumn {
+function makeDataSourceColumn(
+  field: Field<DataSourceRef[]>,
+  width: number,
+  iconClass: string,
+  datasourceItemClass: string,
+  invalidDatasourceItemClass: string,
+  onDatasourceChange: (datasource?: string) => void
+): TableColumn {
   return {
     Cell: DefaultCell,
     id: `column-datasource`,
@@ -182,19 +200,30 @@ function makeDataSourceColumn(field: Field<DataSourceRef[]>, width: number, icon
       if (dslist?.length) {
         const srv = getDataSourceSrv();
         return (
-          <div>
+          <div className={datasourceItemClass}>
             {dslist.map((v, i) => {
               const settings = srv.getInstanceSettings(v);
               const icon = settings?.meta?.info?.logos?.small;
               if (icon) {
                 return (
-                  <span key={i}>
-                    <SVG src={icon} width={14} height={14} title={settings.type} className={iconClass} />
+                  <span
+                    key={i}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      onDatasourceChange(settings.uid);
+                    }}
+                  >
+                    <img src={icon} width={14} height={14} title={settings.type} className={iconClass} />
                     {settings.name}
                   </span>
                 );
               }
-              return <span key={i}>{v.type}</span>;
+              return (
+                <span className={invalidDatasourceItemClass} key={i}>
+                  {v.type}
+                </span>
+              );
             })}
           </div>
         );

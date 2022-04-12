@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,7 @@ import (
 func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) {
 	user := createSimpleUser()
 	externalUser := createSimpleExternalUser()
-	authInfoMock := &authInfoServiceMock{}
+	authInfoMock := &logintest.AuthInfoServiceFake{}
 
 	store := &mockstore.SQLStoreMock{
 		ExpectedUserOrgList:     createUserOrgDTO(),
@@ -44,7 +45,7 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 	user := createSimpleUser()
 	externalUser := createSimpleExternalUser()
 
-	authInfoMock := &authInfoServiceMock{}
+	authInfoMock := &logintest.AuthInfoServiceFake{}
 
 	store := &mockstore.SQLStoreMock{
 		ExpectedUserOrgList:     createUserOrgDTO(),
@@ -63,29 +64,8 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 	assert.Contains(t, buf.String(), models.ErrLastOrgAdmin.Error())
 }
 
-type authInfoServiceMock struct {
-	user *models.User
-	err  error
-}
-
-func (a *authInfoServiceMock) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*models.User, error) {
-	return a.user, a.err
-}
-
-func (a *authInfoServiceMock) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
-	return nil
-}
-
-func (a *authInfoServiceMock) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
-	return nil
-}
-
-func (a *authInfoServiceMock) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
-	return nil
-}
-
 func Test_teamSync(t *testing.T) {
-	authInfoMock := &authInfoServiceMock{}
+	authInfoMock := &logintest.AuthInfoServiceFake{}
 	login := Implementation{
 		Bus:             bus.New(),
 		QuotaService:    &quota.QuotaService{},
@@ -99,9 +79,7 @@ func Test_teamSync(t *testing.T) {
 		Name:  "test_user",
 		Login: "test_user",
 	}
-	authInfoMock.user = expectedUser
-	bus.ClearBusHandlers()
-	t.Cleanup(func() { bus.ClearBusHandlers() })
+	authInfoMock.ExpectedUser = expectedUser
 
 	var actualUser *models.User
 	var actualExternalUser *models.ExternalUserInfo
