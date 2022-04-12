@@ -1,10 +1,12 @@
 import React, { Dispatch, SetStateAction } from 'react';
-import { FileDropzone, useTheme2, Icon, Button } from '@grafana/ui';
+import { FileDropzone, useTheme2, Icon, Button, DropzoneFile } from '@grafana/ui';
 import { getBackendSrv, config } from '@grafana/runtime';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import { MediaType } from '../types';
 interface Props {
   setNewValue: Dispatch<SetStateAction<string>>;
+  mediaType: MediaType;
 }
 
 export function FileDropzoneCustomChildren({
@@ -24,12 +26,20 @@ export function FileDropzoneCustomChildren({
     </div>
   );
 }
-export const FileUploader = (props: Props) => {
-  const { setNewValue } = props;
+export const FileUploader = ({ setNewValue, mediaType }: Props) => {
+  const onFileRemove = (file: DropzoneFile) => {
+    fetch(`/api/storage/delete/upload/${file.file.name}`, {
+      method: 'DELETE',
+    }).catch((error) => console.error('cannot delete file', error));
+  };
+  const acceptableFiles =
+    mediaType === 'icon' ? 'image/svg+xml' : 'image/jpeg,image/png,image/gif,image/png, image/webp';
   return (
     <FileDropzone
       readAs="readAsBinaryString"
+      onFileRemove={onFileRemove}
       options={{
+        accept: acceptableFiles,
         multiple: false,
         onDrop: (acceptedFiles: File[]) => {
           let formData = new FormData();

@@ -34,6 +34,8 @@ type StorageService interface {
 	Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error)
 
 	Upload(ctx context.Context, user *models.SignedInUser, form *multipart.Form) (*Response, error)
+
+	Delete(ctx context.Context, user *models.SignedInUser, path string) error
 }
 
 type standardStorageService struct {
@@ -69,7 +71,6 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 
 	if features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
 		upload := filepath.Join(storage, "upload")
-		grafanaStorageLogger.Info("inside provide service", "flag", true)
 		_ = os.MkdirAll(upload, 0700)
 		roots = append(roots, newDiskStorage("upload", "Local file upload", &StorageLocalDiskConfig{
 			Path: upload,
@@ -117,6 +118,9 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 	}
 	upload, _ := s.tree.getRoot("upload")
 	if upload == nil {
+		response.statusCode = 404
+		response.message = "upload feature is not enabled"
+		response.err = true
 		return &response, fmt.Errorf("upload feature is not enabled")
 	}
 
@@ -163,4 +167,16 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		response.path = "upload/" + fileHeader.Filename
 	}
 	return &response, nil
+}
+
+func (s *standardStorageService) Delete(ctx context.Context, user *models.SignedInUser, path string) error {
+	upload, _ := s.tree.getRoot("upload")
+	if upload == nil {
+		return fmt.Errorf("upload feature is not enabled")
+	}
+	err := upload.Delete(ctx, path)
+	if err != nil {
+		return err
+	}
+	return nil
 }

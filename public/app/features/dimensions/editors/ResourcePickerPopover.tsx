@@ -2,10 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { createRef, useState } from 'react';
-
-import { GrafanaTheme2 } from '@grafana/data';
-import { Button, ButtonGroup, useStyles2 } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 import { MediaType, PickerTabType, ResourceFolderName } from '../types';
 
@@ -49,7 +46,7 @@ export const ResourcePickerPopover = (props: Props) => {
   );
 
   const renderURLPicker = () => <URLPickerTab newValue={newValue} setNewValue={setNewValue} mediaType={mediaType} />;
-  const renderUploader = () => <FileUploader setNewValue={setNewValue} />;
+  const renderUploader = () => <FileUploader setNewValue={setNewValue} mediaType={mediaType} />;
   const renderPicker = () => {
     switch (activePicker) {
       case PickerTabType.Folder:
@@ -77,12 +74,16 @@ export const ResourcePickerPopover = (props: Props) => {
             <button className={getTabClassName(PickerTabType.URL)} onClick={() => setActivePicker(PickerTabType.URL)}>
               URL
             </button>
-            <button
-              className={getTabClassName(PickerTabType.Upload)}
-              onClick={() => setActivePicker(PickerTabType.Upload)}
-            >
-              Upload
-            </button>
+            {config.featureToggles['storageLocalUpload'] ? (
+              <button
+                className={getTabClassName(PickerTabType.Upload)}
+                onClick={() => setActivePicker(PickerTabType.Upload)}
+              >
+                Upload
+              </button>
+            ) : (
+              ''
+            )}
           </div>
           <div className={styles.resourcePickerPopoverContent}>
             {renderPicker()}
