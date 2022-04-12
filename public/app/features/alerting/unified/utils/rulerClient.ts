@@ -190,7 +190,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     return { uid: '', ruleSourceName: GRAFANA_RULES_SOURCE_NAME };
   };
 
-  // we can't move the rule atomically so we have to
+  // we can't move the rule in a single atomic operation so we have to
   // 1. add the rule to the new group
   // 2. remove the rule from the old one
   const moveGrafanaRule = async (
