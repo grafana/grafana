@@ -460,9 +460,9 @@ export class DashboardModel implements TimeModel {
       }
 
       if (panel.panels) {
-        for (const innerPanel of panel.panels) {
-          if (!innerPanel.id) {
-            innerPanel.id = this.getNextPanelId();
+        for (const rowPanel of panel.panels) {
+          if (!rowPanel.id) {
+            rowPanel.id = this.getNextPanelId();
           }
         }
       }
