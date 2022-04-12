@@ -1,6 +1,7 @@
 package converter
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -401,7 +402,7 @@ func readTimeValuePair(iter *jsoniter.Iterator) (time.Time, float64, error) {
 func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
-	labelsField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	labelsField := data.NewFieldFromFieldType(data.FieldTypeJSON, 0)
 	labelsField.Name = "__labels" // avoid automatically spreading this by labels
 
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
@@ -415,14 +416,20 @@ func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 	tsField.Name = "TS"
 
 	labels := data.Labels{}
-	labelString := labels.String()
+	labelJson, err := labelsToRawJson(labels)
+	if err != nil {
+		return &backend.DataResponse{Error: err}
+	}
 
 	for iter.ReadArray() {
 		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 			switch l1Field {
 			case "stream":
 				iter.ReadVal(&labels)
-				labelString = labels.String()
+				labelJson, err = labelsToRawJson(labels)
+				if err != nil {
+					return &backend.DataResponse{Error: err}
+				}
 
 			case "values":
 				for iter.ReadArray() {
@@ -434,7 +441,7 @@ func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 
 					t := timeFromLokiString(ts)
 
-					labelsField.Append(labelString)
+					labelsField.Append(labelJson)
 					timeField.Append(t)
 					lineField.Append(line)
 					tsField.Append(ts)
@@ -469,4 +476,14 @@ func timeFromLokiString(str string) time.Time {
 	ss, _ := strconv.ParseInt(str[0:10], 10, 64)
 	ns, _ := strconv.ParseInt(str[10:], 10, 64)
 	return time.Unix(ss, ns).UTC()
+}
+
+func labelsToRawJson(labels data.Labels) (json.RawMessage, error) {
+	// data.Labels when converted to JSON keep the fields sorted
+	bytes, err := jsoniter.Marshal(labels)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.RawMessage(bytes), nil
 }
