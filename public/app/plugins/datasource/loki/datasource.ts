@@ -8,7 +8,6 @@ import Prism from 'prismjs';
 import {
   AnnotationEvent,
   AnnotationQueryRequest,
-  CoreApp,
   DataFrame,
   DataFrameView,
   DataQueryError,
@@ -153,9 +152,7 @@ export class LokiDatasource
       ...this.getRangeScopedVars(request.range),
     };
 
-    const shouldRunBackendQuery = config.featureToggles.lokiBackendMode && request.app === CoreApp.Explore;
-
-    if (shouldRunBackendQuery) {
+    if (config.featureToggles.lokiBackendMode) {
       // we "fix" the loki queries to have `.queryType` and not have `.instant` and `.range`
       const fixedRequest = {
         ...request,
@@ -789,7 +786,7 @@ export class LokiDatasource
   }
 
   // Used when running queries through backend
-  applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): LokiQuery {
     // We want to interpolate these variables on backend
     const { __interval, __interval_ms, ...rest } = scopedVars;
 
