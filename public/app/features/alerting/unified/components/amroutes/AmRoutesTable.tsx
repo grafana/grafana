@@ -90,7 +90,13 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
       id: 'matchingCriteria',
       label: 'Matching labels',
       // eslint-disable-next-line react/display-name
-      renderCell: (item) => <Matchers matchers={item.data.object_matchers.map(matcherFieldToMatcher)} />,
+      renderCell: (item) => {
+        return item.data.object_matchers.length ? (
+          <Matchers matchers={item.data.object_matchers.map(matcherFieldToMatcher)} />
+        ) : (
+          <span>Matches all alert instances</span>
+        );
+      },
       size: 10,
     },
     {
