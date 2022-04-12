@@ -14,7 +14,7 @@ export function QueryErrorAlert({ error }: Props) {
 
   return (
     <div className={styles.wrapper}>
-      <Icon name="exclamation-triangle" className={styles.icon} /> {message}
+      <Icon name="exclamation-circle" /> {message}
     </div>
   );
 }
@@ -27,8 +27,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.error.text,
     fontFamily: theme.typography.fontFamilyMonospace,
     fontSize: theme.typography.bodySmall.fontSize,
-  }),
-  icon: css({
-    marginRight: theme.spacing(1),
   }),
 });
