@@ -17,7 +17,7 @@ import {
 import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
 import { getTimeZone, NavModel } from '@grafana/data';
 import { Button } from '@grafana/ui';
-import { CreateTokenModal } from './CreateTokenModal';
+import { CreateTokenModal } from './CreateServiceAccountTokenModal';
 import { contextSrv } from 'app/core/core';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {

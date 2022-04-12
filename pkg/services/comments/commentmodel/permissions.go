@@ -62,7 +62,7 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 		if err != nil {
 			return false, nil
 		}
-		items, err := repo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId})
+		items, err := repo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId, SignedInUser: signedInUser})
 		if err != nil || len(items) != 1 {
 			return false, nil
 		}
@@ -109,7 +109,7 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 		if err != nil {
 			return false, nil
 		}
-		items, err := repo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId})
+		items, err := repo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId, SignedInUser: signedInUser})
 		if err != nil || len(items) != 1 {
 			return false, nil
 		}

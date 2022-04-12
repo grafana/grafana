@@ -34,7 +34,9 @@ func (f *FakePreferenceService) GetDefaults() *pref.Preference {
 type FakePreferenceStore struct {
 	ExpectedPreference      *pref.Preference
 	ExpectedListPreferences []*pref.Preference
+	ExpectedID              int64
 	ExpectedError           error
+	ExpectedGetError        error
 }
 
 func NewPreferenceStoreFake() *FakePreferenceStore {
@@ -46,11 +48,11 @@ func (f *FakePreferenceStore) List(ctx context.Context, query *pref.ListPreferen
 }
 
 func (f *FakePreferenceStore) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pref.Preference, error) {
-	return f.ExpectedPreference, f.ExpectedError
+	return f.ExpectedPreference, f.ExpectedGetError
 }
 
-func (f *FakePreferenceStore) Insert(ctx context.Context, cmd *pref.InsertPreferenceQuery) error {
-	return f.ExpectedError
+func (f *FakePreferenceStore) Insert(ctx context.Context, cmd *pref.InsertPreferenceQuery) (int64, error) {
+	return f.ExpectedID, f.ExpectedError
 }
 
 func (f *FakePreferenceStore) Update(ctx context.Context, cmd *pref.UpdatePreferenceQuery) error {

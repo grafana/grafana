@@ -2,7 +2,6 @@ package prefimpl
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -13,7 +12,7 @@ import (
 type store interface {
 	Get(context.Context, *pref.GetPreferenceQuery) (*pref.Preference, error)
 	List(context.Context, *pref.ListPreferenceQuery) ([]*pref.Preference, error)
-	Insert(context.Context, *pref.InsertPreferenceQuery) error
+	Insert(context.Context, *pref.InsertPreferenceQuery) (int64, error)
 	Update(context.Context, *pref.UpdatePreferenceQuery) error
 }
 
@@ -73,15 +72,17 @@ func (s *sqlStore) List(ctx context.Context, query *pref.ListPreferenceQuery) ([
 
 func (s *sqlStore) Update(ctx context.Context, cmd *pref.UpdatePreferenceQuery) error {
 	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.ID(&cmd.Id).AllCols().Update(cmd)
+		_, err := sess.ID(&cmd.ID).AllCols().Update(cmd)
 		return err
 	})
 }
 
-func (s *sqlStore) Insert(ctx context.Context, cmd *pref.InsertPreferenceQuery) error {
-	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		fmt.Println(cmd)
-		_, err := sess.Insert(cmd)
+func (s *sqlStore) Insert(ctx context.Context, cmd *pref.InsertPreferenceQuery) (int64, error) {
+	var ID int64
+	var err error
+	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		ID, err = sess.Insert(cmd)
 		return err
 	})
+	return ID, err
 }

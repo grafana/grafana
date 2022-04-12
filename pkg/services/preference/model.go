@@ -10,7 +10,7 @@ import (
 var ErrPrefNotFound = errors.New("preference not found")
 
 type Preference struct {
-	Id              int64 `xorm:"id"`
+	ID              int64 `xorm:"id"`
 	OrgID           int64 `xorm:"org_id"`
 	UserID          int64 `xorm:"user_id"`
 	TeamID          int64 `xorm:"team_id"`
@@ -21,8 +21,7 @@ type Preference struct {
 	Theme           string
 	Created         time.Time
 	Updated         time.Time
-	JSONData        *PreferencesJSONData    `xorm:"json_data"`
-	QueryHistory    *QueryHistoryPreference `json:"queryHistory,omitempty"`
+	JSONData        *PreferenceJSONData `xorm:"json_data"`
 }
 
 type GetPreferenceWithDefaultsQuery struct {
@@ -70,7 +69,7 @@ type PatchPreferenceCommand struct {
 }
 
 type UpdatePreferenceQuery struct {
-	Id              int64
+	ID              int64 `xorm:"id"`
 	OrgID           int64 `xorm:"org_id"`
 	UserID          int64 `xorm:"user_id"`
 	TeamID          int64 `xorm:"team_id"`
@@ -81,12 +80,10 @@ type UpdatePreferenceQuery struct {
 	Theme           string
 	Created         time.Time
 	Updated         time.Time
-	JSONData        *PreferencesJSONData    `xorm:"json_data"`
-	QueryHistory    *QueryHistoryPreference `json:"queryHistory,omitempty"`
+	JSONData        *PreferenceJSONData `xorm:"json_data"`
 }
 
 type InsertPreferenceQuery struct {
-	Id              int64
 	OrgID           int64 `xorm:"org_id"`
 	UserID          int64 `xorm:"user_id"`
 	TeamID          int64 `xorm:"team_id"`
@@ -97,8 +94,7 @@ type InsertPreferenceQuery struct {
 	Theme           string
 	Created         time.Time
 	Updated         time.Time
-	JSONData        *PreferencesJSONData    `xorm:"json_data"`
-	QueryHistory    *QueryHistoryPreference `json:"queryHistory,omitempty"`
+	JSONData        *PreferenceJSONData `xorm:"json_data"`
 }
 
 type NavLink struct {
@@ -112,7 +108,7 @@ type NavbarPreference struct {
 	SavedItems []NavLink `json:"savedItems"`
 }
 
-type PreferencesJSONData struct {
+type PreferenceJSONData struct {
 	Navbar       NavbarPreference       `json:"navbar"`
 	QueryHistory QueryHistoryPreference `json:"queryHistory"`
 }
@@ -121,13 +117,13 @@ type QueryHistoryPreference struct {
 	HomeTab string `json:"homeTab"`
 }
 
-func (j *PreferencesJSONData) FromDB(data []byte) error {
+func (j *PreferenceJSONData) FromDB(data []byte) error {
 	dec := json.NewDecoder(bytes.NewBuffer(data))
 	dec.UseNumber()
 	return dec.Decode(j)
 }
 
-func (j *PreferencesJSONData) ToDB() ([]byte, error) {
+func (j *PreferenceJSONData) ToDB() ([]byte, error) {
 	if j == nil {
 		return nil, nil
 	}

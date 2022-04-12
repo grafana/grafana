@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -22,8 +21,6 @@ import (
 
 func TestDashboardService(t *testing.T) {
 	t.Run("Dashboard service tests", func(t *testing.T) {
-		bus.ClearBusHandlers()
-
 		fakeStore := m.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)
 		service := &DashboardServiceImpl{

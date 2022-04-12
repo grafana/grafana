@@ -84,7 +84,10 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 				Created:         time.Now(),
 				Updated:         time.Now(),
 			}
-			return s.store.Insert(ctx, preference)
+			_, err = s.store.Insert(ctx, preference)
+			if err != nil {
+				return err
+			}
 		}
 		return err
 	}
@@ -94,7 +97,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	preference.Theme = cmd.Theme
 	preference.Updated = time.Now()
 	preference.Version += 1
-	preference.JSONData = &pref.PreferencesJSONData{}
+	preference.JSONData = &pref.PreferenceJSONData{}
 
 	if cmd.Navbar != nil {
 		preference.JSONData.Navbar = *cmd.Navbar
@@ -106,9 +109,8 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 }
 
 func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) error {
-	var preference *pref.Preference
 	var exists bool
-	prefs, err := s.store.Get(ctx, &pref.GetPreferenceQuery{
+	preference, err := s.store.Get(ctx, &pref.GetPreferenceQuery{
 		OrgID:  cmd.OrgID,
 		UserID: cmd.UserID,
 		TeamID: cmd.TeamID,
@@ -123,7 +125,7 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 			OrgID:    cmd.OrgID,
 			TeamID:   cmd.TeamID,
 			Created:  time.Now(),
-			JSONData: &pref.PreferencesJSONData{},
+			JSONData: &pref.PreferenceJSONData{},
 		}
 	} else {
 		exists = true
@@ -131,10 +133,19 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 
 	if cmd.Navbar != nil {
 		if preference.JSONData == nil {
-			preference.JSONData = &pref.PreferencesJSONData{}
+			preference.JSONData = &pref.PreferenceJSONData{}
 		}
 		if cmd.Navbar.SavedItems != nil {
 			preference.JSONData.Navbar.SavedItems = cmd.Navbar.SavedItems
+		}
+	}
+
+	if cmd.QueryHistory != nil {
+		if preference.JSONData == nil {
+			preference.JSONData = &pref.PreferenceJSONData{}
+		}
+		if cmd.QueryHistory.HomeTab != "" {
+			preference.JSONData.QueryHistory.HomeTab = cmd.QueryHistory.HomeTab
 		}
 	}
 
@@ -147,20 +158,20 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 	}
 
 	if cmd.WeekStart != nil {
-		prefs.WeekStart = *cmd.WeekStart
+		preference.WeekStart = *cmd.WeekStart
 	}
 
 	if cmd.Theme != nil {
-		prefs.Theme = *cmd.Theme
+		preference.Theme = *cmd.Theme
 	}
 
-	prefs.Updated = time.Now()
-	prefs.Version += 1
+	preference.Updated = time.Now()
+	preference.Version += 1
 
 	// Wrap this in an if statement to maintain backwards compatibility
 	if cmd.Navbar != nil {
 		if preference.JSONData == nil {
-			preference.JSONData = &pref.PreferencesJSONData{}
+			preference.JSONData = &pref.PreferenceJSONData{}
 		}
 		if cmd.Navbar.SavedItems != nil {
 			preference.JSONData.Navbar.SavedItems = cmd.Navbar.SavedItems
@@ -171,8 +182,20 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		prefs := (*pref.UpdatePreferenceQuery)(preference)
 		err = s.store.Update(ctx, prefs)
 	} else {
-		prefs := (*pref.InsertPreferenceQuery)(preference)
-		err = s.store.Insert(ctx, prefs)
+		prefs := &pref.InsertPreferenceQuery{
+			OrgID:           preference.OrgID,
+			UserID:          preference.UserID,
+			TeamID:          preference.TeamID,
+			Version:         preference.Version,
+			HomeDashboardID: preference.HomeDashboardID,
+			Timezone:        preference.Timezone,
+			WeekStart:       preference.WeekStart,
+			Theme:           preference.Theme,
+			Created:         preference.Created,
+			Updated:         preference.Updated,
+			JSONData:        preference.JSONData,
+		}
+		_, err = s.store.Insert(ctx, prefs)
 	}
 	return err
 }
@@ -183,7 +206,7 @@ func (s *Service) GetDefaults() *pref.Preference {
 		Timezone:        s.cfg.DateFormats.DefaultTimezone,
 		WeekStart:       s.cfg.DateFormats.DefaultWeekStart,
 		HomeDashboardID: 0,
-		JSONData:        &pref.PreferencesJSONData{},
+		JSONData:        &pref.PreferenceJSONData{},
 	}
 
 	return defaults

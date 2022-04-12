@@ -47,19 +47,30 @@ func TestPreferencesService(t *testing.T) {
 		}},
 	}
 
-	emptyPreferencesJsonData := pref.PreferencesJSONData{
+	emptyQueryPreference := pref.QueryHistoryPreference{}
+
+	queryPreference := pref.QueryHistoryPreference{
+		HomeTab: "hometab",
+	}
+
+	queryPreference2 := pref.QueryHistoryPreference{
+		HomeTab: "hometab",
+	}
+
+	emptyPreferencesJsonData := pref.PreferenceJSONData{
 		Navbar: emptyNavbarPreferences,
 	}
-	userPreferencesJsonData := pref.PreferencesJSONData{
-		Navbar: userNavbarPreferences,
+	userPreferencesJsonData := pref.PreferenceJSONData{
+		Navbar:       userNavbarPreferences,
+		QueryHistory: queryPreference,
 	}
-	orgPreferencesJsonData := pref.PreferencesJSONData{
+	orgPreferencesJsonData := pref.PreferenceJSONData{
 		Navbar: orgNavbarPreferences,
 	}
-	team2PreferencesJsonData := pref.PreferencesJSONData{
+	team2PreferencesJsonData := pref.PreferenceJSONData{
 		Navbar: team2NavbarPreferences,
 	}
-	team1PreferencesJsonData := pref.PreferencesJSONData{
+	team1PreferencesJsonData := pref.PreferenceJSONData{
 		Navbar: team1NavbarPreferences,
 	}
 
@@ -73,7 +84,7 @@ func TestPreferencesService(t *testing.T) {
 			Theme:           "light",
 			Timezone:        "UTC",
 			HomeDashboardID: 0,
-			JSONData:        &pref.PreferencesJSONData{},
+			JSONData:        &pref.PreferenceJSONData{},
 		}
 		if diff := cmp.Diff(expected, preferences); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -124,7 +135,7 @@ func TestPreferencesService(t *testing.T) {
 			Timezone:        "UTC",
 			WeekStart:       "1",
 			HomeDashboardID: 4,
-			JSONData:        &pref.PreferencesJSONData{},
+			JSONData:        &pref.PreferenceJSONData{},
 		}
 		if diff := cmp.Diff(expected, preferences); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -159,7 +170,7 @@ func TestPreferencesService(t *testing.T) {
 			Timezone:        "browser",
 			WeekStart:       "2",
 			HomeDashboardID: 4,
-			JSONData:        &pref.PreferencesJSONData{},
+			JSONData:        &pref.PreferenceJSONData{},
 		}
 		if diff := cmp.Diff(expected, preferences); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -188,38 +199,8 @@ func TestPreferencesService(t *testing.T) {
 			Timezone: "UTC",
 		}, preference)
 	})
-	// t.Run("GetPreferencesWithDefaults with saved org, other teams and user home dashboard should return org home dashboard", func(t *testing.T) {
-	// 	prefStoreFake.ExpectedPreference = &pref.Preference{}
-	// 	prefStoreFake.ExpectedListPreferences = []*pref.Preference{
-	// 		{
-	// 			OrgId:           1,
-	// 			HomeDashboardId: 1,
-	// 		},
-	// 		{
-	// 			OrgId:           1,
-	// 			TeamId:          2,
-	// 			HomeDashboardId: 2,
-	// 		},
-	// 		{
-	// 			OrgId:           1,
-	// 			TeamId:          3,
-	// 			HomeDashboardId: 3,
-	// 		},
-	// 		{
-	// 			OrgId:           1,
-	// 			UserId:          1,
-	// 			HomeDashboardId: 4,
-	// 		},
-	// 	}
-	// 	query := &pref.GetPreferenceWithDefaultsQuery{
-	// 		OrgID: 1, UserID: 2,
-	// 	}
-	// 	preference, err := prefService.GetWithDefaults(context.Background(), query)
-	// 	require.NoError(t, err)
-	// 	require.Equal(t, int64(1), preference.HomeDashboardId)
-	// })
-	t.Run("GetWithDefaults with saved org and teams json data should return last team json data", func(t *testing.T) {
 
+	t.Run("GetWithDefaults with saved org and teams json data should return last team json data", func(t *testing.T) {
 		prefStoreFake.ExpectedPreference = &pref.Preference{}
 		prefStoreFake.ExpectedListPreferences = []*pref.Preference{
 			{
@@ -280,7 +261,7 @@ func TestPreferencesService(t *testing.T) {
 			Timezone:        "browser",
 			WeekStart:       "2",
 			HomeDashboardID: 4,
-			JSONData:        &pref.PreferencesJSONData{},
+			JSONData:        &pref.PreferenceJSONData{},
 		}
 		if diff := cmp.Diff(expected, preferences); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -289,7 +270,7 @@ func TestPreferencesService(t *testing.T) {
 
 	t.Run("SavePreferences for a user should store correct values", func(t *testing.T) {
 		prefStoreFake.ExpectedPreference = &pref.Preference{
-			Id:              1,
+			ID:              1,
 			OrgID:           1,
 			UserID:          3,
 			TeamID:          6,
@@ -308,6 +289,55 @@ func TestPreferencesService(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("SavePreferences for a user should store correct values, when preference not found", func(t *testing.T) {
+		prefStoreFake.ExpectedGetError = pref.ErrPrefNotFound
+		prefStoreFake.ExpectedPreference = &pref.Preference{
+			ID:              1,
+			OrgID:           1,
+			UserID:          3,
+			TeamID:          6,
+			HomeDashboardID: 5,
+			Timezone:        "browser",
+			WeekStart:       "1",
+			Theme:           "dark",
+		}
+		err := prefService.Save(context.Background(),
+			&pref.SavePreferenceCommand{
+				Theme:           "dark",
+				Timezone:        "browser",
+				HomeDashboardID: 5,
+				WeekStart:       "1",
+			},
+		)
+		require.NoError(t, err)
+		prefStoreFake.ExpectedGetError = nil
+	})
+
+	t.Run("SavePreferences for a user should store correct values with nav and query history", func(t *testing.T) {
+		prefStoreFake.ExpectedPreference = &pref.Preference{
+			ID:              1,
+			OrgID:           1,
+			UserID:          3,
+			TeamID:          6,
+			HomeDashboardID: 5,
+			Timezone:        "browser",
+			WeekStart:       "1",
+			Theme:           "dark",
+			JSONData:        &userPreferencesJsonData,
+		}
+		err := prefService.Save(context.Background(),
+			&pref.SavePreferenceCommand{
+				Theme:           "dark",
+				Timezone:        "browser",
+				HomeDashboardID: 5,
+				WeekStart:       "1",
+				Navbar:          &userNavbarPreferences,
+				QueryHistory:    &emptyQueryPreference,
+			},
+		)
+		require.NoError(t, err)
+	})
+
 	t.Run("Get for a user should store correct values", func(t *testing.T) {
 		prefStoreFake.ExpectedPreference = &pref.Preference{
 			HomeDashboardID: 5,
@@ -319,7 +349,7 @@ func TestPreferencesService(t *testing.T) {
 		require.NoError(t, err)
 
 		expected := &pref.Preference{
-			Id:              preference.Id,
+			ID:              preference.ID,
 			Version:         preference.Version,
 			HomeDashboardID: 5,
 			Timezone:        "browser",
@@ -334,13 +364,56 @@ func TestPreferencesService(t *testing.T) {
 	})
 
 	t.Run("Patch for a user should store correct values", func(t *testing.T) {
+		darkTheme := "dark"
+		prefStoreFake.ExpectedPreference = &pref.Preference{
+			HomeDashboardID: 5,
+			Timezone:        "browser",
+			WeekStart:       "1",
+			Theme:           "dark",
+			JSONData:        &userPreferencesJsonData,
+		}
+		err := prefService.Patch(context.Background(),
+			&pref.PatchPreferenceCommand{
+				Theme:        &darkTheme,
+				Navbar:       &userNavbarPreferences,
+				QueryHistory: &queryPreference2,
+			})
+		require.NoError(t, err)
+	})
+
+	t.Run("Patch for a user should store correct values, without navbar and query history", func(t *testing.T) {
+		darkTheme := "dark"
 		prefStoreFake.ExpectedPreference = &pref.Preference{
 			HomeDashboardID: 5,
 			Timezone:        "browser",
 			WeekStart:       "1",
 			Theme:           "dark",
 		}
-		err := prefService.Patch(context.Background(), &pref.PatchPreferenceCommand{})
+		err := prefService.Patch(context.Background(),
+			&pref.PatchPreferenceCommand{
+				Theme:        &darkTheme,
+				Navbar:       &userNavbarPreferences,
+				QueryHistory: &queryPreference2,
+			})
 		require.NoError(t, err)
+	})
+
+	t.Run("Patch for a user should store correct values, when preference not found", func(t *testing.T) {
+		timezone := "browser"
+		weekStart := "1"
+		homeDashboardID := int64(5)
+		prefStoreFake.ExpectedGetError = pref.ErrPrefNotFound
+		prefStoreFake.ExpectedPreference = nil
+
+		err := prefService.Patch(context.Background(),
+			&pref.PatchPreferenceCommand{
+				HomeDashboardID: &homeDashboardID,
+				Timezone:        &timezone,
+				WeekStart:       &weekStart,
+				Navbar:          &emptyNavbarPreferences,
+				QueryHistory:    &emptyQueryPreference,
+			})
+		require.NoError(t, err)
+		prefStoreFake.ExpectedGetError = nil
 	})
 }

@@ -111,7 +111,7 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 			err := json.Unmarshal(resp.Body(), &response)
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
-			require.Equal(t, 1, response.Result.TotalCount)
+			require.Equal(t, 2, response.Result.TotalCount)
 			require.Equal(t, true, response.Result.QueryHistory[0].Starred)
 		})
 }
