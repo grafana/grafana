@@ -59,7 +59,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 }
 
 func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
-	err := tree.Validate()
+	err := tree.ValidateRoot()
 	if err != nil {
 		return NewValidationError(err.Error())
 	}
