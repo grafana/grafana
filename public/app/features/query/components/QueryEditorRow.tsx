@@ -420,7 +420,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
               )}
               {editor}
             </ErrorBoundaryAlert>
-            {data && data.error && data.error.refId === query.refId && <QueryErrorAlert error={data.error} />}
+            {data?.error && data.error.refId === query.refId && <QueryErrorAlert error={data.error} />}
             {visualization}
           </div>
         </QueryOperationRow>
