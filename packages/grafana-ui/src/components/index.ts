@@ -6,7 +6,7 @@ export { Tooltip } from './Tooltip/Tooltip';
 export { PopoverContent } from './Tooltip/types';
 export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
-export { Portal } from './Portal/Portal';
+export { Portal, getPortalRoot } from './Portal/Portal';
 export { CustomScrollbar, ScrollbarPosition } from './CustomScrollbar/CustomScrollbar';
 export { TabbedContainer, TabConfig } from './TabbedContainer/TabbedContainer';
 
