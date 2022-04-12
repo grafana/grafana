@@ -1,5 +1,5 @@
 import React, { Dispatch, SetStateAction } from 'react';
-import { FileDropzone, useTheme2, Icon, Button, DropzoneFile } from '@grafana/ui';
+import { FileDropzone, useTheme2, Button, DropzoneFile } from '@grafana/ui';
 import { getBackendSrv, config } from '@grafana/runtime';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
@@ -9,19 +9,13 @@ interface Props {
   mediaType: MediaType;
 }
 
-export function FileDropzoneCustomChildren({
-  primaryText = 'Upload file',
-  secondaryText = 'Drag and drop here or browse',
-}) {
+export function FileDropzoneCustomChildren({ secondaryText = 'Drag and drop here or browse' }) {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
   return (
     <div className={styles.iconWrapper}>
-      <Icon name="upload" size="xxl" />
-      <h3>{primaryText}</h3>
       <small className={styles.small}>{secondaryText}</small>
-      <h6>Or</h6>
       <Button icon="upload">Upload</Button>
     </div>
   );
@@ -99,6 +93,7 @@ function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
     `,
     small: css`
       color: ${theme.colors.text.secondary};
+      margin-bottom: ${theme.spacing(2)};
     `,
   };
 }
