@@ -9,6 +9,8 @@ import (
 
 // Validate normalizes a Route r, and returns errors if r is invalid.
 func (r *Route) Validate() error {
+	r.GroupBy = nil
+	r.GroupByAll = false
 	for _, l := range r.GroupByStr {
 		if l == "..." {
 			r.GroupByAll = true
@@ -25,7 +27,7 @@ func (r *Route) Validate() error {
 
 	for _, ln := range r.GroupBy {
 		if _, ok := groupBy[ln]; ok {
-			return fmt.Errorf("duplicated label %q in group_by", ln)
+			return fmt.Errorf("duplicated label %q in group_by, %s %s", ln, r.Receiver, r.GroupBy)
 		}
 		groupBy[ln] = struct{}{}
 	}

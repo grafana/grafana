@@ -146,6 +146,21 @@ func TestValidateRoutes(t *testing.T) {
 			require.True(t, route.GroupByAll)
 			require.Nil(t, route.GroupBy)
 		})
+
+		t.Run("idempotently", func(t *testing.T) {
+			route := Route{
+				Receiver:   "foo",
+				GroupByStr: []string{"abc", "def"},
+			}
+
+			err := route.Validate()
+			require.NoError(t, err)
+			err = route.Validate()
+			require.NoError(t, err)
+
+			require.False(t, route.GroupByAll)
+			require.Equal(t, []model.LabelName{"abc", "def"}, route.GroupBy)
+		})
 	})
 
 	t.Run("valid root route", func(t *testing.T) {
