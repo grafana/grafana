@@ -1,5 +1,6 @@
 import { DataFrame, ensureTimeField, FieldType } from '@grafana/data';
-import { GraphDrawStyle, GraphTransform, StackingMode } from '@grafana/schema';
+import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
+import { DrawStyle } from 'src';
 import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
 import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
@@ -42,7 +43,13 @@ interface StackMeta {
 /** @internal */
 export interface StackingGroup {
   series: number[];
-  dir: number;
+  dir: StackDirection;
+}
+
+/** @internal */
+const enum StackDirection {
+  Pos = 1,
+  Neg = -1,
 }
 
 // generates bands between adjacent group series
@@ -110,25 +117,25 @@ export function getStackingGroups(frame: DataFrame) {
     let stackDir =
       transform === GraphTransform.Constant
         ? vals[0] > 0
-          ? 1
-          : -1
+          ? StackDirection.Pos
+          : StackDirection.Neg
         : transform === GraphTransform.NegativeY
         ? vals.some((v) => v > 0)
-          ? -1
-          : 1
+          ? StackDirection.Neg
+          : StackDirection.Pos
         : vals.some((v) => v > 0)
-        ? 1
-        : -1;
+        ? StackDirection.Pos
+        : StackDirection.Neg;
 
-    let drawStyle = custom.drawStyle;
+    let drawStyle = custom.drawStyle as DrawStyle;
     let drawStyle2 =
       drawStyle === GraphDrawStyle.Bars
-        ? custom.barAlignment
+        ? (custom.barAlignment as BarAlignment)
         : drawStyle === GraphDrawStyle.Line
-        ? custom.lineInterpolation
-        : '';
+        ? (custom.lineInterpolation as LineInterpolation)
+        : null;
 
-    let stackKey = [stackDir, stackingMode, stackingGroup, buildScaleKey(config), drawStyle, drawStyle2].join('|');
+    let stackKey = `${stackDir}|${stackingMode}|${stackingGroup}|${buildScaleKey(config)}|${drawStyle}|${drawStyle2}`;
 
     let group = groups.get(stackKey);
 
