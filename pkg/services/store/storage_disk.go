@@ -82,7 +82,7 @@ func (s *rootStorageDisk) Write(ctx context.Context, cmd *WriteValueRequest) (*W
 	}
 	err := s.store.Upsert(ctx, &filestorage.UpsertFileCommand{
 		Path:     path,
-		Contents: &byteAray,
+		Contents: byteAray,
 	})
 	if err != nil {
 		return nil, err
