@@ -170,19 +170,23 @@ const determineRequired = (option: NotificationChannelOption, getValues: any) =>
   if (!option.dependsOn) {
     return option.required ? 'Required' : false;
   }
-  let dependentOn = '';
-  if (isEmpty(getValues(`items[0].secureSettings`))) {
-    dependentOn = getValues(`items[0].secureFields.${option.dependsOn}`);
+  console.log(getValues('items[0].secureFields'));
+  if (isEmpty(getValues('items[0].secureFields'))) {
+    const dependentOn = getValues(`items[0].secureSettings.${option.dependsOn}`);
+    return !Boolean(dependentOn) && option.required ? 'Required' : false;
   } else {
-    dependentOn = getValues(`items[0].secureSettings.${option.dependsOn}`);
+    const dependentOn: boolean = getValues(`items[0].secureFields.${option.dependsOn}`);
+    return !dependentOn && option.required ? 'Required' : false;
   }
-  return !Boolean(dependentOn) && option.required ? 'Required' : false;
 };
 
 const determineReadOnly = (option: NotificationChannelOption, getValues: any) => {
   if (!option.dependsOn) {
     return false;
   }
-
-  return getValues(`items[0].${option.dependsOn}`);
+  if (isEmpty(getValues(`items[0].secureSettings`))) {
+    return getValues(`items[0].secureFields.${option.dependsOn}`);
+  } else {
+    return getValues(`items[0].secureSettings.${option.dependsOn}`);
+  }
 };
