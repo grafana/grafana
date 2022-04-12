@@ -139,7 +139,7 @@ func (ng *AlertNG) init() error {
 
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(store, store, store, ng.Log)
-	contactpointService := provisioning.NewEmbeddedContactPointService(store, ng.SecretsService, store, store, ng.Log)
+	contactpointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
 
 	api := api.API{
 		Cfg:                  ng.Cfg,

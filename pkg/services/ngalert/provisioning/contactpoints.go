@@ -23,7 +23,7 @@ type EmbeddedContactPointService struct {
 	log               log.Logger
 }
 
-func NewEmbeddedContactPointService(store store.AlertingStore, encryptionService secrets.Service,
+func NewContactPointService(store store.AlertingStore, encryptionService secrets.Service,
 	provenanceStore ProvisioningStore, xact TransactionManager, log log.Logger) *EmbeddedContactPointService {
 	return &EmbeddedContactPointService{
 		amStore:           store,
