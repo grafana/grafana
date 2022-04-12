@@ -161,7 +161,14 @@ export class LokiDatasource
         ...request,
         targets: request.targets.map(getNormalizedLokiQuery),
       };
-      return super.query(fixedRequest).pipe(map((response) => transformBackendResult(response, fixedRequest)));
+
+      if (fixedRequest.liveStreaming) {
+        return this.runLiveQueryThroughBackend(fixedRequest);
+      } else {
+        return super
+          .query(fixedRequest)
+          .pipe(map((response) => transformBackendResult(response, fixedRequest.targets)));
+      }
     }
 
     const filteredTargets = request.targets
@@ -195,6 +202,27 @@ export class LokiDatasource
         state: LoadingState.Done,
       });
     }
+
+    return merge(...subQueries);
+  }
+
+  runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
+    // this only works in explore-mode, so variables don't need to be handled,
+    //  and only for logs-queries, not metric queries
+    const logsQueries = request.targets.filter((query) => query.expr !== '' && !isMetricsQuery(query.expr));
+
+    if (logsQueries.length === 0) {
+      return of({
+        data: [],
+        state: LoadingState.Done,
+      });
+    }
+
+    const subQueries = logsQueries.map((query) => {
+      const maxDataPoints = query.maxLines || this.maxLines;
+      // FIXME: currently we are running it through the frontend still.
+      return this.runLiveQuery(query, maxDataPoints);
+    });
 
     return merge(...subQueries);
   }
