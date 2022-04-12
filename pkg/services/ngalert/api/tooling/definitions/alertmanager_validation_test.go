@@ -147,4 +147,96 @@ func TestValidateRoutes(t *testing.T) {
 			require.Nil(t, route.GroupBy)
 		})
 	})
+
+	t.Run("valid root route", func(t *testing.T) {
+		cases := []testCase{
+			{
+				desc: "simple",
+				route: Route{
+					Receiver:   "foo",
+					GroupByStr: []string{"..."},
+				},
+			},
+		}
+
+		for _, c := range cases {
+			t.Run(c.desc, func(t *testing.T) {
+				err := c.route.ValidateRoot()
+
+				require.NoError(t, err)
+			})
+		}
+	})
+
+	t.Run("invalid root route", func(t *testing.T) {
+		cases := []testCase{
+			{
+				desc: "no receiver",
+				route: Route{
+					GroupByStr: []string{"..."},
+				},
+				expMsg: "must specify a default receiver",
+			},
+			{
+				desc: "exact matchers present",
+				route: Route{
+					Receiver:   "foo",
+					GroupByStr: []string{"..."},
+					Match: map[string]string{
+						"abc": "def",
+					},
+				},
+				expMsg: "must not have any matchers",
+			},
+			{
+				desc: "regex matchers present",
+				route: Route{
+					Receiver:   "foo",
+					GroupByStr: []string{"..."},
+					Match: map[string]string{
+						"abc": "def",
+					},
+				},
+				expMsg: "must not have any matchers",
+			},
+			{
+				desc: "mute time intervals present",
+				route: Route{
+					Receiver:          "foo",
+					GroupByStr:        []string{"..."},
+					MuteTimeIntervals: []string{"10"},
+				},
+				expMsg: "must not have any mute time intervals",
+			},
+			{
+				desc: "validation error that is not specific to root",
+				route: Route{
+					Receiver:   "foo",
+					GroupByStr: []string{"abc", "abc"},
+				},
+				expMsg: "duplicated label",
+			},
+			{
+				desc: "nested validation error that is not specific to root",
+				route: Route{
+					Receiver: "foo",
+					Routes: []*Route{
+						{
+							GroupByStr: []string{"abc", "abc"},
+						},
+					},
+				},
+				expMsg: "duplicated label",
+			},
+		}
+
+		for _, c := range cases {
+			t.Run(c.desc, func(t *testing.T) {
+				err := c.route.ValidateRoot()
+
+				require.Error(t, err)
+				require.Contains(t, err.Error(), c.expMsg)
+			})
+		}
+	})
 }

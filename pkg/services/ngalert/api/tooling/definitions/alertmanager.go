@@ -808,19 +808,9 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("no routes provided")
 	}
 
-	err := c.Route.Validate()
+	err := c.Route.ValidateRoot()
 	if err != nil {
 		return err
-	}
-
-	if len(c.Route.Receiver) == 0 {
-		return fmt.Errorf("root route must specify a default receiver")
-	}
-	if len(c.Route.Match) > 0 || len(c.Route.MatchRE) > 0 {
-		return fmt.Errorf("root route must not have any matchers")
-	}
-	if len(c.Route.MuteTimeIntervals) > 0 {
-		return fmt.Errorf("root route must not have any mute time intervals")
 	}
 
 	for _, r := range c.InhibitRules {

@@ -7,6 +7,7 @@ import (
 	"github.com/prometheus/common/model"
 )
 
+// Validate normalizes a Route r, and returns errors if r is invalid.
 func (r *Route) Validate() error {
 	for _, l := range r.GroupByStr {
 		if l == "..." {
@@ -47,4 +48,18 @@ func (r *Route) Validate() error {
 	}
 
 	return nil
+}
+
+// ValidateRoot normalizes a Route r, and returns errors if r is an invalid root route. Root routes must satisfy a few additional conditions.
+func (r *Route) ValidateRoot() error {
+	if len(r.Receiver) == 0 {
+		return fmt.Errorf("root route must specify a default receiver")
+	}
+	if len(r.Match) > 0 || len(r.MatchRE) > 0 {
+		return fmt.Errorf("root route must not have any matchers")
+	}
+	if len(r.MuteTimeIntervals) > 0 {
+		return fmt.Errorf("root route must not have any mute time intervals")
+	}
+	return r.Validate()
 }
