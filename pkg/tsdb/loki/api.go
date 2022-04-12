@@ -55,7 +55,8 @@ func makeRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.
 			//  a. Loki cannot do steps with better precision anyway,
 			//     so the microsecond & nanosecond part can be ignored.
 			//  b. having it always be number+'ms' makes it more robust and
-			//     precise, as Loki does not support step with float number.
+			//     precise, as Loki does not support step with float number
+			//     and time-specifier, like "1.5s"
 			qs.Set("step", fmt.Sprintf("%dms", query.Step.Milliseconds()))
 			lokiUrl.Path = "/loki/api/v1/query_range"
 		}
