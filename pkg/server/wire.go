@@ -243,7 +243,7 @@ var wireBasicSet = wire.NewSet(
 	statscollector.ProvideService,
 	datasource.ProvideCoremodel,
 	cmreg.ProvideRegistry,
-	cuectx.ProvideCueContext,
+	cuectx.ProvideCUEContext,
 	cuectx.ProvideThemaLibrary,
 )
 
