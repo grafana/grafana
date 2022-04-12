@@ -13,11 +13,13 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core
 import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
 import { Subscription } from 'rxjs';
+import { connect, ConnectedProps } from 'react-redux';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
+import { cleanAndRemoveMany } from 'app/features/panel/state/actions';
 import { GridPos } from '../state/PanelModel';
 import { config } from '@grafana/runtime';
 
-export interface Props {
+export interface OwnProps {
   dashboard: DashboardModel;
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
@@ -27,7 +29,15 @@ export interface State {
   isLayoutInitialized: boolean;
 }
 
-export class DashboardGrid extends PureComponent<Props, State> {
+const mapDispatchToProps = {
+  cleanAndRemoveMany,
+};
+
+const connector = connect(null, mapDispatchToProps);
+
+export type Props = OwnProps & ConnectedProps<typeof connector>;
+
+export class DashboardGridUnconnected extends PureComponent<Props, State> {
   private panelMap: { [key: string]: PanelModel } = {};
   private eventSubs = new Subscription();
   private windowHeight = 1200;
@@ -51,6 +61,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     this.eventSubs.unsubscribe();
+    this.props.cleanAndRemoveMany(Object.keys(this.panelMap));
   }
 
   buildLayout() {
@@ -315,3 +326,5 @@ function translateGridHeightToScreenHeight(gridHeight: number): number {
 }
 
 GrafanaGridItem.displayName = 'GridItemWithDimensions';
+
+export const DashboardGrid = connector(DashboardGridUnconnected);

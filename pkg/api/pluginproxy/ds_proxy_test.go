@@ -456,8 +456,6 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		assert.Equal(t, "http://host/root/path/to/folder/", req.URL.String())
 
-		assert.Empty(t, req.Header.Get("Origin"))
-		assert.Empty(t, req.Header.Get("Referer"))
 		assert.Equal(t, "stillthere", req.Header.Get("X-Canary"))
 	})
 

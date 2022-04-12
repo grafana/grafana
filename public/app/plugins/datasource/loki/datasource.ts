@@ -8,7 +8,6 @@ import Prism from 'prismjs';
 import {
   AnnotationEvent,
   AnnotationQueryRequest,
-  CoreApp,
   DataFrame,
   DataFrameView,
   DataQueryError,
@@ -153,15 +152,20 @@ export class LokiDatasource
       ...this.getRangeScopedVars(request.range),
     };
 
-    const shouldRunBackendQuery = config.featureToggles.lokiBackendMode && request.app === CoreApp.Explore;
-
-    if (shouldRunBackendQuery) {
+    if (config.featureToggles.lokiBackendMode) {
       // we "fix" the loki queries to have `.queryType` and not have `.instant` and `.range`
       const fixedRequest = {
         ...request,
         targets: request.targets.map(getNormalizedLokiQuery),
       };
-      return super.query(fixedRequest).pipe(map((response) => transformBackendResult(response, fixedRequest)));
+
+      if (fixedRequest.liveStreaming) {
+        return this.runLiveQueryThroughBackend(fixedRequest);
+      } else {
+        return super
+          .query(fixedRequest)
+          .pipe(map((response) => transformBackendResult(response, fixedRequest.targets)));
+      }
     }
 
     const filteredTargets = request.targets
@@ -184,7 +188,7 @@ export class LokiDatasource
       ) {
         subQueries.push(doLokiChannelStream(target, this, request));
       } else {
-        subQueries.push(this.runRangeQuery(target, request, filteredTargets.length));
+        subQueries.push(this.runRangeQuery(target, request));
       }
     }
 
@@ -195,6 +199,27 @@ export class LokiDatasource
         state: LoadingState.Done,
       });
     }
+
+    return merge(...subQueries);
+  }
+
+  runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
+    // this only works in explore-mode, so variables don't need to be handled,
+    //  and only for logs-queries, not metric queries
+    const logsQueries = request.targets.filter((query) => query.expr !== '' && !isMetricsQuery(query.expr));
+
+    if (logsQueries.length === 0) {
+      return of({
+        data: [],
+        state: LoadingState.Done,
+      });
+    }
+
+    const subQueries = logsQueries.map((query) => {
+      const maxDataPoints = query.maxLines || this.maxLines;
+      // FIXME: currently we are running it through the frontend still.
+      return this.runLiveQuery(query, maxDataPoints);
+    });
 
     return merge(...subQueries);
   }
@@ -234,7 +259,7 @@ export class LokiDatasource
         }
 
         return {
-          data: [lokiResultsToTableModel(response.data.data.result, responseListLength, target.refId, meta, true)],
+          data: [lokiResultsToTableModel(response.data.data.result, responseListLength, target.refId, meta)],
           key: `${target.refId}_instant`,
         };
       }),
@@ -275,11 +300,7 @@ export class LokiDatasource
   /**
    * Attempts to send a query to /loki/api/v1/query_range
    */
-  runRangeQuery = (
-    target: LokiQuery,
-    options: RangeQueryOptions,
-    responseListLength = 1
-  ): Observable<DataQueryResponse> => {
+  runRangeQuery = (target: LokiQuery, options: RangeQueryOptions): Observable<DataQueryResponse> => {
     // For metric query we use maxDataPoints from the request options which should be something like width of the
     // visualisation in pixels. In case of logs request we either use lines limit defined in the query target or
     // global limit defined for the data source which ever is lower.
@@ -306,7 +327,6 @@ export class LokiDatasource
           response.data,
           target,
           query,
-          responseListLength,
           maxDataPoints,
           this.instanceSettings.jsonData,
           (options as DataQueryRequest<LokiQuery>).scopedVars
@@ -766,7 +786,7 @@ export class LokiDatasource
   }
 
   // Used when running queries through backend
-  applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): LokiQuery {
     // We want to interpolate these variables on backend
     const { __interval, __interval_ms, ...rest } = scopedVars;
 
