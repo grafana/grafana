@@ -91,7 +91,7 @@ module.exports = (env = {}) =>
         extensions: ['.ts', '.tsx'],
       }),
       new MiniCssExtractPlugin({
-        filename: 'grafana.[name].[fullhash].css',
+        filename: 'grafana.[name].[contenthash].css',
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/error.html'),
