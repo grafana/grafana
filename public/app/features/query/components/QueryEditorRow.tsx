@@ -6,10 +6,11 @@ import { cloneDeep, has } from 'lodash';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
+import { Alert, ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import {
   CoreApp,
   DataQuery,
+  DataQueryError,
   DataSourceApi,
   DataSourceInstanceSettings,
   EventBusExtended,
@@ -380,9 +381,18 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     );
   };
 
+  renderQueryError(error: DataQueryError) {
+    const message = error?.message ?? error?.data?.message ?? '';
+    return (
+      <Alert severity="error" title={'Query error'} topSpacing={0.5}>
+        {message}
+      </Alert>
+    );
+  }
+
   render() {
     const { query, id, index, visualization } = this.props;
-    const { datasource, showingHelp } = this.state;
+    const { datasource, showingHelp, data } = this.state;
     const isDisabled = query.hide;
 
     const rowClasses = classNames('query-editor-row', {
@@ -419,6 +429,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
               )}
               {editor}
             </ErrorBoundaryAlert>
+            {data && data.error && data.error.refId === query.refId && this.renderQueryError(data.error)}
             {visualization}
           </div>
         </QueryOperationRow>

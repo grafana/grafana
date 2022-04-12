@@ -705,10 +705,13 @@ export class LokiDatasource
   }
 
   processError(err: FetchError, target: LokiQuery) {
-    let error = cloneDeep(err);
-    if (err.data.message.includes('escape') && target.expr.includes('\\')) {
+    let error: DataQueryError = cloneDeep(err);
+    error.refId = target.refId;
+
+    if (error.data && err.data.message.includes('escape') && target.expr.includes('\\')) {
       error.data.message = `Error: ${err.data.message}. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://grafana.com/docs/loki/latest/logql/.`;
     }
+
     return error;
   }
 
