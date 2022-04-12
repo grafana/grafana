@@ -9,7 +9,6 @@ import (
 )
 
 func TestMigrateAlertRuleQueries(t *testing.T) {
-
 	tc := []struct {
 		name     string
 		input    alertQuery
