@@ -12,25 +12,25 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
-type Encryption interface {
+type Crypto interface {
 	LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error
 	getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error)
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
 }
 
-type encryptionImpl struct {
+type encryption struct {
 	secrets secrets.Service
 	configs configurationStore
 }
 
-func NewEncryption(secrets secrets.Service, configs configurationStore) Encryption {
-	return &encryptionImpl{
+func NewCrypto(secrets secrets.Service, configs configurationStore) Crypto {
+	return &encryption{
 		secrets: secrets,
 		configs: configs,
 	}
 }
 
-func (e *encryptionImpl) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error {
+func (e *encryption) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error {
 	// Get the last known working configuration
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: orgId}
 	if err := e.configs.GetLatestAlertmanagerConfiguration(ctx, &query); err != nil {
@@ -84,7 +84,7 @@ func (e *encryptionImpl) LoadSecureSettings(ctx context.Context, orgId int64, re
 	return nil
 }
 
-func (e *encryptionImpl) getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error) {
+func (e *encryption) getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error) {
 	storedValue, ok := r.SecureSettings[key]
 	if !ok {
 		return "", nil
@@ -103,6 +103,6 @@ func (e *encryptionImpl) getDecryptedSecret(r *definitions.PostableGrafanaReceiv
 	return string(decryptedValue), nil
 }
 
-func (e *encryptionImpl) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
+func (e *encryption) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
 	return e.secrets.Encrypt(ctx, payload, opt)
 }

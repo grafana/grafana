@@ -31,7 +31,7 @@ type AlertmanagerSrv struct {
 	log        log.Logger
 	ac         accesscontrol.AccessControl
 	configs    *notifier.AlertmanagerConfigService
-	encryption notifier.Encryption
+	encryption notifier.Crypto
 }
 
 type UnknownReceiverError struct {

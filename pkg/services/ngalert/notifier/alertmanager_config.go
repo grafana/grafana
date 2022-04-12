@@ -29,10 +29,10 @@ func (e AlertmanagerConfigRejectedError) Error() string {
 
 // AlertmanagerConfigService manages configs for the Grafana alertmanager.
 type AlertmanagerConfigService struct {
-	mam        multiOrg
-	encryption Encryption
-	store      configurationStore
-	log        log.Logger
+	mam    multiOrg
+	crypto Crypto
+	store  configurationStore
+	log    log.Logger
 }
 
 type configurationStore interface {
@@ -43,12 +43,12 @@ type multiOrg interface {
 	AlertmanagerFor(orgID int64) (*Alertmanager, error)
 }
 
-func NewAlertmanagerConfigService(mam multiOrg, encryption Encryption, store configurationStore, log log.Logger) *AlertmanagerConfigService {
+func NewAlertmanagerConfigService(mam multiOrg, crypto Crypto, store configurationStore, log log.Logger) *AlertmanagerConfigService {
 	return &AlertmanagerConfigService{
-		mam:        mam,
-		encryption: encryption,
-		store:      store,
-		log:        log,
+		mam:    mam,
+		crypto: crypto,
+		store:  store,
+		log:    log,
 	}
 }
 
@@ -75,7 +75,7 @@ func (s *AlertmanagerConfigService) GetAlertmanagerConfiguration(ctx context.Con
 		for _, pr := range recv.PostableGrafanaReceivers.GrafanaManagedReceivers {
 			secureFields := make(map[string]bool, len(pr.SecureSettings))
 			for k := range pr.SecureSettings {
-				decryptedValue, err := s.encryption.getDecryptedSecret(pr, k)
+				decryptedValue, err := s.crypto.getDecryptedSecret(pr, k)
 				if err != nil {
 					return definitions.GettableUserConfig{}, fmt.Errorf("failed to decrypt stored secure setting: %w", err)
 				}
@@ -116,11 +116,11 @@ func (s *AlertmanagerConfigService) ApplyAlertmanagerConfiguration(ctx context.C
 		}
 	}
 
-	if err := s.encryption.LoadSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
+	if err := s.crypto.LoadSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
 		return err
 	}
 
-	if err := config.ProcessConfig(s.encryption.Encrypt); err != nil {
+	if err := config.ProcessConfig(s.crypto.Encrypt); err != nil {
 		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
 	}
 

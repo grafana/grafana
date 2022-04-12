@@ -75,7 +75,7 @@ type API struct {
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
 	SecretsService       secrets.Service
-	Encryption           notifier.Encryption
+	Crypto               notifier.Crypto
 	AccessControl        accesscontrol.AccessControl
 	Policies             *provisioning.NotificationPolicyService
 	ContactPointService  *provisioning.ContactPointService
@@ -92,7 +92,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		&AlertmanagerSrv{encryption: api.Encryption, log: logger, ac: api.AccessControl, configs: notifier.NewAlertmanagerConfigService(api.MultiOrgAlertmanager, api.Encryption, api.AlertingStore, logger)},
+		&AlertmanagerSrv{encryption: api.Crypto, log: logger, ac: api.AccessControl, configs: notifier.NewAlertmanagerConfigService(api.MultiOrgAlertmanager, api.Crypto, api.AlertingStore, logger)},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
