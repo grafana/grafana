@@ -6,11 +6,10 @@ import { cloneDeep, has } from 'lodash';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { Alert, ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
+import { ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import {
   CoreApp,
   DataQuery,
-  DataQueryError,
   DataSourceApi,
   DataSourceInstanceSettings,
   EventBusExtended,
