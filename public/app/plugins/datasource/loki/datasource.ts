@@ -191,7 +191,7 @@ export class LokiDatasource
       ) {
         subQueries.push(doLokiChannelStream(target, this, request));
       } else {
-        subQueries.push(this.runRangeQuery(target, request, filteredTargets.length));
+        subQueries.push(this.runRangeQuery(target, request));
       }
     }
 
@@ -262,7 +262,7 @@ export class LokiDatasource
         }
 
         return {
-          data: [lokiResultsToTableModel(response.data.data.result, responseListLength, target.refId, meta, true)],
+          data: [lokiResultsToTableModel(response.data.data.result, responseListLength, target.refId, meta)],
           key: `${target.refId}_instant`,
         };
       }),
@@ -303,11 +303,7 @@ export class LokiDatasource
   /**
    * Attempts to send a query to /loki/api/v1/query_range
    */
-  runRangeQuery = (
-    target: LokiQuery,
-    options: RangeQueryOptions,
-    responseListLength = 1
-  ): Observable<DataQueryResponse> => {
+  runRangeQuery = (target: LokiQuery, options: RangeQueryOptions): Observable<DataQueryResponse> => {
     // For metric query we use maxDataPoints from the request options which should be something like width of the
     // visualisation in pixels. In case of logs request we either use lines limit defined in the query target or
     // global limit defined for the data source which ever is lower.
@@ -334,7 +330,6 @@ export class LokiDatasource
           response.data,
           target,
           query,
-          responseListLength,
           maxDataPoints,
           this.instanceSettings.jsonData,
           (options as DataQueryRequest<LokiQuery>).scopedVars
