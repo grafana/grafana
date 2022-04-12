@@ -870,6 +870,8 @@ github.com/getkin/kin-openapi v0.53.0/go.mod h1:7Yn5whZr5kJi6t+kShccXS8ae1APpYTW
 github.com/getkin/kin-openapi v0.61.0/go.mod h1:7Yn5whZr5kJi6t+kShccXS8ae1APpYTW6yheSwk8Yi4=
 github.com/getkin/kin-openapi v0.91.0 h1:mOSAljTAQONM0YVtI3+LvIQaa0zPwa3SH6UuiyEnbYQ=
 github.com/getkin/kin-openapi v0.91.0/go.mod h1:660oXbgy5JFMKreazJaQTw7o+X00qeSyhcnluiMv+Xg=
+github.com/getkin/kin-openapi v0.94.0 h1:bAxg2vxgnHHHoeefVdmGbR+oxtJlcv5HsJJa3qmAHuo=
+github.com/getkin/kin-openapi v0.94.0/go.mod h1:LWZfzOd7PRy8GJ1dJ6mCU6tNdSfOwRac1BUPam4aw6Q=
 github.com/getsentry/raven-go v0.2.0/go.mod h1:KungGk8q33+aIAZUIVWZDr2OfAEBsO49PX4NzFV5kcQ=
 github.com/getsentry/sentry-go v0.10.0 h1:6gwY+66NHKqyZrdi6O2jGdo7wGdo9b3B69E01NFgT5g=
 github.com/getsentry/sentry-go v0.10.0/go.mod h1:kELm/9iCblqUYh+ZRML7PNdCvEuw24wBvJPYyi86cws=
@@ -1368,6 +1370,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOax
 github.com/grafana/grafana-plugin-sdk-go v0.125.0/go.mod h1:9YiJ5GUxIsIEUC0qR9+BJVP5M7mCSP6uc6Ne62YKkgc=
 github.com/grafana/grafana-plugin-sdk-go v0.129.0 h1:apmA8x59QvW5Wov+FhAfM0IiNGjMi8V2Ou7xyMk1leE=
 github.com/grafana/grafana-plugin-sdk-go v0.129.0/go.mod h1:4edtosZepfQF9jkQwRywJsNSJzXTHmzbmcVcAl8MEQc=
+github.com/grafana/grafana-plugin-sdk-go v0.131.0 h1:8M+Qfch4WNi3PPpRhWtmcLFTCq8zlIjnxrc8iRigAY0=
+github.com/grafana/grafana-plugin-sdk-go v0.131.0/go.mod h1:jmrxelOJKrIK0yrsIzcotS8pbqPZozbmJgGy7k3hK1k=
 github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa h1:+pXjAxavVR2FKKNsuuCXGCWEj8XGc1Af6SPiyBpzU2A=
 github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa/go.mod h1:0O8o/juxNSKN/e+DzWDTRkl7Zm8CkZcz0NDqEdojlrk=
 github.com/grafana/saml v0.0.0-20211007135653-aed1b2edd86b h1:YiSGp34F4V0G08HHx1cJBf2GVgwYAkXQjzuVs1t8jYk=
