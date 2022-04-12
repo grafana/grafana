@@ -1,5 +1,7 @@
 import { isString as _isString } from 'lodash';
 
+// Store
+
 import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
@@ -11,6 +13,8 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { AddLibraryPanelModal } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
 import { UnlinkModal } from 'app/features/library-panels/components/UnlinkModal/UnlinkModal';
+import { cleanUpPanelState } from 'app/features/panel/state/actions';
+import { dispatch } from 'app/store/store';
 
 import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
 
@@ -38,6 +42,7 @@ export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: b
   }
 
   dashboard.removePanel(panel);
+  dispatch(cleanUpPanelState(panel.key));
 };
 
 export const duplicatePanel = (dashboard: DashboardModel, panel: PanelModel) => {

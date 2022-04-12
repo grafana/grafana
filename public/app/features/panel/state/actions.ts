@@ -8,7 +8,13 @@ import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
 import { ThunkResult } from 'app/types';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
 
-import { changePanelKey, panelModelAndPluginReady } from './reducers';
+import {
+  changePanelKey,
+  cleanUpAngularComponent,
+  panelModelAndPluginReady,
+  removePanel,
+  removePanels,
+} from './reducers';
 
 export function initPanelState(panel: PanelModel): ThunkResult<void> {
   return async (dispatch, getStore) => {
@@ -29,6 +35,24 @@ export function initPanelState(panel: PanelModel): ThunkResult<void> {
     }
 
     dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
+  };
+}
+
+export function cleanUpPanelState(panelKey: string): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const store = getStore().panels;
+    cleanUpAngularComponent(store[panelKey]);
+    dispatch(removePanel({ key: panelKey }));
+  };
+}
+
+export function cleanAndRemoveMany(panelKeys: string[]): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const store = getStore().panels;
+    for (const key of panelKeys) {
+      cleanUpAngularComponent(store[key]);
+    }
+    dispatch(removePanels({ keys: panelKeys }));
   };
 }
 
