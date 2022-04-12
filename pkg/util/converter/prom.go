@@ -256,6 +256,7 @@ func readMatrixOrVector(iter *jsoniter.Iterator) *backend.DataResponse {
 		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 		timeField.Name = data.TimeSeriesTimeFieldName
 		valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
+		valueField.Name = data.TimeSeriesValueFieldName
 		valueField.Labels = data.Labels{}
 
 		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
@@ -280,14 +281,6 @@ func readMatrixOrVector(iter *jsoniter.Iterator) *backend.DataResponse {
 					}
 				}
 			}
-		}
-
-		name, ok := valueField.Labels["__name__"]
-		if ok {
-			valueField.Name = name
-			delete(valueField.Labels, "__name__")
-		} else {
-			valueField.Name = data.TimeSeriesValueFieldName
 		}
 
 		frame := data.NewFrame("", timeField, valueField)
