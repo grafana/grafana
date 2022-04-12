@@ -1,26 +1,13 @@
-import {
-  DataQuery,
-  DataSourceInstanceSettings,
-  getDataSourceRef,
-  hasQueryExportSupport,
-  hasQueryImportSupport,
-} from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { DataQuery, DataSourceApi, hasQueryExportSupport, hasQueryImportSupport } from '@grafana/data';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 export async function updateQueries(
-  newSettings: DataSourceInstanceSettings,
+  nextDS: DataSourceApi,
   queries: DataQuery[],
-  dsSettings?: DataSourceInstanceSettings
+  currentDS?: DataSourceApi
 ): Promise<DataQuery[]> {
   let nextQueries = queries;
-  const datasource = getDataSourceRef(newSettings);
-  const nextDS = await getDataSourceSrv().get(newSettings.uid);
-  let currentDS;
-
-  if (dsSettings) {
-    currentDS = await getDataSourceSrv().get(dsSettings.uid);
-  }
+  const datasource = { type: nextDS.type, uid: nextDS.uid };
 
   // we are changing data source type
   if (currentDS?.meta.id !== nextDS.meta.id) {
