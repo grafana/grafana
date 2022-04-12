@@ -94,7 +94,10 @@ export const ResourcePickerPopover = (props: Props) => {
               <Button
                 className={styles.button}
                 variant={newValue && newValue !== value ? 'primary' : 'secondary'}
-                onClick={() => onChange(newValue)}
+                onClick={() => {
+                  // TODO: if the trigger is from the upload tab, call backend /upload
+                  onChange(newValue);
+                }}
               >
                 Select
               </Button>

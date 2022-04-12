@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction } from 'react';
+import React, { Dispatch, SetStateAction, useState } from 'react';
 import { FileDropzone, useTheme2, Icon, Button, DropzoneFile } from '@grafana/ui';
 import { getBackendSrv, config } from '@grafana/runtime';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -42,8 +42,11 @@ export const FileUploader = ({ setNewValue, mediaType }: Props) => {
         accept: acceptableFiles,
         multiple: false,
         onDrop: (acceptedFiles: File[]) => {
+          // this state gets cleared out on select
           let formData = new FormData();
           formData.append('file', acceptedFiles[0]);
+          // TODO: check if there's already a file uploaded in the list before calling fetch
+          // so we won't have to delete file when another file gets uploaded
           fetch('/api/storage/upload', {
             method: 'POST',
             body: formData,

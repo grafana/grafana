@@ -109,6 +109,13 @@ func (s *standardStorageService) Read(ctx context.Context, user *models.SignedIn
 	return s.tree.GetFile(ctx, path)
 }
 
+func isFileTypeValid(filetype string) bool {
+	if (filetype == "image/jpeg") || (filetype == "image/jpg") || (filetype == "image/gif") || (filetype == "image/png") || (filetype != "image/svg+xml") || (filetype != "image/webp") {
+		return true
+	}
+	return false
+}
+
 func (s *standardStorageService) Upload(ctx context.Context, user *models.SignedInUser, form *multipart.Form) (*Response, error) {
 	response := Response{
 		path:       "upload",
@@ -149,7 +156,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		}
 		filetype := http.DetectContentType(data)
 		// only allow images to be uploaded
-		if (filetype != "image/jpeg") && (filetype != "image/jpg") && (filetype != "image/gif") && (filetype != "image/png") && (filetype != "image/svg+xml") && (filetype != "image/webp") && !strings.HasSuffix(fileHeader.Filename, ".svg") {
+		if !isFileTypeValid(filetype) && !strings.HasSuffix(fileHeader.Filename, ".svg") {
 			return &Response{
 				statusCode: 400,
 				message:    "unsupported file type uploaded",
