@@ -58,7 +58,7 @@ type ContactpointPayload struct {
 // by grafanas embedded alertmanager implementation.
 type EmbeddedContactPoint struct {
 	// UID is the unique identifier of the contact point. This will be
-	// automaticly set be the Grafana.
+	// automatically set be the Grafana.
 	UID string `json:"uid"`
 	// Name is used as grouping key in the UI. Contact points with the
 	// same name will be grouped in the UI.

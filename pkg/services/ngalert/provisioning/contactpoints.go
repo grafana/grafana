@@ -103,7 +103,6 @@ func (ecp *ContactPointService) getContactPointUncrypted(ctx context.Context, or
 				continue
 			}
 			embeddedContactPoint.Settings.Set(k, decryptedValue)
-
 		}
 		return embeddedContactPoint, nil
 	}
@@ -112,7 +111,6 @@ func (ecp *ContactPointService) getContactPointUncrypted(ctx context.Context, or
 
 func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID int64,
 	contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) (apimodels.EmbeddedContactPoint, error) {
-
 	if err := contactPoint.IsValid(ecp.encryptionService.GetDecryptedValue); err != nil {
 		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("contact point is not valid: %w", err)
 	}
