@@ -19,6 +19,7 @@ interface Props {
 }
 
 export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, defaultValue, readOnly = false }) => {
+  const settingsPath = option.secure ? `${pathPrefix}secureSettings.` : `${pathPrefix}settings.`;
   if (option.element === 'subform') {
     return (
       <SubformField
@@ -26,7 +27,7 @@ export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, def
         defaultValue={defaultValue}
         option={option}
         errors={error as DeepMap<any, FieldError> | undefined}
-        pathPrefix={pathPrefix}
+        pathPrefix={settingsPath}
       />
     );
   }
@@ -36,7 +37,7 @@ export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, def
         readOnly={readOnly}
         defaultValues={defaultValue}
         option={option}
-        pathPrefix={pathPrefix}
+        pathPrefix={settingsPath}
         errors={error as Array<DeepMap<any, FieldError>> | undefined}
       />
     );
@@ -49,18 +50,26 @@ export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, def
       error={error?.message}
     >
       <OptionInput
-        id={`${pathPrefix}${option.propertyName}`}
+        id={`${settingsPath}${option.propertyName}`}
         defaultValue={defaultValue}
         option={option}
         invalid={invalid}
-        pathPrefix={pathPrefix}
+        pathPrefix={settingsPath}
         readOnly={readOnly}
+        pathIndex={pathPrefix}
       />
     </Field>
   );
 };
 
-const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPrefix = '', readOnly = false }) => {
+const OptionInput: FC<Props & { id: string; pathIndex: string }> = ({
+  option,
+  invalid,
+  id,
+  pathPrefix = '',
+  pathIndex,
+  readOnly = false,
+}) => {
   const { control, register, unregister, getValues } = useFormContext();
   const name = `${pathPrefix}${option.propertyName}`;
 
@@ -92,7 +101,7 @@ const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPref
           invalid={invalid}
           type={option.inputType}
           {...register(name, {
-            required: determineRequired(option, getValues),
+            required: determineRequired(option, getValues, pathIndex),
             validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
           })}
           placeholder={option.placeholder}
@@ -166,16 +175,15 @@ const validateOption = (value: string, validationRule: string) => {
   return RegExp(validationRule).test(value) ? true : 'Invalid format';
 };
 
-const determineRequired = (option: NotificationChannelOption, getValues: any) => {
+const determineRequired = (option: NotificationChannelOption, getValues: any, pathIndex: string) => {
   if (!option.dependsOn) {
     return option.required ? 'Required' : false;
   }
-  console.log(getValues('items[0].secureFields'));
-  if (isEmpty(getValues('items[0].secureFields'))) {
-    const dependentOn = getValues(`items[0].secureSettings.${option.dependsOn}`);
+  if (isEmpty(getValues(`${pathIndex}secureFields`))) {
+    const dependentOn = getValues(`${pathIndex}secureSettings.${option.dependsOn}`);
     return !Boolean(dependentOn) && option.required ? 'Required' : false;
   } else {
-    const dependentOn: boolean = getValues(`items[0].secureFields.${option.dependsOn}`);
+    const dependentOn: boolean = getValues(`${pathIndex}secureFields.${option.dependsOn}`);
     return !dependentOn && option.required ? 'Required' : false;
   }
 };

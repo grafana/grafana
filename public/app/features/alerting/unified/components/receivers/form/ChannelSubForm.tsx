@@ -43,6 +43,9 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   useEffect(() => {
     register(`${pathPrefix}.__id`);
+    /* Need to manually register secureFields or else they'll
+     be lost when testing a contact point */
+    register(`${pathPrefix}.secureFields`);
   }, [register, pathPrefix]);
 
   const [_secureFields, setSecureFields] = useState(secureFields ?? {});
