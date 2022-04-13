@@ -42,7 +42,8 @@ type RuleStore interface {
 	GetAlertRules(ctx context.Context, query *ngmodels.GetAlertRulesQuery) error
 	GetUserVisibleNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
-	UpsertAlertRules(ctx context.Context, rule []UpsertRule) error
+	InsertAlertRules(ctx context.Context, rule []UpsertRule) error
+	UpdateAlertRules(ctx context.Context, rule []UpsertRule) error
 }
 
 func getAlertRuleByUID(sess *sqlstore.DBSession, alertRuleUID string, orgID int64) (*ngmodels.AlertRule, error) {
@@ -107,52 +108,86 @@ func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAler
 	})
 }
 
-// UpsertAlertRules is a handler for creating/updating alert rules.
-func (st DBstore) UpsertAlertRules(ctx context.Context, rules []UpsertRule) error {
+// InsertAlertRules is a handler for creating/updating alert rules.
+func (st DBstore) InsertAlertRules(ctx context.Context, rules []UpsertRule) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		newRules := make([]ngmodels.AlertRule, 0, len(rules))
+		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
+		for _, r := range rules {
+			uid, err := GenerateNewAlertRuleUID(sess, r.New.OrgID, r.New.Title)
+			if err != nil {
+				return fmt.Errorf("failed to generate UID for alert rule %q: %w", r.New.Title, err)
+			}
+			r.New.UID = uid
+			r.New.Version = 1
+			if err := st.validateAlertRule(r.New); err != nil {
+				return err
+			}
+			if err := (&r.New).PreSave(TimeNow); err != nil {
+				return err
+			}
+			newRules = append(newRules, r.New)
+			ruleVersions = append(ruleVersions, ngmodels.AlertRuleVersion{
+				RuleOrgID:        r.New.OrgID,
+				RuleUID:          r.New.UID,
+				RuleNamespaceUID: r.New.NamespaceUID,
+				RuleGroup:        r.New.RuleGroup,
+				ParentVersion:    0,
+				Version:          r.New.Version,
+				Created:          r.New.Updated,
+				Condition:        r.New.Condition,
+				Title:            r.New.Title,
+				Data:             r.New.Data,
+				IntervalSeconds:  r.New.IntervalSeconds,
+				NoDataState:      r.New.NoDataState,
+				ExecErrState:     r.New.ExecErrState,
+				For:              r.New.For,
+				Annotations:      r.New.Annotations,
+				Labels:           r.New.Labels,
+			})
+		}
+		if len(newRules) > 0 {
+			if _, err := sess.Insert(&newRules); err != nil {
+				if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+					return ngmodels.ErrAlertRuleUniqueConstraintViolation
+				}
+				return fmt.Errorf("failed to create new rules: %w", err)
+			}
+		}
+
+		if len(ruleVersions) > 0 {
+			if _, err := sess.Insert(&ruleVersions); err != nil {
+				return fmt.Errorf("failed to create new rule versions: %w", err)
+			}
+		}
+
+		return nil
+	})
+}
+
+// UpdateAlertRules is a handler for creating/updating alert rules.
+func (st DBstore) UpdateAlertRules(ctx context.Context, rules []UpsertRule) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		newRules := make([]ngmodels.AlertRule, 0, len(rules))
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
 		for _, r := range rules {
 			var parentVersion int64
-			switch r.Existing {
-			case nil: // new rule
-				uid, err := GenerateNewAlertRuleUID(sess, r.New.OrgID, r.New.Title)
-				if err != nil {
-					return fmt.Errorf("failed to generate UID for alert rule %q: %w", r.New.Title, err)
-				}
-				r.New.UID = uid
-				r.New.Version = 1
-
-				if err := st.validateAlertRule(r.New); err != nil {
-					return err
-				}
-
-				if err := (&r.New).PreSave(TimeNow); err != nil {
-					return err
-				}
-				newRules = append(newRules, r.New)
-			default:
-				r.New.ID = r.Existing.ID
-				r.New.Version = r.Existing.Version + 1
-
-				if err := st.validateAlertRule(r.New); err != nil {
-					return err
-				}
-
-				if err := (&r.New).PreSave(TimeNow); err != nil {
-					return err
-				}
-
-				// no way to update multiple rules at once
-				if _, err := sess.ID(r.Existing.ID).AllCols().Update(r.New); err != nil {
-					if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
-						return ngmodels.ErrAlertRuleUniqueConstraintViolation
-					}
-					return fmt.Errorf("failed to update rule [%s] %s: %w", r.New.UID, r.New.Title, err)
-				}
-				parentVersion = r.Existing.Version
+			r.New.ID = r.Existing.ID
+			r.New.Version = r.Existing.Version + 1
+			if err := st.validateAlertRule(r.New); err != nil {
+				return err
 			}
-
+			if err := (&r.New).PreSave(TimeNow); err != nil {
+				return err
+			}
+			// no way to update multiple rules at once
+			if _, err := sess.ID(r.Existing.ID).AllCols().Update(r.New); err != nil {
+				if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+					return ngmodels.ErrAlertRuleUniqueConstraintViolation
+				}
+				return fmt.Errorf("failed to update rule [%s] %s: %w", r.New.UID, r.New.Title, err)
+			}
+			parentVersion = r.Existing.Version
 			ruleVersions = append(ruleVersions, ngmodels.AlertRuleVersion{
 				RuleOrgID:        r.New.OrgID,
 				RuleUID:          r.New.UID,
@@ -172,7 +207,6 @@ func (st DBstore) UpsertAlertRules(ctx context.Context, rules []UpsertRule) erro
 				Labels:           r.New.Labels,
 			})
 		}
-
 		if len(newRules) > 0 {
 			if _, err := sess.Insert(&newRules); err != nil {
 				if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
@@ -181,13 +215,11 @@ func (st DBstore) UpsertAlertRules(ctx context.Context, rules []UpsertRule) erro
 				return fmt.Errorf("failed to create new rules: %w", err)
 			}
 		}
-
 		if len(ruleVersions) > 0 {
 			if _, err := sess.Insert(&ruleVersions); err != nil {
 				return fmt.Errorf("failed to create new rule versions: %w", err)
 			}
 		}
-
 		return nil
 	})
 }

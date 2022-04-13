@@ -428,7 +428,7 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-		require.JSONEq(t, `{"message": "failed to update rule group: failed to add or update rules: a conflicting alert rule is found: rule title under the same organisation and folder should be unique"}`, string(b))
+		require.JSONEq(t, `{"message": "failed to update rule group: failed to add rules: a conflicting alert rule is found: rule title under the same organisation and folder should be unique"}`, string(b))
 	})
 
 	t.Run("trying to create alert with same title under another folder should succeed", func(t *testing.T) {
