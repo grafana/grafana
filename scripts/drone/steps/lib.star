@@ -18,6 +18,7 @@ trigger_oss = {
     }
 }
 
+
 def slack_step(channel, template, secret):
     return {
         'name': 'slack',
@@ -48,7 +49,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False):
             committish = '${DRONE_TAG}'
             source_commit = ' ${DRONE_TAG}'
             environment = {
-                  'GITHUB_TOKEN': from_secret(github_token),
+                'GITHUB_TOKEN': from_secret(github_token),
             }
             token = "--github-token $${GITHUB_TOKEN}"
         elif ver_mode == 'release-branch':
@@ -99,6 +100,7 @@ def initialize_step(edition, platform, ver_mode, is_downstream=False):
 
     return steps
 
+
 def gen_version_step(ver_mode, is_downstream=False):
     if ver_mode == 'release':
         args = '${DRONE_TAG}'
@@ -119,6 +121,7 @@ def gen_version_step(ver_mode, is_downstream=False):
         ],
     }
 
+
 def yarn_install_step():
     return {
         'name': 'yarn-install',
@@ -131,6 +134,7 @@ def yarn_install_step():
         ],
     }
 
+
 def wire_install_step():
     return {
         'name': 'wire-install',
@@ -141,21 +145,21 @@ def wire_install_step():
     }
 
 
-def identify_runner_step(platform):
-    if platform == 'linux':
-        return {
-            'name': 'identify-runner',
-            'image': alpine_image,
-            'commands': [
-                'echo $DRONE_RUNNER_NAME',
-            ],
-        }
-    else:
+def identify_runner_step(platform='linux'):
+    if platform == 'windows':
         return {
             'name': 'identify-runner',
             'image': windows_image,
             'commands': [
                 'echo $env:DRONE_RUNNER_NAME',
+            ],
+        }
+    else:
+        return {
+            'name': 'identify-runner',
+            'image': alpine_image,
+            'commands': [
+                'echo $DRONE_RUNNER_NAME',
             ],
         }
 
@@ -292,7 +296,6 @@ def store_storybook_step(edition, ver_mode, trigger=None):
     if edition in ('enterprise', 'enterprise2'):
         return None
 
-
     commands = []
     if ver_mode == 'release':
         commands.extend([
@@ -302,12 +305,12 @@ def store_storybook_step(edition, ver_mode, trigger=None):
 
     else:
         # main pipelines should deploy storybook to grafana-storybook/canary public bucket
-        commands = ['./bin/grabpl store-storybook --deployment canary --src-bucket grafana-storybook',]
+        commands = ['./bin/grabpl store-storybook --deployment canary --src-bucket grafana-storybook', ]
 
     step = {
         'name': 'store-storybook',
         'image': publish_image,
-        'depends_on': ['build-storybook',] + end_to_end_tests_deps(edition),
+        'depends_on': ['build-storybook', ] + end_to_end_tests_deps(edition),
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
@@ -317,6 +320,7 @@ def store_storybook_step(edition, ver_mode, trigger=None):
     if trigger and ver_mode in ("release-branch", "main"):
         step.update(trigger)
     return step
+
 
 def e2e_tests_artifacts(edition):
     return {
@@ -462,6 +466,7 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
         'commands': cmds,
     }
 
+
 def build_frontend_package_step(edition, ver_mode, is_downstream=False):
     if not is_downstream:
         build_no = '${DRONE_BUILD_NUMBER}'
@@ -473,12 +478,12 @@ def build_frontend_package_step(edition, ver_mode, is_downstream=False):
         cmds = [
             './bin/grabpl build-frontend-packages --jobs 8 --github-token $${GITHUB_TOKEN} ' + \
             '--edition {} ${{DRONE_TAG}}'.format(edition),
-            ]
+        ]
     else:
         cmds = [
             './bin/grabpl build-frontend-packages --jobs 8 --edition {} '.format(edition) + \
             '--build-id {}'.format(build_no),
-            ]
+        ]
 
     return {
         'name': 'build-frontend-packages',
@@ -586,7 +591,7 @@ def lint_frontend_step():
         'commands': [
             'yarn run prettier:check',
             'yarn run lint',
-            'yarn run i18n:compile', # TODO: right place for this?
+            'yarn run i18n:compile',  # TODO: right place for this?
             'yarn run typecheck',
         ],
     }
@@ -761,6 +766,7 @@ def grafana_server_step(edition, port=3001):
         ],
     }
 
+
 def e2e_tests_step(suite, edition, port=3001, tries=None):
     cmd = './bin/grabpl e2e-tests --port {} --suite {}'.format(port, suite)
     if tries:
@@ -840,13 +846,15 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
         },
     }
 
+
 def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
     if mode == 'security':
         mode = '--{} '.format(mode)
     else:
         mode = ''
 
-    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {} --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7'.format(mode, docker_repo)
+    cmd = './bin/grabpl artifacts docker publish {}--dockerhub-repo {} --base alpine --base ubuntu --arch amd64 --arch arm64 --arch armv7'.format(
+        mode, docker_repo)
 
     if ver_mode == 'release':
         deps = ['fetch-images-{}'.format(edition)]
@@ -991,7 +999,8 @@ def upload_packages_step(edition, ver_mode, is_downstream=False, trigger=None):
         packages_bucket = '$${{PRERELEASE_BUCKET}}/artifacts/downloads{}'.format(enterprise2_suffix(edition))
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket {}'.format(edition, packages_bucket)
     elif edition == 'enterprise2':
-        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads-enterprise2'.format(edition)
+        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads-enterprise2'.format(
+            edition)
     else:
         cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads'.format(edition)
 
@@ -999,7 +1008,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False, trigger=None):
     if edition in 'enterprise2' or not end_to_end_tests_deps(edition):
         deps.extend([
             'package' + enterprise2_suffix(edition),
-            ])
+        ])
     else:
         deps.extend(end_to_end_tests_deps(edition))
 
@@ -1203,6 +1212,7 @@ def ensure_cuetsified_step():
             './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff',
         ],
     }
+
 
 def end_to_end_tests_deps(edition):
     if disable_tests:

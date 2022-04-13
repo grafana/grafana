@@ -154,6 +154,7 @@ def get_steps(edition, ver_mode):
     include_enterprise2 = edition == 'enterprise'
     edition2 = 'enterprise2'
     init_steps = [
+        identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
         wire_install_step(),
@@ -272,7 +273,7 @@ def get_oss_pipelines(trigger, ver_mode):
             ),
             pipeline(
                 name='oss-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step()] + integration_test_steps,
+                steps=[download_grabpl_step(), identify_runner_step(),] + integration_test_steps,
                 volumes=volumes,
             )
         ])
@@ -316,7 +317,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
             ),
             pipeline(
                 name='enterprise-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=init_steps + integration_test_steps,
+                steps=[download_grabpl_step(), identify_runner_step(),] + integration_test_steps,
                 volumes=volumes,
             ),
         ])

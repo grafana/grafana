@@ -76,6 +76,7 @@ def get_steps(edition, is_downstream=False):
     publish = edition != 'enterprise' or is_downstream
     include_enterprise2 = edition == 'enterprise'
     init_steps = [
+        identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
         wire_install_step(),
@@ -236,7 +237,7 @@ def main_pipelines(edition):
         volumes=volumes,
     ), pipeline(
         name='main-integration-tests', edition=edition, trigger=trigger, services=services,
-        steps=[download_grabpl_step()] + integration_test_steps,
+        steps=[download_grabpl_step(), identify_runner_step(),] + integration_test_steps,
         volumes=volumes,
     ), pipeline(
         name='windows-main', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
@@ -247,7 +248,7 @@ def main_pipelines(edition):
         template=drone_change_template, secret='drone-changes-webhook',
     ), pipeline(
         name='publish-main', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
-        steps=[download_grabpl_step()] + store_steps,
+        steps=[download_grabpl_step(), identify_runner_step(),] + store_steps,
         depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'windows-main', ],
     ), notify_pipeline(
         name='notify-main', slack_channel='grafana-ci-notifications', trigger=dict(trigger, status=['failure']),

@@ -4,6 +4,7 @@ load(
     'gen_version_step',
     'yarn_install_step',
     'wire_install_step',
+    'identify_runner_step',
     'lint_drone_step',
     'lint_backend_step',
     'lint_frontend_step',
@@ -62,6 +63,7 @@ def pr_pipelines(edition):
     variants = ['linux-amd64', 'linux-amd64-musl', 'darwin-amd64', 'windows-amd64', 'armv6',]
     include_enterprise2 = edition == 'enterprise'
     init_steps = [
+        identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
         wire_install_step(),
@@ -145,7 +147,7 @@ def pr_pipelines(edition):
             name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=init_steps + build_steps,
         ), pipeline(
             name='pr-integration-tests', edition=edition, trigger=trigger, services=services,
-            steps=[download_grabpl_step()] + integration_test_steps,
+            steps=[download_grabpl_step(), identify_runner_step(),] + integration_test_steps,
             volumes=volumes,
         ), docs_pipelines(edition, ver_mode, trigger_docs())
     ]
