@@ -5,6 +5,7 @@ package server
 
 import (
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/services/entityevents"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api"
@@ -147,6 +148,7 @@ var wireBasicSet = wire.NewSet(
 	postgres.ProvideService,
 	mysql.ProvideService,
 	mssql.ProvideService,
+	entityevents.ProvideService,
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
 	serverlock.ProvideService,
