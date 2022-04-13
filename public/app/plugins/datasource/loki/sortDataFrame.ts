@@ -1,4 +1,4 @@
-import { DataFrame, Field, FieldType, SortedVector } from '@grafana/data';
+import { DataFrame, Field, SortedVector } from '@grafana/data';
 
 type SortDirection = 'ASCENDING' | 'DESCENDING';
 
