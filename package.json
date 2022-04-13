@@ -72,7 +72,7 @@
     "*pkg/**/*.go": [
       "gofmt -w -s"
     ],
-    "*.{star}": [
+    "*.star": [
       "make drone"
     ]
   },
