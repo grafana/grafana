@@ -7,6 +7,8 @@ import TracePageSearchBar from '@jaegertracing/jaeger-ui-components/src/TracePag
 import { useSearch } from './useSearch';
 import { transformDataFrames } from './utils/transform';
 import { useChildrenState } from './useChildrenState';
+import { useSelector } from 'react-redux';
+import { StoreState } from 'app/types';
 interface Props {
   dataFrames: DataFrame[];
   splitOpenFn: SplitOpen;
@@ -26,6 +28,10 @@ export function TraceViewContainer(props: Props) {
 
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
   const [searchBarSuffix, setSearchBarSuffix] = useState('');
+
+  const datasource = useSelector(
+    (state: StoreState) => state.explore[props.exploreId!]?.datasourceInstance ?? undefined
+  );
 
   const setTraceSearch = (value: string) => {
     setFocusedSpanIdForSearch('');
@@ -111,6 +117,7 @@ export function TraceViewContainer(props: Props) {
           childrenToggle={childrenToggle}
           childrenHiddenIDs={childrenHiddenIDs}
           queryResponse={queryResponse}
+          datasource={datasource}
         />
       </Collapse>
     </>

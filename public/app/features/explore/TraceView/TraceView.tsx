@@ -1,7 +1,9 @@
 import {
   DataFrame,
   DataLink,
+  DataQuery,
   DataSourceApi,
+  DataSourceJsonData,
   Field,
   GrafanaTheme2,
   LinkModel,
@@ -66,10 +68,11 @@ type Props = {
   childrenToggle?: (spanId: string) => void;
   childrenHiddenIDs?: Set<string>;
   queryResponse: PanelData;
+  datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
 };
 
 export function TraceView(props: Props) {
-  const { spanFindMatches, traceProp } = props;
+  const { spanFindMatches, traceProp, datasource } = props;
 
   const {
     detailStates,
@@ -98,10 +101,6 @@ export function TraceView(props: Props) {
    * State of the top minimap, slim means it is collapsed.
    */
   const [slim, setSlim] = useState(false);
-
-  const datasource = useSelector(
-    (state: StoreState) => state.explore[props.exploreId!]?.datasourceInstance ?? undefined
-  );
 
   const [focusedSpanId, createFocusSpanLink] = useFocusSpanLink({
     refId: props.dataFrames[0]?.refId,
