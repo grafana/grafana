@@ -362,7 +362,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	dashboard, err := hs.dashboardService.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)
 
-	if dashboard != nil {
+	if dashboard != nil && hs.entityEventsService != nil {
 		if err := hs.entityEventsService.SaveEvent(ctx, store.SaveActionCmd{
 			Grn:       fmt.Sprintf("database/dashboards/%d", dashboard.Id),
 			EventType: store.EntityEventTypeUpdate,
