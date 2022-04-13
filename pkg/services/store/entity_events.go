@@ -29,9 +29,8 @@ type SaveEventCmd struct {
 	EventType EntityEventType
 }
 
-/** EntityEventsService is a temporary solution to support change notifications in an HA setup
-* With this service each system can query for any events that have happened since a fixed time
- */
+// EntityEventsService is a temporary solution to support change notifications in an HA setup
+// With this service each system can query for any events that have happened since a fixed time
 type EntityEventsService interface {
 	SaveEvent(ctx context.Context, cmd SaveEventCmd) error
 	GetLastEvent(ctx context.Context) (*EntityEvent, error)
