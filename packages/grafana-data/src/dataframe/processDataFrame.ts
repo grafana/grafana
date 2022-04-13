@@ -16,6 +16,7 @@ import {
   DataFrameDTO,
   TIME_SERIES_VALUE_FIELD_NAME,
   TIME_SERIES_TIME_FIELD_NAME,
+  TIME_SERIES_SCALE_FIELD_NAME,
 } from '../types/index';
 import { isDateTime } from '../datetime/moment_wrapper';
 import { ArrayVector } from '../vector/ArrayVector';
@@ -70,12 +71,18 @@ function convertTableToDataFrame(table: TableData): DataFrame {
 function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   const times: number[] = [];
   const values: TimeSeriesValue[] = [];
+  const scales: number[] = [];
+  let hasScale = false;
 
   // Sometimes the points are sent as datapoints
   const points = timeSeries.datapoints || (timeSeries as any).points;
   for (const point of points) {
     values.push(point[0]);
     times.push(point[1] as number);
+    if (point.length >= 3) {
+      scales.push(point[2] as number);
+      hasScale = true;
+    }
   }
 
   const fields = [
@@ -95,6 +102,15 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       labels: timeSeries.tags,
     },
   ];
+
+  if (hasScale) {
+    fields.push({
+      name: TIME_SERIES_SCALE_FIELD_NAME,
+      type: FieldType.number,
+      config: {},
+      values: new ArrayVector<number>(scales),
+    });
+  }
 
   if (timeSeries.title) {
     (fields[1].config as FieldConfig).displayNameFromDS = timeSeries.title;

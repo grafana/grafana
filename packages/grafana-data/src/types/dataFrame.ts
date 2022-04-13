@@ -223,6 +223,7 @@ export interface FieldCalcs extends Record<string, any> {}
 
 export const TIME_SERIES_VALUE_FIELD_NAME = 'Value';
 export const TIME_SERIES_TIME_FIELD_NAME = 'Time';
+export const TIME_SERIES_SCALE_FIELD_NAME = 'Scale';
 export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';
 
 /**
