@@ -15,7 +15,7 @@ const ViewOptions: SelectableValue[] = [
   {
     icon: 'list-ul',
     label: 'List',
-    value: 'group',
+    value: 'list',
   },
   {
     icon: 'folder',

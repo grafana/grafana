@@ -14,6 +14,7 @@ import { deleteRulesGroupAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
+import { RuleLocation } from '../RuleLocation';
 import { ActionIcon } from './ActionIcon';
 import { EditCloudGroupModal } from './EditCloudGroupModal';
 import { RulesTable } from './RulesTable';
@@ -121,11 +122,9 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
   // ungrouped rules are rules that are in the "default" group name
   const isUngrouped = group.name === 'default';
   const groupName = isUngrouped ? (
-    namespace.name
+    <RuleLocation namespace={namespace.name} />
   ) : (
-    <span>
-      {namespace.name} <Icon name="angle-right" /> {group.name}
-    </span>
+    <RuleLocation namespace={namespace.name} group={group.name} />
   );
 
   return (

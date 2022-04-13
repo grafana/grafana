@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Field, Input, InputControl, useStyles2 } from '@grafana/ui';
+import { Field, Icon, Input, InputControl, Label, Tooltip, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
@@ -10,6 +10,7 @@ import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import { CloudRulesSourcePicker } from './CloudRulesSourcePicker';
 import { checkForPathSeparator } from './util';
 import { RuleTypePicker } from './rule-types/RuleTypePicker';
+import { Stack } from '@grafana/experimental';
 
 interface Props {
   editingExistingRule: boolean;
@@ -117,8 +118,24 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
       {ruleFormType === RuleFormType.grafana && (
         <div className={styles.flexRow}>
           <Field
-            label="Folder"
-            description="Folders allow you to specify access control to multiple rules."
+            label={
+              <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
+                <Stack gap={0.5}>
+                  Folder
+                  <Tooltip
+                    placement="top"
+                    content={
+                      <div>
+                        Each folder has unique folder permission. When you store multiple rules in a folder, the folder
+                        access permissions get assigned to the rules.
+                      </div>
+                    }
+                  >
+                    <Icon name="info-circle" size="xs" />
+                  </Tooltip>
+                </Stack>
+              </Label>
+            }
             className={styles.formInput}
             error={errors.folder?.message}
             invalid={!!errors.folder?.message}
@@ -126,7 +143,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           >
             <InputControl
               render={({ field: { ref, ...field } }) => (
-                <RuleFolderPicker {...field} enableCreateNew={true} enableReset={true} />
+                <RuleFolderPicker inputId="folder" {...field} enableCreateNew={true} enableReset={true} />
               )}
               name="folder"
               rules={{
@@ -140,7 +157,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           <Field
             label="Group"
             data-testid="group-picker"
-            description="All rules within the same group will be evaluated at the same interval."
+            description="Rules within the same group are evaluated after the same time interval."
             className={styles.formInput}
             error={errors.group?.message}
             invalid={!!errors.group?.message}

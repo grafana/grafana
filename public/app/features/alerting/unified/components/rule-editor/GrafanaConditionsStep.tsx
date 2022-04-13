@@ -59,7 +59,7 @@ export const GrafanaConditionsStep: FC = () => {
       <ConditionField />
       <Field
         label="Evaluate"
-        description="The evaluation inverval will apply to every rule within the group and may overwrite the interval of existing alert rules."
+        description="Evaluation internal applies to every rule within a group. It can overwrite the interval of an existing alert rule."
       >
         <div className={styles.flexRow}>
           <InlineLabel
