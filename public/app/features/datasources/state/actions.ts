@@ -24,6 +24,7 @@ import {
 } from './reducers';
 import { getDataSource, getDataSourceMeta } from './selectors';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { contextSrv } from '../../../core/services/context_srv';
 
 export interface DataSourceTypesLoadedPayload {
   plugins: DataSourcePluginMeta[];
@@ -217,6 +218,9 @@ export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
 
     const result = await getBackendSrv().post('/api/datasources', newInstance);
     await getDatasourceSrv().reload();
+
+    await contextSrv.fetchUserPermissions();
+
     locationService.push(`/datasources/edit/${result.datasource.uid}`);
   };
 }

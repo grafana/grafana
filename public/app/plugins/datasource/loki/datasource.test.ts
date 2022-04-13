@@ -411,7 +411,7 @@ describe('LokiDatasource', () => {
 
       it('should not modify expression with no filters', async () => {
         await lastValueFrom(ds.query(options as any));
-        expect(ds.runRangeQuery).toBeCalledWith({ expr: DEFAULT_EXPR }, expect.anything(), expect.anything());
+        expect(ds.runRangeQuery).toBeCalledWith({ expr: DEFAULT_EXPR }, expect.anything());
       });
 
       it('should add filters to expression', async () => {
@@ -431,7 +431,6 @@ describe('LokiDatasource', () => {
         await lastValueFrom(ds.query(options as any));
         expect(ds.runRangeQuery).toBeCalledWith(
           { expr: 'rate({bar="baz",job="foo",k1="v1",k2!="v2"} |= "bar" [5m])' },
-          expect.anything(),
           expect.anything()
         );
       });
@@ -452,7 +451,6 @@ describe('LokiDatasource', () => {
         await lastValueFrom(ds.query(options as any));
         expect(ds.runRangeQuery).toBeCalledWith(
           { expr: 'rate({bar="baz",job="foo",k1=~"v.*",k2=~"v\\\\\'.*"} |= "bar" [5m])' },
-          expect.anything(),
           expect.anything()
         );
       });

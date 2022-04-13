@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 )
 
@@ -82,6 +83,7 @@ func (r RoleDTO) Role() Role {
 		ID:          r.ID,
 		OrgID:       r.OrgID,
 		UID:         r.UID,
+		Version:     r.Version,
 		Name:        r.Name,
 		DisplayName: r.DisplayName,
 		Group:       r.Group,
@@ -244,6 +246,9 @@ type SetResourcePermissionCommand struct {
 
 const (
 	GlobalOrgID      = 0
+	FixedRolePrefix  = "fixed:"
+	RoleGrafanaAdmin = "Grafana Admin"
+
 	GeneralFolderUID = "general"
 
 	// Permission actions
@@ -385,6 +390,17 @@ var (
 	ScopeAnnotationsTypeOrganization = ScopeAnnotationsProvider.GetResourceScopeType(annotations.Organization.String())
 )
 
-const RoleGrafanaAdmin = "Grafana Admin"
+func BuiltInRolesWithParents(builtInRoles []string) map[string]struct{} {
+	res := map[string]struct{}{}
 
-const FixedRolePrefix = "fixed:"
+	for _, br := range builtInRoles {
+		res[br] = struct{}{}
+		if br != RoleGrafanaAdmin {
+			for _, parent := range models.RoleType(br).Parents() {
+				res[string(parent)] = struct{}{}
+			}
+		}
+	}
+
+	return res
+}
