@@ -23,7 +23,7 @@ import {
   filterQueriesByTime,
   sortQueries,
 } from 'app/core/history/richHistoryLocalStorageUtils';
-import { SortOrder } from './richHistoryTypes';
+import { RichHistorySettings, SortOrder } from './richHistoryTypes';
 
 export { SortOrder };
 
@@ -84,6 +84,14 @@ export async function addToRichHistory(
 
 export async function getRichHistory(): Promise<RichHistoryQuery[]> {
   return await getRichHistoryStorage().getRichHistory();
+}
+
+export async function updateRichHistorySettings(settings: RichHistorySettings): Promise<void> {
+  await getRichHistoryStorage().updateSettings(settings);
+}
+
+export async function getRichHistorySettings(): Promise<RichHistorySettings> {
+  return await getRichHistoryStorage().getSettings();
 }
 
 export async function deleteAllFromRichHistory(): Promise<void> {

@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -24,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -70,7 +70,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	pluginStore plugins.Store, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
 	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles,
-	bus bus.Bus) (*GrafanaLive, error) {
+	accessControl accesscontrol.AccessControl) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		Features:              toggles,
@@ -82,7 +82,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		SQLStore:              sqlStore,
 		SecretsService:        secretsService,
 		queryDataService:      queryDataService,
-		bus:                   bus,
 		channels:              make(map[string]models.ChannelHandler),
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]models.ChannelHandlerFactory),
@@ -242,7 +241,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
-	g.GrafanaScope.Features["comment"] = features.NewCommentHandler(commentmodel.NewPermissionChecker(g.SQLStore, g.Features))
+	g.GrafanaScope.Features["comment"] = features.NewCommentHandler(commentmodel.NewPermissionChecker(g.SQLStore, g.Features, accessControl))
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
@@ -407,7 +406,6 @@ type GrafanaLive struct {
 	SecretsService        secrets.Service
 	pluginStore           plugins.Store
 	queryDataService      *query.Service
-	bus                   bus.Bus
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller
