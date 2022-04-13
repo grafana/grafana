@@ -393,7 +393,7 @@ export interface VariableQuery extends DataQuery {
   region: string;
   metricName: string;
   dimensionKey: string;
-  valueDimensions?: Dimensions;
+  dimensionFilters?: Dimensions;
   ec2Filters: string;
   instanceID: string;
   attributeName: string;

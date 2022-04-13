@@ -87,7 +87,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     }));
   }
 
-  async handleDimensionValuesQuery({ namespace, region, dimensionKey, metricName, valueDimensions }: VariableQuery) {
+  async handleDimensionValuesQuery({ namespace, region, dimensionKey, metricName, dimensionFilters }: VariableQuery) {
     if (!dimensionKey || !metricName) {
       return [];
     }
@@ -96,7 +96,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       namespace,
       metricName,
       dimensionKey,
-      valueDimensions ?? {}
+      dimensionFilters ?? {}
     );
     return keys.map((s: { label: string; value: string }) => ({
       text: s.label,

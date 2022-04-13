@@ -27,12 +27,12 @@ const queryTypes: Array<{ value: string; label: string }> = [
 export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const parsedQuery = migrateVariableQuery(query);
 
-  const { region, namespace, metricName, dimensionKey, valueDimensions } = parsedQuery;
+  const { region, namespace, metricName, dimensionKey, dimensionFilters } = parsedQuery;
   const [regions, regionIsLoading] = useRegions(datasource);
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, region, namespace);
   const dimensionKeys = useDimensionKeys(datasource, region, namespace, metricName);
-  const keysForDimensionFilter = useDimensionKeys(datasource, region, namespace, metricName, valueDimensions ?? {});
+  const keysForDimensionFilter = useDimensionKeys(datasource, region, namespace, metricName, dimensionFilters ?? {});
 
   const onRegionChange = async (region: string) => {
     const validatedQuery = await sanitizeQuery({
@@ -59,7 +59,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
 
   // Reset dimensionValue parameters if namespace or region change
   const sanitizeQuery = async (query: VariableQuery) => {
-    let { metricName, dimensionKey, valueDimensions, namespace, region } = query;
+    let { metricName, dimensionKey, dimensionFilters, namespace, region } = query;
     if (metricName) {
       await datasource.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((metric) => metric.value === metricName)) {
@@ -71,11 +71,11 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
       await datasource.getDimensionKeys(namespace, region).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((key) => key.value === dimensionKey)) {
           dimensionKey = '';
-          valueDimensions = {};
+          dimensionFilters = {};
         }
       });
     }
-    return { ...query, metricName, dimensionKey, valueDimensions };
+    return { ...query, metricName, dimensionKey, dimensionFilters };
   };
 
   const hasRegionField = [
@@ -137,9 +137,9 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           />
           <InlineField label="Dimensions" labelWidth={20} tooltip="Dimensions to filter the returned values on">
             <Dimensions
-              query={{ ...parsedQuery, dimensions: parsedQuery.valueDimensions }}
+              query={{ ...parsedQuery, dimensions: parsedQuery.dimensionFilters }}
               onChange={(dimensions) => {
-                onChange({ ...parsedQuery, valueDimensions: dimensions });
+                onChange({ ...parsedQuery, dimensionFilters: dimensions });
               }}
               dimensionKeys={keysForDimensionFilter}
               disableExpressions={true}

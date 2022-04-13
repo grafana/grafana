@@ -55,7 +55,7 @@ describe('variables', () => {
       queryType: VariableQueryType.DimensionValues,
       metricName: 'abc',
       dimensionKey: 'efg',
-      valueDimensions: { a: 'b' },
+      dimensionFilters: { a: 'b' },
     };
     beforeEach(() => {
       ds.datasource.getDimensionValues = getDimensionValues;
@@ -80,7 +80,7 @@ describe('variables', () => {
         query.namespace,
         query.metricName,
         query.dimensionKey,
-        query.valueDimensions
+        query.dimensionFilters
       );
       expect(result).toEqual([{ text: 'e', value: 'e', expandable: true }]);
     });
