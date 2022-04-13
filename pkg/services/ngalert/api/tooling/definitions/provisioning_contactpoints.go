@@ -49,7 +49,7 @@ import (
 //       400: ValidationError
 
 // swagger:parameters RoutePostContactpoints RoutePutContactpoints
-type ContactpointPayload struct {
+type ContactPointPayload struct {
 	// in:body
 	Body EmbeddedContactPoint
 }

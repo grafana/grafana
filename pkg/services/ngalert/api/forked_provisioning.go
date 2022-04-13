@@ -28,17 +28,17 @@ func (f *ForkedProvisioningApi) forkRoutePostPolicyTree(ctx *models.ReqContext, 
 }
 
 func (f *ForkedProvisioningApi) forkRouteGetContactpoints(ctx *models.ReqContext) response.Response {
-	return f.svc.RouteGetContactpoints(ctx)
+	return f.svc.RouteGetContactPoints(ctx)
 }
 
 func (f *ForkedProvisioningApi) forkRoutePostContactpoints(ctx *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
-	return f.svc.RoutePostContactpoint(ctx, cp)
+	return f.svc.RoutePostContactPoint(ctx, cp)
 }
 
 func (f *ForkedProvisioningApi) forkRoutePutContactpoints(ctx *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
-	return f.svc.RoutePutContactpoints(ctx, cp)
+	return f.svc.RoutePutContactPoint(ctx, cp)
 }
 
 func (f *ForkedProvisioningApi) forkRouteDeleteContactpoints(ctx *models.ReqContext) response.Response {
-	return f.svc.RouteDeleteContactpoint(ctx)
+	return f.svc.RouteDeleteContactPoint(ctx)
 }

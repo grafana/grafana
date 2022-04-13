@@ -59,7 +59,7 @@ func (srv *ProvisioningSrv) RoutePostPolicyTree(c *models.ReqContext, tree apimo
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "policies updated"})
 }
 
-func (srv *ProvisioningSrv) RouteGetContactpoints(c *models.ReqContext) response.Response {
+func (srv *ProvisioningSrv) RouteGetContactPoints(c *models.ReqContext) response.Response {
 	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), c.OrgId)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -67,7 +67,7 @@ func (srv *ProvisioningSrv) RouteGetContactpoints(c *models.ReqContext) response
 	return response.JSON(http.StatusOK, cps)
 }
 
-func (srv *ProvisioningSrv) RoutePostContactpoint(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
+func (srv *ProvisioningSrv) RoutePostContactPoint(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
 	// TODO: provenance is hardcoded for now, change it later to make it more flexible
 	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.OrgId, cp, alerting_models.ProvenanceAPI)
 	if err != nil {
@@ -76,7 +76,7 @@ func (srv *ProvisioningSrv) RoutePostContactpoint(c *models.ReqContext, cp apimo
 	return response.JSON(http.StatusAccepted, contactPoint)
 }
 
-func (srv *ProvisioningSrv) RoutePutContactpoints(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
+func (srv *ProvisioningSrv) RoutePutContactPoint(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
 	err := srv.contactPointService.UpdateContactPoint(c.Req.Context(), c.OrgId, cp, alerting_models.ProvenanceAPI)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -84,7 +84,7 @@ func (srv *ProvisioningSrv) RoutePutContactpoints(c *models.ReqContext, cp apimo
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "contactpoint updated"})
 }
 
-func (srv *ProvisioningSrv) RouteDeleteContactpoint(c *models.ReqContext) response.Response {
+func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *models.ReqContext) response.Response {
 	cpID := web.Params(c.Req)[":ID"]
 	err := srv.contactPointService.DeleteContactPoint(c.Req.Context(), c.OrgId, cpID)
 	if err != nil {
