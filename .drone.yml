@@ -128,7 +128,7 @@ steps:
   - yarn install --immutable
   image: grafana/build-container:1.5.3
   name: initialize
-- image: agnest/drone-downstream-test
+- image: grafana/drone-downstream
   name: trigger-enterprise-downstream
   settings:
     params:
@@ -136,7 +136,7 @@ steps:
     - SOURCE_COMMIT=${DRONE_COMMIT}
     - OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}
     repositories:
-    - grafana/grafana-enterprise@test-at-branch-not-exist
+    - grafana/grafana-enterprise@${DRONE_SOURCE_BRANCH}
     server: https://drone.grafana.net
     token:
       from_secret: drone_token
@@ -737,7 +737,7 @@ steps:
       - .drone.yml
     repo:
     - grafana/grafana
-- image: agnest/drone-downstream-test
+- image: grafana/drone-downstream
   name: trigger-enterprise-downstream
   settings:
     params:
@@ -4460,6 +4460,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: cd5f7c0588bea2f906d9ef295b191d55831cc317fa9aefa05336c134a13d825e
+hmac: 859c20d9e8e6ba0e4f4a2cde7d6c776b04fbb73bde99dd148321d89b8561da6b
 
 ...

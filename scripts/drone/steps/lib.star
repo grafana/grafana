@@ -204,7 +204,7 @@ def enterprise_downstream_step(edition, ver_mode):
 
     repo = 'grafana/grafana-enterprise@'
     if ver_mode == 'pr':
-        repo += 'test-at-branch-not-exist'
+        repo += '${DRONE_SOURCE_BRANCH}'
     else:
         repo += 'main'
 
@@ -214,7 +214,7 @@ def enterprise_downstream_step(edition, ver_mode):
 
     return {
         'name': 'trigger-enterprise-downstream',
-        'image': 'agnest/drone-downstream-test',
+        'image': 'grafana/drone-downstream',
         'settings': {
             'server': 'https://drone.grafana.net',
             'token': from_secret(drone_token),
