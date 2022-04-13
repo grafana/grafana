@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var _ Service = (*InMemory)(nil)
+
 type InMemory struct {
 	cfg   *plugins.Cfg
 	store map[string]*plugins.Plugin
