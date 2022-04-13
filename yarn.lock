@@ -4366,7 +4366,6 @@ __metadata:
     "@react-aria/overlays": 3.8.1
     "@react-stately/menu": 3.2.6
     "@rollup/plugin-commonjs": 21.0.2
-    "@rollup/plugin-image": 2.1.1
     "@rollup/plugin-node-resolve": 13.1.3
     "@sentry/browser": 6.19.1
     "@storybook/addon-a11y": 6.4.15
@@ -7254,18 +7253,6 @@ __metadata:
   peerDependencies:
     rollup: ^2.38.3
   checksum: 5fd4c7b75d7881070f4395d7ba5f9035934f53b25e92d136583cc794461a456efc1e2a2204f946ec567dfea58073c38cb48f24d27155b89af0df0447c2cd0758
-  languageName: node
-  linkType: hard
-
-"@rollup/plugin-image@npm:2.1.1":
-  version: 2.1.1
-  resolution: "@rollup/plugin-image@npm:2.1.1"
-  dependencies:
-    "@rollup/pluginutils": ^3.1.0
-    mini-svg-data-uri: ^1.2.3
-  peerDependencies:
-    rollup: ^1.20.0 || ^2.0.0
-  checksum: a629c8f22233ca159c23655fdbc3449dab3c939372178ed4462fc9c525cc4ecd8b11fae359eb94be4f769d26f48b85fb18eb16ce1fbc33ed16b6a7c1f84391f6
   languageName: node
   linkType: hard
 
@@ -25952,15 +25939,6 @@ __metadata:
   peerDependencies:
     webpack: ^4.4.0
   checksum: dd783b1d3f002b1d2f606e0458c99f2f45507c0b2e9f91ce99807f9875d4b394fc201cad07c1d2bda7ce88877f97ab6228178be93133b9586f93cc7b7da3cf02
-  languageName: node
-  linkType: hard
-
-"mini-svg-data-uri@npm:^1.2.3":
-  version: 1.4.3
-  resolution: "mini-svg-data-uri@npm:1.4.3"
-  bin:
-    mini-svg-data-uri: cli.js
-  checksum: bd1789c34907a36ae9157897b7c7f6ad700e71c8cb6d725bb2810ce6211abcaa3717333ca17408f6f8b2a44055e571cd5b78d478688e1864513cb7f8e023ae3f
   languageName: node
   linkType: hard
 

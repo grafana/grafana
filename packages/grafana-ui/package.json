@@ -98,7 +98,6 @@
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@mdx-js/react": "1.6.22",
     "@rollup/plugin-commonjs": "21.0.2",
-    "@rollup/plugin-image": "2.1.1",
     "@rollup/plugin-node-resolve": "13.1.3",
     "@storybook/addon-a11y": "6.4.15",
     "@storybook/addon-actions": "6.4.15",
