@@ -38,6 +38,11 @@ func ProvideService(sql *sqlstore.SQLStore) SearchService {
 }
 
 func (s *StandardSearchService) Run(ctx context.Context) error {
+	// Build on start for orgID 1 but keep lazy for others.
+	_, err := s.dashboardIndex.getDashboards(ctx, 1)
+	if err != nil {
+		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
+	}
 	return s.dashboardIndex.listenEvents(ctx)
 }
 

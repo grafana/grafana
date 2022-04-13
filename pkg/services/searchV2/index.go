@@ -88,12 +88,23 @@ func (i *DashboardIndex) listenEvents(ctx context.Context) error {
 		case <-partialUpdateTicker.C:
 			lastEventID = i.loadIndexUpdates(context.Background(), lastEventID)
 		case <-fullUpdateTicker.C:
-			i.mu.Lock()
-			i.dashboards = map[int64][]dashboard{}
-			i.mu.Unlock()
+			i.reIndexFromScratch()
 		case <-ctx.Done():
 			return ctx.Err()
 		}
+	}
+}
+
+func (i *DashboardIndex) reIndexFromScratch() {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	for orgID := range i.dashboards {
+		dashboards, err := i.getDashboards(context.Background(), orgID)
+		if err != nil {
+			i.logger.Error("can't re-index dashboards for org ID", "orgId", orgID, "error", err)
+			continue
+		}
+		i.dashboards[orgID] = dashboards
 	}
 }
 
@@ -159,7 +170,7 @@ func (i *DashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 	}
 	i.mu.Unlock()
 
-	dashboards, err := i.loader.LoadDashboards(ctx, orgID, dashboardID)
+	dbDashboards, err := i.loader.LoadDashboards(ctx, orgID, dashboardID)
 	if err != nil {
 		return err
 	}
@@ -167,36 +178,40 @@ func (i *DashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
-	meta, ok := i.dashboards[orgID]
+	dashboards, ok := i.dashboards[orgID]
 	if !ok {
 		// Skip event for org not yet fully indexed.
 		return nil
 	}
 
-	if len(dashboards) == 0 {
-		k := 0
-		for _, d := range meta {
-			if d.id != dashboardID {
-				meta[k] = d
-				k++
-			}
-		}
-		i.dashboards[orgID] = meta[:k]
+	if len(dbDashboards) == 0 {
+		i.dashboards[orgID] = removeDashboard(dashboards, dashboardID)
 	} else {
 		updated := false
-		for i, d := range meta {
+		for i, d := range dashboards {
 			if d.id == dashboardID {
-				meta[i] = dashboards[0]
+				dashboards[i] = dbDashboards[0]
 				updated = true
 				break
 			}
 		}
 		if !updated {
-			meta = append(meta, dashboards...)
+			dashboards = append(dashboards, dbDashboards...)
 		}
-		i.dashboards[orgID] = meta
+		i.dashboards[orgID] = dashboards
 	}
 	return nil
+}
+
+func removeDashboard(dashboards []dashboard, dashboardID int64) []dashboard {
+	k := 0
+	for _, d := range dashboards {
+		if d.id != dashboardID {
+			dashboards[k] = d
+			k++
+		}
+	}
+	return dashboards[:k]
 }
 
 func (i *DashboardIndex) getDashboards(ctx context.Context, orgId int64) ([]dashboard, error) {
