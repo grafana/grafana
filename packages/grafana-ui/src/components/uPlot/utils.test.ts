@@ -1,6 +1,7 @@
 import { getStackingGroups, preparePlotData2, timeFormatToTemplate } from './utils';
 import { FieldType, MutableDataFrame } from '@grafana/data';
-import { GraphTransform, StackingMode } from '@grafana/schema';
+import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
+import Units from 'ol/proj/Units';
 
 describe('timeFormatToTemplate', () => {
   it.each`
@@ -634,5 +635,330 @@ describe('preparePlotData2', () => {
         `);
       });
     });
+  });
+});
+
+describe('auto stacking groups', () => {
+  test('split on stacking mode', () => {
+    const df = new MutableDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [0, 1, 2] },
+        {
+          name: 'b',
+          values: [1, 2, 3],
+          config: { custom: { stacking: { mode: StackingMode.Percent } } },
+        },
+        {
+          name: 'c',
+          values: [4, 5, 6],
+          config: { custom: { stacking: { mode: StackingMode.Normal } } },
+        },
+      ],
+    });
+
+    expect(getStackingGroups(df)).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "dir": 1,
+          "series": Array [
+            1,
+          ],
+        },
+        Object {
+          "dir": 1,
+          "series": Array [
+            2,
+          ],
+        },
+      ]
+    `);
+  });
+
+  test('split pos/neg', () => {
+    // since we expect most series to be Pos, we try to bail early when scanning all values
+    // as soon as we find a value >= 0, it's assumed Pos, else Neg
+
+    const df = new MutableDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [0, 1, 2] },
+        {
+          name: 'a',
+          values: [-1, null, -3],
+          config: { custom: { stacking: { mode: StackingMode.Normal } } },
+        },
+        {
+          name: 'b',
+          values: [1, 2, 3],
+          config: { custom: { stacking: { mode: StackingMode.Normal } } },
+        },
+        {
+          name: 'c',
+          values: [0, 0, 0],
+          config: { custom: { stacking: { mode: StackingMode.Normal } } },
+        },
+      ],
+    });
+
+    expect(getStackingGroups(df)).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "dir": -1,
+          "series": Array [
+            1,
+            3,
+          ],
+        },
+        Object {
+          "dir": 1,
+          "series": Array [
+            2,
+          ],
+        },
+      ]
+    `);
+  });
+
+  test('split pos/neg with NegY', () => {
+    const df = new MutableDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [0, 1, 2] },
+        {
+          name: 'a',
+          values: [-1, null, -3],
+          config: { custom: { stacking: { mode: StackingMode.Normal }, transform: GraphTransform.NegativeY } },
+        },
+        {
+          name: 'b',
+          values: [1, 2, 3],
+          config: { custom: { stacking: { mode: StackingMode.Normal } } },
+        },
+        {
+          name: 'c',
+          values: [0, 0, 0],
+          config: { custom: { stacking: { mode: StackingMode.Normal } } },
+        },
+      ],
+    });
+
+    expect(getStackingGroups(df)).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "dir": 1,
+          "series": Array [
+            1,
+            2,
+          ],
+        },
+        Object {
+          "dir": -1,
+          "series": Array [
+            3,
+          ],
+        },
+      ]
+    `);
+  });
+
+  test('split on drawStyle, lineInterpolation, barAlignment', () => {
+    const df = new MutableDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [0, 1, 2] },
+        {
+          name: 'a',
+          values: [1, 2, 3],
+          config: {
+            custom: {
+              drawStyle: GraphDrawStyle.Bars,
+              barAlignment: BarAlignment.After,
+              stacking: { mode: StackingMode.Normal },
+            },
+          },
+        },
+        {
+          name: 'b',
+          values: [1, 2, 3],
+          config: {
+            custom: {
+              drawStyle: GraphDrawStyle.Bars,
+              barAlignment: BarAlignment.Before,
+              stacking: { mode: StackingMode.Normal },
+            },
+          },
+        },
+        {
+          name: 'c',
+          values: [1, 2, 3],
+          config: {
+            custom: {
+              drawStyle: GraphDrawStyle.Line,
+              lineInterpolation: LineInterpolation.Linear,
+              stacking: { mode: StackingMode.Normal },
+            },
+          },
+        },
+        {
+          name: 'd',
+          values: [1, 2, 3],
+          config: {
+            custom: {
+              drawStyle: GraphDrawStyle.Line,
+              lineInterpolation: LineInterpolation.Smooth,
+              stacking: { mode: StackingMode.Normal },
+            },
+          },
+        },
+        {
+          name: 'e',
+          values: [1, 2, 3],
+          config: { custom: { drawStyle: GraphDrawStyle.Points, stacking: { mode: StackingMode.Normal } } },
+        },
+      ],
+    });
+
+    expect(getStackingGroups(df)).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "dir": 1,
+          "series": Array [
+            1,
+          ],
+        },
+        Object {
+          "dir": 1,
+          "series": Array [
+            2,
+          ],
+        },
+        Object {
+          "dir": 1,
+          "series": Array [
+            3,
+          ],
+        },
+        Object {
+          "dir": 1,
+          "series": Array [
+            4,
+          ],
+        },
+        Object {
+          "dir": 1,
+          "series": Array [
+            5,
+          ],
+        },
+      ]
+    `);
+  });
+
+  test('split on axis & units (scaleKey)', () => {
+    const df = new MutableDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [0, 1, 2] },
+        {
+          name: 'a',
+          values: [1, 2, 3],
+          config: { custom: { stacking: { mode: StackingMode.Normal } }, unit: Units.FEET },
+        },
+        {
+          name: 'b',
+          values: [1, 2, 3],
+          config: { custom: { stacking: { mode: StackingMode.Normal } }, unit: Units.DEGREES },
+        },
+      ],
+    });
+
+    expect(getStackingGroups(df)).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "dir": 1,
+          "series": Array [
+            1,
+          ],
+        },
+        Object {
+          "dir": 1,
+          "series": Array [
+            2,
+          ],
+        },
+      ]
+    `);
+  });
+
+  test('split on explicit stacking group & mode & pos/neg w/NegY', () => {
+    const df = new MutableDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [0, 1, 2] },
+        {
+          name: 'a',
+          values: [1, 2, 3],
+          config: { custom: { stacking: { mode: StackingMode.Normal, group: 'A' } } },
+        },
+        {
+          name: 'b',
+          values: [1, 2, 3],
+          config: { custom: { stacking: { mode: StackingMode.Normal, group: 'A' } } },
+        },
+        {
+          name: 'c',
+          values: [1, 2, 3],
+          config: { custom: { stacking: { mode: StackingMode.Percent, group: 'A' } } },
+        },
+        {
+          name: 'd',
+          values: [1, 2, 3],
+          config: { custom: { stacking: { mode: StackingMode.Normal, group: 'B' } } },
+        },
+        {
+          name: 'e',
+          values: [1, 2, 3],
+          config: { custom: { stacking: { mode: StackingMode.Percent, group: 'B' } } },
+        },
+        {
+          name: 'e',
+          values: [1, 2, 3],
+          config: {
+            custom: { stacking: { mode: StackingMode.Percent, group: 'B' }, transform: GraphTransform.NegativeY },
+          },
+        },
+      ],
+    });
+
+    expect(getStackingGroups(df)).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "dir": 1,
+          "series": Array [
+            1,
+            2,
+          ],
+        },
+        Object {
+          "dir": 1,
+          "series": Array [
+            3,
+          ],
+        },
+        Object {
+          "dir": 1,
+          "series": Array [
+            4,
+          ],
+        },
+        Object {
+          "dir": 1,
+          "series": Array [
+            5,
+          ],
+        },
+        Object {
+          "dir": -1,
+          "series": Array [
+            6,
+          ],
+        },
+      ]
+    `);
   });
 });
