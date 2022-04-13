@@ -30,11 +30,19 @@ export const ResourcePickerPopover = (props: Props) => {
 
   const [newValue, setNewValue] = useState<string>(value ?? '');
   const [activePicker, setActivePicker] = useState<PickerTabType>(PickerTabType.Folder);
+  const [formData, setFormData] = useState<FormData>(new FormData());
+  const [upload, setUpload] = useState<boolean>(false);
 
   const getTabClassName = (tabName: PickerTabType) => {
     return `${styles.resourcePickerPopoverTab} ${activePicker === tabName && styles.resourcePickerPopoverActiveTab}`;
   };
-
+  const getRequest = async (formData: FormData) => {
+    const response = await fetch('/api/storage/upload', {
+      method: 'POST',
+      body: formData,
+    });
+    return response.json();
+  };
   const renderFolderPicker = () => (
     <FolderPickerTab
       value={value}
@@ -46,7 +54,15 @@ export const ResourcePickerPopover = (props: Props) => {
   );
 
   const renderURLPicker = () => <URLPickerTab newValue={newValue} setNewValue={setNewValue} mediaType={mediaType} />;
-  const renderUploader = () => <FileUploader setNewValue={setNewValue} mediaType={mediaType} />;
+  const renderUploader = () => (
+    <FileUploader
+      mediaType={mediaType}
+      setNewValue={setNewValue}
+      setFormData={setFormData}
+      setUpload={setUpload}
+      getRequest={getRequest}
+    />
+  );
   const renderPicker = () => {
     switch (activePicker) {
       case PickerTabType.Folder:
@@ -95,7 +111,9 @@ export const ResourcePickerPopover = (props: Props) => {
                 className={styles.button}
                 variant={newValue && newValue !== value ? 'primary' : 'secondary'}
                 onClick={() => {
-                  // TODO: if the trigger is from the upload tab, call backend /upload
+                  if (upload) {
+                    getRequest(formData);
+                  }
                   onChange(newValue);
                 }}
               >

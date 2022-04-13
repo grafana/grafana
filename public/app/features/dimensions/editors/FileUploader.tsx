@@ -6,9 +6,15 @@ import { css } from '@emotion/css';
 import { MediaType } from '../types';
 interface Props {
   setNewValue: Dispatch<SetStateAction<string>>;
+  setFormData: Dispatch<SetStateAction<FormData>>;
   mediaType: MediaType;
+  setUpload: Dispatch<SetStateAction<boolean>>;
+  getRequest: (formData: FormData) => Promise<UploadResponse>;
 }
-
+interface UploadResponse {
+  err: boolean;
+  path: string;
+}
 export function FileDropzoneCustomChildren({ secondaryText = 'Drag and drop here or browse' }) {
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -20,7 +26,7 @@ export function FileDropzoneCustomChildren({ secondaryText = 'Drag and drop here
     </div>
   );
 }
-export const FileUploader = ({ setNewValue, mediaType }: Props) => {
+export const FileUploader = ({ mediaType, setNewValue, setFormData, setUpload, getRequest }: Props) => {
   const onFileRemove = (file: DropzoneFile) => {
     fetch(`/api/storage/delete/upload/${file.file.name}`, {
       method: 'DELETE',
@@ -36,27 +42,19 @@ export const FileUploader = ({ setNewValue, mediaType }: Props) => {
         accept: acceptableFiles,
         multiple: false,
         onDrop: (acceptedFiles: File[]) => {
-          // this state gets cleared out on select
           let formData = new FormData();
           formData.append('file', acceptedFiles[0]);
-          // TODO: check if there's already a file uploaded in the list before calling fetch
-          // so we won't have to delete file when another file gets uploaded
-          fetch('/api/storage/upload', {
-            method: 'POST',
-            body: formData,
-          })
-            .then((r) => r.json())
-            .then((data) => {
-              // TODO: manually trigger error ui
-              if (!data.err) {
-                getBackendSrv()
-                  .get(`api/storage/read/${data.path}`)
-                  .then(() => {
-                    setNewValue(`${config.appUrl}api/storage/read/${data.path}`);
-                  });
-              }
-            })
-            .catch((error) => console.error('cannot upload file', error));
+          getRequest(formData).then((data) => {
+            if (!data.err) {
+              getBackendSrv()
+                .get(`api/storage/read/${data.path}`)
+                .then(() => {
+                  setNewValue(`${config.appUrl}api/storage/read/${data.path}`);
+                });
+            }
+          });
+          setFormData(formData);
+          setUpload(true);
         },
       }}
     >
