@@ -79,9 +79,9 @@ require (
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/alertmanager v0.23.1-0.20211116083607-e2a10119aaf7
-	github.com/prometheus/client_golang v1.12.1
+	github.com/prometheus/client_golang v1.12.2-0.20220413052150-cc7991d97715
 	github.com/prometheus/client_model v0.2.0
-	github.com/prometheus/common v0.32.1
+	github.com/prometheus/common v0.33.0
 	github.com/prometheus/prometheus v1.8.2-0.20211011171444-354d8d2ecfac
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/robfig/cron/v3 v3.0.1
@@ -104,15 +104,15 @@ require (
 	go.opentelemetry.io/otel/trace v1.6.3
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
 	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f
-	golang.org/x/net v0.0.0-20211118161319-6a13c67c3ce4 // indirect
-	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
+	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
+	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
 	golang.org/x/tools v0.1.9
 	gonum.org/v1/gonum v0.11.0
 	google.golang.org/api v0.60.0
 	google.golang.org/grpc v1.42.0
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/protobuf v1.28.0
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.62.0
 	gopkg.in/ldap.v3 v3.1.0
@@ -161,7 +161,7 @@ require (
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/emicklei/proto v1.6.15 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
-	github.com/go-kit/log v0.1.0
+	github.com/go-kit/log v0.2.0
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-openapi/analysis v0.20.1 // indirect
 	github.com/go-openapi/errors v0.20.0 // indirect
@@ -242,7 +242,7 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.9.0
 	go.uber.org/goleak v1.1.11-0.20210813005559-691160354723 // indirect
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/sys v0.0.0-20220328115105-d36c6a25d886 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
