@@ -77,6 +77,7 @@ type API struct {
 	SecretsService       secrets.Service
 	AccessControl        accesscontrol.AccessControl
 	Policies             *provisioning.NotificationPolicyService
+	ContactPointService  *provisioning.ContactPointService
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -132,8 +133,9 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 
 	if api.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertProvisioning) {
 		api.RegisterProvisioningApiEndpoints(NewForkedProvisioningApi(&ProvisioningSrv{
-			log:      logger,
-			policies: api.Policies,
+			log:                 logger,
+			policies:            api.Policies,
+			contactPointService: api.ContactPointService,
 		}), m)
 	}
 }

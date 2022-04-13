@@ -1,9 +1,9 @@
 export enum NodeGraphDataFrameFieldNames {
   id = 'id',
   title = 'title',
-  subTitle = 'subTitle',
-  mainStat = 'mainStat',
-  secondaryStat = 'secondaryStat',
+  subTitle = 'subtitle',
+  mainStat = 'mainstat',
+  secondaryStat = 'secondarystat',
   source = 'source',
   target = 'target',
   detail = 'detail__',
