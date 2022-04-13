@@ -89,16 +89,13 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 		}
 	}
 
-	cmd := models.AddApiKeyCommand{}
+	cmd := serviceaccounts.AddServiceAccountTokenCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
 	// Force affected service account to be the one referenced in the URL
 	cmd.OrgId = c.OrgId
-
-	// Force role of the SAT to be Viewer
-	cmd.Role = models.ROLE_VIEWER
 
 	if api.cfg.ApiKeyMaxSecondsToLive != -1 {
 		if cmd.SecondsToLive == 0 {
