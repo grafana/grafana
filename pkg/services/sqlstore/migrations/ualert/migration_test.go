@@ -130,8 +130,20 @@ func createDatasource(t *testing.T, id int64, orgId int64, uid string) *models.D
 	}
 }
 
+// Clean input tables for each test case
+func teardown(t *testing.T, x *xorm.Engine) {
+	_, err := x.Exec("DELETE from alert")
+	require.NoError(t, err)
+	_, err = x.Exec("DELETE from alert_notification")
+	require.NoError(t, err)
+	_, err = x.Exec("DELETE from dashboard")
+	require.NoError(t, err)
+	_, err = x.Exec("DELETE from data_source")
+	require.NoError(t, err)
+}
+
 // Setup and insert data into legacy alerting tables needed for migration.
-func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*models.AlertNotification, alerts []*models.Alert) func() {
+func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*models.AlertNotification, alerts []*models.Alert) {
 	t.Helper()
 
 	// Setup dashboards
@@ -154,21 +166,14 @@ func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*mod
 	_, errDataSourcess := x.Insert(dataSources)
 	require.NoError(t, errDataSourcess)
 
-	_, channelErr := x.Insert(legacyChannels)
-	require.NoError(t, channelErr)
+	if len(legacyChannels) > 0 {
+		_, channelErr := x.Insert(legacyChannels)
+		require.NoError(t, channelErr)
+	}
 
-	_, alertErr := x.Insert(alerts)
-	require.NoError(t, alertErr)
-
-	return func() {
-		_, err := x.Exec("DELETE from alert")
-		require.NoError(t, err)
-		_, err = x.Exec("DELETE from alert_notification")
-		require.NoError(t, err)
-		_, err = x.Exec("DELETE from dashboard")
-		require.NoError(t, err)
-		_, err = x.Exec("DELETE from data_source")
-		require.NoError(t, err)
+	if len(alerts) > 0 {
+		_, alertErr := x.Insert(alerts)
+		require.NoError(t, alertErr)
 	}
 }
 
@@ -216,14 +221,14 @@ func Test_AddDashAlertMigration(t *testing.T) {
 		expErr   error
 	}{
 		{
-			name: "when multiple orgs migrate both",
+			name: "general multi-org, multi-alert, multi-channel migration",
 			legacyChannels: []*models.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 				createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, false),
 				createAlertNotification(t, int64(1), "notifier3", "opsgenie", opsgenieSettings, false),
 				createAlertNotification(t, int64(2), "notifier4", "email", emailSettings, false),
 				createAlertNotification(t, int64(2), "notifier5", "slack", slackSettings, false),
-				createAlertNotification(t, int64(2), "notifier6", "opsgenie", opsgenieSettings, false),
+				createAlertNotification(t, int64(2), "notifier6", "opsgenie", opsgenieSettings, true), // default
 			},
 			alerts: []*models.Alert{
 				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1"}),
@@ -262,26 +267,44 @@ func Test_AddDashAlertMigration(t *testing.T) {
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
-							{Name: "autogen-contact-point-4", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier4", Type: "email"}}},                                                                            // email
+							{Name: "autogen-contact-point-4", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier4", Type: "email"}, {Name: "notifier6", Type: "opsgenie"}}},                                     // email
 							{Name: "autogen-contact-point-5", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier4", Type: "email"}, {Name: "notifier5", Type: "slack"}, {Name: "notifier6", Type: "opsgenie"}}}, // email+slack+opsgenie
-							{Name: "autogen-contact-point-default"}, // empty default
+							{Name: "autogen-contact-point-default", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier6", Type: "opsgenie"}}},                                                                   // empty default
 						},
 					},
 				},
 			},
 		},
 		{
-			name: "when default channels, add them to autogen-contact-point-default",
+			name: "when default channel, add to autogen-contact-point-default",
+			legacyChannels: []*models.AlertNotification{
+				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, true), // default
+			},
+			alerts: []*models.Alert{
+				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1"}),
+			},
+			expected: map[int64]*postableUserConfig{
+				int64(1): {
+					AlertmanagerConfig: postableApiAlertingConfig{
+						Route: &route{
+							Receiver: "autogen-contact-point-default",
+						},
+						Receivers: []*ualert.PostableApiReceiver{
+							{Name: "autogen-contact-point-default", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "when default channels exist alongside non-default, add only defaults to autogen-contact-point-default",
 			legacyChannels: []*models.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, true), // default
 				createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, false),
-				createAlertNotification(t, int64(1), "notifier3", "opsgenie", opsgenieSettings, false),
-				createAlertNotification(t, int64(1), "notifier4", "opsgenie", opsgenieSettings, true), // default
+				createAlertNotification(t, int64(1), "notifier3", "opsgenie", opsgenieSettings, true), // default
 			},
 			alerts: []*models.Alert{
-				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier2"}),              // + notifier1, notifier4
-				createAlert(t, int64(1), int64(1), int64(2), "alert2", []string{"notifier2", "notifier3"}), // + notifier1, notifier4
-				createAlert(t, int64(1), int64(2), int64(3), "alert3", []string{"notifier3"}),              // + notifier1, notifier4
+				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier2"}), // + notifier1, notifier3
 			},
 			expected: map[int64]*postableUserConfig{
 				int64(1): {
@@ -290,29 +313,25 @@ func Test_AddDashAlertMigration(t *testing.T) {
 							Receiver: "autogen-contact-point-default",
 							Routes: []*route{
 								{Receiver: "autogen-contact-point-1", name: "alert1"}, // We attach Matchers below
-								{Receiver: "autogen-contact-point-2", name: "alert2"},
-								{Receiver: "autogen-contact-point-3", name: "alert3"},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
-							{Name: "autogen-contact-point-1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}, {Name: "notifier2", Type: "slack"}, {Name: "notifier4", Type: "opsgenie"}}},
-							{Name: "autogen-contact-point-2", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}, {Name: "notifier2", Type: "slack"}, {Name: "notifier3", Type: "opsgenie"}, {Name: "notifier4", Type: "opsgenie"}}},
-							{Name: "autogen-contact-point-3", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}, {Name: "notifier3", Type: "opsgenie"}, {Name: "notifier4", Type: "opsgenie"}}},
-							{Name: "autogen-contact-point-default", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}, {Name: "notifier4", Type: "opsgenie"}}},
+							{Name: "autogen-contact-point-1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}, {Name: "notifier2", Type: "slack"}, {Name: "notifier3", Type: "opsgenie"}}},
+							{Name: "autogen-contact-point-default", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}, {Name: "notifier3", Type: "opsgenie"}}},
 						},
 					},
 				},
 			},
 		},
 		{
-			name: "when alert has only defaults, don't create route",
+			name: "when alert has only defaults, don't create route for it",
 			legacyChannels: []*models.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, true), // default
 				createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, true), // default
 			},
 			alerts: []*models.Alert{
 				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1"}),
-				createAlert(t, int64(1), int64(2), int64(3), "alert3", []string{}),
+				createAlert(t, int64(1), int64(2), int64(3), "alert2", []string{}),
 			},
 			expected: map[int64]*postableUserConfig{
 				int64(1): {
@@ -328,11 +347,39 @@ func Test_AddDashAlertMigration(t *testing.T) {
 			},
 		},
 		{
-			name: "when channel not attached to any alerts, migrate it to autogen-unlinked-channel-recv",
+			name: "when alerts share all channels, only create one receiver for all of them",
 			legacyChannels: []*models.AlertNotification{
-				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, true), // default
-				createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, true), // default
-				createAlertNotification(t, int64(1), "notifier3", "opsgenie", opsgenieSettings, false),
+				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
+				createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, false),
+			},
+			alerts: []*models.Alert{
+				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1", "notifier2"}),
+				createAlert(t, int64(1), int64(1), int64(1), "alert2", []string{"notifier1", "notifier2"}),
+			},
+			expected: map[int64]*postableUserConfig{
+				int64(1): {
+					AlertmanagerConfig: postableApiAlertingConfig{
+						Route: &route{
+							Receiver: "autogen-contact-point-default",
+							Routes: []*route{
+								{Receiver: "autogen-contact-point-1", name: "alert1"}, // We attach Matchers below
+								{Receiver: "autogen-contact-point-1", name: "alert2"},
+							},
+						},
+						Receivers: []*ualert.PostableApiReceiver{
+							{Name: "autogen-contact-point-1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}, {Name: "notifier2", Type: "slack"}}},
+							{Name: "autogen-contact-point-default"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "when channel not linked to any alerts, migrate it to autogen-unlinked-channel-recv",
+			legacyChannels: []*models.AlertNotification{
+				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, true),        // default
+				createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, true),        // default
+				createAlertNotification(t, int64(1), "notifier3", "opsgenie", opsgenieSettings, false), // unlinked
 			},
 			alerts: []*models.Alert{
 				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1"}),
@@ -352,12 +399,58 @@ func Test_AddDashAlertMigration(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "when unsupported channels, do not migrate them",
+			legacyChannels: []*models.AlertNotification{
+				createAlertNotification(t, int64(1), "notifier1", "hipchat", "", false),
+				createAlertNotification(t, int64(1), "notifier2", "sensu", "", false),
+			},
+			alerts: []*models.Alert{},
+			expected: map[int64]*postableUserConfig{
+				int64(1): {
+					AlertmanagerConfig: postableApiAlertingConfig{
+						Route: &route{
+							Receiver: "autogen-contact-point-default",
+						},
+						Receivers: []*ualert.PostableApiReceiver{
+							{Name: "autogen-contact-point-default"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "when unsupported channel linked to alert, do not migrate only that channel",
+			legacyChannels: []*models.AlertNotification{
+				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
+				createAlertNotification(t, int64(1), "notifier2", "sensu", "", false),
+			},
+			alerts: []*models.Alert{
+				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1", "notifier2"}),
+			},
+			expected: map[int64]*postableUserConfig{
+				int64(1): {
+					AlertmanagerConfig: postableApiAlertingConfig{
+						Route: &route{
+							Receiver: "autogen-contact-point-default",
+							Routes: []*route{
+								{Receiver: "autogen-contact-point-1", name: "alert1"},
+							},
+						},
+						Receivers: []*ualert.PostableApiReceiver{
+							{Name: "autogen-contact-point-1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}}, // no sensu
+							{Name: "autogen-contact-point-default"},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			teardown := setupLegacyAlertsTables(t, x, tt.legacyChannels, tt.alerts)
-			defer teardown()
+			defer teardown(t, x)
+			setupLegacyAlertsTables(t, x, tt.legacyChannels, tt.alerts)
 
 			_, errDeleteMig := x.Exec("DELETE FROM migration_log WHERE migration_id = ?", ualert.MigTitle)
 			require.NoError(t, errDeleteMig)
