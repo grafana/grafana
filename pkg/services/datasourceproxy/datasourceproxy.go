@@ -97,7 +97,6 @@ func toAPIError(c *models.ReqContext, err error) {
 		return
 	}
 	c.JsonApiErr(http.StatusInternalServerError, "Unable to load datasource meta data", err)
-	return
 }
 
 func (p *DataSourceProxyService) proxyDatasourceRequest(c *models.ReqContext, ds *models.DataSource) {
