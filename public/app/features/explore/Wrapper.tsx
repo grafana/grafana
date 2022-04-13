@@ -6,6 +6,7 @@ import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './st
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { Branding } from '../../core/components/Branding/Branding';
+import { ExploreActions } from './ExploreActions';
 
 import { getNavModel } from '../../core/selectors/navModel';
 import { StoreState } from 'app/types';
@@ -69,6 +70,7 @@ class WrapperUnconnected extends PureComponent<Props> {
 
     return (
       <div className="page-scrollbar-wrapper">
+        <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
         <div className="explore-wrapper">
           <ErrorBoundaryAlert style="page">
             <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />

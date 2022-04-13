@@ -59,7 +59,6 @@ export const CommandPalette = () => {
 
   return (
     <>
-      <div className={styles.backdrop} />
       <KBarPortal>
         <KBarPositioner className={styles.positioner}>
           <KBarAnimator className={styles.animator}>
@@ -96,6 +95,16 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
   positioner: css({
     zIndex: theme.zIndex.portal,
     marginTop: '0px',
+    '&::before': {
+      content: '""',
+      position: 'fixed',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      background: theme.components.overlay.background,
+      backdropFilter: 'blur(1px)',
+    },
   }),
   backdrop: css({
     position: 'fixed',

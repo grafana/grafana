@@ -35,14 +35,7 @@ export const ResultItem = React.forwardRef(
 
     return (
       <div ref={ref} className={styles.row}>
-        <div
-          style={{
-            display: 'flex',
-            gap: '8px',
-            alignItems: 'center',
-            fontSize: 14,
-          }}
-        >
+        <div className={styles.actionContainer}>
           {action.icon && action.icon}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div>
@@ -111,10 +104,16 @@ const getResultItemStyles = (theme: GrafanaTheme2, isActive: boolean) => {
         background-image: ${theme.colors.gradients.brandVertical};
       }
     `,
+    actionContainer: css`
+      display: 'flex';
+      gap: ${theme.spacing(2)};
+      alignitems: 'center';
+      fontsize: ${theme.typography.fontSize};
+    `,
     shortcut: css`
       padding: ${theme.spacing(0, 1)};
       background: ${shortcutBackgroundColor};
-      border-radius: 4px;
+      border-radius: ${theme.shape.borderRadius()};
       fontsize: ${theme.typography.fontSize};
     `,
   };

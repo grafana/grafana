@@ -96,7 +96,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                 <KBarProvider actions={[]} options={{ enableHistory: true }}>
                   <ModalsProvider>
                     <GlobalStyles />
-                    {config.featureToggles.commandPalette && <CommandPalette />}
+                    {config.featureToggles.commandPalette && contextSrv.isSignedIn && <CommandPalette />}
                     <div className="grafana-app">
                       <Router history={locationService.getHistory()}>
                         {ready && <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>}
