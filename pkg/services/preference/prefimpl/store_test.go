@@ -111,8 +111,6 @@ func TestPreferencesDataAccess(t *testing.T) {
 	})
 
 	t.Run("Update for a user should only modify a single value", func(t *testing.T) {
-		ss := sqlstore.InitTestDB(t)
-		prefStore := sqlStore{db: ss}
 		id, err := prefStore.Insert(context.Background(), &pref.InsertPreferenceQuery{
 			UserID:          models.SignedInUser{}.UserId,
 			Theme:           "dark",
@@ -126,11 +124,14 @@ func TestPreferencesDataAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		err = prefStore.Update(context.Background(), &pref.UpdatePreferenceQuery{
-			ID:       id,
-			UserID:   models.SignedInUser{}.UserId,
-			Created:  time.Now(),
-			Updated:  time.Now(),
-			JSONData: &pref.PreferenceJSONData{},
+			Id:              id,
+			Theme:           "light",
+			HomeDashboardID: 5,
+			Timezone:        "browser",
+			WeekStart:       "1",
+			Created:         time.Now(),
+			Updated:         time.Now(),
+			JSONData:        &pref.PreferenceJSONData{},
 		})
 		require.NoError(t, err)
 		query := &pref.ListPreferenceQuery{}
@@ -142,7 +143,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 			HomeDashboardID: 5,
 			Timezone:        "browser",
 			WeekStart:       "1",
-			Theme:           "dark",
+			Theme:           "light",
 			JSONData:        prefs[0].JSONData,
 			Created:         prefs[0].Created,
 			Updated:         prefs[0].Updated,

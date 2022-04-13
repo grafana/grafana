@@ -91,7 +91,14 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 		}
 		return err
 	}
-	preference := (*pref.UpdatePreferenceQuery)(prefs)
+	preference := &pref.UpdatePreferenceQuery{
+		Id:              prefs.ID,
+		OrgID:           prefs.OrgID,
+		UserID:          prefs.UserID,
+		TeamID:          prefs.TeamID,
+		HomeDashboardID: prefs.HomeDashboardID,
+		Created:         prefs.Created,
+	}
 	preference.Timezone = cmd.Timezone
 	preference.WeekStart = cmd.WeekStart
 	preference.Theme = cmd.Theme
@@ -179,7 +186,20 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 	}
 
 	if exists {
-		prefs := (*pref.UpdatePreferenceQuery)(preference)
+		prefs := &pref.UpdatePreferenceQuery{
+			Id:              preference.ID,
+			OrgID:           preference.OrgID,
+			UserID:          preference.UserID,
+			TeamID:          preference.TeamID,
+			Version:         preference.Version,
+			HomeDashboardID: preference.HomeDashboardID,
+			Timezone:        preference.Timezone,
+			WeekStart:       preference.WeekStart,
+			Theme:           preference.Theme,
+			Created:         preference.Created,
+			Updated:         preference.Updated,
+			JSONData:        preference.JSONData,
+		}
 		err = s.store.Update(ctx, prefs)
 	} else {
 		prefs := &pref.InsertPreferenceQuery{
