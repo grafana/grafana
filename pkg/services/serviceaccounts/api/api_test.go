@@ -227,7 +227,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	m := web.New()
 	signedUser := &models.SignedInUser{
 		OrgId:   1,
-		OrgRole: models.ROLE_ADMIN,
+		OrgRole: models.ROLE_VIEWER,
 	}
 
 	m.Use(func(c *web.Context) {
@@ -344,13 +344,14 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 		Id           int
 	}
 
-	role := models.ROLE_ADMIN
+	viewerRole := models.ROLE_VIEWER
+	editorRole := models.ROLE_EDITOR
 	var invalidRole models.RoleType = "InvalidRole"
 	testCases := []testUpdateSATestCase{
 		{
 			desc: "should be ok to update serviceaccount with permissions",
-			user: &tests.TestUser{Login: "servicetest1@admin", IsServiceAccount: true, Role: "Editor", Name: "Unaltered"},
-			body: &serviceaccounts.UpdateServiceAccountForm{Name: newString("New Name"), Role: &role},
+			user: &tests.TestUser{Login: "servicetest1@admin", IsServiceAccount: true, Role: "Viewer", Name: "Unaltered"},
+			body: &serviceaccounts.UpdateServiceAccountForm{Name: newString("New Name"), Role: &viewerRole},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
 				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
@@ -359,6 +360,19 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 				false,
 			),
 			expectedCode: http.StatusOK,
+		},
+		{
+			desc: "should be forbidden to set role higher than user's role",
+			user: &tests.TestUser{Login: "servicetest2@admin", IsServiceAccount: true, Role: "Viewer", Name: "Unaltered 2"},
+			body: &serviceaccounts.UpdateServiceAccountForm{Name: newString("New Name 2"), Role: &editorRole},
+			acmock: tests.SetupMockAccesscontrol(
+				t,
+				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
+					return []*accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
+				},
+				false,
+			),
+			expectedCode: http.StatusForbidden,
 		},
 		{
 			desc: "bad request when invalid role",
@@ -375,7 +389,7 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 		},
 		{
 			desc: "should be forbidden to update serviceaccount if no permissions",
-			user: &tests.TestUser{Login: "servicetest2@admin", IsServiceAccount: true},
+			user: &tests.TestUser{Login: "servicetest4@admin", IsServiceAccount: true},
 			body: nil,
 			acmock: tests.SetupMockAccesscontrol(
 				t,
