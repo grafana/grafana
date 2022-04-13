@@ -72,7 +72,7 @@
     "*pkg/**/*.go": [
       "gofmt -w -s"
     ],
-    "*.{star}": [
+    "*.star": [
       "make drone"
     ]
   },
@@ -142,7 +142,7 @@
     "@types/papaparse": "5.3.2",
     "@types/pluralize": "^0.0.29",
     "@types/prismjs": "1.26.0",
-    "@types/rc-time-picker": "^3",
+    "@types/rc-time-picker": "3.4.1",
     "@types/react": "17.0.42",
     "@types/react-beautiful-dnd": "13.1.2",
     "@types/react-dom": "17.0.14",
@@ -219,7 +219,7 @@
     "prettier": "2.6.0",
     "raw-loader": "4.0.2",
     "react-refresh": "0.11.0",
-    "react-select-event": "^5.1.0",
+    "react-select-event": "5.5.0",
     "react-test-renderer": "17.0.2",
     "redux-mock-store": "1.5.4",
     "rimraf": "3.0.2",
@@ -325,7 +325,7 @@
     "lru-cache": "7.7.1",
     "memoize-one": "6.0.0",
     "minisearch": "5.0.0-beta1",
-    "moment": "2.29.1",
+    "moment": "2.29.2",
     "moment-timezone": "0.5.34",
     "monaco-editor": "^0.31.1",
     "monaco-promql": "^1.7.2",
