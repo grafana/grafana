@@ -10,10 +10,11 @@ import (
 var ErrPrefNotFound = errors.New("preference not found")
 
 type Preference struct {
-	ID              int64 `xorm:"id"`
-	OrgID           int64 `xorm:"org_id"`
-	UserID          int64 `xorm:"user_id"`
-	TeamID          int64 `xorm:"team_id"`
+	ID              int64   `xorm:"pk autoincr 'id'"`
+	OrgID           int64   `xorm:"org_id"`
+	UserID          int64   `xorm:"user_id"`
+	TeamID          int64   `xorm:"team_id"`
+	Teams           []int64 `xorm:"extends"`
 	Version         int
 	HomeDashboardID int64 `xorm:"home_dashboard_id"`
 	Timezone        string
@@ -49,12 +50,6 @@ type SavePreferenceCommand struct {
 	QueryHistory    *QueryHistoryPreference `json:"queryHistory,omitempty"`
 }
 
-type ListPreferenceQuery struct {
-	Teams  []int64
-	OrgID  int64
-	UserID int64
-}
-
 type PatchPreferenceCommand struct {
 	UserID int64
 	OrgID  int64
@@ -66,35 +61,6 @@ type PatchPreferenceCommand struct {
 	Theme           *string                 `json:"theme,omitempty"`
 	Navbar          *NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory    *QueryHistoryPreference `json:"queryHistory,omitempty"`
-}
-
-type UpdatePreferenceQuery struct {
-	ID              int64 `xorm:"pk autoincr 'id'"`
-	OrgID           int64 `xorm:"org_id"`
-	UserID          int64 `xorm:"user_id"`
-	TeamID          int64 `xorm:"team_id"`
-	Version         int
-	HomeDashboardID int64 `xorm:"home_dashboard_id"`
-	Timezone        string
-	WeekStart       string
-	Theme           string
-	Created         time.Time
-	Updated         time.Time
-	JSONData        *PreferenceJSONData `xorm:"json_data"`
-}
-
-type InsertPreferenceQuery struct {
-	OrgID           int64 `xorm:"org_id"`
-	UserID          int64 `xorm:"user_id"`
-	TeamID          int64 `xorm:"team_id"`
-	Version         int
-	HomeDashboardID int64 `xorm:"home_dashboard_id"`
-	Timezone        string
-	WeekStart       string
-	Theme           string
-	Created         time.Time
-	Updated         time.Time
-	JSONData        *PreferenceJSONData `xorm:"json_data"`
 }
 
 type NavLink struct {
@@ -131,6 +97,4 @@ func (j *PreferenceJSONData) ToDB() ([]byte, error) {
 	return json.Marshal(j)
 }
 
-func (p Preference) TableName() string            { return "preferences" }
-func (p InsertPreferenceQuery) TableName() string { return "preferences" }
-func (p UpdatePreferenceQuery) TableName() string { return "preferences" }
+func (p Preference) TableName() string { return "preferences" }

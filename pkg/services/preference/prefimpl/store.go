@@ -10,17 +10,17 @@ import (
 )
 
 type store interface {
-	Get(context.Context, *pref.GetPreferenceQuery) (*pref.Preference, error)
-	List(context.Context, *pref.ListPreferenceQuery) ([]*pref.Preference, error)
-	Insert(context.Context, *pref.InsertPreferenceQuery) (int64, error)
-	Update(context.Context, *pref.UpdatePreferenceQuery) error
+	Get(context.Context, *pref.Preference) (*pref.Preference, error)
+	List(context.Context, *pref.Preference) ([]*pref.Preference, error)
+	Insert(context.Context, *pref.Preference) (int64, error)
+	Update(context.Context, *pref.Preference) error
 }
 
 type sqlStore struct {
 	db db.DB
 }
 
-func (s *sqlStore) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pref.Preference, error) {
+func (s *sqlStore) Get(ctx context.Context, query *pref.Preference) (*pref.Preference, error) {
 	var prefs pref.Preference
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		exist, err := sess.Where("org_id=? AND user_id=? AND team_id=?", query.OrgID, query.UserID, query.TeamID).Get(&prefs)
@@ -38,7 +38,7 @@ func (s *sqlStore) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pr
 	return &prefs, nil
 }
 
-func (s *sqlStore) List(ctx context.Context, query *pref.ListPreferenceQuery) ([]*pref.Preference, error) {
+func (s *sqlStore) List(ctx context.Context, query *pref.Preference) ([]*pref.Preference, error) {
 	prefs := make([]*pref.Preference, 0)
 	params := make([]interface{}, 0)
 	filter := ""
@@ -70,14 +70,14 @@ func (s *sqlStore) List(ctx context.Context, query *pref.ListPreferenceQuery) ([
 	return prefs, err
 }
 
-func (s *sqlStore) Update(ctx context.Context, cmd *pref.UpdatePreferenceQuery) error {
+func (s *sqlStore) Update(ctx context.Context, cmd *pref.Preference) error {
 	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.ID(cmd.ID).AllCols().Update(cmd)
 		return err
 	})
 }
 
-func (s *sqlStore) Insert(ctx context.Context, cmd *pref.InsertPreferenceQuery) (int64, error) {
+func (s *sqlStore) Insert(ctx context.Context, cmd *pref.Preference) (int64, error) {
 	var ID int64
 	var err error
 	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {

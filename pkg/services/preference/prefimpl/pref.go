@@ -25,7 +25,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg) *Service {
 }
 
 func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreferenceWithDefaultsQuery) (*pref.Preference, error) {
-	listQuery := &pref.ListPreferenceQuery{
+	listQuery := &pref.Preference{
 		Teams:  query.Teams,
 		OrgID:  query.OrgID,
 		UserID: query.UserID,
@@ -58,7 +58,12 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 }
 
 func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pref.Preference, error) {
-	prefs, err := s.store.Get(ctx, query)
+	getPref := &pref.Preference{
+		OrgID:  query.OrgID,
+		UserID: query.UserID,
+		TeamID: query.TeamID,
+	}
+	prefs, err := s.store.Get(ctx, getPref)
 	if err != nil && !errors.Is(err, pref.ErrPrefNotFound) {
 		return nil, err
 	}
@@ -66,14 +71,14 @@ func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pre
 }
 
 func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) error {
-	prefs, err := s.store.Get(ctx, &pref.GetPreferenceQuery{
+	preference, err := s.store.Get(ctx, &pref.Preference{
 		OrgID:  cmd.OrgID,
 		UserID: cmd.UserID,
 		TeamID: cmd.TeamID,
 	})
 	if err != nil {
 		if errors.Is(err, pref.ErrPrefNotFound) {
-			preference := &pref.InsertPreferenceQuery{
+			preference := &pref.Preference{
 				UserID:          cmd.UserID,
 				OrgID:           cmd.OrgID,
 				TeamID:          cmd.TeamID,
@@ -91,14 +96,6 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 		}
 		return err
 	}
-	preference := &pref.UpdatePreferenceQuery{
-		ID:              prefs.ID,
-		OrgID:           prefs.OrgID,
-		UserID:          prefs.UserID,
-		TeamID:          prefs.TeamID,
-		HomeDashboardID: prefs.HomeDashboardID,
-		Created:         prefs.Created,
-	}
 	preference.Timezone = cmd.Timezone
 	preference.WeekStart = cmd.WeekStart
 	preference.Theme = cmd.Theme
@@ -110,14 +107,14 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 		preference.JSONData.Navbar = *cmd.Navbar
 	}
 	if cmd.QueryHistory != nil {
-		prefs.JSONData.QueryHistory = *cmd.QueryHistory
+		preference.JSONData.QueryHistory = *cmd.QueryHistory
 	}
 	return s.store.Update(ctx, preference)
 }
 
 func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) error {
 	var exists bool
-	preference, err := s.store.Get(ctx, &pref.GetPreferenceQuery{
+	preference, err := s.store.Get(ctx, &pref.Preference{
 		OrgID:  cmd.OrgID,
 		UserID: cmd.UserID,
 		TeamID: cmd.TeamID,
@@ -186,36 +183,9 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 	}
 
 	if exists {
-		prefs := &pref.UpdatePreferenceQuery{
-			ID:              preference.ID,
-			OrgID:           preference.OrgID,
-			UserID:          preference.UserID,
-			TeamID:          preference.TeamID,
-			Version:         preference.Version,
-			HomeDashboardID: preference.HomeDashboardID,
-			Timezone:        preference.Timezone,
-			WeekStart:       preference.WeekStart,
-			Theme:           preference.Theme,
-			Created:         preference.Created,
-			Updated:         preference.Updated,
-			JSONData:        preference.JSONData,
-		}
-		err = s.store.Update(ctx, prefs)
+		err = s.store.Update(ctx, preference)
 	} else {
-		prefs := &pref.InsertPreferenceQuery{
-			OrgID:           preference.OrgID,
-			UserID:          preference.UserID,
-			TeamID:          preference.TeamID,
-			Version:         preference.Version,
-			HomeDashboardID: preference.HomeDashboardID,
-			Timezone:        preference.Timezone,
-			WeekStart:       preference.WeekStart,
-			Theme:           preference.Theme,
-			Created:         preference.Created,
-			Updated:         preference.Updated,
-			JSONData:        preference.JSONData,
-		}
-		_, err = s.store.Insert(ctx, prefs)
+		_, err = s.store.Insert(ctx, preference)
 	}
 	return err
 }

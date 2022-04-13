@@ -43,18 +43,18 @@ func NewPreferenceStoreFake() *FakePreferenceStore {
 	return &FakePreferenceStore{}
 }
 
-func (f *FakePreferenceStore) List(ctx context.Context, query *pref.ListPreferenceQuery) ([]*pref.Preference, error) {
+func (f *FakePreferenceStore) List(ctx context.Context, query *pref.Preference) ([]*pref.Preference, error) {
 	return f.ExpectedListPreferences, f.ExpectedError
 }
 
-func (f *FakePreferenceStore) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pref.Preference, error) {
+func (f *FakePreferenceStore) Get(ctx context.Context, query *pref.Preference) (*pref.Preference, error) {
 	return f.ExpectedPreference, f.ExpectedGetError
 }
 
-func (f *FakePreferenceStore) Insert(ctx context.Context, cmd *pref.InsertPreferenceQuery) (int64, error) {
+func (f *FakePreferenceStore) Insert(ctx context.Context, cmd *pref.Preference) (int64, error) {
 	return f.ExpectedID, f.ExpectedError
 }
 
-func (f *FakePreferenceStore) Update(ctx context.Context, cmd *pref.UpdatePreferenceQuery) error {
+func (f *FakePreferenceStore) Update(ctx context.Context, cmd *pref.Preference) error {
 	return f.ExpectedError
 }
