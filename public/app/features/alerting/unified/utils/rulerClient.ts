@@ -186,7 +186,6 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
 
     await setRulerRuleGroup(rulerConfig, namespace, payload);
 
-    // TODO figure out how to get the newly created UID :(
     return { uid: '', ruleSourceName: GRAFANA_RULES_SOURCE_NAME };
   };
 
@@ -231,7 +230,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     const newRules = existingRule.group.rules
       .filter((rule): rule is RulerGrafanaRuleDTO => isGrafanaRulerRule(rule))
       .filter((rule) => rule.grafana_alert.uid !== uid)
-      .concat(newRule as RulerGrafanaRuleDTO); // TODO why type cast this?
+      .concat(newRule as RulerGrafanaRuleDTO);
 
     await setRulerRuleGroup(rulerConfig, existingRule.namespace, {
       name: existingRule.group.name,
