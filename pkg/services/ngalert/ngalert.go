@@ -99,7 +99,8 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"))
+	crypto := notifier.NewCrypto(ng.SecretsService, store)
+	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), crypto)
 	if err != nil {
 		return err
 	}
@@ -136,8 +137,6 @@ func (ng *AlertNG) init() error {
 
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
-
-	crypto := notifier.NewCrypto(ng.SecretsService, store)
 
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(store, store, store, ng.Log)

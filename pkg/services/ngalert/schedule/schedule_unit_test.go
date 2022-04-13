@@ -1015,7 +1015,8 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 	m := metrics.NewNGAlert(registry)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
-	moa, err := notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}, &notifier.FakeKVStore{}, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"))
+	crypto := notifier.NewCrypto(secretsService, &notifier.FakeConfigStore{})
+	moa, err := notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}, &notifier.FakeKVStore{}, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), crypto)
 	require.NoError(t, err)
 
 	schedCfg := SchedulerCfg{

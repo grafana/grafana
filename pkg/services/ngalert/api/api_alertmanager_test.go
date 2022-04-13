@@ -328,7 +328,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			silence := tesCase.silence()
 
 			if silence.ID != "" {
-				alertmanagerFor, err := sut.configs.AlertmanagerFor(1)
+				alertmanagerFor, err := sut.mam.AlertmanagerFor(1)
 				require.NoError(t, err)
 				silence.ID = ""
 				newID, err := alertmanagerFor.CreateSilence(&silence)
@@ -395,7 +395,8 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 		}, // do not poll in tests.
 	}
 
-	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"))
+	crypto := notifier.NewCrypto(secretsService, &configStore)
+	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), crypto)
 	require.NoError(t, err)
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)

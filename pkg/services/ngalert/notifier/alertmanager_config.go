@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -27,34 +26,13 @@ func (e AlertmanagerConfigRejectedError) Error() string {
 	return fmt.Sprintf("failed to save and apply Alertmanager configuration: %s", e.Inner.Error())
 }
 
-// AlertmanagerConfigService manages configs for the Grafana alertmanager.
-type AlertmanagerConfigService struct {
-	mam    multiOrg
-	crypto Crypto
-	store  configurationStore
-	log    log.Logger
-}
-
 type configurationStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error
 }
 
-type multiOrg interface {
-	AlertmanagerFor(orgID int64) (*Alertmanager, error)
-}
-
-func NewAlertmanagerConfigService(mam multiOrg, crypto Crypto, store configurationStore, log log.Logger) *AlertmanagerConfigService {
-	return &AlertmanagerConfigService{
-		mam:    mam,
-		crypto: crypto,
-		store:  store,
-		log:    log,
-	}
-}
-
-func (s *AlertmanagerConfigService) GetAlertmanagerConfiguration(ctx context.Context, org int64) (definitions.GettableUserConfig, error) {
+func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64) (definitions.GettableUserConfig, error) {
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
-	err := s.store.GetLatestAlertmanagerConfiguration(ctx, &query)
+	err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query)
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to get latest configuration: %w", err)
 	}
@@ -75,7 +53,7 @@ func (s *AlertmanagerConfigService) GetAlertmanagerConfiguration(ctx context.Con
 		for _, pr := range recv.PostableGrafanaReceivers.GrafanaManagedReceivers {
 			secureFields := make(map[string]bool, len(pr.SecureSettings))
 			for k := range pr.SecureSettings {
-				decryptedValue, err := s.crypto.getDecryptedSecret(pr, k)
+				decryptedValue, err := moa.crypto.getDecryptedSecret(pr, k)
 				if err != nil {
 					return definitions.GettableUserConfig{}, fmt.Errorf("failed to decrypt stored secure setting: %w", err)
 				}
@@ -106,25 +84,25 @@ func (s *AlertmanagerConfigService) GetAlertmanagerConfiguration(ctx context.Con
 	return result, nil
 }
 
-func (s *AlertmanagerConfigService) ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
+func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
 	// Get the last known working configuration
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
-	if err := s.store.GetLatestAlertmanagerConfiguration(ctx, &query); err != nil {
+	if err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query); err != nil {
 		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
 		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return fmt.Errorf("failed to get latest configuration %w", err)
 		}
 	}
 
-	if err := s.crypto.LoadSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
+	if err := moa.crypto.LoadSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
 		return err
 	}
 
-	if err := config.ProcessConfig(s.crypto.Encrypt); err != nil {
+	if err := config.ProcessConfig(moa.crypto.Encrypt); err != nil {
 		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
 	}
 
-	am, err := s.AlertmanagerFor(org)
+	am, err := moa.AlertmanagerFor(org)
 	if err != nil {
 		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
 		if !errors.Is(err, ErrAlertmanagerNotReady) {
@@ -133,13 +111,9 @@ func (s *AlertmanagerConfigService) ApplyAlertmanagerConfiguration(ctx context.C
 	}
 
 	if err := am.SaveAndApplyConfig(ctx, &config); err != nil {
-		s.log.Error("unable to save and apply alertmanager configuration", "err", err)
+		moa.logger.Error("unable to save and apply alertmanager configuration", "err", err)
 		return AlertmanagerConfigRejectedError{err}
 	}
 
 	return nil
-}
-
-func (s *AlertmanagerConfigService) AlertmanagerFor(orgID int64) (*Alertmanager, error) {
-	return s.mam.AlertmanagerFor(orgID)
 }

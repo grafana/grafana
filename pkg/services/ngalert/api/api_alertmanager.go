@@ -30,7 +30,7 @@ const (
 type AlertmanagerSrv struct {
 	log        log.Logger
 	ac         accesscontrol.AccessControl
-	configs    *notifier.AlertmanagerConfigService
+	mam        *notifier.MultiOrgAlertmanager
 	encryption notifier.Crypto
 }
 
@@ -190,7 +190,7 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Res
 }
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response.Response {
-	config, err := srv.configs.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgId)
+	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgId)
 	if err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -287,7 +287,7 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Respo
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	err := srv.configs.ApplyAlertmanagerConfiguration(c.Req.Context(), c.OrgId, body)
+	err := srv.mam.ApplyAlertmanagerConfiguration(c.Req.Context(), c.OrgId, body)
 	if err == nil {
 		return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
 	}
@@ -444,7 +444,7 @@ func statusForTestReceivers(v []notifier.TestReceiverResult) int {
 }
 
 func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (Alertmanager, *response.NormalResponse) {
-	am, err := srv.configs.AlertmanagerFor(orgID)
+	am, err := srv.mam.AlertmanagerFor(orgID)
 	if err == nil {
 		return am, nil
 	}
