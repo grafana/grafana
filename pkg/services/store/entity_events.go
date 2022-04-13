@@ -24,7 +24,7 @@ type EntityEvent struct {
 	Created   time.Time
 }
 
-type SaveActionCmd struct {
+type SaveEventCmd struct {
 	Grn       string
 	EventType EntityEventType
 }
@@ -33,7 +33,7 @@ type SaveActionCmd struct {
 * With this service each system can query for any events that have happened since a fixed time
  */
 type EntityEventsService interface {
-	SaveEvent(ctx context.Context, cmd SaveActionCmd) error
+	SaveEvent(ctx context.Context, cmd SaveEventCmd) error
 	GetLastEvent(ctx context.Context) (*EntityEvent, error)
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*EntityEvent, error)
 
@@ -54,7 +54,7 @@ type entityEventService struct {
 	log log.Logger
 }
 
-func (e entityEventService) SaveEvent(ctx context.Context, cmd SaveActionCmd) error {
+func (e entityEventService) SaveEvent(ctx context.Context, cmd SaveEventCmd) error {
 	return e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Insert(&EntityEvent{
 			EventType: cmd.EventType,

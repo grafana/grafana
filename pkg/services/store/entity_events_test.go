@@ -29,7 +29,7 @@ func TestEntityEventsService(t *testing.T) {
 	t.Run("Should insert an entity event", func(t *testing.T) {
 		setup()
 
-		err := service.SaveEvent(ctx, SaveActionCmd{
+		err := service.SaveEvent(ctx, SaveEventCmd{
 			Grn:       "database/dash/1",
 			EventType: EntityEventTypeCreate,
 		})
@@ -48,17 +48,17 @@ func TestEntityEventsService(t *testing.T) {
 		setup()
 		lastEventGrn := "database/dash/1"
 
-		err := service.SaveEvent(ctx, SaveActionCmd{
+		err := service.SaveEvent(ctx, SaveEventCmd{
 			Grn:       "database/dash/3",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
-		err = service.SaveEvent(ctx, SaveActionCmd{
+		err = service.SaveEvent(ctx, SaveEventCmd{
 			Grn:       "database/dash/2",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
-		err = service.SaveEvent(ctx, SaveActionCmd{
+		err = service.SaveEvent(ctx, SaveEventCmd{
 			Grn:       lastEventGrn,
 			EventType: EntityEventTypeCreate,
 		})
@@ -73,7 +73,7 @@ func TestEntityEventsService(t *testing.T) {
 		setup()
 		lastEventGrn := "database/dash/1"
 
-		err := service.SaveEvent(ctx, SaveActionCmd{
+		err := service.SaveEvent(ctx, SaveEventCmd{
 			Grn:       "database/dash/3",
 			EventType: EntityEventTypeCreate,
 		})
@@ -81,12 +81,12 @@ func TestEntityEventsService(t *testing.T) {
 		firstEv, err := service.GetLastEvent(ctx)
 		firstEvId := firstEv.Id
 
-		err = service.SaveEvent(ctx, SaveActionCmd{
+		err = service.SaveEvent(ctx, SaveEventCmd{
 			Grn:       "database/dash/2",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
-		err = service.SaveEvent(ctx, SaveActionCmd{
+		err = service.SaveEvent(ctx, SaveEventCmd{
 			Grn:       lastEventGrn,
 			EventType: EntityEventTypeCreate,
 		})
@@ -101,15 +101,15 @@ func TestEntityEventsService(t *testing.T) {
 
 	t.Run("Should delete old events", func(t *testing.T) {
 		setup()
-		_ = service.SaveEvent(ctx, SaveActionCmd{
+		_ = service.SaveEvent(ctx, SaveEventCmd{
 			Grn:       "database/dash/3",
 			EventType: EntityEventTypeCreate,
 		})
-		_ = service.SaveEvent(ctx, SaveActionCmd{
+		_ = service.SaveEvent(ctx, SaveEventCmd{
 			Grn:       "database/dash/2",
 			EventType: EntityEventTypeCreate,
 		})
-		_ = service.SaveEvent(ctx, SaveActionCmd{
+		_ = service.SaveEvent(ctx, SaveEventCmd{
 			Grn:       "database/dash/1",
 			EventType: EntityEventTypeCreate,
 		})
