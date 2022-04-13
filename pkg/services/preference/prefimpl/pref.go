@@ -92,7 +92,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 		return err
 	}
 	preference := &pref.UpdatePreferenceQuery{
-		Id:              prefs.ID,
+		ID:              prefs.ID,
 		OrgID:           prefs.OrgID,
 		UserID:          prefs.UserID,
 		TeamID:          prefs.TeamID,
@@ -187,7 +187,7 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 
 	if exists {
 		prefs := &pref.UpdatePreferenceQuery{
-			Id:              preference.ID,
+			ID:              preference.ID,
 			OrgID:           preference.OrgID,
 			UserID:          preference.UserID,
 			TeamID:          preference.TeamID,

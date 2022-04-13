@@ -72,7 +72,7 @@ func (s *sqlStore) List(ctx context.Context, query *pref.ListPreferenceQuery) ([
 
 func (s *sqlStore) Update(ctx context.Context, cmd *pref.UpdatePreferenceQuery) error {
 	return s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.ID(cmd.Id).AllCols().Update(cmd)
+		_, err := sess.ID(cmd.ID).AllCols().Update(cmd)
 		return err
 	})
 }

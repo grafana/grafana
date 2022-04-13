@@ -69,7 +69,7 @@ type PatchPreferenceCommand struct {
 }
 
 type UpdatePreferenceQuery struct {
-	Id              int64
+	ID              int64 `xorm:"pk autoincr 'id'"`
 	OrgID           int64 `xorm:"org_id"`
 	UserID          int64 `xorm:"user_id"`
 	TeamID          int64 `xorm:"team_id"`

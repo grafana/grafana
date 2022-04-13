@@ -124,7 +124,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		err = prefStore.Update(context.Background(), &pref.UpdatePreferenceQuery{
-			Id:              id,
+			ID:              id,
 			Theme:           "light",
 			HomeDashboardID: 5,
 			Timezone:        "browser",
