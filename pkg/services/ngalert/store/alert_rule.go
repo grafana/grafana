@@ -27,7 +27,7 @@ type UpdateRuleGroupCmd struct {
 	RuleGroupConfig apimodels.PostableRuleGroupConfig
 }
 
-type UpsertRule struct {
+type UpdateRule struct {
 	Existing *ngmodels.AlertRule
 	New      ngmodels.AlertRule
 }
@@ -42,8 +42,8 @@ type RuleStore interface {
 	GetAlertRules(ctx context.Context, query *ngmodels.GetAlertRulesQuery) error
 	GetUserVisibleNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
-	InsertAlertRules(ctx context.Context, rule []UpsertRule) error
-	UpdateAlertRules(ctx context.Context, rule []UpsertRule) error
+	InsertAlertRules(ctx context.Context, rule []UpdateRule) error
+	UpdateAlertRules(ctx context.Context, rule []UpdateRule) error
 }
 
 func getAlertRuleByUID(sess *sqlstore.DBSession, alertRuleUID string, orgID int64) (*ngmodels.AlertRule, error) {
@@ -109,7 +109,7 @@ func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAler
 }
 
 // InsertAlertRules is a handler for creating/updating alert rules.
-func (st DBstore) InsertAlertRules(ctx context.Context, rules []UpsertRule) error {
+func (st DBstore) InsertAlertRules(ctx context.Context, rules []UpdateRule) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		newRules := make([]ngmodels.AlertRule, 0, len(rules))
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
@@ -166,7 +166,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []UpsertRule) erro
 }
 
 // UpdateAlertRules is a handler for creating/updating alert rules.
-func (st DBstore) UpdateAlertRules(ctx context.Context, rules []UpsertRule) error {
+func (st DBstore) UpdateAlertRules(ctx context.Context, rules []UpdateRule) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		newRules := make([]ngmodels.AlertRule, 0, len(rules))
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))

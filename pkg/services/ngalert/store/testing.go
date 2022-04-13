@@ -228,7 +228,7 @@ func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, org
 	return nil, fmt.Errorf("not found")
 }
 
-func (f *FakeRuleStore) UpdateAlertRules(_ context.Context, q []UpsertRule) error {
+func (f *FakeRuleStore) UpdateAlertRules(_ context.Context, q []UpdateRule) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
@@ -238,7 +238,7 @@ func (f *FakeRuleStore) UpdateAlertRules(_ context.Context, q []UpsertRule) erro
 	return nil
 }
 
-func (f *FakeRuleStore) InsertAlertRules(_ context.Context, q []UpsertRule) error {
+func (f *FakeRuleStore) InsertAlertRules(_ context.Context, q []UpdateRule) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)

@@ -355,17 +355,17 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 		logger.Debug("updating database with the authorized changes", "add", len(authorizedChanges.New), "update", len(authorizedChanges.New), "delete", len(authorizedChanges.Delete))
 
 		if len(authorizedChanges.Update) > 0 || len(authorizedChanges.New) > 0 {
-			updates := make([]store.UpsertRule, 0, len(authorizedChanges.Update))
-			inserts := make([]store.UpsertRule, 0, len(authorizedChanges.New))
+			updates := make([]store.UpdateRule, 0, len(authorizedChanges.Update))
+			inserts := make([]store.UpdateRule, 0, len(authorizedChanges.New))
 			for _, update := range authorizedChanges.Update {
 				logger.Debug("updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
-				updates = append(updates, store.UpsertRule{
+				updates = append(updates, store.UpdateRule{
 					Existing: update.Existing,
 					New:      *update.New,
 				})
 			}
 			for _, rule := range authorizedChanges.New {
-				inserts = append(inserts, store.UpsertRule{
+				inserts = append(inserts, store.UpdateRule{
 					Existing: nil,
 					New:      *rule,
 				})

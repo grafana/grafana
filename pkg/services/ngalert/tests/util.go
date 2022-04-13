@@ -81,7 +81,7 @@ func CreateTestAlertRule(t *testing.T, ctx context.Context, dbstore *store.DBsto
 
 func CreateTestAlertRuleWithLabels(t *testing.T, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64, labels map[string]string) *models.AlertRule {
 	ruleGroup := fmt.Sprintf("ruleGroup-%s", util.GenerateShortUID())
-	err := dbstore.InsertAlertRules(ctx, []store.UpsertRule{
+	err := dbstore.InsertAlertRules(ctx, []store.UpdateRule{
 		{
 			New: models.AlertRule{
 				ID:        0,
