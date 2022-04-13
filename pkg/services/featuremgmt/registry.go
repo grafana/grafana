@@ -144,6 +144,12 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:            "publicDashboards",
+			Description:     "enables public access to dashboards",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "lokiLive",
 			Description: "support websocket streaming for loki (early prototype)",
 			State:       FeatureStateAlpha,

@@ -31,7 +31,7 @@ export const createMockResourceGroupsBySubscription = (): ResourceRowGroup => [
   {
     id: 'dev-1',
     uri: '/subscriptions/def-456/resourceGroups/dev-1',
-    name: 'Development',
+    name: 'Development 1',
     type: ResourceRowType.ResourceGroup,
     typeLabel: 'Resource Group',
     children: [],
@@ -39,7 +39,7 @@ export const createMockResourceGroupsBySubscription = (): ResourceRowGroup => [
   {
     id: 'dev-2',
     uri: '/subscriptions/def-456/resourceGroups/dev-2',
-    name: 'Development',
+    name: 'Development 2',
     type: ResourceRowType.ResourceGroup,
     typeLabel: 'Resource Group',
     children: [],
@@ -55,7 +55,7 @@ export const createMockResourceGroupsBySubscription = (): ResourceRowGroup => [
   {
     id: 'dev-4',
     uri: '/subscriptions/def-456/resourceGroups/dev-4',
-    name: 'Development',
+    name: 'Development 3',
     type: ResourceRowType.ResourceGroup,
     typeLabel: 'Resource Group',
     children: [],
@@ -63,7 +63,7 @@ export const createMockResourceGroupsBySubscription = (): ResourceRowGroup => [
   {
     id: 'dev-5',
     uri: '/subscriptions/def-456/resourceGroups/dev-5',
-    name: 'Development',
+    name: 'Development 4',
     type: ResourceRowType.ResourceGroup,
     typeLabel: 'Resource Group',
     children: [],

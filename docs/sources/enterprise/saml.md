@@ -46,6 +46,7 @@ The table below describes all SAML configuration options. Continue reading below
 | ---------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
 | `enabled`                                                  | No       | Whether SAML authentication is allowed                                                                                                                                                              | `false`       |
 | `single_logout`                                            | No       | Whether SAML Single Logout enabled                                                                                                                                                                  | `false`       |
+| `allow_sign_up`                                            | No       | Whether to allow new Grafana user creation through SAML login. If set to `false`, then only existing Grafana users can log in with SAML.                                                            | `true`        |
 | `allow_idp_initiated`                                      | No       | Whether SAML IdP-initiated login is allowed                                                                                                                                                         | `false`       |
 | `certificate` or `certificate_path`                        | Yes      | Base64-encoded string or Path for the SP X.509 certificate                                                                                                                                          |               |
 | `private_key` or `private_key_path`                        | Yes      | Base64-encoded string or Path for the SP private key                                                                                                                                                |               |
@@ -141,6 +142,10 @@ During the SAML SSO authentication flow, Grafana receives the ACS callback. The 
 For Grafana to map the user information, it looks at the individual attributes within the assertion. You can think of these attributes as Key/Value pairs (although, they contain more information than that).
 
 Grafana provides configuration options that let you modify which keys to look at for these values. The data we need to create the user in Grafana is Name, Login handle, and email.
+
+### Allow new user signups
+
+By default, new Grafana users using SAML authentication will have an account created for them automatically. To decouple authentication and account creation and ensure only users with existing accounts can log in with SAML, set the `allow_sign_up` option to false.
 
 ### Configure team sync
 

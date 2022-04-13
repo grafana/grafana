@@ -1,5 +1,5 @@
-//go:build linux
-// +build linux
+//go:build linux || darwin
+// +build linux darwin
 
 package dashboards
 
@@ -25,7 +25,7 @@ func TestProvisionedSymlinkedFolder(t *testing.T) {
 		Options: map[string]interface{}{"path": symlinkedFolder},
 	}
 
-	reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil)
+	reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil, nil)
 	if err != nil {
 		t.Error("expected err to be nil")
 	}

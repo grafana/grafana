@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/annotations"
 )
 
 // RoleRegistration stores a role and its assignments to built-in roles
@@ -80,6 +83,7 @@ func (r RoleDTO) Role() Role {
 		ID:          r.ID,
 		OrgID:       r.OrgID,
 		UID:         r.UID,
+		Version:     r.Version,
 		Name:        r.Name,
 		DisplayName: r.DisplayName,
 		Group:       r.Group,
@@ -242,6 +246,9 @@ type SetResourcePermissionCommand struct {
 
 const (
 	GlobalOrgID      = 0
+	FixedRolePrefix  = "fixed:"
+	RoleGrafanaAdmin = "Grafana Admin"
+
 	GeneralFolderUID = "general"
 
 	// Permission actions
@@ -379,10 +386,21 @@ var (
 	ScopeAnnotationsProvider         = NewScopeProvider(ScopeAnnotationsRoot)
 	ScopeAnnotationsAll              = ScopeAnnotationsProvider.GetResourceAllScope()
 	ScopeAnnotationsID               = Scope(ScopeAnnotationsRoot, "id", Parameter(":annotationId"))
-	ScopeAnnotationsTypeDashboard    = ScopeAnnotationsProvider.GetResourceScopeType("dashboard")
-	ScopeAnnotationsTypeOrganization = ScopeAnnotationsProvider.GetResourceScopeType("organization")
+	ScopeAnnotationsTypeDashboard    = ScopeAnnotationsProvider.GetResourceScopeType(annotations.Dashboard.String())
+	ScopeAnnotationsTypeOrganization = ScopeAnnotationsProvider.GetResourceScopeType(annotations.Organization.String())
 )
 
-const RoleGrafanaAdmin = "Grafana Admin"
+func BuiltInRolesWithParents(builtInRoles []string) map[string]struct{} {
+	res := map[string]struct{}{}
 
-const FixedRolePrefix = "fixed:"
+	for _, br := range builtInRoles {
+		res[br] = struct{}{}
+		if br != RoleGrafanaAdmin {
+			for _, parent := range models.RoleType(br).Parents() {
+				res[string(parent)] = struct{}{}
+			}
+		}
+	}
+
+	return res
+}

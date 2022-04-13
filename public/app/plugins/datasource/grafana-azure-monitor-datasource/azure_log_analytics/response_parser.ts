@@ -1,5 +1,6 @@
-import { concat, find, flattenDeep, forEach, get, map } from 'lodash';
 import { AnnotationEvent, dateTime, TimeSeries } from '@grafana/data';
+import { concat, find, flattenDeep, forEach, get, map } from 'lodash';
+
 import { AzureLogsTableData, AzureLogsVariable } from '../types';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
@@ -220,6 +221,26 @@ export function transformMetadataToKustoSchema(sourceSchema: AzureLogAnalyticsMe
     majorVersion: 0,
     minorVersion: 0,
   };
+
+  // TODO: We should define macros here as functions so they are interpreted as valid
+  // But we cannot do so for the issues listed here: https://github.com/Azure/monaco-kusto/issues/189
+  // For example:
+  // database.functions.push(
+  //   {
+  //     name: '$__timeFilter',
+  //     body: '',
+  //     inputParameters: [
+  //       {
+  //         name: 'timeColumn',
+  //         type: 'System.String',
+  //         cslType: 'string',
+  //         cslDefaultValue: 'Timestamp',
+  //       },
+  //     ],
+  //     docString: 'Filter by a time column',
+  //     functionKind: 'Unknown',
+  //   },
+  // );
 
   return {
     clusterType: 'Engine',

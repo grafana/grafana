@@ -111,28 +111,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, b bus.
 	// Init repo instances
 	annotations.SetRepository(&SQLAnnotationRepo{sql: ss})
 	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: ss.Cfg.AnnotationCleanupJobBatchSize, log: log.New("annotationcleaner")})
-	ss.Bus.SetTransactionManager(ss)
-
-	// Register handlers
-	ss.addStatsQueryAndCommandHandlers()
-	ss.addUserQueryAndCommandHandlers()
-	ss.addAlertNotificationUidByIdHandler()
-	ss.addPreferencesQueryAndCommandHandlers()
-	ss.addDashboardQueryAndCommandHandlers()
-	ss.addDashboardACLQueryAndCommandHandlers()
-	ss.addQuotaQueryAndCommandHandlers()
-	ss.addOrgUsersQueryAndCommandHandlers()
-	ss.addStarQueryAndCommandHandlers()
-	ss.addAlertQueryAndCommandHandlers()
-	ss.addTempUserQueryAndCommandHandlers()
-	ss.addDashboardVersionQueryAndCommandHandlers()
-	ss.addAPIKeysQueryAndCommandHandlers()
-	ss.addPlaylistQueryAndCommandHandlers()
-	ss.addLoginAttemptQueryAndCommandHandlers()
-	ss.addTeamQueryAndCommandHandlers()
-	ss.addOrgQueryAndCommandHandlers()
-
-	bus.AddHandler("sql", ss.GetDBHealthQuery)
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err

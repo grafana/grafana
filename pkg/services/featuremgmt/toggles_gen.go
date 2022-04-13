@@ -107,6 +107,10 @@ const (
 	// only execute the query saved in a panel
 	FlagValidatedQueries = "validatedQueries"
 
+	// FlagPublicDashboards
+	// enables public access to dashboards
+	FlagPublicDashboards = "publicDashboards"
+
 	// FlagLokiLive
 	// support websocket streaming for loki (early prototype)
 	FlagLokiLive = "lokiLive"

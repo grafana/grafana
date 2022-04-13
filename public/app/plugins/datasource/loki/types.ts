@@ -33,11 +33,7 @@ export enum LokiQueryType {
 export interface LokiQuery extends DataQuery {
   queryType?: LokiQueryType;
   expr: string;
-  query?: string;
-  format?: string;
-  reverse?: boolean;
   legendFormat?: string;
-  valueWithRefId?: boolean;
   maxLines?: number;
   resolution?: number;
   /** Used in range queries */
@@ -135,15 +131,9 @@ export type DerivedFieldConfig = {
 };
 
 export interface TransformerOptions {
-  format?: string;
   legendFormat?: string;
-  step: number;
-  start: number;
-  end: number;
   query: string;
-  responseListLength: number;
   refId: string;
   scopedVars: ScopedVars;
   meta?: QueryResultMeta;
-  valueWithRefId?: boolean;
 }

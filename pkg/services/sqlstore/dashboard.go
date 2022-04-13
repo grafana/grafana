@@ -6,7 +6,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
@@ -24,18 +23,6 @@ var shadowSearchCounter = prometheus.NewCounterVec(
 
 func init() {
 	prometheus.MustRegister(shadowSearchCounter)
-}
-
-func (ss *SQLStore) addDashboardQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetDashboard)
-	bus.AddHandler("sql", ss.GetDashboardUIDById)
-	bus.AddHandler("sql", ss.GetDashboardTags)
-	bus.AddHandler("sql", ss.SearchDashboards)
-	bus.AddHandler("sql", ss.GetDashboards)
-	bus.AddHandler("sql", ss.HasEditPermissionInFolders)
-	bus.AddHandler("sql", ss.GetDashboardPermissionsForUser)
-	bus.AddHandler("sql", ss.GetDashboardSlugById)
-	bus.AddHandler("sql", ss.HasAdminPermissionInFolders)
 }
 
 var generateNewUid func() string = util.GenerateShortUID
