@@ -14,6 +14,7 @@ import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
 import { ServiceAccountPage } from 'app/features/serviceaccounts/ServiceAccountPage';
+import type { Truthy } from 'lodash';
 
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -153,7 +154,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
       ),
     },
-    {
+    config.exploreEnabled && {
       path: '/explore',
       pageClass: 'page-explore',
       roles: () =>
@@ -429,5 +430,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     // TODO[Router]
     // ...playlistRoutes,
-  ];
+  ].filter(isTruthy);
+}
+
+function isTruthy<T>(v: T): v is Truthy<T> {
+  return Boolean(v);
 }
