@@ -13,6 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+type dashboardLoader interface {
+	LoadDashboards(ctx context.Context, orgID int64, dashboardID int64) ([]dashboard, error)
+}
+
 type EntityEventType string
 
 type EntityEvent struct {
@@ -21,7 +25,7 @@ type EntityEvent struct {
 	EventType EntityEventType
 }
 
-type EventStore interface {
+type eventStore interface {
 	GetLast(ctx context.Context) (*EntityEvent, error)
 	GetAllAfter(ctx context.Context, id int64) ([]*EntityEvent, error)
 }
@@ -38,9 +42,9 @@ func (d dummyEventStore) GetAllAfter(_ context.Context, _ int64) ([]*EntityEvent
 
 type DashboardIndex struct {
 	mu         sync.RWMutex
-	sql        *sqlstore.SQLStore
+	loader     dashboardLoader
 	dashboards map[int64][]dashboard
-	eventStore EventStore
+	eventStore eventStore
 	logger     log.Logger
 }
 
@@ -54,16 +58,16 @@ type dashboard struct {
 	info     *extract.DashboardInfo
 }
 
-func NewDashboardIndex(eventStore EventStore, sql *sqlstore.SQLStore) *DashboardIndex {
+func NewDashboardIndex(eventStore eventStore, loader dashboardLoader) *DashboardIndex {
 	return &DashboardIndex{
-		sql:        sql,
+		loader:     loader,
 		dashboards: map[int64][]dashboard{},
 		eventStore: eventStore,
 		logger:     log.New("dashboardIndex"),
 	}
 }
 
-func (i *DashboardIndex) ListenEvents(ctx context.Context) error {
+func (i *DashboardIndex) listenEvents(ctx context.Context) error {
 	fullUpdateTicker := time.NewTicker(5 * time.Minute)
 	defer fullUpdateTicker.Stop()
 
@@ -155,7 +159,7 @@ func (i *DashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 	}
 	i.mu.Unlock()
 
-	dash, err := loadDashboards(ctx, orgID, i.sql, dashboardID)
+	dashboards, err := i.loader.LoadDashboards(ctx, orgID, dashboardID)
 	if err != nil {
 		return err
 	}
@@ -169,7 +173,7 @@ func (i *DashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 		return nil
 	}
 
-	if len(dash) == 0 {
+	if len(dashboards) == 0 {
 		k := 0
 		for _, d := range meta {
 			if d.id != dashboardID {
@@ -182,62 +186,49 @@ func (i *DashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 		updated := false
 		for i, d := range meta {
 			if d.id == dashboardID {
-				meta[i] = dash[0]
+				meta[i] = dashboards[0]
 				updated = true
 				break
 			}
 		}
 		if !updated {
-			meta = append(meta, dash...)
+			meta = append(meta, dashboards...)
 		}
 		i.dashboards[orgID] = meta
 	}
 	return nil
 }
 
-func (i *DashboardIndex) GetDashboardInfo(ctx context.Context, orgId int64) ([]dashboard, error) {
-	var dash []dashboard
+func (i *DashboardIndex) getDashboards(ctx context.Context, orgId int64) ([]dashboard, error) {
+	var dashboards []dashboard
 
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
-	if cached, ok := i.dashboards[orgId]; ok {
-		dash = cached
+	if cachedDashboards, ok := i.dashboards[orgId]; ok {
+		dashboards = cachedDashboards
 	} else {
-		// Load and parse all dashboards for given orgId
+		// Load and parse all dashboards for given orgId.
 		var err error
-		dash, err = loadDashboards(ctx, orgId, i.sql, 0)
+		dashboards, err = i.loader.LoadDashboards(ctx, orgId, 0)
 		if err != nil {
 			return nil, err
 		}
-		i.dashboards[orgId] = dash
+		i.dashboards[orgId] = dashboards
 	}
-	return dash, nil
+	return dashboards, nil
 }
 
-type dashDataQueryResult struct {
-	Id       int64
-	IsFolder bool   `xorm:"is_folder"`
-	FolderID int64  `xorm:"folder_id"`
-	Slug     string `xorm:"slug"`
-	Data     []byte
-	Created  time.Time
-	Updated  time.Time
+type sqlDashboardLoader struct {
+	sql *sqlstore.SQLStore
 }
 
-type dsQueryResult struct {
-	UID       string `xorm:"uid"`
-	Type      string `xorm:"type"`
-	Name      string `xorm:"name"`
-	IsDefault bool   `xorm:"is_default"`
-}
-
-func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, dashboardID int64) ([]dashboard, error) {
-	meta := make([]dashboard, 0, 200)
+func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardID int64) ([]dashboard, error) {
+	dashboards := make([]dashboard, 0, 200)
 
 	if dashboardID == 0 {
 		// Add the root folder ID (does not exist in SQL)
-		meta = append(meta, dashboard{
+		dashboards = append(dashboards, dashboard{
 			id:       0,
 			isFolder: true,
 			folderID: 0,
@@ -253,13 +244,13 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, da
 	}
 
 	// key will allow name or uid
-	lookup, err := loadDatasourceLookup(ctx, orgID, sql)
+	lookup, err := loadDatasourceLookup(ctx, orgID, l.sql)
 	if err != nil {
-		return meta, err
+		return dashboards, err
 	}
 
-	err = sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rows := make([]*dashDataQueryResult, 0)
+	err = l.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		rows := make([]*dashboardQueryResult, 0)
 
 		sess.Table("dashboard").
 			Where("org_id = ?", orgID)
@@ -276,23 +267,37 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, da
 		}
 
 		for _, row := range rows {
-			dash := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
-
-			meta = append(meta, dashboard{
+			dashboards = append(dashboards, dashboard{
 				id:       row.Id,
 				isFolder: row.IsFolder,
 				folderID: row.FolderID,
 				slug:     row.Slug,
 				created:  row.Created,
 				updated:  row.Updated,
-				info:     dash,
+				info:     extract.ReadDashboard(bytes.NewReader(row.Data), lookup),
 			})
 		}
-
 		return nil
 	})
 
-	return meta, err
+	return dashboards, err
+}
+
+type dashboardQueryResult struct {
+	Id       int64
+	IsFolder bool   `xorm:"is_folder"`
+	FolderID int64  `xorm:"folder_id"`
+	Slug     string `xorm:"slug"`
+	Data     []byte
+	Created  time.Time
+	Updated  time.Time
+}
+
+type datasourceQueryResult struct {
+	UID       string `xorm:"uid"`
+	Type      string `xorm:"type"`
+	Name      string `xorm:"name"`
+	IsDefault bool   `xorm:"is_default"`
 }
 
 func loadDatasourceLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) (extract.DatasourceLookup, error) {
@@ -301,7 +306,7 @@ func loadDatasourceLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLSto
 	var defaultDS *extract.DataSourceRef
 
 	err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rows := make([]*dsQueryResult, 0)
+		rows := make([]*datasourceQueryResult, 0)
 		sess.Table("data_source").
 			Where("org_id = ?", orgID).
 			Cols("uid", "name", "type", "is_default")

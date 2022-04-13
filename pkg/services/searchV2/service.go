@@ -32,19 +32,19 @@ func ProvideService(sql *sqlstore.SQLStore) SearchService {
 		auth: &simpleSQLAuthService{
 			sql: sql,
 		},
-		dashboardIndex: NewDashboardIndex(&dummyEventStore{}, sql),
+		dashboardIndex: NewDashboardIndex(&dummyEventStore{}, &sqlDashboardLoader{sql: sql}),
 		logger:         log.New("searchV2"),
 	}
 }
 
 func (s *StandardSearchService) Run(ctx context.Context) error {
-	return s.dashboardIndex.ListenEvents(ctx)
+	return s.dashboardIndex.listenEvents(ctx)
 }
 
-func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, query DashboardQuery) *backend.DataResponse {
+func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, _ DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
-	dash, err := s.dashboardIndex.GetDashboardInfo(ctx, orgId)
+	dash, err := s.dashboardIndex.getDashboards(ctx, orgId)
 	if err != nil {
 		rsp.Error = err
 		return rsp
