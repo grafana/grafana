@@ -76,7 +76,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, orgID int6
 }
 
 // internal only
-func (ecp *ContactPointService) getContactPointUncrypted(ctx context.Context, orgID int64, uid string) (apimodels.EmbeddedContactPoint, error) {
+func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, orgID int64, uid string) (apimodels.EmbeddedContactPoint, error) {
 	cfg, _, err := ecp.getCurrentConfig(ctx, orgID)
 	if err != nil {
 		return apimodels.EmbeddedContactPoint{}, err
@@ -199,7 +199,7 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 
 func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) error {
 	// set all redacted values with the latest known value from the store
-	rawContactPoint, err := ecp.getContactPointUncrypted(ctx, orgID, contactPoint.UID)
+	rawContactPoint, err := ecp.getContactPointDecrypted(ctx, orgID, contactPoint.UID)
 	if err != nil {
 		return err
 	}
