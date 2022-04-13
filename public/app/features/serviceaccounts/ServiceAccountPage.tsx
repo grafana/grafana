@@ -17,7 +17,7 @@ import {
 import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
 import { getTimeZone, NavModel } from '@grafana/data';
 import { Button } from '@grafana/ui';
-import { CreateTokenModal } from './CreateServiceAccountTokenModal';
+import { CreateTokenModal, ServiceAccountToken } from './CreateServiceAccountTokenModal';
 import { contextSrv } from 'app/core/core';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
@@ -86,7 +86,7 @@ const ServiceAccountPageUnconnected = ({
     deleteServiceAccountToken(parseInt(match.params.id, 10), key.id!);
   };
 
-  const onCreateToken = (token: ApiKey) => {
+  const onCreateToken = (token: ServiceAccountToken) => {
     createServiceAccountToken(serviceAccount.id, token, setNewToken);
   };
 

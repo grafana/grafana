@@ -356,6 +356,7 @@ function CollapsibleNavItem({
           onClose();
         }}
         className={styles.collapsibleMenuItem}
+        elClassName={styles.collapsibleIcon}
       >
         {link.img && (
           <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
@@ -391,6 +392,9 @@ const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
   collapsibleMenuItem: css({
     height: theme.spacing(6),
     width: theme.spacing(7),
+    display: 'grid',
+  }),
+  collapsibleIcon: css({
     display: 'grid',
     placeContent: 'center',
   }),

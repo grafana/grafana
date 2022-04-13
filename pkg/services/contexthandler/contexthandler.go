@@ -4,6 +4,7 @@ package contexthandler
 import (
 	"context"
 	"errors"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -255,20 +256,26 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	//There is a service account attached to the API key
 
 	//Use service account linked to API key as the signed in user
-	query := models.GetSignedInUserQuery{UserId: *apikey.ServiceAccountId, OrgId: apikey.OrgId}
-	if err := h.SQLStore.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &query); err != nil {
+	querySignedInUser := models.GetSignedInUserQuery{UserId: *apikey.ServiceAccountId, OrgId: apikey.OrgId}
+	if err := h.SQLStore.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &querySignedInUser); err != nil {
 		reqContext.Logger.Error(
 			"Failed to link API key to service account in",
-			"id", query.UserId,
-			"org", query.OrgId,
+			"id", querySignedInUser.UserId,
+			"org", querySignedInUser.OrgId,
 			"err", err,
 		)
-		reqContext.JsonApiErr(500, "Unable to link API key to service account", err)
+		reqContext.JsonApiErr(http.StatusInternalServerError, "Unable to link API key to service account", err)
+		return true
+	}
+
+	// disabled service accounts are not allowed to access the API
+	if querySignedInUser.Result.IsDisabled {
+		reqContext.JsonApiErr(http.StatusUnauthorized, "Service account is disabled", nil)
 		return true
 	}
 
 	reqContext.IsSignedIn = true
-	reqContext.SignedInUser = query.Result
+	reqContext.SignedInUser = querySignedInUser.Result
 	return true
 }
 
