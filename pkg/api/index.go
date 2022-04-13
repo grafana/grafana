@@ -513,6 +513,19 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext, uaVisibleForOrg b
 		})
 	}
 
+	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
+		if uaVisibleForOrg {
+			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
+				Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
+			})
+
+			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
+				Text: "Alert rule", SubTitle: "Create an alert rule", Id: "alert",
+				Icon: "plus", Url: hs.Cfg.AppSubURL + "/alerting/new", HideFromTabs: true, ShowIconInNavbar: true,
+			})
+		}
+	}
+
 	if len(alertChildNavs) > 0 {
 		return []*dtos.NavLink{
 			{
