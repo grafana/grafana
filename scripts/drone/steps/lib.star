@@ -243,7 +243,7 @@ def lint_backend_step(edition):
             'CGO_ENABLED': '1',
         },
         'depends_on': [
-            'grabpl',
+            'wire-install',
         ],
         'commands': [
             # Don't use Make since it will re-download the linters
@@ -536,7 +536,7 @@ def test_backend_step(edition):
         'name': 'test-backend' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            'grabpl',
+            'wire-install',
         ],
         'commands': [
             './bin/grabpl test-backend --edition {}'.format(edition),
@@ -549,7 +549,7 @@ def test_backend_integration_step(edition):
         'name': 'test-backend-integration' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            'grabpl',
+            'wire-install',
         ],
         'commands': [
             './bin/grabpl integration-tests --edition {}'.format(edition),
@@ -565,7 +565,7 @@ def test_frontend_step():
             'TEST_MAX_WORKERS': '50%',
         },
         'depends_on': [
-            'grabpl',
+            'yarn-install',
         ],
         'commands': [
             'yarn run ci:test-frontend',
@@ -580,6 +580,9 @@ def lint_frontend_step():
         'environment': {
             'TEST_MAX_WORKERS': '50%',
         },
+        'depends_on': [
+            'yarn-install',
+        ],
         'commands': [
             'yarn run prettier:check',
             'yarn run lint',
@@ -660,6 +663,9 @@ def shellcheck_step():
     return {
         'name': 'shellcheck',
         'image': build_image,
+        'depends_on': [
+            'grabpl',
+        ],
         'commands': [
             './bin/grabpl shellcheck',
         ],

@@ -51,12 +51,14 @@ steps:
   name: codespell
 - commands:
   - ./bin/grabpl shellcheck
+  depends_on:
+  - grabpl
   image: grafana/build-container:1.5.3
   name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition oss
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: grafana/build-container:1.5.3
@@ -66,6 +68,8 @@ steps:
   - yarn run lint
   - yarn run i18n:compile
   - yarn run typecheck
+  depends_on:
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -73,19 +77,19 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
-  - grabpl
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - grabpl
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - grabpl
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -635,12 +639,14 @@ steps:
   name: codespell
 - commands:
   - ./bin/grabpl shellcheck
+  depends_on:
+  - grabpl
   image: grafana/build-container:1.5.3
   name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition oss
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: grafana/build-container:1.5.3
@@ -650,6 +656,8 @@ steps:
   - yarn run lint
   - yarn run i18n:compile
   - yarn run typecheck
+  depends_on:
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -657,19 +665,19 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
-  - grabpl
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - grabpl
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - grabpl
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -1705,12 +1713,14 @@ steps:
   name: codespell
 - commands:
   - ./bin/grabpl shellcheck
+  depends_on:
+  - grabpl
   image: grafana/build-container:1.5.3
   name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition oss
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: grafana/build-container:1.5.3
@@ -1720,6 +1730,8 @@ steps:
   - yarn run lint
   - yarn run i18n:compile
   - yarn run typecheck
+  depends_on:
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -1727,19 +1739,19 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
-  - grabpl
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - grabpl
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - grabpl
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -2297,12 +2309,14 @@ steps:
   name: codespell
 - commands:
   - ./bin/grabpl shellcheck
+  depends_on:
+  - grabpl
   image: grafana/build-container:1.5.3
   name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition enterprise
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: grafana/build-container:1.5.3
@@ -2312,6 +2326,8 @@ steps:
   - yarn run lint
   - yarn run i18n:compile
   - yarn run typecheck
+  depends_on:
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -2319,19 +2335,19 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
-  - grabpl
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
-  - grabpl
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - grabpl
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -2339,7 +2355,7 @@ steps:
 - commands:
   - ./bin/grabpl lint-backend --edition enterprise2
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: grafana/build-container:1.5.3
@@ -2347,13 +2363,13 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
-  - grabpl
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-enterprise2
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
-  - grabpl
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-integration-enterprise2
 trigger:
@@ -3375,12 +3391,14 @@ steps:
   name: codespell
 - commands:
   - ./bin/grabpl shellcheck
+  depends_on:
+  - grabpl
   image: grafana/build-container:1.5.3
   name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition oss
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: grafana/build-container:1.5.3
@@ -3390,6 +3408,8 @@ steps:
   - yarn run lint
   - yarn run i18n:compile
   - yarn run typecheck
+  depends_on:
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -3397,19 +3417,19 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
-  - grabpl
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - grabpl
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - grabpl
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -3935,12 +3955,14 @@ steps:
   name: codespell
 - commands:
   - ./bin/grabpl shellcheck
+  depends_on:
+  - grabpl
   image: grafana/build-container:1.5.3
   name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition enterprise
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: grafana/build-container:1.5.3
@@ -3950,6 +3972,8 @@ steps:
   - yarn run lint
   - yarn run i18n:compile
   - yarn run typecheck
+  depends_on:
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -3957,19 +3981,19 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
-  - grabpl
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
-  - grabpl
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - grabpl
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -3977,7 +4001,7 @@ steps:
 - commands:
   - ./bin/grabpl lint-backend --edition enterprise2
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: grafana/build-container:1.5.3
@@ -3985,13 +4009,13 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
-  - grabpl
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-enterprise2
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
-  - grabpl
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-integration-enterprise2
 trigger:
@@ -4345,6 +4369,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 768f2196fe6b9aac0c1c4c074219ba7a74c71416c11b8d126456967f0129f9aa
+hmac: 717f46ad539ce35879abca8391078f7052ab67441f00980c466936a1b10e5b0c
 
 ...
