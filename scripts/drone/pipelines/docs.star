@@ -1,7 +1,8 @@
 load(
     'scripts/drone/steps/lib.star',
     'build_image',
-    'initialize_step',
+    'yarn_install_step',
+    'gen_version_step',
     'download_grabpl_step',
     'lint_frontend_step',
     'codespell_step',
@@ -25,16 +26,16 @@ load(
 
 
 def docs_pipelines(edition, ver_mode, trigger):
-    steps = [download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
-
-    # Insert remaining steps
-    steps.extend([
+    steps = [
+        download_grabpl_step(),
+        gen_version_step(ver_mode),
+        yarn_install_step(),
         codespell_step(),
         lint_docs(),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_frontend_docs_step(edition=edition),
         build_docs_website_step(),
-    ])
+    ]
 
     return pipeline(
         name='{}-docs'.format(ver_mode), edition=edition, trigger=trigger, services=[], steps=steps,
@@ -45,7 +46,7 @@ def lint_docs():
         'name': 'lint-docs',
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'yarn-install',
         ],
         'environment': {
             'NODE_OPTIONS': '--max_old_space_size=8192',

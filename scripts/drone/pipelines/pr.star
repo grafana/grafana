@@ -1,7 +1,9 @@
 load(
     'scripts/drone/steps/lib.star',
     'download_grabpl_step',
-    'initialize_step',
+    'gen_version_step',
+    'yarn_install_step',
+    'wire_install_step',
     'lint_drone_step',
     'lint_backend_step',
     'lint_frontend_step',
@@ -59,6 +61,12 @@ def pr_pipelines(edition):
     volumes = integration_test_services_volumes()
     variants = ['linux-amd64', 'linux-amd64-musl', 'darwin-amd64', 'windows-amd64', 'armv6',]
     include_enterprise2 = edition == 'enterprise'
+    init_steps = [
+        download_grabpl_step(),
+        gen_version_step(ver_mode),
+        wire_install_step(),
+        yarn_install_step(),
+    ]
     test_steps = [
         lint_drone_step(),
         codespell_step(),
@@ -132,11 +140,9 @@ def pr_pipelines(edition):
 
     return [
         pipeline(
-            name='pr-test', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
-                + test_steps,
+            name='pr-test', edition=edition, trigger=trigger, services=[], steps=init_steps + test_steps,
         ), pipeline(
-            name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
-                + build_steps,
+            name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=init_steps + build_steps,
         ), pipeline(
             name='pr-integration-tests', edition=edition, trigger=trigger, services=services,
             steps=[download_grabpl_step()] + integration_test_steps,

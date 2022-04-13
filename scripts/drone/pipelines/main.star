@@ -2,6 +2,7 @@ load(
     'scripts/drone/steps/lib.star',
     'download_grabpl_step',
     'build_image',
+    'gen_version_step',
     'initialize_step',
     'lint_drone_step',
     'lint_backend_step',
