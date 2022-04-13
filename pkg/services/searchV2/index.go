@@ -14,7 +14,7 @@ import (
 )
 
 type dashboardLoader interface {
-	LoadDashboards(ctx context.Context, orgID int64, dashboardID int64) ([]dashboard, error)
+	LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error)
 }
 
 type EntityEventType string
@@ -50,6 +50,7 @@ type DashboardIndex struct {
 
 type dashboard struct {
 	id       int64
+	uid      string
 	isFolder bool
 	folderID int64
 	slug     string
@@ -142,7 +143,7 @@ func (i *DashboardIndex) applyEventOnIndex(ctx context.Context, e *EntityEvent) 
 	}
 	orgIDStr := parts[0]
 	kind := parts[1]
-	dashboardIDStr := parts[2]
+	dashboardUID := parts[2]
 	if kind != "dashboards" {
 		i.logger.Error("unknown kind in GRN", "grn", e.GRN)
 		return nil
@@ -152,15 +153,10 @@ func (i *DashboardIndex) applyEventOnIndex(ctx context.Context, e *EntityEvent) 
 		i.logger.Error("can't extract org ID", "grn", e.GRN)
 		return nil
 	}
-	dashboardID, err := strconv.Atoi(dashboardIDStr)
-	if err != nil {
-		i.logger.Error("can't extract dashboard ID", "grn", e.GRN)
-		return nil
-	}
-	return i.applyDashboardEvent(ctx, int64(orgID), int64(dashboardID), e.EventType)
+	return i.applyDashboardEvent(ctx, int64(orgID), dashboardUID, e.EventType)
 }
 
-func (i *DashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, dashboardID int64, _ EntityEventType) error {
+func (i *DashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, dashboardUID string, _ EntityEventType) error {
 	i.mu.Lock()
 	_, ok := i.dashboards[orgID]
 	if !ok {
@@ -170,7 +166,7 @@ func (i *DashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 	}
 	i.mu.Unlock()
 
-	dbDashboards, err := i.loader.LoadDashboards(ctx, orgID, dashboardID)
+	dbDashboards, err := i.loader.LoadDashboards(ctx, orgID, dashboardUID)
 	if err != nil {
 		return err
 	}
@@ -185,11 +181,11 @@ func (i *DashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 	}
 
 	if len(dbDashboards) == 0 {
-		i.dashboards[orgID] = removeDashboard(dashboards, dashboardID)
+		i.dashboards[orgID] = removeDashboard(dashboards, dashboardUID)
 	} else {
 		updated := false
 		for i, d := range dashboards {
-			if d.id == dashboardID {
+			if d.uid == dashboardUID {
 				dashboards[i] = dbDashboards[0]
 				updated = true
 				break
@@ -203,10 +199,10 @@ func (i *DashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 	return nil
 }
 
-func removeDashboard(dashboards []dashboard, dashboardID int64) []dashboard {
+func removeDashboard(dashboards []dashboard, dashboardUID string) []dashboard {
 	k := 0
 	for _, d := range dashboards {
-		if d.id != dashboardID {
+		if d.uid != dashboardUID {
 			dashboards[k] = d
 			k++
 		}
@@ -225,7 +221,7 @@ func (i *DashboardIndex) getDashboards(ctx context.Context, orgId int64) ([]dash
 	} else {
 		// Load and parse all dashboards for given orgId.
 		var err error
-		dashboards, err = i.loader.LoadDashboards(ctx, orgId, 0)
+		dashboards, err = i.loader.LoadDashboards(ctx, orgId, "")
 		if err != nil {
 			return nil, err
 		}
@@ -238,10 +234,10 @@ type sqlDashboardLoader struct {
 	sql *sqlstore.SQLStore
 }
 
-func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardID int64) ([]dashboard, error) {
+func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error) {
 	dashboards := make([]dashboard, 0, 200)
 
-	if dashboardID == 0 {
+	if dashboardUID == "" {
 		// Add the root folder ID (does not exist in SQL)
 		dashboards = append(dashboards, dashboard{
 			id:       0,
@@ -270,11 +266,11 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		sess.Table("dashboard").
 			Where("org_id = ?", orgID)
 
-		if dashboardID > 0 {
-			sess.Where("id = ?", dashboardID)
+		if dashboardUID != "" {
+			sess.Where("uid = ?", dashboardUID)
 		}
 
-		sess.Cols("id", "is_folder", "folder_id", "data", "slug", "created", "updated")
+		sess.Cols("id", "uid", "is_folder", "folder_id", "data", "slug", "created", "updated")
 
 		err := sess.Find(&rows)
 		if err != nil {
@@ -284,6 +280,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		for _, row := range rows {
 			dashboards = append(dashboards, dashboard{
 				id:       row.Id,
+				uid:      row.Uid,
 				isFolder: row.IsFolder,
 				folderID: row.FolderID,
 				slug:     row.Slug,
@@ -300,6 +297,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 
 type dashboardQueryResult struct {
 	Id       int64
+	Uid      string
 	IsFolder bool   `xorm:"is_folder"`
 	FolderID int64  `xorm:"folder_id"`
 	Slug     string `xorm:"slug"`

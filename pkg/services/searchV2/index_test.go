@@ -11,7 +11,7 @@ type testDashboardLoader struct {
 	dashboards []dashboard
 }
 
-func (t *testDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardID int64) ([]dashboard, error) {
+func (t *testDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error) {
 	return t.dashboards, nil
 }
 
@@ -19,7 +19,7 @@ func TestDashboardIndex(t *testing.T) {
 	dashboardLoader := &testDashboardLoader{
 		dashboards: []dashboard{
 			{
-				id: 1,
+				uid: "1",
 			},
 		},
 	}
@@ -30,10 +30,10 @@ func TestDashboardIndex(t *testing.T) {
 	require.Len(t, dashboards, 1)
 	dashboardLoader.dashboards = []dashboard{
 		{
-			id: 2,
+			uid: "2",
 		},
 	}
-	err = index.applyDashboardEvent(context.Background(), 1, 2, "")
+	err = index.applyDashboardEvent(context.Background(), 1, "2", "")
 	require.NoError(t, err)
 	dashboards, err = index.getDashboards(context.Background(), 1)
 	require.NoError(t, err)
