@@ -97,7 +97,7 @@ const OptionInput: FC<Props & { id: string; pathIndex: string }> = ({
       return (
         <Input
           id={id}
-          readOnly={readOnly || determineReadOnly(option, getValues)}
+          readOnly={readOnly || determineReadOnly(option, getValues, pathIndex)}
           invalid={invalid}
           type={option.inputType}
           {...register(name, {
