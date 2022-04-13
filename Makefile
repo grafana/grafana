@@ -45,6 +45,7 @@ $(SPEC_TARGET): $(API_DEFINITION_FILES) ## Generate API spec
 	-e SWAGGER_GENERATE_EXTENSION=false \
 	-v ${HOME}/go:/go \
 	-v $$(pwd):/grafana \
+	-v $$(pwd)/../grafana-enterprise:$$(pwd)/../grafana-enterprise \
 	-w $$(pwd)/pkg/api/docs quay.io/goswagger/swagger:$(SWAGGER_TAG) \
 	generate spec -m -o /grafana/public/api-spec.json \
 	-w /grafana/pkg/server \
@@ -52,7 +53,7 @@ $(SPEC_TARGET): $(API_DEFINITION_FILES) ## Generate API spec
 	-x "github.com/prometheus/alertmanager" \
 	-i /grafana/pkg/api/docs/tags.json
 
-swagger-api-spec: build-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
+swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET)
 
 $(NGALERT_SPEC_TARGET):
 	+$(MAKE) -C pkg/services/ngalert/api/tooling post.json
@@ -69,7 +70,7 @@ ensure_go-swagger_mac:
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/docs/tags.json
 
-swagger-api-spec-mac: build-go --swagger-api-spec-mac $(MERGED_SPEC_TARGET)
+swagger-api-spec-mac: gen-go --swagger-api-spec-mac $(MERGED_SPEC_TARGET)
 
 $(HTTP_API_DOCS_TARGET): swagger-api-spec ## Generate HTTP API markdown
 	docker run -it \
