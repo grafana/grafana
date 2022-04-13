@@ -17,13 +17,12 @@ import (
 const failedToDeleteMsg = "Failed to delete API key"
 
 type TokenDTO struct {
-	Id                     int64           `json:"id"`
-	Name                   string          `json:"name"`
-	Role                   models.RoleType `json:"role"`
-	Created                *time.Time      `json:"created"`
-	Expiration             *time.Time      `json:"expiration"`
-	SecondsUntilExpiration *float64        `json:"secondsUntilExpiration"`
-	HasExpired             bool            `json:"hasExpired"`
+	Id                     int64      `json:"id"`
+	Name                   string     `json:"name"`
+	Created                *time.Time `json:"created"`
+	Expiration             *time.Time `json:"expiration"`
+	SecondsUntilExpiration *float64   `json:"secondsUntilExpiration"`
+	HasExpired             bool       `json:"hasExpired"`
 }
 
 func hasExpired(expiration *int64) bool {
@@ -60,7 +59,6 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 			result[i] = &TokenDTO{
 				Id:                     t.Id,
 				Name:                   t.Name,
-				Role:                   t.Role,
 				Created:                &t.Created,
 				Expiration:             expiration,
 				SecondsUntilExpiration: &secondsUntilExpiration,
@@ -91,17 +89,13 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 		}
 	}
 
-	cmd := models.AddApiKeyCommand{}
+	cmd := serviceaccounts.AddServiceAccountTokenCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
 	// Force affected service account to be the one referenced in the URL
 	cmd.OrgId = c.OrgId
-
-	if !cmd.Role.IsValid() {
-		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
-	}
 
 	if api.cfg.ApiKeyMaxSecondsToLive != -1 {
 		if cmd.SecondsToLive == 0 {
