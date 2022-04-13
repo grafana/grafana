@@ -20,8 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/entityevents"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -363,9 +363,9 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	dashboard, err := hs.dashboardService.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)
 
 	if dashboard != nil {
-		if err := hs.entityEventsService.Save(ctx, entityevents.SaveActionCmd{
+		if err := hs.entityEventsService.SaveEvent(ctx, store.SaveActionCmd{
 			Grn:       fmt.Sprintf("database/dashboards/%d", dashboard.Id),
-			EventType: entityevents.EntityEventTypeUpdate,
+			EventType: store.EntityEventTypeUpdate,
 		}); err != nil {
 			hs.log.Warn("failed to save dashboard entity event", "uid", dashboard.Uid, "error", err)
 		}

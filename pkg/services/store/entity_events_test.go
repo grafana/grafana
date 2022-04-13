@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package entityevents
+package store
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 func TestEntityEventsService(t *testing.T) {
 
 	var ctx context.Context
-	var service Service
+	var service EntityEventsService
 
 	setup := func() {
 		service = &entityEventService{
@@ -29,7 +29,7 @@ func TestEntityEventsService(t *testing.T) {
 	t.Run("Should insert an entity event", func(t *testing.T) {
 		setup()
 
-		err := service.Save(ctx, SaveActionCmd{
+		err := service.SaveEvent(ctx, SaveActionCmd{
 			Grn:       "database/dash/1",
 			EventType: EntityEventTypeCreate,
 		})
@@ -39,7 +39,7 @@ func TestEntityEventsService(t *testing.T) {
 	t.Run("Should retrieve nil entity if database is empty", func(t *testing.T) {
 		setup()
 
-		ev, err := service.GetLast(ctx)
+		ev, err := service.GetLastEvent(ctx)
 		require.NoError(t, err)
 		require.Nil(t, ev)
 	})
@@ -48,23 +48,23 @@ func TestEntityEventsService(t *testing.T) {
 		setup()
 		lastEventGrn := "database/dash/1"
 
-		err := service.Save(ctx, SaveActionCmd{
+		err := service.SaveEvent(ctx, SaveActionCmd{
 			Grn:       "database/dash/3",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
-		err = service.Save(ctx, SaveActionCmd{
+		err = service.SaveEvent(ctx, SaveActionCmd{
 			Grn:       "database/dash/2",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
-		err = service.Save(ctx, SaveActionCmd{
+		err = service.SaveEvent(ctx, SaveActionCmd{
 			Grn:       lastEventGrn,
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
 
-		lastEv, err := service.GetLast(ctx)
+		lastEv, err := service.GetLastEvent(ctx)
 		require.NoError(t, err)
 		require.Equal(t, lastEventGrn, lastEv.Grn)
 	})
@@ -73,26 +73,26 @@ func TestEntityEventsService(t *testing.T) {
 		setup()
 		lastEventGrn := "database/dash/1"
 
-		err := service.Save(ctx, SaveActionCmd{
+		err := service.SaveEvent(ctx, SaveActionCmd{
 			Grn:       "database/dash/3",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
-		firstEv, err := service.GetLast(ctx)
+		firstEv, err := service.GetLastEvent(ctx)
 		firstEvId := firstEv.Id
 
-		err = service.Save(ctx, SaveActionCmd{
+		err = service.SaveEvent(ctx, SaveActionCmd{
 			Grn:       "database/dash/2",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
-		err = service.Save(ctx, SaveActionCmd{
+		err = service.SaveEvent(ctx, SaveActionCmd{
 			Grn:       lastEventGrn,
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
 
-		evs, err := service.GetAllAfter(ctx, firstEvId)
+		evs, err := service.GetAllEventsAfter(ctx, firstEvId)
 		require.NoError(t, err)
 		require.Len(t, evs, 2)
 		require.Equal(t, evs[0].Grn, "database/dash/2")
@@ -101,20 +101,20 @@ func TestEntityEventsService(t *testing.T) {
 
 	t.Run("Should delete old events", func(t *testing.T) {
 		setup()
-		_ = service.Save(ctx, SaveActionCmd{
+		_ = service.SaveEvent(ctx, SaveActionCmd{
 			Grn:       "database/dash/3",
 			EventType: EntityEventTypeCreate,
 		})
-		_ = service.Save(ctx, SaveActionCmd{
+		_ = service.SaveEvent(ctx, SaveActionCmd{
 			Grn:       "database/dash/2",
 			EventType: EntityEventTypeCreate,
 		})
-		_ = service.Save(ctx, SaveActionCmd{
+		_ = service.SaveEvent(ctx, SaveActionCmd{
 			Grn:       "database/dash/1",
 			EventType: EntityEventTypeCreate,
 		})
 
-		evs, err := service.GetAllAfter(ctx, 0)
+		evs, err := service.GetAllEventsAfter(ctx, 0)
 		require.NoError(t, err)
 		require.Len(t, evs, 3)
 
@@ -122,7 +122,7 @@ func TestEntityEventsService(t *testing.T) {
 		require.NoError(t, err)
 
 		// did not delete any events
-		evs, err = service.GetAllAfter(ctx, 0)
+		evs, err = service.GetAllEventsAfter(ctx, 0)
 		require.NoError(t, err)
 		require.Len(t, evs, 3)
 
@@ -131,7 +131,7 @@ func TestEntityEventsService(t *testing.T) {
 		require.NoError(t, err)
 
 		// deleted all events
-		evs, err = service.GetAllAfter(ctx, 0)
+		evs, err = service.GetAllEventsAfter(ctx, 0)
 		require.NoError(t, err)
 
 		// TODO: fix, delete does not work

@@ -1,4 +1,4 @@
-package entityevents
+package store
 
 import (
 	"context"
@@ -29,10 +29,10 @@ type SaveActionCmd struct {
 	EventType EntityEventType
 }
 
-/** EntityNotificationService is a temporary solution to support change notifications in an HA setup
+/** EntityEventsService is a temporary solution to support change notifications in an HA setup
 * With this service each system can query for any events that have happened since a fixed time
-*/
-type EntityNotificationService interface {
+ */
+type EntityEventsService interface {
 	SaveEvent(ctx context.Context, cmd SaveActionCmd) error
 	GetLastEvent(ctx context.Context) (*EntityEvent, error)
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*EntityEvent, error)
@@ -42,7 +42,7 @@ type EntityNotificationService interface {
 	deleteEventsOlderThan(ctx context.Context, duration time.Duration) error
 }
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) Service {
+func ProvideEntityEventsService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) EntityEventsService {
 	return &entityEventService{
 		sql: sqlStore,
 		log: log.New("entity-events"),
@@ -54,7 +54,7 @@ type entityEventService struct {
 	log log.Logger
 }
 
-func (e entityEventService) Save(ctx context.Context, cmd SaveActionCmd) error {
+func (e entityEventService) SaveEvent(ctx context.Context, cmd SaveActionCmd) error {
 	return e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Insert(&EntityEvent{
 			EventType: cmd.EventType,
@@ -65,7 +65,7 @@ func (e entityEventService) Save(ctx context.Context, cmd SaveActionCmd) error {
 	})
 }
 
-func (e entityEventService) GetLast(ctx context.Context) (*EntityEvent, error) {
+func (e entityEventService) GetLastEvent(ctx context.Context) (*EntityEvent, error) {
 	var entityEvent *EntityEvent
 	err := e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		bean := &EntityEvent{}
@@ -79,7 +79,7 @@ func (e entityEventService) GetLast(ctx context.Context) (*EntityEvent, error) {
 	return entityEvent, err
 }
 
-func (e entityEventService) GetAllAfter(ctx context.Context, id int64) ([]*EntityEvent, error) {
+func (e entityEventService) GetAllEventsAfter(ctx context.Context, id int64) ([]*EntityEvent, error) {
 	var evs = make([]*EntityEvent, 0)
 	err := e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		return sess.OrderBy("id asc").Where("id > ?", id).Find(&evs)

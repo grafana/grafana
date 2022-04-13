@@ -40,7 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/encryption"
-	"github.com/grafana/grafana/pkg/services/entityevents"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/ldap"
@@ -150,7 +149,7 @@ type HTTPServer struct {
 	DashboardsnapshotsService    *dashboardsnapshots.Service
 	PluginSettings               *pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
-	entityEventsService          entityevents.Service
+	entityEventsService          store.EntityEventsService
 }
 
 type ServerOptions struct {
@@ -182,7 +181,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
 	dashboardsnapshotsService *dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings *pluginSettings.Service,
-	avatarCacheServer *avatar.AvatarCacheServer, entityEventsService entityevents.Service,
+	avatarCacheServer *avatar.AvatarCacheServer, entityEventsService store.EntityEventsService,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
