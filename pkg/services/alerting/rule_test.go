@@ -97,7 +97,7 @@ func TestAlertRuleModel(t *testing.T) {
 	require.Nil(t, err)
 
 	t.Run("Testing alert rule with notification id and uid", func(t *testing.T) {
-		settingsRawJSON := `
+		json := `
 				{
 					"name": "name2",
 					"description": "desc2",
@@ -118,7 +118,7 @@ func TestAlertRuleModel(t *testing.T) {
 				}
 				`
 
-		settingsJSON, jsonErr := simplejson.NewJson([]byte(settingsRawJSON))
+		alertJSON, jsonErr := simplejson.NewJson([]byte(json))
 		require.Nil(t, jsonErr)
 
 		alert := &models.Alert{
@@ -127,7 +127,7 @@ func TestAlertRuleModel(t *testing.T) {
 			DashboardId: 1,
 			PanelId:     1,
 
-			Settings: settingsJSON,
+			Settings: alertJSON,
 		}
 
 		alertRule, err := NewRuleFromDBAlert(context.Background(), sqlStore, alert, false)

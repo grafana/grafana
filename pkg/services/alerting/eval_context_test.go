@@ -345,7 +345,7 @@ func TestEvaluateNotificationTemplateFields(t *testing.T) {
 	tests := []struct {
 		name            string
 		evalMatches     []*EvalMatch
-		allSeries       []*EvalMatch
+		allMatches      []*EvalMatch
 		expectedName    string
 		expectedMessage string
 	}{
@@ -393,7 +393,7 @@ func TestEvaluateNotificationTemplateFields(t *testing.T) {
 		t.Run(test.name, func(tt *testing.T) {
 			evalContext := NewEvalContext(context.Background(), &Rule{Name: "Rule name: ${value1}", Message: "Rule message: ${value2}", Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil)
 			evalContext.EvalMatches = test.evalMatches
-			evalContext.AllSeries = test.allSeries
+			evalContext.AllMatches = test.allMatches
 
 			err := evalContext.evaluateNotificationTemplateFields()
 

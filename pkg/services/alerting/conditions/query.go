@@ -56,8 +56,11 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler lega
 
 	emptySeriesCount := 0
 	evalMatchCount := 0
+
+	// matches represents all the series that violate the alert condition
 	var matches []*alerting.EvalMatch
-	var allSeries []*alerting.EvalMatch
+	// allMatches capture all evaluation matches irregardless on whether the condition is met or not
+	var allMatches []*alerting.EvalMatch
 
 	for _, series := range seriesList {
 		reducedValue := c.Reducer.Reduce(series)
@@ -79,7 +82,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler lega
 			Tags:   series.Tags,
 		}
 
-		allSeries = append(allSeries, &em)
+		allMatches = append(allMatches, &em)
 
 		if evalMatch {
 			evalMatchCount++
@@ -109,7 +112,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler lega
 		NoDataFound: emptySeriesCount == len(seriesList),
 		Operator:    c.Operator,
 		EvalMatches: matches,
-		AllSeries:   allSeries,
+		AllMatches:  allMatches,
 	}, nil
 }
 
