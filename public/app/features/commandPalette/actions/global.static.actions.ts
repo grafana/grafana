@@ -3,7 +3,7 @@ import { NavModelItem } from '@grafana/data';
 import { Action, Priority } from 'kbar';
 
 export default (navBarTree: NavModelItem[]) => {
-  let globalActions: Action[] = [
+  const globalActions: Action[] = [
     {
       id: 'go/search',
       name: 'Go to dashboard search',
@@ -139,7 +139,7 @@ export default (navBarTree: NavModelItem[]) => {
     },
   ];
 
-  let navBarActions: Action[] = [];
+  const navBarActions: Action[] = [];
 
   navBarActionMap.forEach((navBarAction) => {
     const navBarItem = navBarTree.find((navBarItem) => navBarItem.url === navBarAction.url);

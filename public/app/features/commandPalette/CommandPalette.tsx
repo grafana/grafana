@@ -62,19 +62,17 @@ export const CommandPalette = () => {
     }
   }, [showing]);
 
-  useRegisterActions(!query ? [] : actions, [actions, query]);
+  useRegisterActions(actions, [actions]);
 
   return (
-    <>
-      <KBarPortal>
-        <KBarPositioner className={styles.positioner}>
-          <KBarAnimator className={styles.animator}>
-            <KBarSearch className={styles.search} />
-            <RenderResults />
-          </KBarAnimator>
-        </KBarPositioner>
-      </KBarPortal>
-    </>
+    <KBarPortal>
+      <KBarPositioner className={styles.positioner}>
+        <KBarAnimator className={styles.animator}>
+          <KBarSearch className={styles.search} />
+          <RenderResults />
+        </KBarAnimator>
+      </KBarPositioner>
+    </KBarPortal>
   );
 };
 
@@ -112,15 +110,6 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
       background: theme.components.overlay.background,
       backdropFilter: 'blur(1px)',
     },
-  }),
-  backdrop: css({
-    position: 'fixed',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    background: theme.colors.background.canvas,
-    opacity: '0.7',
   }),
   animator: css({
     maxWidth: theme.breakpoints.values.sm, // supposed to be 600...

@@ -36,7 +36,7 @@ export const ResultItem = React.forwardRef(
     return (
       <div ref={ref} className={styles.row}>
         <div className={styles.actionContainer}>
-          {action.icon && action.icon}
+          {action.icon}
           <div className={styles.textContainer}>
             <div>
               {ancestors.length > 0 &&

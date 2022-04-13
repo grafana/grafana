@@ -51,7 +51,7 @@ export const ExploreActions: FC<Props> = ({ exploreIdLeft, exploreIdRight }: Pro
           name: 'Close split view left',
           keywords: 'split',
           perform: () => {
-            dispatch(splitClose(exploreIdRight));
+            dispatch(splitClose(exploreIdLeft));
           },
           section: exploreSection,
         });
