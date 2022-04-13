@@ -28,7 +28,7 @@ Grafana supports two ways of specifying both the `certificate` and `private_key`
 
 ### **Example** of how to generate SAML credentials:
 
-An example of how to generate a self-signed certificate and private key thats valid for one year:
+An example of how to generate a self-signed certificate and private key that's valid for one year:
 
 ```sh
 $ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes​
