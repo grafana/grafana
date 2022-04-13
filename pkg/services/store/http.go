@@ -46,9 +46,8 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 
 func (s *httpStorage) Read(c *models.ReqContext) response.Response {
 	// full path is api/storage/read/upload/example.jpg, but we only want the part after read
-	indexOfPath := strings.Index(c.Req.RequestURI, "read") + 4
-	path := c.Req.RequestURI[indexOfPath:]
-	file, err := s.store.Read(c.Req.Context(), c.SignedInUser, path)
+	scope, path := getPathAndScope(c)
+	file, err := s.store.Read(c.Req.Context(), c.SignedInUser, scope+"/"+path)
 	if err != nil {
 		return response.Error(400, "cannot call read", err)
 	}
@@ -61,9 +60,8 @@ func (s *httpStorage) Read(c *models.ReqContext) response.Response {
 
 func (s *httpStorage) Delete(c *models.ReqContext) response.Response {
 	// full path is api/storage/delete/upload/example.jpg, but we only want the part after upload
-	indexOfPath := strings.Index(c.Req.RequestURI, "upload") + 6
-	path := c.Req.RequestURI[indexOfPath:]
-	err := s.store.Delete(c.Req.Context(), c.SignedInUser, path)
+	_, path := getPathAndScope(c)
+	err := s.store.Delete(c.Req.Context(), c.SignedInUser, "/"+path)
 	if err != nil {
 		return response.Error(400, "cannot call delete", err)
 	}
