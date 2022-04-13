@@ -10,6 +10,7 @@ import (
 type Service interface {
 	CreateServiceAccount(ctx context.Context, orgID int64, name string) (*ServiceAccountDTO, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
+	RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error)
 }
 
 type Store interface {
@@ -19,6 +20,7 @@ type Store interface {
 	UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64,
 		saForm *UpdateServiceAccountForm) (*ServiceAccountProfileDTO, error)
 	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*ServiceAccountProfileDTO, error)
+	RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
 	UpgradeServiceAccounts(ctx context.Context) error
 	ConvertToServiceAccounts(ctx context.Context, keys []int64) error
