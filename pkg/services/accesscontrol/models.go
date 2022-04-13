@@ -92,7 +92,6 @@ func (r *RoleDTO) LogID() string {
 		return fmt.Sprintf("[%s RoleUID:%v]", org, r.UID)
 	}
 	return fmt.Sprintf("[%s Role:%v]", org, r.Name)
-
 }
 
 func (r *RoleDTO) Role() Role {
