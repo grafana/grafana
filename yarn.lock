@@ -4018,7 +4018,7 @@ __metadata:
     history: 4.10.1
     lodash: 4.17.21
     marked: 4.0.12
-    moment: 2.29.1
+    moment: 2.29.2
     moment-timezone: 0.5.34
     ol: 6.14.1
     papaparse: 5.3.2
@@ -4440,7 +4440,7 @@ __metadata:
     lodash: 4.17.21
     memoize-one: 6.0.0
     mock-raf: 1.0.1
-    moment: 2.29.1
+    moment: 2.29.2
     monaco-editor: ^0.31.1
     ol: 6.14.1
     postcss: 8.4.12
@@ -4614,7 +4614,7 @@ __metadata:
     lodash: 4.17.21
     lru-memoize: ^1.1.0
     memoize-one: 6.0.0
-    moment: 2.29.1
+    moment: 2.29.2
     moment-timezone: 0.5.34
     prop-types: 15.8.1
     react: 17.0.2
@@ -20605,7 +20605,7 @@ __metadata:
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.6.0
     minisearch: 5.0.0-beta1
-    moment: 2.29.1
+    moment: 2.29.2
     moment-timezone: 0.5.34
     monaco-editor: ^0.31.1
     monaco-promql: ^1.7.2
@@ -26255,7 +26255,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment@npm:2.29.1, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1":
+"moment@npm:2.29.2":
+  version: 2.29.2
+  resolution: "moment@npm:2.29.2"
+  checksum: ee850b5776485e2af0775ceb3cfebaa7d7638f0a750fe0678fcae24c310749f96c1938808384bd422a55e5703834a71fcb09c8a1d36d9cf847f6ed0205d7a3e5
+  languageName: node
+  linkType: hard
+
+"moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1":
   version: 2.29.1
   resolution: "moment@npm:2.29.1"
   checksum: 1e14d5f422a2687996be11dd2d50c8de3bd577c4a4ca79ba5d02c397242a933e5b941655de6c8cb90ac18f01cc4127e55b4a12ae3c527a6c0a274e455979345e

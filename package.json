@@ -325,7 +325,7 @@
     "lru-cache": "7.7.1",
     "memoize-one": "6.0.0",
     "minisearch": "5.0.0-beta1",
-    "moment": "2.29.1",
+    "moment": "2.29.2",
     "moment-timezone": "0.5.34",
     "monaco-editor": "^0.31.1",
     "monaco-promql": "^1.7.2",
