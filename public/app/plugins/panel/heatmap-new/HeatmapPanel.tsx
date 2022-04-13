@@ -18,7 +18,7 @@ import { quantizeScheme } from './palettes';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
-import { ColorScale } from './ColorScale';
+import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -114,7 +114,9 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
-        <ColorScale hoverValue={hoverValue} colorPalette={palette} min={min} max={max} display={display} />
+        <div className={styles.colorScaleWrapper}>
+          <ColorScale hoverValue={hoverValue} colorPalette={palette} min={min} max={max} display={display} />
+        </div>
       </VizLayout.Legend>
     );
   };
@@ -156,5 +158,9 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   closeButtonSpacer: css`
     margin-bottom: 15px;
+  `,
+  colorScaleWrapper: css`
+    margin-left: 25px;
+    padding: 10px 0;
   `,
 });

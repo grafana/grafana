@@ -15,7 +15,7 @@ import { heatmapChangedHandler } from './migrations';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 import { colorSchemes, quantizeScheme } from './palettes';
 import { config } from '@grafana/runtime';
-import { ColorScale } from './ColorScale';
+import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
   .useFieldConfig()
