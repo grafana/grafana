@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -71,7 +70,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	pluginStore plugins.Store, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
 	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles,
-	bus bus.Bus, accessControl accesscontrol.AccessControl) (*GrafanaLive, error) {
+	accessControl accesscontrol.AccessControl) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		Features:              toggles,
@@ -83,7 +82,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		SQLStore:              sqlStore,
 		SecretsService:        secretsService,
 		queryDataService:      queryDataService,
-		bus:                   bus,
 		channels:              make(map[string]models.ChannelHandler),
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]models.ChannelHandlerFactory),
@@ -408,7 +406,6 @@ type GrafanaLive struct {
 	SecretsService        secrets.Service
 	pluginStore           plugins.Store
 	queryDataService      *query.Service
-	bus                   bus.Bus
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller

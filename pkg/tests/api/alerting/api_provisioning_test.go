@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -28,8 +27,6 @@ func TestProvisioning(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
 
 	// Create a users to make authenticated requests
 	createUser(t, store, models.CreateUserCommand{
