@@ -6,7 +6,6 @@ load(
     'gen_version_step',
     'wire_install_step',
     'yarn_install_step',
-    'initialize_step',
     'lint_drone_step',
     'lint_backend_step',
     'lint_frontend_step',

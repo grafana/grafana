@@ -1980,15 +1980,24 @@ platform:
 services: []
 steps:
 - commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
-  name: identify-runner
-- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.34/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15
+  name: identify-runner
+- commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout ${DRONE_TAG}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.5.3
+  name: clone-enterprise
 - commands:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
@@ -1996,13 +2005,31 @@ steps:
   image: grafana/build-container:1.5.3
   name: gen-version
 - commands:
+  - mv bin/grabpl /tmp/
+  - rmdir bin
+  - mv grafana-enterprise /tmp/
+  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
+    ${DRONE_TAG}
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
+  - mkdir bin
+  - mv /tmp/grabpl bin/
+  depends_on:
+  - clone-enterprise
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.5.3
+  name: initialize
+- commands:
   - make gen-go
+  depends_on:
+  - clone-enterprise
   image: grafana/build-container:1.5.3
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
-  - grabpl
+  - clone-enterprise
   image: grafana/build-container:1.5.3
   name: yarn-install
 - commands:
@@ -2326,15 +2353,24 @@ platform:
 services: []
 steps:
 - commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
-  name: identify-runner
-- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.34/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15
+  name: identify-runner
+- commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout ${DRONE_TAG}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.5.3
+  name: clone-enterprise
 - commands:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
@@ -2342,13 +2378,31 @@ steps:
   image: grafana/build-container:1.5.3
   name: gen-version
 - commands:
+  - mv bin/grabpl /tmp/
+  - rmdir bin
+  - mv grafana-enterprise /tmp/
+  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
+    ${DRONE_TAG}
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
+  - mkdir bin
+  - mv /tmp/grabpl bin/
+  depends_on:
+  - clone-enterprise
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.5.3
+  name: initialize
+- commands:
   - make gen-go
+  depends_on:
+  - clone-enterprise
   image: grafana/build-container:1.5.3
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
-  - grabpl
+  - clone-enterprise
   image: grafana/build-container:1.5.3
   name: yarn-install
 - commands:
@@ -3643,15 +3697,24 @@ platform:
 services: []
 steps:
 - commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
-  name: identify-runner
-- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.34/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15
+  name: identify-runner
+- commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout ${DRONE_BRANCH}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.5.3
+  name: clone-enterprise
 - commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
@@ -3659,13 +3722,28 @@ steps:
   image: grafana/build-container:1.5.3
   name: gen-version
 - commands:
+  - mv bin/grabpl /tmp/
+  - rmdir bin
+  - mv grafana-enterprise /tmp/
+  - /tmp/grabpl init-enterprise  /tmp/grafana-enterprise
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
+  - mkdir bin
+  - mv /tmp/grabpl bin/
+  depends_on:
+  - clone-enterprise
+  environment: {}
+  image: grafana/build-container:1.5.3
+  name: initialize
+- commands:
   - make gen-go
+  depends_on:
+  - clone-enterprise
   image: grafana/build-container:1.5.3
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
-  - grabpl
+  - clone-enterprise
   image: grafana/build-container:1.5.3
   name: yarn-install
 - commands:
@@ -3980,15 +4058,24 @@ platform:
 services: []
 steps:
 - commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
-  name: identify-runner
-- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.34/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15
+  name: identify-runner
+- commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout ${DRONE_BRANCH}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.5.3
+  name: clone-enterprise
 - commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
@@ -3996,13 +4083,28 @@ steps:
   image: grafana/build-container:1.5.3
   name: gen-version
 - commands:
+  - mv bin/grabpl /tmp/
+  - rmdir bin
+  - mv grafana-enterprise /tmp/
+  - /tmp/grabpl init-enterprise  /tmp/grafana-enterprise
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
+  - mkdir bin
+  - mv /tmp/grabpl bin/
+  depends_on:
+  - clone-enterprise
+  environment: {}
+  image: grafana/build-container:1.5.3
+  name: initialize
+- commands:
   - make gen-go
+  depends_on:
+  - clone-enterprise
   image: grafana/build-container:1.5.3
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
-  - grabpl
+  - clone-enterprise
   image: grafana/build-container:1.5.3
   name: yarn-install
 - commands:
@@ -4421,6 +4523,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 073dc1b6a9c40aa86c1e63ff541984f93a2441df80fddea99428886a6a6d572d
+hmac: 4ee5fac75c6385ec1dc82aa1bff1f17bc80bfd53fffae773ede76d6ad0b34868
 
 ...

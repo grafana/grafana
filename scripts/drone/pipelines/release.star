@@ -1,10 +1,12 @@
 load(
     'scripts/drone/steps/lib.star',
     'disable_tests',
+    'clone_enterprise_step',
     'download_grabpl_step',
     'gen_version_step',
     'yarn_install_step',
     'wire_install_step',
+    'init_enterprise_step',
     'lint_drone_step',
     'build_image',
     'identify_runner_step',
@@ -293,7 +295,23 @@ def get_enterprise_pipelines(trigger, ver_mode):
     edition = 'enterprise'
     services = integration_test_services(edition=edition)
     volumes = integration_test_services_volumes()
-    init_steps, test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
+    _, test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
+    init_steps = [
+        download_grabpl_step(),
+        identify_runner_step(),
+        clone_enterprise_step(ver_mode),
+        gen_version_step(ver_mode),
+        init_enterprise_step(ver_mode)
+    ]
+    deps_on_clone_enterprise_step = {
+        'depends_on': [
+            'clone-enterprise',
+        ]
+    }
+    for step in [wire_install_step(), yarn_install_step()]:
+        step.update(deps_on_clone_enterprise_step)
+        init_steps.extend([step])
+
     windows_pipeline = pipeline(
         name='enterprise-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
         steps=[identify_runner_step('windows')] + windows_package_steps,

@@ -31,76 +31,6 @@ def slack_step(channel, template, secret):
     }
 
 
-def initialize_step(edition, platform, ver_mode, is_downstream=False):
-    common_cmds = [
-        # Generate Go code, will install Wire
-        # TODO: Install Wire in Docker image instead
-        'make gen-go',
-    ]
-
-    if ver_mode == 'release':
-        common_cmds.append('./bin/grabpl verify-version ${DRONE_TAG}')
-
-    identify_runner = identify_runner_step(platform)
-
-    if edition in ('enterprise', 'enterprise2'):
-        source_commit = ''
-        if ver_mode == 'release':
-            committish = '${DRONE_TAG}'
-            source_commit = ' ${DRONE_TAG}'
-            environment = {
-                'GITHUB_TOKEN': from_secret(github_token),
-            }
-            token = "--github-token $${GITHUB_TOKEN}"
-        elif ver_mode == 'release-branch':
-            committish = '${DRONE_BRANCH}'
-            environment = {}
-            token = ""
-        else:
-            environment = {}
-            if is_downstream:
-                source_commit = ' $${SOURCE_COMMIT}'
-            committish = '${DRONE_COMMIT}'
-            token = ""
-        steps = [
-            identify_runner,
-            clone_enterprise(committish),
-            {
-                'name': 'initialize',
-                'image': build_image,
-                'depends_on': [
-                    'clone-enterprise',
-                ],
-                'environment': environment,
-                'commands': [
-                                'mv bin/grabpl /tmp/',
-                                'rmdir bin',
-                                'mv grafana-enterprise /tmp/',
-                                '/tmp/grabpl init-enterprise {} /tmp/grafana-enterprise{}'.format(token, source_commit),
-                                'mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json',
-                                'mkdir bin',
-                                'mv /tmp/grabpl bin/'
-                            ] + common_cmds,
-            },
-        ]
-
-        return steps
-
-    steps = [
-        identify_runner,
-        {
-            'name': 'initialize',
-            'image': build_image,
-            'commands': common_cmds,
-            'depends_on': [
-                'gen-version',
-            ]
-        },
-    ]
-
-    return steps
-
-
 def gen_version_step(ver_mode, is_downstream=False):
     if ver_mode == 'release':
         args = '${DRONE_TAG}'
@@ -164,7 +94,13 @@ def identify_runner_step(platform='linux'):
         }
 
 
-def clone_enterprise(committish):
+def clone_enterprise_step(ver_mode):
+    if ver_mode == 'release':
+        committish = '${DRONE_TAG}'
+    elif ver_mode == 'release-branch':
+        committish = '${DRONE_BRANCH}'
+    else:
+        committish = '${DRONE_COMMIT}'
     return {
         'name': 'clone-enterprise',
         'image': build_image,
@@ -175,6 +111,38 @@ def clone_enterprise(committish):
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
             'cd grafana-enterprise',
             'git checkout {}'.format(committish),
+        ],
+    }
+
+def init_enterprise_step(ver_mode):
+    source_commit = ''
+    if ver_mode == 'release':
+        source_commit = ' ${DRONE_TAG}'
+        environment = {
+            'GITHUB_TOKEN': from_secret(github_token),
+        }
+        token = "--github-token $${GITHUB_TOKEN}"
+    elif ver_mode == 'release-branch':
+        environment = {}
+        token = ""
+    else:
+        environment = {}
+        token = ""
+    return {
+        'name': 'initialize',
+        'image': build_image,
+        'depends_on': [
+            'clone-enterprise',
+        ],
+        'environment': environment,
+        'commands': [
+            'mv bin/grabpl /tmp/',
+            'rmdir bin',
+            'mv grafana-enterprise /tmp/',
+            '/tmp/grabpl init-enterprise {} /tmp/grafana-enterprise{}'.format(token, source_commit),
+            'mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json',
+            'mkdir bin',
+            'mv /tmp/grabpl bin/'
         ],
     }
 
