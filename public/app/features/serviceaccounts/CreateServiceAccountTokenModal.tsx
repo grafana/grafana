@@ -21,7 +21,7 @@ const EXPIRATION_OPTIONS = [
   { label: 'Set expiration date', value: true },
 ];
 
-type ServiceAccountToken = {
+export type ServiceAccountToken = {
   name: string;
   secondsToLive: number;
 };
