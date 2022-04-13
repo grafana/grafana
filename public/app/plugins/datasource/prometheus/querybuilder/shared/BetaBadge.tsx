@@ -16,6 +16,8 @@ export function BetaBadge({ feedbackUrl }: Props) {
         href={feedbackUrl}
         className={styles.link}
         title="This query builder is new, please let us know how we can improve it"
+        target="_blank"
+        rel="noreferrer noopener"
       >
         <Icon name="comment-alt-message" /> Give feedback
       </a>

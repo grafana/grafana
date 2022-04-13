@@ -90,7 +90,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
           </>
         )}
         {editorMode === QueryEditorMode.Builder && (
-          <BetaBadge feedbackUrl="https://github.com/grafana/grafana/pull/47653" />
+          <BetaBadge feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />
         )}
         <FlexItem grow={1} />
         <Button
