@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -151,7 +150,6 @@ func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePat
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
-			Bus:              bus.GetBus(),
 			AuthTokenService: fakeAuthTokenService,
 			SQLStore:         sqlStore,
 		}
@@ -179,7 +177,6 @@ func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePatte
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
-			Bus:              bus.GetBus(),
 			AuthTokenService: fakeAuthTokenService,
 			SQLStore:         sqlStore,
 		}
@@ -204,7 +201,6 @@ func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePatte
 func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId int64, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(desc, func(t *testing.T) {
 		hs := HTTPServer{
-			Bus:              bus.GetBus(),
 			AuthTokenService: auth.NewFakeUserAuthTokenService(),
 			SQLStore:         sqlStore,
 		}
@@ -231,7 +227,6 @@ func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd models.R
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
-			Bus:              bus.GetBus(),
 			AuthTokenService: fakeAuthTokenService,
 			SQLStore:         sqlStore,
 		}
@@ -257,7 +252,6 @@ func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *models.
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
-			Bus:              bus.GetBus(),
 			AuthTokenService: fakeAuthTokenService,
 			SQLStore:         sqlStore,
 		}
