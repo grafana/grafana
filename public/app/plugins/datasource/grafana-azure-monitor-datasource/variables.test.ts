@@ -270,7 +270,9 @@ describe('VariableSupport', () => {
           azureLogAnalyticsDatasource: {
             defaultSubscriptionId: 'defaultSubscriptionId',
           },
-          getMetricNamespaces: jest.fn().mockResolvedValueOnce(expectedResults),
+          azureMonitorDatasource: {
+            getMetricNamespaces: jest.fn().mockResolvedValueOnce(expectedResults),
+          },
         })
       );
       const mockRequest = {
@@ -296,7 +298,9 @@ describe('VariableSupport', () => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
-          getMetricNamespaces: jest.fn().mockResolvedValueOnce(expectedResults),
+          azureMonitorDatasource: {
+            getMetricNamespaces: jest.fn().mockResolvedValueOnce(expectedResults),
+          },
         })
       );
       const mockRequest = {
@@ -325,7 +329,9 @@ describe('VariableSupport', () => {
           azureLogAnalyticsDatasource: {
             defaultSubscriptionId: 'defaultSubscriptionId',
           },
-          getMetricNames: jest.fn().mockResolvedValueOnce(expectedResults),
+          azureMonitorDatasource: {
+            getMetricNames: jest.fn().mockResolvedValueOnce(expectedResults),
+          },
         })
       );
       const mockRequest = {
@@ -351,7 +357,9 @@ describe('VariableSupport', () => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
-          getMetricNames: jest.fn().mockResolvedValueOnce(expectedResults),
+          azureMonitorDatasource: {
+            getMetricNames: jest.fn().mockResolvedValueOnce(expectedResults),
+          },
         })
       );
       const mockRequest = {

@@ -236,102 +236,60 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     });
   }
 
-  getMetricNamespaces(subscriptionId: string, resourceGroup: string, metricDefinition: string, resourceName: string) {
+  getMetricNamespaces(
+    query:
+      | { resourceUri: string }
+      | { subscription: string; resourceGroup: string; metricDefinition: string; resourceName: string }
+  ) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
       this.resourcePath,
-      subscriptionId,
-      resourceGroup,
-      metricDefinition,
-      resourceName,
-      this.apiPreviewVersion
+      this.apiPreviewVersion,
+      this.replaceTemplateVariables(query)
     );
-
-    return this.getResource(url).then((result: any) => {
-      return ResponseParser.parseResponseValues(result, 'name', 'properties.metricNamespaceName');
-    });
-  }
-
-  newGetMetricNamespaces(resourceUri: string) {
-    const templateSrv = getTemplateSrv();
-    const url = UrlBuilder.newBuildAzureMonitorGetMetricNamespacesUrl(
-      this.resourcePath,
-      templateSrv.replace(resourceUri),
-      this.apiPreviewVersion
-    );
-
     return this.getResource(url).then((result: AzureMonitorMetricNamespacesResponse) => {
       return ResponseParser.parseResponseValues(result, 'name', 'properties.metricNamespaceName');
     });
   }
 
   getMetricNames(
-    subscriptionId: string,
-    resourceGroup: string,
-    metricDefinition: string,
-    resourceName: string,
-    metricNamespace: string
+    query:
+      | { resourceUri: string; metricNamespace: string }
+      | {
+          subscription: string;
+          resourceGroup: string;
+          metricDefinition: string;
+          resourceName: string;
+          metricNamespace: string;
+        }
   ) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
-      subscriptionId,
-      resourceGroup,
-      metricDefinition,
-      resourceName,
-      metricNamespace,
-      this.apiVersion
+      this.apiVersion,
+      this.replaceTemplateVariables(query)
     );
-
-    return this.getResource(url).then((result: any) => {
-      return ResponseParser.parseResponseValues(result, 'name.localizedValue', 'name.value');
-    });
-  }
-
-  newGetMetricNames(resourceUri: string, metricNamespace: string) {
-    const templateSrv = getTemplateSrv();
-    const url = UrlBuilder.newBuildAzureMonitorGetMetricNamesUrl(
-      this.resourcePath,
-      templateSrv.replace(resourceUri),
-      templateSrv.replace(metricNamespace),
-      this.apiVersion
-    );
-
     return this.getResource(url).then((result: AzureMonitorMetricNamesResponse) => {
       return ResponseParser.parseResponseValues(result, 'name.localizedValue', 'name.value');
     });
   }
 
   getMetricMetadata(
-    subscriptionId: string,
-    resourceGroup: string,
-    metricDefinition: string,
-    resourceName: string,
-    metricNamespace: string,
-    metricName: string
+    query:
+      | { resourceUri: string; metricNamespace: string; metricName: string }
+      | {
+          subscription: string;
+          resourceGroup: string;
+          metricDefinition: string;
+          resourceName: string;
+          metricNamespace: string;
+          metricName: string;
+        }
   ) {
+    const { metricName } = query;
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
-      subscriptionId,
-      resourceGroup,
-      metricDefinition,
-      resourceName,
-      metricNamespace,
-      this.apiVersion
+      this.apiVersion,
+      this.replaceTemplateVariables(query)
     );
-
-    return this.getResource(url).then((result: any) => {
-      return ResponseParser.parseMetadata(result, metricName);
-    });
-  }
-
-  newGetMetricMetadata(resourceUri: string, metricNamespace: string, metricName: string) {
-    const templateSrv = getTemplateSrv();
-    const url = UrlBuilder.newBuildAzureMonitorGetMetricNamesUrl(
-      this.resourcePath,
-      templateSrv.replace(resourceUri),
-      templateSrv.replace(metricNamespace),
-      this.apiVersion
-    );
-
     return this.getResource(url).then((result: AzureMonitorMetricsMetadataResponse) => {
       return ResponseParser.parseMetadata(result, metricName);
     });
@@ -397,5 +355,17 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
   private isValidConfigField(field?: string): boolean {
     return typeof field === 'string' && field.length > 0;
+  }
+
+  private replaceTemplateVariables<T extends Record<string, string>>(query: T) {
+    const templateSrv = getTemplateSrv();
+
+    const workingQuery: { [K in keyof T]: string } = { ...query };
+    const keys: Array<keyof T> = Object.keys(query);
+    keys.forEach((key) => {
+      workingQuery[key] = templateSrv.replace(workingQuery[key]);
+    });
+
+    return workingQuery;
   }
 }
