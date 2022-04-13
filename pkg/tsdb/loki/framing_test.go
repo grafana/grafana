@@ -22,9 +22,9 @@ import (
 // but i wanted to test for all of them, to be sure.
 
 func TestSuccessResponse(t *testing.T) {
-	matrixQuery := lokiQuery{Expr: "up(ALERTS)", Step: time.Second * 42, QueryType: QueryTypeRange}
-	vectorQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeInstant}
-	streamsQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeRange}
+	matrixQuery := lokiQuery{Expr: "up(ALERTS)", Step: time.Second * 42, QueryType: QueryTypeRange, Direction: DirectionBackward}
+	vectorQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeInstant, Direction: DirectionBackward}
+	streamsQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeRange, Direction: DirectionBackward}
 
 	tt := []struct {
 		name     string

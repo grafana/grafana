@@ -25,9 +25,26 @@ func newLokiAPI(client *http.Client, url string, log log.Logger) *LokiAPI {
 	return &LokiAPI{client: client, url: url, log: log}
 }
 
+func toLokiDirection(direction Direction) (string, error) {
+	switch direction {
+	case "backward":
+		return "BACKWARD", nil
+	case "forward":
+		return "FORWARD", nil
+	default:
+		return "", fmt.Errorf("invalid direction: %v", direction)
+	}
+}
+
 func makeRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.Request, error) {
 	qs := url.Values{}
 	qs.Set("query", query.Expr)
+
+	direction, err := toLokiDirection(query.Direction)
+	if err != nil {
+		return nil, err
+	}
+	qs.Set("direction", direction)
 
 	// MaxLines defaults to zero when not received,
 	// and Loki does not like limit=0, even when it is not needed
