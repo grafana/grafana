@@ -112,7 +112,7 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 		a.resultNormal(alertRule, result)
 		return
 	default:
-		a.Error = fmt.Errorf("cannot map error to a state because option [%s] is not supported. original error: %w", alertRule.ExecErrState, a.Error)
+		a.Error = fmt.Errorf("cannot map error to a state because option [%s] is not supported. evaluation error: %w", alertRule.ExecErrState, a.Error)
 	}
 
 	switch a.State {
