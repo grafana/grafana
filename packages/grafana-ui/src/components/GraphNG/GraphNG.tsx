@@ -257,7 +257,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart
             config={config}
-            data={alignedData}
+            data={alignedData!}
             width={vizWidth}
             height={vizHeight}
             timeRange={timeRange}
