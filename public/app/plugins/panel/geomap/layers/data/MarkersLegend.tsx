@@ -8,6 +8,7 @@ import { getThresholdItems } from 'app/plugins/panel/state-timeline/utils';
 import { getMinMaxAndDelta } from '@grafana/data/src/field/scale';
 import SVG from 'react-inlinesvg';
 import { StyleConfigState } from '../../style/types';
+import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 
 export interface MarkersLegendProps {
   size?: DimensionSupplier<number>;
@@ -48,7 +49,6 @@ export function MarkersLegend(props: MarkersLegendProps) {
     return <></>;
   }
 
-  const fmt = (v: any) => `${formattedValueToString(colorField.display!(v))}`;
   const colorMode = getFieldColorModeForField(colorField);
 
   if (colorMode.isContinuous && colorMode.getColors) {
@@ -65,15 +65,15 @@ export function MarkersLegend(props: MarkersLegendProps) {
     //   ]
     // })
 
+    const display = colorField.display ? (v: number) => formattedValueToString(colorField.display!(v)) : (v: number) => `${v}`;
     return (
       <>
-        <Label>{colorField?.name}</Label>
-        <div
-          className={style.gradientContainer}
-          style={{ backgroundImage: `linear-gradient(to right, ${colors.map((c) => c).join(', ')}` }}
-        >
-          <div style={{ color: theme.colors.getContrastText(colors[0]) }}>{fmt(colorRange.min)}</div>
-          <div style={{ color: theme.colors.getContrastText(colors[colors.length - 1]) }}>{fmt(colorRange.max)}</div>
+        <div className={style.labelsWrapper}>
+          <Label>{layerName}</Label>
+          <Label>{colorField?.name}</Label>
+        </div>
+        <div className={style.colorScaleWrapper}>
+          <ColorScale colorPalette={colors} min={colorRange.min as number} max={colorRange.max as number} display={display} useStopsPercentage={false}/>
         </div>
       </>
     );
@@ -132,11 +132,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     margin: auto;
     margin-right: 4px;
   `,
-  gradientContainer: css`
+  colorScaleWrapper: css`
     min-width: 200px;
-    display: flex;
-    justify-content: space-between;
     font-size: ${theme.typography.bodySmall.fontSize};
     padding: ${theme.spacing(0, 0.5)};
   `,
+  labelsWrapper: css`
+    display: flex;
+    justify-content: space-between;
+  `
 }));
