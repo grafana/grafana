@@ -21,7 +21,6 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlstore *sqlstore.SQLStore) 
 		},
 		sqlstore: sqlstore,
 	}
-	s.Bus.AddHandler(s.SearchHandler)
 	return s
 }
 

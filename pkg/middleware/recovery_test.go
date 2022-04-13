@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -48,8 +47,6 @@ func panicHandler(c *models.ReqContext) {
 
 func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
 		cfg := setting.NewCfg()
 		cfg.ErrTemplateName = "error-template"
 		sc := &scenarioContext{
