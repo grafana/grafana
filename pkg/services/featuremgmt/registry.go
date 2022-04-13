@@ -39,11 +39,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "dashboardPreviewsScheduler",
-			Description: "Schedule automatic updates to dashboard previews",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "dashboardPreviewsAdmin",
 			Description: "Manage the dashboard previews crawler process from the UI",
 			State:       FeatureStateAlpha,

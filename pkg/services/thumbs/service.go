@@ -441,10 +441,6 @@ func (hs *thumbService) runScheduledCrawl(parentCtx context.Context) {
 }
 
 func (hs *thumbService) Run(ctx context.Context) error {
-	if !hs.features.IsEnabled(featuremgmt.FlagDashboardPreviewsScheduler) {
-		return nil
-	}
-
 	if !hs.canRunCrawler {
 		return nil
 	}
