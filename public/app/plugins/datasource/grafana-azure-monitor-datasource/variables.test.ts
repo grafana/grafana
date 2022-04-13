@@ -486,7 +486,9 @@ describe('VariableSupport', () => {
           azureLogAnalyticsDatasource: {
             defaultSubscriptionId: 'defaultSubscriptionId',
           },
-          getMetricNames: jest.fn().mockResolvedValueOnce([]),
+          azureMonitorDatasource: {
+            getMetricNames: jest.fn().mockResolvedValueOnce([]),
+          },
         })
       );
       const mockRequest = {
