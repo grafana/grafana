@@ -14,4 +14,4 @@ load('scripts/drone/vault.star', 'secrets')
 
 def main(ctx):
     edition = 'oss'
-    return pr_pipelines(edition=edition) + secrets()
+    return pr_pipelines(edition=edition) + main_pipelines(edition=edition) + secrets()

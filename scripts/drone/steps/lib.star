@@ -31,17 +31,6 @@ def slack_step(channel, template, secret):
 
 
 def initialize_step(edition, platform, ver_mode, is_downstream=False):
-    if platform == 'windows':
-        return [
-            {
-                'name': 'identify-runner',
-                'image': windows_image,
-                'commands': [
-                    'echo $env:DRONE_RUNNER_NAME',
-                ],
-            },
-        ]
-
     common_cmds = [
         # Generate Go code, will install Wire
         # TODO: Install Wire in Docker image instead
@@ -149,9 +138,6 @@ def wire_install_step():
         'commands': [
             'make gen-go',
         ],
-        'depends_on': [
-            'grabpl',
-        ],
     }
 
 
@@ -189,7 +175,18 @@ def clone_enterprise(committish):
     }
 
 
-def download_grabpl_step():
+def download_grabpl_step(platform="linux"):
+    if platform == 'windows':
+        return {
+            'name': 'grabpl',
+            'image': wix_image,
+            'commands': [
+                '$$ProgressPreference = "SilentlyContinue"',
+                'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe'.format(
+                    grabpl_version),
+            ]
+        }
+
     return {
         'name': 'grabpl',
         'image': curl_image,
@@ -1051,11 +1048,6 @@ def store_packages_step(edition, ver_mode, is_downstream=False):
 
 
 def get_windows_steps(edition, ver_mode, is_downstream=False):
-    if not is_downstream:
-        source_commit = ''
-    else:
-        source_commit = ' $$env:SOURCE_COMMIT'
-
     init_cmds = []
     sfx = ''
     if edition in ('enterprise', 'enterprise2'):
@@ -1068,7 +1060,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         ])
     steps = [
         {
-            'name': 'initialize',
+            'name': 'windows-init',
             'image': wix_image,
             'commands': init_cmds,
         },
@@ -1126,9 +1118,6 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
                 'GITHUB_TOKEN': from_secret('github_token')
             },
             'commands': installer_commands,
-            'depends_on': [
-                'initialize',
-            ],
         })
 
     if edition in ('enterprise', 'enterprise2'):
@@ -1169,7 +1158,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'rm -r -force grafana-enterprise',
             'cp grabpl.exe C:\\App\\grabpl.exe',
             'rm -force grabpl.exe',
-            'C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise{}'.format(source_commit),
+            'C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise',
             'cp C:\\App\\grabpl.exe grabpl.exe',
         ])
         if 'environment' in steps[1]:
