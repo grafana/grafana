@@ -238,7 +238,7 @@ func (f *FakeRuleStore) UpdateAlertRules(_ context.Context, q []UpdateRule) erro
 	return nil
 }
 
-func (f *FakeRuleStore) InsertAlertRules(_ context.Context, q []UpdateRule) error {
+func (f *FakeRuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)

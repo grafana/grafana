@@ -42,7 +42,7 @@ type RuleStore interface {
 	GetAlertRules(ctx context.Context, query *ngmodels.GetAlertRulesQuery) error
 	GetUserVisibleNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
-	InsertAlertRules(ctx context.Context, rule []UpdateRule) error
+	InsertAlertRules(ctx context.Context, rule []ngmodels.AlertRule) error
 	UpdateAlertRules(ctx context.Context, rule []UpdateRule) error
 }
 
@@ -109,41 +109,41 @@ func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAler
 }
 
 // InsertAlertRules is a handler for creating/updating alert rules.
-func (st DBstore) InsertAlertRules(ctx context.Context, rules []UpdateRule) error {
+func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRule) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		newRules := make([]ngmodels.AlertRule, 0, len(rules))
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
 		for _, r := range rules {
-			uid, err := GenerateNewAlertRuleUID(sess, r.New.OrgID, r.New.Title)
+			uid, err := GenerateNewAlertRuleUID(sess, r.OrgID, r.Title)
 			if err != nil {
-				return fmt.Errorf("failed to generate UID for alert rule %q: %w", r.New.Title, err)
+				return fmt.Errorf("failed to generate UID for alert rule %q: %w", r.Title, err)
 			}
-			r.New.UID = uid
-			r.New.Version = 1
-			if err := st.validateAlertRule(r.New); err != nil {
+			r.UID = uid
+			r.Version = 1
+			if err := st.validateAlertRule(r); err != nil {
 				return err
 			}
-			if err := (&r.New).PreSave(TimeNow); err != nil {
+			if err := (&r).PreSave(TimeNow); err != nil {
 				return err
 			}
-			newRules = append(newRules, r.New)
+			newRules = append(newRules, r)
 			ruleVersions = append(ruleVersions, ngmodels.AlertRuleVersion{
-				RuleOrgID:        r.New.OrgID,
-				RuleUID:          r.New.UID,
-				RuleNamespaceUID: r.New.NamespaceUID,
-				RuleGroup:        r.New.RuleGroup,
+				RuleOrgID:        r.OrgID,
+				RuleUID:          r.UID,
+				RuleNamespaceUID: r.NamespaceUID,
+				RuleGroup:        r.RuleGroup,
 				ParentVersion:    0,
-				Version:          r.New.Version,
-				Created:          r.New.Updated,
-				Condition:        r.New.Condition,
-				Title:            r.New.Title,
-				Data:             r.New.Data,
-				IntervalSeconds:  r.New.IntervalSeconds,
-				NoDataState:      r.New.NoDataState,
-				ExecErrState:     r.New.ExecErrState,
-				For:              r.New.For,
-				Annotations:      r.New.Annotations,
-				Labels:           r.New.Labels,
+				Version:          r.Version,
+				Created:          r.Updated,
+				Condition:        r.Condition,
+				Title:            r.Title,
+				Data:             r.Data,
+				IntervalSeconds:  r.IntervalSeconds,
+				NoDataState:      r.NoDataState,
+				ExecErrState:     r.ExecErrState,
+				For:              r.For,
+				Annotations:      r.Annotations,
+				Labels:           r.Labels,
 			})
 		}
 		if len(newRules) > 0 {

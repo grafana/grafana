@@ -356,7 +356,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 
 		if len(authorizedChanges.Update) > 0 || len(authorizedChanges.New) > 0 {
 			updates := make([]store.UpdateRule, 0, len(authorizedChanges.Update))
-			inserts := make([]store.UpdateRule, 0, len(authorizedChanges.New))
+			inserts := make([]ngmodels.AlertRule, 0, len(authorizedChanges.New))
 			for _, update := range authorizedChanges.Update {
 				logger.Debug("updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
 				updates = append(updates, store.UpdateRule{
@@ -365,10 +365,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 				})
 			}
 			for _, rule := range authorizedChanges.New {
-				inserts = append(inserts, store.UpdateRule{
-					Existing: nil,
-					New:      *rule,
-				})
+				inserts = append(inserts, *rule)
 			}
 			err = srv.store.InsertAlertRules(tranCtx, inserts)
 			if err != nil {
