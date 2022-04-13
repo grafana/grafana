@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useReducer } from 'react';
 import { LokiDatasource } from '../../datasource';
 import { LokiQuery } from '../../types';
 import { buildVisualQueryFromString } from '../parsing';
@@ -6,6 +6,7 @@ import { lokiQueryModeller } from '../LokiQueryModeller';
 import { LokiQueryBuilder } from './LokiQueryBuilder';
 import { QueryPreview } from './QueryPreview';
 import { LokiVisualQuery } from '../types';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface Props {
   query: LokiQuery;
@@ -14,25 +15,68 @@ export interface Props {
   onRunQuery: () => void;
 }
 
+export interface State {
+  visQuery?: LokiVisualQuery;
+  expr: string;
+}
+
 /**
  * This component is here just to contain the translation logic between string query and the visual query builder model.
- * @param props
- * @constructor
  */
 export function LokiQueryBuilderContainer(props: Props) {
   const { query, onChange, onRunQuery, datasource } = props;
+  const [state, dispatch] = useReducer(stateSlice.reducer, {
+    expr: '',
+    visQuery: {
+      labels: [],
+      operations: [{ id: '__line_contains', params: [''] }],
+    },
+  });
 
-  const visQuery = buildVisualQueryFromString(query.expr || '').query;
+  // Only rebuild visual query if expr changes from outside
+  useEffect(() => {
+    dispatch(exprChanged(query.expr));
+  }, [query.expr]);
 
-  const onVisQueryChange = (newVisQuery: LokiVisualQuery) => {
-    const rendered = lokiQueryModeller.renderQuery(newVisQuery);
-    onChange({ ...query, expr: rendered });
+  const onVisQueryChange = (visQuery: LokiVisualQuery) => {
+    const expr = lokiQueryModeller.renderQuery(visQuery);
+    dispatch(visualQueryChange({ visQuery, expr }));
+    onChange({ ...props.query, expr: expr });
   };
+
+  if (!state.visQuery) {
+    return null;
+  }
 
   return (
     <>
-      <LokiQueryBuilder query={visQuery} datasource={datasource} onChange={onVisQueryChange} onRunQuery={onRunQuery} />
+      <LokiQueryBuilder
+        query={state.visQuery}
+        datasource={datasource}
+        onChange={onVisQueryChange}
+        onRunQuery={onRunQuery}
+      />
       <QueryPreview query={query.expr} />
     </>
   );
 }
+
+const stateSlice = createSlice({
+  name: 'prom-builder-container',
+  initialState: { expr: '' } as State,
+  reducers: {
+    visualQueryChange: (state, action: PayloadAction<{ visQuery: LokiVisualQuery; expr: string }>) => {
+      state.expr = action.payload.expr;
+      state.visQuery = action.payload.visQuery;
+    },
+    exprChanged: (state, action: PayloadAction<string>) => {
+      if (!state.visQuery || state.expr !== action.payload) {
+        state.expr = action.payload;
+        const parseResult = buildVisualQueryFromString(action.payload);
+        state.visQuery = parseResult.query;
+      }
+    },
+  },
+});
+
+const { visualQueryChange, exprChanged } = stateSlice.actions;

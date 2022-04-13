@@ -4,7 +4,7 @@ import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafan
 import { Button, useStyles2, ConfirmModal } from '@grafana/ui';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { LokiQueryEditorProps } from '../../components/types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { getQueryWithDefaults } from '../state';
@@ -35,19 +35,6 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
     },
     [onChange, query]
   );
-
-  useEffect(() => {
-    const defaultEmptyQuery = '{} |= ``';
-    // For visual query builder we use default query
-    if (query.editorMode === QueryEditorMode.Builder && !query.expr) {
-      onChange({ ...query, expr: defaultEmptyQuery });
-    }
-
-    // For text editor we use empty query as default
-    if (query.editorMode === QueryEditorMode.Code && query.expr === defaultEmptyQuery) {
-      onChange({ ...query, expr: '' });
-    }
-  }, [query, onChange]);
 
   // If no expr (ie new query) then default to builder
   const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
@@ -91,7 +78,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
           }}
           options={lokiQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
         />
-        <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
+        <QueryEditorModeToggle mode={editorMode!} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>
