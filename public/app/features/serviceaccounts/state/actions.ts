@@ -1,4 +1,4 @@
-import { ServiceAccountDTO, ThunkResult, ServiceAccountFilter } from '../../../types';
+import { ServiceAccountDTO, ThunkResult, ServiceAccountFilter, AccessControlAction } from '../../../types';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import {
   acOptionsLoaded,
