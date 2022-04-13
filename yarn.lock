@@ -3239,7 +3239,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/betterer@npm:5.1.7, @betterer/betterer@npm:^5.1.7":
+"@betterer/betterer@npm:5.2.1, @betterer/betterer@npm:^5.2.1":
+  version: 5.2.1
+  resolution: "@betterer/betterer@npm:5.2.1"
+  dependencies:
+    "@betterer/constraints": ^5.0.0
+    "@betterer/errors": ^5.0.0
+    "@betterer/logger": ^5.2.0
+    "@betterer/reporter": ^5.2.1
+    "@phenomnomnominal/debug": ^0.2.5
+    "@phenomnomnominal/worker-require": ^0.0.34
+    chokidar: ^3.3.1
+    djb2a: ^1.2.0
+    fast-memoize: ^2.5.2
+    lines-and-columns: ^2.0.3
+    minimatch: ^5.0.1
+    prettier: ^2.3.2
+    simple-git: ^3.1.1
+    ts-node: ^10.2.1
+    tslib: ^2.3.1
+    typescript: ">=2.7"
+  dependenciesMeta:
+    typescript:
+      optional: true
+  checksum: 7af5030332d4161c966ab4ff0c1e4cd1cd02fa242b4cd5d9f8a52cba48b10c00235d3d280e806fca096537e4062a5a94fdf49e25988faa7e27ec561b142d11d6
+  languageName: node
+  linkType: hard
+
+"@betterer/betterer@npm:^5.1.7":
   version: 5.1.7
   resolution: "@betterer/betterer@npm:5.1.7"
   dependencies:
@@ -3321,6 +3348,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@betterer/logger@npm:^5.2.0":
+  version: 5.2.0
+  resolution: "@betterer/logger@npm:5.2.0"
+  dependencies:
+    "@babel/code-frame": ^7.10.3
+    jest-diff: ^27.0.6
+    lines-and-columns: ^2.0.3
+    react: ">=16.8.4 || >=17.0.0"
+    react-dom: ">=16.8.4 || >=17.0.0"
+    tslib: ^2.3.1
+  checksum: c9789050d3f95e39a5165a97dcafdc9da194b57bb351ed993b92a37e6a602c345a00825a8ad6e3a4037e4c428532c502f231d45dfa27a29c569cd76d6b504105
+  languageName: node
+  linkType: hard
+
 "@betterer/regexp@npm:5.1.7":
   version: 5.1.7
   resolution: "@betterer/regexp@npm:5.1.7"
@@ -3349,6 +3390,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@betterer/reporter@npm:^5.2.1":
+  version: 5.2.1
+  resolution: "@betterer/reporter@npm:5.2.1"
+  dependencies:
+    "@betterer/betterer": ^5.2.1
+    "@betterer/errors": ^5.0.0
+    "@betterer/logger": ^5.2.0
+    "@betterer/tasks": ^5.2.0
+    ink: ^3.0.9
+    ink-text-input: ^4.0.1
+    react: ">=16.8.4 || >=17.0.0"
+    react-dom: ">=16.8.4 || >=17.0.0"
+    tslib: ^2.3.1
+  checksum: 53b58bfcbd3333480cb13e62d2526b70ace020768e6cccd147088b7b6ecf3d011292e529dced0967b6196cf029748458412ff4b2a16469e41fa75e4e962bc8e8
+  languageName: node
+  linkType: hard
+
 "@betterer/tasks@npm:^5.1.7":
   version: 5.1.7
   resolution: "@betterer/tasks@npm:5.1.7"
@@ -3361,6 +3419,21 @@ __metadata:
     react-dom: ">=16.8.4 || >=17.0.0"
     tslib: ^2.3.1
   checksum: b46a019d101a2c3a143cf2e1405f40982ef493c144552a116871f0f037f92ed734618da657ca1beb517dcef370d41daa78be73c224afbb42fe5d7c6c9f45fc38
+  languageName: node
+  linkType: hard
+
+"@betterer/tasks@npm:^5.2.0":
+  version: 5.2.0
+  resolution: "@betterer/tasks@npm:5.2.0"
+  dependencies:
+    "@betterer/errors": ^5.0.0
+    "@betterer/logger": ^5.2.0
+    chalk: ^4.1.2
+    ink: ^3.0.9
+    react: ">=16.8.4 || >=17.0.0"
+    react-dom: ">=16.8.4 || >=17.0.0"
+    tslib: ^2.3.1
+  checksum: aab9c9c76c21396b553aa1f0e86d8760864f3156f222b724d13f53ac0264aa2a67ee37b9ec515ddf56b819bbaf6c2fd0138d540ca7b5f0eba404b0207b07c1ec
   languageName: node
   linkType: hard
 
@@ -13825,6 +13898,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"brace-expansion@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "brace-expansion@npm:2.0.1"
+  dependencies:
+    balanced-match: ^1.0.0
+  checksum: a61e7cd2e8a8505e9f0036b3b6108ba5e926b4b55089eeb5550cd04a471fe216c96d4fe7e4c7f995c728c554ae20ddfc4244cad10aef255e72b62930afd233d1
+  languageName: node
+  linkType: hard
+
 "brace@npm:0.11.1":
   version: 0.11.1
   resolution: "brace@npm:0.11.1"
@@ -20405,7 +20487,7 @@ __metadata:
     "@babel/preset-env": 7.16.11
     "@babel/preset-react": 7.16.7
     "@babel/preset-typescript": 7.16.7
-    "@betterer/betterer": 5.1.7
+    "@betterer/betterer": 5.2.1
     "@betterer/cli": 5.1.7
     "@betterer/regexp": 5.1.7
     "@emotion/css": 11.7.1
@@ -24830,6 +24912,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lines-and-columns@npm:^2.0.3":
+  version: 2.0.3
+  resolution: "lines-and-columns@npm:2.0.3"
+  checksum: 5955363dfd7d3d7c476d002eb47944dbe0310d57959e2112dce004c0dc76cecfd479cf8c098fd479ff344acdf04ee0e82b455462a26492231ac152f6c48d17a1
+  languageName: node
+  linkType: hard
+
 "lint-staged@npm:12.3.7":
   version: 12.3.7
   resolution: "lint-staged@npm:12.3.7"
@@ -25991,6 +26080,15 @@ __metadata:
   dependencies:
     brace-expansion: ^1.1.7
   checksum: c154e566406683e7bcb746e000b84d74465b3a832c45d59912b9b55cd50dee66e5c4b1e5566dba26154040e51672f9aa450a9aef0c97cfc7336b78b7afb9540a
+  languageName: node
+  linkType: hard
+
+"minimatch@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "minimatch@npm:5.0.1"
+  dependencies:
+    brace-expansion: ^2.0.1
+  checksum: b34b98463da4754bc526b244d680c69d4d6089451ebe512edaf6dd9eeed0279399cfa3edb19233513b8f830bf4bfcad911dddcdf125e75074100d52f724774f0
   languageName: node
   linkType: hard
 
