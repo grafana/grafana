@@ -3,7 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { useDebounce } from 'react-use';
 import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Badge, useStyles2 } from '@grafana/ui';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
@@ -53,7 +53,7 @@ export const MatchedSilencedRules = () => {
   return (
     <div>
       <h4 className={styles.title}>
-        Affected alerts
+        Affected alert instances
         {matchedAlertRules.length > 0 ? (
           <Badge className={styles.badge} color="blue" text={matchedAlertRules.length} />
         ) : null}
@@ -96,13 +96,7 @@ function useColumns(): MatchedRulesTableColumnProps[] {
       id: 'created',
       label: 'Created',
       renderCell: function renderSummary({ data: { matchedInstance } }) {
-        return (
-          <>
-            {matchedInstance.activeAt.startsWith('0001')
-              ? '-'
-              : matchedInstance.activeAt.substr(0, 19).replace('T', ' ')}
-          </>
-        );
+        return <>{dateTime(matchedInstance.activeAt).format('YYYY-MM-DD HH:mm:ss')}</>;
       },
       size: '400px',
     },
