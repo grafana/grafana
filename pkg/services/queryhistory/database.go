@@ -292,16 +292,29 @@ func (s QueryHistoryService) migrateQueries(ctx context.Context, user *models.Si
 			}
 		}
 
-		_, err := session.InsertMulti(queryHistories)
-		if err != nil {
-			return err
+		batchSize := 50
+		var err error
+		for i := 0; i < len(queryHistories); i += batchSize {
+			j := i + batchSize
+			if j > len(queryHistories) {
+				j = len(queryHistories)
+			}
+			_, err = session.InsertMulti(queryHistories[i:j])
+			if err != nil {
+				return err
+			}
 		}
 
-		_, err = session.InsertMulti(starredQueries)
-		if err != nil {
-			return err
+		for i := 0; i < len(starredQueries); i += batchSize {
+			j := i + batchSize
+			if j > len(starredQueries) {
+				j = len(starredQueries)
+			}
+			_, err = session.InsertMulti(starredQueries[i:j])
+			if err != nil {
+				return err
+			}
 		}
-
 		return err
 	})
 
