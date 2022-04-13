@@ -70,6 +70,9 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
+	if !c.OrgRole.Includes(cmd.Role) {
+		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
+	}
 
 	if hs.Cfg.ApiKeyMaxSecondsToLive != -1 {
 		if cmd.SecondsToLive == 0 {

@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -37,8 +36,6 @@ func TestAlertRulePermissions(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	dashboardsStore := dashboardsstore.ProvideDashboardStore(store)
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
 
 	// Create a user to make authenticated requests
 	createUser(t, store, models.CreateUserCommand{
@@ -345,8 +342,6 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
 
 	// Create the namespace we'll save our alerts to.
 	_, err = createFolder(t, store, 0, "folder1")
@@ -469,8 +464,6 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
 
 	// Create the namespace under default organisation (orgID = 1) where we'll save our alerts to.
 	dashboardUID, err := createFolder(t, store, 0, "default")
