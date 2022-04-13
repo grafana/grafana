@@ -2,7 +2,7 @@
 title: 'Setup SAML authentication with Okta in Grafana'
 menuTitle: 'SAML authentication with Okta'
 description: 'This is a guide to setup SAML authentication with Okta in Grafana'
-keywords: ['grafana', 'saml', 'documentation', 'saml-auth']
+keywords: ['grafana', 'saml', 'documentation', 'saml-auth', 'enterprise']
 weight: 30
 ---
 

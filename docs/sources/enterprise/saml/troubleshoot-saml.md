@@ -2,7 +2,7 @@
 title: 'Troubleshoot SAML Authentication in Grafana'
 menuTitle: 'Troubleshoot SAML Authentication'
 description: 'This contains information on how to troubleshoot SAML authentication in Grafana'
-keywords: ['grafana', 'saml', 'documentation', 'saml-auth']
+keywords: ['grafana', 'saml', 'documentation', 'saml-auth', 'enterprise']
 aliases: ['/docs/grafana/latest/auth/saml/']
 weight: 50
 ---
