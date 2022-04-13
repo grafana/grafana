@@ -140,7 +140,7 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 			}
 		} else {
 			if index == v6Index+1 {
-				host = dsInfo.URL[0:index]
+				host = dsInfo.URL[1 : index-1]
 				var err error
 				port, err = strconv.Atoi(dsInfo.URL[index+1:])
 				if err != nil {
@@ -149,7 +149,7 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 
 				logger.Debug("Generating ipv6 connection string with network host/port pair", "host", host, "port", port)
 			} else {
-				host = dsInfo.URL
+				host = dsInfo.URL[1 : len(dsInfo.URL)-1]
 				logger.Debug("Generating ipv6 connection string with network host", "host", host)
 			}
 		}

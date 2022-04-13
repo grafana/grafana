@@ -26,9 +26,9 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 		registrations: accesscontrol.RegistrationList{},
 		scopeResolver: accesscontrol.NewScopeResolver(),
 		provider:      database.ProvideService(sqlstore.InitTestDB(t)),
-		roles:         macroRoles(),
+		roles:         accesscontrol.BuildMacroRoleDefinitions(),
 	}
-	require.NoError(t, ac.RegisterFixedRoles())
+	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac
 }
 
@@ -94,7 +94,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 			err := accesscontrol.DeclareFixedRoles(ac)
 			require.NoError(t, err)
 
-			errRegisterRoles := ac.RegisterFixedRoles()
+			errRegisterRoles := ac.RegisterFixedRoles(context.Background())
 			require.NoError(t, errRegisterRoles)
 
 			user := &models.SignedInUser{
@@ -341,7 +341,7 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 			ac.registrations.Append(tt.registrations...)
 
 			// Test
-			err := ac.RegisterFixedRoles()
+			err := ac.RegisterFixedRoles(context.Background())
 			if tt.wantErr {
 				require.Error(t, err)
 				return
@@ -350,19 +350,8 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 
 			// Check
 			for _, registration := range tt.registrations {
-				// Prepare list of builtin roles to check
-				brAndParents := map[string]struct{}{}
-				for _, br := range registration.Grants {
-					brAndParents[br] = struct{}{}
-					if br != accesscontrol.RoleGrafanaAdmin {
-						for _, parent := range models.RoleType(br).Parents() {
-							brAndParents[string(parent)] = struct{}{}
-						}
-					}
-				}
-
 				// Check builtin roles (parents included) have been granted with the permissions
-				for br := range brAndParents {
+				for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
 					builtinRole, ok := ac.roles[br]
 					assert.True(t, ok)
 					for _, expectedPermission := range registration.Role.Permissions {
@@ -418,7 +407,7 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 			err := ac.DeclareFixedRoles(registration)
 			require.NoError(t, err)
 
-			err = ac.RegisterFixedRoles()
+			err = ac.RegisterFixedRoles(context.Background())
 			require.NoError(t, err)
 
 			// Test
@@ -499,7 +488,7 @@ func TestOSSAccessControlService_Evaluate(t *testing.T) {
 			err := ac.DeclareFixedRoles(registration)
 			require.NoError(t, err)
 
-			err = ac.RegisterFixedRoles()
+			err = ac.RegisterFixedRoles(context.Background())
 			require.NoError(t, err)
 
 			// Test
