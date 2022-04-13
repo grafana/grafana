@@ -126,10 +126,10 @@ func (s *QueryHistoryService) migrateHandler(c *models.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	err := s.MigrateQueriesToQueryHistory(c.Req.Context(), c.SignedInUser, cmd)
+	totalCount, starredCount, err := s.MigrateQueriesToQueryHistory(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to migrate query history", err)
 	}
 
-	return response.JSON(http.StatusOK, QueryHistoryMigrationResponse{Message: "Query history successfully migrated"})
+	return response.JSON(http.StatusOK, QueryHistoryMigrationResponse{Message: "Query history successfully migrated", TotalCount: totalCount, StarredCount: starredCount})
 }

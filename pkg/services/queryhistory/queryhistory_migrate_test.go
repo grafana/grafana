@@ -35,6 +35,8 @@ func TestMigrateQueriesToQueryHistory(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
 			require.Equal(t, "Query history successfully migrated", response.Message)
+			require.Equal(t, 1, response.TotalCount)
+			require.Equal(t, 0, response.StarredCount)
 		})
 
 	testScenario(t, "When users tries to migrate multiple queries in query history it should succeed",
@@ -77,6 +79,8 @@ func TestMigrateQueriesToQueryHistory(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
 			require.Equal(t, "Query history successfully migrated", response.Message)
+			require.Equal(t, 3, response.TotalCount)
+			require.Equal(t, 0, response.StarredCount)
 		})
 
 	testScenario(t, "When users tries to migrate starred and not starred query in query history it should succeed",
@@ -110,5 +114,7 @@ func TestMigrateQueriesToQueryHistory(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.Status())
 			require.Equal(t, "Query history successfully migrated", response.Message)
+			require.Equal(t, 2, response.TotalCount)
+			require.Equal(t, 1, response.StarredCount)
 		})
 }

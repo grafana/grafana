@@ -92,5 +92,7 @@ type QueryToMigrate struct {
 }
 
 type QueryHistoryMigrationResponse struct {
-	Message string `json:"message"`
+	Message      string `json:"message"`
+	TotalCount   int    `json:"totalCount"`
+	StarredCount int    `json:"starredCount"`
 }
