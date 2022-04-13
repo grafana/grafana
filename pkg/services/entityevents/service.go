@@ -29,10 +29,13 @@ type SaveActionCmd struct {
 	EventType EntityEventType
 }
 
-type Service interface {
-	Save(ctx context.Context, cmd SaveActionCmd) error
-	GetLast(ctx context.Context) (*EntityEvent, error)
-	GetAllAfter(ctx context.Context, id int64) ([]*EntityEvent, error)
+/** EntityNotificationService is a temporary solution to support change notifications in an HA setup
+* With this service each system can query for any events that have happened since a fixed time
+*/
+type EntityNotificationService interface {
+	SaveEvent(ctx context.Context, cmd SaveActionCmd) error
+	GetLastEvent(ctx context.Context) (*EntityEvent, error)
+	GetAllEventsAfter(ctx context.Context, id int64) ([]*EntityEvent, error)
 
 	Run(ctx context.Context) error
 
