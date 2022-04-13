@@ -372,7 +372,7 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 				},
 				false,
 			),
-			expectedCode: http.StatusBadRequest,
+			expectedCode: http.StatusForbidden,
 		},
 		{
 			desc: "bad request when invalid role",
