@@ -1,6 +1,5 @@
-import React, { FC, useMemo, useState, useCallback } from 'react';
+import React, { FC, useMemo, useCallback } from 'react';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Spinner, useTheme } from '@grafana/ui';
 import { Advanced, AlertManager, Diagnostics, MetricsResolution, Platform, SSHKey } from './components';
@@ -14,7 +13,6 @@ import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
 import { ContentTab, TabbedContent, TabOrientation } from '../shared/components/Elements/TabbedContent';
 import { useCancelToken } from '../shared/components/hooks/cancelToken.hook';
 import { EmptyBlock } from '../shared/components/Elements/EmptyBlock';
-import { TechnicalPreview } from '../shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { setSettings } from '../shared/core/reducers';
 import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/selectors';
 
@@ -29,7 +27,6 @@ export const SettingsPanel: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({
   const settings = useSelector(getPerconaSettings);
   const { isLoading } = settings;
   const { isAuthorized } = useSelector(getPerconaUser);
-  const [techPreviewRef, setTechPreviewRef] = useState<HTMLDivElement | null>(null);
 
   const updateSettings = useCallback(
     async (body: SettingsAPIChangePayload, callback: LoadingCallback, onError = () => {}) => {
@@ -117,7 +114,6 @@ export const SettingsPanel: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({
               key: TabKeys.perconaPlatform,
               component: (
                 <>
-                  {techPreviewRef && createPortal(<TechnicalPreview />, techPreviewRef)}
                   <Platform isConnected={settings.isConnectedToPortal} />
                 </>
               ),
@@ -136,12 +132,11 @@ export const SettingsPanel: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({
             },
           ]
         : [],
-    [settings, advanced, alertManager, communication, metrics, perconaPlatform, ssh, updateSettings, techPreviewRef]
+    [settings, advanced, alertManager, communication, metrics, perconaPlatform, ssh, updateSettings]
   );
 
   return (
     <PageWrapper pageModel={PAGE_MODEL}>
-      <div ref={(e) => setTechPreviewRef(e)} />
       <div className={styles.settingsWrapper}>
         {(isLoading || !isAuthorized) && (
           <div className={styles.emptyBlock}>
