@@ -11,6 +11,8 @@ import { CloudRulesSourcePicker } from './CloudRulesSourcePicker';
 import { checkForPathSeparator } from './util';
 import { RuleTypePicker } from './rule-types/RuleTypePicker';
 import { Stack } from '@grafana/experimental';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
 
 interface Props {
   editingExistingRule: boolean;
@@ -24,6 +26,8 @@ const recordingRuleNameValidationPattern = {
 
 export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   const styles = useStyles2(getStyles);
+
+  const { enabledRuleTypes, defaultRuleType } = getAvailableRuleTypes();
 
   const {
     register,
@@ -45,8 +49,9 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
             render={({ field: { onChange } }) => (
               <RuleTypePicker
                 aria-label="Rule type"
-                selected={getValues('type') ?? RuleFormType.grafana}
+                selected={getValues('type') ?? defaultRuleType}
                 onChange={onChange}
+                enabledTypes={enabledRuleTypes}
               />
             )}
             name="type"
@@ -174,6 +179,22 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
     </RuleEditorSection>
   );
 };
+
+function getAvailableRuleTypes() {
+  const canCreateGrafanaRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate);
+  const canCreateCloudRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
+  const defaultRuleType = canCreateGrafanaRules ? RuleFormType.grafana : RuleFormType.cloudAlerting;
+
+  const enabledRuleTypes: RuleFormType[] = [];
+  if (canCreateGrafanaRules) {
+    enabledRuleTypes.push(RuleFormType.grafana);
+  }
+  if (canCreateCloudRules) {
+    enabledRuleTypes.push(RuleFormType.cloudAlerting, RuleFormType.cloudRecording);
+  }
+
+  return { enabledRuleTypes, defaultRuleType };
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   formInput: css`
