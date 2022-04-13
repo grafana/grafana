@@ -50,6 +50,7 @@ type thumbService struct {
 	crawlLockServiceActionName string
 	log                        log.Logger
 	usageStatsService          usagestats.Service
+	canRunCrawler              bool
 }
 
 type crawlerScheduleOptions struct {
@@ -70,10 +71,11 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 
 	thumbnailRepo := newThumbnailRepo(store)
 
+	canRunCrawler := true
 	crawlerAuth, err := authSetupService.Setup(context.Background())
 	if err != nil {
 		logger.Error("Failed to setup auth for the dashboard previews crawler", "err", err)
-		return &dummyService{}
+		canRunCrawler = false
 	}
 	t := &thumbService{
 		usageStatsService:          usageStatsService,
@@ -85,6 +87,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 		lockService:                lockService,
 		crawlLockServiceActionName: "dashboard-crawler",
 		log:                        logger,
+		canRunCrawler:              canRunCrawler,
 
 		scheduleOptions: crawlerScheduleOptions{
 			tickerInterval:   time.Hour,
@@ -400,6 +403,10 @@ func (hs *thumbService) getDashboardId(c *models.ReqContext, uid string) (int64,
 }
 
 func (hs *thumbService) runOnDemandCrawl(parentCtx context.Context, theme models.Theme, mode CrawlerMode, kind models.ThumbnailKind, authOpts rendering.AuthOpts) {
+	if !hs.canRunCrawler {
+		return
+	}
+
 	crawlerCtx, cancel := context.WithTimeout(parentCtx, hs.scheduleOptions.maxCrawlDuration)
 	defer cancel()
 
@@ -435,6 +442,10 @@ func (hs *thumbService) runScheduledCrawl(parentCtx context.Context) {
 
 func (hs *thumbService) Run(ctx context.Context) error {
 	if !hs.features.IsEnabled(featuremgmt.FlagDashboardPreviewsScheduler) {
+		return nil
+	}
+
+	if !hs.canRunCrawler {
 		return nil
 	}
 
