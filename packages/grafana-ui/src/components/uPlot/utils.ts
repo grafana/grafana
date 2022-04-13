@@ -1,6 +1,5 @@
 import { DataFrame, ensureTimeField, FieldType } from '@grafana/data';
 import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
-import { DrawStyle } from 'src';
 import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
 import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
@@ -127,7 +126,7 @@ export function getStackingGroups(frame: DataFrame) {
         ? StackDirection.Pos
         : StackDirection.Neg;
 
-    let drawStyle = custom.drawStyle as DrawStyle;
+    let drawStyle = custom.drawStyle as GraphDrawStyle;
     let drawStyle2 =
       drawStyle === GraphDrawStyle.Bars
         ? (custom.barAlignment as BarAlignment)
