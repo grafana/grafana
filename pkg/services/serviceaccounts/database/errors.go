@@ -17,14 +17,14 @@ func (e *ErrSAInvalidName) Unwrap() error {
 	return models.ErrUserAlreadyExists
 }
 
-type ErrMisingSAToken struct {
+type ErrMissingSAToken struct {
 }
 
-func (e *ErrMisingSAToken) Error() string {
+func (e *ErrMissingSAToken) Error() string {
 	return "service account token not found"
 }
 
-func (e *ErrMisingSAToken) Unwrap() error {
+func (e *ErrMissingSAToken) Unwrap() error {
 	return models.ErrApiKeyNotFound
 }
 
