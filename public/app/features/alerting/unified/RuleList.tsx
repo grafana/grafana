@@ -20,6 +20,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { RuleStats } from './components/rules/RuleStats';
 import { RuleListErrors } from './components/rules/RuleListErrors';
 import { getFiltersFromUrlParams } from './utils/misc';
+import { AccessControlAction } from 'app/types';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -37,6 +38,10 @@ const RuleList = withErrorBoundary(
     const [queryParams] = useQueryParams();
     const filters = getFiltersFromUrlParams(queryParams);
     const filtersActive = Object.values(filters).some((filter) => filter !== undefined);
+
+    const canCreateRules =
+      contextSrv.hasAccess(AccessControlAction.AlertingRuleCreate, contextSrv.isEditor) ||
+      contextSrv.hasAccess(AccessControlAction.AlertingRuleExternalWrite, contextSrv.isEditor);
 
     const view = VIEWS[queryParams['view'] as keyof typeof VIEWS]
       ? (queryParams['view'] as keyof typeof VIEWS)
@@ -93,7 +98,7 @@ const RuleList = withErrorBoundary(
                 )}
                 <RuleStats showInactive={true} showRecording={true} namespaces={filteredNamespaces} />
               </div>
-              {(contextSrv.hasEditPermissionInFolders || contextSrv.isEditor) && (
+              {contextSrv.hasEditPermissionInFolders && canCreateRules && (
                 <LinkButton
                   href={urlUtil.renderUrl('alerting/new', { returnTo: location.pathname + location.search })}
                   icon="plus"

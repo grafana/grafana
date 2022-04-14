@@ -1,5 +1,6 @@
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
+import { contextSrv } from 'app/core/services/context_srv';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -52,6 +53,7 @@ import {
   setRulerRuleGroup,
 } from '../api/ruler';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { getRulesPermissions } from '../utils/access-control';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
   getAllRulesSourceNames,
@@ -268,6 +270,11 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void
         return;
       }
 
+      const rulePermissions = getRulesPermissions(rulesSourceName);
+      if (!contextSrv.hasPermission(rulePermissions.read)) {
+        return;
+      }
+
       if (force || !promRules[rulesSourceName]?.loading) {
         dispatch(fetchPromRulesAction({ rulesSourceName }));
       }
@@ -282,6 +289,11 @@ export function fetchAllPromRulesAction(force = false): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const { promRules } = getStore().unifiedAlerting;
     getAllRulesSourceNames().map((rulesSourceName) => {
+      const rulePermissions = getRulesPermissions(rulesSourceName);
+      if (!contextSrv.hasPermission(rulePermissions.read)) {
+        return;
+      }
+
       if (force || !promRules[rulesSourceName]?.loading) {
         dispatch(fetchPromRulesAction({ rulesSourceName }));
       }
