@@ -34,6 +34,7 @@ import appEvents from 'app/core/app_events';
 import { AbsoluteTimeEvent } from 'app/types/events';
 import { Unsubscribable } from 'rxjs';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
+import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -101,7 +102,7 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
 export class Explore extends React.PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   absoluteTimeUnsubsciber: Unsubscribable | undefined;
-  topOfExploreViewRef = createRef<HTMLDivElement>();
+  topOfViewRef = createRef<HTMLDivElement>();
 
   constructor(props: Props) {
     super(props);
@@ -306,8 +307,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           dataFrames={dataFrames}
           splitOpenFn={splitOpen}
           scrollElement={this.scrollElement}
-          topOfExploreViewRef={this.topOfExploreViewRef}
           queryResponse={queryResponse}
+          topOfViewRef={this.topOfViewRef}
+          topOfViewRefType={TopOfViewRefType.Explore}
         />
       )
     );
@@ -340,11 +342,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         autoHeightMin={'100%'}
         scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
       >
-        <ExploreToolbar
-          exploreId={exploreId}
-          onChangeTime={this.onChangeTime}
-          topOfExploreViewRef={this.topOfExploreViewRef}
-        />
+        <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} topOfViewRef={this.topOfViewRef} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
           <div className="explore-container">

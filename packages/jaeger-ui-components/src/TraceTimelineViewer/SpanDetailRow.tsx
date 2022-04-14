@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, { RefObject } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
 
 import SpanDetail from './SpanDetail';
@@ -25,6 +25,7 @@ import { GrafanaTheme2, LinkModel } from '@grafana/data';
 
 import { TraceLog, TraceSpan, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 import { SpanLinkFunc } from '../types';
+import { TopOfViewRefType } from './VirtualizedTraceView';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
@@ -92,7 +93,7 @@ type SpanDetailRowProps = {
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
-  topOfExploreViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRefType?: TopOfViewRefType;
 };
 
 export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProps> {
@@ -128,7 +129,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       createSpanLink,
       focusedSpanId,
       createFocusSpanLink,
-      topOfExploreViewRef,
+      topOfViewRefType,
     } = this.props;
     const styles = getStyles(theme);
     return (
@@ -171,7 +172,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               createSpanLink={createSpanLink}
               focusedSpanId={focusedSpanId}
               createFocusSpanLink={createFocusSpanLink}
-              topOfExploreViewRef={topOfExploreViewRef}
+              topOfViewRefType={topOfViewRefType}
             />
           </div>
         </TimelineRow.Cell>

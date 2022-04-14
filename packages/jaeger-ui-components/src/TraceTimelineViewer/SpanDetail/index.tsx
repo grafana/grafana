@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, { RefObject } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import { DataLinkButton, TextArea, useStyles2 } from '@grafana/ui';
@@ -31,6 +31,7 @@ import AccordianReferences from './AccordianReferences';
 import { autoColor } from '../../Theme';
 import { uAlignIcon, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
 import { Divider } from '../../common/Divider';
+import { TopOfViewRefType } from '../VirtualizedTraceView';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -117,7 +118,7 @@ type SpanDetailProps = {
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
-  topOfExploreViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRefType?: TopOfViewRefType;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -137,7 +138,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     focusSpan,
     createSpanLink,
     createFocusSpanLink,
-    topOfExploreViewRef,
+    topOfViewRefType,
   } = props;
   const {
     isTagsOpen,
@@ -281,7 +282,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             focusSpan={focusSpan}
           />
         )}
-        {topOfExploreViewRef && (
+        {topOfViewRefType === TopOfViewRefType.Explore && (
           <small className={styles.debugInfo}>
             <a
               {...focusSpanLink}

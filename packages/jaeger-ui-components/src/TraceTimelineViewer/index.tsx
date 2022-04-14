@@ -18,7 +18,7 @@ import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import TimelineHeaderRow from './TimelineHeaderRow';
-import VirtualizedTraceView from './VirtualizedTraceView';
+import VirtualizedTraceView, { TopOfViewRefType } from './VirtualizedTraceView';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { Accessors } from '../ScrollManager';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
@@ -107,7 +107,8 @@ type TProps = TExtractUiFindFromStateReturn & {
   focusedSpanId?: string;
   focusedSpanIdForSearch: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
-  topOfExploreViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRefType?: TopOfViewRefType;
 };
 
 type State = {
@@ -163,7 +164,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
       createLinkToExternalSpan,
       traceTimeline,
       theme,
-      topOfExploreViewRef,
+      topOfViewRef,
       focusedSpanIdForSearch,
       ...rest
     } = this.props;
@@ -195,7 +196,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
             {...traceTimeline}
             setSpanNameColumnWidth={setSpanNameColumnWidth}
             currentViewRangeTime={viewRange.time.current}
-            topOfExploreViewRef={topOfExploreViewRef}
+            topOfViewRef={topOfViewRef}
             focusedSpanIdForSearch={focusedSpanIdForSearch}
           />
         </div>

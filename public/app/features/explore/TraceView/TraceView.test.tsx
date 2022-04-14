@@ -27,12 +27,6 @@ function getTraceView(frames: DataFrame[]) {
         traceProp={transformDataFrames(frames[0])!}
         search=""
         focusedSpanIdForSearch=""
-        expandOne={() => {}}
-        expandAll={() => {}}
-        collapseOne={() => {}}
-        collapseAll={() => {}}
-        childrenToggle={() => {}}
-        childrenHiddenIDs={new Set()}
         queryResponse={mockPanelData}
       />
     </Provider>

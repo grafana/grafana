@@ -7,25 +7,18 @@ import {
   Field,
   GrafanaTheme2,
   LinkModel,
-  LoadingState,
   mapInternalLinkToExplore,
   PanelData,
   SplitOpen,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import {
-  Trace,
-  TracePageHeader,
-  TraceSpan,
-  TraceTimelineViewer,
-  TTraceTimeline,
-} from '@jaegertracing/jaeger-ui-components';
+import { Trace, TracePageHeader, TraceTimelineViewer, TTraceTimeline } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
-import React, { RefObject, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { RefObject, useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changePanelState } from '../state/explorePane';
 import { createSpanLinkFactory } from './createSpanLink';
@@ -35,6 +28,7 @@ import { useViewRange } from './useViewRange';
 import { css } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 import { useChildrenState } from './useChildrenState';
+import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   noDataMsg: css`
@@ -56,23 +50,18 @@ type Props = {
   splitOpenFn?: SplitOpen;
   exploreId?: ExploreId;
   scrollElement?: Element;
-  topOfExploreViewRef?: RefObject<HTMLDivElement>;
   traceProp: Trace;
   spanFindMatches?: Set<string>;
   search?: string;
   focusedSpanIdForSearch?: string;
-  expandOne?: (spans: TraceSpan[]) => void;
-  expandAll?: () => void;
-  collapseOne?: (spans: TraceSpan[]) => void;
-  collapseAll?: (spans: TraceSpan[]) => void;
-  childrenToggle?: (spanId: string) => void;
-  childrenHiddenIDs?: Set<string>;
   queryResponse: PanelData;
-  datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
+  datasource?: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
+  topOfViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRefType?: TopOfViewRefType;
 };
 
 export function TraceView(props: Props) {
-  const { spanFindMatches, traceProp, datasource } = props;
+  const { spanFindMatches, traceProp, datasource, topOfViewRef, topOfViewRefType } = props;
 
   const {
     detailStates,
@@ -124,12 +113,6 @@ export function TraceView(props: Props) {
     }),
     [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, props.traceProp?.traceID]
   );
-
-  useEffect(() => {
-    if (props.queryResponse.state === LoadingState.Done) {
-      props.topOfExploreViewRef?.current?.scrollIntoView();
-    }
-  }, [props.queryResponse, props.topOfExploreViewRef]);
 
   const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(datasource?.name)?.jsonData as TraceToLogsData)
     ?.tracesToLogs;
@@ -195,7 +178,8 @@ export function TraceView(props: Props) {
             focusedSpanId={focusedSpanId}
             focusedSpanIdForSearch={props.focusedSpanIdForSearch!}
             createFocusSpanLink={createFocusSpanLink}
-            topOfExploreViewRef={props.topOfExploreViewRef}
+            topOfViewRef={topOfViewRef}
+            topOfViewRefType={topOfViewRefType}
           />
         </>
       ) : (
