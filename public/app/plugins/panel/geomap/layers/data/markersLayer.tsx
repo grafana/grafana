@@ -12,7 +12,7 @@ import { getLocationMatchers } from 'app/features/geo/utils/location';
 import { getScaledDimension, getColorDimension, getTextDimension, getScalarDimension } from 'app/features/dimensions';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
-import { ReplaySubject, Subject } from 'rxjs';
+import { ReplaySubject } from 'rxjs';
 import { defaultStyleConfig, StyleConfig, StyleDimensions } from '../../style/types';
 import { StyleEditor } from './StyleEditor';
 import { getStyleConfigState } from '../../style/utils';
@@ -74,11 +74,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       source,
     });
 
-    const mouseSubject =  new Subject<any>();
     const legendProps = new ReplaySubject<MarkersLegendProps>(1);
     let legend: ReactNode = null;
     if (config.showLegend) {
-      vectorLayer.set('__mouseSubject', mouseSubject);
       legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
 
@@ -144,7 +142,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               styleConfig: style,
               size: style.dims?.size,
               layerName: options.name,
-              hoverSubject: mouseSubject
+              layer: vectorLayer,
             });
           }
 

@@ -10,31 +10,38 @@ import SVG from 'react-inlinesvg';
 import { StyleConfigState } from '../../style/types';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { useObservable } from 'react-use';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
+import BaseLayer from 'ol/layer/Base';
+import { MapLayerState } from '../../types';
 
 export interface MarkersLegendProps {
   size?: DimensionSupplier<number>;
   layerName?: string;
   styleConfig?: StyleConfigState;
-  hoverSubject?: Observable<any>;
+  layer?: BaseLayer;
 }
 
 export function MarkersLegend(props: MarkersLegendProps) {
-  const { layerName, styleConfig, hoverSubject } = props;
+  const { layerName, styleConfig, layer } = props;
   const theme = useTheme2();
   const style = getStyles(theme);
 
-  const hoverEvent = useObservable(hoverSubject ?? of({}));
+  const hoverEvent = useObservable(((layer as any)?.__state as MapLayerState)?.mouseEvents ?? of(undefined));
 
   const colorField = styleConfig?.dims?.color?.field;
   const hoverValue = useMemo(() => {
-    const frame = hoverEvent?.frame as DataFrame;
-
-    if (!frame || !colorField) {
+    if (!colorField || !hoverEvent) {
       return undefined;
     }
 
-    const rowIndex = hoverEvent.rowIndex as number;
+    const props = hoverEvent.getProperties();
+    const frame = props.frame as DataFrame;
+
+    if (!frame) {
+      return undefined;
+    }
+
+    const rowIndex = props.rowIndex as number;
     return colorField.values.get(rowIndex);
   }, [hoverEvent, colorField]);
 

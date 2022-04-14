@@ -33,7 +33,7 @@ import { DebugOverlay } from './components/DebugOverlay';
 import { getGlobalStyles } from './globalStyles';
 import { Global } from '@emotion/react';
 import { GeomapHoverPayload, GeomapLayerHover } from './event';
-import { Observer, Subject, Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { PanelEditExitedEvent } from 'app/types/events';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
 import { cloneDeep } from 'lodash';
@@ -372,6 +372,7 @@ export class GeomapPanel extends Component<Props, State> {
     this.map.forEachFeatureAtPixel(
       pixel,
       (feature, layer, geo) => {
+        const s: MapLayerState = (layer as any).__state;
         //match hover layer to layer in layers
         //check if the layer show tooltip is enabled
         //then also pass the list of tooltip fields if exists
@@ -382,14 +383,13 @@ export class GeomapPanel extends Component<Props, State> {
           if (frame) {
             hoverPayload.data = ttip.data = frame as DataFrame;
             hoverPayload.rowIndex = ttip.rowIndex = props['rowIndex'];
-            const obs = layer.get('__mouseSubject') as Observer<any>;
-            if (obs) {
-              obs.next(props);
-            }
+          }
+
+          if (s?.mouseEvents) {
+            s.mouseEvents.next(feature);
           }
         }
 
-        const s: MapLayerState = (layer as any).__state;
         if (s) {
           let h = layerLookup.get(s);
           if (!h) {
@@ -413,12 +413,9 @@ export class GeomapPanel extends Component<Props, State> {
     this.setState({ ttip: { ...hoverPayload } });
 
     if (!layers.length) {
-      // !!!!! clear events
+      // clear mouse events
       this.layers.forEach((layer) => {
-        const obs = layer.layer.get('__mouseSubject') as Observer<any>;
-        if (obs) {
-          obs.next(undefined);
-        }
+        layer.mouseEvents.next(undefined);
       });
     }
 
@@ -524,6 +521,7 @@ export class GeomapPanel extends Component<Props, State> {
       options,
       layer,
       handler,
+      mouseEvents: new Subject<FeatureLike | undefined>(),
 
       getName: () => UID,
 
