@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -62,9 +63,9 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/org/teams", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsRead)), hs.Index)
 	r.Get("/org/teams/edit/*", authorize(reqCanAccessTeams, teamsEditAccessEvaluator), hs.Index)
 	r.Get("/org/teams/new", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsCreate)), hs.Index)
-	r.Get("/org/serviceaccounts", middleware.ReqOrgAdmin, hs.Index)
-	r.Get("/org/serviceaccounts/:serviceAccountId", middleware.ReqOrgAdmin, hs.Index)
-	r.Get("/org/apikeys/", reqOrgAdmin, hs.Index)
+	r.Get("/org/serviceaccounts", authorize(reqOrgAdmin, ac.EvalPermission(serviceaccounts.ActionRead)), hs.Index)
+	r.Get("/org/serviceaccounts/:serviceAccountId", authorize(reqOrgAdmin, ac.EvalPermission(serviceaccounts.ActionRead)), hs.Index)
+	r.Get("/org/apikeys/", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionAPIKeyRead)), hs.Index)
 	r.Get("/dashboard/import/", reqSignedIn, hs.Index)
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin", reqGrafanaAdmin, hs.Index)
