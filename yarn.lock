@@ -4366,7 +4366,6 @@ __metadata:
     "@react-aria/overlays": 3.8.1
     "@react-stately/menu": 3.2.6
     "@rollup/plugin-commonjs": 21.0.2
-    "@rollup/plugin-image": 2.1.1
     "@rollup/plugin-node-resolve": 13.1.3
     "@sentry/browser": 6.19.1
     "@storybook/addon-a11y": 6.4.21
@@ -4476,6 +4475,7 @@ __metadata:
     rimraf: 3.0.2
     rollup: 2.70.1
     rollup-plugin-sourcemaps: 0.6.3
+    rollup-plugin-svg-import: ^1.6.0
     rollup-plugin-terser: 7.0.2
     rxjs: 7.5.5
     sass-loader: 12.6.0
@@ -7256,18 +7256,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/plugin-image@npm:2.1.1":
-  version: 2.1.1
-  resolution: "@rollup/plugin-image@npm:2.1.1"
-  dependencies:
-    "@rollup/pluginutils": ^3.1.0
-    mini-svg-data-uri: ^1.2.3
-  peerDependencies:
-    rollup: ^1.20.0 || ^2.0.0
-  checksum: a629c8f22233ca159c23655fdbc3449dab3c939372178ed4462fc9c525cc4ecd8b11fae359eb94be4f769d26f48b85fb18eb16ce1fbc33ed16b6a7c1f84391f6
-  languageName: node
-  linkType: hard
-
 "@rollup/plugin-json@npm:4.1.0":
   version: 4.1.0
   resolution: "@rollup/plugin-json@npm:4.1.0"
@@ -7305,6 +7293,16 @@ __metadata:
   peerDependencies:
     rollup: ^1.20.0||^2.0.0
   checksum: 8be16e27863c219edbb25a4e6ec2fe0e1e451d9e917b6a43cf2ae5bc025a6b8faaa40f82a6e53b66d0de37b58ff472c6c3d57a83037ae635041f8df959d6d9aa
+  languageName: node
+  linkType: hard
+
+"@rollup/pluginutils@npm:^4.1.1":
+  version: 4.2.0
+  resolution: "@rollup/pluginutils@npm:4.2.0"
+  dependencies:
+    estree-walker: ^2.0.1
+    picomatch: ^2.2.2
+  checksum: 2e86d9bfb95919727bcba0bbbdbedc98e25a1e51fe3047f18ec6d85e0743d1c73e1c0de3f9fdbd2ff6b90c32f30d4b2706c9e794f3c2e7a80156980081558e2e
   languageName: node
   linkType: hard
 
@@ -25960,15 +25958,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mini-svg-data-uri@npm:^1.2.3":
-  version: 1.4.3
-  resolution: "mini-svg-data-uri@npm:1.4.3"
-  bin:
-    mini-svg-data-uri: cli.js
-  checksum: bd1789c34907a36ae9157897b7c7f6ad700e71c8cb6d725bb2810ce6211abcaa3717333ca17408f6f8b2a44055e571cd5b78d478688e1864513cb7f8e023ae3f
-  languageName: node
-  linkType: hard
-
 "minimalistic-assert@npm:^1.0.0, minimalistic-assert@npm:^1.0.1":
   version: 1.0.1
   resolution: "minimalistic-assert@npm:1.0.1"
@@ -32387,6 +32376,17 @@ __metadata:
     "@types/node":
       optional: true
   checksum: bb4909a90f2e824717a67ad146b2cccc40411ee54709ffa548c47c4dfe485bd55039a5850d7640ecb2691de9dc30e3fd57287e4d74331f36fed9c263d86dd4dc
+  languageName: node
+  linkType: hard
+
+"rollup-plugin-svg-import@npm:^1.6.0":
+  version: 1.6.0
+  resolution: "rollup-plugin-svg-import@npm:1.6.0"
+  dependencies:
+    "@rollup/pluginutils": ^4.1.1
+  peerDependencies:
+    rollup: ">=1.29.0 <3.0.0"
+  checksum: 453862c39d2301563d9d07f6647c295377ff66cf3174d2a0612389fda4bfd9fa72718d90279feb782d3525f1d6f9710e1dc78641cd9d4044360a0179f88054b0
   languageName: node
   linkType: hard
 
