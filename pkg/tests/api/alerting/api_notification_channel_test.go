@@ -61,7 +61,7 @@ func TestTestReceivers(t *testing.T) {
 
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{}`, string(b))
+		require.JSONEq(t, `{"traceID":"00000000000000000000000000000000"}`, string(b))
 	})
 
 	t.Run("assert working receiver returns OK", func(t *testing.T) {
