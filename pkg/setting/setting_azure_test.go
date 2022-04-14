@@ -3,7 +3,8 @@ package setting
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

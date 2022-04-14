@@ -256,7 +256,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                       lazy={false}
                       width={panelSize.width}
                       height={panelSize.height}
-                      skipStateCleanUp={true}
                     />
                   </div>
                 </div>
@@ -285,7 +284,13 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         aria-label={selectors.components.PanelEditor.DataPane.content}
         key="panel-editor-tabs"
       >
-        <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} />
+        <PanelEditorTabs
+          key={panel.key}
+          panel={panel}
+          dashboard={dashboard}
+          tabs={tabs}
+          onChangeTab={this.onChangeTab}
+        />
       </div>,
     ];
   }

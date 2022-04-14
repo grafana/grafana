@@ -212,6 +212,9 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.tracing && !x.meta.tracing) {
         return false;
       }
+      if (filters.logs && x.meta.category !== 'logging' && !x.meta.logs) {
+        return false;
+      }
       if (filters.annotations && !x.meta.annotations) {
         return false;
       }

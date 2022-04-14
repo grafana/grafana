@@ -4,17 +4,18 @@ package contexthandler
 import (
 	"context"
 	"errors"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
@@ -29,14 +30,15 @@ import (
 
 const (
 	InvalidUsernamePassword = "invalid username or password"
-	InvalidAPIKey           = "invalid API key"
+	/* #nosec */
+	InvalidAPIKey = "invalid API key"
 )
 
 const ServiceName = "ContextHandler"
 
 func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
-	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore *sqlstore.SQLStore,
-	tracer tracing.Tracer, authProxy *authproxy.AuthProxy) *ContextHandler {
+	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore sqlstore.Store,
+	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service, authenticator loginpkg.Authenticator) *ContextHandler {
 	return &ContextHandler{
 		Cfg:              cfg,
 		AuthTokenService: tokenService,
@@ -46,6 +48,8 @@ func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtS
 		SQLStore:         sqlStore,
 		tracer:           tracer,
 		authProxy:        authProxy,
+		authenticator:    authenticator,
+		loginService:     loginService,
 	}
 }
 
@@ -59,6 +63,8 @@ type ContextHandler struct {
 	SQLStore         sqlstore.Store
 	tracer           tracing.Tracer
 	authProxy        *authproxy.AuthProxy
+	authenticator    loginpkg.Authenticator
+	loginService     login.Service
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -151,7 +157,7 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 	// update last seen every 5min
 	if reqContext.ShouldUpdateLastSeenAt() {
 		reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserId)
-		if err := bus.Dispatch(mContext.Req.Context(), &models.UpdateUserLastSeenAtCommand{UserId: reqContext.UserId}); err != nil {
+		if err := h.SQLStore.UpdateUserLastSeenAt(mContext.Req.Context(), &models.UpdateUserLastSeenAtCommand{UserId: reqContext.UserId}); err != nil {
 			reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
 		}
 	}
@@ -209,7 +215,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 
 	// fetch key
 	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
-	if err := bus.Dispatch(reqContext.Req.Context(), &keyQuery); err != nil {
+	if err := h.SQLStore.GetApiKeyByName(reqContext.Req.Context(), &keyQuery); err != nil {
 		reqContext.JsonApiErr(401, InvalidAPIKey, err)
 		return true
 	}
@@ -250,20 +256,26 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	//There is a service account attached to the API key
 
 	//Use service account linked to API key as the signed in user
-	query := models.GetSignedInUserQuery{UserId: *apikey.ServiceAccountId, OrgId: apikey.OrgId}
-	if err := bus.Dispatch(reqContext.Req.Context(), &query); err != nil {
+	querySignedInUser := models.GetSignedInUserQuery{UserId: *apikey.ServiceAccountId, OrgId: apikey.OrgId}
+	if err := h.SQLStore.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &querySignedInUser); err != nil {
 		reqContext.Logger.Error(
 			"Failed to link API key to service account in",
-			"id", query.UserId,
-			"org", query.OrgId,
+			"id", querySignedInUser.UserId,
+			"org", querySignedInUser.OrgId,
 			"err", err,
 		)
-		reqContext.JsonApiErr(500, "Unable to link API key to service account", err)
+		reqContext.JsonApiErr(http.StatusInternalServerError, "Unable to link API key to service account", err)
+		return true
+	}
+
+	// disabled service accounts are not allowed to access the API
+	if querySignedInUser.Result.IsDisabled {
+		reqContext.JsonApiErr(http.StatusUnauthorized, "Service account is disabled", nil)
 		return true
 	}
 
 	reqContext.IsSignedIn = true
-	reqContext.SignedInUser = query.Result
+	reqContext.SignedInUser = querySignedInUser.Result
 	return true
 }
 
@@ -291,7 +303,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		Password: password,
 		Cfg:      h.Cfg,
 	}
-	if err := bus.Dispatch(reqContext.Req.Context(), &authQuery); err != nil {
+	if err := h.authenticator.AuthenticateUser(reqContext.Req.Context(), &authQuery); err != nil {
 		reqContext.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,
@@ -308,7 +320,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 	user := authQuery.User
 
 	query := models.GetSignedInUserQuery{UserId: user.Id, OrgId: orgID}
-	if err := bus.Dispatch(ctx, &query); err != nil {
+	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err != nil {
 		reqContext.Logger.Error(
 			"Failed at user signed in",
 			"id", user.Id,
@@ -344,7 +356,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	}
 
 	query := models.GetSignedInUserQuery{UserId: token.UserId, OrgId: orgID}
-	if err := bus.Dispatch(ctx, &query); err != nil {
+	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err != nil {
 		reqContext.Logger.Error("Failed to get user with id", "userId", token.UserId, "error", err)
 		return false
 	}

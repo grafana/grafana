@@ -3,10 +3,11 @@ package azuremonitor
 import (
 	"fmt"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azsettings"
 )
 
 // Azure cloud names specific to Azure Monitor

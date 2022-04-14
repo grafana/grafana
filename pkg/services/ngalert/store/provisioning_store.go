@@ -20,13 +20,6 @@ func (pr provenanceRecord) TableName() string {
 	return "provenance_type"
 }
 
-// ProvisioningStore is a store of provisioning data for arbitrary objects.
-type ProvisioningStore interface {
-	GetProvenance(ctx context.Context, o models.Provisionable) (models.Provenance, error)
-	// TODO: API to query all provenances for a specific type?
-	SetProvenance(ctx context.Context, o models.Provisionable, p models.Provenance) error
-}
-
 // GetProvenance gets the provenance status for a provisionable object.
 func (st DBstore) GetProvenance(ctx context.Context, o models.Provisionable) (models.Provenance, error) {
 	recordType := o.ResourceType()
@@ -50,6 +43,23 @@ func (st DBstore) GetProvenance(ctx context.Context, o models.Provisionable) (mo
 		return models.ProvenanceNone, err
 	}
 	return provenance, nil
+}
+
+// GetProvenance gets the provenance status for a provisionable object.
+func (st DBstore) GetProvenances(ctx context.Context, orgID int64, resourceType string) (map[string]models.Provenance, error) {
+	resultMap := make(map[string]models.Provenance)
+	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		filter := "record_type = ? AND org_id = ?"
+		rawData, err := sess.Table(provenanceRecord{}).Where(filter, resourceType, orgID).Desc("id").Cols("record_key", "provenance").QueryString()
+		if err != nil {
+			return fmt.Errorf("failed to query for existing provenance status: %w", err)
+		}
+		for _, data := range rawData {
+			resultMap[data["record_key"]] = models.Provenance(data["provenance"])
+		}
+		return nil
+	})
+	return resultMap, err
 }
 
 // SetProvenance changes the provenance status for a provisionable object.
@@ -81,5 +91,17 @@ func (st DBstore) SetProvenance(ctx context.Context, o models.Provisionable, p m
 		}
 
 		return nil
+	})
+}
+
+// DeleteProvenance deletes the provenance record from the table
+func (st DBstore) DeleteProvenance(ctx context.Context, o models.Provisionable) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.Delete(provenanceRecord{
+			RecordKey:  o.ResourceID(),
+			RecordType: o.ResourceType(),
+			OrgID:      o.ResourceOrgID(),
+		})
+		return err
 	})
 }

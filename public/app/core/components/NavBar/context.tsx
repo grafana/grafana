@@ -18,12 +18,12 @@ export function useNavBarItemMenuContext(): NavBarItemMenuContextProps {
 }
 
 export interface NavBarContextProps {
-  menuIdOpen: string | null;
-  setMenuIdOpen: (id: string | null) => void;
+  menuIdOpen: string | undefined;
+  setMenuIdOpen: (id: string | undefined) => void;
 }
 
 export const NavBarContext = createContext<NavBarContextProps>({
-  menuIdOpen: null,
+  menuIdOpen: undefined,
   setMenuIdOpen: () => undefined,
 });
 

@@ -45,13 +45,13 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
           const tH = Math.floor(entry.contentRect.height + 2 * 8);
           if (tooltipMeasurement.width !== tW || tooltipMeasurement.height !== tH) {
             setTooltipMeasurement({
-              width: tW,
-              height: tH,
+              width: Math.min(tW, width),
+              height: Math.min(tH, height),
             });
           }
         }
       }),
-    [tooltipMeasurement]
+    [tooltipMeasurement, width, height]
   );
 
   useLayoutEffect(() => {

@@ -30,7 +30,7 @@ export function makeError(expr: string, node: SyntaxNode) {
 const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
 
 /**
- * As variables with $ are creating parsing errors, we first replace them with magic string that is parseable and at
+ * As variables with $ are creating parsing errors, we first replace them with magic string that is parsable and at
  * the same time we can get the variable and it's format back from it.
  * @param expr
  */
@@ -104,6 +104,29 @@ export function makeBinOp(
     id: opDef.id,
     params,
   };
+}
+
+/**
+ * Get all nodes with type in the tree. This traverses the tree so it is safe only when you know there shouldn't be
+ * too much nesting but you just want to skip some of the wrappers. For example getting function args this way would
+ * not be safe is it would also find arguments of nested functions.
+ * @param expr
+ * @param cur
+ * @param type
+ */
+export function getAllByType(expr: string, cur: SyntaxNode, type: string): string[] {
+  if (cur.name === type) {
+    return [getString(expr, cur)];
+  }
+  const values: string[] = [];
+  let pos = 0;
+  let child = cur.childAfter(pos);
+  while (child) {
+    values.push(...getAllByType(expr, child, type));
+    pos = child.to;
+    child = cur.childAfter(pos);
+  }
+  return values;
 }
 
 // Debugging function for convenience. Gives you nice output similar to linux tree util.

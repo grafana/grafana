@@ -1,11 +1,11 @@
 import { LokiAndPromQueryModellerBase } from '../../prometheus/querybuilder/shared/LokiAndPromQueryModellerBase';
 import { QueryBuilderLabelFilter } from '../../prometheus/querybuilder/shared/types';
-import { getOperationDefintions } from './operations';
+import { getOperationDefinitions } from './operations';
 import { LokiOperationId, LokiQueryPattern, LokiVisualQueryOperationCategory } from './types';
 
 export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
   constructor() {
-    super(getOperationDefintions);
+    super(getOperationDefinitions);
 
     this.setOperationCategories([
       LokiVisualQueryOperationCategory.Aggregations,
@@ -43,7 +43,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
           { id: LokiOperationId.Unwrap, params: [''] },
-          { id: LokiOperationId.SumOverTime, params: ['auto'] },
+          { id: LokiOperationId.SumOverTime, params: ['$__interval'] },
           { id: LokiOperationId.Sum, params: [] },
         ],
       },

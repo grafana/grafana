@@ -17,6 +17,7 @@ type EvalContext struct {
 	IsTestRun      bool
 	IsDebug        bool
 	EvalMatches    []*EvalMatch
+	AllMatches     []*EvalMatch
 	Logs           []*ResultLogEntry
 	Error          error
 	ConditionEvals string
@@ -47,6 +48,7 @@ func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator model
 		Rule:             rule,
 		Logs:             make([]*ResultLogEntry, 0),
 		EvalMatches:      make([]*EvalMatch, 0),
+		AllMatches:       make([]*EvalMatch, 0),
 		Log:              log.New("alerting.evalContext"),
 		PrevAlertState:   rule.State,
 		RequestValidator: requestValidator,
@@ -188,11 +190,13 @@ func getNewStateInternal(c *EvalContext) models.AlertStateType {
 // evaluateNotificationTemplateFields will treat the alert evaluation rule's name and message fields as
 // templates, and evaluate the templates using data from the alert evaluation's tags
 func (c *EvalContext) evaluateNotificationTemplateFields() error {
-	if len(c.EvalMatches) < 1 {
+	matches := c.getTemplateMatches()
+	if len(matches) < 1 {
+		// if there are no series to parse the templates with, return
 		return nil
 	}
 
-	templateDataMap, err := buildTemplateDataMap(c.EvalMatches)
+	templateDataMap, err := buildTemplateDataMap(matches)
 	if err != nil {
 		return err
 	}
@@ -210,6 +214,18 @@ func (c *EvalContext) evaluateNotificationTemplateFields() error {
 	c.Rule.Name = ruleName
 
 	return nil
+}
+
+// getTemplateMatches returns the values we should use to parse the templates
+func (c *EvalContext) getTemplateMatches() []*EvalMatch {
+	// EvalMatches represent series violating the rule threshold,
+	// if we have any, this means the alert is firing and we should use this data to parse the templates.
+	if len(c.EvalMatches) > 0 {
+		return c.EvalMatches
+	}
+
+	// If we don't have any alerting values, use all values to parse the templates.
+	return c.AllMatches
 }
 
 func evaluateTemplate(s string, m map[string]string) (string, error) {

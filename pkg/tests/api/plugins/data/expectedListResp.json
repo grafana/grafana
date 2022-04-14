@@ -1035,42 +1035,6 @@
     "signatureOrg": ""
   },
   {
-    "name": "Plugin list",
-    "type": "panel",
-    "id": "pluginlist",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Plugin List for Grafana",
-      "links": null,
-      "logos": {
-        "small": "public/app/plugins/panel/pluginlist/img/icn-dashlist-panel.svg",
-        "large": "public/app/plugins/panel/pluginlist/img/icn-dashlist-panel.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": ""
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": []
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/pluginlist/",
-    "category": "",
-    "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": ""
-  },
-  {
     "name": "PostgreSQL",
     "type": "datasource",
     "id": "postgres",

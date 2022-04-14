@@ -32,10 +32,10 @@ export function NavBarItemWithoutMenu({
 
   const content = highlightText ? (
     <NavFeatureHighlight>
-      <span className={styles.icon}>{children}</span>
+      <div className={styles.icon}>{children}</div>
     </NavFeatureHighlight>
   ) : (
-    <span className={styles.icon}>{children}</span>
+    <div className={styles.icon}>{children}</div>
   );
 
   const elStyle = cx(styles.element, elClassName);
@@ -71,7 +71,6 @@ export function getNavBarItemWithoutMenuStyles(theme: GrafanaTheme2, isActive?: 
       position: 'relative',
       color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
       display: 'grid',
-      placeItems: 'center',
 
       '&:hover': {
         backgroundColor: theme.colors.action.hover,
@@ -84,7 +83,7 @@ export function getNavBarItemWithoutMenuStyles(theme: GrafanaTheme2, isActive?: 
       color: 'inherit',
       display: 'block',
       padding: 0,
-      textAlign: 'center',
+      overflowWrap: 'anywhere',
 
       '&::before': {
         display: isActive ? 'block' : 'none',

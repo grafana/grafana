@@ -45,3 +45,7 @@ func (s LoginServiceMock) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 	cmd.Result = s.ExpectedUser
 	return s.ExpectedError
 }
+
+func (s LoginServiceMock) DisableExternalUser(ctx context.Context, username string) error {
+	return nil
+}

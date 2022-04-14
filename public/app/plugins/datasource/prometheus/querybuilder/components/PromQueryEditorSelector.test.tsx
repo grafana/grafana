@@ -51,7 +51,7 @@ describe('PromQueryEditorSelector', () => {
     expectCodeEditor();
   });
 
-  it('shows builder if new query', async () => {
+  it('shows code if new query', async () => {
     render(
       <PromQueryEditorSelector
         {...defaultProps}
@@ -61,7 +61,7 @@ describe('PromQueryEditorSelector', () => {
         }}
       />
     );
-    expectBuilder();
+    expectCodeEditor();
   });
 
   it('shows code editor when code mode is set', async () => {
@@ -189,9 +189,9 @@ function expectExplain() {
 
 function switchToMode(mode: QueryEditorMode) {
   const label = {
-    [QueryEditorMode.Code]: 'Code',
-    [QueryEditorMode.Explain]: 'Explain',
-    [QueryEditorMode.Builder]: 'Builder',
+    [QueryEditorMode.Code]: /Code/,
+    [QueryEditorMode.Explain]: /Explain/,
+    [QueryEditorMode.Builder]: /Builder/,
   }[mode];
 
   const switchEl = screen.getByLabelText(label);

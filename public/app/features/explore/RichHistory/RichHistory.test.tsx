@@ -1,9 +1,9 @@
 import React from 'react';
-import { mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import { GrafanaTheme } from '@grafana/data';
 import { ExploreId } from '../../../types/explore';
 import { RichHistory, RichHistoryProps, Tabs } from './RichHistory';
-import { Tab } from '@grafana/ui';
+import { SortOrder } from '../../../core/utils/richHistoryTypes';
 
 jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
 
@@ -17,34 +17,42 @@ const setup = (propOverrides?: Partial<RichHistoryProps>) => {
     firstTab: Tabs.RichHistory,
     deleteRichHistory: jest.fn(),
     onClose: jest.fn(),
+    richHistorySearchFilters: {
+      search: '',
+      sortOrder: SortOrder.Descending,
+      datasourceFilters: [],
+      from: 0,
+      to: 7,
+    },
+    richHistorySettings: {
+      retentionPeriod: 0,
+      starredTabAsFirstTab: false,
+      activeDatasourceOnly: true,
+      lastUsedDatasourceFilters: [],
+    },
+    updateHistorySearchFilters: jest.fn(),
+    updateHistorySettings: jest.fn(),
   };
 
   Object.assign(props, propOverrides);
 
-  const wrapper = mount(<RichHistory {...props} />);
-  return wrapper;
+  render(<RichHistory {...props} />);
 };
 
 describe('RichHistory', () => {
-  it('should render all tabs in tab bar', () => {
-    const wrapper = setup();
-    expect(wrapper.find(Tab)).toHaveLength(3);
+  it('should render tabs as defined', () => {
+    setup();
+    const tabs = screen.getAllByLabelText(/Tab*/);
+    expect(tabs).toHaveLength(3);
+    expect(tabs[0]).toHaveTextContent('Query history');
+    expect(tabs[1]).toHaveTextContent('Starred');
+    expect(tabs[2]).toHaveTextContent('Settings');
   });
 
-  it('should render correct lebels of tabs in tab bar', () => {
-    const wrapper = setup();
-    expect(wrapper.find(Tab).at(0).text()).toEqual('Query history');
-    expect(wrapper.find(Tab).at(1).text()).toEqual('Starred');
-    expect(wrapper.find(Tab).at(2).text()).toEqual('Settings');
-  });
-
-  it('should correctly render query history tab as active tab', () => {
-    const wrapper = setup();
-    expect(wrapper.find('RichHistoryQueriesTab')).toHaveLength(1);
-  });
-
-  it('should correctly render starred tab as active tab', () => {
-    const wrapper = setup({ firstTab: Tabs.Starred });
-    expect(wrapper.find('RichHistoryStarredTab')).toHaveLength(1);
+  it('should render defined default', () => {
+    setup();
+    const tabs = screen.getAllByLabelText(/Tab*/);
+    expect(tabs[0].className).toMatch(/-*activeTabStyle/);
+    expect(tabs[1].className).not.toMatch(/-*activeTabStyle/);
   });
 });

@@ -12,9 +12,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
@@ -24,12 +25,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azhttpclient"
 )
 
 type Service struct {
-	Bus                bus.Bus
 	SQLStore           *sqlstore.SQLStore
 	SecretsService     secrets.Service
 	cfg                *setting.Cfg
@@ -61,11 +59,10 @@ type cachedDecryptedJSON struct {
 }
 
 func ProvideService(
-	bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
+	store *sqlstore.SQLStore, secretsService secrets.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
 ) *Service {
 	s := &Service{
-		Bus:            bus,
 		SQLStore:       store,
 		SecretsService: secretsService,
 		ptc: proxyTransportCache{
@@ -78,14 +75,6 @@ func ProvideService(
 		features:           features,
 		permissionsService: permissionsServices.GetDataSourceService(),
 	}
-
-	s.Bus.AddHandler(s.GetDataSources)
-	s.Bus.AddHandler(s.GetDataSourcesByType)
-	s.Bus.AddHandler(s.GetDataSource)
-	s.Bus.AddHandler(s.AddDataSource)
-	s.Bus.AddHandler(s.DeleteDataSource)
-	s.Bus.AddHandler(s.UpdateDataSource)
-	s.Bus.AddHandler(s.GetDefaultDataSource)
 
 	ac.RegisterAttributeScopeResolver(NewNameScopeResolver(store))
 	ac.RegisterAttributeScopeResolver(NewIDScopeResolver(store))

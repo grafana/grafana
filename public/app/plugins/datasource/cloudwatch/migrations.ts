@@ -1,6 +1,13 @@
 import { AnnotationQuery, DataQuery } from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import { MetricEditorMode, CloudWatchAnnotationQuery, CloudWatchMetricsQuery, MetricQueryType } from './types';
+import {
+  MetricEditorMode,
+  CloudWatchAnnotationQuery,
+  CloudWatchMetricsQuery,
+  MetricQueryType,
+  VariableQuery,
+  VariableQueryType,
+} from './types';
 
 // Migrates a metric query that use more than one statistic into multiple queries
 // E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
@@ -60,4 +67,95 @@ export function migrateCloudWatchQuery(query: CloudWatchMetricsQuery) {
       query.metricEditorMode = query.expression ? MetricEditorMode.Code : MetricEditorMode.Builder;
     }
   }
+}
+
+export function migrateVariableQuery(rawQuery: string | VariableQuery): VariableQuery {
+  if (typeof rawQuery !== 'string') {
+    return rawQuery;
+  }
+  const newQuery: VariableQuery = {
+    refId: 'CloudWatchVariableQueryEditor-VariableQuery',
+    queryType: VariableQueryType.Regions,
+    namespace: '',
+    region: '',
+    metricName: '',
+    dimensionKey: '',
+    dimensionFilters: '',
+    ec2Filters: '',
+    instanceID: '',
+    attributeName: '',
+    resourceType: '',
+    tags: '',
+  };
+  if (rawQuery === '') {
+    return newQuery;
+  }
+
+  if (rawQuery.match(/^regions\(\)/)) {
+    return newQuery;
+  }
+  if (rawQuery.match(/^namespaces\(\)/)) {
+    newQuery.queryType = VariableQueryType.Namespaces;
+    return newQuery;
+  }
+  const metricNameQuery = rawQuery.match(/^metrics\(([^\)]+?)(,\s?([^,]+?))?\)/);
+  if (metricNameQuery) {
+    newQuery.queryType = VariableQueryType.Metrics;
+    newQuery.namespace = metricNameQuery[1];
+    newQuery.region = metricNameQuery[3] || '';
+    return newQuery;
+  }
+  const dimensionKeysQuery = rawQuery.match(/^dimension_keys\(([^\)]+?)(,\s?([^,]+?))?\)/);
+  if (dimensionKeysQuery) {
+    newQuery.queryType = VariableQueryType.DimensionKeys;
+    newQuery.namespace = dimensionKeysQuery[1];
+    newQuery.region = dimensionKeysQuery[3] || '';
+    return newQuery;
+  }
+
+  const dimensionValuesQuery = rawQuery.match(
+    /^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)(,\s?(.+))?\)/
+  );
+  if (dimensionValuesQuery) {
+    newQuery.queryType = VariableQueryType.DimensionValues;
+    newQuery.region = dimensionValuesQuery[1];
+    newQuery.namespace = dimensionValuesQuery[2];
+    newQuery.metricName = dimensionValuesQuery[3];
+    newQuery.dimensionKey = dimensionValuesQuery[4];
+    newQuery.dimensionFilters = dimensionValuesQuery[6] || '';
+    return newQuery;
+  }
+
+  const ebsVolumeIdsQuery = rawQuery.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
+  if (ebsVolumeIdsQuery) {
+    newQuery.queryType = VariableQueryType.EBSVolumeIDs;
+    newQuery.region = ebsVolumeIdsQuery[1];
+    newQuery.instanceID = ebsVolumeIdsQuery[2];
+    return newQuery;
+  }
+
+  const ec2InstanceAttributeQuery = rawQuery.match(/^ec2_instance_attribute\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
+  if (ec2InstanceAttributeQuery) {
+    newQuery.queryType = VariableQueryType.EC2InstanceAttributes;
+    newQuery.region = ec2InstanceAttributeQuery[1];
+    newQuery.attributeName = ec2InstanceAttributeQuery[2];
+    newQuery.ec2Filters = ec2InstanceAttributeQuery[3] || '';
+    return newQuery;
+  }
+
+  const resourceARNsQuery = rawQuery.match(/^resource_arns\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
+  if (resourceARNsQuery) {
+    newQuery.queryType = VariableQueryType.ResourceArns;
+    newQuery.region = resourceARNsQuery[1];
+    newQuery.resourceType = resourceARNsQuery[2];
+    newQuery.tags = JSON.parse(resourceARNsQuery[3]) || '';
+    return newQuery;
+  }
+
+  const statsQuery = rawQuery.match(/^statistics\(\)/);
+  if (statsQuery) {
+    newQuery.queryType = VariableQueryType.Statistics;
+    return newQuery;
+  }
+  throw new Error('unable to parse old variable query');
 }
