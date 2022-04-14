@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createRef } from 'react';
 import { render, prettyDOM, screen } from '@testing-library/react';
 import { TraceView } from './TraceView';
 import { setDataSourceSrv } from '@grafana/runtime';
@@ -9,6 +9,7 @@ import { configureStore } from '../../../store/configureStore';
 import { Provider } from 'react-redux';
 import { transformDataFrames } from './utils/transform';
 import userEvent from '@testing-library/user-event';
+import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 
 function getTraceView(frames: DataFrame[]) {
   const store = configureStore();
@@ -17,6 +18,7 @@ function getTraceView(frames: DataFrame[]) {
     series: [],
     timeRange: getDefaultTimeRange(),
   };
+  const topOfViewRef = createRef<HTMLDivElement>();
 
   const traceView = (
     <Provider store={store}>
@@ -28,6 +30,9 @@ function getTraceView(frames: DataFrame[]) {
         search=""
         focusedSpanIdForSearch=""
         queryResponse={mockPanelData}
+        datasource={undefined}
+        topOfViewRef={topOfViewRef}
+        topOfViewRefType={TopOfViewRefType.Explore}
       />
     </Provider>
   );

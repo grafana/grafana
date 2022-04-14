@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createRef } from 'react';
 import { render, screen } from '@testing-library/react';
 import { TraceViewContainer } from './TraceViewContainer';
 import { frameOld } from './TraceView.test';
@@ -15,6 +15,7 @@ function renderTraceViewContainer(frames = [frameOld]) {
     series: [],
     timeRange: getDefaultTimeRange(),
   };
+  const topOfViewRef = createRef<HTMLDivElement>();
 
   const { container, baseElement } = render(
     <Provider store={store}>
@@ -23,6 +24,7 @@ function renderTraceViewContainer(frames = [frameOld]) {
         dataFrames={frames}
         splitOpenFn={() => {}}
         queryResponse={mockPanelData}
+        topOfViewRef={topOfViewRef}
       />
     </Provider>
   );
