@@ -253,8 +253,8 @@
         settings: [[.Settings]],
         navTree: [[.NavTree]],
         themePaths: {
-          light: '[[.ContentDeliveryURL]]public/build/grafana.light.<%= compilation.hash %>.css',
-          dark: '[[.ContentDeliveryURL]]public/build/grafana.dark.<%= compilation.hash %>.css'
+          light: '[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>',
+          dark: '[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>'
         }
       };
 
