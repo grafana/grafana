@@ -1,28 +1,23 @@
-import React, { FC, useCallback } from 'react';
-import { StoreState } from 'app/types';
+import React, { FC } from 'react';
 import { Messages } from './PlatformConnectedLoader.messages';
-import { PermissionLoader } from '../PermissionLoader';
 import { useSelector } from 'react-redux';
-import { getPerconaUser } from 'app/percona/shared/core/selectors';
+import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/selectors';
 import { EmptyBlock } from '../EmptyBlock';
-import { ErrorMessage } from './components/ErrorMessage/ErrorMessage';
 
 export const PlatformConnectedLoader: FC = ({ children }) => {
-  const featureSelector = useCallback((state: StoreState) => !!state.perconaSettings.isConnectedToPortal, []);
-  const { isPlatformUser } = useSelector(getPerconaUser);
+  const { isConnectedToPortal } = useSelector(getPerconaSettings);
+  const { isPlatformUser, isAuthorized } = useSelector(getPerconaUser);
 
-  const checkForPlatformUser = useCallback(() => {
-    if (isPlatformUser) {
-      return children;
+  if (isPlatformUser) {
+    return <>{children}</>;
+  } else {
+    if (isConnectedToPortal) {
+      return <EmptyBlock dataTestId="not-platform-user">{Messages.platformUser}</EmptyBlock>;
+    } else {
+      if (!isAuthorized) {
+        return <EmptyBlock dataTestId="unauthorized">{Messages.unauthorized}</EmptyBlock>;
+      }
+      return <EmptyBlock dataTestId="not-connected-platform">{Messages.notConnected}</EmptyBlock>;
     }
-    return <EmptyBlock dataTestId="not-platform-user">{Messages.platformUser}</EmptyBlock>;
-  }, [isPlatformUser, children]);
-
-  return (
-    <PermissionLoader
-      featureSelector={featureSelector}
-      renderSuccess={checkForPlatformUser}
-      renderError={() => <ErrorMessage />}
-    />
-  );
+  }
 };
