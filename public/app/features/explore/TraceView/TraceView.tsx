@@ -57,7 +57,7 @@ type Props = {
   queryResponse: PanelData;
   datasource?: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
   topOfViewRef?: RefObject<HTMLDivElement>;
-  topOfViewRefType?: TopOfViewRefType;
+  topOfViewRefType: TopOfViewRefType;
 };
 
 export function TraceView(props: Props) {

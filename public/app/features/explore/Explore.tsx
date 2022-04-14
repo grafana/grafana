@@ -309,7 +309,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           scrollElement={this.scrollElement}
           queryResponse={queryResponse}
           topOfViewRef={this.topOfViewRef}
-          topOfViewRefType={TopOfViewRefType.Explore}
         />
       )
     );

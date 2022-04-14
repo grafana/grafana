@@ -17,13 +17,11 @@ interface Props {
   scrollElement?: Element;
   queryResponse: PanelData;
   topOfViewRef?: RefObject<HTMLDivElement>;
-  topOfViewRefType?: TopOfViewRefType;
 }
 export function TraceViewContainer(props: Props) {
   // At this point we only show single trace
   const frame = props.dataFrames[0];
   const { dataFrames, splitOpenFn, exploreId, scrollElement, topOfViewRef, queryResponse } = props;
-  const { topOfViewRefType } = props;
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
@@ -62,7 +60,7 @@ export function TraceViewContainer(props: Props) {
           queryResponse={queryResponse}
           datasource={datasource}
           topOfViewRef={topOfViewRef}
-          topOfViewRefType={topOfViewRefType}
+          topOfViewRefType={TopOfViewRefType.Explore}
         />
       </Collapse>
     </>
