@@ -23,7 +23,8 @@ func TestDashboardIndex(t *testing.T) {
 			},
 		},
 	}
-	index := NewDashboardIndex(&dummyEventStore{}, dashboardLoader)
+	// TODO mockery
+	index := NewDashboardIndex(nil, dashboardLoader)
 	require.NotNil(t, index)
 	dashboards, err := index.getDashboards(context.Background(), 1)
 	require.NoError(t, err)

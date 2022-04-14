@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/store"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -26,13 +27,13 @@ type StandardSearchService struct {
 	dashboardIndex *DashboardIndex
 }
 
-func ProvideService(sql *sqlstore.SQLStore) SearchService {
+func ProvideService(sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService) SearchService {
 	return &StandardSearchService{
 		sql: sql,
 		auth: &simpleSQLAuthService{
 			sql: sql,
 		},
-		dashboardIndex: NewDashboardIndex(&dummyEventStore{}, &sqlDashboardLoader{sql: sql}),
+		dashboardIndex: NewDashboardIndex(entityEventStore, &sqlDashboardLoader{sql: sql}),
 		logger:         log.New("searchV2"),
 	}
 }

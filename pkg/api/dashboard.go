@@ -364,7 +364,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	if dashboard != nil && hs.entityEventsService != nil {
 		if err := hs.entityEventsService.SaveEvent(ctx, store.SaveEventCmd{
-			Grn:       fmt.Sprintf("database/%d/dashboards/%s", dashboard.OrgId, dashboard.Uid),
+			Grn:       fmt.Sprintf("database/%d/dashboard/%s", dashboard.OrgId, dashboard.Uid),
 			EventType: store.EntityEventTypeUpdate,
 		}); err != nil {
 			hs.log.Warn("failed to save dashboard entity event", "uid", dashboard.Uid, "error", err)

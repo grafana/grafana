@@ -11,40 +11,18 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/store"
 )
 
 type dashboardLoader interface {
 	LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error)
 }
 
-type EntityEventType string
-
-type EntityEvent struct {
-	ID        int64
-	GRN       string
-	EventType EntityEventType
-}
-
-type eventStore interface {
-	GetLast(ctx context.Context) (*EntityEvent, error)
-	GetAllAfter(ctx context.Context, id int64) ([]*EntityEvent, error)
-}
-
-type dummyEventStore struct{}
-
-func (d dummyEventStore) GetLast(_ context.Context) (*EntityEvent, error) {
-	return nil, nil
-}
-
-func (d dummyEventStore) GetAllAfter(_ context.Context, _ int64) ([]*EntityEvent, error) {
-	return nil, nil
-}
-
 type DashboardIndex struct {
 	mu         sync.RWMutex
 	loader     dashboardLoader
 	dashboards map[int64][]dashboard
-	eventStore eventStore
+	eventStore store.EntityEventsService
 	logger     log.Logger
 }
 
@@ -59,7 +37,7 @@ type dashboard struct {
 	info     *extract.DashboardInfo
 }
 
-func NewDashboardIndex(eventStore eventStore, loader dashboardLoader) *DashboardIndex {
+func NewDashboardIndex(eventStore store.EntityEventsService, loader dashboardLoader) *DashboardIndex {
 	return &DashboardIndex{
 		loader:     loader,
 		dashboards: map[int64][]dashboard{},
@@ -76,12 +54,12 @@ func (i *DashboardIndex) listenEvents(ctx context.Context) error {
 	defer partialUpdateTicker.Stop()
 
 	var lastEventID int64
-	lastEvent, err := i.eventStore.GetLast(context.Background())
+	lastEvent, err := i.eventStore.GetLastEvent(context.Background())
 	if err != nil {
 		return err
 	}
 	if lastEvent != nil {
-		lastEventID = lastEvent.ID
+		lastEventID = lastEvent.Id
 	}
 
 	for {
@@ -110,7 +88,7 @@ func (i *DashboardIndex) reIndexFromScratch() {
 }
 
 func (i *DashboardIndex) loadIndexUpdates(ctx context.Context, lastEventID int64) int64 {
-	events, err := i.eventStore.GetAllAfter(context.Background(), lastEventID)
+	events, err := i.eventStore.GetAllEventsAfter(context.Background(), lastEventID)
 	if err != nil {
 		i.logger.Error("can't load events", "error", err)
 		return lastEventID
@@ -126,37 +104,37 @@ func (i *DashboardIndex) loadIndexUpdates(ctx context.Context, lastEventID int64
 			i.logger.Error("can't apply event", "error", err)
 			return lastEventID
 		}
-		lastEventID = e.ID
+		lastEventID = e.Id
 	}
 	return lastEventID
 }
 
-func (i *DashboardIndex) applyEventOnIndex(ctx context.Context, e *EntityEvent) error {
-	if !strings.HasPrefix(e.GRN, "database/") {
-		i.logger.Info("unknown storage", "grn", e.GRN)
+func (i *DashboardIndex) applyEventOnIndex(ctx context.Context, e *store.EntityEvent) error {
+	if !strings.HasPrefix(e.Grn, "database/") {
+		i.logger.Info("unknown storage", "grn", e.Grn)
 		return nil
 	}
-	parts := strings.Split(strings.TrimPrefix(e.GRN, "database/"), "/")
+	parts := strings.Split(strings.TrimPrefix(e.Grn, "database/"), "/")
 	if len(parts) != 3 {
-		i.logger.Error("can't parse GRN", "grn", e.GRN)
+		i.logger.Error("can't parse GRN", "grn", e.Grn)
 		return nil
 	}
 	orgIDStr := parts[0]
 	kind := parts[1]
 	dashboardUID := parts[2]
-	if kind != "dashboards" {
-		i.logger.Error("unknown kind in GRN", "grn", e.GRN)
+	if kind != "dashboard" {
+		i.logger.Error("unknown kind in GRN", "grn", e.Grn)
 		return nil
 	}
 	orgID, err := strconv.Atoi(orgIDStr)
 	if err != nil {
-		i.logger.Error("can't extract org ID", "grn", e.GRN)
+		i.logger.Error("can't extract org ID", "grn", e.Grn)
 		return nil
 	}
 	return i.applyDashboardEvent(ctx, int64(orgID), dashboardUID, e.EventType)
 }
 
-func (i *DashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, dashboardUID string, _ EntityEventType) error {
+func (i *DashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, dashboardUID string, _ store.EntityEventType) error {
 	i.mu.Lock()
 	_, ok := i.dashboards[orgID]
 	if !ok {
