@@ -92,6 +92,10 @@ export interface UpgradeContentProps {
   description?: string;
   listItems: string[];
   caption?: string;
+  action?: {
+    link: string;
+    text: string;
+  };
 }
 
 export const UpgradeContent = ({
@@ -101,6 +105,7 @@ export const UpgradeContent = ({
   featureName,
   description,
   caption,
+  action,
 }: UpgradeContentProps) => {
   const styles = useStyles2(getUpgradeContentStyles);
   return (
@@ -115,6 +120,11 @@ export const UpgradeContent = ({
             </li>
           ))}
         </ul>
+        {action && (
+          <LinkButton variant={'primary'} href={action.link}>
+            {action.text}
+          </LinkButton>
+        )}
         {featureUrl && (
           <LinkButton fill={'text'} href={featureUrl} className={styles.link} target="_blank" rel="noreferrer noopener">
             Learn more
