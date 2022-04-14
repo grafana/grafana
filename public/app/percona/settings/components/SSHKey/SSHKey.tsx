@@ -26,7 +26,7 @@ export const SSHKey: FC<SSHKeyProps> = ({ sshKey, updateSettings }) => {
         onSubmit={applyChanges}
         initialValues={{ key: sshKey }}
         render={({ handleSubmit, pristine }) => (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} data-testid="ssh-key-form">
             <div className={settingsStyles.labelWrapper} data-testid="ssh-key-label">
               <span>{label}</span>
               <LinkTooltip tooltipText={tooltip} link={link} linkText={tooltipLinkText} icon="info-circle" />

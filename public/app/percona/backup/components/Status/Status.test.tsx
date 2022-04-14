@@ -1,37 +1,39 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Status } from './Status';
 import { BackupStatus, RestoreStatus } from '../../Backup.types';
-import { Ellipsis } from 'app/percona/shared/components/Elements/Icons';
-import { dataTestId } from '@percona/platform-core';
 import { Messages } from './Status.messages';
+
+jest.mock('app/percona/shared/components/Elements/Icons', () => ({
+  ...jest.requireActual('app/percona/shared/components/Elements/Icons'),
+  Ellipsis: jest.fn(() => <div data-testid="ellipsis" />),
+}));
 
 describe('Status', () => {
   describe('pending states', () => {
     it('should show Ellipsis when backup is pending', () => {
-      const wrapper = mount(<Status status={BackupStatus.BACKUP_STATUS_PENDING} />);
-      expect(wrapper.find(Ellipsis).exists()).toBeTruthy();
-      expect(wrapper.find(dataTestId('statusMsg')).exists()).not.toBeTruthy();
+      render(<Status status={BackupStatus.BACKUP_STATUS_PENDING} />);
+      expect(screen.getByTestId('ellipsis')).toBeInTheDocument();
+      expect(screen.queryByTestId('statusMsg')).not.toBeInTheDocument();
     });
 
     it('should show Ellipsis when backup is in progress', () => {
-      const wrapper = mount(<Status status={BackupStatus.BACKUP_STATUS_IN_PROGRESS} />);
-      expect(wrapper.find(Ellipsis).exists()).toBeTruthy();
+      render(<Status status={BackupStatus.BACKUP_STATUS_IN_PROGRESS} />);
+      expect(screen.getByTestId('ellipsis')).toBeInTheDocument();
     });
 
     it('should show Ellipsis when restore is in progress', () => {
-      const wrapper = mount(<Status status={RestoreStatus.RESTORE_STATUS_IN_PROGRESS} />);
-      expect(wrapper.find(Ellipsis).exists()).toBeTruthy();
+      render(<Status status={RestoreStatus.RESTORE_STATUS_IN_PROGRESS} />);
+      expect(screen.getByTestId('ellipsis')).toBeInTheDocument();
     });
   });
 
   describe('not pending states', () => {
     it('should show message when not pending', () => {
-      const wrapper = mount(<Status status={BackupStatus.BACKUP_STATUS_SUCCESS} />);
-      expect(wrapper.find(Ellipsis).exists()).not.toBeTruthy();
-      expect(wrapper.find(dataTestId('statusMsg')).exists()).toBeTruthy();
+      render(<Status status={BackupStatus.BACKUP_STATUS_SUCCESS} />);
+      expect(screen.queryByTestId('ellipsis')).not.toBeInTheDocument();
+      expect(screen.getByTestId('statusMsg')).toBeInTheDocument();
     });
   });
 

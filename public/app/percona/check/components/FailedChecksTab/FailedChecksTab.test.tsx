@@ -1,6 +1,6 @@
 import React from 'react';
 import { logger } from '@percona/platform-core';
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { CheckService } from 'app/percona/check/Check.service';
 import { FailedChecksTab } from './FailedChecksTab';
 
@@ -20,18 +20,14 @@ describe('FailedChecksTab::', () => {
   afterEach(() => getAlertsSpy.mockClear());
 
   it('should fetch active alerts at startup', async () => {
-    act(() => {
-      render(<FailedChecksTab />);
-    });
+    await waitFor(() => render(<FailedChecksTab />));
 
     await screen.findByTestId('db-check-panel-actions');
     expect(CheckService.getAllFailedChecks).toHaveBeenCalledTimes(1);
   });
 
   it('should render a spinner at startup, while loading', async () => {
-    act(() => {
-      render(<FailedChecksTab />);
-    });
+    render(<FailedChecksTab />);
 
     expect(screen.queryByTestId('db-checks-failed-checks-spinner')).toBeInTheDocument();
 
@@ -46,9 +42,7 @@ describe('FailedChecksTab::', () => {
     });
     const loggerSpy = jest.spyOn(logger, 'error');
 
-    act(() => {
-      render(<FailedChecksTab />);
-    });
+    await waitFor(() => render(<FailedChecksTab />));
 
     await screen.findByTestId('db-check-panel-actions');
 
@@ -63,14 +57,13 @@ describe('FailedChecksTab::', () => {
     });
     const loggerSpy = jest.spyOn(logger, 'error');
 
-    act(() => {
-      render(<FailedChecksTab />);
-    });
+    render(<FailedChecksTab />);
 
     await screen.findByTestId('db-check-panel-actions');
 
     const runChecksButton = screen.getByRole('button');
 
+    await waitFor(() => fireEvent.click(runChecksButton));
     fireEvent.click(runChecksButton);
     expect(screen.queryByText('Run Checks')).not.toBeInTheDocument();
 
@@ -85,9 +78,7 @@ describe('FailedChecksTab::', () => {
 
   it('should call the API to run checks when the "run checks" button gets clicked', async () => {
     const runChecksSpy = jest.spyOn(CheckService, 'runDbChecks');
-    act(() => {
-      render(<FailedChecksTab />);
-    });
+    render(<FailedChecksTab />);
 
     await screen.findByTestId('db-check-panel-actions');
 
@@ -108,9 +99,7 @@ describe('FailedChecksTab::', () => {
   });
 
   it('should render a table after having fetched the alerts', async () => {
-    act(() => {
-      render(<FailedChecksTab />);
-    });
+    render(<FailedChecksTab />);
 
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
 

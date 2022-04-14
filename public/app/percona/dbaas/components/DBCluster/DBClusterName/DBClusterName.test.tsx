@@ -1,29 +1,34 @@
 import React from 'react';
-import { shallow } from 'enzyme';
 import { Icon } from '@grafana/ui';
 import { DBClusterName } from './DBClusterName';
 import { dbClustersStub } from '../__mocks__/dbClustersStubs';
+import { render, screen } from '@testing-library/react';
+
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  Icon: jest.fn(() => <div data-testd="icon" />),
+}));
 
 describe('DBClusterName::', () => {
   it('renders correctly with name and icon', () => {
     const cluster = dbClustersStub[0];
-    const root = shallow(<DBClusterName dbCluster={cluster} />);
+    const { container } = render(<DBClusterName dbCluster={cluster} />);
 
-    expect(root.text()).toContain(cluster.clusterName);
-    expect(root.find(Icon)).toBeTruthy();
+    expect(container).toHaveTextContent(cluster.clusterName);
+    expect(Icon).toHaveBeenCalled();
   });
   it('renders correctly MySQL cluster URL', () => {
     const cluster = dbClustersStub[0];
-    const root = shallow(<DBClusterName dbCluster={cluster} />);
+    render(<DBClusterName dbCluster={cluster} />);
 
-    expect(root.find('a').prop('href')).toContain('pxc');
-    expect(root.find('a').prop('href')).toContain(cluster.clusterName);
+    expect(screen.getByRole('link').getAttribute('href')).toContain('pxc');
+    expect(screen.getByRole('link').getAttribute('href')).toContain(cluster.clusterName);
   });
   it('renders correctly MongoDB cluster URL', () => {
     const cluster = dbClustersStub[2];
-    const root = shallow(<DBClusterName dbCluster={cluster} />);
+    render(<DBClusterName dbCluster={cluster} />);
 
-    expect(root.find('a').prop('href')).toContain('mongodb');
-    expect(root.find('a').prop('href')).toContain(cluster.clusterName);
+    expect(screen.getByRole('link').getAttribute('href')).toContain('mongodb');
+    expect(screen.getByRole('link').getAttribute('href')).toContain(cluster.clusterName);
   });
 });

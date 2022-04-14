@@ -1,12 +1,17 @@
 import React from 'react';
-import { shallow } from 'enzyme';
 import { Icon } from '@grafana/ui';
 import { WarningBlock } from './WarningBlock';
+import { render, screen } from '@testing-library/react';
+
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  Icon: jest.fn(() => <div />),
+}));
 
 describe('WarningBlock', () => {
   it('should have warning icon and message', () => {
-    const wrapper = shallow(<WarningBlock message="message" />);
-    expect(wrapper.find(Icon).prop('name')).toBe('info-circle');
-    expect(wrapper.text()).toBe('message');
+    render(<WarningBlock message="message" />);
+    expect(Icon).toHaveBeenCalledWith(expect.objectContaining({ name: 'info-circle' }), expect.anything());
+    expect(screen.getByTestId('warning-block')).toHaveTextContent('message');
   });
 });

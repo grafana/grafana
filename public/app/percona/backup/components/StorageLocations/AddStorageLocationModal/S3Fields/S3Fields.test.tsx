@@ -1,18 +1,28 @@
 import React from 'react';
-import { shallow } from 'enzyme';
-import { TextInputField } from '@percona/platform-core';
 import { S3Fields } from './S3Fields';
 import { SecretToggler } from 'app/percona/shared/components/Elements/SecretToggler';
+import { Form } from 'react-final-form';
+import { render, screen } from '@testing-library/react';
+
+jest.mock('app/percona/shared/components/Elements/SecretToggler', () => ({
+  SecretToggler: jest.fn(({ children }) => <div data-testid="secret-toggler">{children}</div>),
+}));
 
 describe('S3Fields', () => {
   it('should pass initial values', () => {
-    const wrapper = shallow(
-      <S3Fields bucketName="bucket" endpoint="/foo" accessKey="accessKey" secretKey="secretKey" />
+    render(
+      <Form
+        onSubmit={jest.fn()}
+        render={({ form }) => (
+          <S3Fields bucketName="bucket" endpoint="/foo" accessKey="accessKey" secretKey="secretKey" />
+        )}
+      />
     );
-    const inputs = wrapper.find(TextInputField);
-    expect(inputs.find({ initialValue: '/foo' }).exists()).toBeTruthy();
-    expect(inputs.find({ initialValue: 'accessKey' }).exists()).toBeTruthy();
-    expect(inputs.find({ initialValue: 'bucket' }).exists()).toBeTruthy();
-    expect(wrapper.find(SecretToggler).last().prop('secret')).toBe('secretKey');
+
+    const inputs = screen.getAllByRole('textbox').filter((item) => item.tagName === 'INPUT') as HTMLInputElement[];
+    expect(inputs.find((item) => item.value === '/foo')).toBeTruthy();
+    expect(inputs.find((item) => item.value === 'accessKey')).toBeTruthy();
+    expect(inputs.find((item) => item.value === 'bucket')).toBeTruthy();
+    expect(SecretToggler).toHaveBeenCalledWith(expect.objectContaining({ secret: 'secretKey' }), expect.anything());
   });
 });

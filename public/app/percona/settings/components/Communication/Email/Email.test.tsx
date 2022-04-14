@@ -1,11 +1,10 @@
 import React from 'react';
-import { mount } from 'enzyme';
-import { dataTestId } from '@percona/platform-core';
 import { Email } from './Email';
+import { render, screen } from '@testing-library/react';
 
-xdescribe('Email::', () => {
+describe('Email::', () => {
   it('Renders with props', () => {
-    const root = mount(
+    render(
       <Email
         settings={{
           username: 'test',
@@ -19,11 +18,11 @@ xdescribe('Email::', () => {
       />
     );
 
-    expect(root.find(dataTestId('username-text-input')).prop('value')).toEqual('test');
+    expect(screen.getByTestId('username-text-input')).toHaveProperty('value', 'test');
   });
 
   it('Disables apply changes on initial values', () => {
-    const root = mount(
+    render(
       <Email
         settings={{
           username: 'test',
@@ -36,13 +35,14 @@ xdescribe('Email::', () => {
         testSettings={() => Promise.resolve()}
       />
     );
-    const button = root.find('button');
+    const buttons = screen.getAllByRole('button');
 
-    expect(button.prop('disabled')).toBeTruthy();
+    expect(buttons[0]).toBeDisabled();
+    expect(buttons[1]).toBeDisabled();
   });
 
   it('Disables username and password when NONE is selected', () => {
-    const root = mount(
+    render(
       <Email
         settings={{
           from: 'from@mail.com',
@@ -55,12 +55,12 @@ xdescribe('Email::', () => {
       />
     );
 
-    expect(root.find(dataTestId('username-text-input')).prop('disabled')).toBeTruthy();
-    expect(root.find(dataTestId('password-password-input')).prop('disabled')).toBeTruthy();
+    expect(screen.getByTestId('username-text-input')).toBeDisabled();
+    expect(screen.getByTestId('password-password-input')).toBeDisabled();
   });
 
   it('Enabled username and password when NONE is not selected', () => {
-    const root = mount(
+    render(
       <Email
         settings={{
           username: 'user',
@@ -75,7 +75,7 @@ xdescribe('Email::', () => {
       />
     );
 
-    expect(root.find(dataTestId('username-text-input')).prop('disabled')).toBeFalsy();
-    expect(root.find(dataTestId('password-password-input')).prop('disabled')).toBeFalsy();
+    expect(screen.getByTestId('username-text-input')).not.toBeDisabled();
+    expect(screen.getByTestId('password-password-input')).not.toBeDisabled();
   });
 });

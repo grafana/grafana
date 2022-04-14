@@ -49,6 +49,7 @@ export const CheckTableRow: FC<CheckTableRowProps> = ({ check, onSuccess }) => {
               size="sm"
               loading={changeCheckPending}
               onClick={changeCheck}
+              data-testid="check-table-loader-button"
             >
               {disabled ? Messages.enable : Messages.disable}
             </LoaderButton>

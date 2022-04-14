@@ -14,7 +14,7 @@ export const MultipleActions: FC<MultipleActionsProps> = ({ actions, disabled, d
   ));
 
   return (
-    <Dropdown toggle={Toggle}>
+    <Dropdown toggle={Toggle} data-testid="multiple-actions-dropdown">
       {actions.map(({ title, action, disabled }) => (
         <Fragment key={title}>
           {disabled ? <span className={styles.disabledButton}>{title}</span> : <span onClick={action}>{title}</span>}

@@ -151,7 +151,7 @@ export const Advanced: FC<AdvancedProps> = ({
         onSubmit={applyChanges}
         initialValues={initialValues}
         render={({ form: { change }, values, handleSubmit, valid, pristine }) => (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} data-testid="advanced-form">
             <div className={styles.advancedRow}>
               <div className={styles.advancedCol}>
                 <div className={settingsStyles.labelWrapper} data-testid="advanced-label">

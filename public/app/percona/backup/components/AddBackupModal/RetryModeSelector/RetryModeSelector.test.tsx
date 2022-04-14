@@ -1,37 +1,38 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { RetryModeSelector } from './RetryModeSelector';
-import { FormWrapper, NumberInputField, RadioButtonGroupField } from '@percona/platform-core';
+import { FormWrapper } from '@percona/platform-core';
 import { RetryMode } from 'app/percona/backup/Backup.types';
+import { render, screen } from '@testing-library/react';
 
 describe('RetryModeSelector', () => {
   it('should render', () => {
-    const wrapper = mount(
+    render(
       <FormWrapper>
         <RetryModeSelector retryMode={RetryMode.AUTO} />
       </FormWrapper>
     );
-    expect(wrapper.find(RadioButtonGroupField)).toHaveLength(1);
-    expect(wrapper.find(NumberInputField)).toHaveLength(2);
-    expect(wrapper.find(NumberInputField).at(0).prop('disabled')).toBeFalsy();
+    expect(screen.getAllByTestId('retryMode-radio-state')).toHaveLength(1);
+    expect(screen.getAllByTestId('retryTimes-field-container')).toHaveLength(1);
+    expect(screen.getAllByTestId('retryInterval-field-container')).toHaveLength(1);
+    expect(screen.getByTestId('retryTimes-number-input')).toHaveProperty('disabled', false);
   });
 
   it('should disable number inputs when retry mode is MANUAL', () => {
-    const wrapper = mount(
+    render(
       <FormWrapper>
         <RetryModeSelector retryMode={RetryMode.MANUAL} />
       </FormWrapper>
     );
-    expect(wrapper.find(NumberInputField).at(0).prop('disabled')).toBeTruthy();
+    expect(screen.getByTestId('retryTimes-number-input')).toBeDisabled();
   });
 
   it('should disable all fields when disabled is passed, even if retry mode is AUTO', () => {
-    const wrapper = mount(
+    render(
       <FormWrapper>
         <RetryModeSelector disabled retryMode={RetryMode.AUTO} />
       </FormWrapper>
     );
-    expect(wrapper.find(RadioButtonGroupField).at(0).prop('disabled')).toBeTruthy();
-    expect(wrapper.find(NumberInputField).at(0).prop('disabled')).toBeTruthy();
+    expect(screen.getByTestId('retryTimes-number-input')).toBeDisabled();
+    expect(screen.getAllByTestId('retryMode-radio-button')[0]).toBeDisabled();
   });
 });

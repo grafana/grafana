@@ -1,13 +1,11 @@
 import React from 'react';
-import { ReactWrapper } from 'enzyme';
-import { dataTestId } from '@percona/platform-core';
-import { getMount, asyncAct } from 'app/percona/shared/helpers/testUtils';
 import { AddNotificationChannelModal } from './AddNotificationChannelModal';
 import { TYPE_OPTIONS } from './AddNotificationChannel.constants';
 import { notificationChannelStubs } from '../__mocks__/notificationChannelStubs';
 import { NotificationChannelProvider } from '../NotificationChannel.provider';
 import { NotificationChannelType, PagerDutyKeyType, PagerDutylNotificationChannel } from '../NotificationChannel.types';
 import { NotificationChannelService } from '../NotificationChannel.service';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 jest.mock('../NotificationChannel.service');
 jest.mock('app/core/core', () => ({
@@ -28,51 +26,46 @@ const withContext = (wrapper: JSX.Element) => (
   </NotificationChannelProvider.Provider>
 );
 
-const findFormButton = (wrapper: ReactWrapper) =>
-  wrapper.find(dataTestId('notification-channel-add-button')).find('button');
-
-xdescribe('AddNotificationChannelModal', () => {
+describe('AddNotificationChannelModal', () => {
   it('should render modal with correct fields', async () => {
-    const wrapper = await getMount(withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible />));
+    render(withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible />));
 
-    expect(wrapper.find('[className$="-singleValue"]').text()).toEqual(TYPE_OPTIONS[0].label);
-    expect(wrapper.find('input').length).toBe(2);
-    expect(wrapper.find(dataTestId('emails-textarea-input')).length).toBe(1);
-    expect(wrapper.find(dataTestId('notification-channel-add-button')).find('button').length).toBe(1);
-    expect(wrapper.find(dataTestId('notification-channel-cancel-button')).find('button').length).toBe(1);
+    expect(screen.getAllByRole('textbox')).toHaveLength(2);
+    expect(screen.getByTestId('notification-channel-add-button')).toBeInTheDocument();
+    expect(screen.getByTestId('notification-channel-cancel-button')).toBeInTheDocument();
   });
 
   it('should not render modal when visible is set to false', async () => {
-    const wrapper = await getMount(
-      withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible={false} />)
-    );
-
-    expect(wrapper.find(dataTestId('emails-textarea-input')).length).toBe(0);
+    render(withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible={false} />));
+    expect(screen.queryByTestId('add-notification-channel-modal-form')).not.toBeInTheDocument();
   });
 
   it('should call setVisible on close', async () => {
     const setVisible = jest.fn();
-    const wrapper = await getMount(withContext(<AddNotificationChannelModal setVisible={setVisible} isVisible />));
+    render(withContext(<AddNotificationChannelModal setVisible={setVisible} isVisible />));
 
-    await asyncAct(() => wrapper.find(dataTestId('modal-background')).simulate('click'));
+    const modalBackground = screen.getByTestId('modal-background');
+    fireEvent.click(modalBackground);
 
     expect(setVisible).toHaveBeenCalled();
   });
 
   it('should call setVisible on submit', async () => {
     const setVisible = jest.fn();
-    const wrapper = await getMount(withContext(<AddNotificationChannelModal setVisible={setVisible} isVisible />));
+    render(withContext(<AddNotificationChannelModal setVisible={setVisible} isVisible />));
 
-    wrapper.find(dataTestId('name-text-input')).simulate('change', { target: { value: 'Email test' } });
-    wrapper.find('textarea').simulate('change', { target: { value: 'test1@percona.com' } });
-    await asyncAct(() => wrapper.find('form').simulate('submit'));
+    const nameTextInput = screen.getByTestId('name-text-input');
+    fireEvent.change(nameTextInput, { target: { value: 'Email test' } });
+
+    const form = screen.getByTestId('add-notification-channel-modal-form');
+    await waitFor(() => fireEvent.submit(form));
 
     expect(setVisible).toHaveBeenCalledWith(false);
   });
 
   it('should render with notification channel', async () => {
     const setVisible = jest.fn();
-    const wrapper = await getMount(
+    render(
       withContext(
         <AddNotificationChannelModal
           notificationChannel={notificationChannelStubs[0]}
@@ -82,14 +75,14 @@ xdescribe('AddNotificationChannelModal', () => {
       )
     );
 
-    expect(wrapper.find(dataTestId('name-text-input')).prop('value')).toEqual(notificationChannelStubs[0].summary);
+    expect(screen.getByTestId('name-text-input')).toHaveValue(notificationChannelStubs[0].summary);
   });
 
   it('should have the submit button initially disabled', async () => {
-    const wrapper = await getMount(withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible />));
-    const button = findFormButton(wrapper);
+    render(withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible />));
+    const button = screen.getByTestId('notification-channel-add-button');
 
-    expect(button.props().disabled).toBeTruthy();
+    expect(button).toBeDisabled();
   });
 
   describe('Pager Duty option', () => {
@@ -108,16 +101,18 @@ xdescribe('AddNotificationChannelModal', () => {
       const serviceAddMock = jest.fn();
       spyOn(NotificationChannelService, 'change').and.callFake(serviceAddMock);
 
-      const wrapper = await getMount(
+      render(
         withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible notificationChannel={channel} />)
       );
-      await asyncAct(() => wrapper.find(dataTestId('keyType-radio-button')).at(1).simulate('change'));
 
-      wrapper.update();
-      await asyncAct(() =>
-        wrapper.find(dataTestId('service-text-input')).simulate('change', { target: { value: 'new_service_key' } })
-      );
-      await asyncAct(() => wrapper.find('form').simulate('submit'));
+      const keyTypeRadioButton = screen.getAllByTestId('keyType-radio-button')[1];
+      fireEvent.click(keyTypeRadioButton);
+
+      const serviceTextInput = screen.getByTestId('service-text-input');
+      fireEvent.change(serviceTextInput, { target: { value: 'new_service_key' } });
+
+      const form = screen.getByTestId('add-notification-channel-modal-form');
+      await waitFor(() => fireEvent.submit(form));
 
       expect(serviceAddMock).toHaveBeenCalledWith('id1', {
         name: 'name',

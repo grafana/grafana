@@ -1,19 +1,18 @@
 import React from 'react';
-import { shallow } from 'enzyme';
 import { DBClusterConnectionItem } from './DBClusterConnectionItem';
+import { render } from '@testing-library/react';
 
 describe('DBClusterConnectionItem::', () => {
   it('renders correctly', () => {
-    const root = shallow(<DBClusterConnectionItem label="Test" value="test" />);
-    const span = root.find('span');
+    const { container } = render(<DBClusterConnectionItem label="Test" value="test" />);
 
-    expect(span.length).toBe(2);
-    expect(root.find('div').children().length).toBe(2);
+    expect(container.querySelectorAll('span')).toHaveLength(2);
+    expect(container.querySelector('div')?.children).toHaveLength(2);
   });
   it('renders correctly label and value', () => {
-    const root = shallow(<DBClusterConnectionItem label="test label" value="test value" />);
+    const { container } = render(<DBClusterConnectionItem label="test label" value="test value" />);
 
-    expect(root.text()).toContain('test label');
-    expect(root.text()).toContain('test value');
+    expect(container).toHaveTextContent('test label');
+    expect(container).toHaveTextContent('test value');
   });
 });

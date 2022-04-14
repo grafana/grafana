@@ -1,6 +1,6 @@
 import React from 'react';
-import { shallow } from 'enzyme';
 import { LinkTooltip } from './LinkTooltip';
+import { render } from '@testing-library/react';
 
 const testProps = {
   tooltipText: 'Test text',
@@ -11,8 +11,7 @@ const testProps = {
 
 describe('LinkTooltip::', () => {
   it('Renders icon correctly', () => {
-    const root = shallow(<LinkTooltip icon="question-circle" {...testProps} />);
-
-    expect(root.children().length).toEqual(1);
+    const { container } = render(<LinkTooltip icon="question-circle" {...testProps} />);
+    expect(container.children).toHaveLength(1);
   });
 });

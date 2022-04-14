@@ -1,7 +1,7 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { useCancelToken } from './cancelToken.hook';
 import axios from 'axios';
+import { render, screen, fireEvent } from '@testing-library/react';
 
 const FIRST_CANCEL_TOKEN = 'firstRequest';
 const SECOND_CANCEL_TOKEN = 'secondRequest';
@@ -24,9 +24,9 @@ const Dummy = () => {
 
   return (
     <>
-      <button onClick={() => generateToken(FIRST_CANCEL_TOKEN)}></button>
-      <button onClick={() => generateToken(SECOND_CANCEL_TOKEN)}></button>
-      <button onClick={() => cancelToken(FIRST_CANCEL_TOKEN)}></button>
+      <button onClick={() => generateToken(FIRST_CANCEL_TOKEN)} />
+      <button onClick={() => generateToken(SECOND_CANCEL_TOKEN)} />
+      <button onClick={() => cancelToken(FIRST_CANCEL_TOKEN)} />
     </>
   );
 };
@@ -37,54 +37,54 @@ describe('useCancelToken', () => {
   });
 
   it('should cancel previous identical requests', () => {
-    const wrapper = mount(<Dummy />);
-    const button = wrapper.find('button');
+    render(<Dummy />);
+    const buttons = screen.getAllByRole('button');
 
-    button.first().simulate('click');
-    button.first().simulate('click');
-    button.first().simulate('click');
+    fireEvent.click(buttons[0]);
+    fireEvent.click(buttons[0]);
+    fireEvent.click(buttons[0]);
 
     expect(sourceSpy).toHaveBeenCalledTimes(3);
     expect(cancelSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('should keep different requests', () => {
-    const wrapper = mount(<Dummy />);
-    const button = wrapper.find('button');
+  it('should keep different requests', async () => {
+    render(<Dummy />);
+    const buttons = screen.getAllByRole('button');
 
-    button.first().simulate('click');
-    button.first().simulate('click');
-    button.first().simulate('click');
+    fireEvent.click(buttons[0]);
+    fireEvent.click(buttons[0]);
+    fireEvent.click(buttons[0]);
 
-    button.at(1).simulate('click');
-    button.at(1).simulate('click');
+    fireEvent.click(buttons[1]);
+    fireEvent.click(buttons[1]);
 
     expect(sourceSpy).toHaveBeenCalledTimes(5);
-    expect(cancelSpy).toHaveBeenCalledTimes(3);
+    expect(cancelSpy).toHaveBeenCalledTimes(4);
   });
 
-  xit('should clean all requests on unmount', () => {
-    const wrapper = mount(<Dummy />);
-    const button = wrapper.find('button');
+  it('should clean all requests on unmount', () => {
+    const { unmount } = render(<Dummy />);
+    const buttons = screen.getAllByRole('button');
 
-    button.first().simulate('click');
-    button.first().simulate('click');
-    button.first().simulate('click');
+    fireEvent.click(buttons[0]);
+    fireEvent.click(buttons[0]);
+    fireEvent.click(buttons[0]);
 
-    button.at(1).simulate('click');
-    button.at(1).simulate('click');
+    fireEvent.click(buttons[1]);
+    fireEvent.click(buttons[1]);
 
-    wrapper.unmount();
-
-    expect(cancelSpy).toHaveBeenCalledTimes(5);
+    unmount();
+    expect(cancelSpy).toHaveBeenCalledTimes(7);
   });
 
-  xit('should explicitly cancel a token', () => {
-    const wrapper = mount(<Dummy />);
-    const button = wrapper.find('button');
+  it('should explicitly cancel a token', () => {
+    render(<Dummy />);
+    const buttons = screen.getAllByRole('button');
 
-    button.first().simulate('click');
-    button.last().simulate('click');
+    fireEvent.click(buttons[0]);
+    fireEvent.click(buttons[1]);
+    fireEvent.click(buttons[2]);
 
     expect(cancelSpy).toHaveBeenCalledTimes(1);
   });

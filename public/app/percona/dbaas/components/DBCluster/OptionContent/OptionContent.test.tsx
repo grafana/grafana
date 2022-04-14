@@ -1,6 +1,6 @@
 import React from 'react';
-import { shallow } from 'enzyme';
 import { OptionContent } from './OptionContent';
+import { render } from '@testing-library/react';
 
 const title = 'Shared Blocks Written';
 const description = 'Total number of shared blocks written by the statement';
@@ -8,30 +8,30 @@ const tags = ['mysql', 'postgresql'];
 
 describe('OptionContent::', () => {
   it('should render with title, description and tags', () => {
-    const root = shallow(<OptionContent title={title} description={description} tags={tags} />);
-    const spans = root.find('div > div > span');
+    const { container } = render(<OptionContent title={title} description={description} tags={tags} />);
+    const spans = container.querySelectorAll('div > div > span');
 
-    expect(spans.at(0).text()).toEqual(title);
-    expect(spans.at(1).text()).toEqual(description);
-    expect(spans.at(2).text()).toEqual(tags[0]);
-    expect(spans.at(3).text()).toEqual(tags[1]);
+    expect(spans[0]).toHaveTextContent(title);
+    expect(spans[1]).toHaveTextContent(description);
+    expect(spans[2]).toHaveTextContent(tags[0]);
+    expect(spans[3]).toHaveTextContent(tags[1]);
   });
 
   it('should render with title, description and one tag', () => {
-    const root = shallow(<OptionContent title={title} description={description} tags={[tags[0]]} />);
-    const spans = root.find('div > div > span');
+    const { container } = render(<OptionContent title={title} description={description} tags={[tags[0]]} />);
+    const spans = container.querySelectorAll('div > div > span');
 
-    expect(spans.at(0).text()).toEqual(title);
-    expect(spans.at(1).text()).toEqual(description);
-    expect(spans.at(2).text()).toEqual(tags[0]);
+    expect(spans[0]).toHaveTextContent(title);
+    expect(spans[1]).toHaveTextContent(description);
+    expect(spans[2]).toHaveTextContent(tags[0]);
   });
 
   it('should render with title, description and empty tags', () => {
-    const root = shallow(<OptionContent title={title} description={description} tags={[]} />);
-    const spans = root.find('div > div > span');
+    const { container } = render(<OptionContent title={title} description={description} tags={[]} />);
+    const spans = container.querySelectorAll('div > div > span');
 
-    expect(spans.at(0).text()).toEqual(title);
-    expect(spans.at(1).text()).toEqual(description);
-    expect(spans.length).toEqual(2);
+    expect(spans[0]).toHaveTextContent(title);
+    expect(spans[1]).toHaveTextContent(description);
+    expect(spans).toHaveLength(2);
   });
 });

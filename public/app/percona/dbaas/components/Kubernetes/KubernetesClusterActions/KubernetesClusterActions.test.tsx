@@ -1,51 +1,48 @@
 import React from 'react';
-import { dataTestId } from '@percona/platform-core';
-import { MultipleActions } from 'app/percona/dbaas/components/MultipleActions/MultipleActions';
 import { KubernetesClusterActions } from './KubernetesClusterActions';
 import { kubernetesStub } from '../__mocks__/kubernetesStubs';
-import { getMount, asyncAct } from 'app/percona/shared/helpers/testUtils';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 
 describe('KubernetesClusterActions::', () => {
   it('renders correctly', async () => {
-    const root = await getMount(
-      <KubernetesClusterActions
-        kubernetesCluster={kubernetesStub[0]}
-        setSelectedCluster={jest.fn()}
-        setDeleteModalVisible={jest.fn()}
-        setViewConfigModalVisible={jest.fn()}
-        setManageComponentsModalVisible={jest.fn()}
-        getDBClusters={jest.fn()}
-      />
+    await waitFor(() =>
+      render(
+        <KubernetesClusterActions
+          kubernetesCluster={kubernetesStub[0]}
+          setSelectedCluster={jest.fn()}
+          setDeleteModalVisible={jest.fn()}
+          setViewConfigModalVisible={jest.fn()}
+          setManageComponentsModalVisible={jest.fn()}
+          getDBClusters={jest.fn()}
+        />
+      )
     );
 
-    expect(root.find(MultipleActions)).toBeTruthy();
+    expect(screen.getByTestId('dropdown-menu-toggle')).toBeInTheDocument();
+    expect(screen.getByTestId('dropdown-menu-container')).toBeInTheDocument();
   });
 
   it('Select delete actions', async () => {
     const setSelectedCluster = jest.fn();
     const setDeleteModalVisible = jest.fn();
-    const root = await getMount(
-      <KubernetesClusterActions
-        kubernetesCluster={kubernetesStub[1]}
-        setSelectedCluster={setSelectedCluster}
-        setDeleteModalVisible={setDeleteModalVisible}
-        setViewConfigModalVisible={jest.fn()}
-        setManageComponentsModalVisible={jest.fn()}
-        getDBClusters={jest.fn()}
-      />
+    await waitFor(() =>
+      render(
+        <KubernetesClusterActions
+          kubernetesCluster={kubernetesStub[1]}
+          setSelectedCluster={setSelectedCluster}
+          setDeleteModalVisible={setDeleteModalVisible}
+          setViewConfigModalVisible={jest.fn()}
+          setManageComponentsModalVisible={jest.fn()}
+          getDBClusters={jest.fn()}
+        />
+      )
     );
-    await asyncAct(() => {
-      const button = root.find('button');
 
-      button.simulate('click');
-    });
+    const button = screen.getByRole('button');
+    await waitFor(() => fireEvent.click(button));
 
-    root.update();
-
-    const menu = root.find(dataTestId('dropdown-menu-menu'));
-    const action = menu.find('span').at(0);
-
-    action.simulate('click');
+    const action = screen.getByTestId('dropdown-menu-menu').querySelectorAll('span')[0];
+    await waitFor(() => fireEvent.click(action));
 
     expect(setSelectedCluster).toHaveBeenCalled();
     expect(setDeleteModalVisible).toHaveBeenCalled();
@@ -55,29 +52,24 @@ describe('KubernetesClusterActions::', () => {
     const setSelectedCluster = jest.fn();
     const setDeleteModalVisible = jest.fn();
     const setViewConfigModalVisible = jest.fn();
-    const root = await getMount(
-      <KubernetesClusterActions
-        kubernetesCluster={kubernetesStub[1]}
-        setSelectedCluster={setSelectedCluster}
-        setDeleteModalVisible={setDeleteModalVisible}
-        setViewConfigModalVisible={setViewConfigModalVisible}
-        setManageComponentsModalVisible={jest.fn()}
-        getDBClusters={jest.fn()}
-      />
+    await waitFor(() =>
+      render(
+        <KubernetesClusterActions
+          kubernetesCluster={kubernetesStub[1]}
+          setSelectedCluster={setSelectedCluster}
+          setDeleteModalVisible={setDeleteModalVisible}
+          setViewConfigModalVisible={setViewConfigModalVisible}
+          setManageComponentsModalVisible={jest.fn()}
+          getDBClusters={jest.fn()}
+        />
+      )
     );
 
-    await asyncAct(() => {
-      const button = root.find('button');
+    const button = screen.getByRole('button');
+    await waitFor(() => fireEvent.click(button));
 
-      button.simulate('click');
-    });
-
-    root.update();
-
-    const menu = root.find(dataTestId('dropdown-menu-menu'));
-    const action = menu.find('span').at(1);
-
-    action.simulate('click');
+    const action = screen.getByTestId('dropdown-menu-menu').querySelectorAll('span')[1];
+    await waitFor(() => fireEvent.click(action));
 
     expect(setSelectedCluster).toHaveBeenCalled();
     expect(setViewConfigModalVisible).toHaveBeenCalled();

@@ -1,7 +1,7 @@
-import { mount } from 'enzyme';
 import React, { FC } from 'react';
 import { PAGE_SIZES } from './Pagination.constants';
 import { useStoredTablePageSize } from './Pagination.hooks';
+import { render, fireEvent } from '@testing-library/react';
 
 const TABLE_ID = 'test-id';
 const TABLE_STORAGE_ID = `${TABLE_ID}-table-page-size`;
@@ -33,17 +33,17 @@ describe('useStoredTablePageSize', () => {
   });
 
   it('should initially store the default pageSize', () => {
-    mount(<TestComponent />);
+    render(<TestComponent />);
     const storedSize = getDataFromLocalStorage();
     expect(storedSize).toBe(DEFAULT_VALUE);
     localStorage.removeItem(TABLE_STORAGE_ID);
   });
 
   it('should store the size on local storage after input changes', () => {
-    const wrapper = mount(<TestComponent />);
-    const input = wrapper.find('input').first();
+    const { container } = render(<TestComponent />);
+    const input = container.querySelectorAll('input')[0];
     const value = PAGE_SIZES[1].value;
-    input.simulate('change', { target: { value } });
+    fireEvent.change(input, { target: { value } });
     const storedSize = getDataFromLocalStorage();
     expect(storedSize).toBe(value);
   });
@@ -51,17 +51,17 @@ describe('useStoredTablePageSize', () => {
   it('should set the size from previous saves', () => {
     const value = PAGE_SIZES[1].value || 0;
     setDataOnLocalStorage(value);
-    const wrapper = mount(<TestComponent />);
-    const span = wrapper.find('span').first();
-    expect(parseInt(span.text(), 10)).toBe(value);
+    const { container } = render(<TestComponent />);
+    const span = container.querySelectorAll('span')[0];
+    expect(span).toHaveTextContent(value.toString());
   });
 
   it('should set the default if a wrong value is saved', () => {
     localStorage.setItem(TABLE_STORAGE_ID, '1a');
-    const wrapper = mount(<TestComponent />);
-    const span = wrapper.find('span').first();
+    const { container } = render(<TestComponent />);
+    const spanText = container.querySelectorAll('span')[0].textContent;
     const storedSize = getDataFromLocalStorage();
-    expect(parseInt(span.text(), 10)).toBe(DEFAULT_VALUE);
+    expect(spanText ? +spanText : spanText).toBe(DEFAULT_VALUE);
     expect(storedSize).toBe(DEFAULT_VALUE);
   });
 });

@@ -73,7 +73,7 @@ export const Pagination: FC<PaginationProps> = ({
           />
           {shownPages.map((page) => (
             <Button
-              data-testid="page-button"
+              data-testid={`page-button${activePageIndex === page ? '-active' : ''}`}
               variant={activePageIndex === page ? 'primary' : 'secondary'}
               onClick={() => gotoPage(page)}
               key={page}

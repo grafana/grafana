@@ -1,12 +1,9 @@
 import React from 'react';
-import { ReactWrapper } from 'enzyme';
-import { dataTestId } from '@percona/platform-core';
-import { Select } from '@grafana/ui';
 import { AddAlertRuleModal } from './AddAlertRuleModal';
 import { AlertRule, AlertRuleSeverity } from '../AlertRules.types';
 import { templateStubs } from '../../AlertRuleTemplate/__mocks__/alertRuleTemplateStubs';
 import { SEVERITY_OPTIONS } from './AddAlertRulesModal.constants';
-import { getMount } from 'app/percona/shared/helpers/testUtils';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 jest.mock('../AlertRules.service');
 jest.mock('../../AlertRuleTemplate/AlertRuleTemplate.service');
@@ -20,12 +17,7 @@ jest.mock('app/core/app_events', () => {
   };
 });
 
-const selectTemplateOption = (wrapper: ReactWrapper, templateIndex = 0) => {
-  wrapper.find('input').first().simulate('keydown', { key: 'ArrowDown' });
-  wrapper.find({ 'aria-label': 'Select option' }).at(templateIndex).simulate('click');
-};
-
-xdescribe('AddAlertRuleModal', () => {
+describe('AddAlertRuleModal', () => {
   const { name: templateName, summary: templateSummary, params: templateParams = [] } = templateStubs[0];
   const initialValues: AlertRule = {
     ruleId: '/rule_id/ded33d30-1b65-4b43-ba45-75ca52b48fa5',
@@ -63,123 +55,128 @@ xdescribe('AddAlertRuleModal', () => {
   });
 
   it('should render modal', async () => {
-    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
+    await waitFor(() => render(<AddAlertRuleModal setVisible={jest.fn()} isVisible />));
 
-    expect(wrapper.find(dataTestId('add-alert-rule-modal')).exists()).toBeTruthy();
-    expect(wrapper.find(dataTestId('add-alert-rule-modal-form')).exists()).toBeTruthy();
-    expect(wrapper.find(dataTestId('add-alert-rule-modal-add-button')).exists()).toBeTruthy();
+    expect(screen.getByTestId('modal-wrapper')).toBeInTheDocument();
+    expect(screen.getByTestId('add-alert-rule-modal-form')).toBeInTheDocument();
+    expect(screen.getByTestId('add-alert-rule-modal-add-button')).toBeInTheDocument();
   });
 
   it('does not render the modal when visible is set to false', async () => {
-    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible={false} />);
+    await waitFor(() => render(<AddAlertRuleModal setVisible={jest.fn()} isVisible={false} />));
 
-    expect(wrapper.find(dataTestId('add-alert-rule-modal-form')).length).toBe(0);
+    expect(screen.queryByTestId('add-alert-rule-modal-form')).not.toBeInTheDocument();
   });
 
   it('renders the modal when visible is set to true', async () => {
-    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
+    await waitFor(() => render(<AddAlertRuleModal setVisible={jest.fn()} isVisible />));
 
-    expect(wrapper.find(dataTestId('add-alert-rule-modal-form')).length).toBe(1);
+    expect(screen.getByTestId('add-alert-rule-modal-form')).toBeInTheDocument();
   });
 
   it('should have the submit button disabled by default when adding a new rule', async () => {
-    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
-    const button = wrapper.find(dataTestId('add-alert-rule-modal-add-button')).find('button');
+    await waitFor(() => render(<AddAlertRuleModal setVisible={jest.fn()} isVisible />));
 
-    expect(button.props().disabled).toBe(true);
+    expect(screen.getByTestId('add-alert-rule-modal-add-button')).toBeDisabled();
   });
 
   it('should enable the submit button if all fields are valid', async () => {
-    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible alertRule={initialValues} />);
+    await waitFor(() => render(<AddAlertRuleModal setVisible={jest.fn()} isVisible alertRule={initialValues} />));
 
-    wrapper.update();
+    const thresholdInput = screen.getByTestId(`${templateParams[0].name}-number-input`);
+    await waitFor(() =>
+      fireEvent.change(thresholdInput, {
+        target: {
+          value: '2',
+        },
+      })
+    );
 
-    const thresholdInput = wrapper.find(dataTestId(`${templateParams[0].name}-number-input`));
-    thresholdInput.simulate('change', {
-      target: {
-        value: '2',
-      },
-    });
-    const button = wrapper.find(dataTestId('add-alert-rule-modal-add-button')).find('button');
-
-    expect(button.props().disabled).toBe(false);
+    expect(screen.getByTestId('add-alert-rule-modal-add-button')).toHaveProperty('disabled', false);
   });
 
   it('should disable the submit button if a negative duration is inserted', async () => {
-    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible alertRule={initialValues} />);
+    await waitFor(() => render(<AddAlertRuleModal setVisible={jest.fn()} isVisible alertRule={initialValues} />));
 
-    wrapper.update();
-    const thresholdInput = wrapper.find(dataTestId(`${templateParams[0].name}-number-input`));
-    const durationInput = wrapper.find(dataTestId('duration-number-input'));
+    const thresholdInput = screen.getByTestId(`${templateParams[0].name}-number-input`);
+    const durationInput = screen.getByTestId('duration-number-input');
 
-    thresholdInput.simulate('change', {
-      target: {
-        value: '2',
-      },
-    });
+    await waitFor(() =>
+      fireEvent.change(thresholdInput, {
+        target: {
+          value: '2',
+        },
+      })
+    );
 
-    durationInput.simulate('change', {
-      target: {
-        value: '-10',
-      },
-    });
-    const button = wrapper.find(dataTestId('add-alert-rule-modal-add-button')).find('button');
+    await waitFor(() =>
+      fireEvent.change(durationInput, {
+        target: {
+          value: '-10',
+        },
+      })
+    );
 
-    expect(button.props().disabled).toBe(true);
+    expect(screen.getByTestId('add-alert-rule-modal-add-button')).toBeDisabled();
   });
 
   it('should disable template edition', async () => {
-    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible alertRule={initialValues} />);
-    wrapper.update();
-
-    expect(wrapper.find(dataTestId('template-select-input')).first().prop('disabled')).toBeTruthy();
-  });
-
-  it('should change params when switching templates', async () => {
-    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
-
-    wrapper.update();
-
-    expect(wrapper.find(dataTestId('template-1-threshold-number-input')).exists()).toBeFalsy();
-
-    selectTemplateOption(wrapper);
-
-    expect(wrapper.find(dataTestId('template-1-threshold-number-input')).exists()).toBeTruthy();
-
-    selectTemplateOption(wrapper, 3);
-
-    expect(wrapper.find(dataTestId('template-1-threshold-number-input')).exists()).toBeFalsy();
-    expect(wrapper.find(dataTestId('template-4-from-number-input')).exists()).toBeTruthy();
-    expect(wrapper.find(dataTestId('template-4-to-number-input')).exists()).toBeTruthy();
-  });
-
-  it('should pre-fill severity and duration when switching templates', async () => {
-    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
-
-    wrapper.update();
-
-    expect(wrapper.find(dataTestId('duration-number-input')).text()).toHaveLength(0);
-    expect(wrapper.find(dataTestId('severity-select-input')).find(Select).text()).toBe('Choose');
-
-    selectTemplateOption(wrapper);
-
-    expect(wrapper.find(dataTestId('duration-number-input')).props().value).toBe(parseInt(templateStubs[0].for, 10));
-    expect(wrapper.find(dataTestId('severity-select-input')).find(Select).text()).toBe(
-      SEVERITY_OPTIONS.find((severity) => severity.value === templateStubs[0].severity)?.label
+    await waitFor(() => render(<AddAlertRuleModal setVisible={jest.fn()} isVisible alertRule={initialValues} />));
+    // checking template-select-input
+    expect(screen.getByTestId('add-alert-rule-modal-form').querySelectorAll('input')[0]).toHaveProperty(
+      'disabled',
+      true
     );
   });
 
-  it('should show the expression and sample alert when switching templates', async () => {
-    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
+  it('should change params when switching templates', async () => {
+    const { container } = await waitFor(() => render(<AddAlertRuleModal setVisible={jest.fn()} isVisible />));
 
-    wrapper.update();
+    expect(screen.queryByTestId('template-1-threshold-number-input')).not.toBeInTheDocument();
 
-    expect(wrapper.find(dataTestId('template-expression')).exists()).toBeFalsy();
-    expect(wrapper.find(dataTestId('template-alert')).exists()).toBeFalsy();
+    await waitFor(() => fireEvent.keyDown(container.querySelectorAll('input')[0], { key: 'ArrowDown' }));
+    await waitFor(() => fireEvent.click(screen.getAllByLabelText('Select option')[0]));
 
-    selectTemplateOption(wrapper);
+    expect(screen.getByTestId('template-1-threshold-number-input')).toBeInTheDocument();
 
-    expect(wrapper.find(dataTestId('template-expression')).find('pre').text()).toBe(templateStubs[0].expr);
-    expect(wrapper.find(dataTestId('template-alert')).find('pre').text()).toBe(templateStubs[0].annotations?.summary);
+    await waitFor(() => fireEvent.keyDown(container.querySelectorAll('input')[0], { key: 'ArrowDown' }));
+    await waitFor(() => fireEvent.click(screen.getAllByLabelText('Select option')[3]));
+
+    expect(screen.queryByTestId('template-1-threshold-number-input')).not.toBeInTheDocument();
+    expect(screen.getByTestId('template-4-from-number-input')).toBeInTheDocument();
+    expect(screen.getByTestId('template-4-to-number-input')).toBeInTheDocument();
+  });
+
+  it('should pre-fill severity and duration when switching templates', async () => {
+    const { container } = await waitFor(() => render(<AddAlertRuleModal setVisible={jest.fn()} isVisible />));
+
+    expect(screen.getByTestId('duration-number-input').textContent).toHaveLength(0);
+
+    // checking severity-select-input
+    const selectContainer = screen.getByText('Severity')?.parentElement?.nextSibling;
+    expect(selectContainer).toHaveTextContent('Choose');
+
+    await waitFor(() => fireEvent.keyDown(container.querySelectorAll('input')[0], { key: 'ArrowDown' }));
+    await waitFor(() => fireEvent.click(screen.getAllByLabelText('Select option')[0]));
+
+    expect(screen.getByTestId('duration-number-input')).toHaveValue(parseInt(templateStubs[0].for, 10));
+    expect(screen.getByText('Severity')?.parentElement?.nextSibling).toHaveTextContent(
+      `${SEVERITY_OPTIONS.find((severity) => severity.value === templateStubs[0].severity)?.label}`
+    );
+  });
+
+  xit('should show the expression and sample alert when switching templates', async () => {
+    const { container } = await waitFor(() => render(<AddAlertRuleModal setVisible={jest.fn()} isVisible />));
+
+    expect(screen.queryByTestId('template-expression')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('template-alert')).not.toBeInTheDocument();
+
+    await waitFor(() => fireEvent.keyDown(container.querySelectorAll('input')[0], { key: 'ArrowDown' }));
+    await waitFor(() => fireEvent.click(screen.getAllByLabelText('Select option')[0]));
+
+    expect(screen.getByTestId('template-expression').querySelector('pre')).toHaveTextContent(templateStubs[0].expr);
+    expect(screen.getByTestId('template-alert').querySelector('pre')?.textContent).toEqual(
+      templateStubs[0].annotations?.summary
+    );
   });
 });

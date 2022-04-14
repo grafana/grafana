@@ -1,12 +1,11 @@
 import React from 'react';
-import { dataTestId } from '@percona/platform-core';
-import { getMount } from 'app/percona/shared/helpers/testUtils';
 import { AlertRules } from './AlertRules';
 import { AlertRuleTemplateService } from '../AlertRuleTemplate/AlertRuleTemplate.service';
 import { NotificationChannelService } from '../NotificationChannel/NotificationChannel.service';
 import { NotificationChannelType } from '../NotificationChannel/NotificationChannel.types';
 import { templateStubs } from '../AlertRuleTemplate/__mocks__/alertRuleTemplateStubs';
 import { AlertRulesService } from './AlertRules.service';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 
 const notificationChannelsServiceList = jest.spyOn(NotificationChannelService, 'list').mockImplementation(() =>
   Promise.resolve({
@@ -45,55 +44,47 @@ describe('AlertRules', () => {
     expect(alertRuleTemplateServiceList).toBeCalledTimes(0);
     expect(notificationChannelsServiceList).toBeCalledTimes(0);
 
-    const wrapper = await getMount(<AlertRules />);
+    await waitFor(() => render(<AlertRules />));
 
     expect(alertRuleTemplateServiceList).toBeCalledTimes(1);
     expect(notificationChannelsServiceList).toBeCalledTimes(1);
-
-    wrapper.unmount();
   });
 
   it('should toggle selected alert rule details', async () => {
-    const wrapper = await getMount(<AlertRules />);
+    await waitFor(() => render(<AlertRules />));
 
-    wrapper.update();
-    wrapper.find(dataTestId('show-details')).at(0).find('button').simulate('click');
+    const showDetails = screen.getAllByTestId('show-details')[0];
+    await waitFor(() => fireEvent.click(showDetails));
 
-    expect(wrapper.find(dataTestId('alert-rules-details'))).toHaveLength(1);
+    expect(screen.getByTestId('alert-rules-details')).toBeInTheDocument();
 
-    wrapper.find(dataTestId('hide-details')).at(0).find('button').simulate('click');
+    const hideDetails = screen.getByTestId('hide-details');
+    await waitFor(() => fireEvent.click(hideDetails));
 
-    expect(wrapper.find(dataTestId('alert-rules-details'))).toHaveLength(0);
+    expect(screen.queryByTestId('alert-rules-details')).not.toBeInTheDocument();
   });
 
   it('should have table initially loading', async () => {
-    const wrapper = await getMount(<AlertRules />);
+    render(<AlertRules />);
 
-    expect(wrapper.find(dataTestId('table-loading'))).toHaveLength(1);
-    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(1);
+    expect(screen.getByTestId('table-loading')).toBeInTheDocument();
+    expect(screen.getByTestId('table-no-data')).toBeInTheDocument();
   });
 
   it('should render table content', async () => {
-    const wrapper = await getMount(<AlertRules />);
+    await waitFor(() => render(<AlertRules />));
 
-    wrapper.update();
-
-    expect(wrapper.find(dataTestId('table-thead')).find('tr')).toHaveLength(1);
-    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(6);
-    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(0);
+    expect(screen.getByTestId('table-thead').querySelectorAll('tr')).toHaveLength(1);
+    expect(screen.getByTestId('table-tbody').querySelectorAll('tr')).toHaveLength(6);
+    expect(screen.queryByTestId('table-no-data')).not.toBeInTheDocument();
   });
-
   it('should render correctly without data', async () => {
     jest
       .spyOn(AlertRulesService, 'list')
       .mockReturnValueOnce(Promise.resolve({ rules: [], totals: { total_items: 0, total_pages: 0 } }));
 
-    const wrapper = await getMount(<AlertRules />);
+    await waitFor(() => render(<AlertRules />));
 
-    wrapper.update();
-
-    expect(wrapper.find(dataTestId('table-thead')).find('tr')).toHaveLength(0);
-    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(0);
-    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(1);
+    expect(screen.getByTestId('table-no-data')).toBeInTheDocument();
   });
 });

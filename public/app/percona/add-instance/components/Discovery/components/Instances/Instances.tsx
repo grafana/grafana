@@ -10,7 +10,7 @@ const Instances: FC<InstancesTableProps> = (props) => {
   const columns = getInstancesColumns(credentials, selectInstance);
 
   return (
-    <div className={styles.tableWrapper}>
+    <div className={styles.tableWrapper} data-testid="instances-table-wrapper">
       <Table columns={columns} data={instances} loading={loading} />
     </div>
   );

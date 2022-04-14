@@ -1,32 +1,28 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { AlertManager } from './AlertManager';
+import { render, screen, fireEvent } from '@testing-library/react';
 
 describe('AlertManager::', () => {
   it('Renders correctly with props', () => {
-    const root = mount(
-      <AlertManager alertManagerUrl="test url" alertManagerRules="test rules" updateSettings={() => {}} />
-    );
-
-    expect(root.find('[data-testid="alertmanager-url"]').find('input').prop('value')).toEqual('test url');
-    expect(root.find('textarea').text()).toEqual('test rules');
+    render(<AlertManager alertManagerUrl="test url" alertManagerRules="test rules" updateSettings={() => {}} />);
+    expect(screen.getByTestId('alertmanager-url')).toHaveValue('test url');
+    expect(screen.getAllByRole('textbox')[1]).toHaveTextContent('test rules');
   });
 
   it('Disables apply changes on initial values', () => {
-    const root = mount(<AlertManager alertManagerUrl="" alertManagerRules="" updateSettings={() => {}} />);
-    const button = root.find('button');
+    render(<AlertManager alertManagerUrl="" alertManagerRules="" updateSettings={() => {}} />);
 
-    expect(button.prop('disabled')).toBeTruthy();
+    expect(screen.getByRole('button')).toBeDisabled();
   });
 
   it('Calls apply changes', () => {
     const updateSettings = jest.fn();
-    const root = mount(
-      <AlertManager alertManagerUrl="test url" alertManagerRules="test rules" updateSettings={updateSettings} />
-    );
+    render(<AlertManager alertManagerUrl="test url" alertManagerRules="test rules" updateSettings={updateSettings} />);
 
-    root.find('textarea').simulate('change', { target: { value: 'new key' } });
-    root.find('form').simulate('submit');
+    const textarea = screen.getAllByRole('textbox')[1];
+    fireEvent.change(textarea, { target: { value: 'new key' } });
+    const form = screen.getByTestId('alert-manager-form');
+    fireEvent.submit(form);
 
     expect(updateSettings).toHaveBeenCalled();
   });

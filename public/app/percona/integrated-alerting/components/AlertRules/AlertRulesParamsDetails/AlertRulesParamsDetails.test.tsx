@@ -1,9 +1,8 @@
 import React from 'react';
-import { shallow } from 'enzyme';
 import { AlertRulesParsedParam } from '../AlertRules.types';
 import { AlertRulesParamsDetails } from './AlertRulesParamsDetails';
 import { TemplateParamType, TemplateParamUnit } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
-import { dataTestId } from '@percona/platform-core';
+import { render, screen } from '@testing-library/react';
 
 describe('AlertRulesParamsDetails', () => {
   it('should display all params', () => {
@@ -30,7 +29,7 @@ describe('AlertRulesParamsDetails', () => {
         value: '10s',
       },
     ];
-    const wrapper = shallow(<AlertRulesParamsDetails params={params} />);
-    expect(wrapper.find(dataTestId('alert-rule-param'))).toHaveLength(3);
+    render(<AlertRulesParamsDetails params={params} />);
+    expect(screen.getAllByTestId('alert-rule-param')).toHaveLength(3);
   });
 });

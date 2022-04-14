@@ -1,8 +1,7 @@
 import React from 'react';
-import { getMount } from 'app/percona/shared/helpers/testUtils';
 import { CheckPermissions } from './CheckPermissions';
 import { SettingsService } from 'app/percona/settings/Settings.service';
-import { dataTestId } from '@percona/platform-core';
+import { render, screen, waitFor } from '@testing-library/react';
 
 jest.mock('app/percona/settings/Settings.service');
 jest.mock('@percona/platform-core', () => {
@@ -17,15 +16,15 @@ jest.mock('@percona/platform-core', () => {
 
 describe('CheckPermissions::', () => {
   it('should render children', async () => {
-    const wrapper = await getMount(
-      <CheckPermissions>
-        <div>Test</div>
-      </CheckPermissions>
+    const { container } = await waitFor(() =>
+      render(
+        <CheckPermissions>
+          <div>Test</div>
+        </CheckPermissions>
+      )
     );
 
-    wrapper.update();
-
-    expect(wrapper.find('div').text()).toEqual('Test');
+    expect(container.querySelector('div')).toHaveTextContent('Test');
   });
 
   it('should render unauthorized message', async () => {
@@ -33,14 +32,14 @@ describe('CheckPermissions::', () => {
     jest.spyOn(SettingsService, 'getSettings').mockImplementationOnce(() => {
       throw errorObj;
     });
-    const wrapper = await getMount(
-      <CheckPermissions>
-        <div>Test</div>
-      </CheckPermissions>
+    await waitFor(() =>
+      render(
+        <CheckPermissions>
+          <div>Test</div>
+        </CheckPermissions>
+      )
     );
 
-    wrapper.update();
-
-    expect(wrapper.find(dataTestId('unauthorized'))).not.toBeNull();
+    expect(screen.getByTestId('unauthorized')).not.toBeNull();
   });
 });

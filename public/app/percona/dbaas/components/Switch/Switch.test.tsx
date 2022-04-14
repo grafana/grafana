@@ -1,29 +1,25 @@
 import React from 'react';
-import { mount } from 'enzyme';
-import { Field } from 'react-final-form';
-import { dataTestId, FormWrapper } from '@percona/platform-core';
+import { FormWrapper } from '@percona/platform-core';
 import { SwitchField } from './Switch';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 describe('SwitchField::', () => {
-  it('should render an input element of type checkbox', () => {
-    const wrapper = mount(
+  it('should render an input element of type checkbox', async () => {
+    render(
       <FormWrapper>
         <SwitchField name="test" />
       </FormWrapper>
     );
 
-    const field = wrapper.find(Field);
-
-    expect(field).toHaveLength(1);
-    expect(wrapper.find('input')).toHaveLength(1);
-    expect(wrapper.find('input').props()).toHaveProperty('type', 'checkbox');
+    expect(screen.getByRole('checkbox')).toBeInTheDocument();
+    expect(screen.getByTestId('test-switch')).toBeInTheDocument();
   });
 
   it('should call passed validators', () => {
     const validatorOne = jest.fn();
     const validatorTwo = jest.fn();
 
-    mount(
+    render(
       <FormWrapper>
         <SwitchField name="test" validators={[validatorOne, validatorTwo]} />
       </FormWrapper>
@@ -34,47 +30,48 @@ describe('SwitchField::', () => {
   });
 
   it('should show no labels if one is not specified', () => {
-    const wrapper = mount(
+    render(
       <FormWrapper>
         <SwitchField name="test" />
       </FormWrapper>
     );
 
-    expect(wrapper.find(dataTestId('test-field-label')).length).toBe(0);
+    expect(screen.queryByTestId('test-field-label')).not.toBeInTheDocument();
   });
 
   it('should show a label if one is specified', () => {
-    const wrapper = mount(
+    render(
       <FormWrapper>
         <SwitchField label="test label" name="test" />
       </FormWrapper>
     );
 
-    expect(wrapper.find(dataTestId('test-field-label')).length).toBe(1);
-    expect(wrapper.find(dataTestId('test-field-label')).text()).toBe('test label');
+    expect(screen.getByTestId('test-field-label')).toBeInTheDocument();
+    expect(screen.getByTestId('test-field-label')).toHaveTextContent('test label');
   });
 
-  it('should change the state value when clicked', () => {
-    const wrapper = mount(
+  it('should change the state value when clicked', async () => {
+    render(
       <FormWrapper>
         <SwitchField name="test" />
       </FormWrapper>
     );
 
-    expect(wrapper.find(dataTestId('test-switch')).at(0).props()).toHaveProperty('value', false);
-    wrapper.find('input').simulate('change', { target: { value: true } });
-    wrapper.update();
+    expect(screen.getByTestId('test-switch')).toHaveProperty('value', 'on');
 
-    expect(wrapper.find(dataTestId('test-switch')).at(0).props()).toHaveProperty('value', true);
+    const checkbox = screen.getByRole('checkbox');
+    await waitFor(() => fireEvent.change(checkbox, { target: { value: true } }));
+
+    expect(screen.getByTestId('test-switch')).toHaveProperty('value', 'true');
   });
 
   it('should disable switch when `disabled` is passed via props', () => {
-    const wrapper = mount(
+    render(
       <FormWrapper>
         <SwitchField name="test" disabled />
       </FormWrapper>
     );
 
-    expect(wrapper.find('input').props()).toHaveProperty('disabled', true);
+    expect(screen.getByRole('checkbox')).toBeDisabled();
   });
 });

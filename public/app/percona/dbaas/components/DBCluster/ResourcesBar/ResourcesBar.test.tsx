@@ -1,9 +1,8 @@
 import React from 'react';
-import { mount } from 'enzyme';
-import { dataTestId } from '@percona/platform-core';
 import { ResourcesBar } from './ResourcesBar';
 import { Messages } from './ResourcesBar.messages';
 import { ResourcesUnits } from '../DBCluster.types';
+import { render, screen } from '@testing-library/react';
 
 describe('ResourcesBar::', () => {
   it('renders correctly with icon, allocated, expected and label', () => {
@@ -11,7 +10,7 @@ describe('ResourcesBar::', () => {
     const total = { value: 10, units: ResourcesUnits.GB, original: 10 };
     const expected = { value: 2, units: ResourcesUnits.GB, original: 2 };
     const resourceLabel = 'Memory';
-    const wrapper = mount(
+    render(
       <ResourcesBar
         icon={<div>Test icon</div>}
         allocated={allocated}
@@ -21,14 +20,14 @@ describe('ResourcesBar::', () => {
       />
     );
 
-    expect(wrapper.find(dataTestId('resources-bar-icon')).text()).toEqual('Test icon');
-    expect(wrapper.find(dataTestId('resources-bar-label')).text()).toEqual(
+    expect(screen.getByTestId('resources-bar-icon')).toHaveTextContent('Test icon');
+    expect(screen.getByTestId('resources-bar-label')).toHaveTextContent(
       Messages.buildResourcesLabel(allocated, 20, total)
     );
-    expect(wrapper.find(dataTestId('resources-bar-allocated-caption')).text()).toEqual(
+    expect(screen.getByTestId('resources-bar-allocated-caption')).toHaveTextContent(
       Messages.buildAllocatedLabel(resourceLabel)
     );
-    expect(wrapper.find(dataTestId('resources-bar-expected-caption')).text()).toEqual(
+    expect(screen.getByTestId('resources-bar-expected-caption')).toHaveTextContent(
       Messages.buildExpectedLabel(expected, resourceLabel)
     );
   });
@@ -37,11 +36,9 @@ describe('ResourcesBar::', () => {
     const total = { value: 10, units: ResourcesUnits.GB, original: 10 };
     const expected = { value: 20, units: ResourcesUnits.GB, original: 20 };
     const resourceLabel = 'Memory';
-    const wrapper = mount(
-      <ResourcesBar allocated={allocated} expected={expected} total={total} resourceLabel={resourceLabel} />
-    );
+    render(<ResourcesBar allocated={allocated} expected={expected} total={total} resourceLabel={resourceLabel} />);
 
-    expect(wrapper.find(dataTestId('resources-bar-insufficient-resources')).text()).toEqual(
+    expect(screen.getByTestId('resources-bar-insufficient-resources')).toHaveTextContent(
       Messages.buildInsufficientLabel(expected, resourceLabel)
     );
   });
@@ -49,7 +46,7 @@ describe('ResourcesBar::', () => {
     const allocated = { value: 4, units: ResourcesUnits.GB, original: 4 };
     const total = { value: 10, units: ResourcesUnits.GB, original: 10 };
     const expected = { value: -2, units: ResourcesUnits.GB, original: -2 };
-    const wrapper = mount(
+    render(
       <ResourcesBar
         icon={<div>Test icon</div>}
         allocated={allocated}
@@ -59,9 +56,9 @@ describe('ResourcesBar::', () => {
       />
     );
 
-    const resourcesBar = wrapper.find(dataTestId('resources-bar'));
+    const resourcesBar = screen.getByTestId('resources-bar');
 
-    expect(resourcesBar.children().length).toBe(1);
-    expect(resourcesBar.childAt(0).children().length).toBe(1);
+    expect(resourcesBar.children).toHaveLength(1);
+    expect(resourcesBar.children[0].children).toHaveLength(1);
   });
 });

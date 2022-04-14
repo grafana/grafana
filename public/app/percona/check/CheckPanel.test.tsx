@@ -2,7 +2,8 @@ import React from 'react';
 import { CheckPanel } from './CheckPanel';
 import { useSelector } from 'react-redux';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { getMount } from '../shared/helpers/testUtils';
+import { render } from '@testing-library/react';
+import { Messages } from './CheckPanel.messages';
 
 const fakeLocationUpdate = jest.fn();
 
@@ -46,12 +47,9 @@ describe('CheckPanel::', () => {
   });
 
   it('should show tabs for all checks and for failed checks', async () => {
-    const wrapper = await getMount(
-      <CheckPanel {...getRouteComponentProps({ match: { params: { tab: '' } } as any })} />
-    );
+    const { container } = render(<CheckPanel {...getRouteComponentProps({ match: { params: { tab: '' } } as any })} />);
 
-    expect(wrapper.find('li').at(0).text()).toBe('Failed');
-    expect(wrapper.find('li').at(1).text()).toBe('All');
-    wrapper.unmount();
+    expect(container.querySelectorAll('li')[0]).toHaveTextContent(Messages.failedChecksTitle);
+    expect(container.querySelectorAll('li')[1]).toHaveTextContent(Messages.allChecksTitle);
   });
 });

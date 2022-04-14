@@ -52,7 +52,7 @@ export const DBaaS: FC<GrafanaRouteComponentProps<{ tab: string }>> = ({ match }
   const featureSelector = useCallback((state: StoreState) => !!state.perconaSettings.dbaasEnabled, []);
 
   return (
-    <PageWrapper pageModel={PAGE_MODEL}>
+    <PageWrapper pageModel={PAGE_MODEL} dataTestId="dbaas-page-wrapper">
       <TechnicalPreview />
       <div className={styles.panelContentWrapper}>
         <TabbedContent

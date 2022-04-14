@@ -1,13 +1,13 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { OperatorStatusItem } from './OperatorStatusItem';
 import { Databases } from 'app/percona/shared/core';
 import { KubernetesOperatorStatus } from './KubernetesOperatorStatus/KubernetesOperatorStatus.types';
 import { kubernetesStub } from '../__mocks__/kubernetesStubs';
+import { render } from '@testing-library/react';
 
 describe('OperatorStatusItem::', () => {
   it('renders', () => {
-    const root = mount(
+    const { container } = render(
       <OperatorStatusItem
         databaseType={Databases.mysql}
         operator={{ status: KubernetesOperatorStatus.ok }}
@@ -18,13 +18,13 @@ describe('OperatorStatusItem::', () => {
       />
     );
 
-    expect(root.text()).toContain('PXC');
-    expect(root.text()).toContain('Installed');
-    expect(root.text()).not.toContain('1.8.0');
+    expect(container).toHaveTextContent('PXC');
+    expect(container).toHaveTextContent('Installed');
+    expect(container).not.toHaveTextContent('1.8.0');
   });
   it('renders with operator version', () => {
     const operator = { status: KubernetesOperatorStatus.ok, version: '1.8.0' };
-    const root = mount(
+    const { container } = render(
       <OperatorStatusItem
         databaseType={Databases.mysql}
         operator={operator}
@@ -35,8 +35,8 @@ describe('OperatorStatusItem::', () => {
       />
     );
 
-    expect(root.text()).toContain('PXC');
-    expect(root.text()).toContain('Installed');
-    expect(root.text()).toContain('1.8.0');
+    expect(container).toHaveTextContent('PXC');
+    expect(container).toHaveTextContent('Installed');
+    expect(container).toHaveTextContent('1.8.0');
   });
 });

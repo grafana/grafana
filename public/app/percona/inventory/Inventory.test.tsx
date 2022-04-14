@@ -1,8 +1,8 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { Table } from 'app/percona/shared/components/Elements/Table/Table';
 import { AGENTS_COLUMNS, NODES_COLUMNS, SERVICES_COLUMNS } from './Inventory.constants';
 import { InventoryDataService } from './Inventory.tools';
+import { render } from '@testing-library/react';
 
 jest.mock('app/percona/settings/Settings.service');
 
@@ -40,7 +40,7 @@ describe('Inventory tables', () => {
       ],
     };
 
-    const root = mount(
+    const { container } = render(
       <Table
         data={InventoryDataService.getAgentModel(response as any)}
         rowKey={(rec) => rec.agent_id}
@@ -50,8 +50,7 @@ describe('Inventory tables', () => {
     );
 
     // length is 5 because header is also tr
-    expect(root.find('tr').length).toEqual(5);
-    root.unmount();
+    expect(container.querySelectorAll('tr')).toHaveLength(5);
   });
 
   it('Services table renders correct with right data', () => {
@@ -66,7 +65,7 @@ describe('Inventory tables', () => {
         },
       ],
     };
-    const root = mount(
+    const { container } = render(
       <Table
         data={InventoryDataService.getServiceModel(response as any)}
         rowKey={(rec) => rec.service_id}
@@ -76,8 +75,7 @@ describe('Inventory tables', () => {
     );
 
     // length is 2 because header is also tr
-    expect(root.find('tr').length).toEqual(2);
-    root.unmount();
+    expect(container.querySelectorAll('tr')).toHaveLength(2);
   });
 
   it('Nodes table renders correct with right data', () => {
@@ -87,7 +85,7 @@ describe('Inventory tables', () => {
         { node_id: 'pmm-server2', node_name: 'pmm-server2', address: '127.0.0.1' },
       ],
     };
-    const root = mount(
+    const { container } = render(
       <Table
         data={InventoryDataService.getNodeModel(response as any)}
         rowKey={(rec) => rec.node_id}
@@ -97,7 +95,6 @@ describe('Inventory tables', () => {
     );
 
     // length is 3 because header is also tr
-    expect(root.find('tr').length).toEqual(3);
-    root.unmount();
+    expect(container.querySelectorAll('tr')).toHaveLength(3);
   });
 });

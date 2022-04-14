@@ -78,7 +78,7 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
         initialValues={initialValues}
         onSubmit={onSubmit}
         render={({ handleSubmit, valid, pristine, submitting, values }) => (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} data-testid="add-notification-channel-modal-form">
             <>
               <Field name="type">
                 {({ input }) => <SelectField label={Messages.fields.type} options={TYPE_OPTIONS} {...input} />}

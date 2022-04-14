@@ -31,7 +31,7 @@ export const Spinner: FC<Props> = (props: Props) => {
   const { className, inline = false, iconClassName, style, size = 16 } = props;
   const styles = getStyles(size, inline);
   return (
-    <div style={style} className={cx(styles.wrapper, className)}>
+    <div style={style} className={cx(styles.wrapper, className)} data-testid="spinner-wrapper">
       <Icon className={cx('fa-spin', iconClassName)} name="fa fa-spinner" />
     </div>
   );

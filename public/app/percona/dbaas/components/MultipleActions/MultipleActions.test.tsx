@@ -1,10 +1,10 @@
 import React from 'react';
-import { shallow, mount } from 'enzyme';
 import { MultipleActions } from './MultipleActions';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 
 describe('MultipleActions::', () => {
-  it('renders correctly with actions', () => {
-    const root = shallow(
+  it('renders correctly with actions', async () => {
+    const { container } = render(
       <MultipleActions
         actions={[
           {
@@ -19,11 +19,14 @@ describe('MultipleActions::', () => {
       />
     );
 
-    expect(root.find('span').length).toBe(2);
+    const btn = screen.getByTestId('dropdown-menu-toggle');
+    await waitFor(() => fireEvent.click(btn));
+
+    expect(container.querySelectorAll('span')).toHaveLength(2);
   });
   it('renders correctly disabled', () => {
-    const root = mount(<MultipleActions actions={[]} disabled />);
+    render(<MultipleActions actions={[]} disabled />);
 
-    expect(root.find('button').prop('disabled')).toBeTruthy();
+    expect(screen.getByTestId('dropdown-menu-toggle')).toBeDisabled();
   });
 });

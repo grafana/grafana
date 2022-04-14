@@ -1,40 +1,48 @@
 import React from 'react';
-import { shallow, mount } from 'enzyme';
-import { Tooltip } from '@grafana/ui';
 import { DBIcon } from './DBIcon';
 import { DBIconType } from './DBIcon.types';
-import { Edit } from './assets';
+import { Tooltip } from '@grafana/ui';
+import { render, screen } from '@testing-library/react';
+import { svg } from '../../../../../test/mocks/svg';
+
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  Tooltip: jest.fn(() => <div data-testid="tooltip" />),
+}));
 
 describe('DBIcon', () => {
-  it('should not display unknown icons', () => {
-    const wrapper = shallow(<DBIcon type={'unknown' as DBIconType} />);
-    expect(wrapper.children()).toHaveLength(0);
+  it('should not display unknown icons', async () => {
+    render(<DBIcon type={'unknown' as DBIconType} />);
+    expect(screen.queryAllByRole(svg)).toHaveLength(0);
   });
 
   it('should display known icons', () => {
-    const wrapper = shallow(<DBIcon type="edit" />);
-    expect(wrapper.find(Edit).exists()).toBeTruthy();
+    const { container } = render(<DBIcon type="edit" />);
+    const svg = container.querySelectorAll('svg');
+    expect(svg).toHaveLength(1);
   });
 
   it('should have 22 x 22 icons by default', () => {
-    const wrapper = mount(<DBIcon type="edit" />);
-    expect(wrapper.find('svg').prop('width')).toBe(22);
-    expect(wrapper.find('svg').prop('height')).toBe(22);
+    const { container } = render(<DBIcon type="edit" />);
+    const svg = container.querySelector('svg');
+    expect(svg).toHaveAttribute('width', '22');
+    expect(svg).toHaveAttribute('height', '22');
   });
 
   it('should change icon size', () => {
-    const wrapper = mount(<DBIcon size={30} type="edit" />);
-    expect(wrapper.find('svg').prop('width')).toBe(30);
-    expect(wrapper.find('svg').prop('height')).toBe(30);
+    const { container } = render(<DBIcon size={30} type="edit" />);
+    const svg = container.querySelector('svg');
+    expect(svg).toHaveAttribute('width', '30');
+    expect(svg).toHaveAttribute('height', '30');
   });
 
   it('should now show tooltip if no text is passed', () => {
-    const wrapper = shallow(<DBIcon size={30} type="edit" />);
-    expect(wrapper.find(Tooltip).exists()).toBeFalsy();
+    render(<DBIcon size={30} type="edit" />);
+    expect(Tooltip).toHaveBeenCalledTimes(0);
   });
 
-  it('should show tooltip if text is passed', () => {
-    const wrapper = shallow(<DBIcon size={30} type="edit" tooltipText="helper text" />);
-    expect(wrapper.find(Tooltip).exists()).toBeTruthy();
+  it('should show tooltip if text is passed', async () => {
+    render(<DBIcon size={30} type="edit" tooltipText="helper text" />);
+    expect(Tooltip).toHaveBeenCalledTimes(1);
   });
 });

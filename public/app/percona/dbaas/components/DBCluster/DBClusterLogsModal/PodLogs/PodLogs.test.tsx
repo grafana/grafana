@@ -1,11 +1,10 @@
 import React from 'react';
-import { mount } from 'enzyme';
-import { dataTestId } from '@percona/platform-core';
 import { PodLogs } from './PodLogs';
+import { render, screen } from '@testing-library/react';
 
 describe('PodLogs::', () => {
   it('renders pod name, events and containers', () => {
-    const root = mount(
+    const { container } = render(
       <PodLogs
         podLogs={{
           name: 'Pod name',
@@ -27,13 +26,13 @@ describe('PodLogs::', () => {
       />
     );
 
-    expect(root.text().includes('Pod name')).toBeTruthy();
-    expect(root.find(dataTestId('dbcluster-pod-events')).text()).toEqual('Test events');
-    expect(root.find(dataTestId('dbcluster-containers')).children().length).toBe(2);
+    expect(container).toHaveTextContent('Pod name');
+    expect(screen.getByTestId('dbcluster-pod-events')).toHaveTextContent('Test events');
+    expect(screen.getByTestId('dbcluster-containers').children).toHaveLength(2);
   });
 
   it("doesn't render logs when collapsed", () => {
-    const root = mount(
+    render(
       <PodLogs
         podLogs={{
           name: 'Pod name',
@@ -50,7 +49,7 @@ describe('PodLogs::', () => {
       />
     );
 
-    expect(root).not.toContain(dataTestId('dbcluster-pod-events'));
-    expect(root).not.toContain(dataTestId('dbcluster-containers'));
+    expect(screen.queryByTestId('dbcluster-pod-events')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('dbcluster-containers')).not.toBeInTheDocument();
   });
 });

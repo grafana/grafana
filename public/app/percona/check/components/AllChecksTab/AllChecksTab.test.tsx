@@ -1,11 +1,10 @@
 import React from 'react';
-import { logger, dataTestId } from '@percona/platform-core';
+import { logger } from '@percona/platform-core';
 import { CheckService } from 'app/percona/check/Check.service';
-import { getMount } from 'app/percona/shared/helpers/testUtils';
 import { Interval } from 'app/percona/check/types';
 import { AllChecksTab } from './AllChecksTab';
 import { Messages } from './AllChecksTab.messages';
-import { Spinner } from '@grafana/ui';
+import { render, screen, waitFor } from '@testing-library/react';
 
 jest.mock('@percona/platform-core', () => {
   const originalModule = jest.requireActual('@percona/platform-core');
@@ -20,26 +19,30 @@ jest.mock('@percona/platform-core', () => {
 describe('AllChecksTab::', () => {
   it('should fetch checks at startup', async () => {
     const spy = jest.spyOn(CheckService, 'getAllChecks');
-    const wrapper = await getMount(<AllChecksTab />);
-    wrapper.update();
+    render(<AllChecksTab />);
 
     expect(spy).toBeCalledTimes(1);
 
     spy.mockClear();
-    wrapper.unmount();
   });
 
   it('should render a spinner at startup, while loading', async () => {
-    const wrapper = await getMount(<AllChecksTab />);
-    wrapper.update();
-
-    await Promise.resolve();
-
-    wrapper.update();
-
-    expect(wrapper.find(<Spinner />)).toHaveLength(0);
-
-    wrapper.unmount();
+    const spy = jest.spyOn(CheckService, 'getAllChecks').mockImplementation(() =>
+      Promise.resolve([
+        {
+          summary: 'Test',
+          name: 'test enabled',
+          description: 'test enabled description',
+          interval: 'STANDARD',
+          disabled: false,
+        },
+      ])
+    );
+    const component = render(<AllChecksTab />);
+    expect(screen.queryByTestId('spinner-wrapper')).toBeInTheDocument();
+    await waitFor(() => component);
+    expect(screen.queryByTestId('spinner-wrapper')).not.toBeInTheDocument();
+    spy.mockClear();
   });
 
   it('should log an error if the API call fails', async () => {
@@ -48,13 +51,11 @@ describe('AllChecksTab::', () => {
     });
     const loggerSpy = jest.spyOn(logger, 'error').mockImplementationOnce(() => null);
 
-    const wrapper = await getMount(<AllChecksTab />);
-    wrapper.update();
+    await waitFor(() => render(<AllChecksTab />));
 
     expect(loggerSpy).toBeCalledTimes(1);
 
     spy.mockClear();
-    wrapper.unmount();
   });
 
   it('should render a table', async () => {
@@ -77,30 +78,23 @@ describe('AllChecksTab::', () => {
       ])
     );
 
-    const wrapper = await getMount(<AllChecksTab />);
-    wrapper.update();
+    await waitFor(() => render(<AllChecksTab />));
 
-    await Promise.resolve();
+    const tbody = screen.getByTestId('db-checks-all-checks-tbody');
 
-    wrapper.update();
-
-    const tbody = dataTestId('db-checks-all-checks-tbody');
-
-    expect(wrapper.find(dataTestId('db-checks-all-checks-table'))).toHaveLength(1);
-    expect(wrapper.find(dataTestId('db-checks-all-checks-thead'))).toHaveLength(1);
-    expect(wrapper.find(tbody)).toHaveLength(1);
-    expect(wrapper.find(tbody).find('tr > td')).toHaveLength(10);
-    expect(wrapper.find(tbody).find('tr > td').at(0).text()).toBe('Test');
-    expect(wrapper.find(tbody).find('tr > td').at(1).text()).toBe('test enabled description');
-    expect(wrapper.find(tbody).find('tr > td').at(2).text()).toBe(Messages.enabled);
-    expect(wrapper.find(tbody).find('tr > td').at(3).text()).toBe(Interval.STANDARD);
-    expect(wrapper.find(tbody).find('tr > td').at(4).text()).toBe(Messages.disable);
-    expect(wrapper.find(tbody).find('tr > td').at(5).text()).toBe('Test disabled');
-    expect(wrapper.find(tbody).find('tr > td').at(6).text()).toBe('test disabled description');
-    expect(wrapper.find(tbody).find('tr > td').at(7).text()).toBe(Messages.disabled);
-    expect(wrapper.find(tbody).find('tr > td').at(8).text()).toBe(Interval.RARE);
-    expect(wrapper.find(tbody).find('tr > td').at(9).text()).toBe(Messages.enable);
-
-    wrapper.unmount();
+    expect(screen.getByTestId('db-checks-all-checks-table')).toBeInTheDocument();
+    expect(screen.getByTestId('db-checks-all-checks-thead')).toBeInTheDocument();
+    expect(screen.getByTestId('db-checks-all-checks-tbody')).toBeInTheDocument();
+    expect(tbody.querySelectorAll('tr > td')).toHaveLength(10);
+    expect(tbody.querySelectorAll('tr > td')[0]).toHaveTextContent('Test');
+    expect(tbody.querySelectorAll('tr > td')[1]).toHaveTextContent('test enabled description');
+    expect(tbody.querySelectorAll('tr > td')[2]).toHaveTextContent(Messages.enabled);
+    expect(tbody.querySelectorAll('tr > td')[3]).toHaveTextContent(Interval.STANDARD);
+    expect(tbody.querySelectorAll('tr > td')[4]).toHaveTextContent(Messages.disable);
+    expect(tbody.querySelectorAll('tr > td')[5]).toHaveTextContent('Test disabled');
+    expect(tbody.querySelectorAll('tr > td')[6]).toHaveTextContent('test disabled description');
+    expect(tbody.querySelectorAll('tr > td')[7]).toHaveTextContent(Messages.disabled);
+    expect(tbody.querySelectorAll('tr > td')[8]).toHaveTextContent(Interval.RARE);
+    expect(tbody.querySelectorAll('tr > td')[9]).toHaveTextContent(Messages.enable);
   });
 });

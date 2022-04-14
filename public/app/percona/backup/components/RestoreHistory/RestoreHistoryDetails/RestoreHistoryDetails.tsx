@@ -18,7 +18,7 @@ export const RestoreHistoryDetails: FC<RestoreHistoryDetailsProps> = ({ name, fi
       {finished ? (
         <span data-testid="restore-details-finished">
           <span className={styles.detailLabel}>{Messages.finished}</span>
-          <DetailedDate date={finished} />
+          <DetailedDate date={finished} dataTestId="restore-details-date" />
         </span>
       ) : null}
       <span data-testid="restore-details-data-model">

@@ -1,7 +1,6 @@
 import React from 'react';
-import { mount } from 'enzyme';
-import { dataTestId } from '@percona/platform-core';
 import { Table } from './Table';
+import { render, screen } from '@testing-library/react';
 
 const columns = [
   {
@@ -23,7 +22,7 @@ const onPaginationChanged = jest.fn();
 
 describe('Table', () => {
   it('should render the table', async () => {
-    const wrapper = mount(
+    render(
       <Table
         totalItems={data.length}
         data={data}
@@ -33,13 +32,13 @@ describe('Table', () => {
       />
     );
 
-    expect(wrapper.find(dataTestId('table-thead')).find('tr')).toHaveLength(1);
-    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(2);
-    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(0);
+    expect(screen.getByTestId('table-thead').querySelectorAll('tr')).toHaveLength(1);
+    expect(screen.getByTestId('table-tbody').querySelectorAll('tr')).toHaveLength(2);
+    expect(screen.queryByTestId('table-no-data')).not.toBeInTheDocument();
   });
 
   it('should render the loader when data fetch is pending', async () => {
-    const wrapper = mount(
+    render(
       <Table
         totalItems={data.length}
         data={data}
@@ -50,13 +49,13 @@ describe('Table', () => {
       />
     );
 
-    expect(wrapper.find(dataTestId('table-loading'))).toHaveLength(1);
-    expect(wrapper.find(dataTestId('table'))).toHaveLength(1);
-    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(0);
+    expect(screen.getAllByTestId('table-loading')).toHaveLength(1);
+    expect(screen.getAllByTestId('table')).toHaveLength(1);
+    expect(screen.queryByTestId('table-no-data')).not.toBeInTheDocument();
   });
 
   it('should display the noData section when no data is passed', async () => {
-    const wrapper = mount(
+    render(
       <Table
         totalItems={data.length}
         data={[]}
@@ -66,12 +65,12 @@ describe('Table', () => {
         pageSize={10}
       />
     );
-    const noData = wrapper.find(dataTestId('table-no-data'));
+    const noData = screen.getByTestId('table-no-data');
 
-    expect(wrapper.find(dataTestId('table-loading'))).toHaveLength(0);
-    expect(wrapper.find(dataTestId('table'))).toHaveLength(0);
-    expect(noData).toHaveLength(1);
-    expect(noData.text()).toEqual('empty');
+    expect(screen.queryByTestId('table-loading')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('table')).not.toBeInTheDocument();
+    expect(noData).toBeInTheDocument();
+    expect(noData.textContent).toEqual('empty');
   });
 
   it('should display all data without showPagination', () => {
@@ -81,7 +80,7 @@ describe('Table', () => {
       mockData.push({ value: i });
     }
 
-    const wrapper = mount(
+    render(
       <Table
         totalItems={mockData.length}
         data={mockData}
@@ -91,7 +90,7 @@ describe('Table', () => {
       />
     );
 
-    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(100);
+    expect(screen.getByTestId('table-tbody').querySelectorAll('tr')).toHaveLength(100);
   });
 
   it('should display partial data with showPagination using controlled pagination', () => {
@@ -101,7 +100,7 @@ describe('Table', () => {
       mockData.push({ value: i });
     }
 
-    const wrapper = mount(
+    render(
       <Table
         showPagination
         totalItems={mockData.length}
@@ -114,8 +113,9 @@ describe('Table', () => {
       />
     );
 
-    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(10);
-    expect(wrapper.find(dataTestId('page-button')).hostNodes()).toHaveLength(10);
+    expect(screen.getByTestId('table-tbody').querySelectorAll('tr')).toHaveLength(10);
+    expect(screen.getAllByTestId('page-button')).toHaveLength(9);
+    expect(screen.getAllByTestId('page-button-active')).toHaveLength(1);
   });
 
   it('should display partial data with showPagination using uncontrolled pagination', () => {
@@ -125,7 +125,7 @@ describe('Table', () => {
       mockData.push({ value: i });
     }
 
-    const wrapper = mount(
+    render(
       <Table
         showPagination
         totalItems={mockData.length}
@@ -138,7 +138,8 @@ describe('Table', () => {
       />
     );
 
-    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(5);
-    expect(wrapper.find(dataTestId('page-button')).hostNodes()).toHaveLength(20);
+    expect(screen.getByTestId('table-tbody').querySelectorAll('tr')).toHaveLength(5);
+    expect(screen.getAllByTestId('page-button')).toHaveLength(19);
+    expect(screen.getAllByTestId('page-button-active')).toHaveLength(1);
   });
 });

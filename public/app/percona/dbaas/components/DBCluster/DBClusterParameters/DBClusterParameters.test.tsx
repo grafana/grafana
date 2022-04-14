@@ -1,8 +1,7 @@
 import React from 'react';
-import { dataTestId } from '@percona/platform-core';
 import { DBClusterParameters } from './DBClusterParameters';
 import { dbClustersStub } from '../__mocks__/dbClustersStubs';
-import { getMount } from 'app/percona/shared/helpers/testUtils';
+import { render, screen } from '@testing-library/react';
 
 jest.mock('app/core/app_events');
 jest.mock('../XtraDB.service');
@@ -10,44 +9,42 @@ jest.mock('../PSMDB.service');
 
 describe('DBClusterParameters::', () => {
   it('renders parameters items correctly', async () => {
-    const root = await getMount(<DBClusterParameters dbCluster={dbClustersStub[0]} />);
+    render(<DBClusterParameters dbCluster={dbClustersStub[0]} />);
 
-    expect(root.find(dataTestId('cluster-parameters-cluster-name'))).toBeTruthy();
+    expect(screen.getByTestId('cluster-parameters-cluster-name')).toBeInTheDocument();
 
-    const memory = root.find(dataTestId('cluster-parameters-memory'));
-    const cpu = root.find(dataTestId('cluster-parameters-cpu'));
-    const disk = root.find(dataTestId('cluster-parameters-disk'));
-    const expose = root.find(dataTestId('cluster-parameters-expose'));
+    const memory = screen.getByTestId('cluster-parameters-memory');
+    const cpu = screen.getByTestId('cluster-parameters-cpu');
+    const disk = screen.getByTestId('cluster-parameters-disk');
+    const expose = screen.getByTestId('cluster-parameters-expose');
 
-    expect(memory).toBeTruthy();
-    expect(memory.text()).toContain('Memory:1024 GB');
-    expect(cpu).toBeTruthy();
-    expect(cpu.text()).toContain('CPU:1');
-    expect(disk).toBeTruthy();
-    expect(disk.text()).toContain('Disk:25 GB');
-    expect(expose).toBeTruthy();
-    expect(expose.text()).toContain('External Access:Enabled');
+    expect(memory).toBeInTheDocument();
+    expect(memory).toHaveTextContent('Memory:1024 GB');
+    expect(cpu).toBeInTheDocument();
+    expect(cpu).toHaveTextContent('CPU:1');
+    expect(disk).toBeInTheDocument();
+    expect(disk).toHaveTextContent('Disk:25 GB');
+    expect(expose).toBeInTheDocument();
+    expect(expose).toHaveTextContent('External Access:Enabled');
   });
 
   it('renders parameters items correctly with MongoDB cluster', async () => {
-    const root = await getMount(<DBClusterParameters dbCluster={dbClustersStub[2]} />);
+    render(<DBClusterParameters dbCluster={dbClustersStub[2]} />);
 
-    root.update();
+    expect(screen.getByTestId('cluster-parameters-cluster-name')).toBeInTheDocument();
 
-    expect(root.find(dataTestId('cluster-parameters-cluster-name'))).toBeTruthy();
+    const memory = screen.getByTestId('cluster-parameters-memory');
+    const cpu = screen.getByTestId('cluster-parameters-cpu');
+    const disk = screen.getByTestId('cluster-parameters-disk');
+    const expose = screen.getByTestId('cluster-parameters-expose');
 
-    const memory = root.find(dataTestId('cluster-parameters-memory'));
-    const cpu = root.find(dataTestId('cluster-parameters-cpu'));
-    const disk = root.find(dataTestId('cluster-parameters-disk'));
-    const expose = root.find(dataTestId('cluster-parameters-expose'));
-
-    expect(memory).toBeTruthy();
-    expect(memory.text()).toContain('Memory:0 GB');
-    expect(cpu).toBeTruthy();
-    expect(cpu.text()).toContain('CPU:0');
-    expect(disk).toBeTruthy();
-    expect(disk.text()).toContain('Disk:25 GB');
-    expect(expose).toBeTruthy();
-    expect(expose.text()).toContain('External Access:Disabled');
+    expect(memory).toBeInTheDocument();
+    expect(memory).toHaveTextContent('Memory:0 GB');
+    expect(cpu).toBeInTheDocument();
+    expect(cpu).toHaveTextContent('CPU:0');
+    expect(disk).toBeInTheDocument();
+    expect(disk).toHaveTextContent('Disk:25 GB');
+    expect(expose).toBeInTheDocument();
+    expect(expose).toHaveTextContent('External Access:Disabled');
   });
 });

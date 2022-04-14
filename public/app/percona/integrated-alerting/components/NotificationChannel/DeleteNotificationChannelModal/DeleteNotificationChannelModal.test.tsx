@@ -1,15 +1,14 @@
 import React from 'react';
-import { mount } from 'enzyme';
-import { dataTestId } from '@percona/platform-core';
 import { DeleteNotificationChannelModal } from './DeleteNotificationChannelModal';
 import { notificationChannelStubs } from '../__mocks__/notificationChannelStubs';
+import { render, screen, fireEvent } from '@testing-library/react';
 
 jest.mock('../NotificationChannel.service');
 jest.mock('app/core/app_events');
 
 describe('DeleteNotificationChannelModal', () => {
   it('should render delete modal', () => {
-    const wrapper = mount(
+    render(
       <DeleteNotificationChannelModal
         notificationChannel={notificationChannelStubs[0]}
         setVisible={jest.fn()}
@@ -17,12 +16,12 @@ describe('DeleteNotificationChannelModal', () => {
       />
     );
 
-    expect(wrapper.find(dataTestId('confirm-delete-modal-button'))).toBeTruthy();
-    expect(wrapper.find(dataTestId('cancel-delete-modal-button'))).toBeTruthy();
+    expect(screen.getByTestId('confirm-delete-modal-button')).toBeInTheDocument();
+    expect(screen.getByTestId('cancel-delete-modal-button')).toBeInTheDocument();
   });
 
   it('should not render modal when visible is set to false', () => {
-    const wrapper = mount(
+    render(
       <DeleteNotificationChannelModal
         notificationChannel={notificationChannelStubs[0]}
         setVisible={jest.fn()}
@@ -30,12 +29,12 @@ describe('DeleteNotificationChannelModal', () => {
       />
     );
 
-    expect(wrapper.contains(dataTestId('confirm-delete-modal-button'))).toBeFalsy();
+    expect(screen.queryByTestId('confirm-delete-modal-button')).not.toBeInTheDocument();
   });
 
   it('should call setVisible on close', () => {
     const setVisible = jest.fn();
-    const wrapper = mount(
+    render(
       <DeleteNotificationChannelModal
         notificationChannel={notificationChannelStubs[0]}
         setVisible={setVisible}
@@ -43,7 +42,8 @@ describe('DeleteNotificationChannelModal', () => {
       />
     );
 
-    wrapper.find(dataTestId('modal-background')).simulate('click');
+    const background = screen.getByTestId('modal-background');
+    fireEvent.click(background);
 
     expect(setVisible).toHaveBeenCalled();
   });

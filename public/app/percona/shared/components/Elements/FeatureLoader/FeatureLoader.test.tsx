@@ -1,10 +1,8 @@
 import React from 'react';
-import { dataTestId } from '@percona/platform-core';
 import { useSelector } from 'react-redux';
 import { FeatureLoader } from './FeatureLoader';
 import { Messages } from './FeatureLoader.messages';
-import { EmptyBlock } from '../EmptyBlock';
-import { getMount } from 'app/percona/shared/helpers/testUtils';
+import { render, screen, waitFor } from '@testing-library/react';
 
 jest.mock('app/percona/settings/Settings.service');
 jest.mock('@percona/platform-core', () => {
@@ -46,26 +44,29 @@ describe('FeatureLoader', () => {
       });
     });
 
-    const Dummy = () => <></>;
-    const wrapper = await getMount(
+    const Dummy = () => <div data-testid="dummy" />;
+    render(
       <FeatureLoader featureName="IA" featureSelector={(state) => !!state.perconaSettings.alertingEnabled}>
         <Dummy />
       </FeatureLoader>
     );
-    expect(wrapper.find(Dummy).exists()).toBeFalsy();
-    expect(wrapper.find(EmptyBlock).exists()).toBeTruthy();
+
+    expect(screen.queryByTestId('dummy')).not.toBeInTheDocument();
+    expect(screen.getByTestId('empty-block')).toBeInTheDocument();
   });
 
   it('should show children after loading settings', async () => {
-    const Dummy = () => <></>;
-    const wrapper = await getMount(
-      <FeatureLoader featureName="IA" featureSelector={(state) => !!state.perconaSettings.alertingEnabled}>
-        <Dummy />
-      </FeatureLoader>
+    const Dummy = () => <div data-testid="dummy" />;
+    await waitFor(() =>
+      render(
+        <FeatureLoader featureName="IA" featureSelector={(state) => !!state.perconaSettings.alertingEnabled}>
+          <Dummy />
+        </FeatureLoader>
+      )
     );
-    wrapper.update();
-    expect(wrapper.find(Dummy).exists()).toBeTruthy();
-    expect(wrapper.find(EmptyBlock).exists()).toBeFalsy();
+
+    expect(screen.getByTestId('dummy')).toBeInTheDocument();
+    expect(screen.queryByTestId('empty-block')).not.toBeInTheDocument();
   });
 
   it('should show insufficient access permissions message', async () => {
@@ -76,11 +77,10 @@ describe('FeatureLoader', () => {
       });
     });
 
-    const wrapper = await getMount(
-      <FeatureLoader featureName="IA" featureSelector={(state) => !!state.perconaSettings.alertingEnabled} />
+    await waitFor(() =>
+      render(<FeatureLoader featureName="IA" featureSelector={(state) => !!state.perconaSettings.alertingEnabled} />)
     );
-    wrapper.update();
 
-    expect(wrapper.find(dataTestId('unauthorized')).text()).toBe(Messages.unauthorized);
+    expect(screen.getByTestId('unauthorized')).toHaveTextContent(Messages.unauthorized);
   });
 });

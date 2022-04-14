@@ -1,10 +1,10 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { ContainerLogs } from './ContainerLogs';
+import { render } from '@testing-library/react';
 
 describe('ContainerLogs::', () => {
   it('renders container name and logs', () => {
-    const root = mount(
+    const { container } = render(
       <ContainerLogs
         containerLogs={{
           name: 'Test',
@@ -14,12 +14,12 @@ describe('ContainerLogs::', () => {
       />
     );
 
-    expect(root.text().includes('Test')).toBeTruthy();
-    expect(root.find('pre').text()).toEqual('Test logs');
+    expect(container.querySelector('div > div > div > div ')).toHaveTextContent('Test');
+    expect(container.querySelector('pre')).toHaveTextContent('Test logs');
   });
 
   it("does't render logs when collapsed", () => {
-    const root = mount(
+    const { container } = render(
       <ContainerLogs
         containerLogs={{
           name: 'Test',
@@ -29,6 +29,6 @@ describe('ContainerLogs::', () => {
       />
     );
 
-    expect(root).not.toContain('pre');
+    expect(container.querySelector('pre')).not.toBeInTheDocument();
   });
 });

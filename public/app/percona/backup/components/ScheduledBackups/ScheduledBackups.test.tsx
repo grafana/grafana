@@ -1,16 +1,17 @@
 import React from 'react';
-import { getMount } from 'app/percona/shared/helpers/testUtils';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { stubs } from './__mocks__/ScheduledBackups.service';
 import { ScheduledBackups } from './ScheduledBackups';
-import { ScheduledBackup } from './ScheduledBackups.types';
+import { render, waitFor } from '@testing-library/react';
 
 jest.mock('./ScheduledBackups.service');
+jest.mock('app/percona/integrated-alerting/components/Table', () => ({
+  Table: jest.fn(({ children }) => <div data-testid="table">{children}</div>),
+}));
 
 describe('ScheduledBackups', () => {
   it('should send correct data to Table', async () => {
-    const wrapper = await getMount(<ScheduledBackups />);
-    wrapper.update();
-    expect(wrapper.find(Table).prop('data')).toEqual<ScheduledBackup[]>(stubs);
+    await waitFor(() => render(<ScheduledBackups />));
+    expect(Table).toHaveBeenCalledWith(expect.objectContaining({ data: stubs }), expect.anything());
   });
 });

@@ -58,7 +58,7 @@ export const AlertManager: FC<AlertManagerProps> = ({ alertManagerUrl, alertMana
         onSubmit={applyChanges}
         initialValues={initialValues}
         render={({ handleSubmit, pristine }) => (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} data-testid="alert-manager-form">
             <div className={settingsStyles.labelWrapper} data-testid="alertmanager-url-label">
               <strong className={styles.warning}>
                 {warningPre}{' '}

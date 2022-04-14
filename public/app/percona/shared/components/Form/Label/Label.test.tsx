@@ -1,10 +1,10 @@
 import React from 'react';
-import { shallow } from 'enzyme';
 import { Label } from './Label';
+import { render, screen } from '@testing-library/react';
 
 describe('Label', () => {
   it('should render', () => {
-    const wrapper = shallow(<Label label="label" />);
-    expect(wrapper.find('label').exists()).toBeTruthy();
+    render(<Label dataTestId="test-label" label="label" />);
+    expect(screen.getByTestId('test-label')).toBeInTheDocument();
   });
 });

@@ -1,10 +1,10 @@
 import React from 'react';
-import { ReactWrapper, mount } from 'enzyme';
 import { CheckService } from 'app/percona/check/Check.service';
-import { LoaderButton } from '@percona/platform-core';
 import { CheckTableRow } from './CheckTableRow';
 import { Messages } from './AllChecksTab.messages';
 import { CheckDetails } from 'app/percona/check/types';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { createTheme } from '@grafana/data/src';
 
 const originalConsoleError = jest.fn();
 
@@ -26,6 +26,14 @@ const TEST_CHECK_DISABLED: CheckDetails = {
 
 const fakeOnSuccess = jest.fn();
 
+const componentToHex = (c: number) => {
+  const hex = c.toString(16);
+  return hex.length === 1 ? '0' + hex : hex;
+};
+
+const rgbToHex = (r: string, g: string, b: string) =>
+  '#' + componentToHex(+r) + componentToHex(+g) + componentToHex(+b);
+
 describe('CheckTableRow::', () => {
   beforeEach(() => {
     console.error = jest.fn();
@@ -36,80 +44,89 @@ describe('CheckTableRow::', () => {
     jest.resetAllMocks();
   });
 
-  it('should render a check row correctly', () => {
-    let wrapper: ReactWrapper<{}, {}, any> = mount(<CheckTableRow check={TEST_CHECK} onSuccess={fakeOnSuccess} />);
+  it('should render a check row correctly', async () => {
+    const theme = createTheme();
+    const wrapper = await waitFor(() => render(<CheckTableRow check={TEST_CHECK} onSuccess={fakeOnSuccess} />));
 
-    let tdElements = wrapper.find('tr').find('td');
+    let tdElements = wrapper.container.querySelectorAll('td');
+    expect(tdElements[0]).toHaveTextContent('Test');
+    expect(tdElements[1]).toHaveTextContent('test description');
+    expect(tdElements[3]).toHaveTextContent('Frequent');
+    expect(tdElements[4]).toHaveTextContent(Messages.disable);
+    expect(screen.getByTestId('check-table-loader-button')).toBeInTheDocument();
 
-    expect(tdElements.at(0).text()).toBe('Test');
-    expect(tdElements.at(1).text()).toBe('test description');
-    expect(tdElements.at(3).text()).toBe('Frequent');
-    expect(tdElements.at(4).text()).toBe(Messages.disable);
-    expect(tdElements.at(4).find(LoaderButton)).toHaveLength(1);
-    expect(tdElements.at(4).find(LoaderButton).prop('variant')).toBe('destructive');
+    const colorStringDestructive = getComputedStyle(screen.getByTestId('check-table-loader-button')).backgroundColor;
+    const colorDestructiveArr = colorStringDestructive.slice(4, colorStringDestructive.length - 1).split(',');
+    const hexDestructiveValue = rgbToHex(colorDestructiveArr[0], colorDestructiveArr[1], colorDestructiveArr[2]);
+    expect(hexDestructiveValue.toUpperCase()).toEqual(theme.colors.error.main);
 
-    wrapper = mount(<CheckTableRow check={TEST_CHECK_DISABLED} onSuccess={fakeOnSuccess} />);
-    tdElements = wrapper.find('tr').find('td');
+    const wrapperDisabled = await waitFor(() =>
+      render(<CheckTableRow check={TEST_CHECK_DISABLED} onSuccess={fakeOnSuccess} />)
+    );
+    let tdElementsCheckDisabled = wrapperDisabled.container.querySelectorAll('td');
 
-    expect(tdElements.at(2).text()).toBe(Messages.disabled);
-    expect(tdElements.at(3).text()).toBe('Rare');
-    expect(tdElements.at(4).text()).toBe(Messages.enable);
-    expect(tdElements.at(4).find(LoaderButton).prop('variant')).toBe('primary');
+    expect(tdElementsCheckDisabled[2]).toHaveTextContent(Messages.disabled);
+    expect(tdElementsCheckDisabled[3]).toHaveTextContent('Rare');
+    expect(tdElementsCheckDisabled[4]).toHaveTextContent(Messages.enable);
+    expect(tdElementsCheckDisabled[4].querySelector('[data-testid="check-table-loader-button"]')).toBeInTheDocument();
 
-    wrapper.unmount();
+    const colorStringPrimary = getComputedStyle(screen.getAllByTestId('check-table-loader-button')[1]).backgroundColor;
+    const colorPrimaryArr = colorStringPrimary.slice(4, colorStringPrimary.length - 1).split(',');
+    const hexPrimaryValue = rgbToHex(colorPrimaryArr[0], colorPrimaryArr[1], colorPrimaryArr[2]);
+    expect(hexPrimaryValue.toUpperCase()).toEqual(theme.colors.primary.main);
   });
 
   it('should call an API to change the check status when the action button gets clicked', async () => {
     const spy = jest.spyOn(CheckService, 'changeCheck');
-    let wrapper: ReactWrapper<{}, {}, any> = mount(<CheckTableRow check={TEST_CHECK} onSuccess={fakeOnSuccess} />);
+    await waitFor(() => render(<CheckTableRow check={TEST_CHECK} onSuccess={fakeOnSuccess} />));
 
     expect(spy).toBeCalledTimes(0);
 
-    wrapper.find(LoaderButton).simulate('click');
+    fireEvent.click(screen.getByTestId('check-table-loader-button'));
 
     expect(spy).toBeCalledTimes(1);
     expect(spy).toBeCalledWith({ params: [{ name: TEST_CHECK.name, disable: true }] });
+    spy.mockClear();
+  });
 
-    wrapper = mount(<CheckTableRow check={TEST_CHECK_DISABLED} onSuccess={fakeOnSuccess} />);
+  it('should call an API to change the check status when the action button gets clicked CHECK_DISABLED', async () => {
+    const spy = jest.spyOn(CheckService, 'changeCheck');
 
-    wrapper.find(LoaderButton).simulate('click');
+    await waitFor(() => render(<CheckTableRow check={TEST_CHECK_DISABLED} onSuccess={fakeOnSuccess} />));
 
-    expect(spy).toBeCalledTimes(2);
+    fireEvent.click(screen.getByTestId('check-table-loader-button'));
+
+    expect(spy).toHaveBeenCalledTimes(1);
     expect(spy).toBeCalledWith({ params: [{ name: TEST_CHECK_DISABLED.name, enable: true }] });
 
     spy.mockClear();
-    wrapper.unmount();
   });
 
   it('should call the onSuccess callback after the change API succeeds', async () => {
     const spy = jest.spyOn(CheckService, 'changeCheck');
-    const wrapper: ReactWrapper<{}, {}, any> = mount(<CheckTableRow check={TEST_CHECK} onSuccess={fakeOnSuccess} />);
+    await waitFor(() => render(<CheckTableRow check={TEST_CHECK} onSuccess={fakeOnSuccess} />));
 
     expect(fakeOnSuccess).toBeCalledTimes(0);
 
-    wrapper.find(LoaderButton).simulate('click');
+    fireEvent.click(screen.getByTestId('check-table-loader-button'));
 
     await Promise.resolve();
-    wrapper.update();
 
     expect(fakeOnSuccess).toBeCalledTimes(1);
 
     spy.mockClear();
-    wrapper.unmount();
   });
 
-  it('should log an error if the API call fails', () => {
+  it('should log an error if the API call fails', async () => {
     const spy = jest.spyOn(CheckService, 'changeCheck').mockImplementation(() => {
       throw Error('test');
     });
 
-    const wrapper: ReactWrapper<{}, {}, any> = mount(<CheckTableRow check={TEST_CHECK} onSuccess={fakeOnSuccess} />);
+    render(<CheckTableRow check={TEST_CHECK} onSuccess={fakeOnSuccess} />);
 
-    wrapper.find(LoaderButton).simulate('click');
+    fireEvent.click(screen.getByTestId('check-table-loader-button'));
 
     expect(console.error).toBeCalledTimes(1);
-
     spy.mockClear();
-    wrapper.unmount();
   });
 });

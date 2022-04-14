@@ -1,27 +1,21 @@
 import React from 'react';
-import { shallow } from 'enzyme';
-import { dataTestId } from '@percona/platform-core';
 import { DataModel } from 'app/percona/backup/Backup.types';
-import { DetailedDate } from '../../DetailedDate';
 import { RestoreHistoryDetails } from './RestoreHistoryDetails';
+import { render, screen } from '@testing-library/react';
 
 const FINISHED_DATE = 1615912580244;
 describe('RestoreHistoryDetails', () => {
   it('should render', () => {
-    const wrapper = shallow(
-      <RestoreHistoryDetails name="restore one" finished={FINISHED_DATE} dataModel={DataModel.PHYSICAL} />
-    );
-    expect(wrapper.find(dataTestId('restore-details-wrapper')).exists()).toBeTruthy();
-    expect(wrapper.find(dataTestId('restore-details-name')).exists()).toBeTruthy();
-    expect(wrapper.find(dataTestId('restore-details-finished')).exists()).toBeTruthy();
-    expect(wrapper.find(dataTestId('restore-details-data-model')).exists()).toBeTruthy();
-    expect(wrapper.find(DetailedDate).exists()).toBeTruthy();
+    render(<RestoreHistoryDetails name="restore one" finished={FINISHED_DATE} dataModel={DataModel.PHYSICAL} />);
+    expect(screen.getByTestId('restore-details-wrapper')).toBeInTheDocument();
+    expect(screen.getByTestId('restore-details-name')).toBeInTheDocument();
+    expect(screen.getByTestId('restore-details-finished')).toBeInTheDocument();
+    expect(screen.getByTestId('restore-details-data-model')).toBeInTheDocument();
+    expect(screen.getByTestId('restore-details-date')).toBeInTheDocument();
   });
 
   it('should hide "finished at" when null', () => {
-    const wrapper = shallow(
-      <RestoreHistoryDetails name="restore one" finished={null} dataModel={DataModel.PHYSICAL} />
-    );
-    expect(wrapper.find(dataTestId('restore-details-finished')).exists()).toBeFalsy();
+    render(<RestoreHistoryDetails name="restore one" finished={null} dataModel={DataModel.PHYSICAL} />);
+    expect(screen.queryByTestId('restore-details-finished')).not.toBeInTheDocument();
   });
 });

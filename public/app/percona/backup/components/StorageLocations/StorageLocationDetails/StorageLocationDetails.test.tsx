@@ -1,10 +1,12 @@
 import React from 'react';
-import { shallow } from 'enzyme';
-import { dataTestId } from '@percona/platform-core';
 import { StorageLocationDetails } from './StorageLocationDetails';
 import { LocationType, S3Location, StorageLocation } from '../StorageLocations.types';
-import { DescriptionBlock } from '../../DescriptionBlock';
 import { KeysBlock } from '../../KeysBlock';
+import { render, screen } from '@testing-library/react';
+
+jest.mock('../../KeysBlock', () => ({
+  KeysBlock: jest.fn(({ children }) => <div data-testid="keys-block">{children}</div>),
+}));
 
 describe('StorageLocationDetails', () => {
   const location: StorageLocation = {
@@ -16,10 +18,12 @@ describe('StorageLocationDetails', () => {
   };
 
   it('should have only a DescriptionBlock when not an S3 location', () => {
-    const wrapper = shallow(<StorageLocationDetails location={location} />);
+    render(<StorageLocationDetails location={location} />);
 
-    expect(wrapper.find(dataTestId('storage-location-wrapper')).children()).toHaveLength(1);
-    expect(wrapper.find(DescriptionBlock).prop('description')).toBe(location.description);
+    expect(screen.getByTestId('storage-location-wrapper').children).toHaveLength(1);
+    expect(screen.getByTestId('storage-location-description').querySelector('pre')).toHaveTextContent(
+      location.description
+    );
   });
 
   it('should have also a KeysBlock when an S3 location', () => {
@@ -29,11 +33,12 @@ describe('StorageLocationDetails', () => {
       secretKey: 'secret',
       bucketName: 'bucket',
     };
-    const wrapper = shallow(<StorageLocationDetails location={s3Location} />);
-    const keysBlock = wrapper.find(KeysBlock);
+    render(<StorageLocationDetails location={s3Location} />);
+    expect(screen.getByTestId('keys-block')).toBeInTheDocument();
 
-    expect(keysBlock.exists()).toBeTruthy();
-    expect(keysBlock.prop('accessKey')).toBe(s3Location.accessKey);
-    expect(keysBlock.prop('secretKey')).toBe(s3Location.secretKey);
+    expect(KeysBlock).toHaveBeenCalledWith(
+      expect.objectContaining({ accessKey: s3Location.accessKey, secretKey: s3Location.secretKey }),
+      expect.anything()
+    );
   });
 });

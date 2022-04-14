@@ -1,5 +1,4 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { KubernetesInventory } from './KubernetesInventory';
 import { useSelector } from 'react-redux';
 import {
@@ -9,6 +8,7 @@ import {
   getActionStub,
   setLoadingActionStub,
 } from './__mocks__/kubernetesStubs';
+import { render } from '@testing-library/react';
 
 jest.mock('app/core/app_events');
 jest.mock('./Kubernetes.hooks');
@@ -28,7 +28,7 @@ describe('KubernetesInventory::', () => {
   });
 
   it('renders table correctly', () => {
-    const root = mount(
+    const { container } = render(
       <KubernetesInventory
         kubernetes={kubernetesStub}
         addKubernetes={addActionStub}
@@ -38,7 +38,7 @@ describe('KubernetesInventory::', () => {
         loading={false}
       />
     );
-    const rows = root.find('tr');
-    expect(rows.length).toBe(kubernetesStub.length + 1);
+    const rows = container.querySelectorAll('tr');
+    expect(rows).toHaveLength(kubernetesStub.length + 1);
   });
 });

@@ -27,7 +27,7 @@ export const DBIcon: FC<DBIconProps> = ({ type, size, tooltipText, disabled, ...
   );
 
   return tooltipText ? (
-    <Tooltip placement="top" content={tooltipText}>
+    <Tooltip data-testid="DBIcon-tooltip" placement="top" content={tooltipText}>
       {IconEl}
     </Tooltip>
   ) : (

@@ -1,8 +1,7 @@
 import React from 'react';
-import { dataTestId } from '@percona/platform-core';
-import { getMount } from 'app/percona/shared/helpers/testUtils';
 import { Alerts } from './Alerts';
 import { AlertsService } from './Alerts.service';
+import { render, screen, waitFor } from '@testing-library/react';
 
 jest.mock('./Alerts.service');
 
@@ -12,31 +11,27 @@ describe('AlertsTable', () => {
   });
 
   it('should render the table correctly', async () => {
-    const wrapper = await getMount(<Alerts />);
+    await waitFor(() => render(<Alerts />));
 
-    wrapper.update();
-
-    expect(wrapper.find(dataTestId('table-thead')).find('tr')).toHaveLength(1);
-    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(6);
-    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(0);
+    expect(screen.getByTestId('table-thead').querySelectorAll('tr')).toHaveLength(1);
+    expect(screen.getByTestId('table-tbody').querySelectorAll('tr')).toHaveLength(6);
+    expect(screen.queryByTestId('table-no-data')).not.toBeInTheDocument();
   });
 
   it('should have table initially loading', async () => {
-    const wrapper = await getMount(<Alerts />);
-
-    expect(wrapper.find(dataTestId('table-loading')).exists()).toBeTruthy();
+    const resultOfRender = render(<Alerts />);
+    expect(screen.getByTestId('table-loading')).toBeInTheDocument();
+    await waitFor(() => resultOfRender);
   });
 
   it('should render correctly without data', async () => {
     jest
       .spyOn(AlertsService, 'list')
       .mockReturnValueOnce(Promise.resolve({ alerts: [], totals: { total_items: 0, total_pages: 1 } }));
-    const wrapper = await getMount(<Alerts />);
+    await waitFor(() => render(<Alerts />));
 
-    wrapper.update();
-
-    expect(wrapper.find(dataTestId('table-thead')).find('tr')).toHaveLength(0);
-    expect(wrapper.find(dataTestId('table-tbody')).find('tr')).toHaveLength(0);
-    expect(wrapper.find(dataTestId('table-no-data'))).toHaveLength(1);
+    expect(screen.queryByTestId('table-thead')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('table-tbody')).not.toBeInTheDocument();
+    expect(screen.getByTestId('table-no-data')).toBeInTheDocument();
   });
 });

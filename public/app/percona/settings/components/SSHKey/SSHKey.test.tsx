@@ -1,27 +1,28 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { SSHKey } from './SSHKey';
+import { render, screen, fireEvent } from '@testing-library/react';
 
 describe('SSHKey::', () => {
   it('Renders correctly with props', () => {
-    const root = mount(<SSHKey sshKey="test key" updateSettings={() => {}} />);
+    render(<SSHKey sshKey="test key" updateSettings={() => {}} />);
 
-    expect(root.find('textarea').text()).toEqual('test key');
+    expect(screen.getByRole('textbox')).toHaveValue('test key');
   });
 
   it('Disables apply changes on initial values', () => {
-    const root = mount(<SSHKey sshKey="test key" updateSettings={() => {}} />);
-    const button = root.find('button');
+    render(<SSHKey sshKey="test key" updateSettings={() => {}} />);
 
-    expect(button.prop('disabled')).toBeTruthy();
+    expect(screen.getByRole('button')).toBeDisabled();
   });
 
   it('Calls apply changes', () => {
     const updateSettings = jest.fn();
-    const root = mount(<SSHKey sshKey="test key" updateSettings={updateSettings} />);
+    render(<SSHKey sshKey="test key" updateSettings={updateSettings} />);
 
-    root.find('textarea').simulate('change', { target: { value: 'new key' } });
-    root.find('form').simulate('submit');
+    const textArea = screen.getByRole('textbox');
+    fireEvent.change(textArea, { target: { value: 'new key' } });
+    const form = screen.getByTestId('ssh-key-form');
+    fireEvent.submit(form);
 
     expect(updateSettings).toHaveBeenCalled();
   });

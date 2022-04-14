@@ -39,7 +39,7 @@ export const EditAlertRuleTemplateModal: FC<EditAlertRuleTemplateModalProps> = (
         initialValues={{ yaml }}
         onSubmit={onSubmit}
         render={({ handleSubmit, valid, pristine, submitting }) => (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} data-testid="edit-alert-rule-template-form">
             <>
               <TextareaInputField
                 fieldClassName={styles.field}

@@ -20,7 +20,7 @@ const Credentials: FC<CredentialsProps> = ({ discover, selectInstance }) => {
     <FormFinal
       onSubmit={onSubmit}
       render={({ handleSubmit }) => (
-        <form onSubmit={handleSubmit} className={styles.instanceForm}>
+        <form onSubmit={handleSubmit} className={styles.instanceForm} data-testid="credentials-form">
           <div className={styles.fieldsWrapper}>
             <TextInputField
               name={Messages.form.fields.awsAccessKey.name}

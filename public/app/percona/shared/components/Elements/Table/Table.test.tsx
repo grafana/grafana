@@ -1,6 +1,6 @@
 import React from 'react';
-import { mount, shallow } from 'enzyme';
 import { Table } from './Table';
+import { render, screen } from '@testing-library/react';
 
 const columns = [
   {
@@ -26,46 +26,46 @@ const rows = [
 
 describe('Table', () => {
   it('Render correct amount of rows', () => {
-    const root = shallow(<Table columns={columns} data={rows} />);
+    render(<Table columns={columns} data={rows} />);
 
-    expect(root.find('[data-testid="table-row"]').length).toEqual(rows.length);
-    expect(root.find('[data-testid="table-header"]').length).toEqual(1);
+    expect(screen.getAllByTestId('table-row')).toHaveLength(rows.length);
+    expect(screen.getAllByTestId('table-header')).toHaveLength(1);
   });
 
   it('Render no data section if empty rows passed', () => {
-    const root = shallow(<Table columns={columns} data={[]} />);
+    render(<Table columns={columns} data={[]} />);
 
-    expect(root.find('[data-testid="table-row"]').length).toEqual(0);
-    expect(root.find('[data-testid="table-no-data"]').length).toEqual(1);
+    expect(screen.queryByTestId('table-row')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('table-no-data')).toHaveLength(1);
   });
 
   it('Render checkboxes if rowSelection is passed', () => {
-    const root = mount(<Table columns={columns} data={rows} rowSelection />);
+    render(<Table columns={columns} data={rows} rowSelection />);
 
-    expect(root.find('[data-testid="select-all"]').length).toEqual(1);
-    expect(root.find('[data-testid="select-row"]').length).toEqual(rows.length);
+    expect(screen.getAllByTestId('select-all')).toHaveLength(1);
+    expect(screen.getAllByTestId('select-row')).toHaveLength(rows.length);
   });
 
   it('Render custom no data section if its passed', () => {
     const noData = <div data-testid="custom-no-data">123</div>;
-    const root = shallow(<Table columns={columns} data={[]} noData={noData} />);
+    render(<Table columns={columns} data={[]} noData={noData} />);
 
-    expect(root.find('[data-testid="table-no-data"]').length).toEqual(1);
-    expect(root.find('[data-testid="custom-no-data"]').length).toEqual(1);
+    expect(screen.getAllByTestId('table-no-data')).toHaveLength(1);
+    expect(screen.getAllByTestId('custom-no-data')).toHaveLength(1);
   });
 
   it('Render default no data section if no noData passed', () => {
-    const root = shallow(<Table columns={columns} data={[]} />);
+    render(<Table columns={columns} data={[]} />);
 
-    expect(root.find('[data-testid="table-no-data"]').length).toEqual(1);
+    expect(screen.getAllByTestId('table-no-data')).toHaveLength(1);
   });
 
   it('Render spinner if table is loading', () => {
     const noData = <div data-testid="custom-no-data">123</div>;
-    const root = shallow(<Table columns={columns} data={[]} noData={noData} loading />);
+    render(<Table columns={columns} data={[]} noData={noData} loading />);
 
-    expect(root.find('[data-testid="table-loading"]').length).toEqual(1);
-    expect(root.find('[data-testid="table-no-data"]').length).toEqual(0);
-    expect(root.find('[data-testid="custom-no-data"]').length).toEqual(0);
+    expect(screen.getAllByTestId('table-loading')).toHaveLength(1);
+    expect(screen.queryByTestId('table-no-data')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('custom-no-data')).not.toBeInTheDocument();
   });
 });
