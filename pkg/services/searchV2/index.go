@@ -3,6 +3,7 @@ package searchV2
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	"sync"
@@ -46,7 +47,7 @@ func NewDashboardIndex(eventStore store.EntityEventsService, loader dashboardLoa
 	}
 }
 
-func (i *DashboardIndex) listenEvents(ctx context.Context) error {
+func (i *DashboardIndex) run(ctx context.Context) error {
 	fullUpdateTicker := time.NewTicker(5 * time.Minute)
 	defer fullUpdateTicker.Stop()
 
@@ -60,6 +61,12 @@ func (i *DashboardIndex) listenEvents(ctx context.Context) error {
 	}
 	if lastEvent != nil {
 		lastEventID = lastEvent.Id
+	}
+
+	// Build on start for orgID 1 but keep lazy for others.
+	_, err = i.getDashboards(ctx, 1)
+	if err != nil {
+		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
 	}
 
 	for {
