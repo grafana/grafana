@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/sync/errgroup"
 	"xorm.io/xorm"
 )
@@ -279,6 +280,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, name string, scope stri
 
 	// 3. Store its encrypted value in db
 	dek := secrets.DataKey{
+		Id:            util.GenerateShortUID(),
 		Active:        true, // TODO: right now we never mark a key as deactivated
 		Name:          name,
 		Provider:      s.currentProviderID,
