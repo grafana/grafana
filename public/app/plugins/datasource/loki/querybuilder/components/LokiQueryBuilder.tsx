@@ -7,7 +7,6 @@ import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/query
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { DataSourceApi, SelectableValue } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
-import { QueryPreview } from './QueryPreview';
 import { OperationsEditorRow } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationsEditorRow';
 import { NestedQueryList } from './NestedQueryList';
 
@@ -83,11 +82,6 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
       </OperationsEditorRow>
       {query.binaryQueries && query.binaryQueries.length > 0 && (
         <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
-      )}
-      {!nested && (
-        <EditorRow>
-          <QueryPreview query={query} />
-        </EditorRow>
       )}
     </>
   );

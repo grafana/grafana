@@ -122,6 +122,7 @@ const AmRoutes: FC = () => {
           />
           <div className={styles.break} />
           <AmSpecificRouting
+            alertManagerSourceName={alertManagerSourceName}
             onChange={handleSave}
             readOnly={readOnly}
             onRootRouteEdit={enterRootRouteEditMode}

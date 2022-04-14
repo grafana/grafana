@@ -38,6 +38,14 @@ export enum LokiOperationId {
   Rate = 'rate',
   CountOverTime = 'count_over_time',
   SumOverTime = 'sum_over_time',
+  AvgOverTime = 'avg_over_time',
+  MaxOverTime = 'max_over_time',
+  MinOverTime = 'min_over_time',
+  FirstOverTime = 'first_over_time',
+  LastOverTime = 'last_over_time',
+  StdvarOverTime = 'stdvar_over_time',
+  StddevOverTime = 'stddev_over_time',
+  QuantileOverTime = 'quantile_over_time',
   BytesRate = 'bytes_rate',
   BytesOverTime = 'bytes_over_time',
   AbsentOverTime = 'absent_over_time',
@@ -45,6 +53,9 @@ export enum LokiOperationId {
   Avg = 'avg',
   Min = 'min',
   Max = 'max',
+  Stddev = 'stddev',
+  Stdvar = 'stdvar',
+  Count = 'count',
   TopK = 'topk',
   BottomK = 'bottomk',
   LineContains = '__line_contains',
@@ -78,11 +89,4 @@ export enum LokiOperationOrder {
   NoErrors = 5,
   RangeVectorFunction = 5,
   Last = 6,
-}
-
-export function getDefaultEmptyQuery(): LokiVisualQuery {
-  return {
-    labels: [],
-    operations: [{ id: '__line_contains', params: [''] }],
-  };
 }

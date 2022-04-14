@@ -12,6 +12,7 @@ import { NavBarItemMenu } from './NavBarItemMenu';
 import { getNavModelItemKey } from '../utils';
 import { useLingui } from '@lingui/react';
 import menuItemTranslations from '../navBarItem-translations';
+import { useNavBarContext } from '../context';
 
 export interface Props {
   isActive?: boolean;
@@ -33,6 +34,7 @@ const NavBarItem = ({
   const { i18n } = useLingui();
   const theme = useTheme2();
   const menuItems = link.children ?? [];
+  const { menuIdOpen } = useNavBarContext();
 
   // Spreading `menuItems` here as otherwise we'd be mutating props
   const menuItemsSorted = reverseMenuDirection ? [...menuItems].reverse() : menuItems;
@@ -81,7 +83,7 @@ const NavBarItem = ({
     );
   } else {
     return (
-      <li className={cx(styles.container, className)}>
+      <li className={cx(styles.container, { [styles.containerHover]: section.id === menuIdOpen }, className)}>
         <NavBarItemMenuTrigger
           item={section}
           isActive={isActive}
@@ -100,12 +102,13 @@ const NavBarItem = ({
               const translationKey = item.id && menuItemTranslations[item.id];
               const itemText = translationKey ? i18n._(translationKey) : item.text;
               const isSection = item.menuItemType === NavMenuItemType.Section;
+              const icon = item.showIconInNavbar && !isSection ? (item.icon as IconName) : undefined;
 
               return (
                 <Item key={getNavModelItemKey(item)} textValue={item.text}>
                   <NavBarMenuItem
                     isDivider={!isSection && item.divider}
-                    icon={isSection ? undefined : (item.icon as IconName)}
+                    icon={icon}
                     target={item.target}
                     text={itemText}
                     url={item.url}
@@ -126,6 +129,10 @@ export default NavBarItem;
 
 const getStyles = (theme: GrafanaTheme2, adjustHeightForBorder: boolean, isActive?: boolean) => ({
   ...getNavBarItemWithoutMenuStyles(theme, isActive),
+  containerHover: css({
+    backgroundColor: theme.colors.action.hover,
+    color: theme.colors.text.primary,
+  }),
   primaryText: css({
     color: theme.colors.text.primary,
   }),

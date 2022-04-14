@@ -6,7 +6,7 @@ export { Tooltip } from './Tooltip/Tooltip';
 export { PopoverContent } from './Tooltip/types';
 export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
-export { Portal } from './Portal/Portal';
+export { Portal, getPortalContainer, PortalContainer } from './Portal/Portal';
 export { CustomScrollbar, ScrollbarPosition } from './CustomScrollbar/CustomScrollbar';
 export { TabbedContainer, TabConfig } from './TabbedContainer/TabbedContainer';
 
@@ -84,6 +84,7 @@ export {
   BigValueJustifyMode,
   BigValueTextMode,
 } from './BigValue/BigValue';
+export { Sparkline } from './Sparkline/Sparkline';
 
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';

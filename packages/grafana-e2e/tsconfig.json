@@ -3,9 +3,7 @@
     "declarationDir": "dist",
     "outDir": "compiled",
     "rootDirs": ["."],
-    "types": ["cypress"],
-    "incremental": true,
-    "tsBuildInfoFile": "./tsconfig.tsbuildinfo"
+    "types": ["cypress"]
   },
   "exclude": ["dist", "node_modules"],
   "extends": "@grafana/tsconfig",

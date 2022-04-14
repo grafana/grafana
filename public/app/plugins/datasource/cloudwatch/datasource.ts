@@ -259,25 +259,27 @@ export class CloudWatchDatasource
     metricQueries: CloudWatchMetricsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
-    const validMetricsQueries = metricQueries.map((item: CloudWatchMetricsQuery): MetricQuery => {
-      item.region = this.templateSrv.replace(this.getActualRegion(item.region), options.scopedVars);
-      item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
-      item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
-      item.dimensions = this.convertDimensionFormat(item.dimensions ?? {}, options.scopedVars);
-      item.statistic = this.templateSrv.replace(item.statistic, options.scopedVars);
-      item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
-      item.id = this.templateSrv.replace(item.id, options.scopedVars);
-      item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
-      item.sqlExpression = this.templateSrv.replace(item.sqlExpression, options.scopedVars, 'raw');
+    const validMetricsQueries = metricQueries
+      .filter(this.filterQuery)
+      .map((item: CloudWatchMetricsQuery): MetricQuery => {
+        item.region = this.templateSrv.replace(this.getActualRegion(item.region), options.scopedVars);
+        item.namespace = this.replace(item.namespace, options.scopedVars, true, 'namespace');
+        item.metricName = this.replace(item.metricName, options.scopedVars, true, 'metric name');
+        item.dimensions = this.convertDimensionFormat(item.dimensions ?? {}, options.scopedVars);
+        item.statistic = this.templateSrv.replace(item.statistic, options.scopedVars);
+        item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
+        item.id = this.templateSrv.replace(item.id, options.scopedVars);
+        item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
+        item.sqlExpression = this.templateSrv.replace(item.sqlExpression, options.scopedVars, 'raw');
 
-      return {
-        intervalMs: options.intervalMs,
-        maxDataPoints: options.maxDataPoints,
-        ...item,
-        type: 'timeSeriesQuery',
-        datasource: this.getRef(),
-      };
-    });
+        return {
+          intervalMs: options.intervalMs,
+          maxDataPoints: options.maxDataPoints,
+          ...item,
+          type: 'timeSeriesQuery',
+          datasource: this.getRef(),
+        };
+      });
 
     // No valid targets, return the empty result to save a round trip.
     if (isEmpty(validMetricsQueries)) {

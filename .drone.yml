@@ -10,21 +10,31 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
 - commands:
-  - make gen-go
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
+  depends_on:
+  - grabpl
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: gen-version
+- commands:
+  - make gen-go
+  image: grafana/build-container:1.5.3
+  name: wire-install
+- commands:
+  - yarn install --immutable
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.3
+  name: yarn-install
 - commands:
   - ./bin/grabpl verify-drone
   depends_on:
@@ -41,20 +51,18 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  depends_on:
-  - initialize
   image: grafana/build-container:1.5.3
   name: codespell
 - commands:
   - ./bin/grabpl shellcheck
   depends_on:
-  - initialize
+  - grabpl
   image: grafana/build-container:1.5.3
   name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition oss
   depends_on:
-  - initialize
+  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: grafana/build-container:1.5.3
@@ -65,7 +73,7 @@ steps:
   - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
-  - initialize
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -73,19 +81,19 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
-  - initialize
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - initialize
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - initialize
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -113,33 +121,45 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
 - commands:
-  - make gen-go
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
+  depends_on:
+  - grabpl
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: gen-version
+- commands:
+  - make gen-go
+  image: grafana/build-container:1.5.3
+  name: wire-install
+- commands:
+  - yarn install --immutable
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.3
+  name: yarn-install
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
     --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64,armv6
   depends_on:
-  - initialize
+  - gen-version
+  - wire-install
   environment: {}
   image: grafana/build-container:1.5.3
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.3
@@ -147,7 +167,8 @@ steps:
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.3
@@ -155,7 +176,8 @@ steps:
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment: null
   image: grafana/build-container:1.5.3
   name: build-plugins
@@ -356,10 +378,14 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15
+  name: identify-runner
 - commands:
   - apt-get update
   - apt-get install -yq postgresql-client
@@ -420,7 +446,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -429,11 +455,17 @@ steps:
   image: alpine:3.15
   name: identify-runner
 - commands:
-  - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
+  depends_on:
+  - grabpl
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: gen-version
+- commands:
+  - yarn install --immutable
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.3
+  name: yarn-install
 - commands:
   - |-
     echo -e "unknwon
@@ -444,14 +476,12 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  depends_on:
-  - initialize
   image: grafana/build-container:1.5.3
   name: codespell
 - commands:
   - yarn run prettier:checkDocs
   depends_on:
-  - initialize
+  - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.3
@@ -459,7 +489,8 @@ steps:
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.3
@@ -503,7 +534,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -512,11 +543,17 @@ steps:
   image: alpine:3.15
   name: identify-runner
 - commands:
-  - make gen-go
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
+  depends_on:
+  - grabpl
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: gen-version
+- commands:
+  - yarn install --immutable
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.3
+  name: yarn-install
 - commands:
   - |-
     echo -e "unknwon
@@ -527,14 +564,12 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  depends_on:
-  - initialize
   image: grafana/build-container:1.5.3
   name: codespell
 - commands:
   - yarn run prettier:checkDocs
   depends_on:
-  - initialize
+  - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.3
@@ -542,7 +577,8 @@ steps:
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.3
@@ -565,8 +601,6 @@ trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -584,21 +618,31 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
 - commands:
-  - make gen-go
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
+  depends_on:
+  - grabpl
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: gen-version
+- commands:
+  - make gen-go
+  image: grafana/build-container:1.5.3
+  name: wire-install
+- commands:
+  - yarn install --immutable
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.3
+  name: yarn-install
 - commands:
   - ./bin/grabpl verify-drone
   depends_on:
@@ -615,20 +659,18 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  depends_on:
-  - initialize
   image: grafana/build-container:1.5.3
   name: codespell
 - commands:
   - ./bin/grabpl shellcheck
   depends_on:
-  - initialize
+  - grabpl
   image: grafana/build-container:1.5.3
   name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition oss
   depends_on:
-  - initialize
+  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: grafana/build-container:1.5.3
@@ -639,7 +681,7 @@ steps:
   - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
-  - initialize
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -647,19 +689,19 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
-  - initialize
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - initialize
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - initialize
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -668,8 +710,6 @@ trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -687,21 +727,31 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
 - commands:
-  - make gen-go
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
+  depends_on:
+  - grabpl
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: gen-version
+- commands:
+  - make gen-go
+  image: grafana/build-container:1.5.3
+  name: wire-install
+- commands:
+  - yarn install --immutable
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.3
+  name: yarn-install
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     --depth=1
@@ -727,6 +777,8 @@ steps:
     paths:
       include:
       - .drone.yml
+    repo:
+    - grafana/grafana
 - image: grafana/drone-downstream
   name: trigger-enterprise-downstream
   settings:
@@ -741,14 +793,16 @@ steps:
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - initialize
+  - gen-version
+  - wire-install
   environment: {}
   image: grafana/build-container:1.5.3
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.3
@@ -756,7 +810,8 @@ steps:
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.3
@@ -764,7 +819,8 @@ steps:
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
@@ -901,9 +957,7 @@ steps:
   image: grafana/build-container:1.5.3
   name: build-storybook
 - commands:
-  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://$${PRERELEASE_BUCKET}/artifacts/storybook/canary
+  - ./bin/grabpl store-storybook --deployment canary --src-bucket grafana-storybook
   depends_on:
   - build-storybook
   - end-to-end-tests-dashboards-suite
@@ -917,6 +971,9 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: store-storybook
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - yarn wait-on http://$HOST:$PORT
   - pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
@@ -940,6 +997,9 @@ steps:
   failure: ignore
   image: grafana/build-container:1.5.3
   name: publish-frontend-metrics
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -989,6 +1049,9 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana-oss --base alpine
     --base ubuntu --arch amd64 --arch arm64 --arch armv7
@@ -1007,6 +1070,9 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ./scripts/circle-release-canary-packages.sh
   depends_on:
@@ -1019,6 +1085,9 @@ steps:
       from_secret: npm_token
   image: grafana/build-container:1.5.3
   name: release-canary-npm-packages
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
   depends_on:
@@ -1033,6 +1102,9 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-packages
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ./bin/grabpl upload-cdn --edition oss --src-bucket "grafana-static-assets"
   depends_on:
@@ -1044,12 +1116,13 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
+  when:
+    repo:
+    - grafana/grafana
 trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1094,10 +1167,14 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15
+  name: identify-runner
 - commands:
   - apt-get update
   - apt-get install -yq postgresql-client
@@ -1132,8 +1209,6 @@ trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1164,10 +1239,10 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
-  name: initialize
+  name: windows-init
 - commands:
   - $$gcpKey = $$env:GCP_KEY
   - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
@@ -1183,7 +1258,7 @@ steps:
   - gsutil cp $$fname gs://grafana-downloads/oss/main/
   - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/main/
   depends_on:
-  - initialize
+  - windows-init
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -1251,7 +1326,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1259,10 +1334,6 @@ steps:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
-- commands:
-  - make gen-go
-  image: grafana/build-container:1.5.3
-  name: initialize
 - commands:
   - ./bin/grabpl store-packages --edition oss --gcp-key /tmp/gcpkey.json --build-id
     ${DRONE_BUILD_NUMBER}
@@ -1319,8 +1390,6 @@ trigger:
   branch: main
   event:
   - push
-  repo:
-  - grafana/grafana
   status:
   - failure
 type: docker
@@ -1336,27 +1405,37 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
 - commands:
-  - make gen-go
-  - ./bin/grabpl verify-version ${DRONE_TAG}
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
   - ./bin/grabpl gen-version ${DRONE_TAG}
-  - yarn install --immutable
+  depends_on:
+  - grabpl
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: gen-version
+- commands:
+  - make gen-go
+  image: grafana/build-container:1.5.3
+  name: wire-install
+- commands:
+  - yarn install --immutable
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.3
+  name: yarn-install
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --github-token $${GITHUB_TOKEN}
     ${DRONE_TAG}
   depends_on:
-  - initialize
+  - gen-version
+  - wire-install
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1366,7 +1445,8 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --edition
     oss ${DRONE_TAG}
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.3
@@ -1375,7 +1455,8 @@ steps:
   - ./bin/grabpl build-frontend-packages --jobs 8 --github-token $${GITHUB_TOKEN}
     --edition oss ${DRONE_TAG}
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.3
@@ -1383,7 +1464,8 @@ steps:
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
@@ -1578,10 +1660,10 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-packages
 - commands:
-  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://$${PRERELEASE_BUCKET}/artifacts/storybook/latest
-  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://$${PRERELEASE_BUCKET}/artifacts/storybook/${DRONE_TAG}
+  - ./bin/grabpl store-storybook --deployment latest --src-bucket grafana-prerelease
+    --src-dir artifacts/storybook
+  - ./bin/grabpl store-storybook --deployment ${DRONE_TAG} --src-bucket grafana-prerelease
+    --src-dir artifacts/storybook
   depends_on:
   - build-storybook
   - end-to-end-tests-dashboards-suite
@@ -1596,15 +1678,9 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: store-storybook
 - commands:
-  - ./scripts/build/build-npm-packages.sh ${DRONE_TAG}
-  depends_on:
-  - store-storybook
-  image: grafana/build-container:1.5.3
-  name: build-npm-packages
-- commands:
   - ./bin/grabpl artifacts npm store --tag ${DRONE_TAG}
   depends_on:
-  - build-npm-packages
+  - build-frontend-packages
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -1644,22 +1720,37 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
 - commands:
-  - make gen-go
-  - ./bin/grabpl verify-version ${DRONE_TAG}
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
   - ./bin/grabpl gen-version ${DRONE_TAG}
-  - yarn install --immutable
+  depends_on:
+  - grabpl
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: gen-version
+- commands:
+  - make gen-go
+  image: grafana/build-container:1.5.3
+  name: wire-install
+- commands:
+  - yarn install --immutable
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.3
+  name: yarn-install
+- commands:
+  - ./bin/grabpl shellcheck
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.3
+  name: shellcheck
 - commands:
   - |-
     echo -e "unknwon
@@ -1670,20 +1761,12 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  depends_on:
-  - initialize
   image: grafana/build-container:1.5.3
   name: codespell
 - commands:
-  - ./bin/grabpl shellcheck
-  depends_on:
-  - initialize
-  image: grafana/build-container:1.5.3
-  name: shellcheck
-- commands:
   - ./bin/grabpl lint-backend --edition oss
   depends_on:
-  - initialize
+  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: grafana/build-container:1.5.3
@@ -1694,7 +1777,7 @@ steps:
   - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
-  - initialize
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -1702,19 +1785,19 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
-  - initialize
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - initialize
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - initialize
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -1766,7 +1849,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1774,13 +1857,6 @@ steps:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
-- commands:
-  - make gen-go
-  - ./bin/grabpl verify-version ${DRONE_TAG}
-  - ./bin/grabpl gen-version ${DRONE_TAG}
-  - yarn install --immutable
-  image: grafana/build-container:1.5.3
-  name: initialize
 - commands:
   - apt-get update
   - apt-get install -yq postgresql-client
@@ -1850,10 +1926,10 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
-  name: initialize
+  name: windows-init
 - commands:
   - $$gcpKey = $$env:GCP_KEY
   - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
@@ -1868,7 +1944,7 @@ steps:
   - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/oss/release/
   - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/oss/release/
   depends_on:
-  - initialize
+  - windows-init
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -1909,7 +1985,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1935,22 +2011,37 @@ steps:
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
-  - make gen-go
-  - ./bin/grabpl verify-version ${DRONE_TAG}
-  - ./bin/grabpl gen-version ${DRONE_TAG}
-  - yarn install --immutable
   depends_on:
   - clone-enterprise
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: init-enterprise
+- commands:
+  - make gen-go
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.3
+  name: wire-install
+- commands:
+  - yarn install --immutable
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.3
+  name: yarn-install
+- commands:
+  - ./bin/grabpl gen-version ${DRONE_TAG}
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.3
+  name: gen-version
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
     ${DRONE_TAG}
   depends_on:
-  - initialize
+  - gen-version
+  - wire-install
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1960,7 +2051,8 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --edition
     enterprise ${DRONE_TAG}
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.3
@@ -1969,7 +2061,8 @@ steps:
   - ./bin/grabpl build-frontend-packages --jobs 8 --github-token $${GITHUB_TOKEN}
     --edition enterprise ${DRONE_TAG}
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.3
@@ -1977,7 +2070,8 @@ steps:
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --sign --signing-admin
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
@@ -2006,7 +2100,8 @@ steps:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
     ${DRONE_TAG}
   depends_on:
-  - initialize
+  - gen-version
+  - wire-install
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2171,6 +2266,17 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-packages
 - commands:
+  - ./bin/grabpl artifacts npm store --tag ${DRONE_TAG}
+  depends_on:
+  - build-frontend-packages
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    PRERELEASE_BUCKET:
+      from_secret: prerelease_bucket
+  image: grafana/grafana-ci-deploy:1.3.1
+  name: store-npm-packages
+- commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN}
     --sign ${DRONE_TAG}
   depends_on:
@@ -2252,7 +2358,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2278,17 +2384,31 @@ steps:
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
-  - make gen-go
-  - ./bin/grabpl verify-version ${DRONE_TAG}
-  - ./bin/grabpl gen-version ${DRONE_TAG}
-  - yarn install --immutable
   depends_on:
   - clone-enterprise
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: init-enterprise
+- commands:
+  - make gen-go
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.3
+  name: wire-install
+- commands:
+  - yarn install --immutable
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.3
+  name: yarn-install
+- commands:
+  - ./bin/grabpl gen-version ${DRONE_TAG}
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.3
+  name: gen-version
 - commands:
   - |-
     echo -e "unknwon
@@ -2299,20 +2419,12 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  depends_on:
-  - initialize
   image: grafana/build-container:1.5.3
   name: codespell
 - commands:
-  - ./bin/grabpl shellcheck
-  depends_on:
-  - initialize
-  image: grafana/build-container:1.5.3
-  name: shellcheck
-- commands:
   - ./bin/grabpl lint-backend --edition enterprise
   depends_on:
-  - initialize
+  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: grafana/build-container:1.5.3
@@ -2323,7 +2435,7 @@ steps:
   - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
-  - initialize
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -2331,19 +2443,19 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
-  - initialize
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
-  - initialize
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - initialize
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -2351,7 +2463,7 @@ steps:
 - commands:
   - ./bin/grabpl lint-backend --edition enterprise2
   depends_on:
-  - initialize
+  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: grafana/build-container:1.5.3
@@ -2359,13 +2471,13 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
-  - initialize
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-enterprise2
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
-  - initialize
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-integration-enterprise2
 trigger:
@@ -2425,7 +2537,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2451,17 +2563,13 @@ steps:
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
-  - make gen-go
-  - ./bin/grabpl verify-version ${DRONE_TAG}
-  - ./bin/grabpl gen-version ${DRONE_TAG}
-  - yarn install --immutable
   depends_on:
   - clone-enterprise
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: init-enterprise
 - commands:
   - apt-get update
   - apt-get install -yq postgresql-client
@@ -2470,7 +2578,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - initialize
+  - init-enterprise
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -2486,7 +2594,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - initialize
+  - init-enterprise
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -2496,7 +2604,7 @@ steps:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - initialize
+  - init-enterprise
   environment:
     REDIS_URL: redis://redis:6379/0
   image: grafana/build-container:1.5.3
@@ -2505,7 +2613,7 @@ steps:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - initialize
+  - init-enterprise
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: grafana/build-container:1.5.3
@@ -2553,7 +2661,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2576,7 +2684,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/ci-wix:0.1.1
-  name: initialize
+  name: windows-init
 - commands:
   - $$gcpKey = $$env:GCP_KEY
   - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
@@ -2591,7 +2699,7 @@ steps:
   - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/enterprise/release/
   - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/enterprise/release/
   depends_on:
-  - initialize
+  - windows-init
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -2628,7 +2736,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2706,7 +2814,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2767,7 +2875,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2846,7 +2954,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2908,17 +3016,19 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - ./bin/grabpl artifacts publish --security --tag ${TAG} --src-bucket grafana-prerelease
+  - ./bin/grabpl artifacts publish --security --tag ${TAG} --src-bucket $${PRERELEASE_BUCKET}
   depends_on:
   - grabpl
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    PRERELEASE_BUCKET:
+      from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: publish-artifacts
 trigger:
@@ -2944,17 +3054,19 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - ./bin/grabpl artifacts publish --tag ${TAG} --src-bucket grafana-prerelease
+  - ./bin/grabpl artifacts publish --tag ${TAG} --src-bucket $${PRERELEASE_BUCKET}
   depends_on:
   - grabpl
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    PRERELEASE_BUCKET:
+      from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: publish-artifacts
 trigger:
@@ -2979,26 +3091,15 @@ platform:
 services: []
 steps:
 - commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
-  name: identify-runner
-- commands:
-  - make gen-go
-  - ./bin/grabpl verify-version ${DRONE_TAG}
-  - ./bin/grabpl gen-version ${DRONE_TAG}
-  - yarn install --immutable
-  image: grafana/build-container:1.5.3
-  name: initialize
-- commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
   - ./bin/grabpl artifacts npm retrieve --tag v${TAG}
   depends_on:
-  - initialize
+  - grabpl
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -3041,7 +3142,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3103,32 +3204,44 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
 - commands:
-  - make gen-go
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
+  depends_on:
+  - grabpl
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: gen-version
+- commands:
+  - make gen-go
+  image: grafana/build-container:1.5.3
+  name: wire-install
+- commands:
+  - yarn install --immutable
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.3
+  name: yarn-install
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - initialize
+  - gen-version
+  - wire-install
   environment: {}
   image: grafana/build-container:1.5.3
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.3
@@ -3136,7 +3249,8 @@ steps:
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.3
@@ -3144,7 +3258,8 @@ steps:
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
@@ -3322,6 +3437,9 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
   depends_on:
@@ -3336,11 +3454,12 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-packages
+  when:
+    repo:
+    - grafana/grafana
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3364,21 +3483,37 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
 - commands:
-  - make gen-go
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
+  depends_on:
+  - grabpl
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: gen-version
+- commands:
+  - make gen-go
+  image: grafana/build-container:1.5.3
+  name: wire-install
+- commands:
+  - yarn install --immutable
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.3
+  name: yarn-install
+- commands:
+  - ./bin/grabpl shellcheck
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.3
+  name: shellcheck
 - commands:
   - |-
     echo -e "unknwon
@@ -3389,20 +3524,12 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  depends_on:
-  - initialize
   image: grafana/build-container:1.5.3
   name: codespell
 - commands:
-  - ./bin/grabpl shellcheck
-  depends_on:
-  - initialize
-  image: grafana/build-container:1.5.3
-  name: shellcheck
-- commands:
   - ./bin/grabpl lint-backend --edition oss
   depends_on:
-  - initialize
+  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: grafana/build-container:1.5.3
@@ -3413,7 +3540,7 @@ steps:
   - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
-  - initialize
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -3421,19 +3548,19 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
-  - initialize
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition oss
   depends_on:
-  - initialize
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - initialize
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -3441,8 +3568,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3481,7 +3606,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3489,12 +3614,6 @@ steps:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15
   name: identify-runner
-- commands:
-  - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
-  image: grafana/build-container:1.5.3
-  name: initialize
 - commands:
   - apt-get update
   - apt-get install -yq postgresql-client
@@ -3528,8 +3647,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3560,10 +3677,10 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
-  name: initialize
+  name: windows-init
 - commands:
   - $$gcpKey = $$env:GCP_KEY
   - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
@@ -3573,7 +3690,7 @@ steps:
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
   depends_on:
-  - initialize
+  - windows-init
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -3586,8 +3703,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3610,7 +3725,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3635,25 +3750,42 @@ steps:
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
-  - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
   depends_on:
   - clone-enterprise
   environment: {}
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: init-enterprise
+- commands:
+  - make gen-go
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.3
+  name: wire-install
+- commands:
+  - yarn install --immutable
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.3
+  name: yarn-install
+- commands:
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.3
+  name: gen-version
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - initialize
+  - gen-version
+  - wire-install
   environment: {}
   image: grafana/build-container:1.5.3
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.3
@@ -3662,7 +3794,8 @@ steps:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition enterprise --build-id
     ${DRONE_BUILD_NUMBER}
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.3
@@ -3670,7 +3803,8 @@ steps:
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --sign --signing-admin
   depends_on:
-  - initialize
+  - gen-version
+  - yarn-install
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
@@ -3699,7 +3833,8 @@ steps:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
     --variants linux-amd64
   depends_on:
-  - initialize
+  - gen-version
+  - wire-install
   environment: {}
   image: grafana/build-container:1.5.3
   name: build-backend-enterprise2
@@ -3859,6 +3994,9 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-cdn-assets
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads
   depends_on:
@@ -3870,6 +4008,9 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.1
   name: upload-packages
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
     --variants linux-amd64 --sign
@@ -3917,8 +4058,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3947,7 +4086,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3972,14 +4111,29 @@ steps:
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
-  - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
   depends_on:
   - clone-enterprise
   environment: {}
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: init-enterprise
+- commands:
+  - make gen-go
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.3
+  name: wire-install
+- commands:
+  - yarn install --immutable
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.3
+  name: yarn-install
+- commands:
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.3
+  name: gen-version
 - commands:
   - |-
     echo -e "unknwon
@@ -3990,20 +4144,12 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  depends_on:
-  - initialize
   image: grafana/build-container:1.5.3
   name: codespell
 - commands:
-  - ./bin/grabpl shellcheck
-  depends_on:
-  - initialize
-  image: grafana/build-container:1.5.3
-  name: shellcheck
-- commands:
   - ./bin/grabpl lint-backend --edition enterprise
   depends_on:
-  - initialize
+  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: grafana/build-container:1.5.3
@@ -4014,7 +4160,7 @@ steps:
   - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
-  - initialize
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -4022,19 +4168,19 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
-  - initialize
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise
   depends_on:
-  - initialize
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
   depends_on:
-  - initialize
+  - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.5.3
@@ -4042,7 +4188,7 @@ steps:
 - commands:
   - ./bin/grabpl lint-backend --edition enterprise2
   depends_on:
-  - initialize
+  - wire-install
   environment:
     CGO_ENABLED: "1"
   image: grafana/build-container:1.5.3
@@ -4050,20 +4196,18 @@ steps:
 - commands:
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
-  - initialize
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-enterprise2
 - commands:
   - ./bin/grabpl integration-tests --edition enterprise2
   depends_on:
-  - initialize
+  - wire-install
   image: grafana/build-container:1.5.3
   name: test-backend-integration-enterprise2
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4112,7 +4256,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4137,14 +4281,11 @@ steps:
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
-  - make gen-go
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  - yarn install --immutable
   depends_on:
   - clone-enterprise
   environment: {}
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: init-enterprise
 - commands:
   - apt-get update
   - apt-get install -yq postgresql-client
@@ -4153,7 +4294,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   depends_on:
-  - initialize
+  - init-enterprise
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -4169,7 +4310,7 @@ steps:
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   depends_on:
-  - initialize
+  - init-enterprise
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
@@ -4179,7 +4320,7 @@ steps:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - initialize
+  - init-enterprise
   environment:
     REDIS_URL: redis://redis:6379/0
   image: grafana/build-container:1.5.3
@@ -4188,7 +4329,7 @@ steps:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - initialize
+  - init-enterprise
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: grafana/build-container:1.5.3
@@ -4196,8 +4337,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4232,7 +4371,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.35/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -4255,7 +4394,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/ci-wix:0.1.1
-  name: initialize
+  name: windows-init
 - commands:
   - $$gcpKey = $$env:GCP_KEY
   - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
@@ -4265,7 +4404,7 @@ steps:
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
   depends_on:
-  - initialize
+  - windows-init
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -4278,8 +4417,6 @@ steps:
 trigger:
   ref:
   - refs/heads/v[0-9]*
-  repo:
-  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4431,6 +4568,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 430843c058dc4f40a3f881e13fc61ab12f5b6dc823f99067e56ab49fc1bdd459
+hmac: 6b2cdb67f637bdd527ba527741fd7d0af7e61b0700487be912821b93d8d16ca1
 
 ...

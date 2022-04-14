@@ -20,9 +20,9 @@ This is the API documentation for the new Grafana Annotations feature released i
 
 See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
 
-| Action           | Scope          |
-| ---------------- | -------------- |
-| annotations:read | annotations:\* |
+| Action           | Scope                   |
+| ---------------- | ----------------------- |
+| annotations:read | annotations:type:<type> |
 
 **Example Request**:
 

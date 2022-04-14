@@ -1,5 +1,8 @@
-import { createAggregationOperation } from '../../prometheus/querybuilder/aggregations';
-import { getPromAndLokiOperationDisplayName } from '../../prometheus/querybuilder/shared/operationUtils';
+import {
+  createAggregationOperation,
+  createAggregationOperationWithParam,
+  getPromAndLokiOperationDisplayName,
+} from '../../prometheus/querybuilder/shared/operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
@@ -16,14 +19,29 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     LokiOperationId.Min,
     LokiOperationId.Max,
     LokiOperationId.Avg,
-    LokiOperationId.TopK,
-    LokiOperationId.BottomK,
+    LokiOperationId.Stddev,
+    LokiOperationId.Stdvar,
+    LokiOperationId.Count,
   ].flatMap((opId) =>
     createAggregationOperation(opId, {
       addOperationHandler: addLokiOperation,
       orderRank: LokiOperationOrder.Last,
     })
   );
+
+  const aggregationsWithParam = [LokiOperationId.TopK, LokiOperationId.BottomK].flatMap((opId) => {
+    return createAggregationOperationWithParam(
+      opId,
+      {
+        params: [{ name: 'K-value', type: 'number' }],
+        defaultParams: [5],
+      },
+      {
+        addOperationHandler: addLokiOperation,
+        orderRank: LokiOperationOrder.Last,
+      }
+    );
+  });
 
   const list: QueryBuilderOperationDef[] = [
     createRangeOperation(LokiOperationId.Rate),
@@ -32,7 +50,16 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     createRangeOperation(LokiOperationId.BytesRate),
     createRangeOperation(LokiOperationId.BytesOverTime),
     createRangeOperation(LokiOperationId.AbsentOverTime),
+    createRangeOperation(LokiOperationId.AvgOverTime),
+    createRangeOperation(LokiOperationId.MaxOverTime),
+    createRangeOperation(LokiOperationId.MinOverTime),
+    createRangeOperation(LokiOperationId.FirstOverTime),
+    createRangeOperation(LokiOperationId.LastOverTime),
+    createRangeOperation(LokiOperationId.StdvarOverTime),
+    createRangeOperation(LokiOperationId.StddevOverTime),
+    createRangeOperation(LokiOperationId.QuantileOverTime),
     ...aggregations,
+    ...aggregationsWithParam,
     {
       id: LokiOperationId.Json,
       name: 'Json',
@@ -134,7 +161,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       renderer: (model, def, innerExpr) => `${innerExpr} | line_format \`${model.params[0]}\``,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
-        `This will replace log line using a specified template. The template can refer to stream labels and extracted labels. 
+        `This will replace log line using a specified template. The template can refer to stream labels and extracted labels.
 
         Example: \`{{.status_code}} - {{.message}}\`
 
@@ -155,7 +182,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       renderer: (model, def, innerExpr) => `${innerExpr} | label_format ${model.params[1]}=\`${model.params[0]}\``,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
-        `This will change name of label to desired new label. In the example below, label "error_level" will be renamed to "level". 
+        `This will change name of label to desired new label. In the example below, label "error_level" will be renamed to "level".
 
         Example: error_level=\`level\`
 
@@ -303,15 +330,28 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
 }
 
 function createRangeOperation(name: string): QueryBuilderOperationDef {
+  const params = [getRangeVectorParamDef()];
+  const defaultParams = ['$__interval'];
+  let renderer = operationWithRangeVectorRenderer;
+
+  if (name === LokiOperationId.QuantileOverTime) {
+    defaultParams.push('0.95');
+    params.push({
+      name: 'Quantile',
+      type: 'number',
+    });
+    renderer = operationWithRangeVectorRendererAndParam;
+  }
+
   return {
     id: name,
     name: getPromAndLokiOperationDisplayName(name),
-    params: [getRangeVectorParamDef()],
-    defaultParams: ['$__interval'],
+    params,
+    defaultParams,
     alternativesKey: 'range function',
     category: LokiVisualQueryOperationCategory.RangeFunctions,
     orderRank: LokiOperationOrder.RangeVectorFunction,
-    renderer: operationWithRangeVectorRenderer,
+    renderer,
     addOperationHandler: addLokiOperation,
     explainHandler: (op, def) => {
       let opDocs = FUNCTIONS.find((x) => x.insertText === op.id)?.documentation ?? '';
@@ -340,6 +380,17 @@ function operationWithRangeVectorRenderer(
 ) {
   let rangeVector = (model.params ?? [])[0] ?? '$__interval';
   return `${def.id}(${innerExpr} [${rangeVector}])`;
+}
+
+function operationWithRangeVectorRendererAndParam(
+  model: QueryBuilderOperation,
+  def: QueryBuilderOperationDef,
+  innerExpr: string
+) {
+  const params = model.params ?? [];
+  const rangeVector = params[0] ?? '$__interval';
+  const param = params[1];
+  return `${def.id}(${param}, ${innerExpr} [${rangeVector}])`;
 }
 
 function getLineFilterRenderer(operation: string) {

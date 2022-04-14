@@ -87,7 +87,7 @@ export function RadioButtonGroup<T>({
           >
             {o.icon && <Icon name={o.icon as IconName} className={styles.icon} />}
             {o.imgUrl && <img src={o.imgUrl} alt={o.label} className={styles.img} />}
-            {o.label}
+            {o.label} {o.component ? <o.component /> : null}
           </RadioButton>
         );
       })}
