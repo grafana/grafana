@@ -300,15 +300,14 @@ def get_enterprise_pipelines(trigger, ver_mode):
         download_grabpl_step(),
         identify_runner_step(),
         clone_enterprise_step(ver_mode),
-        gen_version_step(ver_mode),
         init_enterprise_step(ver_mode)
     ]
     deps_on_clone_enterprise_step = {
         'depends_on': [
-            'clone-enterprise',
+            'init-enterprise',
         ]
     }
-    for step in [wire_install_step(), yarn_install_step()]:
+    for step in [wire_install_step(), yarn_install_step(), gen_version_step(ver_mode)]:
         step.update(deps_on_clone_enterprise_step)
         init_steps.extend([step])
 

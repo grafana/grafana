@@ -126,7 +126,7 @@ def init_enterprise_step(ver_mode):
         environment = {}
         token = ""
     return {
-        'name': 'initialize',
+        'name': 'init-enterprise',
         'image': build_image,
         'depends_on': [
             'clone-enterprise',

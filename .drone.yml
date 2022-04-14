@@ -1999,12 +1999,6 @@ steps:
   image: grafana/build-container:1.5.3
   name: clone-enterprise
 - commands:
-  - ./bin/grabpl gen-version ${DRONE_TAG}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.3
-  name: gen-version
-- commands:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
@@ -2019,19 +2013,25 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: init-enterprise
 - commands:
   - make gen-go
   depends_on:
-  - clone-enterprise
+  - init-enterprise
   image: grafana/build-container:1.5.3
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
-  - clone-enterprise
+  - init-enterprise
   image: grafana/build-container:1.5.3
   name: yarn-install
+- commands:
+  - ./bin/grabpl gen-version ${DRONE_TAG}
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.3
+  name: gen-version
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN}
     ${DRONE_TAG}
@@ -2372,12 +2372,6 @@ steps:
   image: grafana/build-container:1.5.3
   name: clone-enterprise
 - commands:
-  - ./bin/grabpl gen-version ${DRONE_TAG}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.3
-  name: gen-version
-- commands:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
@@ -2392,19 +2386,25 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: init-enterprise
 - commands:
   - make gen-go
   depends_on:
-  - clone-enterprise
+  - init-enterprise
   image: grafana/build-container:1.5.3
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
-  - clone-enterprise
+  - init-enterprise
   image: grafana/build-container:1.5.3
   name: yarn-install
+- commands:
+  - ./bin/grabpl gen-version ${DRONE_TAG}
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.3
+  name: gen-version
 - commands:
   - |-
     echo -e "unknwon
@@ -3716,12 +3716,6 @@ steps:
   image: grafana/build-container:1.5.3
   name: clone-enterprise
 - commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.3
-  name: gen-version
-- commands:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
@@ -3733,19 +3727,25 @@ steps:
   - clone-enterprise
   environment: {}
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: init-enterprise
 - commands:
   - make gen-go
   depends_on:
-  - clone-enterprise
+  - init-enterprise
   image: grafana/build-container:1.5.3
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
-  - clone-enterprise
+  - init-enterprise
   image: grafana/build-container:1.5.3
   name: yarn-install
+- commands:
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.3
+  name: gen-version
 - commands:
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
@@ -4077,12 +4077,6 @@ steps:
   image: grafana/build-container:1.5.3
   name: clone-enterprise
 - commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.3
-  name: gen-version
-- commands:
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
@@ -4094,19 +4088,25 @@ steps:
   - clone-enterprise
   environment: {}
   image: grafana/build-container:1.5.3
-  name: initialize
+  name: init-enterprise
 - commands:
   - make gen-go
   depends_on:
-  - clone-enterprise
+  - init-enterprise
   image: grafana/build-container:1.5.3
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
-  - clone-enterprise
+  - init-enterprise
   image: grafana/build-container:1.5.3
   name: yarn-install
+- commands:
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.3
+  name: gen-version
 - commands:
   - |-
     echo -e "unknwon
@@ -4523,6 +4523,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 4ee5fac75c6385ec1dc82aa1bff1f17bc80bfd53fffae773ede76d6ad0b34868
+hmac: 94170115dc62aa1f275e17c5a118ab9c268851d53a0f5cfa297fc619ea55a703
 
 ...
