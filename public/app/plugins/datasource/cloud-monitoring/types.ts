@@ -154,6 +154,8 @@ export interface CloudMonitoringAnnotationProps {
 
 export type CloudMonitoringAnnotationQuery = CloudMonitoringQuery & CloudMonitoringAnnotationProps;
 
+export type CloudMonitoringAnyQuery = CloudMonitoringQuery | CloudMonitoringAnnotationQuery;
+
 export interface CloudMonitoringOptions extends DataSourceJsonData {
   defaultProject?: string;
   gceDefaultProject?: string;
