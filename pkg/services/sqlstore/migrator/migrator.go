@@ -21,12 +21,13 @@ var (
 )
 
 type Migrator struct {
-	DBEngine   *xorm.Engine
-	Dialect    Dialect
-	migrations []Migration
-	Logger     log.Logger
-	Cfg        *setting.Cfg
-	isLocked   atomic.Bool
+	DBEngine     *xorm.Engine
+	Dialect      Dialect
+	migrations   []Migration
+	migrationIds map[string]struct{}
+	Logger       log.Logger
+	Cfg          *setting.Cfg
+	isLocked     atomic.Bool
 }
 
 type MigrationLog struct {
@@ -43,6 +44,7 @@ func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
 	mg.DBEngine = engine
 	mg.Logger = log.New("migrator")
 	mg.migrations = make([]Migration, 0)
+	mg.migrationIds = make(map[string]struct{})
 	mg.Dialect = NewDialect(mg.DBEngine)
 	mg.Cfg = cfg
 	return mg
@@ -53,8 +55,13 @@ func (mg *Migrator) MigrationsCount() int {
 }
 
 func (mg *Migrator) AddMigration(id string, m Migration) {
+	if _, ok := mg.migrationIds[id]; ok {
+		panic(fmt.Sprintf("migration id conflict: %s", id))
+	}
+
 	m.SetId(id)
 	mg.migrations = append(mg.migrations, m)
+	mg.migrationIds[id] = struct{}{}
 }
 
 func (mg *Migrator) GetMigrationIDs(excludeNotLogged bool) []string {
