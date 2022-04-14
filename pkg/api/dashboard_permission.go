@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -17,17 +16,14 @@ import (
 )
 
 func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.Response {
-	dashID, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
-	}
+	dashUID := web.Params(c.Req)[":dashboardUid"]
 
-	_, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, 0, dashUID)
 	if rsp != nil {
 		return rsp
 	}
 
-	g := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), dash.Id, c.OrgId, c.SignedInUser)
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
@@ -68,17 +64,14 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		return response.Error(400, err.Error(), err)
 	}
 
-	dashID, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
-	}
+	dashUID := web.Params(c.Req)[":dashboardId"]
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, 0, dashUID)
 	if rsp != nil {
 		return rsp
 	}
 
-	g := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), dash.Id, c.OrgId, c.SignedInUser)
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
 	}
@@ -87,7 +80,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 	for _, item := range apiCmd.Items {
 		items = append(items, &models.DashboardAcl{
 			OrgID:       c.OrgId,
-			DashboardID: dashID,
+			DashboardID: dash.Id,
 			UserID:      item.UserID,
 			TeamID:      item.TeamID,
 			Role:        item.Role,
@@ -126,7 +119,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		return response.Success("Dashboard permissions updated")
 	}
 
-	if err := hs.dashboardService.UpdateDashboardACL(c.Req.Context(), dashID, items); err != nil {
+	if err := hs.dashboardService.UpdateDashboardACL(c.Req.Context(), dash.Id, items); err != nil {
 		if errors.Is(err, models.ErrDashboardAclInfoMissing) ||
 			errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
 			return response.Error(409, err.Error(), err)
