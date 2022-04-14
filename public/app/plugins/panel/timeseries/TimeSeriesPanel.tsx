@@ -36,7 +36,15 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2), [data]);
 
   if (!frames) {
-    return <PanelDataErrorView panelId={id} data={data} needsTimeField={true} needsNumberField={true} />;
+    return (
+      <PanelDataErrorView
+        panelId={id}
+        fieldConfig={fieldConfig}
+        data={data}
+        needsTimeField={true}
+        needsNumberField={true}
+      />
+    );
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());

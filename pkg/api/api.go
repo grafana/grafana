@@ -279,7 +279,7 @@ func (hs *HTTPServer) registerRoutes() {
 			keysRoute.Get("/", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionAPIKeyRead, ac.ScopeAPIKeysAll)), routing.Wrap(hs.GetAPIKeys))
 			keysRoute.Post("/", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionAPIKeyCreate)), quota("api_key"), routing.Wrap(hs.AddAPIKey))
 			keysRoute.Delete("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionAPIKeyDelete, apikeyIDScope)), routing.Wrap(hs.DeleteAPIKey))
-		}, reqOrgAdmin)
+		})
 
 		// Preferences
 		apiRoute.Group("/preferences", func(prefRoute routing.RouteRegister) {
@@ -322,7 +322,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
 		apiRoute.Any("/datasources/proxy/:id/*", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
+		apiRoute.Any("/datasources/proxy/uid/:uid/*", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 		apiRoute.Any("/datasources/proxy/:id", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
+		apiRoute.Any("/datasources/proxy/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 		apiRoute.Any("/datasources/:id/resources", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
 		apiRoute.Any("/datasources/:id/resources/*", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
 		apiRoute.Any("/datasources/:id/health", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealth))

@@ -346,15 +346,18 @@ func createSut(t *testing.T, accessControl accesscontrol.AccessControl) Alertman
 	t.Helper()
 
 	mam := createMultiOrgAlertmanager(t)
-	store := newFakeAlertingStore(t)
-	store.Setup(1)
-	store.Setup(2)
-	store.Setup(3)
+	configs := map[int64]*ngmodels.AlertConfiguration{
+		1: {AlertmanagerConfiguration: validConfig, OrgID: 1},
+		2: {AlertmanagerConfiguration: validConfig, OrgID: 2},
+		3: {AlertmanagerConfiguration: brokenConfig, OrgID: 3},
+	}
+	configStore := notifier.NewFakeConfigStore(t, configs)
 	secrets := fakes.NewFakeSecretsService()
 	if accessControl == nil {
 		accessControl = acMock.New().WithDisabled()
 	}
-	return AlertmanagerSrv{mam: mam, store: store, secrets: secrets, ac: accessControl}
+	log := log.NewNopLogger()
+	return AlertmanagerSrv{mam: mam, store: &configStore, secrets: secrets, ac: accessControl, log: log}
 }
 
 func createAmConfigRequest(t *testing.T) apimodels.PostableUserConfig {
