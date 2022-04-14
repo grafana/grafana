@@ -19,190 +19,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestDB(t *testing.T) *xorm.Engine {
-	t.Helper()
-	testDB := sqlutil.SQLite3TestDB()
-
-	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
-	require.NoError(t, err)
-
-	err = migrator.NewDialect(x).CleanDB()
-	require.NoError(t, err)
-
-	mg := migrator.NewMigrator(x, &setting.Cfg{})
-	migrations := &migrations.OSSMigrations{}
-	migrations.AddMigration(mg)
-
-	err = mg.Start(false, 0)
-	require.NoError(t, err)
-
-	return x
-}
-
-var (
-	now = time.Now()
-)
-
-// createAlertNotification creates a legacy alert notification channel for inserting into the test database.
-func createAlertNotification(t *testing.T, orgId int64, uid string, channelType string, settings string, defaultChannel bool) *models.AlertNotification {
-	t.Helper()
-	settingsJson := simplejson.New()
-	if settings != "" {
-		s, err := simplejson.NewJson([]byte(settings))
-		if err != nil {
-			t.Fatalf("Failed to unmarshal alert notification json: %v", err)
-		}
-		settingsJson = s
-	}
-
-	return &models.AlertNotification{
-		OrgId:                 orgId,
-		Uid:                   uid,
-		Name:                  uid, // Same as uid to make testing easier
-		Type:                  channelType,
-		DisableResolveMessage: false,
-		IsDefault:             defaultChannel,
-		Settings:              settingsJson,
-		SecureSettings:        make(map[string][]byte),
-		Created:               now,
-		Updated:               now,
-	}
-}
-
-// createAlert creates a legacy alert rule for inserting into the test database.
-func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, name string, notifierUids []string) *models.Alert {
-	t.Helper()
-
-	var settings = simplejson.New()
-	if len(notifierUids) != 0 {
-		notifiers := make([]interface{}, 0)
-		for _, n := range notifierUids {
-			notifiers = append(notifiers, struct {
-				Uid string
-			}{Uid: n})
-		}
-
-		settings.Set("notifications", notifiers)
-	}
-
-	return &models.Alert{
-		OrgId:        orgId,
-		DashboardId:  dashboardId,
-		PanelId:      panelsId,
-		Name:         name,
-		Message:      "message",
-		Frequency:    int64(60),
-		For:          time.Duration(time.Duration(60).Seconds()),
-		State:        models.AlertStateOK,
-		Settings:     settings,
-		NewStateDate: now,
-		Created:      now,
-		Updated:      now,
-	}
-}
-
-// createDashboard creates a dashboard for inserting into the test database.
-func createDashboard(t *testing.T, id int64, orgId int64, uid string) *models.Dashboard {
-	t.Helper()
-	return &models.Dashboard{
-		Id:      id,
-		OrgId:   orgId,
-		Uid:     uid,
-		Created: now,
-		Updated: now,
-		Title:   uid, // Not tested, needed to satisfy contraint
-	}
-}
-
-// createDatasource creates a ddatasource for inserting into the test database.
-func createDatasource(t *testing.T, id int64, orgId int64, uid string) *models.DataSource {
-	t.Helper()
-	return &models.DataSource{
-		Id:      id,
-		OrgId:   orgId,
-		Uid:     uid,
-		Created: now,
-		Updated: now,
-		Name:    uid, // Not tested, needed to satisfy contraint
-	}
-}
-
-// Clean input tables for each test case
-func teardown(t *testing.T, x *xorm.Engine) {
-	_, err := x.Exec("DELETE from alert")
-	require.NoError(t, err)
-	_, err = x.Exec("DELETE from alert_notification")
-	require.NoError(t, err)
-	_, err = x.Exec("DELETE from dashboard")
-	require.NoError(t, err)
-	_, err = x.Exec("DELETE from data_source")
-	require.NoError(t, err)
-}
-
-// Setup and insert data into legacy alerting tables needed for migration.
-func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*models.AlertNotification, alerts []*models.Alert) {
-	t.Helper()
-
-	// Setup dashboards
-	dashboards := []models.Dashboard{
-		*createDashboard(t, 1, 1, "dash1-1"),
-		*createDashboard(t, 2, 1, "dash2-1"),
-		*createDashboard(t, 3, 2, "dash3-2"),
-		*createDashboard(t, 4, 2, "dash4-2"),
-	}
-	_, errDashboards := x.Insert(dashboards)
-	require.NoError(t, errDashboards)
-
-	// Setup data_sources
-	dataSources := []models.DataSource{
-		*createDatasource(t, 1, 1, "ds1-1"),
-		*createDatasource(t, 2, 1, "ds2-1"),
-		*createDatasource(t, 3, 2, "ds3-2"),
-		*createDatasource(t, 4, 2, "ds4-2"),
-	}
-	_, errDataSourcess := x.Insert(dataSources)
-	require.NoError(t, errDataSourcess)
-
-	if len(legacyChannels) > 0 {
-		_, channelErr := x.Insert(legacyChannels)
-		require.NoError(t, channelErr)
-	}
-
-	if len(alerts) > 0 {
-		_, alertErr := x.Insert(alerts)
-		require.NoError(t, alertErr)
-	}
-}
-
-type postableUserConfig struct {
-	AlertmanagerConfig postableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config" xorm:"alertmanager_config"`
-}
-
-type postableApiAlertingConfig struct {
-	Route     *route                        `yaml:"route,omitempty" json:"route,omitempty"`
-	Receivers []*ualert.PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
-}
-
-type route struct {
-	Receiver string   `yaml:"receiver,omitempty" json:"receiver,omitempty"`
-	Matchers []string `yaml:"matchers,omitempty" json:"matchers,omitempty"`
-	Routes   []*route `yaml:"routes,omitempty" json:"routes,omitempty"`
-	name     string   // Used to help test
-}
-
-func getAlertManagerConfig(t *testing.T, x *xorm.Engine, orgId int64) *postableUserConfig {
-	amConfig := ""
-	_, err := x.Table("alert_configuration").Where("org_id = ?", orgId).Cols("alertmanager_configuration").Get(&amConfig)
-	require.NoError(t, err)
-
-	config := postableUserConfig{}
-	err = json.Unmarshal([]byte(amConfig), &config)
-	require.NoError(t, err)
-	return &config
-}
-
 func Test_AddDashAlertMigration(t *testing.T) {
-	// Run initial migration to have a working DB
+	// Run initial migration to have a working DB.
 	x := setupTestDB(t)
 
 	emailSettings := `{"addresses": "test"}`
@@ -259,7 +77,7 @@ func Test_AddDashAlertMigration(t *testing.T) {
 						Route: &route{
 							Receiver: "autogen-contact-point-default",
 							Routes: []*route{
-								{Receiver: "autogen-contact-point-4", name: "alert4"}, // We attach Matchers below
+								{Receiver: "autogen-contact-point-4", name: "alert4"},
 								{Receiver: "autogen-contact-point-5", name: "alert5"},
 							},
 						},
@@ -309,7 +127,7 @@ func Test_AddDashAlertMigration(t *testing.T) {
 						Route: &route{
 							Receiver: "autogen-contact-point-default",
 							Routes: []*route{
-								{Receiver: "autogen-contact-point-1", name: "alert1"}, // We attach Matchers below
+								{Receiver: "autogen-contact-point-1", name: "alert1"},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -359,7 +177,7 @@ func Test_AddDashAlertMigration(t *testing.T) {
 						Route: &route{
 							Receiver: "autogen-contact-point-default",
 							Routes: []*route{
-								{Receiver: "autogen-contact-point-1", name: "alert1"}, // We attach Matchers below
+								{Receiver: "autogen-contact-point-1", name: "alert1"},
 								{Receiver: "autogen-contact-point-1", name: "alert2"},
 							},
 						},
@@ -465,7 +283,7 @@ func Test_AddDashAlertMigration(t *testing.T) {
 				// Trim off fields that aren't important for this test.
 				trimFields(amConfig.AlertmanagerConfig.Receivers)
 
-				// Compare migrated receivers.
+				// Order of nested GrafanaManagedReceivers is not guaranteed.
 				sortReceiversForComparison(amConfig.AlertmanagerConfig.Receivers)
 				require.ElementsMatch(t, tt.expected[orgId].AlertmanagerConfig.Receivers, amConfig.AlertmanagerConfig.Receivers)
 
@@ -473,7 +291,7 @@ func Test_AddDashAlertMigration(t *testing.T) {
 				alertUids := getAlertNameToUidMap(t, x, orgId)
 				attachExpectedMatchersToRoutes(t, tt.expected[orgId].AlertmanagerConfig.Route.Routes, alertUids)
 
-				// Compare migrated routes.
+				// Order of nested routes is not guaranteed.
 				sortRoutesForComparison(amConfig.AlertmanagerConfig.Route.Routes)
 				for _, rt := range amConfig.AlertmanagerConfig.Route.Routes {
 					sortRoutesForComparison(rt.Routes)
@@ -482,6 +300,188 @@ func Test_AddDashAlertMigration(t *testing.T) {
 			}
 		})
 	}
+}
+
+func setupTestDB(t *testing.T) *xorm.Engine {
+	t.Helper()
+	testDB := sqlutil.SQLite3TestDB()
+
+	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
+	require.NoError(t, err)
+
+	err = migrator.NewDialect(x).CleanDB()
+	require.NoError(t, err)
+
+	mg := migrator.NewMigrator(x, &setting.Cfg{})
+	migrations := &migrations.OSSMigrations{}
+	migrations.AddMigration(mg)
+
+	err = mg.Start(false, 0)
+	require.NoError(t, err)
+
+	return x
+}
+
+var (
+	now = time.Now()
+)
+
+// createAlertNotification creates a legacy alert notification channel for inserting into the test database.
+func createAlertNotification(t *testing.T, orgId int64, uid string, channelType string, settings string, defaultChannel bool) *models.AlertNotification {
+	t.Helper()
+	settingsJson := simplejson.New()
+	if settings != "" {
+		s, err := simplejson.NewJson([]byte(settings))
+		if err != nil {
+			t.Fatalf("Failed to unmarshal alert notification json: %v", err)
+		}
+		settingsJson = s
+	}
+
+	return &models.AlertNotification{
+		OrgId:                 orgId,
+		Uid:                   uid,
+		Name:                  uid, // Same as uid to make testing easier.
+		Type:                  channelType,
+		DisableResolveMessage: false,
+		IsDefault:             defaultChannel,
+		Settings:              settingsJson,
+		SecureSettings:        make(map[string][]byte),
+		Created:               now,
+		Updated:               now,
+	}
+}
+
+// createAlert creates a legacy alert rule for inserting into the test database.
+func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, name string, notifierUids []string) *models.Alert {
+	t.Helper()
+
+	var settings = simplejson.New()
+	if len(notifierUids) != 0 {
+		notifiers := make([]interface{}, 0)
+		for _, n := range notifierUids {
+			notifiers = append(notifiers, struct {
+				Uid string
+			}{Uid: n})
+		}
+
+		settings.Set("notifications", notifiers)
+	}
+
+	return &models.Alert{
+		OrgId:        orgId,
+		DashboardId:  dashboardId,
+		PanelId:      panelsId,
+		Name:         name,
+		Message:      "message",
+		Frequency:    int64(60),
+		For:          time.Duration(time.Duration(60).Seconds()),
+		State:        models.AlertStateOK,
+		Settings:     settings,
+		NewStateDate: now,
+		Created:      now,
+		Updated:      now,
+	}
+}
+
+// createDashboard creates a dashboard for inserting into the test database.
+func createDashboard(t *testing.T, id int64, orgId int64, uid string) *models.Dashboard {
+	t.Helper()
+	return &models.Dashboard{
+		Id:      id,
+		OrgId:   orgId,
+		Uid:     uid,
+		Created: now,
+		Updated: now,
+		Title:   uid, // Not tested, needed to satisfy contraint.
+	}
+}
+
+// createDatasource creates a ddatasource for inserting into the test database.
+func createDatasource(t *testing.T, id int64, orgId int64, uid string) *models.DataSource {
+	t.Helper()
+	return &models.DataSource{
+		Id:      id,
+		OrgId:   orgId,
+		Uid:     uid,
+		Created: now,
+		Updated: now,
+		Name:    uid, // Not tested, needed to satisfy contraint.
+	}
+}
+
+// Clean input tables for each test case.
+func teardown(t *testing.T, x *xorm.Engine) {
+	_, err := x.Exec("DELETE from alert")
+	require.NoError(t, err)
+	_, err = x.Exec("DELETE from alert_notification")
+	require.NoError(t, err)
+	_, err = x.Exec("DELETE from dashboard")
+	require.NoError(t, err)
+	_, err = x.Exec("DELETE from data_source")
+	require.NoError(t, err)
+}
+
+// Setup and insert data into legacy alerting tables needed for migration.
+func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*models.AlertNotification, alerts []*models.Alert) {
+	t.Helper()
+
+	// Setup dashboards.
+	dashboards := []models.Dashboard{
+		*createDashboard(t, 1, 1, "dash1-1"),
+		*createDashboard(t, 2, 1, "dash2-1"),
+		*createDashboard(t, 3, 2, "dash3-2"),
+		*createDashboard(t, 4, 2, "dash4-2"),
+	}
+	_, errDashboards := x.Insert(dashboards)
+	require.NoError(t, errDashboards)
+
+	// Setup data_sources.
+	dataSources := []models.DataSource{
+		*createDatasource(t, 1, 1, "ds1-1"),
+		*createDatasource(t, 2, 1, "ds2-1"),
+		*createDatasource(t, 3, 2, "ds3-2"),
+		*createDatasource(t, 4, 2, "ds4-2"),
+	}
+	_, errDataSourcess := x.Insert(dataSources)
+	require.NoError(t, errDataSourcess)
+
+	if len(legacyChannels) > 0 {
+		_, channelErr := x.Insert(legacyChannels)
+		require.NoError(t, channelErr)
+	}
+
+	if len(alerts) > 0 {
+		_, alertErr := x.Insert(alerts)
+		require.NoError(t, alertErr)
+	}
+}
+
+type postableUserConfig struct {
+	AlertmanagerConfig postableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config" xorm:"alertmanager_config"`
+}
+
+type postableApiAlertingConfig struct {
+	Route     *route                        `yaml:"route,omitempty" json:"route,omitempty"`
+	Receivers []*ualert.PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+}
+
+type route struct {
+	Receiver string   `yaml:"receiver,omitempty" json:"receiver,omitempty"`
+	Matchers []string `yaml:"matchers,omitempty" json:"matchers,omitempty"`
+	Routes   []*route `yaml:"routes,omitempty" json:"routes,omitempty"`
+	name     string   // Used to help attach Matchers to expected results.
+}
+
+func getAlertManagerConfig(t *testing.T, x *xorm.Engine, orgId int64) *postableUserConfig {
+	amConfig := ""
+	_, err := x.Table("alert_configuration").Where("org_id = ?", orgId).Cols("alertmanager_configuration").Get(&amConfig)
+	require.NoError(t, err)
+
+	config := postableUserConfig{}
+	err = json.Unmarshal([]byte(amConfig), &config)
+	require.NoError(t, err)
+	return &config
 }
 
 // Order of nested GrafanaManagedReceivers is not guaranteed.
@@ -539,7 +539,7 @@ func attachExpectedMatchersToRoutes(t *testing.T, rts []*route, alertUids map[st
 			rt.name = ""
 		}
 
-		// Recurse for nested routes
+		// Recurse for nested routes.
 		attachExpectedMatchersToRoutes(t, rt.Routes, alertUids)
 	}
 }
