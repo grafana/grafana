@@ -44,7 +44,7 @@ type ErrDuplicateSAToken struct {
 }
 
 func (e *ErrDuplicateSAToken) Error() string {
-	return fmt.Sprintf("service account token %s already exists", e.name)
+	return fmt.Sprintf("service account token %s already exists the organization", e.name)
 }
 
 func (e *ErrDuplicateSAToken) Unwrap() error {
