@@ -1744,6 +1744,12 @@ steps:
   image: grafana/build-container:1.5.3
   name: yarn-install
 - commands:
+  - ./bin/grabpl shellcheck
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.3
+  name: shellcheck
+- commands:
   - |-
     echo -e "unknwon
     referer
@@ -1755,12 +1761,6 @@ steps:
   - rm words_to_ignore.txt
   image: grafana/build-container:1.5.3
   name: codespell
-- commands:
-  - ./bin/grabpl shellcheck
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.3
-  name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition oss
   depends_on:
@@ -2417,12 +2417,6 @@ steps:
   - rm words_to_ignore.txt
   image: grafana/build-container:1.5.3
   name: codespell
-- commands:
-  - ./bin/grabpl shellcheck
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.3
-  name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition enterprise
   depends_on:
@@ -3484,6 +3478,12 @@ steps:
   image: grafana/build-container:1.5.3
   name: yarn-install
 - commands:
+  - ./bin/grabpl shellcheck
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.3
+  name: shellcheck
+- commands:
   - |-
     echo -e "unknwon
     referer
@@ -3495,12 +3495,6 @@ steps:
   - rm words_to_ignore.txt
   image: grafana/build-container:1.5.3
   name: codespell
-- commands:
-  - ./bin/grabpl shellcheck
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.3
-  name: shellcheck
 - commands:
   - ./bin/grabpl lint-backend --edition oss
   depends_on:
@@ -4120,12 +4114,6 @@ steps:
   image: grafana/build-container:1.5.3
   name: codespell
 - commands:
-  - ./bin/grabpl shellcheck
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.3
-  name: shellcheck
-- commands:
   - ./bin/grabpl lint-backend --edition enterprise
   depends_on:
   - wire-install
@@ -4523,6 +4511,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 94170115dc62aa1f275e17c5a118ab9c268851d53a0f5cfa297fc619ea55a703
+hmac: 286f061ebedf66479b801ce011962a5fda31a83d39c587e13f7f03492b08f6ad
 
 ...

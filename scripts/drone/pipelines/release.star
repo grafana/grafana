@@ -163,15 +163,18 @@ def get_steps(edition, ver_mode):
         yarn_install_step(),
     ]
 
-    test_steps = [
+    test_steps = []
+    if edition != 'enterprise':
+        test_steps.extend([shellcheck_step()])
+
+    test_steps.extend([
         codespell_step(),
-        shellcheck_step(),
         lint_backend_step(edition=edition),
         lint_frontend_step(),
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
-    ]
+    ])
 
     build_steps = [
         build_backend_step(edition=edition, ver_mode=ver_mode),
