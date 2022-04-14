@@ -277,7 +277,7 @@ require (
 	github.com/getkin/kin-openapi v0.91.0 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
 	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
-	github.com/grafana/thema v0.0.0-20220407122249-f6441292832b
+	github.com/grafana/thema v0.0.0-20220413232647-fc54c169b508
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
