@@ -88,15 +88,22 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 }
 
 func (i *dashboardIndex) reIndexFromScratch() {
+	var orgIDs []int64
 	i.mu.Lock()
-	defer i.mu.Unlock()
 	for orgID := range i.dashboards {
-		dashboards, err := i.getDashboards(context.Background(), orgID)
+		orgIDs = append(orgIDs, orgID)
+	}
+	i.mu.Unlock()
+
+	for _, orgID := range orgIDs {
+		dashboards, err := i.loader.LoadDashboards(context.Background(), orgID, "")
 		if err != nil {
 			i.logger.Error("can't re-index dashboards for org ID", "orgId", orgID, "error", err)
 			continue
 		}
+		i.mu.Lock()
 		i.dashboards[orgID] = dashboards
+		i.mu.Unlock()
 	}
 }
 
@@ -251,21 +258,34 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		return dashboards, err
 	}
 
-	err = l.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rows := make([]*dashboardQueryResult, 0)
+	limit := 200
+	var lastID int64
 
-		sess.Table("dashboard").
-			Where("org_id = ?", orgID)
+	for {
+		rows := make([]*dashboardQueryResult, 0, 2)
 
-		if dashboardUID != "" {
-			sess.Where("uid = ?", dashboardUID)
-		}
+		err = l.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 
-		sess.Cols("id", "uid", "is_folder", "folder_id", "data", "slug", "created", "updated")
+			sess.Table("dashboard").
+				Where("org_id = ?", orgID)
 
-		err := sess.Find(&rows)
+			if lastID > 0 {
+				sess.Where("id > ?", lastID)
+			}
+
+			if dashboardUID != "" {
+				sess.Where("uid = ?", dashboardUID)
+			}
+
+			sess.Cols("id", "uid", "is_folder", "folder_id", "data", "slug", "created", "updated")
+
+			sess.Limit(limit)
+
+			return sess.Find(&rows)
+		})
+
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		for _, row := range rows {
@@ -279,9 +299,13 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 				updated:  row.Updated,
 				info:     extract.ReadDashboard(bytes.NewReader(row.Data), lookup),
 			})
+			lastID = row.Id
 		}
-		return nil
-	})
+
+		if len(rows) < limit || dashboardUID != "" {
+			break
+		}
+	}
 
 	return dashboards, err
 }
