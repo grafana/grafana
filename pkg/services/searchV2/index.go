@@ -54,8 +54,8 @@ func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboar
 }
 
 func (i *dashboardIndex) run(ctx context.Context) error {
-	fullUpdateTicker := time.NewTicker(5 * time.Minute)
-	defer fullUpdateTicker.Stop()
+	fullReIndexTicker := time.NewTicker(5 * time.Minute)
+	defer fullReIndexTicker.Stop()
 
 	partialUpdateTicker := time.NewTicker(5 * time.Second)
 	defer partialUpdateTicker.Stop()
@@ -79,7 +79,7 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 		select {
 		case <-partialUpdateTicker.C:
 			lastEventID = i.loadIndexUpdates(context.Background(), lastEventID)
-		case <-fullUpdateTicker.C:
+		case <-fullReIndexTicker.C:
 			i.reIndexFromScratch()
 		case <-ctx.Done():
 			return ctx.Err()
@@ -88,19 +88,24 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 }
 
 func (i *dashboardIndex) reIndexFromScratch() {
-	var orgIDs []int64
-	i.mu.Lock()
+	i.mu.RLock()
+	orgIDs := make([]int64, 0, len(i.dashboards))
 	for orgID := range i.dashboards {
 		orgIDs = append(orgIDs, orgID)
 	}
-	i.mu.Unlock()
+	i.mu.RUnlock()
 
 	for _, orgID := range orgIDs {
-		dashboards, err := i.loader.LoadDashboards(context.Background(), orgID, "")
+		start := time.Now()
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		dashboards, err := i.loader.LoadDashboards(ctx, orgID, "")
 		if err != nil {
+			cancel()
 			i.logger.Error("can't re-index dashboards for org ID", "orgId", orgID, "error", err)
 			continue
 		}
+		cancel()
+		i.logger.Debug("re-indexed dashboards for organization", "orgId", orgID, "elapsed", time.Since(start))
 		i.mu.Lock()
 		i.dashboards[orgID] = dashboards
 		i.mu.Unlock()
@@ -114,11 +119,11 @@ func (i *dashboardIndex) loadIndexUpdates(ctx context.Context, lastEventID int64
 		return lastEventID
 	}
 	if len(events) == 0 {
-		i.logger.Info("no events since last update")
+		i.logger.Debug("no events since last update")
 		return lastEventID
 	}
 	for _, e := range events {
-		i.logger.Info("processing event", "event", e)
+		i.logger.Debug("processing event", "event", e)
 		err := i.applyEventOnIndex(ctx, e)
 		if err != nil {
 			i.logger.Error("can't apply event", "error", err)
@@ -131,7 +136,7 @@ func (i *dashboardIndex) loadIndexUpdates(ctx context.Context, lastEventID int64
 
 func (i *dashboardIndex) applyEventOnIndex(ctx context.Context, e *store.EntityEvent) error {
 	if !strings.HasPrefix(e.Grn, "database/") {
-		i.logger.Info("unknown storage", "grn", e.Grn)
+		i.logger.Warn("unknown storage", "grn", e.Grn)
 		return nil
 	}
 	parts := strings.Split(strings.TrimPrefix(e.Grn, "database/"), "/")
@@ -178,18 +183,22 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 		return nil
 	}
 
+	// In the future we can rely on operation types to reduce work here.
 	if len(dbDashboards) == 0 {
+		// Delete.
 		i.dashboards[orgID] = removeDashboard(dashboards, dashboardUID)
 	} else {
 		updated := false
 		for i, d := range dashboards {
 			if d.uid == dashboardUID {
+				// Update.
 				dashboards[i] = dbDashboards[0]
 				updated = true
 				break
 			}
 		}
 		if !updated {
+			// Create.
 			dashboards = append(dashboards, dbDashboards...)
 		}
 		i.dashboards[orgID] = dashboards
