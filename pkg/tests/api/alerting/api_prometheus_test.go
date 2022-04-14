@@ -207,7 +207,7 @@ func TestPrometheusRules(t *testing.T) {
 
 		assert.Equal(t, 400, resp.StatusCode)
 		var res map[string]interface{}
-		json.Unmarshal(b, &res)
+		require.NoError(t, json.Unmarshal(b, &res))
 		require.Equal(t, "invalid rule specification at index [0]: both annotations __dashboardUid__ and __panelId__ must be specified", res["message"])
 	}
 
@@ -590,7 +590,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 		var res map[string]interface{}
-		json.Unmarshal(b, &res)
+		require.NoError(t, json.Unmarshal(b, &res))
 		require.Equal(t, `invalid panel_id: strconv.ParseInt: parsing "invalid": invalid syntax`, res["message"])
 	}
 
@@ -608,7 +608,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 		var res map[string]interface{}
-		json.Unmarshal(b, &res)
+		require.NoError(t, json.Unmarshal(b, &res))
 		require.Equal(t, "panel_id must be set with dashboard_uid", res["message"])
 	}
 }

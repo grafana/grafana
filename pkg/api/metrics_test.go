@@ -246,7 +246,8 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 
 		var res map[string]interface{}
-		json.Unmarshal(response.Body.Bytes(), &res)
+		err := json.Unmarshal(response.Body.Bytes(), &res)
+		assert.NoError(t, err)
 		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["error"])
 		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["message"])
 	})
@@ -261,7 +262,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 		)
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 		var res map[string]interface{}
-		json.Unmarshal(response.Body.Bytes(), &res)
+		assert.NoError(t, json.Unmarshal(response.Body.Bytes(), &res))
 		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["error"])
 		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["message"])
 	})
@@ -277,7 +278,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 
 		var res map[string]interface{}
-		json.Unmarshal(response.Body.Bytes(), &res)
+		assert.NoError(t, json.Unmarshal(response.Body.Bytes(), &res))
 		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["error"])
 		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["message"])
 	})

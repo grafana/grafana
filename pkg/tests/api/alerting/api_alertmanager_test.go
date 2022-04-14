@@ -439,7 +439,7 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 		require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 		var res map[string]interface{}
-		json.Unmarshal(b, &res)
+		require.NoError(t, json.Unmarshal(b, &res))
 		require.Equal(t, "invalid username or password", res["message"])
 	}
 
@@ -1375,7 +1375,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 		var res map[string]interface{}
-		json.Unmarshal(b, &res)
+		assert.NoError(t, json.Unmarshal(b, &res))
 		require.Equal(t, "failed to update rule group: failed to update rule with UID unknown because could not find alert rule", res["message"])
 
 		// let's make sure that rule definitions are not affected by the failed POST request.
@@ -1496,7 +1496,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		var res map[string]interface{}
-		json.Unmarshal(b, &res)
+		require.NoError(t, json.Unmarshal(b, &res))
 		require.Equal(t, fmt.Sprintf("rule [1] has UID %s that is already assigned to another rule at index 0", ruleUID), res["message"])
 
 		// let's make sure that rule definitions are not affected by the failed POST request.
@@ -1904,7 +1904,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
 			var res map[string]interface{}
-			json.Unmarshal(b, &res)
+			require.NoError(t, json.Unmarshal(b, &res))
 			require.Equal(t, "rules deleted", res["message"])
 		})
 
@@ -2116,7 +2116,7 @@ func TestQuota(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 		var res map[string]interface{}
-		json.Unmarshal(b, &res)
+		require.NoError(t, json.Unmarshal(b, &res))
 		require.Equal(t, "quota has been exceeded", res["message"])
 	})
 

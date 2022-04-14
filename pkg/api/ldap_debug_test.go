@@ -148,7 +148,8 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 	require.Equal(t, http.StatusBadRequest, sc.resp.Code)
 
 	var res map[string]interface{}
-	json.Unmarshal(sc.resp.Body.Bytes(), &res)
+	err := json.Unmarshal(sc.resp.Body.Bytes(), &res)
+	assert.NoError(t, err)
 	assert.Equal(t, "unable to find organization with ID '2'", res["error"])
 	assert.Equal(t, "An organization was not found - Please verify your LDAP configuration", res["message"])
 }
@@ -469,7 +470,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
 
 	var res map[string]interface{}
-	json.Unmarshal(sc.resp.Body.Bytes(), &res)
+	err := json.Unmarshal(sc.resp.Body.Bytes(), &res)
+	assert.NoError(t, err)
 	assert.Equal(t, "did not find a user", res["error"])
 	assert.Equal(t, "Refusing to sync grafana super admin \"ldap-daniel\" - it would be disabled", res["message"])
 }

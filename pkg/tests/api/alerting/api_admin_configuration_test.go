@@ -67,7 +67,8 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 		var res map[string]interface{}
-		json.Unmarshal(b, &res)
+		err = json.Unmarshal(b, &res)
+		require.NoError(t, err)
 		require.Equal(t, "no admin configuration available", res["message"])
 	}
 
