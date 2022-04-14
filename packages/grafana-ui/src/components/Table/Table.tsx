@@ -304,9 +304,9 @@ export const Table: FC<Props> = memo((props: Props) => {
               totalColumnsWidth={totalColumnsWidth}
             />
           )}
-          {paginationEl}
         </div>
       </CustomScrollbar>
+      {paginationEl}
     </div>
   );
 });
