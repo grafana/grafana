@@ -24,7 +24,7 @@ type StandardSearchService struct {
 	auth FutureAuthService // eventually injected from elsewhere
 
 	logger         log.Logger
-	dashboardIndex *DashboardIndex
+	dashboardIndex *dashboardIndex
 }
 
 func ProvideService(sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService) SearchService {
@@ -33,7 +33,7 @@ func ProvideService(sql *sqlstore.SQLStore, entityEventStore store.EntityEventsS
 		auth: &simpleSQLAuthService{
 			sql: sql,
 		},
-		dashboardIndex: NewDashboardIndex(entityEventStore, &sqlDashboardLoader{sql: sql}),
+		dashboardIndex: newDashboardIndex(&sqlDashboardLoader{sql: sql}, entityEventStore),
 		logger:         log.New("searchV2"),
 	}
 }

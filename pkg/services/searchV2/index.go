@@ -19,11 +19,17 @@ type dashboardLoader interface {
 	LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error)
 }
 
-type DashboardIndex struct {
+// TODO: migrate to a more generic Watch interface to listen for changes.
+type eventStore interface {
+	GetLastEvent(ctx context.Context) (*store.EntityEvent, error)
+	GetAllEventsAfter(ctx context.Context, id int64) ([]*store.EntityEvent, error)
+}
+
+type dashboardIndex struct {
 	mu         sync.RWMutex
 	loader     dashboardLoader
 	dashboards map[int64][]dashboard
-	eventStore store.EntityEventsService
+	eventStore eventStore
 	logger     log.Logger
 }
 
@@ -38,16 +44,16 @@ type dashboard struct {
 	info     *extract.DashboardInfo
 }
 
-func NewDashboardIndex(eventStore store.EntityEventsService, loader dashboardLoader) *DashboardIndex {
-	return &DashboardIndex{
-		loader:     loader,
+func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboardIndex {
+	return &dashboardIndex{
+		loader:     dashLoader,
+		eventStore: evStore,
 		dashboards: map[int64][]dashboard{},
-		eventStore: eventStore,
 		logger:     log.New("dashboardIndex"),
 	}
 }
 
-func (i *DashboardIndex) run(ctx context.Context) error {
+func (i *dashboardIndex) run(ctx context.Context) error {
 	fullUpdateTicker := time.NewTicker(5 * time.Minute)
 	defer fullUpdateTicker.Stop()
 
@@ -81,7 +87,7 @@ func (i *DashboardIndex) run(ctx context.Context) error {
 	}
 }
 
-func (i *DashboardIndex) reIndexFromScratch() {
+func (i *dashboardIndex) reIndexFromScratch() {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	for orgID := range i.dashboards {
@@ -94,7 +100,7 @@ func (i *DashboardIndex) reIndexFromScratch() {
 	}
 }
 
-func (i *DashboardIndex) loadIndexUpdates(ctx context.Context, lastEventID int64) int64 {
+func (i *dashboardIndex) loadIndexUpdates(ctx context.Context, lastEventID int64) int64 {
 	events, err := i.eventStore.GetAllEventsAfter(context.Background(), lastEventID)
 	if err != nil {
 		i.logger.Error("can't load events", "error", err)
@@ -116,7 +122,7 @@ func (i *DashboardIndex) loadIndexUpdates(ctx context.Context, lastEventID int64
 	return lastEventID
 }
 
-func (i *DashboardIndex) applyEventOnIndex(ctx context.Context, e *store.EntityEvent) error {
+func (i *dashboardIndex) applyEventOnIndex(ctx context.Context, e *store.EntityEvent) error {
 	if !strings.HasPrefix(e.Grn, "database/") {
 		i.logger.Info("unknown storage", "grn", e.Grn)
 		return nil
@@ -141,7 +147,7 @@ func (i *DashboardIndex) applyEventOnIndex(ctx context.Context, e *store.EntityE
 	return i.applyDashboardEvent(ctx, int64(orgID), dashboardUID, e.EventType)
 }
 
-func (i *DashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, dashboardUID string, _ store.EntityEventType) error {
+func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, dashboardUID string, _ store.EntityEventType) error {
 	i.mu.Lock()
 	_, ok := i.dashboards[orgID]
 	if !ok {
@@ -195,7 +201,7 @@ func removeDashboard(dashboards []dashboard, dashboardUID string) []dashboard {
 	return dashboards[:k]
 }
 
-func (i *DashboardIndex) getDashboards(ctx context.Context, orgId int64) ([]dashboard, error) {
+func (i *dashboardIndex) getDashboards(ctx context.Context, orgId int64) ([]dashboard, error) {
 	var dashboards []dashboard
 
 	i.mu.Lock()

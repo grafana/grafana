@@ -15,7 +15,7 @@ func (t *testDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, d
 	return t.dashboards, nil
 }
 
-func TestDashboardIndex(t *testing.T) {
+func TestDashboardIndexCreate(t *testing.T) {
 	dashboardLoader := &testDashboardLoader{
 		dashboards: []dashboard{
 			{
@@ -23,12 +23,12 @@ func TestDashboardIndex(t *testing.T) {
 			},
 		},
 	}
-	// TODO mockery
-	index := NewDashboardIndex(nil, dashboardLoader)
+	index := newDashboardIndex(dashboardLoader, nil)
 	require.NotNil(t, index)
 	dashboards, err := index.getDashboards(context.Background(), 1)
 	require.NoError(t, err)
 	require.Len(t, dashboards, 1)
+
 	dashboardLoader.dashboards = []dashboard{
 		{
 			uid: "2",
@@ -39,4 +39,55 @@ func TestDashboardIndex(t *testing.T) {
 	dashboards, err = index.getDashboards(context.Background(), 1)
 	require.NoError(t, err)
 	require.Len(t, dashboards, 2)
+}
+
+func TestDashboardIndexUpdate(t *testing.T) {
+	dashboardLoader := &testDashboardLoader{
+		dashboards: []dashboard{
+			{
+				uid:  "1",
+				slug: "test",
+			},
+		},
+	}
+	index := newDashboardIndex(dashboardLoader, nil)
+	require.NotNil(t, index)
+	dashboards, err := index.getDashboards(context.Background(), 1)
+	require.NoError(t, err)
+	require.Len(t, dashboards, 1)
+
+	dashboardLoader.dashboards = []dashboard{
+		{
+			uid:  "1",
+			slug: "updated",
+		},
+	}
+	err = index.applyDashboardEvent(context.Background(), 1, "1", "")
+	require.NoError(t, err)
+	dashboards, err = index.getDashboards(context.Background(), 1)
+	require.NoError(t, err)
+	require.Len(t, dashboards, 1)
+	require.Equal(t, "updated", dashboards[0].slug)
+}
+
+func TestDashboardIndexDelete(t *testing.T) {
+	dashboardLoader := &testDashboardLoader{
+		dashboards: []dashboard{
+			{
+				uid: "1",
+			},
+		},
+	}
+	index := newDashboardIndex(dashboardLoader, nil)
+	require.NotNil(t, index)
+	dashboards, err := index.getDashboards(context.Background(), 1)
+	require.NoError(t, err)
+	require.Len(t, dashboards, 1)
+
+	dashboardLoader.dashboards = []dashboard{}
+	err = index.applyDashboardEvent(context.Background(), 1, "1", "")
+	require.NoError(t, err)
+	dashboards, err = index.getDashboards(context.Background(), 1)
+	require.NoError(t, err)
+	require.Len(t, dashboards, 0)
 }
