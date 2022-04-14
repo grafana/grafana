@@ -26,11 +26,14 @@ export interface State {
 export function LokiQueryBuilderContainer(props: Props) {
   const { query, onChange, onRunQuery, datasource } = props;
   const [state, dispatch] = useReducer(stateSlice.reducer, {
-    expr: '',
-    visQuery: {
-      labels: [],
-      operations: [{ id: '__line_contains', params: [''] }],
-    },
+    expr: query.expr,
+    // Use initial visual query only if empty query
+    visQuery: query.expr
+      ? undefined
+      : {
+          labels: [],
+          operations: [{ id: '__line_contains', params: [''] }],
+        },
   });
 
   // Only rebuild visual query if expr changes from outside
