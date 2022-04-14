@@ -6,7 +6,24 @@ import (
 )
 
 func RegisterRoles(ac accesscontrol.AccessControl) error {
-	role := accesscontrol.RoleRegistration{
+	saReader := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Version:     4,
+			Name:        "fixed:serviceaccounts:reader",
+			DisplayName: "Service accounts reader",
+			Description: "Read service accounts.",
+			Group:       "Service accounts",
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: serviceaccounts.ActionRead,
+					Scope:  serviceaccounts.ScopeAll,
+				},
+			},
+		},
+		Grants: []string{"Admin"},
+	}
+
+	saWriter := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Version:     4,
 			Name:        "fixed:serviceaccounts:writer",
@@ -34,7 +51,7 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 		Grants: []string{"Admin"},
 	}
 
-	if err := ac.DeclareFixedRoles(role); err != nil {
+	if err := ac.DeclareFixedRoles(saReader, saWriter); err != nil {
 		return err
 	}
 
