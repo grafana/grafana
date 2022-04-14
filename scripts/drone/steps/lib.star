@@ -368,17 +368,13 @@ def build_backend_step(edition, ver_mode, variants=None):
 
     # TODO: Convert number of jobs to percentage
     if ver_mode == 'release':
-        env = {
-            'GITHUB_TOKEN': from_secret(github_token),
-        }
         cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} ${{DRONE_TAG}}'.format(
+            './bin/grabpl build-backend --jobs 8 --edition {} ${{DRONE_TAG}}'.format(
                 edition,
             ),
         ]
     else:
         build_no = '${DRONE_BUILD_NUMBER}'
-        env = {}
         cmds = [
             './bin/grabpl build-backend --jobs 8 --edition {} --build-id {}{}'.format(
                 edition, build_no, variants_str,
@@ -388,7 +384,6 @@ def build_backend_step(edition, ver_mode, variants=None):
     return {
         'name': 'build-backend' + enterprise2_suffix(edition),
         'image': build_image,
-        'environment': env,
         'depends_on': [
             'gen-version',
             'wire-install',
@@ -403,7 +398,7 @@ def build_frontend_step(edition, ver_mode):
     # TODO: Use percentage for num jobs
     if ver_mode == 'release':
         cmds = [
-            './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} ' + \
+            './bin/grabpl build-frontend --jobs 8 ' + \
             '--edition {} ${{DRONE_TAG}}'.format(edition),
         ]
     else:
@@ -432,7 +427,7 @@ def build_frontend_package_step(edition, ver_mode):
     # TODO: Use percentage for num jobs
     if ver_mode == 'release':
         cmds = [
-            './bin/grabpl build-frontend-packages --jobs 8 --github-token $${GITHUB_TOKEN} ' + \
+            './bin/grabpl build-frontend-packages --jobs 8 ' + \
             '--edition {} ${{DRONE_TAG}}'.format(edition),
         ]
     else:
@@ -654,7 +649,6 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
         sign_args = ' --sign'
         env = {
             'GRAFANA_API_KEY': from_secret('grafana_api_key'),
-            'GITHUB_TOKEN': from_secret(github_token),
             'GPG_PRIV_KEY': from_secret('gpg_priv_key'),
             'GPG_PUB_KEY': from_secret('gpg_pub_key'),
             'GPG_KEY_PASSWORD': from_secret('gpg_key_password'),
@@ -669,7 +663,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
     if ver_mode == 'release':
         cmds = [
             '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
-            '--github-token $${{GITHUB_TOKEN}}{} ${{DRONE_TAG}}'.format(
+            '{} ${{DRONE_TAG}}'.format(
                 sign_args
             ),
         ]
