@@ -81,35 +81,34 @@ func CreateTestAlertRule(t *testing.T, ctx context.Context, dbstore *store.DBsto
 
 func CreateTestAlertRuleWithLabels(t *testing.T, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64, labels map[string]string) *models.AlertRule {
 	ruleGroup := fmt.Sprintf("ruleGroup-%s", util.GenerateShortUID())
-	err := dbstore.UpsertAlertRules(ctx, []store.UpsertRule{
+	err := dbstore.InsertAlertRules(ctx, []models.AlertRule{
 		{
-			New: models.AlertRule{
-				ID:        0,
-				OrgID:     orgID,
-				Title:     fmt.Sprintf("an alert definition %s", util.GenerateShortUID()),
-				Condition: "A",
-				Data: []models.AlertQuery{
-					{
-						Model: json.RawMessage(`{
+
+			ID:        0,
+			OrgID:     orgID,
+			Title:     fmt.Sprintf("an alert definition %s", util.GenerateShortUID()),
+			Condition: "A",
+			Data: []models.AlertQuery{
+				{
+					Model: json.RawMessage(`{
 										"datasourceUid": "-100",
 										"type":"math",
 										"expression":"2 + 2 > 1"
 									}`),
-						RelativeTimeRange: models.RelativeTimeRange{
-							From: models.Duration(5 * time.Hour),
-							To:   models.Duration(3 * time.Hour),
-						},
-						RefID: "A",
+					RelativeTimeRange: models.RelativeTimeRange{
+						From: models.Duration(5 * time.Hour),
+						To:   models.Duration(3 * time.Hour),
 					},
+					RefID: "A",
 				},
-				Labels:          labels,
-				Annotations:     map[string]string{"testAnnoKey": "testAnnoValue"},
-				IntervalSeconds: intervalSeconds,
-				NamespaceUID:    "namespace",
-				RuleGroup:       ruleGroup,
-				NoDataState:     models.NoData,
-				ExecErrState:    models.AlertingErrState,
 			},
+			Labels:          labels,
+			Annotations:     map[string]string{"testAnnoKey": "testAnnoValue"},
+			IntervalSeconds: intervalSeconds,
+			NamespaceUID:    "namespace",
+			RuleGroup:       ruleGroup,
+			NoDataState:     models.NoData,
+			ExecErrState:    models.AlertingErrState,
 		},
 	})
 	require.NoError(t, err)
