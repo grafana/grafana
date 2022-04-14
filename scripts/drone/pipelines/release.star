@@ -298,6 +298,11 @@ def get_enterprise_pipelines(trigger, ver_mode):
     edition = 'enterprise'
     services = integration_test_services(edition=edition)
     volumes = integration_test_services_volumes()
+    deps_on_clone_enterprise_step = {
+        'depends_on': [
+            'init-enterprise',
+        ]
+    }
     _, test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
     init_steps = [
         download_grabpl_step(),
@@ -305,14 +310,12 @@ def get_enterprise_pipelines(trigger, ver_mode):
         clone_enterprise_step(ver_mode),
         init_enterprise_step(ver_mode)
     ]
-    deps_on_clone_enterprise_step = {
-        'depends_on': [
-            'init-enterprise',
-        ]
-    }
     for step in [wire_install_step(), yarn_install_step(), gen_version_step(ver_mode)]:
         step.update(deps_on_clone_enterprise_step)
         init_steps.extend([step])
+
+    for step in integration_test_steps:
+        step.update(deps_on_clone_enterprise_step)
 
     windows_pipeline = pipeline(
         name='enterprise-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
@@ -337,7 +340,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
             ),
             pipeline(
                 name='enterprise-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step(), identify_runner_step(),] + integration_test_steps,
+                steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode),] + integration_test_steps,
                 volumes=volumes,
             ),
         ])
