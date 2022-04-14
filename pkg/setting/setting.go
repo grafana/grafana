@@ -393,7 +393,7 @@ type Cfg struct {
 	ReportingEnabled                    bool
 	ApplicationInsightsConnectionString string
 	ApplicationInsightsEndpointUrl      string
-	HideFeedbackLinks                   bool
+	FeedbackLinksEnabled                bool
 
 	// LDAP
 	LDAPEnabled     bool
@@ -949,7 +949,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.ApplicationInsightsConnectionString = analytics.Key("application_insights_connection_string").String()
 	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
-	cfg.HideFeedbackLinks = analytics.Key("hide_feedback_links").MustBool(false)
+	cfg.FeedbackLinksEnabled = analytics.Key("feedback_links_enabled").MustBool(true)
 
 	if err := readAlertingSettings(iniFile); err != nil {
 		return err

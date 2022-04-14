@@ -180,5 +180,5 @@ export interface GrafanaConfig {
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
   angularSupportEnabled: boolean;
-  hideFeedbackLinks: boolean;
+  feedbackLinksEnabled: boolean;
 }

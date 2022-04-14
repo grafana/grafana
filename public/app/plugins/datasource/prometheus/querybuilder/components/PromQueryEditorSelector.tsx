@@ -55,7 +55,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
     onChange(query);
   };
 
-  const showFeedbackLink = editorMode === QueryEditorMode.Builder && !config.hideFeedbackLinks;
+  const showFeedbackLink = editorMode === QueryEditorMode.Builder && config.feedbackLinksEnabled;
 
   return (
     <>
