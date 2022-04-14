@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
 import React from 'react';
 
@@ -10,6 +11,11 @@ export interface Props {
 
 export function FeedbackLink({ feedbackUrl }: Props) {
   const styles = useStyles2(getStyles);
+
+  if (!config.feedbackLinksEnabled) {
+    return null;
+  }
+
   return (
     <Stack gap={1}>
       <a

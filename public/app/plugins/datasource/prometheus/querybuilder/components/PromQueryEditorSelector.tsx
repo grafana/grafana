@@ -55,8 +55,6 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
     onChange(query);
   };
 
-  const showFeedbackLink = editorMode === QueryEditorMode.Builder && config.feedbackLinksEnabled;
-
   return (
     <>
       <ConfirmModal
@@ -92,7 +90,9 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
             <QueryHeaderSwitch label="Raw query" value={query.rawQuery} onChange={onQueryPreviewChange} />
           </>
         )}
-        {showFeedbackLink && <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />}
+        {editorMode === QueryEditorMode.Builder && (
+          <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />
+        )}
         <FlexItem grow={1} />
         <Button
           variant={dataIsStale ? 'primary' : 'secondary'}
