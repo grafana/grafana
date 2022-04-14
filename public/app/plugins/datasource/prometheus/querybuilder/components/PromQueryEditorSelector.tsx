@@ -15,7 +15,6 @@ import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { changeEditorMode, getQueryWithDefaults } from '../state';
 import { PromQuery } from '../../types';
 import { FeedbackLink } from '../shared/FeedbackLink';
-import { config } from '@grafana/runtime';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { onChange, onRunQuery, data } = props;
