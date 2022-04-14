@@ -1,4 +1,3 @@
-import { getBackendSrv } from '@grafana/runtime';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { withSerializedError } from 'app/features/alerting/unified/utils/redux';
 import { Settings } from 'app/percona/settings/Settings.types';
@@ -151,11 +150,7 @@ export const fetchServerSaasHostAction = createAsyncThunk(
     withSerializedError(
       (async () => {
         let host = 'https://portal.percona.com';
-        // Using percona's api wrapper to call '/graph/percona-api' has a weird side effect
-        // The request would be made after login without the application/json accept header
-        // The user would be redirected to /graph/percona/api/saas-host, which is not the intended behaviour
-        // Using getBackendSrv from Grafana solves this
-        const { host: envHost = '' } = await getBackendSrv().get('/percona-api/saas-host');
+        const { host: envHost = '' } = await api.get('/graph/percona-api/saas-host');
 
         if (envHost.includes('dev')) {
           host = 'https://platform-dev.percona.com';
