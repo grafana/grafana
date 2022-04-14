@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
-
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
@@ -44,18 +43,16 @@ var (
 	now = time.Now()
 )
 
-// Helper func to create a legacy alert notification channel for inserting into test database.
+// createAlertNotification creates a legacy alert notification channel for inserting into the test database.
 func createAlertNotification(t *testing.T, orgId int64, uid string, channelType string, settings string, defaultChannel bool) *models.AlertNotification {
 	t.Helper()
-	var settingsJson *simplejson.Json
+	settingsJson := simplejson.New()
 	if settings != "" {
 		s, err := simplejson.NewJson([]byte(settings))
 		if err != nil {
 			t.Fatalf("Failed to unmarshal alert notification json: %v", err)
 		}
 		settingsJson = s
-	} else {
-		settingsJson = simplejson.New()
 	}
 
 	return &models.AlertNotification{
@@ -72,7 +69,7 @@ func createAlertNotification(t *testing.T, orgId int64, uid string, channelType 
 	}
 }
 
-// Helper func to create a legacy alert rule for inserting into test database.
+// createAlert creates a legacy alert rule for inserting into the test database.
 func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, name string, notifierUids []string) *models.Alert {
 	t.Helper()
 
@@ -104,7 +101,7 @@ func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, n
 	}
 }
 
-// Helper func to create a dashboard for inserting into test database.
+// createDashboard creates a dashboard for inserting into the test database.
 func createDashboard(t *testing.T, id int64, orgId int64, uid string) *models.Dashboard {
 	t.Helper()
 	return &models.Dashboard{
@@ -117,7 +114,7 @@ func createDashboard(t *testing.T, id int64, orgId int64, uid string) *models.Da
 	}
 }
 
-// Helper func to create a ddatasource for inserting into test database.
+// createDatasource creates a ddatasource for inserting into the test database.
 func createDatasource(t *testing.T, id int64, orgId int64, uid string) *models.DataSource {
 	t.Helper()
 	return &models.DataSource{
@@ -468,7 +465,7 @@ func Test_AddDashAlertMigration(t *testing.T) {
 				// Trim off fields that aren't important for this test.
 				trimFields(amConfig.AlertmanagerConfig.Receivers)
 
-				// Compare migrated receivers
+				// Compare migrated receivers.
 				sortReceiversForComparison(amConfig.AlertmanagerConfig.Receivers)
 				require.ElementsMatch(t, tt.expected[orgId].AlertmanagerConfig.Receivers, amConfig.AlertmanagerConfig.Receivers)
 
