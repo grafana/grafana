@@ -248,6 +248,7 @@ require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.17
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
+	github.com/grafana/thema v0.0.0-20220413232647-fc54c169b508
 	gocloud.dev v0.24.0
 )
 
@@ -277,7 +278,6 @@ require (
 	github.com/getkin/kin-openapi v0.91.0 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
 	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
-	github.com/grafana/thema v0.0.0-20220413232647-fc54c169b508
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
@@ -292,6 +292,11 @@ replace github.com/crewjam/saml => github.com/grafana/saml v0.0.0-20211007135653
 replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
 
 replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.2
+
+// Thema's thema CLI requires cobra, which eventually works its way down to go-hclog@v1.0.0.
+// Upgrading affects backend plugins: https://github.com/grafana/grafana/pull/47653#discussion_r850508593
+// No harm to Thema because it's only a dependency in its main package.
+replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
 
 // TODO: remove once gocloud.dev releases 0.25.x
 // `fileblob` implementation has buggy key ordering in 0.24.0

@@ -1380,8 +1380,6 @@ github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa/go.mod h1:0O8o/juxN
 github.com/grafana/saml v0.0.0-20211007135653-aed1b2edd86b h1:YiSGp34F4V0G08HHx1cJBf2GVgwYAkXQjzuVs1t8jYk=
 github.com/grafana/saml v0.0.0-20211007135653-aed1b2edd86b/go.mod h1:q83kyQoMD0vhy+RzFLlbw0UgHJ6TAihQpuXvdFmm4s4=
 github.com/grafana/sqlds/v2 v2.3.2/go.mod h1:34uyqPBWsEvg4V/xxh6V4uIqwu1qLfOfsmScll/ukrk=
-github.com/grafana/thema v0.0.0-20220407122249-f6441292832b h1:e7K7yDUUrq7B681+ZZNw05DtJqm0spVuJioKDktzfnM=
-github.com/grafana/thema v0.0.0-20220407122249-f6441292832b/go.mod h1:KuqTKX9lfM87uu9vt9DS/q+REqSrAm2xYMnBBvlmevA=
 github.com/grafana/thema v0.0.0-20220413232647-fc54c169b508 h1:6k0scTj6kRDjn/qLigsLc9OTiMMaWkRUxjKBFowWEWg=
 github.com/grafana/thema v0.0.0-20220413232647-fc54c169b508/go.mod h1:KuqTKX9lfM87uu9vt9DS/q+REqSrAm2xYMnBBvlmevA=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
@@ -1443,16 +1441,8 @@ github.com/hashicorp/go-cleanhttp v0.5.2 h1:035FKYIWjmULyFRBKPs8TBQoi0x6d9G4xc9n
 github.com/hashicorp/go-cleanhttp v0.5.2/go.mod h1:kO/YDlP8L1346E6Sodw+PrpBSV4/SoxCXGY6BqNFT48=
 github.com/hashicorp/go-connlimit v0.3.0/go.mod h1:OUj9FGL1tPIhl/2RCfzYHrIiWj+VVPGNyVPnUX8AqS0=
 github.com/hashicorp/go-discover v0.0.0-20200501174627-ad1e96bde088/go.mod h1:vZu6Opqf49xX5lsFAu7iFNewkcVF1sn/wyapZh5ytlg=
-github.com/hashicorp/go-hclog v0.0.0-20180709165350-ff2cf002a8dd/go.mod h1:9bjs9uLqI8l75knNv3lV1kA55veR+WUPSiKIWcQHudI=
-github.com/hashicorp/go-hclog v0.8.0/go.mod h1:5CU+agLiy3J7N7QjHK5d05KxGsuXiQLrjA0H7acj2lQ=
-github.com/hashicorp/go-hclog v0.9.1/go.mod h1:5CU+agLiy3J7N7QjHK5d05KxGsuXiQLrjA0H7acj2lQ=
-github.com/hashicorp/go-hclog v0.9.2/go.mod h1:5CU+agLiy3J7N7QjHK5d05KxGsuXiQLrjA0H7acj2lQ=
-github.com/hashicorp/go-hclog v0.12.0/go.mod h1:whpDNt7SSdeAju8AWKIWsul05p54N/39EeqMAyrmvFQ=
-github.com/hashicorp/go-hclog v0.12.2/go.mod h1:whpDNt7SSdeAju8AWKIWsul05p54N/39EeqMAyrmvFQ=
-github.com/hashicorp/go-hclog v0.14.1/go.mod h1:whpDNt7SSdeAju8AWKIWsul05p54N/39EeqMAyrmvFQ=
+github.com/hashicorp/go-hclog v0.16.1 h1:IVQwpTGNRRIHafnTs2dQLIk4ENtneRIEEJWOVDqz99o=
 github.com/hashicorp/go-hclog v0.16.1/go.mod h1:whpDNt7SSdeAju8AWKIWsul05p54N/39EeqMAyrmvFQ=
-github.com/hashicorp/go-hclog v1.0.0 h1:bkKf0BeBXcSYa7f5Fyi9gMuQ8gNsxeiNpZjR6VxNZeo=
-github.com/hashicorp/go-hclog v1.0.0/go.mod h1:whpDNt7SSdeAju8AWKIWsul05p54N/39EeqMAyrmvFQ=
 github.com/hashicorp/go-immutable-radix v1.0.0/go.mod h1:0y9vanUI8NX6FsYoO3zeMjhV/C5i9g4Q3DwcSNZ4P60=
 github.com/hashicorp/go-immutable-radix v1.1.0/go.mod h1:0y9vanUI8NX6FsYoO3zeMjhV/C5i9g4Q3DwcSNZ4P60=
 github.com/hashicorp/go-immutable-radix v1.2.0/go.mod h1:0y9vanUI8NX6FsYoO3zeMjhV/C5i9g4Q3DwcSNZ4P60=
