@@ -91,7 +91,7 @@
     "@babel/preset-typescript": "7.16.7",
     "@betterer/betterer": "5.3.0",
     "@betterer/cli": "5.3.0",
-    "@betterer/regexp": "5.1.7",
+    "@betterer/regexp": "5.3.0",
     "@emotion/eslint-plugin": "11.7.0",
     "@grafana/api-documenter": "7.11.2",
     "@grafana/e2e": "workspace:*",
