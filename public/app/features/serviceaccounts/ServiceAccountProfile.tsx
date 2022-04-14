@@ -235,11 +235,9 @@ export class ServiceAccountProfileRow extends PureComponent<
   };
 
   onSave = () => {
-    console.log(`hey:`);
+    this.setState({ editing: false });
     if (this.props.onChange) {
       this.props.onChange(this.state.value);
-      this.setState({ editing: false, value: this.props.value || '' });
-      console.log(`chagingi state`);
     }
   };
 
@@ -277,6 +275,7 @@ export class ServiceAccountProfileRow extends PureComponent<
         <td>
           {this.props.onChange && (
             <ConfirmButton
+              closeOnConfirm
               confirmText="Save"
               onConfirm={this.onSave}
               onClick={this.onEditClick}
