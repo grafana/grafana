@@ -26,7 +26,7 @@ const AddToDashboard = lazy(() =>
 interface OwnProps {
   exploreId: ExploreId;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
-  topOfViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRef: RefObject<HTMLDivElement>;
 }
 
 type Props = OwnProps & ConnectedProps<typeof connector>;

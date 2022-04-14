@@ -56,7 +56,7 @@ type Props = {
   focusedSpanIdForSearch?: string;
   queryResponse: PanelData;
   datasource?: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
-  topOfViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRef: RefObject<HTMLDivElement>;
   topOfViewRefType: TopOfViewRefType;
 };
 

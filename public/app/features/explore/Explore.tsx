@@ -34,7 +34,6 @@ import appEvents from 'app/core/app_events';
 import { AbsoluteTimeEvent } from 'app/types/events';
 import { Unsubscribable } from 'rxjs';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
-import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
