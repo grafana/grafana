@@ -46,6 +46,7 @@ describe('<SpanDetail>', () => {
     warningsToggle: jest.fn(),
     referencesToggle: jest.fn(),
     createFocusSpanLink: jest.fn(),
+    topOfViewRefType: 'Explore',
   };
   span.logs = [
     {
