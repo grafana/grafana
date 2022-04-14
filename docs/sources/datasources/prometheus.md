@@ -40,15 +40,15 @@ To access Prometheus settings, hover your mouse over the **Configuration** (gear
 
 Prometheus query editor is separated into 3 distinct modes that you can switch between. See docs for each section below.
 
-TODO: Top toolbar picture
+![Editor toolbar](/static/img/docs/prometheus/header-8-5.png 'Editor toolbar')
 
-At the top of the editor there is `Run query` button that will run the query. If the query editor is in Builder mode, use the `Query patterns` dropdown to insert a predefined set of operation into your query and `Preview` switch to see raw query that will be executed. Use the `Explain | Builder | Code` tabs to switch between the editor modes.
+At the top of the editor there is `Run query` button that will run the query and `Explain | Builder | Code` tabs to switch between the editor modes. If the query editor is in Builder mode there are additional elements explained in the Builder section.
 
 Each mode is synchronized with the other modes, so you can switch between them without losing your work, although there are some limitations. Some more complex queries are not yet supported in the builder mode. If you try to switch from `Code` to `Builder` with such query, editor will show a popup explaining that you can lose some parts of the query, and you can decide if you still want to continue to `Builder` mode or not.
 
 ### Code mode
 
-TODO: picture
+![Code mode](/static/img/docs/prometheus/code-mode-8-5.png 'Code mode')
 
 Code mode allows you to write raw queries in a textual editor. It implements advanced autocomplete features and syntax highlighting to help with writing complex queries. In addition, it also contains `Metrics browser` to further aid with writing queries (see more docs below).
 
@@ -56,11 +56,11 @@ For more information about Prometheus query language, refer to the [Prometheus d
 
 #### Autocomplete
 
-TODO: open autocomplete dropdown picture
+![Autocomplete](/static/img/docs/prometheus/autocomplete-8-5.png 'Autocomplete')
 
 Autocomplete kicks automatically in appropriate times during typing. Use `ctrl/cmd + space` to trigger autocomplete manually when needed. Autocomplete can suggest both static functions, aggregations and keywords but also dynamic items like metrics and labels. Autocomplete dropdown also shows documentation for the suggested items, either static one or dynamic metric documentation where available.
 
-In [Explore](TODO:explore link) use `shift + enter` to run the query.
+In [Explore]({{< relref "../explore/_index.md" >}}) use `shift + enter` to run the query.
 
 #### Metrics browser
 
@@ -68,7 +68,7 @@ The metrics browser allows you to quickly find metrics and select relevant label
 When you open the browser you will see all available metrics and labels.
 If supported by your Prometheus instance, each metric will show its HELP and TYPE as a tooltip.
 
-{{< figure src="/static/img/docs/v8/prometheus_metrics_browser.png" class="docs-image--no-shadow" max-width="800px" caption="Screenshot of the metrics browser for Prometheus" >}}
+![Metrics browser](/static/img/docs/prometheus/metric-browser-8-5.png 'Metrics browser')
 
 When you select a metric, the browser narrows down the available labels to show only the ones applicable to the metric.
 You can then select one or more labels for which the available label values are shown in lists in the bottom section.
@@ -76,14 +76,14 @@ Select one or more values for each label to tighten your query scope.
 
 > **Note:** If you do not remember a metric name to start with, you can also select a few labels first, to narrow down the list and then find relevant label values.
 
-All lists in the metrics browser have a search field above them to quickly filter for metrics or labels that match a certain string. The values section only has one search field. Its filtering applies to all labels to help you find values across labels once they have been selected, for example, among your labels `app`, `job`, `job_name` only one might with the value you are looking for.
+All lists in the metrics browser have a search field above them to quickly filter for metrics or labels that match a certain string. The values section only has one search field. It's filtering applies to all labels to help you find values across labels once they have been selected, for example, among your labels `app`, `job`, `job_name` only one might with the value you are looking for.
 
 Once you are satisfied with your query, click "Use query" to run the query. The button "Use as rate query" adds a `rate(...)[$__interval]` around your query to help write queries for counter metrics.
 The "Validate selector" button will check with Prometheus how many time series are available for that selector.
 
 #### Options
 
-TODO: options picture
+![Options](/static/img/docs/prometheus/options-8-5.png 'Options')
 
 | Name        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -97,9 +97,18 @@ TODO: options picture
 
 ### Builder mode
 
-#### Metrics and labels
+#### Toolbar
 
-TODO: section picture
+In addition to `Run query` button and mode switcher, in builder mode additional elements are available:
+
+| Name           | Description                                                                                                                       |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Query patterns | A list of useful operation patterns that can be used to quickly add multiple operations to your query to achieve a specific goal. |
+| Raw query      | Toggle to show raw query generated by the builder that will be sent to Prometheus instance.                                       |
+
+#### Metric and labels
+
+![Metric and labels](/static/img/docs/prometheus/metric-select-8-5.png 'Metric and labels')
 
 Select a specific metric name from the dropdown list. List of available metrics is fetched from the Prometheus server based on selected time rage. Write into the select when the dropdown is open to search and filter the list.
 
@@ -107,33 +116,35 @@ Select desired labels and their values from the dropdown list. When metric is se
 
 #### Operations
 
-TODO: picture with operations dropdown open
+![Operations](/static/img/docs/prometheus/operations-8-5.gif 'Operations')
 
 Use the `+ Operations` button to add operation to your query. Operations are grouped into sections for easier navigation. When the operations dropdown is open, write into the search input to search and filter operations list.
 
 Operations in a query are shown as boxes in the operations section. Each has a header with a name and additional action buttons. Hover over the operation header to show the action buttons. Click the `v` button to quickly replace the operation with different one of the same type. Click the `info` button to open operations' description tooltip. Click the `x` button to remove the operation.
 
-Operation can have additional parameters under the operation header. See the operation description or promethues docs for more details about each operation.
+Operation can have additional parameters under the operation header. See the operation description or Prometheus docs for more details about each operation.
 
 Some operations make sense only in specific order, if adding an operation would result in nonsensical query, operation will be added to the correct place. To order operations manually drag operation box by the operation name and drop in appropriate place.
 
 ##### Hints
 
-TODO: hint picture
+![Hint](/static/img/docs/prometheus/hint-8-5.gif 'Hint')
 
 In same cases the query editor can detect which operations would be most appropriate for a selected metric. In such cases it will show a hint next to the `+ Operations` button. Click on the hint to add the operations to your query.
 
-#### Preview
+#### Raw query
 
-This section is shown only if the `Preview` switch from the query editor top toolbar is set to `on`. It shows the raw query that will be created and executed by the query editor.
+![Raw query](/static/img/docs/prometheus/raw-query-8-5.gif 'Raw query')
+
+This section is shown only if the `Raw query` switch from the query editor top toolbar is set to `on`. It shows the raw query that will be created and executed by the query editor.
 
 #### Options
 
-Same set of option is available as in the `Code` mode. See the [Code mode options](TODO link) for details.
+Same set of option is available as in the `Code` mode. See the [Code mode options]({{< relref "#options" >}}) for details.
 
 ### Explain mode
 
-TODO: picture
+![Explain mode](/static/img/docs/prometheus/explain-8-5.png 'Explain mode')
 
 Explain mode helps with understanding the query. It shows a step by step explanation of all query parts and the operations.
 
