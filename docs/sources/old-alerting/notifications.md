@@ -58,7 +58,8 @@ These examples show how often and when reminders are sent for a triggered alert.
 ## List of supported notifiers
 
 | Name                                          | Type                      | Supports images    | Supports alert rule tags |
-| --------------------------------------------- | ------------------------- | ------------------ | ------------------------ |
+|-----------------------------------------------|---------------------------|--------------------|--------------------------|
+| [Amazon SNS](#amazon-sns)                     | `sns`                       | no                 | yes                      |
 | [DingDing](#dingdingdingtalk)                 | `dingding`                | yes, external only | no                       |
 | [Discord](#discord)                           | `discord`                 | yes                | no                       |
 | [Email](#email)                               | `email`                   | yes                | no                       |
@@ -267,6 +268,17 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 ### Sensu Go
 
 Grafana alert notifications can be sent to [Sensu](<(https://sensu.io)>) Go as events via the API. This operation requires an API key. For information on creating this key, refer to [Sensu Go documentation](https://docs.sensu.io/sensu-go/latest/operations/control-access/use-apikeys/#api-key-authentication).
+
+### Amazon SNS
+
+Grafana alert notifications can be sent to [Amazon Simple Notification Service (SNS)](https://aws.amazon.com/sns/).
+
+| Setting                         | Description                                                         |
+|---------------------------------|---------------------------------------------------------------------|
+| Topic                           | ARN of the SNS topic                                                |
+| Auth Provider                   | Desired authentication provider to access the SNS resource          |
+| Message Body Format             | Specify the format of the message body                              |
+| Include all tags in the message | If checked, will include all grafana alert tags in the message body |
 
 ## Enable images in notifications {#external-image-store}
 
