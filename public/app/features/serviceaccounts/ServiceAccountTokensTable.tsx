@@ -37,7 +37,7 @@ export const ServiceAccountTokensTable: FC<Props> = ({ tokens, timeZone, onDelet
                   <TokenExpiration timeZone={timeZone} token={key} />
                 </td>
                 <td>{formatDate(timeZone, key.created)}</td>
-                {!contextSrv.hasPermission(AccessControlAction.ServiceAccountsDelete) && (
+                {contextSrv.hasPermission(AccessControlAction.ServiceAccountsDelete) && (
                   <td>
                     <DeleteButton aria-label="Delete service account token" size="sm" onConfirm={() => onDelete(key)} />
                   </td>

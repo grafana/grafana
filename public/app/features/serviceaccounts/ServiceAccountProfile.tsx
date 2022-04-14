@@ -203,12 +203,10 @@ export class ServiceAccountProfileRow extends PureComponent<
   };
 
   onEditClick = () => {
-    console.log(`on edit clicked`);
     this.setState({ editing: true }, this.focusInput);
   };
 
   onCancelClick = () => {
-    console.log(`on cancel clicked`);
     this.setState({ editing: false, value: this.props.value || '' });
   };
 
@@ -280,6 +278,7 @@ export class ServiceAccountProfileRow extends PureComponent<
               onConfirm={this.onSave}
               onClick={this.onEditClick}
               onCancel={this.onCancelClick}
+              disabled={this.props.disabled}
             >
               Edit
             </ConfirmButton>
