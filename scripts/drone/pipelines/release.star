@@ -1,10 +1,15 @@
 load(
     'scripts/drone/steps/lib.star',
     'disable_tests',
+    'clone_enterprise_step',
     'download_grabpl_step',
-    'initialize_step',
+    'gen_version_step',
+    'yarn_install_step',
+    'wire_install_step',
+    'init_enterprise_step',
     'lint_drone_step',
     'build_image',
+    'identify_runner_step',
     'publish_image',
     'lint_backend_step',
     'lint_frontend_step',
@@ -77,7 +82,7 @@ def retrieve_npm_packages_step():
         'name': 'retrieve-npm-packages',
         'image': publish_image,
         'depends_on': [
-            'initialize',
+            'grabpl',
         ],
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
@@ -150,16 +155,26 @@ def get_steps(edition, ver_mode):
     should_upload = should_publish or ver_mode in ('release-branch',)
     include_enterprise2 = edition == 'enterprise'
     edition2 = 'enterprise2'
+    init_steps = [
+        identify_runner_step(),
+        download_grabpl_step(),
+        gen_version_step(ver_mode),
+        wire_install_step(),
+        yarn_install_step(),
+    ]
 
-    test_steps = [
+    test_steps = []
+    if edition != 'enterprise':
+        test_steps.extend([shellcheck_step()])
+
+    test_steps.extend([
         codespell_step(),
-        shellcheck_step(),
         lint_backend_step(edition=edition),
         lint_frontend_step(),
         test_backend_step(edition=edition),
         test_backend_integration_step(edition=edition),
         test_frontend_step(),
-    ]
+    ])
 
     build_steps = [
         build_backend_step(edition=edition, ver_mode=ver_mode),
@@ -233,16 +248,16 @@ def get_steps(edition, ver_mode):
             if step:
                 publish_steps.append(step)
 
-    return test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps
+    return init_steps, test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps
 
 def get_oss_pipelines(trigger, ver_mode):
     edition = 'oss'
     services = integration_test_services(edition=edition)
     volumes = integration_test_services_volumes()
-    test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
+    init_steps, test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
     windows_pipeline = pipeline(
         name='oss-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
-        steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
+        steps=[identify_runner_step('windows')] + windows_package_steps,
         platform='windows', depends_on=[
             'oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
         ],
@@ -250,8 +265,7 @@ def get_oss_pipelines(trigger, ver_mode):
     pipelines = [
         pipeline(
             name='oss-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-                  build_steps + package_steps + publish_steps,
+            steps=init_steps + build_steps + package_steps + publish_steps,
             volumes=volumes,
         ),
     ]
@@ -259,14 +273,12 @@ def get_oss_pipelines(trigger, ver_mode):
         pipelines.extend([
             pipeline(
                 name='oss-test-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
-                steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-                  test_steps,
+                steps=init_steps + test_steps,
                 volumes=[],
             ),
             pipeline(
                 name='oss-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-                      integration_test_steps,
+                steps=[download_grabpl_step(), identify_runner_step(),] + integration_test_steps,
                 volumes=volumes,
             )
         ])
@@ -286,10 +298,28 @@ def get_enterprise_pipelines(trigger, ver_mode):
     edition = 'enterprise'
     services = integration_test_services(edition=edition)
     volumes = integration_test_services_volumes()
-    test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
+    deps_on_clone_enterprise_step = {
+        'depends_on': [
+            'init-enterprise',
+        ]
+    }
+    _, test_steps, build_steps, integration_test_steps, package_steps, windows_package_steps, publish_steps = get_steps(edition=edition, ver_mode=ver_mode)
+    init_steps = [
+        download_grabpl_step(),
+        identify_runner_step(),
+        clone_enterprise_step(ver_mode),
+        init_enterprise_step(ver_mode)
+    ]
+    for step in [wire_install_step(), yarn_install_step(), gen_version_step(ver_mode)]:
+        step.update(deps_on_clone_enterprise_step)
+        init_steps.extend([step])
+
+    for step in integration_test_steps:
+        step.update(deps_on_clone_enterprise_step)
+
     windows_pipeline = pipeline(
         name='enterprise-windows-{}'.format(ver_mode), edition=edition, trigger=trigger,
-        steps=initialize_step(edition, platform='windows', ver_mode=ver_mode) + windows_package_steps,
+        steps=[identify_runner_step('windows')] + windows_package_steps,
         platform='windows', depends_on=[
             'enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode),
         ],
@@ -297,8 +327,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
     pipelines = [
         pipeline(
             name='enterprise-build{}-publish-{}'.format(get_e2e_suffix(), ver_mode), edition=edition, trigger=trigger, services=[],
-            steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-                  build_steps + package_steps + publish_steps,
+            steps=init_steps + build_steps + package_steps + publish_steps,
             volumes=volumes,
         ),
     ]
@@ -306,14 +335,12 @@ def get_enterprise_pipelines(trigger, ver_mode):
         pipelines.extend([
             pipeline(
                 name='enterprise-test-{}'.format(ver_mode), edition=edition, trigger=trigger, services=[],
-                steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-                  test_steps,
+                steps=init_steps + test_steps,
                 volumes=[],
             ),
             pipeline(
                 name='enterprise-integration-tests-{}'.format(ver_mode), edition=edition, trigger=trigger, services=services,
-                steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode) +
-                      integration_test_steps,
+                steps=[download_grabpl_step(), identify_runner_step(), clone_enterprise_step(ver_mode), init_enterprise_step(ver_mode),] + integration_test_steps,
                 volumes=volumes,
             ),
         ])
@@ -401,7 +428,7 @@ def publish_npm_pipelines(mode):
     ]
 
     return [pipeline(
-        name='publish-npm-packages-{}'.format(mode), trigger=trigger, steps = initialize_step(edition='oss', platform='linux', ver_mode='release') + steps, edition="all"
+        name='publish-npm-packages-{}'.format(mode), trigger=trigger, steps = steps, edition="all"
     )]
 
 def release_pipelines(ver_mode='release', trigger=None, environment=None):
