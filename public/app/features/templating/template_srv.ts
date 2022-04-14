@@ -1,5 +1,5 @@
 import { escape, isString, property } from 'lodash';
-import { deprecationWarning, ScopedVars, TimeRange } from '@grafana/data';
+import { deprecationWarning, ScopedVar, ScopedVars, TimeRange } from '@grafana/data';
 import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
 import { variableRegex } from '../variables/utils';
 import { isAdHoc } from '../variables/guard';
@@ -238,12 +238,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return (this.fieldAccessorCache[fieldPath] = property(fieldPath));
   }
 
-  private getVariableValue(variableName: string, fieldPath: string | undefined, scopedVars: ScopedVars) {
-    const scopedVar = scopedVars[variableName];
-    if (!scopedVar) {
-      return null;
-    }
-
+  private getScopedVariableValue(scopedVar: ScopedVar, fieldPath: string | undefined) {
     if (fieldPath) {
       return this.getFieldAccessor(fieldPath)(scopedVar.value);
     }
@@ -251,13 +246,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return scopedVar.value;
   }
 
-  private getVariableText(variableName: string, value: any, scopedVars: ScopedVars) {
-    const scopedVar = scopedVars[variableName];
-
-    if (!scopedVar) {
-      return null;
-    }
-
+  private getScopedVariableText(scopedVar: ScopedVar, value: any) {
     if (scopedVar.value === value || typeof value !== 'string') {
       return scopedVar.text;
     }
@@ -265,7 +254,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return value;
   }
 
-  replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
+  replace(target?: string, scopedVars?: ScopedVars, defaultFormat?: string | Function): string {
     if (!target) {
       return target ?? '';
     }
@@ -275,14 +264,17 @@ export class TemplateSrv implements BaseTemplateSrv {
     return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
       const variableName = var1 || var2 || var3;
       const variable = this.getVariableAtIndex(variableName);
-      const fmt = fmt2 || fmt3 || format;
+      const manualFormat = fmt2 ?? fmt3;
+      const fmt = manualFormat ?? defaultFormat;
+      const scopedVariable = scopedVars && scopedVars[variableName];
 
-      if (scopedVars) {
-        const value = this.getVariableValue(variableName, fieldPath, scopedVars);
-        const text = this.getVariableText(variableName, value, scopedVars);
+      if (scopedVariable) {
+        const value = this.getScopedVariableValue(scopedVariable, fieldPath);
+        const text = this.getScopedVariableText(scopedVariable, value);
+        const scopedVarFormat = manualFormat ?? scopedVariable.format ?? defaultFormat;
 
         if (value !== null && value !== undefined) {
-          return this.formatValue(value, fmt, variable, text);
+          return this.formatValue(value, scopedVarFormat, variable, text);
         }
       }
 
@@ -315,9 +307,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       }
 
       if (fieldPath) {
-        const fieldValue = this.getVariableValue(variableName, fieldPath, {
-          [variableName]: { value, text },
-        });
+        const fieldValue = this.getScopedVariableValue({ value, text }, fieldPath);
         if (fieldValue !== null && fieldValue !== undefined) {
           return this.formatValue(fieldValue, fmt, variable, text);
         }

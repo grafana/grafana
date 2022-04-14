@@ -402,10 +402,12 @@ export const getLinksSupplier =
         [DataLinkBuiltInVars.keepTime]: {
           text: timeRangeUrl,
           value: timeRangeUrl,
+          format: 'none',
         },
         [DataLinkBuiltInVars.includeVars]: {
           text: variablesQuery,
           value: variablesQuery,
+          format: 'none',
         },
       };
 

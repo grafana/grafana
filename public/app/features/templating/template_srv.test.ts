@@ -65,6 +65,17 @@ describe('templateSrv', () => {
       expect(target).toBe('first second');
     });
 
+    it('scoped var with format option should use that instead of passed default format', () => {
+      const target = _templateSrv.replace(
+        '${__all_variables}',
+        {
+          __all_variables: { value: 'asd=my%20value', format: 'none' },
+        },
+        encodeURIComponent
+      );
+      expect(target).toBe('asd=my%20value');
+    });
+
     it('should replace $test with scoped value', () => {
       const target = _templateSrv.replace('this.$test.filters', {
         test: { value: 'mupp', text: 'asd' },
