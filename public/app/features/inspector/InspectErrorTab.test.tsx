@@ -67,6 +67,6 @@ describe('InspectErrorTab', () => {
     const { container } = render(<InspectErrorTab error={error} />);
     expect(container.childElementCount).toEqual(1);
     expect(screen.getByText('status:')).toBeInTheDocument();
-    expect(screen.getByText('"400"')).toBeInTheDocument();
+    expect(screen.getByText('400')).toBeInTheDocument();
   });
 });
