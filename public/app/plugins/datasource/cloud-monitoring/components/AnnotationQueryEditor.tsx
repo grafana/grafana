@@ -4,16 +4,15 @@ import { LegacyForms } from '@grafana/ui';
 import React from 'react';
 
 import CloudMonitoringDatasource from '../datasource';
-import { AnnotationTarget, EditorMode, MetricDescriptor, MetricKind } from '../types';
+import { CloudMonitoringQuery, AnnotationTarget, EditorMode, MetricDescriptor, MetricKind } from '../types';
 import { AnnotationsHelp, LabelFilter, Metrics, Project, QueryEditorRow } from './';
 
 const { Input } = LegacyForms;
 
 export interface Props {
-  onQueryChange: (target: AnnotationTarget) => void;
-  target: AnnotationTarget;
+  onChange: (target: CloudMonitoringQuery) => void;
+  query: CloudMonitoringQuery;
   datasource: CloudMonitoringDatasource;
-  templateSrv: TemplateSrv;
 }
 
 interface State extends AnnotationTarget {
@@ -45,7 +44,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
   async UNSAFE_componentWillMount() {
     // Unfortunately, migrations like this need to go UNSAFE_componentWillMount. As soon as there's
     // migration hook for this module.ts, we can do the migrations there instead.
-    const { target, datasource } = this.props;
+    const { query: target, datasource } = this.props;
     if (!target.projectName) {
       target.projectName = datasource.getDefaultProject();
     }
@@ -69,7 +68,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
   }
 
   onMetricTypeChange = ({ valueType, metricKind, type, unit }: MetricDescriptor) => {
-    const { onQueryChange, datasource } = this.props;
+    const { onChange: onQueryChange, datasource } = this.props;
     this.setState(
       {
         metricType: type,
@@ -86,7 +85,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
 
   onChange(prop: string, value: string | string[]) {
     this.setState({ [prop]: value }, () => {
-      this.props.onQueryChange(this.state);
+      this.props.onChange(this.state);
     });
   }
 
