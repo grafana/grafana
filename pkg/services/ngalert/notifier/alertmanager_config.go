@@ -53,7 +53,7 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 		for _, pr := range recv.PostableGrafanaReceivers.GrafanaManagedReceivers {
 			secureFields := make(map[string]bool, len(pr.SecureSettings))
 			for k := range pr.SecureSettings {
-				decryptedValue, err := moa.crypto.getDecryptedSecret(pr, k)
+				decryptedValue, err := moa.Crypto.getDecryptedSecret(pr, k)
 				if err != nil {
 					return definitions.GettableUserConfig{}, fmt.Errorf("failed to decrypt stored secure setting: %w", err)
 				}
@@ -94,11 +94,11 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 		}
 	}
 
-	if err := moa.crypto.LoadSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
+	if err := moa.Crypto.LoadSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
 		return err
 	}
 
-	if err := config.ProcessConfig(moa.crypto.Encrypt); err != nil {
+	if err := config.ProcessConfig(moa.Crypto.Encrypt); err != nil {
 		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
 	}
 
