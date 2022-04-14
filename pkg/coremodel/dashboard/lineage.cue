@@ -72,10 +72,10 @@ seqs: [
                 // Version of the JSON schema, incremented each time a Grafana update brings
                 // changes to said schema.
                 // FIXME this is the old schema numbering system, and will be replaced by Thema's themaVersion
-                schemaVersion: uint16 | *30
+                schemaVersion: uint16 | *33
                 // Version of the dashboard, incremented each time the dashboard is updated.
                 version?: uint32
-                panels?: [...(#Panel | #GraphPanel | #RowPanel)]
+                panels?: [...(#Panel | #GraphPanel | #HeatmapPanel | #RowPanel)]
 
                 // TODO docs
                 #FieldColorModeId: "thresholds" | "palette-classic" | "palette-saturated" | "continuous-GrYlRd" | "fixed" @cuetsy(kind="enum")
@@ -224,7 +224,7 @@ seqs: [
 
                     // options is specified by the PanelOptions field in panel
                     // plugin schemas.
-                    options: {}
+                    options: {...}
 
                     fieldConfig: {
                         defaults: {
@@ -288,7 +288,7 @@ seqs: [
 
                             // custom is specified by the PanelFieldConfig field
                             // in panel plugin schemas.
-                            custom?: {}
+                            custom?: {...}
                         }
                         overrides: [...{
                             matcher: {
@@ -325,14 +325,18 @@ seqs: [
                         static?: bool
                     }
                     id: uint32
-                    panels: [...(#Panel | #GraphPanel)]
+                    panels: [...(#Panel | #GraphPanel | #HeatmapPanel)]
                     // Name of template variable to repeat for.
                     repeat?: string
                 }
-                // Support for legacy graph panels.
+                // Support for legacy graph and heatmap panels.
                 #GraphPanel: {
                     ...
                     type: "graph"
+                }
+                #HeatmapPanel: {
+                    ...
+                    type: "heatmap"
                 }
             }
 				]
