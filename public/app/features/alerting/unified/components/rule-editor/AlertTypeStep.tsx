@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Field, Input, InputControl, useStyles2 } from '@grafana/ui';
+import { Field, Icon, Input, InputControl, Label, Tooltip, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
@@ -12,6 +12,7 @@ import { checkForPathSeparator } from './util';
 import { RuleTypePicker } from './rule-types/RuleTypePicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
+import { Stack } from '@grafana/experimental';
 
 interface Props {
   editingExistingRule: boolean;
@@ -120,26 +121,60 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
         dataSourceName && <GroupAndNamespaceFields rulesSourceName={dataSourceName} />}
 
       {ruleFormType === RuleFormType.grafana && (
-        <Field
-          label="Folder"
-          className={styles.formInput}
-          error={errors.folder?.message}
-          invalid={!!errors.folder?.message}
-          data-testid="folder-picker"
-        >
-          <InputControl
-            render={({ field: { ref, ...field } }) => (
-              <RuleFolderPicker {...field} enableCreateNew={true} enableReset={true} />
-            )}
-            name="folder"
-            rules={{
-              required: { value: true, message: 'Please select a folder' },
-              validate: {
-                pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
-              },
-            }}
-          />
-        </Field>
+        <div className={styles.flexRow}>
+          <Field
+            label={
+              <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
+                <Stack gap={0.5}>
+                  Folder
+                  <Tooltip
+                    placement="top"
+                    content={
+                      <div>
+                        Each folder has unique folder permission. When you store multiple rules in a folder, the folder
+                        access permissions get assigned to the rules.
+                      </div>
+                    }
+                  >
+                    <Icon name="info-circle" size="xs" />
+                  </Tooltip>
+                </Stack>
+              </Label>
+            }
+            className={styles.formInput}
+            error={errors.folder?.message}
+            invalid={!!errors.folder?.message}
+            data-testid="folder-picker"
+          >
+            <InputControl
+              render={({ field: { ref, ...field } }) => (
+                <RuleFolderPicker inputId="folder" {...field} enableCreateNew={true} enableReset={true} />
+              )}
+              name="folder"
+              rules={{
+                required: { value: true, message: 'Please select a folder' },
+                validate: {
+                  pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
+                },
+              }}
+            />
+          </Field>
+          <Field
+            label="Group"
+            data-testid="group-picker"
+            description="Rules within the same group are evaluated after the same time interval."
+            className={styles.formInput}
+            error={errors.group?.message}
+            invalid={!!errors.group?.message}
+          >
+            <Input
+              id="group"
+              {...register('group', {
+                required: { value: true, message: 'Must enter a group name' },
+              })}
+            />
+          </Field>
+        </div>
       )}
     </RuleEditorSection>
   );
@@ -172,5 +207,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
+    align-items: flex-end;
   `,
 });

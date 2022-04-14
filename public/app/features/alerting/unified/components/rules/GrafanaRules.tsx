@@ -7,6 +7,8 @@ import { RulesGroup } from './RulesGroup';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { initialAsyncRequestState } from '../../utils/redux';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { flattenGrafanaManagedRules } from '../../hooks/useCombinedRuleNamespaces';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
@@ -15,9 +17,14 @@ interface Props {
 
 export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
   const styles = useStyles(getStyles);
+  const [queryParams] = useQueryParams();
+
   const { loading } = useUnifiedAlertingSelector(
     (state) => state.promRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState
   );
+
+  const wantsGroupedView = queryParams['view'] === 'grouped';
+  const namespacesFormat = wantsGroupedView ? namespaces : flattenGrafanaManagedRules(namespaces);
 
   return (
     <section className={styles.wrapper}>
@@ -26,7 +33,7 @@ export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
         {loading ? <LoadingPlaceholder className={styles.loader} text="Loading..." /> : <div />}
       </div>
 
-      {namespaces?.map((namespace) =>
+      {namespacesFormat?.map((namespace) =>
         namespace.groups.map((group) => (
           <RulesGroup
             group={group}
@@ -36,7 +43,7 @@ export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
           />
         ))
       )}
-      {namespaces?.length === 0 && <p>No rules found.</p>}
+      {namespacesFormat?.length === 0 && <p>No rules found.</p>}
     </section>
   );
 };
