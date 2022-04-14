@@ -108,6 +108,32 @@ func (m *AddColumnMigration) SQL(dialect Dialect) string {
 	return dialect.AddColumnSQL(m.tableName, m.column)
 }
 
+type RenameColumnMigration struct {
+	MigrationBase
+	tableName string
+	oldName   string
+	newName   string
+}
+
+func NewRenameColumnMigration(table Table, oldName, newName string) *RenameColumnMigration {
+	return &RenameColumnMigration{tableName: table.Name, oldName: oldName, newName: newName}
+}
+
+func (m *RenameColumnMigration) Table(tableName string) *RenameColumnMigration {
+	m.tableName = tableName
+	return m
+}
+
+func (m *RenameColumnMigration) Rename(oldName string, newName string) *RenameColumnMigration {
+	m.oldName = oldName
+	m.newName = newName
+	return m
+}
+
+func (m *RenameColumnMigration) SQL(d Dialect) string {
+	return d.RenameColumn(m.tableName, m.oldName, m.newName)
+}
+
 type AddIndexMigration struct {
 	MigrationBase
 	tableName string

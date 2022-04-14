@@ -1,6 +1,10 @@
 package migrations
 
-import "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	"fmt"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
 func addSecretsMigration(mg *migrator.Migrator) {
 	dataKeysV1 := migrator.Table{
@@ -18,4 +22,22 @@ func addSecretsMigration(mg *migrator.Migrator) {
 	}
 
 	mg.AddMigration("create data_keys table", migrator.NewAddTableMigration(dataKeysV1))
+
+	mg.AddMigration("rename name to column to id", migrator.NewRenameColumnMigration(
+		dataKeysV1, "name", "id",
+	))
+
+	mg.AddMigration("add name column", migrator.NewAddColumnMigration(
+		dataKeysV1,
+		&migrator.Column{
+			Name:    "name",
+			Type:    migrator.DB_NVarchar,
+			Length:  100,
+			Default: "\"\"",
+		},
+	))
+
+	mg.AddMigration("copy id column into name", migrator.NewRawSQLMigration(
+		fmt.Sprintf("UPDATE %s SET %s = %s", dataKeysV1.Name, "name", "id"),
+	))
 }
