@@ -274,7 +274,6 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		rows := make([]*dashboardQueryResult, 0, 2)
 
 		err = l.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-
 			sess.Table("dashboard").
 				Where("org_id = ?", orgID)
 

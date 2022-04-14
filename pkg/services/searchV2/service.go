@@ -9,9 +9,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -20,6 +22,7 @@ import (
 type StandardSearchService struct {
 	registry.BackgroundService
 
+	cfg  *setting.Cfg
 	sql  *sqlstore.SQLStore
 	auth FutureAuthService // eventually injected from elsewhere
 
@@ -27,8 +30,9 @@ type StandardSearchService struct {
 	dashboardIndex *dashboardIndex
 }
 
-func ProvideService(sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService) SearchService {
+func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService) SearchService {
 	return &StandardSearchService{
+		cfg: cfg,
 		sql: sql,
 		auth: &simpleSQLAuthService{
 			sql: sql,
@@ -36,6 +40,13 @@ func ProvideService(sql *sqlstore.SQLStore, entityEventStore store.EntityEventsS
 		dashboardIndex: newDashboardIndex(&sqlDashboardLoader{sql: sql}, entityEventStore),
 		logger:         log.New("searchV2"),
 	}
+}
+
+func (s *StandardSearchService) IsDisabled() bool {
+	if s.cfg == nil {
+		return true
+	}
+	return !s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagPanelTitleSearch)
 }
 
 func (s *StandardSearchService) Run(ctx context.Context) error {
