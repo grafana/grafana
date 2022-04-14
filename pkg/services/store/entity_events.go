@@ -53,7 +53,7 @@ type entityEventService struct {
 	log log.Logger
 }
 
-func (e entityEventService) SaveEvent(ctx context.Context, cmd SaveEventCmd) error {
+func (e *entityEventService) SaveEvent(ctx context.Context, cmd SaveEventCmd) error {
 	return e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Insert(&EntityEvent{
 			EventType: cmd.EventType,
@@ -64,7 +64,7 @@ func (e entityEventService) SaveEvent(ctx context.Context, cmd SaveEventCmd) err
 	})
 }
 
-func (e entityEventService) GetLastEvent(ctx context.Context) (*EntityEvent, error) {
+func (e *entityEventService) GetLastEvent(ctx context.Context) (*EntityEvent, error) {
 	var entityEvent *EntityEvent
 	err := e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		bean := &EntityEvent{}
@@ -78,7 +78,7 @@ func (e entityEventService) GetLastEvent(ctx context.Context) (*EntityEvent, err
 	return entityEvent, err
 }
 
-func (e entityEventService) GetAllEventsAfter(ctx context.Context, id int64) ([]*EntityEvent, error) {
+func (e *entityEventService) GetAllEventsAfter(ctx context.Context, id int64) ([]*EntityEvent, error) {
 	var evs = make([]*EntityEvent, 0)
 	err := e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		return sess.OrderBy("id asc").Where("id > ?", id).Find(&evs)
@@ -87,7 +87,7 @@ func (e entityEventService) GetAllEventsAfter(ctx context.Context, id int64) ([]
 	return evs, err
 }
 
-func (e entityEventService) deleteEventsOlderThan(ctx context.Context, duration time.Duration) error {
+func (e *entityEventService) deleteEventsOlderThan(ctx context.Context, duration time.Duration) error {
 	return e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		maxCreated := time.Now().Add(-duration)
 		deletedCount, err := sess.Where("created < ?", maxCreated.Unix()).Delete(&EntityEvent{})
@@ -96,7 +96,7 @@ func (e entityEventService) deleteEventsOlderThan(ctx context.Context, duration 
 	})
 }
 
-func (e entityEventService) Run(ctx context.Context) error {
+func (e *entityEventService) Run(ctx context.Context) error {
 	clean := time.NewTicker(1 * time.Hour)
 
 	for {
