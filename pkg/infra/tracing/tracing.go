@@ -59,10 +59,10 @@ type traceValue struct {
 	IsSampled bool
 }
 
-func TraceIDFromContext(c context.Context, sampled bool) string {
+func TraceIDFromContext(c context.Context, requireSampled bool) string {
 	v := c.Value(traceKey{})
-	// Return traceID if a) it is present and b) it is sampled when sampled param is true
-	if trace, ok := v.(traceValue); ok && (!sampled || trace.IsSampled) {
+	// Return traceID if a) it is present and b) it is sampled when requireSampled param is true
+	if trace, ok := v.(traceValue); ok && (!requireSampled || trace.IsSampled) {
 		return trace.ID
 	}
 	return ""
