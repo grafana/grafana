@@ -8,7 +8,7 @@ func addEntityEventsTableMigration(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, Nullable: false, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "grn", Type: DB_NVarchar, Length: 1024, Nullable: false},
-			{Name: "event_type", Type: DB_NVarchar, Length: 64, Nullable: false},
+			{Name: "event_type", Type: DB_NVarchar, Length: 8, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 		},
 		Indices: []*Index{},
