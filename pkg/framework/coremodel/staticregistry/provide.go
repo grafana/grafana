@@ -1,7 +1,7 @@
 package staticregistry
 
 import (
-	"github.com/grafana/grafana/pkg/coremodel/datasource"
+	"github.com/grafana/grafana/pkg/coremodel/dashboard"
 	"github.com/grafana/grafana/pkg/framework/coremodel"
 )
 
@@ -9,9 +9,9 @@ import (
 // Coremodels have to be manually added.
 // TODO dynamism
 func ProvideRegistry(
-	datasource *datasource.Coremodel,
+	dashboard *dashboard.Coremodel,
 ) (*coremodel.Registry, error) {
 	return coremodel.NewRegistry(
-		datasource,
+		dashboard,
 	)
 }
