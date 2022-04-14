@@ -1074,6 +1074,9 @@ def get_windows_steps(edition, ver_mode):
         steps.append({
             'name': 'build-windows-installer',
             'image': wix_image,
+            'depends_on': [
+                'windows-init',
+            ],
             'environment': {
                 'GCP_KEY': from_secret('gcp_key'),
                 'PRERELEASE_BUCKET': from_secret(prerelease_bucket),

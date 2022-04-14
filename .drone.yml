@@ -1257,6 +1257,8 @@ steps:
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://grafana-downloads/oss/main/
   - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/main/
+  depends_on:
+  - windows-init
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -1941,6 +1943,8 @@ steps:
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/oss/release/
   - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/oss/release/
+  depends_on:
+  - windows-init
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -2694,6 +2698,8 @@ steps:
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/enterprise/release/
   - gsutil cp "$$fname.sha256" gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/enterprise/release/
+  depends_on:
+  - windows-init
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -3683,6 +3689,8 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
+  depends_on:
+  - windows-init
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -4395,6 +4403,8 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
+  depends_on:
+  - windows-init
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -4558,6 +4568,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 2e11f29096cff1fcb5caafaa1ccbb2580095b11f441c414851ada2e9e262fcfd
+hmac: 143792a9a1a34f2b6a32adf51149a6a5d370639717c02804ae23488dfc6160d2
 
 ...
