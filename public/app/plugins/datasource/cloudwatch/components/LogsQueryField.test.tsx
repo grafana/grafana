@@ -6,7 +6,8 @@ import { DescribeLogGroupsRequest } from '../types';
 import { SelectableValue } from '@grafana/data';
 // eslint-disable-next-line lodash/import-scope
 import _, { DebouncedFunc } from 'lodash';
-import { render } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { act } from 'react-dom/test-utils';
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
 
 jest
@@ -14,9 +15,10 @@ jest
   .mockImplementation((func: (...args: any) => any, wait?: number) => func as DebouncedFunc<typeof func>);
 
 describe('CloudWatchLogsQueryField', () => {
-  it('runs onRunQuery on blur', () => {
-    const ds = setupMockedDataSource();
+  it('runs onRunQuery on blur of Log Groups', async () => {
     const onRunQuery = jest.fn();
+    const ds = setupMockedDataSource();
+
     render(
       <CloudWatchLogsQueryField
         absoluteRange={{ from: 1, to: 10 }}
@@ -27,6 +29,12 @@ describe('CloudWatchLogsQueryField', () => {
         onChange={() => {}}
       />
     );
+
+    const multiSelect = screen.getByLabelText('Log Groups');
+    await act(async () => {
+      fireEvent.blur(multiSelect);
+    });
+    expect(onRunQuery).toHaveBeenCalled();
   });
 
   it('updates upstream query log groups on region change', async () => {

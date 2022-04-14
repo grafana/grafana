@@ -345,7 +345,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
               additionalPlugins={this.plugins}
               query={query.expression ?? ''}
               onChange={this.onChangeQuery}
-              onBlur={this.props.onRunQuery}
               onClick={this.onQueryFieldClick}
               onRunQuery={this.props.onRunQuery}
               onTypeahead={this.onTypeahead}
