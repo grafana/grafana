@@ -96,7 +96,13 @@ function useColumns(): MatchedRulesTableColumnProps[] {
       id: 'created',
       label: 'Created',
       renderCell: function renderSummary({ data: { matchedInstance } }) {
-        return <>{dateTime(matchedInstance.activeAt).format('YYYY-MM-DD HH:mm:ss')}</>;
+        return (
+          <>
+            {matchedInstance.activeAt.startsWith('0001')
+              ? '-'
+              : dateTime(matchedInstance.activeAt).format('YYYY-MM-DD HH:mm:ss')}
+          </>
+        );
       },
       size: '400px',
     },
