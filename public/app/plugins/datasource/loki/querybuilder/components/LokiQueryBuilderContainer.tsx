@@ -62,7 +62,7 @@ export function LokiQueryBuilderContainer(props: Props) {
 }
 
 const stateSlice = createSlice({
-  name: 'prom-builder-container',
+  name: 'loki-builder-container',
   initialState: { expr: '' } as State,
   reducers: {
     visualQueryChange: (state, action: PayloadAction<{ visQuery: LokiVisualQuery; expr: string }>) => {
