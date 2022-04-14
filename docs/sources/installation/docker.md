@@ -16,7 +16,7 @@ You can install and run Grafana using the official Docker images. Our docker ima
 
 Each edition is available in two variants: Alpine and Ubuntu. See below.
 
-For documentation regarding configuration of a docker image, please see [configure a Grafana Docker image](https://grafana.com/docs/grafana/latest/administration/configure-docker/).
+For documentation regarding the configuration of a docker image, refer to [configure a Grafana Docker image](https://grafana.com/docs/grafana/latest/administration/configure-docker/).
 
 This topic also contains important information about [migrating from earlier Docker image versions](#migrate-from-previous-docker-containers-versions).
 
