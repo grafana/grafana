@@ -78,3 +78,21 @@ type DeleteQueryFromQueryHistoryResponse struct {
 	ID      int64  `json:"id"`
 	Message string `json:"message"`
 }
+
+type MigrateQueriesToQueryHistoryCommand struct {
+	Queries []QueryToMigrate `json:"queries"`
+}
+
+type QueryToMigrate struct {
+	DatasourceUID string           `json:"datasourceUid"`
+	Queries       *simplejson.Json `json:"queries"`
+	CreatedAt     int64            `json:"createdAt"`
+	Comment       string           `json:"comment"`
+	Starred       bool             `json:"starred"`
+}
+
+type QueryHistoryMigrationResponse struct {
+	Message      string `json:"message"`
+	TotalCount   int    `json:"totalCount"`
+	StarredCount int    `json:"starredCount"`
+}

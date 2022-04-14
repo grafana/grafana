@@ -79,13 +79,6 @@ describe('LokiQueryEditorSelector', () => {
       expr: defaultQuery.expr,
       queryType: LokiQueryType.Range,
       editorMode: QueryEditorMode.Builder,
-      visualQuery: {
-        labels: [
-          { label: 'label1', op: '=', value: 'foo' },
-          { label: 'label2', op: '=', value: 'bar' },
-        ],
-        operations: [],
-      },
     });
   });
 

@@ -178,12 +178,6 @@ func (f *FakeRuleStore) GetOrgAlertRules(_ context.Context, q *models.ListAlertR
 	q.Result = rules
 	return nil
 }
-func (f *FakeRuleStore) GetNamespaceAlertRules(_ context.Context, q *models.ListNamespaceAlertRulesQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	return nil
-}
 func (f *FakeRuleStore) GetAlertRules(_ context.Context, q *models.GetAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()

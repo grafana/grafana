@@ -68,3 +68,11 @@ After you've navigated to Explore, you should notice a "Back" button in the Expl
 > **Note:** Available in Grafana 7.3 and later versions.
 
 The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs with query parameters. To create a shortened link to the executed query, click the **Share** option in the Explore toolbar. A shortened link that is never used will automatically get deleted after seven (7) days.
+
+## Available feature toggles
+
+### explore2Dashboard
+
+> **Note:** Available in Grafana 8.5.0 and later versions.
+
+Enabled by default, allows users to create panels in dashboards from within Explore.
