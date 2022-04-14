@@ -382,13 +382,13 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 	resp, err = http.Get(u + "/" + rules.Name)
 	require.NoError(t, err)
 
-	var createdNode apimodels.GettableRuleGroupConfig
+	var createdRuleGroup apimodels.GettableRuleGroupConfig
 	data, err := ioutil.ReadAll(resp.Body)
 	require.NoError(t, err)
 
-	err = json.Unmarshal(data, &createdNode)
+	err = json.Unmarshal(data, &createdRuleGroup)
 	require.NoError(t, err)
-	require.Len(t, createdNode.Rules, 2)
+	require.Len(t, createdRuleGroup.Rules, 2)
 
 	t.Run("trying to create alert with same title under same folder should fail", func(t *testing.T) {
 		rules := newTestingRuleConfig(t)
@@ -416,8 +416,8 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 	t.Run("trying to update an alert to the title of an existing alert in the same folder should fail", func(t *testing.T) {
 
 		rules := newTestingRuleConfig(t)
-		rules.Rules[0].GrafanaManagedAlert.UID = createdNode.Rules[0].GrafanaManagedAlert.UID
-		rules.Rules[1].GrafanaManagedAlert.UID = createdNode.Rules[1].GrafanaManagedAlert.UID
+		rules.Rules[0].GrafanaManagedAlert.UID = createdRuleGroup.Rules[0].GrafanaManagedAlert.UID
+		rules.Rules[1].GrafanaManagedAlert.UID = createdRuleGroup.Rules[1].GrafanaManagedAlert.UID
 		rules.Rules[1].GrafanaManagedAlert.Title = "AlwaysFiring"
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
