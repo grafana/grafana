@@ -166,7 +166,7 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
                     </Field>
                     <Field name="month">
                       {({ input }) => (
-                        <div>
+                        <div data-testid="multi-select-field-div-wrapper">
                           <MultiSelectField
                             {...input}
                             closeMenuOnSelect={false}

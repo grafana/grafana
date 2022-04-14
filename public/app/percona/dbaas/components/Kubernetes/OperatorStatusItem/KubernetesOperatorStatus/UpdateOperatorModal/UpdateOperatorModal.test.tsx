@@ -1,5 +1,4 @@
-import { dataTestId } from '@percona/platform-core';
-import { mount } from 'enzyme';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 import { ComponentToUpdate } from '../../../Kubernetes.types';
@@ -19,7 +18,7 @@ describe('UpdateOperatorModal::', () => {
   };
 
   it('should render message with new operator version', () => {
-    const root = mount(
+    render(
       <UpdateOperatorModal
         kubernetesClusterName="test_cluster"
         isVisible
@@ -33,12 +32,12 @@ describe('UpdateOperatorModal::', () => {
     );
     const message = 'PXC 1.7.0 to version 1.8.0 in test_cluster';
 
-    expect(root.find(dataTestId('update-operator-message')).text()).toContain(message);
+    expect(screen.getByTestId('update-operator-message')).toHaveTextContent(message);
   });
 
   it('should call onOperatorUpdated after installation', async () => {
     const onOperatorUpdated = jest.fn();
-    const root = mount(
+    render(
       <UpdateOperatorModal
         kubernetesClusterName="test_cluster"
         isVisible
@@ -52,7 +51,8 @@ describe('UpdateOperatorModal::', () => {
     );
 
     jest.useFakeTimers();
-    root.find(dataTestId('confirm-update-operator-button')).find('button').simulate('click');
+    const btn = screen.getByTestId('confirm-update-operator-button');
+    fireEvent.click(btn);
     await jest.runOnlyPendingTimers();
 
     expect(onOperatorUpdated).toHaveBeenCalledTimes(1);
@@ -62,7 +62,7 @@ describe('UpdateOperatorModal::', () => {
     const setVisible = jest.fn();
     const setSelectedCluster = jest.fn();
     const setOperatorToUpdate = jest.fn();
-    const root = mount(
+    render(
       <UpdateOperatorModal
         kubernetesClusterName="test_cluster"
         isVisible
@@ -76,7 +76,8 @@ describe('UpdateOperatorModal::', () => {
     );
 
     jest.useFakeTimers();
-    root.find(dataTestId('confirm-update-operator-button')).find('button').simulate('click');
+    const btn = screen.getByTestId('confirm-update-operator-button');
+    fireEvent.click(btn);
     await jest.runOnlyPendingTimers();
 
     expect(setVisible).toHaveBeenCalledWith(false);

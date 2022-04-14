@@ -1,4 +1,4 @@
-import { mount } from 'enzyme';
+import { render } from '@testing-library/react';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
@@ -29,7 +29,7 @@ describe('KubernetesInventory::', () => {
   });
 
   it('renders table correctly', () => {
-    const root = mount(
+    const { container } = render(
       <KubernetesInventory
         kubernetes={kubernetesStub}
         addKubernetes={addActionStub}
@@ -39,7 +39,7 @@ describe('KubernetesInventory::', () => {
         loading={false}
       />
     );
-    const rows = root.find('tr');
-    expect(rows.length).toBe(kubernetesStub.length + 1);
+    const rows = container.querySelectorAll('tr');
+    expect(rows).toHaveLength(kubernetesStub.length + 1);
   });
 });

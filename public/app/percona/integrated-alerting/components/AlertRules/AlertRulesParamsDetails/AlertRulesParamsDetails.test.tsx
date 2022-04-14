@@ -1,5 +1,4 @@
-import { dataTestId } from '@percona/platform-core';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { TemplateParamType, TemplateParamUnit } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
@@ -32,7 +31,7 @@ describe('AlertRulesParamsDetails', () => {
         value: '10s',
       },
     ];
-    const wrapper = shallow(<AlertRulesParamsDetails params={params} />);
-    expect(wrapper.find(dataTestId('alert-rule-param'))).toHaveLength(3);
+    render(<AlertRulesParamsDetails params={params} />);
+    expect(screen.getAllByTestId('alert-rule-param')).toHaveLength(3);
   });
 });

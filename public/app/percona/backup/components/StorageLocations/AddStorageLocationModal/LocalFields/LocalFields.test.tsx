@@ -1,13 +1,12 @@
-import { TextInputField } from '@percona/platform-core';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { Form } from 'react-final-form';
 
 import { LocalFields } from './LocalFields';
 
 describe('LocalFields', () => {
   it('should pass initial values', () => {
-    const wrapper = shallow(<LocalFields name="server" path="/foo" />);
-
-    expect(wrapper.find(TextInputField).prop('initialValue')).toBe('/foo');
+    render(<Form onSubmit={jest.fn()} render={() => <LocalFields name="server" path="/foo" />} />);
+    expect(screen.getByRole('textbox')).toHaveValue('/foo');
   });
 });

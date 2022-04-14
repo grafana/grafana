@@ -1,10 +1,8 @@
-import { shallow } from 'enzyme';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-
-import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
 
 import { DBaaS } from './DBaaS';
 
@@ -15,6 +13,14 @@ jest.mock('react-redux', () => {
   return {
     ...original,
     useSelector: jest.fn(),
+  };
+});
+
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  return {
+    ...original,
+    getLocationSrv: jest.fn().mockImplementation(() => ({ update: jest.fn() })),
   };
 });
 
@@ -29,8 +35,9 @@ describe('DBaaS::', () => {
     (useSelector as jest.Mock).mockClear();
   });
 
-  it('renders PageWrapper', () => {
-    const wrapper = shallow(<DBaaS {...getRouteComponentProps({ match: { params: { tab: '' } } as any })} />);
-    expect(wrapper.find(PageWrapper).exists()).toBeTruthy();
+  it('renders PageWrapper', async () => {
+    await waitFor(() => render(<DBaaS {...getRouteComponentProps({ match: { params: { tab: '' } } as any })} />));
+
+    expect(screen.getByTestId('dbaas-page-wrapper')).toBeInTheDocument();
   });
 });

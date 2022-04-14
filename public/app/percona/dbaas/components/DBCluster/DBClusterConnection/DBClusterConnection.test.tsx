@@ -1,6 +1,5 @@
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-
-import { getMount } from 'app/percona/shared/helpers/testUtils';
 
 import { dbClustersStub, mongoDBClusterConnectionStub } from '../__mocks__/dbClustersStubs';
 
@@ -22,24 +21,20 @@ jest.mock('@percona/platform-core', () => {
 
 describe('DBClusterConnection::', () => {
   it('renders correctly connection items', async () => {
-    const root = await getMount(<DBClusterConnection dbCluster={dbClustersStub[0]} />);
+    await waitFor(() => render(<DBClusterConnection dbCluster={dbClustersStub[0]} />));
 
-    expect(root.find('[data-testid="cluster-connection-host"]')).toBeTruthy();
-    expect(root.find('[data-testid="cluster-connection-port"]')).toBeTruthy();
-    expect(root.find('[data-testid="cluster-connection-username"]')).toBeTruthy();
-    expect(root.find('[data-testid="cluster-connection-password"]')).toBeTruthy();
+    expect(screen.getByTestId('cluster-connection-host')).toBeInTheDocument();
+    expect(screen.getByTestId('cluster-connection-port')).toBeInTheDocument();
+    expect(screen.getByTestId('cluster-connection-username')).toBeInTheDocument();
+    expect(screen.getByTestId('cluster-connection-password')).toBeInTheDocument();
   });
   it('renders correctly connection items with MongoDB cluster', async () => {
-    const root = await getMount(<DBClusterConnection dbCluster={dbClustersStub[2]} />);
+    await waitFor(() => render(<DBClusterConnection dbCluster={dbClustersStub[2]} />));
 
-    root.update();
-
-    const host = root.find('[data-testid="cluster-connection-host"]');
-
-    expect(host).toBeTruthy();
-    expect(host.text()).toContain(mongoDBClusterConnectionStub.host);
-    expect(root.find('[data-testid="cluster-connection-port"]')).toBeTruthy();
-    expect(root.find('[data-testid="cluster-connection-username"]')).toBeTruthy();
-    expect(root.find('[data-testid="cluster-connection-password"]')).toBeTruthy();
+    expect(screen.getByTestId('cluster-connection-host')).toBeInTheDocument();
+    expect(screen.getByTestId('cluster-connection-host')).toHaveTextContent(mongoDBClusterConnectionStub.host);
+    expect(screen.getByTestId('cluster-connection-port')).toBeInTheDocument();
+    expect(screen.getByTestId('cluster-connection-username')).toBeInTheDocument();
+    expect(screen.getByTestId('cluster-connection-password')).toBeInTheDocument();
   });
 });

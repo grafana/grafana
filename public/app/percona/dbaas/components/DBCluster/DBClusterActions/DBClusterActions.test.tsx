@@ -1,9 +1,5 @@
-import { dataTestId } from '@percona/platform-core';
-import { mount, shallow } from 'enzyme';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
-
-import { MultipleActions } from 'app/percona/dbaas/components/MultipleActions/MultipleActions';
-import { asyncAct } from 'app/percona/shared/helpers/testUtils';
 
 import { dbClustersStub } from '../__mocks__/dbClustersStubs';
 
@@ -13,8 +9,8 @@ jest.mock('app/core/app_events');
 jest.mock('../XtraDB.service');
 
 describe('DBClusterActions::', () => {
-  it('renders correctly', () => {
-    const root = shallow(
+  it('renders correctly', async () => {
+    render(
       <DBClusterActions
         dbCluster={dbClustersStub[0]}
         setSelectedCluster={jest.fn()}
@@ -26,11 +22,11 @@ describe('DBClusterActions::', () => {
       />
     );
 
-    expect(root.find(MultipleActions)).toBeTruthy();
+    expect(screen.getByTestId('dropdown-menu-toggle')).toBeInTheDocument();
   });
 
   it('doesnt disable button if cluster is ready', () => {
-    const root = mount(
+    render(
       <DBClusterActions
         dbCluster={dbClustersStub[0]}
         setSelectedCluster={jest.fn()}
@@ -42,13 +38,13 @@ describe('DBClusterActions::', () => {
       />
     );
 
-    expect(root.find('button').prop('disabled')).toBeFalsy();
+    expect(screen.getByRole('button')).not.toBeDisabled();
   });
 
   it('calls delete action correctly', async () => {
     const setSelectedCluster = jest.fn();
     const setDeleteModalVisible = jest.fn();
-    const root = mount(
+    render(
       <DBClusterActions
         dbCluster={dbClustersStub[0]}
         setSelectedCluster={setSelectedCluster}
@@ -60,18 +56,11 @@ describe('DBClusterActions::', () => {
       />
     );
 
-    await asyncAct(() => {
-      const button = root.find('button');
+    const btn = screen.getByRole('button');
+    await waitFor(() => fireEvent.click(btn));
 
-      button.simulate('click');
-    });
-
-    root.update();
-
-    const menu = root.find(dataTestId('dropdown-menu-menu'));
-    const action = menu.find('span').at(1);
-
-    action.simulate('click');
+    const action = screen.getByTestId('dropdown-menu-menu').querySelectorAll('span')[1];
+    await waitFor(() => fireEvent.click(action));
 
     expect(setSelectedCluster).toHaveBeenCalled();
     expect(setDeleteModalVisible).toHaveBeenCalled();
@@ -80,7 +69,7 @@ describe('DBClusterActions::', () => {
   it('delete action is disabled if cluster is deleting', async () => {
     const setSelectedCluster = jest.fn();
     const setDeleteModalVisible = jest.fn();
-    const root = mount(
+    render(
       <DBClusterActions
         dbCluster={dbClustersStub[3]}
         setSelectedCluster={setSelectedCluster}
@@ -91,18 +80,12 @@ describe('DBClusterActions::', () => {
         getDBClusters={jest.fn()}
       />
     );
-    await asyncAct(() => {
-      const button = root.find('button');
 
-      button.simulate('click');
-    });
+    const btn = screen.getByRole('button');
+    await waitFor(() => fireEvent.click(btn));
 
-    root.update();
-
-    const menu = root.find(dataTestId('dropdown-menu-menu'));
-    const action = menu.find('span').at(1);
-
-    action.simulate('click');
+    const action = screen.getByTestId('dropdown-menu-menu').querySelectorAll('span')[1];
+    await waitFor(() => fireEvent.click(action));
 
     expect(setSelectedCluster).toHaveBeenCalled();
     expect(setDeleteModalVisible).toHaveBeenCalled();
@@ -110,7 +93,7 @@ describe('DBClusterActions::', () => {
 
   xit('calls restart action correctly', async () => {
     const getDBClusters = jest.fn();
-    const root = mount(
+    render(
       <DBClusterActions
         dbCluster={dbClustersStub[0]}
         setSelectedCluster={jest.fn()}
@@ -122,21 +105,11 @@ describe('DBClusterActions::', () => {
       />
     );
 
-    await asyncAct(() => {
-      const button = root.find('button');
+    const btn = screen.getByRole('button');
+    await waitFor(() => fireEvent.click(btn));
 
-      button.simulate('click');
-    });
-
-    root.update();
-
-    const menu = root.find(dataTestId('dropdown-menu-menu'));
-
-    await asyncAct(() => {
-      const action = menu.find('span').at(1);
-
-      action.simulate('click');
-    });
+    const action = screen.getByTestId('dropdown-menu-menu').querySelectorAll('span')[3];
+    await waitFor(() => fireEvent.click(action));
 
     expect(getDBClusters).toHaveBeenCalled();
   });

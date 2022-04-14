@@ -1,21 +1,21 @@
-import { shallow } from 'enzyme';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
-import { DBIcon } from '../../DBIcon';
 import { LocationType, StorageLocation } from '../StorageLocations.types';
 
 import { StorageLocationsActions } from './StorageLocationsActions';
 
 describe('StorageLocationsActions', () => {
   it('should have DBIcon', () => {
-    const wrapper = shallow(
+    render(
       <StorageLocationsActions
         onUpdate={jest.fn()}
         onDelete={jest.fn()}
         location={null as unknown as StorageLocation}
       />
     );
-    expect(wrapper.find(DBIcon).exists()).toBeTruthy();
+    expect(screen.getByTestId('edit-storage-location-button')).toBeInTheDocument();
+    expect(screen.getByTestId('delete-storage-location-button')).toBeInTheDocument();
   });
 
   it('should call onUpdate', () => {
@@ -27,11 +27,9 @@ describe('StorageLocationsActions', () => {
       path: 's3://foo',
     };
     const handleUpdate = jest.fn();
-    const wrapper = shallow(
-      <StorageLocationsActions onDelete={jest.fn()} onUpdate={handleUpdate} location={location} />
-    );
-    wrapper.find(DBIcon).first().simulate('click');
-
+    render(<StorageLocationsActions onDelete={jest.fn()} onUpdate={handleUpdate} location={location} />);
+    const edit = screen.getByTestId('edit-storage-location-button');
+    fireEvent.click(edit);
     expect(handleUpdate).toHaveBeenCalledWith(location);
   });
 });

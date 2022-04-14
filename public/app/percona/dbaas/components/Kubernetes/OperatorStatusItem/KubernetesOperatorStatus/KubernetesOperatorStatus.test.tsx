@@ -1,5 +1,4 @@
-import { dataTestId } from '@percona/platform-core';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { Databases } from 'app/percona/shared/core';
@@ -11,7 +10,7 @@ import { KubernetesOperatorStatus as Status } from './KubernetesOperatorStatus.t
 
 describe('KubernetesOperatorStatus::', () => {
   it('renders installation link when unavailable', () => {
-    const root = shallow(
+    render(
       <KubernetesOperatorStatus
         operator={{ status: Status.unavailable }}
         databaseType={Databases.mongodb}
@@ -22,11 +21,11 @@ describe('KubernetesOperatorStatus::', () => {
       />
     );
 
-    expect(root.find(dataTestId('cluster-link'))).toBeTruthy();
+    expect(screen.getByTestId('cluster-link')).toBeInTheDocument();
   });
 
   it("doesn't render link when installed", () => {
-    const root = shallow(
+    render(
       <KubernetesOperatorStatus
         operator={{ status: Status.ok }}
         databaseType={Databases.mongodb}
@@ -36,12 +35,11 @@ describe('KubernetesOperatorStatus::', () => {
         setUpdateOperatorModalVisible={jest.fn()}
       />
     );
-
-    expect(root.contains(dataTestId('cluster-link'))).toBeFalsy();
+    expect(screen.queryByTestId('cluster-link')).not.toBeInTheDocument();
   });
 
   it('renders link when available new version is available', () => {
-    const root = shallow(
+    render(
       <KubernetesOperatorStatus
         operator={{ status: Status.ok, availableVersion: '1.4.3' }}
         databaseType={Databases.mongodb}
@@ -52,6 +50,6 @@ describe('KubernetesOperatorStatus::', () => {
       />
     );
 
-    expect(root.find(dataTestId('cluster-link'))).toBeTruthy();
+    expect(screen.getByTestId('cluster-link')).toBeInTheDocument();
   });
 });

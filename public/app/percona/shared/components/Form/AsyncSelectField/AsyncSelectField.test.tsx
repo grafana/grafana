@@ -1,16 +1,17 @@
-import { mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-
-import { AsyncSelect } from '@grafana/ui';
-
-import { Label } from '../Label';
 
 import { AsyncSelectField } from './AsyncSelectField';
 
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  AsyncSelect: jest.fn(() => <div data-testid="async-select" />),
+}));
+
 describe('AsyncSelectField', () => {
   it('should render', () => {
-    const wrapper = mount(<AsyncSelectField label="label" name="name" onChange={jest.fn()} />);
-    expect(wrapper.find(Label).exists()).toBeTruthy();
-    expect(wrapper.find(AsyncSelect).exists()).toBeTruthy();
+    render(<AsyncSelectField label="label" name="name" onChange={jest.fn()} />);
+    expect(screen.getByTestId('name-select-label')).toBeInTheDocument();
+    expect(screen.getByTestId('async-select')).toBeInTheDocument();
   });
 });

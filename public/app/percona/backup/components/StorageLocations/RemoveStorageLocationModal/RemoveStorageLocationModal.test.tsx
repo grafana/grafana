@@ -1,14 +1,12 @@
-import { CheckboxField } from '@percona/platform-core';
-import { mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { WarningBlock } from '../../../../shared/components/Elements/WarningBlock/WarningBlock';
 import { LocationType, StorageLocation } from '../StorageLocations.types';
 
 import { RemoveStorageLocationModal } from './RemoveStorageLocationModal';
 
 describe('RemoveStorageLocationModal', () => {
-  it('should have a WarningBlock and CheckboxField', () => {
+  it('should have a WarningBlock and CheckboxField', async () => {
     const location: StorageLocation = {
       locationID: 'ID1',
       name: 'Location_1',
@@ -16,7 +14,7 @@ describe('RemoveStorageLocationModal', () => {
       type: LocationType.CLIENT,
       path: '/foo',
     };
-    const wrapper = mount(
+    render(
       <RemoveStorageLocationModal
         isVisible
         location={location}
@@ -25,7 +23,8 @@ describe('RemoveStorageLocationModal', () => {
         onDelete={jest.fn()}
       />
     );
-    expect(wrapper.find(WarningBlock).exists()).toBeTruthy();
-    expect(wrapper.find(CheckboxField).exists()).toBeTruthy();
+
+    expect(screen.getByTestId('warning-block')).toBeInTheDocument();
+    expect(screen.getByTestId('force-checkbox-input')).toBeInTheDocument();
   });
 });

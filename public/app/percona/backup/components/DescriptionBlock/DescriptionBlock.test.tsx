@@ -1,11 +1,11 @@
-import { shallow } from 'enzyme';
+import { render } from '@testing-library/react';
 import React from 'react';
 
 import { DescriptionBlock } from './DescriptionBlock';
 
 describe('DescriptionBlock', () => {
   it('should render description', () => {
-    const wrapper = shallow(<DescriptionBlock description="sample_description" />);
-    expect(wrapper.find('pre').text()).toBe('sample_description');
+    const { container } = render(<DescriptionBlock description="sample_description" />);
+    expect(container.querySelector('pre')).toHaveTextContent('sample_description');
   });
 });

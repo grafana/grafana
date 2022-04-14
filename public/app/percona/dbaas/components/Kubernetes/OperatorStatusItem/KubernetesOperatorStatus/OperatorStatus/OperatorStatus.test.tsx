@@ -1,5 +1,4 @@
-import { dataTestId } from '@percona/platform-core';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { KubernetesOperatorStatus as Status } from '../KubernetesOperatorStatus.types';
@@ -8,23 +7,22 @@ import { OperatorStatus } from './OperatorStatus';
 
 describe('OperatorStatus::', () => {
   it('renders correctly when active', () => {
-    const root = shallow(<OperatorStatus operator={{ status: Status.ok }} />);
+    render(<OperatorStatus operator={{ status: Status.ok }} />);
 
-    expect(root.find(dataTestId('cluster-status-ok'))).toBeTruthy();
-    expect(root.contains(dataTestId('operator-version-available'))).toBeFalsy();
+    expect(screen.getByTestId('cluster-status-ok')).toBeInTheDocument();
+    expect(screen.queryByTestId('operator-version-available')).not.toBeInTheDocument();
   });
 
   it('renders available version when new version available and operator is installed', () => {
     const operator = { status: Status.ok, availableVersion: '1.8.0' };
-    const root = shallow(<OperatorStatus operator={operator} />);
+    render(<OperatorStatus operator={operator} />);
 
-    expect(root.find(dataTestId('operator-version-available'))).toBeTruthy();
+    expect(screen.getByTestId('operator-version-available')).toBeInTheDocument();
   });
 
   it("doesn't render available version when operator is unavailable", () => {
-    const operator = { status: Status.ok, availableVersion: '1.8.0' };
-    const root = shallow(<OperatorStatus operator={operator} />);
-
-    expect(root.contains(dataTestId('operator-version-available'))).toBeFalsy();
+    const operator = { status: Status.unavailable, availableVersion: '1.8.0' };
+    render(<OperatorStatus operator={operator} />);
+    expect(screen.queryByTestId('operator-version-available')).not.toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { Messages } from 'app/percona/settings/Settings.messages';
@@ -10,10 +10,9 @@ describe('Diagnostics::', () => {
     const {
       diagnostics: { action, label },
     } = Messages;
-    const root = shallow(<Diagnostics />);
+    render(<Diagnostics />);
 
-    expect(root.children().length).toBe(2);
-    expect(root.find('[data-testid="diagnostics-label"]').childAt(0).text()).toBe(label);
-    expect(root.find('[data-testid="diagnostics-button"]').find('span').text()).toBe(action);
+    expect(screen.getByTestId('diagnostics-label')).toHaveTextContent(label);
+    expect(screen.getByTestId('diagnostics-button')).toHaveTextContent(action);
   });
 });

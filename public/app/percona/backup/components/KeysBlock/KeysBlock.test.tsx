@@ -1,5 +1,4 @@
-import { dataTestId } from '@percona/platform-core';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { SecretToggler } from 'app/percona/shared/components/Elements/SecretToggler';
@@ -7,14 +6,18 @@ import { SecretToggler } from 'app/percona/shared/components/Elements/SecretTogg
 import { KeysBlock } from './KeysBlock';
 import { Messages } from './KeysBlock.messages';
 
+jest.mock('app/percona/shared/components/Elements/SecretToggler', () => ({
+  SecretToggler: jest.fn(() => <div data-testid="secretToggler" />),
+}));
+
 describe('KeysBlock', () => {
   it('should have access key next to label', () => {
-    const wrapper = shallow(<KeysBlock accessKey="access" secretKey="secret" />);
-    expect(wrapper.find(dataTestId('access-key')).text()).toBe(`${Messages.accessKey}access`);
+    render(<KeysBlock accessKey="access" secretKey="secret" />);
+    expect(screen.getByTestId('access-key')).toHaveTextContent(`${Messages.accessKey}access`);
   });
 
   it('should have SecretToggler with secret passed', () => {
-    const wrapper = shallow(<KeysBlock accessKey="access" secretKey="secret" />);
-    expect(wrapper.find(SecretToggler).prop('secret')).toBe('secret');
+    render(<KeysBlock accessKey="access" secretKey="secret" />);
+    expect(SecretToggler).toHaveBeenCalledWith(expect.objectContaining({ secret: 'secret' }), expect.anything());
   });
 });

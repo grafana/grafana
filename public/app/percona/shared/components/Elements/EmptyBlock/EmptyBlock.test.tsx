@@ -1,21 +1,20 @@
-import { dataTestId } from '@percona/platform-core';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { EmptyBlock } from './EmptyBlock';
 
 describe('EmptyBlock', () => {
   it('render external wrapper with data-testid attribute', () => {
-    const wrapper = shallow(<EmptyBlock dataTestId="test-data-testid" />);
-    expect(wrapper.find(dataTestId('test-data-testid')).exists()).toBeTruthy();
+    render(<EmptyBlock dataTestId="test-data-testid" />);
+    expect(screen.getByTestId('test-data-testid')).toBeInTheDocument();
   });
 
   it('should render children', () => {
-    const wrapper = shallow(
+    render(
       <EmptyBlock dataTestId="test-data-testid">
         <span data-testid="span-test">TEST</span>
       </EmptyBlock>
     );
-    expect(wrapper.find(dataTestId('span-test')).exists()).toBeTruthy();
+    expect(screen.getByTestId('span-test')).toBeInTheDocument();
   });
 });

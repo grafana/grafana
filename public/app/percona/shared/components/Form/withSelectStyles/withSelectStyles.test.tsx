@@ -1,15 +1,15 @@
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { withSelectStyles } from './withSelectStyles';
 
-const FooWrapper = () => <></>;
+const FooWrapper = () => <div data-testid="foo-wrapper" />;
 
 describe('withSelectStyles', () => {
   it('should return component with injected className', () => {
     const Foo = withSelectStyles(FooWrapper);
-    const wrapper = shallow(<Foo />);
+    render(<Foo />);
 
-    expect(wrapper.find(FooWrapper).prop('className')).toBeDefined();
+    expect(screen.getByTestId('foo-wrapper').className).toBeDefined();
   });
 });

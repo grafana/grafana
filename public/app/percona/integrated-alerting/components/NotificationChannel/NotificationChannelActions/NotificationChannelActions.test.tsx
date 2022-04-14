@@ -1,5 +1,4 @@
-import { dataTestId } from '@percona/platform-core';
-import { mount } from 'enzyme';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 import { NotificationChannelProvider } from '../NotificationChannel.provider';
@@ -9,32 +8,34 @@ import { NotificationChannelActions } from './NotificationChannelActions';
 
 describe('NotificationChannelActions', () => {
   it('should render all the actions', () => {
-    const wrapper = mount(<NotificationChannelActions notificationChannel={notificationChannelStubs[0]} />);
+    render(<NotificationChannelActions notificationChannel={notificationChannelStubs[0]} />);
 
-    expect(wrapper.find(dataTestId('edit-notification-channel-button'))).toBeTruthy();
+    expect(screen.getByTestId('edit-notification-channel-button')).toBeInTheDocument();
   });
 
   it('should open edit modal when clicking edit button', () => {
-    const wrapper = mount(
+    render(
       <NotificationChannelProvider.Provider value={notificationChannelContextStub}>
         <NotificationChannelActions notificationChannel={notificationChannelStubs[0]} />
       </NotificationChannelProvider.Provider>
     );
 
-    wrapper.find(dataTestId('edit-notification-channel-button')).find('button').simulate('click');
+    const button = screen.getByTestId('edit-notification-channel-button');
+    fireEvent.click(button);
 
     expect(notificationChannelContextStub.setSelectedNotificationChannel).toHaveBeenCalled();
     expect(notificationChannelContextStub.setAddModalVisible).toHaveBeenCalled();
   });
 
   it('should open delete modal when clicking edit button', () => {
-    const wrapper = mount(
+    render(
       <NotificationChannelProvider.Provider value={notificationChannelContextStub}>
         <NotificationChannelActions notificationChannel={notificationChannelStubs[0]} />
       </NotificationChannelProvider.Provider>
     );
 
-    wrapper.find(dataTestId('delete-notification-channel-button')).find('button').simulate('click');
+    const button = screen.getByTestId('delete-notification-channel-button');
+    fireEvent.click(button);
 
     expect(notificationChannelContextStub.setSelectedNotificationChannel).toHaveBeenCalled();
     expect(notificationChannelContextStub.setDeleteModalVisible).toHaveBeenCalled();

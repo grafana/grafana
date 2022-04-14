@@ -1,17 +1,20 @@
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { useSelector, Provider } from 'react-redux';
 
-import { Tab } from '@grafana/ui';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
-
-import { getMount } from '../shared/helpers/testUtils';
 
 import { SettingsPanel } from './Settings';
 import { SettingsService } from './Settings.service';
 import { stub as settingsStub } from './__mocks__/Settings.service';
 
 const fakeLocationUpdate = jest.fn();
+
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  Tab: jest.fn(() => <div data-testid="test-tab" />),
+}));
 
 jest.mock('./Settings.service');
 jest.mock('app/percona/shared/components/hooks/parameters.hook');
@@ -43,15 +46,16 @@ describe('SettingsPanel::', () => {
     jest
       .spyOn(SettingsService, 'getSettings')
       .mockImplementationOnce(() => Promise.resolve({ ...settingsStub, alertingEnabled: false }));
-    const root = await getMount(
-      <Provider store={configureStore()}>
-        <SettingsPanel {...getRouteComponentProps({ match: { params: { tab: '' } } as any })} />
-      </Provider>
+    const { container } = await waitFor(() =>
+      render(
+        <Provider store={configureStore()}>
+          <SettingsPanel {...getRouteComponentProps({ match: { params: { tab: '' } } as any })} />
+        </Provider>
+      )
     );
-    root.update();
 
-    const tabs = root.find(Tab);
+    const tabs = screen.getAllByTestId('test-tab');
     expect(tabs).toHaveLength(5);
-    expect(root.childAt(0).children().length).toBe(1);
+    expect(container.children[0].children).toHaveLength(2);
   });
 });

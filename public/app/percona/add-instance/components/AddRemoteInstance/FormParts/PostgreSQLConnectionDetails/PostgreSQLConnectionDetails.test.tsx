@@ -1,5 +1,4 @@
-import { dataTestId } from '@percona/platform-core';
-import { mount } from 'enzyme';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { Form } from 'react-final-form';
 
@@ -7,12 +6,11 @@ import { PostgreSQLConnectionDetails } from './PostgreSQLConnectionDetails';
 
 describe('PostgreSQL connection details:: ', () => {
   it('should have database attribute', () => {
-    const root = mount(
-      <Form onSubmit={jest.fn()} render={() => <PostgreSQLConnectionDetails remoteInstanceCredentials={{}} />} />
-    );
+    render(<Form onSubmit={jest.fn()} render={() => <PostgreSQLConnectionDetails remoteInstanceCredentials={{}} />} />);
 
-    root.find(dataTestId('database-text-input')).simulate('change', { target: { value: 'db1' } });
+    const textInput = screen.getByTestId('database-text-input');
+    fireEvent.change(textInput, { target: { value: 'db1' } });
 
-    expect(root.find(dataTestId('database-text-input')).props().value).toEqual('db1');
+    expect(screen.getByTestId('database-text-input')).toHaveValue('db1');
   });
 });

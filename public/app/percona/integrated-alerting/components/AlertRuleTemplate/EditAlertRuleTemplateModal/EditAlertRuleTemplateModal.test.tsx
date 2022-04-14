@@ -1,17 +1,18 @@
-import { dataTestId } from '@percona/platform-core';
-import { mount } from 'enzyme';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
-
-import { asyncAct } from 'app/percona/shared/helpers/testUtils';
 
 import { EditAlertRuleTemplateModal } from './EditAlertRuleTemplateModal';
 
 jest.mock('../AlertRuleTemplate.service');
 jest.mock('app/core/app_events');
 
-xdescribe('EditAlertRuleTemplateModal', () => {
+describe('EditAlertRuleTemplateModal', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('should render component correctly', () => {
-    const wrapper = mount(
+    const { container } = render(
       <EditAlertRuleTemplateModal
         name="template-1"
         summary="summary"
@@ -21,17 +22,17 @@ xdescribe('EditAlertRuleTemplateModal', () => {
         getAlertRuleTemplates={jest.fn()}
       />
     );
-    const addButton = wrapper.find(dataTestId('alert-rule-template-edit-button')).find('button');
+    const addButton = screen.getByTestId('alert-rule-template-edit-button');
 
-    expect(wrapper.find('textarea')).toBeTruthy();
-    expect(addButton).toBeTruthy();
-    expect(addButton.prop('disabled')).toBeTruthy();
-    expect(wrapper.find(dataTestId('alert-rule-template-cancel-button'))).toBeTruthy();
-    expect(wrapper.find(dataTestId('alert-rule-name-warning'))).toBeTruthy();
+    expect(container.querySelector('textarea')).toBeTruthy();
+    expect(addButton).toBeInTheDocument();
+    expect(addButton).toBeDisabled();
+    expect(screen.getByTestId('alert-rule-template-cancel-button')).toBeInTheDocument();
+    expect(screen.getByTestId('alert-rule-name-warning')).toBeInTheDocument();
   });
 
   it('should not render modal when visible is set to false', () => {
-    const wrapper = mount(
+    const { container } = render(
       <EditAlertRuleTemplateModal
         name="template-1"
         summary="summary"
@@ -42,12 +43,12 @@ xdescribe('EditAlertRuleTemplateModal', () => {
       />
     );
 
-    expect(wrapper.contains('textarea')).toBeFalsy();
+    expect(container.querySelector('textarea')).not.toBeInTheDocument();
   });
 
   it('should call setVisible on close', () => {
     const setVisible = jest.fn();
-    const wrapper = mount(
+    render(
       <EditAlertRuleTemplateModal
         name="template-1"
         summary="summary"
@@ -58,13 +59,14 @@ xdescribe('EditAlertRuleTemplateModal', () => {
       />
     );
 
-    wrapper.find(dataTestId('modal-background')).simulate('click');
+    const background = screen.getByTestId('modal-background');
+    fireEvent.click(background);
 
     expect(setVisible).toHaveBeenCalled();
   });
 
   it('should render yaml content passed', () => {
-    const wrapper = mount(
+    const { container } = render(
       <EditAlertRuleTemplateModal
         name="template-1"
         summary="summary"
@@ -74,16 +76,14 @@ xdescribe('EditAlertRuleTemplateModal', () => {
         getAlertRuleTemplates={jest.fn()}
       />
     );
-    const addButton = wrapper.find(dataTestId('alert-rule-template-edit-button')).find('button');
-
-    expect(wrapper.find('textarea').text()).toEqual('test content');
-    expect(addButton.prop('disabled')).toBeTruthy();
+    expect(container.querySelector('textarea')).toHaveTextContent('test content');
+    expect(screen.getByTestId('alert-rule-template-edit-button')).toBeDisabled();
   });
 
   it('should call setVisible and getAlertRuleTemplates on submit', async () => {
     const setVisible = jest.fn();
     const getAlertRuleTemplates = jest.fn();
-    const wrapper = mount(
+    render(
       <EditAlertRuleTemplateModal
         name="template-1"
         summary="summary"
@@ -94,9 +94,11 @@ xdescribe('EditAlertRuleTemplateModal', () => {
       />
     );
 
-    wrapper.find('textarea').simulate('change', { target: { value: 'test content' } });
+    const textarea = screen.getByRole('textbox');
+    fireEvent.change(textarea, { target: { value: 'test content' } });
 
-    await asyncAct(() => wrapper.find('form').simulate('submit'));
+    const form = screen.getByTestId('edit-alert-rule-template-form');
+    await waitFor(() => fireEvent.submit(form));
 
     expect(setVisible).toHaveBeenCalledWith(false);
     expect(getAlertRuleTemplates).toHaveBeenCalled();
