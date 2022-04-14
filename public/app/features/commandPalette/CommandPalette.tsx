@@ -20,7 +20,7 @@ import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types';
 import { css } from '@emotion/css';
 import { keybindingSrv } from '../../core/services/keybindingSrv';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, locationService } from '@grafana/runtime';
 
 /**
  * Wrap all the components from KBar here.
@@ -34,6 +34,7 @@ export const CommandPalette = () => {
     notHidden: state.visualState !== VisualState.hidden,
     showing: state.visualState === VisualState.showing,
   }));
+  const isNotLogin = locationService.getLocation().pathname !== '/login';
 
   const { navBarTree } = useSelector((state: StoreState) => {
     return {
@@ -49,12 +50,14 @@ export const CommandPalette = () => {
 
   useEffect(() => {
     (async () => {
-      const staticActions = getGlobalActions(navBarTree);
-      const dashAct = await getDashboardNavActions('go/dashboard');
-      setActions([...staticActions, ...dashAct]);
+      if (isNotLogin) {
+        const staticActions = getGlobalActions(navBarTree);
+        const dashAct = await getDashboardNavActions('go/dashboard');
+        setActions([...staticActions, ...dashAct]);
+      }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isNotLogin]);
 
   useEffect(() => {
     if (showing) {
@@ -64,7 +67,7 @@ export const CommandPalette = () => {
 
   useRegisterActions(actions, [actions]);
 
-  return (
+  return actions.length > 0 ? (
     <KBarPortal>
       <KBarPositioner className={styles.positioner}>
         <KBarAnimator className={styles.animator}>
@@ -73,7 +76,7 @@ export const CommandPalette = () => {
         </KBarAnimator>
       </KBarPositioner>
     </KBarPortal>
-  );
+  ) : null;
 };
 
 const RenderResults = () => {

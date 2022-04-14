@@ -105,7 +105,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                 >
                   <ModalsProvider>
                     <GlobalStyles />
-                    {config.featureToggles.commandPalette && contextSrv.isSignedIn && <CommandPalette />}
+                    {config.featureToggles.commandPalette && <CommandPalette />}
                     <div className="grafana-app">
                       <Router history={locationService.getHistory()}>
                         {ready && <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>}
