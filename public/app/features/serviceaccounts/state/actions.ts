@@ -1,4 +1,4 @@
-import { ApiKey, ServiceAccountDTO, ThunkResult, ServiceAccountFilter } from '../../../types';
+import { ServiceAccountDTO, ThunkResult, ServiceAccountFilter } from '../../../types';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import {
   acOptionsLoaded,
@@ -16,6 +16,7 @@ import {
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { debounce } from 'lodash';
+import { ServiceAccountToken } from '../CreateServiceAccountTokenModal';
 
 const BASE_URL = `/api/serviceaccounts`;
 
@@ -55,7 +56,7 @@ export function loadServiceAccount(saID: number): ThunkResult<void> {
 
 export function createServiceAccountToken(
   saID: number,
-  token: ApiKey,
+  token: ServiceAccountToken,
   onTokenCreated: (key: string) => void
 ): ThunkResult<void> {
   return async (dispatch) => {
