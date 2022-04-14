@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  DataSourceApi,
-  LoadingState,
-  toUtc,
-  DataQueryError,
-  DataQueryRequest,
-  CoreApp,
-  createTheme,
-} from '@grafana/data';
+import { DataSourceApi, LoadingState, CoreApp, createTheme } from '@grafana/data';
 import { render, screen } from '@testing-library/react';
 import { ExploreId } from 'app/types/explore';
 import { Explore, Props } from './Explore';
@@ -15,48 +7,37 @@ import { scanStopAction } from './state/query';
 import { Provider } from 'react-redux';
 import { configureStore } from 'app/store/configureStore';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
+import { createEmptyQueryResponse } from './state/utils';
 
 const makeEmptyQueryResponse = (loadingState: LoadingState) => {
-  return {
-    state: loadingState,
-    series: [],
-    request: {
-      requestId: '1',
-      dashboardId: 0,
-      interval: '1s',
-      panelId: 1,
-      scopedVars: {
-        apps: {
-          value: 'value',
-        },
-      },
-      targets: [
-        {
-          refId: 'A',
-        },
-      ],
-      timezone: 'UTC',
-      app: CoreApp.Explore,
-      startTime: 0,
-    } as unknown as DataQueryRequest,
-    error: {} as DataQueryError,
-    timeRange: {
-      from: toUtc('2019-01-01 10:00:00'),
-      to: toUtc('2019-01-01 16:00:00'),
-      raw: {
-        from: 'now-6h',
-        to: 'now',
+  const baseEmptyResponse = createEmptyQueryResponse();
+
+  baseEmptyResponse.request = {
+    requestId: '1',
+    intervalMs: 0,
+    interval: '1s',
+    dashboardId: 0,
+    panelId: 1,
+    range: baseEmptyResponse.timeRange,
+    scopedVars: {
+      apps: {
+        value: 'value',
+        text: 'text',
       },
     },
-    graphFrames: [],
-    logsFrames: [],
-    tableFrames: [],
-    traceFrames: [],
-    nodeGraphFrames: [],
-    graphResult: null,
-    logsResult: null,
-    tableResult: null,
+    targets: [
+      {
+        refId: 'A',
+      },
+    ],
+    timezone: 'UTC',
+    app: CoreApp.Explore,
+    startTime: 0,
   };
+
+  baseEmptyResponse.state = loadingState;
+
+  return baseEmptyResponse;
 };
 
 const dummyProps: Props = {
