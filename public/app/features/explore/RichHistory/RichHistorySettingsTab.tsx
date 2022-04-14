@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { stylesFactory, useTheme, Select, Button, Switch, Field } from '@grafana/ui';
+import { stylesFactory, useTheme, Select, Button, Field, InlineField, InlineSwitch } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { ShowConfirmModalEvent } from '../../../types/events';
@@ -30,13 +30,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     input: css`
       max-width: 200px;
     `,
-    switch: css`
-      display: flex;
-      align-items: center;
-    `,
-    label: css`
-      margin-left: ${theme.spacing.md};
-    `,
   };
 });
 
@@ -47,7 +40,7 @@ const retentionPeriodOptions = [
   { value: 14, label: '2 weeks' },
 ];
 
-export function RichHistorySettings(props: RichHistorySettingsProps) {
+export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
   const {
     retentionPeriod,
     starredTabAsFirstTab,
@@ -92,18 +85,20 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
           ></Select>
         </div>
       </Field>
-      <Field label="Default active tab" description=" " className="space-between">
-        <div className={styles.switch}>
-          <Switch value={starredTabAsFirstTab} onChange={toggleStarredTabAsFirstTab}></Switch>
-          <div className={styles.label}>Change the default active tab from “Query history” to “Starred”</div>
-        </div>
-      </Field>
-      <Field label="Data source behaviour" description=" " className="space-between">
-        <div className={styles.switch}>
-          <Switch value={activeDatasourceOnly} onChange={toggleactiveDatasourceOnly}></Switch>
-          <div className={styles.label}>Only show queries for data source currently active in Explore</div>
-        </div>
-      </Field>
+      <InlineField label="Change the default active tab from “Query history” to “Starred”" className="space-between">
+        <InlineSwitch
+          id="explore-query-history-settings-default-active-tab"
+          value={starredTabAsFirstTab}
+          onChange={toggleStarredTabAsFirstTab}
+        />
+      </InlineField>
+      <InlineField label="Only show queries for data source currently active in Explore" className="space-between">
+        <InlineSwitch
+          id="explore-query-history-settings-data-source-behavior"
+          value={activeDatasourceOnly}
+          onChange={toggleactiveDatasourceOnly}
+        />
+      </InlineField>
       <div
         className={css`
           font-weight: ${theme.typography.weight.bold};

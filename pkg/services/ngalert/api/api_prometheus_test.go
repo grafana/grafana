@@ -4,21 +4,25 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_FormatValues(t *testing.T) {
@@ -83,7 +87,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 	orgID := int64(1)
 
 	t.Run("with no alerts", func(t *testing.T) {
-		_, _, api := setupAPI(t)
+		_, _, _, api := setupAPI(t)
 		req, err := http.NewRequest("GET", "/api/v1/alerts", nil)
 		require.NoError(t, err)
 		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}}
@@ -101,7 +105,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 	})
 
 	t.Run("with two alerts", func(t *testing.T) {
-		_, fakeAIM, api := setupAPI(t)
+		_, fakeAIM, _, api := setupAPI(t)
 		fakeAIM.GenerateAlertInstances(1, util.GenerateShortUID(), 2)
 		req, err := http.NewRequest("GET", "/api/v1/alerts", nil)
 		require.NoError(t, err)
@@ -143,7 +147,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 	})
 
 	t.Run("with two firing alerts", func(t *testing.T) {
-		_, fakeAIM, api := setupAPI(t)
+		_, fakeAIM, _, api := setupAPI(t)
 		fakeAIM.GenerateAlertInstances(1, util.GenerateShortUID(), 2, withAlertingState())
 		req, err := http.NewRequest("GET", "/api/v1/alerts", nil)
 		require.NoError(t, err)
@@ -185,7 +189,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 	})
 
 	t.Run("with the inclusion of internal labels", func(t *testing.T) {
-		_, fakeAIM, api := setupAPI(t)
+		_, fakeAIM, _, api := setupAPI(t)
 		fakeAIM.GenerateAlertInstances(orgID, util.GenerateShortUID(), 2)
 		req, err := http.NewRequest("GET", "/api/v1/alerts?includeInternalLabels=true", nil)
 		require.NoError(t, err)
@@ -251,10 +255,10 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	req, err := http.NewRequest("GET", "/api/v1/rules", nil)
 	require.NoError(t, err)
-	c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}}
+	c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}, IsSignedIn: true}
 
 	t.Run("with no rules", func(t *testing.T) {
-		_, _, api := setupAPI(t)
+		_, _, _, api := setupAPI(t)
 		r := api.RouteGetRuleStatuses(c)
 
 		require.JSONEq(t, `
@@ -268,7 +272,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("with a rule that only has one query", func(t *testing.T) {
-		fakeStore, fakeAIM, api := setupAPI(t)
+		fakeStore, fakeAIM, _, api := setupAPI(t)
 		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery())
 		folder := fakeStore.Folders[orgID][0]
 
@@ -315,13 +319,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("with the inclusion of internal Labels", func(t *testing.T) {
-		fakeStore, fakeAIM, api := setupAPI(t)
+		fakeStore, fakeAIM, _, api := setupAPI(t)
 		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery())
 		folder := fakeStore.Folders[orgID][0]
 
 		req, err := http.NewRequest("GET", "/api/v1/rules?includeInternalLabels=true", nil)
 		require.NoError(t, err)
-		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}}
+		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}, IsSignedIn: true}
 
 		r := api.RouteGetRuleStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
@@ -369,7 +373,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("with a rule that has multiple queries", func(t *testing.T) {
-		fakeStore, fakeAIM, api := setupAPI(t)
+		fakeStore, fakeAIM, _, api := setupAPI(t)
 		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withExpressionsMultiQuery())
 		folder := fakeStore.Folders[orgID][0]
 
@@ -414,18 +418,59 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 }
 `, folder.Title), string(r.Body()))
 	})
+
+	t.Run("when fine-grained access is enabled", func(t *testing.T) {
+		t.Run("should return only rules if the user can query all data sources", func(t *testing.T) {
+			ruleStore := store.NewFakeRuleStore(t)
+			fakeAIM := NewFakeAlertInstanceManager(t)
+
+			rules := ngmodels.GenerateAlertRules(rand.Intn(4)+2, ngmodels.AlertRuleGen(withOrgID(orgID)))
+			ruleStore.PutRule(context.Background(), rules...)
+			ruleStore.PutRule(context.Background(), ngmodels.GenerateAlertRules(rand.Intn(4)+2, ngmodels.AlertRuleGen(withOrgID(orgID)))...)
+
+			acMock := acmock.New().WithPermissions(createPermissionsForRules(rules))
+
+			api := PrometheusSrv{
+				log:     log.NewNopLogger(),
+				manager: fakeAIM,
+				store:   ruleStore,
+				ac:      acMock,
+			}
+
+			response := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, response.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(response.Body(), result))
+			for _, group := range result.Data.RuleGroups {
+			grouploop:
+				for _, rule := range group.Rules {
+					for i, expected := range rules {
+						if rule.Name == expected.Title && group.Name == expected.RuleGroup {
+							rules = append(rules[:i], rules[i+1:]...)
+							continue grouploop
+						}
+					}
+					assert.Failf(t, "rule %s in a group %s was not found in expected", rule.Name, group.Name)
+				}
+			}
+			assert.Emptyf(t, rules, "not all expected rules were returned")
+		})
+	})
 }
 
-func setupAPI(t *testing.T) (*store.FakeRuleStore, *fakeAlertInstanceManager, PrometheusSrv) {
+func setupAPI(t *testing.T) (*store.FakeRuleStore, *fakeAlertInstanceManager, *acmock.Mock, PrometheusSrv) {
 	fakeStore := store.NewFakeRuleStore(t)
 	fakeAIM := NewFakeAlertInstanceManager(t)
+	acMock := acmock.New().WithDisabled()
+
 	api := PrometheusSrv{
 		log:     log.NewNopLogger(),
 		manager: fakeAIM,
 		store:   fakeStore,
+		ac:      acMock,
 	}
 
-	return fakeStore, fakeAIM, api
+	return fakeStore, fakeAIM, acMock, api
 }
 
 func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *store.FakeRuleStore, query func(r *ngmodels.AlertRule)) {
