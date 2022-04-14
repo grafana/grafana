@@ -31,14 +31,11 @@ def slack_step(channel, template, secret):
     }
 
 
-def gen_version_step(ver_mode, is_downstream=False):
+def gen_version_step(ver_mode):
     if ver_mode == 'release':
         args = '${DRONE_TAG}'
     else:
-        if not is_downstream:
-            build_no = '${DRONE_BUILD_NUMBER}'
-        else:
-            build_no = '$${SOURCE_BUILD_NUMBER}'
+        build_no = '${DRONE_BUILD_NUMBER}'
         args = '--build-id {}'.format(build_no)
     return {
         'name': 'gen-version',
@@ -364,7 +361,7 @@ def upload_cdn_step(edition, ver_mode, trigger=None):
     return step
 
 
-def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
+def build_backend_step(edition, ver_mode, variants=None):
     variants_str = ''
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
@@ -380,10 +377,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
             ),
         ]
     else:
-        if not is_downstream:
-            build_no = '${DRONE_BUILD_NUMBER}'
-        else:
-            build_no = '$${SOURCE_BUILD_NUMBER}'
+        build_no = '${DRONE_BUILD_NUMBER}'
         env = {}
         cmds = [
             './bin/grabpl build-backend --jobs 8 --edition {} --build-id {}{}'.format(
@@ -403,11 +397,8 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
     }
 
 
-def build_frontend_step(edition, ver_mode, is_downstream=False):
-    if not is_downstream:
-        build_no = '${DRONE_BUILD_NUMBER}'
-    else:
-        build_no = '$${SOURCE_BUILD_NUMBER}'
+def build_frontend_step(edition, ver_mode):
+    build_no = '${DRONE_BUILD_NUMBER}'
 
     # TODO: Use percentage for num jobs
     if ver_mode == 'release':
@@ -435,11 +426,8 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
     }
 
 
-def build_frontend_package_step(edition, ver_mode, is_downstream=False):
-    if not is_downstream:
-        build_no = '${DRONE_BUILD_NUMBER}'
-    else:
-        build_no = '$${SOURCE_BUILD_NUMBER}'
+def build_frontend_package_step(edition, ver_mode):
+    build_no = '${DRONE_BUILD_NUMBER}'
 
     # TODO: Use percentage for num jobs
     if ver_mode == 'release':
@@ -645,7 +633,7 @@ def shellcheck_step():
     }
 
 
-def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is_downstream=False):
+def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
     deps = [
         'build-plugins',
         'build-backend',
@@ -686,10 +674,7 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None, is
             ),
         ]
     else:
-        if not is_downstream:
-            build_no = '${DRONE_BUILD_NUMBER}'
-        else:
-            build_no = '$${SOURCE_BUILD_NUMBER}'
+        build_no = '${DRONE_BUILD_NUMBER}'
         cmds = [
             '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
             '--build-id {}{}{}'.format(build_no, variants_str, sign_args),
@@ -959,8 +944,8 @@ def enterprise2_suffix(edition):
     return ''
 
 
-def upload_packages_step(edition, ver_mode, is_downstream=False, trigger=None):
-    if ver_mode == 'main' and edition in ('enterprise', 'enterprise2') and not is_downstream:
+def upload_packages_step(edition, ver_mode, trigger=None):
+    if ver_mode == 'main' and edition in ('enterprise', 'enterprise2'):
         return None
 
     if ver_mode == 'release':
@@ -995,16 +980,13 @@ def upload_packages_step(edition, ver_mode, is_downstream=False, trigger=None):
     return step
 
 
-def store_packages_step(edition, ver_mode, is_downstream=False):
+def store_packages_step(edition, ver_mode):
     if ver_mode == 'release':
         cmd = './bin/grabpl store-packages --edition {} --packages-bucket grafana-downloads --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
             edition,
         )
     elif ver_mode == 'main':
-        if not is_downstream:
-            build_no = '${DRONE_BUILD_NUMBER}'
-        else:
-            build_no = '$${SOURCE_BUILD_NUMBER}'
+        build_no = '${DRONE_BUILD_NUMBER}'
         cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
             edition, build_no,
         )
@@ -1030,7 +1012,7 @@ def store_packages_step(edition, ver_mode, is_downstream=False):
     }
 
 
-def get_windows_steps(edition, ver_mode, is_downstream=False):
+def get_windows_steps(edition, ver_mode):
     init_cmds = []
     sfx = ''
     if edition in ('enterprise', 'enterprise2'):
@@ -1048,7 +1030,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'commands': init_cmds,
         },
     ]
-    if (ver_mode == 'main' and (edition not in ('enterprise', 'enterprise2') or is_downstream)) or ver_mode in (
+    if (ver_mode == 'main' and (edition not in ('enterprise', 'enterprise2'))) or ver_mode in (
         'release', 'release-branch',
     ):
         bucket_part = ''
@@ -1060,10 +1042,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             dir = 'main'
             bucket = 'grafana-downloads'
             bucket_part = ' --packages-bucket {}'.format(bucket)
-            if not is_downstream:
-                build_no = 'DRONE_BUILD_NUMBER'
-            else:
-                build_no = 'SOURCE_BUILD_NUMBER'
+            build_no = 'DRONE_BUILD_NUMBER'
             ver_part = '--build-id $$env:{}'.format(build_no)
         installer_commands = [
             '$$gcpKey = $$env:GCP_KEY',
@@ -1074,7 +1053,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'rm gcpkey.json',
             'cp C:\\App\\nssm-2.24.zip .',
         ]
-        if (ver_mode == 'main' and (edition not in ('enterprise', 'enterprise2') or is_downstream)) or ver_mode in (
+        if (ver_mode == 'main' and (edition not in ('enterprise', 'enterprise2'))) or ver_mode in (
             'release',
         ):
             installer_commands.extend([
@@ -1119,11 +1098,10 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         clone_cmds = [
             'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
         ]
-        if not is_downstream:
-            clone_cmds.extend([
-                'cd grafana-enterprise',
-                'git checkout {}'.format(committish),
-            ])
+        clone_cmds.extend([
+            'cd grafana-enterprise',
+            'git checkout {}'.format(committish),
+        ])
         steps.insert(0, {
             'name': 'clone',
             'image': wix_image,
