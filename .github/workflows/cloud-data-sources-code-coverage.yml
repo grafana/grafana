@@ -10,7 +10,7 @@ on:
       - 'public/app/plugins/datasource/cloud-monitoring/**'
     branches-ignore:
       - dependabot/**
-      - backport-**
+      - backport-*
 
 jobs:
   workflow-call:

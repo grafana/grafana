@@ -112,7 +112,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const templateSrv = getTemplateSrv();
     const interpolatedUri = templateSrv.replace(resourceUri, {}, interpolateVariable);
     const metadata = await this.getMetadata(interpolatedUri);
-    return transformMetadataToKustoSchema(metadata, interpolatedUri);
+    return transformMetadataToKustoSchema(metadata, interpolatedUri, templateSrv.getVariables());
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
