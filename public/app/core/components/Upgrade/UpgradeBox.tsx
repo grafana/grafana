@@ -1,6 +1,6 @@
 import React, { HTMLAttributes } from 'react';
 import { css, cx } from '@emotion/css';
-import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
+import { Button, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 
 type ComponentSize = 'sm' | 'md';
@@ -8,9 +8,10 @@ type ComponentSize = 'sm' | 'md';
 export interface Props extends HTMLAttributes<HTMLOrSVGElement> {
   featureName: string;
   size?: ComponentSize;
+  text?: string;
 }
 
-export const UpgradeBox = ({ featureName, className, children, size = 'md', ...htmlProps }: Props) => {
+export const UpgradeBox = ({ featureName, className, children, text, size = 'md', ...htmlProps }: Props) => {
   const styles = useStyles2((theme) => getUpgradeBoxStyles(theme, size));
 
   return (
@@ -18,7 +19,7 @@ export const UpgradeBox = ({ featureName, className, children, size = 'md', ...h
       <Icon name={'rocket'} className={styles.icon} />
       <div className={styles.inner}>
         <p className={styles.text}>
-          You’ve discovered a Pro feature! Get the Grafana Pro plan to access {featureName}.
+          You’ve discovered a Pro feature! {text || `Get the Grafana Pro plan to access ${featureName}.`}
         </p>
         <LinkButton
           variant="secondary"
@@ -93,8 +94,9 @@ export interface UpgradeContentProps {
   listItems: string[];
   caption?: string;
   action?: {
-    link: string;
     text: string;
+    link?: string;
+    onClick?: () => void;
   };
 }
 
@@ -120,10 +122,15 @@ export const UpgradeContent = ({
             </li>
           ))}
         </ul>
-        {action && (
+        {action?.link && (
           <LinkButton variant={'primary'} href={action.link}>
             {action.text}
           </LinkButton>
+        )}
+        {action?.onClick && (
+          <Button variant={'primary'} onClick={action.onClick}>
+            {action.text}
+          </Button>
         )}
         {featureUrl && (
           <LinkButton fill={'text'} href={featureUrl} className={styles.link} target="_blank" rel="noreferrer noopener">
