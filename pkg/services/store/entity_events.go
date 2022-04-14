@@ -31,6 +31,7 @@ type SaveEventCmd struct {
 
 // EntityEventsService is a temporary solution to support change notifications in an HA setup
 // With this service each system can query for any events that have happened since a fixed time
+//go:generate mockery --name EntityEventsService --structname MockEntityEventsService --inpackage --filename entity_events_mock.go
 type EntityEventsService interface {
 	SaveEvent(ctx context.Context, cmd SaveEventCmd) error
 	GetLastEvent(ctx context.Context) (*EntityEvent, error)

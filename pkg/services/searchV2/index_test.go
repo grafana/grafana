@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,7 +24,7 @@ func TestDashboardIndexCreate(t *testing.T) {
 			},
 		},
 	}
-	index := newDashboardIndex(dashboardLoader, nil)
+	index := newDashboardIndex(dashboardLoader, &store.MockEntityEventsService{})
 	require.NotNil(t, index)
 	dashboards, err := index.getDashboards(context.Background(), 1)
 	require.NoError(t, err)
