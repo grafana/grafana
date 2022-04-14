@@ -1,16 +1,16 @@
 +++
 title = "Role-based access control HTTP API"
 description = "RBAC access control API"
-keywords = ["grafana", "http", "documentation", "api", "fine-grained-access-control", "acl", "enterprise"]
+keywords = ["grafana", "http", "documentation", "api", "role-based-access-control", "acl", "enterprise"]
 aliases = ["/docs/grafana/latest/http_api/accesscontrol/"]
 +++
 
-# Fine-grained access control API
+# Role-based access control API
 
-> Fine-grained access control API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> Role-based access control API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
 The API can be used to create, update, get and list roles, and create or remove built-in role assignments.
-To use the API, you would need to [enable fine-grained access control]({{< relref "../enterprise/access-control/_index.md#enable-fine-grained-access-control" >}}).
+To use the API, you would need to [enable role-based access control]({{< relref "../enterprise/access-control/_index.md#enable-role-based-access-control" >}}).
 
 The API does not currently work with an API Token. So in order to use these API endpoints you will have to use [Basic auth]({{< relref "./auth/#basic-auth" >}}).
 
@@ -18,7 +18,7 @@ The API does not currently work with an API Token. So in order to use these API 
 
 `GET /api/access-control/status`
 
-Returns an indicator to check if fine-grained access control is enabled or not.
+Returns an indicator to check if role-based access control is enabled or not.
 
 ### Required permissions
 
@@ -47,12 +47,12 @@ Content-Type: application/json; charset=UTF-8
 
 #### Status codes
 
-| Code | Description                                                                        |
-| ---- | ---------------------------------------------------------------------------------- |
-| 200  | Returned a flag indicating if the fine-grained access control is enabled or no.    |
-| 403  | Access denied                                                                      |
-| 404  | Not found, an indication that fine-grained access control is not available at all. |
-| 500  | Unexpected error. Refer to body and/or server logs for more details.               |
+| Code | Description                                                                      |
+| ---- | -------------------------------------------------------------------------------- |
+| 200  | Returned a flag indicating if the role-based access control is enabled or no.    |
+| 403  | Access denied                                                                    |
+| 404  | Not found, an indication that role-based access control is not available at all. |
+| 500  | Unexpected error. Refer to body and/or server logs for more details.             |
 
 ## Create and manage custom roles
 

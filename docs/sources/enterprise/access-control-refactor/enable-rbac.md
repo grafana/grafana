@@ -1,6 +1,6 @@
 ---
 title: 'Enable role-based access control in Grafana'
-menuTitle: 'Enable role-based access control control'
+menuTitle: 'Enable RBAC'
 description: 'xxx.'
 aliases: [xxx]
 weight: 30
@@ -10,20 +10,20 @@ keywords:
 
 # Enable role-based access control
 
-Before you assign fine-grained access control to Grafana users, you must enable it.
+Before you assign role-based access control to Grafana users, you must enable it.
 
-You can enable fine-grained access control by:
+You can enable role-based access control by:
 
 - adding a feature toggle to the Grafana configuration file, or
 - adding an environment variable to the Grafana configuration file
 
-This topic includes instructions for both methods of enabling fine-grained access control, and steps for how to verify that it is enabled.
+This topic includes instructions for both methods of enabling role-based access control, and steps for how to verify that it is enabled.
 
 ## Before you begin
 
 - Ensure that you have administration privileges to the Grafana server.
 
-**To enable fine-grained access control in the Grafana configuration file**:
+**To enable role-based access control in the Grafana configuration file:**
 
 1. Open the Grafana configuration file.
 
@@ -41,10 +41,10 @@ This topic includes instructions for both methods of enabling fine-grained acces
 
 1. Save your changes and restart the Grafana server.
 
-1. To verify that it is enabled, refer to [verify that fine-grained access control is enabled](#verify-that-fine-grained-access control-is-enabled).
+1. To verify that it is enabled, refer to [verify that role-based access control is enabled](#verify-that-role-based-access-control-is-enabled).
    <br/>
 
-**To enable fine-grained access control using an environment variable:**
+**To enable role-based access control using an environment variable:**
 
 1. Open the Grafana configuration file.
 
@@ -60,11 +60,11 @@ This topic includes instructions for both methods of enabling fine-grained acces
 
 1. Save your changes and restart the Grafana server.
 
-1. To verify that it is enabled, refer to [verify that fine-grained access control is enabled](#verify-that-fine-grained-access control-is-enabled).
+1. To verify that it is enabled, refer to [verify that role-based access control is enabled](#verify-that-role-based-access-control-is-enabled).
 
-## Verify that fine-grained access control is enabled
+## Verify that role-based access control is enabled
 
-To verify that fine-grained access control is enabled, send an HTTP request to the check endpoint.
+To verify that role-based access control is enabled, send an HTTP request to the check endpoint.
 
 For more information about sending an HTTP request to the check endpoint, refer to [Check endpoint]({{< relref "../../http_api/access_control.md#check-if-enabled" >}}).
 

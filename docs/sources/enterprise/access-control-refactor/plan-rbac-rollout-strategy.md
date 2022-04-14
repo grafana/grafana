@@ -10,21 +10,21 @@ keywords:
 
 # Plan your role-based access control rollout strategy
 
-An RBAC rollout strategy includes the planning and the decisions you make prior to assigning RBAC roles to user and teams.
+An RBAC rollout strategy helps you determine _how_ you want to implement RBAC prior to assigning RBAC roles to users and teams.
 
 Your rollout strategy should help you answer the following questions:
 
 - Should I assign basic roles to users, or should I assign fixed roles or custom roles to users?
 - When should I create custom roles?
-- To what entities should I apply fixed and custom roles? Should I apply them to users, teams, or to basic roles?
+- To which entities should I apply fixed and custom roles? Should I apply them to users, teams, or to basic roles?
 - How do I roll out permissions in a way that makes them easy to manage?
-- What options do I have when assigning roles?
+- Which approach should I use when assigning roles? Should I use the Grafana UI, provisioning, or the API?
 
 ## Review basic role and fixed role definitions
 
 As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role defintions. In addition to assigning fixed roles to any user and team, you can also assign fixed roles to basic roles and custom roles. This flexibilty means that there are many combinations of fixed role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use.
 
-To learn more about basic roles and fixed role, refer to the following documentation:
+To learn more about basic roles and fixed roles, refer to the following documentation:
 
 - [Basic role definitions]({{< relref "./basic-role-definitions.md" >}})
 - [Fixed role definitions]({{< relref "./rbac-fixed-role-definitions.md" >}})
@@ -33,11 +33,11 @@ To learn more about basic roles and fixed role, refer to the following documenta
 
 RBAC is a flexible and powerful feature with many possible permissions assignment combinations available. Consider the follow guidelines when assigning permissions to users and teams.
 
-- **Assign roles to users** when you have a one-off scenario where a user requires access to a resource or when you want to assign temporary access. If you have a large number of users, this approach can be difficult to manage as you scale your use of Grafana.
+- **Assign roles to users** when you have a one-off scenario where a small number of users require access to a resource or when you want to assign temporary access. If you have a large number of users, this approach can be difficult to manage as you scale your use of Grafana.
 
 - **Assign roles to teams** when you have a subset of users that align to your organizational structure, and you want all members of the team to have the same level of access.
 
-  When you assign permissions to teams, all members of the team have the same level of access. When you assign additional users to a team, the system automatically assigns permissions to those users.
+  When you assign additional users to a team, the system automatically assigns permissions to those users.
 
 ### Authentication provider considerations
 
@@ -71,12 +71,12 @@ Use any of the following methods when you assign RBAC roles to users and teams.
 
 - **Grafana UI:** Use the Grafana UI when you want to assign a limited number of RBAC roles to users and teams. The UI contains a role picker that you can use to select roles.
 - **Grafana HTTP API:** If you prefer, you can use the Grafana HTTP API to manage role assignments.
-- **Grafana provisioning:** Grafana provisioning provides a robust approach to assign, removing, and deleting roles. Within a single YAML file you can include multiple role assignment and removal entries.
+- **Grafana provisioning:** Grafana provisioning provides a robust approach to assigning, removing, and deleting roles. Within a single YAML file you can include multiple role assignment and removal entries.
 - **Terraform:** If you are a Grafana Cloud Pro customer, you can use Terraform to assign and manage user and team role assignments.
 
 ## Permissions scenarios
 
-We've compiled the following permissions rollout scenarios based on current Grafana requirements. If you have a use case that you'd like to share, feel free to contribute to the content. We'd love to hear from you!
+We've compiled the following permissions rollout scenarios based on current Grafana implementations. If you have a use case that you'd like to share, feel free to contribute to the content. We'd love to hear from you!
 
 ### Provide internal viewer employees with the ability to use Explore and prevent external viewer contractors from using Explore
 
@@ -90,7 +90,7 @@ We've compiled the following permissions rollout scenarios based on current Graf
 1. Review the list of fixed roles associated with the basic role.
 1. Remove the fixed roles from the basic role.
 
-### Limit users (regardless of their basic role) the ability to access the Alert Manager, while providing that ability to other users
+### Limit basic role users the ability to access the Alert Manager, while providing that ability to other users
 
 1. Remove the following fixed roles from all basic roles:
    - fixed:alerts:reader

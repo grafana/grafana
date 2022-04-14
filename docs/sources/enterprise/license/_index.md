@@ -7,7 +7,7 @@ weight = 10
 
 # Grafana Enterprise license
 
-When you become a Grafana Enterprise customer, you gain access to Grafana's premium observability features, including enterprise data source plugins, reporting, and fine-grained access control. In order to use these [enhanced features of Grafana Enterprise]({{< relref "../_index.md" >}}), you must purchase and activate a Grafana Enterprise license.
+When you become a Grafana Enterprise customer, you gain access to Grafana's premium observability features, including enterprise data source plugins, reporting, and role-based access control. In order to use these [enhanced features of Grafana Enterprise]({{< relref "../_index.md" >}}), you must purchase and activate a Grafana Enterprise license.
 
 To purchase a license directly from Grafana Labs, [Contact a Grafana Labs representative](https://grafana.com/contact?about=grafana-enterprise). To activate an Enterprise license purchased from Grafana Labs, refer to [Activate an Enterprise license]({{< relref "./activate-license.md" >}}).
 

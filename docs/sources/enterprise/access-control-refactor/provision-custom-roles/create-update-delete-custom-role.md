@@ -2,7 +2,7 @@
 title: 'Create, update, or delete a custom role using Grafana provisioning'
 menuTitle: 'Create, update, or delete custom roles'
 description: 'xxx.'
-aliases: [xxx]
+aliases: [docs/grafana/latest/manage-built-in-role-assignments]
 weight: 30
 keywords:
   - xxx
