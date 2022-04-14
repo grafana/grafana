@@ -355,23 +355,25 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 		logger.Debug("updating database with the authorized changes", "add", len(authorizedChanges.New), "update", len(authorizedChanges.New), "delete", len(authorizedChanges.Delete))
 
 		if len(authorizedChanges.Update) > 0 || len(authorizedChanges.New) > 0 {
-			upsert := make([]store.UpsertRule, 0, len(authorizedChanges.Update)+len(authorizedChanges.New))
+			updates := make([]store.UpdateRule, 0, len(authorizedChanges.Update))
+			inserts := make([]ngmodels.AlertRule, 0, len(authorizedChanges.New))
 			for _, update := range authorizedChanges.Update {
 				logger.Debug("updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
-				upsert = append(upsert, store.UpsertRule{
+				updates = append(updates, store.UpdateRule{
 					Existing: update.Existing,
 					New:      *update.New,
 				})
 			}
 			for _, rule := range authorizedChanges.New {
-				upsert = append(upsert, store.UpsertRule{
-					Existing: nil,
-					New:      *rule,
-				})
+				inserts = append(inserts, *rule)
 			}
-			err = srv.store.UpsertAlertRules(tranCtx, upsert)
+			err = srv.store.InsertAlertRules(tranCtx, inserts)
 			if err != nil {
-				return fmt.Errorf("failed to add or update rules: %w", err)
+				return fmt.Errorf("failed to add rules: %w", err)
+			}
+			err = srv.store.UpdateAlertRules(tranCtx, updates)
+			if err != nil {
+				return fmt.Errorf("failed to update rules: %w", err)
 			}
 		}
 
