@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
@@ -8,10 +9,10 @@ import (
 func RegisterRoles(ac accesscontrol.AccessControl) error {
 	saReader := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     4,
+			Version:     1,
 			Name:        "fixed:serviceaccounts:reader",
 			DisplayName: "Service accounts reader",
-			Description: "Read service accounts.",
+			Description: "Read service accounts and service account tokens.",
 			Group:       "Service accounts",
 			Permissions: []accesscontrol.Permission{
 				{
@@ -20,7 +21,7 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 				},
 			},
 		},
-		Grants: []string{"Admin"},
+		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
 	saWriter := accesscontrol.RoleRegistration{
@@ -48,7 +49,7 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 				},
 			},
 		},
-		Grants: []string{"Admin"},
+		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
 	if err := ac.DeclareFixedRoles(saReader, saWriter); err != nil {
