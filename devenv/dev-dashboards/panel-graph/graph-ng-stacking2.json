@@ -2934,7 +2934,7 @@
     }
   ],
   "refresh": false,
-  "schemaVersion": 33,
+  "schemaVersion": 36,
   "style": "dark",
   "tags": [
     "gdev",
