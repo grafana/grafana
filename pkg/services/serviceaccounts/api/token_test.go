@@ -34,8 +34,9 @@ func createTokenforSA(t *testing.T, store serviceaccounts.Store, keyName string,
 	key, err := apikeygen.New(orgID, keyName)
 	require.NoError(t, err)
 
-	cmd := serviceaccounts.AddServiceAccountTokenCommand{
+	cmd := models.AddApiKeyCommand{
 		Name:          keyName,
+		Role:          "Viewer",
 		OrgId:         orgID,
 		Key:           key.HashedKey,
 		SecondsToLive: secondsToLive,

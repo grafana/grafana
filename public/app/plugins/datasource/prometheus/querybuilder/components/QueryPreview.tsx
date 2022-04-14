@@ -13,7 +13,7 @@ export interface Props {
 export function QueryPreview({ query }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const highlighted = Prism.highlight(query, promqlGrammar, 'promql');
+  const hightlighted = Prism.highlight(query, promqlGrammar, 'promql');
 
   return (
     <EditorRow>
@@ -22,7 +22,7 @@ export function QueryPreview({ query }: Props) {
           <div
             className={cx(styles.editorField, 'prism-syntax-highlight')}
             aria-label="selector"
-            dangerouslySetInnerHTML={{ __html: highlighted }}
+            dangerouslySetInnerHTML={{ __html: hightlighted }}
           />
         </EditorField>
       </EditorFieldGroup>

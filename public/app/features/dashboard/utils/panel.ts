@@ -1,6 +1,5 @@
 // Store
 import store from 'app/core/store';
-import { dispatch } from 'app/store/store';
 
 // Models
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -22,7 +21,6 @@ import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
 import { AddLibraryPanelModal } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
 import { UnlinkModal } from 'app/features/library-panels/components/UnlinkModal/UnlinkModal';
-import { cleanUpPanelState } from 'app/features/panel/state/actions';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -48,7 +46,6 @@ export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: b
   }
 
   dashboard.removePanel(panel);
-  dispatch(cleanUpPanelState(panel.key));
 };
 
 export const duplicatePanel = (dashboard: DashboardModel, panel: PanelModel) => {

@@ -468,7 +468,7 @@ export interface DataQueryError {
     error?: string;
   };
   message?: string;
-  status?: number;
+  status?: string;
   statusText?: string;
   refId?: string;
   type?: DataQueryErrorType;

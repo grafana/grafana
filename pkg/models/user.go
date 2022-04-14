@@ -182,7 +182,6 @@ type SignedInUser struct {
 	OrgCount           int
 	IsGrafanaAdmin     bool
 	IsAnonymous        bool
-	IsDisabled         bool
 	HelpFlags1         HelpFlags1
 	LastSeenAt         time.Time
 	Teams              []int64

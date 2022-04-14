@@ -28,10 +28,7 @@ const ServiceAccountListItem = memo(
     const editUrl = `org/serviceaccounts/${serviceAccount.id}`;
     const styles = useStyles2(getStyles);
     const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
-    const displayRolePicker =
-      contextSrv.hasPermission(AccessControlAction.ActionRolesList) &&
-      contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
-    const enableRolePicker = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate) && canUpdateRole;
+    const rolePickerDisabled = !canUpdateRole;
 
     return (
       <tr key={serviceAccount.id}>
@@ -64,30 +61,26 @@ const ServiceAccountListItem = memo(
             {serviceAccount.login}
           </a>
         </td>
-        {contextSrv.licensedAccessControlEnabled() ? (
-          displayRolePicker && (
-            <td className={cx('link-td', styles.iconRow)}>
-              <UserRolePicker
-                userId={serviceAccount.id}
-                orgId={serviceAccount.orgId}
-                builtInRole={serviceAccount.role}
-                onBuiltinRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
-                roleOptions={roleOptions}
-                builtInRoles={builtInRoles}
-                disabled={!enableRolePicker}
-              />
-            </td>
-          )
-        ) : (
-          <td className={cx('link-td', styles.iconRow)}>
+        <td className={cx('link-td', styles.iconRow)}>
+          {contextSrv.licensedAccessControlEnabled() ? (
+            <UserRolePicker
+              userId={serviceAccount.id}
+              orgId={serviceAccount.orgId}
+              builtInRole={serviceAccount.role}
+              onBuiltinRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
+              roleOptions={roleOptions}
+              builtInRoles={builtInRoles}
+              disabled={rolePickerDisabled}
+            />
+          ) : (
             <OrgRolePicker
               aria-label="Role"
               value={serviceAccount.role}
               disabled={!canUpdateRole}
               onChange={(newRole) => onRoleChange(newRole, serviceAccount)}
             />
-          </td>
-        )}
+          )}
+        </td>
         <td className="link-td max-width-10">
           <a
             className="ellipsis"

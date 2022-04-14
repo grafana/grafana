@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
@@ -38,7 +39,7 @@ func TestService(t *testing.T) {
 	})
 
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-	s := ProvideService(sqlStore, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+	s := ProvideService(bus.New(), sqlStore, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
 	var ds *models.DataSource
 
@@ -238,7 +239,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		}
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(bus.New(), nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
 		rt1, err := dsService.GetHTTPTransport(&ds, provider)
 		require.NoError(t, err)
@@ -271,7 +272,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json.Set("tlsAuthWithCACert", true)
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(bus.New(), nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
 		tlsCaCert, err := secretsService.Encrypt(context.Background(), []byte(caCert), secrets.WithoutScope())
 		require.NoError(t, err)
@@ -321,7 +322,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json.Set("tlsAuth", true)
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(bus.New(), nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
 		tlsClientCert, err := secretsService.Encrypt(context.Background(), []byte(clientCert), secrets.WithoutScope())
 		require.NoError(t, err)
@@ -364,7 +365,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json.Set("serverName", "server-name")
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(bus.New(), nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
 		tlsCaCert, err := secretsService.Encrypt(context.Background(), []byte(caCert), secrets.WithoutScope())
 		require.NoError(t, err)
@@ -401,7 +402,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		json.Set("tlsSkipVerify", true)
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(bus.New(), nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
 		ds := models.DataSource{
 			Id:       1,
@@ -432,7 +433,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		})
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(bus.New(), nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
 		encryptedData, err := secretsService.Encrypt(context.Background(), []byte(`Bearer xf5yhfkpsnmgo`), secrets.WithoutScope())
 		require.NoError(t, err)
@@ -491,7 +492,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		})
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(bus.New(), nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
 		ds := models.DataSource{
 			Id:       1,
@@ -524,7 +525,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(bus.New(), nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
 		ds := models.DataSource{
 			Type:     models.DS_ES,
@@ -559,7 +560,7 @@ func TestService_getTimeout(t *testing.T) {
 	}
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	dsService := ProvideService(nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+	dsService := ProvideService(bus.New(), nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
 	for _, tc := range testCases {
 		ds := &models.DataSource{
@@ -574,7 +575,7 @@ func TestService_DecryptedValue(t *testing.T) {
 
 	t.Run("When datasource hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := ProvideService(nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(bus.New(), nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
 		encryptedJsonData, err := secretsService.EncryptJsonData(
 			context.Background(),
@@ -628,7 +629,7 @@ func TestService_DecryptedValue(t *testing.T) {
 			SecureJsonData: encryptedJsonData,
 		}
 
-		dsService := ProvideService(nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+		dsService := ProvideService(bus.New(), nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
 		// Populate cache
 		password, ok := dsService.DecryptedValue(&ds, "password")
@@ -679,7 +680,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				})
 
 				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(nil, secretsService, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(bus.New(), nil, secretsService, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
 
 				opts, err := dsService.httpClientOptions(&ds)
 				require.NoError(t, err)
@@ -696,7 +697,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				})
 
 				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(nil, secretsService, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(bus.New(), nil, secretsService, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
 
 				opts, err := dsService.httpClientOptions(&ds)
 				require.NoError(t, err)
@@ -715,7 +716,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				})
 
 				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(nil, secretsService, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(bus.New(), nil, secretsService, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
 
 				_, err := dsService.httpClientOptions(&ds)
 				assert.Error(t, err)
@@ -733,7 +734,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				})
 
 				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(nil, secretsService, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(bus.New(), nil, secretsService, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
 
 				opts, err := dsService.httpClientOptions(&ds)
 				require.NoError(t, err)
@@ -751,7 +752,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				})
 
 				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(nil, secretsService, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(bus.New(), nil, secretsService, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
 
 				opts, err := dsService.httpClientOptions(&ds)
 				require.NoError(t, err)
@@ -773,7 +774,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				})
 
 				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(nil, secretsService, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(bus.New(), nil, secretsService, cfg, features, acmock.New(), acmock.NewPermissionsServicesMock())
 
 				_, err := dsService.httpClientOptions(&ds)
 				assert.Error(t, err)
@@ -793,7 +794,7 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				})
 
 				secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-				dsService := ProvideService(nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+				dsService := ProvideService(bus.New(), nil, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
 				opts, err := dsService.httpClientOptions(&ds)
 				require.NoError(t, err)

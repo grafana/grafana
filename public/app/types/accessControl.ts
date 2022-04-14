@@ -23,7 +23,6 @@ export enum AccessControlAction {
   UsersQuotasList = 'users.quotas:list',
   UsersQuotasUpdate = 'users.quotas:update',
 
-  ServiceAccountsRead = 'serviceaccounts:read',
   ServiceAccountsCreate = 'serviceaccounts:create',
   ServiceAccountsWrite = 'serviceaccounts:write',
   ServiceAccountsDelete = 'serviceaccounts:delete',
@@ -108,8 +107,6 @@ export enum AccessControlAction {
   // External alerting notifications actions.
   AlertingNotificationsExternalWrite = 'alert.notifications.external:write',
   AlertingNotificationsExternalRead = 'alert.notifications.external:read',
-
-  ActionAPIKeysRead = 'apikeys:read',
 }
 
 export interface Role {

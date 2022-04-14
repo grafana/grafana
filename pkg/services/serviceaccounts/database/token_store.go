@@ -5,11 +5,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, saID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
+func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, saID int64, cmd *models.AddApiKeyCommand) error {
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		key := models.ApiKey{OrgId: cmd.OrgId, Name: cmd.Name}
 		exists, _ := sess.Get(&key)
@@ -29,7 +28,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 		t := models.ApiKey{
 			OrgId:            cmd.OrgId,
 			Name:             cmd.Name,
-			Role:             models.ROLE_VIEWER,
+			Role:             cmd.Role,
 			Key:              cmd.Key,
 			Created:          updated,
 			Updated:          updated,

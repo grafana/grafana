@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	secretstore "github.com/grafana/grafana/pkg/services/secrets/database"
@@ -19,7 +20,7 @@ import (
 func TestUserAuth(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, secretstore.ProvideSecretsStore(sqlStore))
-	authInfoStore := database.ProvideAuthInfoStore(sqlStore, secretsService)
+	authInfoStore := database.ProvideAuthInfoStore(sqlStore, bus.New(), secretsService)
 	srv := ProvideAuthInfoService(&OSSUserProtectionImpl{}, authInfoStore)
 
 	t.Run("Given 5 users", func(t *testing.T) {

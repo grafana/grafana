@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -12,14 +13,16 @@ import (
 )
 
 type AlertNotificationService struct {
+	Bus                 bus.Bus
 	SQLStore            *sqlstore.SQLStore
 	EncryptionService   encryption.Internal
 	NotificationService *notifications.NotificationService
 }
 
-func ProvideService(store *sqlstore.SQLStore, encryptionService encryption.Internal,
+func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, encryptionService encryption.Internal,
 	notificationService *notifications.NotificationService) *AlertNotificationService {
 	s := &AlertNotificationService{
+		Bus:                 bus,
 		SQLStore:            store,
 		EncryptionService:   encryptionService,
 		NotificationService: notificationService,

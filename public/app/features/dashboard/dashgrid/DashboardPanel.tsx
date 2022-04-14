@@ -5,7 +5,7 @@ import { PanelChromeAngular } from './PanelChromeAngular';
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
 import { PanelPlugin } from '@grafana/data';
-import { setPanelInstanceState } from '../../panel/state/reducers';
+import { cleanUpPanelState, setPanelInstanceState } from '../../panel/state/reducers';
 import { initPanelState } from '../../panel/state/actions';
 import { LazyLoader } from './LazyLoader';
 
@@ -17,6 +17,7 @@ export interface OwnProps {
   isViewing: boolean;
   width: number;
   height: number;
+  skipStateCleanUp?: boolean;
   lazy?: boolean;
 }
 
@@ -34,6 +35,7 @@ const mapStateToProps = (state: StoreState, props: OwnProps) => {
 
 const mapDispatchToProps = {
   initPanelState,
+  cleanUpPanelState,
   setPanelInstanceState,
 };
 
@@ -46,10 +48,19 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
     lazy: true,
   };
 
+  specialPanels: { [key: string]: Function } = {};
+
   componentDidMount() {
     this.props.panel.isInView = !this.props.lazy;
     if (!this.props.plugin) {
       this.props.initPanelState(this.props.panel);
+    }
+  }
+
+  componentWillUnmount() {
+    // Most of the time an unmount should result in cleanup but in PanelEdit it should not
+    if (!this.props.skipStateCleanUp) {
+      this.props.cleanUpPanelState({ key: this.props.stateKey });
     }
   }
 

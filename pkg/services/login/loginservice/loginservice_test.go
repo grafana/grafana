@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/go-kit/log"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
@@ -27,6 +28,7 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 	}
 
 	login := Implementation{
+		Bus:             bus.New(),
 		QuotaService:    &quota.QuotaService{},
 		AuthInfoService: authInfoMock,
 		SQLStore:        store,
@@ -51,6 +53,7 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 	}
 
 	login := Implementation{
+		Bus:             bus.New(),
 		QuotaService:    &quota.QuotaService{},
 		AuthInfoService: authInfoMock,
 		SQLStore:        store,
@@ -64,6 +67,7 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 func Test_teamSync(t *testing.T) {
 	authInfoMock := &logintest.AuthInfoServiceFake{}
 	login := Implementation{
+		Bus:             bus.New(),
 		QuotaService:    &quota.QuotaService{},
 		AuthInfoService: authInfoMock,
 	}

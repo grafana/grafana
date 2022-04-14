@@ -128,25 +128,17 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 		return toNamespaceErrorResponse(err)
 	}
 
-	q := ngmodels.GetAlertRulesQuery{
+	q := ngmodels.ListNamespaceAlertRulesQuery{
 		OrgID:        c.SignedInUser.OrgId,
 		NamespaceUID: namespace.Uid,
 	}
-	if err := srv.store.GetAlertRules(c.Req.Context(), &q); err != nil {
+	if err := srv.store.GetNamespaceAlertRules(c.Req.Context(), &q); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
 	result := apimodels.NamespaceConfigResponse{}
 	ruleGroupConfigs := make(map[string]apimodels.GettableRuleGroupConfig)
-
-	hasAccess := func(evaluator accesscontrol.Evaluator) bool {
-		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqSignedIn, evaluator)
-	}
-
 	for _, r := range q.Result {
-		if !authorizeDatasourceAccessForRule(r, hasAccess) {
-			continue
-		}
 		ruleGroupConfig, ok := ruleGroupConfigs[r.RuleGroup]
 		if !ok {
 			ruleGroupInterval := model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
@@ -189,15 +181,7 @@ func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Resp
 
 	var ruleGroupInterval model.Duration
 	ruleNodes := make([]apimodels.GettableExtendedRuleNode, 0, len(q.Result))
-
-	hasAccess := func(evaluator accesscontrol.Evaluator) bool {
-		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqSignedIn, evaluator)
-	}
-
 	for _, r := range q.Result {
-		if !authorizeDatasourceAccessForRule(r, hasAccess) {
-			continue
-		}
 		ruleGroupInterval = model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
 		ruleNodes = append(ruleNodes, toGettableExtendedRuleNode(*r, namespace.Id))
 	}
@@ -250,15 +234,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 	}
 
 	configs := make(map[string]map[string]apimodels.GettableRuleGroupConfig)
-
-	hasAccess := func(evaluator accesscontrol.Evaluator) bool {
-		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqSignedIn, evaluator)
-	}
-
 	for _, r := range q.Result {
-		if !authorizeDatasourceAccessForRule(r, hasAccess) {
-			continue
-		}
 		folder, ok := namespaceMap[r.NamespaceUID]
 		if !ok {
 			srv.log.Error("namespace not visible to the user", "user", c.SignedInUser.UserId, "namespace", r.NamespaceUID, "rule", r.UID)

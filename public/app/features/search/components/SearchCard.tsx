@@ -24,7 +24,7 @@ export function getThumbnailURL(uid: string, isLight?: boolean) {
 
 export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
   const [hasImage, setHasImage] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string>();
   const [showExpandedView, setShowExpandedView] = useState(false);
   const timeout = useRef<number | null>(null);
 
@@ -64,11 +64,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
     if (item.uid && !lastUpdated) {
       const dashboard = await backendSrv.getDashboardByUid(item.uid);
       const { updated } = dashboard.meta;
-      if (updated) {
-        setLastUpdated(new Date(updated).toLocaleString());
-      } else {
-        setLastUpdated(null);
-      }
+      setLastUpdated(new Date(updated).toLocaleString());
     }
   };
 

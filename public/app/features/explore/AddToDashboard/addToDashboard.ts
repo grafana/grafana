@@ -1,81 +1,37 @@
-import { DataFrame, DataQuery, DataSourceRef } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv';
-import {
-  getNewDashboardModelData,
-  setDashboardToFetchFromLocalStorage,
-} from 'app/features/dashboard/state/initDashboard';
-import { DashboardDTO, ExplorePanelData } from 'app/types';
+import { DataQuery, DataSourceRef } from '@grafana/data';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
-export enum AddToDashboardError {
-  FETCH_DASHBOARD = 'fetch-dashboard',
-  SET_DASHBOARD_LS = 'set-dashboard-ls-error',
+export interface SaveToNewDashboardDTO {
+  dashboardName: string;
+  folderId: number;
 }
-
-interface AddPanelToDashboardOptions {
+interface SaveOptions {
   queries: DataQuery[];
-  queryResponse: ExplorePanelData;
-  datasource?: DataSourceRef;
-  dashboardUid?: string;
+  panel: string;
+  datasource: DataSourceRef;
 }
 
-function createDashboard(): DashboardDTO {
-  const dto = getNewDashboardModelData();
+const createDashboard = (
+  dashboardName: string,
+  folderId: number,
+  queries: DataQuery[],
+  datasource: DataSourceRef,
+  panel: string
+) => {
+  const dashboard = getDashboardSrv().create({ title: dashboardName }, { folderId });
 
-  // getNewDashboardModelData adds by default the "add-panel" panel. We don't want that.
-  dto.dashboard.panels = [];
+  dashboard.addPanel({ targets: queries, type: panel, title: 'New Panel', datasource });
 
-  return dto;
-}
+  return getDashboardSrv().saveDashboard({ dashboard, folderId }, { showErrorAlert: false, showSuccessAlert: false });
+};
 
-export async function setDashboardInLocalStorage(options: AddPanelToDashboardOptions) {
-  const panelType = getPanelType(options.queries, options.queryResponse);
-  const panel = {
-    targets: options.queries,
-    type: panelType,
-    title: 'New Panel',
-    gridPos: { x: 0, y: 0, w: 12, h: 8 },
-    datasource: options.datasource,
-  };
-
-  let dto: DashboardDTO;
-
-  if (options.dashboardUid) {
-    try {
-      dto = await backendSrv.getDashboardByUid(options.dashboardUid);
-    } catch (e) {
-      throw AddToDashboardError.FETCH_DASHBOARD;
-    }
-  } else {
-    dto = createDashboard();
-  }
-
-  dto.dashboard.panels = [panel, ...(dto.dashboard.panels ?? [])];
-
-  try {
-    setDashboardToFetchFromLocalStorage(dto);
-  } catch {
-    throw AddToDashboardError.SET_DASHBOARD_LS;
-  }
-}
-
-const isVisible = (query: DataQuery) => !query.hide;
-const hasRefId = (refId: DataFrame['refId']) => (frame: DataFrame) => frame.refId === refId;
-
-function getPanelType(queries: DataQuery[], queryResponse: ExplorePanelData) {
-  for (const { refId } of queries.filter(isVisible)) {
-    // traceview is not supported in dashboards, skipping it for now.
-    const hasQueryRefId = hasRefId(refId);
-    if (queryResponse.graphFrames.some(hasQueryRefId)) {
-      return 'timeseries';
-    }
-    if (queryResponse.logsFrames.some(hasQueryRefId)) {
-      return 'logs';
-    }
-    if (queryResponse.nodeGraphFrames.some(hasQueryRefId)) {
-      return 'nodeGraph';
-    }
-  }
-
-  // falling back to table
-  return 'table';
-}
+export const addToDashboard = async (data: SaveToNewDashboardDTO, options: SaveOptions): Promise<string> => {
+  const res = await createDashboard(
+    data.dashboardName,
+    data.folderId,
+    options.queries,
+    options.datasource,
+    options.panel
+  );
+  return res.data.url;
+};

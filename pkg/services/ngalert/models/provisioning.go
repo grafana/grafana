@@ -3,10 +3,8 @@ package models
 type Provenance string
 
 const (
-	// ProvenanceNone reflects the provenance when no provenance is stored
-	// for the requested object in the database.
 	ProvenanceNone Provenance = ""
-	ProvenanceAPI  Provenance = "api"
+	ProvenanceApi  Provenance = "api"
 	ProvenanceFile Provenance = "file"
 )
 

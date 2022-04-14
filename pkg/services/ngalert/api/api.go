@@ -77,7 +77,6 @@ type API struct {
 	SecretsService       secrets.Service
 	AccessControl        accesscontrol.AccessControl
 	Policies             *provisioning.NotificationPolicyService
-	ContactPointService  *provisioning.ContactPointService
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -97,7 +96,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, ac: api.AccessControl},
+		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore},
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
@@ -133,9 +132,8 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 
 	if api.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertProvisioning) {
 		api.RegisterProvisioningApiEndpoints(NewForkedProvisioningApi(&ProvisioningSrv{
-			log:                 logger,
-			policies:            api.Policies,
-			contactPointService: api.ContactPointService,
+			log:      logger,
+			policies: api.Policies,
 		}), m)
 	}
 }

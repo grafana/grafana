@@ -226,7 +226,8 @@ export function lokiResultsToTableModel(
   lokiResults: Array<LokiMatrixResult | LokiVectorResult>,
   resultCount: number,
   refId: string,
-  meta: QueryResultMeta
+  meta: QueryResultMeta,
+  valueWithRefId?: boolean
 ): TableModel {
   if (!lokiResults || lokiResults.length === 0) {
     return new TableModel();
@@ -245,7 +246,7 @@ export function lokiResultsToTableModel(
   table.columns = [
     { text: 'Time', type: FieldType.time },
     ...sortedLabels.map((label) => ({ text: label, filterable: true, type: FieldType.string })),
-    { text: `Value #${refId}`, type: FieldType.number },
+    { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: FieldType.number },
   ];
 
   // Populate rows, set value to empty string when label not present.
@@ -452,6 +453,7 @@ function rangeQueryResponseToTimeSeries(
   response: LokiResponse,
   query: LokiRangeQueryRequest,
   target: LokiQuery,
+  responseListLength: number,
   scopedVars: ScopedVars
 ): TimeSeries[] {
   /** Show results of Loki metric queries only in graph */
@@ -459,10 +461,16 @@ function rangeQueryResponseToTimeSeries(
     preferredVisualisationType: 'graph',
   };
   const transformerOptions: TransformerOptions = {
+    format: target.format,
     legendFormat: target.legendFormat ?? '',
+    start: query.start!,
+    end: query.end!,
+    step: query.step!,
     query: query.query,
+    responseListLength,
     refId: target.refId,
     meta,
+    valueWithRefId: target.valueWithRefId,
     scopedVars,
   };
 
@@ -482,9 +490,10 @@ export function rangeQueryResponseToDataFrames(
   response: LokiResponse,
   query: LokiRangeQueryRequest,
   target: LokiQuery,
+  responseListLength: number,
   scopedVars: ScopedVars
 ): DataFrame[] {
-  const series = rangeQueryResponseToTimeSeries(response, query, target, scopedVars);
+  const series = rangeQueryResponseToTimeSeries(response, query, target, responseListLength, scopedVars);
   const frames = series.map((s) => toDataFrame(s));
 
   const { step } = query;
@@ -508,6 +517,7 @@ export function processRangeQueryResponse(
   response: LokiResponse,
   target: LokiQuery,
   query: LokiRangeQueryRequest,
+  responseListLength: number,
   limit: number,
   config: LokiOptions,
   scopedVars: ScopedVars
@@ -522,7 +532,16 @@ export function processRangeQueryResponse(
     case LokiResultType.Vector:
     case LokiResultType.Matrix:
       return of({
-        data: rangeQueryResponseToDataFrames(response, query, target, scopedVars),
+        data: rangeQueryResponseToDataFrames(
+          response,
+          query,
+          {
+            ...target,
+            format: 'time_series',
+          },
+          responseListLength,
+          scopedVars
+        ),
         key: target.refId,
       });
     default:

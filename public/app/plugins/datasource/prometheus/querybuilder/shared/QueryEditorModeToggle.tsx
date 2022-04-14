@@ -29,9 +29,5 @@ const editorModes = [
 ];
 
 export function QueryEditorModeToggle({ mode, onChange }: Props) {
-  return (
-    <div data-testid={'QueryEditorModeToggle'}>
-      <RadioButtonGroup options={editorModes} size="sm" value={mode} onChange={onChange} />
-    </div>
-  );
+  return <RadioButtonGroup options={editorModes} size="sm" value={mode} onChange={onChange} />;
 }

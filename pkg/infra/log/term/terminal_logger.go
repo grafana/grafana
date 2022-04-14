@@ -14,20 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/level"
 )
 
-var (
+const (
 	timeFormat     = "2006-01-02T15:04:05-0700"
 	termTimeFormat = "01-02|15:04:05"
+	floatFormat    = 'f'
+	termMsgJust    = 40
+	errorKey       = "LOG15_ERROR"
 )
-
-const (
-	floatFormat = 'f'
-	termMsgJust = 40
-	errorKey    = "LOG15_ERROR"
-)
-
-func SetTimeFormatGokitLog() {
-	timeFormat = time.RFC3339Nano
-}
 
 type terminalLogger struct {
 	w io.Writer
@@ -52,10 +45,7 @@ func (l terminalLogger) Log(keyvals ...interface{}) error {
 	r := getRecord(keyvals)
 
 	b := &bytes.Buffer{}
-
-	// To make the log output more readable, we make all log levels 5 characters long
-	lvl := fmt.Sprintf("%-5s", strings.ToUpper(r.level.String()))
-
+	lvl := strings.ToUpper(r.level.String())
 	if r.color > 0 {
 		fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m[%s] %s ", r.color, lvl, r.time.Format(termTimeFormat), r.msg) // lgtm[go/log-injection]
 	} else {
@@ -103,16 +93,10 @@ func getRecord(keyvals ...interface{}) *record {
 		if k == "t" {
 			t, ok := v.(fmt.Stringer)
 			if ok {
-				parsedTime, err := time.Parse("2006-01-02T15:04:05.999999999-0700", t.String())
+				time, err := time.Parse("2006-01-02T15:04:05.999999999-0700", t.String())
 				if err == nil {
-					r.time = parsedTime
+					r.time = time
 					continue
-				} else {
-					parsedTime, err := time.Parse(time.RFC3339Nano, t.String())
-					if err == nil {
-						r.time = parsedTime
-						continue
-					}
 				}
 			}
 

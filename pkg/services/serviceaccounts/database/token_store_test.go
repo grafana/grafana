@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/stretchr/testify/require"
 )
@@ -29,8 +28,9 @@ func TestStore_AddServiceAccountToken(t *testing.T) {
 			key, err := apikeygen.New(user.OrgId, keyName)
 			require.NoError(t, err)
 
-			cmd := serviceaccounts.AddServiceAccountTokenCommand{
+			cmd := models.AddApiKeyCommand{
 				Name:          keyName,
+				Role:          "Viewer",
 				OrgId:         user.OrgId,
 				Key:           key.HashedKey,
 				SecondsToLive: tc.secondsToLive,
@@ -79,8 +79,9 @@ func TestStore_DeleteServiceAccountToken(t *testing.T) {
 	key, err := apikeygen.New(user.OrgId, keyName)
 	require.NoError(t, err)
 
-	cmd := serviceaccounts.AddServiceAccountTokenCommand{
+	cmd := models.AddApiKeyCommand{
 		Name:          keyName,
+		Role:          "Viewer",
 		OrgId:         user.OrgId,
 		Key:           key.HashedKey,
 		SecondsToLive: 0,

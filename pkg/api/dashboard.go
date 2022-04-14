@@ -453,10 +453,9 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 	dash.Meta.IsHome = true
 	dash.Meta.CanEdit = c.SignedInUser.HasRole(models.ROLE_EDITOR)
 	dash.Meta.FolderTitle = "General"
-	dash.Dashboard = simplejson.New()
 
 	jsonParser := json.NewDecoder(file)
-	if err := jsonParser.Decode(dash.Dashboard); err != nil {
+	if err := jsonParser.Decode(&dash.Dashboard); err != nil {
 		return response.Error(500, "Failed to load home dashboard", err)
 	}
 

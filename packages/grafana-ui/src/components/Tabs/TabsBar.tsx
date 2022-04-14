@@ -32,9 +32,7 @@ export const TabsBar = React.forwardRef<HTMLDivElement, Props>(({ children, clas
 
   return (
     <div className={cx(tabsStyles.tabsWrapper, className)} ref={ref}>
-      <div className={tabsStyles.tabs} role="tablist">
-        {children}
-      </div>
+      <ul className={tabsStyles.tabs}>{children}</ul>
     </div>
   );
 });

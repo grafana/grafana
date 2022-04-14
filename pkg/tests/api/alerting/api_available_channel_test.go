@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -27,6 +28,7 @@ func TestAvailableChannels(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	store.Bus = bus.GetBus()
 
 	// Create a user to make authenticated requests
 	createUser(t, store, models.CreateUserCommand{

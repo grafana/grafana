@@ -102,13 +102,12 @@ const NavBarItem = ({
               const translationKey = item.id && menuItemTranslations[item.id];
               const itemText = translationKey ? i18n._(translationKey) : item.text;
               const isSection = item.menuItemType === NavMenuItemType.Section;
-              const icon = item.showIconInNavbar && !isSection ? (item.icon as IconName) : undefined;
 
               return (
                 <Item key={getNavModelItemKey(item)} textValue={item.text}>
                   <NavBarMenuItem
                     isDivider={!isSection && item.divider}
-                    icon={icon}
+                    icon={isSection ? undefined : (item.icon as IconName)}
                     target={item.target}
                     text={itemText}
                     url={item.url}

@@ -15,21 +15,17 @@ import {
   RadioButtonGroup,
   useStyles2,
 } from '@grafana/ui';
+import { ApiKey, OrgRole } from 'app/types';
 
 const EXPIRATION_OPTIONS = [
   { label: 'No expiration', value: false },
   { label: 'Set expiration date', value: true },
 ];
 
-export type ServiceAccountToken = {
-  name: string;
-  secondsToLive: number;
-};
-
 interface CreateTokenModalProps {
   isOpen: boolean;
   token: string;
-  onCreateToken: (token: ServiceAccountToken) => void;
+  onCreateToken: (token: ApiKey) => void;
   onClose: () => void;
 }
 
@@ -99,6 +95,7 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Crea
             onClick={() =>
               onCreateToken({
                 name: newTokenName,
+                role: OrgRole.Viewer,
                 secondsToLive: getSecondsToLive(newTokenExpirationDate),
               })
             }

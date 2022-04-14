@@ -90,3 +90,10 @@ export enum LokiOperationOrder {
   RangeVectorFunction = 5,
   Last = 6,
 }
+
+export function getDefaultEmptyQuery(): LokiVisualQuery {
+  return {
+    labels: [],
+    operations: [{ id: '__line_contains', params: [''] }],
+  };
+}

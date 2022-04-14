@@ -9,11 +9,9 @@ interface Props {
 }
 
 export function Portal(props: PropsWithChildren<Props>) {
-  const { children, className, root, forwardedRef } = props;
+  const { children, className, root: portalRoot = document.body, forwardedRef } = props;
   const theme = useTheme2();
   const node = useRef<HTMLDivElement | null>(null);
-  const portalRoot = root ?? getPortalContainer();
-
   if (!node.current) {
     node.current = document.createElement('div');
     if (className) {
@@ -27,7 +25,6 @@ export function Portal(props: PropsWithChildren<Props>) {
     if (node.current) {
       portalRoot.appendChild(node.current);
     }
-
     return () => {
       if (node.current) {
         portalRoot.removeChild(node.current);
@@ -38,18 +35,7 @@ export function Portal(props: PropsWithChildren<Props>) {
   return ReactDOM.createPortal(<div ref={forwardedRef}>{children}</div>, node.current);
 }
 
-/** @internal */
-export function getPortalContainer() {
-  return window.document.getElementById('grafana-portal-container') ?? document.body;
-}
-
-/** @internal */
-export function PortalContainer() {
-  return <div id="grafana-portal-container" />;
-}
-
 export const RefForwardingPortal = React.forwardRef<HTMLDivElement, Props>((props, ref) => {
   return <Portal {...props} forwardedRef={ref} />;
 });
-
 RefForwardingPortal.displayName = 'RefForwardingPortal';

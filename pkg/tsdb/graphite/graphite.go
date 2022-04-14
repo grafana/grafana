@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -147,7 +148,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		s.logger.Debug("Graphite request", "params", formData)
 	}
 
-	graphiteReq, err := s.createRequest(ctx, dsInfo, formData)
+	graphiteReq, err := s.createRequest(dsInfo, formData)
 	if err != nil {
 		return &result, err
 	}
@@ -162,7 +163,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	defer span.End()
 	s.tracer.Inject(ctx, graphiteReq.Header, span)
 
-	res, err := dsInfo.HTTPClient.Do(graphiteReq)
+	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, graphiteReq)
 	if err != nil {
 		return &result, err
 	}
@@ -251,14 +252,14 @@ func (s *Service) toDataFrames(response *http.Response) (frames data.Frames, err
 	return frames, nil
 }
 
-func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
+func (s *Service) createRequest(dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
 	}
 	u.Path = path.Join(u.Path, "render")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(data.Encode()))
+	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(data.Encode()))
 	if err != nil {
 		s.logger.Info("Failed to create request", "error", err)
 		return nil, fmt.Errorf("failed to create request: %w", err)

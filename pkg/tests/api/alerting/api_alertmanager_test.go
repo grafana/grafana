@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
@@ -39,6 +40,8 @@ func TestAMConfigAccess(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
 
 	// Create a users to make authenticated requests
 	createUser(t, store, models.CreateUserCommand{
@@ -400,6 +403,8 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
 
 	// unauthenticated request to get the alerts should fail
 	{
@@ -569,6 +574,8 @@ func TestRulerAccess(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
 
 	// Create the namespace we'll save our alerts to.
 	_, err = createFolder(t, store, 0, "default")
@@ -697,6 +704,8 @@ func TestDeleteFolderWithRules(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
 
 	// Create the namespace we'll save our alerts to.
 	namespaceUID, err := createFolder(t, store, 0, "default")
@@ -857,6 +866,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
 
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
@@ -1990,6 +2001,8 @@ func TestQuota(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
 
 	// Create the namespace we'll save our alerts to.
 	_, err = createFolder(t, store, 0, "default")
@@ -2235,6 +2248,8 @@ func TestEval(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
 
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),

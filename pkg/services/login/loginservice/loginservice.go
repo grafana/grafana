@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -15,9 +16,10 @@ var (
 	logger = log.New("login.ext_user")
 )
 
-func ProvideService(sqlStore sqlstore.Store, quotaService *quota.QuotaService, authInfoService login.AuthInfoService) *Implementation {
+func ProvideService(sqlStore sqlstore.Store, bus bus.Bus, quotaService *quota.QuotaService, authInfoService login.AuthInfoService) *Implementation {
 	s := &Implementation{
 		SQLStore:        sqlStore,
+		Bus:             bus,
 		QuotaService:    quotaService,
 		AuthInfoService: authInfoService,
 	}
@@ -26,6 +28,7 @@ func ProvideService(sqlStore sqlstore.Store, quotaService *quota.QuotaService, a
 
 type Implementation struct {
 	SQLStore        sqlstore.Store
+	Bus             bus.Bus
 	AuthInfoService login.AuthInfoService
 	QuotaService    *quota.QuotaService
 	TeamSync        login.TeamSyncFunc

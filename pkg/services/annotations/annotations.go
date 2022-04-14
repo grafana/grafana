@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -38,7 +37,6 @@ type ItemQuery struct {
 	Tags         []string `json:"tags"`
 	Type         string   `json:"type"`
 	MatchAny     bool     `json:"matchAny"`
-	SignedInUser *models.SignedInUser
 
 	Limit int64 `json:"limit"`
 }
@@ -153,17 +151,6 @@ const (
 	Organization annotationType = iota
 	Dashboard
 )
-
-func (a annotationType) String() string {
-	switch a {
-	case Organization:
-		return "organization"
-	case Dashboard:
-		return "dashboard"
-	default:
-		return ""
-	}
-}
 
 func (annotation *ItemDTO) GetType() annotationType {
 	if annotation.DashboardId != 0 {

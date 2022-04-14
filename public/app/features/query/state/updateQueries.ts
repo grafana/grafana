@@ -1,42 +1,27 @@
-import { DataQuery, DataSourceApi, hasQueryExportSupport, hasQueryImportSupport } from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
-export async function updateQueries(
-  nextDS: DataSourceApi,
+export function updateQueries(
+  newSettings: DataSourceInstanceSettings,
   queries: DataQuery[],
-  currentDS?: DataSourceApi
-): Promise<DataQuery[]> {
-  let nextQueries = queries;
-  const datasource = { type: nextDS.type, uid: nextDS.uid };
+  dsSettings?: DataSourceInstanceSettings
+): DataQuery[] {
+  const datasource = getDataSourceRef(newSettings);
 
   // we are changing data source type
-  if (currentDS?.meta.id !== nextDS.meta.id) {
+  if (dsSettings?.type !== newSettings.type) {
     // If changing to mixed do nothing
-    if (nextDS.meta.mixed) {
+    if (newSettings.meta.mixed) {
       return queries;
-    }
-    // when both data sources support abstract queries
-    else if (hasQueryExportSupport(currentDS) && hasQueryImportSupport(nextDS)) {
-      const abstractQueries = await currentDS.exportToAbstractQueries(queries);
-      nextQueries = await nextDS.importFromAbstractQueries(abstractQueries);
-    }
-    // when datasource supports query import
-    else if (currentDS && nextDS.importQueries) {
-      nextQueries = await nextDS.importQueries(queries, currentDS);
-    }
-    // Otherwise clear queries
-    else {
+    } else {
+      // Changing to another datasource type clear queries
       return [{ refId: 'A', datasource }];
     }
   }
 
-  if (nextQueries.length === 0) {
-    return [{ refId: 'A', datasource }];
-  }
-
   // Set data source on all queries except expression queries
-  return nextQueries.map((query) => {
-    if (!isExpressionReference(query.datasource) && !nextDS.meta.mixed) {
+  return queries.map((query) => {
+    if (!isExpressionReference(query.datasource) && !newSettings.meta.mixed) {
       query.datasource = datasource;
     }
     return query;

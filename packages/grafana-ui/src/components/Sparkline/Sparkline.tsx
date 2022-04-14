@@ -20,7 +20,7 @@ import {
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { UPlotChart } from '../uPlot/Plot';
 import { Themeable2 } from '../../types';
-import { preparePlotData2, getStackingGroups } from '../uPlot/utils';
+import { preparePlotData } from '../uPlot/utils';
 import { preparePlotFrame } from './utils';
 import { isEqual } from 'lodash';
 
@@ -51,7 +51,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     const alignedDataFrame = preparePlotFrame(props.sparkline, props.config);
 
     this.state = {
-      data: preparePlotData2(alignedDataFrame, getStackingGroups(alignedDataFrame)),
+      data: preparePlotData([alignedDataFrame]),
       alignedDataFrame,
       configBuilder: this.prepareConfig(alignedDataFrame),
     };
@@ -65,7 +65,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
     return {
       ...state,
-      data: preparePlotData2(frame, getStackingGroups(frame)),
+      data: preparePlotData([frame]),
       alignedDataFrame: frame,
     };
   }

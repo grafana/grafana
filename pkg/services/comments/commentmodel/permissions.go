@@ -4,22 +4,21 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type PermissionChecker struct {
-	sqlStore      *sqlstore.SQLStore
-	features      featuremgmt.FeatureToggles
-	accessControl accesscontrol.AccessControl
+	sqlStore *sqlstore.SQLStore
+	features featuremgmt.FeatureToggles
 }
 
-func NewPermissionChecker(sqlStore *sqlstore.SQLStore, features featuremgmt.FeatureToggles, accessControl accesscontrol.AccessControl) *PermissionChecker {
-	return &PermissionChecker{sqlStore: sqlStore, features: features, accessControl: accessControl}
+func NewPermissionChecker(sqlStore *sqlstore.SQLStore, features featuremgmt.FeatureToggles) *PermissionChecker {
+	return &PermissionChecker{sqlStore: sqlStore, features: features}
 }
 
 func (c *PermissionChecker) getDashboardByUid(ctx context.Context, orgID int64, uid string) (*models.Dashboard, error) {
@@ -63,7 +62,7 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 		if err != nil {
 			return false, nil
 		}
-		items, err := repo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId, SignedInUser: signedInUser})
+		items, err := repo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId})
 		if err != nil || len(items) != 1 {
 			return false, nil
 		}
@@ -105,18 +104,12 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 		if !c.features.IsEnabled(featuremgmt.FlagAnnotationComments) {
 			return false, nil
 		}
-		if c.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-			evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsWrite, accesscontrol.ScopeAnnotationsTypeDashboard)
-			if canEdit, err := c.accessControl.Evaluate(ctx, signedInUser, evaluator); err != nil || !canEdit {
-				return canEdit, err
-			}
-		}
 		repo := annotations.GetRepository()
 		annotationID, err := strconv.ParseInt(objectID, 10, 64)
 		if err != nil {
 			return false, nil
 		}
-		items, err := repo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId, SignedInUser: signedInUser})
+		items, err := repo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId})
 		if err != nil || len(items) != 1 {
 			return false, nil
 		}

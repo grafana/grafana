@@ -1,24 +1,8 @@
 import React from 'react';
 import { serializeStateToUrlParam } from '@grafana/data';
 import { setupExplore, tearDown, waitForExplore } from './helper/setup';
-import {
-  closeQueryHistory,
-  deleteQueryHistory,
-  inputQuery,
-  openQueryHistory,
-  runQuery,
-  selectOnlyActiveDataSource,
-  selectStarredTabFirst,
-  starQueryHistory,
-  switchToQueryHistoryTab,
-} from './helper/interactions';
-import {
-  assertDataSourceFilterVisibility,
-  assertQueryHistory,
-  assertQueryHistoryExists,
-  assertQueryHistoryIsStarred,
-  assertQueryHistoryTabIsSelected,
-} from './helper/assert';
+import { deleteQueryHistory, inputQuery, openQueryHistory, runQuery, starQueryHistory } from './helper/interactions';
+import { assertQueryHistory, assertQueryHistoryExists, assertQueryHistoryIsStarred } from './helper/assert';
 import { makeLogsQueryResponse } from './helper/query';
 import { ExploreId } from '../../../types';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
@@ -85,10 +69,7 @@ describe('Explore: Query History', () => {
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}']);
   });
 
-  /**
-   * TODO: #47635 check why this test times out
-   */
-  it.skip('updates the state in both Explore panes', async () => {
+  it('updates the state in both Explore panes', async () => {
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
@@ -121,27 +102,5 @@ describe('Explore: Query History', () => {
     deleteQueryHistory(0, ExploreId.left);
     await assertQueryHistory(['{"expr":"query #1"}'], ExploreId.left);
     await assertQueryHistory(['{"expr":"query #1"}'], ExploreId.right);
-  });
-
-  it('updates query history settings', async () => {
-    // open settings page
-    setupExplore();
-    await waitForExplore();
-    await openQueryHistory();
-
-    // assert default values
-    assertQueryHistoryTabIsSelected('Query history');
-    assertDataSourceFilterVisibility(true);
-    await switchToQueryHistoryTab('Settings');
-
-    // change settings
-    selectStarredTabFirst();
-    selectOnlyActiveDataSource();
-    await closeQueryHistory();
-    await openQueryHistory();
-
-    // assert new settings
-    assertQueryHistoryTabIsSelected('Starred');
-    assertDataSourceFilterVisibility(false);
   });
 });

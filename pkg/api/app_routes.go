@@ -27,10 +27,10 @@ func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 			Renegotiation:      tls.RenegotiateFreelyAsClient,
 		},
 		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
+		Dial: (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
-		}).DialContext,
+		}).Dial,
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
 
@@ -65,7 +65,6 @@ func AppPluginRoute(route *plugins.Route, appID string, hs *HTTPServer) web.Hand
 
 		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appID, hs.Cfg, hs.PluginSettings, hs.SecretsService)
 		proxy.Transport = pluginProxyTransport
-
 		proxy.ServeHTTP(c.Resp, c.Req)
 	}
 }

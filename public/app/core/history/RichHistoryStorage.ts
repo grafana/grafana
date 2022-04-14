@@ -1,5 +1,4 @@
 import { RichHistoryQuery } from '../../types';
-import { RichHistorySettings } from '../utils/richHistoryTypes';
 
 /**
  * Errors are used when the operation on Rich History was not successful.
@@ -45,7 +44,4 @@ export default interface RichHistoryStorage {
   deleteRichHistory(id: string): Promise<void>;
   updateStarred(id: string, starred: boolean): Promise<RichHistoryQuery>;
   updateComment(id: string, comment: string | undefined): Promise<RichHistoryQuery>;
-
-  getSettings(): Promise<RichHistorySettings>;
-  updateSettings(settings: RichHistorySettings): Promise<void>;
 }

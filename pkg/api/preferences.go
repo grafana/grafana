@@ -53,7 +53,6 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 
 	if prefsQuery.Result.JsonData != nil {
 		dto.Navbar = prefsQuery.Result.JsonData.Navbar
-		dto.QueryHistory = prefsQuery.Result.JsonData.QueryHistory
 	}
 
 	return response.JSON(200, &dto)
@@ -111,7 +110,6 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		WeekStart:       dtoCmd.WeekStart,
 		HomeDashboardId: dtoCmd.HomeDashboardID,
 		Navbar:          dtoCmd.Navbar,
-		QueryHistory:    dtoCmd.QueryHistory,
 	}
 
 	if err := hs.SQLStore.PatchPreferences(ctx, &patchCmd); err != nil {

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
 type CrawlerMode string
@@ -65,7 +66,7 @@ type dashboardPreviewsSetupConfig struct {
 type dashRenderer interface {
 
 	// Run Assumes you have already authenticated as admin.
-	Run(ctx context.Context, auth CrawlerAuth, mode CrawlerMode, theme models.Theme, kind models.ThumbnailKind) error
+	Run(ctx context.Context, authOpts rendering.AuthOpts, mode CrawlerMode, theme models.Theme, kind models.ThumbnailKind) error
 
 	// Assumes you have already authenticated as admin.
 	Stop() (crawlStatus, error)

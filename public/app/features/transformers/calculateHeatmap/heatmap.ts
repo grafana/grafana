@@ -220,9 +220,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
         name: 'count',
         type: FieldType.number,
         values: new ArrayVector(heat2d.count),
-        config: {
-          unit: 'short', // always integer
-        },
+        config: {},
       },
     ],
   };

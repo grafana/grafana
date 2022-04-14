@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -32,6 +33,9 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 
 	// editor from main organisation requests configuration
 	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
+
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
 
 	// create user under main organisation
 	userID := createUser(t, store, models.CreateUserCommand{
@@ -140,6 +144,9 @@ func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	alertConfigURL := fmt.Sprintf("http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
+
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
 
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),

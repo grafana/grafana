@@ -20,18 +20,17 @@ import (
 
 func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 	query := &annotations.ItemQuery{
-		From:         c.QueryInt64("from"),
-		To:           c.QueryInt64("to"),
-		OrgId:        c.OrgId,
-		UserId:       c.QueryInt64("userId"),
-		AlertId:      c.QueryInt64("alertId"),
-		DashboardId:  c.QueryInt64("dashboardId"),
-		PanelId:      c.QueryInt64("panelId"),
-		Limit:        c.QueryInt64("limit"),
-		Tags:         c.QueryStrings("tags"),
-		Type:         c.Query("type"),
-		MatchAny:     c.QueryBool("matchAny"),
-		SignedInUser: c.SignedInUser,
+		From:        c.QueryInt64("from"),
+		To:          c.QueryInt64("to"),
+		OrgId:       c.OrgId,
+		UserId:      c.QueryInt64("userId"),
+		AlertId:     c.QueryInt64("alertId"),
+		DashboardId: c.QueryInt64("dashboardId"),
+		PanelId:     c.QueryInt64("panelId"),
+		Limit:       c.QueryInt64("limit"),
+		Tags:        c.QueryStrings("tags"),
+		Type:        c.Query("type"),
+		MatchAny:    c.QueryBool("matchAny"),
 	}
 
 	repo := annotations.GetRepository()
@@ -193,7 +192,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 
 	repo := annotations.GetRepository()
 
-	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.SignedInUser)
+	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.OrgId)
 	if resp != nil {
 		return resp
 	}
@@ -240,7 +239,7 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 
 	repo := annotations.GetRepository()
 
-	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.SignedInUser)
+	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.OrgId)
 	if resp != nil {
 		return resp
 	}
@@ -311,7 +310,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 		var dashboardId int64
 
 		if cmd.AnnotationId != 0 {
-			annotation, respErr := findAnnotationByID(c.Req.Context(), repo, cmd.AnnotationId, c.SignedInUser)
+			annotation, respErr := findAnnotationByID(c.Req.Context(), repo, cmd.AnnotationId, c.OrgId)
 			if respErr != nil {
 				return respErr
 			}
@@ -359,7 +358,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 
 	repo := annotations.GetRepository()
 
-	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.SignedInUser)
+	annotation, resp := findAnnotationByID(c.Req.Context(), repo, annotationID, c.OrgId)
 	if resp != nil {
 		return resp
 	}
@@ -401,13 +400,8 @@ func canSaveOrganizationAnnotation(c *models.ReqContext) bool {
 	return c.SignedInUser.HasRole(models.ROLE_EDITOR)
 }
 
-func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user *models.SignedInUser) (*annotations.ItemDTO, response.Response) {
-	query := &annotations.ItemQuery{
-		AnnotationId: annotationID,
-		OrgId:        user.OrgId,
-		SignedInUser: user,
-	}
-	items, err := repo.Find(ctx, query)
+func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, orgID int64) (*annotations.ItemDTO, response.Response) {
+	items, err := repo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgID})
 
 	if err != nil {
 		return nil, response.Error(500, "Failed to find annotation", err)
@@ -452,21 +446,9 @@ func AnnotationTypeScopeResolver() (string, accesscontrol.AttributeScopeResolveF
 			return "", accesscontrol.ErrInvalidScope
 		}
 
-		// tempUser is used to resolve annotation type.
-		// The annotation doesn't get returned to the real user, so real user's permissions don't matter here.
-		tempUser := &models.SignedInUser{
-			OrgId: orgID,
-			Permissions: map[int64]map[string][]string{
-				orgID: {
-					accesscontrol.ActionDashboardsRead:  {accesscontrol.ScopeDashboardsAll},
-					accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsAll},
-				},
-			},
-		}
-
-		annotation, resp := findAnnotationByID(ctx, annotations.GetRepository(), int64(annotationId), tempUser)
+		annotation, resp := findAnnotationByID(ctx, annotations.GetRepository(), int64(annotationId), orgID)
 		if resp != nil {
-			return "", errors.New("could not resolve annotation type")
+			return "", err
 		}
 
 		if annotation.GetType() == annotations.Organization {

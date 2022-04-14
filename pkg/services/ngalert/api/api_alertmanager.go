@@ -57,12 +57,10 @@ func (srv AlertmanagerSrv) loadSecureSettings(ctx context.Context, orgId int64, 
 	currentReceiverMap := make(map[string]*apimodels.PostableGrafanaReceiver)
 	if query.Result != nil {
 		currentConfig, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
-		// If the current config is un-loadable, treat it as if it never existed. Providing a new, valid config should be able to "fix" this state.
 		if err != nil {
-			srv.log.Warn("Last known alertmanager configuration was invalid. Overwriting...")
-		} else {
-			currentReceiverMap = currentConfig.GetGrafanaReceiverMap()
+			return fmt.Errorf("failed to load latest configuration: %w", err)
 		}
+		currentReceiverMap = currentConfig.GetGrafanaReceiverMap()
 	}
 
 	// Copy the previously known secure settings

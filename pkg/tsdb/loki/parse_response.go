@@ -2,13 +2,11 @@ package loki
 
 import (
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/loki/pkg/loghttp"
 	"github.com/grafana/loki/pkg/logqlmodel/stats"
-	jsoniter "github.com/json-iterator/go"
 )
 
 func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (data.Frames, error) {
@@ -19,10 +17,7 @@ func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (data.Frames,
 	}
 
 	for _, frame := range frames {
-		err = adjustFrame(frame, query)
-		if err != nil {
-			return nil, err
-		}
+		adjustFrame(frame, query)
 	}
 
 	return frames, nil
@@ -36,7 +31,7 @@ func lokiResponseToDataFrames(value *loghttp.QueryResponse, query *lokiQuery) (d
 	case loghttp.Vector:
 		return lokiVectorToDataFrames(res, query, stats), nil
 	case loghttp.Streams:
-		return lokiStreamsToDataFrames(res, query, stats)
+		return lokiStreamsToDataFrames(res, query, stats), nil
 	default:
 		return nil, fmt.Errorf("resultType %T not supported{", res)
 	}
@@ -59,8 +54,8 @@ func lokiMatrixToDataFrames(matrix loghttp.Matrix, query *lokiQuery, stats []dat
 			values = append(values, float64(k.Value))
 		}
 
-		timeField := data.NewField("time", nil, timeVector)
-		valueField := data.NewField("value", tags, values)
+		timeField := data.NewField("", nil, timeVector)
+		valueField := data.NewField("", tags, values)
 
 		frame := data.NewFrame("", timeField, valueField)
 		frame.SetMeta(&data.FrameMeta{
@@ -84,8 +79,8 @@ func lokiVectorToDataFrames(vector loghttp.Vector, query *lokiQuery, stats []dat
 		for k, v := range v.Metric {
 			tags[string(k)] = string(v)
 		}
-		timeField := data.NewField("time", nil, timeVector)
-		valueField := data.NewField("value", tags, values)
+		timeField := data.NewField("", nil, timeVector)
+		valueField := data.NewField("", tags, values)
 
 		frame := data.NewFrame("", timeField, valueField)
 		frame.SetMeta(&data.FrameMeta{
@@ -98,61 +93,35 @@ func lokiVectorToDataFrames(vector loghttp.Vector, query *lokiQuery, stats []dat
 	return frames
 }
 
-// we serialize the labels as an ordered list of pairs
-func labelsToString(labels data.Labels) (string, error) {
-	keys := make([]string, 0, len(labels))
-	for k := range labels {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	labelArray := make([][2]string, 0, len(labels))
-
-	for _, k := range keys {
-		pair := [2]string{k, labels[k]}
-		labelArray = append(labelArray, pair)
-	}
-
-	bytes, err := jsoniter.Marshal(labelArray)
-	if err != nil {
-		return "", err
-	}
-
-	return string(bytes), nil
-}
-
-func lokiStreamsToDataFrames(streams loghttp.Streams, query *lokiQuery, stats []data.QueryStat) (data.Frames, error) {
-	var timeVector []time.Time
-	var values []string
-	var labelsVector []string
+func lokiStreamsToDataFrames(streams loghttp.Streams, query *lokiQuery, stats []data.QueryStat) data.Frames {
+	frames := data.Frames{}
 
 	for _, v := range streams {
-		labelsText, err := labelsToString(v.Labels.Map())
-		if err != nil {
-			return nil, err
+		tags := make(map[string]string, len(v.Labels))
+		timeVector := make([]time.Time, 0, len(v.Entries))
+		values := make([]string, 0, len(v.Entries))
+
+		for k, v := range v.Labels {
+			tags[k] = v
 		}
 
 		for _, k := range v.Entries {
 			timeVector = append(timeVector, k.Timestamp.UTC())
 			values = append(values, k.Line)
-			labelsVector = append(labelsVector, labelsText)
 		}
+
+		timeField := data.NewField("", nil, timeVector)
+		valueField := data.NewField("", tags, values)
+
+		frame := data.NewFrame("", timeField, valueField)
+		frame.SetMeta(&data.FrameMeta{
+			Stats: stats,
+		})
+
+		frames = append(frames, frame)
 	}
 
-	timeField := data.NewField("ts", nil, timeVector)
-	valueField := data.NewField("line", nil, values)
-	labelsField := data.NewField("labels", nil, labelsVector)
-	labelsField.Config = &data.FieldConfig{
-		// we should have a native json-field-type
-		Custom: map[string]interface{}{"json": true},
-	}
-
-	frame := data.NewFrame("", labelsField, timeField, valueField)
-	frame.SetMeta(&data.FrameMeta{
-		Stats: stats,
-	})
-
-	return data.Frames{frame}, nil
+	return frames
 }
 
 func parseStats(result stats.Result) []data.QueryStat {

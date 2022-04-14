@@ -69,7 +69,6 @@ export const getAvailableIcons = () =>
     'envelope',
     'exchange-alt',
     'exclamation-triangle',
-    'exclamation-circle',
     'external-link-alt',
     'eye',
     'eye-slash',

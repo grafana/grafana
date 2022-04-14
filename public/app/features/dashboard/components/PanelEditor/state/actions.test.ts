@@ -1,7 +1,7 @@
 import { thunkTester } from '../../../../../../test/core/thunk/thunkTester';
 import { closeEditor, initialState, PanelEditorState } from './reducers';
 import { exitPanelEditor, initPanelEditor, skipPanelUpdate } from './actions';
-import { panelModelAndPluginReady, removePanel } from 'app/features/panel/state/reducers';
+import { cleanUpPanelState, panelModelAndPluginReady } from 'app/features/panel/state/reducers';
 import { DashboardModel, PanelModel } from '../../../state';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 
@@ -48,7 +48,6 @@ describe('panelEditor actions', () => {
       };
 
       const dispatchedActions = await thunkTester({
-        panels: {},
         panelEditor: state,
         dashboard: {
           getModel: () => dashboard,
@@ -58,7 +57,7 @@ describe('panelEditor actions', () => {
         .whenThunkIsDispatched();
 
       expect(dispatchedActions.length).toBe(2);
-      expect(dispatchedActions[0].type).toBe(removePanel.type);
+      expect(dispatchedActions[0].type).toBe(cleanUpPanelState.type);
       expect(dispatchedActions[1].type).toBe(closeEditor.type);
       expect(sourcePanel.getOptions()).toEqual({ prop: true });
       expect(sourcePanel.id).toEqual(12);
@@ -85,7 +84,6 @@ describe('panelEditor actions', () => {
 
       const dispatchedActions = await thunkTester({
         panelEditor: state,
-        panels: {},
         dashboard: {
           getModel: () => dashboard,
         },
@@ -121,7 +119,6 @@ describe('panelEditor actions', () => {
 
       const dispatchedActions = await thunkTester({
         panelEditor: state,
-        panels: {},
         dashboard: {
           getModel: () => dashboard,
         },

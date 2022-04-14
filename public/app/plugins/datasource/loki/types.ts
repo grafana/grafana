@@ -1,5 +1,6 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
 import { QueryEditorMode } from '../prometheus/querybuilder/shared/types';
+import { LokiVisualQuery } from './querybuilder/types';
 
 export interface LokiInstantQueryRequest {
   query: string;
@@ -32,7 +33,10 @@ export enum LokiQueryType {
 export interface LokiQuery extends DataQuery {
   queryType?: LokiQueryType;
   expr: string;
+  query?: string;
+  format?: string;
   legendFormat?: string;
+  valueWithRefId?: boolean;
   maxLines?: number;
   resolution?: number;
   /** Used in range queries */
@@ -42,6 +46,8 @@ export interface LokiQuery extends DataQuery {
   /* @deprecated now use queryType */
   instant?: boolean;
   editorMode?: QueryEditorMode;
+  /** Temporary until we have a parser */
+  visualQuery?: LokiVisualQuery;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
@@ -128,9 +134,15 @@ export type DerivedFieldConfig = {
 };
 
 export interface TransformerOptions {
+  format?: string;
   legendFormat?: string;
+  step: number;
+  start: number;
+  end: number;
   query: string;
+  responseListLength: number;
   refId: string;
   scopedVars: ScopedVars;
   meta?: QueryResultMeta;
+  valueWithRefId?: boolean;
 }

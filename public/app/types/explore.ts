@@ -15,7 +15,6 @@ import {
   DataQueryResponse,
   ExplorePanelsState,
 } from '@grafana/data';
-import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
 export enum ExploreId {
   left = 'left',
@@ -43,11 +42,6 @@ export interface ExploreState {
    * Explore state of the right area in split view.
    */
   right?: ExploreItemState;
-
-  /**
-   * Settings for rich history (note: filters are stored per each pane separately)
-   */
-  richHistorySettings?: RichHistorySettings;
 
   /**
    * True if local storage quota was exceeded when a rich history item was added. This is to prevent showing
@@ -159,7 +153,6 @@ export interface ExploreItemState {
    * History of all queries
    */
   richHistory: RichHistoryQuery[];
-  richHistorySearchFilters?: RichHistorySearchFilters;
 
   /**
    * We are using caching to store query responses of queries run from logs navigation.

@@ -28,11 +28,13 @@ const ui = {
 jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
 
 describe('RuleDetails FGAC', () => {
+  mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
+
   describe('Grafana rules action buttons', () => {
     const grafanaRule = getGrafanaRule({ name: 'Grafana' });
     it('Should not render Edit button for users without the update permission', () => {
       // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
       // Act
       renderRuleDetails(grafanaRule);
@@ -43,7 +45,7 @@ describe('RuleDetails FGAC', () => {
 
     it('Should not render Delete button for users without the delete permission', () => {
       // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: false });
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
       // Act
       renderRuleDetails(grafanaRule);
@@ -54,7 +56,9 @@ describe('RuleDetails FGAC', () => {
 
     it('Should render Edit button for users with the update permission', () => {
       // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
+      jest
+        .spyOn(contextSrv, 'hasPermission')
+        .mockImplementation((action) => action === AccessControlAction.AlertingRuleUpdate);
 
       // Act
       renderRuleDetails(grafanaRule);
@@ -65,7 +69,9 @@ describe('RuleDetails FGAC', () => {
 
     it('Should render Delete button for users with the delete permission', () => {
       // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
+      jest
+        .spyOn(contextSrv, 'hasPermission')
+        .mockImplementation((action) => action === AccessControlAction.AlertingRuleDelete);
 
       // Act
       renderRuleDetails(grafanaRule);
@@ -103,7 +109,7 @@ describe('RuleDetails FGAC', () => {
     const cloudRule = getCloudRule({ name: 'Cloud' });
     it('Should not render Edit button for users without the update permission', () => {
       // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
       // Act
       renderRuleDetails(cloudRule);
@@ -114,7 +120,7 @@ describe('RuleDetails FGAC', () => {
 
     it('Should not render Delete button for users without the delete permission', () => {
       // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: false });
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
       // Act
       renderRuleDetails(cloudRule);
@@ -125,7 +131,9 @@ describe('RuleDetails FGAC', () => {
 
     it('Should render Edit button for users with the update permission', () => {
       // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
+      jest
+        .spyOn(contextSrv, 'hasPermission')
+        .mockImplementation((action) => action === AccessControlAction.AlertingRuleExternalWrite);
 
       // Act
       renderRuleDetails(cloudRule);
@@ -136,7 +144,9 @@ describe('RuleDetails FGAC', () => {
 
     it('Should render Delete button for users with the delete permission', () => {
       // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
+      jest
+        .spyOn(contextSrv, 'hasPermission')
+        .mockImplementation((action) => action === AccessControlAction.AlertingRuleExternalWrite);
 
       // Act
       renderRuleDetails(cloudRule);

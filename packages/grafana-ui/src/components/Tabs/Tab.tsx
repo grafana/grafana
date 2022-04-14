@@ -38,20 +38,18 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
     const linkClass = cx(tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
 
     return (
-      <div className={tabsStyles.item}>
+      <li className={tabsStyles.item}>
         <a
           href={href}
           className={linkClass}
           {...otherProps}
           onClick={onChangeTab}
           aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
-          role="tab"
-          aria-selected={active}
           ref={ref}
         >
           {content()}
         </a>
-      </div>
+      </li>
     );
   }
 );

@@ -256,6 +256,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                       lazy={false}
                       width={panelSize.width}
                       height={panelSize.height}
+                      skipStateCleanUp={true}
                     />
                   </div>
                 </div>

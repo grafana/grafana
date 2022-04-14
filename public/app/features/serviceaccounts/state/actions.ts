@@ -1,4 +1,4 @@
-import { ServiceAccountDTO, ThunkResult, ServiceAccountFilter, AccessControlAction } from '../../../types';
+import { ApiKey, ServiceAccountDTO, ThunkResult, ServiceAccountFilter } from '../../../types';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import {
   acOptionsLoaded,
@@ -16,25 +16,16 @@ import {
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { debounce } from 'lodash';
-import { contextSrv } from '../../../core/services/context_srv';
-import { ServiceAccountToken } from '../CreateServiceAccountTokenModal';
 
 const BASE_URL = `/api/serviceaccounts`;
 
 export function fetchACOptions(): ThunkResult<void> {
   return async (dispatch) => {
     try {
-      if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
-        const options = await fetchRoleOptions();
-        dispatch(acOptionsLoaded(options));
-      }
-      if (
-        contextSrv.licensedAccessControlEnabled() &&
-        contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)
-      ) {
-        const builtInRoles = await fetchBuiltinRoles();
-        dispatch(builtInRolesLoaded(builtInRoles));
-      }
+      const options = await fetchRoleOptions();
+      dispatch(acOptionsLoaded(options));
+      const builtInRoles = await fetchBuiltinRoles();
+      dispatch(builtInRolesLoaded(builtInRoles));
     } catch (error) {
       console.error(error);
     }
@@ -64,7 +55,7 @@ export function loadServiceAccount(saID: number): ThunkResult<void> {
 
 export function createServiceAccountToken(
   saID: number,
-  token: ServiceAccountToken,
+  token: ApiKey,
   onTokenCreated: (key: string) => void
 ): ThunkResult<void> {
   return async (dispatch) => {

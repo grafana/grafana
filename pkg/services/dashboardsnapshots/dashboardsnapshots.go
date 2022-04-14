@@ -3,6 +3,7 @@ package dashboardsnapshots
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -10,12 +11,14 @@ import (
 )
 
 type Service struct {
+	Bus            bus.Bus
 	SQLStore       sqlstore.Store
 	SecretsService secrets.Service
 }
 
-func ProvideService(store sqlstore.Store, secretsService secrets.Service) *Service {
+func ProvideService(bus bus.Bus, store sqlstore.Store, secretsService secrets.Service) *Service {
 	s := &Service{
+		Bus:            bus,
 		SQLStore:       store,
 		SecretsService: secretsService,
 	}

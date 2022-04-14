@@ -1,41 +1,24 @@
 import React from 'react';
 import { render, RenderResult } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { PromQueryEditorByApp } from './PromQueryEditorByApp';
 import { CoreApp } from '@grafana/data';
 import { noop } from 'lodash';
 import { PrometheusDatasource } from '../datasource';
 import { testIds as alertingTestIds } from './PromQueryEditorForAlerting';
 import { testIds as regularTestIds } from './PromQueryEditor';
+import { testIds as exploreTestIds } from './PromExploreQueryEditor';
 
 // the monaco-based editor uses lazy-loading and that does not work
 // well with this test, and we do not need the monaco-related
 // functionality in this test anyway, so we mock it out.
-jest.mock('./monaco-query-field/MonacoQueryFieldLazy', () => {
-  const fakeQueryField = (props: any) => {
-    return <input onBlur={props.onBlur} data-testid={'dummy-code-input'} type={'text'} />;
-  };
+jest.mock('./monaco-query-field/MonacoQueryFieldWrapper', () => {
+  const fakeQueryField = () => <div>prometheus query field</div>;
   return {
-    MonacoQueryFieldLazy: fakeQueryField,
+    MonacoQueryFieldWrapper: fakeQueryField,
   };
 });
 
-jest.mock('@grafana/runtime', () => {
-  const runtime = jest.requireActual('@grafana/runtime');
-  return {
-    __esModule: true,
-    ...runtime,
-    config: {
-      ...runtime.config,
-      featureToggles: {
-        ...runtime.config.featureToggles,
-        promQueryBuilder: true,
-      },
-    },
-  };
-});
-
-function setup(app: CoreApp): RenderResult & { onRunQuery: jest.Mock } {
+function setup(app: CoreApp): RenderResult {
   const dataSource = {
     createQuery: jest.fn((q) => q),
     getInitHints: () => [],
@@ -47,22 +30,16 @@ function setup(app: CoreApp): RenderResult & { onRunQuery: jest.Mock } {
       metrics: [],
     },
   } as unknown as PrometheusDatasource;
-  const onRunQuery = jest.fn();
 
-  const renderOutput = render(
+  return render(
     <PromQueryEditorByApp
       app={app}
       onChange={noop}
-      onRunQuery={onRunQuery}
+      onRunQuery={noop}
       datasource={dataSource}
       query={{ refId: 'A', expr: '' }}
     />
   );
-
-  return {
-    ...renderOutput,
-    onRunQuery,
-  };
 }
 
 describe('PromQueryEditorByApp', () => {
@@ -73,44 +50,24 @@ describe('PromQueryEditorByApp', () => {
     expect(queryByTestId(regularTestIds.editor)).toBeNull();
   });
 
-  it('should render editor selector for unkown apps', () => {
+  it('should render regular query editor for unkown apps', () => {
     const { getByTestId, queryByTestId } = setup(CoreApp.Unknown);
 
-    expect(getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
+    expect(getByTestId(regularTestIds.editor)).toBeInTheDocument();
     expect(queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 
-  it('should render editor selector for explore', () => {
+  it('should render regular query editor for explore', () => {
     const { getByTestId, queryByTestId } = setup(CoreApp.Explore);
 
-    expect(getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
+    expect(getByTestId(exploreTestIds.editor)).toBeInTheDocument();
     expect(queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 
-  it('should render editor selector for dashboard', () => {
+  it('should render regular query editor for dashboard', () => {
     const { getByTestId, queryByTestId } = setup(CoreApp.Dashboard);
 
-    expect(getByTestId('QueryEditorModeToggle')).toBeInTheDocument();
+    expect(getByTestId(regularTestIds.editor)).toBeInTheDocument();
     expect(queryByTestId(alertingTestIds.editor)).toBeNull();
-  });
-
-  it('should not run query onBlur in explore', () => {
-    const { getByTestId, onRunQuery } = setup(CoreApp.Explore);
-
-    const input = getByTestId('dummy-code-input');
-    expect(input).toBeInTheDocument();
-    userEvent.type(input, 'metric');
-    input.blur();
-    expect(onRunQuery).not.toHaveBeenCalled();
-  });
-
-  it('should run query onBlur in dashboard', () => {
-    const { getByTestId, onRunQuery } = setup(CoreApp.Dashboard);
-
-    const input = getByTestId('dummy-code-input');
-    expect(input).toBeInTheDocument();
-    userEvent.type(input, 'metric');
-    input.blur();
-    expect(onRunQuery).toHaveBeenCalled();
   });
 });

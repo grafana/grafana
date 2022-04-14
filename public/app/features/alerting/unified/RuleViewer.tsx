@@ -1,37 +1,36 @@
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useObservable } from 'react-use';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
 import {
+  withErrorBoundary,
+  useStyles2,
   Alert,
-  Button,
-  Icon,
   LoadingPlaceholder,
   PanelChromeLoadingIndicator,
-  useStyles2,
+  Icon,
+  Button,
   VerticalGroup,
-  withErrorBoundary,
 } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useObservable } from 'react-use';
-import { AlertQuery } from '../../../types/unified-alerting-dto';
-import { AlertLabels } from './components/AlertLabels';
+import { AlertingQueryRunner } from './state/AlertingQueryRunner';
+import { useCombinedRule } from './hooks/useCombinedRule';
+import { alertRuleToQueries } from './utils/query';
+import { RuleState } from './components/rules/RuleState';
+import { getRulesSourceByName } from './utils/datasource';
 import { DetailsField } from './components/DetailsField';
-import { RuleViewerLayout, RuleViewerLayoutContent } from './components/rule-viewer/RuleViewerLayout';
+import { RuleHealth } from './components/rules/RuleHealth';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { RuleDetailsActionButtons } from './components/rules/RuleDetailsActionButtons';
-import { RuleDetailsAnnotations } from './components/rules/RuleDetailsAnnotations';
-import { RuleDetailsDataSources } from './components/rules/RuleDetailsDataSources';
-import { RuleDetailsExpression } from './components/rules/RuleDetailsExpression';
-import { RuleDetailsFederatedSources } from './components/rules/RuleDetailsFederatedSources';
 import { RuleDetailsMatchingInstances } from './components/rules/RuleDetailsMatchingInstances';
-import { RuleHealth } from './components/rules/RuleHealth';
-import { RuleState } from './components/rules/RuleState';
-import { useAlertQueriesStatus } from './hooks/useAlertQueriesStatus';
-import { useCombinedRule } from './hooks/useCombinedRule';
-import { AlertingQueryRunner } from './state/AlertingQueryRunner';
-import { getRulesSourceByName } from './utils/datasource';
-import { alertRuleToQueries } from './utils/query';
+import { RuleDetailsDataSources } from './components/rules/RuleDetailsDataSources';
+import { RuleViewerLayout, RuleViewerLayoutContent } from './components/rule-viewer/RuleViewerLayout';
+import { AlertLabels } from './components/AlertLabels';
+import { RuleDetailsExpression } from './components/rules/RuleDetailsExpression';
+import { RuleDetailsAnnotations } from './components/rules/RuleDetailsAnnotations';
 import * as ruleId from './utils/rule-id';
+import { AlertQuery } from '../../../types/unified-alerting-dto';
+import { RuleDetailsFederatedSources } from './components/rules/RuleDetailsFederatedSources';
 import { isFederatedRuleGroup } from './utils/rules';
 
 type RuleViewerProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: string }>;
@@ -50,23 +49,19 @@ export function RuleViewer({ match }: RuleViewerProps) {
   const queries2 = useMemo(() => alertRuleToQueries(rule), [rule]);
   const [queries, setQueries] = useState<AlertQuery[]>([]);
 
-  const { allDataSourcesAvailable } = useAlertQueriesStatus(queries2);
-
   const onRunQueries = useCallback(() => {
-    if (queries.length > 0 && allDataSourcesAvailable) {
+    if (queries.length > 0) {
       runner.run(queries);
     }
-  }, [queries, runner, allDataSourcesAvailable]);
+  }, [queries, runner]);
 
   useEffect(() => {
     setQueries(queries2);
   }, [queries2]);
 
   useEffect(() => {
-    if (allDataSourcesAvailable) {
-      onRunQueries();
-    }
-  }, [onRunQueries, allDataSourcesAvailable]);
+    onRunQueries();
+  }, [onRunQueries]);
 
   useEffect(() => {
     return () => runner.destroy();
@@ -197,11 +192,6 @@ export function RuleViewer({ match }: RuleViewerProps) {
           </RuleViewerLayoutContent>
         </>
       )}
-      {!isFederatedRule && !allDataSourcesAvailable && (
-        <Alert title="Query not available" severity="warning" className={styles.queryWarning}>
-          Cannot display the query preview. Some of the data sources used in the queries are not available.
-        </Alert>
-      )}
     </RuleViewerLayout>
   );
 }
@@ -228,9 +218,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     query: css`
       border-bottom: 1px solid ${theme.colors.border.medium};
       padding: ${theme.spacing(2)};
-    `,
-    queryWarning: css`
-      margin: ${theme.spacing(4, 0)};
     `,
     details: css`
       display: flex;

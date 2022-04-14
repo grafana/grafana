@@ -33,7 +33,6 @@ type Service interface {
 	PatchQueryCommentInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string, cmd PatchQueryCommentInQueryHistoryCommand) (QueryHistoryDTO, error)
 	StarQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (QueryHistoryDTO, error)
 	UnstarQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (QueryHistoryDTO, error)
-	MigrateQueriesToQueryHistory(ctx context.Context, user *models.SignedInUser, cmd MigrateQueriesToQueryHistoryCommand) (int, int, error)
 }
 
 type QueryHistoryService struct {
@@ -65,8 +64,4 @@ func (s QueryHistoryService) StarQueryInQueryHistory(ctx context.Context, user *
 
 func (s QueryHistoryService) UnstarQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (QueryHistoryDTO, error) {
 	return s.unstarQuery(ctx, user, UID)
-}
-
-func (s QueryHistoryService) MigrateQueriesToQueryHistory(ctx context.Context, user *models.SignedInUser, cmd MigrateQueriesToQueryHistoryCommand) (int, int, error) {
-	return s.migrateQueries(ctx, user, cmd)
 }

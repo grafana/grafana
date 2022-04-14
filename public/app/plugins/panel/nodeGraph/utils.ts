@@ -35,17 +35,13 @@ export function shortenLine(line: Line, length: number): Line {
 }
 
 export function getNodeFields(nodes: DataFrame) {
-  const normalizedFrames = {
-    ...nodes,
-    fields: nodes.fields.map((field) => ({ ...field, name: field.name.toLowerCase() })),
-  };
-  const fieldsCache = new FieldCache(normalizedFrames);
+  const fieldsCache = new FieldCache(nodes);
   return {
-    id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id.toLowerCase()),
-    title: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.title.toLowerCase()),
-    subTitle: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.subTitle.toLowerCase()),
-    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
-    secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
+    id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id),
+    title: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.title),
+    subTitle: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.subTitle),
+    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat),
+    secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat),
     arc: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.arc),
     details: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.detail),
     color: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.color),
@@ -53,18 +49,14 @@ export function getNodeFields(nodes: DataFrame) {
 }
 
 export function getEdgeFields(edges: DataFrame) {
-  const normalizedFrames = {
-    ...edges,
-    fields: edges.fields.map((field) => ({ ...field, name: field.name.toLowerCase() })),
-  };
-  const fieldsCache = new FieldCache(normalizedFrames);
+  const fieldsCache = new FieldCache(edges);
   return {
-    id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id.toLowerCase()),
-    source: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.source.toLowerCase()),
-    target: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.target.toLowerCase()),
-    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
-    secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
-    details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail.toLowerCase()),
+    id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id),
+    source: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.source),
+    target: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.target),
+    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat),
+    secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat),
+    details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail),
   };
 }
 
@@ -180,11 +172,11 @@ function makeNode(index: number) {
   return {
     id: index.toString(),
     title: `service:${index}`,
-    subtitle: 'service',
+    subTitle: 'service',
     arc__success: 0.5,
     arc__errors: 0.5,
-    mainstat: 0.1,
-    secondarystat: 2,
+    mainStat: 0.1,
+    secondaryStat: 2,
     color: 0.5,
   };
 }
@@ -335,13 +327,7 @@ export function getNodeGraphDataFrames(frames: DataFrame[]) {
     if (frame.meta?.preferredVisualisationType === 'nodeGraph') {
       return true;
     }
-
-    if (frame.name === 'nodes' || frame.name === 'edges' || frame.refId === 'nodes' || frame.refId === 'edges') {
-      return true;
-    }
-
-    const fieldsCache = new FieldCache(frame);
-    if (fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id)) {
+    if (frame.name === 'nodes' || frame.name === 'edges') {
       return true;
     }
 

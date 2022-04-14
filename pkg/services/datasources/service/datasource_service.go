@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
@@ -28,6 +29,7 @@ import (
 )
 
 type Service struct {
+	Bus                bus.Bus
 	SQLStore           *sqlstore.SQLStore
 	SecretsService     secrets.Service
 	cfg                *setting.Cfg
@@ -59,10 +61,11 @@ type cachedDecryptedJSON struct {
 }
 
 func ProvideService(
-	store *sqlstore.SQLStore, secretsService secrets.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
+	bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
 ) *Service {
 	s := &Service{
+		Bus:            bus,
 		SQLStore:       store,
 		SecretsService: secretsService,
 		ptc: proxyTransportCache{

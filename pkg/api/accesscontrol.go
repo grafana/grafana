@@ -5,7 +5,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -462,12 +461,6 @@ var teamsEditAccessEvaluator = ac.EvalAll(
 		ac.EvalPermission(ac.ActionTeamsPermissionsWrite),
 	),
 )
-
-// apiKeyAccessEvaluator is used to protect the "Configuration > API keys" page access
-var apiKeyAccessEvaluator = ac.EvalPermission(ac.ActionAPIKeyRead)
-
-// serviceAccountAccessEvaluator is used to protect the "Configuration > Service accounts" page access
-var serviceAccountAccessEvaluator = ac.EvalPermission(serviceaccounts.ActionRead)
 
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource

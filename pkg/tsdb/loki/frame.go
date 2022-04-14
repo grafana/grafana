@@ -2,7 +2,6 @@ package loki
 
 import (
 	"fmt"
-	"hash/fnv"
 	"sort"
 	"strings"
 	"time"
@@ -12,42 +11,14 @@ import (
 
 // we adjust the dataframes to be the way frontend & alerting
 // wants them.
-func adjustFrame(frame *data.Frame, query *lokiQuery) error {
-	fields := frame.Fields
-
-	if len(fields) < 2 {
-		return fmt.Errorf("missing fields in frame")
-	}
-
-	// metric-fields have "timefield, valuefield"
-	// logs-fields have "labelsfield, timefield, ..."
-
-	secondField := fields[1]
-
-	if secondField.Type() == data.FieldTypeFloat64 {
-		return adjustMetricFrame(frame, query)
-	} else {
-		return adjustLogsFrame(frame, query)
-	}
-}
-
-func adjustMetricFrame(frame *data.Frame, query *lokiQuery) error {
-	fields := frame.Fields
-	// we check if the fields are of correct type
-	if len(fields) != 2 {
-		return fmt.Errorf("invalid fields in metric frame")
-	}
-
-	timeField := fields[0]
-	valueField := fields[1]
-
-	if (timeField.Type() != data.FieldTypeTime) || (valueField.Type() != data.FieldTypeFloat64) {
-		return fmt.Errorf("invalid fields in metric frame")
-	}
-
+func adjustFrame(frame *data.Frame, query *lokiQuery) *data.Frame {
 	labels := getFrameLabels(frame)
 
-	isMetricRange := query.QueryType == QueryTypeRange
+	timeFields, nonTimeFields := partitionFields(frame)
+
+	isMetricFrame := nonTimeFields[0].Type() != data.FieldTypeString
+
+	isMetricRange := isMetricFrame && query.QueryType == QueryTypeRange
 
 	name := formatName(labels, query)
 	frame.Name = name
@@ -62,109 +33,48 @@ func adjustMetricFrame(frame *data.Frame, query *lokiQuery) error {
 		frame.Meta.ExecutedQueryString = "Expr: " + query.Expr
 	}
 
-	if isMetricRange {
-		if timeField.Config == nil {
-			timeField.Config = &data.FieldConfig{}
+	for _, field := range timeFields {
+		field.Name = "time"
+
+		if isMetricRange {
+			if field.Config == nil {
+				field.Config = &data.FieldConfig{}
+			}
+			field.Config.Interval = float64(query.Step.Milliseconds())
 		}
-		timeField.Config.Interval = float64(query.Step.Milliseconds())
 	}
 
-	if valueField.Config == nil {
-		valueField.Config = &data.FieldConfig{}
-	}
-	valueField.Config.DisplayNameFromDS = name
-
-	return nil
-}
-
-func adjustLogsFrame(frame *data.Frame, query *lokiQuery) error {
-	// we check if the fields are of correct type and length
-	fields := frame.Fields
-	if len(fields) != 3 {
-		return fmt.Errorf("invalid fields in logs frame")
+	for _, field := range nonTimeFields {
+		field.Name = "value"
+		if field.Config == nil {
+			field.Config = &data.FieldConfig{}
+		}
+		field.Config.DisplayNameFromDS = name
 	}
 
-	labelsField := fields[0]
-	timeField := fields[1]
-	lineField := fields[2]
-
-	if (timeField.Type() != data.FieldTypeTime) || (lineField.Type() != data.FieldTypeString) || (labelsField.Type() != data.FieldTypeString) {
-		return fmt.Errorf("invalid fields in metric frame")
-	}
-
-	if (timeField.Len() != lineField.Len()) || (timeField.Len() != labelsField.Len()) {
-		return fmt.Errorf("invalid fields in metric frame")
-	}
-
-	if frame.Meta == nil {
-		frame.Meta = &data.FrameMeta{}
-	}
-
-	frame.Meta.ExecutedQueryString = "Expr: " + query.Expr
-
-	// we need to send to the browser the nanosecond-precision timestamp too.
+	// for streams-dataframes, we need to send to the browser the nanosecond-precision timestamp too.
 	// usually timestamps become javascript-date-objects in the browser automatically, which only
 	// have millisecond-precision.
 	// so we send a separate timestamp-as-string field too.
-	stringTimeField := makeStringTimeField(timeField)
-
-	idField, err := makeIdField(stringTimeField, lineField, labelsField, frame.RefID)
-	if err != nil {
-		return err
+	if !isMetricFrame {
+		stringTimeField := makeStringTimeField(timeFields[0])
+		frame.Fields = append(frame.Fields, stringTimeField)
 	}
-	frame.Fields = append(frame.Fields, stringTimeField, idField)
-	return nil
+
+	return frame
 }
 
-func makeStringTimeField(timeField *data.Field) *data.Field {
-	length := timeField.Len()
+func makeStringTimeField(field *data.Field) *data.Field {
+	length := field.Len()
 	stringTimestamps := make([]string, length)
 
 	for i := 0; i < length; i++ {
-		nsNumber := timeField.At(i).(time.Time).UnixNano()
-		stringTimestamps[i] = fmt.Sprintf("%d", nsNumber)
-	}
-	return data.NewField("tsNs", timeField.Labels.Copy(), stringTimestamps)
-}
-
-func calculateCheckSum(time string, line string, labels string) (string, error) {
-	input := []byte(line + "_" + labels)
-	hash := fnv.New32()
-	_, err := hash.Write(input)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s_%x", time, hash.Sum32()), nil
-}
-
-func makeIdField(stringTimeField *data.Field, lineField *data.Field, labelsField *data.Field, refId string) (*data.Field, error) {
-	length := stringTimeField.Len()
-
-	ids := make([]string, length)
-
-	checksums := make(map[string]int)
-
-	for i := 0; i < length; i++ {
-		time := stringTimeField.At(i).(string)
-		line := lineField.At(i).(string)
-		labels := labelsField.At(i).(string)
-
-		sum, err := calculateCheckSum(time, line, labels)
-		if err != nil {
-			return nil, err
+		if v, ok := field.ConcreteAt(i); ok {
+			nsNumber := v.(time.Time).UnixNano()
+			stringTimestamps[i] = fmt.Sprintf("%d", nsNumber)
 		}
-
-		sumCount := checksums[sum]
-		idSuffix := ""
-		if sumCount > 0 {
-			// we had this checksum already, we need to do something to make it unique
-			idSuffix = fmt.Sprintf("_%d", sumCount)
-		}
-		checksums[sum] = sumCount + 1
-
-		ids[i] = sum + idSuffix + "_" + refId
 	}
-	return data.NewField("id", nil, ids), nil
+	return data.NewField("tsNs", field.Labels.Copy(), stringTimestamps)
 }
 
 func formatNamePrometheusStyle(labels map[string]string) string {
@@ -208,4 +118,19 @@ func getFrameLabels(frame *data.Frame) map[string]string {
 	}
 
 	return labels
+}
+
+func partitionFields(frame *data.Frame) ([]*data.Field, []*data.Field) {
+	var timeFields []*data.Field
+	var nonTimeFields []*data.Field
+
+	for _, field := range frame.Fields {
+		if field.Type() == data.FieldTypeTime {
+			timeFields = append(timeFields, field)
+		} else {
+			nonTimeFields = append(nonTimeFields, field)
+		}
+	}
+
+	return timeFields, nonTimeFields
 }

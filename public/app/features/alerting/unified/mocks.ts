@@ -29,7 +29,6 @@ import {
   Silence,
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
-import { FolderDTO } from 'app/types';
 
 let nextDataSourceId = 1;
 
@@ -450,18 +449,3 @@ export const mockCombinedRule = (partial?: Partial<CombinedRule>): CombinedRule 
   rulerRule: mockRulerAlertingRule(),
   ...partial,
 });
-
-export const mockFolder = (partial?: Partial<FolderDTO>): FolderDTO => {
-  return {
-    id: 1,
-    uid: 'gdev-1',
-    title: 'Gdev',
-    version: 1,
-    url: '',
-    canAdmin: true,
-    canDelete: true,
-    canEdit: true,
-    canSave: true,
-    ...partial,
-  };
-};

@@ -96,6 +96,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     bottom: 0,
     flexDirection: 'column',
     left: 0,
+    whiteSpace: 'nowrap',
     paddingTop: theme.spacing(1),
     marginRight: theme.spacing(1.5),
     right: 0,
@@ -125,7 +126,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   itemList: css({
     display: 'grid',
     gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
-    minWidth: '300px',
   }),
   menuCollapseIcon: css({
     position: 'absolute',
@@ -283,6 +283,7 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
   }),
   item: css({
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
+    whiteSpace: 'normal',
     '&::before': {
       display: 'none',
     },
@@ -311,7 +312,6 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
   }),
   iconContainer: css({
-    display: 'flex',
     placeContent: 'center',
   }),
   savedItemsMenuItemWrapper: css({
@@ -324,7 +324,7 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
   linkText: css({
     fontSize: theme.typography.pxToRem(14),
     justifySelf: 'start',
-    padding: theme.spacing(0.5, 4.25, 0.5, 0.5),
+    paddingLeft: theme.spacing(0.5),
   }),
 });
 
@@ -356,7 +356,6 @@ function CollapsibleNavItem({
           onClose();
         }}
         className={styles.collapsibleMenuItem}
-        elClassName={styles.collapsibleIcon}
       >
         {link.img && (
           <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
@@ -393,9 +392,6 @@ const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
     height: theme.spacing(6),
     width: theme.spacing(7),
     display: 'grid',
-  }),
-  collapsibleIcon: css({
-    display: 'grid',
     placeContent: 'center',
   }),
   collapsibleSectionWrapper: css({
@@ -407,8 +403,7 @@ const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
   collapseWrapper: css({
     paddingLeft: theme.spacing(0.5),
     paddingRight: theme.spacing(4.25),
-    minHeight: theme.spacing(6),
-    overflowWrap: 'anywhere',
+    height: theme.spacing(6),
     alignItems: 'center',
     color: theme.colors.text.secondary,
     '&:hover, &:focus-within': {

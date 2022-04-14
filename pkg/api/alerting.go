@@ -553,7 +553,7 @@ func (hs *HTTPServer) PauseAlert(c *models.ReqContext) response.Response {
 		return response.Error(500, "", err)
 	}
 
-	resp := models.AlertStateUnknown
+	var resp models.AlertStateType = models.AlertStateUnknown
 	pausedState := "un-paused"
 	if cmd.Paused {
 		resp = models.AlertStatePaused
@@ -579,7 +579,7 @@ func (hs *HTTPServer) PauseAllAlerts(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to pause alerts", err)
 	}
 
-	resp := models.AlertStatePending
+	var resp models.AlertStateType = models.AlertStatePending
 	pausedState := "un paused"
 	if updateCmd.Paused {
 		resp = models.AlertStatePaused

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -138,6 +139,7 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 	cmd models.CreateFolderCommand, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{
+			Bus:           bus.GetBus(),
 			Cfg:           setting.NewCfg(),
 			folderService: folderService,
 			Features:      featuremgmt.WithFeatures(),
