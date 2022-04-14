@@ -410,7 +410,10 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-		require.JSONEq(t, `{"message": "failed to update rule group: failed to add rules: a conflicting alert rule is found: rule title under the same organisation and folder should be unique"}`, string(b))
+
+		var res map[string]interface{}
+		json.Unmarshal(b, &res)
+		require.Equal(t, "failed to update rule group: failed to add rules: a conflicting alert rule is found: rule title under the same organisation and folder should be unique", res["message"])
 	})
 
 	t.Run("trying to update an alert to the title of an existing alert in the same folder should fail", func(t *testing.T) {
