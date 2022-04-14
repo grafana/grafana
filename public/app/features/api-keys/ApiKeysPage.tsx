@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 // Utils
-import { ApiKey, NewApiKey, StoreState } from 'app/types';
+import { AccessControlAction, ApiKey, NewApiKey, StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getApiKeys, getApiKeysCount, getIncludeExpired, getIncludeExpiredDisabled } from './state/selectors';
 import { addApiKey, deleteApiKey, loadApiKeys, toggleIncludeExpired } from './state/actions';
@@ -19,8 +19,20 @@ import { ApiKeysActionBar } from './ApiKeysActionBar';
 import { ApiKeysTable } from './ApiKeysTable';
 import { ApiKeysController } from './ApiKeysController';
 import { ShowModalReactEvent } from 'app/types/events';
+import { contextSrv } from 'app/core/core';
 
 function mapStateToProps(state: StoreState) {
+  let canRead = true;
+  let canDelete = true;
+  let canCreate = true;
+  if (contextSrv.licensedAccessControlEnabled()) {
+    canRead = contextSrv.hasPermission(AccessControlAction.ActionAPIKeysRead);
+    canCreate = contextSrv.hasPermission(AccessControlAction.ActionAPIKeysCreate);
+    canDelete = contextSrv.hasPermission(AccessControlAction.ActionAPIKeysDelete);
+  }
+
+  console.log('AA');
+  console.log(canCreate);
   return {
     navModel: getNavModel(state.navIndex, 'apikeys'),
     apiKeys: getApiKeys(state.apiKeys),
@@ -30,6 +42,9 @@ function mapStateToProps(state: StoreState) {
     timeZone: getTimeZone(state.user),
     includeExpired: getIncludeExpired(state.apiKeys),
     includeExpiredDisabled: getIncludeExpiredDisabled(state.apiKeys),
+    canRead: canRead,
+    canCreate: canCreate,
+    canDelete: canDelete,
   };
 }
 
@@ -120,6 +135,9 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       timeZone,
       includeExpired,
       includeExpiredDisabled,
+      canRead,
+      canCreate,
+      canDelete,
     } = this.props;
 
     if (!hasFetched) {
@@ -146,23 +164,35 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                       onClick={toggleIsAdding}
                       buttonTitle="New API key"
                       proTip="Remember, you can provide view-only API access to other applications."
+                      buttonDisabled={!canCreate}
                     />
                   ) : null}
                   {showTable ? (
                     <ApiKeysActionBar
                       searchQuery={searchQuery}
-                      disabled={isAdding}
+                      disabled={isAdding || !canCreate}
                       onAddClick={toggleIsAdding}
                       onSearchChange={this.onSearchQueryChange}
                     />
                   ) : null}
-                  <ApiKeysForm show={isAdding} onClose={toggleIsAdding} onKeyAdded={this.onAddApiKey} />
+                  <ApiKeysForm
+                    show={isAdding}
+                    onClose={toggleIsAdding}
+                    onKeyAdded={this.onAddApiKey}
+                    disabled={!canCreate}
+                  />
                   {showTable ? (
                     <VerticalGroup>
                       <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
                         <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
                       </InlineField>
-                      <ApiKeysTable apiKeys={apiKeys} timeZone={timeZone} onDelete={this.onDeleteApiKey} />
+                      <ApiKeysTable
+                        apiKeys={apiKeys}
+                        timeZone={timeZone}
+                        onDelete={this.onDeleteApiKey}
+                        canRead={canRead}
+                        canDelete={canDelete}
+                      />
                     </VerticalGroup>
                   ) : null}
                 </>
