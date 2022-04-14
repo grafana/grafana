@@ -304,7 +304,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 	// needs both feature flag and migration to be able to show service accounts
-	if enableServiceAccount(hs, c) {
+	if enableServiceAccount(hs, c) && hasAccess(ac.ReqOrgAdmin, serviceAccountAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Service accounts",
 			Id:          "serviceaccounts",
