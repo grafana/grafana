@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -33,11 +34,10 @@ type SaveEventCmd struct {
 // With this service each system can query for any events that have happened since a fixed time
 //go:generate mockery --name EntityEventsService --structname MockEntityEventsService --inpackage --filename entity_events_mock.go
 type EntityEventsService interface {
+	registry.BackgroundService
 	SaveEvent(ctx context.Context, cmd SaveEventCmd) error
 	GetLastEvent(ctx context.Context) (*EntityEvent, error)
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*EntityEvent, error)
-
-	Run(ctx context.Context) error
 
 	deleteEventsOlderThan(ctx context.Context, duration time.Duration) error
 }
