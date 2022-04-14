@@ -187,6 +187,9 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 	if cmd.Role != nil && !cmd.Role.IsValid() {
 		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
 	}
+	if cmd.Role != nil && !c.OrgRole.Includes(*cmd.Role) {
+		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
+	}
 
 	resp, err := api.store.UpdateServiceAccount(c.Req.Context(), c.OrgId, scopeID, &cmd)
 	if err != nil {

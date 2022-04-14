@@ -406,6 +406,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/f/:uid/:slug/alerting',
+      roles: () =>
+        contextSrv.evaluatePermission(() => ['Viewer', 'Editor', 'Admin'], [AccessControlAction.AlertingRuleRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "FolderAlerting"*/ 'app/features/folders/FolderAlerting')
       ),
