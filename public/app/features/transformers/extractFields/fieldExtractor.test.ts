@@ -14,6 +14,20 @@ describe('Extract fields from text', () => {
     `);
   });
 
+  it('Test key-values with spaces', async () => {
+    const extractor = fieldExtractors.get(FieldExtractorID.KeyValues);
+    const out = extractor.parse('a="1",   "b"=\'2\',c=3  x:y ;\r\nz="7 test"');
+    expect(out).toMatchInlineSnapshot(`
+      Object {
+        "a": "1",
+        "b": "2",
+        "c": "3",
+        "x": "y",
+        "z": "7 test",
+      }
+    `);
+  });
+
   it('Split key+values', async () => {
     const extractor = fieldExtractors.get(FieldExtractorID.KeyValues);
     const out = extractor.parse('a="1",   "b"=\'2\',c=3  x:y ;\r\nz="7"');
