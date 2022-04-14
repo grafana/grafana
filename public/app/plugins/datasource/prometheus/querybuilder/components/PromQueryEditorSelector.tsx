@@ -14,7 +14,8 @@ import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { changeEditorMode, getQueryWithDefaults } from '../state';
 import { PromQuery } from '../../types';
-import { BetaBadge } from '../shared/BetaBadge';
+import { FeedbackLink } from '../shared/FeedbackLink';
+import { config } from '@grafana/runtime';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { onChange, onRunQuery, data } = props;
@@ -45,7 +46,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 
   const onQueryPreviewChange = (event: SyntheticEvent<HTMLInputElement>) => {
     const isEnabled = event.currentTarget.checked;
-    onChange({ ...query, editorPreview: isEnabled });
+    onChange({ ...query, rawQuery: isEnabled });
     onRunQuery();
   };
 
@@ -53,6 +54,8 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
     setDataIsStale(true);
     onChange(query);
   };
+
+  const showFeedbackLink = editorMode === QueryEditorMode.Builder && !config.hideFeedbackLinks;
 
   return (
     <>
@@ -86,12 +89,10 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
               }}
               options={promQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
             />
-            <QueryHeaderSwitch label="Raw query" value={query.editorPreview} onChange={onQueryPreviewChange} />
+            <QueryHeaderSwitch label="Raw query" value={query.rawQuery} onChange={onQueryPreviewChange} />
           </>
         )}
-        {editorMode === QueryEditorMode.Builder && (
-          <BetaBadge feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />
-        )}
+        {showFeedbackLink && <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />}
         <FlexItem grow={1} />
         <Button
           variant={dataIsStale ? 'primary' : 'secondary'}

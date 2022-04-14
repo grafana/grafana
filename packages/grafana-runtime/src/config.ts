@@ -36,6 +36,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   externalUserMngLinkName = '';
   externalUserMngInfo = '';
   allowOrgCreate = false;
+  hideFeedbackLinks = false;
   disableLoginForm = false;
   defaultDatasource = ''; // UID
   alertingEnabled = false;

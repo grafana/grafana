@@ -113,6 +113,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
 		"rudderstackSdkUrl":                   setting.RudderstackSdkUrl,
 		"rudderstackConfigUrl":                setting.RudderstackConfigUrl,
+		"hideFeedbackLinks":                   hs.Cfg.HideFeedbackLinks,
 		"applicationInsightsConnectionString": hs.Cfg.ApplicationInsightsConnectionString,
 		"applicationInsightsEndpointUrl":      hs.Cfg.ApplicationInsightsEndpointUrl,
 		"disableLoginForm":                    setting.DisableLoginForm,
