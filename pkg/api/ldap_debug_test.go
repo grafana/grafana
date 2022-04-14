@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -146,13 +147,11 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 
 	require.Equal(t, http.StatusBadRequest, sc.resp.Code)
 
-	expected := `
-	{
-		"error": "unable to find organization with ID '2'",
-		"message": "An organization was not found - Please verify your LDAP configuration"
-	}
-	`
-	assert.JSONEq(t, expected, sc.resp.Body.String())
+	var res map[string]interface{}
+	err := json.Unmarshal(sc.resp.Body.Bytes(), &res)
+	assert.NoError(t, err)
+	assert.Equal(t, "unable to find organization with ID '2'", res["error"])
+	assert.Equal(t, "An organization was not found - Please verify your LDAP configuration", res["message"])
 }
 
 func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
@@ -470,14 +469,11 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 	}, &sqlstoremock)
 	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
 
-	expected := `
-	{
-		"error": "did not find a user",
-		"message": "Refusing to sync grafana super admin \"ldap-daniel\" - it would be disabled"
-	}
-	`
-
-	assert.JSONEq(t, expected, sc.resp.Body.String())
+	var res map[string]interface{}
+	err := json.Unmarshal(sc.resp.Body.Bytes(), &res)
+	assert.NoError(t, err)
+	assert.Equal(t, "did not find a user", res["error"])
+	assert.Equal(t, "Refusing to sync grafana super admin \"ldap-daniel\" - it would be disabled", res["message"])
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
