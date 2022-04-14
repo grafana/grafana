@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Label, stylesFactory, useTheme2, VizLegendItem } from '@grafana/ui';
-import { formattedValueToString, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, formattedValueToString, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import { DimensionSupplier } from 'app/features/dimensions';
@@ -9,25 +9,41 @@ import { getMinMaxAndDelta } from '@grafana/data/src/field/scale';
 import SVG from 'react-inlinesvg';
 import { StyleConfigState } from '../../style/types';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+import { useObservable } from 'react-use';
+import { Observable, of } from 'rxjs';
 
 export interface MarkersLegendProps {
   size?: DimensionSupplier<number>;
   layerName?: string;
   styleConfig?: StyleConfigState;
+  hoverSubject?: Observable<any>;
 }
 
 export function MarkersLegend(props: MarkersLegendProps) {
-  const { layerName, styleConfig } = props;
+  const { layerName, styleConfig, hoverSubject } = props;
   const theme = useTheme2();
   const style = getStyles(theme);
+
+  const hoverEvent = useObservable(hoverSubject ?? of({}));
+
+  const colorField = styleConfig?.dims?.color?.field;
+  const hoverValue = useMemo(() => {
+    const frame = hoverEvent?.frame as DataFrame;
+
+    if (!frame || !colorField) {
+      return undefined;
+    }
+
+    const rowIndex = hoverEvent.rowIndex as number;
+    return colorField.values.get(rowIndex);
+  }, [hoverEvent, colorField]);
 
   if (!styleConfig) {
     return <></>;
   }
+
   const { color, opacity} = styleConfig?.base ?? {};
   const symbol = styleConfig?.config.symbol?.fixed;
-
-  const colorField = styleConfig.dims?.color?.field;
 
   if (color && symbol && !colorField) {
     return (
@@ -73,7 +89,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
           <Label>{colorField?.name}</Label>
         </div>
         <div className={style.colorScaleWrapper}>
-          <ColorScale colorPalette={colors} min={colorRange.min as number} max={colorRange.max as number} display={display} useStopsPercentage={false}/>
+          <ColorScale hoverValue={hoverValue} colorPalette={colors} min={colorRange.min as number} max={colorRange.max as number} display={display} useStopsPercentage={false}/>
         </div>
       </>
     );

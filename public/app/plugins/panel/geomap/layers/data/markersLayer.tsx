@@ -12,7 +12,7 @@ import { getLocationMatchers } from 'app/features/geo/utils/location';
 import { getScaledDimension, getColorDimension, getTextDimension, getScalarDimension } from 'app/features/dimensions';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from './MarkersLegend';
-import { ReplaySubject } from 'rxjs';
+import { ReplaySubject, Subject } from 'rxjs';
 import { defaultStyleConfig, StyleConfig, StyleDimensions } from '../../style/types';
 import { StyleEditor } from './StyleEditor';
 import { getStyleConfigState } from '../../style/utils';
@@ -67,18 +67,20 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       ...options?.config,
     };
 
-    const legendProps = new ReplaySubject<MarkersLegendProps>(1);
-    let legend: ReactNode = null;
-    if (config.showLegend) {
-      legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
-    }
-
     const style = await getStyleConfigState(config.style);
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
     const vectorLayer = new VectorLayer({
       source,
     });
+
+    const mouseSubject =  new Subject<any>();
+    const legendProps = new ReplaySubject<MarkersLegendProps>(1);
+    let legend: ReactNode = null;
+    if (config.showLegend) {
+      vectorLayer.set('__mouseSubject', mouseSubject);
+      legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
+    }
 
     if (!style.fields) {
       // Set a global style
@@ -142,6 +144,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               styleConfig: style,
               size: style.dims?.size,
               layerName: options.name,
+              hoverSubject: mouseSubject
             });
           }
 

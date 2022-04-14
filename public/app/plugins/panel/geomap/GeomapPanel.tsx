@@ -33,11 +33,12 @@ import { DebugOverlay } from './components/DebugOverlay';
 import { getGlobalStyles } from './globalStyles';
 import { Global } from '@emotion/react';
 import { GeomapHoverPayload, GeomapLayerHover } from './event';
-import { Subscription } from 'rxjs';
+import { Observer, Subject, Subscription } from 'rxjs';
 import { PanelEditExitedEvent } from 'app/types/events';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
 import { cloneDeep } from 'lodash';
 import { GeomapTooltip } from './GeomapTooltip';
+import { FeatureLike } from 'ol/Feature';
 
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
@@ -313,7 +314,7 @@ export class GeomapPanel extends Component<Props, State> {
       this.props.eventBus.publish(new DataHoverClearEvent());
     });
 
-    // Notify the the panel editor
+    // Notify the panel editor
     if (this.panelContext.onInstanceStateChange) {
       this.panelContext.onInstanceStateChange({
         map: this.map,
@@ -381,6 +382,10 @@ export class GeomapPanel extends Component<Props, State> {
           if (frame) {
             hoverPayload.data = ttip.data = frame as DataFrame;
             hoverPayload.rowIndex = ttip.rowIndex = props['rowIndex'];
+            const obs = layer.get('__mouseSubject') as Observer<any>;
+            if (obs) {
+              obs.next(props);
+            }
           }
         }
 
@@ -406,6 +411,17 @@ export class GeomapPanel extends Component<Props, State> {
     this.props.eventBus.publish(this.hoverEvent);
 
     this.setState({ ttip: { ...hoverPayload } });
+
+    if (!layers.length) {
+      // !!!!! clear events
+      this.layers.forEach((layer) => {
+        const obs = layer.layer.get('__mouseSubject') as Observer<any>;
+        if (obs) {
+          obs.next(undefined);
+        }
+      });
+    }
+
     return layers.length ? true : false;
   };
 
