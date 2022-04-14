@@ -14,7 +14,10 @@ export function QueryErrorAlert({ error }: Props) {
 
   return (
     <div className={styles.wrapper}>
-      <Icon name="exclamation-circle" /> {message}
+      <div className={styles.icon}>
+        <Icon name="exclamation-triangle" />
+      </div>
+      <div className={styles.message}>{message}</div>
     </div>
   );
 }
@@ -22,10 +25,17 @@ export function QueryErrorAlert({ error }: Props) {
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     marginTop: theme.spacing(0.5),
-    padding: theme.spacing(1),
     background: theme.colors.background.secondary,
-    color: theme.colors.error.text,
-    fontFamily: theme.typography.fontFamilyMonospace,
+    display: 'flex',
+  }),
+  icon: css({
+    background: theme.colors.error.main,
+    color: theme.colors.error.contrastText,
+    padding: theme.spacing(1),
+  }),
+  message: css({
     fontSize: theme.typography.bodySmall.fontSize,
+    fontFamily: theme.typography.fontFamilyMonospace,
+    padding: theme.spacing(1),
   }),
 });
