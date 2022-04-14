@@ -54,7 +54,7 @@ export function PromQueryBuilderContainer(props: Props) {
         onRunQuery={onRunQuery}
         data={data}
       />
-      {query.editorPreview && <QueryPreview query={query.expr} />}
+      {query.rawQuery && <QueryPreview query={query.expr} />}
     </>
   );
 }

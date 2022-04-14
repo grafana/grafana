@@ -5,6 +5,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -147,6 +148,23 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
+	}
+
+	apikeyReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:apikeys:reader",
+			DisplayName: "APIKeys reader",
+			Description: "Gives access to read api keys.",
+			Group:       "API Keys",
+			Permissions: []ac.Permission{
+				{
+					Action: ac.ActionAPIKeyRead,
+					Scope:  ac.ScopeAPIKeysAll,
+				},
+			},
+		},
+		Grants: []string{string(models.ROLE_ADMIN)},
 	}
 
 	apikeyWriterRole := ac.RoleRegistration{
@@ -410,7 +428,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
-		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyWriterRole,
+		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
 	)
 }
 
@@ -461,6 +479,12 @@ var teamsEditAccessEvaluator = ac.EvalAll(
 		ac.EvalPermission(ac.ActionTeamsPermissionsWrite),
 	),
 )
+
+// apiKeyAccessEvaluator is used to protect the "Configuration > API keys" page access
+var apiKeyAccessEvaluator = ac.EvalPermission(ac.ActionAPIKeyRead)
+
+// serviceAccountAccessEvaluator is used to protect the "Configuration > Service accounts" page access
+var serviceAccountAccessEvaluator = ac.EvalPermission(serviceaccounts.ActionRead)
 
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource

@@ -149,8 +149,11 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 }
 
 func enableServiceAccount(hs *HTTPServer, c *models.ReqContext) bool {
-	return (c.OrgRole == models.ROLE_ADMIN || (hs.Cfg.EditorsCanAdmin && c.OrgRole == models.ROLE_EDITOR)) &&
-		hs.Features.IsEnabled(featuremgmt.FlagServiceAccounts)
+	if !hs.Features.IsEnabled(featuremgmt.FlagServiceAccounts) {
+		return false
+	}
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
+	return hasAccess(ac.ReqOrgAdmin, serviceAccountAccessEvaluator)
 }
 
 func (hs *HTTPServer) ReqCanAdminTeams(c *models.ReqContext) bool {
@@ -291,7 +294,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if c.OrgRole == models.ROLE_ADMIN {
+	if hasAccess(ac.ReqOrgAdmin, apiKeyAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "API keys",
 			Id:          "apikeys",

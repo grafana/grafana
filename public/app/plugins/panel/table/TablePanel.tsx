@@ -17,6 +17,7 @@ import { applyFilterFromTable } from '../../../features/variables/adhoc/actions'
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 import { getFooterCells } from './footer';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { PanelDataErrorView } from '@grafana/runtime';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -118,14 +119,14 @@ export class TablePanel extends Component<Props> {
   }
 
   render() {
-    const { data, height, width, options } = this.props;
+    const { data, height, width, options, fieldConfig, id } = this.props;
 
     const frames = data.series;
     const count = frames?.length;
     const hasFields = frames[0]?.fields.length;
 
     if (!count || !hasFields) {
-      return <div className={tableStyles.noData}>No data</div>;
+      return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
     }
 
     if (count > 1) {
