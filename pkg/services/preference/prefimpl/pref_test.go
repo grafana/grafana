@@ -6,13 +6,12 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPreferencesService(t *testing.T) {
-	prefStoreFake := preftest.NewPreferenceStoreFake()
+	prefStoreFake := newPreferenceStoreFake()
 	prefService := &Service{
 		store: prefStoreFake,
 	}
@@ -416,4 +415,32 @@ func TestPreferencesService(t *testing.T) {
 		require.NoError(t, err)
 		prefStoreFake.ExpectedGetError = nil
 	})
+}
+
+type FakePreferenceStore struct {
+	ExpectedPreference      *pref.Preference
+	ExpectedListPreferences []*pref.Preference
+	ExpectedID              int64
+	ExpectedError           error
+	ExpectedGetError        error
+}
+
+func newPreferenceStoreFake() *FakePreferenceStore {
+	return &FakePreferenceStore{}
+}
+
+func (f *FakePreferenceStore) List(ctx context.Context, query *pref.Preference) ([]*pref.Preference, error) {
+	return f.ExpectedListPreferences, f.ExpectedError
+}
+
+func (f *FakePreferenceStore) Get(ctx context.Context, query *pref.Preference) (*pref.Preference, error) {
+	return f.ExpectedPreference, f.ExpectedGetError
+}
+
+func (f *FakePreferenceStore) Insert(ctx context.Context, cmd *pref.Preference) (int64, error) {
+	return f.ExpectedID, f.ExpectedError
+}
+
+func (f *FakePreferenceStore) Update(ctx context.Context, cmd *pref.Preference) error {
+	return f.ExpectedError
 }
