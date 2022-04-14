@@ -3,7 +3,6 @@ import { default as ReactSelect } from 'react-select';
 import Creatable from 'react-select/creatable';
 import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
-
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
 import { useCustomSelectStyles } from './resetSelectStyles';
@@ -251,7 +250,18 @@ export function SelectBase<T>({
   if (allowCustomValue) {
     ReactSelectComponent = Creatable as any;
     creatableProps.allowCreateWhileLoading = allowCreateWhileLoading;
-    creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
+    creatableProps.formatCreateLabel =
+      formatCreateLabel ??
+      ((input: string) => (
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div>{input}</div>
+          <div style={{ flexGrow: 1 }} />
+          <div className="muted small" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <Icon name="keyboard" size="md" />
+            <Icon name="enter" size="md" />
+          </div>
+        </div>
+      ));
     creatableProps.onCreateOption = onCreateOption;
     creatableProps.isValidNewOption = isValidNewOption;
   }

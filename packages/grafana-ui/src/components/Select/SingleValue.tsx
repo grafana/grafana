@@ -7,7 +7,6 @@ import { SlideOutTransition } from '../transitions/SlideOutTransition';
 import { FadeTransition } from '../transitions/FadeTransition';
 import { Spinner } from '../Spinner/Spinner';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import tinycolor from 'tinycolor2';
 
 const getStyles = (theme: GrafanaTheme2) => {
   const singleValue = css`
@@ -20,6 +19,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     max-width: 100%;
     grid-area: 1 / 1 / 2 / 3;
   `;
+
   const spinnerWrapper = css`
     width: 16px;
     height: 16px;
@@ -37,10 +37,14 @@ const getStyles = (theme: GrafanaTheme2) => {
   `;
 
   const disabled = css`
-    color: ${tinycolor(theme.colors.text.disabled).setAlpha(0.64).toString()};
+    color: ${theme.colors.text.disabled};
   `;
 
-  return { singleValue, spinnerWrapper, spinnerIcon, disabled };
+  const isOpen = css`
+    color: ${theme.colors.text.disabled};
+  `;
+
+  return { singleValue, spinnerWrapper, spinnerIcon, disabled, isOpen };
 };
 
 type StylesType = ReturnType<typeof getStyles>;
@@ -53,7 +57,10 @@ export const SingleValue = <T extends unknown>(props: Props<T>) => {
   const loading = useDelayedSwitch(data.loading || false, { delay: 250, duration: 750 });
 
   return (
-    <components.SingleValue {...props} className={cx(styles.singleValue, isDisabled && styles.disabled)}>
+    <components.SingleValue
+      {...props}
+      className={cx(styles.singleValue, isDisabled && styles.disabled, props.selectProps.menuIsOpen && styles.isOpen)}
+    >
       {data.imgUrl ? (
         <FadeWithImage
           loading={loading}
