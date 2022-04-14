@@ -13,20 +13,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
+// Crypto allows decryption of Alertmanager Configuration and encryption of arbitrary payloads.
 type Crypto interface {
 	LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error
-	getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error)
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
+
+	getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error)
 }
 
-type encryption struct {
+// alertmanagerCrypto implements decryption of Alertmanager configuration and encryption of arbitrary payloads based on Grafana's encryptions.
+type alertmanagerCrypto struct {
 	secrets secrets.Service
 	configs configurationStore
 	log     log.Logger
 }
 
 func NewCrypto(secrets secrets.Service, configs configurationStore, log log.Logger) Crypto {
-	return &encryption{
+	return &alertmanagerCrypto{
 		secrets: secrets,
 		configs: configs,
 		log:     log,
@@ -34,10 +37,10 @@ func NewCrypto(secrets secrets.Service, configs configurationStore, log log.Logg
 }
 
 // LoadSecureSettings adds the corresponding unencrypted secrets stored to the list of input receivers.
-func (e *encryption) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error {
+func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error {
 	// Get the last known working configuration.
 	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: orgId}
-	if err := e.configs.GetLatestAlertmanagerConfiguration(ctx, &query); err != nil {
+	if err := c.configs.GetLatestAlertmanagerConfiguration(ctx, &query); err != nil {
 		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one.
 		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return fmt.Errorf("failed to get latest configuration: %w", err)
@@ -49,7 +52,7 @@ func (e *encryption) LoadSecureSettings(ctx context.Context, orgId int64, receiv
 		currentConfig, err := Load([]byte(query.Result.AlertmanagerConfiguration))
 		// If the current config is un-loadable, treat it as if it never existed. Providing a new, valid config should be able to "fix" this state.
 		if err != nil {
-			e.log.Warn("Last known alertmanager configuration was invalid. Overwriting...")
+			c.log.Warn("Last known alertmanager configuration was invalid. Overwriting...")
 		} else {
 			currentReceiverMap = currentConfig.GetGrafanaReceiverMap()
 		}
@@ -73,7 +76,7 @@ func (e *encryption) LoadSecureSettings(ctx context.Context, orgId int64, receiv
 			for key := range cgmr.SecureSettings {
 				_, ok := gr.SecureSettings[key]
 				if !ok {
-					decryptedValue, err := e.getDecryptedSecret(cgmr, key)
+					decryptedValue, err := c.getDecryptedSecret(cgmr, key)
 					if err != nil {
 						return fmt.Errorf("failed to decrypt stored secure setting: %s: %w", key, err)
 					}
@@ -90,7 +93,7 @@ func (e *encryption) LoadSecureSettings(ctx context.Context, orgId int64, receiv
 	return nil
 }
 
-func (e *encryption) getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error) {
+func (c *alertmanagerCrypto) getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error) {
 	storedValue, ok := r.SecureSettings[key]
 	if !ok {
 		return "", nil
@@ -101,7 +104,7 @@ func (e *encryption) getDecryptedSecret(r *definitions.PostableGrafanaReceiver, 
 		return "", err
 	}
 
-	decryptedValue, err := e.secrets.Decrypt(context.Background(), decodeValue)
+	decryptedValue, err := c.secrets.Decrypt(context.Background(), decodeValue)
 	if err != nil {
 		return "", err
 	}
@@ -110,6 +113,6 @@ func (e *encryption) getDecryptedSecret(r *definitions.PostableGrafanaReceiver, 
 }
 
 // Encrypt delegates encryption to secrets.Service.
-func (e *encryption) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
-	return e.secrets.Encrypt(ctx, payload, opt)
+func (c *alertmanagerCrypto) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
+	return c.secrets.Encrypt(ctx, payload, opt)
 }

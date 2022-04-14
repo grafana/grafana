@@ -358,7 +358,7 @@ func createSut(t *testing.T, accessControl accesscontrol.AccessControl) Alertman
 	}
 	log := log.NewNopLogger()
 	crypto := notifier.NewCrypto(secrets, &configStore, log)
-	return AlertmanagerSrv{mam: mam, encryption: crypto, ac: accessControl, log: log}
+	return AlertmanagerSrv{mam: mam, crypto: crypto, ac: accessControl, log: log}
 }
 
 func createAmConfigRequest(t *testing.T) apimodels.PostableUserConfig {

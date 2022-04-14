@@ -26,10 +26,10 @@ const (
 )
 
 type AlertmanagerSrv struct {
-	log        log.Logger
-	ac         accesscontrol.AccessControl
-	mam        *notifier.MultiOrgAlertmanager
-	encryption notifier.Crypto
+	log    log.Logger
+	ac     accesscontrol.AccessControl
+	mam    *notifier.MultiOrgAlertmanager
+	crypto notifier.Crypto
 }
 
 type UnknownReceiverError struct {
@@ -237,7 +237,7 @@ func (srv AlertmanagerSrv) RoutePostAMAlerts(_ *models.ReqContext, _ apimodels.P
 }
 
 func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
-	if err := srv.encryption.LoadSecureSettings(c.Req.Context(), c.OrgId, body.Receivers); err != nil {
+	if err := srv.crypto.LoadSecureSettings(c.Req.Context(), c.OrgId, body.Receivers); err != nil {
 		var unknownReceiverError UnknownReceiverError
 		if errors.As(err, &unknownReceiverError) {
 			return ErrResp(http.StatusBadRequest, err, "")
@@ -245,7 +245,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body api
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	if err := body.ProcessConfig(srv.encryption.Encrypt); err != nil {
+	if err := body.ProcessConfig(srv.crypto.Encrypt); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to post process Alertmanager configuration")
 	}
 
