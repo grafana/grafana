@@ -10,7 +10,6 @@ import { AnnotationsHelp, LabelFilter, Metrics, Project, QueryEditorRow } from '
 const { Input } = LegacyForms;
 
 export interface Props {
-  refId: string;
   onQueryChange: (target: AnnotationTarget) => void;
   target: AnnotationTarget;
   datasource: CloudMonitoringDatasource;
@@ -98,14 +97,14 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
     return (
       <>
         <Project
-          refId={this.props.refId}
+          refId={this.state.target.refId}
           templateVariableOptions={variableOptions}
           datasource={datasource}
           projectName={projectName || datasource.getDefaultProject()}
           onChange={(value) => this.onChange('projectName', value)}
         />
         <Metrics
-          refId={this.props.refId}
+          refId={this.state.target.refId}
           projectName={projectName}
           metricType={metricType}
           templateSrv={datasource.templateSrv}

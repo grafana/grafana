@@ -9,8 +9,6 @@ import { map, mergeMap } from 'rxjs/operators';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import {
   Aggregation,
-  CloudMonitoringAnnotationQuery,
-  CloudMonitoringAnyQuery,
   CloudMonitoringOptions,
   CloudMonitoringQuery,
   EditorMode,
@@ -21,10 +19,7 @@ import {
 } from './types';
 import { CloudMonitoringVariableSupport } from './variables';
 
-export default class CloudMonitoringDatasource extends DataSourceWithBackend<
-  CloudMonitoringAnnotationQuery,
-  CloudMonitoringOptions
-> {
+export default class CloudMonitoringDatasource extends DataSourceWithBackend<CloudMonitoringQuery, CloudMonitoringOptions> {
   authenticationType: string;
   intervalMs: number;
 
