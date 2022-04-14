@@ -509,6 +509,10 @@ If you want to track Grafana usage via Azure Application Insights, then specify 
 
 <hr />
 
+### enable_feedback_links
+
+If set to false will remove all feedback links from the UI. Defaults to true.
+
 ## [security]
 
 ### disable_initial_admin_creation

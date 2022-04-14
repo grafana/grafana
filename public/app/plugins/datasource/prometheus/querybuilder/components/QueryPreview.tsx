@@ -18,7 +18,7 @@ export function QueryPreview({ query }: Props) {
   return (
     <EditorRow>
       <EditorFieldGroup>
-        <EditorField label="Preview">
+        <EditorField label="Raw query">
           <div
             className={cx(styles.editorField, 'prism-syntax-highlight')}
             aria-label="selector"
