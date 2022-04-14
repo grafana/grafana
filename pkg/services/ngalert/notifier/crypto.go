@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -21,12 +22,14 @@ type Crypto interface {
 type encryption struct {
 	secrets secrets.Service
 	configs configurationStore
+	log     log.Logger
 }
 
-func NewCrypto(secrets secrets.Service, configs configurationStore) Crypto {
+func NewCrypto(secrets secrets.Service, configs configurationStore, log log.Logger) Crypto {
 	return &encryption{
 		secrets: secrets,
 		configs: configs,
+		log:     log,
 	}
 }
 
@@ -44,10 +47,12 @@ func (e *encryption) LoadSecureSettings(ctx context.Context, orgId int64, receiv
 	currentReceiverMap := make(map[string]*definitions.PostableGrafanaReceiver)
 	if query.Result != nil {
 		currentConfig, err := Load([]byte(query.Result.AlertmanagerConfiguration))
+		// If the current config is un-loadable, treat it as if it never existed. Providing a new, valid config should be able to "fix" this state.
 		if err != nil {
-			return fmt.Errorf("failed to load latest configuration: %w", err)
+			e.log.Warn("Last known alertmanager configuration was invalid. Overwriting...")
+		} else {
+			currentReceiverMap = currentConfig.GetGrafanaReceiverMap()
 		}
-		currentReceiverMap = currentConfig.GetGrafanaReceiverMap()
 	}
 
 	// Copy the previously known secure settings.

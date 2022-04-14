@@ -99,7 +99,7 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	crypto := notifier.NewCrypto(ng.SecretsService, store)
+	crypto := notifier.NewCrypto(ng.SecretsService, store, ng.Log)
 	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), crypto)
 	if err != nil {
 		return err

@@ -44,7 +44,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 			DisabledOrgs:                   map[int64]struct{}{5: {}},
 		}, // do not poll in tests.
 	}
-	crypto := NewCrypto(secretsService, configStore)
+	crypto := NewCrypto(secretsService, configStore, log.NewNopLogger())
 	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), crypto)
 	require.NoError(t, err)
 	ctx := context.Background()
@@ -169,7 +169,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
 		}, // do not poll in tests.
 	}
-	crypto := NewCrypto(secretsService, configStore)
+	crypto := NewCrypto(secretsService, configStore, log.NewNopLogger())
 	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), crypto)
 	require.NoError(t, err)
 	ctx := context.Background()
@@ -220,7 +220,7 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	decryptFn := secretsService.GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
-	crypto := NewCrypto(secretsService, configStore)
+	crypto := NewCrypto(secretsService, configStore, log.NewNopLogger())
 	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), crypto)
 	require.NoError(t, err)
 	ctx := context.Background()
