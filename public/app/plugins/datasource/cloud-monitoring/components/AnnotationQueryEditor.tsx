@@ -10,8 +10,8 @@ import { AnnotationsHelp, LabelFilter, Metrics, Project, QueryEditorRow } from '
 const { Input } = LegacyForms;
 
 export interface Props {
-  onChange: (target: CloudMonitoringQuery) => void;
-  query: CloudMonitoringQuery;
+  onChange: (target: AnnotationTarget) => void;
+  query: AnnotationTarget;
   datasource: CloudMonitoringDatasource;
 }
 
