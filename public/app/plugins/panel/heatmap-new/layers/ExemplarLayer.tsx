@@ -1,23 +1,47 @@
-import { ArrayVector, Field } from '@grafana/data';
+import { ArrayVector, DataFrame, Field } from '@grafana/data';
 import { HeatmapHoverProps, HeatmapLayerHover } from '../types';
 
-export const exemplarLayer = ({ data, index }: HeatmapHoverProps): HeatmapLayerHover => {
-  const xField: Field | undefined = data.heatmap?.fields.find((f) => f.name === 'xMin');
-  const yField: Field | undefined = data.heatmap?.fields.find((f) => f.name === 'yMin');
-  const countField: Field | undefined = data.heatmap?.fields.find((f) => f.name === 'count');
+export const exemplarLayer = ({ heatmapData, getValuesInCell, index }: HeatmapHoverProps): HeatmapLayerHover => {
+  const xField: Field | undefined = heatmapData.heatmap?.fields.find((f) => f.name === 'xMin');
+  const yField: Field | undefined = heatmapData.heatmap?.fields.find((f) => f.name === 'yMin');
+  const countField: Field | undefined = heatmapData.heatmap?.fields.find((f) => f.name === 'count');
 
   if (xField && yField && countField) {
     const xMin: number = xField.values.get(index);
-    const xMax: number = xMin + data.xBucketSize!;
+    const xMax: number = xMin + heatmapData.xBucketSize!;
     const yMin: number = yField.values.get(index);
-    const yMax: number = yMin + data.yBucketSize!;
+    const yMax: number = yMin + heatmapData.yBucketSize!;
     const count: number = countField.values.get(index);
+
     if (count === 0) {
       return {
         name: 'Exemplar',
         data: [],
       };
     }
+
+    console.log('index is', index, 'yMin', yMin, 'yMax', yMax);
+    const exemplarData: DataFrame[] | undefined = getValuesInCell!({
+      xRange: {
+        min: xMin,
+        max: xMax,
+        delta: heatmapData.xBucketSize || 0,
+      },
+      yRange: {
+        min: yMin,
+        max: yMax,
+        delta: heatmapData.yBucketSize || 0,
+      },
+      count,
+    });
+
+    if (exemplarData) {
+      return {
+        name: 'Exemplar',
+        data: exemplarData,
+      };
+    }
+
     return {
       name: 'Exemplar',
       data: [

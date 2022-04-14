@@ -23,6 +23,8 @@ export interface RenderCallback {
 export interface HeatmapLayerHover {
   name: string;
   data: DataFrame[];
+  header?: () => JSX.Element;
+  footer?: () => JSX.Element;
 }
 
 export interface HeatmapHoverPayload extends DataHoverPayload {
@@ -31,7 +33,9 @@ export interface HeatmapHoverPayload extends DataHoverPayload {
   hover: HeatmapHoverEvent;
 }
 
-export interface HeatmapHoverProps {
-  data: HeatmapData;
+export interface HeatmapHoverProps<TOptions = any> {
+  heatmapData: HeatmapData;
+  getValuesInCell?: (lookupRange: HeatmapLookup) => DataFrame[] | undefined;
   index: number;
+  options?: TOptions;
 }

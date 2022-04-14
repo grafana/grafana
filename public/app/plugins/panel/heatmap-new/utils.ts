@@ -469,7 +469,29 @@ export const countsToFills = (u: uPlot, seriesIdx: number, palette: string[]) =>
 
 export const findExemplarFrameInPanelData = (data: PanelData): DataFrame | undefined => {
   if (data.annotations) {
-    return data.annotations.find((frame: DataFrame) => frame.meta?.custom?.resultType === 'exemplar');
+    let e = data.annotations.find((frame: DataFrame) => frame.meta?.custom?.resultType === 'exemplar');
+    const colorSeries: DataFrame[] | undefined = data.series.map((s) => {
+      return {
+        ...s,
+        fields: s.fields.filter((f) => f.config.color && f.type === 'time'),
+      };
+    });
+    if (e && colorSeries?.length > 0 && colorSeries[0].fields.length === 1) {
+      return {
+        ...e,
+        fields: e.fields.map((f) => {
+          return {
+            ...f,
+            config: {
+              ...f.config,
+              color: colorSeries?.[0].fields[0].config.color,
+            },
+          };
+        }),
+      };
+    }
+
+    return undefined;
   }
 
   if (data.series) {

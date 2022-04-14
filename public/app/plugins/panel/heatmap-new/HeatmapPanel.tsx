@@ -25,12 +25,12 @@ import {
 } from './utils';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { ColorScale } from './ColorScale';
-import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { HeatmapCalculationMode } from 'app/features/transformers/calculateHeatmap/models.gen';
 import { HeatmapLookup } from './types';
 import { heatmapLayer } from './layers/HeatmapLayer';
 import { exemplarLayer } from './layers/ExemplarLayer';
+import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -75,23 +75,24 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     }
     return undefined;
   }, [data, info, options, theme]);
-  const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
+  const facets = useMemo(() => [null, exemplars?.heatmap?.fields.map((f) => f.values.toArray())], [exemplars?.heatmap]);
   const { onSplitOpen } = usePanelContext();
-
-  //console.log(facets);
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
   const [hover, setHover] = useState<HeatmapHoverEvent | undefined>(undefined);
+  const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
   const isToolTipOpen = useRef<boolean>(false);
 
   const onCloseToolTip = () => {
     isToolTipOpen.current = false;
+    setShouldDisplayCloseButton(false);
     onhover(null);
   };
 
   const onclick = () => {
     isToolTipOpen.current = !isToolTipOpen.current;
+    setShouldDisplayCloseButton(isToolTipOpen.current);
   };
 
   const onhover = useCallback(
@@ -104,7 +105,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
   // ugh
   const dataRef = useRef<HeatmapData>(info);
-  dataRef.current = info;
+  dataRef.current = info!;
 
   const builder = useMemo(() => {
     return prepConfig({
@@ -125,59 +126,84 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
 
-  const getValuesInCell = (lookupRange: HeatmapLookup): DataFrame[] | undefined => {
-    const timeField: Field | undefined = data.annotations?.[0].fields.find((f: Field) => f.type === 'time');
-    const valueField: Field | undefined = data.annotations?.[0].fields.find((f: Field) => f.type === 'number');
-    if (timeField && valueField) {
-      const minIndex: number = timeField.values
-        .toArray()
-        .findIndex((value: number) => value >= lookupRange.xRange.min!);
-      const count: number = timeField.values
-        .toArray()
-        .slice(minIndex)
-        .findIndex((value: number) => value >= lookupRange.xRange.max!);
+  const getValuesInCell = useCallback(
+    (lookupRange: HeatmapLookup): DataFrame[] | undefined => {
+      const timeField: Field | undefined = data.annotations?.[0].fields.find((f: Field) => f.type === 'time');
+      const valueField: Field | undefined = data.annotations?.[0].fields.find((f: Field) => f.type === 'number');
+      if (timeField && valueField) {
+        const minIndex: number = timeField.values
+          .toArray()
+          .findIndex((value: number) => value >= lookupRange.xRange.min!);
+        const count: number = timeField.values
+          .toArray()
+          .slice(minIndex)
+          .findIndex((value: number) => value >= lookupRange.xRange.max!);
 
-      // Now find the relevant values in the value field.
-      const indicies: number[] = valueField.values
-        .toArray()
-        .slice(minIndex, minIndex + count)
-        .reduce((tally: number[], curr: number, i: number) => {
-          if (curr >= lookupRange.yRange?.min! && curr < lookupRange.yRange?.max!) {
-            tally.push(i + minIndex);
-          }
-          return tally;
-        }, []);
-
-      return indicies.map((annotationIndex: number, index: number) => {
-        return {
-          name: `${index}`,
-          fields: (data.annotations?.[0].fields || []).map((f: Field, rowIndex: number) => {
-            const newField: Field = {
-              ...f,
-              values: new ArrayVector([f.values.get(annotationIndex)]),
-            };
-            if (f.config.links?.length) {
-              // We have links to configure. Add a getLinks function to the field
-              newField.getLinks = (config: ValueLinkConfig) => {
-                return getFieldLinksForExplore({ field: f, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
-              };
+        // Now find the relevant values in the value field.
+        const indicies: number[] = valueField.values
+          .toArray()
+          .slice(minIndex, minIndex + count)
+          .reduce((tally: number[], curr: number, i: number) => {
+            if (curr >= lookupRange.yRange?.min! && curr < lookupRange.yRange?.max!) {
+              tally.push(i + minIndex);
             }
-            if (f.type === 'time') {
-              newField.display = (value: number) => {
-                return {
-                  numeric: value,
-                  text: timeFormatter(value, timeZone),
+            return tally;
+          }, []);
+
+        return indicies.map((annotationIndex: number, index: number) => {
+          return {
+            name: `${index + 1}`,
+            fields: (data.annotations?.[0].fields || []).map((f: Field, rowIndex: number) => {
+              const newField: Field = {
+                ...f,
+                values: new ArrayVector([f.values.get(annotationIndex)]),
+              };
+              if (f.config.links?.length) {
+                // We have links to configure. Add a getLinks function to the field
+                newField.getLinks = (config: ValueLinkConfig) => {
+                  return getFieldLinksForExplore({ field: f, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
                 };
-              };
-            }
-            return newField;
-          }),
-          length: 1,
-        };
-      });
+              }
+              if (f.type === 'time') {
+                newField.display = (value: number) => {
+                  return {
+                    numeric: value,
+                    text: timeFormatter(value, timeZone),
+                  };
+                };
+              }
+              return newField;
+            }),
+            length: 1,
+          };
+        });
+      }
+      return undefined;
+    },
+    [data.annotations, onSplitOpen, timeRange, timeZone]
+  );
+
+  const plotRef = (u: uPlot) => {
+    console.log('plotRef', u.ctx);
+    {
+      exemplars &&
+        ExemplarsPlugin({
+          u,
+          exemplars,
+          timeZone,
+          getValuesInCell,
+          config: builder,
+          colorPalette: palette,
+        });
     }
-    return undefined;
   };
+
+  // const exemplarIndex = useCallback((index: number) => {
+  //   const row = Math.floor(index / info.yBucketCount!);
+  //   const column = index % info.yBucketCount!;
+
+  //   return (row * exemplars?.yBucketCount!) + (Math.floor(column / exemplars?.yBucketCount!)) + (column % exemplars?.yBucketCount!);
+  // }, [info.yBucketCount, exemplars?.yBucketCount]);
 
   const renderLegend = () => {
     if (options.legend.displayMode === LegendDisplayMode.Hidden || !info.heatmap) {
@@ -205,20 +231,24 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     return <PanelDataErrorView panelId={id} data={data} needsNumberField={true} message={info.warning} />;
   }
 
+  // useEffect(() => {
+  //   builder.addHook('draw', (u: uPlot) => {
+  //     console.log("draw hook received", u);
+  //   });
+  // }, [builder]);
+
   return (
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight} timeRange={timeRange}>
-            {exemplars && (
-              <ExemplarsPlugin
-                config={builder}
-                exemplars={exemplars}
-                timeZone={timeZone}
-                getValuesInCell={getValuesInCell}
-              />
-            )}
-          </UPlotChart>
+          <UPlotChart
+            config={builder}
+            data={facets as any}
+            width={vizWidth}
+            height={vizHeight}
+            timeRange={timeRange}
+            plotRef={plotRef}
+          />
         )}
       </VizLayout>
       <Portal>
@@ -226,13 +256,17 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
           <HeatmapHoverView
             ttip={{
               layers: [
-                heatmapLayer({ data: info, index: hover.index }),
-                exemplarLayer({ data: exemplars!, index: hover.index }),
+                heatmapLayer({
+                  heatmapData: info,
+                  index: hover.index,
+                  options: { showHistogram: options.tooltip.yHistogram, timeZone },
+                }),
+                exemplarLayer({ heatmapData: exemplars!, getValuesInCell, index: hover.index }),
               ],
               hover,
               point: {},
             }}
-            isOpen={isToolTipOpen.current}
+            isOpen={shouldDisplayCloseButton}
             onClose={onCloseToolTip}
           />
         )}
