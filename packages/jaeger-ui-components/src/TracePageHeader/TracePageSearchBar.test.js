@@ -23,8 +23,6 @@ import UiFindInput from '../common/UiFindInput';
 const defaultProps = {
   forwardedRef: React.createRef(),
   navigable: true,
-  nextResult: () => {},
-  prevResult: () => {},
   suffix: '',
   searchValue: 'something',
 };
@@ -57,8 +55,6 @@ describe('<TracePageSearchBar>', () => {
       buttons.forEach((button) => {
         expect(button.prop('disabled')).toBe(false);
       });
-      expect(wrapper.find('Button[icon="arrow-up"]').prop('onClick')).toBe(defaultProps.prevResult);
-      expect(wrapper.find('Button[icon="arrow-down"]').prop('onClick')).toBe(defaultProps.nextResult);
     });
 
     it('only shows navigable buttons when navigable is true', () => {

@@ -7,7 +7,6 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { useAsync } from 'react-use';
 import TracePageSearchBar from '@jaegertracing/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar';
 import { useSearch } from 'app/features/explore/TraceView/useSearch';
-import { nextResult, prevResult } from 'app/features/explore/TraceView/TraceViewContainer';
 import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 
 const styles = {
@@ -28,12 +27,6 @@ export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
   });
   const scrollElement = document.getElementsByClassName(styles.wrapper)[0];
 
-  const setTraceSearch = (value: string) => {
-    setFocusedSpanIdForSearch('');
-    setSearchBarSuffix('');
-    setSearch(value);
-  };
-
   if (!data || !data.series.length || !traceProp) {
     return (
       <div className="panel-empty">
@@ -46,20 +39,14 @@ export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
     <div className={styles.wrapper}>
       <div ref={topOfViewRef}></div>
       <TracePageSearchBar
-        nextResult={() => {
-          const nextResults = nextResult(spanFindMatches, focusedSpanIdForSearch);
-          setFocusedSpanIdForSearch(nextResults!['focusedSpanIdForSearch']);
-          setSearchBarSuffix(nextResults!['searchBarSuffix']);
-        }}
-        prevResult={() => {
-          const prevResults = prevResult(spanFindMatches, focusedSpanIdForSearch);
-          setFocusedSpanIdForSearch(prevResults!['focusedSpanIdForSearch']);
-          setSearchBarSuffix(prevResults!['searchBarSuffix']);
-        }}
         navigable={true}
         searchValue={search}
-        onSearchValueChange={setTraceSearch}
+        setSearch={setSearch}
+        spanFindMatches={spanFindMatches}
         searchBarSuffix={searchBarSuffix}
+        setSearchBarSuffix={setSearchBarSuffix}
+        focusedSpanIdForSearch={focusedSpanIdForSearch}
+        setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
       />
 
       <TraceView

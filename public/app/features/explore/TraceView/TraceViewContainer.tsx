@@ -32,12 +32,6 @@ export function TraceViewContainer(props: Props) {
     (state: StoreState) => state.explore[props.exploreId!]?.datasourceInstance ?? undefined
   );
 
-  const setTraceSearch = (value: string) => {
-    setFocusedSpanIdForSearch('');
-    setSearchBarSuffix('');
-    setSearch(value);
-  };
-
   if (!traceProp) {
     return null;
   }
@@ -45,20 +39,14 @@ export function TraceViewContainer(props: Props) {
   return (
     <>
       <TracePageSearchBar
-        nextResult={() => {
-          const nextResults = nextResult(spanFindMatches, focusedSpanIdForSearch);
-          setFocusedSpanIdForSearch(nextResults!['focusedSpanIdForSearch']);
-          setSearchBarSuffix(nextResults!['searchBarSuffix']);
-        }}
-        prevResult={() => {
-          const prevResults = prevResult(spanFindMatches, focusedSpanIdForSearch);
-          setFocusedSpanIdForSearch(prevResults!['focusedSpanIdForSearch']);
-          setSearchBarSuffix(prevResults!['searchBarSuffix']);
-        }}
         navigable={true}
         searchValue={search}
-        onSearchValueChange={setTraceSearch}
+        setSearch={setSearch}
+        spanFindMatches={spanFindMatches}
         searchBarSuffix={searchBarSuffix}
+        setSearchBarSuffix={setSearchBarSuffix}
+        focusedSpanIdForSearch={focusedSpanIdForSearch}
+        setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
       />
 
       <Collapse label="Trace View" isOpen>
@@ -80,52 +68,3 @@ export function TraceViewContainer(props: Props) {
     </>
   );
 }
-
-export const nextResult = (spanFindMatches: Set<string> | undefined, focusedSpanIdForSearch: string) => {
-  const spanMatches = Array.from(spanFindMatches!);
-  const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
-    ? spanMatches.indexOf(focusedSpanIdForSearch)
-    : 0;
-
-  // new query || at end, go to start
-  if (prevMatchedIndex === -1 || prevMatchedIndex === spanMatches.length - 1) {
-    return {
-      focusedSpanIdForSearch: spanMatches[0],
-      searchBarSuffix: getSearchBarSuffix(1, spanFindMatches),
-    };
-  }
-
-  // get next
-  return {
-    focusedSpanIdForSearch: spanMatches[prevMatchedIndex + 1],
-    searchBarSuffix: getSearchBarSuffix(prevMatchedIndex + 2, spanFindMatches),
-  };
-};
-
-export const prevResult = (spanFindMatches: Set<string> | undefined, focusedSpanIdForSearch: string) => {
-  const spanMatches = Array.from(spanFindMatches!);
-  const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
-    ? spanMatches.indexOf(focusedSpanIdForSearch)
-    : 0;
-
-  // new query || at start, go to end
-  if (prevMatchedIndex === -1 || prevMatchedIndex === 0) {
-    return {
-      focusedSpanIdForSearch: spanMatches[spanMatches.length - 1],
-      searchBarSuffix: getSearchBarSuffix(spanMatches.length, spanFindMatches),
-    };
-  }
-
-  // get prev
-  return {
-    focusedSpanIdForSearch: spanMatches[prevMatchedIndex - 1],
-    searchBarSuffix: getSearchBarSuffix(prevMatchedIndex, spanFindMatches),
-  };
-};
-
-export const getSearchBarSuffix = (index: number, spanFindMatches: Set<string> | undefined): string => {
-  if (spanFindMatches?.size && spanFindMatches?.size > 0) {
-    return index + ' of ' + spanFindMatches?.size;
-  }
-  return '';
-};
