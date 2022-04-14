@@ -2661,7 +2661,7 @@
             "type": "table"
         }
     ],
-    "schemaVersion": 36,
+    "schemaVersion": 32,
     "style": "dark",
     "tags": [
         "gdev",
