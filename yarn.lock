@@ -3266,33 +3266,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/betterer@npm:^5.1.7":
-  version: 5.1.7
-  resolution: "@betterer/betterer@npm:5.1.7"
-  dependencies:
-    "@betterer/constraints": ^5.0.0
-    "@betterer/errors": ^5.0.0
-    "@betterer/logger": ^5.1.5
-    "@betterer/reporter": ^5.1.7
-    "@phenomnomnominal/debug": ^0.2.5
-    "@phenomnomnominal/worker-require": ^0.0.34
-    chokidar: ^3.3.1
-    djb2a: ^1.2.0
-    fast-memoize: ^2.5.2
-    lines-and-columns: ^1.1.6
-    minimatch: ^3.0.4
-    prettier: ^2.3.2
-    simple-git: ^3.1.1
-    ts-node: ^10.2.1
-    tslib: ^2.3.1
-    typescript: ">=2.7"
-  dependenciesMeta:
-    typescript:
-      optional: true
-  checksum: 3c8b980910de3078b6e44e9aaa741419d1985800ec2fb4e5c64fa1f1cd473aae03a07a93511dbde86647142c7277a3002b39c2c87fe4828f79412dac4c687faf
-  languageName: node
-  linkType: hard
-
 "@betterer/cli@npm:5.3.0":
   version: 5.3.0
   resolution: "@betterer/cli@npm:5.3.0"
@@ -3318,15 +3291,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/constraints@npm:^5.0.0":
-  version: 5.0.0
-  resolution: "@betterer/constraints@npm:5.0.0"
-  dependencies:
-    tslib: ^2.3.1
-  checksum: 6b6560ea7f68f5909e40e444c0a394b299968b0c2b533aea69d8c0bd9e3239952507df1f6665952dde03a1fd90d9786ea4e18b207af37b3d6e331c2f369e696d
-  languageName: node
-  linkType: hard
-
 "@betterer/constraints@npm:^5.3.0":
   version: 5.3.0
   resolution: "@betterer/constraints@npm:5.3.0"
@@ -3336,31 +3300,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/errors@npm:^5.0.0":
-  version: 5.0.0
-  resolution: "@betterer/errors@npm:5.0.0"
-  checksum: d4245427d15305df047bd656820ea492f055237f3cf6e2e971b087f6df404fff1b8bc07ddc353e00d2ffe3aea99ae9edfa471436dccd5a187b93092d9e659217
-  languageName: node
-  linkType: hard
-
 "@betterer/errors@npm:^5.3.0":
   version: 5.3.0
   resolution: "@betterer/errors@npm:5.3.0"
   checksum: 15d6679dca00a97ee1845225af662fdbcf84a684286d3ae654023ec5d1e2e61bb6c7a97ba5e6e50dfeebbeb5247f4bf5d5e4705a0468ea067bff30e22b7ccaf3
-  languageName: node
-  linkType: hard
-
-"@betterer/logger@npm:^5.1.5":
-  version: 5.1.5
-  resolution: "@betterer/logger@npm:5.1.5"
-  dependencies:
-    "@babel/code-frame": ^7.10.3
-    jest-diff: ^27.0.6
-    lines-and-columns: ^1.1.6
-    react: ">=16.8.4 || >=17.0.0"
-    react-dom: ">=16.8.4 || >=17.0.0"
-    tslib: ^2.3.1
-  checksum: ce0e6847049e2132b527003b4732e4ee3e80464651c7882bf94c308f2a2a9f5495013837809743b2a16a11a844d534f8b84fc29cab22ec7fbe40c628c1759cec
   languageName: node
   linkType: hard
 
@@ -3378,31 +3321,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/regexp@npm:5.1.7":
-  version: 5.1.7
-  resolution: "@betterer/regexp@npm:5.1.7"
+"@betterer/regexp@npm:5.3.0":
+  version: 5.3.0
+  resolution: "@betterer/regexp@npm:5.3.0"
   dependencies:
-    "@betterer/betterer": ^5.1.7
-    "@betterer/errors": ^5.0.0
+    "@betterer/betterer": ^5.3.0
+    "@betterer/errors": ^5.3.0
     tslib: ^2.3.1
-  checksum: 17af07f3e8240ce45716b6d24cf5492aeca4ab2a78c57455ae2f26365dbbe5d1a1f93b02ee2cdaddd817b65a510de0a041e7cb8694663acedd7a090599bde547
-  languageName: node
-  linkType: hard
-
-"@betterer/reporter@npm:^5.1.7":
-  version: 5.1.7
-  resolution: "@betterer/reporter@npm:5.1.7"
-  dependencies:
-    "@betterer/betterer": ^5.1.7
-    "@betterer/errors": ^5.0.0
-    "@betterer/logger": ^5.1.5
-    "@betterer/tasks": ^5.1.7
-    ink: ^3.0.9
-    ink-text-input: ^4.0.1
-    react: ">=16.8.4 || >=17.0.0"
-    react-dom: ">=16.8.4 || >=17.0.0"
-    tslib: ^2.3.1
-  checksum: 269f65fb76e539fbd714d75c53a02b941aecdfeb46599e3944f23e7932f1251a4e0c807ad21a610183e797529ce11deeb08b2f6e13b059bc1bbbbe03878ad115
+  checksum: 9b69160783b147ef7c9c585ad8dc82303dee39b549903ae1a74a87d0e3bfaa9a2fc408389d39e655dfae516c82565397841efd04d7b5d051e80df292d21e0530
   languageName: node
   linkType: hard
 
@@ -3420,21 +3346,6 @@ __metadata:
     react-dom: ">=16.8.4 || >=17.0.0"
     tslib: ^2.3.1
   checksum: a303108200cd5a0b3de35093db17a0b208c1c2456f5edad8be346367f036052e88cb87f06f047a52f4671cb895158013b13545bfd4bc12aae2cfc7133c4d6a94
-  languageName: node
-  linkType: hard
-
-"@betterer/tasks@npm:^5.1.7":
-  version: 5.1.7
-  resolution: "@betterer/tasks@npm:5.1.7"
-  dependencies:
-    "@betterer/errors": ^5.0.0
-    "@betterer/logger": ^5.1.5
-    chalk: ^4.1.2
-    ink: ^3.0.9
-    react: ">=16.8.4 || >=17.0.0"
-    react-dom: ">=16.8.4 || >=17.0.0"
-    tslib: ^2.3.1
-  checksum: b46a019d101a2c3a143cf2e1405f40982ef493c144552a116871f0f037f92ed734618da657ca1beb517dcef370d41daa78be73c224afbb42fe5d7c6c9f45fc38
   languageName: node
   linkType: hard
 
@@ -20505,7 +20416,7 @@ __metadata:
     "@babel/preset-typescript": 7.16.7
     "@betterer/betterer": 5.3.0
     "@betterer/cli": 5.3.0
-    "@betterer/regexp": 5.1.7
+    "@betterer/regexp": 5.3.0
     "@emotion/css": 11.7.1
     "@emotion/eslint-plugin": 11.7.0
     "@emotion/react": 11.8.2
