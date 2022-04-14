@@ -25,32 +25,26 @@ func NewNotificationPolicyService(am AMConfigStore, prov ProvisioningStore, xact
 	}
 }
 
-// TODO: move to Swagger codegen
-type EmbeddedRoutingTree struct {
-	definitions.Route
-	Provenance models.Provenance
-}
-
 func (nps *NotificationPolicyService) GetAMConfigStore() AMConfigStore {
 	return nps.amStore
 }
 
-func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (EmbeddedRoutingTree, error) {
+func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error) {
 	q := models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
 	}
 	err := nps.amStore.GetLatestAlertmanagerConfiguration(ctx, &q)
 	if err != nil {
-		return EmbeddedRoutingTree{}, err
+		return definitions.Route{}, err
 	}
 
 	cfg, err := DeserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
 	if err != nil {
-		return EmbeddedRoutingTree{}, err
+		return definitions.Route{}, err
 	}
 
 	if cfg.AlertmanagerConfig.Config.Route == nil {
-		return EmbeddedRoutingTree{}, fmt.Errorf("no route present in current alertmanager config")
+		return definitions.Route{}, fmt.Errorf("no route present in current alertmanager config")
 	}
 
 	adapter := provenanceOrgAdapter{
@@ -59,13 +53,11 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 	}
 	provenance, err := nps.provenanceStore.GetProvenance(ctx, adapter)
 	if err != nil {
-		return EmbeddedRoutingTree{}, err
+		return definitions.Route{}, err
 	}
 
-	result := EmbeddedRoutingTree{
-		Route:      *cfg.AlertmanagerConfig.Route,
-		Provenance: provenance,
-	}
+	result := *cfg.AlertmanagerConfig.Route
+	result.Provenance = provenance
 
 	return result, nil
 }
