@@ -414,7 +414,6 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 	})
 
 	t.Run("trying to update an alert to the title of an existing alert in the same folder should fail", func(t *testing.T) {
-
 		rules := newTestingRuleConfig(t)
 		rules.Rules[0].GrafanaManagedAlert.UID = createdRuleGroup.Rules[0].GrafanaManagedAlert.UID
 		rules.Rules[1].GrafanaManagedAlert.UID = createdRuleGroup.Rules[1].GrafanaManagedAlert.UID

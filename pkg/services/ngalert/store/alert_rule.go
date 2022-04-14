@@ -113,7 +113,8 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		newRules := make([]ngmodels.AlertRule, 0, len(rules))
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
-		for _, r := range rules {
+		for i := range rules {
+			r := rules[i]
 			uid, err := GenerateNewAlertRuleUID(sess, r.OrgID, r.Title)
 			if err != nil {
 				return fmt.Errorf("failed to generate UID for alert rule %q: %w", r.Title, err)
