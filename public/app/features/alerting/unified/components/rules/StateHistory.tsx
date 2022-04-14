@@ -150,4 +150,7 @@ function hasMatchingPrecedingState(index: number, items: StateHistoryItem[]): bo
   return previousHistoryItem.newState === currentHistoryItem.prevState;
 }
 
-export { StateHistory };
+export {
+  StateHistory,
+  sortStateHistory, // exported for testing.
+};
