@@ -357,7 +357,8 @@ func createSut(t *testing.T, accessControl accesscontrol.AccessControl) Alertman
 		accessControl = acMock.New().WithDisabled()
 	}
 	log := log.NewNopLogger()
-	return AlertmanagerSrv{mam: mam, store: &configStore, secrets: secrets, ac: accessControl, log: log}
+	crypto := notifier.NewCrypto(secrets, &configStore, log)
+	return AlertmanagerSrv{mam: mam, crypto: crypto, ac: accessControl, log: log}
 }
 
 func createAmConfigRequest(t *testing.T) apimodels.PostableUserConfig {
@@ -395,7 +396,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 		}, // do not poll in tests.
 	}
 
-	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"))
+	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
 	require.NoError(t, err)
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)
