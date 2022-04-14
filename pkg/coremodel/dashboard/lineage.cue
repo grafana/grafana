@@ -53,7 +53,10 @@ seqs: [
                 annotations?: list: [...{
                     builtIn: uint8 | *0
                     // Datasource to use for annotation.
-                    datasource: string
+                    datasource: {
+                    	type?: string
+                    	uid?: string
+                    }
                     // Whether annotation is enabled.
                     enable: bool | *true
                     // Whether to hide annotation.
@@ -310,7 +313,10 @@ seqs: [
                     title?: string
 
                     // Name of default datasource.
-                    datasource?: string
+                    datasource?: {
+                    	type?: string
+                    	uid?: string
+                    }
 
                     gridPos?: {
                         // Panel
