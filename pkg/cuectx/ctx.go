@@ -13,6 +13,7 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/grafana/thema"
+	"github.com/grafana/thema/kernel"
 	"github.com/grafana/thema/load"
 )
 
@@ -29,6 +30,20 @@ func ProvideThemaLibrary() thema.Library {
 	return lib
 }
 
+// JSONtoCUE attempts to decode the given []byte into a cue.Value, relying on
+// the central Grafana cue.Context provided in this package.
+//
+// The provided path argument determines the name given to the input bytes if
+// later CUE operations (e.g. Thema validation) produce errors related to the
+// returned cue.Value.
+//
+// This is a convenience function for one-off JSON decoding. It's wasteful to
+// call it repeatedly. Most use cases use cases should probably prefer making
+// their own Thema/CUE decoders.
+func JSONtoCUE(path string, b []byte) (cue.Value, error) {
+	return kernel.NewJSONDecoder(path)(ctx, b)
+}
+
 // LoadGrafanaInstancesWithThema loads CUE files containing a lineage
 // representing some Grafana core model schema. It is expected to be used when
 // implementing a thema.LineageFactory.
@@ -38,7 +53,12 @@ func ProvideThemaLibrary() thema.Library {
 // lineage.cue file must be the sole contents of the provided fs.FS.
 //
 // More details on underlying behavior can be found in the docs for github.com/grafana/thema/load.InstancesWithThema.
-func LoadGrafanaInstancesWithThema(path string, cueFS fs.FS, lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
+func LoadGrafanaInstancesWithThema(
+	path string,
+	cueFS fs.FS,
+	lib thema.Library,
+	opts ...thema.BindOption,
+) (thema.Lineage, error) {
 	prefix := filepath.FromSlash(path)
 	fs, err := prefixWithGrafanaCUE(prefix, cueFS)
 	if err != nil {
