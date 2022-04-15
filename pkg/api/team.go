@@ -44,7 +44,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 			c.Logger.Warn("Could not add creator to team because is not a real user")
 		}
 	}
-	return response.JSON(200, &util.DynMap{
+	return response.JSON(http.StatusOK, &util.DynMap{
 		"teamId":  team.Id,
 		"message": "Team created",
 	})
@@ -151,7 +151,7 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 	query.Result.Page = page
 	query.Result.PerPage = perPage
 
-	return response.JSON(200, query.Result)
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 // UserFilter returns the user ID used in a filter when querying a team
@@ -198,7 +198,7 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 	query.Result.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, "teams:id:", strconv.FormatInt(query.Result.Id, 10))
 
 	query.Result.AvatarUrl = dtos.GetGravatarUrlWithDefault(query.Result.Email, query.Result.Name)
-	return response.JSON(200, &query.Result)
+	return response.JSON(http.StatusOK, &query.Result)
 }
 
 // GET /api/teams/:teamId/preferences

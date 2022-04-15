@@ -1,6 +1,8 @@
 package store
 
 import (
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/web"
@@ -28,7 +30,7 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 	action := "Upload"
 	scope, path := getPathAndScope(c)
 
-	return response.JSON(200, map[string]string{
+	return response.JSON(http.StatusOK, map[string]string{
 		"action": action,
 		"scope":  scope,
 		"path":   path,
@@ -39,7 +41,7 @@ func (s *httpStorage) Read(c *models.ReqContext) response.Response {
 	action := "Read"
 	scope, path := getPathAndScope(c)
 
-	return response.JSON(200, map[string]string{
+	return response.JSON(http.StatusOK, map[string]string{
 		"action": action,
 		"scope":  scope,
 		"path":   path,
@@ -50,7 +52,7 @@ func (s *httpStorage) Delete(c *models.ReqContext) response.Response {
 	action := "Delete"
 	scope, path := getPathAndScope(c)
 
-	return response.JSON(200, map[string]string{
+	return response.JSON(http.StatusOK, map[string]string{
 		"action": action,
 		"scope":  scope,
 		"path":   path,
@@ -67,5 +69,5 @@ func (s *httpStorage) List(c *models.ReqContext) response.Response {
 	if frame == nil {
 		return response.Error(404, "not found", nil)
 	}
-	return response.JSONStreaming(200, frame)
+	return response.JSONStreaming(http.StatusOK, frame)
 }

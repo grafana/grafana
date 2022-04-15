@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 	"path"
 	"sort"
 	"strings"
@@ -750,7 +751,7 @@ func (hs *HTTPServer) Index(c *models.ReqContext) {
 		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
 		return
 	}
-	c.HTML(200, "index", data)
+	c.HTML(http.StatusOK, "index", data)
 }
 
 func (hs *HTTPServer) NotFoundHandler(c *models.ReqContext) {
