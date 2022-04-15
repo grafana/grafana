@@ -7,21 +7,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlstore *sqlstore.SQLStore) *SearchService {
+func ProvideService(cfg *setting.Cfg, sqlstore *sqlstore.SQLStore) *SearchService {
 	s := &SearchService{
 		Cfg: cfg,
-		Bus: bus,
 		sortOptions: map[string]models.SortOption{
 			SortAlphaAsc.Name:  SortAlphaAsc,
 			SortAlphaDesc.Name: SortAlphaDesc,
 		},
 		sqlstore: sqlstore,
 	}
-	s.Bus.AddHandler(s.SearchHandler)
 	return s
 }
 
@@ -48,7 +45,6 @@ type Service interface {
 }
 
 type SearchService struct {
-	Bus         bus.Bus
 	Cfg         *setting.Cfg
 	sortOptions map[string]models.SortOption
 	sqlstore    sqlstore.Store

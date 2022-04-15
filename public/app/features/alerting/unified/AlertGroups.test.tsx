@@ -16,6 +16,7 @@ jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     isEditor: true,
     hasAccess: () => true,
+    hasPermission: () => true,
   },
 }));
 const mocks = {

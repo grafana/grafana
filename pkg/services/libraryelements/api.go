@@ -35,7 +35,7 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext) response.Res
 		return toLibraryElementError(err, "Failed to create library element")
 	}
 
-	return response.JSON(200, LibraryElementResponse{Result: element})
+	return response.JSON(http.StatusOK, LibraryElementResponse{Result: element})
 }
 
 // deleteHandler handles DELETE /api/library-elements/:uid.
@@ -45,7 +45,7 @@ func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Res
 		return toLibraryElementError(err, "Failed to delete library element")
 	}
 
-	return response.JSON(200, DeleteLibraryElementResponse{
+	return response.JSON(http.StatusOK, DeleteLibraryElementResponse{
 		Message: "Library element deleted",
 		ID:      id,
 	})
@@ -58,7 +58,7 @@ func (l *LibraryElementService) getHandler(c *models.ReqContext) response.Respon
 		return toLibraryElementError(err, "Failed to get library element")
 	}
 
-	return response.JSON(200, LibraryElementResponse{Result: element})
+	return response.JSON(http.StatusOK, LibraryElementResponse{Result: element})
 }
 
 // getAllHandler handles GET /api/library-elements/.
@@ -78,7 +78,7 @@ func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Res
 		return toLibraryElementError(err, "Failed to get library elements")
 	}
 
-	return response.JSON(200, LibraryElementSearchResponse{Result: elementsResult})
+	return response.JSON(http.StatusOK, LibraryElementSearchResponse{Result: elementsResult})
 }
 
 // patchHandler handles PATCH /api/library-elements/:uid
@@ -93,7 +93,7 @@ func (l *LibraryElementService) patchHandler(c *models.ReqContext) response.Resp
 		return toLibraryElementError(err, "Failed to update library element")
 	}
 
-	return response.JSON(200, LibraryElementResponse{Result: element})
+	return response.JSON(http.StatusOK, LibraryElementResponse{Result: element})
 }
 
 // getConnectionsHandler handles GET /api/library-panels/:uid/connections/.
@@ -103,7 +103,7 @@ func (l *LibraryElementService) getConnectionsHandler(c *models.ReqContext) resp
 		return toLibraryElementError(err, "Failed to get connections")
 	}
 
-	return response.JSON(200, LibraryElementConnectionsResponse{Result: connections})
+	return response.JSON(http.StatusOK, LibraryElementConnectionsResponse{Result: connections})
 }
 
 // getByNameHandler handles GET /api/library-elements/name/:name/.
@@ -113,7 +113,7 @@ func (l *LibraryElementService) getByNameHandler(c *models.ReqContext) response.
 		return toLibraryElementError(err, "Failed to get library element")
 	}
 
-	return response.JSON(200, LibraryElementArrayResponse{Result: elements})
+	return response.JSON(http.StatusOK, LibraryElementArrayResponse{Result: elements})
 }
 
 func toLibraryElementError(err error, message string) response.Response {

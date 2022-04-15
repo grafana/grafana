@@ -25,6 +25,13 @@ When user is using Github OAuth, GitHub login is showed as both Grafana login an
 The meaning of the default data source has now changed from being a persisted property in a panel. Before when you selected the default data source for a panel and later changed the default data source to another data source it would change all panels who were configured to use the default data source. From now on the default data source is just the default for new panels and changing the default will not impact any currently saved dashboards. Issue [#45132](https://github.com/grafana/grafana/issues/45132)
 
 <!-- 8.5.0-beta1 END -->
+<!-- 8.4.6 START -->
+
+# 8.4.6 (2022-04-12)
+
+- **Security:** Fixes CVE-2022-24812. For more information, see our [blog](https://grafana.com/blog/2022/04/12/grafana-enterprise-8.4.6-released-with-high-severity-security-fix/)
+
+<!-- 8.4.6 END -->
 <!-- 8.4.5 START -->
 
 # 8.4.5 (2022-03-31)
