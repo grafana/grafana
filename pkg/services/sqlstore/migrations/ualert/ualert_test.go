@@ -15,11 +15,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var AddRmMigration = func(mg *migrator.Migrator) {
-	mg.AddMigration(rmMigTitle, &rmMigration{})
-}
-
 var MigTitle = migTitle
+var RmMigTitle = rmMigTitle
+var ClearMigrationEntryTitle = clearMigrationEntryTitle
+
+type RmMigration = rmMigration
 
 func Test_validateAlertmanagerConfig(t *testing.T) {
 	tc := []struct {

@@ -2,6 +2,7 @@ package ualert_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -21,6 +22,80 @@ import (
 )
 
 func Test_AddDashAlertMigration(t *testing.T) {
+	x := setupTestDB(t)
+
+	tc := []struct {
+		name           string
+		config         *setting.Cfg
+		isMigrationRun bool
+		expected       []string
+	}{
+		{
+			name: "when unified alerting enabled and migration not already run, then add main migration and clear rmMigration log entry",
+			config: &setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: boolPointer(true),
+				},
+			},
+			isMigrationRun: false,
+			expected:       []string{fmt.Sprintf(ualert.ClearMigrationEntryTitle, ualert.RmMigTitle), ualert.MigTitle},
+		},
+		{
+			name: "when unified alerting disabled and migration is already run, then add rmMigration and clear main migration log entry",
+			config: &setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: boolPointer(false),
+				},
+			},
+			isMigrationRun: true,
+			expected:       []string{fmt.Sprintf(ualert.ClearMigrationEntryTitle, ualert.MigTitle), ualert.RmMigTitle},
+		},
+		{
+			name: "when unified alerting enabled and migration is already run, then do nothing",
+			config: &setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: boolPointer(true),
+				},
+			},
+			isMigrationRun: true,
+			expected:       []string{},
+		},
+		{
+			name: "when unified alerting disabled and migration is not already run, then do nothing",
+			config: &setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: boolPointer(false),
+				},
+			},
+			isMigrationRun: false,
+			expected:       []string{},
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.isMigrationRun {
+				log := migrator.MigrationLog{
+					MigrationID: ualert.MigTitle,
+					SQL:         "",
+					Timestamp:   time.Now(),
+					Success:     true,
+				}
+				_, err := x.Insert(log)
+				require.NoError(t, err)
+			} else {
+				_, err := x.Exec("DELETE FROM migration_log WHERE migration_id = ?", ualert.MigTitle)
+				require.NoError(t, err)
+			}
+
+			mg := migrator.NewMigrator(x, tt.config)
+			ualert.AddDashAlertMigration(mg)
+			require.Equal(t, tt.expected, mg.GetMigrationIDs(false))
+		})
+	}
+}
+
+func Test_DashAlertMigration(t *testing.T) {
 	// Run initial migration to have a working DB.
 	x := setupTestDB(t)
 
@@ -272,7 +347,7 @@ func Test_AddDashAlertMigration(t *testing.T) {
 			require.NoError(t, errDeleteMig)
 
 			alertMigrator := migrator.NewMigrator(x, &setting.Cfg{})
-			ualert.AddRmMigration(alertMigrator)
+			alertMigrator.AddMigration(ualert.RmMigTitle, &ualert.RmMigration{})
 			ualert.AddDashAlertMigration(alertMigrator)
 
 			errRunningMig := alertMigrator.Start(false, 0)
@@ -520,4 +595,8 @@ func attachExpectedMatchersToRoutes(t *testing.T, rts []*route, alertUids map[st
 		// Recurse for nested routes.
 		attachExpectedMatchersToRoutes(t, rt.Routes, alertUids)
 	}
+}
+
+func boolPointer(b bool) *bool {
+	return &b
 }
