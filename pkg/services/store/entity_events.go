@@ -22,7 +22,7 @@ type EntityEvent struct {
 	Id        int64
 	EventType EntityEventType
 	Grn       string
-	Created   time.Time
+	Created   int64
 }
 
 type SaveEventCmd struct {
@@ -59,7 +59,7 @@ func (e *entityEventService) SaveEvent(ctx context.Context, cmd SaveEventCmd) er
 		_, err := sess.Insert(&EntityEvent{
 			EventType: cmd.EventType,
 			Grn:       cmd.Grn,
-			Created:   time.Now(),
+			Created:   time.Now().Unix(),
 		})
 		return err
 	})
