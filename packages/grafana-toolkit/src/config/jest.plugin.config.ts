@@ -76,14 +76,14 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
         },
       ],
     ],
-    testEnvironment: require.resolve('jest-environment-jsdom-fifteen'),
+    testEnvironment: 'jsdom',
     testMatch: [
       '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
       '<rootDir>/src/**/*.{spec,test,jest}.{js,jsx,ts,tsx}',
       '<rootDir>/spec/**/*.{spec,test,jest}.{js,jsx,ts,tsx}',
     ],
     transform: {
-      '^.+\\.js$': 'babel-jest',
+      '^.+\\.jsx?$': require.resolve('babel-jest'),
       '^.+\\.tsx?$': require.resolve('ts-jest'),
     },
     transformIgnorePatterns: [
