@@ -19,13 +19,19 @@ import (
 
 type PrometheusApiForkingService interface {
 	RouteGetAlertStatuses(*models.ReqContext) response.Response
+	RouteGetAlertStatusesWithUID(*models.ReqContext) response.Response
 	RouteGetGrafanaAlertStatuses(*models.ReqContext) response.Response
 	RouteGetGrafanaRuleStatuses(*models.ReqContext) response.Response
 	RouteGetRuleStatuses(*models.ReqContext) response.Response
+	RouteGetRuleStatusesWithUID(*models.ReqContext) response.Response
 }
 
 func (f *ForkedPrometheusApi) RouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetAlertStatuses(ctx)
+}
+
+func (f *ForkedPrometheusApi) RouteGetAlertStatusesWithUID(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetAlertStatusesWithUID(ctx)
 }
 
 func (f *ForkedPrometheusApi) RouteGetGrafanaAlertStatuses(ctx *models.ReqContext) response.Response {
@@ -40,15 +46,29 @@ func (f *ForkedPrometheusApi) RouteGetRuleStatuses(ctx *models.ReqContext) respo
 	return f.forkRouteGetRuleStatuses(ctx)
 }
 
+func (f *ForkedPrometheusApi) RouteGetRuleStatusesWithUID(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetRuleStatusesWithUID(ctx)
+}
+
 func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiForkingService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Get(
-			toMacaronPath("/api/prometheus/{Recipient}/api/v1/alerts"),
-			api.authorize(http.MethodGet, "/api/prometheus/{Recipient}/api/v1/alerts"),
+			toMacaronPath("/api/prometheus/{DatasourceID}/api/v1/alerts"),
+			api.authorize(http.MethodGet, "/api/prometheus/{DatasourceID}/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/prometheus/{Recipient}/api/v1/alerts",
+				"/api/prometheus/{DatasourceID}/api/v1/alerts",
 				srv.RouteGetAlertStatuses,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/prometheus/uid/{DatasourceUID}/api/v1/alerts"),
+			api.authorize(http.MethodGet, "/api/prometheus/uid/{DatasourceUID}/api/v1/alerts"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/prometheus/uid/{DatasourceUID}/api/v1/alerts",
+				srv.RouteGetAlertStatusesWithUID,
 				m,
 			),
 		)
@@ -73,12 +93,22 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiForkingService, 
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/prometheus/{Recipient}/api/v1/rules"),
-			api.authorize(http.MethodGet, "/api/prometheus/{Recipient}/api/v1/rules"),
+			toMacaronPath("/api/prometheus/{DatasourceID}/api/v1/rules"),
+			api.authorize(http.MethodGet, "/api/prometheus/{DatasourceID}/api/v1/rules"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/prometheus/{Recipient}/api/v1/rules",
+				"/api/prometheus/{DatasourceID}/api/v1/rules",
 				srv.RouteGetRuleStatuses,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/prometheus/uid/{DatasourceUID}/api/v1/rules"),
+			api.authorize(http.MethodGet, "/api/prometheus/uid/{DatasourceUID}/api/v1/rules"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/prometheus/uid/{DatasourceUID}/api/v1/rules",
+				srv.RouteGetRuleStatusesWithUID,
 				m,
 			),
 		)

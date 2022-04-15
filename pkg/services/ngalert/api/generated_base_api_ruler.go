@@ -23,15 +23,21 @@ type RulerApiForkingService interface {
 	RouteDeleteGrafanaRuleGroupConfig(*models.ReqContext) response.Response
 	RouteDeleteNamespaceGrafanaRulesConfig(*models.ReqContext) response.Response
 	RouteDeleteNamespaceRulesConfig(*models.ReqContext) response.Response
+	RouteDeleteNamespaceRulesConfigWithUID(*models.ReqContext) response.Response
 	RouteDeleteRuleGroupConfig(*models.ReqContext) response.Response
+	RouteDeleteRuleGroupConfigWithUID(*models.ReqContext) response.Response
 	RouteGetGrafanaRuleGroupConfig(*models.ReqContext) response.Response
 	RouteGetGrafanaRulesConfig(*models.ReqContext) response.Response
 	RouteGetNamespaceGrafanaRulesConfig(*models.ReqContext) response.Response
 	RouteGetNamespaceRulesConfig(*models.ReqContext) response.Response
-	RouteGetRulegGroupConfig(*models.ReqContext) response.Response
+	RouteGetNamespaceRulesConfigWithUID(*models.ReqContext) response.Response
+	RouteGetRuleGroupConfig(*models.ReqContext) response.Response
+	RouteGetRuleGroupConfigWithUID(*models.ReqContext) response.Response
 	RouteGetRulesConfig(*models.ReqContext) response.Response
+	RouteGetRulesConfigWithUID(*models.ReqContext) response.Response
 	RoutePostNameGrafanaRulesConfig(*models.ReqContext) response.Response
 	RoutePostNameRulesConfig(*models.ReqContext) response.Response
+	RoutePostNameRulesConfigWithUID(*models.ReqContext) response.Response
 }
 
 func (f *ForkedRulerApi) RouteDeleteGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
@@ -46,8 +52,16 @@ func (f *ForkedRulerApi) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext)
 	return f.forkRouteDeleteNamespaceRulesConfig(ctx)
 }
 
+func (f *ForkedRulerApi) RouteDeleteNamespaceRulesConfigWithUID(ctx *models.ReqContext) response.Response {
+	return f.forkRouteDeleteNamespaceRulesConfigWithUID(ctx)
+}
+
 func (f *ForkedRulerApi) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteDeleteRuleGroupConfig(ctx)
+}
+
+func (f *ForkedRulerApi) RouteDeleteRuleGroupConfigWithUID(ctx *models.ReqContext) response.Response {
+	return f.forkRouteDeleteRuleGroupConfigWithUID(ctx)
 }
 
 func (f *ForkedRulerApi) RouteGetGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
@@ -66,12 +80,24 @@ func (f *ForkedRulerApi) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) re
 	return f.forkRouteGetNamespaceRulesConfig(ctx)
 }
 
-func (f *ForkedRulerApi) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetRulegGroupConfig(ctx)
+func (f *ForkedRulerApi) RouteGetNamespaceRulesConfigWithUID(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetNamespaceRulesConfigWithUID(ctx)
+}
+
+func (f *ForkedRulerApi) RouteGetRuleGroupConfig(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetRuleGroupConfig(ctx)
+}
+
+func (f *ForkedRulerApi) RouteGetRuleGroupConfigWithUID(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetRuleGroupConfigWithUID(ctx)
 }
 
 func (f *ForkedRulerApi) RouteGetRulesConfig(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetRulesConfig(ctx)
+}
+
+func (f *ForkedRulerApi) RouteGetRulesConfigWithUID(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetRulesConfigWithUID(ctx)
 }
 
 func (f *ForkedRulerApi) RoutePostNameGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
@@ -88,6 +114,14 @@ func (f *ForkedRulerApi) RoutePostNameRulesConfig(ctx *models.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return f.forkRoutePostNameRulesConfig(ctx, conf)
+}
+
+func (f *ForkedRulerApi) RoutePostNameRulesConfigWithUID(ctx *models.ReqContext) response.Response {
+	conf := apimodels.PostableRuleGroupConfig{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRoutePostNameRulesConfigWithUID(ctx, conf)
 }
 
 func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics.API) {
@@ -113,22 +147,42 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 			),
 		)
 		group.Delete(
-			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
-			api.authorize(http.MethodDelete, "/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
+			toMacaronPath("/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodDelete, "/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}",
+				"/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}",
 				srv.RouteDeleteNamespaceRulesConfig,
 				m,
 			),
 		)
 		group.Delete(
-			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}"),
-			api.authorize(http.MethodDelete, "/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}"),
+			toMacaronPath("/api/ruler/uid/{DatasourceUID}/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodDelete, "/api/ruler/uid/{DatasourceUID}/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}",
+				"/api/ruler/uid/{DatasourceUID}/api/v1/rules/{Namespace}",
+				srv.RouteDeleteNamespaceRulesConfigWithUID,
+				m,
+			),
+		)
+		group.Delete(
+			toMacaronPath("/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname}"),
+			api.authorize(http.MethodDelete, "/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname}"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname}",
 				srv.RouteDeleteRuleGroupConfig,
+				m,
+			),
+		)
+		group.Delete(
+			toMacaronPath("/api/ruler/uid/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
+			api.authorize(http.MethodDelete, "/api/ruler/uid/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/ruler/uid/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}",
+				srv.RouteDeleteRuleGroupConfigWithUID,
 				m,
 			),
 		)
@@ -163,32 +217,62 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
-			api.authorize(http.MethodGet, "/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
+			toMacaronPath("/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodGet, "/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}",
+				"/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}",
 				srv.RouteGetNamespaceRulesConfig,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}"),
-			api.authorize(http.MethodGet, "/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}"),
+			toMacaronPath("/api/ruler/uid/{DatasourceUID}/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodGet, "/api/ruler/uid/{DatasourceUID}/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}",
-				srv.RouteGetRulegGroupConfig,
+				"/api/ruler/uid/{DatasourceUID}/api/v1/rules/{Namespace}",
+				srv.RouteGetNamespaceRulesConfigWithUID,
 				m,
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules"),
-			api.authorize(http.MethodGet, "/api/ruler/{Recipient}/api/v1/rules"),
+			toMacaronPath("/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname}"),
+			api.authorize(http.MethodGet, "/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname}"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/ruler/{Recipient}/api/v1/rules",
+				"/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname}",
+				srv.RouteGetRuleGroupConfig,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/ruler/uid/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
+			api.authorize(http.MethodGet, "/api/ruler/uid/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/ruler/uid/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}",
+				srv.RouteGetRuleGroupConfigWithUID,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/ruler/{DatasourceID}/api/v1/rules"),
+			api.authorize(http.MethodGet, "/api/ruler/{DatasourceID}/api/v1/rules"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/ruler/{DatasourceID}/api/v1/rules",
 				srv.RouteGetRulesConfig,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/ruler/uid/{DatasourceUID}/api/v1/rules"),
+			api.authorize(http.MethodGet, "/api/ruler/uid/{DatasourceUID}/api/v1/rules"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/ruler/uid/{DatasourceUID}/api/v1/rules",
+				srv.RouteGetRulesConfigWithUID,
 				m,
 			),
 		)
@@ -203,12 +287,22 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiForkingService, m *metrics
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
-			api.authorize(http.MethodPost, "/api/ruler/{Recipient}/api/v1/rules/{Namespace}"),
+			toMacaronPath("/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodPost, "/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/ruler/{Recipient}/api/v1/rules/{Namespace}",
+				"/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}",
 				srv.RoutePostNameRulesConfig,
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/ruler/uid/{DatasourceUID}/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodPost, "/api/ruler/uid/{DatasourceUID}/api/v1/rules/{Namespace}"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/ruler/uid/{DatasourceUID}/api/v1/rules/{Namespace}",
+				srv.RoutePostNameRulesConfigWithUID,
 				m,
 			),
 		)

@@ -22,6 +22,7 @@ import (
 type TestingApiForkingService interface {
 	RouteEvalQueries(*models.ReqContext) response.Response
 	RouteTestRuleConfig(*models.ReqContext) response.Response
+	RouteTestRuleConfigWithUID(*models.ReqContext) response.Response
 	RouteTestRuleGrafanaConfig(*models.ReqContext) response.Response
 }
 
@@ -39,6 +40,14 @@ func (f *ForkedTestingApi) RouteTestRuleConfig(ctx *models.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return f.forkRouteTestRuleConfig(ctx, conf)
+}
+
+func (f *ForkedTestingApi) RouteTestRuleConfigWithUID(ctx *models.ReqContext) response.Response {
+	conf := apimodels.TestRulePayload{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRouteTestRuleConfigWithUID(ctx, conf)
 }
 
 func (f *ForkedTestingApi) RouteTestRuleGrafanaConfig(ctx *models.ReqContext) response.Response {
@@ -62,12 +71,22 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApiForkingService, m *met
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/v1/rule/test/{Recipient}"),
-			api.authorize(http.MethodPost, "/api/v1/rule/test/{Recipient}"),
+			toMacaronPath("/api/v1/rule/test/{DatasourceID}"),
+			api.authorize(http.MethodPost, "/api/v1/rule/test/{DatasourceID}"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/v1/rule/test/{Recipient}",
+				"/api/v1/rule/test/{DatasourceID}",
 				srv.RouteTestRuleConfig,
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/v1/rule/test/uid/{DatasourceUID}"),
+			api.authorize(http.MethodPost, "/api/v1/rule/test/uid/{DatasourceUID}"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/v1/rule/test/uid/{DatasourceUID}",
+				srv.RouteTestRuleConfigWithUID,
 				m,
 			),
 		)

@@ -119,7 +119,7 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) respon
 	)
 }
 
-func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
+func (r *LotexRuler) RouteGetRuleGroupConfig(ctx *models.ReqContext) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -176,15 +176,11 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimo
 }
 
 func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error) {
-	recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":Recipient"], 10, 64)
-	if err != nil {
-		return "", fmt.Errorf("recipient is invalid")
-	}
-
-	ds, err := r.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), recipient, ctx.SignedInUser, ctx.SkipCache)
+	ds, err := r.getDatasourceFromCtx(ctx)
 	if err != nil {
 		return "", err
 	}
+
 	// Validate URL
 	if ds.Url == "" {
 		return "", fmt.Errorf("URL for this data source is empty")
@@ -210,6 +206,23 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error
 	}
 
 	return subTypePrefix, nil
+}
+
+func (r *LotexRuler) getDatasourceFromCtx(ctx *models.ReqContext) (*models.DataSource, error) {
+	datasourceID := web.Params(ctx.Req)[":DatasourceID"]
+	if datasourceID != "" {
+		recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":DatasourceID"], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("datasource ID is invalid")
+		}
+		return r.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), recipient, ctx.SignedInUser, ctx.SkipCache)
+	} else {
+		datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+		if datasourceUID == "" {
+			return nil, fmt.Errorf("datasource UID is invalid")
+		}
+		return r.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
+	}
 }
 
 func withPath(u url.URL, newPath string) *url.URL {

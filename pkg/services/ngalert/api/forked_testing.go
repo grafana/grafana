@@ -22,6 +22,10 @@ func (f *ForkedTestingApi) forkRouteTestRuleConfig(c *models.ReqContext, body ap
 	return f.svc.RouteTestRuleConfig(c, body)
 }
 
+func (f *ForkedTestingApi) forkRouteTestRuleConfigWithUID(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
+	return f.svc.RouteTestRuleConfig(c, body)
+}
+
 func (f *ForkedTestingApi) forkRouteTestRuleGrafanaConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
 	return f.svc.RouteTestGrafanaRuleConfig(c, body)
 }

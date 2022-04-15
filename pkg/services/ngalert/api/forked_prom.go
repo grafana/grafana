@@ -38,8 +38,36 @@ func (f *ForkedPrometheusApi) forkRouteGetAlertStatuses(ctx *models.ReqContext) 
 	}
 }
 
+func (f *ForkedPrometheusApi) forkRouteGetAlertStatusesWithUID(ctx *models.ReqContext) response.Response {
+	t, err := backendTypeByUID(ctx, f.DatasourceCache)
+	if err != nil {
+		return ErrResp(400, err, "")
+	}
+
+	switch t {
+	case apimodels.LoTexRulerBackend:
+		return f.ProxySvc.RouteGetAlertStatuses(ctx)
+	default:
+		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
+	}
+}
+
 func (f *ForkedPrometheusApi) forkRouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
 	t, err := backendType(ctx, f.DatasourceCache)
+	if err != nil {
+		return ErrResp(400, err, "")
+	}
+
+	switch t {
+	case apimodels.LoTexRulerBackend:
+		return f.ProxySvc.RouteGetRuleStatuses(ctx)
+	default:
+		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
+	}
+}
+
+func (f *ForkedPrometheusApi) forkRouteGetRuleStatusesWithUID(ctx *models.ReqContext) response.Response {
+	t, err := backendTypeByUID(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}

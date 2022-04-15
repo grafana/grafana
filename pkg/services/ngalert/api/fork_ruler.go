@@ -38,8 +38,34 @@ func (f *ForkedRulerApi) forkRouteDeleteNamespaceRulesConfig(ctx *models.ReqCont
 	}
 }
 
+func (f *ForkedRulerApi) forkRouteDeleteNamespaceRulesConfigWithUID(ctx *models.ReqContext) response.Response {
+	t, err := backendTypeByUID(ctx, f.DatasourceCache)
+	if err != nil {
+		return ErrResp(400, err, "")
+	}
+	switch t {
+	case apimodels.LoTexRulerBackend:
+		return f.LotexRuler.RouteDeleteNamespaceRulesConfig(ctx)
+	default:
+		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
+	}
+}
+
 func (f *ForkedRulerApi) forkRouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
 	t, err := backendType(ctx, f.DatasourceCache)
+	if err != nil {
+		return ErrResp(400, err, "")
+	}
+	switch t {
+	case apimodels.LoTexRulerBackend:
+		return f.LotexRuler.RouteDeleteRuleGroupConfig(ctx)
+	default:
+		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
+	}
+}
+
+func (f *ForkedRulerApi) forkRouteDeleteRuleGroupConfigWithUID(ctx *models.ReqContext) response.Response {
+	t, err := backendTypeByUID(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -64,14 +90,40 @@ func (f *ForkedRulerApi) forkRouteGetNamespaceRulesConfig(ctx *models.ReqContext
 	}
 }
 
-func (f *ForkedRulerApi) forkRouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
+func (f *ForkedRulerApi) forkRouteGetNamespaceRulesConfigWithUID(ctx *models.ReqContext) response.Response {
+	t, err := backendTypeByUID(ctx, f.DatasourceCache)
+	if err != nil {
+		return ErrResp(400, err, "")
+	}
+	switch t {
+	case apimodels.LoTexRulerBackend:
+		return f.LotexRuler.RouteGetNamespaceRulesConfig(ctx)
+	default:
+		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
+	}
+}
+
+func (f *ForkedRulerApi) forkRouteGetRuleGroupConfig(ctx *models.ReqContext) response.Response {
 	t, err := backendType(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
 	switch t {
 	case apimodels.LoTexRulerBackend:
-		return f.LotexRuler.RouteGetRulegGroupConfig(ctx)
+		return f.LotexRuler.RouteGetRuleGroupConfig(ctx)
+	default:
+		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
+	}
+}
+
+func (f *ForkedRulerApi) forkRouteGetRuleGroupConfigWithUID(ctx *models.ReqContext) response.Response {
+	t, err := backendTypeByUID(ctx, f.DatasourceCache)
+	if err != nil {
+		return ErrResp(400, err, "")
+	}
+	switch t {
+	case apimodels.LoTexRulerBackend:
+		return f.LotexRuler.RouteGetRuleGroupConfig(ctx)
 	default:
 		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
 	}
@@ -90,8 +142,40 @@ func (f *ForkedRulerApi) forkRouteGetRulesConfig(ctx *models.ReqContext) respons
 	}
 }
 
+func (f *ForkedRulerApi) forkRouteGetRulesConfigWithUID(ctx *models.ReqContext) response.Response {
+	t, err := backendTypeByUID(ctx, f.DatasourceCache)
+	if err != nil {
+		return ErrResp(400, err, "")
+	}
+	switch t {
+	case apimodels.LoTexRulerBackend:
+		return f.LotexRuler.RouteGetRulesConfig(ctx)
+	default:
+		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", t), "")
+	}
+}
+
 func (f *ForkedRulerApi) forkRoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {
 	backendType, err := backendType(ctx, f.DatasourceCache)
+	if err != nil {
+		return ErrResp(400, err, "")
+	}
+	payloadType := conf.Type()
+
+	if backendType != payloadType {
+		return ErrResp(400, fmt.Errorf("unexpected backend type (%v) vs payload type (%v)", backendType, payloadType), "")
+	}
+
+	switch backendType {
+	case apimodels.LoTexRulerBackend:
+		return f.LotexRuler.RoutePostNameRulesConfig(ctx, conf)
+	default:
+		return ErrResp(400, fmt.Errorf("unexpected backend type (%v)", backendType), "")
+	}
+}
+
+func (f *ForkedRulerApi) forkRoutePostNameRulesConfigWithUID(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {
+	backendType, err := backendTypeByUID(ctx, f.DatasourceCache)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}

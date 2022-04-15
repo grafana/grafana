@@ -70,7 +70,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 }
 
 func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
-	recipient := web.Params(c.Req)[":Recipient"]
+	recipient := web.Params(c.Req)[":DatasourceID"]
 	if body.Type() != apimodels.LoTexRulerBackend {
 		return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
 	}

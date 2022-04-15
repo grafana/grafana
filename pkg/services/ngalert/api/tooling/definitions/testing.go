@@ -26,7 +26,20 @@ import (
 //     Responses:
 //       200: TestRuleResponse
 
-// swagger:route Post /api/v1/rule/test/{Recipient} testing RouteTestRuleConfig
+// swagger:route Post /api/v1/rule/test/{DatasourceID} testing RouteTestRuleConfig
+//
+// Test a rule against external data source ruler
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       200: TestRuleResponse
+
+// swagger:route Post /api/v1/rule/test/uid/{DatasourceUID} testing RouteTestRuleConfigWithUID
 //
 // Test a rule against external data source ruler
 //
@@ -59,6 +72,7 @@ type TestReceiverRequest struct {
 }
 
 // swagger:parameters RouteTestRuleConfig RouteTestRuleGrafanaConfig
+// swagger:parameters RouteTestRuleConfigWithUID
 type TestRuleRequest struct {
 	// in:body
 	Body TestRulePayload

@@ -60,13 +60,15 @@ func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
 	p.ProxyDatasourceRequestWithID(c, id)
 }
 
-func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *models.ReqContext) {
+func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *models.ReqContext, dsUID string) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
-	dsUID := web.Params(c.Req)[":uid"]
-	if !util.IsValidShortUID(dsUID) {
-		c.JsonApiErr(http.StatusBadRequest, "UID is invalid", nil)
-		return
+	if dsUID == "" { // if datasource UID is not provided, fetch it from the uid path parameter
+		dsUID := web.Params(c.Req)[":uid"]
+		if !util.IsValidShortUID(dsUID) {
+			c.JsonApiErr(http.StatusBadRequest, "UID is invalid", nil)
+			return
+		}
 	}
 
 	ds, err := p.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipCache)

@@ -78,12 +78,7 @@ func (p *LotexProm) RouteGetRuleStatuses(ctx *models.ReqContext) response.Respon
 }
 
 func (p *LotexProm) getEndpoints(ctx *models.ReqContext) (*promEndpoints, error) {
-	recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":Recipient"], 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("recipient is invalid")
-	}
-
-	ds, err := p.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), recipient, ctx.SignedInUser, ctx.SkipCache)
+	ds, err := p.getDatasourceFromCtx(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -97,4 +92,22 @@ func (p *LotexProm) getEndpoints(ctx *models.ReqContext) (*promEndpoints, error)
 		return nil, fmt.Errorf("unexpected datasource type. expecting loki or prometheus")
 	}
 	return &routes, nil
+}
+
+func (p *LotexProm) getDatasourceFromCtx(ctx *models.ReqContext) (*models.DataSource, error) {
+	datasourceID := web.Params(ctx.Req)[":DatasourceID"]
+	if datasourceID != "" {
+		recipient, err := strconv.ParseInt(datasourceID, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("DatasourceID is invalid")
+		}
+
+		return p.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), recipient, ctx.SignedInUser, ctx.SkipCache)
+	} else {
+		datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+		if datasourceUID == "" {
+			return nil, fmt.Errorf("DatasourceUID is invalid")
+		}
+		return p.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
+	}
 }
