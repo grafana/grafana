@@ -165,12 +165,10 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:dev')
     .option('-w, --watch', 'Run plugin development mode with watch enabled')
-    .option('--yarnlink', 'symlink this project to the local grafana/toolkit')
     .description('Starts plugin dev mode')
     .action(async (cmd) => {
       await execTask(pluginDevTask)({
         watch: !!cmd.watch,
-        yarnlink: !!cmd.yarnlink,
         silent: true,
       });
     });
