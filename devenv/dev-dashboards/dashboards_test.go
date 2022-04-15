@@ -68,7 +68,7 @@ func themaTestableDashboards() (map[string][]byte, error) {
 
 		jtree := make(map[string]interface{})
 		json.Unmarshal(b, &jtree)
-		if oldschemav, has := jtree["schemaVersion"]; !has || !(oldschemav.(float64) > 32) {
+		if oldschemav, has := jtree["schemaVersion"]; !has || !(oldschemav.(float64) > dashboard.HandoffSchemaVersion-1) {
 			return nil
 		}
 

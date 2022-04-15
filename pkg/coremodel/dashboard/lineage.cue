@@ -338,12 +338,12 @@ seqs: [
 
 				// Support for legacy graph and heatmap panels.
 				#GraphPanel: {
-					...
 					type: "graph"
+					...
 				}
 				#HeatmapPanel: {
-					...
 					type: "heatmap"
+					...
 				}
 			},
 		]
