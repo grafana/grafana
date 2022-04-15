@@ -78,9 +78,11 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 	for {
 		select {
 		case <-partialUpdateTicker.C:
-			lastEventID = i.loadIndexUpdates(context.Background(), lastEventID)
+			lastEventID = i.applyIndexUpdates(context.Background(), lastEventID)
 		case <-fullReIndexTicker.C:
+			started := time.Now()
 			i.reIndexFromScratch()
+			i.logger.Info("Full re-indexing finished", "full_re_index_elapsed", time.Since(started))
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -96,23 +98,23 @@ func (i *dashboardIndex) reIndexFromScratch() {
 	i.mu.RUnlock()
 
 	for _, orgID := range orgIDs {
-		start := time.Now()
+		started := time.Now()
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		dashboards, err := i.loader.LoadDashboards(ctx, orgID, "")
 		if err != nil {
 			cancel()
-			i.logger.Error("can't re-index dashboards for org ID", "orgId", orgID, "error", err)
+			i.logger.Error("Error re-indexing dashboards for organization", "orgId", orgID, "error", err)
 			continue
 		}
 		cancel()
-		i.logger.Debug("re-indexed dashboards for organization", "orgId", orgID, "elapsed", time.Since(start))
+		i.logger.Info("Re-indexed dashboards for organization", "orgId", orgID, "org_re_index_elapsed", time.Since(started))
 		i.mu.Lock()
 		i.dashboards[orgID] = dashboards
 		i.mu.Unlock()
 	}
 }
 
-func (i *dashboardIndex) loadIndexUpdates(ctx context.Context, lastEventID int64) int64 {
+func (i *dashboardIndex) applyIndexUpdates(ctx context.Context, lastEventID int64) int64 {
 	events, err := i.eventStore.GetAllEventsAfter(context.Background(), lastEventID)
 	if err != nil {
 		i.logger.Error("can't load events", "error", err)
@@ -122,6 +124,7 @@ func (i *dashboardIndex) loadIndexUpdates(ctx context.Context, lastEventID int64
 		i.logger.Debug("no events since last update")
 		return lastEventID
 	}
+	started := time.Now()
 	for _, e := range events {
 		i.logger.Debug("processing event", "event", e)
 		err := i.applyEventOnIndex(ctx, e)
@@ -131,6 +134,7 @@ func (i *dashboardIndex) loadIndexUpdates(ctx context.Context, lastEventID int64
 		}
 		lastEventID = e.Id
 	}
+	i.logger.Info("Index updates applied", "index_events_applied_elapsed", time.Since(started), "numEvents", len(events))
 	return lastEventID
 }
 
