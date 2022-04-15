@@ -21,14 +21,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@braintree/sanitize-url": "5.0.2",
+    "@braintree/sanitize-url": "6.0.0",
     "@grafana/schema": "8.3.5",
     "@types/d3-interpolate": "^1.4.0",
     "d3-interpolate": "1.4.0",
     "date-fns": "2.21.3",
     "eventemitter3": "4.0.7",
     "lodash": "4.17.21",
-    "marked": "4.0.0",
+    "marked": "4.0.10",
     "moment": "2.29.1",
     "moment-timezone": "0.5.33",
     "ol": "6.7.0",
