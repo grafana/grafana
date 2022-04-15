@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
 
@@ -77,7 +78,7 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator models.Plug
 		sqlStore:           sqlStore,
 		dashAlertExtractor: dashAlertExtractor,
 	}
-	e.ticker = NewTicker(clock.New(), 1*time.Second)
+	e.ticker = NewTicker(clock.New(), 1*time.Second, prometheus.DefaultRegisterer)
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
 	e.evalHandler = NewEvalHandler(e.DataService)
