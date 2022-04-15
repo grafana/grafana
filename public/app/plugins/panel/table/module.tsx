@@ -76,6 +76,25 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           },
           defaultValue: defaultPanelFieldConfig.displayMode,
         })
+        .addRadio({
+          path: 'gaugeLabels',
+          name: 'Display Guage Labels',
+          description: 'How labels are displayed on guages',
+          settings: {
+            options: [
+              { label: 'Always', value: 'always' },
+              { label: 'Never', value: 'never' },
+              { label: 'Overlay', value: 'overlay' },
+            ],
+          },
+          showIf: (cfg) => {
+            return (
+              cfg.displayMode === TableCellDisplayMode.BasicGauge ||
+              cfg.displayMode === TableCellDisplayMode.GradientGauge ||
+              cfg.displayMode === TableCellDisplayMode.LcdGauge
+            );
+          },
+        })
         .addBooleanSwitch({
           path: 'inspect',
           name: 'Cell value inspect',
