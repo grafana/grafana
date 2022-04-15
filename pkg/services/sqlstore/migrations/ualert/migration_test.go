@@ -2,12 +2,13 @@ package ualert_test
 
 import (
 	"encoding/json"
-	"sort"
 	"testing"
 	"time"
 
 	"xorm.io/xorm"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
@@ -280,23 +281,29 @@ func Test_AddDashAlertMigration(t *testing.T) {
 			for orgId := range tt.expected {
 				amConfig := getAlertManagerConfig(t, x, orgId)
 
-				// Trim off fields that aren't important for this test.
-				trimFields(amConfig.AlertmanagerConfig.Receivers)
-
 				// Order of nested GrafanaManagedReceivers is not guaranteed.
-				sortReceiversForComparison(amConfig.AlertmanagerConfig.Receivers)
-				require.ElementsMatch(t, tt.expected[orgId].AlertmanagerConfig.Receivers, amConfig.AlertmanagerConfig.Receivers)
+				cOpt := []cmp.Option{
+					cmpopts.IgnoreFields(ualert.PostableGrafanaReceiver{}, "UID", "Settings", "SecureSettings"),
+					cmpopts.SortSlices(func(a, b *ualert.PostableGrafanaReceiver) bool { return a.Name < b.Name }),
+					cmpopts.SortSlices(func(a, b *ualert.PostableApiReceiver) bool { return a.Name < b.Name }),
+				}
+				if !cmp.Equal(tt.expected[orgId].AlertmanagerConfig.Receivers, amConfig.AlertmanagerConfig.Receivers, cOpt...) {
+					t.Errorf("Unexpected Receivers: %v", cmp.Diff(tt.expected[orgId].AlertmanagerConfig.Receivers, amConfig.AlertmanagerConfig.Receivers, cOpt...))
+				}
+				// require.Equal(t, tt.expected[orgId].AlertmanagerConfig.Receivers, amConfig.AlertmanagerConfig.Receivers)
 
 				// Since routes and alerts are connecting solely by the Matchers on rule_uid, which is created at runtime we need to do some prep-work to populate the expected Matchers.
 				alertUids := getAlertNameToUidMap(t, x, orgId)
 				attachExpectedMatchersToRoutes(t, tt.expected[orgId].AlertmanagerConfig.Route.Routes, alertUids)
 
 				// Order of nested routes is not guaranteed.
-				sortRoutesForComparison(amConfig.AlertmanagerConfig.Route.Routes)
-				for _, rt := range amConfig.AlertmanagerConfig.Route.Routes {
-					sortRoutesForComparison(rt.Routes)
+				cOpt = []cmp.Option{
+					cmpopts.SortSlices(func(a, b *route) bool { return a.Receiver < b.Receiver }),
+					cmpopts.IgnoreUnexported(route{}),
 				}
-				require.Equal(t, tt.expected[orgId].AlertmanagerConfig.Route, amConfig.AlertmanagerConfig.Route)
+				if !cmp.Equal(tt.expected[orgId].AlertmanagerConfig.Route, amConfig.AlertmanagerConfig.Route, cOpt...) {
+					t.Errorf("Unexpected Route: %v", cmp.Diff(tt.expected[orgId].AlertmanagerConfig.Route, amConfig.AlertmanagerConfig.Route, cOpt...))
+				}
 			}
 		})
 	}
@@ -484,24 +491,6 @@ func getAlertManagerConfig(t *testing.T, x *xorm.Engine, orgId int64) *postableU
 	return &config
 }
 
-// Order of nested GrafanaManagedReceivers is not guaranteed.
-func sortReceiversForComparison(actual []*ualert.PostableApiReceiver) {
-	for _, recv := range actual {
-		sort.Slice(recv.GrafanaManagedReceivers, func(i, j int) bool {
-			return recv.GrafanaManagedReceivers[i].Name < recv.GrafanaManagedReceivers[j].Name
-		})
-	}
-}
-
-// Order of nested routes is not guaranteed.
-func sortRoutesForComparison(actual []*route) {
-	for _, rt := range actual {
-		sort.Slice(rt.Routes, func(i, j int) bool {
-			return rt.Routes[i].Receiver < rt.Routes[j].Receiver
-		})
-	}
-}
-
 // Fetch alert_rules from database in order to create map of alert.Name -> alert.Uid. This is needed as alert Uid is created during migration and is used to match routes to alerts.
 func getAlertNameToUidMap(t *testing.T, x *xorm.Engine, orgId int64) map[string]string {
 	t.Helper()
@@ -517,17 +506,6 @@ func getAlertNameToUidMap(t *testing.T, x *xorm.Engine, orgId int64) map[string]
 		res[alert.Title] = alert.Uid
 	}
 	return res
-}
-
-// Trim unnecessary fields from GrafanaManagedReceivers to make require comparison work out of the box.
-func trimFields(recvs []*ualert.PostableApiReceiver) {
-	for _, recv := range recvs {
-		for _, grecv := range recv.GrafanaManagedReceivers {
-			grecv.UID = ""
-			grecv.Settings = nil
-			grecv.SecureSettings = nil
-		}
-	}
 }
 
 // Add Matchers to routes using the rule_uid's created during migration. This allows us to more easily compare expected to actual using require funcs.
