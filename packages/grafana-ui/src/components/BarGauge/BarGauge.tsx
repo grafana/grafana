@@ -45,6 +45,7 @@ export interface Props extends Themeable2 {
   className?: string;
   showUnfilled?: boolean;
   alignmentFactors?: DisplayValueAlignmentFactors;
+  showLabels?: 'always' | 'never' | 'overlay';
 }
 
 export enum BarGaugeDisplayMode {
@@ -185,14 +186,18 @@ export class BarGauge extends PureComponent<Props> {
       cells.push(<div key={i.toString()} style={cellStyles} />);
     }
 
+    let displayLabels = 'always';
+
     return (
       <div style={containerStyles}>
         {cells}
-        <FormattedValueDisplay
-          data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
-          value={value}
-          style={valueStyles}
-        />
+        {displayLabels === 'always' && (
+          <FormattedValueDisplay
+            data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
+            value={value}
+            style={valueStyles}
+          />
+        )}
       </div>
     );
   }
