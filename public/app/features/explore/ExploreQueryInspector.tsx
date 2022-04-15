@@ -1,5 +1,5 @@
 import React from 'react';
-import { TabbedContainer, TabConfig } from '@grafana/ui';
+import { TabbedContainer, TabConfig, useTheme2 } from '@grafana/ui';
 import { TimeZone } from '@grafana/data';
 import { runQueries } from './state/query';
 import { StoreState, ExploreItemState, ExploreId } from 'app/types';
@@ -24,6 +24,7 @@ export function ExploreQueryInspector(props: Props) {
   const { loading, width, onClose, queryResponse, timeZone } = props;
   const dataFrames = queryResponse?.series || [];
   const error = queryResponse?.error;
+  const theme = useTheme2();
 
   const statsTab: TabConfig = {
     label: 'Stats',
@@ -72,7 +73,12 @@ export function ExploreQueryInspector(props: Props) {
   }
   return (
     <ExploreDrawer width={width} onResize={() => {}}>
-      <TabbedContainer tabs={tabs} onClose={onClose} closeIconTooltip="Close query inspector" />
+      <TabbedContainer
+        tabs={tabs}
+        onClose={onClose}
+        closeIconTooltip="Close query inspector"
+        defaultHeight={theme.components.horizontalDrawer.defaultHeight}
+      />
     </ExploreDrawer>
   );
 }

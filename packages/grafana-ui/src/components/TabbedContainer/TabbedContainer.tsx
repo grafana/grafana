@@ -16,10 +16,11 @@ export interface TabbedContainerProps {
   tabs: TabConfig[];
   defaultTab?: string;
   closeIconTooltip?: string;
+  defaultHeight: number;
   onClose: () => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2, defaultHeight: number) => {
   return {
     container: css`
       height: 100%;
@@ -27,7 +28,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     tabContent: css`
       padding: ${theme.spacing(2)};
       background-color: ${theme.colors.background.primary};
-      height: 100%;
+      height: ${defaultHeight - theme.components.menuTabs.height}px;
     `,
     close: css`
       position: absolute;
@@ -57,7 +58,7 @@ export function TabbedContainer(props: TabbedContainerProps) {
 
   const { tabs, onClose, closeIconTooltip } = props;
   const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, props.defaultHeight);
 
   return (
     <div className={styles.container}>

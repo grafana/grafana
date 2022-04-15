@@ -39,6 +39,7 @@ export interface RichHistoryProps extends Themeable {
   exploreId: ExploreId;
   height: number;
   onClose: () => void;
+  defaultHeight: number;
 }
 
 class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
@@ -97,7 +98,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
   render() {
     const { activeDatasourceOnly, retentionPeriod } = this.props.richHistorySettings;
     const { datasourceFilters, sortOrder } = this.props.richHistorySearchFilters;
-    const { richHistory, height, exploreId, deleteRichHistory, onClose, firstTab } = this.props;
+    const { richHistory, height, exploreId, deleteRichHistory, onClose, firstTab, defaultHeight } = this.props;
 
     const QueriesTab: TabConfig = {
       label: 'Query history',
@@ -154,7 +155,13 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
 
     let tabs = [QueriesTab, StarredTab, SettingsTab];
     return (
-      <TabbedContainer tabs={tabs} onClose={onClose} defaultTab={firstTab} closeIconTooltip="Close query history" />
+      <TabbedContainer
+        tabs={tabs}
+        onClose={onClose}
+        defaultTab={firstTab}
+        closeIconTooltip="Close query history"
+        defaultHeight={defaultHeight}
+      />
     );
   }
 }
