@@ -126,15 +126,13 @@ func TestEntityEventsService(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, evs, 3)
 
-		time.Sleep(1 * time.Second)
+		time.Sleep(2 * time.Second)
 		err = service.deleteEventsOlderThan(ctx, 1*time.Second)
 		require.NoError(t, err)
 
 		// deleted all events
 		evs, err = service.GetAllEventsAfter(ctx, 0)
 		require.NoError(t, err)
-
-		// TODO: fix, delete does not work
-		require.Len(t, evs, 3)
+		require.Len(t, evs, 0)
 	})
 }
