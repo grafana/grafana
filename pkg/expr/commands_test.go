@@ -1,13 +1,17 @@
 package expr
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func Test_UnmarshalReduceCommand_Settings(t *testing.T) {
@@ -88,4 +92,34 @@ func Test_UnmarshalReduceCommand_Settings(t *testing.T) {
 			require.Equal(t, test.expectedMapper, cmd.seriesMapper)
 		})
 	}
+}
+
+func TestReduceExecute(t *testing.T) {
+	varToReduce := util.GenerateShortUID()
+	cmd, err := NewReduceCommand(util.GenerateShortUID(), randomReduceFunc(), varToReduce, nil)
+	require.NoError(t, err)
+
+	t.Run("should noop if Number", func(t *testing.T) {
+		var numbers mathexp.Values = []mathexp.Value{
+			mathexp.GenerateNumber(ptr.Float64(rand.Float64())),
+			mathexp.GenerateNumber(ptr.Float64(rand.Float64())),
+			mathexp.GenerateNumber(ptr.Float64(rand.Float64())),
+		}
+
+		vars := map[string]mathexp.Results{
+			varToReduce: {
+				Values: numbers,
+			},
+		}
+
+		execute, err := cmd.Execute(context.Background(), vars)
+		require.NoError(t, err)
+
+		require.Equal(t, numbers, execute.Values)
+	})
+}
+
+func randomReduceFunc() string {
+	res := mathexp.GetSupportedReduceFuncs()
+	return res[rand.Intn(len(res)-1)]
 }
