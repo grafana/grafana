@@ -155,15 +155,18 @@ func (gr *ReduceCommand) NeedsVars() []string {
 func (gr *ReduceCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
 	newRes := mathexp.Results{}
 	for _, val := range vars[gr.VarToReduce].Values {
-		series, ok := val.(mathexp.Series)
-		if !ok {
+		switch v := val.(type) {
+		case mathexp.Series:
+			num, err := v.Reduce(gr.refID, gr.Reducer, gr.seriesMapper)
+			if err != nil {
+				return newRes, err
+			}
+			newRes.Values = append(newRes.Values, num)
+		case mathexp.Number: // if incoming vars is just a number, any reduce op is just a noop, add it as it is
+			newRes.Values = append(newRes.Values, v)
+		default:
 			return newRes, fmt.Errorf("can only reduce type series, got type %v", val.Type())
 		}
-		num, err := series.Reduce(gr.refID, gr.Reducer, gr.seriesMapper)
-		if err != nil {
-			return newRes, err
-		}
-		newRes.Values = append(newRes.Values, num)
 	}
 	return newRes, nil
 }
