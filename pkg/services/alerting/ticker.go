@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -20,17 +21,21 @@ type Ticker struct {
 	C     chan time.Time
 	clock clock.Clock
 	// last is the time of the last tick
-	last        time.Time
-	intervalSec int64
+	last     time.Time
+	interval time.Duration
 }
 
 // NewTicker returns a ticker that ticks on intervalSec marks or very shortly after, and never drops ticks
-func NewTicker(last time.Time, c clock.Clock, intervalSec int64) *Ticker {
+func NewTicker(last time.Time, c clock.Clock, interval time.Duration) *Ticker {
+	if interval <= 0 {
+		panic(fmt.Errorf("non-positive interval [%v] is not allowed", interval))
+	}
+
 	t := &Ticker{
-		C:           make(chan time.Time),
-		clock:       c,
-		last:        last,
-		intervalSec: intervalSec,
+		C:        make(chan time.Time),
+		clock:    c,
+		last:     last,
+		interval: interval,
 	}
 	go t.run()
 	return t
@@ -38,7 +43,7 @@ func NewTicker(last time.Time, c clock.Clock, intervalSec int64) *Ticker {
 
 func (t *Ticker) run() {
 	for {
-		next := t.last.Add(time.Duration(t.intervalSec) * time.Second)
+		next := t.last.Add(t.interval)
 		diff := t.clock.Now().Sub(next)
 		if diff >= 0 {
 			t.C <- next
@@ -51,4 +56,3 @@ func (t *Ticker) run() {
 		}
 	}
 }
-
