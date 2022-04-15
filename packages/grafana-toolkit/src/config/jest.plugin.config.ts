@@ -105,7 +105,8 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
 export const loadJestPluginConfig = (baseDir: string = process.cwd()) => {
   const cfgpath = path.resolve(baseDir, 'jest.config.js');
   if (!fs.existsSync(cfgpath)) {
-    const src = path.resolve(baseDir, 'node_modules/@grafana/toolkit/src/config/jest.plugin.config.local.js');
+    const toolkitDir = path.dirname(require.resolve(`@grafana/toolkit/package.json`));
+    const src = path.join(toolkitDir, 'src/config/jest.plugin.config.local.js');
     fs.copyFileSync(src, cfgpath);
     console.log('Using standard jest plugin config', src);
   }
