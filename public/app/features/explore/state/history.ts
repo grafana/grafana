@@ -4,7 +4,6 @@ import {
   deleteQueryInRichHistory,
   getRichHistory,
   getRichHistorySettings,
-  SortOrder,
   updateCommentInRichHistory,
   updateRichHistorySettings,
   updateStarredInRichHistory,
@@ -114,10 +113,16 @@ export const deleteRichHistory = (): ThunkResult<void> => {
   };
 };
 
-export const loadRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
-  return async (dispatch) => {
-    // TODO: #45379 pass currently applied search filters
-    const richHistory = await getRichHistory();
+export const loadRichHistory = (
+  exploreId: ExploreId,
+  filters: RichHistorySearchFilters,
+  reload: boolean
+): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    if (reload) {
+      dispatch(richHistoryUpdatedAction({ richHistory: [], exploreId }));
+    }
+    const richHistory = await getRichHistory(filters);
     dispatch(richHistoryUpdatedAction({ richHistory, exploreId }));
   };
 };
@@ -134,20 +139,25 @@ export const initRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
       dispatch(richHistorySettingsUpdatedAction(settings));
     }
 
-    dispatch(
-      richHistorySearchFiltersUpdatedAction({
-        exploreId,
-        filters: {
-          search: '',
-          sortOrder: SortOrder.Descending,
-          datasourceFilters: settings!.lastUsedDatasourceFilters || [],
-          from: 0,
-          to: settings!.retentionPeriod,
-        },
-      })
-    );
+    // const activeDatasource = getState().explore[exploreId]!.datasourceInstance?.name;
+    // const datasourceFilters =
+    //   settings.activeDatasourceOnly && activeDatasource
+    //     ? [activeDatasource]
+    //     : settings!.lastUsedDatasourceFilters || [];
 
-    dispatch(loadRichHistory(exploreId));
+    // dispatch(
+    //   richHistorySearchFiltersUpdatedAction({
+    //     exploreId,
+    //     filters: {
+    //       search: '',
+    //       sortOrder: SortOrder.Descending,
+    //       datasourceFilters,
+    //       from: 0,
+    //       to: settings!.retentionPeriod,
+    //       starred: settings.starredTabAsFirstTab,
+    //     },
+    //   })
+    // );
   };
 };
 
@@ -167,14 +177,16 @@ export const updateHistorySearchFilters = (
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     // TODO: #45379 get new rich history list based on filters
-    dispatch(richHistorySearchFiltersUpdatedAction({ exploreId, filters }));
+    await dispatch(richHistorySearchFiltersUpdatedAction({ exploreId, filters: { ...filters } }));
     const currentSettings = getState().explore.richHistorySettings!;
-    dispatch(
+    await dispatch(
       updateHistorySettings({
         ...currentSettings,
         lastUsedDatasourceFilters: filters.datasourceFilters,
       })
     );
+    // CODE: sync by resetting filters (it will cause existing pane to reload)
+    // await dispatch(loadRichHistory(exploreId));
   };
 };
 

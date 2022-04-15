@@ -23,7 +23,7 @@ import {
   filterQueriesByTime,
   sortQueries,
 } from 'app/core/history/richHistoryLocalStorageUtils';
-import { RichHistorySettings, SortOrder } from './richHistoryTypes';
+import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from './richHistoryTypes';
 
 export { SortOrder };
 
@@ -82,8 +82,8 @@ export async function addToRichHistory(
   return {};
 }
 
-export async function getRichHistory(): Promise<RichHistoryQuery[]> {
-  return await getRichHistoryStorage().getRichHistory();
+export async function getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryQuery[]> {
+  return await getRichHistoryStorage().getRichHistory(filters);
 }
 
 export async function updateRichHistorySettings(settings: RichHistorySettings): Promise<void> {
@@ -126,6 +126,7 @@ export async function deleteQueryInRichHistory(id: string) {
   }
 }
 
+// CODE: move it to getRichHistory in persistence layer
 export function filterAndSortQueries(
   queries: RichHistoryQuery[],
   sortOrder: SortOrder,
@@ -231,30 +232,21 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
   return mappedQueriesToHeadings;
 }
 
-/* Create datasource list with images. If specific datasource retrieved from Rich history is not part of
- * exploreDatasources add generic datasource image and add property isRemoved = true.
+/*
+ * Create a list of all available data sources
  */
-export function createDatasourcesList(queriesDatasources: string[]) {
-  const datasources: Array<{ label: string; value: string; imgUrl: string; isRemoved: boolean }> = [];
+export function createDatasourcesList() {
+  const datasources: Array<{ name: string; imgUrl: string; uid: string }> = [];
 
-  queriesDatasources.forEach((dsName) => {
-    const dsSettings = getDataSourceSrv().getInstanceSettings(dsName);
-    if (dsSettings) {
+  getDataSourceSrv()
+    .getList()
+    .forEach((dsSettings) => {
       datasources.push({
-        label: dsSettings.name,
-        value: dsSettings.name,
+        name: dsSettings.name,
+        uid: dsSettings.uid,
         imgUrl: dsSettings.meta.info.logos.small,
-        isRemoved: false,
       });
-    } else {
-      datasources.push({
-        label: dsName,
-        value: dsName,
-        imgUrl: 'public/img/icn-datasource.svg',
-        isRemoved: true,
-      });
-    }
-  });
+    });
   return datasources;
 }
 

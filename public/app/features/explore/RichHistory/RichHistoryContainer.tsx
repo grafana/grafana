@@ -13,6 +13,7 @@ import { RichHistory, Tabs } from './RichHistory';
 import {
   deleteRichHistory,
   initRichHistory,
+  loadRichHistory,
   updateHistorySettings,
   updateHistorySearchFilters,
 } from '../state/history';
@@ -38,6 +39,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
 
 const mapDispatchToProps = {
   initRichHistory,
+  loadRichHistory,
   updateHistorySettings,
   updateHistorySearchFilters,
   deleteRichHistory,
@@ -63,6 +65,7 @@ export function RichHistoryContainer(props: Props) {
     exploreId,
     deleteRichHistory,
     initRichHistory,
+    loadRichHistory,
     richHistorySettings,
     updateHistorySettings,
     richHistorySearchFilters,
@@ -74,7 +77,7 @@ export function RichHistoryContainer(props: Props) {
     initRichHistory(exploreId);
   }, [initRichHistory, exploreId]);
 
-  if (!richHistorySettings || !richHistorySearchFilters) {
+  if (!richHistorySettings) {
     return <span>Loading...</span>;
   }
 
@@ -97,6 +100,7 @@ export function RichHistoryContainer(props: Props) {
         richHistorySearchFilters={richHistorySearchFilters}
         updateHistorySettings={updateHistorySettings}
         updateHistorySearchFilters={updateHistorySearchFilters}
+        loadRichHistory={loadRichHistory}
       />
     </ExploreDrawer>
   );
