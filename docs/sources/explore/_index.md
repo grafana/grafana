@@ -55,14 +55,6 @@ In split view, timepickers for both panels can be linked (if you change one, the
 
 To close the newly created query, click on the Close Split button.
 
-## Navigate between Explore and a dashboard
-
-To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, Grafana provides you with the ability to return to the origin dashboard after navigating to Explore from the panel's dropdown.
-
-After you've navigated to Explore, you should notice a "Back" button in the Explore toolbar. Simply click it to return to the origin dashboard. To bring changes you make in Explore back to the dashboard, click the arrow next to the button to reveal a "Return to panel with changes" menu item.
-
-{{< figure src="/static/img/docs/explore/explore_return_dropdown-7-4.png" class="docs-image--no-shadow" max-width= "400px" caption="Screenshot of the expanded explore return dropdown" >}}
-
 ## Share shortened link
 
 > **Note:** Available in Grafana 7.3 and later versions.

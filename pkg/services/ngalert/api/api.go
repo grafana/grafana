@@ -77,6 +77,7 @@ type API struct {
 	SecretsService       secrets.Service
 	AccessControl        accesscontrol.AccessControl
 	Policies             *provisioning.NotificationPolicyService
+	ContactPointService  *provisioning.ContactPointService
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -90,7 +91,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		&AlertmanagerSrv{store: api.AlertingStore, mam: api.MultiOrgAlertmanager, secrets: api.SecretsService, log: logger, ac: api.AccessControl},
+		&AlertmanagerSrv{crypto: api.MultiOrgAlertmanager.Crypto, log: logger, ac: api.AccessControl, mam: api.MultiOrgAlertmanager},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
@@ -132,8 +133,9 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 
 	if api.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertProvisioning) {
 		api.RegisterProvisioningApiEndpoints(NewForkedProvisioningApi(&ProvisioningSrv{
-			log:      logger,
-			policies: api.Policies,
+			log:                 logger,
+			policies:            api.Policies,
+			contactPointService: api.ContactPointService,
 		}), m)
 	}
 }

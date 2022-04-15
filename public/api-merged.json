@@ -507,6 +507,14 @@
         "operationId": "addUserRole",
         "parameters": [
           {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          },
+          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -514,14 +522,6 @@
             "schema": {
               "$ref": "#/definitions/AddUserRoleCommand"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -548,6 +548,14 @@
         "operationId": "removeUserRole",
         "parameters": [
           {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          },
+          {
             "type": "string",
             "x-go-name": "RoleUID",
             "name": "roleUID",
@@ -560,14 +568,6 @@
             "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
             "name": "global",
             "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -1025,7 +1025,7 @@
             "basic": []
           }
         ],
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global:users:*`.",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global.users:*`.",
         "tags": ["admin_users"],
         "summary": "Delete global User.",
         "operationId": "deleteUser",
@@ -1065,7 +1065,7 @@
             "basic": []
           }
         ],
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global:users:*`.",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global.users:*`.",
         "tags": ["admin_users"],
         "summary": "Return a list of all auth tokens (devices) that the user currently have logged in from.",
         "operationId": "getAuthTokens",
@@ -1102,7 +1102,7 @@
             "basic": []
           }
         ],
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global:users:1` (userIDScope).",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global.users:1` (userIDScope).",
         "tags": ["admin_users"],
         "summary": "Disable user.",
         "operationId": "disableUser",
@@ -1142,7 +1142,7 @@
             "basic": []
           }
         ],
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global:users:1` (userIDScope).",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global.users:1` (userIDScope).",
         "tags": ["admin_users"],
         "summary": "Enable user.",
         "operationId": "enableUser",
@@ -1182,7 +1182,7 @@
             "basic": []
           }
         ],
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global:users:*`.",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global.users:*`.",
         "tags": ["admin_users"],
         "summary": "Logout user revokes all auth tokens (devices) for the user. User of issued auth tokens (devices) will no longer be logged in and will be required to authenticate again upon next activity.",
         "operationId": "logoutUser",
@@ -1225,7 +1225,7 @@
             "basic": []
           }
         ],
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global:users:*`.",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global.users:*`.",
         "tags": ["admin_users"],
         "summary": "Set password for user.",
         "operationId": "setPassword",
@@ -1269,7 +1269,7 @@
     },
     "/admin/users/{user_id}/permissions": {
       "put": {
-        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.permissions:update` and scope `global:users:*`.",
+        "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.permissions:update` and scope `global.users:*`.",
         "tags": ["admin_users"],
         "summary": "Set permissions for user.",
         "operationId": "setPermissions",
@@ -1318,7 +1318,7 @@
             "basic": []
           }
         ],
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:list` and scope `global:users:1` (userIDScope).",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:list` and scope `global.users:1` (userIDScope).",
         "tags": ["admin_users"],
         "summary": "Fetch user quota.",
         "operationId": "getUserQuota",
@@ -1358,7 +1358,7 @@
             "basic": []
           }
         ],
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global:users:1` (userIDScope).",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global.users:1` (userIDScope).",
         "tags": ["admin_users"],
         "summary": "Update user quota.",
         "operationId": "updateUserQuota",
@@ -1414,7 +1414,7 @@
             "basic": []
           }
         ],
-        "description": "Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global:users:*`.",
+        "description": "Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global.users:*`.",
         "tags": ["admin_users"],
         "summary": "Revoke auth token for user.",
         "operationId": "revokeAuthToken",
@@ -3150,7 +3150,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/DeleteAnnotationsCmd"
+              "$ref": "#/definitions/MassDeleteAnnotationsCmd"
             }
           }
         ],
@@ -4063,6 +4063,137 @@
         }
       }
     },
+    "/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route}": {
+      "get": {
+        "description": "Proxies all calls to the actual data source.",
+        "tags": ["datasources"],
+        "summary": "Data source proxy GET calls.",
+        "operationId": "datasourceProxyGETByUIDcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "datasource_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined",
+        "tags": ["datasources"],
+        "summary": "Data source proxy POST calls.",
+        "operationId": "datasourceProxyPOSTByUIDcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "datasource_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "202": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Proxies all calls to the actual data source.",
+        "tags": ["datasources"],
+        "summary": "Data source proxy DELETE calls.",
+        "operationId": "datasourceProxyDELETEByUIDcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "datasource_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/proxy/{datasource_id}/{datasource_proxy_route}": {
       "get": {
         "description": "Proxies all calls to the actual data source.",
@@ -4273,7 +4404,7 @@
     },
     "/datasources/{datasource_id}": {
       "get": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).",
         "tags": ["datasources"],
         "summary": "Get a single data source by Id.",
         "operationId": "getDatasourceByID",
@@ -4308,7 +4439,7 @@
         }
       },
       "put": {
-        "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).",
+        "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).",
         "tags": ["datasources"],
         "summary": "Update an existing data source.",
         "operationId": "updateDatasource",
@@ -4345,7 +4476,7 @@
         }
       },
       "delete": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).",
         "tags": ["datasources"],
         "summary": "Delete an existing data source by id.",
         "operationId": "deleteDatasourceByID",
@@ -4494,15 +4625,15 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "PermissionID",
-            "name": "permissionId",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "PermissionID",
+            "name": "permissionId",
             "in": "path",
             "required": true
           }
@@ -6464,6 +6595,145 @@
             "description": "RuleResponse",
             "schema": {
               "$ref": "#/definitions/RuleResponse"
+            }
+          }
+        }
+      }
+    },
+    "/provisioning/contact-points": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get all the contact points.",
+        "operationId": "RouteGetContactpoints",
+        "responses": {
+          "200": {
+            "description": "Route",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Update an existing contact point.",
+        "operationId": "RoutePutContactpoints",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/responses/Accepted"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Create a contact point.",
+        "operationId": "RoutePostContactpoints",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/responses/Accepted"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/provisioning/contact-points/{ID}": {
+      "delete": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Delete a contact point.",
+        "operationId": "RouteDeleteContactpoints",
+        "responses": {
+          "202": {
+            "$ref": "#/responses/Accepted"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/provisioning/policies": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get the notification policy tree.",
+        "operationId": "RouteGetPolicyTree",
+        "responses": {
+          "200": {
+            "description": "Route",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Sets the notification policy tree.",
+        "operationId": "RoutePostPolicyTree",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/responses/Accepted"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
             }
           }
         }
@@ -10122,6 +10392,36 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
+    "AnnotationActions": {
+      "type": "object",
+      "properties": {
+        "canAdd": {
+          "type": "boolean",
+          "x-go-name": "CanAdd"
+        },
+        "canDelete": {
+          "type": "boolean",
+          "x-go-name": "CanDelete"
+        },
+        "canEdit": {
+          "type": "boolean",
+          "x-go-name": "CanEdit"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
+    "AnnotationPermission": {
+      "type": "object",
+      "properties": {
+        "dashboard": {
+          "$ref": "#/definitions/AnnotationActions"
+        },
+        "organization": {
+          "$ref": "#/definitions/AnnotationActions"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+    },
     "ApiKeyDTO": {
       "type": "object",
       "properties": {
@@ -10240,7 +10540,7 @@
           "x-go-name": "ReportLogo"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "CalculateDiffTarget": {
       "type": "object",
@@ -10390,7 +10690,7 @@
           "x-go-name": "UserID"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "CreateAlertNotificationCommand": {
       "type": "object",
@@ -10576,7 +10876,7 @@
           "x-go-name": "TemplateVars"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "CreateOrgCommand": {
       "type": "object",
@@ -10836,6 +11136,9 @@
     "DashboardMeta": {
       "type": "object",
       "properties": {
+        "annotationsPermissions": {
+          "$ref": "#/definitions/AnnotationPermission"
+        },
         "canAdmin": {
           "type": "boolean",
           "x-go-name": "CanAdmin"
@@ -11499,32 +11802,6 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
     },
-    "DeleteAnnotationsCmd": {
-      "type": "object",
-      "properties": {
-        "alertId": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "AlertId"
-        },
-        "annotationId": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "AnnotationId"
-        },
-        "dashboardId": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "DashboardId"
-        },
-        "panelId": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "PanelId"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
-    },
     "DeleteTokenCommand": {
       "type": "object",
       "properties": {
@@ -11630,6 +11907,36 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
+    },
+    "EmbeddedContactPoint": {
+      "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
+      "type": "object",
+      "properties": {
+        "disableResolveMessage": {
+          "type": "boolean",
+          "x-go-name": "DisableResolveMessage"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "provanance": {
+          "type": "string",
+          "x-go-name": "Provenance"
+        },
+        "settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "uid": {
+          "type": "string",
+          "x-go-name": "UID"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
     "ErrorResponseBody": {
       "type": "object",
@@ -12479,18 +12786,18 @@
           "x-go-name": "URL"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/search"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "HitList": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/Hit"
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/search"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "HitType": {
       "type": "string",
-      "x-go-package": "github.com/grafana/grafana/pkg/services/search"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "HostPort": {
       "type": "object",
@@ -13032,6 +13339,27 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/libraryelements"
+    },
+    "MassDeleteAnnotationsCmd": {
+      "type": "object",
+      "properties": {
+        "annotationId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "AnnotationId"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DashboardId"
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "PanelId"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "MatchRegexps": {
       "type": "object",
@@ -13691,6 +14019,9 @@
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
+        "queryHistory": {
+          "$ref": "#/definitions/QueryHistoryPreference"
+        },
         "theme": {
           "type": "string",
           "enum": ["light", "dark"],
@@ -14153,6 +14484,9 @@
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
+        "queryHistory": {
+          "$ref": "#/definitions/QueryHistoryPreference"
+        },
         "theme": {
           "type": "string",
           "x-go-name": "Theme"
@@ -14249,6 +14583,16 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/backend"
+    },
+    "QueryHistoryPreference": {
+      "type": "object",
+      "properties": {
+        "homeTab": {
+          "type": "string",
+          "x-go-name": "HomeTab"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "Receiver": {
       "type": "object",
@@ -14427,7 +14771,7 @@
           "x-go-name": "UseEmailsFromReport"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "ReportOptionsDTO": {
       "type": "object",
@@ -14444,7 +14788,7 @@
           "$ref": "#/definitions/TimeRangeDTO"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "ResponseDetails": {
       "type": "object",
@@ -14900,7 +15244,7 @@
           "x-go-name": "WorkdaysOnly"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "SearchTeamQueryResult": {
       "type": "object",
@@ -15020,7 +15364,7 @@
           "x-go-name": "UserID"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "SigV4Config": {
       "description": "SigV4Config is the configuration for signing remote write requests with\nAWS's SigV4 verification process. Empty values will be retrieved using the\nAWS default credentials chain.",
@@ -15713,7 +16057,7 @@
           "x-go-name": "To"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report"
+      "x-go-package": "github.com/grafana/grafana/pkg/extensions/report/api"
     },
     "Token": {
       "type": "object",
@@ -15814,6 +16158,15 @@
           "format": "int64",
           "x-go-name": "TokenExpiresWarnDays"
         },
+        "trial": {
+          "type": "boolean",
+          "x-go-name": "Trial"
+        },
+        "trial_exp": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TrialExpires"
+        },
         "update_days": {
           "type": "integer",
           "format": "int64",
@@ -15856,9 +16209,8 @@
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -15891,7 +16243,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "net/url"
+      "x-go-package": "github.com/prometheus/common/config"
     },
     "UpdateAlertNotificationCommand": {
       "type": "object",
@@ -16203,6 +16555,9 @@
         },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
+        },
+        "queryHistory": {
+          "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
           "type": "string",
@@ -16792,12 +17147,11 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
-      },
-      "x-go-name": "AlertGroups",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "alertStatus": {
       "description": "AlertStatus alert status",
@@ -16900,7 +17254,6 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": ["labels", "annotations", "endsAt", "fingerprint", "receivers", "startsAt", "status", "updatedAt"],
       "properties": {
@@ -16950,7 +17303,9 @@
           "format": "date-time",
           "x-go-name": "UpdatedAt"
         }
-      }
+      },
+      "x-go-name": "GettableAlert",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "gettableAlerts": {
       "description": "GettableAlerts gettable alerts",
@@ -17006,12 +17361,11 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
-      },
-      "x-go-name": "GettableSilences",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "labelSet": {
       "description": "LabelSet label set",

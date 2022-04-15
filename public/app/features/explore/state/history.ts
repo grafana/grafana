@@ -3,13 +3,23 @@ import {
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
   getRichHistory,
+  getRichHistorySettings,
+  SortOrder,
   updateCommentInRichHistory,
+  updateRichHistorySettings,
   updateStarredInRichHistory,
 } from 'app/core/utils/richHistory';
 import { ExploreId, ExploreItemState, ExploreState, RichHistoryQuery, ThunkResult } from 'app/types';
-import { richHistoryLimitExceededAction, richHistoryStorageFullAction, richHistoryUpdatedAction } from './main';
+import {
+  richHistoryLimitExceededAction,
+  richHistorySearchFiltersUpdatedAction,
+  richHistorySettingsUpdatedAction,
+  richHistoryStorageFullAction,
+  richHistoryUpdatedAction,
+} from './main';
 import { DataQuery, HistoryItem } from '@grafana/data';
 import { AnyAction, createAction } from '@reduxjs/toolkit';
+import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 
 //
 // Actions and Payloads
@@ -106,8 +116,65 @@ export const deleteRichHistory = (): ThunkResult<void> => {
 
 export const loadRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
   return async (dispatch) => {
+    // TODO: #45379 pass currently applied search filters
     const richHistory = await getRichHistory();
     dispatch(richHistoryUpdatedAction({ richHistory, exploreId }));
+  };
+};
+
+/**
+ * Initialize query history pane. To load history it requires settings to be loaded first
+ * (but only once per session) and filters initialised with default values based on settings.
+ */
+export const initRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    let settings = getState().explore.richHistorySettings;
+    if (!settings) {
+      settings = await getRichHistorySettings();
+      dispatch(richHistorySettingsUpdatedAction(settings));
+    }
+
+    dispatch(
+      richHistorySearchFiltersUpdatedAction({
+        exploreId,
+        filters: {
+          search: '',
+          sortOrder: SortOrder.Descending,
+          datasourceFilters: settings!.lastUsedDatasourceFilters || [],
+          from: 0,
+          to: settings!.retentionPeriod,
+        },
+      })
+    );
+
+    dispatch(loadRichHistory(exploreId));
+  };
+};
+
+export const updateHistorySettings = (settings: RichHistorySettings): ThunkResult<void> => {
+  return async (dispatch) => {
+    dispatch(richHistorySettingsUpdatedAction(settings));
+    await updateRichHistorySettings(settings);
+  };
+};
+
+/**
+ * Assumed this can be called only when settings and filters are initialised
+ */
+export const updateHistorySearchFilters = (
+  exploreId: ExploreId,
+  filters: RichHistorySearchFilters
+): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    // TODO: #45379 get new rich history list based on filters
+    dispatch(richHistorySearchFiltersUpdatedAction({ exploreId, filters }));
+    const currentSettings = getState().explore.richHistorySettings!;
+    dispatch(
+      updateHistorySettings({
+        ...currentSettings,
+        lastUsedDatasourceFilters: filters.datasourceFilters,
+      })
+    );
   };
 };
 

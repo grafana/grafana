@@ -33,6 +33,30 @@ export const openQueryHistory = async (exploreId: ExploreId = ExploreId.left) =>
   ).toBeInTheDocument();
 };
 
+export const closeQueryHistory = async (exploreId: ExploreId = ExploreId.left) => {
+  const closeButton = withinExplore(exploreId).getByRole('button', { name: 'Close query history' });
+  userEvent.click(closeButton);
+};
+
+export const switchToQueryHistoryTab = async (
+  name: 'Settings' | 'Query History',
+  exploreId: ExploreId = ExploreId.left
+) => {
+  userEvent.click(withinExplore(exploreId).getByRole('tab', { name: `Tab ${name}` }));
+};
+
+export const selectStarredTabFirst = (exploreId: ExploreId = ExploreId.left) => {
+  const checkbox = withinExplore(exploreId).getByRole('checkbox', {
+    name: 'Change the default active tab from “Query history” to “Starred”',
+  });
+  userEvent.click(checkbox);
+};
+
+export const selectOnlyActiveDataSource = (exploreId: ExploreId = ExploreId.left) => {
+  const checkbox = withinExplore(exploreId).getByLabelText(/Only show queries for data source currently active.*/);
+  userEvent.click(checkbox);
+};
+
 export const starQueryHistory = (queryIndex: number, exploreId: ExploreId = ExploreId.left) => {
   invokeAction(queryIndex, 'Star query', exploreId);
 };
