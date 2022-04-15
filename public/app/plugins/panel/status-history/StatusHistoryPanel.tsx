@@ -43,7 +43,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
       <div className="panel-empty">
         <p>
           Too many points to visualize properly. <br />
-          Update the query to return fewer points. <br />({frames[0].length} points recieved)
+          Update the query to return fewer points. <br />({frames[0].length} points received)
         </p>
       </div>
     );
