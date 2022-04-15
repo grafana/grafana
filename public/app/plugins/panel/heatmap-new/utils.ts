@@ -511,3 +511,13 @@ export const timeFormatter = (value: number, timeZone: TimeZone) => {
     timeZone,
   });
 };
+
+export const translateMatrixIndex = (index: number, bucketCountFrom: number, bucketCountTo: number): number => {
+  const row = Math.floor(index / bucketCountFrom);
+  const column = index % bucketCountFrom;
+  if (column >= bucketCountTo) {
+    return -1;
+  }
+
+  return row * bucketCountTo + Math.floor(column / bucketCountTo) + (column % bucketCountTo);
+};

@@ -22,14 +22,15 @@ import {
   HeatmapHoverEvent,
   prepConfig,
   timeFormatter,
+  translateMatrixIndex,
 } from './utils';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { ColorScale } from './ColorScale';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { HeatmapCalculationMode } from 'app/features/transformers/calculateHeatmap/models.gen';
 import { HeatmapLookup } from './types';
-import { heatmapLayer } from './layers/HeatmapLayer';
-import { exemplarLayer } from './layers/ExemplarLayer';
+import { HeatmapTab } from './hovertabs/HeatmapTab';
+import { ExemplarTab } from './hovertabs/ExemplarTab';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
@@ -75,7 +76,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     }
     return undefined;
   }, [data, info, options, theme]);
-  const facets = useMemo(() => [null, exemplars?.heatmap?.fields.map((f) => f.values.toArray())], [exemplars?.heatmap]);
+  const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
   const { onSplitOpen } = usePanelContext();
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
@@ -183,28 +184,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     [data.annotations, onSplitOpen, timeRange, timeZone]
   );
 
-  const plotRef = (u: uPlot) => {
-    console.log('plotRef', u.ctx);
-    {
-      exemplars &&
-        ExemplarsPlugin({
-          u,
-          exemplars,
-          timeZone,
-          getValuesInCell,
-          config: builder,
-          colorPalette: palette,
-        });
-    }
-  };
-
-  // const exemplarIndex = useCallback((index: number) => {
-  //   const row = Math.floor(index / info.yBucketCount!);
-  //   const column = index % info.yBucketCount!;
-
-  //   return (row * exemplars?.yBucketCount!) + (Math.floor(column / exemplars?.yBucketCount!)) + (column % exemplars?.yBucketCount!);
-  // }, [info.yBucketCount, exemplars?.yBucketCount]);
-
   const renderLegend = () => {
     if (options.legend.displayMode === LegendDisplayMode.Hidden || !info.heatmap) {
       return null;
@@ -231,24 +210,13 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     return <PanelDataErrorView panelId={id} data={data} needsNumberField={true} message={info.warning} />;
   }
 
-  // useEffect(() => {
-  //   builder.addHook('draw', (u: uPlot) => {
-  //     console.log("draw hook received", u);
-  //   });
-  // }, [builder]);
-
   return (
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart
-            config={builder}
-            data={facets as any}
-            width={vizWidth}
-            height={vizHeight}
-            timeRange={timeRange}
-            plotRef={plotRef}
-          />
+          <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight} timeRange={timeRange}>
+            <ExemplarsPlugin exemplars={exemplars!} config={builder} colorPalette={palette} />
+          </UPlotChart>
         )}
       </VizLayout>
       <Portal>
@@ -256,12 +224,16 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
           <HeatmapHoverView
             ttip={{
               layers: [
-                heatmapLayer({
+                HeatmapTab({
                   heatmapData: info,
                   index: hover.index,
                   options: { showHistogram: options.tooltip.yHistogram, timeZone },
                 }),
-                exemplarLayer({ heatmapData: exemplars!, getValuesInCell, index: hover.index }),
+                ExemplarTab({
+                  heatmapData: exemplars!,
+                  getValuesInCell,
+                  index: translateMatrixIndex(hover.index, info.yBucketCount!, exemplars?.yBucketCount!),
+                }),
               ],
               hover,
               point: {},

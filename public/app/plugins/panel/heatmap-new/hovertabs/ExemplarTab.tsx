@@ -1,12 +1,12 @@
 import { ArrayVector, DataFrame, Field } from '@grafana/data';
 import { HeatmapHoverProps, HeatmapLayerHover } from '../types';
 
-export const exemplarLayer = ({ heatmapData, getValuesInCell, index }: HeatmapHoverProps): HeatmapLayerHover => {
+export const ExemplarTab = ({ heatmapData, getValuesInCell, index }: HeatmapHoverProps): HeatmapLayerHover => {
   const xField: Field | undefined = heatmapData.heatmap?.fields.find((f) => f.name === 'xMin');
   const yField: Field | undefined = heatmapData.heatmap?.fields.find((f) => f.name === 'yMin');
   const countField: Field | undefined = heatmapData.heatmap?.fields.find((f) => f.name === 'count');
 
-  if (xField && yField && countField) {
+  if (xField && yField && countField && index >= 0) {
     const xMin: number = xField.values.get(index);
     const xMax: number = xMin + heatmapData.xBucketSize!;
     const yMin: number = yField.values.get(index);
@@ -20,7 +20,6 @@ export const exemplarLayer = ({ heatmapData, getValuesInCell, index }: HeatmapHo
       };
     }
 
-    console.log('index is', index, 'yMin', yMin, 'yMax', yMax);
     const exemplarData: DataFrame[] | undefined = getValuesInCell!({
       xRange: {
         min: xMin,

@@ -102,7 +102,7 @@ interface HeatmapLayerOptions {
   showHistogram?: boolean;
 }
 
-export const heatmapLayer = ({
+export const HeatmapTab = ({
   heatmapData,
   index,
   options,
