@@ -77,7 +77,7 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator models.Plug
 		sqlStore:           sqlStore,
 		dashAlertExtractor: dashAlertExtractor,
 	}
-	e.ticker = NewTicker(time.Now(), clock.New(), 1*time.Second)
+	e.ticker = NewTicker(clock.New(), 1*time.Second)
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
 	e.evalHandler = NewEvalHandler(e.DataService)

@@ -30,7 +30,7 @@ type Ticker struct {
 }
 
 // NewTicker returns a ticker that ticks on intervalSec marks or very shortly after, and never drops ticks
-func NewTicker(last time.Time, c clock.Clock, interval time.Duration) *Ticker {
+func NewTicker(c clock.Clock, interval time.Duration) *Ticker {
 	if interval <= 0 {
 		panic(fmt.Errorf("non-positive interval [%v] is not allowed", interval))
 	}
@@ -38,7 +38,7 @@ func NewTicker(last time.Time, c clock.Clock, interval time.Duration) *Ticker {
 	t := &Ticker{
 		C:        make(chan time.Time),
 		clock:    c,
-		last:     last,
+		last:     c.Now(),
 		interval: interval,
 		behindTicks: promauto.With(prometheus.DefaultRegisterer).NewGauge(prometheus.GaugeOpts{
 			Namespace: "grafana",
