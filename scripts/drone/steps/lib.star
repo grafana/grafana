@@ -878,7 +878,7 @@ def mysql_integration_tests_step(edition, ver_mode):
     }
 
 
-def redis_integration_tests_step(edition, ver_mode):
+def redis_integration_tests_step():
     deps = []
     deps.extend(['grabpl'])
     return {
@@ -895,7 +895,7 @@ def redis_integration_tests_step(edition, ver_mode):
     }
 
 
-def memcached_integration_tests_step(edition, ver_mode):
+def memcached_integration_tests_step():
     deps = []
     deps.extend(['grabpl'])
     return {
