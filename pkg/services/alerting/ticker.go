@@ -17,11 +17,11 @@ import (
 //   - adjusting offset over time to compensate for storage backing up or getting fast and providing lower latency
 //   you specify a lastProcessed timestamp as well as an offset at creation, or runtime
 type Ticker struct {
-	C           chan time.Time
-	clock       clock.Clock
+	C     chan time.Time
+	clock clock.Clock
+	// last is the time of the last tick
 	last        time.Time
 	offset      time.Duration
-	newOffset   chan time.Duration
 	intervalSec int64
 	paused      bool
 }
@@ -33,7 +33,6 @@ func NewTicker(last time.Time, initialOffset time.Duration, c clock.Clock, inter
 		clock:       c,
 		last:        last,
 		offset:      initialOffset,
-		newOffset:   make(chan time.Duration),
 		intervalSec: intervalSec,
 	}
 	go t.run()
@@ -54,15 +53,8 @@ func (t *Ticker) run() {
 		// tick is too young. try again when ...
 		select {
 		case <-t.clock.After(-diff): // ...it'll definitely be old enough
-		case offset := <-t.newOffset: // ...it might be old enough
-			t.offset = offset
 		}
 	}
-}
-
-// ResetOffset resets the offset.
-func (t *Ticker) ResetOffset(duration time.Duration) {
-	t.newOffset <- duration
 }
 
 // Pause unpauses the ticker and no ticks will be sent.
