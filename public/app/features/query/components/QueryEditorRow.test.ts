@@ -75,6 +75,21 @@ describe('filterPanelDataToQuery', () => {
     expect(panelDataA?.state).toBe(LoadingState.Done);
   });
 
+  it('should return error for query that returns no data, but another query does return data', () => {
+    const withError = {
+      ...data,
+      state: LoadingState.Error,
+      error: {
+        message: 'Sad',
+        refId: 'Q',
+      },
+    };
+
+    const panelDataB = filterPanelDataToQuery(withError, 'Q');
+    expect(panelDataB?.series.length).toBe(0);
+    expect(panelDataB?.error?.refId).toBe('Q');
+  });
+
   it('should not set the state to done if the frame is loading and has no errors', () => {
     const loadingData: PanelData = {
       state: LoadingState.Loading,

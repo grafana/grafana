@@ -119,7 +119,15 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   };
 
   if (info.warning || !info.heatmap) {
-    return <PanelDataErrorView panelId={id} data={data} needsNumberField={true} message={info.warning} />;
+    return (
+      <PanelDataErrorView
+        panelId={id}
+        fieldConfig={fieldConfig}
+        data={data}
+        needsNumberField={true}
+        message={info.warning}
+      />
+    );
   }
 
   return (
