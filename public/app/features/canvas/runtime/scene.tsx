@@ -181,20 +181,29 @@ export class Scene {
     };
 
     console.log('PPP', placement);
+    console.log('element anchor', !Boolean(element.anchor[k]));
 
     // // TODO: needs to recalculate placement based on absolute values...
-    // element.anchor[k] = !Boolean(element.anchor[k]);
-    // element.placement = placement;
-    // element.validatePlacement();
-    // element.revId++;
-    // this.revId++;
-    //    this.save();
+    element.anchor[k] = !Boolean(element.anchor[k]);
+    element.placement = placement;
+    element.validatePlacement();
+    element.revId++;
+    this.revId++;
+    this.save(true);
 
     this.moved.next(Date.now());
   }
 
-  save = () => {
+  save = (updateMoveable = false) => {
     this.onSave(this.root.getSaveModel());
+
+    if (updateMoveable) {
+      setTimeout(() => {
+        if (this.div) {
+          this.initMoveable(true);
+        }
+      }, 100);
+    }
   };
 
   private findElementByTarget = (target: HTMLElement | SVGElement): ElementState | undefined => {

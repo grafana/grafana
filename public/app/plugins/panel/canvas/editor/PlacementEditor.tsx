@@ -1,13 +1,14 @@
 import React, { FC } from 'react';
+import { useObservable } from 'react-use';
+import { Subject } from 'rxjs';
 import { Button, Field, HorizontalGroup, InlineField, InlineFieldRow } from '@grafana/ui';
 import { StandardEditorProps } from '@grafana/data';
 
 import { PanelOptions } from '../models.gen';
-import { useObservable } from 'react-use';
-import { Subject } from 'rxjs';
 import { CanvasEditorOptions } from './elementEditor';
 import { Anchor, Placement } from 'app/features/canvas';
 import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
+import { ElementState } from 'app/features/canvas/runtime/element';
 
 const anchors: Array<keyof Anchor> = ['top', 'left', 'bottom', 'right'];
 const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width', 'height'];
@@ -28,17 +29,21 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
   }
   const { placement } = element;
 
+  const onToggleAnchor = (element: ElementState, anchor: keyof Anchor) => {
+    settings.scene.toggleAnchor(element, anchor);
+  };
+
   return (
     <div>
       <HorizontalGroup>
-        {anchors.map((a) => (
+        {anchors.map((anchor) => (
           <Button
-            key={a}
+            key={anchor}
             size="sm"
-            variant={element.anchor[a] ? 'primary' : 'secondary'}
-            onClick={() => settings.scene.toggleAnchor(element, a)}
+            variant={element.anchor[anchor] ? 'primary' : 'secondary'}
+            onClick={() => onToggleAnchor(element, anchor)}
           >
-            {a}
+            {anchor}
           </Button>
         ))}
       </HorizontalGroup>

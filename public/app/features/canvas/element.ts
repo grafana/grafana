@@ -53,6 +53,6 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
 
   getNewOptions: (options?: CanvasElementOptions) => Omit<CanvasElementOptions<TConfig>, 'type' | 'name'>;
 
-  /** Build the configuraiton UI */
+  /** Build the configuration UI */
   registerOptionsUI?: PanelOptionsSupplier<CanvasElementOptions<TConfig>>;
 }
