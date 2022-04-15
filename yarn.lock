@@ -13431,11 +13431,11 @@ __metadata:
     caniuse-lite: ^1.0.30001286
     electron-to-chromium: ^1.4.17
     escalade: ^3.1.1
-    node-releases: ^2.0.1
+    node-releases: ^2.0.2
     picocolors: ^1.0.0
   bin:
     browserslist: cli.js
-  checksum: c0777fd483691638fd6801e16c9d809e1d65f6d2b06db2e806654be51045cbab1452a89841a2c5caea2cbe19d621b4f1d391cffbb24512aa33280039ab345875
+  checksum: 18e09beeae32e69fea45fc3642240fb63027b1460d90e24da86377177dca3d82c80f8fa44469d95109e3962f08eb2a23e03037bd5e1f1ec38e4866e2a8572435
   languageName: node
   linkType: hard
 
@@ -18611,7 +18611,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"faye-websocket@npm:^0.11.3":
+"faye-websocket@npm:^0.11.3, faye-websocket@npm:^0.11.4":
   version: 0.11.4
   resolution: "faye-websocket@npm:0.11.4"
   dependencies:
@@ -18706,6 +18706,13 @@ __metadata:
   version: 1.0.0
   resolution: "file-uri-to-path@npm:1.0.0"
   checksum: b648580bdd893a008c92c7ecc96c3ee57a5e7b6c4c18a9a09b44fb5d36d79146f8e442578bc0e173dc027adf3987e254ba1dfd6e3ec998b7c282873010502144
+  languageName: node
+  linkType: hard
+
+"filesize@npm:^8.0.6":
+  version: 8.0.7
+  resolution: "filesize@npm:8.0.7"
+  checksum: 8603d27c5287b984cb100733640645e078f5f5ad65c6d913173e01fb99e09b0747828498fd86647685ccecb69be31f3587b9739ab1e50732116b2374aff4cbf9
   languageName: node
   linkType: hard
 
@@ -19037,6 +19044,37 @@ __metadata:
     vue-template-compiler:
       optional: true
   checksum: d74e8b22e3e4d5159061d93f519d7eb795bafac4b9a993b72eed952a714144d89c8a706414b231a89c69cabf29e00e1fb26d7060e3b5577c08cabb5a3d5a7697
+  languageName: node
+  linkType: hard
+
+"fork-ts-checker-webpack-plugin@npm:^6.5.0":
+  version: 6.5.1
+  resolution: "fork-ts-checker-webpack-plugin@npm:6.5.1"
+  dependencies:
+    "@babel/code-frame": ^7.8.3
+    "@types/json-schema": ^7.0.5
+    chalk: ^4.1.0
+    chokidar: ^3.4.2
+    cosmiconfig: ^6.0.0
+    deepmerge: ^4.2.2
+    fs-extra: ^9.0.0
+    glob: ^7.1.6
+    memfs: ^3.1.2
+    minimatch: ^3.0.4
+    schema-utils: 2.7.0
+    semver: ^7.3.2
+    tapable: ^1.0.0
+  peerDependencies:
+    eslint: ">= 6"
+    typescript: ">= 2.7"
+    vue-template-compiler: "*"
+    webpack: ">= 4"
+  peerDependenciesMeta:
+    eslint:
+      optional: true
+    vue-template-compiler:
+      optional: true
+  checksum: b5a06f72fb2db5d182e026668446ef54a80eb8f2f01a4f3336dfa9770c80cda6b5657d1e8dc20f45e2aaa9b72b55be1f4425fb9cf78efc989e1b5107ccdb41a1
   languageName: node
   linkType: hard
 
@@ -21003,7 +21041,7 @@ __metadata:
 "iconscout-unicons-tarball@https://github.com/grafana/icons/tarball/63056cd833ba7ee4e94904492b3a8c0cabc38d28":
   version: 1.0.0
   resolution: "iconscout-unicons-tarball@https://github.com/grafana/icons.git#commit=63056cd833ba7ee4e94904492b3a8c0cabc38d28"
-  checksum: a443e4c3cb3886a2e21b40c8ec08535b98c066eb0dc96eaf94f177283814c59737b91c00f8d75680be46347fcc2ca8798c0da0d1b8bd1df0275ad9afa30cee36
+  checksum: 9e2ffe79d686e5c811e594a1c813e0e9b6a42c12850d93fb353e81d1445ce7a71480083e7d4c66399705103ad6ec5736d0352439d4f9d282505991c2f39e599f
   languageName: node
   linkType: hard
 
@@ -31198,7 +31236,7 @@ __metadata:
   resolution: "rst2html@https://github.com/thoward/rst2html.git#commit=990cb89f2a300cdd9151790be377c4c0840df809"
   dependencies:
     restructured: 0.0.11
-  checksum: be3460fd5216a110ac201f7067bee8a54d2d57ca085742c1b07eac5b998ba307c6f7f2ba7f4de1abd4b4a8d2bd7b6664a9be9de59881bf61b83f2ad05581aa68
+  checksum: 63d5ff30687046d510ebf90968aec1cc878a689ad3c464434e131be12fee822a5d57d224d960908eafa5c7543da3b6f0b49b8ea1f0061597a66c553717957e8c
   languageName: node
   linkType: hard
 
@@ -31828,6 +31866,13 @@ __metadata:
   version: 3.0.0
   resolution: "shebang-regex@npm:3.0.0"
   checksum: 1a2bcae50de99034fcd92ad4212d8e01eedf52c7ec7830eedcf886622804fe36884278f2be8be0ea5fde3fd1c23911643a4e0f726c8685b61871c8908af01222
+  languageName: node
+  linkType: hard
+
+"shell-quote@npm:^1.7.3":
+  version: 1.7.3
+  resolution: "shell-quote@npm:1.7.3"
+  checksum: aca58e73a3a5d933d02e0bdddedc53ee14f7c2ec264f97ac915b9d4482d077a38e422aa664631d60a672cd3cdb4054eb2e6c0303f54882453dacb6483e482d34
   languageName: node
   linkType: hard
 
@@ -33524,7 +33569,7 @@ __metadata:
   resolution: "tether-drop@https://github.com/torkelo/drop.git#commit=fc83ca88db0076fbf6359cbe1743a9ef0f1ee6e1"
   dependencies:
     tether: ^1.1.0
-  checksum: 5d2253acda8a0392af28c7f83eb21ea758ec0adcd1f6df141ba273ce726b756f4d73039e5396592e165ba692324cf541eeecf6c7c32212b88e97080de8e85df6
+  checksum: a10a7337d57cd9daf2ddc9bfd0f1d2aefc0fbd7ec6aad03c900adcaf55803250e7fbecec679ceb9766987a95eac5e55f073be1f8074a4b100771d9188ec6c8aa
   languageName: node
   linkType: hard
 
