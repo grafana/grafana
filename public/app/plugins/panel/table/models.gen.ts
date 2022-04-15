@@ -18,6 +18,7 @@ export interface PanelOptions {
   showTypeIcons?: boolean;
   sortBy?: TableSortByFieldState[];
   footer?: TableFooterCalc; // TODO: should be array (options builder is limited)
+  gaugeLabels: 'always' | 'never' | 'overlay';
 }
 
 export interface TableFooterCalc {
@@ -35,6 +36,7 @@ export const defaultPanelOptions: PanelOptions = {
     show: false,
     reducer: [],
   },
+  gaugeLabels: 'always',
 };
 
 export const defaultPanelFieldConfig: TableFieldOptions = {

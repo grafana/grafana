@@ -94,6 +94,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
               cfg.displayMode === TableCellDisplayMode.LcdGauge
             );
           },
+          defaultValue: defaultPanelOptions.gaugeLabels,
         })
         .addBooleanSwitch({
           path: 'inspect',
