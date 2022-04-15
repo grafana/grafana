@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 // Ticker is a ticker to power the alerting scheduler. it's like a time.Ticker, except:
@@ -23,6 +25,8 @@ type Ticker struct {
 	// last is the time of the last tick
 	last     time.Time
 	interval time.Duration
+	// metric that reports number of ticks the ticker is lagging behind
+	behindTicks prometheus.Gauge
 }
 
 // NewTicker returns a ticker that ticks on intervalSec marks or very shortly after, and never drops ticks
@@ -36,6 +40,12 @@ func NewTicker(last time.Time, c clock.Clock, interval time.Duration) *Ticker {
 		clock:    c,
 		last:     last,
 		interval: interval,
+		behindTicks: promauto.With(prometheus.DefaultRegisterer).NewGauge(prometheus.GaugeOpts{
+			Namespace: "grafana",
+			Subsystem: "alerting",
+			Name:      "ticker_behind_ticks",
+			Help:      "The number of ticks the ticker is lagging behind",
+		}),
 	}
 	go t.run()
 	return t
@@ -43,10 +53,12 @@ func NewTicker(last time.Time, c clock.Clock, interval time.Duration) *Ticker {
 
 func (t *Ticker) run() {
 	for {
-		next := t.last.Add(t.interval)
-		diff := t.clock.Now().Sub(next)
+		next := t.last.Add(t.interval)  // calculate the time of the next tick
+		diff := t.clock.Now().Sub(next) // calculate the difference between the current time and the next tick
+		// if difference is not negative, then it should tick
 		if diff >= 0 {
 			t.C <- next
+			t.behindTicks.Set(float64(diff.Nanoseconds() / t.interval.Nanoseconds()))
 			t.last = next
 			continue
 		}
