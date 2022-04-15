@@ -28,12 +28,13 @@ export function LokiQueryBuilderContainer(props: Props) {
   const [state, dispatch] = useReducer(stateSlice.reducer, {
     expr: query.expr,
     // Use initial visual query only if query.expr is empty string
-    visQuery: query.expr === ''
-      ? undefined
-      : {
-          labels: [],
-          operations: [{ id: '__line_contains', params: [''] }],
-        },
+    visQuery:
+      query.expr === ''
+        ? {
+            labels: [],
+            operations: [{ id: '__line_contains', params: [''] }],
+          }
+        : undefined,
   });
 
   // Only rebuild visual query if expr changes from outside
