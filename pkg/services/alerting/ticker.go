@@ -11,25 +11,18 @@ import (
 
 // Ticker is a ticker to power the alerting scheduler. it's like a time.Ticker, except:
 // * it doesn't drop ticks for slow receivers, rather, it queues up.  so that callers are in control to instrument what's going on.
-// * it automatically ticks every second, which is the right thing in our current design
-// * it ticks on intervalSec marks or very shortly after. this provides a predictable load pattern
+// * it ticks on interval marks or very shortly after. this provides a predictable load pattern
 //   (this shouldn't cause too much load contention issues because the next steps in the pipeline just process at their own pace)
 // * the timestamps are used to mark "last datapoint to query for" and as such, are a configurable amount of seconds in the past
-// * because we want to allow:
-//   - a clean "resume where we left off" and "don't yield ticks we already did"
-//   - adjusting offset over time to compensate for storage backing up or getting fast and providing lower latency
-//   you specify a lastProcessed timestamp as well as an offset at creation, or runtime
 type Ticker struct {
-	C     chan time.Time
-	clock clock.Clock
-	// last is the time of the last tick
-	last     time.Time
-	interval time.Duration
-	// metric that reports number of ticks the ticker is lagging behind
+	C           chan time.Time
+	clock       clock.Clock
+	last        time.Time
+	interval    time.Duration
 	behindTicks prometheus.Gauge
 }
 
-// NewTicker returns a ticker that ticks on intervalSec marks or very shortly after, and never drops ticks
+// NewTicker returns a ticker that ticks on interval marks or very shortly after, and never drops ticks. interval should not be negative or zero
 func NewTicker(c clock.Clock, interval time.Duration) *Ticker {
 	if interval <= 0 {
 		panic(fmt.Errorf("non-positive interval [%v] is not allowed", interval))
@@ -58,6 +51,7 @@ func (t *Ticker) run() {
 		// if difference is not negative, then it should tick
 		if diff >= 0 {
 			t.C <- next
+			// update metric after the push to the channel to guarantee that the tick is delivered as soon as possible
 			t.behindTicks.Set(float64(diff.Nanoseconds() / t.interval.Nanoseconds()))
 			t.last = next
 			continue
