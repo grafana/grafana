@@ -31,8 +31,6 @@ type ScheduleService interface {
 	// Run the scheduler until the context is canceled or the scheduler returns
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
-	Pause() error
-	Unpause() error
 
 	// AlertmanagersFor returns all the discovered Alertmanager URLs for the
 	// organization.
@@ -152,24 +150,6 @@ func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url
 		minRuleInterval:         cfg.MinRuleInterval,
 	}
 	return &sch
-}
-
-func (sch *schedule) Pause() error {
-	if sch == nil {
-		return fmt.Errorf("scheduler is not initialised")
-	}
-	sch.ticker.Pause()
-	sch.log.Info("alert rule scheduler paused", "now", sch.clock.Now())
-	return nil
-}
-
-func (sch *schedule) Unpause() error {
-	if sch == nil {
-		return fmt.Errorf("scheduler is not initialised")
-	}
-	sch.ticker.Unpause()
-	sch.log.Info("alert rule scheduler unpaused", "now", sch.clock.Now())
-	return nil
 }
 
 func (sch *schedule) Run(ctx context.Context) error {

@@ -22,7 +22,6 @@ type Ticker struct {
 	// last is the time of the last tick
 	last        time.Time
 	intervalSec int64
-	paused      bool
 }
 
 // NewTicker returns a ticker that ticks on intervalSec marks or very shortly after, and never drops ticks
@@ -42,9 +41,7 @@ func (t *Ticker) run() {
 		next := t.last.Add(time.Duration(t.intervalSec) * time.Second)
 		diff := t.clock.Now().Sub(next)
 		if diff >= 0 {
-			if !t.paused {
-				t.C <- next
-			}
+			t.C <- next
 			t.last = next
 			continue
 		}
@@ -55,12 +52,3 @@ func (t *Ticker) run() {
 	}
 }
 
-// Pause unpauses the ticker and no ticks will be sent.
-func (t *Ticker) Pause() {
-	t.paused = true
-}
-
-// Unpause unpauses the ticker and ticks will be sent.
-func (t *Ticker) Unpause() {
-	t.paused = false
-}
