@@ -38,16 +38,18 @@ export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
   return (
     <div className={styles.wrapper}>
       <div ref={topOfViewRef}></div>
-      <TracePageSearchBar
-        navigable={true}
-        searchValue={search}
-        setSearch={setSearch}
-        spanFindMatches={spanFindMatches}
-        searchBarSuffix={searchBarSuffix}
-        setSearchBarSuffix={setSearchBarSuffix}
-        focusedSpanIdForSearch={focusedSpanIdForSearch}
-        setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
-      />
+      {data.series[0]?.meta?.preferredVisualisationType === 'trace' ? (
+        <TracePageSearchBar
+          navigable={true}
+          searchValue={search}
+          setSearch={setSearch}
+          spanFindMatches={spanFindMatches}
+          searchBarSuffix={searchBarSuffix}
+          setSearchBarSuffix={setSearchBarSuffix}
+          focusedSpanIdForSearch={focusedSpanIdForSearch}
+          setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+        />
+      ) : null}
 
       <TraceView
         dataFrames={data.series}
