@@ -32,6 +32,7 @@ import {
   QueryResultMeta,
   ScopedVars,
   TimeRange,
+  rangeUtil,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchError, getBackendSrv, config, DataSourceWithBackend } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -78,6 +79,21 @@ const DEFAULT_QUERY_PARAMS: Partial<LokiRangeQueryRequest> = {
   limit: DEFAULT_MAX_LINES,
   query: '',
 };
+
+function makeRequest(query: LokiQuery, range: TimeRange, app: CoreApp, requestId: string): DataQueryRequest<LokiQuery> {
+  const intervalInfo = rangeUtil.calculateInterval(range, 1);
+  return {
+    targets: [query],
+    requestId,
+    interval: intervalInfo.interval,
+    intervalMs: intervalInfo.intervalMs,
+    range: range,
+    scopedVars: {},
+    timezone: 'UTC',
+    app,
+    startTime: Date.now(),
+  };
+}
 
 export class LokiDatasource
   extends DataSourceWithBackend<LokiQuery, LokiOptions>
@@ -153,15 +169,20 @@ export class LokiDatasource
       ...this.getRangeScopedVars(request.range),
     };
 
-    const shouldRunBackendQuery = config.featureToggles.lokiBackendMode && request.app === CoreApp.Explore;
-
-    if (shouldRunBackendQuery) {
+    if (config.featureToggles.lokiBackendMode) {
       // we "fix" the loki queries to have `.queryType` and not have `.instant` and `.range`
       const fixedRequest = {
         ...request,
         targets: request.targets.map(getNormalizedLokiQuery),
       };
-      return super.query(fixedRequest).pipe(map((response) => transformBackendResult(response, fixedRequest)));
+
+      if (fixedRequest.liveStreaming) {
+        return this.runLiveQueryThroughBackend(fixedRequest);
+      } else {
+        return super
+          .query(fixedRequest)
+          .pipe(map((response) => transformBackendResult(response, fixedRequest.targets)));
+      }
     }
 
     const filteredTargets = request.targets
@@ -184,7 +205,7 @@ export class LokiDatasource
       ) {
         subQueries.push(doLokiChannelStream(target, this, request));
       } else {
-        subQueries.push(this.runRangeQuery(target, request, filteredTargets.length));
+        subQueries.push(this.runRangeQuery(target, request));
       }
     }
 
@@ -195,6 +216,27 @@ export class LokiDatasource
         state: LoadingState.Done,
       });
     }
+
+    return merge(...subQueries);
+  }
+
+  runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
+    // this only works in explore-mode, so variables don't need to be handled,
+    //  and only for logs-queries, not metric queries
+    const logsQueries = request.targets.filter((query) => query.expr !== '' && !isMetricsQuery(query.expr));
+
+    if (logsQueries.length === 0) {
+      return of({
+        data: [],
+        state: LoadingState.Done,
+      });
+    }
+
+    const subQueries = logsQueries.map((query) => {
+      const maxDataPoints = query.maxLines || this.maxLines;
+      // FIXME: currently we are running it through the frontend still.
+      return this.runLiveQuery(query, maxDataPoints);
+    });
 
     return merge(...subQueries);
   }
@@ -234,7 +276,7 @@ export class LokiDatasource
         }
 
         return {
-          data: [lokiResultsToTableModel(response.data.data.result, responseListLength, target.refId, meta, true)],
+          data: [lokiResultsToTableModel(response.data.data.result, responseListLength, target.refId, meta)],
           key: `${target.refId}_instant`,
         };
       }),
@@ -275,11 +317,7 @@ export class LokiDatasource
   /**
    * Attempts to send a query to /loki/api/v1/query_range
    */
-  runRangeQuery = (
-    target: LokiQuery,
-    options: RangeQueryOptions,
-    responseListLength = 1
-  ): Observable<DataQueryResponse> => {
+  runRangeQuery = (target: LokiQuery, options: RangeQueryOptions): Observable<DataQueryResponse> => {
     // For metric query we use maxDataPoints from the request options which should be something like width of the
     // visualisation in pixels. In case of logs request we either use lines limit defined in the query target or
     // global limit defined for the data source which ever is lower.
@@ -306,7 +344,6 @@ export class LokiDatasource
           response.data,
           target,
           query,
-          responseListLength,
           maxDataPoints,
           this.instanceSettings.jsonData,
           (options as DataQueryRequest<LokiQuery>).scopedVars
@@ -632,32 +669,25 @@ export class LokiDatasource
   }
 
   async annotationQuery(options: any): Promise<AnnotationEvent[]> {
-    const {
-      expr,
-      maxLines,
-      instant,
-      stepInterval,
-      tagKeys = '',
-      titleFormat = '',
-      textFormat = '',
-    } = options.annotation;
+    const { expr, maxLines, instant, tagKeys = '', titleFormat = '', textFormat = '' } = options.annotation;
 
     if (!expr) {
       return [];
     }
 
-    const interpolatedExpr = this.templateSrv.replace(expr, {}, this.interpolateQueryExpr);
-    const query = {
-      refId: `annotation-${options.annotation.name}`,
-      expr: interpolatedExpr,
+    const id = `annotation-${options.annotation.name}`;
+
+    const query: LokiQuery = {
+      refId: id,
+      expr,
       maxLines,
       instant,
-      stepInterval,
       queryType: instant ? LokiQueryType.Instant : LokiQueryType.Range,
     };
-    const { data } = instant
-      ? await lastValueFrom(this.runInstantQuery(query, options as any))
-      : await lastValueFrom(this.runRangeQuery(query, options as any));
+
+    const request = makeRequest(query, options.range, CoreApp.Dashboard, id);
+
+    const { data } = await lastValueFrom(this.query(request));
 
     const annotations: AnnotationEvent[] = [];
     const splitKeys: string[] = tagKeys.split(',').filter((v: string) => v !== '');
@@ -705,10 +735,13 @@ export class LokiDatasource
   }
 
   processError(err: FetchError, target: LokiQuery) {
-    let error = cloneDeep(err);
-    if (err.data.message.includes('escape') && target.expr.includes('\\')) {
+    let error: DataQueryError = cloneDeep(err);
+    error.refId = target.refId;
+
+    if (error.data && err.data.message.includes('escape') && target.expr.includes('\\')) {
       error.data.message = `Error: ${err.data.message}. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://grafana.com/docs/loki/latest/logql/.`;
     }
+
     return error;
   }
 
@@ -766,7 +799,7 @@ export class LokiDatasource
   }
 
   // Used when running queries through backend
-  applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): LokiQuery {
     // We want to interpolate these variables on backend
     const { __interval, __interval_ms, ...rest } = scopedVars;
 
