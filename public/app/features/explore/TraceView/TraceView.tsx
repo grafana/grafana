@@ -53,7 +53,7 @@ type Props = {
   traceProp: Trace;
   spanFindMatches?: Set<string>;
   search: string;
-  focusedSpanIdForSearch?: string;
+  focusedSpanIdForSearch: string;
   queryResponse: PanelData;
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
   topOfViewRef: RefObject<HTMLDivElement>;

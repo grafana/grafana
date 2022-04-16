@@ -253,7 +253,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       this.scrollToSpan(focusedSpanId);
     }
 
-    if (focusedSpanIdForSearch && focusedSpanIdForSearch !== prevProps.focusedSpanIdForSearch) {
+    if (focusedSpanIdForSearch !== prevProps.focusedSpanIdForSearch) {
       this.scrollToSpan(focusedSpanIdForSearch);
     }
   }
