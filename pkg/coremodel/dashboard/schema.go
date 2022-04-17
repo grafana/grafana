@@ -17,6 +17,15 @@ var (
 	currentVersion = thema.SV(0, 0)
 )
 
+// HandoffSchemaVersion is the minimum schemaVersion for dashboards at which the
+// Thema-based dashboard schema is known to be valid.
+//
+// schemaVersion is the original version numbering system for dashboards. If a
+// dashboard is below this schemaVersion, it is necessary for the frontend
+// typescript dashboard migration logic to first run and get it past this
+// number, after which Thema can take over.
+const HandoffSchemaVersion = 36
+
 // Lineage returns the Thema lineage representing Grafana dashboards. The
 // lineage is the canonical specification of the current datasource schema, all
 // prior schema versions, and the mappings that allow migration between schema
@@ -80,7 +89,7 @@ type model struct {
 	SchemaVersion int           `json:"schemaVersion"`
 	Panels        []interface{} `json:"panels"`
 
-	////
+	// //
 
 	Uid string `json:"uid"`
 	// OrgId   int64  `json:"orgId"`
