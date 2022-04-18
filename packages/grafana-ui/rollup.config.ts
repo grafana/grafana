@@ -47,8 +47,8 @@ const buildCjsPackage = ({ env }) => {
         include: /node_modules/,
         ignoreTryCatch: false,
       }),
-      svg({ stringify: true }),
       resolve(),
+      svg({ stringify: true }),
       env === 'production' && terser(),
     ],
   };

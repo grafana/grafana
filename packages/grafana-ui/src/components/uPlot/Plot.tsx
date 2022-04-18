@@ -1,5 +1,5 @@
 import React, { createRef } from 'react';
-import type { AlignedData, Options } from 'uplot';
+import uPlot, { AlignedData, Options } from 'uplot';
 import { DEFAULT_PLOT_CONFIG, pluginLog } from './utils';
 import { PlotProps } from './types';
 
@@ -72,15 +72,16 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     };
 
     pluginLog('UPlot', false, 'Reinitializing plot', config);
-    import('uplot').then((uPlot) => {
-      const plot = new uPlot.default(config, this.props.data as AlignedData, this.plotContainer!.current!);
 
-      if (plotRef) {
-        plotRef(plot);
-      }
+    const uplot = require('uplot').default as typeof uPlot;
 
-      this.setState({ plot });
-    });
+    const plot = new uplot(config, this.props.data as AlignedData, this.plotContainer!.current!);
+
+    if (plotRef) {
+      plotRef(plot);
+    }
+
+    this.setState({ plot });
   }
 
   componentDidMount() {
