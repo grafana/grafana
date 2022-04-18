@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -81,6 +82,13 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 		result.AlertmanagerConfig.Receivers = append(result.AlertmanagerConfig.Receivers, &gettableApiReceiver)
 	}
 
+	if moa.settings.IsFeatureToggleEnabled(featuremgmt.FlagAlertProvisioning) {
+		result.AlertmanagerConfig, err = moa.mergeProvenance(ctx, result.AlertmanagerConfig, org)
+		if err != nil {
+			return definitions.GettableUserConfig{}, err
+		}
+	}
+
 	return result, nil
 }
 
@@ -116,4 +124,36 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 	}
 
 	return nil
+}
+
+func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config definitions.GettableApiAlertingConfig, org int64) (definitions.GettableApiAlertingConfig, error) {
+	if config.Route != nil {
+		adp := provenanceOrgAdapter{
+			inner: config.Route,
+			orgID: org,
+		}
+		provenance, err := moa.provStore.GetProvenance(ctx, adp)
+		if err != nil {
+			return definitions.GettableApiAlertingConfig{}, err
+		}
+		config.Route.Provenance = provenance
+	}
+	return config, nil
+}
+
+type provenanceOrgAdapter struct {
+	inner models.ProvisionableInOrg
+	orgID int64
+}
+
+func (a provenanceOrgAdapter) ResourceType() string {
+	return a.inner.ResourceType()
+}
+
+func (a provenanceOrgAdapter) ResourceID() string {
+	return a.inner.ResourceID()
+}
+
+func (a provenanceOrgAdapter) ResourceOrgID() int64 {
+	return a.orgID
 }

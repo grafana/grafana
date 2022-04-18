@@ -16,10 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
@@ -208,6 +210,17 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 		require.Equal(t, 202, response.Status())
 	})
+
+	t.Run("assert provenance status is returned", func(t *testing.T) {
+		t.Run("when routes are provisioned", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+
+			response := sut.RouteGetAlertingConfig(rc)
+
+			require.Equal(t, 200, response.Status())
+		})
+	})
 }
 
 func TestRouteCreateSilence(t *testing.T) {
@@ -350,7 +363,12 @@ func createSut(t *testing.T, accessControl accesscontrol.AccessControl) Alertman
 		accessControl = acMock.New().WithDisabled()
 	}
 	log := log.NewNopLogger()
-	return AlertmanagerSrv{mam: mam, crypto: mam.Crypto, ac: accessControl, log: log}
+	return AlertmanagerSrv{
+		mam:    mam,
+		crypto: mam.Crypto,
+		ac:     accessControl,
+		log:    log,
+	}
 }
 
 func createAmConfigRequest(t *testing.T) apimodels.PostableUserConfig {
@@ -373,6 +391,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	}
 	configStore := notifier.NewFakeConfigStore(t, configs)
 	orgStore := notifier.NewFakeOrgStore(t, []int64{1, 2, 3})
+	provStore := provisioning.NewFakeProvisioningStore()
 	tmpDir := t.TempDir()
 	kvStore := notifier.NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -386,9 +405,12 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
 			DisabledOrgs:                   map[int64]struct{}{5: {}},
 		}, // do not poll in tests.
+		IsFeatureToggleEnabled: func(key string) bool {
+			return key == featuremgmt.FlagAlertProvisioning
+		},
 	}
 
-	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, provStore)
 	require.NoError(t, err)
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)
@@ -451,4 +473,15 @@ func silenceGen(mutatorFuncs ...func(*apimodels.PostableSilence)) func() apimode
 
 func withEmptyID(silence *apimodels.PostableSilence) {
 	silence.ID = ""
+}
+
+func createRequestCtxInOrg(org int64) *models.ReqContext {
+	return &models.ReqContext{
+		Context: &web.Context{
+			Req: &http.Request{},
+		},
+		SignedInUser: &models.SignedInUser{
+			OrgId: org,
+		},
+	}
 }

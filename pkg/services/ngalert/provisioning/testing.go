@@ -92,7 +92,7 @@ type fakeProvisioningStore struct {
 	records map[int64]map[string]models.Provenance
 }
 
-func newFakeProvisioningStore() *fakeProvisioningStore {
+func NewFakeProvisioningStore() *fakeProvisioningStore {
 	return &fakeProvisioningStore{
 		records: map[int64]map[string]models.Provenance{},
 	}

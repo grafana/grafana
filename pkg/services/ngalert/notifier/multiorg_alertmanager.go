@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/secrets"
 
@@ -45,6 +46,7 @@ type MultiOrgAlertmanager struct {
 	configStore store.AlertingStore
 	orgStore    store.OrgStore
 	kvStore     kvstore.KVStore
+	provStore   provisioning.ProvisioningStore
 
 	decryptFn channels.GetDecryptedValueFn
 
@@ -53,8 +55,8 @@ type MultiOrgAlertmanager struct {
 }
 
 func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, orgStore store.OrgStore,
-	kvStore kvstore.KVStore, decryptFn channels.GetDecryptedValueFn, m *metrics.MultiOrgAlertmanager,
-	ns notifications.Service, l log.Logger, s secrets.Service,
+	kvStore kvstore.KVStore, provStore provisioning.ProvisioningStore, decryptFn channels.GetDecryptedValueFn,
+	m *metrics.MultiOrgAlertmanager, ns notifications.Service, l log.Logger, s secrets.Service,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
 		Crypto: NewCrypto(s, configStore, l),
@@ -64,6 +66,7 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, 
 		alertmanagers: map[int64]*Alertmanager{},
 		configStore:   configStore,
 		orgStore:      orgStore,
+		provStore:     provStore,
 		kvStore:       kvStore,
 		decryptFn:     decryptFn,
 		metrics:       m,
