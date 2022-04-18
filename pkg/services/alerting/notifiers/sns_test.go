@@ -3,19 +3,21 @@ package notifiers
 import (
 	"context"
 	"encoding/json"
+	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/validations"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestSNSNotifier(t *testing.T) {
-	Convey("AWS SNS notifier tests", t, func() {
-		Convey("Parsing alert notification from settings", func() {
-			Convey("empty settings return error", func() {
+	t.Run("AWS SNS notifier tests", func(t *testing.T) {
+		t.Run("Parsing alert notification from settings", func(t *testing.T) {
+			t.Run("empty settings return error", func(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -25,11 +27,11 @@ func TestSNSNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := newSNSNotifier(model)
-				So(err, ShouldNotBeNil)
+				_, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+				require.Error(t, err)
 			})
 
-			Convey("invalid topic arn", func() {
+			t.Run("invalid topic arn", func(t *testing.T) {
 				json := `
 				{
 					"topic": "arn:aws:sns:us-east-1:123456789",
@@ -45,65 +47,18 @@ func TestSNSNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := newSNSNotifier(model)
-				So(err, ShouldNotBeNil)
+				_, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+				require.Error(t, err)
 			})
 
-			Convey("assume role auth provider settings", func() {
-				Convey("Empty Access Key or Secret Key", func() {
-					json := `
-					{
-						"topic": "arn:aws:sns:us-east-1:123456789:test",
-						"assumeRoleARN": "",
-						"authProvider": "arn"
-					}`
-
-					settingsJSON, _ := simplejson.NewJson([]byte(json))
-					model := &models.AlertNotification{
-						Name:     "AWS SNS",
-						Type:     "sns",
-						Settings: settingsJSON,
-					}
-
-					_, err := newSNSNotifier(model)
-					So(err, ShouldNotBeNil)
-				})
-				Convey("Valid Assume Role ARN", func() {
-					json := `
-					{
-						"topic": "arn:aws:sns:us-east-1:123456789:test",
-						"assumeRoleARN": "testARN",
-						"authProvider": "arn"
-					}`
-
-					settingsJSON, _ := simplejson.NewJson([]byte(json))
-					model := &models.AlertNotification{
-						Name:     "AWS SNS",
-						Type:     "sns",
-						Settings: settingsJSON,
-					}
-
-					not, err := newSNSNotifier(model)
-					snsNotifier := not.(*SNSNotifier)
-
-					So(err, ShouldBeNil)
-					So(snsNotifier.Name, ShouldEqual, "AWS SNS")
-					So(snsNotifier.Type, ShouldEqual, "sns")
-					So(snsNotifier.SnsTopic, ShouldEqual, "arn:aws:sns:us-east-1:123456789:test")
-					So(snsNotifier.AwsSessionCredentialsInput.Region, ShouldEqual, "us-east-1")
-					So(snsNotifier.AwsSessionCredentialsInput.AuthType, ShouldEqual, "arn")
-					So(snsNotifier.AwsSessionCredentialsInput.AssumeRoleArn, ShouldEqual, "testARN")
-				})
-			})
-
-			Convey("access key and secret key auth provider settings", func() {
-				Convey("Empty Access Key or Secret Key", func() {
+			t.Run("access key and secret key auth provider settings", func(t *testing.T) {
+				t.Run("Empty Access Key or Secret Key", func(t *testing.T) {
 					json := `
 					{
 						"topic": "arn:aws:sns:us-east-1:123456789:test",
 						"accessKey": "",
 						"secretKey": "tzNZYf36y0ohWwXo4XoUrB61rz1A4o",
-						"authProvider": "accessKeyAndSecretKey"
+						"authProvider": "keys"
 					}`
 
 					settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -113,15 +68,15 @@ func TestSNSNotifier(t *testing.T) {
 						Settings: settingsJSON,
 					}
 
-					_, err := newSNSNotifier(model)
-					So(err, ShouldNotBeNil)
+					_, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+					require.Error(t, err)
 
 					json = `
 					{
 						"topic": "arn:aws:sns:us-east-1:123456789:test",
 						"accessKey": "4SrUFQL4A5V5TQ1z5Pg9nxHXPXSTve",
 						"secretKey": "",
-						"authProvider": "accessKeyAndSecretKey"
+						"authProvider": "keys"
 					}`
 
 					settingsJSON, _ = simplejson.NewJson([]byte(json))
@@ -131,17 +86,17 @@ func TestSNSNotifier(t *testing.T) {
 						Settings: settingsJSON,
 					}
 
-					_, err = newSNSNotifier(model)
-					So(err, ShouldNotBeNil)
+					_, err = newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+					require.Error(t, err)
 				})
 
-				Convey("Valid Access and Secret Key", func() {
+				t.Run("Valid Access and Secret Key", func(t *testing.T) {
 					json := `
 					{
 						"topic": "arn:aws:sns:us-east-1:123456789:test",
 						"accessKey": "4SrUFQL4A5V5TQ1z5Pg9nxHXPXSTve",
 						"secretKey": "tzNZYf36y0ohWwXo4XoUrB61rz1A4o",
-						"authProvider": "accessKeyAndSecretKey"
+						"authProvider": "keys"
 					}`
 
 					settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -151,26 +106,26 @@ func TestSNSNotifier(t *testing.T) {
 						Settings: settingsJSON,
 					}
 
-					not, err := newSNSNotifier(model)
+					not, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 					snsNotifier := not.(*SNSNotifier)
 
-					So(err, ShouldBeNil)
-					So(snsNotifier.Name, ShouldEqual, "AWS SNS")
-					So(snsNotifier.Type, ShouldEqual, "sns")
-					So(snsNotifier.SnsTopic, ShouldEqual, "arn:aws:sns:us-east-1:123456789:test")
-					So(snsNotifier.AwsSessionCredentialsInput.AuthType, ShouldEqual, "accessKeyAndSecretKey")
-					So(snsNotifier.AwsSessionCredentialsInput.AccessKey, ShouldEqual, "4SrUFQL4A5V5TQ1z5Pg9nxHXPXSTve")
-					So(snsNotifier.AwsSessionCredentialsInput.SecretKey, ShouldEqual, "tzNZYf36y0ohWwXo4XoUrB61rz1A4o")
+					require.Nil(t, err)
+					assert.Equal(t, "AWS SNS", snsNotifier.Name)
+					assert.Equal(t, "sns", snsNotifier.Type)
+					assert.Equal(t, "arn:aws:sns:us-east-1:123456789:test", snsNotifier.SnsTopic)
+					assert.Equal(t, "keys", snsNotifier.AWSDatasourceSettings.AuthType.String())
+					assert.Equal(t, "4SrUFQL4A5V5TQ1z5Pg9nxHXPXSTve", snsNotifier.AWSDatasourceSettings.AccessKey)
+					assert.Equal(t, "tzNZYf36y0ohWwXo4XoUrB61rz1A4o", snsNotifier.AWSDatasourceSettings.SecretKey)
 				})
 			})
 
-			Convey("Credential Profile auth provider settings", func() {
-				Convey("Empty profile", func() {
+			t.Run("Credential Profile auth provider settings", func(t *testing.T) {
+				t.Run("Empty profile", func(t *testing.T) {
 					json := `
 					{
 						"topic": "arn:aws:sns:us-east-1:123456789:test",
-						"credentialsProfile": "",
-						"authProvider": "credentialsProfile"
+						"credentials": "",
+						"authProvider": "credentials"
 					}`
 
 					settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -180,16 +135,16 @@ func TestSNSNotifier(t *testing.T) {
 						Settings: settingsJSON,
 					}
 
-					_, err := newSNSNotifier(model)
-					So(err, ShouldNotBeNil)
+					_, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+					require.Error(t, err)
 				})
 
-				Convey("Valid Credentials Profile", func() {
+				t.Run("Valid Credentials Profile", func(t *testing.T) {
 					json := `
 					{
 						"topic": "arn:aws:sns:us-east-1:123456789:test",
-						"credentialsProfile": "dev",
-						"authProvider": "credentialsProfile"
+						"credentials": "dev",
+						"authProvider": "credentials"
 					}`
 
 					settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -199,23 +154,23 @@ func TestSNSNotifier(t *testing.T) {
 						Settings: settingsJSON,
 					}
 
-					not, err := newSNSNotifier(model)
+					not, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 					snsNotifier := not.(*SNSNotifier)
 
-					So(err, ShouldBeNil)
-					So(snsNotifier.Name, ShouldEqual, "AWS SNS")
-					So(snsNotifier.Type, ShouldEqual, "sns")
-					So(snsNotifier.SnsTopic, ShouldEqual, "arn:aws:sns:us-east-1:123456789:test")
-					So(snsNotifier.AwsSessionCredentialsInput.AuthType, ShouldEqual, "credentialsProfile")
-					So(snsNotifier.AwsSessionCredentialsInput.CredentialsProfile, ShouldEqual, "dev")
+					require.Nil(t, err)
+					assert.Equal(t, "AWS SNS", snsNotifier.Name)
+					assert.Equal(t, "sns", snsNotifier.Type)
+					assert.Equal(t, "arn:aws:sns:us-east-1:123456789:test", snsNotifier.SnsTopic)
+					assert.Equal(t, "credentials", snsNotifier.AWSDatasourceSettings.AuthType.String())
+					assert.Equal(t, "dev", snsNotifier.AWSDatasourceSettings.Profile)
 				})
 			})
 
-			Convey("AWS SDK Default auth provider settings", func() {
+			t.Run("AWS SDK Default auth provider settings", func(t *testing.T) {
 				json := `
 					{
 						"topic": "arn:aws:sns:us-east-1:123456789:test",
-						"authProvider": "authTypeDefault"
+						"authProvider": "default"
 					}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -225,21 +180,21 @@ func TestSNSNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := newSNSNotifier(model)
+				not, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 				snsNotifier := not.(*SNSNotifier)
 
-				So(err, ShouldBeNil)
-				So(snsNotifier.Name, ShouldEqual, "AWS SNS")
-				So(snsNotifier.Type, ShouldEqual, "sns")
-				So(snsNotifier.SnsTopic, ShouldEqual, "arn:aws:sns:us-east-1:123456789:test")
-				So(snsNotifier.AwsSessionCredentialsInput.AuthType, ShouldEqual, "authTypeDefault")
+				require.Nil(t, err)
+				assert.Equal(t, "AWS SNS", snsNotifier.Name)
+				assert.Equal(t, "sns", snsNotifier.Type)
+				assert.Equal(t, "arn:aws:sns:us-east-1:123456789:test", snsNotifier.SnsTopic)
+				assert.Equal(t, "default", snsNotifier.AWSDatasourceSettings.AuthType.String())
 			})
 
-			Convey("Valid JSON message body without tags", func() {
+			t.Run("Valid JSON message body without tags", func(t *testing.T) {
 				setupJson := `
 					{
 						"topic": "arn:aws:sns:us-east-1:123456789:test",
-						"authProvider": "authTypeDefault",
+						"authProvider": "default",
 						"messageFormat": "json"
 					}`
 
@@ -260,33 +215,33 @@ func TestSNSNotifier(t *testing.T) {
 						{Key: "no-tag-prefix-sample", Value: "don't show this tag"},
 						{Key: "severity", Value: "warning"},
 					},
-				}, &validations.OSSPluginRequestValidator{})
+				}, &validations.OSSPluginRequestValidator{}, nil)
 				evalContext.IsTestRun = true
-				not, err := newSNSNotifier(model)
+				not, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 				snsNotifier := not.(*SNSNotifier)
-				So(err, ShouldBeNil)
-				So(snsNotifier.Name, ShouldEqual, "AWS SNS")
-				So(snsNotifier.Type, ShouldEqual, "sns")
-				So(snsNotifier.SnsTopic, ShouldEqual, "arn:aws:sns:us-east-1:123456789:test")
-				So(snsNotifier.AwsSessionCredentialsInput.AuthType, ShouldEqual, "authTypeDefault")
+				require.Nil(t, err)
+				assert.Equal(t, "AWS SNS", snsNotifier.Name)
+				assert.Equal(t, "sns", snsNotifier.Type)
+				assert.Equal(t, "arn:aws:sns:us-east-1:123456789:test", snsNotifier.SnsTopic)
+				assert.Equal(t, "default", snsNotifier.AWSDatasourceSettings.AuthType.String())
 
 				expectedResultJson := simplejson.New()
 				expectedResultJson.Set("state", evalContext.Rule.State)
 				expectedResultJson.Set("body", evalContext.Rule.Message)
 				rawBytes, err := json.MarshalIndent(expectedResultJson, "", "    ")
-				So(err, ShouldBeNil)
+				require.Nil(t, err)
 
 				expectedResult := string(rawBytes)
 				result, err := snsNotifier.buildMessageContent(evalContext)
-				So(result, ShouldEqual, expectedResult)
-				So(err, ShouldBeNil)
+				assert.Equal(t, expectedResult, result)
+				require.Nil(t, err)
 			})
 
-			Convey("Valid JSON message body with tags", func() {
+			t.Run("Valid JSON message body with tags", func(t *testing.T) {
 				setupJson := `
 					{
 						"topic": "arn:aws:sns:us-east-1:123456789:test",
-						"authProvider": "authTypeDefault",
+						"authProvider": "default",
 						"messageFormat": "json",
 						"includeTags": true
 					}`
@@ -308,15 +263,15 @@ func TestSNSNotifier(t *testing.T) {
 						{Key: "no-tag-prefix-sample", Value: "this tag should be visible"},
 						{Key: "severity", Value: "warning"},
 					},
-				}, &validations.OSSPluginRequestValidator{})
+				}, &validations.OSSPluginRequestValidator{}, nil)
 				evalContext.IsTestRun = true
-				not, err := newSNSNotifier(model)
+				not, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 				snsNotifier := not.(*SNSNotifier)
-				So(err, ShouldBeNil)
-				So(snsNotifier.Name, ShouldEqual, "AWS SNS")
-				So(snsNotifier.Type, ShouldEqual, "sns")
-				So(snsNotifier.SnsTopic, ShouldEqual, "arn:aws:sns:us-east-1:123456789:test")
-				So(snsNotifier.AwsSessionCredentialsInput.AuthType, ShouldEqual, "authTypeDefault")
+				require.Nil(t, err)
+				assert.Equal(t, "AWS SNS", snsNotifier.Name)
+				assert.Equal(t, "sns", snsNotifier.Type)
+				assert.Equal(t, "arn:aws:sns:us-east-1:123456789:test", snsNotifier.SnsTopic)
+				assert.Equal(t, "default", snsNotifier.AWSDatasourceSettings.AuthType.String())
 
 				expectedResultJson := simplejson.New()
 				expectedResultJson.Set("state", evalContext.Rule.State)
@@ -325,19 +280,19 @@ func TestSNSNotifier(t *testing.T) {
 				expectedResultJson.Set("no-tag-prefix-sample", "this tag should be visible")
 				expectedResultJson.Set("severity", "warning")
 				rawBytes, err := json.MarshalIndent(expectedResultJson, "", "    ")
-				So(err, ShouldBeNil)
+				require.Nil(t, err)
 
 				expectedResult := string(rawBytes)
 				result, err := snsNotifier.buildMessageContent(evalContext)
-				So(result, ShouldEqual, expectedResult)
-				So(err, ShouldBeNil)
+				assert.Equal(t, expectedResult, result)
+				require.Nil(t, err)
 			})
 
-			Convey("Valid text message body without tags", func() {
+			t.Run("Valid text message body without tags", func(t *testing.T) {
 				setupJson := `
 					{
 						"topic": "arn:aws:sns:us-east-1:123456789:test",
-						"authProvider": "authTypeDefault",
+						"authProvider": "default",
 						"messageFormat": "text"
 					}`
 
@@ -358,29 +313,29 @@ func TestSNSNotifier(t *testing.T) {
 						{Key: "no-tag-prefix-sample", Value: "don't show this tag"},
 						{Key: "severity", Value: "warning"},
 					},
-				}, &validations.OSSPluginRequestValidator{})
+				}, &validations.OSSPluginRequestValidator{}, nil)
 				evalContext.IsTestRun = true
-				not, err := newSNSNotifier(model)
+				not, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 				snsNotifier := not.(*SNSNotifier)
-				So(err, ShouldBeNil)
-				So(snsNotifier.Name, ShouldEqual, "AWS SNS")
-				So(snsNotifier.Type, ShouldEqual, "sns")
-				So(snsNotifier.SnsTopic, ShouldEqual, "arn:aws:sns:us-east-1:123456789:test")
-				So(snsNotifier.AwsSessionCredentialsInput.AuthType, ShouldEqual, "authTypeDefault")
+				require.Nil(t, err)
+				assert.Equal(t, "AWS SNS", snsNotifier.Name)
+				assert.Equal(t, "sns", snsNotifier.Type)
+				assert.Equal(t, "arn:aws:sns:us-east-1:123456789:test", snsNotifier.SnsTopic)
+				assert.Equal(t, "default", snsNotifier.AWSDatasourceSettings.AuthType.String())
 
 				expectedResult := string("State: " + evalContext.Rule.State + "\n")
 				expectedResult += evalContext.Rule.Message
 
 				result, err := snsNotifier.buildMessageContent(evalContext)
-				So(result, ShouldEqual, expectedResult)
-				So(err, ShouldBeNil)
+				assert.Equal(t, expectedResult, result)
+				require.Nil(t, err)
 			})
 
-			Convey("Valid text message body with tags", func() {
+			t.Run("Valid text message body with tags", func(t *testing.T) {
 				setupJson := `
 					{
 						"topic": "arn:aws:sns:us-east-1:123456789:test",
-						"authProvider": "authTypeDefault",
+						"authProvider": "default",
 						"messageFormat": "text",
 						"includeTags": true
 					}`
@@ -402,15 +357,15 @@ func TestSNSNotifier(t *testing.T) {
 						{Key: "tag-sample-2", Value: "show this tag"},
 						{Key: "severity", Value: "warning"},
 					},
-				}, &validations.OSSPluginRequestValidator{})
+				}, &validations.OSSPluginRequestValidator{}, nil)
 				evalContext.IsTestRun = true
-				not, err := newSNSNotifier(model)
+				not, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 				snsNotifier := not.(*SNSNotifier)
-				So(err, ShouldBeNil)
-				So(snsNotifier.Name, ShouldEqual, "AWS SNS")
-				So(snsNotifier.Type, ShouldEqual, "sns")
-				So(snsNotifier.SnsTopic, ShouldEqual, "arn:aws:sns:us-east-1:123456789:test")
-				So(snsNotifier.AwsSessionCredentialsInput.AuthType, ShouldEqual, "authTypeDefault")
+				require.Nil(t, err)
+				assert.Equal(t, "AWS SNS", snsNotifier.Name)
+				assert.Equal(t, "sns", snsNotifier.Type)
+				assert.Equal(t, "arn:aws:sns:us-east-1:123456789:test", snsNotifier.SnsTopic)
+				assert.Equal(t, "default", snsNotifier.AWSDatasourceSettings.AuthType.String())
 
 				expectedResult := string("state:" + evalContext.Rule.State + "\n")
 				expectedResult += "body:" + evalContext.Rule.Message + "\n"
@@ -419,15 +374,15 @@ func TestSNSNotifier(t *testing.T) {
 				expectedResult += "severity:warning\n"
 
 				result, err := snsNotifier.buildMessageContent(evalContext)
-				So(result, ShouldEqual, expectedResult)
-				So(err, ShouldBeNil)
+				assert.Equal(t, expectedResult, result)
+				require.Nil(t, err)
 			})
 
-			Convey("Unspecified messageFormat backwards compatible", func() {
+			t.Run("Unspecified messageFormat backwards compatible", func(t *testing.T) {
 				setupJson := `
 					{
 						"topic": "arn:aws:sns:us-east-1:123456789:test",
-						"authProvider": "authTypeDefault"
+						"authProvider": "default"
 					}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(setupJson))
@@ -445,22 +400,22 @@ func TestSNSNotifier(t *testing.T) {
 					AlertRuleTags: []*models.Tag{
 						{Key: "severity", Value: "warning"},
 					},
-				}, &validations.OSSPluginRequestValidator{})
+				}, &validations.OSSPluginRequestValidator{}, nil)
 				evalContext.IsTestRun = true
-				not, err := newSNSNotifier(model)
+				not, err := newSNSNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
 				snsNotifier := not.(*SNSNotifier)
-				So(err, ShouldBeNil)
-				So(snsNotifier.Name, ShouldEqual, "AWS SNS")
-				So(snsNotifier.Type, ShouldEqual, "sns")
-				So(snsNotifier.SnsTopic, ShouldEqual, "arn:aws:sns:us-east-1:123456789:test")
-				So(snsNotifier.AwsSessionCredentialsInput.AuthType, ShouldEqual, "authTypeDefault")
+				require.Nil(t, err)
+				assert.Equal(t, "AWS SNS", snsNotifier.Name)
+				assert.Equal(t, "sns", snsNotifier.Type)
+				assert.Equal(t, "arn:aws:sns:us-east-1:123456789:test", snsNotifier.SnsTopic)
+				assert.Equal(t, "default", snsNotifier.AWSDatasourceSettings.AuthType.String())
 
 				expectedResult := string("State: " + evalContext.Rule.State + "\n")
 				expectedResult += evalContext.Rule.Message
 
 				result, err := snsNotifier.buildMessageContent(evalContext)
-				So(result, ShouldEqual, expectedResult)
-				So(err, ShouldBeNil)
+				assert.Equal(t, expectedResult, result)
+				require.Nil(t, err)
 			})
 		})
 	})
