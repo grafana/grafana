@@ -15,12 +15,18 @@ import (
 //   (this shouldn't cause too much load contention issues because the next steps in the pipeline just process at their own pace)
 // * the timestamps are used to mark "last datapoint to query for" and as such, are a configurable amount of seconds in the past
 type Ticker struct {
-	C           chan time.Time
-	clock       clock.Clock
-	last        time.Time
-	interval    time.Duration
-	behindTicks prometheus.Gauge
+	C        chan time.Time
+	clock    clock.Clock
+	last     time.Time
+	interval time.Duration
 }
+
+var behindTicksGauge = promauto.NewGauge(prometheus.GaugeOpts{
+	Namespace: "grafana",
+	Subsystem: "alerting",
+	Name:      "ticker_behind_ticks",
+	Help:      "The number of ticks the ticker is lagging behind",
+})
 
 // NewTicker returns a Ticker that ticks on interval marks (or very shortly after) starting at c.Now(), and never drops ticks. interval should not be negative or zero.
 func NewTicker(c clock.Clock, interval time.Duration, registerer prometheus.Registerer) *Ticker {
@@ -33,12 +39,6 @@ func NewTicker(c clock.Clock, interval time.Duration, registerer prometheus.Regi
 		clock:    c,
 		last:     c.Now(),
 		interval: interval,
-		behindTicks: promauto.With(registerer).NewGauge(prometheus.GaugeOpts{
-			Namespace: "grafana",
-			Subsystem: "alerting",
-			Name:      "ticker_behind_ticks",
-			Help:      "The number of ticks the ticker is lagging behind",
-		}),
 	}
 	go t.run()
 	return t
@@ -48,7 +48,7 @@ func (t *Ticker) run() {
 	for {
 		next := t.last.Add(t.interval)  // calculate the time of the next tick
 		diff := t.clock.Now().Sub(next) // calculate the difference between the current time and the next tick
-		t.behindTicks.Set(float64(diff.Nanoseconds() / t.interval.Nanoseconds()))
+		behindTicksGauge.Set(float64(diff.Nanoseconds() / t.interval.Nanoseconds()))
 		// if difference is not negative, then it should tick
 		if diff >= 0 {
 			t.C <- next
