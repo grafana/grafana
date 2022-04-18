@@ -51,6 +51,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -247,6 +248,7 @@ var wireBasicSet = wire.NewSet(
 	cmreg.ProvideRegistry,
 	cuectx.ProvideCUEContext,
 	cuectx.ProvideThemaLibrary,
+	grpcserver.ProvideService,
 )
 
 var wireSet = wire.NewSet(
