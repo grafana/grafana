@@ -1178,7 +1178,10 @@
         ],
         "responses": {
           "202": {
-            "$ref": "#/responses/Accepted"
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
           },
           "400": {
             "description": "ValidationError",
@@ -1208,7 +1211,10 @@
         ],
         "responses": {
           "202": {
-            "$ref": "#/responses/Accepted"
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
           },
           "400": {
             "description": "ValidationError",
@@ -1229,9 +1235,21 @@
         ],
         "summary": "Delete a contact point.",
         "operationId": "RouteDeleteContactpoints",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "ContactPointUID should be the contact point UID identifier",
+            "name": "ID",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "202": {
-            "$ref": "#/responses/Accepted"
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
           },
           "400": {
             "description": "ValidationError",
@@ -2487,6 +2505,7 @@
           "x-go-name": "DisableResolveMessage"
         },
         "name": {
+          "description": "Name is used as grouping key in the UI. Contact points with the\nsame name will be grouped in the UI.",
           "type": "string",
           "x-go-name": "Name"
         },
@@ -2502,6 +2521,7 @@
           "x-go-name": "Type"
         },
         "uid": {
+          "description": "UID is the unique identifier of the contact point. This will be\nautomatically set be the Grafana.",
           "type": "string",
           "x-go-name": "UID"
         }
@@ -3886,6 +3906,10 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
+    "Provenance": {
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
+    },
     "PushoverConfig": {
       "type": "object",
       "properties": {
@@ -4087,6 +4111,9 @@
         },
         "object_matchers": {
           "$ref": "#/definitions/ObjectMatchers"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "receiver": {
           "type": "string",
@@ -5013,11 +5040,12 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
       },
+      "x-go-name": "AlertGroups",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/alertGroups"
     },
     "alertStatus": {
@@ -5138,6 +5166,7 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -5197,16 +5226,15 @@
           "x-go-name": "UpdatedAt"
         }
       },
-      "x-go-name": "GettableAlert",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
       },
+      "x-go-name": "GettableAlerts",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
@@ -5400,6 +5428,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -5440,11 +5469,10 @@
           "x-go-name": "StartsAt"
         }
       },
-      "x-go-name": "PostableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "name"
@@ -5456,8 +5484,6 @@
           "x-go-name": "Name"
         }
       },
-      "x-go-name": "Receiver",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/receiver"
     },
     "silence": {

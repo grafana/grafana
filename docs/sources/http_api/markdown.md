@@ -233,22 +233,25 @@ If you are running Grafana Enterprise and have Fine-grained access control enabl
 
 If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.
 
-| Method | URI                                                             | Name                                                             | Summary                                 |
-| ------ | --------------------------------------------------------------- | ---------------------------------------------------------------- | --------------------------------------- |
-| POST   | /api/datasources                                                | [addDatasource](#add-datasource)                                 | Create a data source.                   |
-| DELETE | /api/datasources/proxy/{datasource_id}/{datasource_proxy_route} | [datasourceProxyDELETEcalls](#datasource-proxy-d-e-l-e-t-ecalls) | Data source proxy DELETE calls.         |
-| GET    | /api/datasources/proxy/{datasource_id}/{datasource_proxy_route} | [datasourceProxyGETcalls](#datasource-proxy-g-e-tcalls)          | Data source proxy GET calls.            |
-| POST   | /api/datasources/proxy/{datasource_id}/{datasource_proxy_route} | [datasourceProxyPOSTcalls](#datasource-proxy-p-o-s-tcalls)       | Data source proxy POST calls.           |
-| DELETE | /api/datasources/{datasource_id}                                | [deleteDatasourceByID](#delete-datasource-by-id)                 | Delete an existing data source by id.   |
-| DELETE | /api/datasources/name/{datasource_name}                         | [deleteDatasourceByName](#delete-datasource-by-name)             | Delete an existing data source by name. |
-| DELETE | /api/datasources/uid/{datasource_uid}                           | [deleteDatasourceByUID](#delete-datasource-by-uid)               | Delete an existing data source by UID.  |
-| GET    | /api/datasources/{datasource_id}                                | [getDatasourceByID](#get-datasource-by-id)                       | Get a single data source by Id.         |
-| GET    | /api/datasources/name/{datasource_name}                         | [getDatasourceByName](#get-datasource-by-name)                   | Get a single data source by Name.       |
-| GET    | /api/datasources/uid/{datasource_uid}                           | [getDatasourceByUID](#get-datasource-by-uid)                     | Get a single data source by UID.        |
-| GET    | /api/datasources/id/{datasource_name}                           | [getDatasourceIdByName](#get-datasource-id-by-name)              | Get data source Id by Name.             |
-| GET    | /api/datasources                                                | [getDatasources](#get-datasources)                               | Get all data sources.                   |
-| POST   | /api/tsdb/query                                                 | [queryDatasource](#query-datasource)                             | Query metrics.                          |
-| PUT    | /api/datasources/{datasource_id}                                | [updateDatasource](#update-datasource)                           | Update an existing data source.         |
+| Method | URI                                                                  | Name                                                                          | Summary                                 |
+| ------ | -------------------------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------- |
+| POST   | /api/datasources                                                     | [addDatasource](#add-datasource)                                              | Create a data source.                   |
+| DELETE | /api/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route} | [datasourceProxyDELETEByUIDcalls](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls) | Data source proxy DELETE calls.         |
+| DELETE | /api/datasources/proxy/{datasource_id}/{datasource_proxy_route}      | [datasourceProxyDELETEcalls](#datasource-proxy-d-e-l-e-t-ecalls)              | Data source proxy DELETE calls.         |
+| GET    | /api/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route} | [datasourceProxyGETByUIDcalls](#datasource-proxy-g-e-t-by-ui-dcalls)          | Data source proxy GET calls.            |
+| GET    | /api/datasources/proxy/{datasource_id}/{datasource_proxy_route}      | [datasourceProxyGETcalls](#datasource-proxy-g-e-tcalls)                       | Data source proxy GET calls.            |
+| POST   | /api/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route} | [datasourceProxyPOSTByUIDcalls](#datasource-proxy-p-o-s-t-by-ui-dcalls)       | Data source proxy POST calls.           |
+| POST   | /api/datasources/proxy/{datasource_id}/{datasource_proxy_route}      | [datasourceProxyPOSTcalls](#datasource-proxy-p-o-s-tcalls)                    | Data source proxy POST calls.           |
+| DELETE | /api/datasources/{datasource_id}                                     | [deleteDatasourceByID](#delete-datasource-by-id)                              | Delete an existing data source by id.   |
+| DELETE | /api/datasources/name/{datasource_name}                              | [deleteDatasourceByName](#delete-datasource-by-name)                          | Delete an existing data source by name. |
+| DELETE | /api/datasources/uid/{datasource_uid}                                | [deleteDatasourceByUID](#delete-datasource-by-uid)                            | Delete an existing data source by UID.  |
+| GET    | /api/datasources/{datasource_id}                                     | [getDatasourceByID](#get-datasource-by-id)                                    | Get a single data source by Id.         |
+| GET    | /api/datasources/name/{datasource_name}                              | [getDatasourceByName](#get-datasource-by-name)                                | Get a single data source by Name.       |
+| GET    | /api/datasources/uid/{datasource_uid}                                | [getDatasourceByUID](#get-datasource-by-uid)                                  | Get a single data source by UID.        |
+| GET    | /api/datasources/id/{datasource_name}                                | [getDatasourceIdByName](#get-datasource-id-by-name)                           | Get data source Id by Name.             |
+| GET    | /api/datasources                                                     | [getDatasources](#get-datasources)                                            | Get all data sources.                   |
+| POST   | /api/tsdb/query                                                      | [queryDatasource](#query-datasource)                                          | Query metrics.                          |
+| PUT    | /api/datasources/{datasource_id}                                     | [updateDatasource](#update-datasource)                                        | Update an existing data source.         |
 
 ### ds
 
@@ -403,10 +406,14 @@ Grafana Alerting Prometheus-compatible endpoints
 
 ### provisioning
 
-| Method | URI                        | Name                                           | Summary                            |
-| ------ | -------------------------- | ---------------------------------------------- | ---------------------------------- |
-| GET    | /api/provisioning/policies | [RouteGetPolicyTree](#route-get-policy-tree)   | Get the notification policy tree.  |
-| POST   | /api/provisioning/policies | [RoutePostPolicyTree](#route-post-policy-tree) | Sets the notification policy tree. |
+| Method | URI                                   | Name                                                    | Summary                            |
+| ------ | ------------------------------------- | ------------------------------------------------------- | ---------------------------------- |
+| DELETE | /api/provisioning/contact-points/{ID} | [RouteDeleteContactpoints](#route-delete-contactpoints) | Delete a contact point.            |
+| GET    | /api/provisioning/contact-points      | [RouteGetContactpoints](#route-get-contactpoints)       | Get all the contact points.        |
+| GET    | /api/provisioning/policies            | [RouteGetPolicyTree](#route-get-policy-tree)            | Get the notification policy tree.  |
+| POST   | /api/provisioning/contact-points      | [RoutePostContactpoints](#route-post-contactpoints)     | Create a contact point.            |
+| POST   | /api/provisioning/policies            | [RoutePostPolicyTree](#route-post-policy-tree)          | Sets the notification policy tree. |
+| PUT    | /api/provisioning/contact-points      | [RoutePutContactpoints](#route-put-contactpoints)       | Update an existing contact point.  |
 
 ### recording_rules
 
@@ -678,6 +685,47 @@ Status: OK
 Status: Bad Request
 
 ###### <span id="route-delete-alerting-config-400-schema"></span> Schema
+
+[ValidationError](#validation-error)
+
+### <span id="route-delete-contactpoints"></span> Delete a contact point. (_RouteDeleteContactpoints_)
+
+```
+DELETE /api/provisioning/contact-points/{ID}
+```
+
+#### Consumes
+
+- application/json
+
+#### Parameters
+
+| Name | Source | Type   | Go type  | Separator | Required | Default | Description                                                |
+| ---- | ------ | ------ | -------- | --------- | :------: | ------- | ---------------------------------------------------------- |
+| ID   | `path` | string | `string` |           |    ✓     |         | ContactPointUID should be the contact point UID identifier |
+
+#### All responses
+
+| Code                                   | Status      | Description     | Has headers | Schema                                           |
+| -------------------------------------- | ----------- | --------------- | :---------: | ------------------------------------------------ |
+| [202](#route-delete-contactpoints-202) | Accepted    | Ack             |             | [schema](#route-delete-contactpoints-202-schema) |
+| [400](#route-delete-contactpoints-400) | Bad Request | ValidationError |             | [schema](#route-delete-contactpoints-400-schema) |
+
+#### Responses
+
+##### <span id="route-delete-contactpoints-202"></span> 202 - Ack
+
+Status: Accepted
+
+###### <span id="route-delete-contactpoints-202-schema"></span> Schema
+
+[Ack](#ack)
+
+##### <span id="route-delete-contactpoints-400"></span> 400 - ValidationError
+
+Status: Bad Request
+
+###### <span id="route-delete-contactpoints-400-schema"></span> Schema
 
 [ValidationError](#validation-error)
 
@@ -1211,6 +1259,37 @@ Status: OK
 ###### <span id="route-get-alertmanagers-200-schema"></span> Schema
 
 [GettableAlertmanagers](#gettable-alertmanagers)
+
+### <span id="route-get-contactpoints"></span> Get all the contact points. (_RouteGetContactpoints_)
+
+```
+GET /api/provisioning/contact-points
+```
+
+#### All responses
+
+| Code                                | Status      | Description     | Has headers | Schema                                        |
+| ----------------------------------- | ----------- | --------------- | :---------: | --------------------------------------------- |
+| [200](#route-get-contactpoints-200) | OK          | Route           |             | [schema](#route-get-contactpoints-200-schema) |
+| [400](#route-get-contactpoints-400) | Bad Request | ValidationError |             | [schema](#route-get-contactpoints-400-schema) |
+
+#### Responses
+
+##### <span id="route-get-contactpoints-200"></span> 200 - Route
+
+Status: OK
+
+###### <span id="route-get-contactpoints-200-schema"></span> Schema
+
+[Route](#route)
+
+##### <span id="route-get-contactpoints-400"></span> 400 - ValidationError
+
+Status: Bad Request
+
+###### <span id="route-get-contactpoints-400-schema"></span> Schema
+
+[ValidationError](#validation-error)
 
 ### <span id="route-get-grafana-a-m-alert-groups"></span> RouteGetGrafanaAMAlertGroups (_RouteGetGrafanaAMAlertGroups_)
 
@@ -1980,6 +2059,47 @@ Status: Bad Request
 
 [ValidationError](#validation-error)
 
+### <span id="route-post-contactpoints"></span> Create a contact point. (_RoutePostContactpoints_)
+
+```
+POST /api/provisioning/contact-points
+```
+
+#### Consumes
+
+- application/json
+
+#### Parameters
+
+| Name | Source | Type                                            | Go type                       | Separator | Required | Default | Description |
+| ---- | ------ | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
+| Body | `body` | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |             |
+
+#### All responses
+
+| Code                                 | Status      | Description     | Has headers | Schema                                         |
+| ------------------------------------ | ----------- | --------------- | :---------: | ---------------------------------------------- |
+| [202](#route-post-contactpoints-202) | Accepted    | Ack             |             | [schema](#route-post-contactpoints-202-schema) |
+| [400](#route-post-contactpoints-400) | Bad Request | ValidationError |             | [schema](#route-post-contactpoints-400-schema) |
+
+#### Responses
+
+##### <span id="route-post-contactpoints-202"></span> 202 - Ack
+
+Status: Accepted
+
+###### <span id="route-post-contactpoints-202-schema"></span> Schema
+
+[Ack](#ack)
+
+##### <span id="route-post-contactpoints-400"></span> 400 - ValidationError
+
+Status: Bad Request
+
+###### <span id="route-post-contactpoints-400-schema"></span> Schema
+
+[ValidationError](#validation-error)
+
 ### <span id="route-post-grafana-a-m-alerts"></span> RoutePostGrafanaAMAlerts (_RoutePostGrafanaAMAlerts_)
 
 ```
@@ -2378,6 +2498,47 @@ Status: Conflict
 
 [AlertManagerNotReady](#alert-manager-not-ready)
 
+### <span id="route-put-contactpoints"></span> Update an existing contact point. (_RoutePutContactpoints_)
+
+```
+PUT /api/provisioning/contact-points
+```
+
+#### Consumes
+
+- application/json
+
+#### Parameters
+
+| Name | Source | Type                                            | Go type                       | Separator | Required | Default | Description |
+| ---- | ------ | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
+| Body | `body` | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |             |
+
+#### All responses
+
+| Code                                | Status      | Description     | Has headers | Schema                                        |
+| ----------------------------------- | ----------- | --------------- | :---------: | --------------------------------------------- |
+| [202](#route-put-contactpoints-202) | Accepted    | Ack             |             | [schema](#route-put-contactpoints-202-schema) |
+| [400](#route-put-contactpoints-400) | Bad Request | ValidationError |             | [schema](#route-put-contactpoints-400-schema) |
+
+#### Responses
+
+##### <span id="route-put-contactpoints-202"></span> 202 - Ack
+
+Status: Accepted
+
+###### <span id="route-put-contactpoints-202-schema"></span> Schema
+
+[Ack](#ack)
+
+##### <span id="route-put-contactpoints-400"></span> 400 - ValidationError
+
+Status: Bad Request
+
+###### <span id="route-put-contactpoints-400-schema"></span> Schema
+
+[ValidationError](#validation-error)
+
 ### <span id="route-test-rule-config"></span> RouteTestRuleConfig (_RouteTestRuleConfig_)
 
 ```
@@ -2666,10 +2827,10 @@ Status: Internal Server Error
 
 | Name       | Type                       | Go type             | Required | Default | Description                               | Example             |
 | ---------- | -------------------------- | ------------------- | :------: | ------- | ----------------------------------------- | ------------------- |
-| ID         | int64 (formatted integer)  | `int64`             |    ✓     |         | ID Identifier of the new data source.     | `65`                |
-| Message    | string                     | `string`            |    ✓     |         | Message Message of the deleted dashboard. | `Data source added` |
-| Name       | string                     | `string`            |    ✓     |         | Name of the new data source.              | `My Data source`    |
 | datasource | [DataSource](#data-source) | `models.DataSource` |    ✓     |         |                                           |                     |
+| id         | int64 (formatted integer)  | `int64`             |    ✓     |         | ID Identifier of the new data source.     | `65`                |
+| message    | string                     | `string`            |    ✓     |         | Message Message of the deleted dashboard. | `Data source added` |
+| name       | string                     | `string`            |    ✓     |         | Name of the new data source.              | `My Data source`    |
 
 ### <span id="add-invite"></span> Add invite. (_addInvite_)
 
@@ -2750,8 +2911,8 @@ Status: Internal Server Error
 
 | Name    | Type                      | Go type  | Required | Default | Description                        | Example             |
 | ------- | ------------------------- | -------- | :------: | ------- | ---------------------------------- | ------------------- |
-| Message | string                    | `string` |    ✓     |         | Message Message of the added user. | `Data source added` |
-| UsedID  | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the added user.   | `65`                |
+| id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the added user.   | `65`                |
+| message | string                    | `string` |    ✓     |         | Message Message of the added user. | `Data source added` |
 
 ### <span id="add-org-user"></span> Add a new user to the current organization (_addOrgUser_)
 
@@ -3655,14 +3816,14 @@ Status: Internal Server Error
 
 **Properties**
 
-| Name     | Type   | Go type  | Required | Default | Description                | Example |
-| -------- | ------ | -------- | :------: | ------- | -------------------------- | ------- |
-| DiffType | string | `string` |          |         | The type of diff to return |
+| Name     | Type                                          | Go type                      | Required | Default | Description                | Example |
+| -------- | --------------------------------------------- | ---------------------------- | :------: | ------- | -------------------------- | ------- |
+| base     | [CalculateDiffTarget](#calculate-diff-target) | `models.CalculateDiffTarget` |          |         |                            |         |
+| diffType | string                                        | `string`                     |          |         | The type of diff to return |
 
 Description:
 `basic`
 `json` | |
-| base | [CalculateDiffTarget](#calculate-diff-target)| `models.CalculateDiffTarget` | | | | |
 | new | [CalculateDiffTarget](#calculate-diff-target)| `models.CalculateDiffTarget` | | | | |
 
 ### <span id="change-user-password"></span> Change Password. (_changeUserPassword_)
@@ -3792,8 +3953,8 @@ Status: Internal Server Error
 
 | Name       | Type                      | Go type  | Required | Default | Description | Example |
 | ---------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| HelpFlags1 | int64 (formatted integer) | `int64`  |          |         |             |         |
-| Message    | string                    | `string` |          |         |             |         |
+| helpFlags1 | int64 (formatted integer) | `int64`  |          |         |             |         |
+| message    | string                    | `string` |          |         |             |         |
 
 ### <span id="create-alert-notification-channel"></span> Create notification channel. (_createAlertNotificationChannel_)
 
@@ -3937,8 +4098,8 @@ Status: Internal Server Error
 
 | Name    | Type                      | Go type  | Required | Default | Description                                | Example |
 | ------- | ------------------------- | -------- | :------: | ------- | ------------------------------------------ | ------- |
-| ID      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the created annotation.   | `65`    |
-| Message | string                    | `string` |    ✓     |         | Message Message of the created annotation. |         |
+| id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the created annotation.   | `65`    |
+| message | string                    | `string` |    ✓     |         | Message Message of the created annotation. |         |
 
 ### <span id="create-folder"></span> Create folder. (_createFolder_)
 
@@ -4087,8 +4248,8 @@ Status: Internal Server Error
 
 | Name    | Type                      | Go type  | Required | Default | Description                                | Example |
 | ------- | ------------------------- | -------- | :------: | ------- | ------------------------------------------ | ------- |
-| ID      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the created annotation.   | `65`    |
-| Message | string                    | `string` |    ✓     |         | Message Message of the created annotation. |         |
+| id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the created annotation.   | `65`    |
+| message | string                    | `string` |    ✓     |         | Message Message of the created annotation. |         |
 
 ### <span id="create-library-element"></span> Create library element. (_createLibraryElement_)
 
@@ -4239,8 +4400,8 @@ Status: Internal Server Error
 
 | Name    | Type                      | Go type  | Required | Default | Description                         | Example             |
 | ------- | ------------------------- | -------- | :------: | ------- | ----------------------------------- | ------------------- |
-| Message | string                    | `string` |    ✓     |         | Message Message of the created org. | `Data source added` |
-| OrgID   | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the created org.   | `65`                |
+| message | string                    | `string` |    ✓     |         | Message Message of the created org. | `Data source added` |
+| orgId   | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the created org.   | `65`                |
 
 ### <span id="create-recording-rule"></span> Create a new recording rule. (_createRecordingRule_)
 
@@ -4581,11 +4742,11 @@ Status: Internal Server Error
 
 | Name      | Type                      | Go type  | Required | Default | Description                                                                                                            | Example |
 | --------- | ------------------------- | -------- | :------: | ------- | ---------------------------------------------------------------------------------------------------------------------- | ------- |
-| DeleteKey | string                    | `string` |          |         | Unique key used to delete the snapshot. It is different from the key so that only the creator can delete the snapshot. |         |
-| DeleteUrl | string                    | `string` |          |         |                                                                                                                        |         |
-| ID        | int64 (formatted integer) | `int64`  |          |         | Snapshot id                                                                                                            |         |
-| Key       | string                    | `string` |          |         | Unique key                                                                                                             |         |
-| URL       | string                    | `string` |          |         |                                                                                                                        |         |
+| deleteKey | string                    | `string` |          |         | Unique key used to delete the snapshot. It is different from the key so that only the creator can delete the snapshot. |         |
+| deleteUrl | string                    | `string` |          |         |                                                                                                                        |         |
+| id        | int64 (formatted integer) | `int64`  |          |         | Snapshot id                                                                                                            |         |
+| key       | string                    | `string` |          |         | Unique key                                                                                                             |         |
+| url       | string                    | `string` |          |         |                                                                                                                        |         |
 
 ### <span id="create-team"></span> Add Team. (_createTeam_)
 
@@ -4659,8 +4820,8 @@ Status: Internal Server Error
 
 | Name    | Type                      | Go type  | Required | Default | Description | Example |
 | ------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| Message | string                    | `string` |          |         |             |         |
-| TeamId  | int64 (formatted integer) | `int64`  |          |         |             |         |
+| message | string                    | `string` |          |         |             |         |
+| teamId  | int64 (formatted integer) | `int64`  |          |         |             |         |
 
 ### <span id="create-user"></span> Create new user. (_createUser_)
 
@@ -4742,6 +4903,80 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
+### <span id="datasource-proxy-d-e-l-e-t-e-by-ui-dcalls"></span> Data source proxy DELETE calls. (_datasourceProxyDELETEByUIDcalls_)
+
+```
+DELETE /api/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route}
+```
+
+Proxies all calls to the actual data source.
+
+#### Parameters
+
+| Name                   | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---------------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| datasource_proxy_route | `path` | string | `string` |           |    ✓     |         |             |
+| datasource_uid         | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                                  | Status                | Description                                                                                                 | Has headers | Schema                                                          |
+| ----------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------------------- |
+| [202](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-202) | Accepted              |                                                                                                             |             | [schema](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-202-schema) |
+| [400](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-400-schema) |
+| [401](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-401-schema) |
+| [403](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-403-schema) |
+| [404](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-404-schema) |
+| [500](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-500-schema) |
+
+#### Responses
+
+##### <span id="datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-202"></span> 202
+
+Status: Accepted
+
+###### <span id="datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-202-schema"></span> Schema
+
+##### <span id="datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="datasource-proxy-d-e-l-e-t-e-by-ui-dcalls-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
 ### <span id="datasource-proxy-d-e-l-e-t-ecalls"></span> Data source proxy DELETE calls. (_datasourceProxyDELETEcalls_)
 
 ```
@@ -4816,6 +5051,80 @@ Status: Internal Server Error
 
 [ErrorResponseBody](#error-response-body)
 
+### <span id="datasource-proxy-g-e-t-by-ui-dcalls"></span> Data source proxy GET calls. (_datasourceProxyGETByUIDcalls_)
+
+```
+GET /api/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route}
+```
+
+Proxies all calls to the actual data source.
+
+#### Parameters
+
+| Name                   | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---------------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| datasource_proxy_route | `path` | string | `string` |           |    ✓     |         |             |
+| datasource_uid         | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                            | Status                | Description                                                                                                 | Has headers | Schema                                                    |
+| ----------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | --------------------------------------------------------- |
+| [200](#datasource-proxy-g-e-t-by-ui-dcalls-200) | OK                    |                                                                                                             |             | [schema](#datasource-proxy-g-e-t-by-ui-dcalls-200-schema) |
+| [400](#datasource-proxy-g-e-t-by-ui-dcalls-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#datasource-proxy-g-e-t-by-ui-dcalls-400-schema) |
+| [401](#datasource-proxy-g-e-t-by-ui-dcalls-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#datasource-proxy-g-e-t-by-ui-dcalls-401-schema) |
+| [403](#datasource-proxy-g-e-t-by-ui-dcalls-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#datasource-proxy-g-e-t-by-ui-dcalls-403-schema) |
+| [404](#datasource-proxy-g-e-t-by-ui-dcalls-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#datasource-proxy-g-e-t-by-ui-dcalls-404-schema) |
+| [500](#datasource-proxy-g-e-t-by-ui-dcalls-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#datasource-proxy-g-e-t-by-ui-dcalls-500-schema) |
+
+#### Responses
+
+##### <span id="datasource-proxy-g-e-t-by-ui-dcalls-200"></span> 200
+
+Status: OK
+
+###### <span id="datasource-proxy-g-e-t-by-ui-dcalls-200-schema"></span> Schema
+
+##### <span id="datasource-proxy-g-e-t-by-ui-dcalls-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="datasource-proxy-g-e-t-by-ui-dcalls-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="datasource-proxy-g-e-t-by-ui-dcalls-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="datasource-proxy-g-e-t-by-ui-dcalls-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="datasource-proxy-g-e-t-by-ui-dcalls-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="datasource-proxy-g-e-t-by-ui-dcalls-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="datasource-proxy-g-e-t-by-ui-dcalls-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="datasource-proxy-g-e-t-by-ui-dcalls-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="datasource-proxy-g-e-t-by-ui-dcalls-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="datasource-proxy-g-e-t-by-ui-dcalls-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
 ### <span id="datasource-proxy-g-e-tcalls"></span> Data source proxy GET calls. (_datasourceProxyGETcalls_)
 
 ```
@@ -4887,6 +5196,87 @@ Status: Not Found
 Status: Internal Server Error
 
 ###### <span id="datasource-proxy-g-e-tcalls-500-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls"></span> Data source proxy POST calls. (_datasourceProxyPOSTByUIDcalls_)
+
+```
+POST /api/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route}
+```
+
+Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined
+
+#### Parameters
+
+| Name                   | Source | Type   | Go type  | Separator | Required | Default | Description |
+| ---------------------- | ------ | ------ | -------- | --------- | :------: | ------- | ----------- |
+| datasource_proxy_route | `path` | string | `string` |           |    ✓     |         |             |
+| datasource_uid         | `path` | string | `string` |           |    ✓     |         |             |
+
+#### All responses
+
+| Code                                              | Status                | Description                                                                                                 | Has headers | Schema                                                      |
+| ------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- | :---------: | ----------------------------------------------------------- |
+| [201](#datasource-proxy-p-o-s-t-by-ui-dcalls-201) | Created               |                                                                                                             |             | [schema](#datasource-proxy-p-o-s-t-by-ui-dcalls-201-schema) |
+| [202](#datasource-proxy-p-o-s-t-by-ui-dcalls-202) | Accepted              |                                                                                                             |             | [schema](#datasource-proxy-p-o-s-t-by-ui-dcalls-202-schema) |
+| [400](#datasource-proxy-p-o-s-t-by-ui-dcalls-400) | Bad Request           | BadRequestError is returned when the request is invalid and it cannot be processed.                         |             | [schema](#datasource-proxy-p-o-s-t-by-ui-dcalls-400-schema) |
+| [401](#datasource-proxy-p-o-s-t-by-ui-dcalls-401) | Unauthorized          | UnauthorizedError is returned when the request is not authenticated.                                        |             | [schema](#datasource-proxy-p-o-s-t-by-ui-dcalls-401-schema) |
+| [403](#datasource-proxy-p-o-s-t-by-ui-dcalls-403) | Forbidden             | ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource. |             | [schema](#datasource-proxy-p-o-s-t-by-ui-dcalls-403-schema) |
+| [404](#datasource-proxy-p-o-s-t-by-ui-dcalls-404) | Not Found             | NotFoundError is returned when the requested resource was not found.                                        |             | [schema](#datasource-proxy-p-o-s-t-by-ui-dcalls-404-schema) |
+| [500](#datasource-proxy-p-o-s-t-by-ui-dcalls-500) | Internal Server Error | InternalServerError is a general error indicating something went wrong internally.                          |             | [schema](#datasource-proxy-p-o-s-t-by-ui-dcalls-500-schema) |
+
+#### Responses
+
+##### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-201"></span> 201
+
+Status: Created
+
+###### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-201-schema"></span> Schema
+
+##### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-202"></span> 202
+
+Status: Accepted
+
+###### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-202-schema"></span> Schema
+
+##### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-400"></span> 400 - BadRequestError is returned when the request is invalid and it cannot be processed.
+
+Status: Bad Request
+
+###### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-400-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
+
+Status: Unauthorized
+
+###### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-401-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-403"></span> 403 - ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
+
+Status: Forbidden
+
+###### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-403-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-404"></span> 404 - NotFoundError is returned when the requested resource was not found.
+
+Status: Not Found
+
+###### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-404-schema"></span> Schema
+
+[ErrorResponseBody](#error-response-body)
+
+##### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-500"></span> 500 - InternalServerError is a general error indicating something went wrong internally.
+
+Status: Internal Server Error
+
+###### <span id="datasource-proxy-p-o-s-t-by-ui-dcalls-500-schema"></span> Schema
 
 [ErrorResponseBody](#error-response-body)
 
@@ -5176,8 +5566,8 @@ Status: Internal Server Error
 
 | Name    | Type                      | Go type  | Required | Default | Description                                           | Example |
 | ------- | ------------------------- | -------- | :------: | ------- | ----------------------------------------------------- | ------- |
-| ID      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the deleted notification channel.    | `65`    |
-| Message | string                    | `string` |    ✓     |         | Message Message of the deleted notificatiton channel. |         |
+| id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the deleted notification channel.    | `65`    |
+| message | string                    | `string` |    ✓     |         | Message Message of the deleted notificatiton channel. |         |
 
 ### <span id="delete-annotation"></span> Delete Annotation By ID. (_deleteAnnotation_)
 
@@ -5369,9 +5759,9 @@ Status: Internal Server Error
 
 | Name    | Type                      | Go type  | Required | Default | Description                               | Example                          |
 | ------- | ------------------------- | -------- | :------: | ------- | ----------------------------------------- | -------------------------------- |
-| ID      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the deleted dashboard.   | `65`                             |
-| Message | string                    | `string` |    ✓     |         | Message Message of the deleted dashboard. | `Dashboard My Dashboard deleted` |
-| Title   | string                    | `string` |    ✓     |         | Title Title of the deleted dashboard.     | `My Dashboard`                   |
+| id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the deleted dashboard.   | `65`                             |
+| message | string                    | `string` |    ✓     |         | Message Message of the deleted dashboard. | `Dashboard My Dashboard deleted` |
+| title   | string                    | `string` |    ✓     |         | Title Title of the deleted dashboard.     | `My Dashboard`                   |
 
 ### <span id="delete-datasource-by-id"></span> Delete an existing data source by id. (_deleteDatasourceByID_)
 
@@ -5515,8 +5905,8 @@ Status: Internal Server Error
 
 | Name    | Type                      | Go type  | Required | Default | Description                               | Example                          |
 | ------- | ------------------------- | -------- | :------: | ------- | ----------------------------------------- | -------------------------------- |
-| ID      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the deleted data source. | `65`                             |
-| Message | string                    | `string` |    ✓     |         | Message Message of the deleted dashboard. | `Dashboard My Dashboard deleted` |
+| id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the deleted data source. | `65`                             |
+| message | string                    | `string` |    ✓     |         | Message Message of the deleted dashboard. | `Dashboard My Dashboard deleted` |
 
 ### <span id="delete-datasource-by-uid"></span> Delete an existing data source by UID. (_deleteDatasourceByUID_)
 
@@ -5670,9 +6060,9 @@ Status: Internal Server Error
 
 | Name    | Type                      | Go type  | Required | Default | Description                            | Example                    |
 | ------- | ------------------------- | -------- | :------: | ------- | -------------------------------------- | -------------------------- |
-| ID      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the deleted folder.   | `65`                       |
-| Message | string                    | `string` |    ✓     |         | Message Message of the deleted folder. | `Folder My Folder deleted` |
-| Title   | string                    | `string` |    ✓     |         | Title of the deleted folder.           | `My Folder`                |
+| id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the deleted folder.   | `65`                       |
+| message | string                    | `string` |    ✓     |         | Message Message of the deleted folder. | `Folder My Folder deleted` |
+| title   | string                    | `string` |    ✓     |         | Title of the deleted folder.           | `My Folder`                |
 
 ### <span id="delete-library-element-by-uid"></span> Delete library element. (_deleteLibraryElementByUID_)
 
@@ -6502,10 +6892,10 @@ Status: Internal Server Error
 
 | Name       | Type                       | Go type             | Required | Default | Description                               | Example             |
 | ---------- | -------------------------- | ------------------- | :------: | ------- | ----------------------------------------- | ------------------- |
-| ID         | int64 (formatted integer)  | `int64`             |    ✓     |         | ID Identifier of the new data source.     | `65`                |
-| Message    | string                     | `string`            |    ✓     |         | Message Message of the deleted dashboard. | `Data source added` |
-| Name       | string                     | `string`            |    ✓     |         | Name of the new data source.              | `My Data source`    |
 | datasource | [DataSource](#data-source) | `models.DataSource` |    ✓     |         |                                           |                     |
+| id         | int64 (formatted integer)  | `int64`             |    ✓     |         | ID Identifier of the new data source.     | `65`                |
+| message    | string                     | `string`            |    ✓     |         | Message Message of the deleted dashboard. | `Data source added` |
+| name       | string                     | `string`            |    ✓     |         | Name of the new data source.              | `My Data source`    |
 
 ### <span id="disable-user"></span> Disable user. (_disableUser_)
 
@@ -6664,10 +7054,10 @@ Status: Internal Server Error
 
 | Name       | Type                       | Go type             | Required | Default | Description                               | Example             |
 | ---------- | -------------------------- | ------------------- | :------: | ------- | ----------------------------------------- | ------------------- |
-| ID         | int64 (formatted integer)  | `int64`             |    ✓     |         | ID Identifier of the new data source.     | `65`                |
-| Message    | string                     | `string`            |    ✓     |         | Message Message of the deleted dashboard. | `Data source added` |
-| Name       | string                     | `string`            |    ✓     |         | Name of the new data source.              | `My Data source`    |
 | datasource | [DataSource](#data-source) | `models.DataSource` |    ✓     |         |                                           |                     |
+| id         | int64 (formatted integer)  | `int64`             |    ✓     |         | ID Identifier of the new data source.     | `65`                |
+| message    | string                     | `string`            |    ✓     |         | Message Message of the deleted dashboard. | `Data source added` |
+| name       | string                     | `string`            |    ✓     |         | Name of the new data source.              | `My Data source`    |
 
 ### <span id="enable-user"></span> Enable user. (_enableUser_)
 
@@ -8056,7 +8446,7 @@ Status: Internal Server Error
 
 | Name | Type                      | Go type | Required | Default | Description                       | Example |
 | ---- | ------------------------- | ------- | :------: | ------- | --------------------------------- | ------- |
-| ID   | int64 (formatted integer) | `int64` |    ✓     |         | ID Identifier of the data source. | `65`    |
+| id   | int64 (formatted integer) | `int64` |    ✓     |         | ID Identifier of the data source. | `65`    |
 
 ### <span id="get-datasources"></span> Get all data sources. (_getDatasources_)
 
@@ -8382,7 +8772,7 @@ Status: OK
 
 ###### <span id="get-home-dashboard-200-schema"></span> Schema
 
-[GetHomeDashboardResponseBody](#get-home-dashboard-response-body)
+[GetHomeDashboardResponse](#get-home-dashboard-response)
 
 ##### <span id="get-home-dashboard-401"></span> 401 - UnauthorizedError is returned when the request is not authenticated.
 
@@ -10031,9 +10421,9 @@ Status: Unauthorized
 
 | Name                 | Type    | Go type  | Required | Default | Description | Example |
 | -------------------- | ------- | -------- | :------: | ------- | ----------- | ------- |
-| ExternalEnabled      | boolean | `bool`   |          |         |             |         |
-| ExternalSnapshotName | string  | `string` |          |         |             |         |
-| ExternalSnapshotURL  | string  | `string` |          |         |             |         |
+| externalEnabled      | boolean | `bool`   |          |         |             |         |
+| externalSnapshotName | string  | `string` |          |         |             |         |
+| externalSnapshotURL  | string  | `string` |          |         |             |         |
 
 ### <span id="get-snapshots"></span> List snapshots. (_getSnapshots_)
 
@@ -11539,8 +11929,8 @@ Status: Internal Server Error
 
 | Name    | Type                      | Go type  | Required | Default | Description                        | Example             |
 | ------- | ------------------------- | -------- | :------: | ------- | ---------------------------------- | ------------------- |
-| Message | string                    | `string` |    ✓     |         | Message Message of the added user. | `Data source added` |
-| UsedID  | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the added user.   | `65`                |
+| id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the added user.   | `65`                |
+| message | string                    | `string` |    ✓     |         | Message Message of the added user. | `Data source added` |
 
 ### <span id="patch-user-preferences"></span> Patch user preferences. (_patchUserPreferences_)
 
@@ -11670,9 +12060,9 @@ Status: Internal Server Error
 
 | Name          | Type                      | Go type  | Required | Default | Description        | Example |
 | ------------- | ------------------------- | -------- | :------: | ------- | ------------------ | ------- |
-| AlertID       | int64 (formatted integer) | `int64`  |    ✓     |         |                    |         |
-| Message       | string                    | `string` |    ✓     |         |                    |         |
-| State         | string                    | `string` |          |         | Alert result state |
+| alertId       | int64 (formatted integer) | `int64`  |    ✓     |         |                    |         |
+| message       | string                    | `string` |    ✓     |         |                    |         |
+| state         | string                    | `string` |          |         | Alert result state |
 | required true |                           |
 
 ### <span id="pause-all-alerts"></span> Pause/unpause all (legacy) alerts. (_pauseAllAlerts_)
@@ -11742,9 +12132,9 @@ Status: Internal Server Error
 
 | Name           | Type                      | Go type  | Required | Default | Description                                          | Example |
 | -------------- | ------------------------- | -------- | :------: | ------- | ---------------------------------------------------- | ------- |
-| AlertsAffected | int64 (formatted integer) | `int64`  |    ✓     |         | AlertsAffected is the number of the affected alerts. |         |
-| Message        | string                    | `string` |    ✓     |         |                                                      |         |
-| State          | string                    | `string` |          |         | Alert result state                                   |
+| alertsAffected | int64 (formatted integer) | `int64`  |    ✓     |         | AlertsAffected is the number of the affected alerts. |         |
+| message        | string                    | `string` |    ✓     |         |                                                      |         |
+| state          | string                    | `string` |          |         | Alert result state                                   |
 | required true  |                           |
 
 ### <span id="post-a-c-s"></span> It performs assertion Consumer Service (ACS). (_postACS_)
@@ -11892,12 +12282,12 @@ Status: Internal Server Error
 
 | Name    | Type                      | Go type  | Required | Default | Description                                                       | Example                     |
 | ------- | ------------------------- | -------- | :------: | ------- | ----------------------------------------------------------------- | --------------------------- |
-| ID      | string                    | `string` |    ✓     |         | ID The unique identifier (id) of the created/updated dashboard.   | `1`                         |
-| Slug    | string                    | `string` |    ✓     |         | Slug The slug of the dashboard.                                   | `my-dashboard`              |
-| Status  | string                    | `string` |    ✓     |         | Status status of the response.                                    | `success`                   |
-| UID     | string                    | `string` |    ✓     |         | UID The unique identifier (uid) of the created/updated dashboard. | `nHz3SXiiz`                 |
-| URL     | string                    | `string` |    ✓     |         | URL The relative URL for accessing the created/updated dashboard. | `/d/nHz3SXiiz/my-dashboard` |
-| Version | int64 (formatted integer) | `int64`  |    ✓     |         | Version The version of the dashboard.                             | `2`                         |
+| id      | string                    | `string` |    ✓     |         | ID The unique identifier (id) of the created/updated dashboard.   | `1`                         |
+| status  | string                    | `string` |    ✓     |         | Status status of the response.                                    | `success`                   |
+| title   | string                    | `string` |    ✓     |         | Slug The slug of the dashboard.                                   | `my-dashboard`              |
+| uid     | string                    | `string` |    ✓     |         | UID The unique identifier (uid) of the created/updated dashboard. | `nHz3SXiiz`                 |
+| url     | string                    | `string` |    ✓     |         | URL The relative URL for accessing the created/updated dashboard. | `/d/nHz3SXiiz/my-dashboard` |
+| version | int64 (formatted integer) | `int64`  |    ✓     |         | Version The version of the dashboard.                             | `2`                         |
 
 ### <span id="post-dashboard-permissions"></span> Updates permissions for a dashboard. (_postDashboardPermissions_)
 
@@ -13112,12 +13502,12 @@ Status: Internal Server Error
 
 | Name    | Type                      | Go type  | Required | Default | Description                                                       | Example                     |
 | ------- | ------------------------- | -------- | :------: | ------- | ----------------------------------------------------------------- | --------------------------- |
-| ID      | string                    | `string` |    ✓     |         | ID The unique identifier (id) of the created/updated dashboard.   | `1`                         |
-| Slug    | string                    | `string` |    ✓     |         | Slug The slug of the dashboard.                                   | `my-dashboard`              |
-| Status  | string                    | `string` |    ✓     |         | Status status of the response.                                    | `success`                   |
-| UID     | string                    | `string` |    ✓     |         | UID The unique identifier (uid) of the created/updated dashboard. | `nHz3SXiiz`                 |
-| URL     | string                    | `string` |    ✓     |         | URL The relative URL for accessing the created/updated dashboard. | `/d/nHz3SXiiz/my-dashboard` |
-| Version | int64 (formatted integer) | `int64`  |    ✓     |         | Version The version of the dashboard.                             | `2`                         |
+| id      | string                    | `string` |    ✓     |         | ID The unique identifier (id) of the created/updated dashboard.   | `1`                         |
+| status  | string                    | `string` |    ✓     |         | Status status of the response.                                    | `success`                   |
+| title   | string                    | `string` |    ✓     |         | Slug The slug of the dashboard.                                   | `my-dashboard`              |
+| uid     | string                    | `string` |    ✓     |         | UID The unique identifier (uid) of the created/updated dashboard. | `nHz3SXiiz`                 |
+| url     | string                    | `string` |    ✓     |         | URL The relative URL for accessing the created/updated dashboard. | `/d/nHz3SXiiz/my-dashboard` |
+| version | int64 (formatted integer) | `int64`  |    ✓     |         | Version The version of the dashboard.                             | `2`                         |
 
 ### <span id="revoke-auth-token"></span> Revoke auth token for user. (_revokeAuthToken_)
 
@@ -13577,10 +13967,10 @@ Status: Unauthorized
 
 | Name        | Type   | Go type  | Required | Default | Description | Example |
 | ----------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Description | string | `string` |          |         |             |         |
-| DisplayName | string | `string` |          |         |             |         |
-| Meta        | string | `string` |          |         |             |         |
-| Name        | string | `string` |          |         |             |         |
+| description | string | `string` |          |         |             |         |
+| displayName | string | `string` |          |         |             |         |
+| meta        | string | `string` |          |         |             |         |
+| name        | string | `string` |          |         |             |         |
 
 ### <span id="search-teams"></span> Team Search With Paging. (_searchTeams_)
 
@@ -13977,8 +14367,8 @@ Status: Internal Server Error
 
 | Name       | Type                      | Go type  | Required | Default | Description | Example |
 | ---------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| HelpFlags1 | int64 (formatted integer) | `int64`  |          |         |             |         |
-| Message    | string                    | `string` |          |         |             |         |
+| helpFlags1 | int64 (formatted integer) | `int64`  |          |         |             |         |
+| message    | string                    | `string` |          |         |             |         |
 
 ### <span id="set-password"></span> Set password for user. (_setPassword_)
 
@@ -14902,10 +15292,10 @@ Status: Internal Server Error
 
 | Name       | Type                       | Go type             | Required | Default | Description                               | Example             |
 | ---------- | -------------------------- | ------------------- | :------: | ------- | ----------------------------------------- | ------------------- |
-| ID         | int64 (formatted integer)  | `int64`             |    ✓     |         | ID Identifier of the new data source.     | `65`                |
-| Message    | string                     | `string`            |    ✓     |         | Message Message of the deleted dashboard. | `Data source added` |
-| Name       | string                     | `string`            |    ✓     |         | Name of the new data source.              | `My Data source`    |
 | datasource | [DataSource](#data-source) | `models.DataSource` |    ✓     |         |                                           |                     |
+| id         | int64 (formatted integer)  | `int64`             |    ✓     |         | ID Identifier of the new data source.     | `65`                |
+| message    | string                     | `string`            |    ✓     |         | Message Message of the deleted dashboard. | `Data source added` |
+| name       | string                     | `string`            |    ✓     |         | Name of the new data source.              | `My Data source`    |
 
 ### <span id="update-folder"></span> Update folder. (_updateFolder_)
 
@@ -15343,8 +15733,8 @@ Status: Internal Server Error
 
 | Name    | Type                      | Go type  | Required | Default | Description                        | Example             |
 | ------- | ------------------------- | -------- | :------: | ------- | ---------------------------------- | ------------------- |
-| Message | string                    | `string` |    ✓     |         | Message Message of the added user. | `Data source added` |
-| UsedID  | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the added user.   | `65`                |
+| id      | int64 (formatted integer) | `int64`  |    ✓     |         | ID Identifier of the added user.   | `65`                |
+| message | string                    | `string` |    ✓     |         | Message Message of the added user. | `Data source added` |
 
 ### <span id="update-org-quota"></span> Update user quota. (_updateOrgQuota_)
 
@@ -16222,20 +16612,20 @@ Status: Internal Server Error
 
 | Name     | Type                         | Go type           | Required | Default | Description | Example |
 | -------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Enabled  | boolean                      | `bool`            |          |         |             |         |
-| NextSync | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| Schedule | string                       | `string`          |          |         |             |         |
+| enabled  | boolean                      | `bool`            |          |         |             |         |
+| nextSync | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
 | prevSync | [SyncResult](#sync-result)   | `SyncResult`      |          |         |             |         |
+| schedule | string                       | `string`          |          |         |             |         |
 
 ### <span id="active-user-stats"></span> ActiveUserStats
 
 **Properties**
 
-| Name                   | Type                      | Go type | Required | Default | Description | Example |
-| ---------------------- | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
-| ActiveAdminsAndEditors | int64 (formatted integer) | `int64` |          |         |             |         |
-| ActiveUsers            | int64 (formatted integer) | `int64` |          |         |             |         |
-| ActiveViewers          | int64 (formatted integer) | `int64` |          |         |             |         |
+| Name                      | Type                      | Go type | Required | Default | Description | Example |
+| ------------------------- | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
+| active_admins_and_editors | int64 (formatted integer) | `int64` |          |         |             |         |
+| active_users              | int64 (formatted integer) | `int64` |          |         |             |         |
+| active_viewers            | int64 (formatted integer) | `int64` |          |         |             |         |
 
 ### <span id="add-api-key-command"></span> AddApiKeyCommand
 
@@ -16245,9 +16635,9 @@ Status: Internal Server Error
 
 | Name          | Type                      | Go type    | Required | Default | Description | Example |
 | ------------- | ------------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| Name          | string                    | `string`   |          |         |             |         |
-| SecondsToLive | int64 (formatted integer) | `int64`    |          |         |             |         |
+| name          | string                    | `string`   |          |         |             |         |
 | role          | [RoleType](#role-type)    | `RoleType` |          |         |             |         |
+| secondsToLive | int64 (formatted integer) | `int64`    |          |         |             |         |
 
 ### <span id="add-built-in-role-command"></span> AddBuiltInRoleCommand
 
@@ -16255,9 +16645,9 @@ Status: Internal Server Error
 
 | Name        | Type    | Go type  | Required | Default | Description                                                                                                                                                                                                                                             | Example |
 | ----------- | ------- | -------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| BuiltinRole | string  | `string` |          |         |                                                                                                                                                                                                                                                         |         |
-| Global      | boolean | `bool`   |          |         | A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to create organization local assignment. Refer to the Built-in role assignments for more information. |         |
-| RoleUID     | string  | `string` |          |         |                                                                                                                                                                                                                                                         |         |
+| builtInRole | string  | `string` |          |         |                                                                                                                                                                                                                                                         |         |
+| global      | boolean | `bool`   |          |         | A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to create organization local assignment. Refer to the Built-in role assignments for more information. |         |
+| roleUid     | string  | `string` |          |         |                                                                                                                                                                                                                                                         |         |
 
 ### <span id="add-data-source-command"></span> AddDataSourceCommand
 
@@ -16267,21 +16657,21 @@ Status: Internal Server Error
 
 | Name              | Type                   | Go type             | Required | Default | Description | Example |
 | ----------------- | ---------------------- | ------------------- | :------: | ------- | ----------- | ------- |
-| BasicAuth         | boolean                | `bool`              |          |         |             |         |
-| BasicAuthPassword | string                 | `string`            |          |         |             |         |
-| BasicAuthUser     | string                 | `string`            |          |         |             |         |
-| Database          | string                 | `string`            |          |         |             |         |
-| IsDefault         | boolean                | `bool`              |          |         |             |         |
-| Name              | string                 | `string`            |          |         |             |         |
-| Password          | string                 | `string`            |          |         |             |         |
-| SecureJsonData    | map of string          | `map[string]string` |          |         |             |         |
-| Type              | string                 | `string`            |          |         |             |         |
-| Uid               | string                 | `string`            |          |         |             |         |
-| Url               | string                 | `string`            |          |         |             |         |
-| User              | string                 | `string`            |          |         |             |         |
-| WithCredentials   | boolean                | `bool`              |          |         |             |         |
 | access            | [DsAccess](#ds-access) | `DsAccess`          |          |         |             |         |
+| basicAuth         | boolean                | `bool`              |          |         |             |         |
+| basicAuthPassword | string                 | `string`            |          |         |             |         |
+| basicAuthUser     | string                 | `string`            |          |         |             |         |
+| database          | string                 | `string`            |          |         |             |         |
+| isDefault         | boolean                | `bool`              |          |         |             |         |
 | jsonData          | [JSON](#json)          | `JSON`              |          |         |             |         |
+| name              | string                 | `string`            |          |         |             |         |
+| password          | string                 | `string`            |          |         |             |         |
+| secureJsonData    | map of string          | `map[string]string` |          |         |             |         |
+| type              | string                 | `string`            |          |         |             |         |
+| uid               | string                 | `string`            |          |         |             |         |
+| url               | string                 | `string`            |          |         |             |         |
+| user              | string                 | `string`            |          |         |             |         |
+| withCredentials   | boolean                | `bool`              |          |         |             |         |
 
 ### <span id="add-invite-form"></span> AddInviteForm
 
@@ -16289,10 +16679,10 @@ Status: Internal Server Error
 
 | Name         | Type                   | Go type    | Required | Default | Description | Example |
 | ------------ | ---------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| LoginOrEmail | string                 | `string`   |          |         |             |         |
-| Name         | string                 | `string`   |          |         |             |         |
-| SendEmail    | boolean                | `bool`     |          |         |             |         |
+| loginOrEmail | string                 | `string`   |          |         |             |         |
+| name         | string                 | `string`   |          |         |             |         |
 | role         | [RoleType](#role-type) | `RoleType` |          |         |             |         |
+| sendEmail    | boolean                | `bool`     |          |         |             |         |
 
 ### <span id="add-org-user-command"></span> AddOrgUserCommand
 
@@ -16300,7 +16690,7 @@ Status: Internal Server Error
 
 | Name         | Type                   | Go type    | Required | Default | Description | Example |
 | ------------ | ---------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| LoginOrEmail | string                 | `string`   |          |         |             |         |
+| loginOrEmail | string                 | `string`   |          |         |             |         |
 | role         | [RoleType](#role-type) | `RoleType` |          |         |             |         |
 
 ### <span id="add-permission-d-t-o"></span> AddPermissionDTO
@@ -16309,10 +16699,10 @@ Status: Internal Server Error
 
 | Name        | Type                                    | Go type            | Required | Default | Description | Example |
 | ----------- | --------------------------------------- | ------------------ | :------: | ------- | ----------- | ------- |
-| BuiltinRole | string                                  | `string`           |          |         |             |         |
-| TeamId      | int64 (formatted integer)               | `int64`            |          |         |             |         |
-| UserId      | int64 (formatted integer)               | `int64`            |          |         |             |         |
+| builtinRole | string                                  | `string`           |          |         |             |         |
 | permission  | [DsPermissionType](#ds-permission-type) | `DsPermissionType` |          |         |             |         |
+| teamId      | int64 (formatted integer)               | `int64`            |          |         |             |         |
+| userId      | int64 (formatted integer)               | `int64`            |          |         |             |         |
 
 ### <span id="add-team-member-command"></span> AddTeamMemberCommand
 
@@ -16320,7 +16710,7 @@ Status: Internal Server Error
 
 | Name   | Type                      | Go type | Required | Default | Description | Example |
 | ------ | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
-| UserId | int64 (formatted integer) | `int64` |          |         |             |         |
+| userId | int64 (formatted integer) | `int64` |          |         |             |         |
 
 ### <span id="add-team-role-command"></span> AddTeamRoleCommand
 
@@ -16328,7 +16718,7 @@ Status: Internal Server Error
 
 | Name    | Type   | Go type  | Required | Default | Description | Example |
 | ------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| RoleUID | string | `string` |          |         |             |         |
+| roleUid | string | `string` |          |         |             |         |
 
 ### <span id="add-user-role-command"></span> AddUserRoleCommand
 
@@ -16336,8 +16726,8 @@ Status: Internal Server Error
 
 | Name    | Type    | Go type  | Required | Default | Description | Example |
 | ------- | ------- | -------- | :------: | ------- | ----------- | ------- |
-| Global  | boolean | `bool`   |          |         |             |         |
-| RoleUID | string  | `string` |          |         |             |         |
+| global  | boolean | `bool`   |          |         |             |         |
+| roleUid | string  | `string` |          |         |             |         |
 
 ### <span id="address"></span> Address
 
@@ -16345,12 +16735,12 @@ Status: Internal Server Error
 
 | Name     | Type   | Go type  | Required | Default | Description | Example |
 | -------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Address1 | string | `string` |          |         |             |         |
-| Address2 | string | `string` |          |         |             |         |
-| City     | string | `string` |          |         |             |         |
-| Country  | string | `string` |          |         |             |         |
-| State    | string | `string` |          |         |             |         |
-| ZipCode  | string | `string` |          |         |             |         |
+| address1 | string | `string` |          |         |             |         |
+| address2 | string | `string` |          |         |             |         |
+| city     | string | `string` |          |         |             |         |
+| country  | string | `string` |          |         |             |         |
+| state    | string | `string` |          |         |             |         |
+| zipCode  | string | `string` |          |         |             |         |
 
 ### <span id="admin-create-user-form"></span> AdminCreateUserForm
 
@@ -16358,11 +16748,11 @@ Status: Internal Server Error
 
 | Name     | Type                      | Go type  | Required | Default | Description | Example |
 | -------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| Email    | string                    | `string` |          |         |             |         |
-| Login    | string                    | `string` |          |         |             |         |
-| Name     | string                    | `string` |          |         |             |         |
-| OrgId    | int64 (formatted integer) | `int64`  |          |         |             |         |
-| Password | string                    | `string` |          |         |             |         |
+| email    | string                    | `string` |          |         |             |         |
+| login    | string                    | `string` |          |         |             |         |
+| name     | string                    | `string` |          |         |             |         |
+| orgId    | int64 (formatted integer) | `int64`  |          |         |             |         |
+| password | string                    | `string` |          |         |             |         |
 
 ### <span id="admin-stats"></span> AdminStats
 
@@ -16370,29 +16760,29 @@ Status: Internal Server Error
 
 | Name                | Type                      | Go type | Required | Default | Description | Example |
 | ------------------- | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
-| ActiveAdmins        | int64 (formatted integer) | `int64` |          |         |             |         |
-| ActiveEditors       | int64 (formatted integer) | `int64` |          |         |             |         |
-| ActiveSessions      | int64 (formatted integer) | `int64` |          |         |             |         |
-| ActiveUsers         | int64 (formatted integer) | `int64` |          |         |             |         |
-| ActiveViewers       | int64 (formatted integer) | `int64` |          |         |             |         |
-| Admins              | int64 (formatted integer) | `int64` |          |         |             |         |
-| Alerts              | int64 (formatted integer) | `int64` |          |         |             |         |
-| DailyActiveAdmins   | int64 (formatted integer) | `int64` |          |         |             |         |
-| DailyActiveEditors  | int64 (formatted integer) | `int64` |          |         |             |         |
-| DailyActiveSessions | int64 (formatted integer) | `int64` |          |         |             |         |
-| DailyActiveUsers    | int64 (formatted integer) | `int64` |          |         |             |         |
-| DailyActiveViewers  | int64 (formatted integer) | `int64` |          |         |             |         |
-| Dashboards          | int64 (formatted integer) | `int64` |          |         |             |         |
-| Datasources         | int64 (formatted integer) | `int64` |          |         |             |         |
-| Editors             | int64 (formatted integer) | `int64` |          |         |             |         |
-| MonthlyActiveUsers  | int64 (formatted integer) | `int64` |          |         |             |         |
-| Orgs                | int64 (formatted integer) | `int64` |          |         |             |         |
-| Playlists           | int64 (formatted integer) | `int64` |          |         |             |         |
-| Snapshots           | int64 (formatted integer) | `int64` |          |         |             |         |
-| Stars               | int64 (formatted integer) | `int64` |          |         |             |         |
-| Tags                | int64 (formatted integer) | `int64` |          |         |             |         |
-| Users               | int64 (formatted integer) | `int64` |          |         |             |         |
-| Viewers             | int64 (formatted integer) | `int64` |          |         |             |         |
+| activeAdmins        | int64 (formatted integer) | `int64` |          |         |             |         |
+| activeEditors       | int64 (formatted integer) | `int64` |          |         |             |         |
+| activeSessions      | int64 (formatted integer) | `int64` |          |         |             |         |
+| activeUsers         | int64 (formatted integer) | `int64` |          |         |             |         |
+| activeViewers       | int64 (formatted integer) | `int64` |          |         |             |         |
+| admins              | int64 (formatted integer) | `int64` |          |         |             |         |
+| alerts              | int64 (formatted integer) | `int64` |          |         |             |         |
+| dailyActiveAdmins   | int64 (formatted integer) | `int64` |          |         |             |         |
+| dailyActiveEditors  | int64 (formatted integer) | `int64` |          |         |             |         |
+| dailyActiveSessions | int64 (formatted integer) | `int64` |          |         |             |         |
+| dailyActiveUsers    | int64 (formatted integer) | `int64` |          |         |             |         |
+| dailyActiveViewers  | int64 (formatted integer) | `int64` |          |         |             |         |
+| dashboards          | int64 (formatted integer) | `int64` |          |         |             |         |
+| datasources         | int64 (formatted integer) | `int64` |          |         |             |         |
+| editors             | int64 (formatted integer) | `int64` |          |         |             |         |
+| monthlyActiveUsers  | int64 (formatted integer) | `int64` |          |         |             |         |
+| orgs                | int64 (formatted integer) | `int64` |          |         |             |         |
+| playlists           | int64 (formatted integer) | `int64` |          |         |             |         |
+| snapshots           | int64 (formatted integer) | `int64` |          |         |             |         |
+| stars               | int64 (formatted integer) | `int64` |          |         |             |         |
+| tags                | int64 (formatted integer) | `int64` |          |         |             |         |
+| users               | int64 (formatted integer) | `int64` |          |         |             |         |
+| viewers             | int64 (formatted integer) | `int64` |          |         |             |         |
 
 ### <span id="admin-update-user-password-form"></span> AdminUpdateUserPasswordForm
 
@@ -16400,7 +16790,7 @@ Status: Internal Server Error
 
 | Name     | Type   | Go type  | Required | Default | Description | Example |
 | -------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Password | string | `string` |          |         |             |         |
+| password | string | `string` |          |         |             |         |
 
 ### <span id="admin-update-user-permissions-form"></span> AdminUpdateUserPermissionsForm
 
@@ -16408,19 +16798,7 @@ Status: Internal Server Error
 
 | Name           | Type    | Go type | Required | Default | Description | Example |
 | -------------- | ------- | ------- | :------: | ------- | ----------- | ------- |
-| IsGrafanaAdmin | boolean | `bool`  |          |         |             |         |
-
-### <span id="alert"></span> Alert
-
-> Alert alert
-
-**Properties**
-
-| Name         | Type                   | Go type      | Required | Default | Description   | Example |
-| ------------ | ---------------------- | ------------ | :------: | ------- | ------------- | ------- |
-| GeneratorURL | uri (formatted string) | `strfmt.URI` |          |         | generator URL |
-| Format: uri  |                        |
-| labels       | [LabelSet](#label-set) | `LabelSet`   |    ✓     |         |               |         |
+| isGrafanaAdmin | boolean | `bool`  |          |         |             |         |
 
 ### <span id="alert"></span> Alert
 
@@ -16434,6 +16812,18 @@ Status: Internal Server Error
 | annotations | [OverrideLabels](#override-labels) | `OverrideLabels`  |    ✓     |         |             |         |
 | labels      | [OverrideLabels](#override-labels) | `OverrideLabels`  |    ✓     |         |             |         |
 
+### <span id="alert"></span> Alert
+
+> Alert alert
+
+**Properties**
+
+| Name         | Type                   | Go type      | Required | Default | Description   | Example |
+| ------------ | ---------------------- | ------------ | :------: | ------- | ------------- | ------- |
+| GeneratorURL | uri (formatted string) | `strfmt.URI` |          |         | generator URL |
+| Format: uri  |                        |
+| labels       | [LabelSet](#label-set) | `LabelSet`   |    ✓     |         |               |         |
+
 ### <span id="alert-discovery"></span> AlertDiscovery
 
 **Properties**
@@ -16441,16 +16831,6 @@ Status: Internal Server Error
 | Name   | Type              | Go type    | Required | Default | Description | Example |
 | ------ | ----------------- | ---------- | :------: | ------- | ----------- | ------- |
 | Alerts | [][alert](#alert) | `[]*Alert` |    ✓     |         |             |         |
-
-### <span id="alert-group"></span> AlertGroup
-
-**Properties**
-
-| Name     | Type                               | Go type            | Required | Default | Description | Example |
-| -------- | ---------------------------------- | ------------------ | :------: | ------- | ----------- | ------- |
-| Alerts   | [][gettablealert](#gettable-alert) | `[]*GettableAlert` |    ✓     |         | alerts      |         |
-| labels   | [LabelSet](#label-set)             | `LabelSet`         |    ✓     |         |             |         |
-| receiver | [Receiver](#receiver)              | `Receiver`         |    ✓     |         |             |         |
 
 ### <span id="alert-groups"></span> AlertGroups
 
@@ -16471,18 +16851,18 @@ Status: Internal Server Error
 
 | Name           | Type                                | Go type           | Required | Default | Description | Example |
 | -------------- | ----------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| DashboardId    | int64 (formatted integer)           | `int64`           |          |         |             |         |
-| DashboardSlug  | string                              | `string`          |          |         |             |         |
-| DashboardUid   | string                              | `string`          |          |         |             |         |
-| EvalDate       | date-time (formatted string)        | `strfmt.DateTime` |          |         |             |         |
-| ExecutionError | string                              | `string`          |          |         |             |         |
-| Id             | int64 (formatted integer)           | `int64`           |          |         |             |         |
-| Name           | string                              | `string`          |          |         |             |         |
-| NewStateDate   | date-time (formatted string)        | `strfmt.DateTime` |          |         |             |         |
-| PanelId        | int64 (formatted integer)           | `int64`           |          |         |             |         |
-| Url            | string                              | `string`          |          |         |             |         |
+| dashboardId    | int64 (formatted integer)           | `int64`           |          |         |             |         |
+| dashboardSlug  | string                              | `string`          |          |         |             |         |
+| dashboardUid   | string                              | `string`          |          |         |             |         |
 | evalData       | [JSON](#json)                       | `JSON`            |          |         |             |         |
+| evalDate       | date-time (formatted string)        | `strfmt.DateTime` |          |         |             |         |
+| executionError | string                              | `string`          |          |         |             |         |
+| id             | int64 (formatted integer)           | `int64`           |          |         |             |         |
+| name           | string                              | `string`          |          |         |             |         |
+| newStateDate   | date-time (formatted string)        | `strfmt.DateTime` |          |         |             |         |
+| panelId        | int64 (formatted integer)           | `int64`           |          |         |             |         |
 | state          | [AlertStateType](#alert-state-type) | `AlertStateType`  |          |         |             |         |
+| url            | string                              | `string`          |          |         |             |         |
 
 ### <span id="alert-manager"></span> AlertManager
 
@@ -16515,18 +16895,18 @@ Status: Internal Server Error
 
 | Name                  | Type                         | Go type           | Required | Default | Description | Example |
 | --------------------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Created               | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| DisableResolveMessage | boolean                      | `bool`            |          |         |             |         |
-| Frequency             | string                       | `string`          |          |         |             |         |
-| Id                    | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| IsDefault             | boolean                      | `bool`            |          |         |             |         |
-| Name                  | string                       | `string`          |          |         |             |         |
-| SecureFields          | map of boolean               | `map[string]bool` |          |         |             |         |
-| SendReminder          | boolean                      | `bool`            |          |         |             |         |
-| Type                  | string                       | `string`          |          |         |             |         |
-| Uid                   | string                       | `string`          |          |         |             |         |
-| Updated               | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| created               | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| disableResolveMessage | boolean                      | `bool`            |          |         |             |         |
+| frequency             | string                       | `string`          |          |         |             |         |
+| id                    | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| isDefault             | boolean                      | `bool`            |          |         |             |         |
+| name                  | string                       | `string`          |          |         |             |         |
+| secureFields          | map of boolean               | `map[string]bool` |          |         |             |         |
+| sendReminder          | boolean                      | `bool`            |          |         |             |         |
 | settings              | [JSON](#json)                | `JSON`            |          |         |             |         |
+| type                  | string                       | `string`          |          |         |             |         |
+| uid                   | string                       | `string`          |          |         |             |         |
+| updated               | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
 
 ### <span id="alert-notification-lookup"></span> AlertNotificationLookup
 
@@ -16534,11 +16914,11 @@ Status: Internal Server Error
 
 | Name      | Type                      | Go type  | Required | Default | Description | Example |
 | --------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| Id        | int64 (formatted integer) | `int64`  |          |         |             |         |
-| IsDefault | boolean                   | `bool`   |          |         |             |         |
-| Name      | string                    | `string` |          |         |             |         |
-| Type      | string                    | `string` |          |         |             |         |
-| Uid       | string                    | `string` |          |         |             |         |
+| id        | int64 (formatted integer) | `int64`  |          |         |             |         |
+| isDefault | boolean                   | `bool`   |          |         |             |         |
+| name      | string                    | `string` |          |         |             |         |
+| type      | string                    | `string` |          |         |             |         |
+| uid       | string                    | `string` |          |         |             |         |
 
 ### <span id="alert-query"></span> AlertQuery
 
@@ -16570,10 +16950,10 @@ Status: Internal Server Error
 
 | Name         | Type                                | Go type           | Required | Default | Description | Example |
 | ------------ | ----------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| DashboardId  | int64 (formatted integer)           | `int64`           |          |         |             |         |
-| Id           | int64 (formatted integer)           | `int64`           |          |         |             |         |
-| NewStateDate | date-time (formatted string)        | `strfmt.DateTime` |          |         |             |         |
-| PanelId      | int64 (formatted integer)           | `int64`           |          |         |             |         |
+| dashboardId  | int64 (formatted integer)           | `int64`           |          |         |             |         |
+| id           | int64 (formatted integer)           | `int64`           |          |         |             |         |
+| newStateDate | date-time (formatted string)        | `strfmt.DateTime` |          |         |             |         |
+| panelId      | int64 (formatted integer)           | `int64`           |          |         |             |         |
 | state        | [AlertStateType](#alert-state-type) | `AlertStateType`  |          |         |             |         |
 
 ### <span id="alert-state-type"></span> AlertStateType
@@ -16600,8 +16980,8 @@ Status: Internal Server Error
 
 | Name      | Type                      | Go type | Required | Default | Description | Example |
 | --------- | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
-| PanelId   | int64 (formatted integer) | `int64` |          |         |             |         |
 | dashboard | [JSON](#json)             | `JSON`  |          |         |             |         |
+| panelId   | int64 (formatted integer) | `int64` |          |         |             |         |
 
 ### <span id="alert-test-result"></span> AlertTestResult
 
@@ -16609,13 +16989,13 @@ Status: Internal Server Error
 
 | Name           | Type                                           | Go type                 | Required | Default | Description | Example |
 | -------------- | ---------------------------------------------- | ----------------------- | :------: | ------- | ----------- | ------- |
-| ConditionEvals | string                                         | `string`                |          |         |             |         |
-| Error          | string                                         | `string`                |          |         |             |         |
-| EvalMatches    | [][evalmatch](#eval-match)                     | `[]*EvalMatch`          |          |         |             |         |
-| Firing         | boolean                                        | `bool`                  |          |         |             |         |
-| Logs           | [][alerttestresultlog](#alert-test-result-log) | `[]*AlertTestResultLog` |          |         |             |         |
-| TimeMs         | string                                         | `string`                |          |         |             |         |
+| conditionEvals | string                                         | `string`                |          |         |             |         |
+| error          | string                                         | `string`                |          |         |             |         |
+| firing         | boolean                                        | `bool`                  |          |         |             |         |
+| logs           | [][alerttestresultlog](#alert-test-result-log) | `[]*AlertTestResultLog` |          |         |             |         |
+| matches        | [][evalmatch](#eval-match)                     | `[]*EvalMatch`          |          |         |             |         |
 | state          | [AlertStateType](#alert-state-type)            | `AlertStateType`        |          |         |             |         |
+| timeMs         | string                                         | `string`                |          |         |             |         |
 
 ### <span id="alert-test-result-log"></span> AlertTestResultLog
 
@@ -16623,8 +17003,8 @@ Status: Internal Server Error
 
 | Name    | Type                      | Go type       | Required | Default | Description | Example |
 | ------- | ------------------------- | ------------- | :------: | ------- | ----------- | ------- |
-| Data    | [interface{}](#interface) | `interface{}` |          |         |             |         |
-| Message | string                    | `string`      |          |         |             |         |
+| data    | [interface{}](#interface) | `interface{}` |          |         |             |         |
+| message | string                    | `string`      |          |         |             |         |
 
 ### <span id="alerting-rule"></span> AlertingRule
 
@@ -16676,9 +17056,9 @@ Status: Internal Server Error
 
 | Name      | Type    | Go type | Required | Default | Description | Example |
 | --------- | ------- | ------- | :------: | ------- | ----------- | ------- |
-| CanAdd    | boolean | `bool`  |          |         |             |         |
-| CanDelete | boolean | `bool`  |          |         |             |         |
-| CanEdit   | boolean | `bool`  |          |         |             |         |
+| canAdd    | boolean | `bool`  |          |         |             |         |
+| canDelete | boolean | `bool`  |          |         |             |         |
+| canEdit   | boolean | `bool`  |          |         |             |         |
 
 ### <span id="annotation-permission"></span> AnnotationPermission
 
@@ -16695,9 +17075,9 @@ Status: Internal Server Error
 
 | Name       | Type                         | Go type           | Required | Default | Description | Example |
 | ---------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Expiration | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| Id         | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| Name       | string                       | `string`          |          |         |             |         |
+| expiration | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| id         | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| name       | string                       | `string`          |          |         |             |         |
 | role       | [RoleType](#role-type)       | `RoleType`        |          |         |             |         |
 
 ### <span id="api-rule-node"></span> ApiRuleNode
@@ -16739,11 +17119,11 @@ Status: Internal Server Error
 
 | Name            | Type   | Go type  | Required | Default | Description | Example |
 | --------------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| EmailFooterLink | string | `string` |          |         |             |         |
-| EmailFooterMode | string | `string` |          |         |             |         |
-| EmailFooterText | string | `string` |          |         |             |         |
-| EmailLogo       | string | `string` |          |         |             |         |
-| ReportLogo      | string | `string` |          |         |             |         |
+| emailFooterLink | string | `string` |          |         |             |         |
+| emailFooterMode | string | `string` |          |         |             |         |
+| emailFooterText | string | `string` |          |         |             |         |
+| emailLogoUrl    | string | `string` |          |         |             |         |
+| reportLogoUrl   | string | `string` |          |         |             |         |
 
 ### <span id="calculate-diff-target"></span> CalculateDiffTarget
 
@@ -16751,9 +17131,9 @@ Status: Internal Server Error
 
 | Name             | Type                      | Go type | Required | Default | Description | Example |
 | ---------------- | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
-| DashboardId      | int64 (formatted integer) | `int64` |          |         |             |         |
-| Version          | int64 (formatted integer) | `int64` |          |         |             |         |
+| dashboardId      | int64 (formatted integer) | `int64` |          |         |             |         |
 | unsavedDashboard | [JSON](#json)             | `JSON`  |          |         |             |         |
+| version          | int64 (formatted integer) | `int64` |          |         |             |         |
 
 ### <span id="change-user-password-command"></span> ChangeUserPasswordCommand
 
@@ -16761,8 +17141,8 @@ Status: Internal Server Error
 
 | Name        | Type   | Go type  | Required | Default | Description | Example |
 | ----------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| NewPassword | string | `string` |          |         |             |         |
-| OldPassword | string | `string` |          |         |             |         |
+| newPassword | string | `string` |          |         |             |         |
+| oldPassword | string | `string` |          |         |             |         |
 
 ### <span id="cluster-status"></span> ClusterStatus
 
@@ -16796,24 +17176,24 @@ Status: Internal Server Error
 
 | Name               | Type                                      | Go type            | Required | Default | Description | Example |
 | ------------------ | ----------------------------------------- | ------------------ | :------: | ------- | ----------- | ------- |
-| Created            | date-time (formatted string)              | `strfmt.DateTime`  |          |         |             |         |
-| DashboardID        | int64 (formatted integer)                 | `int64`            |          |         |             |         |
-| DashboardName      | string                                    | `string`           |          |         |             |         |
-| DashboardUID       | string                                    | `string`           |          |         |             |         |
-| EnableCSV          | boolean                                   | `bool`             |          |         |             |         |
-| EnableDashboardURL | boolean                                   | `bool`             |          |         |             |         |
-| ID                 | int64 (formatted integer)                 | `int64`            |          |         |             |         |
-| Message            | string                                    | `string`           |          |         |             |         |
-| Name               | string                                    | `string`           |          |         |             |         |
-| OrgID              | int64 (formatted integer)                 | `int64`            |          |         |             |         |
-| Recipients         | string                                    | `string`           |          |         |             |         |
-| ReplyTo            | string                                    | `string`           |          |         |             |         |
-| State              | string                                    | `string`           |          |         |             |         |
-| TemplateVars       | [interface{}](#interface)                 | `interface{}`      |          |         |             |         |
-| Updated            | date-time (formatted string)              | `strfmt.DateTime`  |          |         |             |         |
-| UserID             | int64 (formatted integer)                 | `int64`            |          |         |             |         |
+| created            | date-time (formatted string)              | `strfmt.DateTime`  |          |         |             |         |
+| dashboardId        | int64 (formatted integer)                 | `int64`            |          |         |             |         |
+| dashboardName      | string                                    | `string`           |          |         |             |         |
+| dashboardUid       | string                                    | `string`           |          |         |             |         |
+| enableCsv          | boolean                                   | `bool`             |          |         |             |         |
+| enableDashboardUrl | boolean                                   | `bool`             |          |         |             |         |
+| id                 | int64 (formatted integer)                 | `int64`            |          |         |             |         |
+| message            | string                                    | `string`           |          |         |             |         |
+| name               | string                                    | `string`           |          |         |             |         |
 | options            | [ReportOptionsDTO](#report-options-d-t-o) | `ReportOptionsDTO` |          |         |             |         |
+| orgId              | int64 (formatted integer)                 | `int64`            |          |         |             |         |
+| recipients         | string                                    | `string`           |          |         |             |         |
+| replyTo            | string                                    | `string`           |          |         |             |         |
 | schedule           | [ScheduleDTO](#schedule-d-t-o)            | `ScheduleDTO`      |          |         |             |         |
+| state              | string                                    | `string`           |          |         |             |         |
+| templateVars       | [interface{}](#interface)                 | `interface{}`      |          |         |             |         |
+| updated            | date-time (formatted string)              | `strfmt.DateTime`  |          |         |             |         |
+| userId             | int64 (formatted integer)                 | `int64`            |          |         |             |         |
 
 ### <span id="create-alert-notification-command"></span> CreateAlertNotificationCommand
 
@@ -16821,15 +17201,15 @@ Status: Internal Server Error
 
 | Name                  | Type          | Go type             | Required | Default | Description | Example |
 | --------------------- | ------------- | ------------------- | :------: | ------- | ----------- | ------- |
-| DisableResolveMessage | boolean       | `bool`              |          |         |             |         |
-| Frequency             | string        | `string`            |          |         |             |         |
-| IsDefault             | boolean       | `bool`              |          |         |             |         |
-| Name                  | string        | `string`            |          |         |             |         |
-| SecureSettings        | map of string | `map[string]string` |          |         |             |         |
-| SendReminder          | boolean       | `bool`              |          |         |             |         |
-| Type                  | string        | `string`            |          |         |             |         |
-| Uid                   | string        | `string`            |          |         |             |         |
+| disableResolveMessage | boolean       | `bool`              |          |         |             |         |
+| frequency             | string        | `string`            |          |         |             |         |
+| isDefault             | boolean       | `bool`              |          |         |             |         |
+| name                  | string        | `string`            |          |         |             |         |
+| secureSettings        | map of string | `map[string]string` |          |         |             |         |
+| sendReminder          | boolean       | `bool`              |          |         |             |         |
 | settings              | [JSON](#json) | `JSON`              |          |         |             |         |
+| type                  | string        | `string`            |          |         |             |         |
+| uid                   | string        | `string`            |          |         |             |         |
 
 ### <span id="create-dashboard-snapshot-command"></span> CreateDashboardSnapshotCommand
 
@@ -16852,8 +17232,8 @@ Status: Internal Server Error
 
 | Name  | Type   | Go type  | Required | Default | Description | Example |
 | ----- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Title | string | `string` |          |         |             |         |
-| Uid   | string | `string` |          |         |             |         |
+| title | string | `string` |          |         |             |         |
+| uid   | string | `string` |          |         |             |         |
 
 ### <span id="create-library-element-command"></span> CreateLibraryElementCommand
 
@@ -16863,15 +17243,15 @@ Status: Internal Server Error
 
 | Name     | Type                      | Go type | Required | Default | Description                                                     | Example |
 | -------- | ------------------------- | ------- | :------: | ------- | --------------------------------------------------------------- | ------- |
-| FolderID | int64 (formatted integer) | `int64` |          |         | ID of the folder where the library element is stored.           |         |
-| Kind     | int64 (formatted integer) | `int64` |          |         | Kind of element to create, Use 1 for library panels or 2 for c. |
+| folderId | int64 (formatted integer) | `int64` |          |         | ID of the folder where the library element is stored.           |         |
+| kind     | int64 (formatted integer) | `int64` |          |         | Kind of element to create, Use 1 for library panels or 2 for c. |
 
 Description:
 1 - library panels
 2 - library variables | |
-| Model | [interface{}](#interface)| `interface{}` | | | The JSON model for the library element. | |
-| Name | string| `string` | | | Name of the library element. | |
-| UID | string| `string` | | | | |
+| model | [interface{}](#interface)| `interface{}` | | | The JSON model for the library element. | |
+| name | string| `string` | | | Name of the library element. | |
+| uid | string| `string` | | | | |
 
 ### <span id="create-or-update-config-cmd"></span> CreateOrUpdateConfigCmd
 
@@ -16879,18 +17259,18 @@ Description:
 
 | Name               | Type                                      | Go type            | Required | Default | Description | Example |
 | ------------------ | ----------------------------------------- | ------------------ | :------: | ------- | ----------- | ------- |
-| DashboardID        | int64 (formatted integer)                 | `int64`            |          |         |             |         |
-| DashboardUID       | string                                    | `string`           |          |         |             |         |
-| EnableCSV          | boolean                                   | `bool`             |          |         |             |         |
-| EnableDashboardURL | boolean                                   | `bool`             |          |         |             |         |
-| Message            | string                                    | `string`           |          |         |             |         |
-| Name               | string                                    | `string`           |          |         |             |         |
-| Recipients         | string                                    | `string`           |          |         |             |         |
-| ReplyTo            | string                                    | `string`           |          |         |             |         |
-| State              | string                                    | `string`           |          |         |             |         |
-| TemplateVars       | [interface{}](#interface)                 | `interface{}`      |          |         |             |         |
+| dashboardId        | int64 (formatted integer)                 | `int64`            |          |         |             |         |
+| dashboardUid       | string                                    | `string`           |          |         |             |         |
+| enableCsv          | boolean                                   | `bool`             |          |         |             |         |
+| enableDashboardUrl | boolean                                   | `bool`             |          |         |             |         |
+| message            | string                                    | `string`           |          |         |             |         |
+| name               | string                                    | `string`           |          |         |             |         |
 | options            | [ReportOptionsDTO](#report-options-d-t-o) | `ReportOptionsDTO` |          |         |             |         |
+| recipients         | string                                    | `string`           |          |         |             |         |
+| replyTo            | string                                    | `string`           |          |         |             |         |
 | schedule           | [ScheduleDTO](#schedule-d-t-o)            | `ScheduleDTO`      |          |         |             |         |
+| state              | string                                    | `string`           |          |         |             |         |
+| templateVars       | [interface{}](#interface)                 | `interface{}`      |          |         |             |         |
 
 ### <span id="create-org-command"></span> CreateOrgCommand
 
@@ -16898,7 +17278,7 @@ Description:
 
 | Name | Type   | Go type  | Required | Default | Description | Example |
 | ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Name | string | `string` |          |         |             |         |
+| name | string | `string` |          |         |             |         |
 
 ### <span id="create-role-with-permissions-command"></span> CreateRoleWithPermissionsCommand
 
@@ -16906,14 +17286,14 @@ Description:
 
 | Name        | Type                        | Go type         | Required | Default | Description | Example |
 | ----------- | --------------------------- | --------------- | :------: | ------- | ----------- | ------- |
-| Description | string                      | `string`        |          |         |             |         |
-| DisplayName | string                      | `string`        |          |         |             |         |
-| Group       | string                      | `string`        |          |         |             |         |
-| Hidden      | boolean                     | `bool`          |          |         |             |         |
-| Name        | string                      | `string`        |          |         |             |         |
-| Permissions | [][permission](#permission) | `[]*Permission` |          |         |             |         |
-| UID         | string                      | `string`        |          |         |             |         |
-| Version     | int64 (formatted integer)   | `int64`         |          |         |             |         |
+| description | string                      | `string`        |          |         |             |         |
+| displayName | string                      | `string`        |          |         |             |         |
+| group       | string                      | `string`        |          |         |             |         |
+| hidden      | boolean                     | `bool`          |          |         |             |         |
+| name        | string                      | `string`        |          |         |             |         |
+| permissions | [][permission](#permission) | `[]*Permission` |          |         |             |         |
+| uid         | string                      | `string`        |          |         |             |         |
+| version     | int64 (formatted integer)   | `int64`         |          |         |             |         |
 
 ### <span id="create-team-command"></span> CreateTeamCommand
 
@@ -16921,8 +17301,8 @@ Description:
 
 | Name  | Type   | Go type  | Required | Default | Description | Example |
 | ----- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Email | string | `string` |          |         |             |         |
-| Name  | string | `string` |          |         |             |         |
+| email | string | `string` |          |         |             |         |
+| name  | string | `string` |          |         |             |         |
 
 ### <span id="custom-permissions-record-d-t-o"></span> CustomPermissionsRecordDTO
 
@@ -16930,19 +17310,19 @@ Description:
 
 | Name              | Type                      | Go type  | Required | Default | Description | Example |
 | ----------------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| CustomPermissions | string                    | `string` |          |         |             |         |
-| GranteeName       | string                    | `string` |          |         |             |         |
-| GranteeType       | string                    | `string` |          |         |             |         |
-| GranteeURL        | string                    | `string` |          |         |             |         |
-| ID                | int64 (formatted integer) | `int64`  |          |         |             |         |
-| IsFolder          | boolean                   | `bool`   |          |         |             |         |
-| OrgID             | int64 (formatted integer) | `int64`  |          |         |             |         |
-| OrgRole           | string                    | `string` |          |         |             |         |
-| Slug              | string                    | `string` |          |         |             |         |
-| Title             | string                    | `string` |          |         |             |         |
-| UID               | string                    | `string` |          |         |             |         |
-| URL               | string                    | `string` |          |         |             |         |
-| UsersCount        | int64 (formatted integer) | `int64`  |          |         |             |         |
+| customPermissions | string                    | `string` |          |         |             |         |
+| granteeName       | string                    | `string` |          |         |             |         |
+| granteeType       | string                    | `string` |          |         |             |         |
+| granteeUrl        | string                    | `string` |          |         |             |         |
+| id                | int64 (formatted integer) | `int64`  |          |         |             |         |
+| isFolder          | boolean                   | `bool`   |          |         |             |         |
+| orgId             | int64 (formatted integer) | `int64`  |          |         |             |         |
+| orgRole           | string                    | `string` |          |         |             |         |
+| slug              | string                    | `string` |          |         |             |         |
+| title             | string                    | `string` |          |         |             |         |
+| uid               | string                    | `string` |          |         |             |         |
+| url               | string                    | `string` |          |         |             |         |
+| usersCount        | int64 (formatted integer) | `int64`  |          |         |             |         |
 
 ### <span id="dashboard-acl-info-d-t-o"></span> DashboardAclInfoDTO
 
@@ -16950,27 +17330,27 @@ Description:
 
 | Name           | Type                               | Go type           | Required | Default | Description | Example |
 | -------------- | ---------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Created        | date-time (formatted string)       | `strfmt.DateTime` |          |         |             |         |
-| DashboardId    | int64 (formatted integer)          | `int64`           |          |         |             |         |
-| FolderId       | int64 (formatted integer)          | `int64`           |          |         |             |         |
-| Inherited      | boolean                            | `bool`            |          |         |             |         |
-| IsFolder       | boolean                            | `bool`            |          |         |             |         |
-| PermissionName | string                             | `string`          |          |         |             |         |
-| Slug           | string                             | `string`          |          |         |             |         |
-| Team           | string                             | `string`          |          |         |             |         |
-| TeamAvatarUrl  | string                             | `string`          |          |         |             |         |
-| TeamEmail      | string                             | `string`          |          |         |             |         |
-| TeamId         | int64 (formatted integer)          | `int64`           |          |         |             |         |
-| Title          | string                             | `string`          |          |         |             |         |
-| Uid            | string                             | `string`          |          |         |             |         |
-| Updated        | date-time (formatted string)       | `strfmt.DateTime` |          |         |             |         |
-| Url            | string                             | `string`          |          |         |             |         |
-| UserAvatarUrl  | string                             | `string`          |          |         |             |         |
-| UserEmail      | string                             | `string`          |          |         |             |         |
-| UserId         | int64 (formatted integer)          | `int64`           |          |         |             |         |
-| UserLogin      | string                             | `string`          |          |         |             |         |
+| created        | date-time (formatted string)       | `strfmt.DateTime` |          |         |             |         |
+| dashboardId    | int64 (formatted integer)          | `int64`           |          |         |             |         |
+| folderId       | int64 (formatted integer)          | `int64`           |          |         |             |         |
+| inherited      | boolean                            | `bool`            |          |         |             |         |
+| isFolder       | boolean                            | `bool`            |          |         |             |         |
 | permission     | [PermissionType](#permission-type) | `PermissionType`  |          |         |             |         |
+| permissionName | string                             | `string`          |          |         |             |         |
 | role           | [RoleType](#role-type)             | `RoleType`        |          |         |             |         |
+| slug           | string                             | `string`          |          |         |             |         |
+| team           | string                             | `string`          |          |         |             |         |
+| teamAvatarUrl  | string                             | `string`          |          |         |             |         |
+| teamEmail      | string                             | `string`          |          |         |             |         |
+| teamId         | int64 (formatted integer)          | `int64`           |          |         |             |         |
+| title          | string                             | `string`          |          |         |             |         |
+| uid            | string                             | `string`          |          |         |             |         |
+| updated        | date-time (formatted string)       | `strfmt.DateTime` |          |         |             |         |
+| url            | string                             | `string`          |          |         |             |         |
+| userAvatarUrl  | string                             | `string`          |          |         |             |         |
+| userEmail      | string                             | `string`          |          |         |             |         |
+| userId         | int64 (formatted integer)          | `int64`           |          |         |             |         |
+| userLogin      | string                             | `string`          |          |         |             |         |
 
 ### <span id="dashboard-acl-update-item"></span> DashboardAclUpdateItem
 
@@ -16978,10 +17358,10 @@ Description:
 
 | Name       | Type                               | Go type          | Required | Default | Description | Example |
 | ---------- | ---------------------------------- | ---------------- | :------: | ------- | ----------- | ------- |
-| TeamID     | int64 (formatted integer)          | `int64`          |          |         |             |         |
-| UserID     | int64 (formatted integer)          | `int64`          |          |         |             |         |
 | permission | [PermissionType](#permission-type) | `PermissionType` |          |         |             |         |
 | role       | [RoleType](#role-type)             | `RoleType`       |          |         |             |         |
+| teamId     | int64 (formatted integer)          | `int64`          |          |         |             |         |
+| userId     | int64 (formatted integer)          | `int64`          |          |         |             |         |
 
 ### <span id="dashboard-full-with-meta"></span> DashboardFullWithMeta
 
@@ -16998,32 +17378,32 @@ Description:
 
 | Name                   | Type                                           | Go type                | Required | Default | Description | Example |
 | ---------------------- | ---------------------------------------------- | ---------------------- | :------: | ------- | ----------- | ------- |
-| CanAdmin               | boolean                                        | `bool`                 |          |         |             |         |
-| CanDelete              | boolean                                        | `bool`                 |          |         |             |         |
-| CanEdit                | boolean                                        | `bool`                 |          |         |             |         |
-| CanSave                | boolean                                        | `bool`                 |          |         |             |         |
-| CanStar                | boolean                                        | `bool`                 |          |         |             |         |
-| Created                | date-time (formatted string)                   | `strfmt.DateTime`      |          |         |             |         |
-| CreatedBy              | string                                         | `string`               |          |         |             |         |
-| Expires                | date-time (formatted string)                   | `strfmt.DateTime`      |          |         |             |         |
-| FolderId               | int64 (formatted integer)                      | `int64`                |          |         |             |         |
-| FolderTitle            | string                                         | `string`               |          |         |             |         |
-| FolderUid              | string                                         | `string`               |          |         |             |         |
-| FolderUrl              | string                                         | `string`               |          |         |             |         |
-| HasAcl                 | boolean                                        | `bool`                 |          |         |             |         |
-| IsFolder               | boolean                                        | `bool`                 |          |         |             |         |
-| IsHome                 | boolean                                        | `bool`                 |          |         |             |         |
-| IsSnapshot             | boolean                                        | `bool`                 |          |         |             |         |
-| IsStarred              | boolean                                        | `bool`                 |          |         |             |         |
-| Provisioned            | boolean                                        | `bool`                 |          |         |             |         |
-| ProvisionedExternalId  | string                                         | `string`               |          |         |             |         |
-| Slug                   | string                                         | `string`               |          |         |             |         |
-| Type                   | string                                         | `string`               |          |         |             |         |
-| Updated                | date-time (formatted string)                   | `strfmt.DateTime`      |          |         |             |         |
-| UpdatedBy              | string                                         | `string`               |          |         |             |         |
-| Url                    | string                                         | `string`               |          |         |             |         |
-| Version                | int64 (formatted integer)                      | `int64`                |          |         |             |         |
 | annotationsPermissions | [AnnotationPermission](#annotation-permission) | `AnnotationPermission` |          |         |             |         |
+| canAdmin               | boolean                                        | `bool`                 |          |         |             |         |
+| canDelete              | boolean                                        | `bool`                 |          |         |             |         |
+| canEdit                | boolean                                        | `bool`                 |          |         |             |         |
+| canSave                | boolean                                        | `bool`                 |          |         |             |         |
+| canStar                | boolean                                        | `bool`                 |          |         |             |         |
+| created                | date-time (formatted string)                   | `strfmt.DateTime`      |          |         |             |         |
+| createdBy              | string                                         | `string`               |          |         |             |         |
+| expires                | date-time (formatted string)                   | `strfmt.DateTime`      |          |         |             |         |
+| folderId               | int64 (formatted integer)                      | `int64`                |          |         |             |         |
+| folderTitle            | string                                         | `string`               |          |         |             |         |
+| folderUid              | string                                         | `string`               |          |         |             |         |
+| folderUrl              | string                                         | `string`               |          |         |             |         |
+| hasAcl                 | boolean                                        | `bool`                 |          |         |             |         |
+| isFolder               | boolean                                        | `bool`                 |          |         |             |         |
+| isHome                 | boolean                                        | `bool`                 |          |         |             |         |
+| isSnapshot             | boolean                                        | `bool`                 |          |         |             |         |
+| isStarred              | boolean                                        | `bool`                 |          |         |             |         |
+| provisioned            | boolean                                        | `bool`                 |          |         |             |         |
+| provisionedExternalId  | string                                         | `string`               |          |         |             |         |
+| slug                   | string                                         | `string`               |          |         |             |         |
+| type                   | string                                         | `string`               |          |         |             |         |
+| updated                | date-time (formatted string)                   | `strfmt.DateTime`      |          |         |             |         |
+| updatedBy              | string                                         | `string`               |          |         |             |         |
+| url                    | string                                         | `string`               |          |         |             |         |
+| version                | int64 (formatted integer)                      | `int64`                |          |         |             |         |
 
 ### <span id="dashboard-redirect"></span> DashboardRedirect
 
@@ -17031,7 +17411,7 @@ Description:
 
 | Name        | Type   | Go type  | Required | Default | Description | Example |
 | ----------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| RedirectUri | string | `string` |          |         |             |         |
+| redirectUri | string | `string` |          |         |             |         |
 
 ### <span id="dashboard-snapshot"></span> DashboardSnapshot
 
@@ -17064,16 +17444,16 @@ Description:
 
 | Name        | Type                         | Go type           | Required | Default | Description | Example |
 | ----------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Created     | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| Expires     | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| External    | boolean                      | `bool`            |          |         |             |         |
-| ExternalUrl | string                       | `string`          |          |         |             |         |
-| Id          | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| Key         | string                       | `string`          |          |         |             |         |
-| Name        | string                       | `string`          |          |         |             |         |
-| OrgId       | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| Updated     | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| UserId      | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| created     | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| expires     | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| external    | boolean                      | `bool`            |          |         |             |         |
+| externalUrl | string                       | `string`          |          |         |             |         |
+| id          | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| key         | string                       | `string`          |          |         |             |         |
+| name        | string                       | `string`          |          |         |             |         |
+| orgId       | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| updated     | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| userId      | int64 (formatted integer)    | `int64`           |          |         |             |         |
 
 ### <span id="dashboard-tag-cloud-item"></span> DashboardTagCloudItem
 
@@ -17081,8 +17461,8 @@ Description:
 
 | Name  | Type                      | Go type  | Required | Default | Description | Example |
 | ----- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| Count | int64 (formatted integer) | `int64`  |          |         |             |         |
-| Term  | string                    | `string` |          |         |             |         |
+| count | int64 (formatted integer) | `int64`  |          |         |             |         |
+| term  | string                    | `string` |          |         |             |         |
 
 ### <span id="dashboard-version-d-t-o"></span> DashboardVersionDTO
 
@@ -17093,14 +17473,14 @@ Description:
 
 | Name          | Type                         | Go type           | Required | Default | Description | Example |
 | ------------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Created       | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| CreatedBy     | string                       | `string`          |          |         |             |         |
-| DashboardId   | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| Id            | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| Message       | string                       | `string`          |          |         |             |         |
-| ParentVersion | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| RestoredFrom  | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| Version       | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| created       | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| createdBy     | string                       | `string`          |          |         |             |         |
+| dashboardId   | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| id            | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| message       | string                       | `string`          |          |         |             |         |
+| parentVersion | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| restoredFrom  | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| version       | int64 (formatted integer)    | `int64`           |          |         |             |         |
 
 ### <span id="dashboard-version-meta"></span> DashboardVersionMeta
 
@@ -17112,15 +17492,15 @@ Description:
 
 | Name          | Type                         | Go type           | Required | Default | Description | Example |
 | ------------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Created       | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| CreatedBy     | string                       | `string`          |          |         |             |         |
-| DashboardId   | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| Id            | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| Message       | string                       | `string`          |          |         |             |         |
-| ParentVersion | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| RestoredFrom  | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| Version       | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| created       | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| createdBy     | string                       | `string`          |          |         |             |         |
+| dashboardId   | int64 (formatted integer)    | `int64`           |          |         |             |         |
 | data          | [JSON](#json)                | `JSON`            |          |         |             |         |
+| id            | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| message       | string                       | `string`          |          |         |             |         |
+| parentVersion | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| restoredFrom  | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| version       | int64 (formatted integer)    | `int64`           |          |         |             |         |
 
 ### <span id="data-frames"></span> DataFrames
 
@@ -17134,14 +17514,14 @@ Description:
 
 **Properties**
 
-| Name        | Type                                           | Go type               | Required | Default | Description | Example |
-| ----------- | ---------------------------------------------- | --------------------- | :------: | ------- | ----------- | ------- |
-| ErrorString | string                                         | `string`              |          |         |             |         |
-| RefID       | string                                         | `string`              |          |         |             |         |
-| Tables      | [][datatable](#data-table)                     | `[]*DataTable`        |          |         |             |         |
-| dataframes  | [DataFrames](#data-frames)                     | `DataFrames`          |          |         |             |         |
-| meta        | [JSON](#json)                                  | `JSON`                |          |         |             |         |
-| series      | [DataTimeSeriesSlice](#data-time-series-slice) | `DataTimeSeriesSlice` |          |         |             |         |
+| Name       | Type                                           | Go type               | Required | Default | Description | Example |
+| ---------- | ---------------------------------------------- | --------------------- | :------: | ------- | ----------- | ------- |
+| dataframes | [DataFrames](#data-frames)                     | `DataFrames`          |          |         |             |         |
+| error      | string                                         | `string`              |          |         |             |         |
+| meta       | [JSON](#json)                                  | `JSON`                |          |         |             |         |
+| refId      | string                                         | `string`              |          |         |             |         |
+| series     | [DataTimeSeriesSlice](#data-time-series-slice) | `DataTimeSeriesSlice` |          |         |             |         |
+| tables     | [][datatable](#data-table)                     | `[]*DataTable`        |          |         |             |         |
 
 ### <span id="data-response"></span> DataResponse
 
@@ -17151,8 +17531,8 @@ Description:
 
 | Name    | Type                                         | Go type                      | Required | Default | Description | Example |
 | ------- | -------------------------------------------- | ---------------------------- | :------: | ------- | ----------- | ------- |
-| Message | string                                       | `string`                     |          |         |             |         |
-| Results | map of [DataQueryResult](#data-query-result) | `map[string]DataQueryResult` |          |         |             |         |
+| message | string                                       | `string`                     |          |         |             |         |
+| results | map of [DataQueryResult](#data-query-result) | `map[string]DataQueryResult` |          |         |             |         |
 
 ### <span id="data-row-values"></span> DataRowValues
 
@@ -17164,27 +17544,27 @@ Description:
 
 | Name              | Type                      | Go type           | Required | Default | Description | Example |
 | ----------------- | ------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| BasicAuth         | boolean                   | `bool`            |          |         |             |         |
-| BasicAuthPassword | string                    | `string`          |          |         |             |         |
-| BasicAuthUser     | string                    | `string`          |          |         |             |         |
-| Database          | string                    | `string`          |          |         |             |         |
-| Id                | int64 (formatted integer) | `int64`           |          |         |             |         |
-| IsDefault         | boolean                   | `bool`            |          |         |             |         |
-| Name              | string                    | `string`          |          |         |             |         |
-| OrgId             | int64 (formatted integer) | `int64`           |          |         |             |         |
-| Password          | string                    | `string`          |          |         |             |         |
-| ReadOnly          | boolean                   | `bool`            |          |         |             |         |
-| SecureJsonFields  | map of boolean            | `map[string]bool` |          |         |             |         |
-| Type              | string                    | `string`          |          |         |             |         |
-| TypeLogoUrl       | string                    | `string`          |          |         |             |         |
-| UID               | string                    | `string`          |          |         |             |         |
-| Url               | string                    | `string`          |          |         |             |         |
-| User              | string                    | `string`          |          |         |             |         |
-| Version           | int64 (formatted integer) | `int64`           |          |         |             |         |
-| WithCredentials   | boolean                   | `bool`            |          |         |             |         |
 | access            | [DsAccess](#ds-access)    | `DsAccess`        |          |         |             |         |
 | accessControl     | [Metadata](#metadata)     | `Metadata`        |          |         |             |         |
+| basicAuth         | boolean                   | `bool`            |          |         |             |         |
+| basicAuthPassword | string                    | `string`          |          |         |             |         |
+| basicAuthUser     | string                    | `string`          |          |         |             |         |
+| database          | string                    | `string`          |          |         |             |         |
+| id                | int64 (formatted integer) | `int64`           |          |         |             |         |
+| isDefault         | boolean                   | `bool`            |          |         |             |         |
 | jsonData          | [JSON](#json)             | `JSON`            |          |         |             |         |
+| name              | string                    | `string`          |          |         |             |         |
+| orgId             | int64 (formatted integer) | `int64`           |          |         |             |         |
+| password          | string                    | `string`          |          |         |             |         |
+| readOnly          | boolean                   | `bool`            |          |         |             |         |
+| secureJsonFields  | map of boolean            | `map[string]bool` |          |         |             |         |
+| type              | string                    | `string`          |          |         |             |         |
+| typeLogoUrl       | string                    | `string`          |          |         |             |         |
+| uid               | string                    | `string`          |          |         |             |         |
+| url               | string                    | `string`          |          |         |             |         |
+| user              | string                    | `string`          |          |         |             |         |
+| version           | int64 (formatted integer) | `int64`           |          |         |             |         |
+| withCredentials   | boolean                   | `bool`            |          |         |             |         |
 
 ### <span id="data-source-list"></span> DataSourceList
 
@@ -17196,22 +17576,22 @@ Description:
 
 | Name        | Type                      | Go type    | Required | Default | Description | Example |
 | ----------- | ------------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| BasicAuth   | boolean                   | `bool`     |          |         |             |         |
-| Database    | string                    | `string`   |          |         |             |         |
-| Id          | int64 (formatted integer) | `int64`    |          |         |             |         |
-| IsDefault   | boolean                   | `bool`     |          |         |             |         |
-| Name        | string                    | `string`   |          |         |             |         |
-| OrgId       | int64 (formatted integer) | `int64`    |          |         |             |         |
-| Password    | string                    | `string`   |          |         |             |         |
-| ReadOnly    | boolean                   | `bool`     |          |         |             |         |
-| Type        | string                    | `string`   |          |         |             |         |
-| TypeLogoUrl | string                    | `string`   |          |         |             |         |
-| TypeName    | string                    | `string`   |          |         |             |         |
-| UID         | string                    | `string`   |          |         |             |         |
-| Url         | string                    | `string`   |          |         |             |         |
-| User        | string                    | `string`   |          |         |             |         |
 | access      | [DsAccess](#ds-access)    | `DsAccess` |          |         |             |         |
+| basicAuth   | boolean                   | `bool`     |          |         |             |         |
+| database    | string                    | `string`   |          |         |             |         |
+| id          | int64 (formatted integer) | `int64`    |          |         |             |         |
+| isDefault   | boolean                   | `bool`     |          |         |             |         |
 | jsonData    | [JSON](#json)             | `JSON`     |          |         |             |         |
+| name        | string                    | `string`   |          |         |             |         |
+| orgId       | int64 (formatted integer) | `int64`    |          |         |             |         |
+| password    | string                    | `string`   |          |         |             |         |
+| readOnly    | boolean                   | `bool`     |          |         |             |         |
+| type        | string                    | `string`   |          |         |             |         |
+| typeLogoUrl | string                    | `string`   |          |         |             |         |
+| typeName    | string                    | `string`   |          |         |             |         |
+| uid         | string                    | `string`   |          |         |             |         |
+| url         | string                    | `string`   |          |         |             |         |
+| user        | string                    | `string`   |          |         |             |         |
 
 ### <span id="data-table"></span> DataTable
 
@@ -17219,8 +17599,8 @@ Description:
 
 | Name    | Type                                    | Go type              | Required | Default | Description | Example |
 | ------- | --------------------------------------- | -------------------- | :------: | ------- | ----------- | ------- |
-| Columns | [][datatablecolumn](#data-table-column) | `[]*DataTableColumn` |          |         |             |         |
-| Rows    | [][datarowvalues](#data-row-values)     | `[]DataRowValues`    |          |         |             |         |
+| columns | [][datatablecolumn](#data-table-column) | `[]*DataTableColumn` |          |         |             |         |
+| rows    | [][datarowvalues](#data-row-values)     | `[]DataRowValues`    |          |         |             |         |
 
 ### <span id="data-table-column"></span> DataTableColumn
 
@@ -17228,7 +17608,7 @@ Description:
 
 | Name | Type   | Go type  | Required | Default | Description | Example |
 | ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Text | string | `string` |          |         |             |         |
+| text | string | `string` |          |         |             |         |
 
 ### <span id="data-time-point"></span> DataTimePoint
 
@@ -17242,9 +17622,9 @@ Description:
 
 | Name   | Type                                             | Go type                | Required | Default | Description | Example |
 | ------ | ------------------------------------------------ | ---------------------- | :------: | ------- | ----------- | ------- |
-| Name   | string                                           | `string`               |          |         |             |         |
-| Tags   | map of string                                    | `map[string]string`    |          |         |             |         |
+| name   | string                                           | `string`               |          |         |             |         |
 | points | [DataTimeSeriesPoints](#data-time-series-points) | `DataTimeSeriesPoints` |          |         |             |         |
+| tags   | map of string                                    | `map[string]string`    |          |         |             |         |
 
 ### <span id="data-time-series-points"></span> DataTimeSeriesPoints
 
@@ -17284,7 +17664,7 @@ This just tries to make it worry-free. | |
 
 | Name     | Type   | Go type  | Required | Default | Description | Example |
 | -------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Instance | string | `string` |          |         |             |         |
+| instance | string | `string` |          |         |             |         |
 
 ### <span id="discovery-base"></span> DiscoveryBase
 
@@ -17352,15 +17732,33 @@ Enum: 0,1 | |
 | smarthost     | [HostPort](#host-port)   | `HostPort`          |          |         |                          |         |
 | tls_config    | [TLSConfig](#tls-config) | `TLSConfig`         |          |         |                          |         |
 
+### <span id="embedded-contact-point"></span> EmbeddedContactPoint
+
+> EmbeddedContactPoint is the contact point type that is used
+> by grafanas embedded alertmanager implementation.
+
+**Properties**
+
+| Name                                 | Type          | Go type  | Required | Default | Description                                                     | Example |
+| ------------------------------------ | ------------- | -------- | :------: | ------- | --------------------------------------------------------------- | ------- |
+| DisableResolveMessage                | boolean       | `bool`   |          |         |                                                                 |         |
+| Name                                 | string        | `string` |          |         | Name is used as grouping key in the UI. Contact points with the |
+| same name will be grouped in the UI. |               |
+| Provenance                           | string        | `string` |          |         |                                                                 |         |
+| Type                                 | string        | `string` |          |         |                                                                 |         |
+| UID                                  | string        | `string` |          |         | UID is the unique identifier of the contact point. This will be |
+| automatically set be the Grafana.    |               |
+| settings                             | [JSON](#json) | `JSON`   |          |         |                                                                 |         |
+
 ### <span id="error-response-body"></span> ErrorResponseBody
 
 **Properties**
 
 | Name    | Type   | Go type  | Required | Default | Description                                                                                             | Example |
 | ------- | ------ | -------- | :------: | ------- | ------------------------------------------------------------------------------------------------------- | ------- |
-| Error   | string | `string` |          |         | Error An optional detailed description of the actual error. Only included if running in developer mode. |         |
-| Message | string | `string` |    ✓     |         | a human readable version of the error                                                                   |         |
-| Status  | string | `string` |          |         | Status An optional status to denote the cause of the error.                                             |
+| error   | string | `string` |          |         | Error An optional detailed description of the actual error. Only included if running in developer mode. |         |
+| message | string | `string` |    ✓     |         | a human readable version of the error                                                                   |         |
+| status  | string | `string` |          |         | Status An optional status to denote the cause of the error.                                             |
 
 For example, a 412 Precondition Failed error may include additional information of why that error happened. | |
 
@@ -17388,8 +17786,8 @@ For example, a 412 Precondition Failed error may include additional information 
 
 | Name   | Type            | Go type             | Required | Default | Description | Example |
 | ------ | --------------- | ------------------- | :------: | ------- | ----------- | ------- |
-| Metric | string          | `string`            |          |         |             |         |
-| Tags   | map of string   | `map[string]string` |          |         |             |         |
+| metric | string          | `string`            |          |         |             |         |
+| tags   | map of string   | `map[string]string` |          |         |             |         |
 | value  | [Float](#float) | `Float`             |          |         |             |         |
 
 ### <span id="eval-queries-payload"></span> EvalQueriesPayload
@@ -17442,7 +17840,7 @@ For example, a 412 Precondition Failed error may include additional information 
 
 | Name | Type                     | Go type      | Required | Default | Description | Example |
 | ---- | ------------------------ | ------------ | :------: | ------- | ----------- | ------- |
-| Tags | [][tagsdto](#tags-d-t-o) | `[]*TagsDTO` |          |         |             |         |
+| tags | [][tagsdto](#tags-d-t-o) | `[]*TagsDTO` |          |         |             |         |
 
 ### <span id="float"></span> Float
 
@@ -17462,20 +17860,20 @@ For example, a 412 Precondition Failed error may include additional information 
 
 | Name      | Type                         | Go type           | Required | Default | Description | Example |
 | --------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| CanAdmin  | boolean                      | `bool`            |          |         |             |         |
-| CanDelete | boolean                      | `bool`            |          |         |             |         |
-| CanEdit   | boolean                      | `bool`            |          |         |             |         |
-| CanSave   | boolean                      | `bool`            |          |         |             |         |
-| Created   | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| CreatedBy | string                       | `string`          |          |         |             |         |
-| HasAcl    | boolean                      | `bool`            |          |         |             |         |
-| Id        | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| Title     | string                       | `string`          |          |         |             |         |
-| Uid       | string                       | `string`          |          |         |             |         |
-| Updated   | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| UpdatedBy | string                       | `string`          |          |         |             |         |
-| Url       | string                       | `string`          |          |         |             |         |
-| Version   | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| canAdmin  | boolean                      | `bool`            |          |         |             |         |
+| canDelete | boolean                      | `bool`            |          |         |             |         |
+| canEdit   | boolean                      | `bool`            |          |         |             |         |
+| canSave   | boolean                      | `bool`            |          |         |             |         |
+| created   | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| createdBy | string                       | `string`          |          |         |             |         |
+| hasAcl    | boolean                      | `bool`            |          |         |             |         |
+| id        | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| title     | string                       | `string`          |          |         |             |         |
+| uid       | string                       | `string`          |          |         |             |         |
+| updated   | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| updatedBy | string                       | `string`          |          |         |             |         |
+| url       | string                       | `string`          |          |         |             |         |
+| version   | int64 (formatted integer)    | `int64`           |          |         |             |         |
 
 ### <span id="folder-search-hit"></span> FolderSearchHit
 
@@ -17483,9 +17881,9 @@ For example, a 412 Precondition Failed error may include additional information 
 
 | Name  | Type                      | Go type  | Required | Default | Description | Example |
 | ----- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| Id    | int64 (formatted integer) | `int64`  |          |         |             |         |
-| Title | string                    | `string` |          |         |             |         |
-| Uid   | string                    | `string` |          |         |             |         |
+| id    | int64 (formatted integer) | `int64`  |          |         |             |         |
+| title | string                    | `string` |          |         |             |         |
+| uid   | string                    | `string` |          |         |             |         |
 
 ### <span id="get-annotation-tags-response"></span> GetAnnotationTagsResponse
 
@@ -17495,7 +17893,7 @@ For example, a 412 Precondition Failed error may include additional information 
 | ------ | ----------------------------------- | ---------------- | :------: | ------- | ----------- | ------- |
 | result | [FindTagsResult](#find-tags-result) | `FindTagsResult` |          |         |             |         |
 
-### <span id="get-home-dashboard-response-body"></span> GetHomeDashboardResponseBody
+### <span id="get-home-dashboard-response"></span> GetHomeDashboardResponse
 
 - inlined member (_AO0_)
 
@@ -17512,24 +17910,7 @@ For example, a 412 Precondition Failed error may include additional information 
 
 | Name        | Type   | Go type  | Required | Default | Description | Example |
 | ----------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| RedirectUri | string | `string` |          |         |             |         |
-
-### <span id="gettable-alert"></span> GettableAlert
-
-**Properties**
-
-| Name         | Type                         | Go type           | Required | Default | Description   | Example |
-| ------------ | ---------------------------- | ----------------- | :------: | ------- | ------------- | ------- |
-| EndsAt       | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | ends at       |         |
-| Fingerprint  | string                       | `string`          |    ✓     |         | fingerprint   |         |
-| GeneratorURL | uri (formatted string)       | `strfmt.URI`      |          |         | generator URL |
-| Format: uri  |                              |
-| Receivers    | [][receiver](#receiver)      | `[]*Receiver`     |    ✓     |         | receivers     |         |
-| StartsAt     | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | starts at     |         |
-| UpdatedAt    | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | updated at    |         |
-| annotations  | [LabelSet](#label-set)       | `LabelSet`        |    ✓     |         |               |         |
-| labels       | [LabelSet](#label-set)       | `LabelSet`        |    ✓     |         |               |         |
-| status       | [AlertStatus](#alert-status) | `AlertStatus`     |    ✓     |         |               |         |
+| redirectUri | string | `string` |          |         |             |         |
 
 ### <span id="gettable-alertmanagers"></span> GettableAlertmanagers
 
@@ -17539,6 +17920,10 @@ For example, a 412 Precondition Failed error may include additional information 
 | ------ | --------------------------------------------- | --------------------- | :------: | ------- | ----------- | ------- |
 | Status | string                                        | `string`              |          |         |             |         |
 | data   | [AlertManagersResult](#alert-managers-result) | `AlertManagersResult` |          |         |             |         |
+
+### <span id="gettable-alerts"></span> GettableAlerts
+
+[][gettablealert](#gettable-alert)
 
 ### <span id="gettable-api-alerting-config"></span> GettableApiAlertingConfig
 
@@ -17647,25 +18032,6 @@ For example, a 412 Precondition Failed error may include additional information 
 | SourceTenants | []string                                                   | `[]string`                    |          |         |             |         |
 | interval      | [Duration](#duration)                                      | `Duration`                    |          |         |             |         |
 
-### <span id="gettable-silence"></span> GettableSilence
-
-**Properties**
-
-| Name      | Type                             | Go type           | Required | Default | Description | Example |
-| --------- | -------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Comment   | string                           | `string`          |    ✓     |         | comment     |         |
-| CreatedBy | string                           | `string`          |    ✓     |         | created by  |         |
-| EndsAt    | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | ends at     |         |
-| ID        | string                           | `string`          |    ✓     |         | id          |         |
-| StartsAt  | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | starts at   |         |
-| UpdatedAt | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | updated at  |         |
-| matchers  | [Matchers](#matchers)            | `Matchers`        |    ✓     |         |             |         |
-| status    | [SilenceStatus](#silence-status) | `SilenceStatus`   |    ✓     |         |             |         |
-
-### <span id="gettable-silences"></span> GettableSilences
-
-[][gettablesilence](#gettable-silence)
-
 ### <span id="gettable-status"></span> GettableStatus
 
 **Properties**
@@ -17742,21 +18108,21 @@ marshalled configuration when set to false. | |
 
 | Name         | Type                      | Go type    | Required | Default | Description | Example |
 | ------------ | ------------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| FolderID     | int64 (formatted integer) | `int64`    |          |         |             |         |
-| FolderTitle  | string                    | `string`   |          |         |             |         |
-| FolderUID    | string                    | `string`   |          |         |             |         |
-| FolderURL    | string                    | `string`   |          |         |             |         |
-| ID           | int64 (formatted integer) | `int64`    |          |         |             |         |
-| IsStarred    | boolean                   | `bool`     |          |         |             |         |
-| Slug         | string                    | `string`   |          |         |             |         |
-| SortMeta     | int64 (formatted integer) | `int64`    |          |         |             |         |
-| SortMetaName | string                    | `string`   |          |         |             |         |
-| Tags         | []string                  | `[]string` |          |         |             |         |
-| Title        | string                    | `string`   |          |         |             |         |
-| UID          | string                    | `string`   |          |         |             |         |
-| URI          | string                    | `string`   |          |         |             |         |
-| URL          | string                    | `string`   |          |         |             |         |
+| folderId     | int64 (formatted integer) | `int64`    |          |         |             |         |
+| folderTitle  | string                    | `string`   |          |         |             |         |
+| folderUid    | string                    | `string`   |          |         |             |         |
+| folderUrl    | string                    | `string`   |          |         |             |         |
+| id           | int64 (formatted integer) | `int64`    |          |         |             |         |
+| isStarred    | boolean                   | `bool`     |          |         |             |         |
+| slug         | string                    | `string`   |          |         |             |         |
+| sortMeta     | int64 (formatted integer) | `int64`    |          |         |             |         |
+| sortMetaName | string                    | `string`   |          |         |             |         |
+| tags         | []string                  | `[]string` |          |         |             |         |
+| title        | string                    | `string`   |          |         |             |         |
 | type         | [HitType](#hit-type)      | `HitType`  |          |         |             |         |
+| uid          | string                    | `string`   |          |         |             |         |
+| uri          | string                    | `string`   |          |         |             |         |
+| url          | string                    | `string`   |          |         |             |         |
 
 ### <span id="hit-list"></span> HitList
 
@@ -17783,10 +18149,10 @@ marshalled configuration when set to false. | |
 
 | Name     | Type   | Go type  | Required | Default | Description | Example |
 | -------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Name     | string | `string` |          |         |             |         |
-| PluginId | string | `string` |          |         |             |         |
-| Type     | string | `string` |          |         |             |         |
-| Value    | string | `string` |          |         |             |         |
+| name     | string | `string` |          |         |             |         |
+| pluginId | string | `string` |          |         |             |         |
+| type     | string | `string` |          |         |             |         |
+| value    | string | `string` |          |         |             |         |
 
 ### <span id="import-dashboard-request"></span> ImportDashboardRequest
 
@@ -17794,13 +18160,13 @@ marshalled configuration when set to false. | |
 
 | Name      | Type                                              | Go type                   | Required | Default | Description | Example |
 | --------- | ------------------------------------------------- | ------------------------- | :------: | ------- | ----------- | ------- |
-| FolderId  | int64 (formatted integer)                         | `int64`                   |          |         |             |         |
-| FolderUid | string                                            | `string`                  |          |         |             |         |
-| Inputs    | [][importdashboardinput](#import-dashboard-input) | `[]*ImportDashboardInput` |          |         |             |         |
-| Overwrite | boolean                                           | `bool`                    |          |         |             |         |
-| Path      | string                                            | `string`                  |          |         |             |         |
-| PluginId  | string                                            | `string`                  |          |         |             |         |
 | dashboard | [JSON](#json)                                     | `JSON`                    |          |         |             |         |
+| folderId  | int64 (formatted integer)                         | `int64`                   |          |         |             |         |
+| folderUid | string                                            | `string`                  |          |         |             |         |
+| inputs    | [][importdashboardinput](#import-dashboard-input) | `[]*ImportDashboardInput` |          |         |             |         |
+| overwrite | boolean                                           | `bool`                    |          |         |             |         |
+| path      | string                                            | `string`                  |          |         |             |         |
+| pluginId  | string                                            | `string`                  |          |         |             |         |
 
 ### <span id="import-dashboard-response"></span> ImportDashboardResponse
 
@@ -17808,20 +18174,20 @@ marshalled configuration when set to false. | |
 
 | Name             | Type                      | Go type  | Required | Default | Description | Example |
 | ---------------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| DashboardId      | int64 (formatted integer) | `int64`  |          |         |             |         |
-| Description      | string                    | `string` |          |         |             |         |
-| FolderId         | int64 (formatted integer) | `int64`  |          |         |             |         |
-| Imported         | boolean                   | `bool`   |          |         |             |         |
-| ImportedRevision | int64 (formatted integer) | `int64`  |          |         |             |         |
-| ImportedUri      | string                    | `string` |          |         |             |         |
-| ImportedUrl      | string                    | `string` |          |         |             |         |
-| Path             | string                    | `string` |          |         |             |         |
-| PluginId         | string                    | `string` |          |         |             |         |
-| Removed          | boolean                   | `bool`   |          |         |             |         |
-| Revision         | int64 (formatted integer) | `int64`  |          |         |             |         |
-| Slug             | string                    | `string` |          |         |             |         |
-| Title            | string                    | `string` |          |         |             |         |
-| UID              | string                    | `string` |          |         |             |         |
+| dashboardId      | int64 (formatted integer) | `int64`  |          |         |             |         |
+| description      | string                    | `string` |          |         |             |         |
+| folderId         | int64 (formatted integer) | `int64`  |          |         |             |         |
+| imported         | boolean                   | `bool`   |          |         |             |         |
+| importedRevision | int64 (formatted integer) | `int64`  |          |         |             |         |
+| importedUri      | string                    | `string` |          |         |             |         |
+| importedUrl      | string                    | `string` |          |         |             |         |
+| path             | string                    | `string` |          |         |             |         |
+| pluginId         | string                    | `string` |          |         |             |         |
+| removed          | boolean                   | `bool`   |          |         |             |         |
+| revision         | int64 (formatted integer) | `int64`  |          |         |             |         |
+| slug             | string                    | `string` |          |         |             |         |
+| title            | string                    | `string` |          |         |             |         |
+| uid              | string                    | `string` |          |         |             |         |
 
 ### <span id="inclusive-range"></span> InclusiveRange
 
@@ -17858,24 +18224,24 @@ marshalled configuration when set to false. | |
 
 | Name        | Type                      | Go type    | Required | Default | Description | Example |
 | ----------- | ------------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| AlertId     | int64 (formatted integer) | `int64`    |          |         |             |         |
-| AlertName   | string                    | `string`   |          |         |             |         |
-| AvatarUrl   | string                    | `string`   |          |         |             |         |
-| Created     | int64 (formatted integer) | `int64`    |          |         |             |         |
-| DashboardId | int64 (formatted integer) | `int64`    |          |         |             |         |
-| Email       | string                    | `string`   |          |         |             |         |
-| Id          | int64 (formatted integer) | `int64`    |          |         |             |         |
-| Login       | string                    | `string`   |          |         |             |         |
-| NewState    | string                    | `string`   |          |         |             |         |
-| PanelId     | int64 (formatted integer) | `int64`    |          |         |             |         |
-| PrevState   | string                    | `string`   |          |         |             |         |
-| Tags        | []string                  | `[]string` |          |         |             |         |
-| Text        | string                    | `string`   |          |         |             |         |
-| Time        | int64 (formatted integer) | `int64`    |          |         |             |         |
-| TimeEnd     | int64 (formatted integer) | `int64`    |          |         |             |         |
-| Updated     | int64 (formatted integer) | `int64`    |          |         |             |         |
-| UserId      | int64 (formatted integer) | `int64`    |          |         |             |         |
+| alertId     | int64 (formatted integer) | `int64`    |          |         |             |         |
+| alertName   | string                    | `string`   |          |         |             |         |
+| avatarUrl   | string                    | `string`   |          |         |             |         |
+| created     | int64 (formatted integer) | `int64`    |          |         |             |         |
+| dashboardId | int64 (formatted integer) | `int64`    |          |         |             |         |
 | data        | [JSON](#json)             | `JSON`     |          |         |             |         |
+| email       | string                    | `string`   |          |         |             |         |
+| id          | int64 (formatted integer) | `int64`    |          |         |             |         |
+| login       | string                    | `string`   |          |         |             |         |
+| newState    | string                    | `string`   |          |         |             |         |
+| panelId     | int64 (formatted integer) | `int64`    |          |         |             |         |
+| prevState   | string                    | `string`   |          |         |             |         |
+| tags        | []string                  | `[]string` |          |         |             |         |
+| text        | string                    | `string`   |          |         |             |         |
+| time        | int64 (formatted integer) | `int64`    |          |         |             |         |
+| timeEnd     | int64 (formatted integer) | `int64`    |          |         |             |         |
+| updated     | int64 (formatted integer) | `int64`    |          |         |             |         |
+| userId      | int64 (formatted integer) | `int64`    |          |         |             |         |
 
 ### <span id="json"></span> Json
 
@@ -17938,12 +18304,12 @@ marshalled configuration when set to false. | |
 
 | Name         | Type                                                          | Go type                     | Required | Default | Description | Example |
 | ------------ | ------------------------------------------------------------- | --------------------------- | :------: | ------- | ----------- | ------- |
-| ConnectionID | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
-| Created      | date-time (formatted string)                                  | `strfmt.DateTime`           |          |         |             |         |
-| ElementID    | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
-| ID           | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
-| Kind         | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
+| connectionId | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
+| created      | date-time (formatted string)                                  | `strfmt.DateTime`           |          |         |             |         |
 | createdBy    | [LibraryElementDTOMetaUser](#library-element-d-t-o-meta-user) | `LibraryElementDTOMetaUser` |          |         |             |         |
+| elementId    | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
+| id           | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
+| kind         | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
 
 ### <span id="library-element-connections-response"></span> LibraryElementConnectionsResponse
 
@@ -17951,7 +18317,7 @@ marshalled configuration when set to false. | |
 
 | Name   | Type                                                               | Go type                          | Required | Default | Description | Example |
 | ------ | ------------------------------------------------------------------ | -------------------------------- | :------: | ------- | ----------- | ------- |
-| Result | [][libraryelementconnectiondto](#library-element-connection-d-t-o) | `[]*LibraryElementConnectionDTO` |          |         |             |         |
+| result | [][libraryelementconnectiondto](#library-element-connection-d-t-o) | `[]*LibraryElementConnectionDTO` |          |         |             |         |
 
 ### <span id="library-element-d-t-o"></span> LibraryElementDTO
 
@@ -17959,17 +18325,17 @@ marshalled configuration when set to false. | |
 
 | Name        | Type                                                 | Go type                 | Required | Default | Description | Example |
 | ----------- | ---------------------------------------------------- | ----------------------- | :------: | ------- | ----------- | ------- |
-| Description | string                                               | `string`                |          |         |             |         |
-| FolderID    | int64 (formatted integer)                            | `int64`                 |          |         |             |         |
-| ID          | int64 (formatted integer)                            | `int64`                 |          |         |             |         |
-| Kind        | int64 (formatted integer)                            | `int64`                 |          |         |             |         |
-| Model       | [interface{}](#interface)                            | `interface{}`           |          |         |             |         |
-| Name        | string                                               | `string`                |          |         |             |         |
-| OrgID       | int64 (formatted integer)                            | `int64`                 |          |         |             |         |
-| Type        | string                                               | `string`                |          |         |             |         |
-| UID         | string                                               | `string`                |          |         |             |         |
-| Version     | int64 (formatted integer)                            | `int64`                 |          |         |             |         |
+| description | string                                               | `string`                |          |         |             |         |
+| folderId    | int64 (formatted integer)                            | `int64`                 |          |         |             |         |
+| id          | int64 (formatted integer)                            | `int64`                 |          |         |             |         |
+| kind        | int64 (formatted integer)                            | `int64`                 |          |         |             |         |
 | meta        | [LibraryElementDTOMeta](#library-element-d-t-o-meta) | `LibraryElementDTOMeta` |          |         |             |         |
+| model       | [interface{}](#interface)                            | `interface{}`           |          |         |             |         |
+| name        | string                                               | `string`                |          |         |             |         |
+| orgId       | int64 (formatted integer)                            | `int64`                 |          |         |             |         |
+| type        | string                                               | `string`                |          |         |             |         |
+| uid         | string                                               | `string`                |          |         |             |         |
+| version     | int64 (formatted integer)                            | `int64`                 |          |         |             |         |
 
 ### <span id="library-element-d-t-o-meta"></span> LibraryElementDTOMeta
 
@@ -17977,12 +18343,12 @@ marshalled configuration when set to false. | |
 
 | Name                | Type                                                          | Go type                     | Required | Default | Description | Example |
 | ------------------- | ------------------------------------------------------------- | --------------------------- | :------: | ------- | ----------- | ------- |
-| ConnectedDashboards | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
-| Created             | date-time (formatted string)                                  | `strfmt.DateTime`           |          |         |             |         |
-| FolderName          | string                                                        | `string`                    |          |         |             |         |
-| FolderUID           | string                                                        | `string`                    |          |         |             |         |
-| Updated             | date-time (formatted string)                                  | `strfmt.DateTime`           |          |         |             |         |
+| connectedDashboards | int64 (formatted integer)                                     | `int64`                     |          |         |             |         |
+| created             | date-time (formatted string)                                  | `strfmt.DateTime`           |          |         |             |         |
 | createdBy           | [LibraryElementDTOMetaUser](#library-element-d-t-o-meta-user) | `LibraryElementDTOMetaUser` |          |         |             |         |
+| folderName          | string                                                        | `string`                    |          |         |             |         |
+| folderUid           | string                                                        | `string`                    |          |         |             |         |
+| updated             | date-time (formatted string)                                  | `strfmt.DateTime`           |          |         |             |         |
 | updatedBy           | [LibraryElementDTOMetaUser](#library-element-d-t-o-meta-user) | `LibraryElementDTOMetaUser` |          |         |             |         |
 
 ### <span id="library-element-d-t-o-meta-user"></span> LibraryElementDTOMetaUser
@@ -17991,9 +18357,9 @@ marshalled configuration when set to false. | |
 
 | Name      | Type                      | Go type  | Required | Default | Description | Example |
 | --------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| AvatarURL | string                    | `string` |          |         |             |         |
-| ID        | int64 (formatted integer) | `int64`  |          |         |             |         |
-| Name      | string                    | `string` |          |         |             |         |
+| avatarUrl | string                    | `string` |          |         |             |         |
+| id        | int64 (formatted integer) | `int64`  |          |         |             |         |
+| name      | string                    | `string` |          |         |             |         |
 
 ### <span id="library-element-response"></span> LibraryElementResponse
 
@@ -18017,10 +18383,10 @@ marshalled configuration when set to false. | |
 
 | Name       | Type                                          | Go type                | Required | Default | Description | Example |
 | ---------- | --------------------------------------------- | ---------------------- | :------: | ------- | ----------- | ------- |
-| Elements   | [][libraryelementdto](#library-element-d-t-o) | `[]*LibraryElementDTO` |          |         |             |         |
-| Page       | int64 (formatted integer)                     | `int64`                |          |         |             |         |
-| PerPage    | int64 (formatted integer)                     | `int64`                |          |         |             |         |
-| TotalCount | int64 (formatted integer)                     | `int64`                |          |         |             |         |
+| elements   | [][libraryelementdto](#library-element-d-t-o) | `[]*LibraryElementDTO` |          |         |             |         |
+| page       | int64 (formatted integer)                     | `int64`                |          |         |             |         |
+| perPage    | int64 (formatted integer)                     | `int64`                |          |         |             |         |
+| totalCount | int64 (formatted integer)                     | `int64`                |          |         |             |         |
 
 ### <span id="mass-delete-annotations-cmd"></span> MassDeleteAnnotationsCmd
 
@@ -18028,9 +18394,9 @@ marshalled configuration when set to false. | |
 
 | Name         | Type                      | Go type | Required | Default | Description | Example |
 | ------------ | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
-| AnnotationId | int64 (formatted integer) | `int64` |          |         |             |         |
-| DashboardId  | int64 (formatted integer) | `int64` |          |         |             |         |
-| PanelId      | int64 (formatted integer) | `int64` |          |         |             |         |
+| annotationId | int64 (formatted integer) | `int64` |          |         |             |         |
+| dashboardId  | int64 (formatted integer) | `int64` |          |         |             |         |
+| panelId      | int64 (formatted integer) | `int64` |          |         |             |         |
 
 ### <span id="match-regexps"></span> MatchRegexps
 
@@ -18067,15 +18433,15 @@ marshalled configuration when set to false. | |
 
 ### <span id="matchers"></span> Matchers
 
-> Matchers matchers
+> Matchers is a slice of Matchers that is sortable, implements Stringer, and
+> provides a Matches method to match a LabelSet against all Matchers in the
+> slice. Note that some users of Matchers might require it to be sorted.
 
 [][matcher](#matcher)
 
 ### <span id="matchers"></span> Matchers
 
-> Matchers is a slice of Matchers that is sortable, implements Stringer, and
-> provides a Matches method to match a LabelSet against all Matchers in the
-> slice. Note that some users of Matchers might require it to be sorted.
+> Matchers matchers
 
 [][matcher](#matcher)
 
@@ -18092,14 +18458,14 @@ marshalled configuration when set to false. | |
 
 | Name    | Type            | Go type  | Required | Default | Description                                                                               | Example  |
 | ------- | --------------- | -------- | :------: | ------- | ----------------------------------------------------------------------------------------- | -------- |
-| Debug   | boolean         | `bool`   |          |         |                                                                                           |          |
-| From    | string          | `string` |    ✓     |         | From Start time in epoch timestamps in milliseconds or relative using Grafana time units. | `now-1h` |
-| Queries | [][json](#json) | `[]JSON` |    ✓     |         | queries.refId – Specifies an identifier of the query. Is optional and default to “A”.     |
+| debug   | boolean         | `bool`   |          |         |                                                                                           |          |
+| from    | string          | `string` |    ✓     |         | From Start time in epoch timestamps in milliseconds or relative using Grafana time units. | `now-1h` |
+| queries | [][json](#json) | `[]JSON` |    ✓     |         | queries.refId – Specifies an identifier of the query. Is optional and default to “A”.     |
 
 queries.datasourceId – Specifies the data source to be queried. Each query in the request must have an unique datasourceId.
 queries.maxDataPoints - Species maximum amount of data points that dashboard panel can render. Is optional and default to 100.
 queries.intervalMs - Specifies the time interval in milliseconds of time series. Is optional and defaults to 1000. | `[{"datasource":{"uid":"PD8C576611E62080A"},"format":"table","intervalMs":86400000,"maxDataPoints":1092,"rawSql":"SELECT 1 as valueOne, 2 as valueTwo","refId":"A"}]` |
-| To | string| `string` | ✓ | | To End time in epoch timestamps in milliseconds or relative using Grafana time units. | `now` |
+| to | string| `string` | ✓ | | To End time in epoch timestamps in milliseconds or relative using Grafana time units. | `now` |
 
 ### <span id="month-range"></span> MonthRange
 
@@ -18133,10 +18499,10 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 | Name   | Type   | Go type  | Required | Default | Description | Example |
 | ------ | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Id     | string | `string` |          |         |             |         |
-| Target | string | `string` |          |         |             |         |
-| Text   | string | `string` |          |         |             |         |
-| Url    | string | `string` |          |         |             |         |
+| id     | string | `string` |          |         |             |         |
+| target | string | `string` |          |         |             |         |
+| text   | string | `string` |          |         |             |         |
+| url    | string | `string` |          |         |             |         |
 
 ### <span id="navbar-preference"></span> NavbarPreference
 
@@ -18144,7 +18510,7 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 | Name       | Type                   | Go type      | Required | Default | Description | Example |
 | ---------- | ---------------------- | ------------ | :------: | ------- | ----------- | ------- |
-| SavedItems | [][navlink](#nav-link) | `[]*NavLink` |          |         |             |         |
+| savedItems | [][navlink](#nav-link) | `[]*NavLink` |          |         |             |         |
 
 ### <span id="new-api-key-result"></span> NewApiKeyResult
 
@@ -18152,9 +18518,9 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 | Name | Type                      | Go type  | Required | Default | Description | Example |
 | ---- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| ID   | int64 (formatted integer) | `int64`  |          |         |             |         |
-| Key  | string                    | `string` |          |         |             |         |
-| Name | string                    | `string` |          |         |             |         |
+| id   | int64 (formatted integer) | `int64`  |          |         |             |         |
+| key  | string                    | `string` |          |         |             |         |
+| name | string                    | `string` |          |         |             |         |
 
 ### <span id="notification-test-command"></span> NotificationTestCommand
 
@@ -18162,14 +18528,14 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 | Name                  | Type                      | Go type             | Required | Default | Description | Example |
 | --------------------- | ------------------------- | ------------------- | :------: | ------- | ----------- | ------- |
-| DisableResolveMessage | boolean                   | `bool`              |          |         |             |         |
-| Frequency             | string                    | `string`            |          |         |             |         |
-| ID                    | int64 (formatted integer) | `int64`             |          |         |             |         |
-| Name                  | string                    | `string`            |          |         |             |         |
-| SecureSettings        | map of string             | `map[string]string` |          |         |             |         |
-| SendReminder          | boolean                   | `bool`              |          |         |             |         |
-| Type                  | string                    | `string`            |          |         |             |         |
+| disableResolveMessage | boolean                   | `bool`              |          |         |             |         |
+| frequency             | string                    | `string`            |          |         |             |         |
+| id                    | int64 (formatted integer) | `int64`             |          |         |             |         |
+| name                  | string                    | `string`            |          |         |             |         |
+| secureSettings        | map of string             | `map[string]string` |          |         |             |         |
+| sendReminder          | boolean                   | `bool`              |          |         |             |         |
 | settings              | [JSON](#json)             | `JSON`              |          |         |             |         |
+| type                  | string                    | `string`            |          |         |             |         |
 
 ### <span id="notifier-config"></span> NotifierConfig
 
@@ -18239,8 +18605,8 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 | Name | Type                      | Go type  | Required | Default | Description | Example |
 | ---- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| Id   | int64 (formatted integer) | `int64`  |          |         |             |         |
-| Name | string                    | `string` |          |         |             |         |
+| id   | int64 (formatted integer) | `int64`  |          |         |             |         |
+| name | string                    | `string` |          |         |             |         |
 
 ### <span id="org-details-d-t-o"></span> OrgDetailsDTO
 
@@ -18248,9 +18614,9 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 | Name    | Type                      | Go type   | Required | Default | Description | Example |
 | ------- | ------------------------- | --------- | :------: | ------- | ----------- | ------- |
-| Id      | int64 (formatted integer) | `int64`   |          |         |             |         |
-| Name    | string                    | `string`  |          |         |             |         |
 | address | [Address](#address)       | `Address` |          |         |             |         |
+| id      | int64 (formatted integer) | `int64`   |          |         |             |         |
+| name    | string                    | `string`  |          |         |             |         |
 
 ### <span id="org-user-d-t-o"></span> OrgUserDTO
 
@@ -18258,16 +18624,16 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 | Name          | Type                         | Go type           | Required | Default | Description | Example |
 | ------------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| AccessControl | map of boolean               | `map[string]bool` |          |         |             |         |
-| AvatarUrl     | string                       | `string`          |          |         |             |         |
-| Email         | string                       | `string`          |          |         |             |         |
-| LastSeenAt    | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| LastSeenAtAge | string                       | `string`          |          |         |             |         |
-| Login         | string                       | `string`          |          |         |             |         |
-| Name          | string                       | `string`          |          |         |             |         |
-| OrgId         | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| Role          | string                       | `string`          |          |         |             |         |
-| UserId        | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| accessControl | map of boolean               | `map[string]bool` |          |         |             |         |
+| avatarUrl     | string                       | `string`          |          |         |             |         |
+| email         | string                       | `string`          |          |         |             |         |
+| lastSeenAt    | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| lastSeenAtAge | string                       | `string`          |          |         |             |         |
+| login         | string                       | `string`          |          |         |             |         |
+| name          | string                       | `string`          |          |         |             |         |
+| orgId         | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| role          | string                       | `string`          |          |         |             |         |
+| userId        | int64 (formatted integer)    | `int64`           |          |         |             |         |
 
 ### <span id="pagerduty-config"></span> PagerdutyConfig
 
@@ -18320,11 +18686,11 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 | Name    | Type                      | Go type    | Required | Default | Description | Example |
 | ------- | ------------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| Id      | int64 (formatted integer) | `int64`    |          |         |             |         |
-| Tags    | []string                  | `[]string` |          |         |             |         |
-| Text    | string                    | `string`   |          |         |             |         |
-| Time    | int64 (formatted integer) | `int64`    |          |         |             |         |
-| TimeEnd | int64 (formatted integer) | `int64`    |          |         |             |         |
+| id      | int64 (formatted integer) | `int64`    |          |         |             |         |
+| tags    | []string                  | `[]string` |          |         |             |         |
+| text    | string                    | `string`   |          |         |             |         |
+| time    | int64 (formatted integer) | `int64`    |          |         |             |         |
+| timeEnd | int64 (formatted integer) | `int64`    |          |         |             |         |
 
 ### <span id="patch-library-element-command"></span> PatchLibraryElementCommand
 
@@ -18334,28 +18700,29 @@ queries.intervalMs - Specifies the time interval in milliseconds of time series.
 
 | Name     | Type                      | Go type | Required | Default | Description                                                     | Example |
 | -------- | ------------------------- | ------- | :------: | ------- | --------------------------------------------------------------- | ------- |
-| FolderID | int64 (formatted integer) | `int64` |          |         | ID of the folder where the library element is stored.           |         |
-| Kind     | int64 (formatted integer) | `int64` |          |         | Kind of element to create, Use 1 for library panels or 2 for c. |
+| folderId | int64 (formatted integer) | `int64` |          |         | ID of the folder where the library element is stored.           |         |
+| kind     | int64 (formatted integer) | `int64` |          |         | Kind of element to create, Use 1 for library panels or 2 for c. |
 
 Description:
 1 - library panels
 2 - library variables | |
-| Model | [interface{}](#interface)| `interface{}` | | | The JSON model for the library element. | |
-| Name | string| `string` | | | Name of the library element. | |
-| UID | string| `string` | | | | |
-| Version | int64 (formatted integer)| `int64` | | | Version of the library element you are updating. | |
+| model | [interface{}](#interface)| `interface{}` | | | The JSON model for the library element. | |
+| name | string| `string` | | | Name of the library element. | |
+| uid | string| `string` | | | | |
+| version | int64 (formatted integer)| `int64` | | | Version of the library element you are updating. | |
 
 ### <span id="patch-prefs-cmd"></span> PatchPrefsCmd
 
 **Properties**
 
-| Name            | Type                                   | Go type            | Required | Default | Description                                | Example |
-| --------------- | -------------------------------------- | ------------------ | :------: | ------- | ------------------------------------------ | ------- |
-| HomeDashboardID | int64 (formatted integer)              | `int64`            |          |         | The numerical :id of a favorited dashboard |         |
-| Theme           | string                                 | `string`           |          |         |                                            |         |
-| Timezone        | string                                 | `string`           |          |         |                                            |         |
-| WeekStart       | string                                 | `string`           |          |         |                                            |         |
-| navbar          | [NavbarPreference](#navbar-preference) | `NavbarPreference` |          |         |                                            |         |
+| Name            | Type                                                | Go type                  | Required | Default | Description                                | Example |
+| --------------- | --------------------------------------------------- | ------------------------ | :------: | ------- | ------------------------------------------ | ------- |
+| homeDashboardId | int64 (formatted integer)                           | `int64`                  |          |         | The numerical :id of a favorited dashboard |         |
+| navbar          | [NavbarPreference](#navbar-preference)              | `NavbarPreference`       |          |         |                                            |         |
+| queryHistory    | [QueryHistoryPreference](#query-history-preference) | `QueryHistoryPreference` |          |         |                                            |         |
+| theme           | string                                              | `string`                 |          |         |                                            |         |
+| timezone        | string                                              | `string`                 |          |         |                                            |         |
+| weekStart       | string                                              | `string`                 |          |         |                                            |         |
 
 ### <span id="pause-alert-command"></span> PauseAlertCommand
 
@@ -18363,8 +18730,8 @@ Description:
 
 | Name    | Type                      | Go type | Required | Default | Description | Example |
 | ------- | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
-| AlertId | int64 (formatted integer) | `int64` |          |         |             |         |
-| Paused  | boolean                   | `bool`  |          |         |             |         |
+| alertId | int64 (formatted integer) | `int64` |          |         |             |         |
+| paused  | boolean                   | `bool`  |          |         |             |         |
 
 ### <span id="pause-all-alerts-command"></span> PauseAllAlertsCommand
 
@@ -18372,7 +18739,7 @@ Description:
 
 | Name   | Type    | Go type | Required | Default | Description | Example |
 | ------ | ------- | ------- | :------: | ------- | ----------- | ------- |
-| Paused | boolean | `bool`  |          |         |             |         |
+| paused | boolean | `bool`  |          |         |             |         |
 
 ### <span id="peer-status"></span> PeerStatus
 
@@ -18391,10 +18758,10 @@ Description:
 
 | Name    | Type                         | Go type           | Required | Default | Description | Example |
 | ------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Action  | string                       | `string`          |          |         |             |         |
-| Created | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| Scope   | string                       | `string`          |          |         |             |         |
-| Updated | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| action  | string                       | `string`          |          |         |             |         |
+| created | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| scope   | string                       | `string`          |          |         |             |         |
+| updated | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
 
 ### <span id="permission-denied"></span> PermissionDenied
 
@@ -18421,13 +18788,13 @@ Description:
 
 | Name        | Type                      | Go type    | Required | Default | Description | Example |
 | ----------- | ------------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| DashboardId | int64 (formatted integer) | `int64`    |          |         |             |         |
-| PanelId     | int64 (formatted integer) | `int64`    |          |         |             |         |
-| Tags        | []string                  | `[]string` |          |         |             |         |
-| Text        | string                    | `string`   |          |         |             |         |
-| Time        | int64 (formatted integer) | `int64`    |          |         |             |         |
-| TimeEnd     | int64 (formatted integer) | `int64`    |          |         |             |         |
+| dashboardId | int64 (formatted integer) | `int64`    |          |         |             |         |
 | data        | [JSON](#json)             | `JSON`     |          |         |             |         |
+| panelId     | int64 (formatted integer) | `int64`    |          |         |             |         |
+| tags        | []string                  | `[]string` |          |         |             |         |
+| text        | string                    | `string`   |          |         |             |         |
+| time        | int64 (formatted integer) | `int64`    |          |         |             |         |
+| timeEnd     | int64 (formatted integer) | `int64`    |          |         |             |         |
 
 ### <span id="post-graphite-annotations-cmd"></span> PostGraphiteAnnotationsCmd
 
@@ -18435,10 +18802,10 @@ Description:
 
 | Name | Type                      | Go type       | Required | Default | Description | Example |
 | ---- | ------------------------- | ------------- | :------: | ------- | ----------- | ------- |
-| Data | string                    | `string`      |          |         |             |         |
-| Tags | [interface{}](#interface) | `interface{}` |          |         |             |         |
-| What | string                    | `string`      |          |         |             |         |
-| When | int64 (formatted integer) | `int64`       |          |         |             |         |
+| data | string                    | `string`      |          |         |             |         |
+| tags | [interface{}](#interface) | `interface{}` |          |         |             |         |
+| what | string                    | `string`      |          |         |             |         |
+| when | int64 (formatted integer) | `int64`       |          |         |             |         |
 
 ### <span id="postable-alert"></span> PostableAlert
 
@@ -18561,19 +18928,6 @@ Description:
 | Rules    | [][postableextendedrulenode](#postable-extended-rule-node) | `[]*PostableExtendedRuleNode` |          |         |             |         |
 | interval | [Duration](#duration)                                      | `Duration`                    |          |         |             |         |
 
-### <span id="postable-silence"></span> PostableSilence
-
-**Properties**
-
-| Name      | Type                         | Go type           | Required | Default | Description | Example |
-| --------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Comment   | string                       | `string`          |    ✓     |         | comment     |         |
-| CreatedBy | string                       | `string`          |    ✓     |         | created by  |         |
-| EndsAt    | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | ends at     |         |
-| ID        | string                       | `string`          |          |         | id          |         |
-| StartsAt  | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | starts at   |         |
-| matchers  | [Matchers](#matchers)        | `Matchers`        |    ✓     |         |             |         |
-
 ### <span id="postable-user-config"></span> PostableUserConfig
 
 **Properties**
@@ -18587,23 +18941,30 @@ Description:
 
 **Properties**
 
-| Name            | Type                                   | Go type            | Required | Default | Description | Example |
-| --------------- | -------------------------------------- | ------------------ | :------: | ------- | ----------- | ------- |
-| HomeDashboardID | int64 (formatted integer)              | `int64`            |          |         |             |         |
-| Theme           | string                                 | `string`           |          |         |             |         |
-| Timezone        | string                                 | `string`           |          |         |             |         |
-| WeekStart       | string                                 | `string`           |          |         |             |         |
-| navbar          | [NavbarPreference](#navbar-preference) | `NavbarPreference` |          |         |             |         |
+| Name            | Type                                                | Go type                  | Required | Default | Description | Example |
+| --------------- | --------------------------------------------------- | ------------------------ | :------: | ------- | ----------- | ------- |
+| homeDashboardId | int64 (formatted integer)                           | `int64`                  |          |         |             |         |
+| navbar          | [NavbarPreference](#navbar-preference)              | `NavbarPreference`       |          |         |             |         |
+| queryHistory    | [QueryHistoryPreference](#query-history-preference) | `QueryHistoryPreference` |          |         |             |         |
+| theme           | string                                              | `string`                 |          |         |             |         |
+| timezone        | string                                              | `string`                 |          |         |             |         |
+| weekStart       | string                                              | `string`                 |          |         |             |         |
 
 ### <span id="prometheus-remote-write-target-json"></span> PrometheusRemoteWriteTargetJSON
 
 **Properties**
 
-| Name          | Type   | Go type  | Required | Default | Description | Example |
-| ------------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| DatasourceUID | string | `string` |          |         |             |         |
-| ID            | string | `string` |          |         |             |         |
-| WritePath     | string | `string` |          |         |             |         |
+| Name              | Type   | Go type  | Required | Default | Description | Example |
+| ----------------- | ------ | -------- | :------: | ------- | ----------- | ------- |
+| data_source_uid   | string | `string` |          |         |             |         |
+| id                | string | `string` |          |         |             |         |
+| remote_write_path | string | `string` |          |         |             |         |
+
+### <span id="provenance"></span> Provenance
+
+| Name       | Type   | Go type | Default | Description | Example |
+| ---------- | ------ | ------- | ------- | ----------- | ------- |
+| Provenance | string | string  |         |             |         |
 
 ### <span id="pushover-config"></span> PushoverConfig
 
@@ -18635,6 +18996,14 @@ Description:
 | --------- | ----------------------- | ----------- | :------: | ------- | ----------- | ------- |
 | Responses | [Responses](#responses) | `Responses` |          |         |             |         |
 
+### <span id="query-history-preference"></span> QueryHistoryPreference
+
+**Properties**
+
+| Name    | Type   | Go type  | Required | Default | Description | Example |
+| ------- | ------ | -------- | :------: | ------- | ----------- | ------- |
+| homeTab | string | `string` |          |         |             |         |
+
 ### <span id="receiver"></span> Receiver
 
 **Properties**
@@ -18652,33 +19021,25 @@ Description:
 | WebhookConfigs   | [][webhookconfig](#webhook-config)      | `[]*WebhookConfig`   |          |         |                                        |         |
 | WechatConfigs    | [][wechatconfig](#wechat-config)        | `[]*WechatConfig`    |          |         |                                        |         |
 
-### <span id="receiver"></span> Receiver
-
-**Properties**
-
-| Name | Type   | Go type  | Required | Default | Description | Example |
-| ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Name | string | `string` |    ✓     |         | name        |         |
-
 ### <span id="recording-rule-json"></span> RecordingRuleJSON
 
 > RecordingRuleJSON is the external representation of a recording rule
 
 **Properties**
 
-| Name              | Type                                             | Go type                    | Required | Default | Description | Example |
-| ----------------- | ------------------------------------------------ | -------------------------- | :------: | ------- | ----------- | ------- |
-| Active            | boolean                                          | `bool`                     |          |         |             |         |
-| Count             | boolean                                          | `bool`                     |          |         |             |         |
-| Description       | string                                           | `string`                   |          |         |             |         |
-| DestDataSourceUID | string                                           | `string`                   |          |         |             |         |
-| ID                | string                                           | `string`                   |          |         |             |         |
-| Interval          | int64 (formatted integer)                        | `int64`                    |          |         |             |         |
-| Name              | string                                           | `string`                   |          |         |             |         |
-| PromName          | string                                           | `string`                   |          |         |             |         |
-| Queries           | []map[string]interface{}](#map-string-interface) | `[]map[string]interface{}` |          |         |             |         |
-| Range             | int64 (formatted integer)                        | `int64`                    |          |         |             |         |
-| TargetRefID       | string                                           | `string`                   |          |         |             |         |
+| Name                 | Type                                             | Go type                    | Required | Default | Description | Example |
+| -------------------- | ------------------------------------------------ | -------------------------- | :------: | ------- | ----------- | ------- |
+| active               | boolean                                          | `bool`                     |          |         |             |         |
+| count                | boolean                                          | `bool`                     |          |         |             |         |
+| description          | string                                           | `string`                   |          |         |             |         |
+| dest_data_source_uid | string                                           | `string`                   |          |         |             |         |
+| id                   | string                                           | `string`                   |          |         |             |         |
+| interval             | int64 (formatted integer)                        | `int64`                    |          |         |             |         |
+| name                 | string                                           | `string`                   |          |         |             |         |
+| prom_name            | string                                           | `string`                   |          |         |             |         |
+| queries              | []map[string]interface{}](#map-string-interface) | `[]map[string]interface{}` |          |         |             |         |
+| range                | int64 (formatted integer)                        | `int64`                    |          |         |             |         |
+| target_ref_id        | string                                           | `string`                   |          |         |             |         |
 
 ### <span id="regexp"></span> Regexp
 
@@ -18705,10 +19066,10 @@ Description:
 
 | Name                | Type                     | Go type  | Required | Default | Description                                                                               | Example |
 | ------------------- | ------------------------ | -------- | :------: | ------- | ----------------------------------------------------------------------------------------- | ------- |
-| Email               | string                   | `string` |          |         |                                                                                           |         |
-| Emails              | string                   | `string` |          |         | Comma-separated list of emails to which to send the report to.                            |         |
-| Id                  | int64 (formatted string) | `string` |          |         | Send the report to the emails specified in the report. Required if emails is not present. |         |
-| UseEmailsFromReport | boolean                  | `bool`   |          |         | Send the report to the emails specified in the report. Required if emails is not present. |         |
+| email               | string                   | `string` |          |         |                                                                                           |         |
+| emails              | string                   | `string` |          |         | Comma-separated list of emails to which to send the report to.                            |         |
+| id                  | int64 (formatted string) | `string` |          |         | Send the report to the emails specified in the report. Required if emails is not present. |         |
+| useEmailsFromReport | boolean                  | `bool`   |          |         | Send the report to the emails specified in the report. Required if emails is not present. |         |
 
 ### <span id="report-options-d-t-o"></span> ReportOptionsDTO
 
@@ -18716,8 +19077,8 @@ Description:
 
 | Name        | Type                              | Go type        | Required | Default | Description | Example |
 | ----------- | --------------------------------- | -------------- | :------: | ------- | ----------- | ------- |
-| Layout      | string                            | `string`       |          |         |             |         |
-| Orientation | string                            | `string`       |          |         |             |         |
+| layout      | string                            | `string`       |          |         |             |         |
+| orientation | string                            | `string`       |          |         |             |         |
 | timeRange   | [TimeRangeDTO](#time-range-d-t-o) | `TimeRangeDTO` |          |         |             |         |
 
 ### <span id="response-details"></span> ResponseDetails
@@ -18741,7 +19102,7 @@ Description:
 
 | Name        | Type                      | Go type | Required | Default | Description | Example |
 | ----------- | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
-| AuthTokenId | int64 (formatted integer) | `int64` |          |         |             |         |
+| authTokenId | int64 (formatted integer) | `int64` |          |         |             |         |
 
 ### <span id="role-d-t-o"></span> RoleDTO
 
@@ -18749,17 +19110,17 @@ Description:
 
 | Name        | Type                         | Go type           | Required | Default | Description | Example |
 | ----------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Created     | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| Delegatable | boolean                      | `bool`            |          |         |             |         |
-| Description | string                       | `string`          |          |         |             |         |
-| DisplayName | string                       | `string`          |          |         |             |         |
-| Group       | string                       | `string`          |          |         |             |         |
-| Hidden      | boolean                      | `bool`            |          |         |             |         |
-| Name        | string                       | `string`          |          |         |             |         |
-| Permissions | [][permission](#permission)  | `[]*Permission`   |          |         |             |         |
-| UID         | string                       | `string`          |          |         |             |         |
-| Updated     | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| Version     | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| created     | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| delegatable | boolean                      | `bool`            |          |         |             |         |
+| description | string                       | `string`          |          |         |             |         |
+| displayName | string                       | `string`          |          |         |             |         |
+| group       | string                       | `string`          |          |         |             |         |
+| hidden      | boolean                      | `bool`            |          |         |             |         |
+| name        | string                       | `string`          |          |         |             |         |
+| permissions | [][permission](#permission)  | `[]*Permission`   |          |         |             |         |
+| uid         | string                       | `string`          |          |         |             |         |
+| updated     | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| version     | int64 (formatted integer)    | `int64`           |          |         |             |         |
 
 ### <span id="role-type"></span> RoleType
 
@@ -18787,6 +19148,7 @@ Description:
 | match_re          | [MatchRegexps](#match-regexps)     | `MatchRegexps`      |          |         |                                         |         |
 | matchers          | [Matchers](#matchers)              | `Matchers`          |          |         |                                         |         |
 | object_matchers   | [ObjectMatchers](#object-matchers) | `ObjectMatchers`    |          |         |                                         |         |
+| provenance        | [Provenance](#provenance)          | `Provenance`        |          |         |                                         |         |
 | repeat_interval   | [Duration](#duration)              | `Duration`          |          |         |                                         |         |
 
 ### <span id="rule"></span> Rule
@@ -18891,14 +19253,14 @@ same array. | |
 
 | Name      | Type                         | Go type           | Required | Default | Description | Example |
 | --------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| FolderId  | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| FolderUid | string                       | `string`          |          |         |             |         |
-| IsFolder  | boolean                      | `bool`            |          |         |             |         |
-| Message   | string                       | `string`          |          |         |             |         |
-| Overwrite | boolean                      | `bool`            |          |         |             |         |
 | UpdatedAt | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| UserId    | int64 (formatted integer)    | `int64`           |          |         |             |         |
 | dashboard | [JSON](#json)                | `JSON`            |          |         |             |         |
+| folderId  | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| folderUid | string                       | `string`          |          |         |             |         |
+| isFolder  | boolean                      | `bool`            |          |         |             |         |
+| message   | string                       | `string`          |          |         |             |         |
+| overwrite | boolean                      | `bool`            |          |         |             |         |
+| userId    | int64 (formatted integer)    | `int64`           |          |         |             |         |
 
 ### <span id="schedule-d-t-o"></span> ScheduleDTO
 
@@ -18906,17 +19268,17 @@ same array. | |
 
 | Name              | Type                         | Go type           | Required | Default | Description | Example |
 | ----------------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Day               | string                       | `string`          |          |         |             |         |
-| DayOfMonth        | string                       | `string`          |          |         |             |         |
-| EndDate           | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| Frequency         | string                       | `string`          |          |         |             |         |
-| Hour              | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| IntervalAmount    | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| IntervalFrequency | string                       | `string`          |          |         |             |         |
-| Minute            | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| StartDate         | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| TimeZone          | string                       | `string`          |          |         |             |         |
-| WorkdaysOnly      | boolean                      | `bool`            |          |         |             |         |
+| day               | string                       | `string`          |          |         |             |         |
+| dayOfMonth        | string                       | `string`          |          |         |             |         |
+| endDate           | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| frequency         | string                       | `string`          |          |         |             |         |
+| hour              | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| intervalAmount    | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| intervalFrequency | string                       | `string`          |          |         |             |         |
+| minute            | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| startDate         | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| timeZone          | string                       | `string`          |          |         |             |         |
+| workdaysOnly      | boolean                      | `bool`            |          |         |             |         |
 
 ### <span id="search-team-query-result"></span> SearchTeamQueryResult
 
@@ -18924,10 +19286,10 @@ same array. | |
 
 | Name       | Type                      | Go type      | Required | Default | Description | Example |
 | ---------- | ------------------------- | ------------ | :------: | ------- | ----------- | ------- |
-| Page       | int64 (formatted integer) | `int64`      |          |         |             |         |
-| PerPage    | int64 (formatted integer) | `int64`      |          |         |             |         |
-| Teams      | [][teamdto](#team-d-t-o)  | `[]*TeamDTO` |          |         |             |         |
-| TotalCount | int64 (formatted integer) | `int64`      |          |         |             |         |
+| page       | int64 (formatted integer) | `int64`      |          |         |             |         |
+| perPage    | int64 (formatted integer) | `int64`      |          |         |             |         |
+| teams      | [][teamdto](#team-d-t-o)  | `[]*TeamDTO` |          |         |             |         |
+| totalCount | int64 (formatted integer) | `int64`      |          |         |             |         |
 
 ### <span id="search-user-query-result"></span> SearchUserQueryResult
 
@@ -18935,10 +19297,10 @@ same array. | |
 
 | Name       | Type                                         | Go type               | Required | Default | Description | Example |
 | ---------- | -------------------------------------------- | --------------------- | :------: | ------- | ----------- | ------- |
-| Page       | int64 (formatted integer)                    | `int64`               |          |         |             |         |
-| PerPage    | int64 (formatted integer)                    | `int64`               |          |         |             |         |
-| TotalCount | int64 (formatted integer)                    | `int64`               |          |         |             |         |
-| Users      | [][usersearchhitdto](#user-search-hit-d-t-o) | `[]*UserSearchHitDTO` |          |         |             |         |
+| page       | int64 (formatted integer)                    | `int64`               |          |         |             |         |
+| perPage    | int64 (formatted integer)                    | `int64`               |          |         |             |         |
+| totalCount | int64 (formatted integer)                    | `int64`               |          |         |             |         |
+| users      | [][usersearchhitdto](#user-search-hit-d-t-o) | `[]*UserSearchHitDTO` |          |         |             |         |
 
 ### <span id="secret"></span> Secret
 
@@ -18956,9 +19318,9 @@ same array. | |
 
 | Name          | Type     | Go type    | Required | Default | Description | Example |
 | ------------- | -------- | ---------- | :------: | ------- | ----------- | ------- |
-| Global        | boolean  | `bool`     |          |         |             |         |
-| IncludeHidden | boolean  | `bool`     |          |         |             |         |
-| RoleUIDs      | []string | `[]string` |          |         |             |         |
+| global        | boolean  | `bool`     |          |         |             |         |
+| includeHidden | boolean  | `bool`     |          |         |             |         |
+| roleUids      | []string | `[]string` |          |         |             |         |
 
 ### <span id="settings-bag"></span> SettingsBag
 
@@ -18970,10 +19332,10 @@ same array. | |
 
 | Name     | Type                                          | Go type              | Required | Default | Description | Example |
 | -------- | --------------------------------------------- | -------------------- | :------: | ------- | ----------- | ------- |
-| ID       | int64 (formatted integer)                     | `int64`              |          |         |             |         |
-| OrgID    | int64 (formatted integer)                     | `int64`              |          |         |             |         |
-| UserID   | int64 (formatted integer)                     | `int64`              |          |         |             |         |
 | branding | [BrandingOptionsDTO](#branding-options-d-t-o) | `BrandingOptionsDTO` |          |         |             |         |
+| id       | int64 (formatted integer)                     | `int64`              |          |         |             |         |
+| orgId    | int64 (formatted integer)                     | `int64`              |          |         |             |         |
+| userId   | int64 (formatted integer)                     | `int64`              |          |         |             |         |
 
 ### <span id="sig-v4-config"></span> SigV4Config
 
@@ -19101,7 +19463,7 @@ same array. | |
 
 | Name    | Type    | Go type | Required | Default | Description | Example |
 | ------- | ------- | ------- | :------: | ------- | ----------- | ------- |
-| Enabled | boolean | `bool`  |          |         |             |         |
+| enabled | boolean | `bool`  |          |         |             |         |
 
 ### <span id="success"></span> Success
 
@@ -19113,7 +19475,7 @@ same array. | |
 
 | Name    | Type   | Go type  | Required | Default | Description | Example |
 | ------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Message | string | `string` |          |         |             |         |
+| message | string | `string` |          |         |             |         |
 
 ### <span id="sync-result"></span> SyncResult
 
@@ -19145,8 +19507,8 @@ same array. | |
 
 | Name  | Type                      | Go type  | Required | Default | Description | Example |
 | ----- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| Count | int64 (formatted integer) | `int64`  |          |         |             |         |
-| Tag   | string                    | `string` |          |         |             |         |
+| count | int64 (formatted integer) | `int64`  |          |         |             |         |
+| tag   | string                    | `string` |          |         |             |         |
 
 ### <span id="team-d-t-o"></span> TeamDTO
 
@@ -19154,13 +19516,13 @@ same array. | |
 
 | Name          | Type                               | Go type           | Required | Default | Description | Example |
 | ------------- | ---------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| AccessControl | map of boolean                     | `map[string]bool` |          |         |             |         |
-| AvatarUrl     | string                             | `string`          |          |         |             |         |
-| Email         | string                             | `string`          |          |         |             |         |
-| Id            | int64 (formatted integer)          | `int64`           |          |         |             |         |
-| MemberCount   | int64 (formatted integer)          | `int64`           |          |         |             |         |
-| Name          | string                             | `string`          |          |         |             |         |
-| OrgId         | int64 (formatted integer)          | `int64`           |          |         |             |         |
+| accessControl | map of boolean                     | `map[string]bool` |          |         |             |         |
+| avatarUrl     | string                             | `string`          |          |         |             |         |
+| email         | string                             | `string`          |          |         |             |         |
+| id            | int64 (formatted integer)          | `int64`           |          |         |             |         |
+| memberCount   | int64 (formatted integer)          | `int64`           |          |         |             |         |
+| name          | string                             | `string`          |          |         |             |         |
+| orgId         | int64 (formatted integer)          | `int64`           |          |         |             |         |
 | permission    | [PermissionType](#permission-type) | `PermissionType`  |          |         |             |         |
 
 ### <span id="team-group-d-t-o"></span> TeamGroupDTO
@@ -19169,9 +19531,9 @@ same array. | |
 
 | Name    | Type                      | Go type  | Required | Default | Description | Example |
 | ------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| GroupId | string                    | `string` |          |         |             |         |
-| OrgId   | int64 (formatted integer) | `int64`  |          |         |             |         |
-| TeamId  | int64 (formatted integer) | `int64`  |          |         |             |         |
+| groupId | string                    | `string` |          |         |             |         |
+| orgId   | int64 (formatted integer) | `int64`  |          |         |             |         |
+| teamId  | int64 (formatted integer) | `int64`  |          |         |             |         |
 
 ### <span id="team-group-mapping"></span> TeamGroupMapping
 
@@ -19179,24 +19541,24 @@ same array. | |
 
 | Name    | Type   | Go type  | Required | Default | Description | Example |
 | ------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| GroupId | string | `string` |          |         |             |         |
+| groupId | string | `string` |          |         |             |         |
 
 ### <span id="team-member-d-t-o"></span> TeamMemberDTO
 
 **Properties**
 
-| Name       | Type                               | Go type          | Required | Default | Description | Example |
-| ---------- | ---------------------------------- | ---------------- | :------: | ------- | ----------- | ------- |
-| AuthModule | string                             | `string`         |          |         |             |         |
-| AvatarUrl  | string                             | `string`         |          |         |             |         |
-| Email      | string                             | `string`         |          |         |             |         |
-| Labels     | []string                           | `[]string`       |          |         |             |         |
-| Login      | string                             | `string`         |          |         |             |         |
-| Name       | string                             | `string`         |          |         |             |         |
-| OrgId      | int64 (formatted integer)          | `int64`          |          |         |             |         |
-| TeamId     | int64 (formatted integer)          | `int64`          |          |         |             |         |
-| UserId     | int64 (formatted integer)          | `int64`          |          |         |             |         |
-| permission | [PermissionType](#permission-type) | `PermissionType` |          |         |             |         |
+| Name        | Type                               | Go type          | Required | Default | Description | Example |
+| ----------- | ---------------------------------- | ---------------- | :------: | ------- | ----------- | ------- |
+| auth_module | string                             | `string`         |          |         |             |         |
+| avatarUrl   | string                             | `string`         |          |         |             |         |
+| email       | string                             | `string`         |          |         |             |         |
+| labels      | []string                           | `[]string`       |          |         |             |         |
+| login       | string                             | `string`         |          |         |             |         |
+| name        | string                             | `string`         |          |         |             |         |
+| orgId       | int64 (formatted integer)          | `int64`          |          |         |             |         |
+| permission  | [PermissionType](#permission-type) | `PermissionType` |          |         |             |         |
+| teamId      | int64 (formatted integer)          | `int64`          |          |         |             |         |
+| userId      | int64 (formatted integer)          | `int64`          |          |         |             |         |
 
 ### <span id="temp-user-d-t-o"></span> TempUserDTO
 
@@ -19204,20 +19566,20 @@ same array. | |
 
 | Name           | Type                                | Go type           | Required | Default | Description | Example |
 | -------------- | ----------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| Code           | string                              | `string`          |          |         |             |         |
-| Created        | date-time (formatted string)        | `strfmt.DateTime` |          |         |             |         |
-| Email          | string                              | `string`          |          |         |             |         |
-| EmailSent      | boolean                             | `bool`            |          |         |             |         |
-| EmailSentOn    | date-time (formatted string)        | `strfmt.DateTime` |          |         |             |         |
-| Id             | int64 (formatted integer)           | `int64`           |          |         |             |         |
-| InvitedByEmail | string                              | `string`          |          |         |             |         |
-| InvitedByLogin | string                              | `string`          |          |         |             |         |
-| InvitedByName  | string                              | `string`          |          |         |             |         |
-| Name           | string                              | `string`          |          |         |             |         |
-| OrgId          | int64 (formatted integer)           | `int64`           |          |         |             |         |
-| Url            | string                              | `string`          |          |         |             |         |
+| code           | string                              | `string`          |          |         |             |         |
+| createdOn      | date-time (formatted string)        | `strfmt.DateTime` |          |         |             |         |
+| email          | string                              | `string`          |          |         |             |         |
+| emailSent      | boolean                             | `bool`            |          |         |             |         |
+| emailSentOn    | date-time (formatted string)        | `strfmt.DateTime` |          |         |             |         |
+| id             | int64 (formatted integer)           | `int64`           |          |         |             |         |
+| invitedByEmail | string                              | `string`          |          |         |             |         |
+| invitedByLogin | string                              | `string`          |          |         |             |         |
+| invitedByName  | string                              | `string`          |          |         |             |         |
+| name           | string                              | `string`          |          |         |             |         |
+| orgId          | int64 (formatted integer)           | `int64`           |          |         |             |         |
 | role           | [RoleType](#role-type)              | `RoleType`        |          |         |             |         |
 | status         | [TempUserStatus](#temp-user-status) | `TempUserStatus`  |          |         |             |         |
+| url            | string                              | `string`          |          |         |             |         |
 
 ### <span id="temp-user-status"></span> TempUserStatus
 
@@ -19323,38 +19685,40 @@ same array. | |
 
 | Name | Type   | Go type  | Required | Default | Description | Example |
 | ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| From | string | `string` |          |         |             |         |
-| To   | string | `string` |          |         |             |         |
+| from | string | `string` |          |         |             |         |
+| to   | string | `string` |          |         |             |         |
 
 ### <span id="token"></span> Token
 
 **Properties**
 
-| Name                      | Type                         | Go type       | Required | Default | Description | Example |
-| ------------------------- | ---------------------------- | ------------- | :------: | ------- | ----------- | ------- |
-| Account                   | string                       | `string`      |          |         |             |         |
-| Company                   | string                       | `string`      |          |         |             |         |
-| DetailsUrl                | string                       | `string`      |          |         |             |         |
-| Expires                   | int64 (formatted integer)    | `int64`       |          |         |             |         |
-| Id                        | string                       | `string`      |          |         |             |         |
-| IncludedAdmins            | int64 (formatted integer)    | `int64`       |          |         |             |         |
-| IncludedUsers             | int64 (formatted integer)    | `int64`       |          |         |             |         |
-| IncludedViewers           | int64 (formatted integer)    | `int64`       |          |         |             |         |
-| Issued                    | int64 (formatted integer)    | `int64`       |          |         |             |         |
-| Issuer                    | string                       | `string`      |          |         |             |         |
-| LicenseExpires            | int64 (formatted integer)    | `int64`       |          |         |             |         |
-| LicenseExpiresWarnDays    | int64 (formatted integer)    | `int64`       |          |         |             |         |
-| LicenseId                 | string                       | `string`      |          |         |             |         |
-| LicenseIssued             | int64 (formatted integer)    | `int64`       |          |         |             |         |
-| LimitBy                   | string                       | `string`      |          |         |             |         |
-| MaxConcurrentUserSessions | int64 (formatted integer)    | `int64`       |          |         |             |         |
-| Products                  | []string                     | `[]string`    |          |         |             |         |
-| Slug                      | string                       | `string`      |          |         |             |         |
-| Subject                   | string                       | `string`      |          |         |             |         |
-| TokenExpiresWarnDays      | int64 (formatted integer)    | `int64`       |          |         |             |         |
-| UpdateDays                | int64 (formatted integer)    | `int64`       |          |         |             |         |
-| UsageBilling              | boolean                      | `bool`        |          |         |             |         |
-| status                    | [TokenStatus](#token-status) | `TokenStatus` |          |         |             |         |
+| Name                         | Type                         | Go type       | Required | Default | Description | Example |
+| ---------------------------- | ---------------------------- | ------------- | :------: | ------- | ----------- | ------- |
+| account                      | string                       | `string`      |          |         |             |         |
+| company                      | string                       | `string`      |          |         |             |         |
+| details_url                  | string                       | `string`      |          |         |             |         |
+| exp                          | int64 (formatted integer)    | `int64`       |          |         |             |         |
+| iat                          | int64 (formatted integer)    | `int64`       |          |         |             |         |
+| included_admins              | int64 (formatted integer)    | `int64`       |          |         |             |         |
+| included_users               | int64 (formatted integer)    | `int64`       |          |         |             |         |
+| included_viewers             | int64 (formatted integer)    | `int64`       |          |         |             |         |
+| iss                          | string                       | `string`      |          |         |             |         |
+| jti                          | string                       | `string`      |          |         |             |         |
+| lexp                         | int64 (formatted integer)    | `int64`       |          |         |             |         |
+| lic_exp_warn_days            | int64 (formatted integer)    | `int64`       |          |         |             |         |
+| lid                          | string                       | `string`      |          |         |             |         |
+| limit_by                     | string                       | `string`      |          |         |             |         |
+| max_concurrent_user_sessions | int64 (formatted integer)    | `int64`       |          |         |             |         |
+| nbf                          | int64 (formatted integer)    | `int64`       |          |         |             |         |
+| prod                         | []string                     | `[]string`    |          |         |             |         |
+| slug                         | string                       | `string`      |          |         |             |         |
+| status                       | [TokenStatus](#token-status) | `TokenStatus` |          |         |             |         |
+| sub                          | string                       | `string`      |          |         |             |         |
+| tok_exp_warn_days            | int64 (formatted integer)    | `int64`       |          |         |             |         |
+| trial                        | boolean                      | `bool`        |          |         |             |         |
+| trial_exp                    | int64 (formatted integer)    | `int64`       |          |         |             |         |
+| update_days                  | int64 (formatted integer)    | `int64`       |          |         |             |         |
+| usage_billing                | boolean                      | `bool`        |          |         |             |         |
 
 ### <span id="token-status"></span> TokenStatus
 
@@ -19403,16 +19767,16 @@ same array. | |
 
 | Name                  | Type                      | Go type             | Required | Default | Description | Example |
 | --------------------- | ------------------------- | ------------------- | :------: | ------- | ----------- | ------- |
-| DisableResolveMessage | boolean                   | `bool`              |          |         |             |         |
-| Frequency             | string                    | `string`            |          |         |             |         |
-| Id                    | int64 (formatted integer) | `int64`             |          |         |             |         |
-| IsDefault             | boolean                   | `bool`              |          |         |             |         |
-| Name                  | string                    | `string`            |          |         |             |         |
-| SecureSettings        | map of string             | `map[string]string` |          |         |             |         |
-| SendReminder          | boolean                   | `bool`              |          |         |             |         |
-| Type                  | string                    | `string`            |          |         |             |         |
-| Uid                   | string                    | `string`            |          |         |             |         |
+| disableResolveMessage | boolean                   | `bool`              |          |         |             |         |
+| frequency             | string                    | `string`            |          |         |             |         |
+| id                    | int64 (formatted integer) | `int64`             |          |         |             |         |
+| isDefault             | boolean                   | `bool`              |          |         |             |         |
+| name                  | string                    | `string`            |          |         |             |         |
+| secureSettings        | map of string             | `map[string]string` |          |         |             |         |
+| sendReminder          | boolean                   | `bool`              |          |         |             |         |
 | settings              | [JSON](#json)             | `JSON`              |          |         |             |         |
+| type                  | string                    | `string`            |          |         |             |         |
+| uid                   | string                    | `string`            |          |         |             |         |
 
 ### <span id="update-alert-notification-with-uid-command"></span> UpdateAlertNotificationWithUidCommand
 
@@ -19420,15 +19784,15 @@ same array. | |
 
 | Name                  | Type          | Go type             | Required | Default | Description | Example |
 | --------------------- | ------------- | ------------------- | :------: | ------- | ----------- | ------- |
-| DisableResolveMessage | boolean       | `bool`              |          |         |             |         |
-| Frequency             | string        | `string`            |          |         |             |         |
-| IsDefault             | boolean       | `bool`              |          |         |             |         |
-| Name                  | string        | `string`            |          |         |             |         |
-| NewUid                | string        | `string`            |          |         |             |         |
-| SecureSettings        | map of string | `map[string]string` |          |         |             |         |
-| SendReminder          | boolean       | `bool`              |          |         |             |         |
-| Type                  | string        | `string`            |          |         |             |         |
+| disableResolveMessage | boolean       | `bool`              |          |         |             |         |
+| frequency             | string        | `string`            |          |         |             |         |
+| isDefault             | boolean       | `bool`              |          |         |             |         |
+| name                  | string        | `string`            |          |         |             |         |
+| secureSettings        | map of string | `map[string]string` |          |         |             |         |
+| sendReminder          | boolean       | `bool`              |          |         |             |         |
 | settings              | [JSON](#json) | `JSON`              |          |         |             |         |
+| type                  | string        | `string`            |          |         |             |         |
+| uid                   | string        | `string`            |          |         |             |         |
 
 ### <span id="update-annotations-cmd"></span> UpdateAnnotationsCmd
 
@@ -19436,11 +19800,11 @@ same array. | |
 
 | Name    | Type                      | Go type    | Required | Default | Description | Example |
 | ------- | ------------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| Id      | int64 (formatted integer) | `int64`    |          |         |             |         |
-| Tags    | []string                  | `[]string` |          |         |             |         |
-| Text    | string                    | `string`   |          |         |             |         |
-| Time    | int64 (formatted integer) | `int64`    |          |         |             |         |
-| TimeEnd | int64 (formatted integer) | `int64`    |          |         |             |         |
+| id      | int64 (formatted integer) | `int64`    |          |         |             |         |
+| tags    | []string                  | `[]string` |          |         |             |         |
+| text    | string                    | `string`   |          |         |             |         |
+| time    | int64 (formatted integer) | `int64`    |          |         |             |         |
+| timeEnd | int64 (formatted integer) | `int64`    |          |         |             |         |
 
 ### <span id="update-dashboard-acl-command"></span> UpdateDashboardAclCommand
 
@@ -19448,7 +19812,7 @@ same array. | |
 
 | Name  | Type                                                   | Go type                     | Required | Default | Description | Example |
 | ----- | ------------------------------------------------------ | --------------------------- | :------: | ------- | ----------- | ------- |
-| Items | [][dashboardaclupdateitem](#dashboard-acl-update-item) | `[]*DashboardACLUpdateItem` |          |         |             |         |
+| items | [][dashboardaclupdateitem](#dashboard-acl-update-item) | `[]*DashboardACLUpdateItem` |          |         |             |         |
 
 ### <span id="update-data-source-command"></span> UpdateDataSourceCommand
 
@@ -19458,22 +19822,22 @@ same array. | |
 
 | Name              | Type                      | Go type             | Required | Default | Description | Example |
 | ----------------- | ------------------------- | ------------------- | :------: | ------- | ----------- | ------- |
-| BasicAuth         | boolean                   | `bool`              |          |         |             |         |
-| BasicAuthPassword | string                    | `string`            |          |         |             |         |
-| BasicAuthUser     | string                    | `string`            |          |         |             |         |
-| Database          | string                    | `string`            |          |         |             |         |
-| IsDefault         | boolean                   | `bool`              |          |         |             |         |
-| Name              | string                    | `string`            |          |         |             |         |
-| Password          | string                    | `string`            |          |         |             |         |
-| SecureJsonData    | map of string             | `map[string]string` |          |         |             |         |
-| Type              | string                    | `string`            |          |         |             |         |
-| Uid               | string                    | `string`            |          |         |             |         |
-| Url               | string                    | `string`            |          |         |             |         |
-| User              | string                    | `string`            |          |         |             |         |
-| Version           | int64 (formatted integer) | `int64`             |          |         |             |         |
-| WithCredentials   | boolean                   | `bool`              |          |         |             |         |
 | access            | [DsAccess](#ds-access)    | `DsAccess`          |          |         |             |         |
+| basicAuth         | boolean                   | `bool`              |          |         |             |         |
+| basicAuthPassword | string                    | `string`            |          |         |             |         |
+| basicAuthUser     | string                    | `string`            |          |         |             |         |
+| database          | string                    | `string`            |          |         |             |         |
+| isDefault         | boolean                   | `bool`              |          |         |             |         |
 | jsonData          | [JSON](#json)             | `JSON`              |          |         |             |         |
+| name              | string                    | `string`            |          |         |             |         |
+| password          | string                    | `string`            |          |         |             |         |
+| secureJsonData    | map of string             | `map[string]string` |          |         |             |         |
+| type              | string                    | `string`            |          |         |             |         |
+| uid               | string                    | `string`            |          |         |             |         |
+| url               | string                    | `string`            |          |         |             |         |
+| user              | string                    | `string`            |          |         |             |         |
+| version           | int64 (formatted integer) | `int64`             |          |         |             |         |
+| withCredentials   | boolean                   | `bool`              |          |         |             |         |
 
 ### <span id="update-folder-command"></span> UpdateFolderCommand
 
@@ -19481,10 +19845,10 @@ same array. | |
 
 | Name      | Type                      | Go type  | Required | Default | Description | Example |
 | --------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| Overwrite | boolean                   | `bool`   |          |         |             |         |
-| Title     | string                    | `string` |          |         |             |         |
-| Uid       | string                    | `string` |          |         |             |         |
-| Version   | int64 (formatted integer) | `int64`  |          |         |             |         |
+| overwrite | boolean                   | `bool`   |          |         |             |         |
+| title     | string                    | `string` |          |         |             |         |
+| uid       | string                    | `string` |          |         |             |         |
+| version   | int64 (formatted integer) | `int64`  |          |         |             |         |
 
 ### <span id="update-org-address-form"></span> UpdateOrgAddressForm
 
@@ -19492,12 +19856,12 @@ same array. | |
 
 | Name     | Type   | Go type  | Required | Default | Description | Example |
 | -------- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Address1 | string | `string` |          |         |             |         |
-| Address2 | string | `string` |          |         |             |         |
-| City     | string | `string` |          |         |             |         |
-| Country  | string | `string` |          |         |             |         |
-| State    | string | `string` |          |         |             |         |
-| ZipCode  | string | `string` |          |         |             |         |
+| address1 | string | `string` |          |         |             |         |
+| address2 | string | `string` |          |         |             |         |
+| city     | string | `string` |          |         |             |         |
+| country  | string | `string` |          |         |             |         |
+| state    | string | `string` |          |         |             |         |
+| zipcode  | string | `string` |          |         |             |         |
 
 ### <span id="update-org-form"></span> UpdateOrgForm
 
@@ -19505,7 +19869,7 @@ same array. | |
 
 | Name | Type   | Go type  | Required | Default | Description | Example |
 | ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Name | string | `string` |          |         |             |         |
+| name | string | `string` |          |         |             |         |
 
 ### <span id="update-org-quota-cmd"></span> UpdateOrgQuotaCmd
 
@@ -19513,8 +19877,8 @@ same array. | |
 
 | Name   | Type                      | Go type  | Required | Default | Description | Example |
 | ------ | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| Limit  | int64 (formatted integer) | `int64`  |          |         |             |         |
-| Target | string                    | `string` |          |         |             |         |
+| limit  | int64 (formatted integer) | `int64`  |          |         |             |         |
+| target | string                    | `string` |          |         |             |         |
 
 ### <span id="update-org-user-command"></span> UpdateOrgUserCommand
 
@@ -19528,13 +19892,14 @@ same array. | |
 
 **Properties**
 
-| Name            | Type                                   | Go type            | Required | Default | Description                                | Example |
-| --------------- | -------------------------------------- | ------------------ | :------: | ------- | ------------------------------------------ | ------- |
-| HomeDashboardID | int64 (formatted integer)              | `int64`            |          |         | The numerical :id of a favorited dashboard |         |
-| Theme           | string                                 | `string`           |          |         |                                            |         |
-| Timezone        | string                                 | `string`           |          |         |                                            |         |
-| WeekStart       | string                                 | `string`           |          |         |                                            |         |
-| navbar          | [NavbarPreference](#navbar-preference) | `NavbarPreference` |          |         |                                            |         |
+| Name            | Type                                                | Go type                  | Required | Default | Description                                | Example |
+| --------------- | --------------------------------------------------- | ------------------------ | :------: | ------- | ------------------------------------------ | ------- |
+| homeDashboardId | int64 (formatted integer)                           | `int64`                  |          |         | The numerical :id of a favorited dashboard |         |
+| navbar          | [NavbarPreference](#navbar-preference)              | `NavbarPreference`       |          |         |                                            |         |
+| queryHistory    | [QueryHistoryPreference](#query-history-preference) | `QueryHistoryPreference` |          |         |                                            |         |
+| theme           | string                                              | `string`                 |          |         |                                            |         |
+| timezone        | string                                              | `string`                 |          |         |                                            |         |
+| weekStart       | string                                              | `string`                 |          |         |                                            |         |
 
 ### <span id="update-role-command"></span> UpdateRoleCommand
 
@@ -19542,14 +19907,14 @@ same array. | |
 
 | Name        | Type                        | Go type         | Required | Default | Description | Example |
 | ----------- | --------------------------- | --------------- | :------: | ------- | ----------- | ------- |
-| Description | string                      | `string`        |          |         |             |         |
-| DisplayName | string                      | `string`        |          |         |             |         |
-| Global      | boolean                     | `bool`          |          |         |             |         |
-| Group       | string                      | `string`        |          |         |             |         |
-| Hidden      | boolean                     | `bool`          |          |         |             |         |
-| Name        | string                      | `string`        |          |         |             |         |
-| Permissions | [][permission](#permission) | `[]*Permission` |          |         |             |         |
-| Version     | int64 (formatted integer)   | `int64`         |          |         |             |         |
+| description | string                      | `string`        |          |         |             |         |
+| displayName | string                      | `string`        |          |         |             |         |
+| global      | boolean                     | `bool`          |          |         |             |         |
+| group       | string                      | `string`        |          |         |             |         |
+| hidden      | boolean                     | `bool`          |          |         |             |         |
+| name        | string                      | `string`        |          |         |             |         |
+| permissions | [][permission](#permission) | `[]*Permission` |          |         |             |         |
+| version     | int64 (formatted integer)   | `int64`         |          |         |             |         |
 
 ### <span id="update-team-command"></span> UpdateTeamCommand
 
@@ -19575,10 +19940,10 @@ same array. | |
 
 | Name  | Type   | Go type  | Required | Default | Description | Example |
 | ----- | ------ | -------- | :------: | ------- | ----------- | ------- |
-| Email | string | `string` |          |         |             |         |
-| Login | string | `string` |          |         |             |         |
-| Name  | string | `string` |          |         |             |         |
-| Theme | string | `string` |          |         |             |         |
+| email | string | `string` |          |         |             |         |
+| login | string | `string` |          |         |             |         |
+| name  | string | `string` |          |         |             |         |
+| theme | string | `string` |          |         |             |         |
 
 ### <span id="update-user-quota-cmd"></span> UpdateUserQuotaCmd
 
@@ -19586,8 +19951,8 @@ same array. | |
 
 | Name   | Type                      | Go type  | Required | Default | Description | Example |
 | ------ | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| Limit  | int64 (formatted integer) | `int64`  |          |         |             |         |
-| Target | string                    | `string` |          |         |             |         |
+| limit  | int64 (formatted integer) | `int64`  |          |         |             |         |
+| target | string                    | `string` |          |         |             |         |
 
 ### <span id="user-id-d-t-o"></span> UserIdDTO
 
@@ -19595,8 +19960,8 @@ same array. | |
 
 | Name    | Type                      | Go type  | Required | Default | Description | Example |
 | ------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| Id      | int64 (formatted integer) | `int64`  |          |         |             |         |
-| Message | string                    | `string` |          |         |             |         |
+| id      | int64 (formatted integer) | `int64`  |          |         |             |         |
+| message | string                    | `string` |          |         |             |         |
 
 ### <span id="user-lookup-d-t-o"></span> UserLookupDTO
 
@@ -19604,9 +19969,9 @@ same array. | |
 
 | Name      | Type                      | Go type  | Required | Default | Description | Example |
 | --------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| AvatarURL | string                    | `string` |          |         |             |         |
-| Login     | string                    | `string` |          |         |             |         |
-| UserID    | int64 (formatted integer) | `int64`  |          |         |             |         |
+| avatarUrl | string                    | `string` |          |         |             |         |
+| login     | string                    | `string` |          |         |             |         |
+| userId    | int64 (formatted integer) | `int64`  |          |         |             |         |
 
 ### <span id="user-org-d-t-o"></span> UserOrgDTO
 
@@ -19614,8 +19979,8 @@ same array. | |
 
 | Name  | Type                      | Go type    | Required | Default | Description | Example |
 | ----- | ------------------------- | ---------- | :------: | ------- | ----------- | ------- |
-| Name  | string                    | `string`   |          |         |             |         |
-| OrgId | int64 (formatted integer) | `int64`    |          |         |             |         |
+| name  | string                    | `string`   |          |         |             |         |
+| orgId | int64 (formatted integer) | `int64`    |          |         |             |         |
 | role  | [RoleType](#role-type)    | `RoleType` |          |         |             |         |
 
 ### <span id="user-profile-d-t-o"></span> UserProfileDTO
@@ -19624,31 +19989,31 @@ same array. | |
 
 | Name           | Type                         | Go type           | Required | Default | Description | Example |
 | -------------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| AccessControl  | map of boolean               | `map[string]bool` |          |         |             |         |
-| AuthLabels     | []string                     | `[]string`        |          |         |             |         |
-| AvatarUrl      | string                       | `string`          |          |         |             |         |
-| CreatedAt      | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| Email          | string                       | `string`          |          |         |             |         |
-| Id             | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| IsDisabled     | boolean                      | `bool`            |          |         |             |         |
-| IsExternal     | boolean                      | `bool`            |          |         |             |         |
-| IsGrafanaAdmin | boolean                      | `bool`            |          |         |             |         |
-| Login          | string                       | `string`          |          |         |             |         |
-| Name           | string                       | `string`          |          |         |             |         |
-| OrgId          | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| Theme          | string                       | `string`          |          |         |             |         |
-| UpdatedAt      | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| accessControl  | map of boolean               | `map[string]bool` |          |         |             |         |
+| authLabels     | []string                     | `[]string`        |          |         |             |         |
+| avatarUrl      | string                       | `string`          |          |         |             |         |
+| createdAt      | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| email          | string                       | `string`          |          |         |             |         |
+| id             | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| isDisabled     | boolean                      | `bool`            |          |         |             |         |
+| isExternal     | boolean                      | `bool`            |          |         |             |         |
+| isGrafanaAdmin | boolean                      | `bool`            |          |         |             |         |
+| login          | string                       | `string`          |          |         |             |         |
+| name           | string                       | `string`          |          |         |             |         |
+| orgId          | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| theme          | string                       | `string`          |          |         |             |         |
+| updatedAt      | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
 
 ### <span id="user-quota-d-t-o"></span> UserQuotaDTO
 
 **Properties**
 
-| Name   | Type                      | Go type  | Required | Default | Description | Example |
-| ------ | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
-| Limit  | int64 (formatted integer) | `int64`  |          |         |             |         |
-| Target | string                    | `string` |          |         |             |         |
-| Used   | int64 (formatted integer) | `int64`  |          |         |             |         |
-| UserId | int64 (formatted integer) | `int64`  |          |         |             |         |
+| Name    | Type                      | Go type  | Required | Default | Description | Example |
+| ------- | ------------------------- | -------- | :------: | ------- | ----------- | ------- |
+| limit   | int64 (formatted integer) | `int64`  |          |         |             |         |
+| target  | string                    | `string` |          |         |             |         |
+| used    | int64 (formatted integer) | `int64`  |          |         |             |         |
+| user_id | int64 (formatted integer) | `int64`  |          |         |             |         |
 
 ### <span id="user-search-hit-d-t-o"></span> UserSearchHitDTO
 
@@ -19656,16 +20021,16 @@ same array. | |
 
 | Name          | Type                         | Go type           | Required | Default | Description | Example |
 | ------------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
-| AuthLabels    | []string                     | `[]string`        |          |         |             |         |
-| AvatarUrl     | string                       | `string`          |          |         |             |         |
-| Email         | string                       | `string`          |          |         |             |         |
-| Id            | int64 (formatted integer)    | `int64`           |          |         |             |         |
-| IsAdmin       | boolean                      | `bool`            |          |         |             |         |
-| IsDisabled    | boolean                      | `bool`            |          |         |             |         |
-| LastSeenAt    | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
-| LastSeenAtAge | string                       | `string`          |          |         |             |         |
-| Login         | string                       | `string`          |          |         |             |         |
-| Name          | string                       | `string`          |          |         |             |         |
+| authLabels    | []string                     | `[]string`        |          |         |             |         |
+| avatarUrl     | string                       | `string`          |          |         |             |         |
+| email         | string                       | `string`          |          |         |             |         |
+| id            | int64 (formatted integer)    | `int64`           |          |         |             |         |
+| isAdmin       | boolean                      | `bool`            |          |         |             |         |
+| isDisabled    | boolean                      | `bool`            |          |         |             |         |
+| lastSeenAt    | date-time (formatted string) | `strfmt.DateTime` |          |         |             |         |
+| lastSeenAtAge | string                       | `string`          |          |         |             |         |
+| login         | string                       | `string`          |          |         |             |         |
+| name          | string                       | `string`          |          |         |             |         |
 
 ### <span id="user-token"></span> UserToken
 
@@ -19796,14 +20161,87 @@ allows an unlimited number of alerts. | |
 | Begin | int64 (formatted integer) | `int64` |          |         |             |         |
 | End   | int64 (formatted integer) | `int64` |          |         |             |         |
 
-### <span id="gettable-alerts"></span> gettableAlerts
+### <span id="alert-group"></span> alertGroup
 
-> GettableAlerts gettable alerts
+> AlertGroup alert group
 
-[][gettablealert](#gettable-alert)
+**Properties**
+
+| Name     | Type                               | Go type            | Required | Default | Description | Example |
+| -------- | ---------------------------------- | ------------------ | :------: | ------- | ----------- | ------- |
+| Alerts   | [][gettablealert](#gettable-alert) | `[]*GettableAlert` |    ✓     |         | alerts      |         |
+| labels   | [LabelSet](#label-set)             | `LabelSet`         |    ✓     |         |             |         |
+| receiver | [Receiver](#receiver)              | `Receiver`         |    ✓     |         |             |         |
+
+### <span id="gettable-alert"></span> gettableAlert
+
+> GettableAlert gettable alert
+
+**Properties**
+
+| Name         | Type                         | Go type           | Required | Default | Description   | Example |
+| ------------ | ---------------------------- | ----------------- | :------: | ------- | ------------- | ------- |
+| EndsAt       | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | ends at       |         |
+| Fingerprint  | string                       | `string`          |    ✓     |         | fingerprint   |         |
+| GeneratorURL | uri (formatted string)       | `strfmt.URI`      |          |         | generator URL |
+| Format: uri  |                              |
+| Receivers    | [][receiver](#receiver)      | `[]*Receiver`     |    ✓     |         | receivers     |         |
+| StartsAt     | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | starts at     |         |
+| UpdatedAt    | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | updated at    |         |
+| annotations  | [LabelSet](#label-set)       | `LabelSet`        |    ✓     |         |               |         |
+| labels       | [LabelSet](#label-set)       | `LabelSet`        |    ✓     |         |               |         |
+| status       | [AlertStatus](#alert-status) | `AlertStatus`     |    ✓     |         |               |         |
+
+### <span id="gettable-silence"></span> gettableSilence
+
+> GettableSilence gettable silence
+
+**Properties**
+
+| Name      | Type                             | Go type           | Required | Default | Description | Example |
+| --------- | -------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
+| Comment   | string                           | `string`          |    ✓     |         | comment     |         |
+| CreatedBy | string                           | `string`          |    ✓     |         | created by  |         |
+| EndsAt    | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | ends at     |         |
+| ID        | string                           | `string`          |    ✓     |         | id          |         |
+| StartsAt  | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | starts at   |         |
+| UpdatedAt | date-time (formatted string)     | `strfmt.DateTime` |    ✓     |         | updated at  |         |
+| matchers  | [Matchers](#matchers)            | `Matchers`        |    ✓     |         |             |         |
+| status    | [SilenceStatus](#silence-status) | `SilenceStatus`   |    ✓     |         |             |         |
+
+### <span id="gettable-silences"></span> gettableSilences
+
+> GettableSilences gettable silences
+
+[][gettablesilence](#gettable-silence)
 
 ### <span id="override-labels"></span> overrideLabels
 
 > The custom marshaling for labels.Labels ends up doing this anyways.
 
 [OverrideLabels](#override-labels)
+
+### <span id="postable-silence"></span> postableSilence
+
+> PostableSilence postable silence
+
+**Properties**
+
+| Name      | Type                         | Go type           | Required | Default | Description | Example |
+| --------- | ---------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
+| Comment   | string                       | `string`          |    ✓     |         | comment     |         |
+| CreatedBy | string                       | `string`          |    ✓     |         | created by  |         |
+| EndsAt    | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | ends at     |         |
+| ID        | string                       | `string`          |          |         | id          |         |
+| StartsAt  | date-time (formatted string) | `strfmt.DateTime` |    ✓     |         | starts at   |         |
+| matchers  | [Matchers](#matchers)        | `Matchers`        |    ✓     |         |             |         |
+
+### <span id="receiver"></span> receiver
+
+> Receiver receiver
+
+**Properties**
+
+| Name | Type   | Go type  | Required | Default | Description | Example |
+| ---- | ------ | -------- | :------: | ------- | ----------- | ------- |
+| Name | string | `string` |    ✓     |         | name        |         |

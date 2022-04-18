@@ -566,6 +566,7 @@
      "x-go-name": "DisableResolveMessage"
     },
     "name": {
+     "description": "Name is used as grouping key in the UI. Contact points with the\nsame name will be grouped in the UI.",
      "type": "string",
      "x-go-name": "Name"
     },
@@ -581,6 +582,7 @@
      "x-go-name": "Type"
     },
     "uid": {
+     "description": "UID is the unique identifier of the contact point. This will be\nautomatically set be the Grafana.",
      "type": "string",
      "x-go-name": "UID"
     }
@@ -1963,6 +1965,10 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "Provenance": {
+   "type": "string",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
+  },
   "PushoverConfig": {
    "properties": {
     "expire": {
@@ -2163,6 +2169,9 @@
     },
     "object_matchers": {
      "$ref": "#/definitions/ObjectMatchers"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
     },
     "receiver": {
      "type": "string",
@@ -3089,11 +3098,12 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "AlertGroups",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -3213,6 +3223,7 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3271,16 +3282,15 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableAlert",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "GettableAlerts",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilence": {
    "description": "GettableSilence gettable silence",
@@ -3471,6 +3481,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3510,11 +3521,10 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object",
-   "x-go-name": "PostableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3525,9 +3535,7 @@
    "required": [
     "name"
    ],
-   "type": "object",
-   "x-go-name": "Receiver",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "silence": {
    "description": "Silence silence",
@@ -4798,7 +4806,10 @@
     ],
     "responses": {
      "202": {
-      "$ref": "#/responses/Accepted"
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
      },
      "400": {
       "description": "ValidationError",
@@ -4828,7 +4839,10 @@
     ],
     "responses": {
      "202": {
-      "$ref": "#/responses/Accepted"
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
      },
      "400": {
       "description": "ValidationError",
@@ -4849,9 +4863,21 @@
      "application/json"
     ],
     "operationId": "RouteDeleteContactpoints",
+    "parameters": [
+     {
+      "description": "ContactPointUID should be the contact point UID identifier",
+      "in": "path",
+      "name": "ID",
+      "required": true,
+      "type": "string"
+     }
+    ],
     "responses": {
      "202": {
-      "$ref": "#/responses/Accepted"
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
      },
      "400": {
       "description": "ValidationError",

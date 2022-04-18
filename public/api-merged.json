@@ -3971,8 +3971,8 @@
       "get": {
         "description": "Proxies all calls to the actual data source.",
         "tags": ["datasources"],
-        "summary": "Data source proxy GET calls ussing UID.",
-        "operationId": "datasourceProxyGETcallsWithUID",
+        "summary": "Data source proxy GET calls.",
+        "operationId": "datasourceProxyGETByUIDcalls",
         "parameters": [
           {
             "type": "string",
@@ -3989,6 +3989,89 @@
         ],
         "responses": {
           "200": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined",
+        "tags": ["datasources"],
+        "summary": "Data source proxy POST calls.",
+        "operationId": "datasourceProxyPOSTByUIDcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "datasource_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "202": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Proxies all calls to the actual data source.",
+        "tags": ["datasources"],
+        "summary": "Data source proxy DELETE calls.",
+        "operationId": "datasourceProxyDELETEByUIDcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "datasource_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
             "description": ""
           },
           "400": {
@@ -6333,6 +6416,116 @@
         }
       }
     },
+    "/provisioning/contact-points": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get all the contact points.",
+        "operationId": "RouteGetContactpoints",
+        "responses": {
+          "200": {
+            "description": "Route",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Update an existing contact point.",
+        "operationId": "RoutePutContactpoints",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Create a contact point.",
+        "operationId": "RoutePostContactpoints",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/provisioning/contact-points/{ID}": {
+      "delete": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Delete a contact point.",
+        "operationId": "RouteDeleteContactpoints",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "ContactPointUID should be the contact point UID identifier",
+            "name": "ID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Ack",
+            "schema": {
+              "$ref": "#/definitions/Ack"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
     "/provisioning/policies": {
       "get": {
         "tags": ["provisioning"],
@@ -7770,19 +7963,19 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
+            "type": "integer",
+            "format": "int64",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          },
+          {
             "name": "body",
             "in": "body",
             "required": true,
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "teamId",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -7816,14 +8009,14 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "groupId",
+            "name": "teamId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "name": "teamId",
+            "name": "groupId",
             "in": "path",
             "required": true
           }
@@ -11113,6 +11306,38 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
+    "EmbeddedContactPoint": {
+      "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
+      "type": "object",
+      "properties": {
+        "disableResolveMessage": {
+          "type": "boolean",
+          "x-go-name": "DisableResolveMessage"
+        },
+        "name": {
+          "description": "Name is used as grouping key in the UI. Contact points with the\nsame name will be grouped in the UI.",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "provanance": {
+          "type": "string",
+          "x-go-name": "Provenance"
+        },
+        "settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "uid": {
+          "description": "UID is the unique identifier of the contact point. This will be\nautomatically set be the Grafana.",
+          "type": "string",
+          "x-go-name": "UID"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
     "ErrorResponseBody": {
       "type": "object",
       "required": ["message"],
@@ -13467,6 +13692,10 @@
         }
       }
     },
+    "Provenance": {
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
+    },
     "PushoverConfig": {
       "type": "object",
       "properties": {
@@ -13832,6 +14061,9 @@
         },
         "object_matchers": {
           "$ref": "#/definitions/ObjectMatchers"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "receiver": {
           "type": "string",
@@ -14959,6 +15191,13 @@
           "type": "integer",
           "format": "int64"
         },
+        "trial": {
+          "type": "boolean"
+        },
+        "trial_exp": {
+          "type": "integer",
+          "format": "int64"
+        },
         "update_days": {
           "type": "integer",
           "format": "int64"
@@ -15786,6 +16025,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": ["alerts", "labels", "receiver"],
       "properties": {
@@ -15803,9 +16043,7 @@
         "receiver": {
           "$ref": "#/definitions/receiver"
         }
-      },
-      "x-go-name": "AlertGroup",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "alertGroups": {
       "type": "array",
@@ -15916,6 +16154,7 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": ["labels", "annotations", "endsAt", "fingerprint", "receivers", "startsAt", "status", "updatedAt"],
       "properties": {
@@ -15965,18 +16204,18 @@
           "format": "date-time",
           "x-go-name": "UpdatedAt"
         }
-      },
-      "x-go-name": "GettableAlert",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
-      }
+      },
+      "x-go-name": "GettableAlerts",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt", "id", "status", "updatedAt"],
       "properties": {
@@ -16019,17 +16258,14 @@
           "format": "date-time",
           "x-go-name": "UpdatedAt"
         }
-      },
-      "x-go-name": "GettableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
-      },
-      "x-go-name": "GettableSilences",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "labelSet": {
       "description": "LabelSet label set",
@@ -16149,6 +16385,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt"],
       "properties": {
@@ -16182,11 +16419,10 @@
           "format": "date-time",
           "x-go-name": "StartsAt"
         }
-      },
-      "x-go-name": "PostableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": ["name"],
       "properties": {
@@ -16195,9 +16431,7 @@
           "type": "string",
           "x-go-name": "Name"
         }
-      },
-      "x-go-name": "Receiver",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "silence": {
       "description": "Silence silence",
