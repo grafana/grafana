@@ -22,7 +22,7 @@ type Ticker struct {
 	behindTicks prometheus.Gauge
 }
 
-// NewTicker returns a ticker that ticks on interval marks or very shortly after, and never drops ticks. interval should not be negative or zero
+// NewTicker returns a Ticker that ticks on interval marks (or very shortly after) starting at c.Now(), and never drops ticks. interval should not be negative or zero.
 func NewTicker(c clock.Clock, interval time.Duration, registerer prometheus.Registerer) *Ticker {
 	if interval <= 0 {
 		panic(fmt.Errorf("non-positive interval [%v] is not allowed", interval))
