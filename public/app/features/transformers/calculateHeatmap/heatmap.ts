@@ -209,7 +209,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
         config: {
           ...xField.config,
           custom: {
-            originalName: xField.name,
+            originalName: getFieldDisplayName( xField, ... ),
           },
         },
       },
