@@ -134,6 +134,9 @@ function migrateMetricsDimensionFilters(query: AzureMonitorQuery): AzureMonitorQ
   return workingQuery;
 }
 
+// Azure Monitor metric queries prior to Grafana version 9 did not include a `resourceUri`.
+// The resourceUri was previously constructed with the subscription id, resource group,
+// metric definition (a.k.a. resource type), and the resource name.
 function migrateResourceUri(query: AzureMonitorQuery): AzureMonitorQuery {
   const azureMonitorQuery = query.azureMonitor;
 
