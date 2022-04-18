@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -445,21 +446,16 @@ type Cfg struct {
 
 	DashboardPreviews DashboardPreviewsSettings
 
-<<<<<<< HEAD
 	// Access Control
 	RBACEnabled         bool
 	RBACPermissionCache bool
 	// Undocumented option as a backup in case removing builtin-role assignment
 	// fails
 	RBACBuiltInRoleAssignmentEnabled bool
-=======
 	// GRPC Server.
-	GRPCServerNetwork  string
-	GRPCServerAddress  string
-	GRPCServerUseTLS   bool
-	GRPCServerCertFile string
-	GRPCServerKeyFile  string
->>>>>>> c829355bf6 (grpc server service)
+	GRPCServerNetwork   string
+	GRPCServerAddress   string
+	GRPCServerTLSConfig *tls.Config
 }
 
 type CommandLineArgs struct {
@@ -1463,9 +1459,20 @@ func readAlertingSettings(iniFile *ini.File) error {
 func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 	server := iniFile.Section("grpc_server")
 	errPrefix := "grpc_server:"
-	cfg.GRPCServerUseTLS = server.Key("use_tls").MustBool(false)
-	cfg.GRPCServerCertFile = server.Key("cert_file").String()
-	cfg.GRPCServerKeyFile = server.Key("cert_key").String()
+	useTLS := server.Key("use_tls").MustBool(false)
+	certFile := server.Key("cert_file").String()
+	keyFile := server.Key("cert_key").String()
+	if useTLS {
+		serverCert, err := tls.LoadX509KeyPair(certFile, keyFile)
+		if err != nil {
+			return fmt.Errorf("%s error loading X509 key pair: %w", errPrefix, err)
+		}
+		cfg.GRPCServerTLSConfig = &tls.Config{
+			Certificates: []tls.Certificate{serverCert},
+			ClientAuth:   tls.NoClientCert,
+		}
+	}
+
 	cfg.GRPCServerNetwork = valueAsString(server, "network", "unix")
 	cfg.GRPCServerAddress = valueAsString(server, "address", "")
 	switch cfg.GRPCServerNetwork {
