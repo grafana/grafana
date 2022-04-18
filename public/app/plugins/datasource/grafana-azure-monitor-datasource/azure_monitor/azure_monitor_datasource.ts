@@ -16,6 +16,9 @@ import {
   AzureMonitorResourceGroupsResponse,
   AzureQueryType,
   DatasourceValidationResult,
+  GetMetricNamespacesQuery,
+  GetMetricNamesQuery,
+  GetMetricMetadataQuery,
 } from '../types';
 import { routeNames } from '../utils/common';
 import ResponseParser from './response_parser';
@@ -236,11 +239,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     });
   }
 
-  getMetricNamespaces(
-    query:
-      | { resourceUri: string }
-      | { subscription: string; resourceGroup: string; metricDefinition: string; resourceName: string }
-  ) {
+  getMetricNamespaces(query: GetMetricNamespacesQuery) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
       this.resourcePath,
       this.apiPreviewVersion,
@@ -251,17 +250,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     });
   }
 
-  getMetricNames(
-    query:
-      | { resourceUri: string; metricNamespace: string }
-      | {
-          subscription: string;
-          resourceGroup: string;
-          metricDefinition: string;
-          resourceName: string;
-          metricNamespace: string;
-        }
-  ) {
+  getMetricNames(query: GetMetricNamesQuery) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
       this.apiVersion,
@@ -272,18 +261,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     });
   }
 
-  getMetricMetadata(
-    query:
-      | { resourceUri: string; metricNamespace: string; metricName: string }
-      | {
-          subscription: string;
-          resourceGroup: string;
-          metricDefinition: string;
-          resourceName: string;
-          metricNamespace: string;
-          metricName: string;
-        }
-  ) {
+  getMetricMetadata(query: GetMetricMetadataQuery) {
     const { metricName } = query;
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
@@ -357,11 +335,11 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return typeof field === 'string' && field.length > 0;
   }
 
-  private replaceTemplateVariables<T extends Record<string, string>>(query: T) {
+  private replaceTemplateVariables<T extends { [K in keyof T]: string }>(query: T) {
     const templateSrv = getTemplateSrv();
 
     const workingQuery: { [K in keyof T]: string } = { ...query };
-    const keys: Array<keyof T> = Object.keys(query);
+    const keys = Object.keys(query) as Array<keyof T>;
     keys.forEach((key) => {
       workingQuery[key] = templateSrv.replace(workingQuery[key]);
     });

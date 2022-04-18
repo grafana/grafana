@@ -209,3 +209,47 @@ export interface AzureResourceGraphOptions {
   allowPartialScopes: boolean;
   resultFormat: 'objectArray' | 'table';
 }
+
+export type GetMetricNamespacesQuery = AzureGetMetricNamespacesQuery | LegacyAzureGetMetricNamespacesQuery;
+
+export interface AzureGetMetricNamespacesQuery {
+  resourceUri: string;
+}
+export interface LegacyAzureGetMetricNamespacesQuery {
+  subscription: string;
+  resourceGroup: string;
+  metricDefinition: string;
+  resourceName: string;
+}
+
+export type GetMetricNamesQuery = AzureGetMetricNamesQuery | LegacyAzureGetMetricNamesQuery;
+
+export interface AzureGetMetricNamesQuery {
+  resourceUri: string;
+  metricNamespace: string;
+}
+
+export interface LegacyAzureGetMetricNamesQuery {
+  subscription: string;
+  resourceGroup: string;
+  metricDefinition: string;
+  resourceName: string;
+  metricNamespace: string;
+}
+
+export type GetMetricMetadataQuery = AzureGetMetricMetadataQuery | LegacyAzureGetMetricMetadataQuery;
+
+export interface AzureGetMetricMetadataQuery {
+  resourceUri: string;
+  metricNamespace: string;
+  metricName: string;
+}
+
+export interface LegacyAzureGetMetricMetadataQuery {
+  subscription: string;
+  resourceGroup: string;
+  metricDefinition: string;
+  resourceName: string;
+  metricNamespace: string;
+  metricName: string;
+}
