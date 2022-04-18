@@ -51,13 +51,12 @@ type cachedRoundTripper struct {
 }
 
 func ProvideService(
-	store *sqlstore.SQLStore, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
+	store *sqlstore.SQLStore, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
+	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
 ) *Service {
 	s := &Service{
-		SQLStore:       store,
-		SecretsStore:   secretsStore,
-		SecretsService: secretsService,
+		SQLStore:     store,
+		SecretsStore: secretsStore,
 		ptc: proxyTransportCache{
 			cache: make(map[int64]cachedRoundTripper),
 		},
@@ -285,28 +284,13 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (m
 			return nil, err
 		}
 	} else if len(ds.SecureJsonData) > 0 {
-		decryptedValues, err = s.MigrateSecrets(ctx, ds)
+		decryptedValues, err = s.SecretsStore.Migrate(ctx, ds.OrgId, ds.Name, secretType)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	return decryptedValues, nil
-}
-
-func (s *Service) MigrateSecrets(ctx context.Context, ds *models.DataSource) (map[string]string, error) {
-	secureJsonData, err := s.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
-	if err != nil {
-		return nil, err
-	}
-
-	jsonData, err := json.Marshal(secureJsonData)
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.SecretsStore.Set(ctx, ds.OrgId, ds.Name, secretType, string(jsonData))
-	return secureJsonData, err
 }
 
 func (s *Service) DecryptedValue(ctx context.Context, ds *models.DataSource, key string) (string, bool, error) {

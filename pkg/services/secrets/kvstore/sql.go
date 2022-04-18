@@ -3,10 +3,12 @@ package kvstore
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -217,4 +219,28 @@ func (kv *secretsKVStoreSQL) Rename(ctx context.Context, orgId int64, namespace 
 
 		return err
 	})
+}
+
+func (kv *secretsKVStoreSQL) Migrate(ctx context.Context, orgId int64, namespace string, typ string) (map[string]string, error) {
+	query := &models.GetDataSourceQuery{
+		OrgId: orgId,
+		Name:  namespace,
+	}
+	err := kv.sqlStore.GetDataSource(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	secureJsonData, err := kv.secretsService.DecryptJsonData(ctx, query.Result.SecureJsonData)
+	if err != nil {
+		return nil, err
+	}
+
+	jsonData, err := json.Marshal(secureJsonData)
+	if err != nil {
+		return nil, err
+	}
+
+	err = kv.Set(ctx, orgId, namespace, typ, string(jsonData))
+	return secureJsonData, err
 }
