@@ -56,7 +56,7 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 		dto.QueryHistory = prefsQuery.Result.JsonData.QueryHistory
 	}
 
-	return response.JSON(200, &dto)
+	return response.JSON(http.StatusOK, &dto)
 }
 
 // PUT /api/user/preferences

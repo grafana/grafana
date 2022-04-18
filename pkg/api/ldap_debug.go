@@ -314,7 +314,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Unable to find the teams for this user", err)
 	}
 
-	return response.JSON(200, u)
+	return response.JSON(http.StatusOK, u)
 }
 
 // splitName receives the full name of a user and splits it into two parts: A name and a surname.

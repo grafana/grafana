@@ -67,7 +67,7 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 	}
 
 	c.TimeRequest(metrics.MApiDashboardSearch)
-	return response.JSON(200, searchQuery.Result)
+	return response.JSON(http.StatusOK, searchQuery.Result)
 }
 
 func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) response.Response {
