@@ -7,8 +7,8 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// Validate normalizes a Route r, and returns errors if r is invalid.
-func (r *Route) Validate() error {
+// Validate normalizes a possibly nested Route r, and returns errors if r is invalid.
+func (r *Route) validate() error {
 	r.GroupBy = nil
 	r.GroupByAll = false
 	for _, l := range r.GroupByStr {
@@ -42,7 +42,7 @@ func (r *Route) Validate() error {
 	// Routes are a self-referential structure.
 	if r.Routes != nil {
 		for _, child := range r.Routes {
-			err := child.Validate()
+			err := child.validate()
 			if err != nil {
 				return err
 			}
@@ -63,5 +63,5 @@ func (r *Route) ValidateRoot() error {
 	if len(r.MuteTimeIntervals) > 0 {
 		return fmt.Errorf("root route must not have any mute time intervals")
 	}
-	return r.Validate()
+	return r.validate()
 }
