@@ -5,6 +5,10 @@ export interface Dimensions {
   [key: string]: string | string[];
 }
 
+export interface MultiFilters {
+  [key: string]: string[];
+}
+
 import {
   QueryEditorArrayExpression,
   QueryEditorFunctionExpression,
@@ -394,9 +398,9 @@ export interface VariableQuery extends DataQuery {
   metricName: string;
   dimensionKey: string;
   dimensionFilters?: Dimensions;
-  ec2Filters: string;
+  ec2Filters?: MultiFilters;
   instanceID: string;
   attributeName: string;
   resourceType: string;
-  tags: string;
+  tags?: MultiFilters;
 }

@@ -102,6 +102,7 @@ export function SelectBase<T>({
   formatCreateLabel,
   getOptionLabel,
   getOptionValue,
+  hideIndicator,
   inputValue,
   invalid,
   isClearable = false,
@@ -332,7 +333,7 @@ export function SelectBase<T>({
             );
           },
           DropdownIndicator(props: any) {
-            return <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />;
+            return <DropdownIndicator isOpen={props.selectProps.menuIsOpen} hidden={hideIndicator} />;
           },
           SingleValue(props: any) {
             return <SingleValue {...props} disabled={disabled} />;

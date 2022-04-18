@@ -1,6 +1,7 @@
+import { union } from 'lodash';
 import React from 'react';
 
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { QueryEditorProps, SelectableValue, toOption } from '@grafana/data';
 import { InlineField } from '@grafana/ui';
 
 import { Dimensions } from '..';
@@ -9,6 +10,7 @@ import { useDimensionKeys, useMetrics, useNamespaces, useRegions } from '../../h
 import { migrateVariableQuery } from '../../migrations';
 import { CloudWatchJsonData, CloudWatchQuery, VariableQuery, VariableQueryType } from '../../types';
 
+import { MultiFilter } from './MultiFilter';
 import { VariableQueryField } from './VariableQueryField';
 import { VariableTextField } from './VariableTextField';
 
@@ -160,19 +162,29 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
       )}
       {parsedQuery.queryType === VariableQueryType.EC2InstanceAttributes && (
         <>
-          <VariableTextField
+          <VariableQueryField
             value={parsedQuery.attributeName}
-            placeholder="attribute name"
-            onBlur={(value: string) => onQueryChange({ ...parsedQuery, attributeName: value })}
+            options={
+              parsedQuery.attributeName ? union(ec2Attributes, [toOption(parsedQuery.attributeName)]) : ec2Attributes
+            }
+            onChange={(value: string) => onQueryChange({ ...parsedQuery, attributeName: value })}
             label="Attribute Name"
+            inputId={`variable-query-attribute-name-${query.refId}`}
+            allowCustomValue
+            tooltip='Create a "Tags.<name>" value to select a tag'
           />
-          <VariableTextField
-            value={parsedQuery.ec2Filters}
-            tooltip='A JSON object representing dimensions/tags and the values to filter on. Ex. { "filter_name": [ "filter_value" ], "tag:name": [ "*" ] }'
-            placeholder='{"key":["value"]}'
-            onBlur={(value: string) => onQueryChange({ ...parsedQuery, ec2Filters: value })}
+          <InlineField
             label="Filters"
-          />
+            labelWidth={20}
+            tooltip='Pre-defined ec2:DescribeInstances filters and tags to filter the returned values on. Tags should be formatted "tag:<name>" '
+          >
+            <MultiFilter
+              filters={parsedQuery.ec2Filters}
+              onChange={(filters) => {
+                onChange({ ...parsedQuery, ec2Filters: filters });
+              }}
+            />
+          </InlineField>
         </>
       )}
       {parsedQuery.queryType === VariableQueryType.ResourceArns && (
@@ -183,14 +195,47 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, resourceType: value })}
             label="Resource Type"
           />
-          <VariableTextField
-            value={parsedQuery.tags}
-            placeholder='{"tag":["value"]}'
-            onBlur={(value: string) => onQueryChange({ ...parsedQuery, tags: value })}
-            label="Tags"
-          />
+          <InlineField label="Tags" labelWidth={20} tooltip="Tags to filter the returned values on.">
+            <MultiFilter
+              filters={parsedQuery.tags}
+              onChange={(filters) => {
+                onChange({ ...parsedQuery, tags: filters });
+              }}
+            />
+          </InlineField>
         </>
       )}
     </>
   );
 };
+
+const ec2Attributes = [
+  'AmiLaunchIndex',
+  'Architecture',
+  'ClientToken',
+  'EbsOptimized',
+  'EnaSupport',
+  'Hypervisor',
+  'IamInstanceProfile',
+  'ImageId',
+  'InstanceId',
+  'InstanceLifecycle',
+  'InstanceType',
+  'KernelId',
+  'KeyName',
+  'LaunchTime',
+  'Platform',
+  'PrivateDnsName',
+  'PrivateIpAddress',
+  'PublicDnsName',
+  'PublicIpAddress',
+  'RamdiskId',
+  'RootDeviceName',
+  'RootDeviceType',
+  'SourceDestCheck',
+  'SpotInstanceRequestId',
+  'SriovNetSupport',
+  'SubnetId',
+  'VirtualizationType',
+  'VpcId',
+].map(toOption);

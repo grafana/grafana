@@ -8,11 +8,9 @@ const defaultQuery: VariableQuery = {
   region: 'bar',
   metricName: '',
   dimensionKey: '',
-  ec2Filters: '',
   instanceID: '',
   attributeName: '',
   resourceType: '',
-  tags: '',
   refId: '',
 };
 
@@ -114,7 +112,7 @@ describe('variables', () => {
       ...defaultQuery,
       queryType: VariableQueryType.EC2InstanceAttributes,
       attributeName: 'abc',
-      ec2Filters: '{"a":["b"]}',
+      ec2Filters: { a: ['b'] },
     };
     beforeEach(() => {
       ds.datasource.getEc2InstanceAttribute = getEc2InstanceAttribute;
@@ -139,7 +137,7 @@ describe('variables', () => {
       ...defaultQuery,
       queryType: VariableQueryType.ResourceArns,
       resourceType: 'abc',
-      tags: '{"a":["b"]}',
+      tags: { a: ['b'] },
     };
     beforeEach(() => {
       ds.datasource.getResourceARNs = getResourceARNs;
