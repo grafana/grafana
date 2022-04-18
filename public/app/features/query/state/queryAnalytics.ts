@@ -19,6 +19,14 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       return;
     }
 
+    const cachedQueries: { [key: string]: boolean } = {};
+    for (let i = 0; i < data.series.length; i++) {
+      const refId = data.series[i].refId;
+      if (refId && !cachedQueries[refId]) {
+        cachedQueries[refId] = data.series[i].meta?.isCachedResponse ?? false;
+      }
+    }
+
     const eventData: DataRequestEventPayload = {
       eventName: MetaAnalyticsEventName.DataRequest,
       datasourceName: datasource.name,
@@ -28,6 +36,8 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       dashboardId: data.request.dashboardId,
       dataSize: 0,
       duration: data.request.endTime! - data.request.startTime,
+      totalQueries: Object.keys(cachedQueries).length,
+      cachedQueries: Object.values(cachedQueries).filter((val) => val === true).length,
     };
 
     // enrich with dashboard info
