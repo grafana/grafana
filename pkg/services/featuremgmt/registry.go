@@ -259,5 +259,11 @@ var (
 			Description: "Enable streaming JSON parser for Prometheus datasource",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:            "grpcServer",
+			Description:     "Run GRPC server",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
 	}
 )

@@ -190,4 +190,8 @@ const (
 	// FlagPrometheusStreamingJSONParser
 	// Enable streaming JSON parser for Prometheus datasource
 	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
+
+	// FlagGrpcServer
+	// Run GRPC server
+	FlagGrpcServer = "grpcServer"
 )
