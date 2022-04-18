@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -69,7 +68,7 @@ func setup(t *testing.T) *testContext {
 	rv := &fakePluginRequestValidator{}
 
 	ss := kvstore.SetupTestService(t)
-	ds := datasources.ProvideService(bus.New(), nil, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+	ds := datasources.ProvideService(nil, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
 	return &testContext{
 		pluginContext:          pc,
