@@ -1,18 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 // import { css } from '@emotion/css';
 // import { PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
-import {
-  ArrayVector,
-  DataFrame,
-  Field,
-  // GrafanaTheme2,
-  // formattedValueToString,
-  PanelProps,
-  reduceField,
-  ReducerID,
-  TimeRange,
-  ValueLinkConfig,
-} from '@grafana/data';
+import { DataFrame, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
 import { Portal, UPlotChart, useTheme2, VizLayout, LegendDisplayMode, usePanelContext } from '@grafana/ui';
 import { PanelDataErrorView } from '@grafana/runtime';
 
@@ -24,19 +13,16 @@ import {
   findDataFramesInPanelData,
   HeatmapHoverEvent,
   prepConfig,
-  timeFormatter,
   translateMatrixIndex,
+  lookupDataInCell,
 } from './utils';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { ColorScale } from './ColorScale';
-import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { HeatmapCalculationMode } from 'app/features/transformers/calculateHeatmap/models.gen';
 import { HeatmapLookup } from './types';
 import { HeatmapTab } from './hovertabs/HeatmapTab';
 import { ExemplarTab } from './hovertabs/ExemplarTab';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
-// import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
-// import { css } from '@emotion/css';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -115,7 +101,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   dataRef.current = info!;
 
   const builder = useMemo(() => {
-    return prepConfig({
+    const b = prepConfig({
       dataRef,
       theme,
       onhover: onhover,
@@ -130,64 +116,37 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       cellGap: options.cellGap,
       hideThreshold: options.hideThreshold,
     });
+
+    b.addHook('draw', (u: uPlot) => {
+      ExemplarsPlugin({
+        u,
+        exemplars: exemplars!,
+        config: builder,
+        theme: {
+          ...theme,
+          visualization: {
+            ...theme.visualization,
+            palette,
+          },
+        },
+      });
+    });
+    return b;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
 
-  const getValuesInCell = useCallback(
+  const getExemplarValuesInCell = useCallback(
     (lookupRange: HeatmapLookup): DataFrame[] | undefined => {
-      const timeField: Field | undefined = data.annotations?.[0].fields.find((f: Field) => f.type === 'time');
-      const valueField: Field | undefined = data.annotations?.[0].fields.find((f: Field) => f.type === 'number');
-      if (timeField && valueField) {
-        const minIndex: number = timeField.values
-          .toArray()
-          .findIndex((value: number) => value >= lookupRange.xRange.min!);
-        const count: number = timeField.values
-          .toArray()
-          .slice(minIndex)
-          .findIndex((value: number) => value >= lookupRange.xRange.max!);
-
-        // Now find the relevant values in the value field.
-        const indicies: number[] = valueField.values
-          .toArray()
-          .slice(minIndex, minIndex + count)
-          .reduce((tally: number[], curr: number, i: number) => {
-            if (curr >= lookupRange.yRange?.min! && curr < lookupRange.yRange?.max!) {
-              tally.push(i + minIndex);
-            }
-            return tally;
-          }, []);
-
-        return indicies.map((annotationIndex: number, index: number) => {
-          return {
-            name: `${index + 1}`,
-            fields: (data.annotations?.[0].fields || []).map((f: Field, rowIndex: number) => {
-              const newField: Field = {
-                ...f,
-                values: new ArrayVector([f.values.get(annotationIndex)]),
-              };
-              if (f.config.links?.length) {
-                // We have links to configure. Add a getLinks function to the field
-                newField.getLinks = (config: ValueLinkConfig) => {
-                  return getFieldLinksForExplore({ field: f, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
-                };
-              }
-              if (f.type === 'time') {
-                newField.display = (value: number) => {
-                  return {
-                    numeric: value,
-                    text: timeFormatter(value, timeZone),
-                  };
-                };
-              }
-              return newField;
-            }),
-            length: 1,
-          };
-        });
-      }
-      return undefined;
+      return lookupDataInCell(lookupRange, data.annotations?.[0]!, onSplitOpen, timeRange, timeZone);
     },
     [data.annotations, onSplitOpen, timeRange, timeZone]
+  );
+
+  const getDataValuesInCell = useCallback(
+    (lookupRange: HeatmapLookup): DataFrame[] | undefined => {
+      return lookupDataInCell(lookupRange, data.series?.[0]!, onSplitOpen, timeRange, timeZone);
+    },
+    [data.series, onSplitOpen, timeRange, timeZone]
   );
 
   const renderLegend = () => {
@@ -227,9 +186,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight} timeRange={timeRange}>
-            <ExemplarsPlugin exemplars={exemplars!} config={builder} colorPalette={palette} />
-          </UPlotChart>
+          <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight} timeRange={timeRange} />
         )}
       </VizLayout>
       <Portal>
@@ -240,11 +197,12 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
                 HeatmapTab({
                   heatmapData: info,
                   index: hover.index,
+                  getValuesInCell: getDataValuesInCell,
                   options: { showHistogram: options.tooltip.yHistogram, timeZone },
                 }),
                 ExemplarTab({
                   heatmapData: exemplars!,
-                  getValuesInCell,
+                  getValuesInCell: getExemplarValuesInCell,
                   index: translateMatrixIndex(hover.index, info.yBucketCount!, exemplars?.yBucketCount!),
                 }),
               ],
@@ -255,30 +213,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
             onClose={onCloseToolTip}
           />
         )}
-        {/* {hover && options.tooltip.show && (
-          <VizTooltipContainer
-            position={{ x: hover.pageX, y: hover.pageY }}
-            offset={{ x: 10, y: 10 }}
-            allowPointerEvents={isToolTipOpen.current}
-          >
-            {shouldDisplayCloseButton && (
-              <>
-                <CloseButton onClick={onCloseToolTip} />
-                <div className={styles.closeButtonSpacer} />
-              </>
-            )}
-            <HeatmapHoverView data={info} hover={hover} showHistogram={options.tooltip.yHistogram} />
-          </VizTooltipContainer>
-        )} */}
       </Portal>
     </>
   );
 };
-
-{
-  /* const getStyles = (theme: GrafanaTheme2) => ({
-  closeButtonSpacer: css`
-    margin-bottom: 15px;
-  `,
-}); */
-}

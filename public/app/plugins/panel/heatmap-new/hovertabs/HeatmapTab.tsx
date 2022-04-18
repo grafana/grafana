@@ -1,8 +1,9 @@
 import React, { useRef, useEffect } from 'react';
-import { ArrayVector, Field, TimeZone } from '@grafana/data';
+import { DataFrame, ArrayVector, Field, TimeZone } from '@grafana/data';
 import { BucketLayout } from '../fields';
 import { HeatmapHoverProps, HeatmapLayerHover } from '../types';
 import { timeFormatter } from '../utils';
+import { DataHoverView } from '../components/DataHoverView';
 
 interface HistogramFooterProps {
   xField: Field;
@@ -105,6 +106,7 @@ interface HeatmapLayerOptions {
 export const HeatmapTab = ({
   heatmapData,
   index,
+  getValuesInCell,
   options,
 }: HeatmapHoverProps<HeatmapLayerOptions>): HeatmapLayerHover => {
   const xField: Field | undefined = heatmapData.heatmap?.fields.find((f) => f.name === 'xMin');
@@ -121,93 +123,123 @@ export const HeatmapTab = ({
     const xMax: number = xMin + heatmapData.xBucketSize!;
     const yMin: number = yField.values.get(yMinIdx);
     const yMax: number = yField.values.get(yMaxIdx);
-    return {
-      name: 'Heatmap',
-      footer: () => {
-        if (options?.showHistogram!) {
-          return (
-            <HistogramFooter
-              xField={xField}
-              yField={yField}
-              countField={countField}
-              index={index}
-              yBucketCount={heatmapData.yBucketCount}
-            />
-          );
-        }
-        return <></>;
+    const count: number = countField.values.get(index);
+
+    const data: DataFrame[] | undefined = getValuesInCell!({
+      xRange: {
+        min: xMin,
+        max: xMax,
+        delta: heatmapData.xBucketSize || 0,
       },
-      data: [
+      yRange: {
+        min: yMin,
+        max: yMax,
+        delta: heatmapData.yBucketSize || 0,
+      },
+      count,
+    });
+
+    const summaryData: DataFrame = {
+      fields: [
         {
-          fields: [
-            {
-              ...xField,
-              config: {
-                ...xField.config,
-                displayNameFromDS: 'xMin',
-              },
-              display: (value: number) => {
-                return {
-                  numeric: value,
-                  text: timeFormatter(value, options?.timeZone!),
-                };
-              },
-              state: {
-                ...xField.state,
-                displayName: 'xMin',
-              },
-              values: new ArrayVector([xMin]),
-            },
-            {
-              ...xField,
-              config: {
-                ...xField.config,
-                displayNameFromDS: 'xMax',
-              },
-              display: (value: number) => {
-                return {
-                  numeric: value,
-                  text: timeFormatter(value, options?.timeZone!),
-                };
-              },
-              state: {
-                ...xField.state,
-                displayName: 'xMax',
-              },
-              values: new ArrayVector([xMax]),
-            },
-            {
-              ...yField,
-              config: {
-                ...yField.config,
-                displayNameFromDS: 'yMin',
-              },
-              state: {
-                ...yField.state,
-                displayName: 'yMin',
-              },
-              values: new ArrayVector([yMin]),
-            },
-            {
-              ...yField,
-              config: {
-                ...yField.config,
-                displayNameFromDS: 'yMax',
-              },
-              state: {
-                ...yField.state,
-                displayName: 'yMax',
-              },
-              values: new ArrayVector([yMax]),
-            },
-            {
-              ...countField,
-              values: new ArrayVector([countField.values.get(index)]),
-            },
-          ],
-          length: 5,
+          ...xField,
+          config: {
+            ...xField.config,
+            displayNameFromDS: 'xMin',
+          },
+          display: (value: number) => {
+            return {
+              numeric: value,
+              text: timeFormatter(value, options?.timeZone!),
+            };
+          },
+          state: {
+            ...xField.state,
+            displayName: 'xMin',
+          },
+          values: new ArrayVector([xMin]),
+        },
+        {
+          ...xField,
+          config: {
+            ...xField.config,
+            displayNameFromDS: 'xMax',
+          },
+          display: (value: number) => {
+            return {
+              numeric: value,
+              text: timeFormatter(value, options?.timeZone!),
+            };
+          },
+          state: {
+            ...xField.state,
+            displayName: 'xMax',
+          },
+          values: new ArrayVector([xMax]),
+        },
+        {
+          ...yField,
+          config: {
+            ...yField.config,
+            displayNameFromDS: 'yMin',
+          },
+          state: {
+            ...yField.state,
+            displayName: 'yMin',
+          },
+          values: new ArrayVector([yMin]),
+        },
+        {
+          ...yField,
+          config: {
+            ...yField.config,
+            displayNameFromDS: 'yMax',
+          },
+          state: {
+            ...yField.state,
+            displayName: 'yMax',
+          },
+          values: new ArrayVector([yMax]),
+        },
+        {
+          ...countField,
+          values: new ArrayVector([count]),
         },
       ],
+      length: 5,
+    };
+
+    const footer = () => {
+      if (options?.showHistogram!) {
+        return (
+          <HistogramFooter
+            xField={xField}
+            yField={yField}
+            countField={countField}
+            index={index}
+            yBucketCount={heatmapData.yBucketCount}
+          />
+        );
+      }
+      return <></>;
+    };
+
+    const header = () => {
+      return <DataHoverView data={summaryData} rowIndex={0} />;
+    };
+
+    if (data) {
+      return {
+        name: 'Heatmap',
+        header,
+        data,
+        footer,
+      };
+    }
+
+    return {
+      name: 'Heatmap',
+      data: [summaryData],
     };
   }
 

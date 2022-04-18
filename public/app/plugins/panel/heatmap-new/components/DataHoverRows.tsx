@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 
 import { HeatmapLayerHover } from '../types';
@@ -19,22 +19,13 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
     setRowMap(new Map(rowMap.set(key, value)));
   };
 
-  const renderDataHoverView = (layer: HeatmapLayerHover, dataFrame: DataFrame): JSX.Element => {
-    return (
-      <>
-        {layer.header && layer.header()}
-        <DataHoverRow data={dataFrame} rowIndex={0} />
-        {layer.footer && layer.footer()}
-      </>
-    );
-  };
-
   return (
     <TabContent>
       {layers.map(
         (layer, index) =>
           index === activeTabIndex && (
             <div key={layer.name}>
+              {layer.header && layer.header()}
               <div>
                 {layer.data.map((dataFrame, idx) => {
                   const key = dataFrame.refId ?? idx;
@@ -51,13 +42,14 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
                       }}
                       className={styles.collapsibleRow}
                     >
-                      {renderDataHoverView(layer, dataFrame)}
+                      <DataHoverRow data={dataFrame} rowIndex={0} />
                     </Collapse>
                   ) : (
-                    renderDataHoverView(layer, dataFrame)
+                    <DataHoverRow data={dataFrame} rowIndex={0} />
                   );
                 })}
               </div>
+              {layer.footer && layer.footer()}
             </div>
           )
       )}
