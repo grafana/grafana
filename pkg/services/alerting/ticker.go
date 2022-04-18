@@ -56,8 +56,6 @@ func (t *Ticker) run() {
 			continue
 		}
 		// tick is too young. try again when ...
-		select {
-		case <-t.clock.After(-diff): // ...it'll definitely be old enough
-		}
+		t.clock.After(-diff) // ...it'll definitely be old enough
 	}
 }
