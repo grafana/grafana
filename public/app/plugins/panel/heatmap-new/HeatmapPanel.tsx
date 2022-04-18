@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-// import { css } from '@emotion/css';
+import { css } from '@emotion/css';
 // import { PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
-import { DataFrame, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
-import { Portal, UPlotChart, useTheme2, VizLayout, LegendDisplayMode, usePanelContext } from '@grafana/ui';
+import { DataFrame, GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
+import { Portal, UPlotChart, useTheme2, VizLayout, LegendDisplayMode, usePanelContext, useStyles2 } from '@grafana/ui';
 import { PanelDataErrorView } from '@grafana/runtime';
 
 import { HeatmapData, prepareHeatmapData } from './fields';
@@ -17,7 +17,7 @@ import {
   lookupDataInCell,
 } from './utils';
 import { HeatmapHoverView } from './HeatmapHoverView';
-import { ColorScale } from './ColorScale';
+import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { HeatmapCalculationMode } from 'app/features/transformers/calculateHeatmap/models.gen';
 import { HeatmapLookup } from './types';
 import { HeatmapTab } from './hovertabs/HeatmapTab';
@@ -39,7 +39,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   replaceVariables,
 }) => {
   const theme = useTheme2();
-  // const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles);
 
   // ugh
   let timeRangeRef = useRef<TimeRange>(timeRange);
@@ -165,7 +165,9 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
-        <ColorScale hoverValue={hoverValue} colorPalette={palette} min={min} max={max} display={info.display} />
+        <div className={styles.colorScaleWrapper}>
+          <ColorScale hoverValue={hoverValue} colorPalette={palette} min={min} max={max} display={info.display} />
+        </div>
       </VizLayout.Legend>
     );
   };
@@ -217,3 +219,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     </>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  colorScaleWrapper: css`
+    margin-left: 25px;
+    padding: 10px 0;
+  `,
+});
