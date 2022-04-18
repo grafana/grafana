@@ -9,6 +9,8 @@ import { MediaType, PickerTabType, ResourceFolderName } from '../types';
 import { FolderPickerTab } from './FolderPickerTab';
 import { URLPickerTab } from './URLPickerTab';
 import { FileUploader } from './FileUploader';
+import { getBackendSrv } from '@grafana/runtime';
+
 interface Props {
   value?: string; //img/icons/unicons/0-plus.svg
   onChange: (value?: string) => void;
@@ -55,13 +57,7 @@ export const ResourcePickerPopover = (props: Props) => {
 
   const renderURLPicker = () => <URLPickerTab newValue={newValue} setNewValue={setNewValue} mediaType={mediaType} />;
   const renderUploader = () => (
-    <FileUploader
-      mediaType={mediaType}
-      setNewValue={setNewValue}
-      setFormData={setFormData}
-      setUpload={setUpload}
-      getRequest={getRequest}
-    />
+    <FileUploader mediaType={mediaType} setFormData={setFormData} setUpload={setUpload} newValue={newValue} />
   );
   const renderPicker = () => {
     switch (activePicker) {
@@ -112,9 +108,17 @@ export const ResourcePickerPopover = (props: Props) => {
                 variant={newValue && newValue !== value ? 'primary' : 'secondary'}
                 onClick={() => {
                   if (upload) {
-                    getRequest(formData);
+                    getRequest(formData).then((data) => {
+                      if (!data.err) {
+                        getBackendSrv()
+                          .get(`api/storage/read/${data.path}`)
+                          .then(() => setNewValue(`${config.appUrl}api/storage/read/${data.path}`))
+                          .then(() => onChange(`${config.appUrl}api/storage/read/${data.path}`));
+                      }
+                    });
+                  } else {
+                    onChange(newValue);
                   }
-                  onChange(newValue);
                 }}
               >
                 Select

@@ -1,20 +1,16 @@
-import React, { Dispatch, SetStateAction } from 'react';
-import { FileDropzone, useTheme2, Button, DropzoneFile } from '@grafana/ui';
-import { getBackendSrv, config } from '@grafana/runtime';
+import React, { Dispatch, SetStateAction, useState } from 'react';
+import { FileDropzone, useTheme2, Button, DropzoneFile, Field, Label } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { MediaType } from '../types';
+import SVG from 'react-inlinesvg';
 interface Props {
-  setNewValue: Dispatch<SetStateAction<string>>;
   setFormData: Dispatch<SetStateAction<FormData>>;
   mediaType: MediaType;
   setUpload: Dispatch<SetStateAction<boolean>>;
-  getRequest: (formData: FormData) => Promise<UploadResponse>;
+  newValue: string;
 }
-interface UploadResponse {
-  err: boolean;
-  path: string;
-}
+
 export function FileDropzoneCustomChildren({ secondaryText = 'Drag and drop here or browse' }) {
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -26,7 +22,11 @@ export function FileDropzoneCustomChildren({ secondaryText = 'Drag and drop here
     </div>
   );
 }
-export const FileUploader = ({ mediaType, setNewValue, setFormData, setUpload, getRequest }: Props) => {
+export const FileUploader = ({ mediaType, setFormData, setUpload, newValue }: Props) => {
+  const [dropped, setDropped] = useState<boolean>(false);
+  console.log(newValue);
+  const theme = useTheme2();
+  const styles = getStyles(theme);
   const onFileRemove = (file: DropzoneFile) => {
     fetch(`/api/storage/delete/upload/${file.file.name}`, {
       method: 'DELETE',
@@ -44,21 +44,25 @@ export const FileUploader = ({ mediaType, setNewValue, setFormData, setUpload, g
         onDrop: (acceptedFiles: File[]) => {
           let formData = new FormData();
           formData.append('file', acceptedFiles[0]);
-          getRequest(formData).then((data) => {
-            if (!data.err) {
-              getBackendSrv()
-                .get(`api/storage/read/${data.path}`)
-                .then(() => {
-                  setNewValue(`${config.appUrl}api/storage/read/${data.path}`);
-                });
-            }
-          });
+          setDropped(true);
           setFormData(formData);
           setUpload(true);
         },
       }}
     >
-      <FileDropzoneCustomChildren />
+      {dropped ? (
+        <div className={styles.iconContainer}>
+          <Field label="Preview">
+            <div className={styles.iconPreview}>
+              {mediaType === MediaType.Icon && <SVG src={newValue} className={styles.img} />}
+              {mediaType === MediaType.Image && newValue && <img src={newValue} className={styles.img} />}
+            </div>
+          </Field>
+          <Label>uploaded</Label>
+        </div>
+      ) : (
+        <FileDropzoneCustomChildren />
+      )}
     </FileDropzone>
   );
 };
@@ -92,6 +96,26 @@ function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
     small: css`
       color: ${theme.colors.text.secondary};
       margin-bottom: ${theme.spacing(2)};
+    `,
+    iconContainer: css`
+      display: flex;
+      flex-direction: column;
+      width: 80%;
+      align-items: center;
+      align-self: center;
+    `,
+    iconPreview: css`
+      width: 238px;
+      height: 198px;
+      border: 1px solid ${theme.colors.border.medium};
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `,
+    img: css`
+      width: 147px;
+      height: 147px;
+      fill: ${theme.colors.text.primary};
     `,
   };
 }

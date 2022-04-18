@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
@@ -118,10 +117,7 @@ func isFileTypeValid(filetype string) bool {
 
 func (s *standardStorageService) Upload(ctx context.Context, user *models.SignedInUser, form *multipart.Form) (*Response, error) {
 	response := Response{
-		path:       "upload",
-		statusCode: 200,
-		message:    "Uploaded successfully",
-		err:        false,
+		path: "upload",
 	}
 	upload, _ := s.tree.getRoot("upload")
 	if upload == nil {
@@ -155,8 +151,9 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 			return nil, err
 		}
 		filetype := http.DetectContentType(data)
+		grafanaStorageLogger.Info("inside upload", "filetype", filetype)
 		// only allow images to be uploaded
-		if !isFileTypeValid(filetype) && !strings.HasSuffix(fileHeader.Filename, ".svg") {
+		if !isFileTypeValid(filetype) {
 			return &Response{
 				statusCode: 400,
 				message:    "unsupported file type uploaded",
@@ -170,6 +167,8 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		if err != nil {
 			return nil, err
 		}
+		response.message = "Uploaded successfully"
+		response.statusCode = 200
 		response.fileName = fileHeader.Filename
 		response.path = "upload/" + fileHeader.Filename
 	}
