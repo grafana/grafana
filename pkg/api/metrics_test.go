@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -241,15 +242,14 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 			strings.NewReader(queryDatasourceInput),
 			t,
 		)
+
 		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(
-			t,
-			fmt.Sprintf(
-				"{\"error\":\"%[1]s\",\"message\":\"%[1]s\"}",
-				models.ErrDashboardOrPanelIdentifierNotSet,
-			),
-			response.Body.String(),
-		)
+
+		var res map[string]interface{}
+		err := json.Unmarshal(response.Body.Bytes(), &res)
+		assert.NoError(t, err)
+		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["error"])
+		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["message"])
 	})
 
 	t.Run("Cannot query without a valid orgid", func(t *testing.T) {
@@ -261,14 +261,10 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 			t,
 		)
 		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(
-			t,
-			fmt.Sprintf(
-				"{\"error\":\"%[1]s\",\"message\":\"%[1]s\"}",
-				models.ErrDashboardOrPanelIdentifierNotSet,
-			),
-			response.Body.String(),
-		)
+		var res map[string]interface{}
+		assert.NoError(t, json.Unmarshal(response.Body.Bytes(), &res))
+		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["error"])
+		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["message"])
 	})
 
 	t.Run("Cannot query without a valid dashboard or panel ID", func(t *testing.T) {
@@ -280,14 +276,11 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 			t,
 		)
 		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(
-			t,
-			fmt.Sprintf(
-				"{\"error\":\"%[1]s\",\"message\":\"%[1]s\"}",
-				models.ErrDashboardOrPanelIdentifierNotSet,
-			),
-			response.Body.String(),
-		)
+
+		var res map[string]interface{}
+		assert.NoError(t, json.Unmarshal(response.Body.Bytes(), &res))
+		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["error"])
+		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["message"])
 	})
 
 	t.Run("Cannot query when ValidatedQueries is disabled", func(t *testing.T) {

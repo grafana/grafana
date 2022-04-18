@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
 import { ServiceAccountProfile } from './ServiceAccountProfile';
-import { StoreState, ServiceAccountDTO, ApiKey, Role } from 'app/types';
+import { StoreState, ServiceAccountDTO, ApiKey, Role, AccessControlAction } from 'app/types';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import {
   deleteServiceAccountToken,
@@ -114,12 +114,24 @@ const ServiceAccountPageUnconnected = ({
           <h3 className="page-heading" style={{ marginBottom: '0px' }}>
             Tokens
           </h3>
-          <Button onClick={() => setIsModalOpen(true)}>Add token</Button>
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            disabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite)}
+          >
+            Add token
+          </Button>
         </div>
         {tokens && (
           <ServiceAccountTokensTable tokens={tokens} timeZone={timezone} onDelete={onDeleteServiceAccountToken} />
         )}
-        <CreateTokenModal isOpen={isModalOpen} token={newToken} onCreateToken={onCreateToken} onClose={onModalClose} />
+        {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && (
+          <CreateTokenModal
+            isOpen={isModalOpen}
+            token={newToken}
+            onCreateToken={onCreateToken}
+            onClose={onModalClose}
+          />
+        )}
       </Page.Contents>
     </Page>
   );

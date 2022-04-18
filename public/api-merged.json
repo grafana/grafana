@@ -4474,6 +4474,137 @@
         }
       }
     },
+    "/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route}": {
+      "get": {
+        "description": "Proxies all calls to the actual data source.",
+        "tags": ["datasources"],
+        "summary": "Data source proxy GET calls.",
+        "operationId": "datasourceProxyGETByUIDcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "datasource_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined",
+        "tags": ["datasources"],
+        "summary": "Data source proxy POST calls.",
+        "operationId": "datasourceProxyPOSTByUIDcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "datasource_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "202": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Proxies all calls to the actual data source.",
+        "tags": ["datasources"],
+        "summary": "Data source proxy DELETE calls.",
+        "operationId": "datasourceProxyDELETEByUIDcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "datasource_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/proxy/{datasource_id}/{datasource_proxy_route}": {
       "get": {
         "description": "Proxies all calls to the actual data source.",
@@ -6923,6 +7054,145 @@
             "description": "RuleResponse",
             "schema": {
               "$ref": "#/definitions/RuleResponse"
+            }
+          }
+        }
+      }
+    },
+    "/provisioning/contact-points": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get all the contact points.",
+        "operationId": "RouteGetContactpoints",
+        "responses": {
+          "200": {
+            "description": "Route",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Update an existing contact point.",
+        "operationId": "RoutePutContactpoints",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/responses/Accepted"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Create a contact point.",
+        "operationId": "RoutePostContactpoints",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/responses/Accepted"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/provisioning/contact-points/{ID}": {
+      "delete": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Delete a contact point.",
+        "operationId": "RouteDeleteContactpoints",
+        "responses": {
+          "202": {
+            "$ref": "#/responses/Accepted"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/provisioning/policies": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get the notification policy tree.",
+        "operationId": "RouteGetPolicyTree",
+        "responses": {
+          "200": {
+            "description": "Route",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Sets the notification policy tree.",
+        "operationId": "RoutePostPolicyTree",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/responses/Accepted"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
             }
           }
         }
@@ -16708,6 +16978,15 @@
           "format": "int64",
           "x-go-name": "TokenExpiresWarnDays"
         },
+        "trial": {
+          "type": "boolean",
+          "x-go-name": "Trial"
+        },
+        "trial_exp": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TrialExpires"
+        },
         "update_days": {
           "type": "integer",
           "format": "int64",
@@ -16750,9 +17029,8 @@
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -16785,7 +17063,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "net/url"
+      "x-go-package": "github.com/prometheus/common/config"
     },
     "UpdateAlertNotificationCommand": {
       "type": "object",
@@ -17689,12 +17967,11 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
-      },
-      "x-go-name": "AlertGroups",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "alertStatus": {
       "description": "AlertStatus alert status",
@@ -17797,7 +18074,6 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": ["labels", "annotations", "endsAt", "fingerprint", "receivers", "startsAt", "status", "updatedAt"],
       "properties": {
@@ -17847,7 +18123,9 @@
           "format": "date-time",
           "x-go-name": "UpdatedAt"
         }
-      }
+      },
+      "x-go-name": "GettableAlert",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "gettableAlerts": {
       "type": "array",
@@ -17904,12 +18182,11 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
-      },
-      "x-go-name": "GettableSilences",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "labelSet": {
       "description": "LabelSet label set",
