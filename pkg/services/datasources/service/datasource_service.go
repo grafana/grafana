@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,6 +32,7 @@ import (
 type Service struct {
 	SQLStore           *sqlstore.SQLStore
 	SecretsStore       kvstore.SecretsKVStore
+	SecretsService     secrets.Service
 	cfg                *setting.Cfg
 	features           featuremgmt.FeatureToggles
 	permissionsService accesscontrol.PermissionsService
@@ -49,12 +51,13 @@ type cachedRoundTripper struct {
 }
 
 func ProvideService(
-	store *sqlstore.SQLStore, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
-	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
+	store *sqlstore.SQLStore, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
 ) *Service {
 	s := &Service{
-		SQLStore:     store,
-		SecretsStore: secretsStore,
+		SQLStore:       store,
+		SecretsStore:   secretsStore,
+		SecretsService: secretsService,
 		ptc: proxyTransportCache{
 			cache: make(map[int64]cachedRoundTripper),
 		},
@@ -268,6 +271,7 @@ func (s *Service) GetTLSConfig(ctx context.Context, ds *models.DataSource, httpC
 	}
 	return httpClientProvider.GetTLSConfig(*opts)
 }
+
 func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (map[string]string, error) {
 	decryptedValues := make(map[string]string)
 	secret, exist, err := s.SecretsStore.Get(ctx, ds.OrgId, ds.Name, secretType)
@@ -280,8 +284,29 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (m
 		if err != nil {
 			return nil, err
 		}
+	} else if len(ds.SecureJsonData) > 0 {
+		decryptedValues, err = s.MigrateSecrets(ctx, ds)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	return decryptedValues, nil
+}
+
+func (s *Service) MigrateSecrets(ctx context.Context, ds *models.DataSource) (map[string]string, error) {
+	secureJsonData, err := s.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
+	if err != nil {
+		return nil, err
+	}
+
+	jsonData, err := json.Marshal(secureJsonData)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.SecretsStore.Set(ctx, ds.OrgId, ds.Name, secretType, string(jsonData))
+	return secureJsonData, err
 }
 
 func (s *Service) DecryptedValue(ctx context.Context, ds *models.DataSource, key string) (string, bool, error) {
