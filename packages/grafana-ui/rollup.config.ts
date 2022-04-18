@@ -36,6 +36,11 @@ const buildCjsPackage = ({ env }) => {
       'jquery', // required to use jquery.plot, which is assigned externally
       'react-inlinesvg', // required to mock Icon svg loading in tests
       'uplot', // load uplot library dynamically
+      '@emotion/react',
+      '@emotion/css',
+      '@emotion/cache',
+      '@emotion/babel-plugin',
+      '@emotion/utils',
     ],
     plugins: [
       commonjs({
