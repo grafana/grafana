@@ -152,6 +152,7 @@ function addCacheNotice(frame: DataFrameJSON): DataFrameJSON {
       meta: {
         ...frame.schema?.meta,
         notices: [...(frame.schema?.meta?.notices ?? []), cachedResponseNotice],
+        isCachedResponse: true,
       },
     },
   };
