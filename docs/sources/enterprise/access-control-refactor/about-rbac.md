@@ -15,7 +15,7 @@ RBAC extends Grafana basic roles that are included in Grafana OSS, and enables y
 
 > **Note:** RBAC is in beta, so you can expect changes in future releases.
 
-By using RBAC you can provide users with permissions that extend beyond the permissions available with basic roles. For example, you can use RBAC to:
+By using RBAC you can provide users with permissions that extend the permissions available with basic roles. For example, you can use RBAC to:
 
 - Modify existing basic roles, for example, enable an editor to create reports
 - Assign fixed roles to users and teams
@@ -67,7 +67,6 @@ You apply RBAC to the following Grafana resources:
 - [Roles]({{< relref "../../administration/manage-users-permissions/_index.md" >}})
 - [Settings]({{< relref "../settings-updates.md" >}})
 - [Service accounts]({{< relref "../../administration/service-accounts/_index.md" >}})
-- Statistics
 - [Teams]({{< relref "../../administration/manage-users-permissions/manage-teams/_index.md" >}})
 - [Users]({{< relref "../../administration/manage-users-and-permissions/manage-server-users/_index.md" >}})
 

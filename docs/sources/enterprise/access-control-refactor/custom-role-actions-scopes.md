@@ -10,15 +10,15 @@ keywords:
 
 # Role-based access control permissions actions and scopes
 
-A permission is an action and a scope. When creating an RBAC, consider the actions can perform and on which resources.
+A permission is comprised of an action and a scope. When creating a custom role, consider the actions the user can perform and the resource on which to perform them.
 
-To learn more about which permissions are used for which resources, refer to [Resources with RBAC permissions]({{< relref "./about-rbac.md#resources-with-rbac-permissions" >}}).
+To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions]({{< relref "./about-rbac.md#resources-with-rbac-permissions" >}}).
 
 action
-: The action on a resource defines what a user is allowed to perform if they have permission with the relevant action assigned to it.
+: An action describes what tasks a user can perform on a resource.
 
 scope
-: The scope describes where an action can be performed, such as reading a specific user profile. In such case, a permission is associated with the scope `users:<userId>` to the relevant role.
+: A scope describes where an action can be performed, such as reading a specific user profile. In this example, a permission is associated with the scope `users:<userId>` to the relevant role.
 
 ## Action definitions
 
