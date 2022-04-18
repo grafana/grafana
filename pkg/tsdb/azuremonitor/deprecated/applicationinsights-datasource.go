@@ -14,13 +14,13 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"go.opentelemetry.io/otel/attribute"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 // ApplicationInsightsDatasource calls the application insights query API.
@@ -158,7 +158,7 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	tracer.Inject(ctx, req.Header, span)
 
 	azlog.Debug("ApplicationInsights", "Request URL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, client, req)
+	res, err := client.Do(req)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse, nil
@@ -200,7 +200,7 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInfo types.DatasourceInfo, url string) (*http.Request, error) {
 	appInsightsAppID := dsInfo.Settings.AppInsightsAppId
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("Failed to create request", err)

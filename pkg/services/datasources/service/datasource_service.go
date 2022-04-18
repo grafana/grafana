@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
@@ -30,7 +29,6 @@ import (
 )
 
 type Service struct {
-	Bus                bus.Bus
 	SQLStore           *sqlstore.SQLStore
 	SecretsStore       kvstore.SecretsKVStore
 	cfg                *setting.Cfg
@@ -51,11 +49,10 @@ type cachedRoundTripper struct {
 }
 
 func ProvideService(
-	bus bus.Bus, store *sqlstore.SQLStore, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
+	store *sqlstore.SQLStore, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
 ) *Service {
 	s := &Service{
-		Bus:          bus,
 		SQLStore:     store,
 		SecretsStore: secretsStore,
 		ptc: proxyTransportCache{

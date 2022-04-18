@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -19,11 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginStore plugins.Store,
+func ProvideService(cacheService *localcache.CacheService, pluginStore plugins.Store,
 	dataSourceCache datasources.CacheService, dataSourceService datasources.DataSourceService,
 	pluginSettingsService pluginsettings.Service) *Provider {
 	return &Provider{
-		bus:                   bus,
 		cacheService:          cacheService,
 		pluginStore:           pluginStore,
 		dataSourceCache:       dataSourceCache,
@@ -34,7 +32,6 @@ func ProvideService(bus bus.Bus, cacheService *localcache.CacheService, pluginSt
 }
 
 type Provider struct {
-	bus                   bus.Bus
 	cacheService          *localcache.CacheService
 	pluginStore           plugins.Store
 	dataSourceCache       datasources.CacheService
