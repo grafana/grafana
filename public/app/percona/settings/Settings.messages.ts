@@ -25,7 +25,7 @@ export const Messages = {
     sttCheckIntervalsLabel: 'Execution Intervals',
     sttCheckIntervalTooltip: 'Interval between check runs',
     sttCheckIntervalUnit: 'hours',
-    sttLink: `${GUI_DOC_URL}#security-threat-tool`,
+    advisorsLink: `${GUI_DOC_URL}#advisors`,
     advisorsTooltip: 'Enable Advisor Checks and get updated checks from Percona.',
     dbaasLabel: 'DBaaS',
     azureDiscoverLabel: 'Microsoft Azure monitoring',
