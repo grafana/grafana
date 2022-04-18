@@ -30,7 +30,6 @@ type SecretsKVStore interface {
 	Set(ctx context.Context, orgId int64, namespace string, typ string, value string) error
 	Del(ctx context.Context, orgId int64, namespace string, typ string) error
 	Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error)
-	Migrate(ctx context.Context, orgId int64, namespace string, typ string) (map[string]string, error)
 	Rename(ctx context.Context, orgId int64, namespace string, typ string, newNamespace string) error
 }
 
@@ -65,10 +64,6 @@ func (kv *FixedKVStore) Del(ctx context.Context) error {
 }
 
 func (kv *FixedKVStore) Keys(ctx context.Context) ([]Key, error) {
-	return kv.kvStore.Keys(ctx, kv.OrgId, kv.Namespace, kv.Type)
-}
-
-func (kv *FixedKVStore) Migrate(ctx context.Context) ([]Key, error) {
 	return kv.kvStore.Keys(ctx, kv.OrgId, kv.Namespace, kv.Type)
 }
 
