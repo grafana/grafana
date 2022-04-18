@@ -17,7 +17,6 @@ const setup = (propOverrides?: Partial<RichHistoryProps>) => {
     firstTab: Tabs.RichHistory,
     deleteRichHistory: jest.fn(),
     onClose: jest.fn(),
-    defaultHeight: 400,
     richHistorySearchFilters: {
       search: '',
       sortOrder: SortOrder.Descending,

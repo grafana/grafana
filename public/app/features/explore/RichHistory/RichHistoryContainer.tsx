@@ -54,8 +54,8 @@ interface OwnProps {
 export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export function RichHistoryContainer(props: Props) {
-  const [height, setHeight] = useState(400);
   const theme = useTheme2();
+  const [height, setHeight] = useState(theme.components.horizontalDrawer.defaultHeight);
 
   const {
     richHistory,
@@ -99,7 +99,6 @@ export function RichHistoryContainer(props: Props) {
         richHistorySearchFilters={richHistorySearchFilters}
         updateHistorySettings={updateHistorySettings}
         updateHistorySearchFilters={updateHistorySearchFilters}
-        defaultHeight={theme.components.horizontalDrawer.defaultHeight}
       />
     </ExploreDrawer>
   );
