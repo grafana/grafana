@@ -62,7 +62,7 @@ export const Advanced: FC<AdvancedProps> = ({
       updatesLink,
       updatesTooltip,
       advisorsLabel,
-      sttLink,
+      advisorsLink,
       advisorsTooltip,
       dbaasLabel,
       dbaasTooltip,
@@ -205,7 +205,7 @@ export const Advanced: FC<AdvancedProps> = ({
               label={advisorsLabel}
               tooltip={advisorsTooltip}
               tooltipLinkText={tooltipLinkText}
-              link={sttLink}
+              link={advisorsLink}
               dataTestId="advanced-advisors"
               component={SwitchRow}
             />
