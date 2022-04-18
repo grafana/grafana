@@ -17,7 +17,9 @@ import (
 	datasources "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
 	"github.com/stretchr/testify/require"
 )
@@ -68,7 +70,8 @@ func setup(t *testing.T) *testContext {
 	rv := &fakePluginRequestValidator{}
 
 	ss := kvstore.SetupTestService(t)
-	ds := datasources.ProvideService(nil, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+	ssvc := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	ds := datasources.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
 
 	return &testContext{
 		pluginContext:          pc,
