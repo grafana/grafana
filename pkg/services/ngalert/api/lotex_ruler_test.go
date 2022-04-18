@@ -27,7 +27,7 @@ func TestLotexRuler_ValidateAndGetPrefix(t *testing.T) {
 		{
 			name:        "with an invalid recipient",
 			namedParams: map[string]string{":DatasourceID": "AAABBB"},
-			err:         errors.New("recipient is invalid"),
+			err:         errors.New("datasource ID is invalid"),
 		},
 		{
 			name:            "with an error while trying to fetch the datasource",
