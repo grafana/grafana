@@ -26,7 +26,7 @@ describe('AzureMonitorDatasource', () => {
     ctx.instanceSettings = {
       name: 'test',
       url: 'http://azuremonitor.com',
-      jsonData: { subscriptionId: '9935389e-9122-4ef9-95f9-1513dd24753f', cloudName: 'azuremonitor' },
+      jsonData: { subscriptionId: 'mock-subscription-id', cloudName: 'azuremonitor' },
     } as unknown as DataSourceInstanceSettings<AzureDataSourceJsonData>;
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
   });
@@ -80,7 +80,7 @@ describe('AzureMonitorDatasource', () => {
     const response = {
       value: [
         {
-          id: '/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1/providers/microsoft.insights/metricNamespaces/Azure.ApplicationInsights',
+          id: '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1/providers/microsoft.insights/metricNamespaces/Azure.ApplicationInsights',
           name: 'Azure.ApplicationInsights',
           type: 'Microsoft.Insights/metricNamespaces',
           classification: 'Custom',
@@ -89,7 +89,7 @@ describe('AzureMonitorDatasource', () => {
           },
         },
         {
-          id: '/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1/providers/microsoft.insights/metricNamespaces/microsoft.insights-components',
+          id: '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1/providers/microsoft.insights/metricNamespaces/microsoft.insights-components',
           name: 'microsoft.insights-components',
           type: 'Microsoft.Insights/metricNamespaces',
           classification: 'Platform',
@@ -102,7 +102,7 @@ describe('AzureMonitorDatasource', () => {
 
     beforeEach(() => {
       ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-        const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp';
+        const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp';
         const expected =
           basePath +
           '/providers/microsoft.insights/components/resource1' +
@@ -116,7 +116,7 @@ describe('AzureMonitorDatasource', () => {
       return ctx.ds.azureMonitorDatasource
         .getMetricNamespaces({
           resourceUri:
-            '/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
+            '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
         })
         .then((results: Array<{ text: string; value: string }>) => {
           expect(results.length).toEqual(2);
@@ -166,7 +166,7 @@ describe('AzureMonitorDatasource', () => {
 
     beforeEach(() => {
       ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-        const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp';
+        const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp';
         const expected =
           basePath +
           '/providers/microsoft.insights/components/resource1' +
@@ -180,7 +180,7 @@ describe('AzureMonitorDatasource', () => {
       return ctx.ds.azureMonitorDatasource
         .getMetricNames({
           resourceUri:
-            '/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
+            '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
           metricNamespace: 'default',
         })
         .then((results: Array<{ text: string; value: string }>) => {
@@ -231,7 +231,7 @@ describe('AzureMonitorDatasource', () => {
 
     beforeEach(() => {
       ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-        const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp';
+        const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp';
         const expected =
           basePath +
           '/providers/microsoft.insights/components/resource1' +
@@ -245,7 +245,7 @@ describe('AzureMonitorDatasource', () => {
       return ctx.ds.azureMonitorDatasource
         .getMetricMetadata({
           resourceUri:
-            '/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
+            '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
           metricNamespace: 'default',
           metricName: 'UsedCapacity',
         })
@@ -345,7 +345,7 @@ describe('AzureMonitorDatasource', () => {
 
       beforeEach(() => {
         ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-          const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
+          const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups';
           expect(path).toBe(basePath + '/nodesapp/resources?api-version=2021-04-01');
           return Promise.resolve(response);
         });
@@ -353,7 +353,7 @@ describe('AzureMonitorDatasource', () => {
 
       it('should return list of Metric Definitions with no duplicates and no unsupported namespaces', () => {
         return ctx.ds
-          .getMetricDefinitions('9935389e-9122-4ef9-95f9-1513dd24753f', 'nodesapp')
+          .getMetricDefinitions('mock-subscription-id', 'nodesapp')
           .then((results: Array<{ text: string; value: string }>) => {
             expect(results.length).toEqual(7);
             expect(results[0].text).toEqual('Network interface');
@@ -375,12 +375,12 @@ describe('AzureMonitorDatasource', () => {
     });
 
     describe('When performing getResourceNames', () => {
-      let subscription = '9935389e-9122-4ef9-95f9-1513dd24753f';
+      let subscription = 'mock-subscription-id';
       let resourceGroup = 'nodeapp';
       let metricDefinition = 'microsoft.insights/components';
 
       beforeEach(() => {
-        subscription = '9935389e-9122-4ef9-95f9-1513dd24753f';
+        subscription = 'mock-subscription-id';
         resourceGroup = 'nodeapp';
         metricDefinition = 'microsoft.insights/components';
       });
@@ -555,7 +555,7 @@ describe('AzureMonitorDatasource', () => {
 
       beforeEach(() => {
         ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-          const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp';
+          const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp';
           const expected =
             basePath +
             '/providers/microsoft.insights/components/resource1' +
@@ -568,7 +568,7 @@ describe('AzureMonitorDatasource', () => {
       it('should return list of Metric Definitions', () => {
         return ctx.ds.azureMonitorDatasource
           .getMetricNames({
-            subscription: '9935389e-9122-4ef9-95f9-1513dd24753f',
+            subscription: 'mock-subscription-id',
             resourceGroup: 'nodeapp',
             metricDefinition: 'microsoft.insights/components',
             resourceName: 'resource1',
@@ -622,7 +622,7 @@ describe('AzureMonitorDatasource', () => {
 
       beforeEach(() => {
         ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-          const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp';
+          const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp';
           const expected =
             basePath +
             '/providers/microsoft.insights/components/resource1' +
@@ -635,7 +635,7 @@ describe('AzureMonitorDatasource', () => {
       it('should return Aggregation metadata for a Metric', () => {
         return ctx.ds.azureMonitorDatasource
           .getMetricMetadata({
-            subscription: '9935389e-9122-4ef9-95f9-1513dd24753f',
+            subscription: 'mock-subscription-id',
             resourceGroup: 'nodeapp',
             metricDefinition: 'microsoft.insights/components',
             resourceName: 'resource1',
@@ -691,7 +691,7 @@ describe('AzureMonitorDatasource', () => {
 
       beforeEach(() => {
         ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
-          const basePath = 'azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups/nodeapp';
+          const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp';
           const expected =
             basePath +
             '/providers/microsoft.insights/components/resource1' +
@@ -704,7 +704,7 @@ describe('AzureMonitorDatasource', () => {
       it('should return dimensions for a Metric that has dimensions', () => {
         return ctx.ds.azureMonitorDatasource
           .getMetricMetadata({
-            subscription: '9935389e-9122-4ef9-95f9-1513dd24753f',
+            subscription: 'mock-subscription-id',
             resourceGroup: 'nodeapp',
             metricDefinition: 'microsoft.insights/components',
             resourceName: 'resource1',
@@ -764,7 +764,7 @@ describe('AzureMonitorDatasource', () => {
       it('should return an empty array for a Metric that does not have dimensions', () => {
         return ctx.ds.azureMonitorDatasource
           .getMetricMetadata({
-            subscription: '9935389e-9122-4ef9-95f9-1513dd24753f',
+            subscription: 'mock-subscription-id',
             resourceGroup: 'nodeapp',
             metricDefinition: 'microsoft.insights/components',
             resourceName: 'resource1',
