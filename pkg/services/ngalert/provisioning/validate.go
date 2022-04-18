@@ -1,15 +1,5 @@
 package provisioning
 
-type ValidationError struct {
-	msg string
-}
+import "fmt"
 
-func (e ValidationError) Error() string {
-	return e.msg
-}
-
-func NewValidationError(msg string) ValidationError {
-	return ValidationError{
-		msg: msg,
-	}
-}
+var ErrValidation = fmt.Errorf("invalid route specification")

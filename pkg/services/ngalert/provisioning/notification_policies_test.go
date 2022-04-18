@@ -81,7 +81,7 @@ func TestNotificationPolicyService(t *testing.T) {
 		err := sut.UpdatePolicyTree(context.Background(), 1, invalid, models.ProvenanceNone)
 
 		require.Error(t, err)
-		require.ErrorAs(t, err, &ValidationError{})
+		require.ErrorIs(t, err, ErrValidation)
 	})
 }
 

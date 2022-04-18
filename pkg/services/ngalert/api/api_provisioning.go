@@ -51,8 +51,7 @@ func (srv *ProvisioningSrv) RoutePostPolicyTree(c *models.ReqContext, tree apimo
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
 	}
-	var verr provisioning.ValidationError
-	if errors.As(err, &verr) {
+	if errors.Is(err, provisioning.ErrValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {

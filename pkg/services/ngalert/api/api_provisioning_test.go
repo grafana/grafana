@@ -45,7 +45,7 @@ func TestProvisioningApi(t *testing.T) {
 			response := sut.RoutePostPolicyTree(&rc, tree)
 
 			require.Equal(t, 400, response.Status())
-			expBody := `{"error":"invalid policy tree","message":"invalid policy tree"}`
+			expBody := `{"error":"invalid route specification: invalid policy tree","message":"invalid route specification: invalid policy tree"}`
 			require.Equal(t, expBody, string(response.Body()))
 		})
 	})
@@ -167,5 +167,5 @@ func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Conte
 }
 
 func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p domain.Provenance) error {
-	return provisioning.NewValidationError("invalid policy tree")
+	return fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
 }
