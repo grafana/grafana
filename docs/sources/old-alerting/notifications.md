@@ -58,7 +58,7 @@ These examples show how often and when reminders are sent for a triggered alert.
 ## List of supported notifiers
 
 | Name                                          | Type                      | Supports images    | Supports alert rule tags |
-|-----------------------------------------------|---------------------------|--------------------|--------------------------|
+| --------------------------------------------- | ------------------------- | ------------------ | ------------------------ |
 | [Amazon SNS](#amazon-sns)                     | `sns`                     | no                 | yes                      |
 | [DingDing](#dingdingdingtalk)                 | `dingding`                | yes, external only | no                       |
 | [Discord](#discord)                           | `discord`                 | yes                | no                       |
@@ -274,7 +274,7 @@ Grafana alert notifications can be sent to [Sensu](<(https://sensu.io)>) Go as e
 Grafana alert notifications can be sent to [Amazon Simple Notification Service (SNS)](https://aws.amazon.com/sns/).
 
 | Setting                         | Description                                                         |
-|---------------------------------|---------------------------------------------------------------------|
+| ------------------------------- | ------------------------------------------------------------------- |
 | Topic                           | ARN of the SNS topic                                                |
 | Auth Provider                   | Desired authentication provider to access the SNS resource          |
 | Message Body Format             | Specify the format of the message body                              |
