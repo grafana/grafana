@@ -132,7 +132,7 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 			inner: config.Route,
 			orgID: org,
 		}
-		provenance, err := moa.provStore.GetProvenance(ctx, adp)
+		provenance, err := moa.ProvStore.GetProvenance(ctx, adp)
 		if err != nil {
 			return definitions.GettableApiAlertingConfig{}, err
 		}

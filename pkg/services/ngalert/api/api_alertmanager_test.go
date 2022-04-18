@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"math/rand"
 	"net/http"
 	"testing"
@@ -219,6 +220,36 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response := sut.RouteGetAlertingConfig(rc)
 
 			require.Equal(t, 200, response.Status())
+		})
+	})
+
+	t.Run("when objects are not provisioned", func(t *testing.T) {
+		t.Run("route from GET config has no provenance", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+
+			response := sut.RouteGetAlertingConfig(rc)
+
+			body := &apimodels.GettableUserConfig{}
+			err := json.Unmarshal(response.Body(), body)
+			require.NoError(t, err)
+			require.Equal(t, ngmodels.ProvenanceNone, body.AlertmanagerConfig.Route.Provenance)
+		})
+	})
+
+	t.Run("when objects are provisioned", func(t *testing.T) {
+		t.Run("route from GET config has expected provenance", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+			adp := provenanceOrgAdapter{inner: &apimodels.Route{}, orgID: 1}
+			sut.mam.ProvStore.SetProvenance(context.Background(), adp, ngmodels.ProvenanceAPI)
+
+			response := sut.RouteGetAlertingConfig(rc)
+
+			body := &apimodels.GettableUserConfig{}
+			err := json.Unmarshal(response.Body(), body)
+			require.NoError(t, err)
+			require.Equal(t, ngmodels.ProvenanceAPI, body.AlertmanagerConfig.Route.Provenance)
 		})
 	})
 }
@@ -484,4 +515,22 @@ func createRequestCtxInOrg(org int64) *models.ReqContext {
 			OrgId: org,
 		},
 	}
+}
+
+// TODO: extract to shared location
+type provenanceOrgAdapter struct {
+	inner ngmodels.ProvisionableInOrg
+	orgID int64
+}
+
+func (a provenanceOrgAdapter) ResourceType() string {
+	return a.inner.ResourceType()
+}
+
+func (a provenanceOrgAdapter) ResourceID() string {
+	return a.inner.ResourceID()
+}
+
+func (a provenanceOrgAdapter) ResourceOrgID() int64 {
+	return a.orgID
 }
