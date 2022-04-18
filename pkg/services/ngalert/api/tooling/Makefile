@@ -2,7 +2,7 @@
 
 API_DIR = definitions
 GO_PKG_FILES = $(shell find $(API_DIR) -name *.go -print)
-SWAGGER_TAG ?= v0.29.0
+SWAGGER_TAG ?= latest
 
 PATH_DOWN = pkg/services/ngalert/api/tooling
 PATH_UP = ../../../../..

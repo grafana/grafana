@@ -1965,6 +1965,10 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "Provenance": {
+   "type": "string",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
+  },
   "PushoverConfig": {
    "properties": {
     "expire": {
@@ -2165,6 +2169,9 @@
     },
     "object_matchers": {
      "$ref": "#/definitions/ObjectMatchers"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
     },
     "receiver": {
      "type": "string",
@@ -3067,7 +3074,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3089,15 +3095,16 @@
     "labels",
     "receiver"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "AlertGroup",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array",
-   "x-go-name": "AlertGroups",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -3279,15 +3286,13 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array",
-   "x-go-name": "GettableAlerts",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3339,7 +3344,9 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
    "items": {
@@ -3519,6 +3526,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3529,9 +3537,7 @@
    "required": [
     "name"
    ],
-   "type": "object",
-   "x-go-name": "Receiver",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "silence": {
    "description": "Silence silence",
@@ -4101,7 +4107,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      }
@@ -4141,7 +4147,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      }
@@ -4173,7 +4179,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      }
@@ -4203,9 +4209,15 @@
     "operationId": "RouteDeleteSilenceWithUID",
     "parameters": [
      {
+      "in": "path",
+      "name": "SilenceId",
+      "required": true,
+      "type": "string"
+     },
+     {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      }
@@ -4233,9 +4245,15 @@
     "operationId": "RouteGetSilenceWithUID",
     "parameters": [
      {
+      "in": "path",
+      "name": "SilenceId",
+      "required": true,
+      "type": "string"
+     },
+     {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      }
@@ -4267,7 +4285,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      }
@@ -4304,7 +4322,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      }
@@ -4336,7 +4354,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      }
@@ -4368,7 +4386,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      }
@@ -4398,7 +4416,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      }
@@ -4435,7 +4453,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      }
@@ -4473,7 +4491,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      }
@@ -4578,7 +4596,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4619,7 +4637,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4693,7 +4711,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4732,7 +4750,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4769,7 +4787,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4811,7 +4829,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4849,7 +4867,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4882,7 +4900,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4915,7 +4933,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4946,7 +4964,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4984,7 +5002,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -5023,7 +5041,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -5153,7 +5171,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      }
@@ -5179,7 +5197,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      }
@@ -5206,7 +5224,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -5233,7 +5251,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -5289,7 +5307,10 @@
     ],
     "responses": {
      "202": {
-      "$ref": "#/responses/Accepted"
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
      },
      "400": {
       "description": "ValidationError",
@@ -5319,7 +5340,10 @@
     ],
     "responses": {
      "202": {
-      "$ref": "#/responses/Accepted"
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
      },
      "400": {
       "description": "ValidationError",
@@ -5340,9 +5364,21 @@
      "application/json"
     ],
     "operationId": "RouteDeleteContactpoints",
+    "parameters": [
+     {
+      "description": "ContactPointUID should be the contact point UID identifier",
+      "in": "path",
+      "name": "ID",
+      "required": true,
+      "type": "string"
+     }
+    ],
     "responses": {
      "202": {
-      "$ref": "#/responses/Accepted"
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
      },
      "400": {
       "description": "ValidationError",
@@ -5395,7 +5431,10 @@
     ],
     "responses": {
      "202": {
-      "$ref": "#/responses/Accepted"
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
      },
      "400": {
       "description": "ValidationError",
@@ -5599,7 +5638,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      },
@@ -5639,7 +5678,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      },
@@ -5669,7 +5708,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      },
@@ -5706,7 +5745,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      },
@@ -5745,7 +5784,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      },
@@ -5778,6 +5817,13 @@
     "description": "Get rule group",
     "operationId": "RouteGetRuleGroupConfigWithUID",
     "parameters": [
+     {
+      "description": "DatasoureUID should be the datasource UID identifier",
+      "in": "path",
+      "name": "DatasourceUID",
+      "required": true,
+      "type": "string"
+     },
      {
       "in": "path",
       "name": "Namespace",
@@ -5816,7 +5862,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      },
@@ -5857,7 +5903,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      },
@@ -5888,7 +5934,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      },
@@ -5926,7 +5972,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      },
@@ -5966,7 +6012,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      },
@@ -5999,6 +6045,14 @@
     "description": "Get rule group",
     "operationId": "RouteGetRuleGroupConfig",
     "parameters": [
+     {
+      "description": "DatasoureID should be the numeric datasource identifier",
+      "format": "int64",
+      "in": "path",
+      "name": "DatasourceID",
+      "required": true,
+      "type": "integer"
+     },
      {
       "in": "path",
       "name": "Namespace",
@@ -6212,7 +6266,7 @@
      {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasoureUID",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      },
@@ -6252,7 +6306,7 @@
       "description": "DatasoureID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
-      "name": "DatasoureID",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      },

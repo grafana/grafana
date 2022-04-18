@@ -391,6 +391,7 @@ type CreateSilenceParams struct {
 }
 
 // swagger:parameters RouteGetSilence RouteDeleteSilence RouteGetGrafanaSilence RouteDeleteGrafanaSilence
+// swagger:parameters RouteGetSilenceWithUID RouteDeleteSilenceWithUID
 type GetDeleteSilenceParams struct {
 	// in:path
 	SilenceId string
@@ -548,7 +549,7 @@ type BodyAlertingConfig struct {
 // alertmanager routes
 // swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig RoutePostTestReceivers
 // ruler routes
-// swagger:parameters RouteGetRulesConfig RoutePostNameRulesConfig RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig
+// swagger:parameters RouteGetRulesConfig RoutePostNameRulesConfig RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetRuleGroupConfig RouteDeleteRuleGroupConfig
 // prom routes
 // swagger:parameters RouteGetRuleStatuses RouteGetAlertStatuses
 // testing routes
@@ -556,13 +557,13 @@ type BodyAlertingConfig struct {
 type DatasourceIDReference struct {
 	// DatasoureID should be the numeric datasource identifier
 	// in:path
-	DatasoureID int
+	DatasourceID int
 }
 
 // alertmanager routes
 // swagger:parameters RoutePostAlertingConfigWithUID RouteGetAlertingConfigWithUID RouteDeleteAlertingConfigWithUID RouteGetAMStatusWithUID RouteGetAMAlertsWithUID RoutePostAMAlertsWithUID RouteGetAMAlertGroupsWithUID RouteGetSilencesWithUID RouteCreateSilenceWithUID RouteGetSilenceWithUID RouteDeleteSilenceWithUID RoutePostAlertingConfigWithUID RoutePostTestReceiversWithUID
 // ruler routes
-// swagger:parameters RouteGetRulesConfigWithUID RoutePostNameRulesConfigWithUID RouteGetNamespaceRulesConfigWithUID RouteDeleteNamespaceRulesConfigWithUID RouteGetRulegGroupConfigWithUID RouteDeleteRuleGroupConfigWithUID
+// swagger:parameters RouteGetRulesConfigWithUID RoutePostNameRulesConfigWithUID RouteGetNamespaceRulesConfigWithUID RouteDeleteNamespaceRulesConfigWithUID RouteGetRuleGroupConfigWithUID RouteDeleteRuleGroupConfigWithUID
 // prom routes
 // swagger:parameters RouteGetRuleStatusesWithUID RouteGetAlertStatusesWithUID
 // testing routes
@@ -570,7 +571,7 @@ type DatasourceIDReference struct {
 type DatasourceUIDReference struct {
 	// DatasoureUID should be the datasource UID identifier
 	// in:path
-	DatasoureUID string
+	DatasourceUID string
 }
 
 // swagger:model
