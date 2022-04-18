@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -449,6 +451,12 @@ type Cfg struct {
 	// Undocumented option as a backup in case removing builtin-role assignment
 	// fails
 	RBACBuiltInRoleAssignmentEnabled bool
+	// GRPC Server.
+	GRPCServerNetwork  string
+	GRPCServerAddress  string
+	GRPCServerUseTLS   bool
+	GRPCServerCertFile string
+	GRPCServerKeyFile  string
 }
 
 type CommandLineArgs struct {
@@ -915,6 +923,10 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	if err := readSnapshotsSettings(cfg, iniFile); err != nil {
+		return err
+	}
+
+	if err := readGRPCServerSettings(cfg, iniFile); err != nil {
 		return err
 	}
 
@@ -1442,6 +1454,57 @@ func readAlertingSettings(iniFile *ini.File) error {
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
 	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
 
+	return nil
+}
+
+func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
+	server := iniFile.Section("grpc_server")
+	errPrefix := "grpc_server:"
+	cfg.GRPCServerUseTLS = server.Key("use_tls").MustBool(false)
+	cfg.GRPCServerCertFile = server.Key("cert_file").String()
+	cfg.GRPCServerKeyFile = server.Key("cert_key").String()
+	cfg.GRPCServerNetwork = valueAsString(server, "network", "unix")
+	cfg.GRPCServerAddress = valueAsString(server, "address", "")
+	switch cfg.GRPCServerNetwork {
+	case "unix":
+		if cfg.GRPCServerAddress != "" {
+			// Explicitly provided path for unix domain socket.
+			if stat, err := os.Stat(cfg.GRPCServerAddress); os.IsNotExist(err) {
+				// File does not exist - nice, nothing to do.
+			} else if err != nil {
+				return fmt.Errorf("%s error getting stat for a file: %s", errPrefix, cfg.GRPCServerAddress)
+			} else {
+				if stat.Mode()&fs.ModeSocket == 0 {
+					return fmt.Errorf("%s file %s already exists and is not a unix domain socket", errPrefix, cfg.GRPCServerAddress)
+				}
+				// Unix domain socket file, should be safe to remove.
+				err := os.Remove(cfg.GRPCServerAddress)
+				if err != nil {
+					return fmt.Errorf("%s can't remove unix socket file: %s", errPrefix, cfg.GRPCServerAddress)
+				}
+			}
+		} else {
+			// Use temporary file path for a unix domain socket.
+			tf, err := ioutil.TempFile("", "gf_grpc_server_api")
+			if err != nil {
+				return fmt.Errorf("%s error creating tmp file: %v", errPrefix, err)
+			}
+			unixPath := tf.Name()
+			if err := tf.Close(); err != nil {
+				return fmt.Errorf("%s error closing tmp file: %v", errPrefix, err)
+			}
+			if err := os.Remove(unixPath); err != nil {
+				return fmt.Errorf("%s error removing tmp file: %v", errPrefix, err)
+			}
+			cfg.GRPCServerAddress = unixPath
+		}
+	case "tcp":
+		if cfg.GRPCServerAddress == "" {
+			cfg.GRPCServerAddress = "127.0.0.1:10000"
+		}
+	default:
+		return fmt.Errorf("%s unsupported network %s", errPrefix, cfg.GRPCServerNetwork)
+	}
 	return nil
 }
 
