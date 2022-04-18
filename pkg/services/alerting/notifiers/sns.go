@@ -39,7 +39,7 @@ func init() {
 				SelectOptions: []alerting.SelectOption{
 					{
 						Value: "default",
-						Label: "Workspace IAM Role",
+						Label: "AWS SDK Default",
 					},
 					{
 						Value: "credentials",
