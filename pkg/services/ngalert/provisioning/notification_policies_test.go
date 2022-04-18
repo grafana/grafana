@@ -75,7 +75,7 @@ func TestNotificationPolicyService(t *testing.T) {
 func createNotificationPolicyServiceSut() *NotificationPolicyService {
 	return &NotificationPolicyService{
 		amStore:         newFakeAMConfigStore(),
-		provenanceStore: newFakeProvisioningStore(),
+		provenanceStore: NewFakeProvisioningStore(),
 		xact:            newNopTransactionManager(),
 		log:             log.NewNopLogger(),
 	}

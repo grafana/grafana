@@ -33,6 +33,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	kvStore := NewFakeKVStore(t)
+	provStore := provisioning.NewFakeProvisioningStore()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
@@ -45,7 +46,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
 			DisabledOrgs:                   map[int64]struct{}{5: {}},
 		}, // do not poll in tests.
 	}
-	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
 	require.NoError(t, err)
 	ctx := context.Background()
 
@@ -158,6 +159,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 
 	tmpDir := t.TempDir()
 	kvStore := NewFakeKVStore(t)
+	provStore := provisioning.NewFakeProvisioningStore()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
@@ -169,7 +171,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
 		}, // do not poll in tests.
 	}
-	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
 	require.NoError(t, err)
 	ctx := context.Background()
 
@@ -220,7 +222,7 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	decryptFn := secretsService.GetDecryptedValue
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
-	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	mam, err := NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
 	require.NoError(t, err)
 	ctx := context.Background()
 
