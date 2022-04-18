@@ -268,7 +268,7 @@ func (ss *SQLStore) RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUser
 			}
 		}
 
-		// validate that after delete there is at least one user with admin role in org
+		// validate that after delete, there is at least one user with admin role in org
 		if err := validateOneAdminLeftInOrg(cmd.OrgId, sess); err != nil {
 			return err
 		}
