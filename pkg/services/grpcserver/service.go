@@ -2,7 +2,6 @@ package grpcserver
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"net"
 
@@ -32,16 +31,6 @@ func ProvideService(cfg *setting.Cfg) Provider {
 		cfg:    cfg,
 		logger: log.New("grpc-server"),
 	}
-	return s
-}
-
-func (s *GPRCServerService) Run(ctx context.Context) error {
-	s.logger.Info("Running GRPC server", "address", s.cfg.GRPCServerAddress, "network", s.cfg.GRPCServerNetwork, "tls", s.cfg.GRPCServerUseTLS)
-
-	listener, err := net.Listen(s.cfg.GRPCServerNetwork, s.cfg.GRPCServerAddress)
-	if err != nil {
-		return fmt.Errorf("GRPC server: failed to listen: %w", err)
-	}
 
 	var opts []grpc.ServerOption
 
@@ -54,16 +43,22 @@ func (s *GPRCServerService) Run(ctx context.Context) error {
 		grpc.UnaryInterceptor(grpcAuth.UnaryServerInterceptor(authenticator.Authenticate)),
 	}...)
 
-	if s.cfg.GRPCServerUseTLS {
-		cred, err := s.loadTLSCredentials()
-		if err != nil {
-			return fmt.Errorf("error loading GRPC TLS Credentials: %w", err)
-		}
-		opts = append(opts, grpc.Creds(cred))
+	if s.cfg.GRPCServerTLSConfig != nil {
+		opts = append(opts, grpc.Creds(credentials.NewTLS(cfg.GRPCServerTLSConfig)))
 	}
 
 	grpcServer := grpc.NewServer(opts...)
 	s.server = grpcServer
+	return s
+}
+
+func (s *GPRCServerService) Run(ctx context.Context) error {
+	s.logger.Info("Running GRPC server", "address", s.cfg.GRPCServerAddress, "network", s.cfg.GRPCServerNetwork, "tls", s.cfg.GRPCServerTLSConfig != nil)
+
+	listener, err := net.Listen(s.cfg.GRPCServerNetwork, s.cfg.GRPCServerAddress)
+	if err != nil {
+		return fmt.Errorf("GRPC server: failed to listen: %w", err)
+	}
 
 	serveErr := make(chan error, 1)
 	go func() {
@@ -87,18 +82,6 @@ func (s *GPRCServerService) IsDisabled() bool {
 		return true
 	}
 	return !s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrpcServer)
-}
-
-func (s *GPRCServerService) loadTLSCredentials() (credentials.TransportCredentials, error) {
-	serverCert, err := tls.LoadX509KeyPair(s.cfg.GRPCServerCertFile, s.cfg.GRPCServerKeyFile)
-	if err != nil {
-		return nil, err
-	}
-	config := &tls.Config{
-		Certificates: []tls.Certificate{serverCert},
-		ClientAuth:   tls.NoClientCert,
-	}
-	return credentials.NewTLS(config), nil
 }
 
 func (s *GPRCServerService) GetServer() *grpc.Server {
