@@ -14,12 +14,22 @@ interface Props {
   option: NotificationChannelOption;
   invalid?: boolean;
   pathPrefix: string;
+  pathSuffix?: string;
   error?: FieldError | DeepMap<any, FieldError>;
   readOnly?: boolean;
 }
 
-export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, defaultValue, readOnly = false }) => {
-  const settingsPath = option.secure ? `${pathPrefix}secureSettings.` : `${pathPrefix}settings.`;
+export const OptionField: FC<Props> = ({
+  option,
+  invalid,
+  pathPrefix,
+  pathSuffix = '',
+  error,
+  defaultValue,
+  readOnly = false,
+}) => {
+  const optionPath = `${pathPrefix}${pathSuffix}`;
+
   if (option.element === 'subform') {
     return (
       <SubformField
@@ -27,7 +37,7 @@ export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, def
         defaultValue={defaultValue}
         option={option}
         errors={error as DeepMap<any, FieldError> | undefined}
-        pathPrefix={settingsPath}
+        pathPrefix={optionPath}
       />
     );
   }
@@ -37,7 +47,7 @@ export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, def
         readOnly={readOnly}
         defaultValues={defaultValue}
         option={option}
-        pathPrefix={settingsPath}
+        pathPrefix={optionPath}
         errors={error as Array<DeepMap<any, FieldError>> | undefined}
       />
     );
@@ -50,11 +60,11 @@ export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, def
       error={error?.message}
     >
       <OptionInput
-        id={`${settingsPath}${option.propertyName}`}
+        id={`${optionPath}${option.propertyName}`}
         defaultValue={defaultValue}
         option={option}
         invalid={invalid}
-        pathPrefix={settingsPath}
+        pathPrefix={optionPath}
         readOnly={readOnly}
         pathIndex={pathPrefix}
       />
@@ -62,12 +72,12 @@ export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, def
   );
 };
 
-const OptionInput: FC<Props & { id: string; pathIndex: string }> = ({
+const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
   option,
   invalid,
   id,
   pathPrefix = '',
-  pathIndex,
+  pathIndex = '',
   readOnly = false,
 }) => {
   const { control, register, unregister, getValues } = useFormContext();

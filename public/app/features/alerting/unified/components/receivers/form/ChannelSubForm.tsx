@@ -37,7 +37,7 @@ export function ChannelSubForm<R extends ChannelValues>({
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
   const name = (fieldName: string) => `${pathPrefix}${fieldName}`;
-  const { control, watch, register, trigger, formState } = useFormContext();
+  const { control, watch, register, trigger, formState, setValue } = useFormContext();
   const selectedType = watch(name('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
   const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
 
@@ -55,6 +55,7 @@ export function ChannelSubForm<R extends ChannelValues>({
       const updatedSecureFields = { ...secureFields };
       delete updatedSecureFields[key];
       setSecureFields(updatedSecureFields);
+      setValue(`${pathPrefix}.secureFields`, updatedSecureFields);
     }
   };
 

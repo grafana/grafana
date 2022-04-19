@@ -70,6 +70,7 @@ export function ChannelOptions<R extends ChannelValues>({
             key={key}
             error={error}
             pathPrefix={pathPrefix}
+            pathSuffix={option.secure ? 'secureSettings.' : 'settings.'}
             option={option}
           />
         );
