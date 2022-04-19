@@ -321,6 +321,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
                 onCreateOption={(v) => {
                   this.setCustomLogGroups(v);
                 }}
+                onBlur={this.props.onRunQuery}
                 className={containerClass}
                 closeMenuOnSelect={false}
                 isClearable={true}
@@ -344,7 +345,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
               additionalPlugins={this.plugins}
               query={query.expression ?? ''}
               onChange={this.onChangeQuery}
-              onBlur={this.props.onBlur}
               onClick={this.onQueryFieldClick}
               onRunQuery={this.props.onRunQuery}
               onTypeahead={this.onTypeahead}
