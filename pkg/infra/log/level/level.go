@@ -1,6 +1,9 @@
 package level
 
-import "github.com/go-kit/log"
+import (
+	"github.com/go-kit/log"
+	gokitlevel "github.com/go-kit/log/level"
+)
 
 // Error returns a logger that includes a Key/ErrorValue pair.
 func Error(logger log.Logger) log.Logger {
