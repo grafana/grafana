@@ -22,17 +22,10 @@ import { ShowModalReactEvent } from 'app/types/events';
 import { contextSrv } from 'app/core/core';
 
 function mapStateToProps(state: StoreState) {
-  let canRead = true;
-  let canDelete = true;
-  let canCreate = true;
-  if (contextSrv.licensedAccessControlEnabled()) {
-    canRead = contextSrv.hasPermission(AccessControlAction.ActionAPIKeysRead);
-    canCreate = contextSrv.hasPermission(AccessControlAction.ActionAPIKeysCreate);
-    canDelete = contextSrv.hasPermission(AccessControlAction.ActionAPIKeysDelete);
-  }
+  const canRead = contextSrv.hasAccess(AccessControlAction.ActionAPIKeysRead, true);
+  const canCreate = contextSrv.hasAccess(AccessControlAction.ActionAPIKeysCreate, true);
+  const canDelete = contextSrv.hasAccess(AccessControlAction.ActionAPIKeysDelete, true);
 
-  console.log('AA');
-  console.log(canCreate);
   return {
     navModel: getNavModel(state.navIndex, 'apikeys'),
     apiKeys: getApiKeys(state.apiKeys),
