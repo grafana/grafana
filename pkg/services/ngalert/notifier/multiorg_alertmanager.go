@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/secrets"
 
 	"github.com/prometheus/alertmanager/cluster"
 	"github.com/prometheus/client_golang/prometheus"
@@ -29,6 +30,8 @@ var (
 )
 
 type MultiOrgAlertmanager struct {
+	Crypto Crypto
+
 	alertmanagersMtx sync.RWMutex
 	alertmanagers    map[int64]*Alertmanager
 
@@ -51,9 +54,11 @@ type MultiOrgAlertmanager struct {
 
 func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, orgStore store.OrgStore,
 	kvStore kvstore.KVStore, decryptFn channels.GetDecryptedValueFn, m *metrics.MultiOrgAlertmanager,
-	ns notifications.Service, l log.Logger,
+	ns notifications.Service, l log.Logger, s secrets.Service,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
+		Crypto: NewCrypto(s, configStore, l),
+
 		logger:        l,
 		settings:      cfg,
 		alertmanagers: map[int64]*Alertmanager{},

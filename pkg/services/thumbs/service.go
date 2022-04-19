@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -192,7 +193,7 @@ func (hs *thumbService) UpdateThumbnailState(c *models.ReqContext) {
 	}
 
 	hs.log.Info("Updated dashboard thumbnail state", "dashboardUid", req.UID, "theme", req.Theme, "newState", body.State)
-	c.JSON(200, map[string]string{"success": "true"})
+	c.JSON(http.StatusOK, map[string]string{"success": "true"})
 }
 
 func (hs *thumbService) GetImage(c *models.ReqContext) {
@@ -320,7 +321,7 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 		return
 	}
 
-	c.JSON(200, map[string]int{"OK": len(fileBytes)})
+	c.JSON(http.StatusOK, map[string]int{"OK": len(fileBytes)})
 }
 
 func (hs *thumbService) StartCrawler(c *models.ReqContext) response.Response {
@@ -348,7 +349,7 @@ func (hs *thumbService) StartCrawler(c *models.ReqContext) response.Response {
 		return response.Error(500, "error starting", err)
 	}
 
-	return response.JSON(200, status)
+	return response.JSON(http.StatusOK, status)
 }
 
 func (hs *thumbService) StopCrawler(c *models.ReqContext) response.Response {
@@ -356,7 +357,7 @@ func (hs *thumbService) StopCrawler(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(500, "error starting", err)
 	}
-	return response.JSON(200, msg)
+	return response.JSON(http.StatusOK, msg)
 }
 
 func (hs *thumbService) CrawlerStatus(c *models.ReqContext) response.Response {
@@ -364,7 +365,7 @@ func (hs *thumbService) CrawlerStatus(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(500, "error starting", err)
 	}
-	return response.JSON(200, msg)
+	return response.JSON(http.StatusOK, msg)
 }
 
 // Ideally this service would not require first looking up the full dashboard just to bet the id!

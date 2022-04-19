@@ -17,14 +17,14 @@ func (e *ErrSAInvalidName) Unwrap() error {
 	return models.ErrUserAlreadyExists
 }
 
-type ErrMisingSAToken struct {
+type ErrMissingSAToken struct {
 }
 
-func (e *ErrMisingSAToken) Error() string {
+func (e *ErrMissingSAToken) Error() string {
 	return "service account token not found"
 }
 
-func (e *ErrMisingSAToken) Unwrap() error {
+func (e *ErrMissingSAToken) Unwrap() error {
 	return models.ErrApiKeyNotFound
 }
 
@@ -44,7 +44,7 @@ type ErrDuplicateSAToken struct {
 }
 
 func (e *ErrDuplicateSAToken) Error() string {
-	return fmt.Sprintf("service account token %s already exists", e.name)
+	return fmt.Sprintf("service account token %s already exists in the organization", e.name)
 }
 
 func (e *ErrDuplicateSAToken) Unwrap() error {

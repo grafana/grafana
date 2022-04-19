@@ -4,7 +4,6 @@ import { connect, ConnectedProps } from 'react-redux';
 import { locationService } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar, stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
-
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
@@ -78,6 +77,7 @@ export interface State {
   showLoadingState: boolean;
   panelNotFound: boolean;
   editPanelAccessDenied: boolean;
+  scrollElement?: HTMLDivElement;
 }
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
@@ -224,14 +224,14 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       }
 
       if (dashboard.canEditPanel(panel)) {
-        return { ...state, editPanel: panel };
+        return { ...state, editPanel: panel, rememberScrollTop: state.scrollElement?.scrollTop };
       } else {
         return { ...state, editPanelAccessDenied: true };
       }
     }
     // Leaving edit mode
     else if (state.editPanel && !urlEditPanelId) {
-      return { ...state, editPanel: null };
+      return { ...state, editPanel: null, updateScrollTop: state.rememberScrollTop };
     }
 
     // Entering view mode
@@ -245,11 +245,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       // Should move this state out of dashboard in the future
       dashboard.initViewPanel(panel);
 
-      return {
-        ...state,
-        viewPanel: panel,
-        updateScrollTop: 0,
-      };
+      return { ...state, viewPanel: panel, rememberScrollTop: state.scrollElement?.scrollTop, updateScrollTop: 0 };
     }
     // Leaving view mode
     else if (state.viewPanel && !urlViewPanelId) {
@@ -288,6 +284,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     // scroll to top after adding panel
     this.setState({ updateScrollTop: 0 });
+  };
+
+  setScrollRef = (scrollElement: HTMLDivElement): void => {
+    this.setState({ scrollElement });
   };
 
   getInspectPanel() {
@@ -346,6 +346,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         <div className={styles.dashboardScroll}>
           <CustomScrollbar
             autoHeightMin="100%"
+            scrollRefCallback={this.setScrollRef}
             scrollTop={updateScrollTop}
             hideHorizontalTrack={true}
             updateAfterMountMs={500}

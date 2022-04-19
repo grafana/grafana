@@ -255,7 +255,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		query1 := &models.GetOrgUsersQuery{OrgId: users[0].OrgId}
-		err = GetOrgUsersForTest(query1)
+		err = ss.GetOrgUsersForTest(context.Background(), query1)
 		require.Nil(t, err)
 
 		require.Len(t, query1.Result, 1)
@@ -341,7 +341,7 @@ func TestUserDataAccess(t *testing.T) {
 
 		// delete connected org users and permissions
 		query2 := &models.GetOrgUsersQuery{OrgId: users[0].OrgId}
-		err = GetOrgUsersForTest(query2)
+		err = ss.GetOrgUsersForTest(context.Background(), query2)
 		require.Nil(t, err)
 
 		require.Len(t, query2.Result, 1)
@@ -507,15 +507,17 @@ func TestUserDataAccess(t *testing.T) {
 	})
 }
 
-func GetOrgUsersForTest(query *models.GetOrgUsersQuery) error {
-	query.Result = make([]*models.OrgUserDTO, 0)
-	sess := x.Table("org_user")
-	sess.Join("LEFT ", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
-	sess.Where("org_user.org_id=?", query.OrgId)
-	sess.Cols("org_user.org_id", "org_user.user_id", "user.email", "user.login", "org_user.role")
+func (ss *SQLStore) GetOrgUsersForTest(ctx context.Context, query *models.GetOrgUsersQuery) error {
+	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
+		query.Result = make([]*models.OrgUserDTO, 0)
+		sess := dbSess.Table("org_user")
+		sess.Join("LEFT ", ss.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.Dialect.Quote("user")))
+		sess.Where("org_user.org_id=?", query.OrgId)
+		sess.Cols("org_user.org_id", "org_user.user_id", "user.email", "user.login", "org_user.role")
 
-	err := sess.Find(&query.Result)
-	return err
+		err := sess.Find(&query.Result)
+		return err
+	})
 }
 
 func createFiveTestUsers(t *testing.T, sqlStore *SQLStore, fn func(i int) *models.CreateUserCommand) []models.User {
