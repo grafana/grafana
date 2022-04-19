@@ -136,3 +136,61 @@ func TestTimeSeriesQuery(t *testing.T) {
 		assert.EqualError(t, err, "invalid time range: start time must be before end time")
 	})
 }
+
+func Test_QueryData_executeTimeSeriesQuery_formatAlias(t *testing.T) {
+	origNewCWClient := NewCWClient
+	t.Cleanup(func() {
+		NewCWClient = origNewCWClient
+	})
+	var cwClient fakeCWClient
+	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+		return &cwClient
+	}
+
+	t.Run("parses period and stat from expression when isUserDefinedSearchExpression", func(t *testing.T) {
+		cwClient = fakeCWClient{
+			GetMetricDataOutput: cloudwatch.GetMetricDataOutput{
+				MetricDataResults: []*cloudwatch.MetricDataResult{
+					{StatusCode: aws.String("Complete"), Id: aws.String("a"), Label: aws.String("NetworkOut"),
+						Values: []*float64{aws.Float64(1.0)}, Timestamps: []*time.Time{{}}},
+				},
+			},
+		}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					JSON: json.RawMessage(`{
+						"type":      "timeSeriesQuery",
+						"metricQueryType": 0,
+						"metricEditorMode": 1,
+						"namespace": "",
+						"metricName": "",
+						"expression": "SEARCH('{AWS/EC2,InstanceId} MetricName=\"CPUUtilization\"', 'Average', 300)",
+						"dimensions": {},
+						"region": "us-east-2",
+						"id": "a",
+						"alias": "{{period}} {{stat}}",
+						"statistic": "Maximum",
+						"period": "1200",
+						"hide": false,
+						"matchExact": true,
+						"refId": "A"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		// asserts that period '300' and stat 'Average' are parsed from the JSON query expression and used in the alias, not the JSON model's 'statistic' nor 'period' fields
+		assert.Equal(t, "300 Average", resp.Responses["A"].Frames[0].Name)
+	})
+
+}
