@@ -121,15 +121,16 @@ describe('LibraryPanelsSearch', () => {
         const { getLibraryPanelsSpy } = await getTestContext({ showSort: true });
 
         await userEvent.type(screen.getByText(/sort \(default a–z\)/i), 'Desc{enter}');
-        await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1));
-        expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
-          searchString: '',
-          sortDirection: 'alpha-desc',
-          folderFilter: [],
-          page: 0,
-          typeFilter: [],
-          perPage: 40,
-        });
+        await waitFor(() =>
+          expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
+            searchString: '',
+            sortDirection: 'alpha-desc',
+            folderFilter: [],
+            page: 0,
+            typeFilter: [],
+            perPage: 40,
+          })
+        );
       });
     });
   });
@@ -149,14 +150,15 @@ describe('LibraryPanelsSearch', () => {
 
         await userEvent.type(screen.getByRole('combobox', { name: /panel type filter/i }), 'Graph{enter}');
         await userEvent.type(screen.getByRole('combobox', { name: /panel type filter/i }), 'Time Series{enter}');
-        await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1));
-        expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
-          searchString: '',
-          folderFilter: [],
-          page: 0,
-          typeFilter: ['graph', 'timeseries'],
-          perPage: 40,
-        });
+        await waitFor(() =>
+          expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
+            searchString: '',
+            folderFilter: [],
+            page: 0,
+            typeFilter: ['graph', 'timeseries'],
+            perPage: 40,
+          })
+        );
       });
     });
   });
