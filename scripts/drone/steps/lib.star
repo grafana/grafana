@@ -488,9 +488,16 @@ def build_plugins_step(edition, sign=False):
 
 
 def test_backend_step(edition):
+    if edition == 'oss':
+        env = {
+            'STORE_INTEGRATION_TEST': 'true',
+        }
+    else:
+        env = None
     return {
         'name': 'test-backend' + enterprise2_suffix(edition),
         'image': build_image,
+        'environment': env,
         'depends_on': [
             'wire-install',
         ],

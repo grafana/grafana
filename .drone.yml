@@ -82,6 +82,8 @@ steps:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - wire-install
+  environment:
+    STORE_INTEGRATION_TEST: "true"
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -689,6 +691,8 @@ steps:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - wire-install
+  environment:
+    STORE_INTEGRATION_TEST: "true"
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -1773,6 +1777,8 @@ steps:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - wire-install
+  environment:
+    STORE_INTEGRATION_TEST: "true"
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -2415,6 +2421,7 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - wire-install
+  environment: null
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -2443,6 +2450,7 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - wire-install
+  environment: null
   image: grafana/build-container:1.5.3
   name: test-backend-enterprise2
 - commands:
@@ -3517,6 +3525,8 @@ steps:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - wire-install
+  environment:
+    STORE_INTEGRATION_TEST: "true"
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -4131,6 +4141,7 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise
   depends_on:
   - wire-install
+  environment: null
   image: grafana/build-container:1.5.3
   name: test-backend
 - commands:
@@ -4159,6 +4170,7 @@ steps:
   - ./bin/grabpl test-backend --edition enterprise2
   depends_on:
   - wire-install
+  environment: null
   image: grafana/build-container:1.5.3
   name: test-backend-enterprise2
 - commands:
@@ -4530,6 +4542,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 803ec2a67b1758ce82ddda8ba1fb276fd23e4cfbfc3c5736bf2fa9e98edc2e6b
+hmac: 2c665bdb653eb130ad2b31c48304b544511d4806dbbac17a9df52388f2b288ea
 
 ...

@@ -1,10 +1,8 @@
-//go:build integration
-// +build integration
-
 package prefimpl
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -16,6 +14,10 @@ import (
 )
 
 func TestPreferencesDataAccess(t *testing.T) {
+	storeTestFlag := os.Getenv("STORE_INTEGRATION_TEST")
+	if storeTestFlag != "true" {
+		t.Skip("Not running store intgration tests")
+	}
 	ss := sqlstore.InitTestDB(t)
 	prefStore := sqlStore{db: ss}
 	orgNavbarPreferences := pref.NavbarPreference{
