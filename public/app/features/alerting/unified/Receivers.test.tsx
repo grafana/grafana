@@ -4,7 +4,7 @@ import { Router } from 'react-router-dom';
 import Receivers from './Receivers';
 import React from 'react';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { act, render, waitFor } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { getAllDataSources } from './utils/config';
 import { updateAlertManagerConfig, fetchAlertManagerConfig, fetchStatus, testReceivers } from './api/alertmanager';
 import {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { InfluxQuery } from '../../types';
 import InfluxDatasource from '../../datasource';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Editor } from './Editor';
 import * as mockedMeta from '../../influxQLMetadataQuery';
