@@ -7,24 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
-
-func (ss *SQLStore) addTeamQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.UpdateTeam)
-	bus.AddHandler("sql", ss.DeleteTeam)
-	bus.AddHandler("sql", ss.SearchTeams)
-	bus.AddHandler("sql", ss.GetTeamById)
-	bus.AddHandler("sql", ss.GetTeamsByUser)
-
-	bus.AddHandler("sql", ss.UpdateTeamMember)
-	bus.AddHandler("sql", ss.RemoveTeamMember)
-	bus.AddHandler("sql", ss.GetTeamMembers)
-	bus.AddHandler("sql", IsAdminOfTeams)
-}
 
 type TeamStore interface {
 	UpdateTeam(ctx context.Context, cmd *models.UpdateTeamCommand) error
@@ -35,7 +21,6 @@ type TeamStore interface {
 	RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error
 	GetTeamMembers(ctx context.Context, cmd *models.GetTeamMembersQuery) error
 	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error)
-	AddOrUpdateTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error
 }
 
 func getFilteredUsers(signedInUser *models.SignedInUser, hiddenUsers map[string]struct{}) []string {

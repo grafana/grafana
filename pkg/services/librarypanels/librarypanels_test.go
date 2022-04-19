@@ -1422,7 +1422,7 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.Sig
 	}
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil)
+	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	service := dashboardservice.ProvideDashboardService(
 		setting.NewCfg(), dashboardStore, dashAlertService,
 		featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),

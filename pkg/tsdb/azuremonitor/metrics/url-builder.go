@@ -18,6 +18,35 @@ type urlBuilder struct {
 	ResourceName        string
 }
 
+func (params *urlBuilder) buildMetricsURLFromLegacyQuery() string {
+	subscription := params.Subscription
+
+	if params.Subscription == "" {
+		subscription = params.DefaultSubscription
+	}
+
+	metricDefinitionArray := strings.Split(params.MetricDefinition, "/")
+	resourceNameArray := strings.Split(params.ResourceName, "/")
+	provider := metricDefinitionArray[0]
+	metricDefinitionArray = metricDefinitionArray[1:]
+
+	urlArray := []string{
+		"/subscriptions",
+		subscription,
+		"resourceGroups",
+		params.ResourceGroup,
+		"providers",
+		provider,
+	}
+
+	for i, metricDefinition := range metricDefinitionArray {
+		urlArray = append(urlArray, metricDefinition, resourceNameArray[i])
+	}
+
+	resourceURI := strings.Join(urlArray, "/")
+	return resourceURI
+}
+
 // BuildMetricsURL checks the metric definition property to see which form of the url
 // should be returned
 func (params *urlBuilder) BuildMetricsURL() string {
@@ -25,31 +54,7 @@ func (params *urlBuilder) BuildMetricsURL() string {
 
 	// Prior to Grafana 9, we had a legacy query object rather than a resourceURI, so we manually create the resource URI
 	if resourceURI == "" {
-		subscription := params.Subscription
-
-		if params.Subscription == "" {
-			subscription = params.DefaultSubscription
-		}
-
-		metricDefinitionArray := strings.Split(params.MetricDefinition, "/")
-		resourceNameArray := strings.Split(params.ResourceName, "/")
-		provider := metricDefinitionArray[0]
-		metricDefinitionArray = metricDefinitionArray[1:]
-
-		urlArray := []string{
-			subscription,
-			"resourceGroups",
-			params.ResourceGroup,
-			"providers",
-			provider,
-		}
-
-		for i := range metricDefinitionArray {
-			urlArray = append(urlArray, metricDefinitionArray[i])
-			urlArray = append(urlArray, resourceNameArray[i])
-		}
-
-		resourceURI = strings.Join(urlArray[:], "/")
+		resourceURI = params.buildMetricsURLFromLegacyQuery()
 	}
 
 	return fmt.Sprintf("%s/providers/microsoft.insights/metrics", resourceURI)

@@ -72,7 +72,7 @@
     "*pkg/**/*.go": [
       "gofmt -w -s"
     ],
-    "*.{star}": [
+    "*.star": [
       "make drone"
     ]
   },
@@ -89,9 +89,9 @@
     "@babel/preset-env": "7.16.11",
     "@babel/preset-react": "7.16.7",
     "@babel/preset-typescript": "7.16.7",
-    "@betterer/betterer": "5.1.7",
-    "@betterer/cli": "5.1.7",
-    "@betterer/regexp": "5.1.7",
+    "@betterer/betterer": "5.3.0",
+    "@betterer/cli": "5.3.0",
+    "@betterer/regexp": "5.3.0",
     "@emotion/eslint-plugin": "11.7.0",
     "@grafana/api-documenter": "7.11.2",
     "@grafana/e2e": "workspace:*",
@@ -142,7 +142,7 @@
     "@types/papaparse": "5.3.2",
     "@types/pluralize": "^0.0.29",
     "@types/prismjs": "1.26.0",
-    "@types/rc-time-picker": "^3",
+    "@types/rc-time-picker": "3.4.1",
     "@types/react": "17.0.42",
     "@types/react-beautiful-dnd": "13.1.2",
     "@types/react-dom": "17.0.14",
@@ -202,7 +202,7 @@
     "jest-canvas-mock": "2.3.1",
     "jest-date-mock": "1.0.8",
     "jest-fail-on-console": "2.3.0",
-    "jest-junit": "13.0.0",
+    "jest-junit": "13.1.0",
     "jest-matcher-utils": "27.5.1",
     "jest-mock-console": "1.2.3",
     "lerna": "^4.0.0",
@@ -219,7 +219,7 @@
     "prettier": "2.6.0",
     "raw-loader": "4.0.2",
     "react-refresh": "0.11.0",
-    "react-select-event": "^5.1.0",
+    "react-select-event": "5.5.0",
     "react-test-renderer": "17.0.2",
     "redux-mock-store": "1.5.4",
     "rimraf": "3.0.2",
@@ -237,7 +237,7 @@
     "ts-node": "10.7.0",
     "typescript": "4.4.4",
     "wait-on": "6.0.1",
-    "webpack": "5.70.0",
+    "webpack": "5.72.0",
     "webpack-bundle-analyzer": "4.5.0",
     "webpack-cli": "4.9.2",
     "webpack-dev-server": "4.7.4",
@@ -257,7 +257,7 @@
     "@grafana/slate-react": "0.22.10-grafana",
     "@grafana/ui": "workspace:*",
     "@jaegertracing/jaeger-ui-components": "workspace:*",
-    "@kusto/monaco-kusto": "4.1.6",
+    "@kusto/monaco-kusto": "5.0.0",
     "@lezer/common": "0.15.12",
     "@lezer/lr": "0.15.8",
     "@lingui/core": "3.13.2",
@@ -325,7 +325,7 @@
     "lru-cache": "7.7.1",
     "memoize-one": "6.0.0",
     "minisearch": "5.0.0-beta1",
-    "moment": "2.29.1",
+    "moment": "2.29.2",
     "moment-timezone": "0.5.34",
     "monaco-editor": "^0.31.1",
     "monaco-promql": "^1.7.2",
@@ -396,7 +396,7 @@
     "@rushstack/node-core-library": "3.45.1",
     "@rushstack/rig-package": "0.3.8",
     "@rushstack/ts-command-line": "4.10.7",
-    "@storybook/react/webpack": "5.70.0",
+    "@storybook/react/webpack": "5.72.0",
     "node-fetch": "2.6.7"
   },
   "workspaces": {

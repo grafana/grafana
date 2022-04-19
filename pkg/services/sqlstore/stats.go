@@ -5,19 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
-
-func (ss *SQLStore) addStatsQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetAdminStats)
-	bus.AddHandler("sql", ss.GetSystemUserCountStats)
-	bus.AddHandler("sql", ss.GetAlertNotifiersUsageStats)
-	bus.AddHandler("sql", ss.GetDataSourceAccessStats)
-	bus.AddHandler("sql", ss.GetDataSourceStats)
-	bus.AddHandler("sql", ss.GetSystemStats)
-}
 
 const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24

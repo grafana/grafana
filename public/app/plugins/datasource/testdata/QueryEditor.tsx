@@ -163,7 +163,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         .sort((a, b) => a.label.localeCompare(b.label)),
     [scenarioList]
   );
-  const showLabels = useMemo(() => showLabelsFor.includes(query.scenarioId), [query]);
+  const showLabels = useMemo(() => showLabelsFor.includes(query.scenarioId ?? ''), [query]);
 
   if (loading) {
     return null;
