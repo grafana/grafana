@@ -65,13 +65,11 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
 
       let minMax: uPlot.Range.MinMax = [dataMin, dataMax];
 
-      const uplot = require('uplot').default as typeof uPlot;
-
       if (scale.distr === 1 || scale.distr === 2) {
         // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
-        minMax = uplot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
+        minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
       } else if (scale.distr === 3) {
-        minMax = uplot.rangeLog(dataMin, dataMax, scale.log ?? 10, true);
+        minMax = uPlot.rangeLog(dataMin, dataMax, scale.log ?? 10, true);
       }
 
       // if all we got were hard limits, treat them as static min/max

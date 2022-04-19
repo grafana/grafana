@@ -3,6 +3,7 @@ import { UPlotChart } from './Plot';
 import { render } from '@testing-library/react';
 import { ArrayVector, dateTime, FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
 import { GraphFieldConfig, GraphDrawStyle } from '@grafana/schema';
+import uPlot from 'uplot';
 import createMockRaf from 'mock-raf';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { preparePlotData2, getStackingGroups } from './utils';
@@ -15,16 +16,14 @@ const initializeMock = jest.fn();
 const destroyMock = jest.fn();
 
 jest.mock('uplot', () => {
-  return {
-    default: jest.fn().mockImplementation(() => {
-      return {
-        setData: setDataMock,
-        setSize: setSizeMock,
-        initialize: initializeMock,
-        destroy: destroyMock,
-      };
-    }),
-  };
+  return jest.fn().mockImplementation(() => {
+    return {
+      setData: setDataMock,
+      setSize: setSizeMock,
+      initialize: initializeMock,
+      destroy: destroyMock,
+    };
+  });
 });
 
 const mockData = () => {
@@ -59,10 +58,9 @@ const mockData = () => {
   return { data: data, timeRange, config };
 };
 
-const uPlot = require('uplot').default;
-
 describe('UPlotChart', () => {
   beforeEach(() => {
+    // @ts-ignore
     uPlot.mockClear();
     setDataMock.mockClear();
     setSizeMock.mockClear();
