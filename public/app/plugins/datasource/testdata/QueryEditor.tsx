@@ -22,6 +22,7 @@ import { CSVFileEditor } from './components/CSVFileEditor';
 import { CSVContentEditor } from './components/CSVContentEditor';
 import { USAQueryEditor, usaQueryModes } from './components/USAQueryEditor';
 import ErrorEditor from './components/ErrorEditor';
+import { SimulationQueryEditor } from './components/SimulationQueryEditor';
 
 const showLabelsFor = ['random_walk', 'predictable_pulse'];
 const endpoints = [
@@ -100,6 +101,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         break;
       case 'live':
         update.channel = 'random-2s-stream'; // default stream
+        break;
+      case 'simulation':
+        update.sim = { key: { type: 'flight', tick: 10 } }; // default stream
         break;
       case 'predictable_pulse':
         update.pulseWave = defaultPulseQuery;
@@ -238,6 +242,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       {scenarioId === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
       {scenarioId === 'streaming_client' && <StreamingClientEditor onChange={onStreamClientChange} query={query} />}
       {scenarioId === 'live' && <GrafanaLiveEditor onChange={onUpdate} query={query} />}
+      {scenarioId === 'simulation' && <SimulationQueryEditor onChange={onUpdate} query={query} />}
       {scenarioId === 'raw_frame' && <RawFrameEditor onChange={onUpdate} query={query} />}
       {scenarioId === 'csv_file' && <CSVFileEditor onChange={onUpdate} query={query} />}
       {scenarioId === 'csv_content' && <CSVContentEditor onChange={onUpdate} query={query} />}

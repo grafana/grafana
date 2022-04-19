@@ -13,6 +13,7 @@ export interface TestDataQuery extends DataQuery {
   stringInput?: string;
   stream?: StreamingQuery;
   pulseWave?: PulseWaveQuery;
+  sim?: SimulationQuery;
   csvWave?: CSVWave[];
   labels?: string;
   lines?: number;
@@ -38,6 +39,15 @@ export interface StreamingQuery {
   noise: number; // wiggle around the signal for min/max
   bands?: number; // number of bands around the middle band
   url?: string; // the Fetch URL
+}
+
+export interface SimulationQuery {
+  key: {
+    type: string;
+    tick: number;
+    uid?: string;
+  };
+  config?: Record<string, any>;
 }
 
 export interface PulseWaveQuery {

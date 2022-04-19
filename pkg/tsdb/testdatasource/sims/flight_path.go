@@ -8,8 +8,8 @@ import (
 )
 
 type flightSim struct {
-	cfg  flightConfig
-	last flightDataPoint
+	key simulationKey
+	cfg flightConfig
 }
 
 var (
@@ -25,89 +25,107 @@ type flightDataPoint struct {
 }
 
 type flightConfig struct {
-	centerLat   float64
-	centerLng   float64
-	radius      float64
-	altitudeMin float64
-	altitudeMax float64
-	periodS     float64 // angular speed
+	CenterLat   float64 `json:"centerLat"`
+	CenterLng   float64 `json:"centerLng"`
+	Radius      float64 `json:"radius"`
+	AltitudeMin float64 `json:"altitudeMin"`
+	AltitudeMax float64 `json:"altitudeMax"`
+	Period      float64 `json:"period"` // angular speed (seconds)
 }
 
-func (s *flightSim) GetConfig() SimulationConfig {
-	return SimulationConfig{}
+func (s *flightSim) GetState() simulationState {
+	return simulationState{
+		Key:    s.key,
+		Config: s.cfg,
+	}
 }
 
 func (s *flightSim) SetConfig(vals map[string]interface{}) error {
-	return nil
+	return updateConfigObjectFromJSON(s.cfg, vals)
 }
 
-func (s *flightSim) GetValues(time time.Time) *data.Frame {
-	return nil
+func (s *flightSim) NewFrame(size int) *data.Frame {
+	frame := data.NewFrameOfFieldTypes("", size,
+		data.FieldTypeTime,    // time
+		data.FieldTypeFloat64, // lat
+		data.FieldTypeFloat64, // lng
+		data.FieldTypeFloat64, // heading
+		data.FieldTypeFloat64, // altitude
+	)
+	frame.Fields[0].Name = "time"
+	frame.Fields[1].Name = "lat"
+	frame.Fields[2].Name = "lng"
+	frame.Fields[3].Name = "heading"
+	frame.Fields[4].Name = "altitude"
+	return frame
 }
 
-func newFlightConfig() *flightConfig {
-	return &flightConfig{
-		centerLat:   37.83, // San francisco
-		centerLng:   -122.42487,
-		radius:      0.01, // raw gps degrees
-		altitudeMin: 350,
-		altitudeMax: 400,
-		periodS:     10, //model.Get("period").MustFloat64(10),
+func (s *flightSim) GetValues(t time.Time) map[string]interface{} {
+	p := s.cfg.getNextPoint(t)
+
+	return map[string]interface{}{
+		"time":     p.time,
+		"lat":      p.lat,
+		"lng":      p.lng,
+		"heading":  p.heading,
+		"altitude": p.altitude,
 	}
 }
 
-type flightFields struct {
-	time     *data.Field
-	lat      *data.Field
-	lng      *data.Field
-	heading  *data.Field
-	altitude *data.Field
-
-	frame *data.Frame
+func (s *flightSim) Close() error {
+	return nil
 }
 
-func (f *flightConfig) initFields() *flightFields {
-	ff := &flightFields{
-		time:     data.NewFieldFromFieldType(data.FieldTypeTime, 0),
-		lat:      data.NewFieldFromFieldType(data.FieldTypeFloat64, 0),
-		lng:      data.NewFieldFromFieldType(data.FieldTypeFloat64, 0),
-		heading:  data.NewFieldFromFieldType(data.FieldTypeFloat64, 0),
-		altitude: data.NewFieldFromFieldType(data.FieldTypeFloat64, 0),
+func newFlightSimInfo() simulationInfo {
+	sf := flightConfig{
+		CenterLat:   37.83, // San francisco
+		CenterLng:   -122.42487,
+		Radius:      0.01, // raw gps degrees
+		AltitudeMin: 350,
+		AltitudeMax: 400,
+		Period:      10, //model.Get("period").MustFloat64(10),
 	}
-	ff.time.Name = "time"
-	ff.lat.Name = "lat"
-	ff.lng.Name = "lng"
-	ff.heading.Name = "heading"
-	ff.altitude.Name = "altitude"
 
-	ff.frame = data.NewFrame("", ff.time, ff.lat, ff.lng, ff.heading, ff.altitude)
-	return ff
-}
+	df := data.NewFrame("")
+	df.Fields = append(df.Fields, data.NewField("centerLat", nil, []float64{sf.CenterLat}))
+	df.Fields = append(df.Fields, data.NewField("centerLng", nil, []float64{sf.CenterLng}))
+	df.Fields = append(df.Fields, data.NewField("radius", nil, []float64{sf.Radius}))
+	df.Fields = append(df.Fields, data.NewField("altitudeMin", nil, []float64{sf.AltitudeMin}))
+	df.Fields = append(df.Fields, data.NewField("altitudeMax", nil, []float64{sf.AltitudeMax}))
 
-func (f *flightFields) append(v flightDataPoint) {
-	f.frame.AppendRow(v.time, v.lat, v.lng, v.heading, v.altitude)
-}
+	f := data.NewField("period", nil, []float64{sf.Period})
+	f.Config = &data.FieldConfig{Unit: "s"} // seconds
+	df.Fields = append(df.Fields, f)
 
-func (f *flightFields) set(idx int, v flightDataPoint) {
-	f.time.Set(idx, v.time)
-	f.lat.Set(idx, v.lat)
-	f.lng.Set(idx, v.lng)
-	f.heading.Set(idx, v.heading)
-	f.altitude.Set(idx, v.altitude)
+	return simulationInfo{
+		Type:        "flight",
+		Name:        "Flight",
+		Description: "simple circling airplain",
+		SetupFields: df,
+		OnlyForward: false,
+		create: func(cfg simulationState) (Simulation, error) {
+			s := &flightSim{
+				key: cfg.Key,
+				cfg: sf, // default value
+			}
+			err := updateConfigObjectFromJSON(&s.cfg, cfg.Config) // override any fields
+			return s, err
+		},
+	}
 }
 
 func (f *flightConfig) getNextPoint(t time.Time) flightDataPoint {
-	periodNS := int64(f.periodS * float64(time.Second))
+	periodNS := int64(f.Period * float64(time.Second))
 	ms := t.UnixNano() % periodNS
 	per := float64(ms) / float64(periodNS)
 	rad := per * 2.0 * math.Pi // 0 >> 2Pi
-	delta := f.altitudeMax - f.altitudeMin
+	delta := f.AltitudeMax - f.AltitudeMin
 
 	return flightDataPoint{
 		time:     t,
-		lat:      f.centerLat + math.Sin(rad)*f.radius,
-		lng:      f.centerLng + math.Cos(rad)*f.radius,
+		lat:      f.CenterLat + math.Sin(rad)*f.Radius,
+		lng:      f.CenterLng + math.Cos(rad)*f.Radius,
 		heading:  (rad * 180) / math.Pi,         // (math.Atanh(rad) * 180.0) / math.Pi, // in degrees
-		altitude: f.altitudeMin + (delta * per), // clif
+		altitude: f.AltitudeMin + (delta * per), // clif
 	}
 }
