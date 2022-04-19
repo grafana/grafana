@@ -60,7 +60,7 @@ export function LokiQueryBuilderContainer(props: Props) {
         onChange={onVisQueryChange}
         onRunQuery={onRunQuery}
       />
-      <QueryPreview query={query.expr} />
+      {query.rawQuery && <QueryPreview query={query.expr} />}
     </>
   );
 }
