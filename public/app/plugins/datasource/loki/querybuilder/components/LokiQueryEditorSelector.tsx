@@ -1,10 +1,9 @@
-import { css } from '@emotion/css';
-import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
-import { Button, useStyles2, ConfirmModal } from '@grafana/ui';
+import { Button, ConfirmModal } from '@grafana/ui';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
-import React, { useCallback, useState } from 'react';
+import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { LokiQueryEditorProps } from '../../components/types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { getQueryWithDefaults } from '../state';
@@ -13,12 +12,15 @@ import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplained';
 import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
 import { LokiQueryCodeEditor } from './LokiQueryCodeEditor';
 import { buildVisualQueryFromString } from '../parsing';
+import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
+import { LokiQuery } from '../../types';
 
 export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) => {
   const { onChange, onRunQuery, data } = props;
-  const styles = useStyles2(getStyles);
-  const query = getQueryWithDefaults(props.query);
   const [parseModalOpen, setParseModalOpen] = useState(false);
+  const [dataIsStale, setDataIsStale] = useState(false);
+
+  const query = getQueryWithDefaults(props.query);
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
@@ -36,6 +38,20 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
     [onChange, query]
   );
 
+  useEffect(() => {
+    setDataIsStale(false);
+  }, [data]);
+
+  const onChangeInternal = (query: LokiQuery) => {
+    setDataIsStale(true);
+    onChange(query);
+  };
+
+  const onQueryPreviewChange = (event: SyntheticEvent<HTMLInputElement>) => {
+    const isEnabled = event.currentTarget.checked;
+    onChange({ ...query, rawQuery: isEnabled });
+  };
+
   // If no expr (ie new query) then default to builder
   const editorMode = query.editorMode ?? (query.expr ? QueryEditorMode.Code : QueryEditorMode.Builder);
   return (
@@ -52,18 +68,6 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
         onDismiss={() => setParseModalOpen(false)}
       />
       <EditorHeader>
-        <FlexItem grow={1} />
-        <Button
-          className={styles.runQuery}
-          variant="secondary"
-          size="sm"
-          fill="outline"
-          onClick={onRunQuery}
-          icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
-          disabled={data?.state === LoadingState.Loading}
-        >
-          Run query
-        </Button>
         <InlineSelect
           value={null}
           placeholder="Query patterns"
@@ -78,6 +82,17 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
           }}
           options={lokiQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
         />
+        <QueryHeaderSwitch label="Raw query" value={query.rawQuery} onChange={onQueryPreviewChange} />
+        <FlexItem grow={1} />
+        <Button
+          variant={dataIsStale ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={onRunQuery}
+          icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
+          disabled={data?.state === LoadingState.Loading}
+        >
+          Run query
+        </Button>
         <QueryEditorModeToggle mode={editorMode!} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
@@ -87,7 +102,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
           <LokiQueryBuilderContainer
             datasource={props.datasource}
             query={query}
-            onChange={onChange}
+            onChange={onChangeInternal}
             onRunQuery={props.onRunQuery}
           />
         )}
@@ -101,15 +116,3 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
 });
 
 LokiQueryEditorSelector.displayName = 'LokiQueryEditorSelector';
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    runQuery: css({
-      color: theme.colors.text.secondary,
-    }),
-    switchLabel: css({
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
-    }),
-  };
-};

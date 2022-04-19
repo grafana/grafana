@@ -82,29 +82,29 @@ describe('LokiQueryEditorSelector', () => {
     });
   });
 
-  // it('Can enable preview', async () => {
-  //   const { onChange } = renderWithMode(QueryEditorMode.Builder);
-  //   expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
+  it('Can enable raw query', async () => {
+    const { onChange } = renderWithMode(QueryEditorMode.Builder);
+    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
 
-  //   screen.getByLabelText('Preview').click();
+    screen.getByLabelText('Raw query').click();
 
-  //   expect(onChange).toBeCalledWith({
-  //     refId: 'A',
-  //     expr: defaultQuery.expr,
-  //     range: true,
-  //     editorMode: QueryEditorMode.Builder,
-  //     editorPreview: true,
-  //   });
-  // });
+    expect(onChange).toBeCalledWith({
+      refId: 'A',
+      expr: defaultQuery.expr,
+      queryType: 'range',
+      editorMode: QueryEditorMode.Builder,
+      rawQuery: true,
+    });
+  });
 
-  // it('Should show preview', async () => {
-  //   renderWithProps({
-  //     editorPreview: true,
-  //     editorMode: QueryEditorMode.Builder,
-  //     expr: 'my_metric',
-  //   });
-  //   expect(screen.getByLabelText('selector').textContent).toBe('my_metric');
-  // });
+  it('Should show raw query', async () => {
+    renderWithProps({
+      rawQuery: true,
+      editorMode: QueryEditorMode.Builder,
+      expr: '{job="grafana"}',
+    });
+    expect(screen.getByLabelText('selector').textContent).toBe('{job="grafana"}');
+  });
 
   it('changes to code mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Builder);
