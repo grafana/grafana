@@ -177,7 +177,7 @@ export class TeamPages extends PureComponent<Props, State> {
         } else if (config.featureToggles.featureHighlights) {
           return (
             <>
-              <UpgradeBox featureName={'team sync'} />
+              <UpgradeBox featureName={'team sync'} featureId={'team-sync'} />
               <TeamSyncUpgradeContent />
             </>
           );

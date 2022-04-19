@@ -63,7 +63,8 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   };
 
   if (highlightTrial()) {
-    dsPermissions.tabSuffix = () => ProBadge({ experimentId: 'feature-highlights-data-source-permissions-badge' });
+    dsPermissions.tabSuffix = () =>
+      ProBadge({ experimentId: 'feature-highlights-data-source-permissions-badge', eventVariant: 'trial' });
   }
 
   if (featureEnabled('dspermissions')) {
@@ -87,7 +88,8 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   };
 
   if (highlightTrial()) {
-    analytics.tabSuffix = () => ProBadge({ experimentId: 'feature-highlights-data-source-insights-badge' });
+    analytics.tabSuffix = () =>
+      ProBadge({ experimentId: 'feature-highlights-data-source-insights-badge', eventVariant: 'trial' });
   }
 
   if (featureEnabled('analytics')) {
@@ -110,7 +112,8 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   };
 
   if (highlightTrial()) {
-    caching.tabSuffix = () => ProBadge({ experimentId: 'feature-highlights-query-caching-badge' });
+    caching.tabSuffix = () =>
+      ProBadge({ experimentId: 'feature-highlights-query-caching-badge', eventVariant: 'trial' });
   }
 
   if (featureEnabled('caching')) {

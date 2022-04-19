@@ -64,7 +64,7 @@ export function buildNavModel(team: Team): NavModelItem {
 
   if (highlightTrial()) {
     teamGroupSync.tabSuffix = () =>
-      ProBadge({ experimentId: isLoadingTeam ? '' : 'feature-highlights-team-sync-badge' });
+      ProBadge({ experimentId: isLoadingTeam ? '' : 'feature-highlights-team-sync-badge', eventVariant: 'trial' });
   }
 
   // With both Legacy and FGAC the tab is protected being featureEnabled

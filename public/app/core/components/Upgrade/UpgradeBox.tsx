@@ -1,7 +1,8 @@
-import React, { HTMLAttributes } from 'react';
+import React, { HTMLAttributes, useEffect } from 'react';
 import { css, cx } from '@emotion/css';
 import { Button, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportExperimentView } from '@grafana/runtime/src';
 
 type ComponentSize = 'sm' | 'md';
 
@@ -9,10 +10,25 @@ export interface Props extends HTMLAttributes<HTMLOrSVGElement> {
   featureName: string;
   size?: ComponentSize;
   text?: string;
+  eventVariant?: string;
+  featureId: string;
 }
 
-export const UpgradeBox = ({ featureName, className, children, text, size = 'md', ...htmlProps }: Props) => {
+export const UpgradeBox = ({
+  featureName,
+  className,
+  children,
+  text,
+  featureId,
+  eventVariant = '',
+  size = 'md',
+  ...htmlProps
+}: Props) => {
   const styles = useStyles2((theme) => getUpgradeBoxStyles(theme, size));
+
+  useEffect(() => {
+    reportExperimentView(`feature-highlights-${featureId}`, 'test', eventVariant);
+  }, [eventVariant, featureId]);
 
   return (
     <div className={cx(styles.box, className)} {...htmlProps}>
