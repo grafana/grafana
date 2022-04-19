@@ -6,14 +6,7 @@ import { cacheStore } from 'react-inlinesvg';
 export let cacheInitialized = false;
 export let iconRoot = 'public/img/icons';
 
-function cacheItem(baseContent: string, path: string) {
-  let content = baseContent;
-
-  if (content?.startsWith('data:image')) {
-    // Transform rollup compiled version into raw inline svg
-    content = decodeURIComponent(content.replace('data:image/svg+xml,', ''));
-  }
-
+function cacheItem(content: string, path: string) {
   cacheStore[iconRoot + path] = { content, status: 'loaded', queue: [] };
 }
 
