@@ -3,7 +3,7 @@ import { Labels } from '@grafana/data';
 import { parseMatcher } from './alertmanager';
 import { uniqBy } from 'lodash';
 import { MatcherFieldValue } from '../types/silence-form';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { Alert } from 'app/types/unified-alerting';
 
 // Parses a list of entries like like "['foo=bar', 'baz=~bad*']" into SilenceMatcher[]
 export function parseQueryParamMatchers(matcherPairs: string[]): Matcher[] {
@@ -27,16 +27,19 @@ export const getMatcherQueryParams = (labels: Labels) => {
   return matcherUrlParams;
 };
 
-interface MatchedRule {
+interface MatchedInstance {
   id: string;
   data: {
-    matchedRule: CombinedRule;
+    matchedInstance: Alert;
   };
 }
 
-export const findAlertRulesWithMatchers = (rules: CombinedRule[], matchers: MatcherFieldValue[]): MatchedRule[] => {
-  const hasMatcher = (rule: CombinedRule, matcher: MatcherFieldValue) => {
-    return Object.entries(rule.labels).some(([key, value]) => {
+export const findAlertInstancesWithMatchers = (
+  instances: Alert[],
+  matchers: MatcherFieldValue[]
+): MatchedInstance[] => {
+  const hasMatcher = (instance: Alert, matcher: MatcherFieldValue) => {
+    return Object.entries(instance.labels).some(([key, value]) => {
       if (!matcher.name || !matcher.value) {
         return false;
       }
@@ -56,13 +59,13 @@ export const findAlertRulesWithMatchers = (rules: CombinedRule[], matchers: Matc
     });
   };
 
-  const filteredRules = rules.filter((rule) => {
-    return matchers.every((matcher) => hasMatcher(rule, matcher));
+  const filteredInstances = instances.filter((instance) => {
+    return matchers.every((matcher) => hasMatcher(instance, matcher));
   });
-  const mappedRules = filteredRules.map((rule) => ({
-    id: `${rule.namespace}-${rule.name}`,
-    data: { matchedRule: rule },
+  const mappedInstances = filteredInstances.map((instance) => ({
+    id: `${instance.activeAt}-${instance.value}`,
+    data: { matchedInstance: instance },
   }));
 
-  return mappedRules;
+  return mappedInstances;
 };
