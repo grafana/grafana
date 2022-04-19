@@ -56,6 +56,17 @@ func setFrameRow(frame *data.Frame, idx int, values map[string]interface{}) {
 	}
 }
 
+func appendFrameRow(frame *data.Frame, values map[string]interface{}) {
+	for _, field := range frame.Fields {
+		v, ok := values[field.Name]
+		if ok {
+			field.Append(v)
+		} else {
+			field.Extend(1) // fill with nullable value
+		}
+	}
+}
+
 func getBodyFromRequest(req *http.Request) (map[string]interface{}, error) {
 	result := make(map[string]interface{}, 10)
 

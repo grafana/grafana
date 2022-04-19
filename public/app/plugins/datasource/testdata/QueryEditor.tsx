@@ -58,7 +58,12 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       });
     }
 
-    return datasource.getScenarios();
+    const vals = await datasource.getScenarios();
+    const hideAlias = ['simulation'];
+    return vals.map((v) => ({
+      ...v,
+      hideAliasField: hideAlias.includes(v.id),
+    }));
   }, []);
 
   const onUpdate = (query: TestDataQuery) => {
@@ -198,18 +203,20 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             />
           </InlineField>
         )}
-        <InlineField label="Alias" labelWidth={14}>
-          <Input
-            width={32}
-            id={`alias-${query.refId}`}
-            type="text"
-            placeholder="optional"
-            pattern='[^<>&\\"]+'
-            name="alias"
-            value={query.alias}
-            onChange={onInputChange}
-          />
-        </InlineField>
+        {Boolean(!currentScenario?.hideAliasField) && (
+          <InlineField label="Alias" labelWidth={14}>
+            <Input
+              width={32}
+              id={`alias-${query.refId}`}
+              type="text"
+              placeholder="optional"
+              pattern='[^<>&\\"]+'
+              name="alias"
+              value={query.alias}
+              onChange={onInputChange}
+            />
+          </InlineField>
+        )}
         {showLabels && (
           <InlineField
             label="Labels"

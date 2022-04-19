@@ -1,6 +1,7 @@
 package sims
 
 import (
+	"math"
 	"math/rand"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 type waveformSim struct {
 	key        simulationKey
 	cfg        waveformConfig
-	calculator func(t time.Time, cfg *waveformConfig) float64
+	calculator func(x float64, cfg *waveformConfig) float64
 }
 
 var (
@@ -47,11 +48,18 @@ func (s *waveformSim) NewFrame(size int) *data.Frame {
 }
 
 func (s *waveformSim) GetValues(t time.Time) map[string]interface{} {
-	v := s.calculator(t, &s.cfg)
+	x := 0.0
+	if s.cfg.Period > 0 {
+		periodMS := s.cfg.Period * 1000
+		ms := t.UnixMilli() % int64(periodMS)
+		x = ((float64(ms) / periodMS) * 2 * math.Pi) // 0 >> 2Pi
+	}
+
+	v := s.calculator(x, &s.cfg)
 
 	noise := s.cfg.Noise
 	if noise > 0 {
-		gen := rand.New(rand.NewSource(t.UnixMilli()))
+		gen := rand.New(rand.NewSource(t.UnixMilli())) // consistent for the value
 		v += (gen.Float64() * 2.0 * noise) - noise
 	}
 
@@ -67,9 +75,10 @@ func (s *waveformSim) Close() error {
 
 func newSinewaveInfo() simulationInfo {
 	sf := waveformConfig{
-		Offset: 0,
-		Phase:  0,
-		Period: 10, //model.Get("period").MustFloat64(10),
+		Period:    10,
+		Amplitude: 1,
+		Offset:    0,
+		Phase:     0,
 	}
 
 	df := data.NewFrame("")
@@ -101,6 +110,6 @@ func newSinewaveInfo() simulationInfo {
 	}
 }
 
-func sinewaveCalculator(t time.Time, cfg *waveformConfig) float64 {
-	return 0
+func sinewaveCalculator(x float64, cfg *waveformConfig) float64 {
+	return (math.Sin(x) * cfg.Amplitude) + cfg.Offset
 }

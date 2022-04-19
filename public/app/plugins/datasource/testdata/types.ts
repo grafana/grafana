@@ -5,6 +5,7 @@ export interface Scenario {
   name: string;
   stringInput: string;
   description?: string;
+  hideAliasField?: boolean;
 }
 
 export interface TestDataQuery extends DataQuery {
@@ -48,6 +49,8 @@ export interface SimulationQuery {
     uid?: string;
   };
   config?: Record<string, any>;
+  stream?: boolean;
+  last?: boolean;
 }
 
 export interface PulseWaveQuery {

@@ -110,21 +110,9 @@ func (s *SimulationEngine) Lookup(info simulationState) (Simulation, error) {
 	return v, err
 }
 
-func (s *SimulationEngine) Kill(info simulationState) {
-	key := info.Key.String()
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	v, ok := s.running[key]
-	if ok {
-		_ = v.Close()
-
-		delete(s.running, key)
-	}
-}
-
 type simulationQuery struct {
 	simulationState
+	Last   bool `json:"last"`
 	Stream bool `json:"stream"`
 }
 
@@ -136,13 +124,17 @@ func (s *SimulationEngine) QueryData(ctx context.Context, req *backend.QueryData
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		sq := &dumbQueryQrapper{}
-		err := json.Unmarshal(q.JSON, sq)
+		wrap := &dumbQueryQrapper{}
+		err := json.Unmarshal(q.JSON, wrap)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse query json: %v", err)
 		}
+		sq := wrap.Sim
+		if sq.Key.TickHZ == 0 {
+			sq.Key.TickHZ = 10
+		}
 
-		sim, err := s.Lookup(sq.Sim.simulationState)
+		sim, err := s.Lookup(sq.simulationState)
 		if err != nil {
 			return nil, fmt.Errorf("error fetching simulation: %v", err)
 		}
@@ -151,35 +143,29 @@ func (s *SimulationEngine) QueryData(ctx context.Context, req *backend.QueryData
 			return nil, fmt.Errorf("invalid simulation: %v", sq)
 		}
 
-		timeWalkerMs := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
-		to := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
-		stepMillis := q.Interval.Milliseconds()
-
 		frame := sim.NewFrame(0)
+		if sq.Last {
+			v := sim.GetValues(q.TimeRange.To)
+			appendFrameRow(frame, v)
+		} else {
+			timeWalkerMs := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
+			to := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
+			stepMillis := q.Interval.Milliseconds()
 
-		maxPoints := q.MaxDataPoints * 2
-		for i := int64(0); i < maxPoints && timeWalkerMs < to; i++ {
-			t := time.UnixMilli(timeWalkerMs).UTC()
-
-			vals := sim.GetValues(t)
-			for _, f := range frame.Fields {
-				v, ok := vals[f.Name]
-				if ok {
-					f.Append(v)
-				} else {
-					f.Extend(1) // fill with nullable value
-				}
+			maxPoints := q.MaxDataPoints * 2
+			for i := int64(0); i < maxPoints && timeWalkerMs < to; i++ {
+				t := time.UnixMilli(timeWalkerMs).UTC()
+				appendFrameRow(frame, sim.GetValues(t))
+				timeWalkerMs += stepMillis
 			}
-
-			timeWalkerMs += stepMillis
 		}
 
-		// // When close to now, link to the live streaming channel
-		// if q.TimeRange.To.Add(time.Second * 2).After(time.Now()) {
-		// 	f.frame.Meta = &data.FrameMeta{
-		// 		Channel: "plugin/testdata/flight-5hz-stream",
-		// 	}
-		// }
+		if sq.Stream && req.PluginContext.DataSourceInstanceSettings != nil {
+			uid := req.PluginContext.DataSourceInstanceSettings.UID
+			frame.Meta = &data.FrameMeta{
+				Channel: fmt.Sprintf("ds/%s/sim/%s", uid, sim.GetState().Key.String()),
+			}
+		}
 
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, frame)
@@ -289,8 +275,8 @@ func (s *SimulationEngine) RunStream(ctx context.Context, req *backend.RunStream
 		return err
 	}
 
-	hz := sim.GetState().Key.TickHZ
-	ticker := time.NewTicker(time.Duration(hz * float64(time.Second)))
+	frequency := 1.0 / sim.GetState().Key.TickHZ
+	ticker := time.NewTicker(time.Duration(frequency * float64(time.Second)))
 	defer ticker.Stop()
 
 	mode := data.IncludeDataOnly
