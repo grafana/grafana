@@ -594,6 +594,7 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 }
 
 func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
+	// TODO: probably here to include a accesscontrol check for listing only users you are allowed to see.
 	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
 		query.Result = models.SearchUserQueryResult{
 			Users: make([]*models.UserSearchHitDTO, 0),
