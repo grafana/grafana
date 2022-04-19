@@ -6,6 +6,9 @@ import { TimelineChart } from './TimelineChart';
 import { prepareTimelineFields, prepareTimelineLegendItems } from './utils';
 import { StateTimelineTooltip } from './StateTimelineTooltip';
 import { getLastStreamingDataFramePacket } from 'app/features/live/data/StreamingDataFrame';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
+import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
+import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
 
 interface TimelinePanelProps extends PanelProps<TimelineOptions> {}
 
@@ -19,6 +22,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   options,
   width,
   height,
+  replaceVariables,
   onChangeTimeRange,
 }) => {
   const theme = useTheme2();
@@ -114,6 +118,39 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
               timeZone={timeZone}
               renderTooltip={renderCustomTooltip}
             />
+            {data.annotations && (
+              <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
+            )}
+
+            <AnnotationEditorPlugin data={alignedFrame} timeZone={timeZone} config={config}>
+              {({ startAnnotating }) => {
+                return (
+                  <ContextMenuPlugin
+                    data={alignedFrame}
+                    config={config}
+                    timeZone={timeZone}
+                    replaceVariables={replaceVariables}
+                    defaultItems={[
+                      {
+                        items: [
+                          {
+                            label: 'Add annotation',
+                            ariaLabel: 'Add annotation',
+                            icon: 'comment-alt',
+                            onClick: (e, p) => {
+                              if (!p) {
+                                return;
+                              }
+                              startAnnotating({ coords: p.coords });
+                            },
+                          },
+                        ],
+                      },
+                    ]}
+                  />
+                );
+              }}
+            </AnnotationEditorPlugin>
           </>
         );
       }}
