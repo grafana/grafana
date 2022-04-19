@@ -206,47 +206,45 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   }
 
   return (
-    <>
-      <DynamicTable
-        cols={cols}
-        isExpandable={true}
-        items={dynamicTableRoutes}
-        testIdGenerator={() => 'am-routes-row'}
-        onCollapse={collapseItem}
-        onExpand={expandItem}
-        isExpanded={(item) => expandedId === item.id}
-        renderExpandedContent={(item: RouteTableItemProps) =>
-          isAddMode || editMode ? (
-            <AmRoutesExpandedForm
-              onCancel={() => {
-                if (isAddMode) {
-                  onCancelAdd();
-                }
-                setEditMode(false);
-              }}
-              onSave={(data) => {
-                const newRoutes = updatedRoute(routes, data);
+    <DynamicTable
+      cols={cols}
+      isExpandable={true}
+      items={dynamicTableRoutes}
+      testIdGenerator={() => 'am-routes-row'}
+      onCollapse={collapseItem}
+      onExpand={expandItem}
+      isExpanded={(item) => expandedId === item.id}
+      renderExpandedContent={(item: RouteTableItemProps) =>
+        isAddMode || editMode ? (
+          <AmRoutesExpandedForm
+            onCancel={() => {
+              if (isAddMode) {
+                onCancelAdd();
+              }
+              setEditMode(false);
+            }}
+            onSave={(data) => {
+              const newRoutes = updatedRoute(routes, data);
 
-                setEditMode(false);
-                onChange(newRoutes);
-              }}
-              receivers={receivers}
-              routes={item.data}
-            />
-          ) : (
-            <AmRoutesExpandedRead
-              onChange={(data) => {
-                const newRoutes = updatedRoute(routes, data);
-                onChange(newRoutes);
-              }}
-              receivers={receivers}
-              routes={item.data}
-              readOnly={readOnly}
-              alertManagerSourceName={alertManagerSourceName}
-            />
-          )
-        }
-      />
-    </>
+              setEditMode(false);
+              onChange(newRoutes);
+            }}
+            receivers={receivers}
+            routes={item.data}
+          />
+        ) : (
+          <AmRoutesExpandedRead
+            onChange={(data) => {
+              const newRoutes = updatedRoute(routes, data);
+              onChange(newRoutes);
+            }}
+            receivers={receivers}
+            routes={item.data}
+            readOnly={readOnly}
+            alertManagerSourceName={alertManagerSourceName}
+          />
+        )
+      }
+    />
   );
 };
