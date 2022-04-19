@@ -206,7 +206,7 @@ describe('migration', () => {
           expect(query.namespace).toBe('AWS/RDS');
           expect(query.metricName).toBe('CPUUtilization');
           expect(query.dimensionKey).toBe('DBInstanceIdentifier');
-          expect(query.dimensionFilters).toBe('');
+          expect(query.dimensionFilters).toStrictEqual({});
         });
       });
       describe('and filter param is defined by user', () => {
@@ -219,9 +219,18 @@ describe('migration', () => {
           expect(query.namespace).toBe('AWS/RDS');
           expect(query.metricName).toBe('CPUUtilization');
           expect(query.dimensionKey).toBe('DBInstanceIdentifier');
-          expect(query.dimensionFilters).toBe('{"InstanceId":"$instance_id"}');
+          expect(query.dimensionFilters).toStrictEqual({ InstanceId: '$instance_id' });
         });
       });
+    });
+  });
+  describe('when resource_arns query is used', () => {
+    it('should parse the query', () => {
+      const query = migrateVariableQuery('resource_arns(us-east-1,rds:db,{"environment":["$environment"]})');
+      expect(query.queryType).toBe(VariableQueryType.ResourceArns);
+      expect(query.region).toBe('us-east-1');
+      expect(query.resourceType).toBe('rds:db');
+      expect(query.tags).toBe('{"environment":["$environment"]}');
     });
   });
 });
