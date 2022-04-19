@@ -6,6 +6,16 @@ import { locationUtil } from '@grafana/data';
 import { config, setLocationService } from '@grafana/runtime';
 import TestProvider from '../../../../test/helpers/TestProvider';
 
+// Need to mock createBrowserHistory here to avoid errors
+jest.mock('history', () => ({
+  ...jest.requireActual('history'),
+  createBrowserHistory: () => ({
+    listen: jest.fn(),
+    location: {},
+    createHref: jest.fn(),
+  }),
+}));
+
 import NavBarItem, { Props } from './NavBarItem';
 
 const onClickMock = jest.fn();
