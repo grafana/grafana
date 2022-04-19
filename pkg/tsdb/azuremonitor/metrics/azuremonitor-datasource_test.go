@@ -38,19 +38,22 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		azureMonitorVariedProperties map[string]interface{}
 		azureMonitorQueryTarget      string
 		expectedInterval             string
+		resourceURI                  string
 		queryInterval                time.Duration
 	}{
 		{
 			name: "Parse queries from frontend and build AzureMonitor API queries",
 			azureMonitorVariedProperties: map[string]interface{}{
-				"timeGrain": "PT1M",
-				"top":       "10",
+				"resourceURI": "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
+				"timeGrain":   "PT1M",
+				"top":         "10",
 			},
+			resourceURI:             "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
 			expectedInterval:        "PT1M",
 			azureMonitorQueryTarget: "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
 		},
 		{
-			name: "time grain set to auto",
+			name: "legacy query without resourceURI and time grain set to auto",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain": "auto",
 				"top":       "10",
@@ -60,7 +63,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			azureMonitorQueryTarget: "aggregation=Average&api-version=2018-01-01&interval=PT15M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
 		},
 		{
-			name: "time grain set to auto",
+			name: "legacy query without resourceURI and time grain set to auto",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":           "auto",
 				"allowedTimeGrainsMs": []int64{60000, 300000},
@@ -71,7 +74,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			azureMonitorQueryTarget: "aggregation=Average&api-version=2018-01-01&interval=PT5M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
 		},
 		{
-			name: "has a dimension filter",
+			name: "legacy query without resourceURI and has a dimension filter",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":       "PT1M",
 				"dimension":       "blob",
@@ -83,7 +86,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
 		},
 		{
-			name: "has a dimension filter and none Dimension",
+			name: "legacy query without resourceURI and has a dimension filter and none Dimension",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":       "PT1M",
 				"dimension":       "None",
@@ -95,7 +98,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			azureMonitorQueryTarget: "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
 		},
 		{
-			name: "has dimensionFilter*s* property with one dimension",
+			name: "legacy query without resourceURI and has dimensionFilter*s* property with one dimension",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
 				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: "*"}},
@@ -106,7 +109,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
 		},
 		{
-			name: "has dimensionFilter*s* property with two dimensions",
+			name: "legacy query without resourceURI and has dimensionFilter*s* property with two dimensions",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
 				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: "*"}, {Dimension: "tier", Operator: "eq", Filter: "*"}},
@@ -117,7 +120,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27+and+tier+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
 		},
 		{
-			name: "has a dimension filter without specifying a top",
+			name: "legacy query without resourceURI and has a dimension filter without specifying a top",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":       "PT1M",
 				"dimension":       "blob",
@@ -165,6 +168,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			azureMonitorQuery := &types.AzureMonitorQuery{
 				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
 				UrlComponents: map[string]string{
+					"resourceURI":      tt.resourceURI,
 					"metricDefinition": "Microsoft.Compute/virtualMachines",
 					"resourceGroup":    "grafanastaging",
 					"resourceName":     "grafana",
