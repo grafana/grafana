@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -230,9 +231,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 			response := sut.RouteGetAlertingConfig(rc)
 
-			body := &apimodels.GettableUserConfig{}
-			err := json.Unmarshal(response.Body(), body)
-			require.NoError(t, err)
+			body := asGettableUserConfig(t, response)
 			require.Equal(t, ngmodels.ProvenanceNone, body.AlertmanagerConfig.Route.Provenance)
 		})
 	})
@@ -241,14 +240,11 @@ func TestAlertmanagerConfig(t *testing.T) {
 		t.Run("route from GET config has expected provenance", func(t *testing.T) {
 			sut := createSut(t, nil)
 			rc := createRequestCtxInOrg(1)
-			adp := provenanceOrgAdapter{inner: &apimodels.Route{}, orgID: 1}
-			sut.mam.ProvStore.SetProvenance(context.Background(), adp, ngmodels.ProvenanceAPI)
+			setRouteProvenance(t, 1, sut.mam.ProvStore)
 
 			response := sut.RouteGetAlertingConfig(rc)
 
-			body := &apimodels.GettableUserConfig{}
-			err := json.Unmarshal(response.Body(), body)
-			require.NoError(t, err)
+			body := asGettableUserConfig(t, response)
 			require.Equal(t, ngmodels.ProvenanceAPI, body.AlertmanagerConfig.Route.Provenance)
 		})
 	})
@@ -515,6 +511,22 @@ func createRequestCtxInOrg(org int64) *models.ReqContext {
 			OrgId: org,
 		},
 	}
+}
+
+// setRouteProvenance marks an org's routing tree as provisioned.
+func setRouteProvenance(t *testing.T, org int64, ps provisioning.ProvisioningStore) {
+	t.Helper()
+	adp := provenanceOrgAdapter{inner: &apimodels.Route{}, orgID: org}
+	err := ps.SetProvenance(context.Background(), adp, ngmodels.ProvenanceAPI)
+	require.NoError(t, err)
+}
+
+func asGettableUserConfig(t *testing.T, r response.Response) *apimodels.GettableUserConfig {
+	t.Helper()
+	body := &apimodels.GettableUserConfig{}
+	err := json.Unmarshal(r.Body(), body)
+	require.NoError(t, err)
+	return body
 }
 
 // TODO: extract to shared location
