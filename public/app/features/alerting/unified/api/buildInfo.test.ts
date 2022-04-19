@@ -8,6 +8,7 @@ const fetch = jest.fn();
 
 jest.mock('./prometheus');
 jest.mock('./ruler');
+jest.mock('app/core/services/context_srv', () => {});
 jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({ fetch }),
 }));
