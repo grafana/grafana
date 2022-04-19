@@ -121,7 +121,7 @@ type SchedulerCfg struct {
 
 // NewScheduler returns a new schedule.
 func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url.URL, stateManager *state.Manager) *schedule {
-	ticker := alerting.NewTicker(cfg.C, cfg.BaseInterval, cfg.Metrics.Registerer)
+	ticker := alerting.NewTicker(cfg.C, cfg.BaseInterval)
 
 	sch := schedule{
 		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]*alertRuleInfo)},
@@ -769,7 +769,7 @@ type evaluation struct {
 func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
 	sch.clock = cfg.C
 	sch.baseInterval = cfg.BaseInterval
-	sch.ticker = alerting.NewTicker(cfg.C, cfg.BaseInterval, cfg.Metrics.Registerer)
+	sch.ticker = alerting.NewTicker(cfg.C, cfg.BaseInterval)
 	sch.evalAppliedFunc = cfg.EvalAppliedFunc
 	sch.stopAppliedFunc = cfg.StopAppliedFunc
 }
