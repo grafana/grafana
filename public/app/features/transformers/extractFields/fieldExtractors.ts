@@ -40,6 +40,7 @@ const extLabels: FieldExtractor = {
     const placeholderPrefix = '$val';
     let quoteCounter = 0;
     v.trim()
+      .replace(/[\r\n]/g, '')
       .replace(quotedValues, (matched) => {
         const placeholder = `${placeholderPrefix}${quoteCounter}$`;
         quotedValuesMap.set(placeholder, matched);
