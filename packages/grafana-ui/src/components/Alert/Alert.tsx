@@ -20,11 +20,9 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;
   topSpacing?: number;
-  sideClass?: string;
-  side?: ReactNode;
 }
 
-function getIconFromSeverity(severity: AlertVariant): string {
+export function getIconFromSeverity(severity: AlertVariant): string {
   switch (severity) {
     case 'error':
     case 'warning':
@@ -48,8 +46,6 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
       elevated,
       bottomSpacing,
       topSpacing,
-      side,
-      sideClass,
       className,
       severity = 'error',
       ...restProps
@@ -75,9 +71,8 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
         </div>
         {/* If onRemove is specified, giving preference to onRemove */}
         {onRemove && !buttonContent && (
-          <div className={cx(styles.close, sideClass)}>
+          <div className={styles.close}>
             <IconButton aria-label="Close alert" name="times" onClick={onRemove} size="lg" type="button" />
-            {side}
           </div>
         )}
         {onRemove && buttonContent && (

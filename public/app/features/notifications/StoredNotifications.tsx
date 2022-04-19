@@ -1,9 +1,8 @@
 import React, { useRef } from 'react';
 import { useEffectOnce } from 'react-use';
-import { formatDistanceToNow } from 'date-fns';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Icon, useStyles2 } from '@grafana/ui';
+import { Button, Icon, useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types';
 import {
   clearAllNotifications,
@@ -12,6 +11,7 @@ import {
   selectWarningsAndErrors,
   selectLastReadTimestamp,
 } from 'app/core/reducers/appNotification';
+import { StoredNotificationItem } from 'app/core/components/AppNotifications/StoredNotificationItem';
 
 export function StoredNotifications() {
   const dispatch = useDispatch();
@@ -51,21 +51,15 @@ export function StoredNotifications() {
             key={notif.id}
             className={cx(styles.listItem, { [styles.newItem]: notif.timestamp > lastReadTimestamp.current })}
           >
-            <Alert
+            <StoredNotificationItem
               severity={notif.severity}
               title={notif.title}
-              bottomSpacing={0}
               onRemove={() => onClearNotification(notif.id)}
-              sideClass={styles.side}
-              side={
-                <span className={styles.smallText}>{formatDistanceToNow(notif.timestamp, { addSuffix: true })}</span>
-              }
+              timestamp={notif.timestamp}
+              traceId={notif.traceId}
             >
-              <div className={styles.list}>
-                <span>{notif.text}</span>
-                {notif.traceId && <span className={styles.smallText}>Trace ID: {notif.traceId}</span>}
-              </div>
-            </Alert>
+              <span>{notif.text}</span>
+            </StoredNotificationItem>
           </li>
         ))}
       </ul>
@@ -94,7 +88,6 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
     }),
     listItem: css({
-      display: 'flex',
       listStyle: 'none',
       gap: theme.spacing(1),
       alignItems: 'center',
