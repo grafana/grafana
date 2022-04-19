@@ -1,24 +1,24 @@
+import { css } from '@emotion/css';
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { useStyles2, LinkButton, withErrorBoundary, Button } from '@grafana/ui';
+import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
-import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { useFilteredRules } from './hooks/useFilteredRules';
-import { fetchAllPromAndRulerRulesAction } from './state/actions';
-import { getAllRulesSourceNames } from './utils/datasource';
-import { css } from '@emotion/css';
-import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
-import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
-import RulesFilter from './components/rules/RulesFilter';
+import { RuleListErrors } from './components/rules/RuleListErrors';
 import { RuleListGroupView } from './components/rules/RuleListGroupView';
 import { RuleListStateView } from './components/rules/RuleListStateView';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { useLocation } from 'react-router-dom';
-import { contextSrv } from 'app/core/services/context_srv';
+import RulesFilter from './components/rules/RulesFilter';
 import { RuleStats } from './components/rules/RuleStats';
-import { RuleListErrors } from './components/rules/RuleListErrors';
+import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
+import { useFilteredRules } from './hooks/useFilteredRules';
+import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
+import { fetchAllPromAndRulerRulesAction } from './state/actions';
+import { useRulesAccess } from './utils/accessControlHooks';
+import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
+import { getAllRulesSourceNames } from './utils/datasource';
 import { getFiltersFromUrlParams } from './utils/misc';
 
 const VIEWS = {
@@ -37,6 +37,8 @@ const RuleList = withErrorBoundary(
     const [queryParams] = useQueryParams();
     const filters = getFiltersFromUrlParams(queryParams);
     const filtersActive = Object.values(filters).some((filter) => filter !== undefined);
+
+    const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
 
     const view = VIEWS[queryParams['view'] as keyof typeof VIEWS]
       ? (queryParams['view'] as keyof typeof VIEWS)
@@ -93,7 +95,7 @@ const RuleList = withErrorBoundary(
                 )}
                 <RuleStats showInactive={true} showRecording={true} namespaces={filteredNamespaces} />
               </div>
-              {(contextSrv.hasEditPermissionInFolders || contextSrv.isEditor) && (
+              {(canCreateGrafanaRules || canCreateCloudRules) && (
                 <LinkButton
                   href={urlUtil.renderUrl('alerting/new', { returnTo: location.pathname + location.search })}
                   icon="plus"
