@@ -147,6 +147,10 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const overlayTransition = {
     ...commonTransition,
     transitionProperty: 'background-color, box-shadow, width',
+    // this is needed to prevent a horizontal scrollbar during the animation on firefox
+    '.scrollbar-view': {
+      overflow: 'hidden !important',
+    },
   };
 
   const backdropTransition = {

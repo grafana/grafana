@@ -3,6 +3,7 @@ package queryhistory
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -264,4 +265,62 @@ func (s QueryHistoryService) unstarQuery(ctx context.Context, user *models.Signe
 	}
 
 	return dto, nil
+}
+
+func (s QueryHistoryService) migrateQueries(ctx context.Context, user *models.SignedInUser, cmd MigrateQueriesToQueryHistoryCommand) (int, int, error) {
+	queryHistories := make([]*QueryHistory, 0, len(cmd.Queries))
+	starredQueries := make([]*QueryHistoryStar, 0)
+
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+		for _, query := range cmd.Queries {
+			uid := util.GenerateShortUID()
+			queryHistories = append(queryHistories, &QueryHistory{
+				OrgID:         user.OrgId,
+				UID:           uid,
+				Queries:       query.Queries,
+				DatasourceUID: query.DatasourceUID,
+				CreatedBy:     user.UserId,
+				CreatedAt:     query.CreatedAt,
+				Comment:       query.Comment,
+			})
+
+			if query.Starred {
+				starredQueries = append(starredQueries, &QueryHistoryStar{
+					UserID:   user.UserId,
+					QueryUID: uid,
+				})
+			}
+		}
+
+		batchSize := 50
+		var err error
+		for i := 0; i < len(queryHistories); i += batchSize {
+			j := i + batchSize
+			if j > len(queryHistories) {
+				j = len(queryHistories)
+			}
+			_, err = session.InsertMulti(queryHistories[i:j])
+			if err != nil {
+				return err
+			}
+		}
+
+		for i := 0; i < len(starredQueries); i += batchSize {
+			j := i + batchSize
+			if j > len(starredQueries) {
+				j = len(starredQueries)
+			}
+			_, err = session.InsertMulti(starredQueries[i:j])
+			if err != nil {
+				return err
+			}
+		}
+		return err
+	})
+
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to migrate query history: %w", err)
+	}
+
+	return len(queryHistories), len(starredQueries), nil
 }
