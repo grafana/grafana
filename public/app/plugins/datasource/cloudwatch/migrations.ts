@@ -80,7 +80,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     region: '',
     metricName: '',
     dimensionKey: '',
-    dimensionFilters: '',
+    dimensionFilters: {},
     ec2Filters: '',
     instanceID: '',
     attributeName: '',
@@ -122,7 +122,14 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.namespace = dimensionValuesQuery[2];
     newQuery.metricName = dimensionValuesQuery[3];
     newQuery.dimensionKey = dimensionValuesQuery[4];
-    newQuery.dimensionFilters = dimensionValuesQuery[6] || '';
+    newQuery.dimensionFilters = {};
+    if (!!dimensionValuesQuery[6]) {
+      try {
+        newQuery.dimensionFilters = JSON.parse(dimensionValuesQuery[6]);
+      } catch {
+        throw new Error(`unable to migrate poorly formed filters: ${dimensionValuesQuery[6]}`);
+      }
+    }
     return newQuery;
   }
 
@@ -148,7 +155,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.queryType = VariableQueryType.ResourceArns;
     newQuery.region = resourceARNsQuery[1];
     newQuery.resourceType = resourceARNsQuery[2];
-    newQuery.tags = JSON.parse(resourceARNsQuery[3]) || '';
+    newQuery.tags = resourceARNsQuery[3] || '';
     return newQuery;
   }
 

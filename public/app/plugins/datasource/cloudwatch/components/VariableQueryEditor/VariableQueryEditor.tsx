@@ -7,6 +7,8 @@ import { useDimensionKeys, useMetrics, useNamespaces, useRegions } from '../../h
 import { CloudWatchJsonData, CloudWatchQuery, VariableQuery, VariableQueryType } from '../../types';
 import { migrateVariableQuery } from '../../migrations';
 import { VariableQueryField } from './VariableQueryField';
+import { Dimensions } from '..';
+import { InlineField } from '@grafana/ui';
 
 export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData, VariableQuery>;
 
@@ -25,11 +27,12 @@ const queryTypes: Array<{ value: string; label: string }> = [
 export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const parsedQuery = migrateVariableQuery(query);
 
-  const { region, namespace, metricName, dimensionKey } = parsedQuery;
+  const { region, namespace, metricName, dimensionKey, dimensionFilters } = parsedQuery;
   const [regions, regionIsLoading] = useRegions(datasource);
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, region, namespace);
   const dimensionKeys = useDimensionKeys(datasource, region, namespace, metricName);
+  const keysForDimensionFilter = useDimensionKeys(datasource, region, namespace, metricName, dimensionFilters ?? {});
 
   const onRegionChange = async (region: string) => {
     const validatedQuery = await sanitizeQuery({
@@ -48,7 +51,10 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   };
 
   const onQueryChange = (newQuery: VariableQuery) => {
-    onChange({ ...newQuery, refId: 'CloudWatchVariableQueryEditor-VariableQuery' });
+    onChange({
+      ...newQuery,
+      refId: 'CloudWatchVariableQueryEditor-VariableQuery',
+    });
   };
 
   // Reset dimensionValue parameters if namespace or region change
@@ -58,7 +64,6 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
       await datasource.getMetrics(namespace, region).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((metric) => metric.value === metricName)) {
           metricName = '';
-          dimensionFilters = '';
         }
       });
     }
@@ -66,7 +71,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
       await datasource.getDimensionKeys(namespace, region).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((key) => key.value === dimensionKey)) {
           dimensionKey = '';
-          dimensionFilters = '';
+          dimensionFilters = {};
         }
       });
     }
@@ -86,7 +91,6 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     VariableQueryType.DimensionKeys,
     VariableQueryType.DimensionValues,
   ].includes(parsedQuery.queryType);
-
   return (
     <>
       <VariableQueryField
@@ -94,6 +98,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
         options={queryTypes}
         onChange={(value: VariableQueryType) => onQueryChange({ ...parsedQuery, queryType: value })}
         label="Query Type"
+        inputId={`variable-query-type-${query.refId}`}
       />
       {hasRegionField && (
         <VariableQueryField
@@ -102,6 +107,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           onChange={(value: string) => onRegionChange(value)}
           label="Region"
           isLoading={regionIsLoading}
+          inputId={`variable-query-region-${query.refId}`}
         />
       )}
       {hasNamespaceField && (
@@ -110,6 +116,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           options={namespaces}
           onChange={(value: string) => onNamespaceChange(value)}
           label="Namespace"
+          inputId={`variable-query-namespace-${query.refId}`}
         />
       )}
       {parsedQuery.queryType === VariableQueryType.DimensionValues && (
@@ -119,20 +126,26 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             options={metrics}
             onChange={(value: string) => onQueryChange({ ...parsedQuery, metricName: value })}
             label="Metric"
+            inputId={`variable-query-metric-${query.refId}`}
           />
           <VariableQueryField
             value={dimensionKey || null}
             options={dimensionKeys}
             onChange={(value: string) => onQueryChange({ ...parsedQuery, dimensionKey: value })}
             label="Dimension Key"
+            inputId={`variable-query-dimension-key-${query.refId}`}
           />
-          <VariableTextField
-            value={query.dimensionFilters}
-            tooltip='A JSON object representing dimensions and the values to filter on. Ex. { "filter_name1": [ "filter_value1" ], "filter_name2": [ "*" ] }'
-            placeholder='{"key":["value"]}'
-            onBlur={(value: string) => onQueryChange({ ...parsedQuery, dimensionFilters: value })}
-            label="Filters"
-          />
+          <InlineField label="Dimensions" labelWidth={20} tooltip="Dimensions to filter the returned values on">
+            <Dimensions
+              query={{ ...parsedQuery, dimensions: parsedQuery.dimensionFilters }}
+              onChange={(dimensions) => {
+                onChange({ ...parsedQuery, dimensionFilters: dimensions });
+              }}
+              dimensionKeys={keysForDimensionFilter}
+              disableExpressions={true}
+              datasource={datasource}
+            />
+          </InlineField>
         </>
       )}
       {parsedQuery.queryType === VariableQueryType.EBSVolumeIDs && (
