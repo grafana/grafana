@@ -225,7 +225,7 @@ func (ss *SQLStore) GetDashboardTags(ctx context.Context, query *models.GetDashb
 
 func (ss *SQLStore) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
 	return ss.WithDbSession(ctx, func(dbSession *DBSession) error {
-		if len(query.DashboardIds) == 0 || len(query.DashboardUIds) == 0 {
+		if len(query.DashboardIds) == 0 && len(query.DashboardUIds) == 0 {
 			return models.ErrCommandValidationFailed
 		}
 
