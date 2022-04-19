@@ -5,6 +5,7 @@ import { StatusPanelOptions } from './types';
 import { TimelineChart } from '../state-timeline/TimelineChart';
 import { TimelineMode } from '../state-timeline/types';
 import { prepareTimelineFields, prepareTimelineLegendItems } from '../state-timeline/utils';
+import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 
 interface TimelinePanelProps extends PanelProps<StatusPanelOptions> {}
 
@@ -68,6 +69,12 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
             <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />
+            <OutsideRangePlugin
+              config={config}
+              frame={alignedFrame}
+              range={timeRange}
+              onChangeTimeRange={onChangeTimeRange}
+            />
           </>
         );
       }}
