@@ -44,11 +44,8 @@ export const OutsideRangePlugin: React.FC<ThresholdControlsPluginProps> = ({
     <div
       style={{
         position: 'absolute',
-        overflow: 'visible',
-        top: `${plotInstance.current.bbox.height / window.devicePixelRatio / 2 - 20}px`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        top: '50%',
+        transform: 'translateY(-50%)',
         width: '100%',
         textAlign: 'center',
       }}
