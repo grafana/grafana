@@ -205,6 +205,35 @@ const (
 	levelError
 )
 
+func IsKey(v interface{}) bool {
+	return v != nil && (v == Key() || v == gokitlevel.Key())
+}
+
+func GetValue(v interface{}) Value {
+	if v == nil {
+		return nil
+	}
+
+	if val, ok := v.(Value); ok {
+		return val
+	}
+
+	if val, ok := v.(gokitlevel.Value); ok {
+		switch val {
+		case gokitlevel.InfoValue():
+			return InfoValue()
+		case gokitlevel.WarnValue():
+			return WarnValue()
+		case gokitlevel.ErrorValue():
+			return ErrorValue()
+		case gokitlevel.DebugValue():
+			return DebugValue()
+		}
+	}
+
+	return nil
+}
+
 type levelValue struct {
 	name string
 	level
