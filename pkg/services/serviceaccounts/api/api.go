@@ -93,7 +93,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 	serviceAccount, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgId, cmd.Name)
 	switch {
 	case errors.Is(err, &database.ErrSAInvalidName{}):
-		return response.Error(http.StatusBadRequest, "Invalid service account name", err)
+		return response.Error(http.StatusBadRequest, "Failed due to %s", err)
 	case err != nil:
 		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
 	}
