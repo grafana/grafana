@@ -54,7 +54,7 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 		filteredMembers = append(filteredMembers, member)
 	}
 
-	return response.JSON(200, filteredMembers)
+	return response.JSON(http.StatusOK, filteredMembers)
 }
 
 // POST /api/teams/:teamId/members
@@ -89,7 +89,7 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to add Member to Team", err)
 	}
 
-	return response.JSON(200, &util.DynMap{
+	return response.JSON(http.StatusOK, &util.DynMap{
 		"message": "Member added to Team",
 	})
 }

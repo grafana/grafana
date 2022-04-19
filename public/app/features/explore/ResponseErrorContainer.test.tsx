@@ -19,15 +19,14 @@ describe('ResponseErrorContainer', () => {
     expect(errorEl).toHaveTextContent(errorMessage);
   });
 
-  it('shows error if there is refID', async () => {
+  it('do not show error if there is a refId', async () => {
     const errorMessage = 'test error';
     setup({
       refId: 'someId',
       message: errorMessage,
     });
-    const errorEl = screen.getByTestId(selectors.components.Alert.alertV2('error'));
-    expect(errorEl).toBeInTheDocument();
-    expect(errorEl).toHaveTextContent(errorMessage);
+    const errorEl = screen.queryByTestId(selectors.components.Alert.alertV2('error'));
+    expect(errorEl).not.toBeInTheDocument();
   });
 
   it('shows error.data.message if error.message does not exist', async () => {

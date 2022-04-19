@@ -157,7 +157,7 @@ func (s *ServiceAccountsStoreImpl) ListTokens(ctx context.Context, orgID int64, 
 		sess = dbSession.
 			Join("inner", quotedUser, quotedUser+".id = api_key.service_account_id").
 			Where(quotedUser+".org_id=? AND "+quotedUser+".id=?", orgID, serviceAccountID).
-			Asc("name")
+			Asc("api_key.name")
 
 		return sess.Find(&result)
 	})
