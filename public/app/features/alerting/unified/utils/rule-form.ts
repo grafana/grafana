@@ -31,9 +31,12 @@ import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
 import { parseInterval } from './time';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { getRulesAccess } from './access-control';
 
-export const getDefaultFormValues = (): RuleFormValues =>
-  Object.freeze({
+export const getDefaultFormValues = (): RuleFormValues => {
+  const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
+
+  return Object.freeze({
     name: '',
     labels: [{ key: '', value: '' }],
     annotations: [
@@ -42,7 +45,7 @@ export const getDefaultFormValues = (): RuleFormValues =>
       { key: Annotation.runbookURL, value: '' },
     ],
     dataSourceName: null,
-    type: !contextSrv.isEditor ? RuleFormType.grafana : undefined, // viewers can't create prom alerts
+    type: canCreateGrafanaRules ? RuleFormType.grafana : canCreateCloudRules ? RuleFormType.cloudAlerting : undefined, // viewers can't create prom alerts
 
     // grafana
     folder: null,
@@ -60,6 +63,7 @@ export const getDefaultFormValues = (): RuleFormValues =>
     forTime: 1,
     forTimeUnit: 'm',
   });
+};
 
 export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
   const { name, expression, forTime, forTimeUnit, type } = values;
