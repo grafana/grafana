@@ -26,7 +26,7 @@
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -88,13 +88,13 @@
               "frame": "float64"
             },
             "labels": {
-              "job": "cortex-dev-01/cortex-gw",
               "route": "api_prom_api_v1_cardinality_label_values",
-              "cluster": "dev-us-central-0"
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw"
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -162,7 +162,7 @@
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -230,7 +230,7 @@
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -298,7 +298,75 @@
             }
           },
           {
+            "name": "yMax",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          },
+          {
+            "name": "count",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          },
+          {
+            "name": "yLayout",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int8"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ],
+          [
+            
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "meta": {
+          "type": "histogram-prom-experimental"
+        },
+        "fields": [
+          {
+            "name": "xMax",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
             "name": "yMin",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {
+              "route": "api_prom_api_v1_query",
+              "cluster": "dev-us-central-0",
+              "job": "cortex-dev-01/cortex-gw"
+            }
+          },
+          {
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -362,79 +430,11 @@
             "labels": {
               "cluster": "dev-us-central-0",
               "job": "cortex-dev-01/cortex-gw",
-              "route": "api_prom_api_v1_query"
+              "route": "api_prom_api_v1_query_exemplars"
             }
           },
           {
-            "name": "yMin",
-            "type": "number",
-            "typeInfo": {
-              "frame": "float64"
-            }
-          },
-          {
-            "name": "count",
-            "type": "number",
-            "typeInfo": {
-              "frame": "float64"
-            }
-          },
-          {
-            "name": "yLayout",
-            "type": "number",
-            "typeInfo": {
-              "frame": "int8"
-            }
-          }
-        ]
-      },
-      "data": {
-        "values": [
-          [
-            
-          ],
-          [
-            
-          ],
-          [
-            
-          ],
-          [
-            
-          ],
-          [
-            
-          ]
-        ]
-      }
-    },
-    {
-      "schema": {
-        "meta": {
-          "type": "histogram-prom-experimental"
-        },
-        "fields": [
-          {
-            "name": "xMax",
-            "type": "time",
-            "typeInfo": {
-              "frame": "time.Time"
-            }
-          },
-          {
-            "name": "yMin",
-            "type": "number",
-            "typeInfo": {
-              "frame": "float64"
-            },
-            "labels": {
-              "job": "cortex-dev-01/cortex-gw",
-              "route": "api_prom_api_v1_query_exemplars",
-              "cluster": "dev-us-central-0"
-            }
-          },
-          {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -502,7 +502,7 @@
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -564,13 +564,13 @@
               "frame": "float64"
             },
             "labels": {
-              "route": "api_prom_api_v1_rules",
               "cluster": "dev-us-central-0",
-              "job": "cortex-dev-01/cortex-gw"
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_prom_api_v1_rules"
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -638,7 +638,7 @@
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -706,7 +706,7 @@
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -768,13 +768,13 @@
               "frame": "float64"
             },
             "labels": {
-              "route": "api_prom_rules",
               "cluster": "dev-us-central-0",
-              "job": "cortex-dev-01/cortex-gw"
+              "job": "cortex-dev-01/cortex-gw",
+              "route": "api_prom_rules"
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -836,13 +836,13 @@
               "frame": "float64"
             },
             "labels": {
+              "route": "api_v1_rules",
               "cluster": "dev-us-central-0",
-              "job": "cortex-dev-01/cortex-gw",
-              "route": "api_v1_rules"
+              "job": "cortex-dev-01/cortex-gw"
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -910,7 +910,7 @@
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -978,7 +978,7 @@
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -1040,13 +1040,13 @@
               "frame": "float64"
             },
             "labels": {
-              "route": "api_prom_api_v1_labels",
               "cluster": "dev-us-central-0",
-              "job": "cortex-dev-01/cortex-gw-internal"
+              "job": "cortex-dev-01/cortex-gw-internal",
+              "route": "api_prom_api_v1_labels"
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -1108,13 +1108,13 @@
               "frame": "float64"
             },
             "labels": {
+              "route": "api_prom_api_v1_query",
               "cluster": "dev-us-central-0",
-              "job": "cortex-dev-01/cortex-gw-internal",
-              "route": "api_prom_api_v1_query"
+              "job": "cortex-dev-01/cortex-gw-internal"
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -1182,7 +1182,7 @@
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -1244,13 +1244,13 @@
               "frame": "float64"
             },
             "labels": {
+              "cluster": "dev-us-central-0",
               "job": "cortex-dev-01/cortex-gw-internal",
-              "route": "api_prom_api_v1_series",
-              "cluster": "dev-us-central-0"
+              "route": "api_prom_api_v1_series"
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -1312,13 +1312,13 @@
               "frame": "float64"
             },
             "labels": {
-              "cluster": "dev-us-central-0",
               "job": "cortex-dev-01/cortex-gw-internal",
-              "route": "api_prom_push"
+              "route": "api_prom_push",
+              "cluster": "dev-us-central-0"
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -1386,7 +1386,7 @@
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -1454,7 +1454,7 @@
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -1522,7 +1522,7 @@
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -1590,7 +1590,7 @@
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"

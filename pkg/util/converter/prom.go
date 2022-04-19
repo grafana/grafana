@@ -362,7 +362,7 @@ func newHistogramInfo() *histogramInfo {
 	}
 	hist.time.Name = "xMax"
 	hist.yMin.Name = "yMin"
-	hist.yMax.Name = "yMin"
+	hist.yMax.Name = "yMax"
 	hist.count.Name = "count"
 	hist.yLayout.Name = "yLayout"
 	return hist

@@ -24,7 +24,7 @@
             }
           },
           {
-            "name": "yMin",
+            "name": "yMax",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
