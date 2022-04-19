@@ -14,7 +14,6 @@
 
 import * as React from 'react';
 import cx from 'classnames';
-import IoAndroidLocate from 'react-icons/lib/io/android-locate';
 import { css } from '@emotion/css';
 import { Button, useStyles2 } from '@grafana/ui';
 
@@ -24,11 +23,24 @@ import UiFindInput from '../common/UiFindInput';
 import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
 // eslint-disable-next-line no-duplicate-imports
 import { memo } from 'react';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = () => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     TracePageSearchBar: css`
       label: TracePageSearchBar;
+      float: right;
+      position: sticky;
+      top: 8px;
+      right: 0;
+      z-index: ${theme.zIndex.navbarFixed};
+      background: ${theme.colors.background.primary};
+      margin-top: 8px;
+      margin-bottom: -48px;
+      padding: 8px;
+      margin-right: 2px;
+      border-radius: 4px;
+      box-shadow: ${theme.shadows.z2};
     `,
     TracePageSearchBarBar: css`
       label: TracePageSearchBarBar;
@@ -38,14 +50,14 @@ export const getStyles = () => {
         max-width: 100%;
       }
     `,
-    TracePageSearchBarCount: css`
-      label: TracePageSearchBarCount;
+    TracePageSearchBarSuffix: css`
+      label: TracePageSearchBarSuffix;
       opacity: 0.6;
     `,
     TracePageSearchBarBtn: css`
       label: TracePageSearchBarBtn;
-      border-left: none;
       transition: 0.2s;
+      margin-left: 8px;
     `,
     TracePageSearchBarBtnDisabled: css`
       label: TracePageSearchBarBtnDisabled;
@@ -61,72 +73,62 @@ export const getStyles = () => {
 type TracePageSearchBarProps = {
   prevResult: () => void;
   nextResult: () => void;
-  clearSearch: () => void;
-  focusUiFindMatches: () => void;
-  resultCount: number;
   navigable: boolean;
   searchValue: string;
   onSearchValueChange: (value: string) => void;
+  searchBarSuffix: string;
 };
 
 export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
-  const {
-    clearSearch,
-    focusUiFindMatches,
-    navigable,
-    nextResult,
-    prevResult,
-    resultCount,
-    onSearchValueChange,
-    searchValue,
-  } = props;
+  const { navigable, nextResult, prevResult, onSearchValueChange, searchValue, searchBarSuffix } = props;
   const styles = useStyles2(getStyles);
 
-  const count = searchValue ? <span className={styles.TracePageSearchBarCount}>{resultCount}</span> : null;
+  const suffix = searchValue ? (
+    <span className={styles.TracePageSearchBarSuffix} data-testid="trace-page-search-bar-suffix">
+      {searchBarSuffix}
+    </span>
+  ) : null;
 
   const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !searchValue });
   const uiFindInputInputProps = {
     'data-test': markers.IN_TRACE_SEARCH,
     className: cx(styles.TracePageSearchBarBar, ubFlexAuto),
     name: 'search',
-    suffix: count,
+    suffix,
   };
 
   return (
     <div className={styles.TracePageSearchBar}>
       <span className={ubJustifyEnd} style={{ display: 'flex' }}>
-        <UiFindInput onChange={onSearchValueChange} value={searchValue} inputProps={uiFindInputInputProps} />
+        <UiFindInput
+          onChange={onSearchValueChange}
+          value={searchValue}
+          inputProps={uiFindInputInputProps}
+          allowClear={true}
+        />
         <>
           {navigable && (
             <>
               <Button
-                className={cx(btnClass, styles.TracePageSearchBarLocateBtn)}
-                disabled={!searchValue}
-                type="button"
-                onClick={focusUiFindMatches}
-              >
-                <IoAndroidLocate />
-              </Button>
-              <Button className={btnClass} disabled={!searchValue} type="button" icon="arrow-up" onClick={prevResult} />
-              <Button
                 className={btnClass}
+                variant="secondary"
                 disabled={!searchValue}
                 type="button"
                 icon="arrow-down"
+                data-testid="trace-page-search-bar-next-result-button"
                 onClick={nextResult}
+              />
+              <Button
+                className={btnClass}
+                variant="secondary"
+                disabled={!searchValue}
+                type="button"
+                icon="arrow-up"
+                data-testid="trace-page-search-bar-prev-result-button"
+                onClick={prevResult}
               />
             </>
           )}
-          <Button
-            variant={'secondary'}
-            fill={'text'}
-            // className={btnClass}
-            disabled={!searchValue}
-            type="button"
-            icon="times"
-            onClick={clearSearch}
-            title={'Clear search'}
-          />
         </>
       </span>
     </div>

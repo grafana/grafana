@@ -53,7 +53,7 @@ describe('ShareEmbed', () => {
       user: {
         orgId: 1,
       },
-    };
+    } as any;
   });
 
   afterAll(() => {

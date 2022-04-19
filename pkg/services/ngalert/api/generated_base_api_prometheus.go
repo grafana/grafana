@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 )
@@ -81,5 +82,5 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiForkingService, 
 				m,
 			),
 		)
-	})
+	}, middleware.ReqSignedIn)
 }

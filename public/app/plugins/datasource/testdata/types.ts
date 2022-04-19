@@ -4,11 +4,12 @@ export interface Scenario {
   id: string;
   name: string;
   stringInput: string;
+  description?: string;
 }
 
 export interface TestDataQuery extends DataQuery {
   alias?: string;
-  scenarioId: string;
+  scenarioId?: string;
   stringInput?: string;
   stream?: StreamingQuery;
   pulseWave?: PulseWaveQuery;
@@ -22,6 +23,7 @@ export interface TestDataQuery extends DataQuery {
   csvContent?: string;
   rawFrameContent?: string;
   usa?: USAQuery;
+  errorType?: 'server_panic' | 'frontend_exception' | 'frontend_observable';
 }
 
 export interface NodesQuery {

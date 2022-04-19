@@ -46,7 +46,7 @@ import (
 // encrypted fields are listed under secureJsonFields section in the response.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
-// you need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+// you need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).
 //
 // Responses:
 // 200: createOrUpdateDatasourceResponse
@@ -59,7 +59,7 @@ import (
 // Delete an existing data source by id.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
-// you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+// you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).
 //
 // Responses:
 // 200: okResponse
@@ -101,7 +101,7 @@ import (
 // Get a single data source by Id.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
-// you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+// you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).
 //
 // Responses:
 // 200: getDatasourceResponse
@@ -167,7 +167,36 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
+// swagger:route GET /datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route} datasources datasourceProxyGETByUIDcalls
+//
+// Data source proxy GET calls.
+//
+// Proxies all calls to the actual data source.
+//
+// Responses:
+// 200:
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
 // swagger:route POST /datasources/proxy/{datasource_id}/{datasource_proxy_route} datasources datasourceProxyPOSTcalls
+//
+// Data source proxy POST calls.
+//
+// Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined
+//
+// Responses:
+// 201:
+// 202:
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route POST /datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route} datasources datasourceProxyPOSTByUIDcalls
 //
 // Data source proxy POST calls.
 //
@@ -196,9 +225,25 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
+// swagger:route DELETE /datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route} datasources datasourceProxyDELETEByUIDcalls
+//
+// Data source proxy DELETE calls.
+//
+// Proxies all calls to the actual data source.
+//
+// Responses:
+// 202:
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
 // swagger:route POST /tsdb/query datasources queryDatasource
 //
 // Query metrics.
+//
+// Please refer to [updated API](#/ds/queryMetricsWithExpressions) instead
 //
 // Queries a data source having backend implementation.
 //
@@ -206,6 +251,8 @@ import (
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:query`.
+//
+// Deprecated: true
 //
 // Responses:
 // 200: queryDatasourceResponse
@@ -223,7 +270,7 @@ type DatasourceID struct {
 	DatasourceID string `json:"datasource_id"`
 }
 
-// swagger:parameters deleteDatasourceByUID getDatasourceByUID
+// swagger:parameters deleteDatasourceByUID getDatasourceByUID datasourceProxyGETByUIDcalls datasourceProxyPOSTByUIDcalls datasourceProxyDELETEByUIDcalls
 type DatasourceUID struct {
 	// in:path
 	// required:true
@@ -237,7 +284,8 @@ type DatasourceName struct {
 	DatasourceName string `json:"datasource_name"`
 }
 
-// swagger:parameters datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls
+// swagger:parameters datasourceProxyGETcalls datasourceProxyPOSTcalls datasourceProxyDELETEcalls datasourceProxyGETByUIDcalls
+// swagger:parameters datasourceProxyPOSTByUIDcalls datasourceProxyDELETEByUIDcalls
 type DatasourceProxyRouteParam struct {
 	// in:path
 	// required:true

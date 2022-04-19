@@ -9,6 +9,8 @@ import { Matchers } from '../silences/Matchers';
 import { matcherFieldToMatcher, parseMatchers } from '../../utils/alertmanager';
 import { intersectionWith, isEqual } from 'lodash';
 import { EmptyArea } from '../EmptyArea';
+import { contextSrv } from 'app/core/services/context_srv';
+import { getNotificationsPermissions } from '../../utils/access-control';
 
 export interface AmRoutesTableProps {
   isAddMode: boolean;
@@ -18,6 +20,7 @@ export interface AmRoutesTableProps {
   routes: FormAmRoute[];
   filters?: { queryString?: string; contactPoint?: string };
   readOnly?: boolean;
+  alertManagerSourceName: string;
 }
 
 type RouteTableColumnProps = DynamicTableColumnProps<FormAmRoute>;
@@ -69,9 +72,15 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   routes,
   filters,
   readOnly = false,
+  alertManagerSourceName,
 }) => {
   const [editMode, setEditMode] = useState(false);
   const [expandedId, setExpandedId] = useState<string | number>();
+  const permissions = getNotificationsPermissions(alertManagerSourceName);
+  const canEditRoutes = contextSrv.hasPermission(permissions.update);
+  const canDeleteRoutes = contextSrv.hasPermission(permissions.delete);
+
+  const showActions = !readOnly && (canEditRoutes || canDeleteRoutes);
 
   const expandItem = useCallback((item: RouteTableItemProps) => setExpandedId(item.id), []);
   const collapseItem = useCallback(() => setExpandedId(undefined), []);
@@ -81,7 +90,13 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
       id: 'matchingCriteria',
       label: 'Matching labels',
       // eslint-disable-next-line react/display-name
-      renderCell: (item) => <Matchers matchers={item.data.object_matchers.map(matcherFieldToMatcher)} />,
+      renderCell: (item) => {
+        return item.data.object_matchers.length ? (
+          <Matchers matchers={item.data.object_matchers.map(matcherFieldToMatcher)} />
+        ) : (
+          <span>Matches all alert instances</span>
+        );
+      },
       size: 10,
     },
     {
@@ -102,7 +117,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
       renderCell: (item) => item.data.muteTimeIntervals.join(', ') || '-',
       size: 5,
     },
-    ...(readOnly
+    ...(!showActions
       ? []
       : [
           {
@@ -212,6 +227,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
             receivers={receivers}
             routes={item.data}
             readOnly={readOnly}
+            alertManagerSourceName={alertManagerSourceName}
           />
         )
       }

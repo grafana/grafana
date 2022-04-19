@@ -48,7 +48,11 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
   return (
     <EditorRow>
       <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, formatOption.label!, queryTypeLabel)}>
-        <PromQueryLegendEditor query={query} onChange={onChange} onRunQuery={onRunQuery} />
+        <PromQueryLegendEditor
+          legendFormat={query.legendFormat}
+          onChange={(legendFormat) => onChange({ ...query, legendFormat })}
+          onRunQuery={onRunQuery}
+        />
         <EditorField
           label="Min step"
           tooltip={

@@ -49,8 +49,6 @@ const (
 	silencesFilename        = "silences"
 
 	workingDir = "alerting"
-	// How long should we keep silences and notification entries on-disk after they've served their purpose.
-	retentionNotificationsAndSilences = 5 * 24 * time.Hour
 	// maintenanceNotificationAndSilences how often should we flush and gargabe collect notifications and silences
 	maintenanceNotificationAndSilences = 15 * time.Minute
 	// defaultResolveTimeout is the default timeout used for resolving an alert
@@ -59,6 +57,10 @@ const (
 	// memoryAlertsGCInterval is the interval at which we'll remove resolved alerts from memory.
 	memoryAlertsGCInterval = 30 * time.Minute
 )
+
+// How long should we keep silences and notification entries on-disk after they've served their purpose.
+var retentionNotificationsAndSilences = 5 * 24 * time.Hour
+var silenceMaintenanceInterval = 15 * time.Minute
 
 func init() {
 	silence.ValidateMatcher = func(m *pb.Matcher) error {
@@ -185,7 +187,14 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store s
 
 	am.wg.Add(1)
 	go func() {
-		am.silences.Maintenance(15*time.Minute, silencesFilePath, am.stopc, func() (int64, error) {
+		am.silences.Maintenance(silenceMaintenanceInterval, silencesFilePath, am.stopc, func() (int64, error) {
+			// Delete silences older than the retention period.
+			if _, err := am.silences.GC(); err != nil {
+				am.logger.Error("silence garbage collection", "err", err)
+				// Don't return here - we need to snapshot our state first.
+			}
+
+			// Snapshot our silences to the Grafana KV store
 			return am.fileStore.Persist(ctx, silencesFilename, am.silences)
 		})
 		am.wg.Done()

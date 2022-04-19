@@ -65,14 +65,14 @@ describe('VariablesUnknownTable', () => {
         const { getUnknownsNetworkSpy } = await getTestContext();
 
         userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
-        await waitFor(() => expect(screen.getByTitle('Click to collapse')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-expanded', 'true'));
         expect(getUnknownsNetworkSpy).toHaveBeenCalledTimes(1);
 
         userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
-        await waitFor(() => expect(screen.getByTitle('Click to expand')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-expanded', 'false'));
 
         userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
-        await waitFor(() => expect(screen.getByTitle('Click to collapse')).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-expanded', 'true'));
 
         expect(getUnknownsNetworkSpy).toHaveBeenCalledTimes(1);
       });

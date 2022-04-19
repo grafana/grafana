@@ -62,11 +62,11 @@ describe('InspectErrorTab', () => {
 
   it('should return a jsonFormatter object of error if it has no .data and no .message', () => {
     const error = {
-      status: '400',
+      status: 400,
     };
     const { container } = render(<InspectErrorTab error={error} />);
     expect(container.childElementCount).toEqual(1);
     expect(screen.getByText('status:')).toBeInTheDocument();
-    expect(screen.getByText('"400"')).toBeInTheDocument();
+    expect(screen.getByText('400')).toBeInTheDocument();
   });
 });

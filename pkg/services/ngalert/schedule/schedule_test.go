@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -200,7 +201,7 @@ func TestAlertingTicker(t *testing.T) {
 	})
 
 	key := alerts[0].GetKey()
-	err := dbstore.DeleteAlertRuleByUID(ctx, alerts[0].OrgID, alerts[0].UID)
+	err := dbstore.DeleteAlertRulesByUID(ctx, alerts[0].OrgID, alerts[0].UID)
 	require.NoError(t, err)
 	t.Logf("alert rule: %v deleted", key)
 

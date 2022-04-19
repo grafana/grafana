@@ -171,6 +171,7 @@ export class DashboardModel implements TimeModel {
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
     this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
+    this.ensurePanelsHaveIds();
     this.formatDate = this.formatDate.bind(this);
 
     this.resetOriginalVariables(true);
@@ -450,6 +451,22 @@ export class DashboardModel implements TimeModel {
 
     this.startRefresh({ panelIds: this.panelsAffectedByVariableChange, refreshAll: false });
     this.panelsAffectedByVariableChange = null;
+  }
+
+  private ensurePanelsHaveIds() {
+    for (const panel of this.panels) {
+      if (!panel.id) {
+        panel.id = this.getNextPanelId();
+      }
+
+      if (panel.panels) {
+        for (const rowPanel of panel.panels) {
+          if (!rowPanel.id) {
+            rowPanel.id = this.getNextPanelId();
+          }
+        }
+      }
+    }
   }
 
   private ensureListExist(data: any) {
@@ -1178,7 +1195,32 @@ export class DashboardModel implements TimeModel {
     return this.getVariablesFromState(this.uid);
   };
 
+  canEditAnnotations(dashboardId: number) {
+    let canEdit = true;
+
+    // if FGAC is enabled there are additional conditions to check
+    if (contextSrv.accessControlEnabled()) {
+      if (dashboardId === 0) {
+        canEdit = !!this.meta.annotationsPermissions?.organization.canEdit;
+      } else {
+        canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
+      }
+    }
+    return this.canEditDashboard() && canEdit;
+  }
+
   canAddAnnotations() {
+    let canAdd = true;
+
+    // if FGAC is enabled there are additional conditions to check
+    if (contextSrv.accessControlEnabled()) {
+      canAdd = !!this.meta.annotationsPermissions?.dashboard.canAdd;
+    }
+
+    return this.canEditDashboard() && canAdd;
+  }
+
+  canEditDashboard() {
     return this.meta.canEdit || this.meta.canMakeEditable;
   }
 

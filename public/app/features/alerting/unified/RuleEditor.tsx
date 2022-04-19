@@ -2,16 +2,17 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LinkButton, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import { contextSrv } from 'app/core/services/context_srv';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { contextSrv } from 'app/core/services/context_srv';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { useAsync } from 'react-use';
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
 import { useIsRuleEditable } from './hooks/useIsRuleEditable';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchEditableRuleAction } from './state/actions';
+import { fetchAllPromBuildInfoAction, fetchEditableRuleAction } from './state/actions';
 import * as ruleId from './utils/rule-id';
 
 interface ExistingRuleEditorProps {
@@ -58,15 +59,30 @@ const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
 type RuleEditorProps = GrafanaRouteComponentProps<{ id?: string }>;
 
 const RuleEditor: FC<RuleEditorProps> = ({ match }) => {
+  const dispatch = useDispatch();
   const { id } = match.params;
   const identifier = ruleId.tryParse(id, true);
+
+  const { loading } = useAsync(async () => {
+    await dispatch(fetchAllPromBuildInfoAction());
+  }, [dispatch]);
+
+  if (!(contextSrv.hasEditPermissionInFolders || contextSrv.isEditor)) {
+    return <AlertWarning title="Cannot create rules">Sorry! You are not allowed to create rules.</AlertWarning>;
+  }
+
+  if (loading) {
+    return (
+      <Page.Contents>
+        <LoadingPlaceholder text="Loading..." />
+      </Page.Contents>
+    );
+  }
 
   if (identifier) {
     return <ExistingRuleEditor key={id} identifier={identifier} />;
   }
-  if (!(contextSrv.hasEditPermissionInFolders || contextSrv.isEditor)) {
-    return <AlertWarning title="Cannot create rules">Sorry! You are not allowed to create rules.</AlertWarning>;
-  }
+
   return <AlertRuleForm />;
 };
 

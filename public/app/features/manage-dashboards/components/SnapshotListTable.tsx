@@ -19,7 +19,7 @@ export const SnapshotListTable: FC = () => {
   const [removeSnapshot, setRemoveSnapshot] = useState<Snapshot | undefined>();
   const currentPath = locationService.getLocation().pathname;
   const fullUrl = window.location.href;
-  const baseUrl = fullUrl.substr(0, fullUrl.indexOf(currentPath));
+  const baseUrl = fullUrl.substring(0, fullUrl.indexOf(currentPath));
 
   useAsync(async () => {
     const response = await getSnapshots();

@@ -271,19 +271,11 @@ export const processVariableDependencies = async (variable: VariableModel, state
     throw new Error(`rootStateKey not found for variable with id:${variable.id}`);
   }
 
-  const dependencies: VariableModel[] = [];
-
-  for (const otherVariable of getVariablesByKey(variable.rootStateKey, state)) {
-    if (variable === otherVariable) {
-      continue;
-    }
-
-    if (variableAdapters.getIfExists(variable.type)) {
-      if (variableAdapters.get(variable.type).dependsOn(variable, otherVariable)) {
-        dependencies.push(otherVariable);
-      }
-    }
+  if (isDependencyGraphCircular(variable, state)) {
+    throw new Error('Circular dependency in dashboard variables detected. Dashboard may not work as expected.');
   }
+
+  const dependencies = getDirectDependencies(variable, state);
 
   if (!isWaitingForDependencies(variable.rootStateKey, dependencies, state)) {
     return;
@@ -301,6 +293,44 @@ export const processVariableDependencies = async (variable: VariableModel, state
       }
     });
   });
+};
+
+const isDependencyGraphCircular = (
+  variable: VariableModel,
+  state: StoreState,
+  encounteredDependencyIds: Set<string> = new Set()
+): boolean => {
+  if (encounteredDependencyIds.has(variable.id)) {
+    return true;
+  }
+
+  encounteredDependencyIds = new Set([...encounteredDependencyIds, variable.id]);
+
+  return getDirectDependencies(variable, state).some((dependency) => {
+    return isDependencyGraphCircular(dependency, state, encounteredDependencyIds);
+  });
+};
+
+const getDirectDependencies = (variable: VariableModel, state: StoreState) => {
+  if (!variable.rootStateKey) {
+    return [];
+  }
+
+  const directDependencies: VariableModel[] = [];
+
+  for (const otherVariable of getVariablesByKey(variable.rootStateKey, state)) {
+    if (variable === otherVariable) {
+      continue;
+    }
+
+    if (variableAdapters.getIfExists(variable.type)) {
+      if (variableAdapters.get(variable.type).dependsOn(variable, otherVariable)) {
+        directDependencies.push(otherVariable);
+      }
+    }
+  }
+
+  return directDependencies;
 };
 
 const isWaitingForDependencies = (key: string, dependencies: VariableModel[], state: StoreState): boolean => {

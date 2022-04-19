@@ -8,7 +8,7 @@ import { AxiosResponse } from 'axios';
 
 const resolveContentType = (extension: string): string => {
   if (extension.startsWith('.')) {
-    extension = extension.substr(1);
+    extension = extension.slice(1);
   }
   switch (extension) {
     case 'zip':

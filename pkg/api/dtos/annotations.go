@@ -28,8 +28,7 @@ type PatchAnnotationsCmd struct {
 	Tags    []string `json:"tags"`
 }
 
-type DeleteAnnotationsCmd struct {
-	AlertId      int64 `json:"alertId"`
+type MassDeleteAnnotationsCmd struct {
 	DashboardId  int64 `json:"dashboardId"`
 	PanelId      int64 `json:"panelId"`
 	AnnotationId int64 `json:"annotationId"`

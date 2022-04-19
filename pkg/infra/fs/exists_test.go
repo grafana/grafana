@@ -31,12 +31,7 @@ func TestExists_Existent(t *testing.T) {
 }
 
 func TestExists_Dir(t *testing.T) {
-	f, err := ioutil.TempDir("", "")
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		err := os.Remove(f)
-		assert.NoError(t, err)
-	})
+	f := t.TempDir()
 
 	exists, err := Exists(f)
 

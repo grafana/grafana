@@ -4,7 +4,7 @@ import React, { memo } from 'react';
 import { LokiQuery } from '../types';
 import { LokiQueryField } from './LokiQueryField';
 import { LokiOptionFields } from './LokiOptionFields';
-import LokiDatasource from '../datasource';
+import { LokiDatasource } from '../datasource';
 
 interface Props {
   expr: string;

@@ -2,15 +2,15 @@
 title = "Annotations"
 keywords = ["grafana", "annotations", "documentation", "guide"]
 aliases = ["/docs/grafana/latest/reference/annotations/"]
-weight = 2
+weight = 9
 +++
 
 # Annotations
 
-{{< figure src="/static/img/docs/v46/annotations.png" max-width="800px" >}}
-
 Annotations provide a way to mark points on the graph with rich events. When you hover over an annotation
 you can get event description and event tags. The text field can include links to other systems with more detail.
+
+{{< figure src="/static/img/docs/v46/annotations.png" max-width="800px" >}}
 
 ## Native annotations
 

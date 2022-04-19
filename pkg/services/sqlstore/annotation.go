@@ -9,7 +9,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 )
 
 // Update the item so that EpochEnd >= Epoch
@@ -31,6 +35,10 @@ func validateTimeRange(item *annotations.Item) error {
 
 type SQLAnnotationRepo struct {
 	sql *SQLStore
+}
+
+func NewSQLAnnotationRepo(sql *SQLStore) SQLAnnotationRepo {
+	return SQLAnnotationRepo{sql: sql}
 }
 
 func (r *SQLAnnotationRepo) Save(item *annotations.Item) error {
@@ -221,6 +229,15 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 			}
 		}
 
+		if r.sql.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+			acFilter, acArgs, err := getAccessControlFilter(query.SignedInUser)
+			if err != nil {
+				return err
+			}
+			sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter))
+			params = append(params, acArgs...)
+		}
+
 		if query.Limit == 0 {
 			query.Limit = 100
 		}
@@ -239,8 +256,39 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 	return items, err
 }
 
-func (r *SQLAnnotationRepo) Delete(params *annotations.DeleteParams) error {
-	return inTransaction(func(sess *DBSession) error {
+func getAccessControlFilter(user *models.SignedInUser) (string, []interface{}, error) {
+	if user == nil || user.Permissions[user.OrgId] == nil {
+		return "", nil, errors.New("missing permissions")
+	}
+	scopes, has := user.Permissions[user.OrgId][ac.ActionAnnotationsRead]
+	if !has {
+		return "", nil, errors.New("missing permissions")
+	}
+	types, hasWildcardScope := ac.ParseScopes(ac.ScopeAnnotationsProvider.GetResourceScopeType(""), scopes)
+	if hasWildcardScope {
+		types = map[interface{}]struct{}{annotations.Dashboard.String(): {}, annotations.Organization.String(): {}}
+	}
+
+	var filters []string
+	var params []interface{}
+	for t := range types {
+		// annotation read permission with scope annotations:type:organization allows listing annotations that are not associated with a dashboard
+		if t == annotations.Organization.String() {
+			filters = append(filters, "a.dashboard_id = 0")
+		}
+		// annotation read permission with scope annotations:type:dashboard allows listing annotations from dashboards which the user can view
+		if t == annotations.Dashboard.String() {
+			dashboardFilter, dashboardParams := permissions.NewAccessControlDashboardPermissionFilter(user, models.PERMISSION_VIEW, searchstore.TypeDashboard).Where()
+			filter := fmt.Sprintf("a.dashboard_id IN(SELECT id FROM dashboard WHERE %s)", dashboardFilter)
+			filters = append(filters, filter)
+			params = dashboardParams
+		}
+	}
+	return strings.Join(filters, " OR "), params, nil
+}
+
+func (r *SQLAnnotationRepo) Delete(ctx context.Context, params *annotations.DeleteParams) error {
+	return r.sql.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		var (
 			sql        string
 			annoTagSQL string
@@ -275,17 +323,19 @@ func (r *SQLAnnotationRepo) Delete(params *annotations.DeleteParams) error {
 	})
 }
 
-func (r *SQLAnnotationRepo) FindTags(query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	if query.Limit == 0 {
-		query.Limit = 100
-	}
+func (r *SQLAnnotationRepo) FindTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	var items []*annotations.Tag
+	err := r.sql.WithDbSession(ctx, func(dbSession *DBSession) error {
+		if query.Limit == 0 {
+			query.Limit = 100
+		}
 
-	var sql bytes.Buffer
-	params := make([]interface{}, 0)
-	tagKey := `tag.` + dialect.Quote("key")
-	tagValue := `tag.` + dialect.Quote("value")
+		var sql bytes.Buffer
+		params := make([]interface{}, 0)
+		tagKey := `tag.` + dialect.Quote("key")
+		tagValue := `tag.` + dialect.Quote("value")
 
-	sql.WriteString(`
+		sql.WriteString(`
 		SELECT
 			` + tagKey + `,
 			` + tagValue + `,
@@ -294,21 +344,22 @@ func (r *SQLAnnotationRepo) FindTags(query *annotations.TagsQuery) (annotations.
 		INNER JOIN annotation_tag ON tag.id = annotation_tag.tag_id
 `)
 
-	sql.WriteString(`WHERE EXISTS(SELECT 1 FROM annotation WHERE annotation.id = annotation_tag.annotation_id AND annotation.org_id = ?)`)
-	params = append(params, query.OrgID)
+		sql.WriteString(`WHERE EXISTS(SELECT 1 FROM annotation WHERE annotation.id = annotation_tag.annotation_id AND annotation.org_id = ?)`)
+		params = append(params, query.OrgID)
 
-	sql.WriteString(` AND (` + tagKey + ` ` + dialect.LikeStr() + ` ? OR ` + tagValue + ` ` + dialect.LikeStr() + ` ?)`)
-	params = append(params, `%`+query.Tag+`%`, `%`+query.Tag+`%`)
+		sql.WriteString(` AND (` + tagKey + ` ` + dialect.LikeStr() + ` ? OR ` + tagValue + ` ` + dialect.LikeStr() + ` ?)`)
+		params = append(params, `%`+query.Tag+`%`, `%`+query.Tag+`%`)
 
-	sql.WriteString(` GROUP BY ` + tagKey + `,` + tagValue)
-	sql.WriteString(` ORDER BY ` + tagKey + `,` + tagValue)
-	sql.WriteString(` ` + dialect.Limit(query.Limit))
+		sql.WriteString(` GROUP BY ` + tagKey + `,` + tagValue)
+		sql.WriteString(` ORDER BY ` + tagKey + `,` + tagValue)
+		sql.WriteString(` ` + dialect.Limit(query.Limit))
 
-	var items []*annotations.Tag
-	if err := x.SQL(sql.String(), params...).Find(&items); err != nil {
+		err := dbSession.SQL(sql.String(), params...).Find(&items)
+		return err
+	})
+	if err != nil {
 		return annotations.FindTagsResult{Tags: []*annotations.TagsDTO{}}, err
 	}
-
 	tags := make([]*annotations.TagsDTO, 0)
 	for _, item := range items {
 		tag := item.Key

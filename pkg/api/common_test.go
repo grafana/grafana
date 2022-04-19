@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -27,11 +26,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/searchusers"
@@ -50,8 +52,6 @@ func loggedInUserScenario(t *testing.T, desc string, url string, routePattern st
 
 func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = sqlStore
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -79,8 +79,6 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 
 func anonymousUserScenario(t *testing.T, desc string, method string, url string, routePattern string, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
@@ -166,7 +164,7 @@ type scenarioContext struct {
 	url                  string
 	userAuthTokenService *auth.FakeUserAuthTokenService
 	sqlStore             sqlstore.Store
-	authInfoService      *mockAuthInfoService
+	authInfoService      *logintest.AuthInfoServiceFake
 }
 
 func (sc *scenarioContext) exec() {
@@ -193,7 +191,10 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	authJWTSvc := models.NewFakeJWTService()
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
-	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer)
+	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, sqlStore)
+	loginService := &logintest.LoginServiceFake{}
+	authenticator := &logintest.AuthenticatorFake{}
+	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, authenticator)
 
 	return ctxHdlr
 }
@@ -231,16 +232,15 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	cfg.Quota.Enabled = false
 
-	mockStore := sqlstore.InitTestDB(t)
+	store := sqlstore.InitTestDB(t)
 	hs := &HTTPServer{
 		Cfg:                cfg,
-		Bus:                bus.GetBus(),
-		Live:               newTestLive(t),
+		Live:               newTestLive(t, store),
 		Features:           features,
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
-		searchUsersService: searchusers.ProvideUsersService(mockStore, filters.ProvideOSSSearchUserFilter()),
+		searchUsersService: searchusers.ProvideUsersService(store, filters.ProvideOSSSearchUserFilter()),
 		ldapGroups:         ldap.ProvideGroupsService(),
 	}
 
@@ -325,7 +325,6 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	return &HTTPServer{
 		Cfg:           cfg,
 		Features:      features,
-		Bus:           bus.GetBus(),
 		AccessControl: accesscontrolmock.New().WithDisabled(),
 	}
 }
@@ -352,8 +351,11 @@ func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl bool, enableAc
 }
 
 func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg) accessControlScenarioContext {
-	db := sqlstore.InitTestDB(t)
-	db.Cfg = cfg
+	var featureFlags []string
+	if enableAccessControl {
+		featureFlags = append(featureFlags, featuremgmt.FlagAccesscontrol)
+	}
+	db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{FeatureFlags: featureFlags})
 	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, db)
 }
 
@@ -373,8 +375,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 	hs := &HTTPServer{
 		Cfg:                cfg,
 		Features:           features,
-		Bus:                bus.GetBus(),
-		Live:               newTestLive(t),
+		Live:               newTestLive(t, db),
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routeRegister,
 		SQLStore:           store,
@@ -393,13 +394,14 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		require.NoError(t, err)
 		hs.teamPermissionsService = teamPermissionService
 	} else {
-		ac := ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t},
+		ac, errInitAc := ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t},
 			database.ProvideService(db), routing.NewRouteRegister())
+		require.NoError(t, errInitAc)
 		hs.AccessControl = ac
 		// Perform role registration
 		err := hs.declareFixedRoles()
 		require.NoError(t, err)
-		err = ac.RegisterFixedRoles()
+		err = ac.RegisterFixedRoles(context.Background())
 		require.NoError(t, err)
 		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, database.ProvideService(db))
 		require.NoError(t, err)

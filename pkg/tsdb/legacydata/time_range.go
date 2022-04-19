@@ -158,11 +158,7 @@ func (t parsableTime) datemathOptions() []func(*datemath.Options) {
 		options = append(options, datemath.WithLocation(t.location))
 	}
 	if t.weekstart != nil {
-		weekstart := *t.weekstart
-		if weekstart > t.now.Weekday() {
-			weekstart = weekstart - 7
-		}
-		options = append(options, datemath.WithStartOfWeek(weekstart))
+		options = append(options, datemath.WithStartOfWeek(*t.weekstart))
 	}
 	if t.fiscalStartMonth != nil {
 		loc := time.UTC

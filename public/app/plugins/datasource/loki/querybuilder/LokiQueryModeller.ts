@@ -1,17 +1,17 @@
 import { LokiAndPromQueryModellerBase } from '../../prometheus/querybuilder/shared/LokiAndPromQueryModellerBase';
 import { QueryBuilderLabelFilter } from '../../prometheus/querybuilder/shared/types';
-import { getOperationDefintions } from './operations';
-import { LokiOperationId, LokiQueryPattern, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
+import { getOperationDefinitions } from './operations';
+import { LokiOperationId, LokiQueryPattern, LokiVisualQueryOperationCategory } from './types';
 
-export class LokiQueryModeller extends LokiAndPromQueryModellerBase<LokiVisualQuery> {
+export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
   constructor() {
-    super(getOperationDefintions);
+    super(getOperationDefinitions);
 
     this.setOperationCategories([
       LokiVisualQueryOperationCategory.Aggregations,
       LokiVisualQueryOperationCategory.RangeFunctions,
       LokiVisualQueryOperationCategory.Formats,
-      //LokiVisualQueryOperationCategory.Functions,
+      LokiVisualQueryOperationCategory.BinaryOps,
       LokiVisualQueryOperationCategory.LabelFilters,
       LokiVisualQueryOperationCategory.LineFilters,
     ]);
@@ -23,13 +23,6 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase<LokiVisualQu
     }
 
     return super.renderLabels(labels);
-  }
-
-  renderQuery(query: LokiVisualQuery) {
-    let queryString = `${this.renderLabels(query.labels)}`;
-    queryString = this.renderOperations(queryString, query.operations);
-    queryString = this.renderBinaryQueries(queryString, query.binaryQueries);
-    return queryString;
   }
 
   getQueryPatterns(): LokiQueryPattern[] {
@@ -50,7 +43,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase<LokiVisualQu
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
           { id: LokiOperationId.Unwrap, params: [''] },
-          { id: LokiOperationId.SumOverTime, params: ['auto'] },
+          { id: LokiOperationId.SumOverTime, params: ['$__interval'] },
           { id: LokiOperationId.Sum, params: [] },
         ],
       },

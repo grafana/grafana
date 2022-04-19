@@ -11,7 +11,7 @@ var fs = require('fs');
 var githubClient_1 = tslib_1.__importDefault(require('./githubClient'));
 var resolveContentType = function (extension) {
   if (extension.startsWith('.')) {
-    extension = extension.substr(1);
+    extension = extension.slice(1);
   }
   switch (extension) {
     case 'zip':

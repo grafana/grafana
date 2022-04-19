@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import kbn from 'app/core/utils/kbn';
+import { AccessControlAction } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import pluralize from 'pluralize';
 import React, { FC, useEffect, useState } from 'react';
@@ -31,6 +33,8 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
   const [isEditingGroup, setIsEditingGroup] = useState(false);
   const [isDeletingGroup, setIsDeletingGroup] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(!expandAll);
+
+  const canEditCloudRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
 
   useEffect(() => {
     setIsCollapsed(!expandAll);
@@ -88,7 +92,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll }
         );
       }
     }
-  } else if (hasRuler(rulesSource)) {
+  } else if (canEditCloudRules && hasRuler(rulesSource)) {
     if (!isFederated) {
       actionIcons.push(
         <ActionIcon

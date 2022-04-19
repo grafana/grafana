@@ -37,6 +37,11 @@ jest.mock('../hooks/usePluginConfig.tsx', () => ({
   })),
 }));
 
+jest.mock('../helpers.ts', () => ({
+  ...jest.requireActual('../helpers.ts'),
+  updatePanels: jest.fn(),
+}));
+
 const renderPluginDetails = (
   pluginOverride: Partial<CatalogPlugin>,
   {

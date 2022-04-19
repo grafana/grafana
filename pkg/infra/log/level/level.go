@@ -1,6 +1,9 @@
 package level
 
-import "github.com/go-kit/log"
+import (
+	"github.com/go-kit/log"
+	gokitlevel "github.com/go-kit/log/level"
+)
 
 // Error returns a logger that includes a Key/ErrorValue pair.
 func Error(logger log.Logger) log.Logger {
@@ -51,6 +54,12 @@ func (l *logger) Log(keyvals ...interface{}) error {
 		if v, ok := keyvals[i].(*levelValue); ok {
 			hasLevel = true
 			levelAllowed = l.allowed&v.level != 0
+			break
+		}
+
+		if v, ok := keyvals[i].(gokitlevel.Value); ok {
+			hasLevel = true
+			levelAllowed = l.allowed&levelFromGokitLevel(v) != 0
 			break
 		}
 	}
@@ -187,6 +196,14 @@ var (
 	debugValue = &levelValue{level: levelDebug, name: "dbug"}
 )
 
+func SetLevelKeyAndValuesToGokitLog() {
+	key = "level"
+	errorValue = &levelValue{level: levelError, name: "error"}
+	warnValue = &levelValue{level: levelWarn, name: "warn"}
+	infoValue = &levelValue{level: levelInfo, name: "info"}
+	debugValue = &levelValue{level: levelDebug, name: "debug"}
+}
+
 type level byte
 
 const (
@@ -196,6 +213,35 @@ const (
 	levelError
 )
 
+func IsKey(v interface{}) bool {
+	return v != nil && (v == Key() || v == gokitlevel.Key())
+}
+
+func GetValue(v interface{}) Value {
+	if v == nil {
+		return nil
+	}
+
+	if val, ok := v.(Value); ok {
+		return val
+	}
+
+	if val, ok := v.(gokitlevel.Value); ok {
+		switch val {
+		case gokitlevel.InfoValue():
+			return InfoValue()
+		case gokitlevel.WarnValue():
+			return WarnValue()
+		case gokitlevel.ErrorValue():
+			return ErrorValue()
+		case gokitlevel.DebugValue():
+			return DebugValue()
+		}
+	}
+
+	return nil
+}
+
 type levelValue struct {
 	name string
 	level
@@ -203,3 +249,16 @@ type levelValue struct {
 
 func (v *levelValue) String() string { return v.name }
 func (v *levelValue) levelVal()      {}
+
+func levelFromGokitLevel(l gokitlevel.Value) level {
+	switch l.String() {
+	case gokitlevel.ErrorValue().String():
+		return levelError
+	case gokitlevel.WarnValue().String():
+		return levelWarn
+	case gokitlevel.DebugValue().String():
+		return levelDebug
+	}
+
+	return levelInfo
+}

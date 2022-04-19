@@ -171,6 +171,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		EvaluationTime:  result.EvaluatedAt,
 		EvaluationState: result.State,
 		Values:          NewEvaluationValues(result.Values),
+		Condition:       alertRule.Condition,
 	})
 	currentState.LastEvaluationString = result.EvaluationString
 	currentState.TrimResults(alertRule)

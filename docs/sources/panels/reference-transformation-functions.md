@@ -53,6 +53,12 @@ This transformation allow you to select one query and from it extract standard o
 
 If you want to extract a unique config for every row in the config query result then try the rows to fields transformation.
 
+### Options
+
+- **Config query**: Select the query that returns the data you want to use as configuration.
+- **Apply to**: Select what fields or series to apply the configuration to.
+- **Apply to options**: Usually a field type or field name regex depending on what option you selected in **Apply to**.
+
 ## Convert field type
 
 This transformation changes the field type of the specified field.

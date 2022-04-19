@@ -16,14 +16,10 @@ var (
 			DisplayName: "Rules Reader",
 			Description: "Can read alert rules in all Grafana folders and external providers",
 			Group:       AlertRolesGroup,
-			Version:     1,
+			Version:     2,
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingRuleRead,
-					Scope:  dashboards.ScopeFoldersAll,
-				},
-				{
-					Action: dashboards.ActionFoldersRead,
 					Scope:  dashboards.ScopeFoldersAll,
 				},
 				{
@@ -40,7 +36,7 @@ var (
 			DisplayName: "Rules Editor",
 			Description: "Can add, update, and delete rules in any Grafana folder and external providers",
 			Group:       AlertRolesGroup,
-			Version:     1,
+			Version:     2,
 			Permissions: accesscontrol.ConcatPermissions(rulesReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingRuleCreate,
@@ -154,7 +150,7 @@ var (
 			DisplayName: "Full read-only access",
 			Description: "Can read alert rules, instances, silences, contact points, and notification policies in Grafana and all external providers",
 			Group:       AlertRolesGroup,
-			Version:     1,
+			Version:     2,
 			Permissions: accesscontrol.ConcatPermissions(rulesReaderRole.Role.Permissions, instancesReaderRole.Role.Permissions, notificationsReaderRole.Role.Permissions),
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
@@ -166,7 +162,7 @@ var (
 			DisplayName: "Full access",
 			Description: "Can add,update and delete alert rules, instances, silences, contact points, and notification policies in Grafana and all external providers",
 			Group:       AlertRolesGroup,
-			Version:     1,
+			Version:     2,
 			Permissions: accesscontrol.ConcatPermissions(rulesEditorRole.Role.Permissions, instancesEditorRole.Role.Permissions, notificationsEditorRole.Role.Permissions),
 		},
 		Grants: []string{string(models.ROLE_EDITOR)},

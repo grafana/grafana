@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -42,8 +41,6 @@ func TestPlugins(t *testing.T) {
 	}
 
 	t.Run("Install", func(t *testing.T) {
-		store.Bus = bus.GetBus()
-
 		createUser(t, store, models.CreateUserCommand{Login: usernameNonAdmin, Password: defaultPassword, IsAdmin: false})
 		createUser(t, store, models.CreateUserCommand{Login: usernameAdmin, Password: defaultPassword, IsAdmin: true})
 

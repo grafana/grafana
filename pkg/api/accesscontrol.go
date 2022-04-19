@@ -5,6 +5,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -149,6 +150,23 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
+	apikeyReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Version:     1,
+			Name:        "fixed:apikeys:reader",
+			DisplayName: "APIKeys reader",
+			Description: "Gives access to read api keys.",
+			Group:       "API Keys",
+			Permissions: []ac.Permission{
+				{
+					Action: ac.ActionAPIKeyRead,
+					Scope:  ac.ScopeAPIKeysAll,
+				},
+			},
+		},
+		Grants: []string{string(models.ROLE_ADMIN)},
+	}
+
 	apikeyWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Version:     1,
@@ -265,10 +283,9 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "Annotation reader",
 			Description: "Read annotations and tags",
 			Group:       "Annotations",
-			Version:     1,
+			Version:     2,
 			Permissions: []ac.Permission{
 				{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsAll},
-				{Action: ac.ActionAnnotationsTagsRead, Scope: ac.ScopeAnnotationsTagsAll},
 			},
 		},
 		Grants: []string{string(models.ROLE_VIEWER)},
@@ -280,9 +297,9 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "Dashboard annotation writer",
 			Description: "Update annotations associated with dashboards.",
 			Group:       "Annotations",
-			Version:     2,
+			Version:     3,
 			Permissions: []ac.Permission{
-				{Action: ac.ActionAnnotationsCreate},
+				{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsTypeDashboard},
 				{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeDashboard},
 				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeDashboard},
 			},
@@ -296,9 +313,9 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "Annotation writer",
 			Description: "Update all annotations.",
 			Group:       "Annotations",
-			Version:     1,
+			Version:     2,
 			Permissions: []ac.Permission{
-				{Action: ac.ActionAnnotationsCreate},
+				{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsAll},
 				{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsAll},
 				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsAll},
 			},
@@ -308,14 +325,14 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	dashboardsCreatorRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Version:     1,
+			Version:     2,
 			Name:        "fixed:dashboards:creator",
 			DisplayName: "Dashboard creator",
 			Description: "Create dashboard in general folder.",
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScope("0")},
-				{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScope("0")},
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: ac.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
 			},
 		},
 		Grants: []string{"Editor"},
@@ -411,7 +428,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
-		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyWriterRole,
+		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
 	)
 }
 
@@ -463,15 +480,24 @@ var teamsEditAccessEvaluator = ac.EvalAll(
 	),
 )
 
+// apiKeyAccessEvaluator is used to protect the "Configuration > API keys" page access
+var apiKeyAccessEvaluator = ac.EvalPermission(ac.ActionAPIKeyRead)
+
+// serviceAccountAccessEvaluator is used to protect the "Configuration > Service accounts" page access
+var serviceAccountAccessEvaluator = ac.EvalPermission(serviceaccounts.ActionRead)
+
 // Metadata helpers
 // getAccessControlMetadata returns the accesscontrol metadata associated with a given resource
-func (hs *HTTPServer) getAccessControlMetadata(c *models.ReqContext, prefix string, resourceID string) ac.Metadata {
+func (hs *HTTPServer) getAccessControlMetadata(c *models.ReqContext,
+	orgID int64, prefix string, resourceID string) ac.Metadata {
 	ids := map[string]bool{resourceID: true}
-	return hs.getMultiAccessControlMetadata(c, prefix, ids)[resourceID]
+	return hs.getMultiAccessControlMetadata(c, orgID, prefix, ids)[resourceID]
 }
 
 // getMultiAccessControlMetadata returns the accesscontrol metadata associated with a given set of resources
-func (hs *HTTPServer) getMultiAccessControlMetadata(c *models.ReqContext, prefix string, resourceIDs map[string]bool) map[string]ac.Metadata {
+// Context must contain permissions in the given org (see LoadPermissionsMiddleware or AuthorizeInOrgMiddleware)
+func (hs *HTTPServer) getMultiAccessControlMetadata(c *models.ReqContext,
+	orgID int64, prefix string, resourceIDs map[string]bool) map[string]ac.Metadata {
 	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
 		return map[string]ac.Metadata{}
 	}
@@ -480,7 +506,7 @@ func (hs *HTTPServer) getMultiAccessControlMetadata(c *models.ReqContext, prefix
 		return map[string]ac.Metadata{}
 	}
 
-	permissions, ok := c.SignedInUser.Permissions[c.OrgId]
+	permissions, ok := c.SignedInUser.Permissions[orgID]
 	if !ok {
 		return map[string]ac.Metadata{}
 	}

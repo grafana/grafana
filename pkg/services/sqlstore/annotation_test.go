@@ -1,29 +1,39 @@
 //go:build integration
 // +build integration
 
-package sqlstore
+package sqlstore_test
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func TestAnnotations(t *testing.T) {
-	mockTimeNow()
-	defer resetTimeNow()
-
-	repo := SQLAnnotationRepo{}
-	repo.sql = InitTestDB(t)
+	sql := sqlstore.InitTestDB(t)
+	repo := sqlstore.NewSQLAnnotationRepo(sql)
 
 	t.Run("Testing annotation create, read, update and delete", func(t *testing.T) {
 		t.Cleanup(func() {
-			_, err := x.Exec("DELETE FROM annotation WHERE 1=1")
-			assert.NoError(t, err)
-			_, err = x.Exec("DELETE FROM annotation_tag WHERE 1=1")
+			err := sql.WithDbSession(context.Background(), func(dbSession *sqlstore.DBSession) error {
+				_, err := dbSession.Exec("DELETE FROM annotation WHERE 1=1")
+				if err != nil {
+					return err
+				}
+				_, err = dbSession.Exec("DELETE FROM annotation_tag WHERE 1=1")
+				return err
+			})
 			assert.NoError(t, err)
 		})
 
@@ -245,7 +255,7 @@ func TestAnnotations(t *testing.T) {
 			require.NoError(t, err)
 
 			annotationId := items[0].Id
-			err = repo.Delete(&annotations.DeleteParams{Id: annotationId, OrgId: 1})
+			err = repo.Delete(context.Background(), &annotations.DeleteParams{Id: annotationId, OrgId: 1})
 			require.NoError(t, err)
 
 			items, err = repo.Find(context.Background(), query)
@@ -275,7 +285,7 @@ func TestAnnotations(t *testing.T) {
 
 			dashboardId := items[0].DashboardId
 			panelId := items[0].PanelId
-			err = repo.Delete(&annotations.DeleteParams{DashboardId: dashboardId, PanelId: panelId, OrgId: 1})
+			err = repo.Delete(context.Background(), &annotations.DeleteParams{DashboardId: dashboardId, PanelId: panelId, OrgId: 1})
 			require.NoError(t, err)
 
 			items, err = repo.Find(context.Background(), query)
@@ -284,7 +294,7 @@ func TestAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find tags by key", func(t *testing.T) {
-			result, err := repo.FindTags(&annotations.TagsQuery{
+			result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{
 				OrgID: 1,
 				Tag:   "server",
 			})
@@ -295,7 +305,7 @@ func TestAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find tags by value", func(t *testing.T) {
-			result, err := repo.FindTags(&annotations.TagsQuery{
+			result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{
 				OrgID: 1,
 				Tag:   "outage",
 			})
@@ -308,7 +318,7 @@ func TestAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find tags in other org", func(t *testing.T) {
-			result, err := repo.FindTags(&annotations.TagsQuery{
+			result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{
 				OrgID: 0,
 				Tag:   "server-1",
 			})
@@ -317,7 +327,7 @@ func TestAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find tags that do not exist", func(t *testing.T) {
-			result, err := repo.FindTags(&annotations.TagsQuery{
+			result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{
 				OrgID: 0,
 				Tag:   "unknown:tag",
 			})
@@ -325,4 +335,137 @@ func TestAnnotations(t *testing.T) {
 			require.Len(t, result.Tags, 0)
 		})
 	})
+}
+
+func TestAnnotationListingWithFGAC(t *testing.T) {
+	sql := sqlstore.InitTestDB(t)
+	sql.Cfg.IsFeatureToggleEnabled = func(key string) bool {
+		return key == featuremgmt.FlagAccesscontrol
+	}
+	repo := sqlstore.NewSQLAnnotationRepo(sql)
+	dashboardStore := dashboardstore.ProvideDashboardStore(sql)
+
+	testDashboard1 := models.SaveDashboardCommand{
+		UserId: 1,
+		OrgId:  1,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"title": "Dashboard 1",
+		}),
+	}
+	dashboard, err := dashboardStore.SaveDashboard(testDashboard1)
+	require.NoError(t, err)
+	dash1UID := dashboard.Uid
+
+	testDashboard2 := models.SaveDashboardCommand{
+		UserId: 1,
+		OrgId:  1,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"title": "Dashboard 2",
+		}),
+	}
+	_, err = dashboardStore.SaveDashboard(testDashboard2)
+	require.NoError(t, err)
+
+	dash1Annotation := &annotations.Item{
+		OrgId:       1,
+		DashboardId: 1,
+		Epoch:       10,
+	}
+	err = repo.Save(dash1Annotation)
+	require.NoError(t, err)
+
+	dash2Annotation := &annotations.Item{
+		OrgId:       1,
+		DashboardId: 2,
+		Epoch:       10,
+	}
+	err = repo.Save(dash2Annotation)
+	require.NoError(t, err)
+
+	organizationAnnotation := &annotations.Item{
+		OrgId: 1,
+		Epoch: 10,
+	}
+	err = repo.Save(organizationAnnotation)
+	require.NoError(t, err)
+
+	user := &models.SignedInUser{
+		UserId: 1,
+		OrgId:  1,
+	}
+
+	type testStruct struct {
+		description           string
+		permissions           map[string][]string
+		expectedAnnotationIds []int64
+		expectedError         bool
+	}
+
+	testCases := []testStruct{
+		{
+			description: "Should find all annotations when has permissions to list all annotations and read all dashboards",
+			permissions: map[string][]string{
+				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsAll},
+				accesscontrol.ActionDashboardsRead:  {accesscontrol.ScopeDashboardsAll},
+			},
+			expectedAnnotationIds: []int64{dash1Annotation.Id, dash2Annotation.Id, organizationAnnotation.Id},
+		},
+		{
+			description: "Should find all dashboard annotations",
+			permissions: map[string][]string{
+				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
+				accesscontrol.ActionDashboardsRead:  {accesscontrol.ScopeDashboardsAll},
+			},
+			expectedAnnotationIds: []int64{dash1Annotation.Id, dash2Annotation.Id},
+		},
+		{
+			description: "Should find only annotations from dashboards that user can read",
+			permissions: map[string][]string{
+				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
+				accesscontrol.ActionDashboardsRead:  {fmt.Sprintf("dashboards:uid:%s", dash1UID)},
+			},
+			expectedAnnotationIds: []int64{dash1Annotation.Id},
+		},
+		{
+			description: "Should find no annotations if user can't view dashboards or organization annotations",
+			permissions: map[string][]string{
+				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
+			},
+			expectedAnnotationIds: []int64{},
+		},
+		{
+			description: "Should find only organization annotations",
+			permissions: map[string][]string{
+				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeOrganization},
+				accesscontrol.ActionDashboardsRead:  {accesscontrol.ScopeDashboardsAll},
+			},
+			expectedAnnotationIds: []int64{organizationAnnotation.Id},
+		},
+		{
+			description: "Should error if user doesn't have annotation read permissions",
+			permissions: map[string][]string{
+				accesscontrol.ActionDashboardsRead: {accesscontrol.ScopeDashboardsAll},
+			},
+			expectedError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			user.Permissions = map[int64]map[string][]string{1: tc.permissions}
+			results, err := repo.Find(context.Background(), &annotations.ItemQuery{
+				OrgId:        1,
+				SignedInUser: user,
+			})
+			if tc.expectedError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Len(t, results, len(tc.expectedAnnotationIds))
+			for _, r := range results {
+				assert.Contains(t, tc.expectedAnnotationIds, r.Id)
+			}
+		})
+	}
 }

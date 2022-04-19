@@ -16,6 +16,7 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
   const onBlur = (value: string) => {
     setDashboardJson(value);
   };
+
   const onClick = () => {
     getDashboardSrv()
       .saveJSONDashboard(dashboardJson)
@@ -23,6 +24,7 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
         dashboardWatcher.reloadPage();
       });
   };
+
   const styles = useStyles2(getStyles);
 
   return (

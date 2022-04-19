@@ -3,9 +3,11 @@ package azuremonitor
 import (
 	"fmt"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 // Azure cloud names specific to Azure Monitor
@@ -43,17 +45,17 @@ func getDefaultAzureCloud(cfg *setting.Cfg) (string, error) {
 	// Allow only known cloud names
 	cloudName := cfg.Azure.Cloud
 	switch cloudName {
-	case setting.AzurePublic:
-		return setting.AzurePublic, nil
-	case setting.AzureChina:
-		return setting.AzureChina, nil
-	case setting.AzureUSGovernment:
-		return setting.AzureUSGovernment, nil
-	case setting.AzureGermany:
-		return setting.AzureGermany, nil
+	case azsettings.AzurePublic:
+		return azsettings.AzurePublic, nil
+	case azsettings.AzureChina:
+		return azsettings.AzureChina, nil
+	case azsettings.AzureUSGovernment:
+		return azsettings.AzureUSGovernment, nil
+	case azsettings.AzureGermany:
+		return azsettings.AzureGermany, nil
 	case "":
 		// Not set cloud defaults to public
-		return setting.AzurePublic, nil
+		return azsettings.AzurePublic, nil
 	default:
 		err := fmt.Errorf("the cloud '%s' not supported", cloudName)
 		return "", err
@@ -63,13 +65,13 @@ func getDefaultAzureCloud(cfg *setting.Cfg) (string, error) {
 func normalizeAzureCloud(cloudName string) (string, error) {
 	switch cloudName {
 	case azureMonitorPublic:
-		return setting.AzurePublic, nil
+		return azsettings.AzurePublic, nil
 	case azureMonitorChina:
-		return setting.AzureChina, nil
+		return azsettings.AzureChina, nil
 	case azureMonitorUSGovernment:
-		return setting.AzureUSGovernment, nil
+		return azsettings.AzureUSGovernment, nil
 	case azureMonitorGermany:
-		return setting.AzureGermany, nil
+		return azsettings.AzureGermany, nil
 	default:
 		err := fmt.Errorf("the cloud '%s' not supported", cloudName)
 		return "", err

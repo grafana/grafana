@@ -25,6 +25,7 @@ describe('getFieldLinksForExplore', () => {
       containsTemplate() {
         return false;
       },
+      updateTimeRange(timeRange: TimeRange) {},
     });
   });
 

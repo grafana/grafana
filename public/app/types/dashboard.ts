@@ -1,6 +1,7 @@
 import { DashboardAcl } from './acl';
 import { DataQuery } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { VariableModel } from 'app/features/variables/types';
 
 export interface DashboardDTO {
   redirectUri?: string;
@@ -35,10 +36,27 @@ export interface DashboardMeta {
   fromScript?: boolean;
   fromFile?: boolean;
   hasUnsavedFolderChange?: boolean;
+  annotationsPermissions?: AnnotationsPermissions;
+}
+
+export interface AnnotationActions {
+  canAdd: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+}
+
+export interface AnnotationsPermissions {
+  dashboard: AnnotationActions;
+  organization: AnnotationActions;
 }
 
 export interface DashboardDataDTO {
   title: string;
+  uid: string;
+  templating: {
+    list: VariableModel[];
+  };
+  panels?: any[];
 }
 
 export enum DashboardRoutes {

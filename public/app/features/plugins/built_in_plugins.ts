@@ -47,7 +47,6 @@ import * as statusHistoryPanel from 'app/plugins/panel/status-history/module';
 import * as candlestickPanel from 'app/plugins/panel/candlestick/module';
 import * as xyChartPanel from 'app/plugins/panel/xychart/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
-import * as pluginsListPanel from 'app/plugins/panel/pluginlist/module';
 import * as alertListPanel from 'app/plugins/panel/alertlist/module';
 import * as annoListPanel from 'app/plugins/panel/annolist/module';
 import * as heatmapPanelNG from 'app/plugins/panel/heatmap-new/module';
@@ -110,7 +109,6 @@ const builtInPlugins: any = {
   'app/plugins/panel/canvas/module': canvasPanel,
   'app/plugins/panel/icon/module': iconPanel,
   'app/plugins/panel/dashlist/module': dashListPanel,
-  'app/plugins/panel/pluginlist/module': pluginsListPanel,
   'app/plugins/panel/alertlist/module': alertListPanel,
   'app/plugins/panel/annolist/module': annoListPanel,
   'app/plugins/panel/heatmap/module': heatmapPanel,

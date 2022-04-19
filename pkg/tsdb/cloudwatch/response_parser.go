@@ -47,11 +47,16 @@ func (e *cloudWatchExecutor) parseResponse(startTime time.Time, endTime time.Tim
 
 func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) map[string]queryRowResponse {
 	responseByID := make(map[string]queryRowResponse)
+	errorCodes := map[string]bool{
+		maxMetricsExceeded:         false,
+		maxQueryTimeRangeExceeded:  false,
+		maxQueryResultsExceeded:    false,
+		maxMatchingResultsExceeded: false,
+	}
 	for _, gmdo := range getMetricDataOutputs {
-		requestExceededMaxLimit := false
 		for _, message := range gmdo.Messages {
-			if *message.Code == "MaxMetricsExceeded" {
-				requestExceededMaxLimit = true
+			if _, exists := errorCodes[*message.Code]; exists {
+				errorCodes[*message.Code] = true
 			}
 		}
 		for _, r := range gmdo.MetricDataResults {
@@ -75,7 +80,11 @@ func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) m
 				response.appendTimeSeries(r)
 			}
 
-			response.RequestExceededMaxLimit = response.RequestExceededMaxLimit || requestExceededMaxLimit
+			for code := range errorCodes {
+				if _, exists := response.ErrorCodes[code]; exists {
+					response.ErrorCodes[code] = errorCodes[code]
+				}
+			}
 			responseByID[id] = response
 		}
 	}
@@ -183,11 +192,19 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 			Meta:  createMeta(query),
 		}
 
-		if aggregatedResponse.RequestExceededMaxLimit {
-			frame.AppendNotices(data.Notice{
-				Severity: data.NoticeSeverityWarning,
-				Text:     "cloudwatch GetMetricData error: Maximum number of allowed metrics exceeded. Your search may have been limited",
-			})
+		warningTextMap := map[string]string{
+			"MaxMetricsExceeded":         "Maximum number of allowed metrics exceeded. Your search may have been limited",
+			"MaxQueryTimeRangeExceeded":  "Max time window exceeded for query",
+			"MaxQueryResultsExceeded":    "Only the first 500 time series can be returned by a query.",
+			"MaxMatchingResultsExceeded": "The query matched more than 10.000 metrics, results might not be accurate.",
+		}
+		for code := range aggregatedResponse.ErrorCodes {
+			if aggregatedResponse.ErrorCodes[code] {
+				frame.AppendNotices(data.Notice{
+					Severity: data.NoticeSeverityWarning,
+					Text:     "cloudwatch GetMetricData error: " + warningTextMap[code],
+				})
+			}
 		}
 
 		if aggregatedResponse.StatusCode != "Complete" {

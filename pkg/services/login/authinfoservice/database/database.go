@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -16,28 +15,17 @@ var GetTime = time.Now
 
 type AuthInfoStore struct {
 	sqlStore       sqlstore.Store
-	bus            bus.Bus
 	secretsService secrets.Service
 	logger         log.Logger
 }
 
-func ProvideAuthInfoStore(sqlStore sqlstore.Store, bus bus.Bus, secretsService secrets.Service) *AuthInfoStore {
+func ProvideAuthInfoStore(sqlStore sqlstore.Store, secretsService secrets.Service) *AuthInfoStore {
 	store := &AuthInfoStore{
 		sqlStore:       sqlStore,
-		bus:            bus,
 		secretsService: secretsService,
 		logger:         log.New("login.authinfo.store"),
 	}
-	store.registerBusHandlers()
 	return store
-}
-
-func (s *AuthInfoStore) registerBusHandlers() {
-	s.bus.AddHandler(s.GetExternalUserInfoByLogin)
-	s.bus.AddHandler(s.GetAuthInfo)
-	s.bus.AddHandler(s.SetAuthInfo)
-	s.bus.AddHandler(s.UpdateAuthInfo)
-	s.bus.AddHandler(s.DeleteAuthInfo)
 }
 
 func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {

@@ -7,6 +7,7 @@ type AlertConfiguration struct {
 	ID int64 `xorm:"pk autoincr 'id'"`
 
 	AlertmanagerConfiguration string
+	ConfigurationHash         string
 	ConfigurationVersion      string
 	CreatedAt                 int64 `xorm:"created"`
 	Default                   bool
@@ -22,6 +23,7 @@ type GetLatestAlertmanagerConfigurationQuery struct {
 // SaveAlertmanagerConfigurationCmd is the command to save an alertmanager configuration.
 type SaveAlertmanagerConfigurationCmd struct {
 	AlertmanagerConfiguration string
+	FetchedConfigurationHash  string
 	ConfigurationVersion      string
 	Default                   bool
 	OrgID                     int64

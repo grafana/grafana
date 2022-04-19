@@ -49,6 +49,17 @@ func (r RoleType) Children() []RoleType {
 	}
 }
 
+func (r RoleType) Parents() []RoleType {
+	switch r {
+	case ROLE_EDITOR:
+		return []RoleType{ROLE_ADMIN}
+	case ROLE_VIEWER:
+		return []RoleType{ROLE_EDITOR, ROLE_ADMIN}
+	default:
+		return nil
+	}
+}
+
 func (r *RoleType) UnmarshalJSON(data []byte) error {
 	var str string
 	err := json.Unmarshal(data, &str)

@@ -26,7 +26,7 @@ export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
   return (
     <section className={styles.wrapper}>
       <div className={styles.sectionHeader}>
-        <h5>Cortex / Loki</h5>
+        <h5>Mimir / Cortex / Loki</h5>
         {dataSourcesLoading.length ? (
           <LoadingPlaceholder
             className={styles.loader}

@@ -64,18 +64,20 @@ describe('loki result transformer', () => {
     jest.clearAllMocks();
   });
 
-  describe('lokiStreamResultToDataFrame', () => {
+  describe('lokiStreamsToRawDataFrame', () => {
     it('converts streams to series', () => {
-      const data = streamResult.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream));
+      const data = ResultTransformer.lokiStreamsToRawDataFrame(streamResult);
 
-      expect(data.length).toBe(2);
-      expect(data[0].fields[1].labels!['foo']).toEqual('bar');
-      expect(data[0].fields[0].values.get(0)).toEqual('2020-01-24T09:19:22.021Z');
-      expect(data[0].fields[1].values.get(0)).toEqual(streamResult[0].values[0][1]);
-      expect(data[0].fields[2].values.get(0)).toEqual('4b79cb43-81ce-52f7-b1e9-a207fff144dc');
-      expect(data[1].fields[0].values.get(0)).toEqual('2020-01-24T09:19:22.031Z');
-      expect(data[1].fields[1].values.get(0)).toEqual(streamResult[1].values[0][1]);
-      expect(data[1].fields[2].values.get(0)).toEqual('73d144f6-57f2-5a45-a49c-eb998e2006b1');
+      expect(data.fields[0].values.get(0)).toStrictEqual({ foo: 'bar' });
+      expect(data.fields[1].values.get(0)).toEqual('2020-01-24T09:19:22.021Z');
+      expect(data.fields[2].values.get(0)).toEqual(streamResult[0].values[0][1]);
+      expect(data.fields[3].values.get(0)).toEqual(streamResult[0].values[0][0]);
+      expect(data.fields[4].values.get(0)).toEqual('4b79cb43-81ce-52f7-b1e9-a207fff144dc');
+      expect(data.fields[0].values.get(1)).toStrictEqual({ bar: 'foo' });
+      expect(data.fields[1].values.get(1)).toEqual('2020-01-24T09:19:22.031Z');
+      expect(data.fields[2].values.get(1)).toEqual(streamResult[1].values[0][1]);
+      expect(data.fields[3].values.get(1)).toEqual(streamResult[1].values[0][0]);
+      expect(data.fields[4].values.get(1)).toEqual('73d144f6-57f2-5a45-a49c-eb998e2006b1');
     });
 
     it('should always generate unique ids for logs', () => {
@@ -100,20 +102,19 @@ describe('loki result transformer', () => {
         },
       ];
 
-      const data = streamResultWithDuplicateLogs.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream));
+      const data = ResultTransformer.lokiStreamsToRawDataFrame(streamResultWithDuplicateLogs);
 
-      expect(data[0].fields[2].values.get(0)).toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa');
-      expect(data[0].fields[2].values.get(1)).toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_1');
-      expect(data[0].fields[2].values.get(2)).not.toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_2');
-      expect(data[0].fields[2].values.get(3)).toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_2');
-      expect(data[1].fields[2].values.get(0)).not.toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_3');
+      expect(data.fields[4].values.get(0)).toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa');
+      expect(data.fields[4].values.get(1)).toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_1');
+      expect(data.fields[4].values.get(2)).not.toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_2');
+      expect(data.fields[4].values.get(3)).toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_2');
+      expect(data.fields[4].values.get(4)).not.toEqual('b48fe7dc-36aa-5d37-bfba-087ef810d8fa_3');
     });
 
     it('should append refId to the unique ids if refId is provided', () => {
-      const data = streamResult.map((stream) => ResultTransformer.lokiStreamResultToDataFrame(stream, false, 'B'));
-      expect(data.length).toBe(2);
-      expect(data[0].fields[2].values.get(0)).toEqual('4b79cb43-81ce-52f7-b1e9-a207fff144dc_B');
-      expect(data[1].fields[2].values.get(0)).toEqual('73d144f6-57f2-5a45-a49c-eb998e2006b1_B');
+      const data = ResultTransformer.lokiStreamsToRawDataFrame(streamResult, false, 'B');
+      expect(data.fields[4].values.get(0)).toEqual('4b79cb43-81ce-52f7-b1e9-a207fff144dc_B');
+      expect(data.fields[4].values.get(1)).toEqual('73d144f6-57f2-5a45-a49c-eb998e2006b1_B');
     });
   });
 
@@ -159,11 +160,11 @@ describe('loki result transformer', () => {
       };
 
       const data = new CircularDataFrame({ capacity: 1 });
-      data.addField({ name: 'ts', type: FieldType.time, config: { displayName: 'Time' } });
-      data.addField({ name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' } });
-      data.addField({ name: 'line', type: FieldType.string }).labels = { job: 'grafana' };
       data.addField({ name: 'labels', type: FieldType.other });
+      data.addField({ name: 'ts', type: FieldType.time, config: { displayName: 'Time' } });
+      data.addField({ name: 'line', type: FieldType.string }).labels = { job: 'grafana' };
       data.addField({ name: 'id', type: FieldType.string });
+      data.addField({ name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' } });
 
       ResultTransformer.appendResponseToBufferedData(tailResponse, data);
       expect(data.get(0)).toEqual({
@@ -196,11 +197,11 @@ describe('loki result transformer', () => {
       };
 
       const data = new CircularDataFrame({ capacity: 6 });
-      data.addField({ name: 'ts', type: FieldType.time, config: { displayName: 'Time' } });
-      data.addField({ name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' } });
-      data.addField({ name: 'line', type: FieldType.string }).labels = { job: 'grafana' };
       data.addField({ name: 'labels', type: FieldType.other });
+      data.addField({ name: 'ts', type: FieldType.time, config: { displayName: 'Time' } });
+      data.addField({ name: 'line', type: FieldType.string }).labels = { job: 'grafana' };
       data.addField({ name: 'id', type: FieldType.string });
+      data.addField({ name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' } });
       data.refId = 'C';
 
       ResultTransformer.appendResponseToBufferedData(tailResponse, data);
@@ -306,7 +307,7 @@ describe('enhanceDataFrame', () => {
         [1, 1000],
         [0, 2000],
         [1, 4000],
-        [null, 7000],
+        [NaN, 7000],
         [Infinity, 8000],
         [-Infinity, 9000],
       ]);

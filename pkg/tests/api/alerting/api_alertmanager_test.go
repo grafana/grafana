@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
@@ -40,8 +39,6 @@ func TestAMConfigAccess(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
 
 	// Create a users to make authenticated requests
 	createUser(t, store, models.CreateUserCommand{
@@ -101,7 +98,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "permission denied"}`,
+				expBody:   `{"message": "Permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -171,7 +168,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "permission denied"}`,
+				expBody:   `{"message": "Permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -234,7 +231,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "permission denied"}`,
+				expBody:   `{"message": "Permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -340,7 +337,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silence/%s",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "permission denied"}`,
+				expBody:   `{"message": "Permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -403,8 +400,6 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
 
 	// unauthenticated request to get the alerts should fail
 	{
@@ -442,7 +437,10 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-		require.JSONEq(t, `{"message": "invalid username or password"}`, string(b))
+
+		var res map[string]interface{}
+		require.NoError(t, json.Unmarshal(b, &res))
+		require.Equal(t, "invalid username or password", res["message"])
 	}
 
 	// When there are no alerts available, it returns an empty list.
@@ -574,8 +572,6 @@ func TestRulerAccess(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
 
 	// Create the namespace we'll save our alerts to.
 	_, err = createFolder(t, store, 0, "default")
@@ -615,7 +611,7 @@ func TestRulerAccess(t *testing.T) {
 			desc:             "viewer request should fail",
 			url:              "http://viewer:viewer@%s/api/ruler/grafana/api/v1/rules/default",
 			expStatus:        http.StatusForbidden,
-			expectedResponse: `{"message": "user does not have permissions to edit the namespace: user does not have permissions to edit the namespace"}`,
+			expectedResponse: `{"message": "Permission denied"}`,
 		},
 		{
 			desc:             "editor request should succeed",
@@ -704,8 +700,6 @@ func TestDeleteFolderWithRules(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
 
 	// Create the namespace we'll save our alerts to.
 	namespaceUID, err := createFolder(t, store, 0, "default")
@@ -866,8 +860,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
 
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
@@ -908,7 +900,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						Data:  []ngmodels.AlertQuery{},
 					},
 				},
-				expectedResponse: `{"message": "invalid rule specification at index [0]: invalid alert rule: no queries or expressions are found"}`,
+				expectedResponse: `{"message": "invalid rule specification at index [0]: invalid alert rule: no queries or expressions are found", "traceID":"00000000000000000000000000000000"}`,
 			},
 			{
 				desc:      "alert rule with empty title",
@@ -938,7 +930,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message": "invalid rule specification at index [0]: alert rule title cannot be empty"}`,
+				expectedResponse: `{"message": "invalid rule specification at index [0]: alert rule title cannot be empty", "traceID":"00000000000000000000000000000000"}`,
 			},
 			{
 				desc:      "alert rule with too long name",
@@ -968,7 +960,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message": "invalid rule specification at index [0]: alert rule title is too long. Max length is 190"}`,
+				expectedResponse: `{"message": "invalid rule specification at index [0]: alert rule title is too long. Max length is 190", "traceID":"00000000000000000000000000000000"}`,
 			},
 			{
 				desc:      "alert rule with too long rulegroup",
@@ -998,7 +990,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message": "rule group name is too long. Max length is 190"}`,
+				expectedResponse: `{"message": "rule group name is too long. Max length is 190", "traceID":"00000000000000000000000000000000"}`,
 			},
 			{
 				desc:      "alert rule with invalid interval",
@@ -1029,7 +1021,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message": "rule evaluation interval (1 second) should be positive number that is multiple of the base interval of 10 seconds"}`,
+				expectedResponse: `{"message": "rule evaluation interval (1 second) should be positive ` +
+					`number that is multiple of the base interval of 10 seconds", "traceID":"00000000000000000000000000000000"}`,
 			},
 			{
 				desc:      "alert rule with unknown datasource",
@@ -1059,7 +1052,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message": "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring: invalid query A: data source not found: unknown"}`,
+				expectedResponse: `{"message": "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring:` +
+					` invalid query A: data source not found: unknown", "traceID":"00000000000000000000000000000000"}`,
 			},
 			{
 				desc:      "alert rule with invalid condition",
@@ -1089,7 +1083,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message": "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring: condition B not found in any query or expression: it should be one of: [A]"}`,
+				expectedResponse: `{"message": "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring: ` +
+					`condition B not found in any query or expression: it should be one of: [A]", "traceID":"00000000000000000000000000000000"}`,
 			},
 		}
 
@@ -1379,7 +1374,9 @@ func TestAlertRuleCRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-		require.JSONEq(t, `{"message": "failed to update rule group: failed to update rule with UID unknown because could not find alert rule"}`, string(b))
+		var res map[string]interface{}
+		assert.NoError(t, json.Unmarshal(b, &res))
+		require.Equal(t, "failed to update rule group: failed to update rule with UID unknown because could not find alert rule", res["message"])
 
 		// let's make sure that rule definitions are not affected by the failed POST request.
 		u = fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
@@ -1498,7 +1495,9 @@ func TestAlertRuleCRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		require.JSONEq(t, fmt.Sprintf(`{"message": "rule [1] has UID %s that is already assigned to another rule at index 0"}`, ruleUID), string(b))
+		var res map[string]interface{}
+		require.NoError(t, json.Unmarshal(b, &res))
+		require.Equal(t, fmt.Sprintf("rule [1] has UID %s that is already assigned to another rule at index 0", ruleUID), res["message"])
 
 		// let's make sure that rule definitions are not affected by the failed POST request.
 		u = fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
@@ -1890,7 +1889,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 	client := &http.Client{}
 	// Finally, make sure we can delete it.
 	{
-		t.Run("fail if he rule group name does not exists", func(t *testing.T) {
+		t.Run("succeed if the rule group name does not exists", func(t *testing.T) {
 			u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default/groupnotexist", grafanaListedAddr)
 			req, err := http.NewRequest(http.MethodDelete, u, nil)
 			require.NoError(t, err)
@@ -1903,8 +1902,10 @@ func TestAlertRuleCRUD(t *testing.T) {
 			b, err := ioutil.ReadAll(resp.Body)
 			require.NoError(t, err)
 
-			require.Equal(t, http.StatusNotFound, resp.StatusCode)
-			require.JSONEq(t, `{"message": "failed to delete rule group: rule group not found under this namespace"}`, string(b))
+			require.Equal(t, http.StatusAccepted, resp.StatusCode)
+			var res map[string]interface{}
+			require.NoError(t, json.Unmarshal(b, &res))
+			require.Equal(t, "rules deleted", res["message"])
 		})
 
 		t.Run("succeed if the rule group name does exist", func(t *testing.T) {
@@ -1921,7 +1922,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
-			require.JSONEq(t, `{"message":"rule group deleted"}`, string(b))
+			require.JSONEq(t, `{"message":"rules deleted"}`, string(b))
 		})
 	}
 }
@@ -2001,8 +2002,6 @@ func TestQuota(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
 
 	// Create the namespace we'll save our alerts to.
 	_, err = createFolder(t, store, 0, "default")
@@ -2116,7 +2115,9 @@ func TestQuota(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
-		require.JSONEq(t, `{"message": "quota has been exceeded"}`, string(b))
+		var res map[string]interface{}
+		require.NoError(t, json.Unmarshal(b, &res))
+		require.Equal(t, "quota has been exceeded", res["message"])
 	})
 
 	t.Run("when quota limit exceed updating existing rule should succeed", func(t *testing.T) {
@@ -2248,8 +2249,6 @@ func TestEval(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	// override bus to get the GetSignedInUserQuery handler
-	store.Bus = bus.GetBus()
 
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
@@ -2415,7 +2414,8 @@ func TestEval(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"message": "invalid condition: condition B not found in any query or expression: it should be one of: [A]"}`,
+			expectedResponse: `{"message": "invalid condition: condition B not found in any query or expression: it should be one of: [A]",` +
+				`"traceID": "00000000000000000000000000000000"}`,
 		},
 		{
 			desc: "unknown query datasource",
@@ -2440,7 +2440,7 @@ func TestEval(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"message": "invalid condition: invalid query A: data source not found: unknown"}`,
+			expectedResponse:   `{"message": "invalid condition: invalid query A: data source not found: unknown", "traceID": "00000000000000000000000000000000"}`,
 		},
 	}
 
@@ -2596,7 +2596,8 @@ func TestEval(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"message": "invalid queries or expressions: invalid query A: data source not found: unknown"}`,
+			expectedResponse: `{"message": "invalid queries or expressions: invalid query A: data source not found: unknown",` +
+				`"traceID": "00000000000000000000000000000000"}`,
 		},
 	}
 

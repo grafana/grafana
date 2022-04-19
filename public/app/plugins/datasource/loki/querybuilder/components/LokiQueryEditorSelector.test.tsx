@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LokiDatasource } from '../../datasource';
 import { cloneDeep, defaultsDeep } from 'lodash';
-import { LokiQuery } from '../../types';
+import { LokiQuery, LokiQueryType } from '../../types';
 import { LokiQueryEditorSelector } from './LokiQueryEditorSelector';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
@@ -77,33 +77,34 @@ describe('LokiQueryEditorSelector', () => {
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
+      queryType: LokiQueryType.Range,
       editorMode: QueryEditorMode.Builder,
     });
   });
 
-  // it('Can enable preview', async () => {
-  //   const { onChange } = renderWithMode(QueryEditorMode.Builder);
-  //   expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
+  it('Can enable raw query', async () => {
+    const { onChange } = renderWithMode(QueryEditorMode.Builder);
+    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
 
-  //   screen.getByLabelText('Preview').click();
+    screen.getByLabelText('Raw query').click();
 
-  //   expect(onChange).toBeCalledWith({
-  //     refId: 'A',
-  //     expr: defaultQuery.expr,
-  //     range: true,
-  //     editorMode: QueryEditorMode.Builder,
-  //     editorPreview: true,
-  //   });
-  // });
+    expect(onChange).toBeCalledWith({
+      refId: 'A',
+      expr: defaultQuery.expr,
+      queryType: 'range',
+      editorMode: QueryEditorMode.Builder,
+      rawQuery: true,
+    });
+  });
 
-  // it('Should show preview', async () => {
-  //   renderWithProps({
-  //     editorPreview: true,
-  //     editorMode: QueryEditorMode.Builder,
-  //     expr: 'my_metric',
-  //   });
-  //   expect(screen.getByLabelText('selector').textContent).toBe('my_metric');
-  // });
+  it('Should show raw query', async () => {
+    renderWithProps({
+      rawQuery: true,
+      editorMode: QueryEditorMode.Builder,
+      expr: '{job="grafana"}',
+    });
+    expect(screen.getByLabelText('selector').textContent).toBe('{job="grafana"}');
+  });
 
   it('changes to code mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Builder);
@@ -111,6 +112,7 @@ describe('LokiQueryEditorSelector', () => {
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
+      queryType: LokiQueryType.Range,
       editorMode: QueryEditorMode.Code,
     });
   });
@@ -121,33 +123,33 @@ describe('LokiQueryEditorSelector', () => {
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
+      queryType: LokiQueryType.Range,
       editorMode: QueryEditorMode.Explain,
     });
   });
 
-  // it('parses query when changing to builder mode', async () => {
-  //   const { rerender } = renderWithProps({
-  //     refId: 'A',
-  //     expr: 'rate(test_metric{instance="host.docker.internal:3000"}[$__interval])',
-  //     editorMode: QueryEditorMode.Code,
-  //   });
-  //   switchToMode(QueryEditorMode.Builder);
-  //   rerender(
-  //     <PromQueryEditorSelector
-  //       {...defaultProps}
-  //       query={{
-  //         refId: 'A',
-  //         expr: 'rate(test_metric{instance="host.docker.internal:3000"}[$__interval])',
-  //         editorMode: QueryEditorMode.Builder,
-  //       }}
-  //     />
-  //   );
+  it('parses query when changing to builder mode', async () => {
+    const { rerender } = renderWithProps({
+      refId: 'A',
+      expr: 'rate({instance="host.docker.internal:3000"}[$__interval])',
+      editorMode: QueryEditorMode.Code,
+    });
+    switchToMode(QueryEditorMode.Builder);
+    rerender(
+      <LokiQueryEditorSelector
+        {...defaultProps}
+        query={{
+          refId: 'A',
+          expr: 'rate({instance="host.docker.internal:3000"}[$__interval])',
+          editorMode: QueryEditorMode.Builder,
+        }}
+      />
+    );
 
-  //   await screen.findByText('test_metric');
-  //   expect(screen.getByText('host.docker.internal:3000')).toBeInTheDocument();
-  //   expect(screen.getByText('Rate')).toBeInTheDocument();
-  //   expect(screen.getByText('$__interval')).toBeInTheDocument();
-  // });
+    await screen.findByText('host.docker.internal:3000');
+    expect(screen.getByText('Rate')).toBeInTheDocument();
+    expect(screen.getByText('$__interval')).toBeInTheDocument();
+  });
 });
 
 function renderWithMode(mode: QueryEditorMode) {
@@ -178,9 +180,9 @@ function expectExplain() {
 
 function switchToMode(mode: QueryEditorMode) {
   const label = {
-    [QueryEditorMode.Code]: 'Code',
-    [QueryEditorMode.Explain]: 'Explain',
-    [QueryEditorMode.Builder]: 'Builder',
+    [QueryEditorMode.Code]: /Code/,
+    [QueryEditorMode.Explain]: /Explain/,
+    [QueryEditorMode.Builder]: /Builder/,
   }[mode];
 
   const switchEl = screen.getByLabelText(label);

@@ -1,7 +1,7 @@
 import { DataFrameJSON, DataQueryRequest, DataQueryResponse, LiveChannelScope, LoadingState } from '@grafana/data';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 import { map, Observable, defer, mergeMap } from 'rxjs';
-import LokiDatasource from './datasource';
+import { LokiDatasource } from './datasource';
 import { LokiQuery } from './types';
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 

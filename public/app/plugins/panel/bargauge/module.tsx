@@ -1,5 +1,5 @@
 import { commonOptionsBuilder, sharedSingleStatPanelChangedHandler } from '@grafana/ui';
-import { PanelPlugin } from '@grafana/data';
+import { PanelPlugin, VizOrientation } from '@grafana/data';
 import { BarGaugePanel } from './BarGaugePanel';
 import { BarGaugeOptions, displayModes } from './types';
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/types';
@@ -28,6 +28,20 @@ export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
         description: 'When enabled renders the unfilled region as gray',
         defaultValue: true,
         showIf: (options: BarGaugeOptions) => options.displayMode !== 'lcd',
+      })
+      .addNumberInput({
+        path: 'minVizWidth',
+        name: 'Min width',
+        description: 'Minimum column width',
+        defaultValue: 0,
+        showIf: (options: BarGaugeOptions) => options.orientation === VizOrientation.Vertical,
+      })
+      .addNumberInput({
+        path: 'minVizHeight',
+        name: 'Min height',
+        description: 'Minimum row height',
+        defaultValue: 10,
+        showIf: (options: BarGaugeOptions) => options.orientation === VizOrientation.Horizontal,
       });
   })
   .setPanelChangeHandler(sharedSingleStatPanelChangedHandler)

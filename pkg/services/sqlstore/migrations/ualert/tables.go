@@ -306,6 +306,10 @@ func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add index in alert_configuration table on org_id column", migrator.NewAddIndexMigration(alertConfiguration, &migrator.Index{
 		Cols: []string{"org_id"},
 	}))
+
+	mg.AddMigration("add configuration_hash column to alert_configuration", migrator.NewAddColumnMigration(alertConfiguration, &migrator.Column{
+		Name: "configuration_hash", Type: migrator.DB_Varchar, Nullable: false, Default: "'not-yet-calculated'", Length: 32,
+	}))
 }
 
 func AddAlertAdminConfigMigrations(mg *migrator.Migrator) {

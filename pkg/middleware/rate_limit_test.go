@@ -25,7 +25,7 @@ func rateLimiterScenario(t *testing.T, desc string, rps int, burst int, fn rateL
 		defaultHandler := func(c *models.ReqContext) {
 			resp := make(map[string]interface{})
 			resp["message"] = "OK"
-			c.JSON(200, resp)
+			c.JSON(http.StatusOK, resp)
 		}
 		currentTime := time.Now()
 
@@ -33,7 +33,7 @@ func rateLimiterScenario(t *testing.T, desc string, rps int, burst int, fn rateL
 
 		m := web.New()
 		m.UseMiddleware(web.Renderer("../../public/views", "[[", "]]"))
-		m.Use(getContextHandler(t, cfg).Middleware)
+		m.Use(getContextHandler(t, cfg, nil, nil).Middleware)
 		m.Get("/foo", RateLimit(rps, burst, func() time.Time { return currentTime }), defaultHandler)
 
 		fn(func() *httptest.ResponseRecorder {

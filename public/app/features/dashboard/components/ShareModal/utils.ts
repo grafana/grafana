@@ -9,7 +9,7 @@ export interface BuildParamsArgs {
   panel?: PanelModel;
   search?: string;
   range?: TimeRange;
-  orgId?: string;
+  orgId?: number;
 }
 
 export function buildParams({
@@ -24,7 +24,7 @@ export function buildParams({
 
   searchParams.set('from', String(range.from.valueOf()));
   searchParams.set('to', String(range.to.valueOf()));
-  searchParams.set('orgId', orgId);
+  searchParams.set('orgId', String(orgId));
 
   if (!useCurrentTimeRange) {
     searchParams.delete('from');

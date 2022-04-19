@@ -1,6 +1,8 @@
+import { AccessControlAction } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 import React, { FC, useMemo } from 'react';
 import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
+import { Authorize } from '../Authorize';
 import { CloudRules } from './CloudRules';
 import { GrafanaRules } from './GrafanaRules';
 
@@ -25,8 +27,12 @@ export const RuleListGroupView: FC<Props> = ({ namespaces, expandAll }) => {
 
   return (
     <>
-      <GrafanaRules namespaces={grafanaNamespaces} expandAll={expandAll} />
-      <CloudRules namespaces={cloudNamespaces} expandAll={expandAll} />
+      <Authorize actions={[AccessControlAction.AlertingRuleRead]}>
+        <GrafanaRules namespaces={grafanaNamespaces} expandAll={expandAll} />
+      </Authorize>
+      <Authorize actions={[AccessControlAction.AlertingRuleExternalRead]}>
+        <CloudRules namespaces={cloudNamespaces} expandAll={expandAll} />
+      </Authorize>
     </>
   );
 };

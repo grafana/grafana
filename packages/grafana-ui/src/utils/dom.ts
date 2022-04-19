@@ -37,5 +37,5 @@ export function getNextCharacter(global?: any) {
   const range = selection.getRangeAt(0);
   const text = selection.anchorNode.textContent;
   const offset = range.startOffset;
-  return text!.substr(offset, 1);
+  return text!.slice(offset, offset + 1);
 }

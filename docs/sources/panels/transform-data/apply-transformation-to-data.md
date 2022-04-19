@@ -28,9 +28,3 @@ The following steps guide you in applying a transformation to data. This documen
    This transformation acts on the result set returned by the previous transformation.
 
    {{< figure src="/static/img/docs/transformations/transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
-
-## Options
-
-- **Config query**: Select the query that returns the data you want to use as configuration.
-- **Apply to**: Select what fields or series to apply the configuration to.
-- **Apply to options**: Usually a field type or field name regex depending on what option you selected in **Apply to**.

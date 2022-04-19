@@ -14,7 +14,8 @@ export function changeEditorMode(query: PromQuery, editorMode: QueryEditorMode, 
   onChange({ ...query, editorMode });
 }
 
-export function getDefaultEditorMode(expr: string) {
+// @ts-ignore Will be used after builder is out of beta
+function getDefaultEditorMode(expr: string) {
   // If we already have an expression default to code view
   if (expr != null && expr !== '') {
     return QueryEditorMode.Code;
@@ -35,11 +36,11 @@ export function getDefaultEditorMode(expr: string) {
  * Returns query with defaults, and boolean true/false depending on change was required
  */
 export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined): PromQuery {
-  // If no expr (ie new query) then default to builder
   let result = query;
 
   if (!query.editorMode) {
-    result = { ...query, editorMode: getDefaultEditorMode(query.expr) };
+    // Default to Code mode until we are out of beta with the builder, then use getDefaultEditorMode.
+    result = { ...query, editorMode: QueryEditorMode.Code };
   }
 
   if (query.expr == null) {

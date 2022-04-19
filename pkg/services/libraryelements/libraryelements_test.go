@@ -201,7 +201,7 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 	}
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
-	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil)
+	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	service := dashboardservice.ProvideDashboardService(
 		setting.NewCfg(), dashboardStore, dashAlertExtractor,
 		featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
@@ -228,7 +228,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	ac := acmock.New()
 	s := dashboardservice.ProvideFolderService(
 		cfg, d, dashboardStore, nil,
-		features, permissionsServices, ac,
+		features, permissionsServices, ac, nil,
 	)
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), &user, user.OrgId, title, title)
@@ -327,7 +327,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			SQLStore: sqlStore,
 			folderService: dashboardservice.ProvideFolderService(
 				setting.NewCfg(), dashboardService, dashboardStore, nil,
-				featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(), ac,
+				featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(), ac, nil,
 			),
 		}
 
