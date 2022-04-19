@@ -24,6 +24,32 @@ interface RuleStateHistoryProps {
   alertId: string;
 }
 
+function sortStateHistory(a: StateHistoryItem, b: StateHistoryItem): number {
+  const compareDesc = (a: number, b: number): number => {
+    // Larger numbers first.
+    if (a > b) {
+      return -1;
+    }
+
+    if (b > a) {
+      return 1;
+    }
+    return 0;
+  };
+
+  const endNeq = compareDesc(a.timeEnd, b.timeEnd);
+  if (endNeq) {
+    return endNeq;
+  }
+
+  const timeNeq = compareDesc(a.time, b.time);
+  if (timeNeq) {
+    return timeNeq;
+  }
+
+  return compareDesc(a.id, b.id);
+}
+
 const StateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
   const { loading, error, result = [] } = useManagedAlertStateHistory(alertId);
 
@@ -42,6 +68,7 @@ const StateHistory: FC<RuleStateHistoryProps> = ({ alertId }) => {
   ];
 
   const items: StateHistoryRow[] = result
+    .sort(sortStateHistory)
     .reduce((acc: StateHistoryRowItem[], item, index) => {
       acc.push({
         id: String(item.id),
@@ -123,4 +150,7 @@ function hasMatchingPrecedingState(index: number, items: StateHistoryItem[]): bo
   return previousHistoryItem.newState === currentHistoryItem.prevState;
 }
 
-export { StateHistory };
+export {
+  StateHistory,
+  sortStateHistory, // exported for testing.
+};
