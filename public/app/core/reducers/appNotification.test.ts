@@ -1,4 +1,4 @@
-import { appNotificationsReducer, hideAppNotification, notifyApp } from './appNotification';
+import { appNotificationsReducer, clearNotification, notifyApp } from './appNotification';
 import { AppNotificationSeverity, AppNotificationsState } from 'app/types/';
 
 const timestamp = 1649849468889;
@@ -31,7 +31,7 @@ describe('clear alert', () => {
       lastRead: timestamp - 10,
     };
 
-    const result = appNotificationsReducer(initialState, hideAppNotification(id2));
+    const result = appNotificationsReducer(initialState, clearNotification(id2));
 
     const expectedResult: AppNotificationsState = {
       byId: {
@@ -121,7 +121,7 @@ describe('notify', () => {
           icon: 'info',
           title: 'test3',
           text: 'test alert info 3',
-          timestamp,
+          timestamp: 1649802870373,
           showing: true,
         },
       },

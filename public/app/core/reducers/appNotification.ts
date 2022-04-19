@@ -22,7 +22,7 @@ const appNotificationsSlice = createSlice({
   initialState,
   reducers: {
     notifyApp: (state, { payload: newAlert }: PayloadAction<AppNotification>) => {
-      if (Object.values(state.byId).some((alert) => isSimilar(newAlert, alert))) {
+      if (Object.values(state.byId).some((alert) => isSimilar(newAlert, alert) && alert.showing)) {
         return;
       }
 
@@ -67,14 +67,7 @@ export const selectVisible = (state: AppNotificationsState) => Object.values(sta
 // Helper functions
 
 function isSimilar(a: AppNotification, b: AppNotification): boolean {
-  return (
-    a.icon === b.icon &&
-    a.severity === b.severity &&
-    a.text === b.text &&
-    a.title === b.title &&
-    a.component === b.component &&
-    b.showing
-  );
+  return a.icon === b.icon && a.severity === b.severity && a.text === b.text && a.title === b.title;
 }
 
 function isAtLeastWarning(notif: AppNotification) {
@@ -93,7 +86,7 @@ function isStoredNotification(obj: any): obj is StoredNotification {
 // (De)serialization
 
 export function deserializeNotifications(): Record<string, StoredNotification> {
-  if (!config.featureToggles.persistNotifications) {
+  if (!config.featureToggles?.persistNotifications) {
     return {};
   }
 
@@ -111,7 +104,7 @@ export function deserializeNotifications(): Record<string, StoredNotification> {
 }
 
 function serializeNotifications(notifs: Record<string, StoredNotification>) {
-  if (!config.featureToggles.persistNotifications) {
+  if (!config.featureToggles?.persistNotifications) {
     return;
   }
 

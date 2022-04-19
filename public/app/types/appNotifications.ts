@@ -23,6 +23,13 @@ export enum AppNotificationTimeout {
   Error = 7000,
 }
 
+export const timeoutMap = {
+  [AppNotificationSeverity.Success]: AppNotificationTimeout.Success,
+  [AppNotificationSeverity.Warning]: AppNotificationTimeout.Warning,
+  [AppNotificationSeverity.Error]: AppNotificationTimeout.Error,
+  [AppNotificationSeverity.Info]: AppNotificationTimeout.Success,
+};
+
 export interface AppNotificationsState {
   byId: Record<string, AppNotification>;
   lastRead: number;

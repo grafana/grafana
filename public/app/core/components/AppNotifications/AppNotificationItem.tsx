@@ -1,11 +1,9 @@
 import React from 'react';
-import { AppNotification, AppNotificationSeverity, AppNotificationTimeout } from 'app/types';
-import { Alert, useStyles2 } from '@grafana/ui';
 import { useEffectOnce } from 'react-use';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-
-import { capitalize } from 'lodash';
+import { Alert, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { AppNotification, timeoutMap } from 'app/types';
 
 interface Props {
   appNotification: AppNotification;
@@ -16,11 +14,9 @@ export default function AppNotificationItem({ appNotification, onClearNotificati
   const styles = useStyles2(getStyles);
 
   useEffectOnce(() => {
-    if (appNotification.severity !== AppNotificationSeverity.Info) {
-      setTimeout(() => {
-        onClearNotification(appNotification.id);
-      }, AppNotificationTimeout[capitalize(appNotification.severity) as 'Success' | 'Warning' | 'Error']);
-    }
+    setTimeout(() => {
+      onClearNotification(appNotification.id);
+    }, timeoutMap[appNotification.severity]);
   });
 
   return (

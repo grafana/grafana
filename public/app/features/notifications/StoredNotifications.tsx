@@ -83,7 +83,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       padding: '3px 6px',
-      paddingTop: '8px',
+      paddingTop: theme.spacing(1),
       alignItems: 'flex-end',
       justifyContent: 'space-between',
       flexShrink: 0,
