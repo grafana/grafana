@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_AddDashAlertMigration(t *testing.T) {
+func TestAddDashAlertMigration(t *testing.T) {
 	x := setupTestDB(t)
 
 	tc := []struct {
@@ -95,7 +95,7 @@ func Test_AddDashAlertMigration(t *testing.T) {
 	}
 }
 
-func Test_DashAlertMigration(t *testing.T) {
+func TestDashAlertMigration(t *testing.T) {
 	// Run initial migration to have a working DB.
 	x := setupTestDB(t)
 
@@ -365,7 +365,6 @@ func Test_DashAlertMigration(t *testing.T) {
 				if !cmp.Equal(tt.expected[orgId].AlertmanagerConfig.Receivers, amConfig.AlertmanagerConfig.Receivers, cOpt...) {
 					t.Errorf("Unexpected Receivers: %v", cmp.Diff(tt.expected[orgId].AlertmanagerConfig.Receivers, amConfig.AlertmanagerConfig.Receivers, cOpt...))
 				}
-				// require.Equal(t, tt.expected[orgId].AlertmanagerConfig.Receivers, amConfig.AlertmanagerConfig.Receivers)
 
 				// Since routes and alerts are connecting solely by the Matchers on rule_uid, which is created at runtime we need to do some prep-work to populate the expected Matchers.
 				alertUids := getAlertNameToUidMap(t, x, orgId)
