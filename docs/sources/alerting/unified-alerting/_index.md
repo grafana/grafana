@@ -27,7 +27,7 @@ Before you begin using Grafana alerting, we recommend that you familiarize yours
 
 ## Performance Considerations.
 
-Grafana Alerting now support multi-dimensional alerting, or templatized alerting, so that one alert rule can generate many separate alerts. For example, one alert rule could generate an alert for each VM that's CPU is maxed out. This new capability adds some new performance considerations.
+Grafana Alerting now supports multi-dimensional alerting, or templatized alerting, so that one alert rule can generate many separate alerts. For example, one alert rule could generate an alert for each VM that's CPU is maxed out. This new capability adds some new performance considerations.
 
 Evaluating Alerting rules consumes RAM and CPU to compute the output of an alerting query, and network resources to write the results to the Grafana SQL database. The SQL database's network connections are often saturated before RAM or CPU are exhausted. The configuration of alert rules affects how many resources the Alertmanager consumes, and therefore the maximum number of rules a given configuration can support.
 
@@ -39,7 +39,7 @@ These load factors include:
 
 Each evaluation of an alert rule generates a set of "alert instances", one for each member of the result set. The state of all alert instances are written to Grafana's SQL database in the `alert_instance` table.
 
-To estimate the load that alerting queries are putting on your system, you can count the number of alert instances that have been updated recently. This is a rough estimate - if you some rules evaluated every 30m, and others every 10s, load will be unevenly distributed.
+To estimate the load that alerting queries are putting on your system, you can count the number of alert instances that have been updated recently. This is a rough estimate - if you have some rules evaluated every 30m, and others every 10s, load will be unevenly distributed.
 
 The query will differ based on your database backend. For MySQL, over the last 5 minutes:
 
