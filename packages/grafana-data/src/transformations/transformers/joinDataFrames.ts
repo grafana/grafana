@@ -49,13 +49,6 @@ export interface JoinOptions {
   keep?: FieldMatcher;
 
   /**
-   * When the result is a single frame, this will to a quick check to see if the values are sorted,
-   * and sort if necessary.  If the first/last values are in order the whole vector is assumed to be
-   * sorted
-   */
-  enforceSort?: boolean;
-
-  /**
    * @internal -- used when we need to keep a reference to the original frame/field index
    */
   keepOriginIndices?: boolean;
@@ -109,12 +102,8 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
       }
     }
 
-    if (options.enforceSort) {
-      if (joinIndex >= 0) {
-        if (!isLikelyAscendingVector(frameCopy.fields[joinIndex].values)) {
-          frameCopy = sortDataFrame(frameCopy, joinIndex);
-        }
-      }
+    if (joinIndex >= 0 && !isLikelyAscendingVector(frameCopy.fields[joinIndex].values)) {
+      frameCopy = sortDataFrame(frameCopy, joinIndex);
     }
 
     if (options.keep) {

@@ -301,7 +301,7 @@ export function prepareBarChartDisplayValues(
   }
 
   // Bar chart requires a single frame
-  const frame = series.length === 1 ? series[0] : outerJoinDataFrames({ frames: series, enforceSort: false });
+  const frame = series.length === 1 ? series[0] : outerJoinDataFrames({ frames: series });
   if (!frame) {
     return { warn: 'Unable to join data' } as BarChartDisplayValues;
   }

@@ -102,7 +102,7 @@ export function prepareCandlestickFields(
 
   // All fields
   const fieldMap = options.fields ?? {};
-  const aligned = series.length === 1 ? series[0] : outerJoinDataFrames({ frames: series, enforceSort: true });
+  const aligned = series.length === 1 ? series[0] : outerJoinDataFrames({ frames: series });
   if (!aligned?.length) {
     return null;
   }
