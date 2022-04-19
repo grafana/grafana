@@ -10,7 +10,7 @@ import { SelectableValue } from '@grafana/data';
 export interface DashboardPickerItem {
   id: number;
   uid: string;
-  [key: string]: any;
+  [key: string]: string | number;
 }
 
 interface Props {
