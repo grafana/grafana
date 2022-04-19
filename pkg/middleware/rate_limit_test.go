@@ -25,7 +25,7 @@ func rateLimiterScenario(t *testing.T, desc string, rps int, burst int, fn rateL
 		defaultHandler := func(c *models.ReqContext) {
 			resp := make(map[string]interface{})
 			resp["message"] = "OK"
-			c.JSON(200, resp)
+			c.JSON(http.StatusOK, resp)
 		}
 		currentTime := time.Now()
 
