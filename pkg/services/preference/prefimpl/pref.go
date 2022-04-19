@@ -15,7 +15,7 @@ type Service struct {
 	cfg   *setting.Cfg
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg) *Service {
+func ProvideService(db db.DB, cfg *setting.Cfg) pref.Service {
 	return &Service{
 		store: &sqlStore{
 			db: db,
