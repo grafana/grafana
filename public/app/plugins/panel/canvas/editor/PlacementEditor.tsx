@@ -1,19 +1,30 @@
 import React, { FC } from 'react';
 import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
-import { Button, Field, HorizontalGroup, InlineField, InlineFieldRow } from '@grafana/ui';
-import { StandardEditorProps } from '@grafana/data';
+import { Field, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
+import { SelectableValue, StandardEditorProps } from '@grafana/data';
 
 import { PanelOptions } from '../models.gen';
 import { CanvasEditorOptions } from './elementEditor';
-import { Anchor, Placement } from 'app/features/canvas';
+import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/features/canvas';
 import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
-import { ElementState } from 'app/features/canvas/runtime/element';
 
-const anchors: Array<keyof Anchor> = ['top', 'left', 'bottom', 'right'];
 const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width', 'height'];
 
-export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, PanelOptions>> = ({ item }) => {
+const horizontalOptions: Array<SelectableValue<HorizontalConstraint>> = [
+  { label: 'Left', value: HorizontalConstraint.Left },
+  { label: 'Right', value: HorizontalConstraint.Right },
+];
+
+const verticalOptions: Array<SelectableValue<VerticalConstraint>> = [
+  { label: 'Top', value: VerticalConstraint.Top },
+  { label: 'Bottom', value: VerticalConstraint.Bottom },
+];
+
+export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, PanelOptions>> = ({
+  item,
+  onChange,
+}) => {
   const settings = item.settings;
 
   // Will force a rerender whenever the subject changes
@@ -27,32 +38,45 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
   if (!element) {
     return <div>???</div>;
   }
-  const { placement } = element;
+  const { options } = element;
+  const { placement, constraint: layout } = options;
 
-  const onToggleAnchor = (element: ElementState, anchor: keyof Anchor) => {
-    settings.scene.toggleAnchor(element, anchor);
+  // const onToggleAnchor = (element: ElementState, anchor: keyof Anchor) => {
+  //   settings.scene.toggleAnchor(element, anchor);
+  // };
+
+  const onHorizontalConstraintChange = (h: SelectableValue<HorizontalConstraint>) => {
+    element.options.constraint!.horizontal = h.value;
+    element.validatePlacement();
+    settings.scene.revId++;
+    settings.scene.save();
+    setTimeout(() => settings.scene.initMoveable(true), 100);
+  };
+
+  const onVerticalConstraintChange = (v: SelectableValue<VerticalConstraint>) => {
+    element.options.constraint!.vertical = v.value;
+    element.validatePlacement();
+    settings.scene.revId++;
+    settings.scene.save();
+    setTimeout(() => settings.scene.initMoveable(true), 100);
   };
 
   return (
     <div>
-      <HorizontalGroup>
-        {anchors.map((anchor) => (
-          <Button
-            key={anchor}
-            size="sm"
-            variant={element.anchor[anchor] ? 'primary' : 'secondary'}
-            onClick={() => onToggleAnchor(element, anchor)}
-          >
-            {anchor}
-          </Button>
-        ))}
-      </HorizontalGroup>
+      <VerticalGroup>
+        <Select options={verticalOptions} onChange={onVerticalConstraintChange} value={layout?.vertical} />
+        <Select
+          options={horizontalOptions}
+          onChange={onHorizontalConstraintChange}
+          value={options.constraint?.horizontal}
+        />
+      </VerticalGroup>
       <br />
 
       <Field label="Position">
         <>
           {places.map((p) => {
-            const v = placement[p];
+            const v = placement![p];
             if (v == null) {
               return null;
             }

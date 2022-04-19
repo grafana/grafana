@@ -8,7 +8,7 @@ import Selecto from 'selecto';
 import { config } from 'app/core/config';
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
-import { Anchor, CanvasGroupOptions, DEFAULT_CANVAS_ELEMENT_CONFIG, Placement } from 'app/features/canvas';
+import { CanvasGroupOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import {
   ColorDimensionConfig,
   ResourceDimensionConfig,
@@ -157,42 +157,42 @@ export class Scene {
     this.save();
   }
 
-  toggleAnchor(element: ElementState, k: keyof Anchor) {
-    const { div } = element;
-    if (!div) {
-      console.log('Not ready');
-      return;
-    }
+  // toggleAnchor(element: ElementState, k: keyof Anchor) {
+  //   const { div } = element;
+  //   if (!div) {
+  //     console.log('Not ready');
+  //     return;
+  //   }
 
-    const w = element.parent?.width ?? 100;
-    const h = element.parent?.height ?? 100;
+  //   const w = element.parent?.width ?? 100;
+  //   const h = element.parent?.height ?? 100;
 
-    // Get computed position....
-    const info = div.getBoundingClientRect(); // getElementInfo(div, element.parent?.div);
-    console.log('DIV info', div);
+  //   // Get computed position....
+  //   const info = div.getBoundingClientRect(); // getElementInfo(div, element.parent?.div);
+  //   console.log('DIV info', div);
 
-    const placement: Placement = {
-      top: info.top,
-      left: info.left,
-      width: info.width,
-      height: info.height,
-      bottom: h - info.bottom,
-      right: w - info.right,
-    };
+  //   const placement: Placement = {
+  //     top: info.top,
+  //     left: info.left,
+  //     width: info.width,
+  //     height: info.height,
+  //     bottom: h - info.bottom,
+  //     right: w - info.right,
+  //   };
 
-    console.log('PPP', placement);
-    console.log('element anchor', !Boolean(element.anchor[k]));
+  //   console.log('PPP', placement);
+  //   console.log('element anchor', !Boolean(element.anchor[k]));
 
-    // // TODO: needs to recalculate placement based on absolute values...
-    element.anchor[k] = !Boolean(element.anchor[k]);
-    element.placement = placement;
-    element.validatePlacement();
-    element.revId++;
-    this.revId++;
-    this.save(true);
+  //   // // TODO: needs to recalculate placement based on absolute values...
+  // element.anchor[k] = !Boolean(element.anchor[k]);
+  // element.placement = placement;
+  // element.validatePlacement();
+  // element.revId++;
+  // this.revId++;
+  // this.save(true);
 
-    this.moved.next(Date.now());
-  }
+  //   this.moved.next(Date.now());
+  // }
 
   save = (updateMoveable = false) => {
     this.onSave(this.root.getSaveModel());
@@ -271,7 +271,7 @@ export class Scene {
   initMoveable = (destroySelecto = false, allowChanges = true) => {
     const targetElements = this.generateTargetElements(this.root.elements);
 
-    if (destroySelecto) {
+    if (destroySelecto && this.selecto) {
       this.selecto?.destroy();
     }
 
@@ -304,6 +304,7 @@ export class Scene {
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
 
+        // validate element placement?
         if (targetedElement && targetedElement.parent) {
           const parent = targetedElement.parent;
           targetedElement.updateSize(parent.width, parent.height);

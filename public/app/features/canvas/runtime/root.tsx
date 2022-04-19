@@ -28,10 +28,10 @@ export class RootElement extends GroupState {
   }
 
   getSaveModel(): CanvasGroupOptions {
-    const { placement, anchor, ...rest } = this.options;
+    const { placement, constraint, ...rest } = this.options;
 
     return {
-      ...rest, // everything except placement & anchor
+      ...rest, // everything except placement & constraint
       elements: this.elements.map((v) => v.getSaveModel()),
     };
   }

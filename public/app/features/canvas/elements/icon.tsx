@@ -78,6 +78,8 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
     placement: {
       width: 50,
       height: 50,
+      top: 0,
+      left: 0,
     },
     ...options,
     config: {

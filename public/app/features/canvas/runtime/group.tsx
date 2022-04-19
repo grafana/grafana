@@ -113,18 +113,18 @@ export class GroupState extends ElementState {
           return;
         }
         const opts = cloneDeep(element.options);
-        if (element.anchor.top) {
-          opts.placement!.top! += 10;
-        }
-        if (element.anchor.left) {
-          opts.placement!.left! += 10;
-        }
-        if (element.anchor.bottom) {
-          opts.placement!.bottom! += 10;
-        }
-        if (element.anchor.right) {
-          opts.placement!.right! += 10;
-        }
+        // if (element.anchor.top) {
+        //   opts.placement!.top! += 10;
+        // }
+        // if (element.anchor.left) {
+        //   opts.placement!.left! += 10;
+        // }
+        // if (element.anchor.bottom) {
+        //   opts.placement!.bottom! += 10;
+        // }
+        // if (element.anchor.right) {
+        //   opts.placement!.right! += 10;
+        // }
 
         const copy = new ElementState(element.item, opts, this);
         copy.updateSize(element.width, element.height);
