@@ -49,16 +49,14 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
     element.options.constraint!.horizontal = h.value;
     element.validatePlacement();
     settings.scene.revId++;
-    settings.scene.save();
-    setTimeout(() => settings.scene.initMoveable(true), 100);
+    settings.scene.save(true);
   };
 
   const onVerticalConstraintChange = (v: SelectableValue<VerticalConstraint>) => {
     element.options.constraint!.vertical = v.value;
     element.validatePlacement();
     settings.scene.revId++;
-    settings.scene.save();
-    setTimeout(() => settings.scene.initMoveable(true), 100);
+    settings.scene.save(true);
   };
 
   return (

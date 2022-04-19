@@ -68,70 +68,66 @@ export class ElementState implements LayerElement {
     return this.options.name;
   }
 
+  // Make sure saved constraints aren't over defined, on load, on horizontal / vertical placement change?
   validatePlacement() {
-    let { constraint, placement } = this.options;
-    placement = placement ?? {};
+    let { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
-    const isConstrainedTop = vertical === VerticalConstraint.Top || vertical === VerticalConstraint.TopBottom;
-    const isConstrainedBottom = vertical === VerticalConstraint.Bottom || vertical === VerticalConstraint.TopBottom;
-    const isConstrainedLeft = horizontal === HorizontalConstraint.Left || horizontal === HorizontalConstraint.LeftRight;
-    const isConstrainedRight =
-      horizontal === HorizontalConstraint.Right || horizontal === HorizontalConstraint.LeftRight;
 
-    const scene = this.getScene();
     const elementContainer = this.div && this.div.getBoundingClientRect();
-    const rootContainer = scene?.div && this.getScene()?.div?.getBoundingClientRect();
+    const parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
 
     const relativeTop =
-      elementContainer && rootContainer ? Math.abs(Math.round(elementContainer.top - rootContainer.top)) : 0;
+      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.top - parentContainer.top)) : 0;
     const relativeBottom =
-      elementContainer && rootContainer ? Math.abs(Math.round(elementContainer.bottom - rootContainer.bottom)) : 0;
+      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.bottom - parentContainer.bottom)) : 0;
     const relativeLeft =
-      elementContainer && rootContainer ? Math.abs(Math.round(elementContainer.left - rootContainer.left)) : 0;
+      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.left - parentContainer.left)) : 0;
     const relativeRight =
-      elementContainer && rootContainer ? Math.abs(Math.round(elementContainer.right - rootContainer.right)) : 0;
+      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.right - parentContainer.right)) : 0;
 
-    const w = placement.width ?? 100;
-    const h = placement.height ?? 100;
-    if (isConstrainedTop) {
-      if (!placement.top) {
+    const placement = {} as Placement;
+
+    const w = elementContainer?.width ?? 100;
+    const h = elementContainer?.height ?? 100;
+
+    switch (vertical) {
+      case VerticalConstraint.Top:
         placement.top = relativeTop;
-      }
-      if (isConstrainedBottom) {
-        delete placement.height;
-      } else {
         placement.height = h;
-        delete placement.bottom;
-      }
-    } else if (isConstrainedBottom) {
-      if (!placement.bottom) {
+        break;
+      case VerticalConstraint.Bottom:
         placement.bottom = relativeBottom;
-      }
-      placement.height = h;
-      delete placement.top;
+        placement.height = h;
+        break;
+      case VerticalConstraint.TopBottom:
+        placement.top = relativeTop;
+        placement.bottom = relativeBottom;
+        break;
     }
-    if (isConstrainedLeft) {
-      if (!placement.left) {
+
+    switch (horizontal) {
+      case HorizontalConstraint.Left:
         placement.left = relativeLeft;
-      }
-      if (isConstrainedRight) {
-        delete placement.width;
-      } else {
         placement.width = w;
-        delete placement.right;
-      }
-    } else if (isConstrainedRight) {
-      if (!placement.right) {
+        break;
+      case HorizontalConstraint.Right:
         placement.right = relativeRight;
-      }
-      placement.width = w;
-      delete placement.left;
+        placement.width = w;
+        break;
+      case HorizontalConstraint.LeftRight:
+        placement.left = relativeLeft;
+        placement.right = relativeRight;
+        break;
     }
+
     this.width = w;
     this.height = h;
     this.options.placement = placement;
+    this.sizeStyle = {
+      ...this.options.placement,
+      position: 'absolute',
+    };
     this.revId++;
-    scene && scene.revId++;
   }
 
   // The parent size, need to set our own size based on offsets
