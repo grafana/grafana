@@ -10,6 +10,7 @@ import {
   getFieldDisplayName,
   Field,
 } from '@grafana/data';
+// import { Heatmap } from 'ol/layer';
 import { map } from 'rxjs';
 import { HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
 import { niceLinearIncrs, niceTimeIncrs } from './utils';
@@ -29,11 +30,11 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
 
   transformer: (options: HeatmapTransformerOptions) => {
     return (data: DataFrame[]) => {
-      const v = calculateHeatmapFromData(data, options);
+      const v = calculateHeatmapFromData({ heatmap: data }, options);
       if (options.keepOriginalData) {
-        return [v, ...data];
+        return [v['heatmap'], ...data];
       }
-      return [v];
+      return [v['heatmap']];
     };
   },
 };
@@ -147,14 +148,7 @@ export function prepBucketFrames(frames: DataFrame[]): DataFrame[] {
   }));
 }
 
-export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCalculationOptions): DataFrame {
-  let xs: number[] = [];
-  let ys: number[] = [];
-
-  // optimization
-  //let xMin = Infinity;
-  //let xMax = -Infinity;
-
+function calculateHeatmapGeometry(frames: DataFrame[], options: HeatmapCalculationOptions) {
   let xField: Field | undefined = undefined;
   let yField: Field | undefined = undefined;
 
@@ -169,12 +163,8 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
       xField = x; // the first X
     }
 
-    const xValues = x.values.toArray();
     for (let field of frame.fields) {
       if (field !== x && field.type === FieldType.number) {
-        xs = xs.concat(xValues);
-        ys = ys.concat(field.values.toArray());
-
         if (!yField) {
           yField = field;
         }
@@ -186,7 +176,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     throw 'no heatmap fields found';
   }
 
-  const heat2d = heatmap(xs, ys, {
+  return calculateBins(xField, yField, {
     xSorted: true,
     xTime: xField.type === FieldType.time,
     xMode: options.xAxis?.mode,
@@ -194,52 +184,83 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     yMode: options.yAxis?.mode,
     ySize: +(options.yAxis?.value ?? 0),
   });
+}
 
-  const frame = {
-    length: heat2d.x.length,
-    name: getFieldDisplayName(yField),
-    meta: {
-      type: DataFrameType.HeatmapScanlines,
+export function calculateHeatmapFromData(
+  layers: Record<string, DataFrame[]>,
+  options: HeatmapCalculationOptions
+): Record<string, DataFrame> {
+  let geometry: Record<string, HeatmapXYBinDef> = {};
+  for (const [name, frames] of Object.entries(layers!)) {
+    geometry[name] = calculateHeatmapGeometry(frames, options);
+  }
+
+  let xyBinDef: HeatmapXYBinDef = geometry['heatmap'];
+  for (const [name, xyBin] of Object.entries(geometry)) {
+    if (name === 'heatmap') {
+      continue;
+    }
+
+    if (xyBin.y.quantity > xyBinDef.y.quantity) {
+      xyBinDef.y.quantity = xyBin.y.quantity;
+    }
+  }
+
+  return Object.entries(geometry).reduce(
+    (tally: Record<string, DataFrame>, [name, xyBin]: [string, HeatmapXYBinDef]) => {
+      const { x, y } = xyBin;
+      const heat2d = heatmap(xyBin, {
+        xSorted: true,
+        xTime: x.field.type === FieldType.time,
+        xMode: options.xAxis?.mode,
+        xSize: +(options.xAxis?.value ?? 0),
+        yMode: options.yAxis?.mode,
+        ySize: +(options.yAxis?.value ?? 0),
+      });
+
+      tally[name] = {
+        length: heat2d.x.length,
+        name: getFieldDisplayName(y.field),
+        meta: {
+          type: DataFrameType.HeatmapScanlines,
+        },
+        fields: [
+          {
+            name: 'xMin',
+            type: x.field.type,
+            values: new ArrayVector(heat2d.x),
+            config: {
+              ...xyBin.x.field.config,
+              custom: {
+                originalName: getFieldDisplayName(x.field),
+              },
+            },
+          },
+          {
+            name: 'yMin',
+            type: FieldType.number,
+            values: new ArrayVector(heat2d.y),
+            config: {
+              ...y.field.config,
+              custom: {
+                originalName: y.field.name,
+              },
+            },
+          },
+          {
+            name: 'count',
+            type: FieldType.number,
+            values: new ArrayVector(heat2d.count),
+            config: {
+              unit: 'short', // always integer
+            },
+          },
+        ],
+      };
+      return tally;
     },
-    fields: [
-      {
-        name: 'xMin',
-        type: xField.type,
-        values: new ArrayVector(heat2d.x),
-        config: {
-          ...xField.config,
-          custom: {
-            originalName: getFieldDisplayName( xField, ... ),
-          },
-        },
-      },
-      {
-        name: 'yMin',
-        type: FieldType.number,
-        values: new ArrayVector(heat2d.y),
-        config: {
-          ...yField.config,
-          custom: {
-            originalName: yField.name,
-          },
-        },
-      },
-      {
-        name: 'count',
-        type: FieldType.number,
-        values: new ArrayVector(heat2d.count),
-        config: {
-          unit: 'short', // always integer
-        },
-      },
-    ],
-  };
-
-  //console.timeEnd('calculateHeatmapFromData');
-
-  //console.log({ tiles: frame.length });
-
-  return frame;
+    {} as Record<string, DataFrame>
+  );
 }
 
 interface HeatmapOpts {
@@ -270,8 +291,47 @@ interface HeatmapOpts {
   ySorted?: boolean;
 }
 
+interface HeatmapBinDef {
+  field: Field;
+  quantity: number;
+  min: number;
+  increment: number;
+}
+
+interface HeatmapXYBinDef {
+  x: HeatmapBinDef;
+  y: HeatmapBinDef;
+}
+
 // TODO: handle NaN, Inf, -Inf, null, undefined values in xs & ys
-function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
+function heatmap(geometry: HeatmapXYBinDef, opts?: HeatmapOpts) {
+  const { x, y } = geometry;
+
+  let [xs2, ys2, counts] = initBins(geometry);
+
+  let binX = opts?.xCeil ? (v: number) => incrRoundUp(v, x.increment) : (v: number) => incrRoundDn(v, x.increment);
+  let binY = opts?.yCeil ? (v: number) => incrRoundUp(v, y.increment) : (v: number) => incrRoundDn(v, y.increment);
+  const xs = x.field.values.toArray();
+  const ys = y.field.values.toArray();
+
+  for (let i = 0; i < xs.length; i++) {
+    const xi = (binX(xs[i]) - x.min) / x.increment;
+    const yi = (binY(ys[i]) - geometry.y.min) / geometry.y.increment;
+    const ci = xi * y.quantity + yi;
+
+    counts[ci]++;
+  }
+
+  return {
+    x: xs2,
+    y: ys2,
+    count: counts,
+  };
+}
+
+function calculateBins(x: Field, y: Field, opts?: HeatmapOpts): HeatmapXYBinDef {
+  const xs = x.values.toArray();
+  const ys = y.values.toArray();
   let len = xs.length;
 
   let xSorted = opts?.xSorted ?? false;
@@ -347,35 +407,34 @@ function heatmap(xs: number[], ys: number[], opts?: HeatmapOpts) {
   let xBinQty = Math.round((maxXBin - minXBin) / xBinIncr) + 1;
   let yBinQty = Math.round((maxYBin - minYBin) / yBinIncr) + 1;
 
-  let [xs2, ys2, counts] = initBins(xBinQty, yBinQty, minXBin, xBinIncr, minYBin, yBinIncr);
-
-  for (let i = 0; i < len; i++) {
-    const xi = (binX(xs[i]) - minXBin) / xBinIncr;
-    const yi = (binY(ys[i]) - minYBin) / yBinIncr;
-    const ci = xi * yBinQty + yi;
-
-    counts[ci]++;
-  }
-
   return {
-    x: xs2,
-    y: ys2,
-    count: counts,
+    x: {
+      field: x,
+      quantity: xBinQty,
+      min: minXBin,
+      increment: xBinIncr,
+    },
+    y: {
+      field: y,
+      quantity: yBinQty,
+      min: minYBin,
+      increment: yBinIncr,
+    },
   };
 }
 
-function initBins(xQty: number, yQty: number, xMin: number, xIncr: number, yMin: number, yIncr: number) {
-  const len = xQty * yQty;
+function initBins(geometry: HeatmapXYBinDef) {
+  const len = geometry.x.quantity * geometry.y.quantity;
   const xs = new Array<number>(len);
   const ys = new Array<number>(len);
   const counts = new Array<number>(len);
 
-  for (let i = 0, yi = 0, x = xMin; i < len; yi = ++i % yQty) {
+  for (let i = 0, yi = 0, x = geometry.x.min; i < len; yi = ++i % geometry.y.quantity) {
     counts[i] = 0;
-    ys[i] = yMin + yi * yIncr;
+    ys[i] = geometry.y.min + yi * geometry.y.increment;
 
-    if (yi === 0 && i >= yQty) {
-      x += xIncr;
+    if (yi === 0 && i >= geometry.y.quantity) {
+      x += geometry.x.increment;
     }
 
     xs[i] = x;

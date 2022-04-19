@@ -10,11 +10,10 @@ interface ExemplarsPluginProps {
 }
 
 export const ExemplarsPlugin = ({ u, exemplars, config, theme }: ExemplarsPluginProps) => {
-  console.log('theme', theme, 'u', u, 'config', config);
   const { ctx } = u;
-  const xField: number[] | undefined = exemplars?.heatmap?.fields.find((f) => f.name === 'xMin')?.values.toArray();
-  const yField: number[] | undefined = exemplars?.heatmap?.fields.find((f) => f.name === 'yMin')?.values.toArray();
-  const countField: number[] | undefined = exemplars?.heatmap?.fields.find((f) => f.name === 'count')?.values.toArray();
+  const xField: number[] | undefined = exemplars.heatmap?.fields.find((f) => f.name === 'xMin')?.values.toArray();
+  const yField: number[] | undefined = exemplars.heatmap?.fields.find((f) => f.name === 'yMin')?.values.toArray();
+  const countField: number[] | undefined = exemplars.heatmap?.fields.find((f) => f.name === 'count')?.values.toArray();
 
   if (xField && yField && countField) {
     const max = Math.max(...countField);

@@ -9,16 +9,15 @@ import { HeatmapData, prepareHeatmapData } from './fields';
 import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
 import {
-  findExemplarFrameInPanelData,
-  findDataFramesInPanelData,
+  // findExemplarFrameInPanelData,
   HeatmapHoverEvent,
   prepConfig,
-  translateMatrixIndex,
+  // translateMatrixIndex,
   lookupDataInCell,
 } from './utils';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { ColorScale } from './ColorScale';
-import { HeatmapCalculationMode } from 'app/features/transformers/calculateHeatmap/models.gen';
+// import { HeatmapCalculationMode } from 'app/features/transformers/calculateHeatmap/models.gen';
 import { HeatmapLookup } from './types';
 import { HeatmapTab } from './hovertabs/HeatmapTab';
 import { ExemplarTab } from './hovertabs/ExemplarTab';
@@ -45,30 +44,49 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
 
-  const info = useMemo(
-    () => prepareHeatmapData(findDataFramesInPanelData(data), options, theme),
-    [data, options, theme]
-  );
-  const exemplars: HeatmapData | undefined = useMemo((): HeatmapData | undefined => {
-    const exemplarsFrame: DataFrame | undefined = findExemplarFrameInPanelData(data);
-    if (exemplarsFrame) {
-      return prepareHeatmapData(
-        [exemplarsFrame],
-        {
-          ...options,
-          heatmap: {
-            yAxis: {
-              mode: HeatmapCalculationMode.Size,
-              value: info.yBucketSize?.toString(),
-            },
-          },
-        },
-        theme
-      );
-    }
-    return undefined;
-  }, [data, info, options, theme]);
-  const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
+  const [info, exemplars] = useMemo((): HeatmapData[] => {
+    const heatmap = prepareHeatmapData(
+      {
+        heatmap: data.series,
+        exemplars: data.annotations!,
+      },
+      options,
+      theme
+    );
+    return [
+      {
+        ...heatmap,
+        layers: undefined,
+        heatmap: heatmap.layers?.['heatmap'],
+      },
+      {
+        ...heatmap,
+        layers: undefined,
+        heatmap: heatmap.layers?.['exemplars'],
+      },
+    ];
+  }, [data, options, theme]);
+  // const exemplars: HeatmapData | undefined = useMemo((): HeatmapData | undefined => {
+  //   const exemplarsFrame: DataFrame | undefined = findExemplarFrameInPanelData(data);
+  //   if (exemplarsFrame) {
+  //     return prepareHeatmapData(
+  //       [exemplarsFrame],
+  //       {
+  //         ...options,
+  //         heatmap: {
+  //           yAxis: {
+  //             mode: HeatmapCalculationMode.Size,
+  //             value: info.yBucketSize?.toString(),
+  //           },
+  //         },
+  //       },
+  //       theme
+  //     );
+  //   }
+  //   return undefined;
+  // }, [data, info, options, theme]);
+  const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap?.fields]);
+  console.log('facets', facets);
   const { onSplitOpen } = usePanelContext();
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
@@ -101,7 +119,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   dataRef.current = info!;
 
   const builder = useMemo(() => {
-    const b = prepConfig({
+    return prepConfig({
       dataRef,
       theme,
       onhover: onhover,
@@ -116,24 +134,23 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       cellGap: options.cellGap,
       hideThreshold: options.hideThreshold,
     });
-
-    b.addHook('draw', (u: uPlot) => {
-      ExemplarsPlugin({
-        u,
-        exemplars: exemplars!,
-        config: builder,
-        theme: {
-          ...theme,
-          visualization: {
-            ...theme.visualization,
-            palette,
-          },
-        },
-      });
-    });
-    return b;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
+
+  builder.addHook('draw', (u: uPlot) => {
+    ExemplarsPlugin({
+      u,
+      exemplars,
+      config: builder,
+      theme: {
+        ...theme,
+        visualization: {
+          ...theme.visualization,
+          palette,
+        },
+      },
+    });
+  });
 
   const getExemplarValuesInCell = useCallback(
     (lookupRange: HeatmapLookup): DataFrame[] | undefined => {
@@ -158,8 +175,8 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     const { min, max } = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
 
     let hoverValue: number | undefined = undefined;
-    if (hover && info.heatmap.fields) {
-      const countField = info.heatmap.fields[2];
+    if (hover && info.heatmap?.fields) {
+      const countField = info.heatmap?.fields[2];
       hoverValue = countField?.values.get(hover.index);
     }
 
@@ -201,9 +218,9 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
                   options: { showHistogram: options.tooltip.yHistogram, timeZone },
                 }),
                 ExemplarTab({
-                  heatmapData: exemplars!,
+                  heatmapData: exemplars,
                   getValuesInCell: getExemplarValuesInCell,
-                  index: translateMatrixIndex(hover.index, info.yBucketCount!, exemplars?.yBucketCount!),
+                  index: hover.index,
                 }),
               ],
               hover,
