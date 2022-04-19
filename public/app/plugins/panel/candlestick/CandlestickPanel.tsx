@@ -313,12 +313,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
               />
             )}
 
-            <OutsideRangePlugin
-              config={config}
-              frame={alignedDataFrame}
-              range={timeRange}
-              onChangeTimeRange={onChangeTimeRange}
-            />
+            <OutsideRangePlugin config={config} range={timeRange} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
       }}

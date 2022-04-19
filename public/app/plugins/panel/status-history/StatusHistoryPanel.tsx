@@ -69,12 +69,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
             <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />
-            <OutsideRangePlugin
-              config={config}
-              frame={alignedFrame}
-              range={timeRange}
-              onChangeTimeRange={onChangeTimeRange}
-            />
+            <OutsideRangePlugin config={config} range={timeRange} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
       }}
