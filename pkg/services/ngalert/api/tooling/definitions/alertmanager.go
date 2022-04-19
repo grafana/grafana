@@ -723,7 +723,7 @@ func (r *Route) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	return r.Validate()
+	return r.validate()
 }
 
 // Return an alertmanager route from a Grafana route. The ObjectMatchers are converted to Matchers.
