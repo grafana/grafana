@@ -4,8 +4,8 @@ aliases = ["/docs/grafana/next/panels/thresholds/", "/docs/sources/panels/specif
 weight = 300
 +++
 
-# Modify visualization text and background colors
+# Configure thresholds
 
-Use thresholds to set the color of a visualization text and background.
+This sectionUse thresholds to set the color of a visualization text and background.
 
 {{< section >}}
