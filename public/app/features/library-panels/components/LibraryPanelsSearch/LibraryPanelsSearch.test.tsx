@@ -120,7 +120,7 @@ describe('LibraryPanelsSearch', () => {
       it('should call api with correct params', async () => {
         const { getLibraryPanelsSpy } = await getTestContext({ showSort: true });
 
-        await userEvent.type(screen.getByText(/sort \(default a–z\)/i), 'Desc{Enter}');
+        await userEvent.type(screen.getByText(/sort \(default a–z\)/i), 'Desc{enter}');
         await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1));
         expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
           searchString: '',
@@ -147,8 +147,8 @@ describe('LibraryPanelsSearch', () => {
       it('should call api with correct params', async () => {
         const { getLibraryPanelsSpy } = await getTestContext({ showPanelFilter: true });
 
-        await userEvent.type(screen.getByRole('combobox', { name: /panel type filter/i }), 'Graph{Enter}');
-        await userEvent.type(screen.getByRole('combobox', { name: /panel type filter/i }), 'Time Series{Enter}');
+        await userEvent.type(screen.getByRole('combobox', { name: /panel type filter/i }), 'Graph{enter}');
+        await userEvent.type(screen.getByRole('combobox', { name: /panel type filter/i }), 'Time Series{enter}');
         await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1));
         expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
           searchString: '',
@@ -175,7 +175,7 @@ describe('LibraryPanelsSearch', () => {
         const { getLibraryPanelsSpy } = await getTestContext({ showFolderFilter: true });
 
         await userEvent.click(screen.getByRole('combobox', { name: /folder filter/i }));
-        await userEvent.type(screen.getByRole('combobox', { name: /folder filter/i }), '{Enter}', {
+        await userEvent.type(screen.getByRole('combobox', { name: /folder filter/i }), '{enter}', {
           skipClick: true,
         });
         await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1));
