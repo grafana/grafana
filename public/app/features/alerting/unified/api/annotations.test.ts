@@ -2,10 +2,16 @@ import '@grafana/runtime';
 import { fetchAnnotations, sortStateHistory } from './annotations';
 import { StateHistoryItem } from 'app/types/unified-alerting';
 
-const get = jest.fn();
+const get = jest.fn(() => {
+  return new Promise((resolve) => {
+    resolve(undefined);
+  });
+});
 
 jest.mock('@grafana/runtime', () => ({
-  getBackendSrv: () => ({ get }),
+  getBackendSrv: () => ({
+    get,
+  }),
 }));
 
 describe('annotations', () => {
