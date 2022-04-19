@@ -2,6 +2,7 @@ import * as webpack from 'webpack';
 
 import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
 
+const browserslist = require('browserslist');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
@@ -150,6 +151,12 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
     plugins.push(new HtmlWebpackPlugin());
   }
 
+  // use toolkit browserlist to babel/preset-env
+  const targets = browserslist(undefined, {
+    path: path.resolve(__dirname, '.browserslistrc'),
+    env: options.production ? 'production' : 'dev',
+  });
+
   return {
     mode: options.production ? 'production' : 'development',
     target: 'web',
@@ -210,7 +217,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
               cacheDirectory: true,
               cacheCompression: false,
               presets: [
-                [require.resolve('@babel/preset-env'), { modules: false }],
+                [require.resolve('@babel/preset-env'), { modules: false, debug: true, targets }],
                 [
                   require.resolve('@babel/preset-typescript'),
                   {
