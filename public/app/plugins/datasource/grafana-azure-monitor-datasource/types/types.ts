@@ -210,7 +210,14 @@ export interface AzureResourceGraphOptions {
   resultFormat: 'objectArray' | 'table';
 }
 
+// Azure Monitor Metrics query API data fetcher argument types.
+// The types prefixed by Legacy are applicable to pre-version 9 of Grafana
+// that do not have a resourceUri, instead the resourceUri is built up from
+// the subscription, resource group, metric definition (a.k.a. resource type)
+// and the resource name.
 export type GetMetricNamespacesQuery = AzureGetMetricNamespacesQuery | LegacyAzureGetMetricNamespacesQuery;
+export type GetMetricNamesQuery = AzureGetMetricNamesQuery | LegacyAzureGetMetricNamesQuery;
+export type GetMetricMetadataQuery = AzureGetMetricMetadataQuery | LegacyAzureGetMetricMetadataQuery;
 
 export interface AzureGetMetricNamespacesQuery {
   resourceUri: string;
@@ -221,8 +228,6 @@ export interface LegacyAzureGetMetricNamespacesQuery {
   metricDefinition: string;
   resourceName: string;
 }
-
-export type GetMetricNamesQuery = AzureGetMetricNamesQuery | LegacyAzureGetMetricNamesQuery;
 
 export interface AzureGetMetricNamesQuery {
   resourceUri: string;
@@ -236,8 +241,6 @@ export interface LegacyAzureGetMetricNamesQuery {
   resourceName: string;
   metricNamespace: string;
 }
-
-export type GetMetricMetadataQuery = AzureGetMetricMetadataQuery | LegacyAzureGetMetricMetadataQuery;
 
 export interface AzureGetMetricMetadataQuery {
   resourceUri: string;
