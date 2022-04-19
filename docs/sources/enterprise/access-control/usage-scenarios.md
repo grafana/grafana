@@ -231,3 +231,46 @@ By default, the Grafana Server Admin is the only user who can create and manage 
 1. [Create a custom role]({{< ref "#create-your-custom-role" >}}) with `roles.builtin:add` and `roles:write` permissions, then create a built-in role assignment for `Editor` organization role.
 
 Note that any user with the ability to modify roles can only create, update or delete roles with permissions they themselves have been granted. For example, a user with the `Editor` role would be able to create and manage roles only with the permissions they have, or with a subset of them.
+
+
+## Create a custom role to access alerts in a specific folder
+
+In order to see an alert rule in Grafana user is required to have read access to a folder where that alert rule is stored, permission to read alerts in that folder and permission to query all data sources the rule uses.
+
+For example, let's assume that we have 
+- a folder `Test-Folder` with ID `92`, 
+- two data sources `DS1` with UID `_oAfGYUnk` and `DS2` with UID `YYcBGYUnk`.
+- and alert rule that is stored in the folder and queries these two data sources.
+Therefore, a request to create a custom role with minimum required permissions to access that rule would be the following:
+
+```
+curl --location --request POST '<grafana_url>/api/access-control/roles/' \
+--header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ=' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "version": 1,
+    "name": "custom:alerts.reader.in.folder.123",
+    "displayName": "Read-only access to alerts in folder Test-Folder",
+    "description": "Let user query DS1 and DS2, and read alerts in folder Test-Folders",
+    "group":"Custom",
+    "global": true,
+    "permissions": [
+        {
+            "action": "folders:read",
+            "scope": "folders:id:92"
+        },
+        {
+            "action": "alert.rules:read",
+            "scope": "folders:id:92"
+        },
+        {
+            "action": "datasources:query",
+            "scope": "datasources:uid:_oAfGYUnk"
+        },
+        {
+            "action": "datasources:query",
+            "scope": "datasources:uid:YYcBGYUnk"
+        }
+    ]
+}'
+```
