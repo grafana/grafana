@@ -38,7 +38,7 @@ func asStringMap(input interface{}) (map[string]interface{}, error) {
 	if ok {
 		return v, nil
 	}
-	v = make(map[string]interface{}, 0)
+	v = make(map[string]interface{})
 	b, err := json.Marshal(input)
 	if err != nil {
 		return nil, err

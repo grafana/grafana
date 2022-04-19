@@ -54,7 +54,7 @@ func (s *SimulationEngine) register(info simulationInfo) error {
 	return nil
 }
 
-type simulationInitalizer = func() simulationInfo
+type simulationInitializer = func() simulationInfo
 
 func NewSimulationEngine() (*SimulationEngine, error) {
 	s := &SimulationEngine{
@@ -62,8 +62,8 @@ func NewSimulationEngine() (*SimulationEngine, error) {
 		running:  make(map[string]Simulation),
 		logger:   log.New("tsdb.sims"),
 	}
-	// Initalize each type
-	initializers := []simulationInitalizer{
+	// Initialize each type
+	initializers := []simulationInitializer{
 		newFlightSimInfo,
 		newSinewaveInfo,
 	}
@@ -290,7 +290,10 @@ func (s *SimulationEngine) RunStream(ctx context.Context, req *backend.RunStream
 
 		case t := <-ticker.C:
 			setFrameRow(frame, 0, sim.GetValues(t))
-			sender.SendFrame(frame, mode)
+			err := sender.SendFrame(frame, mode)
+			if err != nil {
+				return err
+			}
 		}
 	}
 }

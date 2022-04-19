@@ -38,7 +38,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) *Serv
 	var err error
 	s.sims, err = sims.NewSimulationEngine()
 	if err != nil {
-		s.logger.Error("unable to initalize SimulationEngine", "err", err)
+		s.logger.Error("unable to initialize SimulationEngine", "err", err)
 	}
 
 	s.registerScenarios()
