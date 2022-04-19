@@ -489,7 +489,7 @@ func (ss *SQLStore) GetUserOrgList(ctx context.Context, query *models.GetUserOrg
 		query.Result = make([]*models.UserOrgDTO, 0)
 		sess := dbSess.Table("org_user")
 		sess.Join("INNER", "org", "org_user.org_id=org.id")
-		sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
+		sess.Join("INNER", ss.Dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.Dialect.Quote("user")))
 		sess.Where("org_user.user_id=?", query.UserId)
 		sess.Where(notServiceAccountFilter(ss))
 		sess.Cols("org.name", "org_user.role", "org_user.org_id")
@@ -535,6 +535,7 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		u.email               as email,
 		u.login               as login,
 		u.name                as name,
+		u.is_disabled         as is_disabled,
 		u.help_flags1         as help_flags1,
 		u.last_seen_at        as last_seen_at,
 		(SELECT COUNT(*) FROM org_user where org_user.user_id = u.id) as org_count,

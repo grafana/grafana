@@ -93,7 +93,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 	serviceAccount, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgId, cmd.Name)
 	switch {
 	case errors.Is(err, &database.ErrSAInvalidName{}):
-		return response.Error(http.StatusBadRequest, "Invalid service account name", err)
+		return response.Error(http.StatusBadRequest, "Failed due to %s", err)
 	case err != nil:
 		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
 	}
@@ -186,6 +186,9 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 
 	if cmd.Role != nil && !cmd.Role.IsValid() {
 		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
+	}
+	if cmd.Role != nil && !c.OrgRole.Includes(*cmd.Role) {
+		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
 	}
 
 	resp, err := api.store.UpdateServiceAccount(c.Req.Context(), c.OrgId, scopeID, &cmd)

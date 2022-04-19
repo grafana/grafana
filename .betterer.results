@@ -203,7 +203,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:809006195": [
       [1, 35, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/dashboard/dashgrid/DashboardGrid.test.tsx:1798654441": [
+    "public/app/features/dashboard/dashgrid/DashboardGrid.test.tsx:3682134210": [
       [1, 35, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/dashboard/dashgrid/PanelHeader/PanelHeaderCorner.test.tsx:3293585799": [
@@ -230,7 +230,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/explore/LiveLogs.test.tsx:1667605379": [
       [2, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/explore/RichHistory/RichHistoryStarredTab.test.tsx:3948011811": [
+    "public/app/features/explore/RichHistory/RichHistoryStarredTab.test.tsx:492930613": [
       [1, 17, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/explore/RunButton.test.tsx:138299098": [
@@ -290,7 +290,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:2974837543": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.test.tsx:132770839": [
+    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.test.tsx:3888529428": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/elasticsearch/configuration/ConfigEditor.test.tsx:1089831034": [

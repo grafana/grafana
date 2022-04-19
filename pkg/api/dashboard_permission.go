@@ -56,7 +56,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 		filteredAcls = append(filteredAcls, perm)
 	}
 
-	return response.JSON(200, filteredAcls)
+	return response.JSON(http.StatusOK, filteredAcls)
 }
 
 func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.Response {

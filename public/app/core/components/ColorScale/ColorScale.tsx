@@ -11,6 +11,7 @@ type Props = {
   // Show a value as string -- when not defined, the raw values will not be shown
   display?: (v: number) => string;
   hoverValue?: number;
+  useStopsPercentage?: boolean;
 };
 
 type HoverState = {
@@ -19,8 +20,9 @@ type HoverState = {
 };
 
 const LEFT_OFFSET = 2;
+const GRADIENT_STOPS = 10;
 
-export const ColorScale = ({ colorPalette, min, max, display, hoverValue }: Props) => {
+export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useStopsPercentage }: Props) => {
   const [colors, setColors] = useState<string[]>([]);
   const [scaleHover, setScaleHover] = useState<HoverState>({ isShown: false, value: 0 });
   const [percent, setPercent] = useState<number | null>(null);
@@ -29,8 +31,8 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue }: Prop
   const styles = getStyles(theme, colors);
 
   useEffect(() => {
-    setColors(getGradientStops({ colorArray: colorPalette }));
-  }, [colorPalette]);
+    setColors(getGradientStops({ colorArray: colorPalette, stops: GRADIENT_STOPS, useStopsPercentage }));
+  }, [colorPalette, useStopsPercentage]);
 
   const onScaleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const divOffset = event.nativeEvent.offsetX;
@@ -79,9 +81,17 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue }: Prop
   );
 };
 
-const getGradientStops = ({ colorArray, stops = 10 }: { colorArray: string[]; stops?: number }): string[] => {
+const getGradientStops = ({
+  colorArray,
+  stops,
+  useStopsPercentage = true,
+}: {
+  colorArray: string[];
+  stops: number;
+  useStopsPercentage?: boolean;
+}): string[] => {
   const colorCount = colorArray.length;
-  if (colorCount <= 20) {
+  if (useStopsPercentage && colorCount <= 20) {
     const incr = (1 / colorCount) * 100;
     let per = 0;
     const stops: string[] = [];
@@ -114,8 +124,6 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   scaleWrapper: css`
     width: 100%;
     max-width: 300px;
-    margin-left: 25px;
-    padding: 10px 0;
     font-size: 11px;
     opacity: 1;
   `,
