@@ -52,7 +52,6 @@ import {
   setRulerRuleGroup,
 } from '../api/ruler';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
-import { getRulesPermissions } from '../utils/access-control';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
   getAllRulesSourceNames,

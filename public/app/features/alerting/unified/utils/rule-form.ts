@@ -1,37 +1,36 @@
 import {
   DataQuery,
+  DataSourceRef,
+  getDefaultRelativeTimeRange,
+  IntervalValues,
   rangeUtil,
   RelativeTimeRange,
   ScopedVars,
-  getDefaultRelativeTimeRange,
   TimeRange,
-  IntervalValues,
-  DataSourceRef,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
+  AlertQuery,
   Annotations,
   GrafanaAlertStateDecision,
-  AlertQuery,
   Labels,
   PostableRuleGrafanaRuleDTO,
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 import { EvalFunction } from '../../state/alertDef';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { getRulesAccess } from './access-control';
 import { Annotation } from './constants';
 import { isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
 import { parseInterval } from './time';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { getRulesAccess } from './access-control';
 
 export const getDefaultFormValues = (): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
