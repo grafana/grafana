@@ -1,16 +1,18 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
-import { FileDropzone, useTheme2, Button, DropzoneFile, Field, Label } from '@grafana/ui';
+import { FileDropzone, useTheme2, Button, DropzoneFile } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { MediaType } from '../types';
-import SVG from 'react-inlinesvg';
 interface Props {
   setFormData: Dispatch<SetStateAction<FormData>>;
   mediaType: MediaType;
   setUpload: Dispatch<SetStateAction<boolean>>;
   newValue: string;
+  error: ErrorResponse;
 }
-
+interface ErrorResponse {
+  message: string;
+}
 export function FileDropzoneCustomChildren({ secondaryText = 'Drag and drop here or browse' }) {
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -22,11 +24,8 @@ export function FileDropzoneCustomChildren({ secondaryText = 'Drag and drop here
     </div>
   );
 }
-export const FileUploader = ({ mediaType, setFormData, setUpload, newValue }: Props) => {
+export const FileUploader = ({ mediaType, setFormData, setUpload, error }: Props) => {
   const [dropped, setDropped] = useState<boolean>(false);
-  console.log(newValue);
-  const theme = useTheme2();
-  const styles = getStyles(theme);
   const onFileRemove = (file: DropzoneFile) => {
     fetch(`/api/storage/delete/upload/${file.file.name}`, {
       method: 'DELETE',
@@ -50,19 +49,7 @@ export const FileUploader = ({ mediaType, setFormData, setUpload, newValue }: Pr
         },
       }}
     >
-      {dropped ? (
-        <div className={styles.iconContainer}>
-          <Field label="Preview">
-            <div className={styles.iconPreview}>
-              {mediaType === MediaType.Icon && <SVG src={newValue} className={styles.img} />}
-              {mediaType === MediaType.Image && newValue && <img src={newValue} className={styles.img} />}
-            </div>
-          </Field>
-          <Label>uploaded</Label>
-        </div>
-      ) : (
-        <FileDropzoneCustomChildren />
-      )}
+      {error && dropped ? <p>{error.message}</p> : <FileDropzoneCustomChildren />}
     </FileDropzone>
   );
 };

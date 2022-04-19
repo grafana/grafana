@@ -109,7 +109,7 @@ func (s *standardStorageService) Read(ctx context.Context, user *models.SignedIn
 }
 
 func isFileTypeValid(filetype string) bool {
-	if (filetype == "image/jpeg") || (filetype == "image/jpg") || (filetype == "image/gif") || (filetype == "image/png") || (filetype == "image/svg+xml") || (filetype == "image/webp") {
+	if (filetype == "image/jpeg") || (filetype == "image/jpg") || (filetype == "image/gif") || (filetype == "image/png") || (filetype == "image/webp") {
 		return true
 	}
 	return false
@@ -129,14 +129,14 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 
 	files := form.File["file"]
 	for _, fileHeader := range files {
-		// Restrict the size of each uploaded file to 1MB.
+		// Restrict the size of each uploaded file to 1MB based on the header
 		if fileHeader.Size > MAX_UPLOAD_SIZE {
 			response.statusCode = 400
 			response.message = "The uploaded image is too big"
 			response.err = true
 			return &response, nil
 		}
-
+		// restrict file size based on file size
 		// open each file to copy contents
 		file, err := fileHeader.Open()
 		if err != nil {

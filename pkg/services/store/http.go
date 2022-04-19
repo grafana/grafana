@@ -32,16 +32,22 @@ func (s *httpStorage) Upload(c *models.ReqContext) response.Response {
 	if err := c.Req.ParseMultipartForm(32 << 20); err != nil {
 		return response.Error(400, "error in parsing form", err)
 	}
+	const MAX_UPLOAD_SIZE = 1024 * 1024
+	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
+	if err := c.Req.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
+		return response.Error(400, "Please limit file uploaded under 1MB", err)
+	}
 	res, err := s.store.Upload(c.Req.Context(), c.SignedInUser, c.Req.MultipartForm)
 
 	if err != nil {
 		return response.Error(500, "Internal Server Error", err)
 	}
 
-	return response.JSON(res.statusCode, map[string]string{
+	return response.JSON(res.statusCode, map[string]interface{}{
 		"message": res.message,
 		"path":    res.path,
 		"file":    res.fileName,
+		"err":     true,
 	})
 }
 
