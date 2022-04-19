@@ -193,4 +193,46 @@ func Test_QueryData_executeTimeSeriesQuery_formatAlias(t *testing.T) {
 		assert.Equal(t, "300 Average", resp.Responses["A"].Frames[0].Name)
 	})
 
+	t.Run("returns query.Id when no alias provided and query isMathExpression", func(t *testing.T) {
+		cwClient = fakeCWClient{
+			GetMetricDataOutput: cloudwatch.GetMetricDataOutput{
+				MetricDataResults: []*cloudwatch.MetricDataResult{
+					{StatusCode: aws.String("Complete"), Id: aws.String("query id"), Label: aws.String("NetworkOut"),
+						Values: []*float64{aws.Float64(1.0)}, Timestamps: []*time.Time{{}}},
+				},
+			},
+		}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					JSON: json.RawMessage(`{
+						"type":      "timeSeriesQuery",
+						"metricQueryType": 0,
+						"metricEditorMode": 1,
+						"namespace": "",
+						"metricName": "",
+						"region": "us-east-2",
+						"id": "query id",
+						"statistic": "Maximum",
+						"period": "1200",
+						"hide": false,
+						"matchExact": true,
+						"refId": "A"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, "query id", resp.Responses["A"].Frames[0].Name)
+	})
+
 }
