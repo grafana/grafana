@@ -3,7 +3,6 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { LegacyForms, Tooltip, Icon, Button, useTheme2 } from '@grafana/ui';
-import { config } from '@grafana/runtime';
 const { Input } = LegacyForms;
 
 import { StoreState, TeamGroup } from '../../types';
@@ -12,6 +11,7 @@ import { getTeamGroups } from './state/selectors';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { UpgradeBox, UpgradeContent, UpgradeContentProps } from 'app/core/components/Upgrade/UpgradeBox';
+import { highlightTrial } from 'app/features/admin/utils';
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -92,17 +92,16 @@ export class TeamGroupSync extends PureComponent<Props, State> {
   render() {
     const { isAdding, newGroupId } = this.state;
     const { groups, isReadOnly } = this.props;
-    const highlightTrial = config.featureToggles.featureHighlights && (config as any)?.licensing?.isTrial;
     return (
       <div>
-        {highlightTrial && (
+        {highlightTrial() && (
           <UpgradeBox
             featureName={'team sync'}
             text={'Add a group to enable team sync for free during your 14-day trial of Grafana Pro.'}
           />
         )}
         <div className="page-action-bar">
-          {(!highlightTrial || groups.length > 0) && (
+          {(!highlightTrial() || groups.length > 0) && (
             <>
               <h3 className="page-sub-heading">External group sync</h3>
               <Tooltip placement="auto" content={headerTooltip}>
@@ -145,7 +144,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
 
         {groups.length === 0 &&
           !isAdding &&
-          (highlightTrial ? (
+          (highlightTrial() ? (
             <TeamSyncUpgradeContent action={{ onClick: this.onToggleAdding, text: 'Add group' }} />
           ) : (
             <EmptyListCTA

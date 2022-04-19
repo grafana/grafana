@@ -163,6 +163,9 @@ const getUpgradeContentStyles = (theme: GrafanaTheme2) => {
         width: 100%;
       }
     `,
+    title: css`
+      color: ${theme.colors.text.maxContrast};
+    `,
     description: css`
       color: ${theme.colors.text.primary};
       font-weight: ${theme.typography.fontWeightLight};
@@ -184,9 +187,6 @@ const getUpgradeContentStyles = (theme: GrafanaTheme2) => {
     `,
     link: css`
       margin-left: ${theme.spacing(2)};
-    `,
-    title: css`
-      color: ${theme.colors.text.maxContrast};
     `,
     caption: css`
       font-weight: ${theme.typography.fontWeightLight};

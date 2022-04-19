@@ -5,6 +5,7 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 import { GenericDataSourcePlugin } from '../settings/PluginSettings';
+import { highlightTrial } from '../../admin/utils';
 
 const loadingDSType = 'Loading';
 
@@ -53,13 +54,17 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
 
   const isLoadingNav = dataSource.type === loadingDSType;
 
-  const dsPermissions = {
+  const dsPermissions: NavModelItem = {
     active: false,
     icon: 'lock',
     id: `datasource-permissions-${dataSource.uid}`,
     text: 'Permissions',
     url: `datasources/edit/${dataSource.uid}/permissions`,
   };
+
+  if (highlightTrial()) {
+    dsPermissions.tabSuffix = () => ProBadge({ experimentId: 'feature-highlights-data-source-permissions-badge' });
+  }
 
   if (featureEnabled('dspermissions')) {
     if (contextSrv.hasPermission(AccessControlAction.DataSourcesPermissionsRead)) {
@@ -73,13 +78,17 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     });
   }
 
-  const analytics = {
+  const analytics: NavModelItem = {
     active: false,
     icon: 'info-circle',
     id: `datasource-insights-${dataSource.uid}`,
     text: 'Insights',
     url: `datasources/edit/${dataSource.uid}/insights`,
   };
+
+  if (highlightTrial()) {
+    analytics.tabSuffix = () => ProBadge({ experimentId: 'feature-highlights-data-source-insights-badge' });
+  }
 
   if (featureEnabled('analytics')) {
     navModel.children!.push(analytics);
@@ -91,7 +100,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     });
   }
 
-  const caching = {
+  const caching: NavModelItem = {
     active: false,
     icon: 'database',
     id: `datasource-cache-${dataSource.uid}`,
@@ -99,6 +108,10 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     url: `datasources/edit/${dataSource.uid}/cache`,
     hideFromTabs: !pluginMeta.isBackend || !config.caching.enabled,
   };
+
+  if (highlightTrial()) {
+    caching.tabSuffix = () => ProBadge({ experimentId: 'feature-highlights-query-caching-badge' });
+  }
 
   if (featureEnabled('caching')) {
     navModel.children!.push(caching);
