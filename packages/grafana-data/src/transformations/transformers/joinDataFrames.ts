@@ -102,8 +102,12 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
       }
     }
 
-    if (joinIndex >= 0 && !isLikelyAscendingVector(frameCopy.fields[joinIndex].values)) {
-      frameCopy = sortDataFrame(frameCopy, joinIndex);
+    if (joinIndex >= 0) {
+      let joinField = frameCopy.fields[joinIndex];
+
+      if (joinField.type !== FieldType.string && !isLikelyAscendingVector(joinField.values)) {
+        frameCopy = sortDataFrame(frameCopy, joinIndex);
+      }
     }
 
     if (options.keep) {
