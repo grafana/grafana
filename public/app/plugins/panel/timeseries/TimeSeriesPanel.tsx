@@ -12,6 +12,7 @@ import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
 import { PanelDataErrorView } from '@grafana/runtime';
+import { OutsideViewPlugin } from './plugins/OutsideViewPlugin';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -134,6 +135,13 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
                 onThresholdsChange={onThresholdsChange}
               />
             )}
+
+            <OutsideViewPlugin
+              config={config}
+              frame={alignedDataFrame}
+              range={timeRange}
+              onChangeTimeRange={onChangeTimeRange}
+            />
           </>
         );
       }}
