@@ -72,7 +72,7 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext) response.Response {
 	}
 
 	c.TimeRequest(metrics.MApiDashboardGet)
-	return response.JSON(200, dto)
+	return response.JSON(http.StatusOK, dto)
 }
 
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
@@ -196,7 +196,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	}
 
 	c.TimeRequest(metrics.MApiDashboardGet)
-	return response.JSON(200, dto)
+	return response.JSON(http.StatusOK, dto)
 }
 
 func (hs *HTTPServer) getAnnotationPermissionsByScope(c *models.ReqContext, actions *dtos.AnnotationActions, scope string) {
@@ -282,7 +282,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 			hs.log.Error("Failed to broadcast delete info", "dashboard", dash.Uid, "error", err)
 		}
 	}
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
 		"id":      dash.Id,
@@ -396,7 +396,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	c.TimeRequest(metrics.MApiDashboardSave)
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"status":  "success",
 		"slug":    dashboard.Slug,
 		"version": dashboard.Version,
@@ -417,7 +417,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 
 	if prefsQuery.Result.HomeDashboardId == 0 && len(homePage) > 0 {
 		homePageRedirect := dtos.DashboardRedirect{RedirectUri: homePage}
-		return response.JSON(200, &homePageRedirect)
+		return response.JSON(http.StatusOK, &homePageRedirect)
 	}
 
 	if prefsQuery.Result.HomeDashboardId != 0 {
@@ -426,7 +426,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 		if err == nil {
 			url := models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
-			return response.JSON(200, &dashRedirect)
+			return response.JSON(http.StatusOK, &dashRedirect)
 		}
 		hs.log.Warn("Failed to get slug from database", "err", err)
 	}
@@ -462,7 +462,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 
 	hs.addGettingStartedPanelToHomeDashboard(c, dash.Dashboard)
 
-	return response.JSON(200, &dash)
+	return response.JSON(http.StatusOK, &dash)
 }
 
 func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext, dash *simplejson.Json) {
@@ -530,7 +530,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 		}
 	}
 
-	return response.JSON(200, query.Result)
+	return response.JSON(http.StatusOK, query.Result)
 }
 
 // GetDashboardVersion returns the dashboard version with the given ID.
@@ -573,7 +573,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 		CreatedBy:     creator,
 	}
 
-	return response.JSON(200, dashVersionMeta)
+	return response.JSON(http.StatusOK, dashVersionMeta)
 }
 
 // POST /api/dashboards/calculate-diff performs diffs on two dashboards
@@ -648,10 +648,10 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Resp
 	}
 
 	if options.DiffType == dashdiffs.DiffDelta {
-		return response.Respond(200, result.Delta).SetHeader("Content-Type", "application/json")
+		return response.Respond(http.StatusOK, result.Delta).SetHeader("Content-Type", "application/json")
 	}
 
-	return response.Respond(200, result.Delta).SetHeader("Content-Type", "text/html")
+	return response.Respond(http.StatusOK, result.Delta).SetHeader("Content-Type", "text/html")
 }
 
 // RestoreDashboardVersion restores a dashboard to the given version.
@@ -703,5 +703,5 @@ func (hs *HTTPServer) GetDashboardTags(c *models.ReqContext) {
 		return
 	}
 
-	c.JSON(200, query.Result)
+	c.JSON(http.StatusOK, query.Result)
 }

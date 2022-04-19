@@ -134,7 +134,7 @@ export const getStandardFieldConfigs = () => {
   const noValue: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
     id: 'noValue',
     path: 'noValue',
-    name: 'No Value',
+    name: 'No value',
     description: 'What to show when there is no value',
 
     editor: standardEditorsRegistry.get('text').editor as any,

@@ -111,7 +111,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	}
 
 	sort.Sort(result)
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Response {
@@ -163,7 +163,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		dto.HasUpdate = true
 	}
 
-	return response.JSON(200, dto)
+	return response.JSON(http.StatusOK, dto)
 }
 
 func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Response {
@@ -217,7 +217,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 		}
 	}
 
-	resp := response.Respond(200, content)
+	resp := response.Respond(http.StatusOK, content)
 	resp.SetHeader("Content-Type", "text/plain; charset=utf-8")
 	return resp
 }
@@ -343,7 +343,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 		return response.JSON(503, payload)
 	}
 
-	return response.JSON(200, payload)
+	return response.JSON(http.StatusOK, payload)
 }
 
 // CallResource passes a resource call from a plugin to the backend plugin.
@@ -354,7 +354,7 @@ func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 }
 
 func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Response {
-	return response.JSON(200, hs.pluginErrorResolver.PluginErrors())
+	return response.JSON(http.StatusOK, hs.pluginErrorResolver.PluginErrors())
 }
 
 func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {

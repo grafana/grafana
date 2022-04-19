@@ -36,6 +36,9 @@ Fine-grained access control is available for the following capabilities:
 - [Provision Grafana]({{< relref "../../administration/provisioning/_index.md" >}})
 - [Manage reports]({{< relref "../reporting.md" >}})
 - [View server information]({{< relref "../../administration/view-server/_index.md" >}})
+- [Manage teams]({{< relref "../../administration/manage-users-and-permissions/manage-teams/_index.md" >}})
+- [Manage dashboards and folders]({{< relref "../../dashboards/_index.md" >}})
+- [Manage annotations]({{< relref "../../visualizations/annotations.md" >}})
 
 To learn about specific endpoints where you can use fine-grained access control, refer to [Permissions]({{< relref "./permissions.md" >}}) and to the relevant [API]({{< relref "../../http_api/_index.md" >}}) documentation.
 
@@ -63,3 +66,8 @@ Refer to [Configuring with environment variables]({{< relref "../../administrati
 ### Verify if enabled
 
 You can verify if fine-grained access control is enabled or not by sending an HTTP request to the [Check endpoint]({{< relref "../../http_api/access_control.md#check-if-enabled" >}}).
+
+## Caveats
+
+If you have created a folder with unique identifier (uid) set to "general", you will not be able to manage its permissions with fine-grained access control.
+Any [folder permissions]({{< relref "../../administration/manage-users-and-permissions/manage-dashboard-permissions/_index.md" >}}) set for this folder will be disregarded when fine-grained access control is enabled.

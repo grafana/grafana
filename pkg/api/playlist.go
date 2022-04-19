@@ -54,7 +54,7 @@ func (hs *HTTPServer) SearchPlaylists(c *models.ReqContext) response.Response {
 		return response.Error(500, "Search failed", err)
 	}
 
-	return response.JSON(200, searchQuery.Result)
+	return response.JSON(http.StatusOK, searchQuery.Result)
 }
 
 func (hs *HTTPServer) GetPlaylist(c *models.ReqContext) response.Response {
@@ -78,7 +78,7 @@ func (hs *HTTPServer) GetPlaylist(c *models.ReqContext) response.Response {
 		Items:    playlistDTOs,
 	}
 
-	return response.JSON(200, dto)
+	return response.JSON(http.StatusOK, dto)
 }
 
 func (hs *HTTPServer) LoadPlaylistItemDTOs(ctx context.Context, id int64) ([]models.PlaylistItemDTO, error) {
@@ -125,7 +125,7 @@ func (hs *HTTPServer) GetPlaylistItems(c *models.ReqContext) response.Response {
 		return response.Error(500, "Could not load playlist items", err)
 	}
 
-	return response.JSON(200, playlistDTOs)
+	return response.JSON(http.StatusOK, playlistDTOs)
 }
 
 func (hs *HTTPServer) GetPlaylistDashboards(c *models.ReqContext) response.Response {
@@ -139,7 +139,7 @@ func (hs *HTTPServer) GetPlaylistDashboards(c *models.ReqContext) response.Respo
 		return response.Error(500, "Could not load dashboards", err)
 	}
 
-	return response.JSON(200, playlists)
+	return response.JSON(http.StatusOK, playlists)
 }
 
 func (hs *HTTPServer) DeletePlaylist(c *models.ReqContext) response.Response {
@@ -153,7 +153,7 @@ func (hs *HTTPServer) DeletePlaylist(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to delete playlist", err)
 	}
 
-	return response.JSON(200, "")
+	return response.JSON(http.StatusOK, "")
 }
 
 func (hs *HTTPServer) CreatePlaylist(c *models.ReqContext) response.Response {
@@ -167,7 +167,7 @@ func (hs *HTTPServer) CreatePlaylist(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to create playlist", err)
 	}
 
-	return response.JSON(200, cmd.Result)
+	return response.JSON(http.StatusOK, cmd.Result)
 }
 
 func (hs *HTTPServer) UpdatePlaylist(c *models.ReqContext) response.Response {
@@ -192,5 +192,5 @@ func (hs *HTTPServer) UpdatePlaylist(c *models.ReqContext) response.Response {
 	}
 
 	cmd.Result.Items = playlistDTOs
-	return response.JSON(200, cmd.Result)
+	return response.JSON(http.StatusOK, cmd.Result)
 }
