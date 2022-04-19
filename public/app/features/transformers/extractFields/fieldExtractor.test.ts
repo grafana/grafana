@@ -16,14 +16,31 @@ describe('Extract fields from text', () => {
 
   it('Test key-values with single/double quotes', async () => {
     const extractor = fieldExtractors.get(FieldExtractorID.KeyValues);
-    const out = extractor.parse('a="1",   "b"=\'2\',c=3  x:y ;\r\nz="7 test"');
+    const out = extractor.parse('a="1",   "b"=\'2\',c=3  x:y ;\r\nz="d and 4"');
     expect(out).toMatchInlineSnapshot(`
       Object {
         "a": "1",
         "b": "2",
         "c": "3",
         "x": "y",
-        "z": "7 test",
+        "z": "d and 4",
+      }
+    `);
+  });
+
+  it('Test key-values with nested single/double quotes', async () => {
+    const extractor = fieldExtractors.get(FieldExtractorID.KeyValues);
+    const out = extractor.parse(
+      `a="1",   "b"=\'2\',c=3  x:y ;\r\nz="dbl_quotes="Double Quotes": sgl_quotes='Single Quotes'"`
+    );
+
+    expect(out).toMatchInlineSnapshot(`
+      Object {
+        "a": "1",
+        "b": "2",
+        "c": "3",
+        "x": "y",
+        "z": "dbl_quotes=\\"Double Quotes\\" sgl_quotes=\\"Single Quotes\\"",
       }
     `);
   });

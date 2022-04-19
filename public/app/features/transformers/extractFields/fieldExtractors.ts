@@ -48,17 +48,56 @@ const extLabels: FieldExtractor = {
       })
       .replace(stripDecor, '')
       .split(splitLines)
-      .forEach((pair) => {
-        let [k, v] = pair
-          .replace(prefixRegex, (matched, _index) => {
-            const originalValue = quotedValuesMap.get(matched);
-            if (originalValue) {
-              return originalValue.replace(stripDecor, '');
+      .forEach((pair, index, arr) => {
+        if (pair.match(splitPair) === null) {
+          pair = `${arr[index - 1]} ${pair}`;
+          let counter = 0;
+          let flipQuote = false;
+          const matches = pair.match(prefixRegex)?.length;
+          pair = pair.replace(stripDecor, '').replace(prefixRegex, (matched) => {
+            let quotedValue = '';
+            if (matches) {
+              if (matches % 2 === 0) {
+                if (counter % 2 === 0) {
+                  quotedValue = `${matched}"`;
+                } else {
+                  quotedValue = `"${matched}`;
+                }
+              } else {
+                if (counter % 2 === 0 && !flipQuote) {
+                  quotedValue = `${matched}"`;
+                  flipQuote = true;
+                } else if (counter % 2 === 0 && flipQuote) {
+                  quotedValue = `"${matched}`;
+                  flipQuote = false;
+                } else {
+                  quotedValue = `"${matched}"`;
+                }
+              }
             }
-            return matched;
-          })
-          .split(splitPair);
+            counter++;
+            return quotedValue;
+          });
+          arr[index] = pair;
+        }
 
+        let [k, v] = pair.split(splitPair);
+
+        k = k.replace(prefixRegex, (matched, _index) => {
+          const originalValue = quotedValuesMap.get(matched);
+          if (originalValue) {
+            return originalValue.replace(stripDecor, '');
+          }
+          return matched;
+        });
+
+        v = v.replace(prefixRegex, (matched, _index) => {
+          const originalValue = quotedValuesMap.get(matched);
+          if (originalValue) {
+            return originalValue.replace(stripDecor, '');
+          }
+          return matched;
+        });
         if (k != null) {
           obj[k] = v;
         }
