@@ -47,7 +47,7 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 		}
 	}
 
-	return response.JSON(200, items)
+	return response.JSON(http.StatusOK, items)
 }
 
 type AnnotationError struct {
@@ -111,7 +111,7 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 
 	startID := item.Id
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Annotation added",
 		"id":      startID,
 	})
@@ -174,7 +174,7 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *models.ReqContext) response.Resp
 		return response.Error(500, "Failed to save Graphite annotation", err)
 	}
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Graphite annotation added",
 		"id":      item.Id,
 	})
@@ -433,7 +433,7 @@ func (hs *HTTPServer) GetAnnotationTags(c *models.ReqContext) response.Response 
 		return response.Error(500, "Failed to find annotation tags", err)
 	}
 
-	return response.JSON(200, annotations.GetAnnotationTagsResponse{Result: result})
+	return response.JSON(http.StatusOK, annotations.GetAnnotationTagsResponse{Result: result})
 }
 
 // AnnotationTypeScopeResolver provides an AttributeScopeResolver able to

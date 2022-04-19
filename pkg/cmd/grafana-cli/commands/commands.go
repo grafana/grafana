@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsmigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -56,7 +55,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 			return errutil.Wrap("failed to initialize tracer service", err)
 		}
 
-		sqlStore, err := sqlstore.ProvideService(cfg, nil, bus.GetBus(), &migrations.OSSMigrations{}, tracer)
+		sqlStore, err := sqlstore.ProvideService(cfg, nil, &migrations.OSSMigrations{}, tracer)
 		if err != nil {
 			return errutil.Wrap("failed to initialize SQL store", err)
 		}

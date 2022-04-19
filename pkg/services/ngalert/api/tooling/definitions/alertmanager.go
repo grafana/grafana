@@ -18,6 +18,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -712,6 +713,8 @@ type Route struct {
 	GroupWait      *model.Duration `yaml:"group_wait,omitempty" json:"group_wait,omitempty"`
 	GroupInterval  *model.Duration `yaml:"group_interval,omitempty" json:"group_interval,omitempty"`
 	RepeatInterval *model.Duration `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty"`
+
+	Provenance models.Provenance `yaml:"provenance,omitempty" json:"provenance,omitempty"`
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface for Route. This is a copy of alertmanager's upstream except it removes validation on the label key.

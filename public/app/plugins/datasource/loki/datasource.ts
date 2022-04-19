@@ -8,6 +8,7 @@ import Prism from 'prismjs';
 import {
   AnnotationEvent,
   AnnotationQueryRequest,
+  CoreApp,
   DataFrame,
   DataFrameView,
   DataQueryError,
@@ -31,6 +32,7 @@ import {
   QueryResultMeta,
   ScopedVars,
   TimeRange,
+  rangeUtil,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchError, getBackendSrv, config, DataSourceWithBackend } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -77,6 +79,21 @@ const DEFAULT_QUERY_PARAMS: Partial<LokiRangeQueryRequest> = {
   limit: DEFAULT_MAX_LINES,
   query: '',
 };
+
+function makeRequest(query: LokiQuery, range: TimeRange, app: CoreApp, requestId: string): DataQueryRequest<LokiQuery> {
+  const intervalInfo = rangeUtil.calculateInterval(range, 1);
+  return {
+    targets: [query],
+    requestId,
+    interval: intervalInfo.interval,
+    intervalMs: intervalInfo.intervalMs,
+    range: range,
+    scopedVars: {},
+    timezone: 'UTC',
+    app,
+    startTime: Date.now(),
+  };
+}
 
 export class LokiDatasource
   extends DataSourceWithBackend<LokiQuery, LokiOptions>
@@ -652,32 +669,25 @@ export class LokiDatasource
   }
 
   async annotationQuery(options: any): Promise<AnnotationEvent[]> {
-    const {
-      expr,
-      maxLines,
-      instant,
-      stepInterval,
-      tagKeys = '',
-      titleFormat = '',
-      textFormat = '',
-    } = options.annotation;
+    const { expr, maxLines, instant, tagKeys = '', titleFormat = '', textFormat = '' } = options.annotation;
 
     if (!expr) {
       return [];
     }
 
-    const interpolatedExpr = this.templateSrv.replace(expr, {}, this.interpolateQueryExpr);
-    const query = {
-      refId: `annotation-${options.annotation.name}`,
-      expr: interpolatedExpr,
+    const id = `annotation-${options.annotation.name}`;
+
+    const query: LokiQuery = {
+      refId: id,
+      expr,
       maxLines,
       instant,
-      stepInterval,
       queryType: instant ? LokiQueryType.Instant : LokiQueryType.Range,
     };
-    const { data } = instant
-      ? await lastValueFrom(this.runInstantQuery(query, options as any))
-      : await lastValueFrom(this.runRangeQuery(query, options as any));
+
+    const request = makeRequest(query, options.range, CoreApp.Dashboard, id);
+
+    const { data } = await lastValueFrom(this.query(request));
 
     const annotations: AnnotationEvent[] = [];
     const splitKeys: string[] = tagKeys.split(',').filter((v: string) => v !== '');
@@ -725,10 +735,13 @@ export class LokiDatasource
   }
 
   processError(err: FetchError, target: LokiQuery) {
-    let error = cloneDeep(err);
-    if (err.data.message.includes('escape') && target.expr.includes('\\')) {
+    let error: DataQueryError = cloneDeep(err);
+    error.refId = target.refId;
+
+    if (error.data && err.data.message.includes('escape') && target.expr.includes('\\')) {
       error.data.message = `Error: ${err.data.message}. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://grafana.com/docs/loki/latest/logql/.`;
     }
+
     return error;
   }
 

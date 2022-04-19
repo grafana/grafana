@@ -20,7 +20,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -43,7 +42,6 @@ func TestTestReceivers(t *testing.T) {
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-		env.SQLStore.Bus = bus.GetBus()
 
 		createUser(t, env.SQLStore, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
@@ -63,7 +61,7 @@ func TestTestReceivers(t *testing.T) {
 
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{}`, string(b))
+		require.JSONEq(t, `{"traceID":"00000000000000000000000000000000"}`, string(b))
 	})
 
 	t.Run("assert working receiver returns OK", func(t *testing.T) {
@@ -77,7 +75,6 @@ func TestTestReceivers(t *testing.T) {
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-		env.SQLStore.Bus = bus.GetBus()
 
 		createUser(t, env.SQLStore, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
@@ -162,7 +159,6 @@ func TestTestReceivers(t *testing.T) {
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-		env.SQLStore.Bus = bus.GetBus()
 
 		createUser(t, env.SQLStore, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
@@ -242,7 +238,6 @@ func TestTestReceivers(t *testing.T) {
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-		env.SQLStore.Bus = bus.GetBus()
 
 		createUser(t, env.SQLStore, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
@@ -332,7 +327,6 @@ func TestTestReceivers(t *testing.T) {
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-		env.SQLStore.Bus = bus.GetBus()
 
 		createUser(t, env.SQLStore, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
@@ -448,7 +442,6 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-		env.SQLStore.Bus = bus.GetBus()
 
 		createUser(t, env.SQLStore, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
@@ -544,7 +537,6 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-		env.SQLStore.Bus = bus.GetBus()
 
 		createUser(t, env.SQLStore, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
@@ -635,7 +627,6 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 		})
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-		env.SQLStore.Bus = bus.GetBus()
 
 		createUser(t, env.SQLStore, models.CreateUserCommand{
 			DefaultOrgRole: string(models.ROLE_EDITOR),
@@ -727,7 +718,6 @@ func TestNotificationChannels(t *testing.T) {
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	env.SQLStore.Bus = bus.GetBus()
 
 	mockChannel := newMockNotificationChannel(t, grafanaListedAddr)
 	amConfig := getAlertmanagerConfig(mockChannel.server.Addr)

@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -45,7 +44,6 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 	hs := &HTTPServer{
 		Cfg:      cfg,
 		Features: features,
-		Bus:      bus.GetBus(),
 		License:  &licensing.OSSLicensingService{Cfg: cfg},
 		RenderService: &rendering.RenderingService{
 			Cfg:                   cfg,
