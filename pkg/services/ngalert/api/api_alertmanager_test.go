@@ -516,7 +516,7 @@ func createRequestCtxInOrg(org int64) *models.ReqContext {
 // setRouteProvenance marks an org's routing tree as provisioned.
 func setRouteProvenance(t *testing.T, org int64, ps provisioning.ProvisioningStore) {
 	t.Helper()
-	adp := provenanceOrgAdapter{inner: &apimodels.Route{}, orgID: org}
+	adp := provisioning.ProvenanceOrgAdapter{Inner: &apimodels.Route{}, OrgID: org}
 	err := ps.SetProvenance(context.Background(), adp, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
@@ -527,22 +527,4 @@ func asGettableUserConfig(t *testing.T, r response.Response) *apimodels.Gettable
 	err := json.Unmarshal(r.Body(), body)
 	require.NoError(t, err)
 	return body
-}
-
-// TODO: extract to shared location
-type provenanceOrgAdapter struct {
-	inner ngmodels.ProvisionableInOrg
-	orgID int64
-}
-
-func (a provenanceOrgAdapter) ResourceType() string {
-	return a.inner.ResourceType()
-}
-
-func (a provenanceOrgAdapter) ResourceID() string {
-	return a.inner.ResourceID()
-}
-
-func (a provenanceOrgAdapter) ResourceOrgID() int64 {
-	return a.orgID
 }

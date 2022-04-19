@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
@@ -128,9 +129,9 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 
 func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config definitions.GettableApiAlertingConfig, org int64) (definitions.GettableApiAlertingConfig, error) {
 	if config.Route != nil {
-		adp := provenanceOrgAdapter{
-			inner: config.Route,
-			orgID: org,
+		adp := provisioning.ProvenanceOrgAdapter{
+			Inner: config.Route,
+			OrgID: org,
 		}
 		provenance, err := moa.ProvStore.GetProvenance(ctx, adp)
 		if err != nil {
@@ -139,21 +140,4 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 		config.Route.Provenance = provenance
 	}
 	return config, nil
-}
-
-type provenanceOrgAdapter struct {
-	inner models.ProvisionableInOrg
-	orgID int64
-}
-
-func (a provenanceOrgAdapter) ResourceType() string {
-	return a.inner.ResourceType()
-}
-
-func (a provenanceOrgAdapter) ResourceID() string {
-	return a.inner.ResourceID()
-}
-
-func (a provenanceOrgAdapter) ResourceOrgID() int64 {
-	return a.orgID
 }
