@@ -54,7 +54,6 @@
     "chalk": "^4.1.2",
     "command-exists": "^1.2.9",
     "commander": "^9.2.0",
-    "concurrently": "^7.1.0",
     "copy-webpack-plugin": "^9.0.1",
     "css-loader": "^6.7.1",
     "css-minimizer-webpack-plugin": "^3.4.1",
