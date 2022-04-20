@@ -113,8 +113,6 @@ export class ElementState implements LayerElement {
     }
 
     this.options.placement = updatedPlacement;
-
-    console.log('am being  called after', this.options.placement);
   }
 
   setPlacementFromConstraint() {
