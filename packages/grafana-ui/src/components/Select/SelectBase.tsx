@@ -257,8 +257,7 @@ export function SelectBase<T>({
           <div>{input}</div>
           <div style={{ flexGrow: 1 }} />
           <div className="muted small" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <Icon name="keyboard" size="md" />
-            <Icon name="enter" size="md" />
+            Hit enter to add
           </div>
         </div>
       ));
