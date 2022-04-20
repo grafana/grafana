@@ -47,12 +47,7 @@ export function ChannelOptions<R extends ChannelValues>({
                 value="Configured"
                 suffix={
                   readOnly ? null : (
-                    <Button
-                      onClick={() => onResetSecureField(option.propertyName)}
-                      variant="link"
-                      type="button"
-                      size="sm"
-                    >
+                    <Button onClick={() => onResetSecureField(option.propertyName)} fill="text" type="button" size="sm">
                       Clear
                     </Button>
                   )
@@ -74,7 +69,8 @@ export function ChannelOptions<R extends ChannelValues>({
             readOnly={readOnly}
             key={key}
             error={error}
-            pathPrefix={option.secure ? `${pathPrefix}secureSettings.` : `${pathPrefix}settings.`}
+            pathPrefix={pathPrefix}
+            pathSuffix={option.secure ? 'secureSettings.' : 'settings.'}
             option={option}
           />
         );

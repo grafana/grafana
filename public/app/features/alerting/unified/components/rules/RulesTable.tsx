@@ -3,7 +3,6 @@ import { useStyles2 } from '@grafana/ui';
 import React, { FC, useMemo } from 'react';
 import { css, cx } from '@emotion/css';
 import { RuleDetails } from './RuleDetails';
-import { isCloudRulesSource } from '../../utils/datasource';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { Annotation } from '../../utils/constants';
@@ -11,6 +10,7 @@ import { RuleState } from './RuleState';
 import { RuleHealth } from './RuleHealth';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
+import { RuleLocation } from '../RuleLocation';
 
 type RuleTableColumnProps = DynamicTableColumnProps<CombinedRule>;
 type RuleTableItemProps = DynamicTableItemProps<CombinedRule>;
@@ -137,8 +137,15 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: rule }) => {
           const { namespace, group } = rule;
-          const { rulesSource } = namespace;
-          return isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name;
+          // ungrouped rules are rules that are in the "default" group name
+          const isUngrouped = group.name === 'default';
+          const groupName = isUngrouped ? (
+            <RuleLocation namespace={namespace.name} />
+          ) : (
+            <RuleLocation namespace={namespace.name} group={group.name} />
+          );
+
+          return groupName;
         },
         size: 5,
       });
