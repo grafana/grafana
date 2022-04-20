@@ -4,7 +4,6 @@ import { Icon } from '../Icon/Icon';
 
 interface DropdownIndicatorProps {
   isOpen: boolean;
-  hidden?: boolean;
 }
 
 export const DropdownIndicator: React.FC<DropdownIndicatorProps> = ({ isOpen }) => {
