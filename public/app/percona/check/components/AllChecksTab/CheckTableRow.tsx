@@ -53,7 +53,7 @@ export const CheckTableRow: FC<CheckTableRowProps> = ({ check, onSuccess }) => {
             >
               {disabled ? Messages.enable : Messages.disable}
             </LoaderButton>
-            <IconButton title={Messages.changeIntervalButtonTitle} name="history" onClick={handleChangeCheckInterval} />
+            <IconButton title={Messages.changeIntervalButtonTitle} name="pen" onClick={handleChangeCheckInterval} />
           </div>
         </td>
       </tr>
