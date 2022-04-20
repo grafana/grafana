@@ -35,6 +35,13 @@ export interface SQLExpression {
   limit?: number;
 }
 
+export interface DimensionsQuery extends DataQuery {
+  namespace: string;
+  region: string;
+  metricName?: string;
+  dimensions?: Dimensions;
+}
+
 export interface CloudWatchMetricsQuery extends DataQuery {
   queryMode?: 'Metrics';
   metricQueryType?: MetricQueryType;
@@ -366,4 +373,30 @@ export interface MetricQuery {
   refId?: string;
   maxDataPoints?: number;
   intervalMs?: number;
+}
+
+export enum VariableQueryType {
+  Regions = 'regions',
+  Namespaces = 'namespaces',
+  Metrics = 'metrics',
+  DimensionKeys = 'dimensionKeys',
+  DimensionValues = 'dimensionValues',
+  EBSVolumeIDs = 'ebsVolumeIDs',
+  EC2InstanceAttributes = 'ec2InstanceAttributes',
+  ResourceArns = 'resourceARNs',
+  Statistics = 'statistics',
+}
+
+export interface VariableQuery extends DataQuery {
+  queryType: VariableQueryType;
+  namespace: string;
+  region: string;
+  metricName: string;
+  dimensionKey: string;
+  dimensionFilters?: Dimensions;
+  ec2Filters: string;
+  instanceID: string;
+  attributeName: string;
+  resourceType: string;
+  tags: string;
 }

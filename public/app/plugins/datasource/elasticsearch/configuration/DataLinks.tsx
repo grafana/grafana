@@ -66,6 +66,7 @@ export const DataLinks = (props: Props) => {
       )}
 
       <Button
+        type="button"
         variant={'secondary'}
         className={css`
           margin-right: 10px;

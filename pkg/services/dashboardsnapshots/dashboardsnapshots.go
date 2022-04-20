@@ -3,7 +3,6 @@ package dashboardsnapshots
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -11,23 +10,15 @@ import (
 )
 
 type Service struct {
-	Bus            bus.Bus
 	SQLStore       sqlstore.Store
 	SecretsService secrets.Service
 }
 
-func ProvideService(bus bus.Bus, store sqlstore.Store, secretsService secrets.Service) *Service {
+func ProvideService(store sqlstore.Store, secretsService secrets.Service) *Service {
 	s := &Service{
-		Bus:            bus,
 		SQLStore:       store,
 		SecretsService: secretsService,
 	}
-
-	s.Bus.AddHandler(s.CreateDashboardSnapshot)
-	s.Bus.AddHandler(s.GetDashboardSnapshot)
-	s.Bus.AddHandler(s.DeleteDashboardSnapshot)
-	s.Bus.AddHandler(s.SearchDashboardSnapshots)
-	s.Bus.AddHandler(s.DeleteExpiredSnapshots)
 
 	return s
 }

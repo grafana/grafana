@@ -89,7 +89,7 @@ func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dash 
 	// create a list of all viewable dashboards for this user
 	res := make([]dashMeta, 0, len(dash))
 	for _, dash := range dash {
-		if filter(dash.dash.UID) {
+		if filter(dash.dash.UID) || (dash.is_folder && dash.dash.UID == "") { // include the "General" folder
 			res = append(res, dash)
 		}
 	}
@@ -106,15 +106,38 @@ type dashDataQueryResult struct {
 	Updated  time.Time
 }
 
+type dsQueryResult struct {
+	UID       string `xorm:"uid"`
+	Type      string `xorm:"type"`
+	Name      string `xorm:"name"`
+	IsDefault bool   `xorm:"is_default"`
+}
+
 func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([]dashMeta, error) {
 	meta := make([]dashMeta, 0, 200)
 
+	// Add the root folder ID (does not exist in SQL)
+	meta = append(meta, dashMeta{
+		id:        0,
+		is_folder: true,
+		folder_id: 0,
+		slug:      "",
+		created:   time.Now(),
+		updated:   time.Now(),
+		dash: &extract.DashboardInfo{
+			ID:    0,
+			UID:   "",
+			Title: "General",
+		},
+	})
+
 	// key will allow name or uid
-	lookup := func(key string) *extract.DatasourceInfo {
-		return nil // TODO!
+	lookup, err := loadDatasoureLookup(ctx, orgID, sql)
+	if err != nil {
+		return meta, err
 	}
 
-	err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		rows := make([]*dashDataQueryResult, 0)
 
 		sess.Table("dashboard").
@@ -146,6 +169,64 @@ func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([
 	return meta, err
 }
 
+func loadDatasoureLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) (extract.DatasourceLookup, error) {
+	byUID := make(map[string]*extract.DataSourceRef, 50)
+	byName := make(map[string]*extract.DataSourceRef, 50)
+	var defaultDS *extract.DataSourceRef
+
+	err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		rows := make([]*dsQueryResult, 0)
+		sess.Table("data_source").
+			Where("org_id = ?", orgID).
+			Cols("uid", "name", "type", "is_default")
+
+		err := sess.Find(&rows)
+		if err != nil {
+			return err
+		}
+
+		for _, row := range rows {
+			ds := &extract.DataSourceRef{
+				UID:  row.UID,
+				Type: row.Type,
+			}
+			byUID[row.UID] = ds
+			byName[row.Name] = ds
+			if row.IsDefault {
+				defaultDS = ds
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Lookup by UID or name
+	return func(ref *extract.DataSourceRef) *extract.DataSourceRef {
+		if ref == nil {
+			return defaultDS
+		}
+		key := ""
+		if ref.UID != "" {
+			ds, ok := byUID[ref.UID]
+			if ok {
+				return ds
+			}
+			key = ref.UID
+		}
+		if key == "" {
+			return defaultDS
+		}
+		ds, ok := byUID[key]
+		if ok {
+			return ds
+		}
+		return byName[key]
+	}, err
+}
+
 type simpleCounter struct {
 	values map[string]int64
 }
@@ -173,10 +254,12 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	folderID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	folderUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	folderName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	folderDashCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 
-	folderID.Name = "ID"
-	folderUID.Name = "UID"
-	folderName.Name = "Name"
+	folderID.Name = "id"
+	folderUID.Name = "uid"
+	folderName.Name = "name"
+	folderDashCount.Name = "DashCount"
 
 	dashID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	dashUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
@@ -188,22 +271,28 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	dashUpdated := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 	dashSchemaVersion := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	dashTags := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
+	dashPanelCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
+	dashVarCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
+	dashDSList := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
 
-	dashID.Name = "ID"
-	dashUID.Name = "UID"
-	dashFolderID.Name = "FolderID"
-	dashName.Name = "Name"
-	dashDescr.Name = "Description"
-	dashTags.Name = "Tags"
+	dashID.Name = "id"
+	dashUID.Name = "uid"
+	dashFolderID.Name = "folderID"
+	dashName.Name = "name"
+	dashDescr.Name = "description"
+	dashTags.Name = "tags"
 	dashSchemaVersion.Name = "SchemaVersion"
 	dashCreated.Name = "Created"
 	dashUpdated.Name = "Updated"
-	dashURL.Name = "URL"
+	dashURL.Name = "url"
 	dashURL.Config = &data.FieldConfig{
 		Links: []data.DataLink{
 			{Title: "link", URL: "${__value.text}"},
 		},
 	}
+	dashPanelCount.Name = "panelCount"
+	dashVarCount.Name = "varCount"
+	dashDSList.Name = "datasource"
 
 	dashTags.Config = &data.FieldConfig{
 		Custom: map[string]interface{}{
@@ -218,11 +307,11 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	panelDescr := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	panelType := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 
-	panelDashID.Name = "DashboardID"
-	panelID.Name = "ID"
-	panelName.Name = "Name"
-	panelDescr.Name = "Description"
-	panelType.Name = "Type"
+	panelDashID.Name = "dashboardID"
+	panelID.Name = "id"
+	panelName.Name = "name"
+	panelDescr.Name = "description"
+	panelType.Name = "type"
 
 	panelTypeCounter := simpleCounter{
 		values: make(map[string]int64, 30),
@@ -232,12 +321,14 @@ func metaToFrame(meta []dashMeta) data.Frames {
 		values: make(map[string]int64, 30),
 	}
 
-	var tags *string
+	folderCounter := make(map[int64]int64, 20)
+
 	for _, row := range meta {
 		if row.is_folder {
 			folderID.Append(row.id)
 			folderUID.Append(row.dash.UID)
 			folderName.Append(row.dash.Title)
+			folderDashCount.Append(int64(0)) // filled in later
 			continue
 		}
 
@@ -250,22 +341,23 @@ func metaToFrame(meta []dashMeta) data.Frames {
 		dashCreated.Append(row.created)
 		dashUpdated.Append(row.updated)
 
+		// Increment the folder counter
+		fcount, ok := folderCounter[row.folder_id]
+		if !ok {
+			fcount = 0
+		}
+		folderCounter[row.folder_id] = fcount + 1
+
 		url := fmt.Sprintf("/d/%s/%s", row.dash.UID, row.slug)
 		dashURL.Append(url)
 
 		// stats
 		schemaVersionCounter.add(strconv.FormatInt(row.dash.SchemaVersion, 10))
 
-		// Send tags as JSON array
-		tags = nil
-		if len(row.dash.Tags) > 0 {
-			b, err := json.Marshal(row.dash.Tags)
-			if err == nil {
-				s := string(b)
-				tags = &s
-			}
-		}
-		dashTags.Append(tags)
+		dashTags.Append(toJSONString(row.dash.Tags))
+		dashPanelCount.Append(int64(len(row.dash.Panels)))
+		dashVarCount.Append(int64(len(row.dash.TemplateVars)))
+		dashDSList.Append(dsAsJSONString(row.dash.Datasource))
 
 		// Row for each panel
 		for _, panel := range row.dash.Panels {
@@ -278,11 +370,47 @@ func metaToFrame(meta []dashMeta) data.Frames {
 		}
 	}
 
+	// Update the folder counts
+	for i := 0; i < folderID.Len(); i++ {
+		id, ok := folderID.At(i).(int64)
+		if ok {
+			folderDashCount.Set(i, folderCounter[id])
+		}
+	}
+
 	return data.Frames{
-		data.NewFrame("folders", folderID, folderUID, folderName),
-		data.NewFrame("dashboards", dashID, dashUID, dashURL, dashFolderID, dashName, dashDescr, dashTags, dashSchemaVersion, dashCreated, dashUpdated),
+		data.NewFrame("folders", folderID, folderUID, folderName, folderDashCount),
+		data.NewFrame("dashboards", dashID, dashUID, dashURL, dashFolderID,
+			dashName, dashDescr, dashTags,
+			dashSchemaVersion,
+			dashPanelCount, dashVarCount, dashDSList,
+			dashCreated, dashUpdated),
 		data.NewFrame("panels", panelDashID, panelID, panelName, panelDescr, panelType),
 		panelTypeCounter.toFrame("panel-type-counts"),
 		schemaVersionCounter.toFrame("schema-version-counts"),
 	}
+}
+
+func toJSONString(vals []string) *string {
+	if len(vals) < 1 {
+		return nil
+	}
+	b, err := json.Marshal(vals)
+	if err == nil {
+		s := string(b)
+		return &s
+	}
+	return nil
+}
+
+func dsAsJSONString(vals []extract.DataSourceRef) *string {
+	if len(vals) < 1 {
+		return nil
+	}
+	b, err := json.Marshal(vals)
+	if err == nil {
+		s := string(b)
+		return &s
+	}
+	return nil
 }

@@ -84,14 +84,17 @@ func (i *Initializer) awsEnvVars() []string {
 
 func (i *Initializer) azureEnvVars() []string {
 	var variables []string
-	if i.cfg.Azure.Cloud != "" {
-		variables = append(variables, "AZURE_CLOUD="+i.cfg.Azure.Cloud)
-	}
-	if i.cfg.Azure.ManagedIdentityClientId != "" {
-		variables = append(variables, "AZURE_MANAGED_IDENTITY_CLIENT_ID="+i.cfg.Azure.ManagedIdentityClientId)
-	}
-	if i.cfg.Azure.ManagedIdentityEnabled {
-		variables = append(variables, "AZURE_MANAGED_IDENTITY_ENABLED=true")
+
+	if i.cfg.Azure != nil {
+		if i.cfg.Azure.Cloud != "" {
+			variables = append(variables, "AZURE_CLOUD="+i.cfg.Azure.Cloud)
+		}
+		if i.cfg.Azure.ManagedIdentityClientId != "" {
+			variables = append(variables, "AZURE_MANAGED_IDENTITY_CLIENT_ID="+i.cfg.Azure.ManagedIdentityClientId)
+		}
+		if i.cfg.Azure.ManagedIdentityEnabled {
+			variables = append(variables, "AZURE_MANAGED_IDENTITY_ENABLED=true")
+		}
 	}
 
 	return variables

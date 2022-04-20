@@ -246,10 +246,75 @@ describe('Prometheus Result Transformer', () => {
       } as unknown as DataQueryResponse;
 
       const series = transformV2(response, options, {});
-      expect(series.data[0].fields.length).toEqual(2);
+      expect(series.data[0].fields.length).toEqual(4);
       expect(series.data[0].fields[1].values.toArray()).toEqual([10, 10, 0]);
-      expect(series.data[1].fields[1].values.toArray()).toEqual([10, 0, 30]);
-      expect(series.data[2].fields[1].values.toArray()).toEqual([10, 0, 10]);
+      expect(series.data[0].fields[2].values.toArray()).toEqual([10, 0, 30]);
+      expect(series.data[0].fields[3].values.toArray()).toEqual([10, 0, 10]);
+    });
+
+    it('Retains exemplar frames when data returned is a heatmap', () => {
+      const options = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          new MutableDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1' },
+              },
+            ],
+          }),
+          new MutableDataFrame({
+            refId: 'A',
+            name: 'exemplar',
+            meta: {
+              custom: {
+                resultType: 'exemplar',
+              },
+            },
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4, 3, 2, 1] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 40, 90, 14, 21],
+                labels: { le: '6' },
+              },
+              {
+                name: 'Test',
+                type: FieldType.string,
+                values: ['hello', 'doctor', 'name', 'continue', 'yesterday', 'tomorrow'],
+                labels: { le: '6' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse;
+
+      const series = transformV2(response, options, {});
+      expect(series.data[0].fields.length).toEqual(2);
+      expect(series.data.length).toEqual(2);
+      expect(series.data[1].fields[2].values.toArray()).toEqual([
+        'hello',
+        'doctor',
+        'name',
+        'continue',
+        'yesterday',
+        'tomorrow',
+      ]);
+      expect(series.data[1].fields.length).toEqual(3);
     });
   });
   describe('transformDFToTable', () => {
@@ -513,10 +578,8 @@ describe('Prometheus Result Transformer', () => {
         const result = transform({ data: response } as any, { query: options, target: options } as any);
         expect(result[0].fields[0].values.toArray()).toEqual([1445000010000, 1445000020000, 1445000030000]);
         expect(result[0].fields[1].values.toArray()).toEqual([10, 10, 0]);
-        expect(result[1].fields[0].values.toArray()).toEqual([1445000010000, 1445000020000, 1445000030000]);
-        expect(result[1].fields[1].values.toArray()).toEqual([10, 0, 30]);
-        expect(result[2].fields[0].values.toArray()).toEqual([1445000010000, 1445000020000, 1445000030000]);
-        expect(result[2].fields[1].values.toArray()).toEqual([10, 0, 10]);
+        expect(result[0].fields[2].values.toArray()).toEqual([10, 0, 30]);
+        expect(result[0].fields[3].values.toArray()).toEqual([10, 0, 10]);
       });
 
       it('should handle missing datapoints', () => {
@@ -546,8 +609,8 @@ describe('Prometheus Result Transformer', () => {
         ]);
         const result = transform({ data: response } as any, { query: options, target: options } as any);
         expect(result[0].fields[1].values.toArray()).toEqual([1, 2]);
-        expect(result[1].fields[1].values.toArray()).toEqual([1, 3, 1]);
-        expect(result[2].fields[1].values.toArray()).toEqual([1, 2]);
+        expect(result[0].fields[2].values.toArray()).toEqual([1, 3, 1]);
+        expect(result[0].fields[3].values.toArray()).toEqual([1, 2]);
       });
     });
 

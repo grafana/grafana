@@ -59,3 +59,15 @@ Choose a display mode.
 ### Show unfilled area
 
 Select this if you want to render the unfilled region of the bars as dark gray. Not applicable to Retro LCD display mode.
+
+### Min width
+
+Limit the minimum width of the bar column in the vertical direction.
+
+Automatically show x-axis scrollbar when there is a large amount of data.
+
+### Min height
+
+Limit the minimum height of the bar row in the horizontal direction.
+
+Automatically show y-axis scrollbar when there is a large amount of data.

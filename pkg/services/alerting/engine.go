@@ -10,7 +10,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -30,6 +29,7 @@ type AlertStore interface {
 	GetDashboardUIDById(context.Context, *models.GetDashboardRefByIdQuery) error
 	SetAlertNotificationStateToCompleteCommand(context.Context, *models.SetAlertNotificationStateToCompleteCommand) error
 	SetAlertNotificationStateToPendingCommand(context.Context, *models.SetAlertNotificationStateToPendingCommand) error
+	GetAlertNotificationUidWithId(context.Context, *models.GetAlertNotificationUidQuery) error
 	GetAlertNotificationsWithUidToSend(context.Context, *models.GetAlertNotificationsWithUidToSendQuery) error
 	GetOrCreateAlertNotificationState(context.Context, *models.GetOrCreateNotificationStateQuery) error
 	SetAlertState(context.Context, *models.SetAlertStateCommand) error
@@ -40,7 +40,6 @@ type AlertStore interface {
 // are sent.
 type AlertEngine struct {
 	RenderService    rendering.Service
-	Bus              bus.Bus
 	RequestValidator models.PluginRequestValidator
 	DataService      legacydata.RequestHandler
 	Cfg              *setting.Cfg
@@ -64,14 +63,13 @@ func (e *AlertEngine) IsDisabled() bool {
 }
 
 // ProvideAlertEngine returns a new AlertEngine.
-func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidator models.PluginRequestValidator,
+func ProvideAlertEngine(renderer rendering.Service, requestValidator models.PluginRequestValidator,
 	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
 	notificationService *notifications.NotificationService, tracer tracing.Tracer, sqlStore AlertStore, cfg *setting.Cfg,
 	dashAlertExtractor DashAlertExtractor) *AlertEngine {
 	e := &AlertEngine{
 		Cfg:                cfg,
 		RenderService:      renderer,
-		Bus:                bus,
 		RequestValidator:   requestValidator,
 		DataService:        dataService,
 		usageStatsService:  usageStatsService,

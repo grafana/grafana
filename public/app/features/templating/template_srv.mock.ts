@@ -1,4 +1,4 @@
-import { ScopedVars, VariableModel } from '@grafana/data';
+import { ScopedVars, TimeRange, VariableModel } from '@grafana/data';
 import { variableRegex } from '../variables/utils';
 import { TemplateSrv } from '@grafana/runtime';
 
@@ -55,4 +55,6 @@ export class TemplateSrvMock implements TemplateSrv {
     const match = this.regex.exec(target);
     return match !== null;
   }
+
+  updateTimeRange(timeRange: TimeRange) {}
 }

@@ -186,3 +186,8 @@ export const Footer: Story = (args) => {
     </div>
   );
 };
+
+export const Pagination: Story = (args) => <Basic {...args} />;
+Pagination.args = {
+  pageSize: 10,
+};

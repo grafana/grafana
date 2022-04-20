@@ -23,8 +23,8 @@ export function interceptLinkClicks(e: MouseEvent) {
       // Make sure external links are handled correctly
       // That is they where seen as being absolute from app root
       if (href[0] !== '/') {
-        // if still contains protocol it's an absolute link to another domain or web application
-        if (href.indexOf('://') > 0) {
+        // if still contains protocol or is a mailto link, it's an absolute link to another domain or web application
+        if (href.indexOf('://') > 0 || href.indexOf('mailto:') === 0) {
           window.location.href = href;
           return;
         } else {

@@ -12,6 +12,7 @@ import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/
 import { contextSrv } from 'app/core/services/context_srv';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
+import { getProfileRoutes } from 'app/features/profile/routes';
 import { ServiceAccountPage } from 'app/features/serviceaccounts/ServiceAccountPage';
 
 export const extraRoutes: RouteDescriptor[] = [];
@@ -194,14 +195,14 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/apikeys',
-      roles: () => ['Editor', 'Admin'],
+      roles: () => contextSrv.evaluatePermission(() => ['Admin'], [AccessControlAction.ActionAPIKeysRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ApiKeysPage" */ 'app/features/api-keys/ApiKeysPage')
       ),
     },
     {
       path: '/org/serviceaccounts',
-      roles: () => ['Editor', 'Admin'],
+      roles: () => contextSrv.evaluatePermission(() => ['Admin'], [AccessControlAction.ServiceAccountsRead]),
       component: SafeDynamicImport(
         () =>
           import(/* webpackChunkName: "ServiceAccountsPage" */ 'app/features/serviceaccounts/ServiceAccountsListPage')
@@ -246,24 +247,6 @@ export function getAppRoutes(): RouteDescriptor[] {
           [AccessControlAction.ActionTeamsRead, AccessControlAction.ActionTeamsCreate]
         ),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
-    },
-    {
-      path: '/profile',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "UserProfileEditPage" */ 'app/features/profile/UserProfileEditPage')
-      ),
-    },
-    {
-      path: '/profile/password',
-      component: SafeDynamicImport(
-        () => import(/* webPackChunkName: "ChangePasswordPage" */ 'app/features/profile/ChangePasswordPage')
-      ),
-    },
-    {
-      path: '/profile/select-org',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SelectOrgPage" */ 'app/features/org/SelectOrgPage')
-      ),
     },
     // ADMIN
 
@@ -423,6 +406,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/f/:uid/:slug/alerting',
+      roles: () =>
+        contextSrv.evaluatePermission(() => ['Viewer', 'Editor', 'Admin'], [AccessControlAction.AlertingRuleRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "FolderAlerting"*/ 'app/features/folders/FolderAlerting')
       ),
@@ -436,6 +421,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getPluginCatalogRoutes(),
     ...getLiveRoutes(),
     ...getAlertingRoutes(),
+    ...getProfileRoutes(),
     ...extraRoutes,
     {
       path: '/*',

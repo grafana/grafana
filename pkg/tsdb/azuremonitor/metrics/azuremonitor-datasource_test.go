@@ -116,6 +116,17 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			expectedInterval:        "PT1M",
 			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27+and+tier+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
 		},
+		{
+			name: "has a dimension filter without specifying a top",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain":       "PT1M",
+				"dimension":       "blob",
+				"dimensionFilter": "*",
+			},
+			queryInterval:           duration,
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+		},
 	}
 
 	commonAzureModelProps := map[string]interface{}{
@@ -152,7 +163,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			}
 
 			azureMonitorQuery := &types.AzureMonitorQuery{
-				URL: "12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
 				UrlComponents: map[string]string{
 					"metricDefinition": "Microsoft.Compute/virtualMachines",
 					"resourceGroup":    "grafanastaging",
@@ -576,7 +587,7 @@ func TestAzureMonitorCreateRequest(t *testing.T) {
 	}{
 		{
 			name:        "creates a request",
-			expectedURL: "http://ds/subscriptions",
+			expectedURL: "http://ds/",
 			expectedHeaders: http.Header{
 				"Content-Type": []string{"application/json"},
 			},

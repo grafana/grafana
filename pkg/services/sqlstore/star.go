@@ -3,16 +3,8 @@ package sqlstore
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
-
-func (ss *SQLStore) addStarQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.StarDashboard)
-	bus.AddHandler("sql", ss.UnstarDashboard)
-	bus.AddHandler("sql", ss.GetUserStars)
-	bus.AddHandler("sql", ss.IsStarredByUserCtx)
-}
 
 func (ss *SQLStore) IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {

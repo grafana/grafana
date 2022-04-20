@@ -110,7 +110,7 @@ describe('ShareModal', () => {
         user: {
           orgId: 1,
         },
-      };
+      } as any;
       ctx.mount({
         panel: new PanelModel({ id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
       });
@@ -202,7 +202,7 @@ describe('when default_home_dashboard_path is set in the grafana config', () => 
       user: {
         orgId: 1,
       },
-    };
+    } as any;
   });
 
   afterAll(() => {

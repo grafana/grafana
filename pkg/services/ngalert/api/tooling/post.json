@@ -558,6 +558,36 @@
    "type": "object",
    "x-go-package": "github.com/prometheus/alertmanager/config"
   },
+  "EmbeddedContactPoint": {
+   "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
+   "properties": {
+    "disableResolveMessage": {
+     "type": "boolean",
+     "x-go-name": "DisableResolveMessage"
+    },
+    "name": {
+     "type": "string",
+     "x-go-name": "Name"
+    },
+    "provanance": {
+     "type": "string",
+     "x-go-name": "Provenance"
+    },
+    "settings": {
+     "$ref": "#/definitions/Json"
+    },
+    "type": {
+     "type": "string",
+     "x-go-name": "Type"
+    },
+    "uid": {
+     "type": "string",
+     "x-go-name": "UID"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "ErrorType": {
    "title": "ErrorType models the different API error types.",
    "type": "string",
@@ -2803,7 +2833,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2836,9 +2865,9 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object",
-   "x-go-package": "net/url"
+   "x-go-package": "github.com/prometheus/common/config"
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -3060,12 +3089,11 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array",
-   "x-go-name": "AlertGroups",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -3185,7 +3213,6 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3244,7 +3271,9 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableAlert",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableAlerts": {
    "description": "GettableAlerts gettable alerts",
@@ -3309,12 +3338,11 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array",
-   "x-go-name": "GettableSilences",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "labelSet": {
    "additionalProperties": {
@@ -4729,6 +4757,165 @@
     },
     "tags": [
      "prometheus"
+    ]
+   }
+  },
+  "/api/provisioning/contact-points": {
+   "get": {
+    "operationId": "RouteGetContactpoints",
+    "responses": {
+     "200": {
+      "description": "Route",
+      "schema": {
+       "$ref": "#/definitions/Route"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Get all the contact points.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePostContactpoints",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/EmbeddedContactPoint"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "$ref": "#/responses/Accepted"
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Create a contact point.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "put": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePutContactpoints",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/EmbeddedContactPoint"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "$ref": "#/responses/Accepted"
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Update an existing contact point.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/provisioning/contact-points/{ID}": {
+   "delete": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RouteDeleteContactpoints",
+    "responses": {
+     "202": {
+      "$ref": "#/responses/Accepted"
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Delete a contact point.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/provisioning/policies": {
+   "get": {
+    "operationId": "RouteGetPolicyTree",
+    "responses": {
+     "200": {
+      "description": "Route",
+      "schema": {
+       "$ref": "#/definitions/Route"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Get the notification policy tree.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePostPolicyTree",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/Route"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "$ref": "#/responses/Accepted"
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Sets the notification policy tree.",
+    "tags": [
+     "provisioning"
     ]
    }
   },

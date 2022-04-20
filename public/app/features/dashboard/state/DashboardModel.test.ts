@@ -863,7 +863,7 @@ describe('DashboardModel', () => {
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
 
-        const result = dashboard.canAddAnnotations();
+        const result = dashboard.canEditDashboard();
 
         expect(result).toBe(expected);
       }

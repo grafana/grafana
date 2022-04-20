@@ -66,7 +66,7 @@ describe('Wrapper', () => {
         range: { from: 'now-1h', to: 'now' },
       }),
     };
-    const { datasources, store } = setupExplore({ urlParams });
+    const { datasources } = setupExplore({ urlParams });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
 
     // Make sure we render the logs panel
@@ -82,11 +82,6 @@ describe('Wrapper', () => {
     expect(locationService.getSearchObject()).toEqual({
       orgId: '1',
       ...urlParams,
-    });
-
-    expect(store.getState().explore.richHistory[0]).toMatchObject({
-      datasourceName: 'loki',
-      queries: [{ expr: '{ label="value"}', refId: 'A' }],
     });
 
     // We called the data source query method once

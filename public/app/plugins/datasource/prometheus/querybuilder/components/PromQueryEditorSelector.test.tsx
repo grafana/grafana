@@ -51,7 +51,7 @@ describe('PromQueryEditorSelector', () => {
     expectCodeEditor();
   });
 
-  it('shows builder if new query', async () => {
+  it('shows code if new query', async () => {
     render(
       <PromQueryEditorSelector
         {...defaultProps}
@@ -61,7 +61,7 @@ describe('PromQueryEditorSelector', () => {
         }}
       />
     );
-    expectBuilder();
+    expectCodeEditor();
   });
 
   it('shows code editor when code mode is set', async () => {
@@ -90,24 +90,24 @@ describe('PromQueryEditorSelector', () => {
     });
   });
 
-  it('Can enable preview', async () => {
+  it('Can enable raw query', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Builder);
     expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
 
-    screen.getByLabelText('Preview').click();
+    screen.getByLabelText('Raw query').click();
 
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
       range: true,
       editorMode: QueryEditorMode.Builder,
-      editorPreview: true,
+      rawQuery: true,
     });
   });
 
-  it('Should show preview', async () => {
+  it('Should show raw query', async () => {
     renderWithProps({
-      editorPreview: true,
+      rawQuery: true,
       editorMode: QueryEditorMode.Builder,
       expr: 'my_metric',
     });
@@ -189,9 +189,9 @@ function expectExplain() {
 
 function switchToMode(mode: QueryEditorMode) {
   const label = {
-    [QueryEditorMode.Code]: 'Code',
-    [QueryEditorMode.Explain]: 'Explain',
-    [QueryEditorMode.Builder]: 'Builder',
+    [QueryEditorMode.Code]: /Code/,
+    [QueryEditorMode.Explain]: /Explain/,
+    [QueryEditorMode.Builder]: /Builder/,
   }[mode];
 
   const switchEl = screen.getByLabelText(label);

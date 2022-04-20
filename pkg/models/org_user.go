@@ -14,6 +14,7 @@ var (
 	ErrOrgUserAlreadyAdded = errors.New("user is already added to organization")
 )
 
+// swagger:enum RoleType
 type RoleType string
 
 const (
@@ -44,6 +45,17 @@ func (r RoleType) Children() []RoleType {
 		return []RoleType{ROLE_EDITOR, ROLE_VIEWER}
 	case ROLE_EDITOR:
 		return []RoleType{ROLE_VIEWER}
+	default:
+		return nil
+	}
+}
+
+func (r RoleType) Parents() []RoleType {
+	switch r {
+	case ROLE_EDITOR:
+		return []RoleType{ROLE_ADMIN}
+	case ROLE_VIEWER:
+		return []RoleType{ROLE_EDITOR, ROLE_ADMIN}
 	default:
 		return nil
 	}

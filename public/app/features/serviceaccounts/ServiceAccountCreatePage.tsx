@@ -31,7 +31,7 @@ const ServiceAccountCreatePage: React.FC<ServiceAccountCreatePageProps> = ({ nav
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <h1>Add new service account</h1>
+        <h1>Create service account</h1>
         <Form onSubmit={onSubmit} validateOn="onBlur">
           {({ register, errors }) => {
             return (
@@ -44,7 +44,7 @@ const ServiceAccountCreatePage: React.FC<ServiceAccountCreatePageProps> = ({ nav
                 >
                   <Input id="display-name-input" {...register('name', { required: true })} />
                 </Field>
-                <Button type="submit">Create Service account</Button>
+                <Button type="submit">Create</Button>
               </>
             );
           }}

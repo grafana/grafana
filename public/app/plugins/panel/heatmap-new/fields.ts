@@ -1,5 +1,14 @@
-import { DataFrame, DataFrameType, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
-import { calculateHeatmapFromData, createHeatmapFromBuckets } from 'app/features/transformers/calculateHeatmap/heatmap';
+import {
+  DataFrame,
+  DataFrameType,
+  FieldType,
+  formattedValueToString,
+  getDisplayProcessor,
+  getFieldDisplayName,
+  getValueFormat,
+  GrafanaTheme2,
+} from '@grafana/data';
+import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
 
 export const enum BucketLayout {
@@ -22,6 +31,9 @@ export interface HeatmapData {
   xLayout?: BucketLayout;
   yLayout?: BucketLayout;
 
+  // Print a heatmap cell value
+  display?: (v: number) => string;
+
   // Errors
   warning?: string;
 }
@@ -42,26 +54,23 @@ export function prepareHeatmapData(
   }
 
   // Find a well defined heatmap
-  let heatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanlines);
-  if (heatmap) {
-    return getHeatmapData(heatmap, theme);
+  let scanlinesHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanlines);
+  if (scanlinesHeatmap) {
+    return getHeatmapData(scanlinesHeatmap, theme);
+  }
+
+  let bucketsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapBuckets);
+  if (bucketsHeatmap) {
+    return {
+      yAxisValues: frames[0].fields.flatMap((field) =>
+        field.type === FieldType.number ? getFieldDisplayName(field) : []
+      ),
+      ...getHeatmapData(bucketsToScanlines(bucketsHeatmap), theme),
+    };
   }
 
   if (source === HeatmapSourceMode.Data) {
-    // TODO: check for names xMin, yMin etc...
-    return getHeatmapData(createHeatmapFromBuckets(frames), theme);
-  }
-
-  // detect a frame-per-bucket heatmap frame
-  // TODO: improve heuristic? infer from fields[1].labels.le === '+Inf' ?
-  if (frames[0].meta?.custom?.resultType === 'matrix' && frames.some((f) => f.name?.startsWith('+Inf'))) {
-    // already done by the Prometheus datasource frontend
-    //frames = prepBucketFrames(frames);
-
-    return {
-      yAxisValues: frames.map((f) => f.name ?? null),
-      ...getHeatmapData(createHeatmapFromBuckets(frames), theme),
-    };
+    return getHeatmapData(bucketsToScanlines(frames[0]), theme);
   }
 
   // TODO, check for error etc
@@ -80,6 +89,7 @@ const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => 
     return { heatmap: frame };
   }
 
+  // Y field values (display is used in the axis)
   if (!frame.fields[1].display) {
     frame.fields[1].display = getDisplayProcessor({ field: frame.fields[1], theme });
   }
@@ -101,14 +111,19 @@ const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => 
   let yBinIncr = ys[1] - ys[0];
   let xBinIncr = xs[yBinQty] - xs[0];
 
+  // The "count" field
+  const disp = frame.fields[2].display ?? getValueFormat('short');
   return {
     heatmap: frame,
     xBucketSize: xBinIncr,
     yBucketSize: yBinIncr,
     xBucketCount: xBinQty,
     yBucketCount: yBinQty,
+
     // TODO: improve heuristic
     xLayout: frame.fields[0].name === 'xMax' ? BucketLayout.le : BucketLayout.ge,
     yLayout: frame.fields[1].name === 'yMax' ? BucketLayout.le : BucketLayout.ge,
+
+    display: (v) => formattedValueToString(disp(v)),
   };
 };

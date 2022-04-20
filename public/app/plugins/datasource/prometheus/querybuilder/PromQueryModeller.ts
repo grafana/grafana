@@ -2,9 +2,9 @@ import { FUNCTIONS } from '../promql';
 import { getAggregationOperations } from './aggregations';
 import { getOperationDefinitions } from './operations';
 import { LokiAndPromQueryModellerBase } from './shared/LokiAndPromQueryModellerBase';
-import { PromQueryPattern, PromVisualQuery, PromVisualQueryOperationCategory } from './types';
+import { PromQueryPattern, PromVisualQueryOperationCategory } from './types';
 
-export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQuery> {
+export class PromQueryModeller extends LokiAndPromQueryModellerBase {
   constructor() {
     super(() => {
       const allOperations = [...getOperationDefinitions(), ...getAggregationOperations()];
@@ -27,45 +27,19 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQu
     ]);
   }
 
-  renderQuery(query: PromVisualQuery, nested?: boolean) {
-    let queryString = `${query.metric}${this.renderLabels(query.labels)}`;
-    queryString = this.renderOperations(queryString, query.operations);
-
-    if (!nested && this.hasBinaryOp(query) && Boolean(query.binaryQueries?.length)) {
-      queryString = `(${queryString})`;
-    }
-
-    queryString = this.renderBinaryQueries(queryString, query.binaryQueries);
-
-    if (nested && (this.hasBinaryOp(query) || Boolean(query.binaryQueries?.length))) {
-      queryString = `(${queryString})`;
-    }
-
-    return queryString;
-  }
-
-  hasBinaryOp(query: PromVisualQuery): boolean {
-    return (
-      query.operations.find((op) => {
-        const def = this.getOperationDef(op.id);
-        return def?.category === PromVisualQueryOperationCategory.BinaryOps;
-      }) !== undefined
-    );
-  }
-
   getQueryPatterns(): PromQueryPattern[] {
     return [
       {
         name: 'Rate then sum',
         operations: [
-          { id: 'rate', params: ['auto'] },
+          { id: 'rate', params: ['$__rate_interval'] },
           { id: 'sum', params: [] },
         ],
       },
       {
         name: 'Rate then sum by(label) then avg',
         operations: [
-          { id: 'rate', params: ['auto'] },
+          { id: 'rate', params: ['$__rate_interval'] },
           { id: '__sum_by', params: [''] },
           { id: 'avg', params: [] },
         ],
@@ -73,7 +47,7 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQu
       {
         name: 'Histogram quantile on rate',
         operations: [
-          { id: 'rate', params: ['auto'] },
+          { id: 'rate', params: ['$__rate_interval'] },
           { id: '__sum_by', params: ['le'] },
           { id: 'histogram_quantile', params: [0.95] },
         ],
@@ -81,7 +55,7 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase<PromVisualQu
       {
         name: 'Histogram quantile on increase ',
         operations: [
-          { id: 'increase', params: ['auto'] },
+          { id: 'increase', params: ['$__rate_interval'] },
           { id: '__max_by', params: ['le'] },
           { id: 'histogram_quantile', params: [0.95] },
         ],

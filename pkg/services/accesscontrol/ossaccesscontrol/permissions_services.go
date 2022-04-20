@@ -23,11 +23,11 @@ func ProvidePermissionsServices(
 	if err != nil {
 		return nil, err
 	}
-	folderPermissions, err := provideFolderService(cfg, router, sql, ac, store)
+	folderPermissions, err := ProvideFolderPermissions(cfg, router, sql, ac, store)
 	if err != nil {
 		return nil, err
 	}
-	dashboardPermissions, err := provideDashboardService(cfg, router, sql, ac, store)
+	dashboardPermissions, err := ProvideDashboardPermissions(cfg, router, sql, ac, store)
 	if err != nil {
 		return nil, err
 	}
@@ -141,20 +141,13 @@ func ProvideTeamPermissions(
 var DashboardViewActions = []string{accesscontrol.ActionDashboardsRead}
 var DashboardEditActions = append(DashboardViewActions, []string{accesscontrol.ActionDashboardsWrite, accesscontrol.ActionDashboardsDelete}...)
 var DashboardAdminActions = append(DashboardEditActions, []string{accesscontrol.ActionDashboardsPermissionsRead, accesscontrol.ActionDashboardsPermissionsWrite}...)
-var FolderViewActions = []string{dashboards.ActionFoldersRead}
-var FolderEditActions = append(FolderViewActions, []string{dashboards.ActionFoldersWrite, dashboards.ActionFoldersDelete, accesscontrol.ActionDashboardsCreate}...)
-var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)
 
-func provideDashboardService(
+func ProvideDashboardPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore,
 	ac accesscontrol.AccessControl, store resourcepermissions.Store,
 ) (*resourcepermissions.Service, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*models.Dashboard, error) {
-		id, err := strconv.ParseInt(resourceID, 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		query := &models.GetDashboardQuery{Id: id, OrgId: orgID}
+		query := &models.GetDashboardQuery{Uid: resourceID, OrgId: orgID}
 		if err := sql.GetDashboard(ctx, query); err != nil {
 			return nil, err
 		}
@@ -163,7 +156,7 @@ func provideDashboardService(
 
 	options := resourcepermissions.Options{
 		Resource:          "dashboards",
-		ResourceAttribute: "id",
+		ResourceAttribute: "uid",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
@@ -176,23 +169,18 @@ func provideDashboardService(
 
 			return nil
 		},
-		UidSolver: func(ctx context.Context, orgID int64, uid string) (int64, error) {
-			query := &models.GetDashboardQuery{
-				Uid:   uid,
-				OrgId: orgID,
-			}
-			if err := sql.GetDashboard(ctx, query); err != nil {
-				return 0, err
-			}
-			return query.Result.Id, nil
-		},
+		InheritedScopePrefixes: []string{"folders:uid:"},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
 			dashboard, err := getDashboard(ctx, orgID, resourceID)
 			if err != nil {
 				return nil, err
 			}
 			if dashboard.FolderId > 0 {
-				return []string{accesscontrol.GetResourceScope("folders", strconv.FormatInt(dashboard.FolderId, 10))}, nil
+				query := &models.GetDashboardQuery{Id: dashboard.FolderId, OrgId: orgID}
+				if err := sql.GetDashboard(ctx, query); err != nil {
+					return nil, err
+				}
+				return []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.Result.Uid)}, nil
 			}
 			return []string{}, nil
 		},
@@ -214,19 +202,19 @@ func provideDashboardService(
 	return resourcepermissions.New(options, cfg, router, ac, store, sql)
 }
 
-func provideFolderService(
+var FolderViewActions = []string{dashboards.ActionFoldersRead}
+var FolderEditActions = append(FolderViewActions, []string{dashboards.ActionFoldersWrite, dashboards.ActionFoldersDelete, accesscontrol.ActionDashboardsCreate}...)
+var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)
+
+func ProvideFolderPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore,
 	accesscontrol accesscontrol.AccessControl, store resourcepermissions.Store,
 ) (*resourcepermissions.Service, error) {
 	options := resourcepermissions.Options{
 		Resource:          "folders",
-		ResourceAttribute: "id",
+		ResourceAttribute: "uid",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
-			id, err := strconv.ParseInt(resourceID, 10, 64)
-			if err != nil {
-				return err
-			}
-			query := &models.GetDashboardQuery{Id: id, OrgId: orgID}
+			query := &models.GetDashboardQuery{Uid: resourceID, OrgId: orgID}
 			if err := sql.GetDashboard(ctx, query); err != nil {
 				return err
 			}
@@ -236,16 +224,6 @@ func provideFolderService(
 			}
 
 			return nil
-		},
-		UidSolver: func(ctx context.Context, orgID int64, uid string) (int64, error) {
-			query := &models.GetDashboardQuery{
-				Uid:   uid,
-				OrgId: orgID,
-			}
-			if err := sql.GetDashboard(ctx, query); err != nil {
-				return 0, err
-			}
-			return query.Result.Id, nil
 		},
 		Assignments: resourcepermissions.Assignments{
 			Users:        true,

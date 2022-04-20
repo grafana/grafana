@@ -74,6 +74,8 @@ function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<B
     },
     orientation: VizOrientation.Horizontal,
     showUnfilled: true,
+    minVizHeight: 10,
+    minVizWidth: 0,
   };
   const fieldConfig: FieldConfigSource = {
     defaults: {},

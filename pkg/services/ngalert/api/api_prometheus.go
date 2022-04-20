@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -25,6 +27,7 @@ type PrometheusSrv struct {
 	log     log.Logger
 	manager state.AlertInstanceManager
 	store   store.RuleStore
+	ac      accesscontrol.AccessControl
 }
 
 const queryIncludeInternalLabels = "includeInternalLabels"
@@ -47,8 +50,9 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 	for _, alertState := range srv.manager.GetAll(c.OrgId) {
 		startsAt := alertState.StartsAt
 		valString := ""
-		if alertState.State == eval.Alerting {
-			valString = alertState.LastEvaluationString
+
+		if alertState.State == eval.Alerting || alertState.State == eval.Pending {
+			valString = formatValues(alertState)
 		}
 
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
@@ -63,6 +67,34 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 	return response.JSON(http.StatusOK, alertResponse)
 }
 
+func formatValues(alertState *state.State) string {
+	var fv string
+	values := alertState.GetLastEvaluationValuesForCondition()
+
+	switch len(values) {
+	case 0:
+		fv = alertState.LastEvaluationString
+	case 1:
+		for _, v := range values {
+			fv = strconv.FormatFloat(v, 'e', -1, 64)
+			break
+		}
+
+	default:
+		vs := make([]string, 0, len(values))
+
+		for k, v := range values {
+			vs = append(vs, fmt.Sprintf("%s: %s", k, strconv.FormatFloat(v, 'e', -1, 64)))
+		}
+
+		// Ensure we have a consistent natural ordering after formatting e.g. A0, A1, A10, A11, A3, etc.
+		sort.Strings(vs)
+		fv = strings.Join(vs, ", ")
+	}
+
+	return fv
+}
+
 func getPanelIDFromRequest(r *http.Request) (int64, error) {
 	if s := strings.TrimSpace(r.URL.Query().Get("panel_id")); s != "" {
 		return strconv.ParseInt(s, 10, 64)
@@ -71,6 +103,15 @@ func getPanelIDFromRequest(r *http.Request) (int64, error) {
 }
 
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Response {
+	dashboardUID := c.Query("dashboard_uid")
+	panelID, err := getPanelIDFromRequest(c.Req)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "invalid panel_id")
+	}
+	if dashboardUID == "" && panelID != 0 {
+		return ErrResp(http.StatusBadRequest, errors.New("panel_id must be set with dashboard_uid"), "")
+	}
+
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -85,7 +126,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
-	namespaceMap, err := srv.store.GetNamespaces(c.Req.Context(), c.OrgId, c.SignedInUser)
+	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.OrgId, c.SignedInUser)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
@@ -100,32 +141,11 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		namespaceUIDs = append(namespaceUIDs, k)
 	}
 
-	dashboardUID := c.Query("dashboard_uid")
-	panelID, err := getPanelIDFromRequest(c.Req)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "invalid panel_id")
-	}
-	if dashboardUID == "" && panelID != 0 {
-		return ErrResp(http.StatusBadRequest, errors.New("panel_id must be set with dashboard_uid"), "")
-	}
-
-	ruleGroupQuery := ngmodels.ListOrgRuleGroupsQuery{
+	alertRuleQuery := ngmodels.ListAlertRulesQuery{
 		OrgID:         c.SignedInUser.OrgId,
 		NamespaceUIDs: namespaceUIDs,
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
-	}
-	if err := srv.store.GetOrgRuleGroups(c.Req.Context(), &ruleGroupQuery); err != nil {
-		ruleResponse.DiscoveryBase.Status = "error"
-		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rule groups: %s", err.Error())
-		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
-		return response.JSON(http.StatusInternalServerError, ruleResponse)
-	}
-
-	alertRuleQuery := ngmodels.ListAlertRulesQuery{
-		OrgID:        c.SignedInUser.OrgId,
-		DashboardUID: dashboardUID,
-		PanelID:      panelID,
 	}
 	if err := srv.store.GetOrgAlertRules(c.Req.Context(), &alertRuleQuery); err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"
@@ -133,32 +153,32 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
 		return response.JSON(http.StatusInternalServerError, ruleResponse)
 	}
+	hasAccess := func(evaluator accesscontrol.Evaluator) bool {
+		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqSignedIn, evaluator)
+	}
 
 	groupMap := make(map[string]*apimodels.RuleGroup)
 
-	for _, r := range ruleGroupQuery.Result {
-		if len(r) < 3 {
-			continue
-		}
-		groupId, namespaceUID, namespace := r[0], r[1], r[2]
-
-		newGroup := &apimodels.RuleGroup{
-			Name:           groupId,
-			File:           namespace, // file is what Prometheus uses for provisioning, we replace it with namespace.
-			LastEvaluation: time.Time{},
-			EvaluationTime: 0, // TODO: see if we are able to pass this along with evaluation results
-		}
-
-		groupMap[groupId+"-"+namespaceUID] = newGroup
-
-		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, newGroup)
-	}
-
 	for _, rule := range alertRuleQuery.Result {
-		newGroup, ok := groupMap[rule.RuleGroup+"-"+rule.NamespaceUID]
-		if !ok {
+		if !authorizeDatasourceAccessForRule(rule, hasAccess) {
 			continue
 		}
+		groupKey := rule.RuleGroup + "-" + rule.NamespaceUID
+		newGroup, ok := groupMap[groupKey]
+		if !ok {
+			folder := namespaceMap[rule.NamespaceUID]
+			if folder == nil {
+				srv.log.Warn("query returned rules that belong to folder the user does not have access to. The rule will not be added to the response", "folder_uid", rule.NamespaceUID, "rule_uid", rule.UID)
+				continue
+			}
+			newGroup = &apimodels.RuleGroup{
+				Name: rule.RuleGroup,
+				File: folder.Title, // file is what Prometheus uses for provisioning, we replace it with namespace.
+			}
+			groupMap[groupKey] = newGroup
+			ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, newGroup)
+		}
+
 		alertingRule := apimodels.AlertingRule{
 			State:       "inactive",
 			Name:        rule.Title,
@@ -178,8 +198,8 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		for _, alertState := range srv.manager.GetStatesForRuleUID(c.OrgId, rule.UID) {
 			activeAt := alertState.StartsAt
 			valString := ""
-			if alertState.State == eval.Alerting {
-				valString = alertState.LastEvaluationString
+			if alertState.State == eval.Alerting || alertState.State == eval.Pending {
+				valString = formatValues(alertState)
 			}
 
 			alert := &apimodels.Alert{
@@ -187,12 +207,11 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 				Annotations: alertState.Annotations,
 				State:       alertState.State.String(),
 				ActiveAt:    &activeAt,
-				Value:       valString, // TODO: set this once it is added to the evaluation results
+				Value:       valString,
 			}
 
 			if alertState.LastEvaluationTime.After(newRule.LastEvaluation) {
 				newRule.LastEvaluation = alertState.LastEvaluationTime
-				newGroup.LastEvaluation = alertState.LastEvaluationTime
 			}
 
 			newRule.EvaluationTime = alertState.EvaluationDuration.Seconds()
@@ -222,7 +241,10 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		alertingRule.Rule = newRule
 		newGroup.Rules = append(newGroup.Rules, alertingRule)
 		newGroup.Interval = float64(rule.IntervalSeconds)
+		newGroup.EvaluationTime = newRule.EvaluationTime
+		newGroup.LastEvaluation = newRule.LastEvaluation
 	}
+
 	return response.JSON(http.StatusOK, ruleResponse)
 }
 

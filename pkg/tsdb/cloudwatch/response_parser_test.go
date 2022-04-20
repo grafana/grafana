@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"encoding/json"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -13,9 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func loadGetMetricDataOutputsFromFile() ([]*cloudwatch.GetMetricDataOutput, error) {
+func loadGetMetricDataOutputsFromFile(filePath string) ([]*cloudwatch.GetMetricDataOutput, error) {
 	var getMetricDataOutputs []*cloudwatch.GetMetricDataOutput
-	jsonBody, err := ioutil.ReadFile("./test-data/multiple-outputs.json")
+	cleanFilePath := filepath.Clean(filePath)
+	jsonBody, err := ioutil.ReadFile(cleanFilePath)
 	if err != nil {
 		return getMetricDataOutputs, err
 	}
@@ -27,7 +29,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	startTime := time.Now()
 	endTime := startTime.Add(2 * time.Hour)
 	t.Run("when aggregating response", func(t *testing.T) {
-		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile()
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/multiple-outputs.json")
 		require.NoError(t, err)
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
 		t.Run("response for id a", func(t *testing.T) {
@@ -43,7 +45,16 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				assert.Equal(t, "Complete", aggregatedResponse[idA].StatusCode)
 			})
 			t.Run("should have exceeded request limit", func(t *testing.T) {
-				assert.True(t, aggregatedResponse[idA].RequestExceededMaxLimit)
+				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxMetricsExceeded"])
+			})
+			t.Run("should have exceeded query time range", func(t *testing.T) {
+				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxQueryTimeRangeExceeded"])
+			})
+			t.Run("should have exceeded max query results", func(t *testing.T) {
+				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxQueryResultsExceeded"])
+			})
+			t.Run("should have exceeded max matching results", func(t *testing.T) {
+				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxMatchingResultsExceeded"])
 			})
 		})
 		t.Run("response for id b", func(t *testing.T) {
@@ -54,6 +65,27 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			t.Run("should have an arithmetic error and an error message", func(t *testing.T) {
 				assert.True(t, aggregatedResponse[idB].HasArithmeticError)
 				assert.Equal(t, "One or more data-points have been dropped due to non-numeric values (NaN, -Infinite, +Infinite)", aggregatedResponse[idB].ArithmeticErrorMessage)
+			})
+		})
+	})
+
+	t.Run("when aggregating response and error codes are in first GetMetricDataOutput", func(t *testing.T) {
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/multiple-outputs2.json")
+		require.NoError(t, err)
+		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
+		t.Run("response for id a", func(t *testing.T) {
+			idA := "a"
+			t.Run("should have exceeded request limit", func(t *testing.T) {
+				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxMetricsExceeded"])
+			})
+			t.Run("should have exceeded query time range", func(t *testing.T) {
+				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxQueryTimeRangeExceeded"])
+			})
+			t.Run("should have exceeded max query results", func(t *testing.T) {
+				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxQueryResultsExceeded"])
+			})
+			t.Run("should have exceeded max matching results", func(t *testing.T) {
+				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxMatchingResultsExceeded"])
 			})
 		})
 	})

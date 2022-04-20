@@ -13,8 +13,7 @@ import {
   toUtc,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
-
-import LokiDatasource, { RangeQueryOptions } from './datasource';
+import { isMetricsQuery, LokiDatasource, RangeQueryOptions } from './datasource';
 import { LokiQuery, LokiResponse, LokiResultType } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -412,7 +411,7 @@ describe('LokiDatasource', () => {
 
       it('should not modify expression with no filters', async () => {
         await lastValueFrom(ds.query(options as any));
-        expect(ds.runRangeQuery).toBeCalledWith({ expr: DEFAULT_EXPR }, expect.anything(), expect.anything());
+        expect(ds.runRangeQuery).toBeCalledWith({ expr: DEFAULT_EXPR }, expect.anything());
       });
 
       it('should add filters to expression', async () => {
@@ -432,7 +431,6 @@ describe('LokiDatasource', () => {
         await lastValueFrom(ds.query(options as any));
         expect(ds.runRangeQuery).toBeCalledWith(
           { expr: 'rate({bar="baz",job="foo",k1="v1",k2!="v2"} |= "bar" [5m])' },
-          expect.anything(),
           expect.anything()
         );
       });
@@ -453,7 +451,6 @@ describe('LokiDatasource', () => {
         await lastValueFrom(ds.query(options as any));
         expect(ds.runRangeQuery).toBeCalledWith(
           { expr: 'rate({bar="baz",job="foo",k1=~"v.*",k2=~"v\\\\\'.*"} |= "bar" [5m])' },
-          expect.anything(),
           expect.anything()
         );
       });
@@ -1027,6 +1024,23 @@ describe('LokiDatasource', () => {
       ]);
       expect(queries[0].expr).toBe('{foo="bar"}');
     });
+  });
+});
+
+describe('isMetricsQuery', () => {
+  it('should return true for metrics query', () => {
+    const query = 'rate({label=value}[1m])';
+    expect(isMetricsQuery(query)).toBeTruthy();
+  });
+
+  it('should return false for logs query', () => {
+    const query = '{label=value}';
+    expect(isMetricsQuery(query)).toBeFalsy();
+  });
+
+  it('should not blow up on empty query', () => {
+    const query = '';
+    expect(isMetricsQuery(query)).toBeFalsy();
   });
 });
 

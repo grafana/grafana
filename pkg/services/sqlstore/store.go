@@ -26,6 +26,7 @@ type Store interface {
 	GetOrgById(context.Context, *models.GetOrgByIdQuery) error
 	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
 	CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error
+	GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error
 	DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error
 	CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error)
 	GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error

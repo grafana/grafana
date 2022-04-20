@@ -77,7 +77,7 @@ const columns: AlertTableColumnProps[] = [
     label: 'Created',
     // eslint-disable-next-line react/display-name
     renderCell: ({ data: { activeAt } }) => (
-      <>{activeAt.startsWith('0001') ? '-' : activeAt.substr(0, 19).replace('T', ' ')}</>
+      <>{activeAt.startsWith('0001') ? '-' : activeAt.slice(0, 19).replace('T', ' ')}</>
     ),
     size: '150px',
   },

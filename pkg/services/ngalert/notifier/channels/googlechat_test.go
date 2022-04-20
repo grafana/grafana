@@ -205,7 +205,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 			},
 			expMsgError: nil,
 		}, {
-			name:     "Invalid template",
+			name:     "Missing field in template",
 			settings: `{"url": "http://localhost", "message": "I'm a custom template {{ .NotAField }} bad template"}`,
 			alerts: []*types.Alert{
 				{
@@ -231,6 +231,55 @@ func TestGoogleChatNotifier(t *testing.T) {
 											Text: "I'm a custom template ",
 										},
 									},
+									buttonWidget{
+										Buttons: []button{
+											{
+												TextButton: textButton{
+													Text: "OPEN IN GRAFANA",
+													OnClick: onClick{
+														OpenLink: openLink{
+															URL: "http://localhost/alerting/list",
+														},
+													},
+												},
+											},
+										},
+									},
+									textParagraphWidget{
+										Text: text{
+											// RFC822 only has the minute, hence it works in most cases.
+											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expMsgError: nil,
+		}, {
+			name:     "Invalid template",
+			settings: `{"url": "http://localhost", "message": "I'm a custom template {{ {.NotAField }} bad template"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: &outerStruct{
+				PreviewText:  "[FIRING:1]  (val1)",
+				FallbackText: "[FIRING:1]  (val1)",
+				Cards: []card{
+					{
+						Header: header{
+							Title: "[FIRING:1]  (val1)",
+						},
+						Sections: []section{
+							{
+								Widgets: []widget{
 									buttonWidget{
 										Buttons: []button{
 											{
@@ -293,6 +342,8 @@ func TestGoogleChatNotifier(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.True(t, ok)
+
+			require.NotEmpty(t, webhookSender.Webhook.Url)
 
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)

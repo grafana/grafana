@@ -19,7 +19,7 @@ export function fromRulerRule(
   rule: RulerRuleDTO
 ): RuleIdentifier {
   if (isGrafanaRulerRule(rule)) {
-    return { uid: rule.grafana_alert.uid! };
+    return { uid: rule.grafana_alert.uid!, ruleSourceName: 'grafana' };
   }
   return {
     ruleSourceName,
@@ -99,7 +99,7 @@ export function parse(value: string, decodeFromUri = false): RuleIdentifier {
   const parts = source.split('$');
 
   if (parts.length === 1) {
-    return { uid: value };
+    return { uid: value, ruleSourceName: 'grafana' };
   }
 
   if (parts.length === 5) {

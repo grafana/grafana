@@ -22,7 +22,7 @@ export const defaultBaseLayer: MapLayerRegistryItem = {
     if (serverLayerType) {
       const layer = geomapLayerRegistry.getIfExists(serverLayerType);
       if (!layer) {
-        throw new Error('Invalid basemap configuraiton on server');
+        throw new Error('Invalid basemap configuration on server');
       }
       return layer.create(map, config.geomapDefaultBaseLayerConfig!, theme);
     }

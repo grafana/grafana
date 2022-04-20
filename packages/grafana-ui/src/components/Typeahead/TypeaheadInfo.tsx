@@ -21,7 +21,7 @@ const getStyles = (theme: GrafanaTheme, height: number, visible: boolean) => {
       box-shadow: 0 0 20px ${theme.colors.dropdownShadow};
       visibility: ${visible === true ? 'visible' : 'hidden'};
       width: 250px;
-      height: ${height + parseInt(theme.spacing.xxs, 10)}px;
+      min-height: ${height + parseInt(theme.spacing.xxs, 10)}px;
       position: relative;
       word-break: break-word;
     `,

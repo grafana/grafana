@@ -1,9 +1,10 @@
-import React, { FunctionComponent } from 'react';
-import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { Tooltip, PopoverContent } from '../Tooltip';
-import { Icon } from '../Icon/Icon';
+import { GrafanaTheme } from '@grafana/data';
+import React, { FunctionComponent } from 'react';
+
 import { useTheme } from '../../themes';
+import { Icon } from '../Icon/Icon';
+import { PopoverContent, Tooltip } from '../Tooltip';
 import { LabelProps } from './Label';
 
 export interface Props extends Omit<LabelProps, 'css' | 'description' | 'category'> {
@@ -41,7 +42,7 @@ export const InlineLabel: FunctionComponent<Props> = ({
       {children}
       {tooltip && (
         <Tooltip placement="top" content={tooltip} theme="info">
-          <Icon name="info-circle" size="sm" className={styles.icon} />
+          <Icon tabIndex={0} name="info-circle" size="sm" className={styles.icon} />
         </Tooltip>
       )}
     </Component>

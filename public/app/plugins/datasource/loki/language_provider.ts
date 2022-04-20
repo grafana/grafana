@@ -15,7 +15,7 @@ import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 import { LokiQuery, LokiQueryType } from './types';
 import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
 
-import LokiDatasource from './datasource';
+import { LokiDatasource } from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
 import Prism, { Grammar } from 'prismjs';
 

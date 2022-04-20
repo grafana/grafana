@@ -303,9 +303,36 @@ interface LogFields {
 
   timeField: FieldWithIndex;
   stringField: FieldWithIndex;
+  labelsField?: FieldWithIndex;
   timeNanosecondField?: FieldWithIndex;
   logLevelField?: FieldWithIndex;
   idField?: FieldWithIndex;
+}
+
+function getAllLabels(fields: LogFields): Labels[] {
+  // there are two types of dataframes we handle:
+  // 1. labels are in a separate field (more efficient when labels change by every log-row)
+  // 2. labels are in in the string-field's `.labels` attribute
+
+  const { stringField, labelsField } = fields;
+
+  const fieldLabels = stringField.labels !== undefined ? [stringField.labels] : [];
+
+  const labelsFieldLabels: Labels[] = labelsField !== undefined ? labelsField.values.toArray() : [];
+
+  return [...fieldLabels, ...labelsFieldLabels];
+}
+
+function getLabelsForFrameRow(fields: LogFields, index: number): Labels {
+  // there are two types of dataframes we handle.
+  // either labels-on-the-string-field, or labels-in-the-labels-field
+
+  const { stringField, labelsField } = fields;
+
+  return {
+    ...stringField.labels,
+    ...labelsField?.values.get(index),
+  };
 }
 
 /**
@@ -316,7 +343,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   if (logSeries.length === 0) {
     return undefined;
   }
-  const allLabels: Labels[] = [];
+  const allLabels: Labels[][] = [];
 
   // Find the fields we care about and collect all labels
   let allSeries: LogFields[] = [];
@@ -326,44 +353,43 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   const seriesWithFields = logSeries.filter((series) => series.fields.length);
 
   if (seriesWithFields.length) {
-    allSeries = seriesWithFields.map((series) => {
+    seriesWithFields.forEach((series) => {
       const fieldCache = new FieldCache(series);
       const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
+      const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
+      const labelsField = fieldCache.getFieldByName('labels');
 
-      if (stringField?.labels) {
-        allLabels.push(stringField.labels);
+      if (stringField !== undefined && timeField !== undefined) {
+        const info = {
+          series,
+          timeField,
+          labelsField,
+          timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
+            ? fieldCache.getFieldByName('tsNs')
+            : undefined,
+          stringField,
+          logLevelField: fieldCache.getFieldByName('level'),
+          idField: getIdField(fieldCache),
+        };
+
+        allSeries.push(info);
+
+        const labels = getAllLabels(info);
+        if (labels.length > 0) {
+          allLabels.push(labels);
+        }
       }
-
-      return {
-        series,
-        timeField: fieldCache.getFirstFieldOfType(FieldType.time),
-        timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
-          ? fieldCache.getFieldByName('tsNs')
-          : undefined,
-        stringField,
-        logLevelField: fieldCache.getFieldByName('level'),
-        idField: getIdField(fieldCache),
-      } as LogFields;
     });
   }
 
-  const commonLabels = allLabels.length > 0 ? findCommonLabels(allLabels) : {};
+  const flatAllLabels = allLabels.flat();
+  const commonLabels = flatAllLabels.length > 0 ? findCommonLabels(flatAllLabels) : {};
 
   const rows: LogRowModel[] = [];
   let hasUniqueLabels = false;
 
   for (const info of allSeries) {
     const { timeField, timeNanosecondField, stringField, logLevelField, idField, series } = info;
-    const labels = stringField.labels;
-    const uniqueLabels = findUniqueLabels(labels, commonLabels);
-    if (Object.keys(uniqueLabels).length > 0) {
-      hasUniqueLabels = true;
-    }
-
-    let seriesLogLevel: LogLevel | undefined = undefined;
-    if (labels && Object.keys(labels).indexOf('level') !== -1) {
-      seriesLogLevel = getLogLevelFromKey(labels['level']);
-    }
 
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values.get(j);
@@ -383,14 +409,20 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
       const entry = hasAnsi ? ansicolor.strip(message) : message;
 
+      const labels = getLabelsForFrameRow(info, j);
+      const uniqueLabels = findUniqueLabels(labels, commonLabels);
+      if (Object.keys(uniqueLabels).length > 0) {
+        hasUniqueLabels = true;
+      }
+
       let logLevel = LogLevel.unknown;
-      if (logLevelField && logLevelField.values.get(j)) {
-        logLevel = getLogLevelFromKey(logLevelField.values.get(j));
-      } else if (seriesLogLevel) {
-        logLevel = seriesLogLevel;
+      const logLevelKey = (logLevelField && logLevelField.values.get(j)) || (labels && labels['level']);
+      if (logLevelKey) {
+        logLevel = getLogLevelFromKey(logLevelKey);
       } else {
         logLevel = getLogLevel(entry);
       }
+
       rows.push({
         entryFieldIndex: stringField.index,
         rowIndex: j,
@@ -407,7 +439,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         searchWords,
         entry,
         raw: message,
-        labels: stringField.labels || {},
+        labels: labels || {},
         uid: idField ? idField.values.get(j) : j.toString(),
       });
     }

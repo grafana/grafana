@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { filterSpans, TraceSpan } from '@jaegertracing/jaeger-ui-components';
 
 /**
@@ -11,9 +11,5 @@ export function useSearch(spans?: TraceSpan[]) {
     return search && spans ? filterSpans(search, spans) : undefined;
   }, [search, spans]);
 
-  const clearSearch = useCallback(() => {
-    setSearch('');
-  }, [setSearch]);
-
-  return { search, setSearch, spanFindMatches, clearSearch };
+  return { search, setSearch, spanFindMatches };
 }

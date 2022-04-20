@@ -39,6 +39,12 @@ func TestSuccessResponse(t *testing.T) {
 		{name: "parse a matrix response with Infinity", filepath: "matrix_inf", query: matrixQuery},
 		{name: "parse a matrix response with very small step value", filepath: "matrix_small_step", query: matrixQuery},
 
+		// Prometheus handles the `__name__` label in a special way, but Loki should not.
+		{name: "parse a matrix response with __name__ label normally", filepath: "matrix_name", query: matrixQuery},
+
+		// loki adds stats to matrix-responses too
+		{name: "parse a matrix response with stats", filepath: "matrix_with_stats", query: matrixQuery},
+
 		{name: "parse a simple vector response", filepath: "vector_simple", query: vectorQuery},
 		{name: "parse a vector response with special values", filepath: "vector_special_values", query: vectorQuery},
 
@@ -53,7 +59,7 @@ func TestSuccessResponse(t *testing.T) {
 			bytes, err := os.ReadFile(responseFileName)
 			require.NoError(t, err)
 
-			frames, err := runQuery(context.Background(), makeMockedAPI(200, "application/json", bytes), &test.query)
+			frames, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes), &test.query)
 			require.NoError(t, err)
 
 			dr := &backend.DataResponse{

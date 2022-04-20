@@ -3,18 +3,8 @@ package sqlstore
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
-
-func (ss *SQLStore) addPlaylistQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.CreatePlaylist)
-	bus.AddHandler("sql", ss.UpdatePlaylist)
-	bus.AddHandler("sql", ss.DeletePlaylist)
-	bus.AddHandler("sql", ss.SearchPlaylists)
-	bus.AddHandler("sql", ss.GetPlaylist)
-	bus.AddHandler("sql", ss.GetPlaylistItem)
-}
 
 func (ss *SQLStore) CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {

@@ -21,7 +21,6 @@ import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import SpanGraph from './SpanGraph';
-import TracePageSearchBar from './TracePageSearchBar';
 import { autoColor, TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '..';
 import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
@@ -138,22 +137,15 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 type TracePageHeaderEmbedProps = {
   canCollapse: boolean;
-  clearSearch: () => void;
-  focusUiFindMatches: () => void;
   hideMap: boolean;
   hideSummary: boolean;
-  nextResult: () => void;
   onSlimViewClicked: () => void;
   onTraceGraphViewClicked: () => void;
-  prevResult: () => void;
-  resultCount: number;
   slimView: boolean;
   trace: Trace;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRange: ViewRange;
-  searchValue: string;
-  onSearchValueChange: (value: string) => void;
   timeZone: TimeZone;
 };
 
@@ -200,21 +192,14 @@ export const HEADER_ITEMS = [
 export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
   const {
     canCollapse,
-    clearSearch,
-    focusUiFindMatches,
     hideMap,
     hideSummary,
-    nextResult,
     onSlimViewClicked,
-    prevResult,
-    resultCount,
     slimView,
     trace,
     updateNextViewRangeTime,
     updateViewRangeTime,
     viewRange,
-    searchValue,
-    onSearchValueChange,
     timeZone,
   } = props;
 
@@ -267,17 +252,6 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
         ) : (
           title
         )}
-        <TracePageSearchBar
-          clearSearch={clearSearch}
-          focusUiFindMatches={focusUiFindMatches}
-          nextResult={nextResult}
-          prevResult={prevResult}
-          resultCount={resultCount}
-          // TODO: we can change this when we have scroll to span functionality
-          navigable={false}
-          searchValue={searchValue}
-          onSearchValueChange={onSearchValueChange}
-        />
       </div>
       {summaryItems && <LabeledList className={styles.TracePageHeaderOverviewItems} items={summaryItems} />}
       {!hideMap && !slimView && (

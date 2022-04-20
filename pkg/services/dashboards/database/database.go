@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -488,8 +487,7 @@ func saveDashboard(sess *sqlstore.DBSession, cmd *models.SaveDashboardCommand) e
 	}
 
 	// delete existing tags
-	_, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.Id)
-	if err != nil {
+	if _, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.Id); err != nil {
 		return err
 	}
 
@@ -724,9 +722,10 @@ func (d *DashboardStore) deleteDashboard(cmd *models.DeleteDashboardCommand, ses
 		deletes = append(deletes, "DELETE FROM dashboard WHERE folder_id = ?")
 
 		var dashIds []struct {
-			Id int64
+			Id  int64
+			Uid string
 		}
-		err := sess.SQL("SELECT id FROM dashboard WHERE folder_id = ?", dashboard.Id).Find(&dashIds)
+		err := sess.SQL("SELECT id, uid FROM dashboard WHERE folder_id = ?", dashboard.Id).Find(&dashIds)
 		if err != nil {
 			return err
 		}
@@ -738,14 +737,14 @@ func (d *DashboardStore) deleteDashboard(cmd *models.DeleteDashboardCommand, ses
 		}
 
 		// remove all access control permission with folder scope
-		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(dashboard.Id, 10)))
+		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.Uid))
 		if err != nil {
 			return err
 		}
 
 		for _, dash := range dashIds {
 			// remove all access control permission with child dashboard scopes
-			_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("dashboards", "id", strconv.FormatInt(dash.Id, 10)))
+			_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.GetResourceScopeUID("dashboards", dash.Uid))
 			if err != nil {
 				return err
 			}
@@ -792,7 +791,7 @@ func (d *DashboardStore) deleteDashboard(cmd *models.DeleteDashboardCommand, ses
 			}
 		}
 	} else {
-		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.Scope("dashboards", "id", strconv.FormatInt(dashboard.Id, 10)))
+		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.GetResourceScopeUID("dashboards", dashboard.Uid))
 		if err != nil {
 			return err
 		}

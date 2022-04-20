@@ -80,7 +80,7 @@ func TestPluginManager_int_init(t *testing.T) {
 	idb := influxdb.ProvideService(hcp)
 	lk := loki.ProvideService(hcp, tracer)
 	otsdb := opentsdb.ProvideService(hcp)
-	pr := prometheus.ProvideService(hcp, tracer)
+	pr := prometheus.ProvideService(hcp, cfg, features, tracer)
 	tmpo := tempo.ProvideService(hcp)
 	td := testdatasource.ProvideService(cfg, features)
 	pg := postgres.ProvideService(cfg)
@@ -127,7 +127,6 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"news":           {},
 		"nodeGraph":      {},
 		"piechart":       {},
-		"pluginlist":     {},
 		"stat":           {},
 		"state-timeline": {},
 		"status-history": {},

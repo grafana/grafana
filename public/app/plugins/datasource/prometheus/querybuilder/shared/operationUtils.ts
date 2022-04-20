@@ -3,9 +3,13 @@ import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
   QueryBuilderOperationParamDef,
+  QueryBuilderOperationParamValue,
   QueryWithOperations,
 } from './types';
 import { SelectableValue } from '@grafana/data/src';
+import { LabelParamEditor } from '../components/LabelParamEditor';
+import { PromVisualQueryOperationCategory } from '../types';
+import pluralize from 'pluralize';
 
 export function functionRendererLeft(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
   const params = renderParams(model, def, innerExpr);
@@ -143,4 +147,176 @@ export function getRangeVectorParamDef(withRateInterval = false): QueryBuilderOp
   }
 
   return param;
+}
+
+/**
+ * This function is shared between Prometheus and Loki variants
+ */
+export function createAggregationOperation<T extends QueryWithOperations>(
+  name: string,
+  overrides: Partial<QueryBuilderOperationDef> = {}
+): QueryBuilderOperationDef[] {
+  const operations: QueryBuilderOperationDef[] = [
+    {
+      id: name,
+      name: getPromAndLokiOperationDisplayName(name),
+      params: [
+        {
+          name: 'By label',
+          type: 'string',
+          restParam: true,
+          optional: true,
+        },
+      ],
+      defaultParams: [],
+      alternativesKey: 'plain aggregations',
+      category: PromVisualQueryOperationCategory.Aggregations,
+      renderer: functionRendererLeft,
+      paramChangedHandler: getOnLabelAddedHandler(`__${name}_by`),
+      explainHandler: getAggregationExplainer(name, ''),
+      addOperationHandler: defaultAddOperationHandler,
+      ...overrides,
+    },
+    {
+      id: `__${name}_by`,
+      name: `${getPromAndLokiOperationDisplayName(name)} by`,
+      params: [
+        {
+          name: 'Label',
+          type: 'string',
+          restParam: true,
+          optional: true,
+          editor: LabelParamEditor,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'aggregations by',
+      category: PromVisualQueryOperationCategory.Aggregations,
+      renderer: getAggregationByRenderer(name),
+      paramChangedHandler: getLastLabelRemovedHandler(name),
+      explainHandler: getAggregationExplainer(name, 'by'),
+      addOperationHandler: defaultAddOperationHandler,
+      hideFromList: true,
+      ...overrides,
+    },
+    {
+      id: `__${name}_without`,
+      name: `${getPromAndLokiOperationDisplayName(name)} without`,
+      params: [
+        {
+          name: 'Label',
+          type: 'string',
+          restParam: true,
+          optional: true,
+          editor: LabelParamEditor,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'aggregations by',
+      category: PromVisualQueryOperationCategory.Aggregations,
+      renderer: getAggregationWithoutRenderer(name),
+      paramChangedHandler: getLastLabelRemovedHandler(name),
+      explainHandler: getAggregationExplainer(name, 'without'),
+      addOperationHandler: defaultAddOperationHandler,
+      hideFromList: true,
+      ...overrides,
+    },
+  ];
+
+  return operations;
+}
+
+export function createAggregationOperationWithParam(
+  name: string,
+  paramsDef: { params: QueryBuilderOperationParamDef[]; defaultParams: QueryBuilderOperationParamValue[] },
+  overrides: Partial<QueryBuilderOperationDef> = {}
+): QueryBuilderOperationDef[] {
+  const operations = createAggregationOperation(name, overrides);
+  operations[0].params.unshift(...paramsDef.params);
+  operations[1].params.unshift(...paramsDef.params);
+  operations[2].params.unshift(...paramsDef.params);
+  operations[0].defaultParams = paramsDef.defaultParams;
+  operations[1].defaultParams = [...paramsDef.defaultParams, ''];
+  operations[2].defaultParams = [...paramsDef.defaultParams, ''];
+  operations[1].renderer = getAggregationByRendererWithParameter(name);
+  operations[2].renderer = getAggregationByRendererWithParameter(name);
+  return operations;
+}
+
+function getAggregationByRenderer(aggregation: string) {
+  return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+    return `${aggregation} by(${model.params.join(', ')}) (${innerExpr})`;
+  };
+}
+
+function getAggregationWithoutRenderer(aggregation: string) {
+  return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+    return `${aggregation} without(${model.params.join(', ')}) (${innerExpr})`;
+  };
+}
+
+/**
+ * Very simple poc implementation, needs to be modified to support all aggregation operators
+ */
+function getAggregationExplainer(aggregationName: string, mode: 'by' | 'without' | '') {
+  return function aggregationExplainer(model: QueryBuilderOperation) {
+    const labels = model.params.map((label) => `\`${label}\``).join(' and ');
+    const labelWord = pluralize('label', model.params.length);
+
+    switch (mode) {
+      case 'by':
+        return `Calculates ${aggregationName} over dimensions while preserving ${labelWord} ${labels}.`;
+      case 'without':
+        return `Calculates ${aggregationName} over the dimensions ${labels}. All other labels are preserved.`;
+      default:
+        return `Calculates ${aggregationName} over the dimensions.`;
+    }
+  };
+}
+
+function getAggregationByRendererWithParameter(aggregation: string) {
+  return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+    function mapType(p: QueryBuilderOperationParamValue) {
+      if (typeof p === 'string') {
+        return `\"${p}\"`;
+      }
+      return p;
+    }
+    const params = model.params.slice(0, -1);
+    const restParams = model.params.slice(1);
+    return `${aggregation} by(${restParams.join(', ')}) (${params.map(mapType).join(', ')}, ${innerExpr})`;
+  };
+}
+
+/**
+ * This function will transform operations without labels to their plan aggregation operation
+ */
+function getLastLabelRemovedHandler(changeToOperationId: string) {
+  return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDef) {
+    // If definition has more params then is defined there are no optional rest params anymore.
+    // We then transform this operation into a different one
+    if (op.params.length < def.params.length) {
+      return {
+        ...op,
+        id: changeToOperationId,
+      };
+    }
+
+    return op;
+  };
+}
+
+function getOnLabelAddedHandler(changeToOperationId: string) {
+  return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDef) {
+    // Check if we actually have the label param. As it's optional the aggregation can have one less, which is the
+    // case of just simple aggregation without label. When user adds the label it now has the same number of params
+    // as it's definition, and now we can change it to it's `_by` variant.
+    if (op.params.length === def.params.length) {
+      return {
+        ...op,
+        id: changeToOperationId,
+      };
+    }
+    return op;
+  };
 }

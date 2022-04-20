@@ -6,7 +6,7 @@ import { css } from '@emotion/css';
 import { AlertTypeStep } from './AlertTypeStep';
 import { DetailsStep } from './DetailsStep';
 import { QueryStep } from './QueryStep';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider, UseFormWatch } from 'react-hook-form';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -23,6 +23,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { CloudConditionsStep } from './CloudConditionsStep';
 import { GrafanaConditionsStep } from './GrafanaConditionsStep';
 import * as ruleId from '../../utils/rule-id';
+import { RuleInspector } from './RuleInspector';
 
 type Props = {
   existing?: RuleWithLocation;
@@ -33,6 +34,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
   const [queryParams] = useQueryParams();
+  const [showEditYaml, setShowEditYaml] = useState(false);
 
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -106,7 +108,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
-        <PageToolbar title="Create alert rule" pageIcon="bell">
+        <PageToolbar title={`${existing ? 'Edit' : 'Create'} alert rule`} pageIcon="bell">
           <Link to={returnTo}>
             <Button variant="secondary" disabled={submitState.loading} type="button" fill="outline">
               Cancel
@@ -117,6 +119,16 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
               Delete
             </Button>
           ) : null}
+          {isCortexLokiOrRecordingRule(watch) && (
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => setShowEditYaml(true)}
+              disabled={submitState.loading}
+            >
+              Edit yaml
+            </Button>
+          )}
           <Button
             variant="primary"
             type="button"
@@ -162,8 +174,15 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
           onDismiss={() => setShowDeleteModal(false)}
         />
       ) : null}
+      {showEditYaml ? <RuleInspector onClose={() => setShowEditYaml(false)} /> : null}
     </FormProvider>
   );
+};
+
+const isCortexLokiOrRecordingRule = (watch: UseFormWatch<RuleFormValues>) => {
+  const [ruleType, dataSourceName] = watch(['type', 'dataSourceName']);
+
+  return (ruleType === RuleFormType.cloudAlerting || ruleType === RuleFormType.cloudRecording) && dataSourceName !== '';
 };
 
 const getStyles = (theme: GrafanaTheme2) => {

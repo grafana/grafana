@@ -41,7 +41,10 @@ const Receivers: FC = () => {
   }, [alertManagerSourceName, dispatch, shouldLoadConfig]);
 
   useEffect(() => {
-    if (alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && !(receiverTypes.result || receiverTypes.loading)) {
+    if (
+      alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME &&
+      !(receiverTypes.result || receiverTypes.loading || receiverTypes.error)
+    ) {
       dispatch(fetchGrafanaNotifiersAction());
     }
   }, [alertManagerSourceName, dispatch, receiverTypes]);

@@ -9,7 +9,9 @@ aliases = ["/docs/grafana/latest/alerting/add-notification-template/"]
 
 You can provide detailed information to alert notification recipients by injecting alert query data into an alert notification. This topic explains how you can use alert query labels in alert notifications.
 
-Labels that exist from the evaluation of the alert query can be used in the alert rule name and in the alert notification message fields. The alert label data is injected into the notification fields when the alert is in the alerting state. When there are multiple unique values for the same label, the values are comma-separated.
+You can use labels generated during an alerting query evaluation to create alert notification messages. For multiple unique values for the same label, the values are comma-separated.
+
+When an alert fires, the alerting data series indicates the violation. For resolved alerts, all data series are included in the resolved notification.
 
 This topic explains how you can use alert query labels in alert notifications.
 

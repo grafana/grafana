@@ -4,7 +4,7 @@ import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/O
 import { defaultMarkersConfig } from '../layers/data/markersLayer';
 import { hasAlphaPanels } from 'app/core/config';
 import { MapLayerState } from '../types';
-import { get as lodashGet } from 'lodash';
+import { get as lodashGet, isEqual } from 'lodash';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 
@@ -93,12 +93,14 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
         // TODO -- add opacity check
       }
 
-      builder.addBooleanSwitch({
-        path: 'tooltip',
-        name: 'Display tooltip',
-        description: 'Show the tooltip for layer',
-        defaultValue: true,
-      });
+      if (!isEqual(opts.category, ['Base layer'])) {
+        builder.addBooleanSwitch({
+          path: 'tooltip',
+          name: 'Display tooltip',
+          description: 'Show the tooltip for layer',
+          defaultValue: true,
+        });
+      }
     },
   };
 }

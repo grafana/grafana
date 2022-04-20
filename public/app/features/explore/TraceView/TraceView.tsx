@@ -1,6 +1,5 @@
 import {
   DataFrame,
-  DataFrameView,
   DataLink,
   DataSourceApi,
   Field,
@@ -9,16 +8,13 @@ import {
   mapInternalLinkToExplore,
   PanelData,
   SplitOpen,
-  TraceSpanRow,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import {
   Trace,
   TracePageHeader,
-  TraceProcess,
-  TraceResponse,
+  TraceSpan,
   TraceTimelineViewer,
-  transformTraceData,
   TTraceTimeline,
 } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
@@ -30,10 +26,8 @@ import React, { RefObject, useCallback, useEffect, useMemo, useState } from 'rea
 import { useDispatch, useSelector } from 'react-redux';
 import { changePanelState } from '../state/explorePane';
 import { createSpanLinkFactory } from './createSpanLink';
-import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
-import { useSearch } from './useSearch';
 import { useViewRange } from './useViewRange';
 
 function noop(): {} {
@@ -46,14 +40,31 @@ type Props = {
   exploreId: ExploreId;
   scrollElement?: Element;
   topOfExploreViewRef?: RefObject<HTMLDivElement>;
+  traceProp: Trace;
+  spanFindMatches?: Set<string>;
+  search: string;
+  focusedSpanIdForSearch: string;
+  expandOne: (spans: TraceSpan[]) => void;
+  expandAll: () => void;
+  collapseOne: (spans: TraceSpan[]) => void;
+  collapseAll: (spans: TraceSpan[]) => void;
+  childrenToggle: (spanId: string) => void;
+  childrenHiddenIDs: Set<string>;
   queryResponse: PanelData;
 };
 
 export function TraceView(props: Props) {
-  // At this point we only show single trace
-  const frame = props.dataFrames[0];
+  const {
+    expandOne,
+    expandAll,
+    collapseOne,
+    collapseAll,
+    childrenToggle,
+    childrenHiddenIDs,
+    spanFindMatches,
+    traceProp,
+  } = props;
 
-  const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
   const {
     detailStates,
     toggleDetail,
@@ -65,7 +76,7 @@ export function TraceView(props: Props) {
     detailTagsToggle,
     detailWarningsToggle,
     detailStackTracesToggle,
-  } = useDetailState(frame);
+  } = useDetailState(props.dataFrames[0]);
 
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
@@ -79,15 +90,12 @@ export function TraceView(props: Props) {
    */
   const [slim, setSlim] = useState(false);
 
-  const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
-  const { search, setSearch, spanFindMatches, clearSearch } = useSearch(traceProp?.spans);
-
   const datasource = useSelector(
     (state: StoreState) => state.explore[props.exploreId]?.datasourceInstance ?? undefined
   );
 
   const [focusedSpanId, createFocusSpanLink] = useFocusSpanLink({
-    refId: frame?.refId,
+    refId: props.dataFrames[0]?.refId,
     exploreId: props.exploreId,
     datasource,
   });
@@ -104,9 +112,9 @@ export function TraceView(props: Props) {
       hoverIndentGuideIds,
       shouldScrollToFirstUiFindMatch: false,
       spanNameColumnWidth,
-      traceID: traceProp?.traceID,
+      traceID: props.traceProp?.traceID,
     }),
-    [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp?.traceID]
+    [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, props.traceProp?.traceID]
   );
 
   useEffect(() => {
@@ -118,8 +126,8 @@ export function TraceView(props: Props) {
   const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(datasource?.name)?.jsonData as TraceToLogsData)
     ?.tracesToLogs;
   const createSpanLink = useMemo(
-    () => createSpanLinkFactory({ splitOpenFn: props.splitOpenFn, traceToLogsOptions, dataFrame: frame }),
-    [props.splitOpenFn, traceToLogsOptions, frame]
+    () => createSpanLinkFactory({ splitOpenFn: props.splitOpenFn, traceToLogsOptions, dataFrame: props.dataFrames[0] }),
+    [props.splitOpenFn, traceToLogsOptions, props.dataFrames]
   );
   const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
@@ -132,22 +140,15 @@ export function TraceView(props: Props) {
     <>
       <TracePageHeader
         canCollapse={false}
-        clearSearch={clearSearch}
-        focusUiFindMatches={noop}
         hideMap={false}
         hideSummary={false}
-        nextResult={noop}
         onSlimViewClicked={onSlimViewClicked}
         onTraceGraphViewClicked={noop}
-        prevResult={noop}
-        resultCount={spanFindMatches?.size ?? 0}
         slimView={slim}
         trace={traceProp}
         updateNextViewRangeTime={updateNextViewRangeTime}
         updateViewRangeTime={updateViewRangeTime}
         viewRange={viewRange}
-        searchValue={search}
-        onSearchValueChange={setSearch}
         timeZone={timeZone}
       />
       <TraceTimelineViewer
@@ -181,65 +182,16 @@ export function TraceView(props: Props) {
         addHoverIndentGuideId={addHoverIndentGuideId}
         removeHoverIndentGuideId={removeHoverIndentGuideId}
         linksGetter={noop as any}
-        uiFind={search}
+        uiFind={props.search}
         createSpanLink={createSpanLink}
         scrollElement={props.scrollElement}
         focusedSpanId={focusedSpanId}
+        focusedSpanIdForSearch={props.focusedSpanIdForSearch}
         createFocusSpanLink={createFocusSpanLink}
         topOfExploreViewRef={props.topOfExploreViewRef}
       />
     </>
   );
-}
-
-function transformDataFrames(frame?: DataFrame): Trace | null {
-  if (!frame) {
-    return null;
-  }
-  let data: TraceResponse =
-    frame.fields.length === 1
-      ? // For backward compatibility when we sent whole json response in a single field/value
-        frame.fields[0].values.get(0)
-      : transformTraceDataFrame(frame);
-  return transformTraceData(data);
-}
-
-function transformTraceDataFrame(frame: DataFrame): TraceResponse {
-  const view = new DataFrameView<TraceSpanRow>(frame);
-  const processes: Record<string, TraceProcess> = {};
-  for (let i = 0; i < view.length; i++) {
-    const span = view.get(i);
-    if (!processes[span.spanID]) {
-      processes[span.spanID] = {
-        serviceName: span.serviceName,
-        tags: span.serviceTags,
-      };
-    }
-  }
-
-  return {
-    traceID: view.get(0).traceID,
-    processes,
-    spans: view.toArray().map((s, index) => {
-      const references = [];
-      if (s.parentSpanID) {
-        references.push({ refType: 'CHILD_OF' as const, spanID: s.parentSpanID, traceID: s.traceID });
-      }
-      if (s.references) {
-        references.push(...s.references.map((reference) => ({ refType: 'FOLLOWS_FROM' as const, ...reference })));
-      }
-      return {
-        ...s,
-        duration: s.duration * 1000,
-        startTime: s.startTime * 1000,
-        processID: s.spanID,
-        flags: 0,
-        references,
-        logs: s.logs?.map((l) => ({ ...l, timestamp: l.timestamp * 1000 })) || [],
-        dataFrameRowIndex: index,
-      };
-    }),
-  };
 }
 
 /**

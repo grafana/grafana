@@ -12,12 +12,17 @@ import { isRulerNotSupportedResponse } from '../../utils/rules';
 export function RuleListErrors(): ReactElement {
   const [expanded, setExpanded] = useState(false);
   const [closed, setClosed] = useLocalStorage('grafana.unifiedalerting.hideErrors', false);
+  const dataSourceConfigRequests = useUnifiedAlertingSelector((state) => state.dataSources);
   const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const styles = useStyles2(getStyles);
 
   const errors = useMemo((): JSX.Element[] => {
-    const [promRequestErrors, rulerRequestErrors] = [promRuleRequests, rulerRuleRequests].map((requests) =>
+    const [dataSourceConfigErrors, promRequestErrors, rulerRequestErrors] = [
+      dataSourceConfigRequests,
+      promRuleRequests,
+      rulerRuleRequests,
+    ].map((requests) =>
       getRulesDataSources().reduce<Array<{ error: SerializedError; dataSource: DataSourceInstanceSettings }>>(
         (result, dataSource) => {
           const error = requests[dataSource.name]?.error;
@@ -41,6 +46,15 @@ export function RuleListErrors(): ReactElement {
       result.push(<>Failed to load Grafana rules config: {grafanaRulerError.message || 'Unknown error.'}</>);
     }
 
+    dataSourceConfigErrors.forEach(({ dataSource, error }) => {
+      result.push(
+        <>
+          Failed to load the data source configuration for{' '}
+          <a href={`datasources/edit/${dataSource.uid}`}>{dataSource.name}</a>: {error.message || 'Unknown error.'}
+        </>
+      );
+    });
+
     promRequestErrors.forEach(({ dataSource, error }) =>
       result.push(
         <>
@@ -60,7 +74,7 @@ export function RuleListErrors(): ReactElement {
     );
 
     return result;
-  }, [promRuleRequests, rulerRuleRequests]);
+  }, [dataSourceConfigRequests, promRuleRequests, rulerRuleRequests]);
 
   return (
     <>

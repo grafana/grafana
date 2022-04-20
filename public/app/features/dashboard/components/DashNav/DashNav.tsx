@@ -15,7 +15,7 @@ import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { DashboardModel } from '../../state';
 import { KioskMode } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
-import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
+import { SaveDashboardProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardProxy';
 import { DashboardCommentsModal } from 'app/features/dashboard/components/DashboardComments/DashboardCommentsModal';
 import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
@@ -227,7 +227,7 @@ export const DashNav = React.memo<Props>((props) => {
               tooltip="Save dashboard"
               icon="save"
               onClick={() => {
-                showModal(SaveDashboardDrawer, {
+                showModal(SaveDashboardProxy, {
                   dashboard,
                   onDismiss: hideModal,
                 });
