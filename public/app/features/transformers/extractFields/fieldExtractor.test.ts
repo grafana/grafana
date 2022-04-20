@@ -40,7 +40,36 @@ describe('Extract fields from text', () => {
         "b": "2",
         "c": "3",
         "x": "y",
-        "z": "dbl_quotes=\\"Double Quotes\\" sgl_quotes=\\"Single Quotes\\"",
+        "z": "dbl_quotes=\\"Double Quotes\\" sgl_quotes='Single Quotes'",
+      }
+    `);
+  });
+
+  it('Test key-values with nested separator characters', async () => {
+    const extractor = fieldExtractors.get(FieldExtractorID.KeyValues);
+    const out = extractor.parse(`a="1",   "b"=\'2\',c=3  x:y ;\r\nz="This is; testing& validating, 1=:2"`);
+
+    expect(out).toMatchInlineSnapshot(`
+      Object {
+        "a": "1",
+        "b": "2",
+        "c": "3",
+        "x": "y",
+        "z": "This is; testing& validating, 1=:2",
+      }
+    `);
+  });
+
+  it('Test key-values where some values are null', async () => {
+    const extractor = fieldExtractors.get(FieldExtractorID.KeyValues);
+    const out = extractor.parse(`a=, "b"=\'2\',c=3  x: `);
+
+    expect(out).toMatchInlineSnapshot(`
+      Object {
+        "a": "",
+        "b": "2",
+        "c": "3",
+        "x": "",
       }
     `);
   });
