@@ -178,11 +178,13 @@ export const userListAdminSlice = createSlice({
       if (state.filters.some((filter) => filter.name === name)) {
         return {
           ...state,
+          page: 0,
           filters: state.filters.map((filter) => (filter.name === name ? { ...filter, value } : filter)),
         };
       }
       return {
         ...state,
+        page: 0,
         filters: [...state.filters, action.payload],
       };
     },
