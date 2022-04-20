@@ -542,7 +542,7 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		})
 	}
 
-	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) && hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) &&
+	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) &&
 		hasAccess(hs.editorInAnyFolder, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleCreate), ac.EvalPermission(ac.ActionAlertingRuleExternalWrite))) {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
 			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
