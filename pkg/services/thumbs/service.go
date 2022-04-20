@@ -68,7 +68,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
 		return &dummyService{}
 	}
-	logger := log.New("thumbnails_service")
+	logger := log.New("previews_service")
 
 	logger.Info("initialized thumb", "settings", cfg.DashboardPreviews)
 	thumbnailRepo := newThumbnailRepo(store)
