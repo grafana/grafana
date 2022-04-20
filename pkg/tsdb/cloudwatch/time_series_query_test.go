@@ -138,7 +138,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 	})
 }
 
-func Test_QueryData_executeTimeSeriesQuery_alias_provided_frame_name_uses_period_and_stat_from_expression_when_isUserDefinedSearchExpression(t *testing.T) {
+func Test_QueryData_where_user_defines_search_expression_then_frame_name_prioritizes_period_and_stat_from_expression_over_input(t *testing.T) {
 	origNewCWClient := NewCWClient
 	t.Cleanup(func() {
 		NewCWClient = origNewCWClient
@@ -192,7 +192,7 @@ func Test_QueryData_executeTimeSeriesQuery_alias_provided_frame_name_uses_period
 	assert.Equal(t, "300 Average", resp.Responses["A"].Frames[0].Name)
 }
 
-func Test_QueryData_executeTimeSeriesQuery_no_alias_provided_frame_name_is_queryId_when_query_isMathExpression(t *testing.T) {
+func Test_QueryData_where_no_alias_is_provided_and_query_is_math_expression_then_frame_name_is_queryId(t *testing.T) {
 	origNewCWClient := NewCWClient
 	t.Cleanup(func() {
 		NewCWClient = origNewCWClient
@@ -220,6 +220,9 @@ func Test_QueryData_executeTimeSeriesQuery_no_alias_provided_frame_name_is_query
 			{
 				RefID:     "A",
 				TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+				/* for the following JSON:
+				isMathExpression = true is satisfied by: "metricQueryType": 0, "metricEditorMode": 1, not SEARCH() expression
+				no "alias" populated */
 				JSON: json.RawMessage(`{
 						"type":      "timeSeriesQuery",
 						"metricQueryType": 0,
@@ -242,7 +245,7 @@ func Test_QueryData_executeTimeSeriesQuery_no_alias_provided_frame_name_is_query
 	assert.Equal(t, "query id", resp.Responses["A"].Frames[0].Name)
 }
 
-func Test_QueryData_executeTimeSeriesQuery_no_alias_provided_frame_name_depends_on_dimension_values_and_matchExact(t *testing.T) {
+func Test_QueryData_where_no_alias_provided_then_frame_name_depends_on_dimension_values_and_matchExact(t *testing.T) {
 	origNewCWClient := NewCWClient
 	t.Cleanup(func() {
 		NewCWClient = origNewCWClient
@@ -264,25 +267,25 @@ func Test_QueryData_executeTimeSeriesQuery_no_alias_provided_frame_name_depends_
 	})
 	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 
-	t.Run("frame name is label when isInferredSearchExpression and not isMultiValuedDimensionExpression", func(t *testing.T) {
-		testCasesReturningLabel := map[string]struct {
-			dimensions string
-			matchExact bool
-		}{
-			"with specific dimension, matchExact false": {dimensions: `"dimensions": {"InstanceId": ["some-instance"]},`, matchExact: false},
-			"with wildcard dimension, matchExact false": {dimensions: `"dimensions": {"InstanceId": ["*"]},`, matchExact: false},
-			"with wildcard dimension, matchExact true":  {dimensions: `"dimensions": {"InstanceId": ["*"]},`, matchExact: true},
-			"without dimension, matchExact false":       {dimensions: "", matchExact: false},
-		}
-		for name, tc := range testCasesReturningLabel {
-			t.Run(name, func(t *testing.T) {
-				resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-					PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
-					Queries: []backend.DataQuery{
-						{
-							RefID:     "A",
-							TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
-							JSON: json.RawMessage(fmt.Sprintf(`{
+	// where query is inferred search expression and not multivalued dimension expression, then frame name is label
+	testCasesReturningLabel := map[string]struct {
+		dimensions string
+		matchExact bool
+	}{
+		"with specific dimensions, matchExact false": {dimensions: `"dimensions": {"InstanceId": ["some-instance"]},`, matchExact: false},
+		"with wildcard dimensions, matchExact false": {dimensions: `"dimensions": {"InstanceId": ["*"]},`, matchExact: false},
+		"with wildcard dimensions, matchExact true":  {dimensions: `"dimensions": {"InstanceId": ["*"]},`, matchExact: true},
+		"no dimension, matchExact false":             {dimensions: "", matchExact: false},
+	}
+	for name, tc := range testCasesReturningLabel {
+		t.Run(name, func(t *testing.T) {
+			resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+				Queries: []backend.DataQuery{
+					{
+						RefID:     "A",
+						TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+						JSON: json.RawMessage(fmt.Sprintf(`{
 						"type":      "timeSeriesQuery",
 						"metricQueryType": 0,
 						"metricEditorMode": 0,
@@ -297,35 +300,34 @@ func Test_QueryData_executeTimeSeriesQuery_no_alias_provided_frame_name_depends_
 						"matchExact": %t,
 						"refId": "A"
 					}`, tc.dimensions, tc.matchExact)),
-						},
 					},
-				})
-
-				assert.NoError(t, err)
-				assert.Equal(t, "response label", resp.Responses["A"].Frames[0].Name)
+				},
 			})
-		}
-	})
 
-	t.Run("frame name is metricName_stat when isInferredSearchExpression and not isMultiValuedDimensionExpression", func(t *testing.T) {
-		testCasesReturningMetricStat := map[string]struct {
-			dimensions string
-			matchExact bool
-		}{
-			"with specific dimension, matchExact true": {dimensions: `"dimensions": {"InstanceId": ["some-instance"]},`, matchExact: true},
-			"without dimension, matchExact true":       {dimensions: "", matchExact: true},
-			"multi dimension, matchExact true":         {dimensions: `"dimensions": {"InstanceId": ["some-instance","another-instance"]},`, matchExact: true},
-			"multi dimension, matchExact false":        {dimensions: `"dimensions": {"InstanceId": ["some-instance","another-instance"]},`, matchExact: false},
-		}
-		for name, tc := range testCasesReturningMetricStat {
-			t.Run(name, func(t *testing.T) {
-				resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-					PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
-					Queries: []backend.DataQuery{
-						{
-							RefID:     "A",
-							TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
-							JSON: json.RawMessage(fmt.Sprintf(`{
+			assert.NoError(t, err)
+			assert.Equal(t, "response label", resp.Responses["A"].Frames[0].Name)
+		})
+	}
+
+	// complementary test cases to above: multivalued dimension expression
+	testCasesReturningMetricStat := map[string]struct {
+		dimensions string
+		matchExact bool
+	}{
+		"with specific dimensions, matchExact true": {dimensions: `"dimensions": {"InstanceId": ["some-instance"]},`, matchExact: true},
+		"no dimensions, matchExact true":            {dimensions: "", matchExact: true},
+		"multivalued dimensions, matchExact true":   {dimensions: `"dimensions": {"InstanceId": ["some-instance","another-instance"]},`, matchExact: true},
+		"multivalued dimensions, matchExact false":  {dimensions: `"dimensions": {"InstanceId": ["some-instance","another-instance"]},`, matchExact: false},
+	}
+	for name, tc := range testCasesReturningMetricStat {
+		t.Run(name, func(t *testing.T) {
+			resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+				Queries: []backend.DataQuery{
+					{
+						RefID:     "A",
+						TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+						JSON: json.RawMessage(fmt.Sprintf(`{
 						"type":      "timeSeriesQuery",
 						"metricQueryType": 0,
 						"metricEditorMode": 0,
@@ -340,18 +342,17 @@ func Test_QueryData_executeTimeSeriesQuery_no_alias_provided_frame_name_depends_
 						"matchExact": %t,
 						"refId": "A"
 					}`, tc.dimensions, tc.matchExact)),
-						},
 					},
-				})
-
-				assert.NoError(t, err)
-				assert.Equal(t, "CPUUtilization_Maximum", resp.Responses["A"].Frames[0].Name)
+				},
 			})
-		}
-	})
+
+			assert.NoError(t, err)
+			assert.Equal(t, "CPUUtilization_Maximum", resp.Responses["A"].Frames[0].Name)
+		})
+	}
 }
 
-func Test_QueryData_executeTimeSeriesQuery_no_alias_provided_frame_name_is_label_when_query_type_is_MetricQueryTypeQuery(t *testing.T) {
+func Test_QueryData_where_no_alias_provided_and_query_type_is_MetricQueryTypeQuery_then_frame_name_is_label(t *testing.T) {
 	origNewCWClient := NewCWClient
 	t.Cleanup(func() {
 		NewCWClient = origNewCWClient
@@ -380,6 +381,9 @@ func Test_QueryData_executeTimeSeriesQuery_no_alias_provided_frame_name_is_label
 			{
 				RefID:     "A",
 				TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+				/* for the following JSON:
+				"metricQueryType": 1 is MetricQueryTypeQuery
+				no "alias" populated */
 				JSON: json.RawMessage(`{
 						"type":      "timeSeriesQuery",
 						"metricQueryType": 1,
