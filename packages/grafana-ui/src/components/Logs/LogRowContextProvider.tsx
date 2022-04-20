@@ -6,6 +6,7 @@ import {
   LogsSortOrder,
   DataQueryResponse,
   DataQueryError,
+  FieldType,
 } from '@grafana/data';
 import React, { useState, useEffect } from 'react';
 import useAsync from 'react-use/lib/useAsync';
@@ -76,7 +77,7 @@ export const getRowContexts = async (
     for (let index = 0; index < dataResult.data.length; index++) {
       const dataFrame = toDataFrame(dataResult.data[index]);
       const fieldCache = new FieldCache(dataFrame);
-      const timestampField: Field<string> = fieldCache.getFieldByName('ts')!;
+      const timestampField: Field<string> = fieldCache.getFirstFieldOfType(FieldType.time)!;
       const idField: Field<string> | undefined = fieldCache.getFieldByName('id');
 
       for (let fieldIndex = 0; fieldIndex < timestampField.values.length; fieldIndex++) {
@@ -104,7 +105,7 @@ export const getRowContexts = async (
           }
         }
 
-        const lineField: Field<string> = dataFrame.fields.filter((field) => field.name === 'line')[0];
+        const lineField: Field<string> = fieldCache.getFirstFieldOfType(FieldType.string)!;
         const line = lineField.values.get(fieldIndex); // assuming that both fields have same length
 
         data.push(line);
