@@ -174,19 +174,15 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			DisplayName: "APIKeys writer",
 			Description: "Gives access to add and delete api keys.",
 			Group:       "API Keys",
-			Permissions: []ac.Permission{
+			Permissions: ac.ConcatPermissions(apikeyReaderRole.Role.Permissions, []ac.Permission{
 				{
 					Action: ac.ActionAPIKeyCreate,
-				},
-				{
-					Action: ac.ActionAPIKeyRead,
-					Scope:  ac.ScopeAPIKeysAll,
 				},
 				{
 					Action: ac.ActionAPIKeyDelete,
 					Scope:  ac.ScopeAPIKeysAll,
 				},
-			},
+			}),
 		},
 		Grants: []string{string(models.ROLE_ADMIN)},
 	}

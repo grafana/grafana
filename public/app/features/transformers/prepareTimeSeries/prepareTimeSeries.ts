@@ -301,7 +301,6 @@ export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<Prepar
       const frame = outerJoinDataFrames({
         frames: data,
         joinBy: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-        enforceSort: true,
         keepOriginIndices: true,
       });
       return frame ? [frame] : [];
