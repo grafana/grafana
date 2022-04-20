@@ -66,7 +66,9 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     !contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
     !contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead)
   ) {
-    return <Alert title="Permission required">Sorry, you don not have required permissions to read alert rules</Alert>;
+    return (
+      <Alert title="Permission required">Sorry, you do not have the required permissions to read alert rules</Alert>
+    );
   }
 
   return (
