@@ -1,6 +1,7 @@
 import {
   ApplyFieldOverrideOptions,
   DataFrame,
+  DataLink,
   DisplayProcessor,
   DisplayValue,
   DynamicConfigValue,
@@ -352,7 +353,7 @@ export const getLinksSupplier =
     const timeRangeUrl = locationUtil.getTimeRangeUrlParams();
     const { timeField } = getTimeField(frame);
 
-    return field.config.links.map((link) => {
+    return field.config.links.map((link: DataLink) => {
       const variablesQuery = locationUtil.getVariablesUrlParams();
       let dataFrameVars = {};
       let valueVars = {};
@@ -438,7 +439,7 @@ export const getLinksSupplier =
       }
 
       let href = locationUtil.assureBaseUrl(link.url.replace(/\n/g, ''));
-      href = replaceVariables(href, variables, encodeURIComponent);
+      href = replaceVariables(href, variables);
       href = locationUtil.processUrl(href);
 
       const info: LinkModel<Field> = {

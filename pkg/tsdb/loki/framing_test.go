@@ -59,7 +59,7 @@ func TestSuccessResponse(t *testing.T) {
 			bytes, err := os.ReadFile(responseFileName)
 			require.NoError(t, err)
 
-			frames, err := runQuery(context.Background(), makeMockedAPI(200, "application/json", bytes), &test.query)
+			frames, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes), &test.query)
 			require.NoError(t, err)
 
 			dr := &backend.DataResponse{

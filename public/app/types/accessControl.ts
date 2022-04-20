@@ -110,6 +110,8 @@ export enum AccessControlAction {
   AlertingNotificationsExternalRead = 'alert.notifications.external:read',
 
   ActionAPIKeysRead = 'apikeys:read',
+  ActionAPIKeysCreate = 'apikeys:create',
+  ActionAPIKeysDelete = 'apikeys:delete',
 }
 
 export interface Role {
