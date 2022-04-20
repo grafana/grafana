@@ -532,8 +532,8 @@ func (ss *SQLStore) getTeamMembers(ctx context.Context, query *models.GetTeamMem
 	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
 		query.Result = make([]*models.TeamMemberDTO, 0)
 		sess := dbSess.Table("team_member")
-		sess.Join("INNER", dbSess.Dialect.Quote("user"),
-			fmt.Sprintf("team_member.user_id=%s.%s", dbSess.Dialect.Quote("user"), dbSess.Dialect.Quote("id")),
+		sess.Join("INNER", ss.Dialect.Quote("user"),
+			fmt.Sprintf("team_member.user_id=%s.%s", ss.Dialect.Quote("user"), ss.Dialect.Quote("id")),
 		)
 
 		if acUserFilter != nil {
@@ -545,7 +545,7 @@ func (ss *SQLStore) getTeamMembers(ctx context.Context, query *models.GetTeamMem
 		SELECT id from user_auth
 			WHERE user_auth.user_id = team_member.user_id
 			ORDER BY user_auth.created DESC `
-		authJoinCondition = "user_auth.id=" + authJoinCondition + dialect.Limit(1) + ")"
+		authJoinCondition = "user_auth.id=" + authJoinCondition + ss.Dialect.Limit(1) + ")"
 		sess.Join("LEFT", "user_auth", authJoinCondition)
 
 		if query.OrgId != 0 {
@@ -558,7 +558,7 @@ func (ss *SQLStore) getTeamMembers(ctx context.Context, query *models.GetTeamMem
 			sess.Where("team_member.user_id=?", query.UserId)
 		}
 		if query.External {
-			sess.Where("team_member.external=?", dialect.BooleanStr(true))
+			sess.Where("team_member.external=?", ss.Dialect.BooleanStr(true))
 		}
 		sess.Cols(
 			"team_member.org_id",
@@ -578,20 +578,22 @@ func (ss *SQLStore) getTeamMembers(ctx context.Context, query *models.GetTeamMem
 	})
 }
 
-func IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error {
-	builder := &SQLBuilder{}
-	builder.Write("SELECT COUNT(team.id) AS count FROM team INNER JOIN team_member ON team_member.team_id = team.id WHERE team.org_id = ? AND team_member.user_id = ? AND team_member.permission = ?", query.SignedInUser.OrgId, query.SignedInUser.UserId, models.PERMISSION_ADMIN)
+func (ss *SQLStore) IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error {
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		builder := &SQLBuilder{}
+		builder.Write("SELECT COUNT(team.id) AS count FROM team INNER JOIN team_member ON team_member.team_id = team.id WHERE team.org_id = ? AND team_member.user_id = ? AND team_member.permission = ?", query.SignedInUser.OrgId, query.SignedInUser.UserId, models.PERMISSION_ADMIN)
 
-	type teamCount struct {
-		Count int64
-	}
+		type teamCount struct {
+			Count int64
+		}
 
-	resp := make([]*teamCount, 0)
-	if err := x.SQL(builder.GetSQLString(), builder.params...).Find(&resp); err != nil {
-		return err
-	}
+		resp := make([]*teamCount, 0)
+		if err := sess.SQL(builder.GetSQLString(), builder.params...).Find(&resp); err != nil {
+			return err
+		}
 
-	query.Result = len(resp) > 0 && resp[0].Count > 0
+		query.Result = len(resp) > 0 && resp[0].Count > 0
 
-	return nil
+		return nil
+	})
 }
