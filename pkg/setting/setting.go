@@ -169,6 +169,9 @@ var (
 	AlertingMaxAttempts         int
 	AlertingMinInterval         int64
 
+	// Run migrations to wipe out all UA data
+	ClearUAData bool
+
 	// Explore UI
 	ExploreEnabled bool
 
@@ -1435,6 +1438,8 @@ func readAlertingSettings(iniFile *ini.File) error {
 	AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
 	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
+
+	ClearUAData = alerting.Key("clear_ua_data").MustBool()
 
 	return nil
 }

@@ -75,7 +75,7 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
 			silences:                  make(map[int64][]*pb.MeshSilence),
 		})
-	case !mg.Cfg.UnifiedAlerting.IsEnabled() && migrationRun:
+	case !mg.Cfg.UnifiedAlerting.IsEnabled() && setting.ClearUAData && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
 		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, migTitle), &clearMigrationEntry{
@@ -184,7 +184,7 @@ func (m *updateDashboardUIDPanelIDMigration) Exec(sess *xorm.Session, mg *migrat
 	return nil
 }
 
-// clearMigrationEntry removes an entry fromt the migration_log table.
+// clearMigrationEntry removes an entry from the migration_log table.
 // This migration is not recorded in the migration_log so that it can re-run several times.
 type clearMigrationEntry struct {
 	migrator.MigrationBase

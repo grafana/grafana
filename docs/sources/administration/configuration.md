@@ -1311,6 +1311,10 @@ This setting should be expressed as a duration. Examples: 6h (hours), 10d (days)
 
 Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
 
+### clean_ua_data
+
+Wipes out all Unified Alerting tables when starting Grafana with UA disabled. This allows for new rules created in the legacy alerting system after enabling Unified Alerting for the first time to be migrated to UA.
+
 <hr>
 
 ## [annotations]
