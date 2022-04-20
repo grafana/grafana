@@ -63,9 +63,9 @@ function getJoinMatcher(options: JoinOptions): FieldMatcher {
  */
 export function maybeSortFrame(frame: DataFrame, fieldIdx: number) {
   if (fieldIdx >= 0) {
-    let joinField = frame.fields[fieldIdx];
+    let sortByField = frame.fields[fieldIdx];
 
-    if (joinField.type !== FieldType.string && !isLikelyAscendingVector(joinField.values)) {
+    if (sortByField.type !== FieldType.string && !isLikelyAscendingVector(sortByField.values)) {
       frame = sortDataFrame(frame, fieldIdx);
     }
   }
