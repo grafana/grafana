@@ -170,6 +170,7 @@ func (ots *Opentelemetry) initOpentelemetryTracer() error {
 func (ots *Opentelemetry) Run(ctx context.Context) error {
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 	otel.SetErrorHandler(otelErrHandler(func(err error) {
+		// nolint:gosec
 		level.Error(ots.log).Log("msg", "OpenTelemetry handler returned an error", "err", err)
 	}))
 	<-ctx.Done()
