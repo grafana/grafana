@@ -171,6 +171,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
     if (this.datasource.jsonData.timescaledb === true) {
       aggregates.submenu.push({ text: 'First', value: 'first' });
       aggregates.submenu.push({ text: 'Last', value: 'last' });
+      aggregates.submenu.push({ text: 'Histogram', value: 'histogram' });
+      aggregates.submenu.push({ text: 'Time Bucket', value: 'time_bucket' });
     }
 
     this.selectMenu.push(aggregates);

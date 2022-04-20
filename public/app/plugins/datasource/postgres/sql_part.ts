@@ -51,7 +51,7 @@ register({
       type: 'string',
       options: [],
       baseOptions: ['avg', 'count', 'min', 'max', 'sum', 'stddev', 'variance'],
-      timescaleOptions: ['first', 'last'],
+      timescaleOptions: ['first', 'last', 'histogram', 'time_bucket'],
     },
   ],
   defaultParams: ['avg'],
