@@ -19,6 +19,7 @@ import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuil
 import { prepareCandlestickFields } from './fields';
 import uPlot from 'uplot';
 import { PanelDataErrorView } from '@grafana/runtime';
+import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 
 interface CandlestickPanelProps extends PanelProps<CandlestickOptions> {}
 
@@ -311,6 +312,8 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
                 onThresholdsChange={onThresholdsChange}
               />
             )}
+
+            <OutsideRangePlugin config={config} range={timeRange} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
       }}
