@@ -11,6 +11,16 @@ import (
 )
 
 func TestTicker(t *testing.T) {
+	readChanOrFail := func(t *testing.T, c chan time.Time) time.Time {
+		t.Helper()
+		select {
+		case tick := <-c:
+			return tick
+		default:
+			require.Failf(t, "channel is empty but it should have a tick", "")
+		}
+		return time.Time{}
+	}
 	t.Run("should not drop ticks", func(t *testing.T) {
 		clk := clock.NewMock()
 		intervalSec := rand.Int63n(100) + 10
@@ -50,4 +60,43 @@ func TestTicker(t *testing.T) {
 		})
 	})
 
+	t.Run("should not put anything to channel until it's time", func(t *testing.T) {
+		clk := clock.NewMock()
+		intervalSec := rand.Int63n(9) + 1
+		interval := time.Duration(intervalSec) * time.Second
+		last := clk.Now()
+		ticker := NewTicker(last, 0, clk, intervalSec)
+		expectedTick := clk.Now().Add(interval)
+		for {
+			require.Empty(t, ticker.C)
+			clk.Add(time.Duration(rand.Int31n(500)+100) * time.Millisecond)
+			if clk.Now().After(expectedTick) {
+				break
+			}
+		}
+		actual := readChanOrFail(t, ticker.C)
+		require.Equal(t, expectedTick, actual)
+	})
+
+	t.Run("should put the tick in the channel immediately if it is behind", func(t *testing.T) {
+		clk := clock.NewMock()
+		intervalSec := rand.Int63n(9) + 1
+		interval := time.Duration(intervalSec) * time.Second
+		last := clk.Now()
+		ticker := NewTicker(last, 0, clk, intervalSec)
+		expectedTick := clk.Now().Add(interval)
+		require.Empty(t, ticker.C)
+		jitter := time.Duration(rand.Int63n(interval.Milliseconds()-1)) * time.Millisecond
+		clk.Add(interval)          // make it put the first tick
+		clk.Add(interval + jitter) // make it put the second tick
+
+		actual1 := readChanOrFail(t, ticker.C)
+		var actual2 time.Time
+		require.Eventually(t, func() bool {
+			actual2 = readChanOrFail(t, ticker.C)
+			return true
+		}, time.Second, 10*time.Millisecond)
+		require.Equal(t, expectedTick, actual1)
+		require.Equal(t, expectedTick.Add(interval), actual2)
+	})
 }
