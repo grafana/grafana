@@ -67,10 +67,8 @@ export const GrafanaConditionsStep: FC = () => {
             Evaluate every
           </InlineLabel>
           <Field
-            className={styles.inlineField}
-            error={errors.evaluateEvery?.message}
-            invalid={!!errors.evaluateEvery?.message}
-            validationMessageHorizontalOverflow={true}
+            label="Evaluate"
+            description="Evaluation internal applies to every rule within a group. It can overwrite the interval of an existing alert rule."
           >
             <Input id={evaluateEveryId} width={8} {...register('evaluateEvery', evaluateEveryValidationOptions)} />
           </Field>

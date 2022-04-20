@@ -3,7 +3,7 @@ import { render, screen, getAllByRole, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LokiQueryBuilder } from './LokiQueryBuilder';
 import { LokiDatasource } from '../../datasource';
-import { LokiVisualQuery } from '../types';
+import { LokiOperationId, LokiVisualQuery } from '../types';
 import { PanelData } from '@grafana/data';
 
 const defaultQuery: LokiVisualQuery = {
@@ -17,9 +17,19 @@ describe('LokiQueryBuilder', () => {
     datasource.languageProvider.fetchSeriesLabels = jest.fn().mockReturnValue({ job: ['a'], instance: ['b'] });
     userEvent.click(screen.getByLabelText('Add'));
     const labels = screen.getByText(/Labels/);
-    const selects = getAllByRole(labels.parentElement!, 'combobox');
+    const selects = getAllByRole(labels.parentElement!.parentElement!.parentElement!, 'combobox');
     userEvent.click(selects[3]);
     await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
+  });
+
+  it('shows error for query with operations and no stream selector', async () => {
+    setup({ labels: [], operations: [{ id: LokiOperationId.Logfmt, params: [] }] });
+    expect(screen.getByText('You need to specify at least 1 label filter (stream selector)')).toBeInTheDocument();
+  });
+
+  it('shows no error for query with empty __line_contains operation and no stream selector', async () => {
+    setup({ labels: [], operations: [{ id: LokiOperationId.LineContains, params: [''] }] });
+    expect(screen.queryByText('You need to specify at least 1 label filter (stream selector)')).not.toBeInTheDocument();
   });
 });
 

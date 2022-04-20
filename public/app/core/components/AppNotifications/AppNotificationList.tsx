@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import AppNotificationItem from './AppNotificationItem';
-import { notifyApp, clearAppNotification } from 'app/core/actions';
-import { selectAll } from 'app/core/reducers/appNotification';
+import { notifyApp, hideAppNotification } from 'app/core/actions';
+import { selectVisible } from 'app/core/reducers/appNotification';
 import { StoreState } from 'app/types';
 
 import {
@@ -17,12 +17,12 @@ import { VerticalGroup } from '@grafana/ui';
 export interface OwnProps {}
 
 const mapStateToProps = (state: StoreState, props: OwnProps) => ({
-  appNotifications: selectAll(state.appNotifications),
+  appNotifications: selectVisible(state.appNotifications),
 });
 
 const mapDispatchToProps = {
   notifyApp,
-  clearAppNotification,
+  hideAppNotification,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -39,7 +39,7 @@ export class AppNotificationListUnConnected extends PureComponent<Props> {
   }
 
   onClearAppNotification = (id: string) => {
-    this.props.clearAppNotification(id);
+    this.props.hideAppNotification(id);
   };
 
   render() {
