@@ -73,6 +73,7 @@ const displayAlert = (datasourceName: string, region: string) =>
       createErrorNotification(
         `CloudWatch request limit reached in ${region} for data source ${datasourceName}`,
         '',
+        undefined,
         React.createElement(ThrottlingErrorMessage, { region }, null)
       )
     )
