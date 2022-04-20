@@ -1,8 +1,7 @@
+import React, { ChangeEvent, PureComponent } from 'react';
 import { QueryEditorProps } from '@grafana/data';
 import { EditorField, EditorRow, Space } from '@grafana/experimental';
 import { Input } from '@grafana/ui/src';
-import React, { ChangeEvent, PureComponent } from 'react';
-
 import { CloudWatchDatasource } from '../datasource';
 import { isMetricsQuery } from '../guards';
 import { migrateQueryAliasFormat } from '../migrations';
