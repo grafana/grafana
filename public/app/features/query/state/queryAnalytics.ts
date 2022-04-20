@@ -26,6 +26,8 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
         queryCacheStatus[refId] = data.series[i].meta?.isCachedResponse ?? false;
       }
     }
+    const totalQueries = Object.keys(queryCacheStatus).length;
+    const cachedQueries = Object.values(queryCacheStatus).filter((val) => val === true).length;
 
     const eventData: DataRequestEventPayload = {
       eventName: MetaAnalyticsEventName.DataRequest,
@@ -36,8 +38,8 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       dashboardId: data.request.dashboardId,
       dataSize: 0,
       duration: data.request.endTime! - data.request.startTime,
-      totalQueries: Object.keys(queryCacheStatus).length,
-      cachedQueries: Object.values(queryCacheStatus).filter((val) => val === true).length,
+      totalQueries,
+      cachedQueries,
     };
 
     // enrich with dashboard info
