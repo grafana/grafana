@@ -233,15 +233,15 @@ By default, the Grafana Server Admin is the only user who can create and manage 
 Note that any user with the ability to modify roles can only create, update or delete roles with permissions they themselves have been granted. For example, a user with the `Editor` role would be able to create and manage roles only with the permissions they have, or with a subset of them.
 
 
-## Create a custom role to access alerts in a specific folder
+## Create a custom role to access alerts in a folder
 
-In order to see an alert rule in Grafana user is required to have read access to a folder where that alert rule is stored, permission to read alerts in that folder and permission to query all data sources the rule uses.
+To see an alert rule in Grafana, the user must have read access to the folder that stores the alert rule, permission to read alerts in the folder, and permission to query all data sources that the rule uses.
 
-For example, let's assume that we have 
-- a folder `Test-Folder` with ID `92`, 
-- two data sources `DS1` with UID `_oAfGYUnk` and `DS2` with UID `YYcBGYUnk`.
-- and alert rule that is stored in the folder and queries these two data sources.
-Therefore, a request to create a custom role with minimum required permissions to access that rule would be the following:
+The API command in this example is based on the following:
+- A `Test-Folder` with ID `92`
+- Two data sources: `DS1` with UID `_oAfGYUnk`, and `DS2` with UID `YYcBGYUnk`
+- An alert rule that is stored in `Test-Folder` and queries the two data sources.
+The following request creates a custom role that includes permissions to access the alert rule:
 
 ```
 curl --location --request POST '<grafana_url>/api/access-control/roles/' \

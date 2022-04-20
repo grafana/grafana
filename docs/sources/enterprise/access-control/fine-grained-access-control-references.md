@@ -60,10 +60,10 @@ If you [enable]({{< relref "../../alerting/unified-alerting/opt-in.md" >}}) Graf
 
 Access to Grafana alert rules is an intersection of many permissions:
 - Permission to read a folder, for example, the fixed role `fixed:folders:reader` or action `folders:read` in the scope of a folder `folders:id:`
-- permission to manage alerts (see table below)
-- permission to query **all** data sources that the rule uses, i.e. fixed role `fixed:datasources:reader` or action `datasources:query` in the scope of `datasources:uid:`. 
+- Permission to manage alerts. The following table contains information about alerting fixed roles.
+- Permission to query **all** data sources that the rule uses, for example, the fixed role `fixed:datasources:reader` or action `datasources:query` in the scope of `datasources:uid:`. 
 
-For example of permissions required to access an alert rule see [usage scenarios]({{< relref "./usage-scenarios.md#create-a-custom-role-to-access-alerts-in-a-specific-folder" >}})
+For more information about the permissions required to access alert rules, refer to [Create a custom role to access alerts in a folder]({{< relref "./usage-scenarios.md#create-a-custom-role-to-access-alerts-in-a-folder" >}}).
 
 | Fixed roles                            | Permissions                                                                                                                                                                                                                                                              | Descriptions                                                                                                                                                                                                                                                                          |
 |----------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
