@@ -87,7 +87,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     url: `datasources/edit/${dataSource.uid}/insights`,
   };
 
-  if (highlightTrial()) {
+  if (highlightTrial() && !isLoadingNav) {
     analytics.tabSuffix = () =>
       ProBadge({ experimentId: 'feature-highlights-data-source-insights-badge', eventVariant: 'trial' });
   }
