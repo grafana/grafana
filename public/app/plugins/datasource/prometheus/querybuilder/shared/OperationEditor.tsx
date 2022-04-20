@@ -230,9 +230,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     cardHighlight: css({
       boxShadow: `0px 0px 6px 0px ${theme.colors.primary.shade}`,
     }),
-    cardNoHighlight: css({
-      boxShadow: 'none',
-    }),
     infoIcon: css({
       marginLeft: theme.spacing(0.5),
       color: theme.colors.text.secondary,

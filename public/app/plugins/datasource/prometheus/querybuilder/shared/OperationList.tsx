@@ -138,13 +138,38 @@ export function OperationList<T extends QueryWithOperations>({
 function useOperationsHighlight(operations: QueryBuilderOperation[]) {
   const isMounted = useMountedState();
   const prevOperations = usePrevious(operations);
-  const newOps = operations.map((op, index) => isMounted() && op.id !== prevOperations?.[index]?.id);
-  console.log({
-    operations,
-    prevOperations,
-    newOps,
-  });
+
+  if (!isMounted()) {
+    return operations.map(() => false);
+  }
+
+  if (!prevOperations) {
+    return operations.map(() => true);
+  }
+
+  let newOps: boolean[] = [];
+
+  if (prevOperations.length - 1 === operations.length && operations.every((op) => prevOperations.includes(op))) {
+    // In case we remove one op and does not change any ops then don't highlight anything.
+    return operations.map(() => false);
+  }
+  if (prevOperations.length + 1 === operations.length && prevOperations.every((op) => operations.includes(op))) {
+    // If we add a single op just find it and highlight just that.
+    const newOp = operations.find((op) => !prevOperations.includes(op));
+    newOps = operations.map((op) => {
+      return op === newOp;
+    });
+  } else {
+    // Default diff of all ops.
+    newOps = operations.map((op, index) => {
+      return !isSameOp(op.id, prevOperations[index]?.id);
+    });
+  }
   return newOps;
+}
+
+function isSameOp(op1?: string, op2: string) {
+  return op1 === op2 || `__${op1}_by` === op2 || op1 === `__${op2}_by`;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
