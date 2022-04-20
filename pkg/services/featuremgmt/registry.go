@@ -207,5 +207,11 @@ var (
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
 		},
+		{
+			Name:         "persistNotifications",
+			Description:  "PoC Notifications page",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
 	}
 )

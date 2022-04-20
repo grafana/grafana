@@ -2,8 +2,10 @@ import React, { FC } from 'react';
 import { DeleteButton, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 
+import { AccessControlAction } from 'app/types';
 import { ApiKey } from '../../types';
 import { css } from '@emotion/css';
+import { contextSrv } from 'app/core/core';
 
 interface Props {
   tokens: ApiKey[];
@@ -35,9 +37,11 @@ export const ServiceAccountTokensTable: FC<Props> = ({ tokens, timeZone, onDelet
                   <TokenExpiration timeZone={timeZone} token={key} />
                 </td>
                 <td>{formatDate(timeZone, key.created)}</td>
-                <td>
-                  <DeleteButton aria-label="Delete API key" size="sm" onConfirm={() => onDelete(key)} />
-                </td>
+                {contextSrv.hasPermission(AccessControlAction.ServiceAccountsDelete) && (
+                  <td>
+                    <DeleteButton aria-label="Delete service account token" size="sm" onConfirm={() => onDelete(key)} />
+                  </td>
+                )}
               </tr>
             );
           })}
@@ -82,7 +86,7 @@ const TokenExpiration = ({ timeZone, token }: TokenExpirationProps) => {
       <span className={styles.hasExpired}>
         Expired
         <span className={styles.tooltipContainer}>
-          <Tooltip content="This API key has expired.">
+          <Tooltip content="This token has expired">
             <Icon name="exclamation-triangle" className={styles.toolTipIcon} />
           </Tooltip>
         </span>

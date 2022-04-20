@@ -5180,15 +5180,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/monaco-kusto@npm:5.0.0":
-  version: 5.0.0
-  resolution: "@kusto/monaco-kusto@npm:5.0.0"
+"@kusto/monaco-kusto@npm:5.1.1":
+  version: 5.1.1
+  resolution: "@kusto/monaco-kusto@npm:5.1.1"
   dependencies:
     "@kusto/language-service": 2.0.0-beta.0
     "@kusto/language-service-next": 0.0.54
   peerDependencies:
     monaco-editor: 0.33.0
-  checksum: 961bcae8a84562ad0d1aa199bdacbe5adfffafb01e98a2cf927883331d45ad8fcdf7385f9bde00eed16f74a33e0dea41f9eb80127e2e5a341ea3b8a2aa9fb2d8
+  checksum: 51771a0a128640d6385d693200ef1128fa2d55250e4f8db97aa4e9c46350dc94c93238958a9a9640939c6813caad117fe3a858b50e7b72a413baa78e964a359c
   languageName: node
   linkType: hard
 
@@ -20427,7 +20427,7 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
-    "@kusto/monaco-kusto": 5.0.0
+    "@kusto/monaco-kusto": 5.1.1
     "@lezer/common": 0.15.12
     "@lezer/lr": 0.15.8
     "@lingui/cli": 3.13.2
@@ -26001,9 +26001,9 @@ __metadata:
   linkType: hard
 
 "minimist@npm:^1.1.1, minimist@npm:^1.2.0, minimist@npm:^1.2.5":
-  version: 1.2.5
-  resolution: "minimist@npm:1.2.5"
-  checksum: 86706ce5b36c16bfc35c5fe3dbb01d5acdc9a22f2b6cc810b6680656a1d2c0e44a0159c9a3ba51fb072bb5c203e49e10b51dcd0eec39c481f4c42086719bae52
+  version: 1.2.6
+  resolution: "minimist@npm:1.2.6"
+  checksum: d15428cd1e11eb14e1233bcfb88ae07ed7a147de251441d61158619dfb32c4d7e9061d09cab4825fdee18ecd6fce323228c8c47b5ba7cd20af378ca4048fb3fb
   languageName: node
   linkType: hard
 
