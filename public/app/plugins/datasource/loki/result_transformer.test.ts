@@ -112,7 +112,7 @@ describe('loki result transformer', () => {
     });
 
     it('should append refId to the unique ids if refId is provided', () => {
-      const data = ResultTransformer.lokiStreamsToRawDataFrame(streamResult, false, 'B');
+      const data = ResultTransformer.lokiStreamsToRawDataFrame(streamResult, 'B');
       expect(data.fields[4].values.get(0)).toEqual('4b79cb43-81ce-52f7-b1e9-a207fff144dc_B');
       expect(data.fields[4].values.get(1)).toEqual('73d144f6-57f2-5a45-a49c-eb998e2006b1_B');
     });
@@ -121,7 +121,7 @@ describe('loki result transformer', () => {
   describe('lokiStreamsToDataFrames', () => {
     it('should enhance data frames', () => {
       jest.spyOn(ResultTransformer, 'enhanceDataFrame');
-      const dataFrames = ResultTransformer.lokiStreamsToDataFrames(lokiResponse, { refId: 'B' }, 500, {
+      const dataFrames = ResultTransformer.lokiStreamsToDataFrames(lokiResponse, { refId: 'B', expr: '' }, 500, {
         derivedFields: [
           {
             matcherRegex: 'trace=(w+)',
