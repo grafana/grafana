@@ -119,7 +119,7 @@ func TestErrorResponse(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body), &lokiQuery{QueryType: QueryTypeRange})
+			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward})
 
 			require.Len(t, frames, 0)
 			require.Error(t, err)
