@@ -30,6 +30,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
       reportInteraction('cloud_user_clicked_prometheus_editor_mode', {
         newEditor: newMetricEditorMode,
         previousEditor: query.editorMode ?? '',
+        newQuery: !query.expr,
       });
 
       if (newMetricEditorMode === QueryEditorMode.Builder) {
