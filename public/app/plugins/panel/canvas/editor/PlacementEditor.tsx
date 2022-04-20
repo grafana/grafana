@@ -43,10 +43,6 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
   const { options } = element;
   const { placement, constraint: layout } = options;
 
-  // const onToggleAnchor = (element: ElementState, anchor: keyof Anchor) => {
-  //   settings.scene.toggleAnchor(element, anchor);
-  // };
-
   const onHorizontalConstraintChange = (h: SelectableValue<HorizontalConstraint>) => {
     element.options.constraint!.horizontal = h.value;
     element.setPlacementFromConstraint();

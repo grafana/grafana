@@ -40,7 +40,7 @@ export class ElementState implements LayerElement {
       horizontal: HorizontalConstraint.Left,
     };
     options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0 };
-    // ?? validate placement so that it isn't under / over constrained?
+    this.validatePlacement();
     this.sizeStyle = {
       ...options.placement,
       position: 'absolute',
@@ -71,7 +71,52 @@ export class ElementState implements LayerElement {
     return this.options.name;
   }
 
-  // Make sure saved constraints aren't over defined, on load, on horizontal / vertical placement change?
+  validatePlacement() {
+    const { constraint, placement } = this.options;
+    const { vertical, horizontal } = constraint ?? {};
+    const updatedPlacement = placement ?? ({} as Placement);
+
+    switch (vertical) {
+      case VerticalConstraint.Top:
+        updatedPlacement.top = updatedPlacement.top ?? 0;
+        updatedPlacement.height = updatedPlacement.height ?? 100;
+        delete updatedPlacement.bottom;
+        break;
+      case VerticalConstraint.Bottom:
+        updatedPlacement.bottom = updatedPlacement.bottom ?? 0;
+        updatedPlacement.height = updatedPlacement.height ?? 100;
+        delete updatedPlacement.top;
+        break;
+      case VerticalConstraint.TopBottom:
+        updatedPlacement.top = updatedPlacement.top ?? 0;
+        updatedPlacement.bottom = updatedPlacement.bottom ?? 0;
+        delete updatedPlacement.height;
+        break;
+    }
+
+    switch (horizontal) {
+      case HorizontalConstraint.Left:
+        updatedPlacement.left = updatedPlacement.left ?? 0;
+        updatedPlacement.width = updatedPlacement.width ?? 100;
+        delete updatedPlacement.right;
+        break;
+      case HorizontalConstraint.Right:
+        updatedPlacement.right = updatedPlacement.right ?? 0;
+        updatedPlacement.width = updatedPlacement.width ?? 100;
+        delete updatedPlacement.left;
+        break;
+      case HorizontalConstraint.LeftRight:
+        updatedPlacement.left = updatedPlacement.left ?? 0;
+        updatedPlacement.right = updatedPlacement.right ?? 0;
+        delete updatedPlacement.width;
+        break;
+    }
+
+    this.options.placement = updatedPlacement;
+
+    console.log('am being  called after', this.options.placement);
+  }
+
   setPlacementFromConstraint() {
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
@@ -273,8 +318,8 @@ export class ElementState implements LayerElement {
   // https://github.com/grafana/grafana-edge-app/blob/main/src/panels/draw/WrapItem.tsx#L44
   applyResize = (event: OnResize) => {
     const { options } = this;
-    const { placement, constraint: layout } = options;
-    const { vertical, horizontal } = layout ?? {};
+    const { placement, constraint } = options;
+    const { vertical, horizontal } = constraint ?? {};
 
     const top = vertical === VerticalConstraint.Top || vertical === VerticalConstraint.TopBottom;
     const bottom = vertical === VerticalConstraint.Bottom || vertical === VerticalConstraint.TopBottom;
