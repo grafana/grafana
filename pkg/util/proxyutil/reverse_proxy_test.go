@@ -102,7 +102,7 @@ func TestReverseProxy(t *testing.T) {
 			{
 				desc:               "Timed out request should return 504 Gateway timeout",
 				transport:          timedOutTransport,
-				responseWaitTime:   500 * time.Millisecond,
+				responseWaitTime:   100 * time.Millisecond,
 				expectedStatusCode: http.StatusGatewayTimeout,
 			},
 			{
