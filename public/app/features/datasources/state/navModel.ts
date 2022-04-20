@@ -111,7 +111,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     hideFromTabs: !pluginMeta.isBackend || !config.caching.enabled,
   };
 
-  if (highlightTrial()) {
+  if (highlightTrial() && !isLoadingNav) {
     caching.tabSuffix = () =>
       ProBadge({ experimentId: 'feature-highlights-query-caching-badge', eventVariant: 'trial' });
   }
