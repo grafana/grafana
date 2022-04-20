@@ -30,11 +30,6 @@ export interface Props {
   richHistorySearchFilters?: RichHistorySearchFilters;
   exploreId: ExploreId;
   height: number;
-  onChangeSortOrder: (sortOrder: SortOrder) => void;
-  onSelectDatasourceFilters: (value: string[]) => void;
-  onChangeSearchText: (search: string) => void;
-  onChangeTimeFilters: (from: number, to: number) => void;
-  onChangeStarred: (starred: boolean) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
@@ -128,11 +123,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
 
 export function RichHistoryQueriesTab(props: Props) {
   const {
-    onSelectDatasourceFilters,
-    onChangeSearchText,
-    onChangeTimeFilters,
     queries,
-    onChangeSortOrder,
     richHistorySearchFilters,
     loadRichHistory,
     updateFilters,
@@ -198,7 +189,7 @@ export function RichHistoryQueriesTab(props: Props) {
               formatTooltipResult={mapNumbertoTimeInSlider}
               reverse={true}
               onAfterChange={(value) => {
-                onChangeTimeFilters(value![0], value![1]);
+                updateFilters({ from: value![0], to: value![1] });
               }}
             />
           </div>
@@ -219,7 +210,7 @@ export function RichHistoryQueriesTab(props: Props) {
               placeholder="Filter queries for data sources(s)"
               aria-label="Filter queries for data sources(s)"
               onChange={(options: SelectableValue[]) => {
-                onSelectDatasourceFilters(options.map((option) => option.value));
+                updateFilters({ datasourceFilters: options.map((option) => option.value) });
               }}
             />
           )}
@@ -227,7 +218,7 @@ export function RichHistoryQueriesTab(props: Props) {
             <FilterInput
               placeholder="Search queries"
               value={richHistorySearchFilters.search}
-              onChange={onChangeSearchText}
+              onChange={(search: string) => updateFilters({ search })}
             />
           </div>
           <div aria-label="Sort queries" className={styles.sort}>
@@ -236,7 +227,7 @@ export function RichHistoryQueriesTab(props: Props) {
               value={sortOrderOptions.filter((order) => order.value === richHistorySearchFilters.sortOrder)}
               options={sortOrderOptions}
               placeholder="Sort queries by"
-              onChange={(e) => onChangeSortOrder(e.value as SortOrder)}
+              onChange={(e: SelectableValue<SortOrder>) => updateFilters({ sortOrder: e.value })}
             />
           </div>
         </div>

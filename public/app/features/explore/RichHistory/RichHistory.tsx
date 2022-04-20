@@ -68,17 +68,6 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
   toggleActiveDatasourceOnly = () =>
     this.updateSettings({ activeDatasourceOnly: !this.props.richHistorySettings.activeDatasourceOnly });
 
-  // CODE: replace with updateFilters?
-  onSelectDatasourceFilters = (datasourceFilters: string[]) => this.updateFilters({ datasourceFilters });
-
-  onChangeSortOrder = (sortOrder: SortOrder) => this.updateFilters({ sortOrder });
-
-  onChangeSearchText = (search: string) => this.updateFilters({ search });
-
-  onChangeTimeFilters = (from: number, to: number) => this.updateFilters({ from, to });
-
-  onChangeStarred = (starred: boolean) => this.updateFilters({ starred });
-
   render() {
     const { richHistory, height, exploreId, deleteRichHistory, onClose, firstTab, activeDatasourceInstance } =
       this.props;
@@ -94,11 +83,6 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
           activeDatasourceInstance={activeDatasourceInstance}
           richHistorySettings={this.props.richHistorySettings}
           richHistorySearchFilters={this.props.richHistorySearchFilters}
-          onChangeSortOrder={this.onChangeSortOrder}
-          onSelectDatasourceFilters={this.onSelectDatasourceFilters}
-          onChangeSearchText={this.onChangeSearchText}
-          onChangeTimeFilters={this.onChangeTimeFilters}
-          onChangeStarred={this.onChangeStarred}
           exploreId={exploreId}
           height={height}
         />
@@ -117,11 +101,6 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
           updateFilters={this.updateFilters}
           richHistorySettings={this.props.richHistorySettings}
           richHistorySearchFilters={this.props.richHistorySearchFilters}
-          onChangeSortOrder={this.onChangeSortOrder}
-          onSelectDatasourceFilters={this.onSelectDatasourceFilters}
-          onChangeSearchText={this.onChangeSearchText}
-          onChangeTimeFilters={this.onChangeTimeFilters}
-          onChangeStarred={this.onChangeStarred}
           exploreId={exploreId}
         />
       ),

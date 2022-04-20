@@ -23,11 +23,6 @@ export interface Props {
   richHistorySearchFilters?: RichHistorySearchFilters;
   richHistorySettings: RichHistorySettings;
   exploreId: ExploreId;
-  onChangeSortOrder: (sortOrder: SortOrder) => void;
-  onSelectDatasourceFilters: (value: string[]) => void;
-  onChangeSearchText: (search: string) => void;
-  onChangeTimeFilters: (from: number, to: number) => void;
-  onChangeStarred: (starred: boolean) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -79,10 +74,7 @@ export function RichHistoryStarredTab(props: Props) {
     updateFilters,
     activeDatasourceInstance,
     richHistorySettings,
-    onSelectDatasourceFilters,
-    onChangeSearchText,
     queries,
-    onChangeSortOrder,
     richHistorySearchFilters,
     loadRichHistory,
     exploreId,
@@ -137,7 +129,7 @@ export function RichHistoryStarredTab(props: Props) {
               placeholder="Filter queries for data sources(s)"
               aria-label="Filter queries for data sources(s)"
               onChange={(options: SelectableValue[]) => {
-                onSelectDatasourceFilters(options.map((option) => option.value));
+                updateFilters({ datasourceFilters: options.map((option) => option.value) });
               }}
             />
           )}
@@ -145,7 +137,7 @@ export function RichHistoryStarredTab(props: Props) {
             <FilterInput
               placeholder="Search queries"
               value={richHistorySearchFilters.search}
-              onChange={onChangeSearchText}
+              onChange={(search: string) => updateFilters({ search })}
             />
           </div>
           <div aria-label="Sort queries" className={styles.sort}>
@@ -154,7 +146,7 @@ export function RichHistoryStarredTab(props: Props) {
               value={sortOrderOptions.filter((order) => order.value === richHistorySearchFilters.sortOrder)}
               options={sortOrderOptions}
               placeholder="Sort queries by"
-              onChange={(e) => onChangeSortOrder(e.value as SortOrder)}
+              onChange={(e: SelectableValue<SortOrder>) => updateFilters({ sortOrder: e.value })}
             />
           </div>
         </div>
