@@ -1,11 +1,19 @@
 +++
-title = "Inspector in Explore"
+title = "Inspect a query"
+aliases = ["/docs/grafana/latest/features/explore/explore-inspector/"]
 weight = 400
 +++
 
-# Inspector in Explore
+# Inspect a query
 
-The inspector helps you understand and troubleshoot your queries. You can inspect the raw data, export that data to a comma-separated values (CSV) file, export log results in TXT format, and view query requests.
+To help debug queries, Explore's Query inspector provides tools to investigate query requests and responses, as well as query statistics.
+
+You can inspect the raw data, export data to a comma-separated values (CSV) file, export log results in TXT format, and view query requests.
+
+This functionality is similar to the panel inspector tasks [Inspect query performance]({{< relref "../panels/query-a-data-source/inspect-query-performance.md" >}}) and
+[Inspect query request and response data]({{< relref "../panels/query-a-data-source/inspect-request-and-response-data.md" >}}).
+
+{{< figure src="/static/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" max-width= "550px" caption="Screenshot of the query inspector button in Explore" >}}
 
 ## Inspector UI
 
@@ -17,18 +25,14 @@ The inspector has following tabs:
 - **Data tab -** Shows the raw data returned by the query.
 - **Error tab -** Shows the error. Only visible when query returns error.
 
-## Inspector tasks
-
-You can perform a variety of tasks in the Explore inspector.
-
-### Open the Inspector
+## Open the Inspector
 
 1. Run the query you would like to inspect.
 1. Click the **Inspector** button.
 
 The inspector pane opens on the bottom of the screen.
 
-### Inspect raw query results
+## Inspect raw query results
 
 You can view raw query results, that is the data returned by the query in a table.
 
@@ -39,7 +43,7 @@ For multiple queries or for queries multiple nodes, there are additional options
 - **Show data frame:** Select the result set data you want to view.
 - **Series joined by time:** View the raw data from all of your queries at once, one result set per column. You can click a column heading to sort the data.
 
-### Download raw query results as CSV
+## Download raw query results as CSV
 
 Grafana generates a CSV file in your default browser download location. You can open it in the viewer of your choice.
 
@@ -49,7 +53,7 @@ Grafana generates a CSV file in your default browser download location. You can 
 
 In order to download a CSV file specifically formatted for Excel, expand **Data options** and then enable the **Download for Excel** toggle before you click the **Download CSV** option.
 
-### Download log results as TXT
+## Download log results as TXT
 
 Grafana generates a TXT file in your default browser download location. You can open it in the viewer of your choice.
 
@@ -57,7 +61,7 @@ Grafana generates a TXT file in your default browser download location. You can 
 1. Inspect the log query results as described above.
 1. Click **Download logs**.
 
-### Download trace results
+## Download trace results
 
 Based on the data source type, Grafana generates a JSON file for the trace results in one of the supported formats: Jaeger, Zipkin, or OTLP formats.
 
@@ -65,7 +69,7 @@ Based on the data source type, Grafana generates a JSON file for the trace resul
 1. Inspect the trace query results [as described above](#inspect-raw-query-results).
 1. Click **Download traces**.
 
-### Inspect query performance
+## Inspect query performance
 
 The Stats tab displays statistics that tell you how long your query takes, how many queries you send, and the number of rows returned. This information can help you troubleshoot your queries, especially if any of the numbers are unexpectedly high or low.
 
@@ -74,7 +78,7 @@ The Stats tab displays statistics that tell you how long your query takes, how m
 
 Statistics are displayed in read-only format.
 
-### View JSON model
+## View JSON model
 
 You can explore and export data as well as data frame JSON models.
 
@@ -84,7 +88,7 @@ You can explore and export data as well as data frame JSON models.
    - **DataFrame structure -** Displays the raw result set.
 1. You can expand or collapse portions of the JSON to view separate sections. You can also click the **Copy to clipboard** option to copy JSON body and paste it into another application.
 
-### View raw request and response to data source
+## View raw request and response to data source
 
 1. Open the panel inspector and then click the **Query** tab.
 1. Click **Refresh**.
