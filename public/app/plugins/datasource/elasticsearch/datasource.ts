@@ -15,7 +15,6 @@ import {
   DataSourceWithLogsVolumeSupport,
   DateTime,
   dateTime,
-  Field,
   getDefaultTimeRange,
   AbstractQuery,
   getLogLevelFromKey,
