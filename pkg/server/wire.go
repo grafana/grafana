@@ -7,11 +7,15 @@ import (
 	"github.com/google/wire"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/coremodel/dashboard"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/expr"
+	cmreg "github.com/grafana/grafana/pkg/framework/coremodel/staticregistry"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -239,6 +243,10 @@ var wireBasicSet = wire.NewSet(
 	avatar.ProvideAvatarCacheServer,
 	authproxy.ProvideAuthProxy,
 	statscollector.ProvideService,
+	dashboard.ProvideCoremodel,
+	cmreg.ProvideRegistry,
+	cuectx.ProvideCUEContext,
+	cuectx.ProvideThemaLibrary,
 )
 
 var wireSet = wire.NewSet(

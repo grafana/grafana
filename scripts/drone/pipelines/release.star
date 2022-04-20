@@ -224,7 +224,7 @@ def get_steps(edition, ver_mode):
         build_steps.append(build_storybook)
 
     if include_enterprise2:
-      integration_test_steps.extend([redis_integration_tests_step(edition=edition2, ver_mode=ver_mode), memcached_integration_tests_step(edition=edition2, ver_mode=ver_mode)])
+      integration_test_steps.extend([redis_integration_tests_step(), memcached_integration_tests_step()])
 
     if should_upload:
         publish_steps.append(upload_cdn_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss))
@@ -431,9 +431,8 @@ def publish_npm_pipelines(mode):
         name='publish-npm-packages-{}'.format(mode), trigger=trigger, steps = steps, edition="all"
     )]
 
-def release_pipelines(ver_mode='release', trigger=None, environment=None):
+def release_pipelines(ver_mode='release', trigger=None):
     # 'enterprise' edition services contain both OSS and enterprise services
-    services = integration_test_services(edition='enterprise')
     if not trigger:
         trigger = {
             'event': {
@@ -447,8 +446,6 @@ def release_pipelines(ver_mode='release', trigger=None, environment=None):
             },
         }
 
-    should_publish = ver_mode == 'release'
-
     # The release pipelines include also enterprise ones, so both editions are built for a release.
     # We could also solve this by triggering a downstream build for the enterprise repo, but by including enterprise
     # in OSS release builds, we simplify the UX for the release engineer.
@@ -456,13 +453,6 @@ def release_pipelines(ver_mode='release', trigger=None, environment=None):
     enterprise_pipelines = get_enterprise_pipelines(ver_mode=ver_mode, trigger=trigger)
 
     pipelines = oss_pipelines + enterprise_pipelines
-
-    # if ver_mode == 'release':
-    #   pipelines.append(publish_artifacts_pipelines())
-    #pipelines.append(notify_pipeline(
-    #    name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=dict(trigger, status = ['failure']),
-    #    depends_on=[p['name'] for p in pipelines], template=failure_template, secret='slack_webhook',
-    #))
 
     return pipelines
 

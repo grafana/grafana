@@ -4135,9 +4135,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/experimental@npm:0.0.2-canary.22":
-  version: 0.0.2-canary.22
-  resolution: "@grafana/experimental@npm:0.0.2-canary.22"
+"@grafana/experimental@npm:^0.0.2-canary.25":
+  version: 0.0.2-canary.25
+  resolution: "@grafana/experimental@npm:0.0.2-canary.25"
   dependencies:
     "@types/uuid": ^8.3.3
     uuid: ^8.3.2
@@ -4145,7 +4145,7 @@ __metadata:
     "@emotion/css": 11.1.3
     react: 17.0.1
     react-select: 5.2.1
-  checksum: b9a64c0abc33798967c94e82e329925f75661eb23b4bbaf4d34fc0c95db1a535b95a240deb6e95fe08f2a2207859e599daf51b560813cf0e5c85468fa6d7a5cc
+  checksum: 20532d6a1ff1bb7a98db71728bc34474f87663431fef349a53f4673d12b6356336b9250bc85028693e7bbfeec8e468d9910837f4062cb49239d581dc974c55c9
   languageName: node
   linkType: hard
 
@@ -5180,15 +5180,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/monaco-kusto@npm:5.0.0":
-  version: 5.0.0
-  resolution: "@kusto/monaco-kusto@npm:5.0.0"
+"@kusto/monaco-kusto@npm:5.1.1":
+  version: 5.1.1
+  resolution: "@kusto/monaco-kusto@npm:5.1.1"
   dependencies:
     "@kusto/language-service": 2.0.0-beta.0
     "@kusto/language-service-next": 0.0.54
   peerDependencies:
     monaco-editor: 0.33.0
-  checksum: 961bcae8a84562ad0d1aa199bdacbe5adfffafb01e98a2cf927883331d45ad8fcdf7385f9bde00eed16f74a33e0dea41f9eb80127e2e5a341ea3b8a2aa9fb2d8
+  checksum: 51771a0a128640d6385d693200ef1128fa2d55250e4f8db97aa4e9c46350dc94c93238958a9a9640939c6813caad117fe3a858b50e7b72a413baa78e964a359c
   languageName: node
   linkType: hard
 
@@ -20424,7 +20424,7 @@ __metadata:
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": 3.0.0
-    "@grafana/experimental": 0.0.2-canary.22
+    "@grafana/experimental": ^0.0.2-canary.25
     "@grafana/google-sdk": 0.0.3
     "@grafana/lezer-logql": ^0.0.11
     "@grafana/runtime": "workspace:*"
@@ -20434,7 +20434,7 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
-    "@kusto/monaco-kusto": 5.0.0
+    "@kusto/monaco-kusto": 5.1.1
     "@lezer/common": 0.15.12
     "@lezer/lr": 0.15.8
     "@lingui/cli": 3.13.2

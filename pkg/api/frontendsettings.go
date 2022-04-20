@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -21,7 +22,7 @@ func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
 		return
 	}
 
-	c.JSON(200, settings)
+	c.JSON(http.StatusOK, settings)
 }
 
 // getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
