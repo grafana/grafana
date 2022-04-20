@@ -64,7 +64,10 @@ func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pre
 		TeamID: query.TeamID,
 	}
 	prefs, err := s.store.Get(ctx, getPref)
-	if err != nil && !errors.Is(err, pref.ErrPrefNotFound) {
+	if errors.Is(err, pref.ErrPrefNotFound) {
+		return &pref.Preference{}, nil
+	}
+	if err != nil {
 		return nil, err
 	}
 	return prefs, nil
