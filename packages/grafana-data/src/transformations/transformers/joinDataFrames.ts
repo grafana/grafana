@@ -59,6 +59,21 @@ function getJoinMatcher(options: JoinOptions): FieldMatcher {
 }
 
 /**
+ * @internal
+ */
+export function maybeSortFrame(frame: DataFrame, fieldIdx: number) {
+  if (fieldIdx >= 0) {
+    let joinField = frame.fields[fieldIdx];
+
+    if (joinField.type !== FieldType.string && !isLikelyAscendingVector(joinField.values)) {
+      frame = sortDataFrame(frame, fieldIdx);
+    }
+  }
+
+  return frame;
+}
+
+/**
  * This will return a single frame joined by the first matching field.  When a join field is not specified,
  * the default will use the first time field
  */
@@ -103,11 +118,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
     }
 
     if (joinIndex >= 0) {
-      let joinField = frameCopy.fields[joinIndex];
-
-      if (joinField.type !== FieldType.string && !isLikelyAscendingVector(joinField.values)) {
-        frameCopy = sortDataFrame(frameCopy, joinIndex);
-      }
+      frameCopy = maybeSortFrame(frameCopy, joinIndex);
     }
 
     if (options.keep) {
