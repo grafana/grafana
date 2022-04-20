@@ -38,10 +38,9 @@ type Span interface {
 }
 
 type Opentelemetry struct {
-	enabledJaeger bool
-	enabledOTLP   bool
-	address       string
-	log           log.Logger
+	enabled string
+	address string
+	log     log.Logger
 
 	tracerProvider *tracesdk.TracerProvider
 	tracer         trace.Tracer
@@ -72,7 +71,7 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 
 	ots.address = section.Key("address").MustString("")
 	if ots.address != "" {
-		ots.enabledJaeger = true
+		ots.enabled = "jaeger"
 		return nil
 	}
 
@@ -83,7 +82,7 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 
 	ots.address = section.Key("address").MustString("")
 	if ots.address != "" {
-		ots.enabledOTLP = true
+		ots.enabled = "otlp"
 	}
 
 	return nil
@@ -141,23 +140,25 @@ func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, er
 func (ots *Opentelemetry) initOpentelemetryTracer() error {
 	var tp *tracesdk.TracerProvider
 	var err error
-	if ots.enabledJaeger {
+	switch ots.enabled {
+	case "jaeger":
 		tp, err = ots.initJaegerTracerProvider()
 		if err != nil {
 			return err
 		}
-	}
-
-	if ots.enabledOTLP {
+	case "otlp":
 		tp, err = ots.initOTLPTracerProvider()
 		if err != nil {
 			return err
 		}
+	default:
+		ots.log.Error("invalid trace exporter")
 	}
+
 	// Register our TracerProvider as the global so any imported
 	// instrumentation in the future will default to using it
 	// only if tracing is enabled
-	if ots.enabledJaeger || ots.enabledOTLP {
+	if ots.enabled != "" {
 		otel.SetTracerProvider(tp)
 	}
 

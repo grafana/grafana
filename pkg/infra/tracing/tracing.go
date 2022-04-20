@@ -28,29 +28,35 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg) (Tracer, error) {
-	ts := &Opentracing{
-		Cfg: cfg,
-		log: log.New("tracing"),
-	}
-
-	if err := ts.parseSettings(); err != nil {
+	ts, ots, err := parseSettings(cfg)
+	if err != nil {
 		return nil, err
 	}
 
 	if ts.enabled {
-		return ts, ts.initGlobalTracer()
-	}
-
-	ots := &Opentelemetry{
-		Cfg: cfg,
-		log: log.New("tracing"),
-	}
-
-	if err := ots.parseSettingsOpentelemetry(); err != nil {
-		return nil, err
+		return ts, ts.initJaegerGlobalTracer()
 	}
 
 	return ots, ots.initOpentelemetryTracer()
+}
+
+func parseSettings(cfg *setting.Cfg) (ts *Opentracing, ots *Opentelemetry, err error) {
+	ts.Cfg = cfg
+	ts.log = log.New("tracing")
+
+	err = ts.parseSettings()
+	if err != nil {
+		return ts, ots, err
+	}
+	if ts.enabled {
+		return ts, ots, nil
+	}
+
+	ots.Cfg = cfg
+	ots.log = log.New("tracing")
+
+	err = ots.parseSettingsOpentelemetry()
+	return ts, ots, err
 }
 
 type traceKey struct{}
@@ -136,7 +142,7 @@ func (ts *Opentracing) initJaegerCfg() (jaegercfg.Configuration, error) {
 	return cfg, nil
 }
 
-func (ts *Opentracing) initGlobalTracer() error {
+func (ts *Opentracing) initJaegerGlobalTracer() error {
 	cfg, err := ts.initJaegerCfg()
 	if err != nil {
 		return err
