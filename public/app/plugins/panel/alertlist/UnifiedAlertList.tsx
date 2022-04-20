@@ -49,13 +49,13 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const rules = useMemo(
     () =>
       filterRules(
-        props.options,
+        props,
         sortRules(
           props.options.sortOrder,
           Object.values(promRulesRequests).flatMap(({ result = [] }) => flattenRules(result))
         )
       ),
-    [props.options, promRulesRequests]
+    [props, promRulesRequests]
   );
 
   const noAlertsMessage = rules.length ? '' : 'No alerts';
@@ -95,7 +95,9 @@ function sortRules(sortOrder: SortOrder, rules: PromRuleWithLocation[]) {
   return result;
 }
 
-function filterRules(options: PanelProps<UnifiedAlertListOptions>['options'], rules: PromRuleWithLocation[]) {
+function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: PromRuleWithLocation[]) {
+  const { options, replaceVariables } = props;
+
   let filteredRules = [...rules];
   if (options.dashboardAlerts) {
     const dashboardUid = getDashboardSrv().getCurrent()?.uid;
@@ -104,8 +106,9 @@ function filterRules(options: PanelProps<UnifiedAlertListOptions>['options'], ru
     );
   }
   if (options.alertName) {
+    const replacedName = replaceVariables(options.alertName);
     filteredRules = filteredRules.filter(({ rule: { name } }) =>
-      name.toLocaleLowerCase().includes(options.alertName.toLocaleLowerCase())
+      name.toLocaleLowerCase().includes(replacedName.toLocaleLowerCase())
     );
   }
   if (Object.values(options.stateFilter).some((value) => value)) {
@@ -118,7 +121,8 @@ function filterRules(options: PanelProps<UnifiedAlertListOptions>['options'], ru
     });
   }
   if (options.alertInstanceLabelFilter) {
-    const matchers = parseMatchers(options.alertInstanceLabelFilter);
+    const replacedLabelFilter = replaceVariables(options.alertInstanceLabelFilter);
+    const matchers = parseMatchers(replacedLabelFilter);
     // Reduce rules and instances to only those that match
     filteredRules = filteredRules.reduce((rules, rule) => {
       const filteredAlerts = (rule.rule.alerts ?? []).filter(({ labels }) => labelsMatchMatchers(labels, matchers));
