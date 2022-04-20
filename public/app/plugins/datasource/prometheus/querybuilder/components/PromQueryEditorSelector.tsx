@@ -1,5 +1,6 @@
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { LoadingState } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { PromQueryEditorProps } from '../../components/types';
@@ -26,6 +27,11 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
+      reportInteraction('cloud_user_clicked_prometheus_editor_mode', {
+        newEditor: newMetricEditorMode,
+        previousEditor: query.editorMode ?? '',
+      });
+
       if (newMetricEditorMode === QueryEditorMode.Builder) {
         const result = buildVisualQueryFromString(query.expr || '');
         // If there are errors, give user a chance to decide if they want to go to builder as that can loose some data.
