@@ -292,6 +292,8 @@ replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
 
 replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.2
 
+// Upgraded to fix CVE-2020-26066. This can be removed when go.opentelemetry.io/collector and github.com/influxdata/telegraf are upgraded
+// github.com/tidwall/match v1.0.1 should not be used.
 replace github.com/tidwall/match => github.com/tidwall/match v1.1.1
 
 // Thema's thema CLI requires cobra, which eventually works its way down to go-hclog@v1.0.0.
