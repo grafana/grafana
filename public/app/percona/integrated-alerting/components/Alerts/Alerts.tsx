@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import { Button, useStyles } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 import { AppEvents } from '@grafana/data';
 import { logger, Chip } from '@percona/platform-core';
 import { appEvents } from 'app/core/core';
@@ -39,7 +39,7 @@ const {
 } = columns;
 
 export const Alerts: FC = () => {
-  const style = useStyles(getStyles);
+  const style = useStyles2(getStyles);
   const [pendingRequest, setPendingRequest] = useState(true);
   const [data, setData] = useState<Alert[]>([]);
   const [pageSize, setPageSize] = useStoredTablePageSize(ALERT_RULE_TEMPLATES_TABLE_ID);

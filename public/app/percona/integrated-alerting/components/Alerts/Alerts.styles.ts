@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ colors, spacing }: GrafanaTheme) => {
+export const getStyles = ({ colors, v1: { colors: v1Colors, spacing } }: GrafanaTheme2) => {
   return {
     generalActionsWrapper: css`
       display: flex;
@@ -21,14 +21,15 @@ export const getStyles = ({ colors, spacing }: GrafanaTheme) => {
       }
     `,
     label: css`
-      background-color: ${colors.bg3};
+      background-color: ${v1Colors.bg3};
       border-radius: 8px;
       padding: 6px;
       line-height: 1;
       margin: 5px;
     `,
     disabledRow: css`
-      background-color: ${colors.dashboardBg} !important;
+      background-color: ${colors.action.disabledBackground} !important;
+      opacity: ${colors.action.disabledOpacity};
     `,
     silencedSeverity: css`
       color: inherit;
