@@ -1,14 +1,14 @@
 import {
   DataFrame,
   DataFrameType,
-  // FieldType,
+  FieldType,
   formattedValueToString,
   getDisplayProcessor,
-  // getFieldDisplayName,
+  getFieldDisplayName,
   getValueFormat,
   GrafanaTheme2,
 } from '@grafana/data';
-import { calculateHeatmapFromData } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { bucketsToScanlines, calculateHeatmapFromData } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
 
 export const enum BucketLayout {
@@ -61,19 +61,19 @@ export function prepareHeatmapData(
     return getHeatmapData({ heatmap: scanlinesHeatmap }, theme);
   }
 
-  // let bucketsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapBuckets);
-  // if (bucketsHeatmap) {
-  //   return {
-  //     yAxisValues: frames[0].fields.flatMap((field) =>
-  //       field.type === FieldType.number ? getFieldDisplayName(field) : []
-  //     ),
-  //     ...getHeatmapData(bucketsToScanlines(bucketsHeatmap), theme),
-  //   };
-  // }
+  let bucketsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapBuckets);
+  if (bucketsHeatmap) {
+    return {
+      yAxisValues: frames[0].fields.flatMap((field) =>
+        field.type === FieldType.number ? getFieldDisplayName(field) : []
+      ),
+      ...getHeatmapData({ heatmap: bucketsToScanlines(bucketsHeatmap) }, theme),
+    };
+  }
 
-  // if (source === HeatmapSourceMode.Data) {
-  //   return getHeatmapData(bucketsToScanlines(frames[0]), theme);
-  // }
+  if (source === HeatmapSourceMode.Data) {
+    return getHeatmapData({ heatmap: bucketsToScanlines(frames[0]) }, theme);
+  }
 
   // TODO, check for error etc
   return getHeatmapData(calculateHeatmapFromData({ heatmap: frames }, options.heatmap ?? {}), theme);

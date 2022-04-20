@@ -44,6 +44,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
 
+  console.log('data', data);
   const [info, exemplars] = useMemo((): HeatmapData[] => {
     const heatmap = prepareHeatmapData(
       {
@@ -66,27 +67,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       },
     ];
   }, [data, options, theme]);
-  // const exemplars: HeatmapData | undefined = useMemo((): HeatmapData | undefined => {
-  //   const exemplarsFrame: DataFrame | undefined = findExemplarFrameInPanelData(data);
-  //   if (exemplarsFrame) {
-  //     return prepareHeatmapData(
-  //       [exemplarsFrame],
-  //       {
-  //         ...options,
-  //         heatmap: {
-  //           yAxis: {
-  //             mode: HeatmapCalculationMode.Size,
-  //             value: info.yBucketSize?.toString(),
-  //           },
-  //         },
-  //       },
-  //       theme
-  //     );
-  //   }
-  //   return undefined;
-  // }, [data, info, options, theme]);
+
+  console.log('info', info, 'exemplars', exemplars);
+
   const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap?.fields]);
-  console.log('facets', facets);
   const { onSplitOpen } = usePanelContext();
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
@@ -213,7 +197,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
           <HeatmapHoverView
             ttip={{
               layers: [
-                HeatmapTab({
+                ...HeatmapTab({
                   heatmapData: info,
                   index: hover.index,
                   getValuesInCell: getDataValuesInCell,

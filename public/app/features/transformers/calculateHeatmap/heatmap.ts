@@ -196,14 +196,46 @@ export function calculateHeatmapFromData(
   }
 
   let xyBinDef: HeatmapXYBinDef = geometry['heatmap'];
-  for (const [name, xyBin] of Object.entries(geometry)) {
+  for (let [name, xyBin] of Object.entries(geometry)) {
     if (name === 'heatmap') {
       continue;
     }
 
-    if (xyBin.y.quantity > xyBinDef.y.quantity) {
-      xyBinDef.y.quantity = xyBin.y.quantity;
+    if (xyBin.y.quantity * xyBin.y.increment > xyBinDef.y.quantity * xyBinDef.y.increment) {
+      xyBinDef = {
+        ...xyBinDef,
+        y: {
+          ...xyBin.y,
+          increment: xyBinDef.y.increment,
+          quantity: xyBinDef.y.quantity,
+        },
+      };
     }
+
+    if (xyBin.x.quantity * xyBin.x.increment > xyBinDef.x.quantity * xyBinDef.x.increment) {
+      xyBinDef = {
+        ...xyBinDef,
+        x: {
+          ...xyBin.x,
+          increment: xyBinDef.x.increment,
+          quantity: xyBinDef.x.quantity,
+        },
+      };
+    }
+  }
+
+  for (let [name, xyBin] of Object.entries(geometry)) {
+    geometry[name] = {
+      ...xyBin,
+      x: {
+        ...xyBinDef.x,
+        field: xyBin.x.field,
+      },
+      y: {
+        ...xyBinDef.y,
+        field: xyBin.y.field,
+      },
+    };
   }
 
   return Object.entries(geometry).reduce(
@@ -212,10 +244,12 @@ export function calculateHeatmapFromData(
       const heat2d = heatmap(xyBin, {
         xSorted: true,
         xTime: x.field.type === FieldType.time,
-        xMode: options.xAxis?.mode,
-        xSize: +(options.xAxis?.value ?? 0),
-        yMode: options.yAxis?.mode,
-        ySize: +(options.yAxis?.value ?? 0),
+        xMode: HeatmapCalculationMode.Size,
+        xSize: xyBinDef.x.increment,
+        xMin: xyBinDef.x.min,
+        yMode: HeatmapCalculationMode.Size,
+        ySize: xyBinDef.y.increment,
+        yMin: xyBinDef.y.min,
       });
 
       tally[name] = {
@@ -316,7 +350,7 @@ function heatmap(geometry: HeatmapXYBinDef, opts?: HeatmapOpts) {
 
   for (let i = 0; i < xs.length; i++) {
     const xi = (binX(xs[i]) - x.min) / x.increment;
-    const yi = (binY(ys[i]) - geometry.y.min) / geometry.y.increment;
+    const yi = (binY(ys[i]) - y.min) / y.increment;
     const ci = xi * y.quantity + yi;
 
     counts[ci]++;

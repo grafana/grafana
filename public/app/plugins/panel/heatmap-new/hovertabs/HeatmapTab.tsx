@@ -108,143 +108,151 @@ export const HeatmapTab = ({
   index,
   getValuesInCell,
   options,
-}: HeatmapHoverProps<HeatmapLayerOptions>): HeatmapLayerHover => {
-  const xField: Field | undefined = heatmapData.heatmap?.fields.find((f) => f.name === 'xMin');
-  const yField: Field | undefined = heatmapData.heatmap?.fields.find((f) => f.name === 'yMin');
-  const countField: Field | undefined = heatmapData.heatmap?.fields.find((f) => f.name === 'count');
+}: HeatmapHoverProps<HeatmapLayerOptions>): HeatmapLayerHover[] => {
+  const xFields: Field[] | undefined = heatmapData.heatmap?.fields.filter((f) => f.name === 'xMin');
+  const yFields: Field[] | undefined = heatmapData.heatmap?.fields.filter((f) => f.name === 'yMin');
+  const countFields: Field[] | undefined = heatmapData.heatmap?.fields.filter((f) => f.name === 'count');
 
-  if (xField && yField && countField) {
-    const yValueIdx = index % heatmapData.yBucketCount! ?? 0;
+  if (xFields && yFields && countFields) {
+    return xFields.map((xField, i) => {
+      const yField = yFields[i];
+      const countField = countFields[i];
 
-    const yMinIdx = heatmapData.yLayout === BucketLayout.le ? yValueIdx - 1 : yValueIdx;
-    const yMaxIdx = heatmapData.yLayout === BucketLayout.le ? yValueIdx : yValueIdx + 1;
+      console.log('i', i, 'xField', xField, 'yField', yField, 'countField', countField);
+      const yValueIdx = index % heatmapData.yBucketCount! ?? 0;
 
-    const xMin: number = xField.values.get(index);
-    const xMax: number = xMin + heatmapData.xBucketSize!;
-    const yMin: number = yField.values.get(yMinIdx);
-    const yMax: number = yField.values.get(yMaxIdx);
-    const count: number = countField.values.get(index);
+      const yMinIdx = heatmapData.yLayout === BucketLayout.le ? yValueIdx - 1 : yValueIdx;
+      const yMaxIdx = heatmapData.yLayout === BucketLayout.le ? yValueIdx : yValueIdx + 1;
 
-    const data: DataFrame[] | undefined = getValuesInCell!({
-      xRange: {
-        min: xMin,
-        max: xMax,
-        delta: heatmapData.xBucketSize || 0,
-      },
-      yRange: {
-        min: yMin,
-        max: yMax,
-        delta: heatmapData.yBucketSize || 0,
-      },
-      count,
-    });
+      const xMin: number = xField.values.get(index);
+      const xMax: number = xMin + heatmapData.xBucketSize!;
+      const yMin: number = yField.values.get(yMinIdx);
+      const yMax: number = yField.values.get(yMaxIdx);
+      const count: number = countField.values.get(index);
 
-    const summaryData: DataFrame = {
-      fields: [
-        {
-          ...xField,
-          config: {
-            ...xField.config,
-            displayNameFromDS: 'xMin',
-          },
-          display: (value: number) => {
-            return {
-              numeric: value,
-              text: timeFormatter(value, options?.timeZone!),
-            };
-          },
-          state: {
-            ...xField.state,
-            displayName: 'xMin',
-          },
-          values: new ArrayVector([xMin]),
+      const data: DataFrame[] | undefined = getValuesInCell!({
+        xRange: {
+          min: xMin,
+          max: xMax,
+          delta: heatmapData.xBucketSize || 0,
         },
-        {
-          ...xField,
-          config: {
-            ...xField.config,
-            displayNameFromDS: 'xMax',
-          },
-          display: (value: number) => {
-            return {
-              numeric: value,
-              text: timeFormatter(value, options?.timeZone!),
-            };
-          },
-          state: {
-            ...xField.state,
-            displayName: 'xMax',
-          },
-          values: new ArrayVector([xMax]),
+        yRange: {
+          min: yMin,
+          max: yMax,
+          delta: heatmapData.yBucketSize || 0,
         },
-        {
-          ...yField,
-          config: {
-            ...yField.config,
-            displayNameFromDS: 'yMin',
-          },
-          state: {
-            ...yField.state,
-            displayName: 'yMin',
-          },
-          values: new ArrayVector([yMin]),
-        },
-        {
-          ...yField,
-          config: {
-            ...yField.config,
-            displayNameFromDS: 'yMax',
-          },
-          state: {
-            ...yField.state,
-            displayName: 'yMax',
-          },
-          values: new ArrayVector([yMax]),
-        },
-        {
-          ...countField,
-          values: new ArrayVector([count]),
-        },
-      ],
-      length: 5,
-    };
+        count,
+      });
 
-    const footer = () => {
-      if (options?.showHistogram!) {
-        return (
-          <HistogramFooter
-            xField={xField}
-            yField={yField}
-            countField={countField}
-            index={index}
-            yBucketCount={heatmapData.yBucketCount}
-          />
-        );
-      }
-      return <></>;
-    };
-
-    const header = () => {
-      return <DataHoverView data={summaryData} rowIndex={0} />;
-    };
-
-    if (data) {
-      return {
-        name: 'Heatmap',
-        header,
-        data,
-        footer,
+      const summaryData: DataFrame = {
+        fields: [
+          {
+            ...xField,
+            config: {
+              ...xField.config,
+              displayNameFromDS: 'xMin',
+            },
+            display: (value: number) => {
+              return {
+                numeric: value,
+                text: timeFormatter(value, options?.timeZone!),
+              };
+            },
+            state: {
+              ...xField.state,
+              displayName: 'xMin',
+            },
+            values: new ArrayVector([xMin]),
+          },
+          {
+            ...xField,
+            config: {
+              ...xField.config,
+              displayNameFromDS: 'xMax',
+            },
+            display: (value: number) => {
+              return {
+                numeric: value,
+                text: timeFormatter(value, options?.timeZone!),
+              };
+            },
+            state: {
+              ...xField.state,
+              displayName: 'xMax',
+            },
+            values: new ArrayVector([xMax]),
+          },
+          {
+            ...yField,
+            config: {
+              ...yField.config,
+              displayNameFromDS: 'yMin',
+            },
+            state: {
+              ...yField.state,
+              displayName: 'yMin',
+            },
+            values: new ArrayVector([yMin]),
+          },
+          {
+            ...yField,
+            config: {
+              ...yField.config,
+              displayNameFromDS: 'yMax',
+            },
+            state: {
+              ...yField.state,
+              displayName: 'yMax',
+            },
+            values: new ArrayVector([yMax]),
+          },
+          {
+            ...countField,
+            values: new ArrayVector([count]),
+          },
+        ],
+        length: 5,
       };
-    }
 
-    return {
-      name: 'Heatmap',
-      data: [summaryData],
-    };
+      const footer = () => {
+        if (options?.showHistogram!) {
+          return (
+            <HistogramFooter
+              xField={xField}
+              yField={yField}
+              countField={countField}
+              index={index}
+              yBucketCount={heatmapData.yBucketCount}
+            />
+          );
+        }
+        return <></>;
+      };
+
+      const header = () => {
+        return <DataHoverView data={summaryData} rowIndex={0} />;
+      };
+
+      if (data) {
+        return {
+          name: yField.config.displayNameFromDS ?? yField.config.displayName ?? 'Heatmap',
+          header,
+          data,
+          footer,
+        };
+      }
+
+      return {
+        name: yField.config.displayNameFromDS ?? yField.config.displayName ?? 'Heatmap',
+        data: [summaryData],
+      };
+    });
   }
 
-  return {
-    name: 'Heatmap',
-    data: [],
-  };
+  return [
+    {
+      name: 'Heatmap',
+      data: [],
+    },
+  ];
 };
