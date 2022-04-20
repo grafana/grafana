@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -32,35 +30,21 @@ func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int6
 		s.log.Error("Failed to read all Prometheus data sources", "error", err)
 		return nil, err
 	}
-	group, ctx := errgroup.WithContext(ctx)
-
-	variantChan := make(chan string)
-	for _, ds := range dsProm.Result {
-		ds := ds
-		group.Go(func() error {
-			variant, err := s.detectPrometheusVariant(ctx, ds)
-			if err != nil {
-				return err
-			}
-			variantChan <- variant
-			return nil
-		})
-	}
-
-	go func() {
-		err = group.Wait()
-		close(variantChan)
-	}()
 
 	variants := map[string]int64{}
-	for variant := range variantChan {
+	for _, ds := range dsProm.Result {
+		variant, err := s.detectPrometheusVariant(ctx, ds)
+		if err != nil {
+			return nil, err
+		}
+		if variant == "" {
+			continue
+		}
+
 		if _, exists := variants[variant]; !exists {
 			variants[variant] = 0
 		}
 		variants[variant] += 1
-	}
-	if err != nil {
-		return nil, err
 	}
 
 	s.promFlavorCache.variants = variants
