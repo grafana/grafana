@@ -1,17 +1,16 @@
 import { DataQuery } from '@grafana/data';
-
 import {
-  migrateCloudWatchQuery,
   migrateMultipleStatsAnnotationQuery,
   migrateMultipleStatsMetricsQuery,
+  migrateCloudWatchQuery,
   migrateQueryAliasFormat,
   migrateVariableQuery,
 } from './migrations';
 import {
   CloudWatchAnnotationQuery,
   CloudWatchMetricsQuery,
-  MetricEditorMode,
   MetricQueryType,
+  MetricEditorMode,
   VariableQueryType,
 } from './types';
 
@@ -179,7 +178,6 @@ describe('migration', () => {
       });
     });
   });
-
   describe('migrateVariableQuery', () => {
     describe('when metrics query is used', () => {
       describe('and region param is left out', () => {
@@ -227,7 +225,6 @@ describe('migration', () => {
       });
     });
   });
-
   describe('when resource_arns query is used', () => {
     it('should parse the query', () => {
       const query = migrateVariableQuery('resource_arns(us-east-1,rds:db,{"environment":["$environment"]})');
@@ -277,4 +274,5 @@ describe('migration', () => {
         expect(result.alias).toBe(expectedResult);
       });
     });
+  });
 });

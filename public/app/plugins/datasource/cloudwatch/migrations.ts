@@ -1,12 +1,12 @@
 import { AnnotationQuery, DataQuery } from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import {
-  CloudWatchMetricsQuery,
-  VariableQueryType,
-  VariableQuery,
   MetricEditorMode,
-  MetricQueryType,
   CloudWatchAnnotationQuery,
+  CloudWatchMetricsQuery,
+  MetricQueryType,
+  VariableQuery,
+  VariableQueryType,
 } from './types';
 
 // Migrates a metric query that use more than one statistic into multiple queries
