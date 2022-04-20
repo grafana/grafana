@@ -249,6 +249,7 @@ var wireBasicSet = wire.NewSet(
 	cuectx.ProvideCUEContext,
 	cuectx.ProvideThemaLibrary,
 	grpcserver.ProvideService,
+	grpcserver.ProvideHealthService,
 )
 
 var wireSet = wire.NewSet(

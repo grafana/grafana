@@ -2,6 +2,7 @@ package grpcserver
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -58,7 +59,7 @@ func (a *Authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 
 func (a *Authenticator) validateToken(_ string) error {
 	// TODO: implement API key check, require admin role.
-	return nil
+	return errors.New("not implemented")
 }
 
 func extractAuthorization(ctx context.Context) (string, error) {

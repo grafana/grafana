@@ -26,7 +26,7 @@ type GPRCServerService struct {
 	server *grpc.Server
 }
 
-func ProvideService(cfg *setting.Cfg) Provider {
+func ProvideService(cfg *setting.Cfg) (Provider, error) {
 	s := &GPRCServerService{
 		cfg:    cfg,
 		logger: log.New("grpc-server"),
@@ -49,7 +49,7 @@ func ProvideService(cfg *setting.Cfg) Provider {
 
 	grpcServer := grpc.NewServer(opts...)
 	s.server = grpcServer
-	return s
+	return s, nil
 }
 
 func (s *GPRCServerService) Run(ctx context.Context) error {
