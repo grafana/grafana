@@ -14,6 +14,7 @@ import {
   deleteRichHistory,
   initRichHistory,
   loadRichHistory,
+  clearRichHistoryResults,
   updateHistorySettings,
   updateHistorySearchFilters,
 } from '../state/history';
@@ -40,6 +41,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
 const mapDispatchToProps = {
   initRichHistory,
   loadRichHistory,
+  clearRichHistoryResults,
   updateHistorySettings,
   updateHistorySearchFilters,
   deleteRichHistory,
@@ -66,6 +68,7 @@ export function RichHistoryContainer(props: Props) {
     deleteRichHistory,
     initRichHistory,
     loadRichHistory,
+    clearRichHistoryResults,
     richHistorySettings,
     updateHistorySettings,
     richHistorySearchFilters,
@@ -101,6 +104,7 @@ export function RichHistoryContainer(props: Props) {
         updateHistorySettings={updateHistorySettings}
         updateHistorySearchFilters={updateHistorySearchFilters}
         loadRichHistory={loadRichHistory}
+        clearRichHistoryResults={clearRichHistoryResults}
       />
     </ExploreDrawer>
   );

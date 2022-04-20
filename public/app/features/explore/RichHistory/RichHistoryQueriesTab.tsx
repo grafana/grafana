@@ -23,7 +23,8 @@ import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/uti
 export interface Props {
   queries: RichHistoryQuery[];
   activeDatasourceInstance?: string;
-  updateFilters: (filtersToUpdate: Partial<RichHistorySearchFilters>) => void;
+  updateFilters: (filtersToUpdate?: Partial<RichHistorySearchFilters>) => void;
+  clearRichHistoryResults: () => void;
   richHistorySettings: RichHistorySettings;
   richHistorySearchFilters?: RichHistorySearchFilters;
   exploreId: ExploreId;
@@ -124,6 +125,7 @@ export function RichHistoryQueriesTab(props: Props) {
     queries,
     richHistorySearchFilters,
     updateFilters,
+    clearRichHistoryResults,
     richHistorySettings,
     exploreId,
     height,
@@ -149,6 +151,10 @@ export function RichHistoryQueriesTab(props: Props) {
       starred: false,
     };
     updateFilters(filters);
+
+    return () => {
+      clearRichHistoryResults();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

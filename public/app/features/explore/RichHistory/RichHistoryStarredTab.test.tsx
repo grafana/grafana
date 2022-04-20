@@ -19,6 +19,7 @@ const setup = (activeDatasourceOnly = false) => {
   const props: Props = {
     queries: [],
     updateFilters: jest.fn(),
+    clearRichHistoryResults: jest.fn(),
     exploreId: ExploreId.left,
     richHistorySettings: {
       retentionPeriod: 7,

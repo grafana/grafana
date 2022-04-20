@@ -35,6 +35,7 @@ export interface RichHistoryProps extends Themeable {
   updateHistorySettings: (settings: RichHistorySettings) => void;
   updateHistorySearchFilters: (exploreId: ExploreId, filters: RichHistorySearchFilters) => void;
   loadRichHistory: (exploreId: ExploreId) => void;
+  clearRichHistoryResults: (exploreId: ExploreId) => void;
   deleteRichHistory: () => void;
   activeDatasourceInstance?: string;
   firstTab: Tabs;
@@ -48,13 +49,17 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
     this.props.updateHistorySettings({ ...this.props.richHistorySettings, ...settingsToUpdate });
   };
 
-  updateFilters = (filtersToUpdate: Partial<RichHistorySearchFilters>) => {
+  updateFilters = (filtersToUpdate?: Partial<RichHistorySearchFilters>) => {
     const filters = {
       ...this.props.richHistorySearchFilters!,
       ...filtersToUpdate,
     };
     this.props.updateHistorySearchFilters(this.props.exploreId, filters);
     this.loadRichHistory();
+  };
+
+  clearResults = () => {
+    this.props.clearRichHistoryResults(this.props.exploreId);
   };
 
   loadRichHistory = debounce(() => {
@@ -84,6 +89,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
         <RichHistoryQueriesTab
           queries={richHistory}
           updateFilters={this.updateFilters}
+          clearRichHistoryResults={() => this.props.clearRichHistoryResults(this.props.exploreId)}
           activeDatasourceInstance={activeDatasourceInstance}
           richHistorySettings={this.props.richHistorySettings}
           richHistorySearchFilters={this.props.richHistorySearchFilters}
@@ -102,6 +108,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
           queries={richHistory}
           activeDatasourceInstance={activeDatasourceInstance}
           updateFilters={this.updateFilters}
+          clearRichHistoryResults={() => this.props.clearRichHistoryResults(this.props.exploreId)}
           richHistorySettings={this.props.richHistorySettings}
           richHistorySearchFilters={this.props.richHistorySearchFilters}
           exploreId={exploreId}

@@ -27,6 +27,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     deleteRichHistory: jest.fn(),
     initRichHistory: jest.fn(),
     loadRichHistory: jest.fn(),
+    clearRichHistoryResults: jest.fn(),
     updateHistorySearchFilters: jest.fn(),
     updateHistorySettings: jest.fn(),
     onClose: jest.fn(),

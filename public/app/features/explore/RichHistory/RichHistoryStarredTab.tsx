@@ -18,6 +18,7 @@ export interface Props {
   queries: RichHistoryQuery[];
   activeDatasourceInstance?: string;
   updateFilters: (filtersToUpdate: Partial<RichHistorySearchFilters>) => void;
+  clearRichHistoryResults: () => void;
   richHistorySearchFilters?: RichHistorySearchFilters;
   richHistorySettings: RichHistorySettings;
   exploreId: ExploreId;
@@ -68,8 +69,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 export function RichHistoryStarredTab(props: Props) {
-  const { updateFilters, activeDatasourceInstance, richHistorySettings, queries, richHistorySearchFilters, exploreId } =
-    props;
+  const {
+    updateFilters,
+    clearRichHistoryResults,
+    activeDatasourceInstance,
+    richHistorySettings,
+    queries,
+    richHistorySearchFilters,
+    exploreId,
+  } = props;
 
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -90,6 +98,9 @@ export function RichHistoryStarredTab(props: Props) {
       starred: true,
     };
     updateFilters(filters);
+    return () => {
+      clearRichHistoryResults();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -28,6 +28,7 @@ const setup = (propOverrides?: Partial<RichHistoryProps>) => {
     firstTab: Tabs.RichHistory,
     deleteRichHistory: jest.fn(),
     loadRichHistory: jest.fn(),
+    clearRichHistoryResults: jest.fn(),
     onClose: jest.fn(),
     richHistorySearchFilters: {
       search: '',

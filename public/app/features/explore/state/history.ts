@@ -123,6 +123,13 @@ export const loadRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
   };
 };
 
+export const clearRichHistoryResults = (exploreId: ExploreId): ThunkResult<void> => {
+  return async (dispatch) => {
+    dispatch(richHistorySearchFiltersUpdatedAction({ filters: undefined, exploreId }));
+    dispatch(richHistoryUpdatedAction({ richHistory: [], exploreId }));
+  };
+};
+
 /**
  * Initialize query history pane. To load history it requires settings to be loaded first
  * (but only once per session). Filters are initialised by the tab (starred or home).
