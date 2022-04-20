@@ -1,23 +1,23 @@
 +++
-title = "Configure thresholds"
-aliases = ["/docs/grafana/next/panels/thresholds/", "/docs/grafana/next/panels/"]
+title = "Configure thresholds in a Grafana dasboard"
+aliases = ["/docs/grafana/latest/panels/thresholds/", "/docs/grafana/latest/panels/", "/docs/grafana/latest/panels/specify-thresholds/about-thresholds/", "/docs/grafana/latest/panels/specify-thresholds/add-a-threshold/", "/docs/grafana/latest/panels/specify-thresholds/add-threshold-to-graph/", "/docs/grafana/latest/panels/specify-thresholds/delete-a-threshold/"]
 weight = 300
 +++
 
-# Configure thresholds
+# Configure thresholds in a dashboard
 
-This sectionUse thresholds to set the color of a visualization text and background.
+This section includes information about using thresholds in your visualizations.
 
 ## About thresholds
 
-Thresholds set the color of either the value text or the background based on conditions that you define.
+A threshold is a value that you specify for a metric that is visually reflected in a dashboard when the threshold value is met or exceeded.
 
 There are two types of thresholds:
 
 - **Absolute** thresholds are defined based on a number. For example, 80 on a scale of 1 to 150.
 - **Percentage** thresholds are defined relative to minimum or maximum. For example, 80 percent.
 
-You can apply thresholds to most, but not all, visualizations.
+You can apply thresholds to most, but not all, visualizations. For more information about visualizations, refer to [Visualization panels]({{< relref "../../visualizations" >}}).
 
 ### Default thresholds
 
@@ -59,7 +59,7 @@ Delete a threshold when it is no longer relevant to your business operations. Wh
 
 ### Before you begin
 
-- [Add a threshold]({{< relref "./add-a-threshold.md" >}}).
+- [Add a threshold]({{< relref "#add-a-threshold.md" >}}).
 
 **To delete a threshold**:
 
