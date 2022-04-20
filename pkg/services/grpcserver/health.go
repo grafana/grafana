@@ -10,11 +10,11 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
-// GPRCHealthService implements GRPC Health Checking Protocol:
+// HealthService implements GRPC Health Checking Protocol:
 // https://github.com/grpc/grpc/blob/master/doc/health-checking.md
 // It also demonstrates how to override authentication for a service – in this
 // case we are disabling any auth in AuthFuncOverride.
-type GPRCHealthService struct {
+type HealthService struct {
 	cfg          *setting.Cfg
 	healthServer *healthServer
 }
@@ -28,21 +28,21 @@ func (s *healthServer) AuthFuncOverride(ctx context.Context, _ string) (context.
 	return ctx, nil
 }
 
-func ProvideHealthService(cfg *setting.Cfg, grpcServerProvider Provider) (*GPRCHealthService, error) {
+func ProvideHealthService(cfg *setting.Cfg, grpcServerProvider Provider) (*HealthService, error) {
 	hs := &healthServer{health.NewServer()}
 	grpc_health_v1.RegisterHealthServer(grpcServerProvider.GetServer(), hs)
-	return &GPRCHealthService{
+	return &HealthService{
 		cfg:          cfg,
 		healthServer: hs,
 	}, nil
 }
 
-func (s *GPRCHealthService) Run(ctx context.Context) error {
+func (s *HealthService) Run(ctx context.Context) error {
 	<-ctx.Done()
 	return ctx.Err()
 }
 
-func (s *GPRCHealthService) IsDisabled() bool {
+func (s *HealthService) IsDisabled() bool {
 	if s.cfg == nil {
 		return true
 	}
