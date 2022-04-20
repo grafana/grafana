@@ -28,6 +28,7 @@ import {
 import { orderBy } from 'lodash';
 import { findField } from 'app/features/dimensions';
 import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
+import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 
 function getBarCharScaleOrientation(orientation: VizOrientation) {
   if (orientation === VizOrientation.Vertical) {
@@ -301,7 +302,13 @@ export function prepareBarChartDisplayValues(
   }
 
   // Bar chart requires a single frame
-  const frame = series.length === 1 ? series[0] : outerJoinDataFrames({ frames: series, enforceSort: false });
+  const frame =
+    series.length === 1
+      ? maybeSortFrame(
+          series[0],
+          series[0].fields.findIndex((f) => f.type === FieldType.time)
+        )
+      : outerJoinDataFrames({ frames: series });
   if (!frame) {
     return { warn: 'Unable to join data' } as BarChartDisplayValues;
   }
