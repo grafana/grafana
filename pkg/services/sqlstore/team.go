@@ -227,7 +227,7 @@ func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQu
 
 		if query.Limit != 0 {
 			offset := query.Limit * (query.Page - 1)
-			sql.WriteString(dialect.LimitOffset(int64(query.Limit), int64(offset)))
+			sql.WriteString(ss.Dialect.LimitOffset(int64(query.Limit), int64(offset)))
 		}
 
 		if err := sess.SQL(sql.String(), params...).Find(&query.Result.Teams); err != nil {
