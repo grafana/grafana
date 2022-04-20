@@ -82,12 +82,16 @@ In order to support debugging issues in Grafana, error alerts that appear when v
 {{< figure src="/static/img/docs/navigation/nav-profile-notification-8-5.png" max-width="1200px" caption="Alert error list" >}}
 
 ## Service accounts (beta)
+
 Service accounts are a major evolution for machine access within Grafana. You can create multiple API tokens per service account with independent expiration dates, and temporarily disable a service account without deleting it. These benefits make Service Accounts a more flexible way for Terraform and other apps to authenticate with Grafana. Service accounts also work with [fine-grained access control](https://grafana.com/docs/grafana/latest/enterprise/access-control/) in [Grafana Enterprise](https://grafana.com/docs/grafana/latest/enterprise/): you can improve security by granting service accounts specific roles to limit the functions they can perform. Service accounts are available in beta; you can try them out by enabling the `service-accounts` [feature toggle](https://grafana.com/docs/grafana/latest/administration/service-accounts/enable-service-accounts) or, if you use Grafana Cloud, [reaching out to our support team](https://grafana.com/orgs/raintank/tickets#) for early access.  Learn more about Service Accounts in our [docs](https://grafana.com/docs/grafana/latest/administration/service-accounts).
 
+{{< figure src="/static/img/docs/service-accounts/configure-8-5.png" max-width="1200px" caption="Configure service accounts" >}}
 
-Image
+
 ## Observability
+
 ### Trace to Logs for Splunk
+
 With Trace to Logs, you can view relevant logs for a trace or span with one click. You can now link to Splunk logs from your tracing datasource. In your tracing datasource, configure Trace to Logs by selecting the Splunk datasource and relevant query options like tags to include in the query. 
 
 ## Experimental Explore to Dashboard workflow
@@ -109,9 +113,15 @@ Check the Grafana Enterprise / Security section below for more details, includin
  [fine-grained access control](https://grafana.com/docs/grafana/latest/enterprise/access-control/) for alerting rules, notification policies, and contact points in [Grafana Enterprise](https://grafana.com/docs/grafana/latest/enterprise/). You can turn on fine-grained access control using the `accesscontrol` [feature toggle](https://grafana.com/docs/grafana/latest/enterprise/access-control/#enable-fine-grained-access-control), or by [reaching out to our support team](https://grafana.com/orgs/raintank/tickets#) for early access if you use Grafana Cloud. For more information on fine-grained access control, visit our [docs](https://grafana.com/docs/grafana/latest/enterprise/access-control/).
 
 ### Control access to dashboards, folders, and annotations (beta)
+
 You can now use fine-grained access control to manage which specific users, teams, and roles can create, read, update, or delete dashboards, folders, or annotations. These are the latest services to incorporate fine-grained access control, which helps you dial in the specific access your users should have in Grafana. Fine-grained access control is currently in beta, but general availability is just around the corner, planned for our 9.0 release. You can turn on fine-grained access control using the `accesscontrol` [feature toggle](https://grafana.com/docs/grafana/latest/enterprise/access-control/#enable-fine-grained-access-control), or by [reaching out to our support team](https://grafana.com/orgs/raintank/tickets#) for early access if you use Grafana Cloud. For more information on fine-grained access control, visit our [docs](https://grafana.com/docs/grafana/latest/enterprise/access-control/).
 
 ### Configure Azure Key Vault using Managed Identities
+
 You can already keep secrets in Grafana’s database (like data source credentials) safer by retrieving your database encryption key from a Key Management Service, like AWS KMS or Azure Key Vault. In Grafana v8.5, you can use an Azure Managed Identity to integrate with Azure Key Vault. This simplifies the Key Vault integration and keeps it consistent with Grafana data sources, like Azure Data Explorer.
+
 ## Configure reports more easily
+
 Reports are a great way to share Grafana dashboards by email with users who don’t regularly sign in to Grafana. In 8.5, we’ve revamped the Report authoring UI to make it quicker and easier for you to create reports. View report details at a glance in list view, consider one configuration step at a time, and save reports for later. Also, Grafana will now emit a log every time a report is sent, so you can confirm its status or learn about send errors. Learn more about Reporting in our [docs](https://grafana.com/docs/grafana/latest/enterprise/reporting/).
+
+{{< figure src="/static/img/docs/enterprise/report-new-report-8-5.png" max-width="1200px" caption="New report" >}}
