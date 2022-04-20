@@ -47,6 +47,9 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
 
   componentDidMount() {
     this.props.panel.isInView = !this.props.lazy;
+    if (!this.props.lazy) {
+      this.onPanelLoad();
+    }
   }
 
   onInstanceStateChange = (value: any) => {
