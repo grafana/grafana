@@ -201,7 +201,7 @@ func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQu
 		params = append(params, query.OrgId)
 
 		if query.Query != "" {
-			sql.WriteString(` and team.name ` + dialect.LikeStr() + ` ?`)
+			sql.WriteString(` and team.name ` + ss.Dialect.LikeStr() + ` ?`)
 			params = append(params, queryWithWildcards)
 		}
 
