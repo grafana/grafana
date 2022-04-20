@@ -296,3 +296,5 @@ replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.2
 // Upgrading affects backend plugins: https://github.com/grafana/grafana/pull/47653#discussion_r850508593
 // No harm to Thema because it's only a dependency in its main package.
 replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
+
+replace github.com/microcosm-cc/bluemonday => github.com/microcosm-cc/bluemonday v1.0.18
