@@ -38,6 +38,12 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 		},
 	}
 
+	if hs.Features.IsEnabled(featuremgmt.FlagPersistNotifications) {
+		children = append(children, &dtos.NavLink{
+			Text: "Notifications", Id: "notifications", Url: hs.Cfg.AppSubURL + "/notifications", Icon: "bell",
+		})
+	}
+
 	if setting.AddChangePasswordLink() {
 		children = append(children, &dtos.NavLink{
 			Text: "Change password", Id: "change-password", Url: hs.Cfg.AppSubURL + "/profile/password",
