@@ -138,7 +138,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 	})
 }
 
-func Test_QueryData_where_user_defines_search_expression_then_frame_name_prioritizes_period_and_stat_from_expression_over_input(t *testing.T) {
+func Test_QueryData_response_data_frame_names(t *testing.T) {
 	origNewCWClient := NewCWClient
 	t.Cleanup(func() {
 		NewCWClient = origNewCWClient
@@ -151,7 +151,7 @@ func Test_QueryData_where_user_defines_search_expression_then_frame_name_priorit
 	cwClient = fakeCWClient{
 		GetMetricDataOutput: cloudwatch.GetMetricDataOutput{
 			MetricDataResults: []*cloudwatch.MetricDataResult{
-				{StatusCode: aws.String("Complete"), Id: aws.String("a"), Label: aws.String("NetworkOut"),
+				{StatusCode: aws.String("Complete"), Id: aws.String("query id"), Label: aws.String("response label"),
 					Values: []*float64{aws.Float64(1.0)}, Timestamps: []*time.Time{{}}},
 			},
 		},
@@ -161,13 +161,14 @@ func Test_QueryData_where_user_defines_search_expression_then_frame_name_priorit
 	})
 	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 
-	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-		PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
-		Queries: []backend.DataQuery{
-			{
-				RefID:     "A",
-				TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
-				JSON: json.RawMessage(`{
+	t.Run("where user defines search expression, then frame name prioritizes period and stat from expression over input", func(t *testing.T) {
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					JSON: json.RawMessage(`{
 						"type":      "timeSeriesQuery",
 						"metricQueryType": 0,
 						"metricEditorMode": 1,
@@ -175,7 +176,7 @@ func Test_QueryData_where_user_defines_search_expression_then_frame_name_priorit
 						"metricName": "",
 						"expression": "SEARCH('{AWS/EC2,InstanceId} MetricName=\"CPUUtilization\"', 'Average', 300)",
 						"region": "us-east-2",
-						"id": "a",
+						"id": "query id",
 						"alias": "{{period}} {{stat}}",
 						"statistic": "Maximum",
 						"period": "1200",
@@ -183,47 +184,26 @@ func Test_QueryData_where_user_defines_search_expression_then_frame_name_priorit
 						"matchExact": true,
 						"refId": "A"
 					}`),
+				},
 			},
-		},
+		})
+
+		assert.NoError(t, err)
+		// asserts that period '300' and stat 'Average' are parsed from the JSON query expression and used in the alias, not the JSON model's 'statistic' nor 'period' fields
+		assert.Equal(t, "300 Average", resp.Responses["A"].Frames[0].Name)
 	})
 
-	assert.NoError(t, err)
-	// asserts that period '300' and stat 'Average' are parsed from the JSON query expression and used in the alias, not the JSON model's 'statistic' nor 'period' fields
-	assert.Equal(t, "300 Average", resp.Responses["A"].Frames[0].Name)
-}
-
-func Test_QueryData_where_no_alias_is_provided_and_query_is_math_expression_then_frame_name_is_queryId(t *testing.T) {
-	origNewCWClient := NewCWClient
-	t.Cleanup(func() {
-		NewCWClient = origNewCWClient
-	})
-	var cwClient fakeCWClient
-	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
-		return &cwClient
-	}
-	cwClient = fakeCWClient{
-		GetMetricDataOutput: cloudwatch.GetMetricDataOutput{
-			MetricDataResults: []*cloudwatch.MetricDataResult{
-				{StatusCode: aws.String("Complete"), Id: aws.String("query id"), Label: aws.String("NetworkOut"),
-					Values: []*float64{aws.Float64(1.0)}, Timestamps: []*time.Time{{}}},
-			},
-		},
-	}
-	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return datasourceInfo{}, nil
-	})
-	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
-
-	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-		PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
-		Queries: []backend.DataQuery{
-			{
-				RefID:     "A",
-				TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
-				/* for the following JSON:
-				isMathExpression = true is satisfied by: "metricQueryType": 0, "metricEditorMode": 1, not SEARCH() expression
-				no "alias" populated */
-				JSON: json.RawMessage(`{
+	t.Run("where no alias is provided and query is math expression, then frame name is queryId", func(t *testing.T) {
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					/* for the following JSON:
+					isMathExpression = true is satisfied by: "metricQueryType": 0, "metricEditorMode": 1, not SEARCH() expression
+					no "alias" */
+					JSON: json.RawMessage(`{
 						"type":      "timeSeriesQuery",
 						"metricQueryType": 0,
 						"metricEditorMode": 1,
@@ -237,12 +217,46 @@ func Test_QueryData_where_no_alias_is_provided_and_query_is_math_expression_then
 						"matchExact": true,
 						"refId": "A"
 					}`),
+				},
 			},
-		},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, "query id", resp.Responses["A"].Frames[0].Name)
 	})
 
-	assert.NoError(t, err)
-	assert.Equal(t, "query id", resp.Responses["A"].Frames[0].Name)
+	t.Run("where no alias provided and query type is MetricQueryTypeQuery, then frame name is label", func(t *testing.T) {
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
+					/* for the following JSON:
+					"metricQueryType": 1 is MetricQueryTypeQuery
+					no "alias" */
+					JSON: json.RawMessage(`{
+						"type":      "timeSeriesQuery",
+						"metricQueryType": 1,
+						"metricEditorMode": 0,
+						"namespace": "",
+						"metricName": "",
+						"dimensions": {"InstanceId": ["some-instance"]},
+						"region": "us-east-2",
+						"id": "query id",
+						"statistic": "Maximum",
+						"period": "1200",
+						"hide": false,
+						"matchExact": false,
+						"refId": "A"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, "response label", resp.Responses["A"].Frames[0].Name)
+	})
 }
 
 func Test_QueryData_where_no_alias_provided_then_frame_name_depends_on_dimension_values_and_matchExact(t *testing.T) {
@@ -309,7 +323,7 @@ func Test_QueryData_where_no_alias_provided_then_frame_name_depends_on_dimension
 		})
 	}
 
-	// complementary test cases to above: multivalued dimension expression
+	// complementary test cases to above return default of "metricName_stat"
 	testCasesReturningMetricStat := map[string]struct {
 		dimensions string
 		matchExact bool
@@ -350,59 +364,4 @@ func Test_QueryData_where_no_alias_provided_then_frame_name_depends_on_dimension
 			assert.Equal(t, "CPUUtilization_Maximum", resp.Responses["A"].Frames[0].Name)
 		})
 	}
-}
-
-func Test_QueryData_where_no_alias_provided_and_query_type_is_MetricQueryTypeQuery_then_frame_name_is_label(t *testing.T) {
-	origNewCWClient := NewCWClient
-	t.Cleanup(func() {
-		NewCWClient = origNewCWClient
-	})
-	var cwClient fakeCWClient
-	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
-		return &cwClient
-	}
-
-	cwClient = fakeCWClient{
-		GetMetricDataOutput: cloudwatch.GetMetricDataOutput{
-			MetricDataResults: []*cloudwatch.MetricDataResult{
-				{StatusCode: aws.String("Complete"), Id: aws.String("query id"), Label: aws.String("response label"),
-					Values: []*float64{aws.Float64(1.0)}, Timestamps: []*time.Time{{}}},
-			},
-		},
-	}
-	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return datasourceInfo{}, nil
-	})
-	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
-
-	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-		PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
-		Queries: []backend.DataQuery{
-			{
-				RefID:     "A",
-				TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
-				/* for the following JSON:
-				"metricQueryType": 1 is MetricQueryTypeQuery
-				no "alias" populated */
-				JSON: json.RawMessage(`{
-						"type":      "timeSeriesQuery",
-						"metricQueryType": 1,
-						"metricEditorMode": 0,
-						"namespace": "",
-						"metricName": "",
-						"dimensions": {"InstanceId": ["some-instance"]},
-						"region": "us-east-2",
-						"id": "query id",
-						"statistic": "Maximum",
-						"period": "1200",
-						"hide": false,
-						"matchExact": false,
-						"refId": "A"
-					}`),
-			},
-		},
-	})
-
-	assert.NoError(t, err)
-	assert.Equal(t, "response label", resp.Responses["A"].Frames[0].Name)
 }
