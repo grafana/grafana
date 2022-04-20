@@ -53,7 +53,6 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
   const onQueryPreviewChange = (event: SyntheticEvent<HTMLInputElement>) => {
     const isEnabled = event.currentTarget.checked;
     onChange({ ...query, rawQuery: isEnabled });
-    onRunQuery();
   };
 
   const onChangeInternal = (query: PromQuery) => {
