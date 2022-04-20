@@ -18,11 +18,11 @@ enum SaveTarget {
 
 const SAVE_TARGETS: Array<SelectableValue<SaveTarget>> = [
   {
-    label: 'New Dashboard',
+    label: 'New dashboard',
     value: SaveTarget.NewDashboard,
   },
   {
-    label: 'Existing Dashboard',
+    label: 'Existing dashboard',
     value: SaveTarget.ExistingDashboard,
   },
 ];
@@ -141,7 +141,7 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
         <InputControl
           control={control}
           render={({ field: { ref, ...field } }) => (
-            <Field label="Target dashboard" description="Start a new dashboard or save the panel in an existing one.">
+            <Field label="Target dashboard" description="Choose where to add the panel.">
               <RadioButtonGroup options={SAVE_TARGETS} {...field} id="e2d-save-target" />
             </Field>
           )}
@@ -195,7 +195,7 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
             Open in new tab
           </Button>
           <Button type="submit" variant="primary" onClick={handleSubmit(partial(onSubmit, false))} icon="apps">
-            Open
+            Open dashboard
           </Button>
         </Modal.ButtonRow>
       </form>
