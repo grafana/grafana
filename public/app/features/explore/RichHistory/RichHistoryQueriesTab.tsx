@@ -19,13 +19,11 @@ import {
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
-import { useDebounce } from 'react-use';
 
 export interface Props {
   queries: RichHistoryQuery[];
   activeDatasourceInstance?: string;
   updateFilters: (filtersToUpdate: Partial<RichHistorySearchFilters>) => void;
-  loadRichHistory: (exploreId: ExploreId, filters: RichHistorySearchFilters, reload: boolean) => void;
   richHistorySettings: RichHistorySettings;
   richHistorySearchFilters?: RichHistorySearchFilters;
   exploreId: ExploreId;
@@ -125,7 +123,6 @@ export function RichHistoryQueriesTab(props: Props) {
   const {
     queries,
     richHistorySearchFilters,
-    loadRichHistory,
     updateFilters,
     richHistorySettings,
     exploreId,
@@ -152,17 +149,8 @@ export function RichHistoryQueriesTab(props: Props) {
       starred: false,
     };
     updateFilters(filters);
-    loadRichHistory(exploreId, filters, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useDebounce(
-    () => {
-      richHistorySearchFilters && loadRichHistory(exploreId, richHistorySearchFilters, false);
-    },
-    300,
-    [richHistorySearchFilters]
-  );
 
   if (!richHistorySearchFilters) {
     return <span>Loading...</span>;

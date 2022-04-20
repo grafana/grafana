@@ -74,8 +74,8 @@ export function RichHistoryContainer(props: Props) {
   } = props;
 
   useEffect(() => {
-    initRichHistory(exploreId);
-  }, [initRichHistory, exploreId]);
+    initRichHistory();
+  }, [initRichHistory]);
 
   if (!richHistorySettings) {
     return <span>Loading...</span>;

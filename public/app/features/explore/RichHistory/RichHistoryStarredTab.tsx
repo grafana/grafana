@@ -13,13 +13,11 @@ import { createDatasourcesList, SortOrder } from 'app/core/utils/richHistory';
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
-import { useDebounce } from 'react-use';
 
 export interface Props {
   queries: RichHistoryQuery[];
   activeDatasourceInstance?: string;
   updateFilters: (filtersToUpdate: Partial<RichHistorySearchFilters>) => void;
-  loadRichHistory: (exploreId: ExploreId, filters: RichHistorySearchFilters, reload: boolean) => void;
   richHistorySearchFilters?: RichHistorySearchFilters;
   richHistorySettings: RichHistorySettings;
   exploreId: ExploreId;
@@ -70,15 +68,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 export function RichHistoryStarredTab(props: Props) {
-  const {
-    updateFilters,
-    activeDatasourceInstance,
-    richHistorySettings,
-    queries,
-    richHistorySearchFilters,
-    loadRichHistory,
-    exploreId,
-  } = props;
+  const { updateFilters, activeDatasourceInstance, richHistorySettings, queries, richHistorySearchFilters, exploreId } =
+    props;
 
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -101,14 +92,6 @@ export function RichHistoryStarredTab(props: Props) {
     updateFilters(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useDebounce(
-    () => {
-      richHistorySearchFilters && loadRichHistory(exploreId, richHistorySearchFilters, false);
-    },
-    300,
-    [richHistorySearchFilters]
-  );
 
   if (!richHistorySearchFilters) {
     return <span>Loading...</span>;

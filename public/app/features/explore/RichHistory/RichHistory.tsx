@@ -33,7 +33,7 @@ export interface RichHistoryProps extends Themeable {
   richHistorySearchFilters?: RichHistorySearchFilters;
   updateHistorySettings: (settings: RichHistorySettings) => void;
   updateHistorySearchFilters: (exploreId: ExploreId, filters: RichHistorySearchFilters) => void;
-  loadRichHistory: (exploreId: ExploreId, filters: RichHistorySearchFilters, reload: boolean) => void;
+  loadRichHistory: (exploreId: ExploreId) => void;
   deleteRichHistory: () => void;
   activeDatasourceInstance?: string;
   firstTab: Tabs;
@@ -53,7 +53,8 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
       ...filtersToUpdate,
     };
     this.props.updateHistorySearchFilters(this.props.exploreId, filters);
-    this.props.loadRichHistory(this.props.exploreId, filters, false);
+    // CODE debounce it?
+    this.props.loadRichHistory(this.props.exploreId);
   };
 
   onChangeRetentionPeriod = (retentionPeriod: SelectableValue<number>) => {
@@ -78,7 +79,6 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
       content: (
         <RichHistoryQueriesTab
           queries={richHistory}
-          loadRichHistory={this.props.loadRichHistory}
           updateFilters={this.updateFilters}
           activeDatasourceInstance={activeDatasourceInstance}
           richHistorySettings={this.props.richHistorySettings}
@@ -96,7 +96,6 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
       content: (
         <RichHistoryStarredTab
           queries={richHistory}
-          loadRichHistory={this.props.loadRichHistory}
           activeDatasourceInstance={activeDatasourceInstance}
           updateFilters={this.updateFilters}
           richHistorySettings={this.props.richHistorySettings}
