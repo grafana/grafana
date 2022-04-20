@@ -38,7 +38,7 @@ const svgStrokePathClass = css`
 `;
 
 export function IconDisplay(props: CanvasElementProps) {
-  const { width, height, data } = props;
+  const { data } = props;
   if (!data?.path) {
     return null;
   }
@@ -59,8 +59,6 @@ export function IconDisplay(props: CanvasElementProps) {
     <SVG
       onClick={onClick}
       src={data.path}
-      width={width}
-      height={height}
       style={svgStyle}
       className={svgStyle.strokeWidth ? svgStrokePathClass : undefined}
     />

@@ -112,7 +112,6 @@ export class Scene {
     this.width = width;
     this.height = height;
     this.style = { width, height };
-    this.root.updateSize(width, height);
 
     if (this.selecto?.getSelectedTargets().length) {
       this.clearCurrentSelection();
@@ -304,10 +303,8 @@ export class Scene {
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
 
-        // validate element placement?
-        if (targetedElement && targetedElement.parent) {
-          const parent = targetedElement.parent;
-          targetedElement.updateSize(parent.width, parent.height);
+        if (targetedElement) {
+          targetedElement?.setPlacementFromConstraint();
         }
       })
       .on('resize', (event) => {
@@ -321,6 +318,13 @@ export class Scene {
           targetedElement!.applyResize(event);
         });
         this.moved.next(Date.now()); // TODO only on end
+      })
+      .on('resizeEnd', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+
+        if (targetedElement) {
+          targetedElement?.setPlacementFromConstraint();
+        }
       });
 
     let targets: Array<HTMLElement | SVGElement> = [];

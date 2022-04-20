@@ -47,14 +47,14 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
 
   const onHorizontalConstraintChange = (h: SelectableValue<HorizontalConstraint>) => {
     element.options.constraint!.horizontal = h.value;
-    element.validatePlacement();
+    element.setPlacementFromConstraint();
     settings.scene.revId++;
     settings.scene.save(true);
   };
 
   const onVerticalConstraintChange = (v: SelectableValue<VerticalConstraint>) => {
     element.options.constraint!.vertical = v.value;
-    element.validatePlacement();
+    element.setPlacementFromConstraint();
     settings.scene.revId++;
     settings.scene.save(true);
   };

@@ -27,8 +27,6 @@ export class ElementState implements LayerElement {
   div?: HTMLDivElement;
 
   // Calculated
-  width = 100;
-  height = 100;
   data?: any; // depends on the type
 
   constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: GroupState) {
@@ -42,6 +40,11 @@ export class ElementState implements LayerElement {
       horizontal: HorizontalConstraint.Left,
     };
     options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0 };
+    // ?? validate placement so that it isn't under / over constrained?
+    this.sizeStyle = {
+      ...options.placement,
+      position: 'absolute',
+    };
 
     const scene = this.getScene();
     if (!options.name) {
@@ -69,7 +72,7 @@ export class ElementState implements LayerElement {
   }
 
   // Make sure saved constraints aren't over defined, on load, on horizontal / vertical placement change?
-  validatePlacement() {
+  setPlacementFromConstraint() {
     let { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
 
@@ -87,17 +90,17 @@ export class ElementState implements LayerElement {
 
     const placement = {} as Placement;
 
-    const w = elementContainer?.width ?? 100;
-    const h = elementContainer?.height ?? 100;
+    const width = elementContainer?.width ?? 100;
+    const height = elementContainer?.height ?? 100;
 
     switch (vertical) {
       case VerticalConstraint.Top:
         placement.top = relativeTop;
-        placement.height = h;
+        placement.height = height;
         break;
       case VerticalConstraint.Bottom:
         placement.bottom = relativeBottom;
-        placement.height = h;
+        placement.height = height;
         break;
       case VerticalConstraint.TopBottom:
         placement.top = relativeTop;
@@ -108,11 +111,11 @@ export class ElementState implements LayerElement {
     switch (horizontal) {
       case HorizontalConstraint.Left:
         placement.left = relativeLeft;
-        placement.width = w;
+        placement.width = width;
         break;
       case HorizontalConstraint.Right:
         placement.right = relativeRight;
-        placement.width = w;
+        placement.width = width;
         break;
       case HorizontalConstraint.LeftRight:
         placement.left = relativeLeft;
@@ -120,27 +123,12 @@ export class ElementState implements LayerElement {
         break;
     }
 
-    this.width = w;
-    this.height = h;
     this.options.placement = placement;
     this.sizeStyle = {
       ...this.options.placement,
       position: 'absolute',
     };
     this.revId++;
-  }
-
-  // The parent size, need to set our own size based on offsets
-  updateSize(width: number, height: number) {
-    this.width = width;
-    this.height = height;
-    this.validatePlacement();
-
-    // Update the CSS position
-    this.sizeStyle = {
-      ...this.options.placement,
-      position: 'absolute',
-    };
   }
 
   updateData(ctx: DimensionContext) {
@@ -349,22 +337,13 @@ export class ElementState implements LayerElement {
     }
 
     // TODO: Center + Scale
-
-    this.width = event.width;
-    this.height = event.height;
   };
 
   render() {
     const { item } = this;
     return (
       <div key={`${this.UID}`} style={{ ...this.sizeStyle, ...this.dataStyle }} ref={this.initElement}>
-        <item.display
-          key={`${this.UID}/${this.revId}`}
-          config={this.options.config}
-          width={this.width}
-          height={this.height}
-          data={this.data}
-        />
+        <item.display key={`${this.UID}/${this.revId}`} config={this.options.config} data={this.data} />
       </div>
     );
   }

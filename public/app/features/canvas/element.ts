@@ -29,10 +29,6 @@ export interface CanvasElementProps<TConfig = any, TData = any> {
   // Saved config
   config: TConfig;
 
-  // Calculated position info
-  width: number;
-  height: number;
-
   // Raw data
   data?: TData;
 }

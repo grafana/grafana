@@ -47,7 +47,6 @@ export class IconPanel extends Component<Props> {
       width,
       height,
     };
-    this.element.updateSize(width, height);
   };
 
   dims: DimensionContext = {

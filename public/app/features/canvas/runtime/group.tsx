@@ -53,27 +53,6 @@ export class GroupState extends ElementState {
     return false;
   }
 
-  // The parent size, need to set our own size based on offsets
-  updateSize(width: number, height: number) {
-    super.updateSize(width, height);
-    if (!this.parent) {
-      this.width = width;
-      this.height = height;
-      this.sizeStyle.width = width;
-      this.sizeStyle.height = height;
-    }
-
-    // Update children with calculated size
-    for (const elem of this.elements) {
-      elem.updateSize(this.width, this.height);
-    }
-
-    // The group forced to full width (for now)
-    this.sizeStyle.width = width;
-    this.sizeStyle.height = height;
-    this.sizeStyle.position = 'absolute';
-  }
-
   updateData(ctx: DimensionContext) {
     super.updateData(ctx);
     for (const elem of this.elements) {
@@ -127,7 +106,6 @@ export class GroupState extends ElementState {
         // }
 
         const copy = new ElementState(element.item, opts, this);
-        copy.updateSize(element.width, element.height);
         copy.updateData(this.scene.context);
         if (updateName) {
           copy.options.name = this.scene.getNextElementName();
