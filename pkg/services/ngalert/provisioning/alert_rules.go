@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -27,17 +28,31 @@ func NewAlertRuleService(ruleStore store.RuleStore,
 	}
 }
 
-func (service *AlertRuleService) GetAlertRule(ctx context.Context, uid string) (models.AlertRule, error) {
-	return models.AlertRule{}, nil
+func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, ruleUID string) (models.AlertRule, error) {
+	query := &models.GetAlertRuleByUIDQuery{
+		OrgID: orgID,
+		UID:   ruleUID,
+	}
+	err := service.ruleStore.GetAlertRuleByUID(ctx, query)
+	if err != nil {
+		return models.AlertRule{}, err
+	}
+	return *query.Result, nil
 }
 
-func (service *AlertRuleService) CreateAlertRule(ctx context.Context, provenance models.Provenance) error {
+func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) error {
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err := service.ruleStore.UpsertAlertRules(ctx, []store.UpsertRule{
+		err := service.ruleStore.InsertAlertRules(ctx, []models.AlertRule{
+
 			{
-				New: models.AlertRule{
-					OrgID: 1,
-				},
+				ID:        rule.ID,
+				UID:       rule.UID,
+				OrgID:     rule.OrgID,
+				Title:     rule.Title,
+				Data:      rule.Data,
+				Condition: rule.Condition,
+				Version:   rule.Version,
+				RuleGroup: rule.RuleGroup,
 			},
 		})
 		if err != nil {
@@ -47,17 +62,32 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, provenance
 	})
 }
 
-func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, provenance models.Provenance) error {
-	storedRule, err := service.GetAlertRule(ctx, "someuid")
+func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) error {
+	// check that provenance is not changed in a invalid way
+	storedProvenance, err := service.provenanceStore.GetProvenance(ctx, &rule)
+	if err != nil {
+		return err
+	}
+	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
+		return fmt.Errorf("cannot changed provenance from '%s' to '%s'", storedProvenance, provenance)
+	}
+	storedRule, err := service.GetAlertRule(ctx, rule.OrgID, rule.UID)
 	if err != nil {
 		return err
 	}
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err := service.ruleStore.UpsertAlertRules(ctx, []store.UpsertRule{
+		err := service.ruleStore.UpdateAlertRules(ctx, []store.UpdateRule{
 			{
 				Existing: &storedRule,
 				New: models.AlertRule{
-					OrgID: 1,
+					ID:        rule.ID,
+					UID:       rule.UID,
+					OrgID:     rule.OrgID,
+					Title:     rule.Title,
+					Data:      rule.Data,
+					Condition: rule.Condition,
+					Version:   rule.Version,
+					RuleGroup: rule.RuleGroup,
 				},
 			},
 		})
@@ -68,6 +98,24 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, provenance
 	})
 }
 
-func (service *AlertRuleService) DeleteALertRule() error {
-	return nil
+func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance models.Provenance) error {
+	rule := &models.AlertRule{
+		OrgID: orgID,
+		UID:   ruleUID,
+	}
+	// check that provenance is not changed in a invalid way
+	storedProvenance, err := service.provenanceStore.GetProvenance(ctx, rule)
+	if err != nil {
+		return err
+	}
+	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
+		return fmt.Errorf("cannot changed provenance from '%s' to '%s'", storedProvenance, provenance)
+	}
+	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
+		err := service.ruleStore.DeleteAlertRulesByUID(ctx, orgID, ruleUID)
+		if err != nil {
+			return err
+		}
+		return service.provenanceStore.DeleteProvenance(ctx, rule)
+	})
 }
