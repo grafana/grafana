@@ -199,6 +199,7 @@ type Dashboard struct {
 	FolderId  int64
 	IsFolder  bool
 	HasAcl    bool
+	IsPublic  bool
 
 	Title string
 	Data  *simplejson.Json
