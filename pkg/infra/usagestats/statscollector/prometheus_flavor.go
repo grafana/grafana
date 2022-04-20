@@ -79,6 +79,12 @@ func (s *Service) detectPrometheusVariant(ctx context.Context, ds *models.DataSo
 		s.log.Debug("Failed to send Prometheus build info request", "error", err)
 		return "", nil
 	}
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			s.log.Error("Got error while closing response body")
+		}
+	}()
 
 	if resp.StatusCode == 404 {
 		return "cortex-like", nil
