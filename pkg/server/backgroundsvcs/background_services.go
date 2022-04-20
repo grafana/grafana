@@ -43,7 +43,7 @@ func ProvideBackgroundServiceRegistry(
 	_ serviceaccounts.Service, _ *guardian.Provider,
 	_ *plugindashboardsservice.DashboardUpdater,
 	grpcServerProvider grpcserver.Provider,
-	healthGRPCService *grpcserver.GPRCHealthService,
+	healthGRPCService *grpcserver.HealthService,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
