@@ -7,7 +7,7 @@ weight = 9
 
 # Previews
 
-{{< figure  max-width="950px" src="http://localhost:3002/static/img/docs/dashboards/previews.jpg" animated-gif="/static/img/docs/dashboards/previews.gif" >}}
+{{< figure  max-width="950px" src="/static/img/docs/dashboards/previews.jpg" animated-gif="/static/img/docs/dashboards/previews.gif" >}}
 
 > **Note:** Dashboard previews are available in Grafana 9.0+ as an opt-in beta feature. Please refer to the [permissions]({{< relref "./enable-service-accounts.md#">}}) section to learn about issues with data source permissions before enabling the feature.
 
@@ -34,12 +34,12 @@ enable = dashboardPreviews
 
 Visit the dashboard search page to verify that the setup was successful. You should be able to see dashboard preview placeholders for all your existing dashboards after clicking on the _Show previews_ toggle at the top of page.
 
-{{< figure src="http://localhost:3002/static/img/docs/dashboards/previews-successful-setup.jpg"
+{{< figure src="/static/img/docs/dashboards/previews-successful-setup.jpg"
 max-width="950px" animated-gif="/static/img/docs/dashboards/previews-successful-setup.gif" >}}
 
 Please check [Grafana server logs]({{< relref "../administration/configuration.md#log" >}}) in case you see any warnings after clicking on the toggle - errors logs produced by `dashboard_service` should provide more context.
 
-{{< figure src="http://localhost:3002/static/img/docs/dashboards/previews-unsuccessful-setup.png" max-width="950px" >}}
+{{< figure src="/static/img/docs/dashboards/previews-unsuccessful-setup.png" max-width="950px" >}}
 
 ## About the dashboard previews crawler
 
