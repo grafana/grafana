@@ -7,10 +7,7 @@ interface DropdownIndicatorProps {
   hidden?: boolean;
 }
 
-export const DropdownIndicator: React.FC<DropdownIndicatorProps> = ({ isOpen, hidden = false }) => {
-  if (hidden) {
-    return <></>;
-  }
+export const DropdownIndicator: React.FC<DropdownIndicatorProps> = ({ isOpen }) => {
   const icon = isOpen ? 'angle-up' : 'angle-down';
   return <Icon name={icon} />;
 };

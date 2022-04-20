@@ -15,31 +15,22 @@ export interface MultiFilterCondition {
   value?: string[];
 }
 
-const multiFiltersToFilterConditions = (filters: MultiFilters | undefined) =>
-  Object.entries(filters ?? {}).reduce<MultiFilterCondition[]>((acc, [key, value]) => {
-    if (value && typeof value === 'object') {
-      const filter = {
-        key,
-        value,
-        operator: '=',
-      };
-      return [...acc, filter];
-    }
-    return acc;
-  }, []);
+const multiFiltersToFilterConditions = (filters: MultiFilters) =>
+  Object.keys(filters).map((key) => ({ key, value: filters[key], operator: '=' }));
 
 const filterConditionsToMultiFilters = (filters: MultiFilterCondition[]) => {
-  return filters.reduce<MultiFilters>((acc, { key, value }) => {
+  const res: MultiFilters = {};
+  filters.forEach(({ key, value }) => {
     if (key && value) {
-      return { ...acc, [key]: value };
+      res[key] = value;
     }
-    return acc;
-  }, {});
+  });
+  return res;
 };
 
 export const MultiFilter: React.FC<Props> = ({ filters, onChange }) => {
   const [items, setItems] = useState<MultiFilterCondition[]>([]);
-  useEffect(() => setItems(multiFiltersToFilterConditions(filters)), [filters]);
+  useEffect(() => setItems(filters ? multiFiltersToFilterConditions(filters) : []), [filters]);
   const onFiltersChange = (newItems: Array<Partial<MultiFilterCondition>>) => {
     setItems(newItems);
 

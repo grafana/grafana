@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme2, toOption } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
-import { Input, MultiSelect, stylesFactory, useTheme2 } from '@grafana/ui';
+import { Input, stylesFactory, useTheme2 } from '@grafana/ui';
 import React, { FunctionComponent, useState } from 'react';
 import { MultiFilterCondition } from './MultiFilter';
 
@@ -13,27 +13,16 @@ export interface Props {
 
 export const MultiFilterItem: FunctionComponent<Props> = ({ filter, onChange, onDelete }) => {
   const [localKey, setLocalKey] = useState(filter.key || '');
-  const [inputValue, setInputValue] = useState('');
+  const [localValue, setLocalValue] = useState(filter.value?.join(', ') || '');
   const theme = useTheme2();
   const styles = getOperatorStyles(theme);
-
-  const handleInputChange = (inputValue: string) => {
-    setInputValue(inputValue);
-  };
-  const handleKeyDown = (keyEvent: React.KeyboardEvent) => {
-    if (['Tab', 'Enter'].includes(keyEvent.key)) {
-      onChange({ ...filter, value: filter.value ? [...filter.value, inputValue] : [inputValue] });
-      setInputValue('');
-      keyEvent.preventDefault();
-    }
-  };
 
   return (
     <div data-testid="cloudwatch-multifilter-item">
       <InputGroup>
         <Input
+          data-testid="cloudwatch-multifilter-item-key"
           aria-label="Filter key"
-          id="cloudwatch-multifilter-item-key"
           value={localKey}
           placeholder="key"
           onChange={(e) => setLocalKey(e.currentTarget.value)}
@@ -46,22 +35,20 @@ export const MultiFilterItem: FunctionComponent<Props> = ({ filter, onChange, on
 
         <span className={cx(styles.root)}>=</span>
 
-        <MultiSelect
+        <Input
+          data-testid="cloudwatch-multifilter-item-value"
           aria-label="Filter value"
-          value={filter.value ? filter.value.map(toOption) : []}
-          inputId="cloudwatch-multifilter-item-value"
-          inputValue={inputValue}
-          allowCustomValue
-          onChange={(items) => {
-            onChange({ ...filter, value: items.map((item) => item.value ?? '') });
+          value={localValue}
+          placeholder="value1, value2,..."
+          onChange={(e) => setLocalValue(e.currentTarget.value)}
+          onBlur={() => {
+            const newValues = localValue.replace(' ', '').split(',');
+            if (localValue && newValues !== filter.value) {
+              onChange({ ...filter, value: newValues });
+            }
           }}
-          onInputChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          isOpen={false}
-          hideIndicator
-          options={filter.value ? filter.value.map(toOption) : []}
-          placeholder="value"
         />
+
         <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} type="button" />
       </InputGroup>
     </div>

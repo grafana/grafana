@@ -179,19 +179,18 @@ describe('VariableEditor', () => {
       render(<VariableQueryEditor {...props} />);
 
       await waitFor(() => {
-        expect(screen.getByText('Tags.blah')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('Tags.blah')).toBeInTheDocument();
       });
 
       const filterItem = screen.getByTestId('cloudwatch-multifilter-item');
       expect(filterItem).toBeInTheDocument();
-      expect(within(filterItem).getByText('foo')).toBeInTheDocument();
-      expect(within(filterItem).getByText('bar')).toBeInTheDocument();
+      expect(within(filterItem).getByDisplayValue('foo, bar')).toBeInTheDocument();
 
       // set filter value
-      const valueElement = filterItem.querySelector('#cloudwatch-multifilter-item-value');
+      const valueElement = screen.getByTestId('cloudwatch-multifilter-item-value');
       expect(valueElement).toBeInTheDocument();
-      userEvent.type(valueElement!, 'baz');
-      fireEvent.keyDown(valueElement!, { keyCode: 13 });
+      userEvent.type(valueElement!, ',baz');
+      fireEvent.blur(valueElement!);
 
       expect(onChange).toHaveBeenCalledWith({
         ...defaultQuery,

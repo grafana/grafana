@@ -88,6 +88,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     resourceType: '',
     tags: {},
   };
+
   if (rawQuery === '') {
     return newQuery;
   }
@@ -147,7 +148,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.queryType = VariableQueryType.EC2InstanceAttributes;
     newQuery.region = ec2InstanceAttributeQuery[1];
     newQuery.attributeName = ec2InstanceAttributeQuery[2];
-    if (!!ec2InstanceAttributeQuery[3]) {
+    if (ec2InstanceAttributeQuery[3]) {
       try {
         newQuery.ec2Filters = JSON.parse(ec2InstanceAttributeQuery[3]);
       } catch {
@@ -162,7 +163,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.queryType = VariableQueryType.ResourceArns;
     newQuery.region = resourceARNsQuery[1];
     newQuery.resourceType = resourceARNsQuery[2];
-    if (!!resourceARNsQuery[3]) {
+    if (resourceARNsQuery[3]) {
       try {
         newQuery.tags = JSON.parse(resourceARNsQuery[3]);
       } catch {

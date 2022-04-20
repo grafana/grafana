@@ -16,11 +16,10 @@ describe('MultiFilters', () => {
       expect(filterItems.length).toBe(2);
 
       expect(within(filterItems[0]).getByDisplayValue('InstanceId')).toBeInTheDocument();
-      expect(within(filterItems[0]).getByText('a')).toBeInTheDocument();
-      expect(within(filterItems[0]).getByText('b')).toBeInTheDocument();
+      expect(within(filterItems[0]).getByDisplayValue('a, b')).toBeInTheDocument();
 
       expect(within(filterItems[1]).getByDisplayValue('InstanceGroup')).toBeInTheDocument();
-      expect(within(filterItems[1]).getByText('Group1')).toBeInTheDocument();
+      expect(within(filterItems[1]).getByDisplayValue('Group1')).toBeInTheDocument();
     });
   });
 
@@ -40,16 +39,16 @@ describe('MultiFilters', () => {
     it('it should add the new item but not call onChange', async () => {
       const filters = {};
       const onChange = jest.fn();
-      const { container } = render(<MultiFilter filters={filters} onChange={onChange} />);
+      render(<MultiFilter filters={filters} onChange={onChange} />);
 
       userEvent.click(screen.getByLabelText('Add'));
       const filterItemElement = screen.getByTestId('cloudwatch-multifilter-item');
       expect(filterItemElement).toBeInTheDocument();
 
-      const keyElement = container.querySelector('#cloudwatch-multifilter-item-key');
+      const keyElement = screen.getByTestId('cloudwatch-multifilter-item-key');
       expect(keyElement).toBeInTheDocument();
       userEvent.type(keyElement!, 'my-key');
-      fireEvent.keyDown(keyElement!, { keyCode: 13 });
+      fireEvent.blur(keyElement!);
 
       expect(within(filterItemElement).getByDisplayValue('my-key')).toBeInTheDocument();
       expect(onChange).not.toHaveBeenCalled();
@@ -60,27 +59,27 @@ describe('MultiFilters', () => {
     it('it should add the new item and trigger onChange', async () => {
       const filters = {};
       const onChange = jest.fn();
-      const { container } = render(<MultiFilter filters={filters} onChange={onChange} />);
+      render(<MultiFilter filters={filters} onChange={onChange} />);
 
       const label = await screen.findByLabelText('Add');
       userEvent.click(label);
       const filterItemElement = screen.getByTestId('cloudwatch-multifilter-item');
       expect(filterItemElement).toBeInTheDocument();
 
-      const keyElement = container.querySelector('#cloudwatch-multifilter-item-key');
+      const keyElement = screen.getByTestId('cloudwatch-multifilter-item-key');
       expect(keyElement).toBeInTheDocument();
       userEvent.type(keyElement!, 'my-key');
-      fireEvent.keyDown(keyElement!, { keyCode: 13 });
+      fireEvent.blur(keyElement!);
       expect(within(filterItemElement).getByDisplayValue('my-key')).toBeInTheDocument();
       expect(onChange).not.toHaveBeenCalled();
 
-      const valueElement = container.querySelector('#cloudwatch-multifilter-item-value');
+      const valueElement = screen.getByTestId('cloudwatch-multifilter-item-value');
       expect(valueElement).toBeInTheDocument();
-      userEvent.type(valueElement!, 'my-value');
-      fireEvent.keyDown(valueElement!, { keyCode: 13 });
-      expect(within(filterItemElement).getByText('my-value')).toBeInTheDocument();
+      userEvent.type(valueElement!, 'my-value1,my-value2');
+      fireEvent.blur(valueElement!);
+      expect(within(filterItemElement).getByDisplayValue('my-value1,my-value2')).toBeInTheDocument();
       expect(onChange).toHaveBeenCalledWith({
-        'my-key': ['my-value'],
+        'my-key': ['my-value1', 'my-value2'],
       });
     });
   });
