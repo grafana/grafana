@@ -7,6 +7,8 @@ import { PromAlertingRuleState, PromRulesResponse } from 'app/types/unified-aler
 import { AlertState, AlertStateInfo } from '@grafana/data';
 import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
 
 export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
   // maps dashboard uid to wether it has alert rules.
@@ -24,6 +26,10 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
     }
 
     if (this.hasAlertRules[dashboard.uid] === false) {
+      return false;
+    }
+
+    if (!contextSrv.hasPermission(AccessControlAction.AlertingRuleRead)) {
       return false;
     }
 
