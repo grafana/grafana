@@ -7,6 +7,7 @@ import {
   GrafanaTheme2,
   outerJoinDataFrames,
 } from '@grafana/data';
+import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { findField } from 'app/features/dimensions';
 import { prepareGraphableFields } from '../timeseries/utils';
 import { CandlestickOptions, CandlestickFieldMap, VizDisplayMode } from './models.gen';
@@ -102,7 +103,13 @@ export function prepareCandlestickFields(
 
   // All fields
   const fieldMap = options.fields ?? {};
-  const aligned = series.length === 1 ? series[0] : outerJoinDataFrames({ frames: series, enforceSort: true });
+  const aligned =
+    series.length === 1
+      ? maybeSortFrame(
+          series[0],
+          series[0].fields.findIndex((f) => f.type === FieldType.time)
+        )
+      : outerJoinDataFrames({ frames: series });
   if (!aligned?.length) {
     return null;
   }
