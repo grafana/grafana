@@ -62,7 +62,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     url: `datasources/edit/${dataSource.uid}/permissions`,
   };
 
-  if (highlightTrial()) {
+  if (highlightTrial() && !isLoadingNav) {
     dsPermissions.tabSuffix = () =>
       ProBadge({ experimentId: 'feature-highlights-data-source-permissions-badge', eventVariant: 'trial' });
   }
