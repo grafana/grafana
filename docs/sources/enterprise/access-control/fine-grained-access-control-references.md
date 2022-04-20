@@ -56,9 +56,10 @@ The reference information that follows complements conceptual information about 
 
 ### Alerting roles
 
-If Grafana Alerting is [enabled]({{< relref "../../alerting/unified-alerting/opt-in.md" >}}), then you can manage user access to alert rules, alert instances and notification settings using predefined roles as well as create custom roles to limit user access to alert rules in a specific folder.
-It is important to understand that the access to Grafana alert rules is an intersection of many permissions:
-- permission to read a folder, i.e. fixed role `fixed:folders:reader` or action `folders:read` in the scope of specific folder `folders:id:`, 
+If you [enable]({{< relref "../../alerting/unified-alerting/opt-in.md" >}}) Grafana Alerting, you can use predefined roles to manage user access to alert rules, alert instances, and alert notification settings and create custom roles to limit user access to alert rules in a folder.
+
+Access to Grafana alert rules is an intersection of many permissions:
+- Permission to read a folder, for example, the fixed role `fixed:folders:reader` or action `folders:read` in the scope of a folder `folders:id:`
 - permission to manage alerts (see table below)
 - permission to query **all** data sources that the rule uses, i.e. fixed role `fixed:datasources:reader` or action `datasources:query` in the scope of `datasources:uid:`. 
 
