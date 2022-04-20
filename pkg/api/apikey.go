@@ -36,7 +36,7 @@ func (hs *HTTPServer) GetAPIKeys(c *models.ReqContext) response.Response {
 		}
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 // DeleteAPIKey deletes an API key
@@ -107,5 +107,5 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 		Key:  newKeyInfo.ClientSecret,
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }

@@ -57,7 +57,7 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
 }
 
 function getMessageFor(
-  { data, message, needsNumberField, needsTimeField, needsStringField }: PanelDataErrorViewProps,
+  { data, fieldConfig, message, needsNumberField, needsTimeField, needsStringField }: PanelDataErrorViewProps,
   dataSummary: PanelDataSummary
 ): string {
   if (message) {
@@ -66,7 +66,7 @@ function getMessageFor(
 
   // In some cases there is a data frame but with no fields
   if (!data.series || data.series.length === 0 || (data.series.length === 1 && data.series[0].fields.length === 0)) {
-    return 'No data';
+    return fieldConfig?.defaults.noValue ?? 'No data';
   }
 
   if (needsStringField && !dataSummary.hasStringField) {

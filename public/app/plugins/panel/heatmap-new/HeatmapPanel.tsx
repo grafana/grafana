@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { formattedValueToString, GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
+import { GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
 import {
   Portal,
   UPlotChart,
@@ -18,7 +18,7 @@ import { quantizeScheme } from './palettes';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
-import { ColorScale } from './ColorScale';
+import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -82,7 +82,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     return prepConfig({
       dataRef,
       theme,
-      onhover: options.tooltip.show ? onhover : null,
+      onhover: onhover,
       onclick: options.tooltip.show ? onclick : null,
       onzoom: (evt) => {
         onChangeTimeRange({ from: evt.xMin, to: evt.xMax });
@@ -104,7 +104,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
     const field = info.heatmap.fields[2];
     const { min, max } = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
-    const display = field.display ? (v: number) => formattedValueToString(field.display!(v)) : (v: number) => `${v}`;
 
     let hoverValue: number | undefined = undefined;
     if (hover && info.heatmap.fields) {
@@ -114,13 +113,23 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
-        <ColorScale hoverValue={hoverValue} colorPalette={palette} min={min} max={max} display={display} />
+        <div className={styles.colorScaleWrapper}>
+          <ColorScale hoverValue={hoverValue} colorPalette={palette} min={min} max={max} display={info.display} />
+        </div>
       </VizLayout.Legend>
     );
   };
 
   if (info.warning || !info.heatmap) {
-    return <PanelDataErrorView panelId={id} data={data} needsNumberField={true} message={info.warning} />;
+    return (
+      <PanelDataErrorView
+        panelId={id}
+        fieldConfig={fieldConfig}
+        data={data}
+        needsNumberField={true}
+        message={info.warning}
+      />
+    );
   }
 
   return (
@@ -133,7 +142,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
         )}
       </VizLayout>
       <Portal>
-        {hover && (
+        {hover && options.tooltip.show && (
           <VizTooltipContainer
             position={{ x: hover.pageX, y: hover.pageY }}
             offset={{ x: 10, y: 10 }}
@@ -156,5 +165,9 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   closeButtonSpacer: css`
     margin-bottom: 15px;
+  `,
+  colorScaleWrapper: css`
+    margin-left: 25px;
+    padding: 10px 0;
   `,
 });
