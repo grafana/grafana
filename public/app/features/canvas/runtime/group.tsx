@@ -153,11 +153,7 @@ export class GroupState extends ElementState {
   };
 
   render() {
-    return (
-      <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }}>
-        {this.elements.map((v) => v.render())}
-      </div>
-    );
+    return <div key={`${this.UID}/${this.revId}`}>{this.elements.map((v) => v.render())}</div>;
   }
 
   /** Recursively visit all nodes */

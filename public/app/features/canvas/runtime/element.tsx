@@ -1,5 +1,5 @@
 import React, { CSSProperties } from 'react';
-import { OnDrag, OnResize } from 'react-moveable/declaration/types';
+import { OnDrag, OnDragStart, OnResize } from 'react-moveable/declaration/types';
 
 import {
   BackgroundImageSize,
@@ -15,6 +15,7 @@ import { Scene } from './scene';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
 let counter = 0;
+const startTime = Date.now();
 
 export class ElementState implements LayerElement {
   // UID necessary for moveable to work (for now)
@@ -40,12 +41,7 @@ export class ElementState implements LayerElement {
       horizontal: HorizontalConstraint.Left,
     };
     options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0 };
-    this.validatePlacement();
-    this.sizeStyle = {
-      ...options.placement,
-      position: 'absolute',
-    };
-
+    this.updateLayout();
     const scene = this.getScene();
     if (!options.name) {
       const newName = scene?.getNextElementName();
@@ -71,48 +67,92 @@ export class ElementState implements LayerElement {
     return this.options.name;
   }
 
-  validatePlacement() {
-    const { constraint, placement } = this.options;
+  updateLayout() {
+    const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
-    const updatedPlacement = placement ?? ({} as Placement);
+    const placement = this.options.placement ?? ({} as Placement);
+
+    const style: React.CSSProperties = {
+      position: 'absolute',
+      transform: 'translate(0px, 0px)',
+      maxWidth: Date.now(),
+    };
 
     switch (vertical) {
       case VerticalConstraint.Top:
-        updatedPlacement.top = updatedPlacement.top ?? 0;
-        updatedPlacement.height = updatedPlacement.height ?? 100;
-        delete updatedPlacement.bottom;
+        placement.top = placement.top ?? 0;
+        placement.height = placement.height ?? 100;
+        style.top = placement.top;
+        style.height = placement.height;
+        delete placement.bottom;
         break;
       case VerticalConstraint.Bottom:
-        updatedPlacement.bottom = updatedPlacement.bottom ?? 0;
-        updatedPlacement.height = updatedPlacement.height ?? 100;
-        delete updatedPlacement.top;
+        placement.bottom = placement.bottom ?? 0;
+        placement.height = placement.height ?? 100;
+        style.bottom = placement.bottom;
+        style.height = placement.height;
+        delete placement.top;
         break;
       case VerticalConstraint.TopBottom:
-        updatedPlacement.top = updatedPlacement.top ?? 0;
-        updatedPlacement.bottom = updatedPlacement.bottom ?? 0;
-        delete updatedPlacement.height;
+        placement.top = placement.top ?? 0;
+        placement.bottom = placement.bottom ?? 0;
+        style.top = placement.top;
+        style.bottom = placement.bottom;
+        delete placement.height;
         break;
     }
 
     switch (horizontal) {
       case HorizontalConstraint.Left:
-        updatedPlacement.left = updatedPlacement.left ?? 0;
-        updatedPlacement.width = updatedPlacement.width ?? 100;
-        delete updatedPlacement.right;
+        placement.left = placement.left ?? 0;
+        placement.width = placement.width ?? 100;
+        style.left = placement.left;
+        style.width = placement.width;
+        delete placement.right;
         break;
       case HorizontalConstraint.Right:
-        updatedPlacement.right = updatedPlacement.right ?? 0;
-        updatedPlacement.width = updatedPlacement.width ?? 100;
-        delete updatedPlacement.left;
+        placement.right = placement.right ?? 0;
+        placement.width = placement.width ?? 100;
+        style.right = placement.right;
+        style.width = placement.width;
+        delete placement.left;
         break;
       case HorizontalConstraint.LeftRight:
-        updatedPlacement.left = updatedPlacement.left ?? 0;
-        updatedPlacement.right = updatedPlacement.right ?? 0;
-        delete updatedPlacement.width;
+        placement.left = placement.left ?? 0;
+        placement.right = placement.right ?? 0;
+        style.left = placement.left;
+        style.right = placement.right;
+        delete placement.width;
+        break;
+      case HorizontalConstraint.Scale:
+        placement.left = placement.left ?? 0;
+        placement.right = placement.right ?? 0;
+        style.left = `${placement.left}%`;
+        style.right = `${placement.right}%`;
+        delete placement.width;
         break;
     }
 
-    this.options.placement = updatedPlacement;
+    this.options.placement = placement;
+    this.sizeStyle = style;
+    console.log('sizeStyle', this.sizeStyle);
+    if (this.div) {
+      this.div.style.maxWidth = `${Date.now() - startTime}px`;
+      this.div.style.minWidth = '1px';
+      // style={{ ...this.sizeStyle, ...this.dataStyle }}
+      const style = this.div.style;
+
+      for (const key in this.sizeStyle) {
+        this.div.style[key as any] = (this.sizeStyle as any)[key];
+      }
+
+      for (const key in this.dataStyle) {
+        this.div.style[key as any] = (this.dataStyle as any)[key];
+      }
+
+      console.log('calling updateLayout;;;', style.cssText);
+      this.div.setAttribute('a', 'hello');
+    }
   }
 
   setPlacementFromConstraint() {
@@ -120,6 +160,7 @@ export class ElementState implements LayerElement {
     const { vertical, horizontal } = constraint ?? {};
 
     const elementContainer = this.div && this.div.getBoundingClientRect();
+    console.log(elementContainer, this.div?.style.transform, 'calling setPlacement form constraint');
     const parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
 
     const relativeTop =
@@ -164,14 +205,17 @@ export class ElementState implements LayerElement {
         placement.left = relativeLeft;
         placement.right = relativeRight;
         break;
+      case HorizontalConstraint.Scale:
+        placement.left = relativeLeft / (parentContainer?.width ?? width);
+        placement.right = relativeRight / (parentContainer?.width ?? width);
+        break;
     }
 
     this.options.placement = placement;
-    this.sizeStyle = {
-      ...this.options.placement,
-      position: 'absolute',
-    };
-    this.revId++;
+
+    this.updateLayout();
+    this.onChange(this.options);
+    console.log('called onChange / update placement', this.options);
   }
 
   updateData(ctx: DimensionContext) {
@@ -271,45 +315,53 @@ export class ElementState implements LayerElement {
 
   initElement = (target: HTMLDivElement) => {
     this.div = target;
+    this.updateLayout();
   };
 
+  tempPosition = {
+    top: 0,
+    left: 0,
+    width: 0,
+    height: 0,
+  };
+  applyDirectPosition(event: OnDragStart) {
+    // const style = event.target.style;
+    const elementContainer = event.target.getBoundingClientRect();
+    const parentContainer = event.target.parentElement?.getBoundingClientRect();
+
+    const relativeTop =
+      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.top - parentContainer.top)) : 0;
+    const relativeLeft =
+      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.left - parentContainer.left)) : 0;
+
+    this.tempPosition.top = relativeTop;
+    this.tempPosition.left = relativeLeft;
+    this.tempPosition.width = elementContainer.width;
+    this.tempPosition.height = elementContainer.height;
+
+    // console.log(this.tempPosition);
+
+    // style.position = 'absolute';
+    // style.top = `${this.tempPosition.top}px`;
+    // style.left = `${this.tempPosition.left}px`;
+    // style.width = `${this.tempPosition.width}px`;
+    // style.height = `${this.tempPosition.height}px`;
+    // style.right = '';
+    // style.left = '';
+  }
+
   applyDrag = (event: OnDrag) => {
-    const { options } = this;
-    const { placement, constraint } = options;
-    const { vertical, horizontal } = constraint ?? {};
+    // const deltaX = event.delta[0];
+    // const deltaY = event.delta[1];
+    // const style = event.target.style;
 
-    const deltaX = event.delta[0];
-    const deltaY = event.delta[1];
+    // this.tempPosition.top += deltaY;
+    // this.tempPosition.left += deltaX;
 
-    const style = event.target.style;
+    // style.top = `${this.tempPosition.top}px`;
+    // style.left = `${this.tempPosition.left}px`;
 
-    const isConstrainedTop = vertical === VerticalConstraint.Top || vertical === VerticalConstraint.TopBottom;
-    const isConstrainedBottom = vertical === VerticalConstraint.Bottom || vertical === VerticalConstraint.TopBottom;
-    const isConstrainedLeft = horizontal === HorizontalConstraint.Left || horizontal === HorizontalConstraint.LeftRight;
-    const isConstrainedRight =
-      horizontal === HorizontalConstraint.Right || horizontal === HorizontalConstraint.LeftRight;
-
-    if (isConstrainedTop) {
-      placement!.top! += deltaY;
-      style.top = `${placement!.top}px`;
-    }
-
-    if (isConstrainedBottom) {
-      placement!.bottom! -= deltaY;
-      style.bottom = `${placement!.bottom}px`;
-    }
-
-    if (isConstrainedLeft) {
-      placement!.left! += deltaX;
-      style.left = `${placement!.left}px`;
-    }
-
-    if (isConstrainedRight) {
-      placement!.right! -= deltaX;
-      style.right = `${placement!.right}px`;
-    }
-
-    // TODO: Center + Scale
+    event.target.style.transform = event.transform;
   };
 
   // kinda like:
@@ -384,9 +436,15 @@ export class ElementState implements LayerElement {
 
   render() {
     const { item } = this;
+
+    console.log('rendering element', { revId: this.revId, uid: this.UID });
+
+    const key = `${this.UID}/${this.revId}`;
+    // <div style={{ ...this.sizeStyle, ...this.dataStyle }} ref={this.initElement}>
+
     return (
-      <div key={`${this.UID}`} style={{ ...this.sizeStyle, ...this.dataStyle }} ref={this.initElement}>
-        <item.display key={`${this.UID}/${this.revId}`} config={this.options.config} data={this.data} />
+      <div key={this.UID} ref={this.initElement}>
+        <item.display key={key} config={this.options.config} data={this.data} />
       </div>
     );
   }

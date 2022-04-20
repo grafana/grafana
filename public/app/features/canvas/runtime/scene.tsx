@@ -251,6 +251,14 @@ export class Scene {
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
       })
+      .on('dragStart', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+        console.log('calling dragstart');
+
+        if (targetedElement) {
+          targetedElement.applyDirectPosition(event);
+        }
+      })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         targetedElement!.applyDrag(event);
@@ -266,6 +274,7 @@ export class Scene {
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
 
+        console.log('calling dragend');
         if (targetedElement) {
           targetedElement?.setPlacementFromConstraint();
         }
@@ -316,6 +325,7 @@ export class Scene {
   };
 
   render() {
+    console.log('rendering scene', this.revId);
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         {this.root.render()}
