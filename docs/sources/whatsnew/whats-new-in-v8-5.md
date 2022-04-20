@@ -58,7 +58,7 @@ The Bar gauge panel now supports scrolling to support displaying large datasets 
 
 ### Template variable substitution
 
-We’ve added support to substitute  template variables to transformations. This allows dashboards to be more interactive with transformations when a user inputs calculations and $__interval and $__interval_ms.
+We’ve added support to substitute template variables to transformations. This allows dashboards to be more interactive with transformations when a user inputs calculations and $**interval and $**interval_ms.
 
 ### Grouping to matrix
 
@@ -67,7 +67,7 @@ A new transformation is available that helps you structure data in a matrix form
 ## Expanding the navigation bar (Beta)
 
 Available by switching on the ‘newNavigation’ feature toggle.
-You can expand the navigation bar for a better overview of Grafana’s features and installed integrations. 
+You can expand the navigation bar for a better overview of Grafana’s features and installed integrations.
 This feature is currently in a beta version and we would appreciate your feedback. Sign up for a call with the Grafana team - it only takes 30 minutes, and you'll receive a $40 USD gift card as a token of appreciation for your time.
 US, UK, Canada, Australia, France, Germany, or South Africa: sign up here
 Everywhere else in the world: sign up here
@@ -83,16 +83,15 @@ In order to support debugging issues in Grafana, error alerts that appear when v
 
 ## Service accounts (beta)
 
-Service accounts are a major evolution for machine access within Grafana. You can create multiple API tokens per service account with independent expiration dates, and temporarily disable a service account without deleting it. These benefits make Service Accounts a more flexible way for Terraform and other apps to authenticate with Grafana. Service accounts also work with [fine-grained access control](https://grafana.com/docs/grafana/latest/enterprise/access-control/) in [Grafana Enterprise](https://grafana.com/docs/grafana/latest/enterprise/): you can improve security by granting service accounts specific roles to limit the functions they can perform. Service accounts are available in beta; you can try them out by enabling the `service-accounts` [feature toggle](https://grafana.com/docs/grafana/latest/administration/service-accounts/enable-service-accounts) or, if you use Grafana Cloud, [reaching out to our support team](https://grafana.com/orgs/raintank/tickets#) for early access.  Learn more about Service Accounts in our [docs](https://grafana.com/docs/grafana/latest/administration/service-accounts).
+Service accounts are a major evolution for machine access within Grafana. You can create multiple API tokens per service account with independent expiration dates, and temporarily disable a service account without deleting it. These benefits make Service Accounts a more flexible way for Terraform and other apps to authenticate with Grafana. Service accounts also work with [fine-grained access control](https://grafana.com/docs/grafana/latest/enterprise/access-control/) in [Grafana Enterprise](https://grafana.com/docs/grafana/latest/enterprise/): you can improve security by granting service accounts specific roles to limit the functions they can perform. Service accounts are available in beta; you can try them out by enabling the `service-accounts` [feature toggle](https://grafana.com/docs/grafana/latest/administration/service-accounts/enable-service-accounts) or, if you use Grafana Cloud, [reaching out to our support team](https://grafana.com/orgs/raintank/tickets#) for early access. Learn more about Service Accounts in our [docs](https://grafana.com/docs/grafana/latest/administration/service-accounts).
 
 {{< figure src="/static/img/docs/service-accounts/configure-8-5.png" max-width="1200px" caption="Configure service accounts" >}}
-
 
 ## Observability
 
 ### Trace to Logs for Splunk
 
-With Trace to Logs, you can view relevant logs for a trace or span with one click. You can now link to Splunk logs from your tracing datasource. In your tracing datasource, configure Trace to Logs by selecting the Splunk datasource and relevant query options like tags to include in the query. 
+With Trace to Logs, you can view relevant logs for a trace or span with one click. You can now link to Splunk logs from your tracing datasource. In your tracing datasource, configure Trace to Logs by selecting the Splunk datasource and relevant query options like tags to include in the query.
 
 ## Experimental Explore to Dashboard workflow
 
@@ -110,7 +109,7 @@ This feature is behind the `explore2Dashboard` feature toggle and is enabled by 
 ### Fine-Grained Access Control comes to Alerting (beta)
 
 Check the Grafana Enterprise / Security section below for more details, including how to enable this beta feature; we’ve implemented
- [fine-grained access control](https://grafana.com/docs/grafana/latest/enterprise/access-control/) for alerting rules, notification policies, and contact points in [Grafana Enterprise](https://grafana.com/docs/grafana/latest/enterprise/). You can turn on fine-grained access control using the `accesscontrol` [feature toggle](https://grafana.com/docs/grafana/latest/enterprise/access-control/#enable-fine-grained-access-control), or by [reaching out to our support team](https://grafana.com/orgs/raintank/tickets#) for early access if you use Grafana Cloud. For more information on fine-grained access control, visit our [docs](https://grafana.com/docs/grafana/latest/enterprise/access-control/).
+[fine-grained access control](https://grafana.com/docs/grafana/latest/enterprise/access-control/) for alerting rules, notification policies, and contact points in [Grafana Enterprise](https://grafana.com/docs/grafana/latest/enterprise/). You can turn on fine-grained access control using the `accesscontrol` [feature toggle](https://grafana.com/docs/grafana/latest/enterprise/access-control/#enable-fine-grained-access-control), or by [reaching out to our support team](https://grafana.com/orgs/raintank/tickets#) for early access if you use Grafana Cloud. For more information on fine-grained access control, visit our [docs](https://grafana.com/docs/grafana/latest/enterprise/access-control/).
 
 ### Control access to dashboards, folders, and annotations (beta)
 
