@@ -101,20 +101,36 @@ export class GroupState extends ElementState {
         switch (vertical) {
           case VerticalConstraint.Top:
           case VerticalConstraint.TopBottom:
-            placement.top += 10;
+            if (placement.top == null) {
+              placement.top = 25;
+            } else {
+              placement.top += 10;
+            }
             break;
           case VerticalConstraint.Bottom:
-            placement.bottom -= 10;
+            if (placement.bottom == null) {
+              placement.bottom = 100;
+            } else {
+              placement.bottom -= 10;
+            }
             break;
         }
 
         switch (horizontal) {
           case HorizontalConstraint.Left:
           case HorizontalConstraint.LeftRight:
-            placement.left += 10;
+            if (placement.left == null) {
+              placement.left = 50;
+            } else {
+              placement.left += 10;
+            }
             break;
           case HorizontalConstraint.Right:
-            placement.right -= 10;
+            if (placement.right == null) {
+              placement.right = 50;
+            } else {
+              placement.right -= 10;
+            }
             break;
         }
 
