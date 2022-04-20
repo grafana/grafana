@@ -49,4 +49,4 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [BUGFIX] (Legacy) Templates: Parse notification templates using all the matches of the alert rule when going from `Alerting` to `OK` in legacy alerting #47355
 - [BUGFIX] Scheduler: Fix state manager to support OK option of `AlertRule.ExecErrState` #47670 
 - [ENHANCEMENT] Templates: Enable the use of classic condition values in templates #46971
-- [ENHANCEMENT] Notification URL points to alert view page instead of alert edit page. [#47752](https://github.com/grafana/grafana/pull/47752)
+- [CHANGE] Notification URL points to alert view page instead of alert edit page. #47752
