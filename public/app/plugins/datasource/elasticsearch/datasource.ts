@@ -538,33 +538,19 @@ export class ElasticDatasource
     const payload = [header, esQuery].join('\n') + '\n';
     const url = this.getMultiSearchUrl();
     const response = await lastValueFrom(this.post(url, payload));
-    const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [{ type: 'logs', id: '1' }] }];
+    const targets: ElasticsearchQuery[] = [
+      { timeField: this.timeField, refId: `${row.dataFrame.refId}`, metrics: [{ type: 'logs', id: '1' }] },
+    ];
     const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, sort));
     const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);
     const dataFrame = _first(logResponse.data);
     if (!dataFrame) {
       return { data: [] };
     }
-    /**
-     * The LogRowContextProvider requires there is a field in the dataFrame.fields
-     * named `ts` for timestamp and `line` for the actual log line to display.
-     * Unfortunatly these fields are hardcoded and are required for the lines to
-     * be properly displayed. This code just copies the fields based on this.timeField
-     * and this.logMessageField and recreates the dataFrame so it works.
-     */
-    const timestampField = dataFrame.fields.find((f: Field) => f.name === this.timeField);
-    const lineField = dataFrame.fields.find((f: Field) => f.name === this.logMessageField);
-    if (timestampField && lineField) {
-      return {
-        data: [
-          {
-            ...dataFrame,
-            fields: [...dataFrame.fields, { ...timestampField, name: 'ts' }, { ...lineField, name: 'line' }],
-          },
-        ],
-      };
-    }
-    return logResponse;
+
+    return {
+      data: [dataFrame],
+    };
   };
 
   getLogsVolumeDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
