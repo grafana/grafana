@@ -15,7 +15,6 @@ export interface RichHistorySettings {
 export type RichHistorySearchFilters = {
   search: string;
   sortOrder: SortOrder;
-  // name or uid
   datasourceFilters: string[];
   from: number;
   to: number;

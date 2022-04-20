@@ -125,7 +125,7 @@ export const loadRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
 
 /**
  * Initialize query history pane. To load history it requires settings to be loaded first
- * (but only once per session) and filters initialised with default values based on settings.
+ * (but only once per session). Filters are initialised by the tab (starred or home).
  */
 export const initRichHistory = (): ThunkResult<void> => {
   return async (dispatch, getState) => {

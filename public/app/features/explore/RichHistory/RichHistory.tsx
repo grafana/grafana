@@ -13,6 +13,7 @@ import { RichHistorySettingsTab } from './RichHistorySettingsTab';
 import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
 import { RichHistoryStarredTab } from './RichHistoryStarredTab';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
+import { debounce } from 'lodash';
 
 export enum Tabs {
   RichHistory = 'Query history',
@@ -53,9 +54,12 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
       ...filtersToUpdate,
     };
     this.props.updateHistorySearchFilters(this.props.exploreId, filters);
-    // CODE debounce it?
-    this.props.loadRichHistory(this.props.exploreId);
+    this.loadRichHistory();
   };
+
+  loadRichHistory = debounce(() => {
+    this.props.loadRichHistory(this.props.exploreId);
+  }, 300);
 
   onChangeRetentionPeriod = (retentionPeriod: SelectableValue<number>) => {
     if (retentionPeriod.value !== undefined) {

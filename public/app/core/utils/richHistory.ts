@@ -17,12 +17,6 @@ import {
   RichHistoryStorageWarning,
   RichHistoryStorageWarningDetails,
 } from '../history/RichHistoryStorage';
-import {
-  filterQueriesByDataSource,
-  filterQueriesBySearchFilter,
-  filterQueriesByTime,
-  sortQueries,
-} from 'app/core/history/richHistoryLocalStorageUtils';
 import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from './richHistoryTypes';
 
 export { SortOrder };
