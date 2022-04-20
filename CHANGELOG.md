@@ -1,3 +1,46 @@
+<!-- 8.5.0-beta1 START -->
+
+# 8.5.0-beta1 (2022-04-06)
+
+### Features and enhancements
+
+- Add config option to enable/disable reporting. (Enterprise)
+- **Alerting:** Accurately set value for prom-compatible APIs. [#47216](https://github.com/grafana/grafana/pull/47216), [@gotjosh](https://github.com/gotjosh)
+- **Alerting:** Provisioning API - Notification Policies. [#46755](https://github.com/grafana/grafana/pull/46755), [@alexweav](https://github.com/alexweav)
+- **Analytics:** Enable grafana and plugin update checks to be operated independently. [#46352](https://github.com/grafana/grafana/pull/46352), [@wbrowne](https://github.com/wbrowne)
+- **Azure Monitor:** Add support for multiple template variables in resource picker. [#46215](https://github.com/grafana/grafana/pull/46215), [@sarahzinger](https://github.com/sarahzinger)
+- **Caching:** Add separate TTL for resources cache. (Enterprise)
+- **Caching:** add support for TLS configuration for Redis Cluster. (Enterprise)
+- **NewsPanel:** Remove Use Proxy option and update documentation with recommendations. [#47189](https://github.com/grafana/grafana/pull/47189), [@joshhunt](https://github.com/joshhunt)
+- **OAuth:** Sync GitHub OAuth user name to Grafana if it's set. [#45438](https://github.com/grafana/grafana/pull/45438), [@pallxk](https://github.com/pallxk)
+
+### Bug fixes
+
+- **Plugins:** Fix Default Nav URL for dashboard includes. [#47143](https://github.com/grafana/grafana/pull/47143), [@wbrowne](https://github.com/wbrowne)
+
+### Breaking changes
+
+When user is using Github OAuth, GitHub login is showed as both Grafana login and name. Now the GitHub name is showed as Grafana name, and GitHub login is showed as Grafana Login. Issue [#45438](https://github.com/grafana/grafana/issues/45438)
+
+The meaning of the default data source has now changed from being a persisted property in a panel. Before when you selected the default data source for a panel and later changed the default data source to another data source it would change all panels who were configured to use the default data source. From now on the default data source is just the default for new panels and changing the default will not impact any currently saved dashboards. Issue [#45132](https://github.com/grafana/grafana/issues/45132)
+
+<!-- 8.4.7 START -->
+
+# 8.4.7 (2022-04-19)
+
+### Features and enhancements
+
+- **CloudWatch:** Added missing MemoryDB Namespace metrics. [#47290](https://github.com/grafana/grafana/pull/47290), [@james-deee](https://github.com/james-deee)
+- **Histogram Panel:** Take decimal into consideration. [#47330](https://github.com/grafana/grafana/pull/47330), [@mdvictor](https://github.com/mdvictor)
+- **TimeSeries:** Sort tooltip values based on raw values. [#46738](https://github.com/grafana/grafana/pull/46738), [@dprokop](https://github.com/dprokop)
+
+### Bug fixes
+
+- **API:** Include userId, orgId, uname in request logging middleware. [#47183](https://github.com/grafana/grafana/pull/47183), [@marefr](https://github.com/marefr)
+- **Elasticsearch:** Respect maxConcurrentShardRequests datasource setting. [#47120](https://github.com/grafana/grafana/pull/47120), [@alexandrst88](https://github.com/alexandrst88)
+
+<!-- 8.4.7 END -->
+<!-- 8.5.0-beta1 END -->
 <!-- 8.4.6 START -->
 
 # 8.4.6 (2022-04-12)
@@ -168,6 +211,43 @@ AngularJS plugin support is now in a deprecated state, meaning it will be remove
 - **News:** Reload feed when changing the time range or refreshing. [#42217](https://github.com/grafana/grafana/pull/42217), [@ashharrison90](https://github.com/ashharrison90)
 - **UI/Plot:** Implement keyboard controls for plot cursor. [#42244](https://github.com/grafana/grafana/pull/42244), [@kaydelaney](https://github.com/kaydelaney)
 
+<!-- 8.3.7 START -->
+
+# 8.3.7 (2022-03-01)
+
+### Bug fixes
+
+- **Provisioning:** Ensure that the default value for orgID is set when provisioning datasources to be deleted. [#44244](https://github.com/grafana/grafana/pull/44244), [@filewalkwithme](https://github.com/filewalkwithme)
+
+<!-- 8.3.7 END -->
+
+<!-- 8.3.6 START -->
+
+# 8.3.6 (2022-02-09)
+
+### Features and enhancements
+
+- **Cloud Monitoring:** Reduce request size when listing labels. [#44365](https://github.com/grafana/grafana/pull/44365), [@mtanda](https://github.com/mtanda)
+- **Explore:** Show scalar data result in a table instead of graph. [#44362](https://github.com/grafana/grafana/pull/44362), [@tharun208](https://github.com/tharun208)
+- **Snapshots:** Updates the default external snapshot server URL. [#44563](https://github.com/grafana/grafana/pull/44563), [@DanCech](https://github.com/DanCech)
+- **Table:** Makes footer not overlap table content. [#44210](https://github.com/grafana/grafana/pull/44210), [@dprokop](https://github.com/dprokop)
+- **Tempo:** Add request histogram to service graph datalink. [#44671](https://github.com/grafana/grafana/pull/44671), [@connorlindsey](https://github.com/connorlindsey)
+- **Tempo:** Add time range to tempo search query behind a feature flag. [#43811](https://github.com/grafana/grafana/pull/43811), [@connorlindsey](https://github.com/connorlindsey)
+- **Tempo:** Auto-clear results when changing query type. [#44390](https://github.com/grafana/grafana/pull/44390), [@connorlindsey](https://github.com/connorlindsey)
+- **Tempo:** Display start time in search results as relative time. [#44568](https://github.com/grafana/grafana/pull/44568), [@tharun208](https://github.com/tharun208)
+
+### Bug fixes
+
+- **CloudMonitoring:** Fix resource labels in query editor. [#44550](https://github.com/grafana/grafana/pull/44550), [@iwysiu](https://github.com/iwysiu)
+- **Cursor sync:** Apply the settings without saving the dashboard. [#44270](https://github.com/grafana/grafana/pull/44270), [@dprokop](https://github.com/dprokop)
+- **LibraryPanels:** Fix for Error while cleaning library panels. [#45033](https://github.com/grafana/grafana/pull/45033), [@hugohaggmark](https://github.com/hugohaggmark)
+- **Logs Panel:** fix timestamp parsing for string dates without timezone. [#44664](https://github.com/grafana/grafana/pull/44664), [@Elfo404](https://github.com/Elfo404)
+- **Prometheus:** Fix some of the alerting queries that use reduce/math operation. [#44380](https://github.com/grafana/grafana/pull/44380), [@ivanahuckova](https://github.com/ivanahuckova)
+- **TablePanel:** Fix ad-hoc variables not working on default datasources. [#44314](https://github.com/grafana/grafana/pull/44314), [@joshhunt](https://github.com/joshhunt)
+- **Text Panel:** Fix alignment of elements. [#44313](https://github.com/grafana/grafana/pull/44313), [@ashharrison90](https://github.com/ashharrison90)
+- **Variables:** Fix for constant variables in self referencing links. [#44631](https://github.com/grafana/grafana/pull/44631), [@hugohaggmark](https://github.com/hugohaggmark)
+
+<!-- 8.3.6 END -->
 <!-- 8.4.0-beta1 END -->
 <!-- 8.3.5 START -->
 
