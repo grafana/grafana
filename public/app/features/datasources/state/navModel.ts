@@ -54,6 +54,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
 
   const isLoadingNav = dataSource.type === loadingDSType;
 
+  const permissionsExperimentId = 'feature-highlights-data-source-permissions-badge';
   const dsPermissions: NavModelItem = {
     active: false,
     icon: 'lock',
@@ -63,8 +64,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   };
 
   if (highlightTrial() && !isLoadingNav) {
-    dsPermissions.tabSuffix = () =>
-      ProBadge({ experimentId: 'feature-highlights-data-source-permissions-badge', eventVariant: 'trial' });
+    dsPermissions.tabSuffix = () => ProBadge({ experimentId: permissionsExperimentId, eventVariant: 'trial' });
   }
 
   if (featureEnabled('dspermissions')) {
@@ -75,10 +75,11 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     navModel.children!.push({
       ...dsPermissions,
       url: dsPermissions.url + '/upgrade',
-      tabSuffix: () => ProBadge({ experimentId: 'feature-highlights-data-source-permissions-badge' }),
+      tabSuffix: () => ProBadge({ experimentId: permissionsExperimentId }),
     });
   }
 
+  const analyticsExperimentId = 'feature-highlights-data-source-insights-badge';
   const analytics: NavModelItem = {
     active: false,
     icon: 'info-circle',
@@ -88,8 +89,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   };
 
   if (highlightTrial() && !isLoadingNav) {
-    analytics.tabSuffix = () =>
-      ProBadge({ experimentId: 'feature-highlights-data-source-insights-badge', eventVariant: 'trial' });
+    analytics.tabSuffix = () => ProBadge({ experimentId: analyticsExperimentId, eventVariant: 'trial' });
   }
 
   if (featureEnabled('analytics')) {
@@ -98,9 +98,11 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     navModel.children!.push({
       ...analytics,
       url: analytics.url + '/upgrade',
-      tabSuffix: () => ProBadge({ experimentId: 'feature-highlights-data-source-insights-badge' }),
+      tabSuffix: () => ProBadge({ experimentId: analyticsExperimentId }),
     });
   }
+
+  const cachingExperimentId = 'feature-highlights-query-caching-badge';
 
   const caching: NavModelItem = {
     active: false,
@@ -112,8 +114,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   };
 
   if (highlightTrial() && !isLoadingNav) {
-    caching.tabSuffix = () =>
-      ProBadge({ experimentId: 'feature-highlights-query-caching-badge', eventVariant: 'trial' });
+    caching.tabSuffix = () => ProBadge({ experimentId: cachingExperimentId, eventVariant: 'trial' });
   }
 
   if (featureEnabled('caching')) {
@@ -122,7 +123,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     navModel.children!.push({
       ...caching,
       url: caching.url + '/upgrade',
-      tabSuffix: () => ProBadge({ experimentId: 'feature-highlights-query-caching-badge' }),
+      tabSuffix: () => ProBadge({ experimentId: cachingExperimentId }),
     });
   }
 

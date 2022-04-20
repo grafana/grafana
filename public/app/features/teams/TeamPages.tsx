@@ -15,7 +15,7 @@ import { getTeamLoadingNav } from './state/navModel';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { NavModel } from '@grafana/data';
-import { featureEnabled, reportExperimentView } from '@grafana/runtime';
+import { featureEnabled } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { UpgradeBox } from 'app/core/components/Upgrade/UpgradeBox';
 
@@ -84,13 +84,6 @@ export class TeamPages extends PureComponent<Props, State> {
 
   async componentDidMount() {
     await this.fetchTeam();
-
-    const { isSyncEnabled } = this.state;
-    const currentPage = this.getCurrentPage();
-
-    if (currentPage === PageTypes.GroupSync && !isSyncEnabled && config.featureToggles.featureHighlights) {
-      reportExperimentView('feature-highlights-team-sync', 'test', '');
-    }
   }
 
   async fetchTeam() {

@@ -99,7 +99,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
             featureId={'team-sync'}
             eventVariant={'trial'}
             featureName={'team sync'}
-            text={'Add a group to enable team sync for free during your 14-day trial of Grafana Pro.'}
+            text={'Add a group to enable team sync for free during your trial of Grafana Pro.'}
           />
         )}
         <div className="page-action-bar">
