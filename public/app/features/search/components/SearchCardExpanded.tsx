@@ -11,7 +11,7 @@ export interface Props {
   imageHeight: number;
   imageWidth: number;
   item: DashboardSectionItem;
-  lastUpdated?: string;
+  lastUpdated?: string | null;
 }
 
 export function SearchCardExpanded({ className, imageHeight, imageWidth, item, lastUpdated }: Props) {
@@ -48,10 +48,12 @@ export function SearchCardExpanded({ className, imageHeight, imageWidth, item, l
               {folderTitle}
             </div>
           </div>
-          <div className={styles.updateContainer}>
-            <div>Last updated</div>
-            {lastUpdated ? <div className={styles.update}>{lastUpdated}</div> : <Spinner />}
-          </div>
+          {lastUpdated !== null && (
+            <div className={styles.updateContainer}>
+              <div>Last updated</div>
+              {lastUpdated ? <div className={styles.update}>{lastUpdated}</div> : <Spinner />}
+            </div>
+          )}
         </div>
         <div>
           <TagList className={styles.tagList} tags={item.tags} />

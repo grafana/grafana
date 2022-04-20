@@ -68,7 +68,7 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 
 	sort.Sort(result)
 
-	return response.JSON(200, &result)
+	return response.JSON(http.StatusOK, &result)
 }
 
 // GET /api/datasources/:id
@@ -102,7 +102,7 @@ func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response 
 	// Add accesscontrol metadata
 	dto.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, datasources.ScopePrefix, dto.UID)
 
-	return response.JSON(200, &dto)
+	return response.JSON(http.StatusOK, &dto)
 }
 
 // DELETE /api/datasources/:id
@@ -161,7 +161,7 @@ func (hs *HTTPServer) GetDataSourceByUID(c *models.ReqContext) response.Response
 	// Add accesscontrol metadata
 	dto.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, datasources.ScopePrefix, dto.UID)
 
-	return response.JSON(200, &dto)
+	return response.JSON(http.StatusOK, &dto)
 }
 
 // DELETE /api/datasources/uid/:uid
@@ -193,7 +193,7 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *models.ReqContext) response.Respo
 
 	hs.Live.HandleDatasourceDelete(c.OrgId, ds.Uid)
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Data source deleted",
 		"id":      ds.Id,
 	})
@@ -227,7 +227,7 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Resp
 
 	hs.Live.HandleDatasourceDelete(c.OrgId, getCmd.Result.Uid)
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Data source deleted",
 		"id":      getCmd.Result.Id,
 	})
@@ -266,7 +266,7 @@ func (hs *HTTPServer) AddDataSource(c *models.ReqContext) response.Response {
 	}
 
 	ds := convertModelToDtos(cmd.Result)
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message":    "Datasource added",
 		"id":         cmd.Result.Id,
 		"name":       cmd.Result.Name,
@@ -331,7 +331,7 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 
 	hs.Live.HandleDatasourceUpdate(c.OrgId, datasourceDTO.UID)
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message":    "Datasource updated",
 		"id":         cmd.Id,
 		"name":       cmd.Name,
@@ -409,7 +409,7 @@ func (hs *HTTPServer) GetDataSourceByName(c *models.ReqContext) response.Respons
 	}
 
 	dto := convertModelToDtos(filtered[0])
-	return response.JSON(200, &dto)
+	return response.JSON(http.StatusOK, &dto)
 }
 
 // Get /api/datasources/id/:name
@@ -428,7 +428,7 @@ func (hs *HTTPServer) GetDataSourceIdByName(c *models.ReqContext) response.Respo
 		Id: ds.Id,
 	}
 
-	return response.JSON(200, &dtos)
+	return response.JSON(http.StatusOK, &dtos)
 }
 
 // /api/datasources/:id/resources/*

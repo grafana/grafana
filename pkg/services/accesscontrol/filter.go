@@ -43,7 +43,7 @@ func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) 
 	wildcards := 0
 	result := make(map[interface{}]int)
 	for _, a := range actions {
-		ids, hasWildcard := parseScopes(prefix, user.Permissions[user.OrgId][a])
+		ids, hasWildcard := ParseScopes(prefix, user.Permissions[user.OrgId][a])
 		if hasWildcard {
 			wildcards += 1
 			continue
@@ -84,7 +84,7 @@ func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) 
 	return SQLFilter{query.String(), ids}, nil
 }
 
-func parseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, hasWildcard bool) {
+func ParseScopes(prefix string, scopes []string) (ids map[interface{}]struct{}, hasWildcard bool) {
 	ids = make(map[interface{}]struct{})
 
 	rootPrefix, attributePrefix, ok := extractPrefixes(prefix)

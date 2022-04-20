@@ -1,5 +1,5 @@
-import React from 'react';
-import { LokiVisualQuery } from '../types';
+import React, { useMemo } from 'react';
+import { LokiOperationId, LokiVisualQuery } from '../types';
 import { LokiDatasource } from '../../datasource';
 import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
@@ -7,7 +7,6 @@ import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/query
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { DataSourceApi, SelectableValue } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
-import { QueryPreview } from './QueryPreview';
 import { OperationsEditorRow } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationsEditorRow';
 import { NestedQueryList } from './NestedQueryList';
 
@@ -58,6 +57,18 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
     return result[forLabelInterpolated] ?? [];
   };
 
+  const labelFilterError: string | undefined = useMemo(() => {
+    const { labels, operations: op } = query;
+    if (!labels.length && op.length) {
+      // We don't want to show error for initial state with empty line contains operation
+      if (op.length === 1 && op[0].id === LokiOperationId.LineContains && op[0].params[0] === '') {
+        return undefined;
+      }
+      return 'You need to specify at least 1 label filter (stream selector)';
+    }
+    return undefined;
+  }, [query]);
+
   return (
     <>
       <EditorRow>
@@ -70,6 +81,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
           }
           labelsFilters={query.labels}
           onChange={onChangeLabels}
+          error={labelFilterError}
         />
       </EditorRow>
       <OperationsEditorRow>
@@ -83,11 +95,6 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
       </OperationsEditorRow>
       {query.binaryQueries && query.binaryQueries.length > 0 && (
         <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
-      )}
-      {!nested && (
-        <EditorRow>
-          <QueryPreview query={query} />
-        </EditorRow>
       )}
     </>
   );
