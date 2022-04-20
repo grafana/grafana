@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -624,11 +623,11 @@ func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQu
 
 		// user only sees the users in which it has user read access too
 		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) && query.SignedInUser != nil {
-			acFilter, err := accesscontrol.Filter(
+			acFilter, err := ac.Filter(
 				query.SignedInUser,
 				"u.id",
 				"users:id:",
-				accesscontrol.ActionOrgUsersRead,
+				ac.ActionOrgUsersRead,
 			)
 			if err != nil {
 				return err
