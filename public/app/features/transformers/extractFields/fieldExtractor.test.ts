@@ -31,7 +31,7 @@ describe('Extract fields from text', () => {
   it('Test key-values with nested single/double quotes', async () => {
     const extractor = fieldExtractors.get(FieldExtractorID.KeyValues);
     const out = extractor.parse(
-      `a="1",   "b"=\'2\',c=3  x:y ;\r\nz="dbl_quotes="Double Quotes" sgl_quotes='Single Quotes'"`
+      `a="1",   "b"=\'2\',c=3  x:y ;\r\nz="dbl_quotes=\\"Double Quotes\\" sgl_quotes='Single Quotes'"`
     );
 
     expect(out).toMatchInlineSnapshot(`
