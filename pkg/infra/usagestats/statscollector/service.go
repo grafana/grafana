@@ -2,10 +2,7 @@ package statscollector
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"strings"
 	"time"
 
@@ -36,6 +33,7 @@ type Service struct {
 
 	startTime                time.Time
 	concurrentUserStatsCache memoConcurrentUserStats
+	promFlavorCache          memoPrometheusFlavor
 }
 
 func ProvideService(
@@ -283,86 +281,6 @@ func (s *Service) collect(ctx context.Context) (map[string]interface{}, error) {
 	}
 
 	return m, nil
-}
-
-func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int64, error) {
-	dsProm := &models.GetDataSourcesByTypeQuery{Type: "prometheus"}
-	err := s.datasources.GetDataSourcesByType(ctx, dsProm)
-	if err != nil {
-		s.log.Error("Failed to read all Prometheus data sources", "error", err)
-		return nil, err
-	}
-
-	variants := map[string]int64{}
-	for _, ds := range dsProm.Result {
-		variant, err := s.detectPrometheusVariant(ctx, ds)
-		if err != nil {
-			// it's not worth canceling the entire collection because
-			// we failed to gather Prometheus variants.
-			continue
-		}
-
-		if _, exists := variants[variant]; !exists {
-			variants[variant] = 0
-		}
-		variants[variant] += 1
-	}
-	return variants, nil
-}
-
-func (s *Service) detectPrometheusVariant(ctx context.Context, ds *models.DataSource) (string, error) {
-	type buildInfo struct {
-		Data struct {
-			Application *string                `json:"application"`
-			Features    map[string]interface{} `json:"features"`
-		} `json:"data"`
-	}
-
-	c, err := s.datasources.GetHTTPTransport(ds, s.httpClientProvider)
-	if err != nil {
-		s.log.Error("Failed to get HTTP client for Prometheus data source", "error", err)
-		return "", err
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ds.Url+"/api/v1/status/buildinfo", nil)
-	if err != nil {
-		s.log.Error("Failed to create Prometheus build info request", "error", err)
-		return "", err
-	}
-
-	resp, err := c.RoundTrip(req)
-	if err != nil {
-		s.log.Warn("Failed to send Prometheus build info request", "error", err)
-		return "", err
-	}
-
-	if resp.StatusCode == 404 {
-		return "cortex-like", nil
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		s.log.Error("Failed to read Prometheus build info", "error", err)
-		return "", err
-	}
-
-	fmt.Println(string(body))
-	bi := &buildInfo{}
-	err = json.Unmarshal(body, bi)
-	if err != nil {
-		s.log.Error("Failed to read Prometheus build info JSON", "error", err)
-		return "", err
-	}
-
-	if bi.Data.Application != nil && *bi.Data.Application == "Grafana Mimir" {
-		return "mimir", nil
-	}
-
-	if bi.Data.Features != nil {
-		return "mimir-like", nil
-	}
-
-	return "vanilla", nil
 }
 
 func (s *Service) updateTotalStats(ctx context.Context) bool {
