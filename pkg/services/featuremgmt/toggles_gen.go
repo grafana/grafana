@@ -162,4 +162,8 @@ const (
 	// FlagGrpcServer
 	// Run GRPC server
 	FlagGrpcServer = "grpcServer"
+	
+	// FlagPersistNotifications
+	// PoC Notifications page
+	FlagPersistNotifications = "persistNotifications"
 )

@@ -55,4 +55,5 @@ export interface FeatureToggles {
   azureMonitorResourcePickerForMetrics?: boolean;
   explore2Dashboard?: boolean;
   grpcServer?: boolean;
+  persistNotifications?: boolean;
 }

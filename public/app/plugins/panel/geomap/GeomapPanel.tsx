@@ -33,11 +33,12 @@ import { DebugOverlay } from './components/DebugOverlay';
 import { getGlobalStyles } from './globalStyles';
 import { Global } from '@emotion/react';
 import { GeomapHoverPayload, GeomapLayerHover } from './event';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { PanelEditExitedEvent } from 'app/types/events';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
 import { cloneDeep } from 'lodash';
 import { GeomapTooltip } from './GeomapTooltip';
+import { FeatureLike } from 'ol/Feature';
 
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
@@ -313,7 +314,7 @@ export class GeomapPanel extends Component<Props, State> {
       this.props.eventBus.publish(new DataHoverClearEvent());
     });
 
-    // Notify the the panel editor
+    // Notify the panel editor
     if (this.panelContext.onInstanceStateChange) {
       this.panelContext.onInstanceStateChange({
         map: this.map,
@@ -371,6 +372,7 @@ export class GeomapPanel extends Component<Props, State> {
     this.map.forEachFeatureAtPixel(
       pixel,
       (feature, layer, geo) => {
+        const s: MapLayerState = (layer as any).__state;
         //match hover layer to layer in layers
         //check if the layer show tooltip is enabled
         //then also pass the list of tooltip fields if exists
@@ -382,9 +384,12 @@ export class GeomapPanel extends Component<Props, State> {
             hoverPayload.data = ttip.data = frame as DataFrame;
             hoverPayload.rowIndex = ttip.rowIndex = props['rowIndex'];
           }
+
+          if (s?.mouseEvents) {
+            s.mouseEvents.next(feature);
+          }
         }
 
-        const s: MapLayerState = (layer as any).__state;
         if (s) {
           let h = layerLookup.get(s);
           if (!h) {
@@ -406,6 +411,14 @@ export class GeomapPanel extends Component<Props, State> {
     this.props.eventBus.publish(this.hoverEvent);
 
     this.setState({ ttip: { ...hoverPayload } });
+
+    if (!layers.length) {
+      // clear mouse events
+      this.layers.forEach((layer) => {
+        layer.mouseEvents.next(undefined);
+      });
+    }
+
     return layers.length ? true : false;
   };
 
@@ -508,6 +521,7 @@ export class GeomapPanel extends Component<Props, State> {
       options,
       layer,
       handler,
+      mouseEvents: new Subject<FeatureLike | undefined>(),
 
       getName: () => UID,
 
