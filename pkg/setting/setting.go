@@ -1473,7 +1473,7 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 		}
 	}
 
-	cfg.GRPCServerNetwork = valueAsString(server, "network", "unix")
+	cfg.GRPCServerNetwork = valueAsString(server, "network", "tcp")
 	cfg.GRPCServerAddress = valueAsString(server, "address", "")
 	switch cfg.GRPCServerNetwork {
 	case "unix":
