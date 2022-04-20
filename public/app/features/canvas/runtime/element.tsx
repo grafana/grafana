@@ -73,7 +73,7 @@ export class ElementState implements LayerElement {
 
   // Make sure saved constraints aren't over defined, on load, on horizontal / vertical placement change?
   setPlacementFromConstraint() {
-    let { constraint } = this.options;
+    const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
 
     const elementContainer = this.div && this.div.getBoundingClientRect();
