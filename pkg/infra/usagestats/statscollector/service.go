@@ -6,31 +6,34 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-
-	"github.com/grafana/grafana/pkg/infra/usagestats"
-
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
-	cfg        *setting.Cfg
-	sqlstore   sqlstore.Store
-	plugins    plugins.Store
-	social     social.Service
-	usageStats usagestats.Service
-	features   *featuremgmt.FeatureManager
+	cfg                *setting.Cfg
+	sqlstore           sqlstore.Store
+	plugins            plugins.Store
+	social             social.Service
+	usageStats         usagestats.Service
+	features           *featuremgmt.FeatureManager
+	datasources        datasources.DataSourceService
+	httpClientProvider httpclient.Provider
 
 	log log.Logger
 
 	startTime                time.Time
 	concurrentUserStatsCache memoConcurrentUserStats
+	promFlavorCache          memoPrometheusFlavor
 }
 
 func ProvideService(
@@ -40,14 +43,18 @@ func ProvideService(
 	social social.Service,
 	plugins plugins.Store,
 	features *featuremgmt.FeatureManager,
+	datasourceService datasources.DataSourceService,
+	httpClientProvider httpclient.Provider,
 ) *Service {
 	s := &Service{
-		cfg:        cfg,
-		sqlstore:   store,
-		plugins:    plugins,
-		social:     social,
-		usageStats: usagestats,
-		features:   features,
+		cfg:                cfg,
+		sqlstore:           store,
+		plugins:            plugins,
+		social:             social,
+		usageStats:         usagestats,
+		features:           features,
+		datasources:        datasourceService,
+		httpClientProvider: httpClientProvider,
 
 		startTime: time.Now(),
 		log:       log.New("infra.usagestats.collector"),
@@ -187,6 +194,15 @@ func (s *Service) collect(ctx context.Context) (map[string]interface{}, error) {
 	if err := s.sqlstore.GetDataSourceAccessStats(ctx, &dsAccessStats); err != nil {
 		s.log.Error("Failed to get datasource access stats", "error", err)
 		return nil, err
+	}
+
+	variants, err := s.detectPrometheusVariants(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for variant, count := range variants {
+		m["stats.ds.prometheus.flavor."+variant+".count"] = count
 	}
 
 	// send access counters for each data source

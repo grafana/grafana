@@ -46,7 +46,8 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 ## Grafana Alerting - main / unreleased
 
 - [CHANGE] Prometheus Compatible API: Use float-like values for `api/prometheus/grafana/api/v1/alerts` and `api/prometheus/grafana/api/v1/rules` instead of the evaluation string #47216
+- [CHANGE] Notification URL points to alert view page instead of alert edit page. #47752
 - [BUGFIX] (Legacy) Templates: Parse notification templates using all the matches of the alert rule when going from `Alerting` to `OK` in legacy alerting #47355
 - [BUGFIX] Scheduler: Fix state manager to support OK option of `AlertRule.ExecErrState` #47670 
 - [ENHANCEMENT] Templates: Enable the use of classic condition values in templates #46971
-- [ENHANCEMENT] Migrations: Keep UA data when downgrading to legacy alerting, provide a flag to wipe out UA data #
+- [ENHANCEMENT] Migrations: Keep UA data when downgrading to legacy alerting, provide a flag to wipe out UA data #47970
