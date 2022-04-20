@@ -1,5 +1,6 @@
 import React from 'react';
 import { Provider } from 'react-redux';
+import { useEffectOnce } from 'react-use';
 import { render, screen } from '@testing-library/react';
 import { Props, UnthemedDashboardPage } from './DashboardPage';
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
@@ -17,7 +18,10 @@ import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { setDashboardSrv } from '../services/DashboardSrv';
 
 jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
-  const LazyLoader = ({ children }: Pick<LazyLoaderProps, 'children'>) => {
+  const LazyLoader = ({ children, onLoad }: Pick<LazyLoaderProps, 'children' | 'onLoad'>) => {
+    useEffectOnce(() => {
+      onLoad?.();
+    });
     return <>{typeof children === 'function' ? children({ isInView: true }) : children}</>;
   };
   return { LazyLoader };
