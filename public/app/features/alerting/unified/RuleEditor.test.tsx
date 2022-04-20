@@ -1,4 +1,4 @@
-import { Matcher, render, waitFor } from '@testing-library/react';
+import { Matcher, render, waitFor, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { BackendSrv, locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
@@ -249,6 +249,9 @@ describe('RuleEditor', () => {
     const folderInput = await ui.inputs.folder.find();
     await clickSelectOption(folderInput, 'Folder A');
 
+    const groupInput = screen.getByRole('textbox', { name: /^Group/ });
+    userEvent.type(groupInput, 'my group');
+
     userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
     userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
 
@@ -268,7 +271,7 @@ describe('RuleEditor', () => {
       'Folder A',
       {
         interval: '1m',
-        name: 'my great new rule',
+        name: 'my group',
         rules: [
           {
             annotations: { description: 'some description', summary: 'some summary' },

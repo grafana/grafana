@@ -86,7 +86,7 @@ describe('AddToDashboardButton', () => {
 
         await openModal();
 
-        userEvent.click(screen.getByRole('button', { name: /open$/i }));
+        userEvent.click(screen.getByRole('button', { name: /open dashboard$/i }));
 
         await waitForAddToDashboardResponse();
 
@@ -138,7 +138,7 @@ describe('AddToDashboardButton', () => {
 
           await openModal();
 
-          userEvent.click(screen.getByRole('button', { name: /open$/i }));
+          userEvent.click(screen.getByRole('button', { name: /open dashboard$/i }));
 
           await waitForAddToDashboardResponse();
 
@@ -170,7 +170,7 @@ describe('AddToDashboardButton', () => {
 
         userEvent.click(screen.getByRole<HTMLInputElement>('radio', { name: /existing dashboard/i }));
 
-        userEvent.click(screen.getByRole('button', { name: /open$/i }));
+        userEvent.click(screen.getByRole('button', { name: /open dashboard$/i }));
         await waitForAddToDashboardResponse();
 
         expect(locationService.push).not.toHaveBeenCalled();
@@ -255,7 +255,7 @@ describe('AddToDashboardButton', () => {
           });
           userEvent.click(screen.getByLabelText('Select option'));
 
-          userEvent.click(screen.getByRole('button', { name: /open$/i }));
+          userEvent.click(screen.getByRole('button', { name: /open dashboard$/i }));
 
           await waitFor(async () => {
             expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

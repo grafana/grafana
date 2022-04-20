@@ -310,6 +310,7 @@ export class BackendSrv implements BackendService {
     this.dependencies.appEvents.emit(err.status < 500 ? AppEvents.alertWarning : AppEvents.alertError, [
       message,
       description,
+      err.data.traceID,
     ]);
   }
 

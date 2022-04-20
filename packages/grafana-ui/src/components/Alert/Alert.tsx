@@ -22,7 +22,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   topSpacing?: number;
 }
 
-function getIconFromSeverity(severity: AlertVariant): string {
+export function getIconFromSeverity(severity: AlertVariant): string {
   switch (severity) {
     case 'error':
     case 'warning':
@@ -150,7 +150,7 @@ const getStyles = (
       color: ${theme.colors.text.secondary};
       padding-top: ${theme.spacing(1)};
       max-height: 50vh;
-      overflow-y: scroll;
+      overflow-y: auto;
     `,
     buttonWrapper: css`
       padding: ${theme.spacing(1)};
