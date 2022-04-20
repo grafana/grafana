@@ -126,10 +126,6 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *models.ReqContext) response.Respo
 }
 
 func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
-	if !c.HasUserRole(models.ROLE_EDITOR) {
-		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
-	}
-
 	err := postableSilence.Validate(strfmt.Default)
 	if err != nil {
 		srv.log.Error("argument failed validation", "err", err)
