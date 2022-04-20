@@ -118,7 +118,6 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
       activeDatasourceOnly: store.getObject(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, false),
       retentionPeriod: store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7),
       starredTabAsFirstTab: store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false),
-      // Locally items are saved as selectable values, for backwards compatibility
       lastUsedDatasourceFilters: store
         .getObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, [])
         .map((selectableValue: SelectableValue) => selectableValue.value),
