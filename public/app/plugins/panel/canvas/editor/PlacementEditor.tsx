@@ -14,11 +14,13 @@ const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width
 const horizontalOptions: Array<SelectableValue<HorizontalConstraint>> = [
   { label: 'Left', value: HorizontalConstraint.Left },
   { label: 'Right', value: HorizontalConstraint.Right },
+  { label: 'Left and right', value: HorizontalConstraint.LeftRight },
 ];
 
 const verticalOptions: Array<SelectableValue<VerticalConstraint>> = [
   { label: 'Top', value: VerticalConstraint.Top },
   { label: 'Bottom', value: VerticalConstraint.Bottom },
+  { label: 'Top and bottom', value: VerticalConstraint.TopBottom },
 ];
 
 export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, PanelOptions>> = ({
