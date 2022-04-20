@@ -168,7 +168,7 @@ function useOperationsHighlight(operations: QueryBuilderOperation[]) {
   return newOps;
 }
 
-function isSameOp(op1?: string, op2: string) {
+function isSameOp(op1?: string, op2?: string) {
   return op1 === op2 || `__${op1}_by` === op2 || op1 === `__${op2}_by`;
 }
 
