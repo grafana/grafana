@@ -37,6 +37,9 @@ const setup = (propOverrides: Partial<Props>) => {
     includeExpired: false,
     includeExpiredDisabled: false,
     toggleIncludeExpired: toggleIncludeExpiredMock,
+    canRead: true,
+    canCreate: true,
+    canDelete: true,
   };
 
   Object.assign(props, propOverrides);
