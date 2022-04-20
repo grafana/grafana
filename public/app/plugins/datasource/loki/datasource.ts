@@ -571,7 +571,7 @@ export class LokiDatasource
       };
     };
 
-    // i think this can only be called from explore currently
+    // this can only be called from explore currently
     const app = CoreApp.Explore;
 
     return lastValueFrom(
