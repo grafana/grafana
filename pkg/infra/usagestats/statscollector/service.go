@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,7 +26,7 @@ type Service struct {
 	social             social.Service
 	usageStats         usagestats.Service
 	features           *featuremgmt.FeatureManager
-	datasources        *datasourceservice.Service
+	datasources        datasources.DataSourceService
 	httpClientProvider httpclient.Provider
 
 	log log.Logger
@@ -43,7 +43,7 @@ func ProvideService(
 	social social.Service,
 	plugins plugins.Store,
 	features *featuremgmt.FeatureManager,
-	datasourceService *datasourceservice.Service,
+	datasourceService datasources.DataSourceService,
 	httpClientProvider httpclient.Provider,
 ) *Service {
 	s := &Service{

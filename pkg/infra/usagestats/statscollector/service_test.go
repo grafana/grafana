@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -16,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -358,5 +358,15 @@ func createService(t testing.TB, cfg *setting.Cfg, store sqlstore.Store) *Servic
 		&mockSocial{},
 		&fakePluginStore{},
 		featuremgmt.WithFeatures("feature1", "feature2"),
+		mockDatasourceService{},
+		nil,
 	)
+}
+
+type mockDatasourceService struct {
+	datasources.DataSourceService
+}
+
+func (mockDatasourceService) GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
+	return nil
 }
