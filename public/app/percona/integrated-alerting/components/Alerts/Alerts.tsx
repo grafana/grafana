@@ -2,10 +2,10 @@
 import { cx } from '@emotion/css';
 import { logger, Chip } from '@percona/platform-core';
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import { Cell, Column } from 'react-table';
+import { Cell, Column, Row } from 'react-table';
 
 import { AppEvents } from '@grafana/data';
-import { Button, useStyles } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
 import { SilenceBell } from 'app/percona/shared/components/Elements/SilenceBell';
@@ -42,7 +42,7 @@ const {
 } = columns;
 
 export const Alerts: FC = () => {
-  const style = useStyles(getStyles);
+  const style = useStyles2(getStyles);
   const [pendingRequest, setPendingRequest] = useState(true);
   const [data, setData] = useState<Alert[]>([]);
   const [pageSize, setPageSize] = useStoredTablePageSize(ALERT_RULE_TEMPLATES_TABLE_ID);

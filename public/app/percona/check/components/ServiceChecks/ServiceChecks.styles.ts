@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ v1: { colors, spacing } }: GrafanaTheme2) => {
+export const getStyles = ({ v1: { colors: v1Colors, spacing }, colors }: GrafanaTheme2) => {
   const labelStyles = `
     margin-right: ${spacing.sm};
     margin-bottom: ${spacing.sm};
@@ -15,9 +15,9 @@ export const getStyles = ({ v1: { colors, spacing } }: GrafanaTheme2) => {
 
   return {
     link: css`
-      color: ${colors.linkExternal};
+      color: ${v1Colors.linkExternal};
       &:hover {
-        color: ${colors.textBlue};
+        color: ${v1Colors.textBlue};
       }
     `,
     chips: css`
@@ -36,7 +36,8 @@ export const getStyles = ({ v1: { colors, spacing } }: GrafanaTheme2) => {
       justify-content: center;
     `,
     disabledRow: css`
-      background-color: ${colors.dashboardBg} !important;
+      background-color: ${colors.action.disabledBackground} !important;
+      opacity: ${colors.action.disabledOpacity};
     `,
     secondaryLabels: css`
       ${labelContainer};

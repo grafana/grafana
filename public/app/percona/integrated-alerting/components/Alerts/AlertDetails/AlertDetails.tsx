@@ -1,7 +1,7 @@
 import { Chip } from '@percona/platform-core';
 import React, { FC } from 'react';
 
-import { useStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { getStyles as getMainStyles } from '../Alerts.styles';
 
@@ -10,8 +10,8 @@ import { getStyles } from './AlertDetails.styles';
 import { AlertDetailsProps } from './AlertDetails.types';
 
 export const AlertDetails: FC<AlertDetailsProps> = ({ ruleExpression = '', labels }) => {
-  const styles = useStyles(getStyles);
-  const mainStyles = useStyles(getMainStyles);
+  const styles = useStyles2(getStyles);
+  const mainStyles = useStyles2(getMainStyles);
 
   return (
     <div data-testid="alert-details-wrapper" className={styles.wrapper}>
