@@ -61,6 +61,7 @@ RUN apk add --no-cache ca-certificates bash tzdata musl-utils
 RUN apk add --no-cache openssl ncurses-libs ncurses-terminfo-base --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
 RUN apk upgrade ncurses-libs ncurses-terminfo-base --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
 RUN apk info -vv | sort
+RUN apk --purge del apk-tools
 
 COPY conf ./conf
 
