@@ -10,7 +10,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -594,7 +596,6 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 }
 
 func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
-	// TODO: probably here to include a accesscontrol check for listing only users you are allowed to see.
 	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
 		query.Result = models.SearchUserQueryResult{
 			Users: make([]*models.UserSearchHitDTO, 0),
@@ -619,6 +620,21 @@ func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQu
 		if query.OrgId > 0 {
 			whereConditions = append(whereConditions, "org_id = ?")
 			whereParams = append(whereParams, query.OrgId)
+		}
+
+		// user only sees the users in which it has user read access too
+		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) && query.SignedInUser != nil {
+			acFilter, err := accesscontrol.Filter(
+				query.SignedInUser,
+				"u.id",
+				"users:id:",
+				accesscontrol.ActionOrgUsersRead,
+			)
+			if err != nil {
+				return err
+			}
+			whereConditions = append(whereConditions, acFilter.Where)
+			whereParams = append(whereParams, acFilter.Args...)
 		}
 
 		if query.Query != "" {
