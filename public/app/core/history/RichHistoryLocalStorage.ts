@@ -3,10 +3,13 @@ import { RichHistoryQuery } from '../../types';
 import store from '../store';
 import { DataQuery, SelectableValue } from '@grafana/data';
 import { find, isEqual, omit } from 'lodash';
-import { createRetentionPeriodBoundary, RICH_HISTORY_SETTING_KEYS } from './richHistoryLocalStorageUtils';
+import {
+  createRetentionPeriodBoundary,
+  filterAndSortQueries,
+  RICH_HISTORY_SETTING_KEYS,
+} from './richHistoryLocalStorageUtils';
 import { fromDTO, toDTO } from './localStorageConverter';
 import { RichHistorySearchFilters, RichHistorySettings } from '../utils/richHistoryTypes';
-import { filterAndSortQueries } from '../utils/richHistory';
 
 export const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 export const MAX_HISTORY_ITEMS = 10000;

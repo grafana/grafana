@@ -126,23 +126,6 @@ export async function deleteQueryInRichHistory(id: string) {
   }
 }
 
-// CODE: move it to getRichHistory in persistence layer
-export function filterAndSortQueries(
-  queries: RichHistoryQuery[],
-  sortOrder: SortOrder,
-  listOfDatasourceFilters: string[],
-  searchFilter: string,
-  timeFilter?: [number, number]
-) {
-  const filteredQueriesByDs = filterQueriesByDataSource(queries, listOfDatasourceFilters);
-  const filteredQueriesByDsAndSearchFilter = filterQueriesBySearchFilter(filteredQueriesByDs, searchFilter);
-  const filteredQueriesToBeSorted = timeFilter
-    ? filterQueriesByTime(filteredQueriesByDsAndSearchFilter, timeFilter)
-    : filteredQueriesByDsAndSearchFilter;
-
-  return sortQueries(filteredQueriesToBeSorted, sortOrder);
-}
-
 export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
   const exploreState: ExploreUrlState = {
     /* Default range, as we are not saving timerange in rich history */
