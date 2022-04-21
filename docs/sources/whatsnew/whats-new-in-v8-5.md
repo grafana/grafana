@@ -36,7 +36,7 @@ When enabled, a check runs every 10 minutes. It will notify, via the UI, when a 
 
 Plugin update available:
 
-{{< figure src="/static/img/docs/analytics/github-plugin-update-available-8-5.png" max-width="150x" caption="Plugin-available" >}}
+{{< figure src="/static/img/docs/analytics/github-plugin-update-available-8-5.png" max-width="450px" caption="Grafana-update-available" >}}
 
 Grafana update available:
 
@@ -68,9 +68,9 @@ A new transformation is available that helps you structure data in a matrix form
 
 Available by switching on the ‘newNavigation’ feature toggle.
 You can expand the navigation bar for a better overview of Grafana’s features and installed integrations.
-This feature is currently in a beta version and we would appreciate your feedback. [Sign up for a call with the Grafana team](https://www.userinterviews.com/projects/Hz3DyNNwWA/apply) - it only takes 30 minutes, and you'll receive a $40 USD gift card as a token of appreciation for your time.
-US, UK, Canada, Australia, France, Germany, or South Africa: sign up here
-Everywhere else in the world: sign up here
+This feature is currently in a beta version and we would appreciate your feedback. Sign up for a call with the Grafana team - it only takes 30 minutes, and you'll receive a $40 USD gift card as a token of appreciation for your time.
+US, UK, Canada, Australia, France, Germany, or South Africa: sign up [here](https://www.userinterviews.com/projects/Hz3DyNNwWA/apply);
+Everywhere else in the world: sign up [here](https://www.userinterviews.com/projects/Hz3DyNNwWA/apply.)
 
 {{< figure src="/static/img/docs/navigation/new-navigation-8-5.png" max-width="400px" caption="New nav panel" >}}
 
@@ -79,7 +79,7 @@ Everywhere else in the world: sign up here
 Available by switching on the ‘persistNotifications’ feature toggle.
 In order to support debugging issues in Grafana, error alerts that appear when viewing a dashboard now include a trace ID, and these alerts can be accessed under Profile / Notifications.
 
-{{< figure src="/static/img/docs/navigation/nav-profile-notification-8-5.png" max-width="400px" caption="Alert error list" >}}
+{{< figure src="/static/img/docs/navigation/nav-profile-notification-8-5.png" max-width="200px" caption="New nav panel" >}}
 
 ## Service accounts (beta)
 
