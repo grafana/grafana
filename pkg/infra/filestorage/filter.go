@@ -3,7 +3,6 @@ package filestorage
 import (
 	"strings"
 
-	"github.com/armon/go-radix"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -23,6 +22,11 @@ type PathFilter interface {
 	asSQLFilter() accesscontrol.SQLFilter
 }
 
+// NewPathFilter factory function for a tree-based PathFilter
+// `nil` and empty arrays are treated in a different way. The PathFilter will not perform checks associated with a `nil` array, examples:
+//   - `allowedPrefixes` & `allowedPaths` are nil -> all paths are allowed (unless included in `disallowedX` arrays)
+//   - `allowedPrefixes` & `allowedPaths` are both empty -> no paths are allowed, regardless of what is inside `disallowedX` arrays
+//   - `allowedPrefixes` is nil, `allowedPaths` is not nil. -> only paths specified in `allowedPaths` are allowed (unless included in `disallowedX` arrays)
 func NewPathFilter(allowedPrefixes []string, allowedPaths []string, disallowedPrefixes []string, disallowedPaths []string) PathFilter {
 	if allowedPrefixes != nil && allowedPaths != nil && (len(allowedPrefixes)+len(allowedPaths) == 0) {
 		return NewDenyAllPathFilter()
