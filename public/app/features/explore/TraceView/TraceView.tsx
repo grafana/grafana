@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import {
   DataFrame,
   DataLink,
@@ -221,13 +222,20 @@ function useFocusSpanLink(options: {
   );
 
   const createFocusSpanLink = (traceId: string, spanId: string) => {
+    let tempQuery: any;
+
+    if ('queryType' in query && query.queryType === 'traceId' && query.query !== traceId) {
+      tempQuery = cloneDeep(query);
+      tempQuery.query = traceId;
+    }
+
     const link: DataLink = {
       title: 'Deep link to this span',
       url: '',
       internal: {
         datasourceUid: options.datasource?.uid!,
         datasourceName: options.datasource?.name!,
-        query: query,
+        query: tempQuery || query,
         panelsState: {
           trace: {
             spanId,
