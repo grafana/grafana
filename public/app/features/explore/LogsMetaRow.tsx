@@ -58,7 +58,7 @@ export const LogsMetaRow: React.FC<Props> = React.memo(
           label: '',
           value: (
             <Button variant="secondary" size="sm" onClick={clearDetectedFields}>
-              Show all detected fields
+              Show original line
             </Button>
           ),
         }
