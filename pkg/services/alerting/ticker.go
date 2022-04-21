@@ -21,12 +21,26 @@ type Ticker struct {
 	interval time.Duration
 }
 
-var behindTicksGauge = promauto.NewGauge(prometheus.GaugeOpts{
-	Namespace: "grafana",
-	Subsystem: "alerting",
-	Name:      "ticker_behind_ticks",
-	Help:      "The number of ticks the ticker is lagging behind",
-})
+var (
+	lastTick = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "grafana",
+		Subsystem: "alerting",
+		Name:      "ticker_last_consumed_tick",
+		Help:      "Timestamp of the last consumed tick",
+	})
+	nextTick = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "grafana",
+		Subsystem: "alerting",
+		Name:      "ticker_next_tick",
+		Help:      "Timestamp of the next tick",
+	})
+	interval = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "grafana",
+		Subsystem: "alerting",
+		Name:      "ticker_interval",
+		Help:      "Duration of the ticker interval",
+	})
+)
 
 // NewTicker returns a Ticker that ticks on interval marks (or very shortly after) starting at c.Now(), and never drops ticks. interval should not be negative or zero.
 func NewTicker(c clock.Clock, interval time.Duration) *Ticker {
@@ -45,14 +59,16 @@ func NewTicker(c clock.Clock, interval time.Duration) *Ticker {
 }
 
 func (t *Ticker) run() {
+	interval.Set(t.interval.Seconds()) // Seconds report fractional part as well, so it matches the format of the timestamp we report below
 	for {
-		next := t.last.Add(t.interval)  // calculate the time of the next tick
+		next := t.last.Add(t.interval) // calculate the time of the next tick
+		nextTick.Set(float64(next.UnixNano()) / 1e9)
 		diff := t.clock.Now().Sub(next) // calculate the difference between the current time and the next tick
-		behindTicksGauge.Set(float64(diff.Nanoseconds() / t.interval.Nanoseconds()))
 		// if difference is not negative, then it should tick
 		if diff >= 0 {
 			t.C <- next
 			t.last = next
+			lastTick.Set(float64(next.UnixNano()) / 1e9)
 			continue
 		}
 		// tick is too young. try again when ...
