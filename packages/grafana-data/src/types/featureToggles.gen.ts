@@ -19,7 +19,7 @@ export interface FeatureToggles {
   trimDefaults?: boolean;
   envelopeEncryption?: boolean;
   httpclientprovider_azure_auth?: boolean;
-  ['service-accounts']?: boolean;
+  serviceAccounts?: boolean;
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
   dashboardPreviewsScheduler?: boolean;
