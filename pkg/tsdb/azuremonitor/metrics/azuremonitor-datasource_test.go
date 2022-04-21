@@ -218,19 +218,19 @@ func makeTestDataLink(url string) data.DataLink {
 func TestAzureMonitorParseResponse(t *testing.T) {
 	// datalinks for the test frames
 	averageLink := makeTestDataLink(`http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/` +
-		`ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F%2FresourceGroups%2F%2Fproviders%2F%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C` +
+		`ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C` +
 		`%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D`)
 	totalLink := makeTestDataLink(`http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/` +
-		`ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F%2FresourceGroups%2F%2Fproviders%2F%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A1%2C%22namespace%22%3A%22%22%2C` +
+		`ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A1%2C%22namespace%22%3A%22%22%2C` +
 		`%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D`)
 	maxLink := makeTestDataLink(`http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/` +
-		`ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F%2FresourceGroups%2F%2Fproviders%2F%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A3%2C%22namespace%22%3A%22%22%2C` +
+		`ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A3%2C%22namespace%22%3A%22%22%2C` +
 		`%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D`)
 	minLink := makeTestDataLink(`http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/` +
-		`ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F%2FresourceGroups%2F%2Fproviders%2F%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A2%2C%22namespace%22%3A%22%22%2C` +
+		`ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A2%2C%22namespace%22%3A%22%22%2C` +
 		`%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D`)
 	countLink := makeTestDataLink(`http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/` +
-		`ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F%2FresourceGroups%2F%2Fproviders%2F%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A7%2C%22namespace%22%3A%22%22%2C` +
+		`ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A7%2C%22namespace%22%3A%22%22%2C` +
 		`%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D`)
 
 	tests := []struct {
@@ -246,6 +246,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			mockQuery: &types.AzureMonitorQuery{
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
+					"resourceURI":  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
 				},
 				Params: url.Values{
 					"aggregation": {"Average"},
@@ -267,6 +268,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			mockQuery: &types.AzureMonitorQuery{
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
+					"resourceURI":  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
 				},
 				Params: url.Values{
 					"aggregation": {"Total"},
@@ -288,6 +290,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			mockQuery: &types.AzureMonitorQuery{
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
+					"resourceURI":  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
 				},
 				Params: url.Values{
 					"aggregation": {"Maximum"},
@@ -309,6 +312,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			mockQuery: &types.AzureMonitorQuery{
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
+					"resourceURI":  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
 				},
 				Params: url.Values{
 					"aggregation": {"Minimum"},
@@ -330,6 +334,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			mockQuery: &types.AzureMonitorQuery{
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
+					"resourceURI":  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
 				},
 				Params: url.Values{
 					"aggregation": {"Count"},
@@ -351,6 +356,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			mockQuery: &types.AzureMonitorQuery{
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
+					"resourceURI":  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
 				},
 				Params: url.Values{
 					"aggregation": {"Average"},
@@ -386,6 +392,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Alias: "custom {{resourcegroup}} {{namespace}} {{resourceName}} {{metric}}",
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
+					"resourceURI":  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
 				},
 				Params: url.Values{
 					"aggregation": {"Total"},
@@ -408,6 +415,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Alias: "{{dimensionname}}={{DimensionValue}}",
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
+					"resourceURI":  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
 				},
 				Params: url.Values{
 					"aggregation": {"Average"},
@@ -445,6 +453,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Alias: "{{resourcegroup}} {Blob Type={{blobtype}}, Tier={{Tier}}}",
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
+					"resourceURI":  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
 				},
 				Params: url.Values{
 					"aggregation": {"Average"},
@@ -483,6 +492,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Alias: "custom",
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
+					"resourceURI":  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
 				},
 				Params: url.Values{
 					"aggregation": {"Average"},
@@ -496,6 +506,57 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 					data.NewField("Percentage CPU", nil, []*float64{
 						ptr.Float64(2.0875),
 					}).SetConfig(&data.FieldConfig{DisplayName: "custom", Links: []data.DataLink{averageLink}})),
+			},
+		},
+		{
+			name:         "with legacy azure monitor query properties and without a resource uri",
+			responseFile: "2-azure-monitor-response-total.json",
+			mockQuery: &types.AzureMonitorQuery{
+				Alias: "custom {{resourcegroup}} {{namespace}} {{resourceName}} {{metric}}",
+				UrlComponents: map[string]string{
+					"subscription":     "12345678-aaaa-bbbb-cccc-123456789abc",
+					"resourceGroup":    "grafanastaging",
+					"metricDefinition": "Microsoft.Compute/virtualMachines",
+					"resourceName":     "grafana",
+				},
+				Params: url.Values{
+					"aggregation": {"Total"},
+				},
+			},
+			expectedFrames: data.Frames{
+				data.NewFrame("",
+					data.NewField("Time", nil,
+						makeDates(time.Date(2019, 2, 9, 13, 29, 0, 0, time.UTC), 5, time.Minute),
+					).SetConfig(&data.FieldConfig{Links: []data.DataLink{totalLink}}),
+					data.NewField("Percentage CPU", nil, []*float64{
+						ptr.Float64(8.26), ptr.Float64(8.7), ptr.Float64(14.82), ptr.Float64(10.07), ptr.Float64(8.52),
+					}).SetConfig(&data.FieldConfig{Unit: "percent", DisplayName: "custom grafanastaging Microsoft.Compute/virtualMachines grafana Percentage CPU", Links: []data.DataLink{totalLink}})),
+			},
+		},
+		{
+			name:         "with legacy azure monitor query properties and with a resource uri it should use the resource uri",
+			responseFile: "2-azure-monitor-response-total.json",
+			mockQuery: &types.AzureMonitorQuery{
+				Alias: "custom {{resourcegroup}} {{namespace}} {{resourceName}} {{metric}}",
+				UrlComponents: map[string]string{
+					"resourceURI":      "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
+					"subscription":     "12345678-aaaa-bbbb-cccc-123456789abc-nope",
+					"resourceGroup":    "grafanastaging-nope",
+					"metricDefinition": "Microsoft.Compute/virtualMachines-nope",
+					"resourceName":     "grafana",
+				},
+				Params: url.Values{
+					"aggregation": {"Total"},
+				},
+			},
+			expectedFrames: data.Frames{
+				data.NewFrame("",
+					data.NewField("Time", nil,
+						makeDates(time.Date(2019, 2, 9, 13, 29, 0, 0, time.UTC), 5, time.Minute),
+					).SetConfig(&data.FieldConfig{Links: []data.DataLink{totalLink}}),
+					data.NewField("Percentage CPU", nil, []*float64{
+						ptr.Float64(8.26), ptr.Float64(8.7), ptr.Float64(14.82), ptr.Float64(10.07), ptr.Float64(8.52),
+					}).SetConfig(&data.FieldConfig{Unit: "percent", DisplayName: "custom grafanastaging Microsoft.Compute/virtualMachines grafana Percentage CPU", Links: []data.DataLink{totalLink}})),
 			},
 		},
 	}

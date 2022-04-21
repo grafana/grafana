@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -32,7 +33,8 @@ type AzureMonitorDatasource struct {
 
 var (
 	// Used to convert the aggregation value to the Azure enum for deep linking
-	aggregationTypeMap = map[string]int{"None": 0, "Total": 1, "Minimum": 2, "Maximum": 3, "Average": 4, "Count": 7}
+	aggregationTypeMap   = map[string]int{"None": 0, "Total": 1, "Minimum": 2, "Maximum": 3, "Average": 4, "Count": 7}
+	resourceNameLandmark = regexp.MustCompile(`(?i)(/\w+/providers/Microsoft\.Insights/metrics)`)
 )
 
 const azureMonitorAPIVersion = "2018-01-01"
@@ -74,14 +76,6 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 
 		azJSONModel := queryJSONModel.AzureMonitor
 
-		urlComponents := map[string]string{}
-		urlComponents["resourceURI"] = azJSONModel.ResourceURI
-		// Legacy fields used for constructing a deep link to display the query in Azure Portal.
-		urlComponents["subscription"] = queryJSONModel.Subscription
-		urlComponents["resourceGroup"] = azJSONModel.ResourceGroup
-		urlComponents["metricDefinition"] = azJSONModel.MetricDefinition
-		urlComponents["resourceName"] = azJSONModel.ResourceName
-
 		ub := urlBuilder{
 			ResourceURI: azJSONModel.ResourceURI,
 			// Legacy, used to reconstruct resource URI if it's not present
@@ -92,6 +86,23 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 			ResourceName:        azJSONModel.ResourceName,
 		}
 		azureURL := ub.BuildMetricsURL()
+
+		resourceName := azJSONModel.ResourceName
+		if resourceName == "" {
+			match := resourceNameLandmark.FindString(azureURL)
+			if match != "" {
+				index := strings.Index(match, "/providers/Microsoft.Insights/metrics")
+				resourceName = match[1:index]
+			}
+		}
+
+		urlComponents := map[string]string{}
+		urlComponents["resourceURI"] = azJSONModel.ResourceURI
+		// Legacy fields used for constructing a deep link to display the query in Azure Portal.
+		urlComponents["subscription"] = queryJSONModel.Subscription
+		urlComponents["resourceGroup"] = azJSONModel.ResourceGroup
+		urlComponents["metricDefinition"] = azJSONModel.MetricDefinition
+		urlComponents["resourceName"] = resourceName
 
 		alias := azJSONModel.Alias
 
@@ -349,7 +360,7 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl string) (string,
 			MetricDefinition: query.UrlComponents["metricDefinition"],
 			ResourceName:     query.UrlComponents["resourceName"],
 		}
-		id = ub.BuildResourceURIFromLegacyQuery()
+		id = ub.buildResourceURIFromLegacyQuery()
 	}
 
 	chartDef, err := json.Marshal(map[string]interface{}{
