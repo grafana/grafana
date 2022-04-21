@@ -14,12 +14,12 @@ describe('Unified Alerting promotion', () => {
     expect(screen.queryByText('Try out the Grafana 8 alerting!')).toBeInTheDocument();
   });
 
-  it('should be hidden if dismissed', () => {
+  it('should be hidden if dismissed', async () => {
     const promotion = render(<UnifiedAlertingPromotion />);
     expect(window.localStorage.getItem(LOCAL_STORAGE_KEY)).toBe('true');
 
     const dismissButton = promotion.getByRole('button');
-    userEvent.click(dismissButton);
+    await userEvent.click(dismissButton);
 
     expect(screen.queryByText('Try out the Grafana 8 alerting!')).not.toBeInTheDocument();
     expect(window.localStorage.getItem(LOCAL_STORAGE_KEY)).toBe('false');

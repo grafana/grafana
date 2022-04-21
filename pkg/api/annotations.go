@@ -273,7 +273,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 	repo := annotations.GetRepository()
 	var deleteParams *annotations.DeleteParams
 
-	// validations only for FGAC. A user can mass delete all annotations in a (dashboard + panel) or a specific annotation
+	// validations only for RBAC. A user can mass delete all annotations in a (dashboard + panel) or a specific annotation
 	// if has access to that dashboard.
 	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
 		var dashboardId int64

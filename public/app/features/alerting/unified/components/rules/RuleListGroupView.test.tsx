@@ -18,7 +18,7 @@ const ui = {
 };
 
 describe('RuleListGroupView', () => {
-  describe('FGAC', () => {
+  describe('RBAC', () => {
     jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
 
     it('Should display Grafana rules when the user has the alert rule read permission', () => {

@@ -191,7 +191,7 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	})
 }
 
-func TestGetTeamMembersAPIEndpoint_FGAC(t *testing.T) {
+func TestGetTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	sc.hs.License = &licensing.OSSLicensingService{}
 
@@ -245,7 +245,7 @@ func TestGetTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	})
 }
 
-func TestAddTeamMembersAPIEndpoint_FGAC(t *testing.T) {
+func TestAddTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	sc.hs.License = &licensing.OSSLicensingService{}
 
@@ -325,7 +325,7 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	})
 }
 
-func TestUpdateTeamMembersAPIEndpoint_FGAC(t *testing.T) {
+func TestUpdateTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	sc.hs.License = &licensing.OSSLicensingService{}
 
@@ -399,7 +399,7 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	})
 }
 
-func TestDeleteTeamMembersAPIEndpoint_FGAC(t *testing.T) {
+func TestDeleteTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	sc.hs.License = &licensing.OSSLicensingService{}
 
