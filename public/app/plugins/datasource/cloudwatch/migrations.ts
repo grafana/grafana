@@ -1,5 +1,8 @@
+import { omit } from 'lodash';
+
 import { AnnotationQuery, DataQuery } from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
+
 
 import {
   MetricEditorMode,
@@ -8,6 +11,7 @@ import {
   MetricQueryType,
   VariableQuery,
   VariableQueryType,
+  OldVariableQuery,
 } from './types';
 
 // Migrates a metric query that use more than one statistic into multiple queries
@@ -70,10 +74,38 @@ export function migrateCloudWatchQuery(query: CloudWatchMetricsQuery) {
   }
 }
 
-export function migrateVariableQuery(rawQuery: string | VariableQuery): VariableQuery {
-  if (typeof rawQuery !== 'string') {
+function isVariableQuery(rawQuery: string | VariableQuery | OldVariableQuery): rawQuery is VariableQuery {
+  return typeof rawQuery !== 'string' && typeof rawQuery.ec2Filters !== 'string' && typeof rawQuery.tags !== 'string';
+}
+
+export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVariableQuery): VariableQuery {
+  if (isVariableQuery(rawQuery)) {
     return rawQuery;
   }
+
+  // rawQuery is OldVariableQuery
+  if (typeof rawQuery !== 'string') {
+    const newQuery: VariableQuery = omit(rawQuery, ['ec2Filters', 'tags']);
+    newQuery.ec2Filters = {};
+    newQuery.tags = {};
+
+    if (rawQuery.ec2Filters !== '') {
+      try {
+        newQuery.ec2Filters = JSON.parse(rawQuery.ec2Filters);
+      } catch {
+        throw new Error(`unable to migrate poorly formed filters: ${rawQuery.ec2Filters}`);
+      }
+    }
+    if (rawQuery.tags !== '') {
+      try {
+        newQuery.tags = JSON.parse(rawQuery.tags);
+      } catch {
+        throw new Error(`unable to migrate poorly formed filters: ${rawQuery.tags}`);
+      }
+    }
+    return newQuery;
+  }
+
   const newQuery: VariableQuery = {
     refId: 'CloudWatchVariableQueryEditor-VariableQuery',
     queryType: VariableQueryType.Regions,

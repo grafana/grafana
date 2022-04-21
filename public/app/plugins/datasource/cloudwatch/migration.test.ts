@@ -12,6 +12,7 @@ import {
   MetricQueryType,
   MetricEditorMode,
   VariableQueryType,
+  OldVariableQuery,
 } from './types';
 
 describe('migration', () => {
@@ -243,6 +244,29 @@ describe('migration', () => {
       expect(query.region).toBe('us-east-1');
       expect(query.attributeName).toBe('rds:db');
       expect(query.ec2Filters).toStrictEqual({ environment: ['$environment'] });
+    });
+  });
+  describe('when OldVariableQuery is used', () => {
+    it('should parse the query', () => {
+      const oldQuery: OldVariableQuery = {
+        queryType: VariableQueryType.EC2InstanceAttributes,
+        namespace: '',
+        region: 'us-east-1',
+        metricName: '',
+        dimensionKey: '',
+        ec2Filters: '{"environment":["$environment"]}',
+        instanceID: '',
+        attributeName: 'rds:db',
+        resourceType: 'elasticloadbalancing:loadbalancer',
+        tags: '{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]}',
+        refId: '',
+      };
+      const query = migrateVariableQuery(oldQuery);
+      expect(query.region).toBe('us-east-1');
+      expect(query.attributeName).toBe('rds:db');
+      expect(query.ec2Filters).toStrictEqual({ environment: ['$environment'] });
+      expect(query.resourceType).toBe('elasticloadbalancing:loadbalancer');
+      expect(query.tags).toStrictEqual({ 'elasticbeanstalk:environment-name': ['myApp-dev', 'myApp-prod'] });
     });
   });
 });

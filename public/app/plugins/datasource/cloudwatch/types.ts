@@ -391,6 +391,20 @@ export enum VariableQueryType {
   Statistics = 'statistics',
 }
 
+export interface OldVariableQuery extends DataQuery {
+  queryType: VariableQueryType;
+  namespace: string;
+  region: string;
+  metricName: string;
+  dimensionKey: string;
+  dimensionFilters?: Dimensions;
+  ec2Filters: string;
+  instanceID: string;
+  attributeName: string;
+  resourceType: string;
+  tags: string;
+}
+
 export interface VariableQuery extends DataQuery {
   queryType: VariableQueryType;
   namespace: string;
