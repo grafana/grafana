@@ -14,6 +14,7 @@ import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { changeEditorMode, getQueryWithDefaults } from '../state';
 import { PromQuery } from '../../types';
+import { FeedbackLink } from '../shared/FeedbackLink';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { onChange, onRunQuery, data } = props;
@@ -44,8 +45,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 
   const onQueryPreviewChange = (event: SyntheticEvent<HTMLInputElement>) => {
     const isEnabled = event.currentTarget.checked;
-    onChange({ ...query, editorPreview: isEnabled });
-    onRunQuery();
+    onChange({ ...query, rawQuery: isEnabled });
   };
 
   const onChangeInternal = (query: PromQuery) => {
@@ -67,16 +67,6 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
         onDismiss={() => setParseModalOpen(false)}
       />
       <EditorHeader>
-        <FlexItem grow={1} />
-        <Button
-          variant={dataIsStale ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={onRunQuery}
-          icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
-          disabled={data?.state === LoadingState.Loading}
-        >
-          Run query
-        </Button>
         {editorMode === QueryEditorMode.Builder && (
           <>
             <InlineSelect
@@ -95,14 +85,22 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
               }}
               options={promQueryModeller.getQueryPatterns().map((x) => ({ label: x.name, value: x }))}
             />
+            <QueryHeaderSwitch label="Raw query" value={query.rawQuery} onChange={onQueryPreviewChange} />
           </>
         )}
-        <QueryHeaderSwitch
-          label="Preview"
-          value={query.editorPreview}
-          onChange={onQueryPreviewChange}
-          disabled={editorMode !== QueryEditorMode.Builder}
-        />
+        {editorMode === QueryEditorMode.Builder && (
+          <FeedbackLink feedbackUrl="https://github.com/grafana/grafana/discussions/47693" />
+        )}
+        <FlexItem grow={1} />
+        <Button
+          variant={dataIsStale ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={onRunQuery}
+          icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
+          disabled={data?.state === LoadingState.Loading}
+        >
+          Run query
+        </Button>
         <QueryEditorModeToggle mode={editorMode} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />

@@ -616,6 +616,18 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			want: http.StatusForbidden,
 		},
 		{
+			name: "AccessControl create dashboard annotation with incorrect permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeOrganization,
+				}},
+				url:    "/api/annotations",
+				method: http.MethodPost,
+				body:   mockRequestBody(postDashboardCmd),
+			},
+			want: http.StatusForbidden,
+		},
+		{
 			name: "AccessControl create organization annotation with permissions is allowed",
 			args: args{
 				permissions: []*accesscontrol.Permission{{

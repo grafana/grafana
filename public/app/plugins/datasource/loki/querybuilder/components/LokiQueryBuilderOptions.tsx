@@ -58,12 +58,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onR
           />
         </EditorField>
         <EditorField label="Type">
-          <RadioButtonGroup
-            id="options.query.type"
-            options={queryTypeOptions}
-            value={queryType}
-            onChange={onQueryTypeChange}
-          />
+          <RadioButtonGroup options={queryTypeOptions} value={queryType} onChange={onQueryTypeChange} />
         </EditorField>
         {showMaxLines && (
           <EditorField label="Line limit" tooltip="Upper limit for number of log lines returned by query.">

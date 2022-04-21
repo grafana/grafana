@@ -346,15 +346,19 @@ func createSut(t *testing.T, accessControl accesscontrol.AccessControl) Alertman
 	t.Helper()
 
 	mam := createMultiOrgAlertmanager(t)
-	store := newFakeAlertingStore(t)
-	store.Setup(1)
-	store.Setup(2)
-	store.Setup(3)
+	configs := map[int64]*ngmodels.AlertConfiguration{
+		1: {AlertmanagerConfiguration: validConfig, OrgID: 1},
+		2: {AlertmanagerConfiguration: validConfig, OrgID: 2},
+		3: {AlertmanagerConfiguration: brokenConfig, OrgID: 3},
+	}
+	configStore := notifier.NewFakeConfigStore(t, configs)
 	secrets := fakes.NewFakeSecretsService()
 	if accessControl == nil {
 		accessControl = acMock.New().WithDisabled()
 	}
-	return AlertmanagerSrv{mam: mam, store: store, secrets: secrets, ac: accessControl}
+	log := log.NewNopLogger()
+	crypto := notifier.NewCrypto(secrets, &configStore, log)
+	return AlertmanagerSrv{mam: mam, crypto: crypto, ac: accessControl, log: log}
 }
 
 func createAmConfigRequest(t *testing.T) apimodels.PostableUserConfig {
@@ -392,7 +396,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 		}, // do not poll in tests.
 	}
 
-	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"))
+	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
 	require.NoError(t, err)
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)

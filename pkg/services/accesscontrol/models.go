@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -32,15 +33,15 @@ type Role struct {
 	Created time.Time `json:"created"`
 }
 
-func (r Role) Global() bool {
+func (r *Role) Global() bool {
 	return r.OrgID == GlobalOrgID
 }
 
-func (r Role) IsFixed() bool {
+func (r *Role) IsFixed() bool {
 	return strings.HasPrefix(r.Name, FixedRolePrefix)
 }
 
-func (r Role) GetDisplayName() string {
+func (r *Role) GetDisplayName() string {
 	if r.IsFixed() && r.DisplayName == "" {
 		r.DisplayName = fallbackDisplayName(r.Name)
 	}
@@ -78,7 +79,22 @@ type RoleDTO struct {
 	Created time.Time `json:"created"`
 }
 
-func (r RoleDTO) Role() Role {
+func (r *RoleDTO) LogID() string {
+	var org string
+
+	if r.Global() {
+		org = "Global"
+	} else {
+		org = fmt.Sprintf("OrgId:%v", r.OrgID)
+	}
+
+	if r.UID != "" {
+		return fmt.Sprintf("[%s RoleUID:%v]", org, r.UID)
+	}
+	return fmt.Sprintf("[%s Role:%v]", org, r.Name)
+}
+
+func (r *RoleDTO) Role() Role {
 	return Role{
 		ID:          r.ID,
 		OrgID:       r.OrgID,
@@ -94,15 +110,15 @@ func (r RoleDTO) Role() Role {
 	}
 }
 
-func (r RoleDTO) Global() bool {
+func (r *RoleDTO) Global() bool {
 	return r.OrgID == GlobalOrgID
 }
 
-func (r RoleDTO) IsFixed() bool {
+func (r *RoleDTO) IsFixed() bool {
 	return strings.HasPrefix(r.Name, FixedRolePrefix)
 }
 
-func (r RoleDTO) GetDisplayName() string {
+func (r *RoleDTO) GetDisplayName() string {
 	if r.IsFixed() && r.DisplayName == "" {
 		r.DisplayName = fallbackDisplayName(r.Name)
 	}
