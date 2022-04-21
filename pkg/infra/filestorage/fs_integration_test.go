@@ -320,7 +320,7 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:       "/dashboards/dashboards/file-inner.jpg",
-							Contents:   &[]byte{},
+							Contents:   emptyContents,
 							Properties: map[string]string{"prop1": "val1"},
 						},
 					},
