@@ -224,7 +224,8 @@ func Test_QueryData_response_data_frame_names(t *testing.T) {
 
 	t.Run("where user defines search expression and alias is defined, then frame name prioritizes period and stat from expression over input", func(t *testing.T) {
 		query := newTestQuery(t, queryParameters{
-			MetricEditorMode: MetricEditorModeRaw, // contributes to isUserDefinedSearchExpression = true
+			MetricQueryType:  MetricQueryTypeSearch, // contributes to isUserDefinedSearchExpression = true
+			MetricEditorMode: MetricEditorModeRaw,   // contributes to isUserDefinedSearchExpression = true
 			Alias:            "{{period}} {{stat}}",
 			Expression:       `SEARCH('{AWS/EC2,InstanceId} MetricName="CPUUtilization"', 'Average', 300)`, // period 300 and stat 'Average' parsed from this expression
 			Statistic:        "Maximum",                                                                    // stat parsed from expression takes precedence over 'Maximum'
@@ -248,6 +249,7 @@ func Test_QueryData_response_data_frame_names(t *testing.T) {
 
 	t.Run("where no alias is provided and query is math expression, then frame name is queryId", func(t *testing.T) {
 		query := newTestQuery(t, queryParameters{
+			MetricQueryType:  MetricQueryTypeSearch,
 			MetricEditorMode: MetricEditorModeRaw,
 		})
 
