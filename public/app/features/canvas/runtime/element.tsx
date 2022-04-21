@@ -320,43 +320,8 @@ export class ElementState implements LayerElement {
     width: 0,
     height: 0,
   };
-  applyDirectPosition(event: OnDragStart) {
-    // const style = event.target.style;
-    const elementContainer = event.target.getBoundingClientRect();
-    const parentContainer = event.target.parentElement?.getBoundingClientRect();
-
-    const relativeTop =
-      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.top - parentContainer.top)) : 0;
-    const relativeLeft =
-      elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.left - parentContainer.left)) : 0;
-
-    this.tempPosition.top = relativeTop;
-    this.tempPosition.left = relativeLeft;
-    this.tempPosition.width = elementContainer.width;
-    this.tempPosition.height = elementContainer.height;
-
-    // console.log(this.tempPosition);
-
-    // style.position = 'absolute';
-    // style.top = `${this.tempPosition.top}px`;
-    // style.left = `${this.tempPosition.left}px`;
-    // style.width = `${this.tempPosition.width}px`;
-    // style.height = `${this.tempPosition.height}px`;
-    // style.right = '';
-    // style.left = '';
-  }
 
   applyDrag = (event: OnDrag) => {
-    // const deltaX = event.delta[0];
-    // const deltaY = event.delta[1];
-    // const style = event.target.style;
-
-    // this.tempPosition.top += deltaY;
-    // this.tempPosition.left += deltaX;
-
-    // style.top = `${this.tempPosition.top}px`;
-    // style.left = `${this.tempPosition.left}px`;
-
     event.target.style.transform = event.transform;
   };
 
