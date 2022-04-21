@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.etcd.io/etcd/version"
+	jaegerpropagator "go.opentelemetry.io/contrib/propagators/jaeger"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -20,6 +21,13 @@ import (
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	trace "go.opentelemetry.io/otel/trace"
+)
+
+const (
+	jaegerExporter   string = "jaeger"
+	otlpExporter     string = "otlp"
+	jaegerPropagator string = "jaeger"
+	w3cPropagator    string = "w3c"
 )
 
 type Tracer interface {
@@ -38,9 +46,10 @@ type Span interface {
 }
 
 type Opentelemetry struct {
-	enabled string
-	address string
-	log     log.Logger
+	enabled     string
+	address     string
+	propagation string
+	log         log.Logger
 
 	tracerProvider *tracesdk.TracerProvider
 	tracer         trace.Tracer
@@ -71,9 +80,10 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 
 	ots.address = section.Key("address").MustString("")
 	if ots.address != "" {
-		ots.enabled = "jaeger"
+		ots.enabled = jaegerExporter
 		return nil
 	}
+	ots.propagation = section.Key("propagation").MustString("")
 
 	section, err = ots.Cfg.Raw.GetSection("tracing.opentelemetry.otlp")
 	if err != nil {
@@ -82,8 +92,9 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 
 	ots.address = section.Key("address").MustString("")
 	if ots.address != "" {
-		ots.enabled = "otlp"
+		ots.enabled = otlpExporter
 	}
+	ots.propagation = section.Key("propagation").MustString("")
 
 	return nil
 }
@@ -141,12 +152,12 @@ func (ots *Opentelemetry) initOpentelemetryTracer() error {
 	var tp *tracesdk.TracerProvider
 	var err error
 	switch ots.enabled {
-	case "jaeger":
+	case jaegerExporter:
 		tp, err = ots.initJaegerTracerProvider()
 		if err != nil {
 			return err
 		}
-	case "otlp":
+	case otlpExporter:
 		tp, err = ots.initOTLPTracerProvider()
 		if err != nil {
 			return err
@@ -162,6 +173,14 @@ func (ots *Opentelemetry) initOpentelemetryTracer() error {
 		otel.SetTracerProvider(tp)
 	}
 
+	switch ots.propagation {
+	case w3cPropagator:
+		otel.SetTextMapPropagator(propagation.TraceContext{})
+	case jaegerPropagator:
+		otel.SetTextMapPropagator(jaegerpropagator.Jaeger{})
+	default:
+		otel.SetTextMapPropagator(propagation.TraceContext{})
+	}
 	ots.tracerProvider = tp
 	ots.tracer = otel.GetTracerProvider().Tracer("component-main")
 
@@ -169,10 +188,12 @@ func (ots *Opentelemetry) initOpentelemetryTracer() error {
 }
 
 func (ots *Opentelemetry) Run(ctx context.Context) error {
-	otel.SetTextMapPropagator(propagation.TraceContext{})
 	otel.SetErrorHandler(otelErrHandler(func(err error) {
-		// nolint:gosec
-		level.Error(ots.log).Log("msg", "OpenTelemetry handler returned an error", "err", err)
+		// nolint:errcheck
+		err = level.Error(ots.log).Log("msg", "OpenTelemetry handler returned an error", "err", err)
+		// if err != nil {
+		// 	return
+		// }
 	}))
 	<-ctx.Done()
 
