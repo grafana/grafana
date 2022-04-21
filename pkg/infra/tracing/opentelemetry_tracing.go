@@ -189,11 +189,10 @@ func (ots *Opentelemetry) initOpentelemetryTracer() error {
 
 func (ots *Opentelemetry) Run(ctx context.Context) error {
 	otel.SetErrorHandler(otelErrHandler(func(err error) {
-		// nolint:errcheck
 		err = level.Error(ots.log).Log("msg", "OpenTelemetry handler returned an error", "err", err)
-		// if err != nil {
-		// 	return
-		// }
+		if err != nil {
+			ots.log.Error("OpenTelemetry log returning error", err)
+		}
 	}))
 	<-ctx.Done()
 
