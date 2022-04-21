@@ -1,3 +1,4 @@
+import { rangeUtil } from '@grafana/data';
 import { useEffect, useState } from 'react';
 
 import Datasource from '../../datasource';
@@ -230,7 +231,6 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
           label: v,
           value: v,
         }));
-        console.log('==', metadata.supportedTimeGrains);
         setMetricMetadata({
           aggOptions: aggregations,
           timeGrains: metadata.supportedTimeGrains,
@@ -247,6 +247,15 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
     const newAggregation = aggregation || metricMetadata.primaryAggType;
     const newTimeGrain = timeGrain || 'auto';
 
+    console.log(
+      'allowed ',
+      metricMetadata.timeGrains
+        .filter((timeGrain) => timeGrain.value !== 'auto')
+        .map((timeGrain) => {
+          console.log('converting ', timeGrain.label);
+          rangeUtil.intervalToMs(timeGrain.label);
+        })
+    );
     if (newAggregation !== aggregation || newTimeGrain !== timeGrain) {
       onChange({
         ...query,
@@ -254,6 +263,7 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
           ...query.azureMonitor,
           aggregation: newAggregation,
           timeGrain: newTimeGrain,
+          // allowedTimeGrainsMs: metricMetadata.timeGrains.map((timeGrain) => rangeUtil.intervalToMs(timeGrain.value)),
         },
       });
     }
