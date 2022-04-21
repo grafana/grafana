@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { Icon, IconName, useTheme2 } from '@grafana/ui';
+import { CustomScrollbar, Icon, IconName, useTheme2 } from '@grafana/ui';
 import { config, locationService } from '@grafana/runtime';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { KioskMode, StoreState } from 'app/types';
@@ -20,7 +20,6 @@ import { NavBarMenu } from './NavBarMenu';
 import NavBarItem from './NavBarItem';
 import { useSelector } from 'react-redux';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
-import { FocusScope } from '@react-aria/focus';
 import { NavBarContext } from '../context';
 import { NavBarToggle } from './NavBarToggle';
 
@@ -81,28 +80,29 @@ export const NavBarNext = React.memo(() => {
             setMenuIdOpen: setMenuIdOpen,
           }}
         >
-          <FocusScope>
-            <div id={NAV_MENU_PORTAL_CONTAINER_ID} className={styles.menuPortalContainer} />
+          <div id={NAV_MENU_PORTAL_CONTAINER_ID} className={styles.menuPortalContainer} />
 
-            <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
-              <Icon name="bars" size="xl" />
-            </div>
+          <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
+            <Icon name="bars" size="xl" />
+          </div>
 
-            <NavBarToggle
-              className={styles.menuExpandIcon}
-              isExpanded={menuOpen}
-              onClick={() => setMenuOpen(!menuOpen)}
-            />
+          <NavBarToggle
+            className={styles.menuExpandIcon}
+            isExpanded={menuOpen}
+            onClick={() => setMenuOpen(!menuOpen)}
+          />
 
-            <ul className={styles.itemList}>
-              <NavBarItemWithoutMenu
-                isActive={isMatchOrChildMatch(homeItem, activeItem)}
-                label="Home"
-                className={styles.grafanaLogo}
-                url={homeItem.url}
-              >
-                <Icon name="grafana" size="xl" />
-              </NavBarItemWithoutMenu>
+          <ul className={styles.itemList}>
+            <NavBarItemWithoutMenu
+              isActive={isMatchOrChildMatch(homeItem, activeItem)}
+              label="Home"
+              className={styles.grafanaLogo}
+              url={homeItem.url}
+            >
+              <Icon name="grafana" size="xl" />
+            </NavBarItemWithoutMenu>
+
+            <CustomScrollbar hideHorizontalTrack>
               <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
                 <Icon name="search" size="xl" />
               </NavBarItem>
@@ -125,21 +125,21 @@ export const NavBarNext = React.memo(() => {
                     {link.img && <img src={link.img} alt={`${link.text} logo`} />}
                   </NavBarItem>
                 ))}
+            </CustomScrollbar>
 
-              {configItems.map((link, index) => (
-                <NavBarItem
-                  key={`${link.id}-${index}`}
-                  isActive={isMatchOrChildMatch(link, activeItem)}
-                  reverseMenuDirection
-                  link={link}
-                  className={cx({ [styles.verticalSpacer]: index === 0 })}
-                >
-                  {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-                  {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-                </NavBarItem>
-              ))}
-            </ul>
-          </FocusScope>
+            {configItems.map((link, index) => (
+              <NavBarItem
+                key={`${link.id}-${index}`}
+                isActive={isMatchOrChildMatch(link, activeItem)}
+                reverseMenuDirection
+                link={link}
+                className={cx({ [styles.verticalSpacer]: index === 0 })}
+              >
+                {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+                {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+              </NavBarItem>
+            ))}
+          </ul>
         </NavBarContext.Provider>
       </nav>
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
