@@ -70,7 +70,7 @@ Available by switching on the ‘newNavigation’ feature toggle.
 You can expand the navigation bar for a better overview of Grafana’s features and installed integrations.
 This feature is currently in a beta version and we would appreciate your feedback. Sign up for a call with the Grafana team - it only takes 30 minutes, and you'll receive a $40 USD gift card as a token of appreciation for your time.
 US, UK, Canada, Australia, France, Germany, or South Africa: sign up [here](https://www.userinterviews.com/projects/Hz3DyNNwWA/apply);
-Everywhere else in the world: sign up [here](https://www.userinterviews.com/projects/Hz3DyNNwWA/apply.)
+Everywhere else in the world: sign up [here](https://www.userinterviews.com/projects/Hz3DyNNwWA/apply).
 
 {{< figure src="/static/img/docs/navigation/new-navigation-8-5.png" max-width="400px" caption="New nav panel" >}}
 
