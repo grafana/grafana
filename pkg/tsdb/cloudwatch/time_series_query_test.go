@@ -153,6 +153,8 @@ type queryParameters struct {
 	MetricName       string           `json:"metricName"`
 }
 
+var queryId = "query id"
+
 func newTestQuery(t testing.TB, p queryParameters) json.RawMessage {
 	t.Helper()
 
@@ -176,7 +178,7 @@ func newTestQuery(t testing.TB, p queryParameters) json.RawMessage {
 	}{
 		Type:   "timeSeriesQuery",
 		Region: "us-east-2",
-		ID:     "query id",
+		ID:     queryId,
 		RefID:  "A",
 
 		MatchExact:       p.MatchExact,
@@ -205,11 +207,12 @@ func Test_QueryData_response_data_frame_names(t *testing.T) {
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return &cwClient
 	}
+	labelFromGetMetricData := "some label"
 
 	cwClient = fakeCWClient{
 		GetMetricDataOutput: cloudwatch.GetMetricDataOutput{
 			MetricDataResults: []*cloudwatch.MetricDataResult{
-				{StatusCode: aws.String("Complete"), Id: aws.String("query id"), Label: aws.String("response label"),
+				{StatusCode: aws.String("Complete"), Id: aws.String(queryId), Label: aws.String(labelFromGetMetricData),
 					Values: []*float64{aws.Float64(1.0)}, Timestamps: []*time.Time{{}}},
 			},
 		},
@@ -280,7 +283,7 @@ func Test_QueryData_response_data_frame_names(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t, "response label", resp.Responses["A"].Frames[0].Name)
+		assert.Equal(t, labelFromGetMetricData, resp.Responses["A"].Frames[0].Name)
 	})
 
 	// where query is inferred search expression and not multivalued dimension expression, then frame name is label
@@ -306,7 +309,7 @@ func Test_QueryData_response_data_frame_names(t *testing.T) {
 			})
 
 			assert.NoError(t, err)
-			assert.Equal(t, "response label", resp.Responses["A"].Frames[0].Name)
+			assert.Equal(t, labelFromGetMetricData, resp.Responses["A"].Frames[0].Name)
 		})
 	}
 
