@@ -24,7 +24,7 @@ export const AlertDetails: FC<AmNotificationsAlertDetailsProps> = ({ alert, aler
   // For external alert manager the Generator URL redirects to an external service which we don't control
   const isGrafanaSource = isGrafanaRulesSource(alertManagerSourceName);
   const isSeeSourceButtonEnabled = isGrafanaSource
-    ? contextSrv.hasPermission(AccessControlAction.AlertingRuleUpdate)
+    ? contextSrv.hasPermission(AccessControlAction.AlertingRuleRead)
     : true;
 
   return (

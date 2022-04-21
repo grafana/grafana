@@ -943,9 +943,9 @@ describe('LokiDatasource', () => {
         dataFrame: new MutableDataFrame({
           fields: [
             {
-              name: 'tsNs',
-              type: FieldType.string,
-              values: ['0'],
+              name: 'ts',
+              type: FieldType.time,
+              values: [0],
             },
           ],
         }),
@@ -957,8 +957,8 @@ describe('LokiDatasource', () => {
       jest.spyOn(ds.languageProvider, 'getLabelKeys').mockImplementation(() => ['bar']);
       const contextQuery = ds.prepareLogRowContextQueryTarget(row, 10, 'BACKWARD');
 
-      expect(contextQuery.expr).toContain('baz');
-      expect(contextQuery.expr).not.toContain('uniqueParsedLabel');
+      expect(contextQuery.query.expr).toContain('baz');
+      expect(contextQuery.query.expr).not.toContain('uniqueParsedLabel');
     });
   });
 
