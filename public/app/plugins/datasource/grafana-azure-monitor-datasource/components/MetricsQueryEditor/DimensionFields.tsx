@@ -22,6 +22,15 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
     { label: 'starts with', value: 'sw' },
   ];
 
+  const validDimensionOptions = useMemo(() => {
+    let t = dimensionOptions;
+    let dimensionFilters = query.azureMonitor?.dimensionFilters;
+    if (dimensionFilters !== undefined && dimensionFilters.length > 0) {
+      t = dimensionOptions.filter((val) => !dimensionFilters?.find((dimension) => dimension.dimension === val.value));
+    }
+    return t;
+  }, [query.azureMonitor?.dimensionFilters, dimensionOptions]);
+
   const addFilter = () => {
     onQueryChange(appendDimensionFilter(query));
   };
@@ -53,7 +62,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
               menuShouldPortal
               placeholder="Field"
               value={filter.dimension}
-              options={dimensionOptions}
+              options={validDimensionOptions}
               onChange={(v) => onFieldChange(index, 'dimension', v.value ?? '')}
               width={38}
             />
