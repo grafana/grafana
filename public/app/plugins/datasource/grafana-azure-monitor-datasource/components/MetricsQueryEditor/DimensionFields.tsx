@@ -16,15 +16,6 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
     [query.azureMonitor?.dimensionFilters]
   );
 
-  const validDimensionOptions = useMemo(() => {
-    let t = dimensionOptions;
-    let dimensionFilters = query.azureMonitor?.dimensionFilters;
-    if (dimensionFilters !== undefined && dimensionFilters.length > 0) {
-      t = dimensionOptions.filter((val) => !dimensionFilters?.find((dimension) => dimension.dimension === val.value));
-    }
-    return t;
-  }, [query.azureMonitor?.dimensionFilters, dimensionOptions]);
-
   const dimensionOperators: Array<SelectableValue<string>> = [
     { label: '==', value: 'eq' },
     { label: '!=', value: 'ne' },
@@ -62,7 +53,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
               menuShouldPortal
               placeholder="Field"
               value={filter.dimension}
-              options={validDimensionOptions}
+              options={dimensionOptions}
               onChange={(v) => onFieldChange(index, 'dimension', v.value ?? '')}
               width={38}
             />
