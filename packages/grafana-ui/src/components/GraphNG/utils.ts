@@ -35,17 +35,37 @@ function applySpanNullsThresholds(frame: DataFrame) {
   return frame;
 }
 
-function isBarsField(f: Field) {
+function isNumericBarField(f: Field) {
   return f.type === FieldType.number && f.config.custom?.drawStyle === GraphDrawStyle.Bars;
 }
 
 export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
-  // make bar widths of all series uniform (equal to narrowest bar series)
-  // find smallest distance between x points
-  let minXDelta = Infinity;
+  // apply null insertions at interval
+  frames = frames.map((frame) => applyNullInsertThreshold(frame, null, timeRange?.to.valueOf()));
+
+  let numBarSeries = 0;
 
   frames.forEach((frame) => {
-    if (frame.fields.some(isBarsField)) {
+    frame.fields.forEach((f) => {
+      if (isNumericBarField(f)) {
+        // prevent minesweeper-expansion of nulls (gaps) when joining bars
+        // since bar width is determined from the minimum distance between non-undefined values
+        // (this strategy will still retain any original pre-join nulls, though)
+        f.config.custom = {
+          ...f.config.custom,
+          spanNulls: -1,
+        };
+
+        numBarSeries++;
+      }
+    });
+  });
+
+  // to make bar widths of all series uniform (equal to narrowest bar series), find smallest distance between x points
+  let minXDelta = Infinity;
+
+  if (numBarSeries > 1) {
+    frames.forEach((frame) => {
       const xVals = frame.fields[0].values.toArray();
 
       for (let i = 0; i < xVals.length; i++) {
@@ -53,27 +73,11 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
           minXDelta = Math.min(minXDelta, xVals[i] - xVals[i - 1]);
         }
       }
-    }
-  });
+    });
+  }
 
   let alignedFrame = outerJoinDataFrames({
-    frames: frames.map((frame) => {
-      let fr = applyNullInsertThreshold(frame, null, timeRange?.to.valueOf());
-
-      // prevent minesweeper-expansion of nulls (gaps) when joining bars
-      // since bar width is determined from the minimum distance between non-undefined values
-      // (this strategy will still retain any original pre-join nulls, though)
-      fr.fields.forEach((f) => {
-        if (isBarsField(f)) {
-          f.config.custom = {
-            ...f.config.custom,
-            spanNulls: -1,
-          };
-        }
-      });
-
-      return fr;
-    }),
+    frames,
     joinBy: dimFields.x,
     keep: dimFields.y,
     keepOriginIndices: true,
@@ -90,7 +94,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
         if (fi === 0) {
           let lastVal = vals[vals.length - 1];
           vals.push(lastVal + minXDelta, lastVal + 2 * minXDelta);
-        } else if (isBarsField(f)) {
+        } else if (isNumericBarField(f)) {
           vals.push(null, null);
         } else {
           vals.push(undefined, undefined);
