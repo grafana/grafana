@@ -28,7 +28,7 @@ func TestAddDashAlertMigration(t *testing.T) {
 		name           string
 		config         *setting.Cfg
 		isMigrationRun bool
-		expected       []string
+		expected       []string // set of migration titles
 	}{
 		{
 			name: "when unified alerting enabled and migration not already run, then add main migration and clear rmMigration log entry",
@@ -565,7 +565,7 @@ func getAlertManagerConfig(t *testing.T, x *xorm.Engine, orgId int64) *postableU
 	return &config
 }
 
-// Fetch alert_rules from database in order to create map of alert.Name -> alert.Uid. This is needed as alert Uid is created during migration and is used to match routes to alerts.
+// getAlertNameToUidMap fetches alert_rules from database to create map of alert.Name -> alert.Uid. This is needed as alert Uid is created during migration and is used to match routes to alerts.
 func getAlertNameToUidMap(t *testing.T, x *xorm.Engine, orgId int64) map[string]string {
 	t.Helper()
 	alerts := []struct {
@@ -582,7 +582,7 @@ func getAlertNameToUidMap(t *testing.T, x *xorm.Engine, orgId int64) map[string]
 	return res
 }
 
-// Add Matchers to routes using the rule_uid's created during migration. This allows us to more easily compare expected to actual using require funcs.
+// attachExpectedMatchersToRoutes adds matchers to routes using the rule_uid's created during migration. This allows us to more easily compare expected to actual using require funcs.
 func attachExpectedMatchersToRoutes(t *testing.T, rts []*route, alertUids map[string]string) {
 	for _, rt := range rts {
 		if rt.name != "" {
