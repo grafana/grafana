@@ -1,19 +1,56 @@
-import React, { FormEvent } from 'react';
-
-import { SelectableValue } from '@grafana/data';
+import { DataFrameJSON, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Label, Select } from '@grafana/ui';
-
+import React, { FormEvent, useMemo } from 'react';
+import { useAsync } from 'react-use';
 import { EditorProps } from '../QueryEditor';
 import { SimulationQuery } from '../types';
 
-export const SimulationQueryEditor = ({ onChange, query }: EditorProps) => {
+// Type         string      `json:"type"`
+// Name         string      `json:"name"`
+// Description  string      `json:"description"`
+// OnlyForward  bool        `json:"forward"`
+// ConfigFields *data.Frame `json:"config"`
+
+interface SimInfo {
+  type: string;
+  name: string;
+  description: string;
+  forward: boolean;
+  config: DataFrameJSON;
+}
+
+export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
   const simQuery = query.sim ?? ({} as SimulationQuery);
   const simKey = simQuery.key ?? ({} as typeof simQuery.key);
-  const options = [
-    { label: 'Flight', value: 'flight' },
-    { label: 'Sine', value: 'sine' },
-    { label: 'Tank', value: 'tank' },
-  ];
+
+  // This only changes once
+  const info = useAsync(async () => {
+    const v = (await ds.getResource('sims')) as SimInfo[];
+    console.log(v);
+    return {
+      sims: v,
+      options: v.map((s) => ({ label: s.name, value: s.type, description: s.description })),
+    };
+  }, [ds]);
+
+  const current = useMemo(() => {
+    const type = simKey.type;
+    if (!type || !info.value) {
+      return {};
+    }
+    return {
+      details: info.value.sims.find((v) => v.type === type),
+      option: info.value.options.find((v) => v.value === type),
+    };
+  }, [info.value, simKey?.type]);
+
+  const config = useAsync(async () => {
+    let path = simKey.type + '/' + simKey.tick + 'hz';
+    if (simKey.uid) {
+      path += '/' + simKey.uid;
+    }
+    return (await ds.getResource('sim/' + path))?.config;
+  }, [simKey.type, simKey.tick, simKey.uid]);
 
   const onUpdateKey = (key: typeof simQuery.key) => {
     onChange({ ...query, sim: { ...simQuery, key } });
@@ -46,9 +83,10 @@ export const SimulationQueryEditor = ({ onChange, query }: EditorProps) => {
       <InlineFieldRow>
         <InlineField labelWidth={14} label="Simulation" tooltip="">
           <Select
+            isLoading={info.loading}
             menuShouldPortal
-            options={options}
-            value={options.find((item) => item.value === simQuery.key?.type)}
+            options={info.value?.options ?? []}
+            value={current.option}
             onChange={onTypeChange}
             width={32}
           />
@@ -81,6 +119,12 @@ export const SimulationQueryEditor = ({ onChange, query }: EditorProps) => {
           <Input type="text" placeholder="optional" value={simQuery.key.uid} onChange={onUIDChanged} />
         </InlineField>
       </InlineFieldRow>
+      <div>
+        CONFIG:
+        <pre>{JSON.stringify(config.value, null, 2)}</pre>
+        SCHEMA:
+        <pre>{JSON.stringify(current.details?.config.schema, null, 2)}</pre>
+      </div>
     </>
   );
 };
