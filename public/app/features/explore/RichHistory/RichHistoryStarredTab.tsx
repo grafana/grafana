@@ -145,7 +145,7 @@ export function RichHistoryStarredTab(props: Props) {
           </div>
         </div>
         {queries.map((q) => {
-          const idx = listOfDatasources.findIndex((d) => d.uid === q.datasourceUid || d.name === q.datasourceName);
+          const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
           return (
             <RichHistoryCard
               query={q}

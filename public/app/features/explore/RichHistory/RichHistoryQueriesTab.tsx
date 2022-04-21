@@ -232,9 +232,7 @@ export function RichHistoryQueriesTab(props: Props) {
                 {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
               </div>
               {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
-                const idx = listOfDatasources.findIndex(
-                  (d) => d.uid === q.datasourceUid || d.name === q.datasourceName
-                );
+                const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
                 return (
                   <RichHistoryCard
                     query={q}
