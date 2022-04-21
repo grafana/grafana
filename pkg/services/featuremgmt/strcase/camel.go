@@ -1,4 +1,5 @@
-// https://github.com/iancoleman/strcase/blob/master/snake.go
+// https://github.com/iancoleman/strcase/blob/master/camel.go
+// https://github.com/iancoleman/strcase/blob/master/acronyms.go
 
 /*
  * The MIT License (MIT)
