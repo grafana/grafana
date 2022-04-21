@@ -45,6 +45,10 @@ func AddExpander(name string, priority int64, e Expander) {
 
 var regex = regexp.MustCompile(`\$(|__\w+){([^}]+)}`)
 
+func GetExpanderRegex() *regexp.Regexp {
+	return regex
+}
+
 func expandConfig(file *ini.File) error {
 	sort.Slice(expanders, func(i, j int) bool {
 		return expanders[i].priority < expanders[j].priority
