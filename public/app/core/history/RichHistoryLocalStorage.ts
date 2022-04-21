@@ -28,7 +28,7 @@ export type RichHistoryLocalStorageDTO = {
  */
 export default class RichHistoryLocalStorage implements RichHistoryStorage {
   /**
-   * Return all history entries, perform migration and clean up entries not matching retention policy.
+   * Return history entries based on provided filters, perform migration and clean up entries not matching retention policy.
    */
   async getRichHistory(filters: RichHistorySearchFilters) {
     const allQueries = getRichHistoryDTOs().map(fromDTO);
