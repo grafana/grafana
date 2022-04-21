@@ -92,6 +92,7 @@ export class ExploreTimeControls extends Component<Props> {
         {...timePickerCommonProps}
         timeSyncButton={timeSyncButton}
         isSynced={syncedTimes}
+        widthOverride={splitted ? window.innerWidth / 2 : undefined}
         onChange={this.onChangeTimePicker}
         onChangeTimeZone={onChangeTimeZone}
         onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
