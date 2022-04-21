@@ -53,6 +53,7 @@ type datasourceInfo struct {
 type QueryJSONModel struct {
 	QueryType    string `json:"queryType"`
 	Expr         string `json:"expr"`
+	Direction    string `json:"direction"`
 	LegendFormat string `json:"legendFormat"`
 	Interval     string `json:"interval"`
 	IntervalMS   int    `json:"intervalMS"`
