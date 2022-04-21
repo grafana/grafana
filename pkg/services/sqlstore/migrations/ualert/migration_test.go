@@ -6,10 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"xorm.io/xorm"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/stretchr/testify/require"
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
@@ -17,9 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/alertmanager/pkg/labels"
-
-	"github.com/stretchr/testify/require"
 )
 
 // TestAddDashAlertMigration tests the AddDashAlertMigration wrapper method that decides when to run the migration based on migration status and settings.
