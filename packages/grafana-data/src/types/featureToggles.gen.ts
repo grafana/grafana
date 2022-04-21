@@ -19,7 +19,7 @@ export interface FeatureToggles {
   trimDefaults?: boolean;
   envelopeEncryption?: boolean;
   httpclientprovider_azure_auth?: boolean;
-  ['service-accounts']?: boolean;
+  serviceAccounts?: boolean;
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
   dashboardPreviewsScheduler?: boolean;
@@ -41,6 +41,7 @@ export interface FeatureToggles {
   showFeatureFlagsInUI?: boolean;
   disable_http_request_histogram?: boolean;
   validatedQueries?: boolean;
+  publicDashboards?: boolean;
   lokiLive?: boolean;
   swaggerUi?: boolean;
   featureHighlights?: boolean;
@@ -52,4 +53,6 @@ export interface FeatureToggles {
   alertProvisioning?: boolean;
   storageLocalUpload?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
+  explore2Dashboard?: boolean;
+  persistNotifications?: boolean;
 }

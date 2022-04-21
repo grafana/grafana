@@ -213,7 +213,7 @@ function mapDrawStyleToPathBuilder(
   lineInterpolation?: LineInterpolation,
   barAlignment = 0,
   barWidthFactor = 0.6,
-  barMaxWidth = Infinity
+  barMaxWidth = 200
 ): Series.PathBuilder {
   const pathBuilders = uPlot.paths;
 

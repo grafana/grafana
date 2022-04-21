@@ -32,7 +32,7 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
         try {
           const templateVariablesResults = await this.callGrafanaTemplateVariableFn(queryObj.grafanaTemplateVariableFn);
           return {
-            data: templateVariablesResults ? [toDataFrame(templateVariablesResults)] : [],
+            data: templateVariablesResults?.length ? [toDataFrame(templateVariablesResults)] : [],
           };
         } catch (err) {
           return { data: [], error: { message: messageFromError(err) } };
@@ -81,22 +81,11 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
     }
 
     if (query.kind === 'MetricNamespaceQuery') {
-      return this.datasource.getMetricNamespaces(
-        this.replaceVariable(query.subscription),
-        this.replaceVariable(query.resourceGroup),
-        this.replaceVariable(query.metricDefinition),
-        this.replaceVariable(query.resourceName)
-      );
+      return this.datasource.azureMonitorDatasource.getMetricNamespaces(query);
     }
 
     if (query.kind === 'MetricNamesQuery') {
-      return this.datasource.getMetricNames(
-        this.replaceVariable(query.subscription),
-        this.replaceVariable(query.resourceGroup),
-        this.replaceVariable(query.metricDefinition),
-        this.replaceVariable(query.resourceName),
-        this.replaceVariable(query.metricNamespace)
-      );
+      return this.datasource.azureMonitorDatasource.getMetricNames(query);
     }
 
     if (query.kind === 'WorkspacesQuery') {

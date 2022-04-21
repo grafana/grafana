@@ -163,7 +163,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			}
 
 			azureMonitorQuery := &types.AzureMonitorQuery{
-				URL: "12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
 				UrlComponents: map[string]string{
 					"metricDefinition": "Microsoft.Compute/virtualMachines",
 					"resourceGroup":    "grafanastaging",
@@ -587,7 +587,7 @@ func TestAzureMonitorCreateRequest(t *testing.T) {
 	}{
 		{
 			name:        "creates a request",
-			expectedURL: "http://ds/subscriptions",
+			expectedURL: "http://ds/",
 			expectedHeaders: http.Header{
 				"Content-Type": []string{"application/json"},
 			},

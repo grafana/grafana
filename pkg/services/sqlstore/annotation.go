@@ -9,7 +9,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 )
 
 // Update the item so that EpochEnd >= Epoch
@@ -31,6 +35,10 @@ func validateTimeRange(item *annotations.Item) error {
 
 type SQLAnnotationRepo struct {
 	sql *SQLStore
+}
+
+func NewSQLAnnotationRepo(sql *SQLStore) SQLAnnotationRepo {
+	return SQLAnnotationRepo{sql: sql}
 }
 
 func (r *SQLAnnotationRepo) Save(item *annotations.Item) error {
@@ -221,6 +229,15 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 			}
 		}
 
+		if r.sql.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+			acFilter, acArgs, err := getAccessControlFilter(query.SignedInUser)
+			if err != nil {
+				return err
+			}
+			sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter))
+			params = append(params, acArgs...)
+		}
+
 		if query.Limit == 0 {
 			query.Limit = 100
 		}
@@ -237,6 +254,37 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 	)
 
 	return items, err
+}
+
+func getAccessControlFilter(user *models.SignedInUser) (string, []interface{}, error) {
+	if user == nil || user.Permissions[user.OrgId] == nil {
+		return "", nil, errors.New("missing permissions")
+	}
+	scopes, has := user.Permissions[user.OrgId][ac.ActionAnnotationsRead]
+	if !has {
+		return "", nil, errors.New("missing permissions")
+	}
+	types, hasWildcardScope := ac.ParseScopes(ac.ScopeAnnotationsProvider.GetResourceScopeType(""), scopes)
+	if hasWildcardScope {
+		types = map[interface{}]struct{}{annotations.Dashboard.String(): {}, annotations.Organization.String(): {}}
+	}
+
+	var filters []string
+	var params []interface{}
+	for t := range types {
+		// annotation read permission with scope annotations:type:organization allows listing annotations that are not associated with a dashboard
+		if t == annotations.Organization.String() {
+			filters = append(filters, "a.dashboard_id = 0")
+		}
+		// annotation read permission with scope annotations:type:dashboard allows listing annotations from dashboards which the user can view
+		if t == annotations.Dashboard.String() {
+			dashboardFilter, dashboardParams := permissions.NewAccessControlDashboardPermissionFilter(user, models.PERMISSION_VIEW, searchstore.TypeDashboard).Where()
+			filter := fmt.Sprintf("a.dashboard_id IN(SELECT id FROM dashboard WHERE %s)", dashboardFilter)
+			filters = append(filters, filter)
+			params = dashboardParams
+		}
+	}
+	return strings.Join(filters, " OR "), params, nil
 }
 
 func (r *SQLAnnotationRepo) Delete(ctx context.Context, params *annotations.DeleteParams) error {

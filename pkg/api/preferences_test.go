@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,6 +27,9 @@ var (
 
 func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true, false)
+	prefService := preftest.NewPreferenceServiceFake()
+	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
+	sc.hs.preferenceService = prefService
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
@@ -45,6 +50,10 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 func TestAPIEndpoint_GetCurrentOrgPreferences_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	setInitCtxSignedInViewer(sc.initCtx)
+
+	prefService := preftest.NewPreferenceServiceFake()
+	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
+	sc.hs.preferenceService = prefService
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)

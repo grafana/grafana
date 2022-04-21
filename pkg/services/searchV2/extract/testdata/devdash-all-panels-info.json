@@ -56,11 +56,6 @@
       "pluginVersion": "8.1.0-pre"
     },
     {
-      "id": 30,
-      "title": "Panel list",
-      "type": "pluginlist"
-    },
-    {
       "id": 6,
       "title": "Alert list",
       "type": "alertlist"

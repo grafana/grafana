@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -77,10 +76,6 @@ func (ss *SQLStore) DeleteAlertNotificationWithUid(ctx context.Context, cmd *mod
 
 func (ss *SQLStore) GetAlertNotifications(ctx context.Context, query *models.GetAlertNotificationsQuery) error {
 	return getAlertNotificationInternal(ctx, query, newSession(ctx))
-}
-
-func (ss *SQLStore) addAlertNotificationUidByIdHandler() {
-	bus.AddHandler("sql", ss.GetAlertNotificationUidWithId)
 }
 
 func (ss *SQLStore) GetAlertNotificationUidWithId(ctx context.Context, query *models.GetAlertNotificationUidQuery) error {

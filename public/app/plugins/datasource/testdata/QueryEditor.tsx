@@ -21,6 +21,8 @@ import { defaultStreamQuery } from './runStreams';
 import { CSVFileEditor } from './components/CSVFileEditor';
 import { CSVContentEditor } from './components/CSVContentEditor';
 import { USAQueryEditor, usaQueryModes } from './components/USAQueryEditor';
+import ErrorEditor from './components/ErrorEditor';
+import { SimulationQueryEditor } from './components/SimulationQueryEditor';
 
 const showLabelsFor = ['random_walk', 'predictable_pulse'];
 const endpoints = [
@@ -56,7 +58,12 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       });
     }
 
-    return datasource.getScenarios();
+    const vals = await datasource.getScenarios();
+    const hideAlias = ['simulation'];
+    return vals.map((v) => ({
+      ...v,
+      hideAliasField: hideAlias.includes(v.id),
+    }));
   }, []);
 
   const onUpdate = (query: TestDataQuery) => {
@@ -69,6 +76,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     [scenarioList, query]
   );
   const scenarioId = currentScenario?.id;
+  const description = currentScenario?.description;
 
   const onScenarioChange = (item: SelectableValue<string>) => {
     const scenario = scenarioList?.find((sc) => sc.id === item.value);
@@ -98,6 +106,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         break;
       case 'live':
         update.channel = 'random-2s-stream'; // default stream
+        break;
+      case 'simulation':
+        update.sim = { key: { type: 'flight', tick: 10 } }; // default stream
         break;
       case 'predictable_pulse':
         update.pulseWave = defaultPulseQuery;
@@ -161,7 +172,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         .sort((a, b) => a.label.localeCompare(b.label)),
     [scenarioList]
   );
-  const showLabels = useMemo(() => showLabelsFor.includes(query.scenarioId), [query]);
+  const showLabels = useMemo(() => showLabelsFor.includes(query.scenarioId ?? ''), [query]);
 
   if (loading) {
     return null;
@@ -192,18 +203,20 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             />
           </InlineField>
         )}
-        <InlineField label="Alias" labelWidth={14}>
-          <Input
-            width={32}
-            id={`alias-${query.refId}`}
-            type="text"
-            placeholder="optional"
-            pattern='[^<>&\\"]+'
-            name="alias"
-            value={query.alias}
-            onChange={onInputChange}
-          />
-        </InlineField>
+        {Boolean(!currentScenario?.hideAliasField) && (
+          <InlineField label="Alias" labelWidth={14}>
+            <Input
+              width={32}
+              id={`alias-${query.refId}`}
+              type="text"
+              placeholder="optional"
+              pattern='[^<>&\\"]+'
+              name="alias"
+              value={query.alias}
+              onChange={onInputChange}
+            />
+          </InlineField>
+        )}
         {showLabels && (
           <InlineField
             label="Labels"
@@ -236,6 +249,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       {scenarioId === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
       {scenarioId === 'streaming_client' && <StreamingClientEditor onChange={onStreamClientChange} query={query} />}
       {scenarioId === 'live' && <GrafanaLiveEditor onChange={onUpdate} query={query} />}
+      {scenarioId === 'simulation' && <SimulationQueryEditor onChange={onUpdate} query={query} />}
       {scenarioId === 'raw_frame' && <RawFrameEditor onChange={onUpdate} query={query} />}
       {scenarioId === 'csv_file' && <CSVFileEditor onChange={onUpdate} query={query} />}
       {scenarioId === 'csv_content' && <CSVContentEditor onChange={onUpdate} query={query} />}
@@ -287,6 +301,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       {scenarioId === 'node_graph' && (
         <NodeGraphEditor onChange={(val: NodesQuery) => onChange({ ...query, nodes: val })} query={query} />
       )}
+      {scenarioId === 'server_error_500' && <ErrorEditor onChange={onUpdate} query={query} />}
+
+      {description && <p>{description}</p>}
     </>
   );
 };

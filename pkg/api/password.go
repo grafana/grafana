@@ -29,7 +29,7 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *models.ReqContext) response.Resp
 
 	if err := hs.SQLStore.GetUserByLogin(c.Req.Context(), &userQuery); err != nil {
 		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail)
-		return response.Error(200, "Email sent", err)
+		return response.Error(http.StatusOK, "Email sent", err)
 	}
 
 	emailCmd := models.SendResetPasswordEmailCommand{User: userQuery.Result}

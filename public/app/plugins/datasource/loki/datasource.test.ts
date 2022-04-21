@@ -411,7 +411,7 @@ describe('LokiDatasource', () => {
 
       it('should not modify expression with no filters', async () => {
         await lastValueFrom(ds.query(options as any));
-        expect(ds.runRangeQuery).toBeCalledWith({ expr: DEFAULT_EXPR }, expect.anything(), expect.anything());
+        expect(ds.runRangeQuery).toBeCalledWith({ expr: DEFAULT_EXPR }, expect.anything());
       });
 
       it('should add filters to expression', async () => {
@@ -431,7 +431,6 @@ describe('LokiDatasource', () => {
         await lastValueFrom(ds.query(options as any));
         expect(ds.runRangeQuery).toBeCalledWith(
           { expr: 'rate({bar="baz",job="foo",k1="v1",k2!="v2"} |= "bar" [5m])' },
-          expect.anything(),
           expect.anything()
         );
       });
@@ -452,7 +451,6 @@ describe('LokiDatasource', () => {
         await lastValueFrom(ds.query(options as any));
         expect(ds.runRangeQuery).toBeCalledWith(
           { expr: 'rate({bar="baz",job="foo",k1=~"v.*",k2=~"v\\\\\'.*"} |= "bar" [5m])' },
-          expect.anything(),
           expect.anything()
         );
       });
@@ -945,9 +943,9 @@ describe('LokiDatasource', () => {
         dataFrame: new MutableDataFrame({
           fields: [
             {
-              name: 'tsNs',
-              type: FieldType.string,
-              values: ['0'],
+              name: 'ts',
+              type: FieldType.time,
+              values: [0],
             },
           ],
         }),
@@ -959,8 +957,8 @@ describe('LokiDatasource', () => {
       jest.spyOn(ds.languageProvider, 'getLabelKeys').mockImplementation(() => ['bar']);
       const contextQuery = ds.prepareLogRowContextQueryTarget(row, 10, 'BACKWARD');
 
-      expect(contextQuery.expr).toContain('baz');
-      expect(contextQuery.expr).not.toContain('uniqueParsedLabel');
+      expect(contextQuery.query.expr).toContain('baz');
+      expect(contextQuery.query.expr).not.toContain('uniqueParsedLabel');
     });
   });
 

@@ -141,7 +141,7 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 		if exists {
 			existing.Updated = now
 			if cmd.Contents != nil {
-				contents := *cmd.Contents
+				contents := cmd.Contents
 				existing.Contents = contents
 				existing.MimeType = cmd.MimeType
 				existing.Size = int64(len(contents))
@@ -154,7 +154,7 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 		} else {
 			contentsToInsert := make([]byte, 0)
 			if cmd.Contents != nil {
-				contentsToInsert = *cmd.Contents
+				contentsToInsert = cmd.Contents
 			}
 
 			file := &file{

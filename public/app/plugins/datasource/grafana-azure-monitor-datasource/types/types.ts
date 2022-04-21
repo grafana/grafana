@@ -95,6 +95,23 @@ export interface AzureMonitorMetricMetadataItem {
   metricAvailabilities?: AzureMonitorMetricAvailabilityMetadata[];
 }
 
+export interface AzureMonitorMetricNamespacesResponse {
+  value: AzureMonitorMetricNamespaceItem[];
+}
+
+export interface AzureMonitorMetricNamespaceItem {
+  name: string;
+  properties: { metricNamespacename: string };
+}
+
+export interface AzureMonitorMetricNamesResponse {
+  value: AzureMonitorMetricNameItem[];
+}
+
+export interface AzureMonitorMetricNameItem {
+  name: { value: string; localizedValue: string };
+}
+
 export interface AzureMonitorMetricAvailabilityMetadata {
   timeGrain: string;
   retention: string;
@@ -191,4 +208,51 @@ export interface AzureResourceGraphOptions {
   $top: number;
   allowPartialScopes: boolean;
   resultFormat: 'objectArray' | 'table';
+}
+
+// Azure Monitor Metrics query API data fetcher argument types.
+// The types prefixed by Legacy are applicable to pre-version 9 of Grafana
+// that do not have a resourceUri, instead the resourceUri is built up from
+// the subscription, resource group, metric definition (a.k.a. resource type)
+// and the resource name.
+export type GetMetricNamespacesQuery = AzureGetMetricNamespacesQuery | LegacyAzureGetMetricNamespacesQuery;
+export type GetMetricNamesQuery = AzureGetMetricNamesQuery | LegacyAzureGetMetricNamesQuery;
+export type GetMetricMetadataQuery = AzureGetMetricMetadataQuery | LegacyAzureGetMetricMetadataQuery;
+
+export interface AzureGetMetricNamespacesQuery {
+  resourceUri: string;
+}
+export interface LegacyAzureGetMetricNamespacesQuery {
+  subscription: string;
+  resourceGroup: string;
+  metricDefinition: string;
+  resourceName: string;
+}
+
+export interface AzureGetMetricNamesQuery {
+  resourceUri: string;
+  metricNamespace: string;
+}
+
+export interface LegacyAzureGetMetricNamesQuery {
+  subscription: string;
+  resourceGroup: string;
+  metricDefinition: string;
+  resourceName: string;
+  metricNamespace: string;
+}
+
+export interface AzureGetMetricMetadataQuery {
+  resourceUri: string;
+  metricNamespace: string;
+  metricName: string;
+}
+
+export interface LegacyAzureGetMetricMetadataQuery {
+  subscription: string;
+  resourceGroup: string;
+  metricDefinition: string;
+  resourceName: string;
+  metricNamespace: string;
+  metricName: string;
 }

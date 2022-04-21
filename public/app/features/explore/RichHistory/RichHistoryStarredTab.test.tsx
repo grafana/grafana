@@ -34,12 +34,12 @@ describe('RichHistoryStarredTab', () => {
   describe('select datasource', () => {
     it('should render select datasource if activeDatasourceOnly is false', () => {
       const wrapper = setup();
-      expect(wrapper.find({ 'aria-label': 'Filter datasources' })).toHaveLength(1);
+      expect(wrapper.find({ 'aria-label': 'Filter queries for data sources(s)' }).exists()).toBeTruthy();
     });
 
     it('should not render select datasource if activeDatasourceOnly is true', () => {
       const wrapper = setup({ activeDatasourceOnly: true });
-      expect(wrapper.find({ 'aria-label': 'Filter datasources' })).toHaveLength(0);
+      expect(wrapper.find({ 'aria-label': 'Filter queries for data sources(s)' }).exists()).toBeFalsy();
     });
   });
 });

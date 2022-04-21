@@ -187,7 +187,7 @@ func (ps *ProvisioningServiceImpl) ProvisionNotifications(ctx context.Context) e
 
 func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.dashboardService, ps.SQLStore)
+	dashProvisioner, err := ps.newDashboardProvisioner(ctx, dashboardPath, ps.dashboardService, ps.SQLStore, ps.SQLStore)
 	if err != nil {
 		return errutil.Wrap("Failed to create provisioner", err)
 	}

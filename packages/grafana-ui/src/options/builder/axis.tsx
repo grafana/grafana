@@ -143,7 +143,6 @@ const ScaleDistributionEditor: React.FC<FieldOverrideEditorProps<ScaleDistributi
         <Select
           menuShouldPortal
           allowCustomValue={false}
-          autoFocus
           options={LOG_DISTRIBUTION_OPTIONS}
           value={value.log || 2}
           prefix={'base'}

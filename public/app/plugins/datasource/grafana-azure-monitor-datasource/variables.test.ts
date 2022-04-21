@@ -270,7 +270,9 @@ describe('VariableSupport', () => {
           azureLogAnalyticsDatasource: {
             defaultSubscriptionId: 'defaultSubscriptionId',
           },
-          getMetricNamespaces: jest.fn().mockResolvedValueOnce(expectedResults),
+          azureMonitorDatasource: {
+            getMetricNamespaces: jest.fn().mockResolvedValueOnce(expectedResults),
+          },
         })
       );
       const mockRequest = {
@@ -296,7 +298,9 @@ describe('VariableSupport', () => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
-          getMetricNamespaces: jest.fn().mockResolvedValueOnce(expectedResults),
+          azureMonitorDatasource: {
+            getMetricNamespaces: jest.fn().mockResolvedValueOnce(expectedResults),
+          },
         })
       );
       const mockRequest = {
@@ -325,7 +329,9 @@ describe('VariableSupport', () => {
           azureLogAnalyticsDatasource: {
             defaultSubscriptionId: 'defaultSubscriptionId',
           },
-          getMetricNames: jest.fn().mockResolvedValueOnce(expectedResults),
+          azureMonitorDatasource: {
+            getMetricNames: jest.fn().mockResolvedValueOnce(expectedResults),
+          },
         })
       );
       const mockRequest = {
@@ -351,7 +357,9 @@ describe('VariableSupport', () => {
       const expectedResults = ['test'];
       const variableSupport = new VariableSupport(
         createMockDatasource({
-          getMetricNames: jest.fn().mockResolvedValueOnce(expectedResults),
+          azureMonitorDatasource: {
+            getMetricNames: jest.fn().mockResolvedValueOnce(expectedResults),
+          },
         })
       );
       const mockRequest = {
@@ -468,6 +476,36 @@ describe('VariableSupport', () => {
       const observables = variableSupport.query(mockRequest);
       observables.subscribe((result: DataQueryResponseData) => {
         expect(result.data).toEqual([]);
+        done();
+      });
+    });
+
+    it('should return None when there is no data', (done) => {
+      const variableSupport = new VariableSupport(
+        createMockDatasource({
+          azureLogAnalyticsDatasource: {
+            defaultSubscriptionId: 'defaultSubscriptionId',
+          },
+          azureMonitorDatasource: {
+            getMetricNames: jest.fn().mockResolvedValueOnce([]),
+          },
+        })
+      );
+      const mockRequest = {
+        targets: [
+          {
+            refId: 'A',
+            queryType: AzureQueryType.GrafanaTemplateVariableFn,
+            grafanaTemplateVariableFn: {
+              kind: 'MetricNamesQuery',
+              rawQuery: 'metricNames(resourceGroup, metricDefinition, resourceName, metricNamespace)',
+            },
+          } as AzureMonitorQuery,
+        ],
+      } as DataQueryRequest<AzureMonitorQuery>;
+      const observables = variableSupport.query(mockRequest);
+      observables.subscribe((result: DataQueryResponseData) => {
+        expect(result.data.length).toBe(0);
         done();
       });
     });

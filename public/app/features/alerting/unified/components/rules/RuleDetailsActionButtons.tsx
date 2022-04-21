@@ -1,24 +1,24 @@
-import React, { FC, Fragment, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, ConfirmModal, ClipboardButton, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
+import { Button, ClipboardButton, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
+import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import React, { FC, Fragment, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
+import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
+import { deleteRuleAction } from '../../state/actions';
+import { getAlertmanagerByUid } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
 import { createExploreLink, createViewLink, makeRuleBasedSilenceLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { deleteRuleAction } from '../../state/actions';
-import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
-import { getAlertmanagerByUid } from '../../utils/alertmanager';
-import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
-import { RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 import { isFederatedRuleGroup } from '../../utils/rules';
-import { AccessControlAction } from 'app/types';
 
 interface Props {
   rule: CombinedRule;
@@ -38,12 +38,15 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const alertmanagerSourceName = isGrafanaRulesSource(rulesSource)
     ? rulesSource
     : getAlertmanagerByUid(rulesSource.jsonData.alertmanagerUid)?.name;
+  const rulesSourceName = getRulesSourceName(rulesSource);
+
+  const hasExplorePermission = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
 
   const leftButtons: JSX.Element[] = [];
   const rightButtons: JSX.Element[] = [];
 
   const isFederated = isFederatedRuleGroup(group);
-  const { isEditable } = useIsRuleEditable(getRulesSourceName(rulesSource), rulerRule);
+  const { isEditable, isRemovable } = useIsRuleEditable(rulesSourceName, rulerRule);
   const returnTo = location.pathname + location.search;
   const isViewMode = inViewMode(location.pathname);
 
@@ -74,7 +77,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
 
   // explore does not support grafana rule queries atm
   // neither do "federated rules"
-  if (isCloudRulesSource(rulesSource) && contextSrv.isEditor && !isFederated) {
+  if (isCloudRulesSource(rulesSource) && hasExplorePermission && !isFederated) {
     leftButtons.push(
       <LinkButton
         className={style.button}
@@ -213,7 +216,12 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     rightButtons.push(
       <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
         Edit
-      </LinkButton>,
+      </LinkButton>
+    );
+  }
+
+  if (isRemovable && rulerRule && !isFederated) {
+    rightButtons.push(
       <Button
         className={style.button}
         size="xs"
@@ -227,6 +235,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
       </Button>
     );
   }
+
   if (leftButtons.length || rightButtons.length) {
     return (
       <>

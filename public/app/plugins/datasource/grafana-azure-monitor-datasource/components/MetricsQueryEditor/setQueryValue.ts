@@ -1,5 +1,20 @@
 import { AzureMetricDimension, AzureMonitorQuery } from '../../types';
 
+export function setResource(query: AzureMonitorQuery, resourceURI: string | undefined): AzureMonitorQuery {
+  return {
+    ...query,
+    azureMonitor: {
+      ...query.azureMonitor,
+      resourceUri: resourceURI,
+      metricNamespace: undefined,
+      metricName: undefined,
+      aggregation: undefined,
+      timeGrain: '',
+      dimensionFilters: [],
+    },
+  };
+}
+
 export function setSubscriptionID(query: AzureMonitorQuery, subscriptionID: string): AzureMonitorQuery {
   if (query.subscription === subscriptionID) {
     return query;

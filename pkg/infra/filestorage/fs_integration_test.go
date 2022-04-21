@@ -151,7 +151,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 
 func TestFsStorage(t *testing.T) {
 	//skipTest := true
-	emptyFileBytes := make([]byte, 0)
+	emptyContents := make([]byte, 0)
 	pngImage, _ := base64.StdEncoding.DecodeString(pngImageBase64)
 	pngImageSize := int64(len(pngImage))
 
@@ -163,21 +163,21 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:       "/folder1/folder2/file.jpg",
-							Contents:   &[]byte{},
+							Contents:   emptyContents,
 							Properties: map[string]string{"prop1": "val1", "prop2": "val"},
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:       "/folder1/file-inner.jpg",
-							Contents:   &[]byte{},
+							Contents:   emptyContents,
 							Properties: map[string]string{"prop1": "val1", "prop2": "val"},
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/folder1/file-inner2.jpg",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					queryListFiles{
@@ -260,25 +260,25 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/ab/a.jpg",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/ab/a/a.jpg",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/ac/a.jpg",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/aba/a.jpg",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					queryListFiles{
@@ -306,14 +306,14 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:       "/folder1/folder2/file.jpg",
-							Contents:   &[]byte{},
+							Contents:   emptyContents,
 							Properties: map[string]string{"prop1": "val1", "prop2": "val"},
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:       "/folder1/file-inner.jpg",
-							Contents:   &[]byte{},
+							Contents:   emptyContents,
 							Properties: map[string]string{"prop1": "val1"},
 						},
 					},
@@ -383,13 +383,13 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/folder1/folder2/file.jpg",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/folder1/file-inner.jpg",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					queryListFiles{
@@ -424,19 +424,19 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/folder1/a",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/folder1/b",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/folder2/c",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					queryListFiles{
@@ -546,25 +546,25 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/folder1/folder2/file.jpg",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/folder1/file-inner.jpg",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/folderX/folderZ/file.txt",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/folderA/folderB/file.txt",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					queryListFolders{
@@ -598,25 +598,25 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/folder1/folder2/file.jpg",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/folder1/file-inner.jpg",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/folderX/folderZ/file.txt",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/folderA/folderB/file.txt",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					queryListFolders{
@@ -686,7 +686,7 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:       "/folder/a.png",
-							Contents:   &pngImage,
+							Contents:   pngImage,
 							Properties: map[string]string{"prop1": "val1", "prop2": "val"},
 						},
 					},
@@ -711,7 +711,7 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/Folder/A.png",
-							Contents: &emptyFileBytes,
+							Contents: emptyContents,
 						},
 					},
 					queryGet{
@@ -731,7 +731,7 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:       "/a.png",
-							Contents:   &pngImage,
+							Contents:   pngImage,
 							Properties: map[string]string{"a": "av", "b": "bv"},
 						},
 					},
@@ -767,7 +767,7 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:       "/aB.png",
-							Contents:   &emptyFileBytes,
+							Contents:   emptyContents,
 							Properties: map[string]string{"a": "av", "b": "bv"},
 						},
 					},
@@ -804,7 +804,7 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:       "/FILE.png",
-							Contents:   &emptyFileBytes,
+							Contents:   emptyContents,
 							Properties: map[string]string{"a": "av", "b": "bv"},
 						},
 					},
@@ -816,13 +816,13 @@ func TestFsStorage(t *testing.T) {
 							fName("FILE.png"),
 							fProperties(map[string]string{"a": "av", "b": "bv"}),
 							fSize(0),
-							fContents(emptyFileBytes),
+							fContents(emptyContents),
 						),
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/file.png",
-							Contents: &pngImage,
+							Contents: pngImage,
 						},
 					},
 					queryGet{
@@ -845,7 +845,7 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:       "/FILE.png",
-							Contents:   &emptyFileBytes,
+							Contents:   emptyContents,
 							Properties: map[string]string{"a": "av", "b": "bv"},
 						},
 					},
@@ -868,7 +868,7 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:       "/file.png",
-							Contents:   &emptyFileBytes,
+							Contents:   emptyContents,
 							Properties: map[string]string{"a": "av", "b": "bv"},
 						},
 					},
@@ -901,7 +901,7 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/aB/cD/eF/file.jpg",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					queryListFolders{
@@ -1020,7 +1020,7 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/a/b/c/file.jpg",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					queryListFolders{
@@ -1132,7 +1132,7 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/folder/dashboards/myNewFolder/file.jpg",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdDeleteFolder{
@@ -1177,43 +1177,43 @@ func TestFsStorage(t *testing.T) {
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/s3/folder/dashboard.json",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/s3/folder/nested/dashboard.json",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/gitA/dashboard1.json",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/gitA/dashboard2.json",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/gitB/nested/dashboard.json",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/gitB/nested2/dashboard2.json",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					cmdUpsert{
 						cmd: UpsertFileCommand{
 							Path:     "/gitC/nestedC/dashboardC.json",
-							Contents: &[]byte{},
+							Contents: emptyContents,
 						},
 					},
 					queryListFiles{
