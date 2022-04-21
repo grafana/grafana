@@ -95,14 +95,15 @@ describe('LibraryPanelsSearch', () => {
 
         await userEvent.type(screen.getByPlaceholderText(/search by name/i), 'a');
         await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalled());
-        expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1);
-        expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
-          searchString: 'a',
-          folderFilter: [],
-          page: 0,
-          typeFilter: [],
-          perPage: 40,
-        });
+        await waitFor(() =>
+          expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
+            searchString: 'a',
+            folderFilter: [],
+            page: 0,
+            typeFilter: [],
+            perPage: 40,
+          })
+        );
       });
     });
   });
