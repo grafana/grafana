@@ -1,7 +1,9 @@
 package ualert
 
 import (
+	"encoding/json"
 	"fmt"
+	"sort"
 	"testing"
 
 	"xorm.io/xorm"
@@ -11,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/prometheus/alertmanager/pkg/labels"
 
 	"github.com/stretchr/testify/require"
 )
@@ -20,6 +23,22 @@ var RmMigTitle = rmMigTitle
 var ClearMigrationEntryTitle = clearMigrationEntryTitle
 
 type RmMigration = rmMigration
+
+func (m *Matchers) UnmarshalJSON(data []byte) error {
+	var lines []string
+	if err := json.Unmarshal(data, &lines); err != nil {
+		return err
+	}
+	for _, line := range lines {
+		pm, err := labels.ParseMatchers(line)
+		if err != nil {
+			return err
+		}
+		*m = append(*m, pm...)
+	}
+	sort.Sort(labels.Matchers(*m))
+	return nil
+}
 
 func Test_validateAlertmanagerConfig(t *testing.T) {
 	tc := []struct {

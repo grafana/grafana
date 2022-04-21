@@ -17,10 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/alertmanager/pkg/labels"
 
 	"github.com/stretchr/testify/require"
 )
 
+// TestAddDashAlertMigration tests the AddDashAlertMigration wrapper method that decides when to run the migration based on migration status and settings.
 func TestAddDashAlertMigration(t *testing.T) {
 	x := setupTestDB(t)
 
@@ -95,6 +97,7 @@ func TestAddDashAlertMigration(t *testing.T) {
 	}
 }
 
+// TestDashAlertMigration tests the execution of the main DashAlertMigration.
 func TestDashAlertMigration(t *testing.T) {
 	// Run initial migration to have a working DB.
 	x := setupTestDB(t)
@@ -108,7 +111,7 @@ func TestDashAlertMigration(t *testing.T) {
 		legacyChannels []*models.AlertNotification
 		alerts         []*models.Alert
 
-		expected map[int64]*postableUserConfig
+		expected map[int64]*ualert.PostableUserConfig
 		expErr   error
 	}{
 		{
@@ -129,15 +132,15 @@ func TestDashAlertMigration(t *testing.T) {
 				createAlert(t, int64(2), int64(3), int64(2), "alert5", []string{"notifier4", "notifier5", "notifier6"}),
 				createAlert(t, int64(2), int64(4), int64(3), "alert6", []string{}),
 			},
-			expected: map[int64]*postableUserConfig{
+			expected: map[int64]*ualert.PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: postableApiAlertingConfig{
-						Route: &route{
+					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
+						Route: &ualert.Route{
 							Receiver: "autogen-contact-point-default",
-							Routes: []*route{
-								{Receiver: "autogen-contact-point-1", name: "alert1"}, // We attach Matchers below
-								{Receiver: "autogen-contact-point-2", name: "alert2"},
-								{Receiver: "autogen-contact-point-3", name: "alert3"},
+							Routes: []*ualert.Route{
+								{Receiver: "autogen-contact-point-1", Matchers: newMatchers(labels.MatchEqual, "alert_name", "alert1")}, // These Matchers are temporary and will be replaced below with generated rule_uid.
+								{Receiver: "autogen-contact-point-2", Matchers: newMatchers(labels.MatchEqual, "alert_name", "alert2")},
+								{Receiver: "autogen-contact-point-3", Matchers: newMatchers(labels.MatchEqual, "alert_name", "alert3")},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -149,12 +152,12 @@ func TestDashAlertMigration(t *testing.T) {
 					},
 				},
 				int64(2): {
-					AlertmanagerConfig: postableApiAlertingConfig{
-						Route: &route{
+					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
+						Route: &ualert.Route{
 							Receiver: "autogen-contact-point-default",
-							Routes: []*route{
-								{Receiver: "autogen-contact-point-4", name: "alert4"},
-								{Receiver: "autogen-contact-point-5", name: "alert5"},
+							Routes: []*ualert.Route{
+								{Receiver: "autogen-contact-point-4", Matchers: newMatchers(labels.MatchEqual, "alert_name", "alert4")},
+								{Receiver: "autogen-contact-point-5", Matchers: newMatchers(labels.MatchEqual, "alert_name", "alert5")},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -174,10 +177,10 @@ func TestDashAlertMigration(t *testing.T) {
 			alerts: []*models.Alert{
 				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1"}),
 			},
-			expected: map[int64]*postableUserConfig{
+			expected: map[int64]*ualert.PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: postableApiAlertingConfig{
-						Route: &route{
+					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
+						Route: &ualert.Route{
 							Receiver: "autogen-contact-point-default",
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -197,13 +200,13 @@ func TestDashAlertMigration(t *testing.T) {
 			alerts: []*models.Alert{
 				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier2"}), // + notifier1, notifier3
 			},
-			expected: map[int64]*postableUserConfig{
+			expected: map[int64]*ualert.PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: postableApiAlertingConfig{
-						Route: &route{
+					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
+						Route: &ualert.Route{
 							Receiver: "autogen-contact-point-default",
-							Routes: []*route{
-								{Receiver: "autogen-contact-point-1", name: "alert1"},
+							Routes: []*ualert.Route{
+								{Receiver: "autogen-contact-point-1", Matchers: newMatchers(labels.MatchEqual, "alert_name", "alert1")},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -224,10 +227,10 @@ func TestDashAlertMigration(t *testing.T) {
 				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1"}),
 				createAlert(t, int64(1), int64(2), int64(3), "alert2", []string{}),
 			},
-			expected: map[int64]*postableUserConfig{
+			expected: map[int64]*ualert.PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: postableApiAlertingConfig{
-						Route: &route{
+					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
+						Route: &ualert.Route{
 							Receiver: "autogen-contact-point-default",
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -247,14 +250,14 @@ func TestDashAlertMigration(t *testing.T) {
 				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1", "notifier2"}),
 				createAlert(t, int64(1), int64(1), int64(1), "alert2", []string{"notifier1", "notifier2"}),
 			},
-			expected: map[int64]*postableUserConfig{
+			expected: map[int64]*ualert.PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: postableApiAlertingConfig{
-						Route: &route{
+					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
+						Route: &ualert.Route{
 							Receiver: "autogen-contact-point-default",
-							Routes: []*route{
-								{Receiver: "autogen-contact-point-1", name: "alert1"},
-								{Receiver: "autogen-contact-point-1", name: "alert2"},
+							Routes: []*ualert.Route{
+								{Receiver: "autogen-contact-point-1", Matchers: newMatchers(labels.MatchEqual, "alert_name", "alert1")},
+								{Receiver: "autogen-contact-point-1", Matchers: newMatchers(labels.MatchEqual, "alert_name", "alert2")},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -276,10 +279,10 @@ func TestDashAlertMigration(t *testing.T) {
 				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1"}),
 				createAlert(t, int64(1), int64(2), int64(3), "alert3", []string{}),
 			},
-			expected: map[int64]*postableUserConfig{
+			expected: map[int64]*ualert.PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: postableApiAlertingConfig{
-						Route: &route{
+					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
+						Route: &ualert.Route{
 							Receiver: "autogen-contact-point-default",
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -297,10 +300,10 @@ func TestDashAlertMigration(t *testing.T) {
 				createAlertNotification(t, int64(1), "notifier2", "sensu", "", false),
 			},
 			alerts: []*models.Alert{},
-			expected: map[int64]*postableUserConfig{
+			expected: map[int64]*ualert.PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: postableApiAlertingConfig{
-						Route: &route{
+					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
+						Route: &ualert.Route{
 							Receiver: "autogen-contact-point-default",
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -319,13 +322,13 @@ func TestDashAlertMigration(t *testing.T) {
 			alerts: []*models.Alert{
 				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1", "notifier2"}),
 			},
-			expected: map[int64]*postableUserConfig{
+			expected: map[int64]*ualert.PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: postableApiAlertingConfig{
-						Route: &route{
+					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
+						Route: &ualert.Route{
 							Receiver: "autogen-contact-point-default",
-							Routes: []*route{
-								{Receiver: "autogen-contact-point-1", name: "alert1"},
+							Routes: []*ualert.Route{
+								{Receiver: "autogen-contact-point-1", Matchers: newMatchers(labels.MatchEqual, "alert_name", "alert1")},
 							},
 						},
 						Receivers: []*ualert.PostableApiReceiver{
@@ -354,7 +357,7 @@ func TestDashAlertMigration(t *testing.T) {
 			require.NoError(t, errRunningMig)
 
 			for orgId := range tt.expected {
-				amConfig := getAlertManagerConfig(t, x, orgId)
+				amConfig := getAlertmanagerConfig(t, x, orgId)
 
 				// Order of nested GrafanaManagedReceivers is not guaranteed.
 				cOpt := []cmp.Option{
@@ -368,12 +371,12 @@ func TestDashAlertMigration(t *testing.T) {
 
 				// Since routes and alerts are connecting solely by the Matchers on rule_uid, which is created at runtime we need to do some prep-work to populate the expected Matchers.
 				alertUids := getAlertNameToUidMap(t, x, orgId)
-				attachExpectedMatchersToRoutes(t, tt.expected[orgId].AlertmanagerConfig.Route.Routes, alertUids)
+				replaceAlertNameMatcherWithRuleUid(t, tt.expected[orgId].AlertmanagerConfig.Route.Routes, alertUids)
 
 				// Order of nested routes is not guaranteed.
 				cOpt = []cmp.Option{
-					cmpopts.SortSlices(func(a, b *route) bool { return a.Receiver < b.Receiver }),
-					cmpopts.IgnoreUnexported(route{}),
+					cmpopts.SortSlices(func(a, b *ualert.Route) bool { return a.Receiver < b.Receiver }),
+					cmpopts.IgnoreUnexported(ualert.Route{}, labels.Matcher{}),
 				}
 				if !cmp.Equal(tt.expected[orgId].AlertmanagerConfig.Route, amConfig.AlertmanagerConfig.Route, cOpt...) {
 					t.Errorf("Unexpected Route: %v", cmp.Diff(tt.expected[orgId].AlertmanagerConfig.Route, amConfig.AlertmanagerConfig.Route, cOpt...))
@@ -383,6 +386,7 @@ func TestDashAlertMigration(t *testing.T) {
 	}
 }
 
+// setupTestDB prepares the sqlite database and runs OSS migrations to initialize the schemas.
 func setupTestDB(t *testing.T) *xorm.Engine {
 	t.Helper()
 	testDB := sqlutil.SQLite3TestDB()
@@ -491,7 +495,7 @@ func createDatasource(t *testing.T, id int64, orgId int64, uid string) *models.D
 	}
 }
 
-// Clean input tables for each test case.
+// teardown cleans the input tables between test cases.
 func teardown(t *testing.T, x *xorm.Engine) {
 	_, err := x.Exec("DELETE from alert")
 	require.NoError(t, err)
@@ -503,7 +507,7 @@ func teardown(t *testing.T, x *xorm.Engine) {
 	require.NoError(t, err)
 }
 
-// Setup and insert data into legacy alerting tables needed for migration.
+// setupLegacyAlertsTables inserts data into the legacy alerting tables that is needed for testing the migration.
 func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*models.AlertNotification, alerts []*models.Alert) {
 	t.Helper()
 
@@ -538,28 +542,13 @@ func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*mod
 	}
 }
 
-type postableUserConfig struct {
-	AlertmanagerConfig postableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config" xorm:"alertmanager_config"`
-}
-
-type postableApiAlertingConfig struct {
-	Route     *route                        `yaml:"route,omitempty" json:"route,omitempty"`
-	Receivers []*ualert.PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
-}
-
-type route struct {
-	Receiver string   `yaml:"receiver,omitempty" json:"receiver,omitempty"`
-	Matchers []string `yaml:"matchers,omitempty" json:"matchers,omitempty"`
-	Routes   []*route `yaml:"routes,omitempty" json:"routes,omitempty"`
-	name     string   // Used to help attach Matchers to expected results.
-}
-
-func getAlertManagerConfig(t *testing.T, x *xorm.Engine, orgId int64) *postableUserConfig {
+// getAlertmanagerConfig retreives the Alertmanager Config from the database for a given orgId.
+func getAlertmanagerConfig(t *testing.T, x *xorm.Engine, orgId int64) *ualert.PostableUserConfig {
 	amConfig := ""
 	_, err := x.Table("alert_configuration").Where("org_id = ?", orgId).Cols("alertmanager_configuration").Get(&amConfig)
 	require.NoError(t, err)
 
-	config := postableUserConfig{}
+	config := ualert.PostableUserConfig{}
 	err = json.Unmarshal([]byte(amConfig), &config)
 	require.NoError(t, err)
 	return &config
@@ -582,20 +571,31 @@ func getAlertNameToUidMap(t *testing.T, x *xorm.Engine, orgId int64) map[string]
 	return res
 }
 
-// attachExpectedMatchersToRoutes adds matchers to routes using the rule_uid's created during migration. This allows us to more easily compare expected to actual using require funcs.
-func attachExpectedMatchersToRoutes(t *testing.T, rts []*route, alertUids map[string]string) {
+// replaceAlertNameMatcherWithRuleUid replaces the stub matchers based on alert_name with the rule_uid's generated during migration.
+func replaceAlertNameMatcherWithRuleUid(t *testing.T, rts []*ualert.Route, alertUids map[string]string) {
 	for _, rt := range rts {
-		if rt.name != "" {
-			alertUid := alertUids[rt.name]
-			rt.Matchers = []string{"rule_uid=\"" + alertUid + "\""}
-			rt.name = ""
+
+		if len(rt.Matchers) > 0 {
+			// Replace alert name matcher with generated rule_uid matcher
+			for _, m := range rt.Matchers {
+				if m.Name == "alert_name" {
+					m.Name = "rule_uid"
+					m.Value = alertUids[m.Value]
+				}
+			}
 		}
 
 		// Recurse for nested routes.
-		attachExpectedMatchersToRoutes(t, rt.Routes, alertUids)
+		replaceAlertNameMatcherWithRuleUid(t, rt.Routes, alertUids)
 	}
 }
 
 func boolPointer(b bool) *bool {
 	return &b
+}
+
+// newMatchers creates a new ualert.Matchers given MatchType, name, and value.
+func newMatchers(t labels.MatchType, n, v string) ualert.Matchers {
+	matcher, _ := labels.NewMatcher(t, n, v)
+	return ualert.Matchers(labels.Matchers{matcher})
 }
