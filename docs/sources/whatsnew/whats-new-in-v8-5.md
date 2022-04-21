@@ -36,11 +36,11 @@ When enabled, a check runs every 10 minutes. It will notify, via the UI, when a 
 
 Plugin update available:
 
-{{< figure src="/static/img/docs/analytics/github-plugin-update-available-8-5.png" max-width="350x" caption="Plugin-available" >}}
+{{< figure src="/static/img/docs/analytics/github-plugin-update-available-8-5.png" max-width="150x" caption="Plugin-available" >}}
 
 Grafana update available:
 
-{{< figure src="/static/img/docs/analytics/github-plugin-version-8-5.png" max-width="350px" caption="Grafana-update-available" >}}
+{{< figure src="/static/img/docs/analytics/github-plugin-version-8-5.png" max-width="450px" caption="Grafana-update-available" >}}
 
 ## Dashboard Panels
 
@@ -68,7 +68,7 @@ A new transformation is available that helps you structure data in a matrix form
 
 Available by switching on the ‘newNavigation’ feature toggle.
 You can expand the navigation bar for a better overview of Grafana’s features and installed integrations.
-This feature is currently in a beta version and we would appreciate your feedback. Sign up for a call with the Grafana team - it only takes 30 minutes, and you'll receive a $40 USD gift card as a token of appreciation for your time.
+This feature is currently in a beta version and we would appreciate your feedback. [Sign up for a call with the Grafana team](https://www.userinterviews.com/projects/Hz3DyNNwWA/apply) - it only takes 30 minutes, and you'll receive a $40 USD gift card as a token of appreciation for your time.
 US, UK, Canada, Australia, France, Germany, or South Africa: sign up here
 Everywhere else in the world: sign up here
 
