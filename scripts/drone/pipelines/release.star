@@ -423,6 +423,7 @@ def publish_npm_pipelines(mode):
     }
     steps = [
         download_grabpl_step(),
+        yarn_install_step(),
         retrieve_npm_packages_step(),
         release_npm_packages_step()
     ]

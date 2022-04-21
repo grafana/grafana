@@ -27,7 +27,7 @@ const ui = {
 
 jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
 
-describe('RuleDetails FGAC', () => {
+describe('RuleDetails RBAC', () => {
   describe('Grafana rules action buttons', () => {
     const grafanaRule = getGrafanaRule({ name: 'Grafana' });
     it('Should not render Edit button for users without the update permission', () => {
