@@ -1,23 +1,43 @@
-+++
-title = "Configure thresholds in a Grafana dasboard"
-aliases = ["/docs/grafana/latest/panels/thresholds/", "/docs/grafana/latest/panels/", "/docs/grafana/latest/panels/specify-thresholds/about-thresholds/", "/docs/grafana/latest/panels/specify-thresholds/add-a-threshold/", "/docs/grafana/latest/panels/specify-thresholds/add-threshold-to-graph/", "/docs/grafana/latest/panels/specify-thresholds/delete-a-threshold/"]
-weight = 300
-+++
+---
+title: 'Configure visualization thresholds'
+menuTitle: 'Configure visualization thresholds'
+description: 'This section includes information about using thresholds in your visualizations.'
+weight: 300
+aliases:
+  [
+    docs/grafana/latest/panels/thresholds/,
+    docs/grafana/latest/panels/,
+    docs/grafana/latest/panels/specify-thresholds/about-thresholds/,
+    docs/grafana/latest/panels/specify-thresholds/add-a-threshold/,
+    docs/grafana/latest/panels/specify-thresholds/add-threshold-to-graph/,
+    docs/grafana/latest/panels/specify-thresholds/delete-a-threshold/,
+  ]
+---
 
 # Configure visualization thresholds
 
-This section includes information about using thresholds in your visualizations.
+This section includes information about using thresholds in your visualizations. You'll learn about thresholds and their defaults, how to add or delete a threshold, and adding a threshold to a legacy panel.
 
 ## About thresholds
 
 A threshold is a value that you specify for a metric that is visually reflected in a dashboard when the threshold value is met or exceeded.
 
+Thresholds provide one method for you to conditionally style and color your visualizations based on query results. You can apply thresholds to most, but not all, visualizations. For more information about visualizations, refer to [Visualization panels]({{< relref "../../visualizations" >}}).
+
+You can use thresholds to:
+
+- Color lines or areas in the [Graph panel]({{< relref "../../visualizations/graph-panel" >}})
+- Color lines in the [Time-series panel]({{< relref "../../visualizations/time-series/graph-color-scheme/#from-thresholds" >}})
+- Color the background or value text in the [Stat panel]({{< relref "../../visualizations/stat-panel" >}})
+- Color the gauge and threshold markers in the [Gauge panel]({{< relref "../../visualizations/gauge-panel" >}})
+- Color markers in the [Geomap panel]({{< relref "../../visualizations/geomap" >}})
+- Color cell text or background in the [Table panel]({{< relref "../../visualizations/table" >}})
+- Define regions and region colors in the [State timeline panel]({{< relref "../../visualizations/state-timeline" >}})
+
 There are two types of thresholds:
 
-- **Absolute** thresholds are defined based on a number. For example, 80 on a scale of 1 to 150.
+- **Absolute** thresholds are defined by a number. For example, 80 on a scale of 1 to 150.
 - **Percentage** thresholds are defined relative to minimum or maximum. For example, 80 percent.
-
-You can apply thresholds to most, but not all, visualizations. For more information about visualizations, refer to [Visualization panels]({{< relref "../../visualizations" >}}).
 
 ### Default thresholds
 
@@ -29,52 +49,38 @@ On visualizations that support it, Grafana sets default threshold values of:
 
 The **Base** value represents minus infinity. It is generally the “good” color.
 
-## Add a threshold
+## Add or delete a threshold
 
-You can add as many thresholds to a panel as you want. Grafana automatically sorts thresholds from highest value to lowest.
-
-### Before you begin
-
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
-
-**To add a threshold**:
-
-1. Edit the panel to which you want to add a threshold.
-1. On the panel display options, locate the **Thresholds** section.
-1. Click **+ Add threshold**.
-
-   Grafana adds a threshold value and color.
-
-1. Accept the recommendations or edit the threshold.
-   - **Edit color:** To select a color, click the color dot.
-   - **Edit number:** To change the threshold value, click in the field and enter a number.
-1. Select a **Threshold mode**.
-   Threshold mode applies to all thresholds on this panel.
-1. In the **Show thresholds** drop-down, select a threshold display option.
-1. Click **Save**.
-
-## Delete a threshold
+You can add as many thresholds to a panel as you want. Grafana automatically sorts thresholds values from highest to lowest.
 
 Delete a threshold when it is no longer relevant to your business operations. When you delete a threshold, the system removes the threshold from all visualizations that include the threshold.
 
-### Before you begin
+**Before you begin:**
 
-- [Add a threshold]({{< relref "#add-a-threshold.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}})
 
-**To delete a threshold**:
+**To add or delete a threshold**:
 
-1. Navigate to the panel to which you want to add a threshold.
-1. Click the **Field** tab. (Or **Panel** tab for a graph panel.)
-1. Click the trash can icon next to the threshold you want to remove.
-1. Click **Save** to save the changes in the dashboard.
+1. To add a threshold:
+
+   a. Edit the panel to which you want to add a threshold.
+
+   b. On the panel display options, locate the **Thresholds** section and click **+ Add threshold**.
+
+   c. Selct a threshold color, number, and mode.
+   Threshold mode applies to all thresholds on this panel.
+
+   d. For a time-series panel, select a **Show thresholds** option.
+
+1. To delete a threshold, navigate to the panel that contains the threshold and click the trash icon next to the threshold you want to remove.
 
 ## Add a threshold to a legacy graph panel
 
 In the Graph panel visualization, thresholds enable you to add lines or sections to a graph to make it easier to recognize when the graph crosses a threshold.
 
-### Before you begin
+**Before you begin:**
 
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
+- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}})
 
 **To add a threshold to a graph panel**:
 
