@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
-import { Button, Select, Input, HorizontalGroup, VerticalGroup, InlineLabel } from '@grafana/ui';
+import { Button, Select, Input, HorizontalGroup, VerticalGroup } from '@grafana/ui';
 
 import { Field } from '../Field';
 import { AzureMetricDimension, AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types';
 import { appendDimensionFilter, removeDimensionFilter, setDimensionFilterValue } from './setQueryValue';
+import { SelectableValue } from '@grafana/data';
 
 interface DimensionFieldsProps extends AzureQueryEditorFieldProps {
   dimensionOptions: AzureMonitorOption[];
@@ -14,6 +15,21 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
     () => query.azureMonitor?.dimensionFilters ?? [],
     [query.azureMonitor?.dimensionFilters]
   );
+
+  const validDimensionOptions = useMemo(() => {
+    let t = dimensionOptions;
+    let dimensionFilters = query.azureMonitor?.dimensionFilters;
+    if (dimensionFilters !== undefined && dimensionFilters.length > 0) {
+      t = dimensionOptions.filter((val) => !dimensionFilters?.find((dimension) => dimension.dimension === val.value));
+    }
+    return t;
+  }, [query.azureMonitor?.dimensionFilters, dimensionOptions]);
+
+  const dimensionOperators: Array<SelectableValue<string>> = [
+    { label: '==', value: 'eq' },
+    { label: '!=', value: 'ne' },
+    { label: 'starts with', value: 'sw' },
+  ];
 
   const addFilter = () => {
     onQueryChange(appendDimensionFilter(query));
@@ -46,11 +62,17 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
               menuShouldPortal
               placeholder="Field"
               value={filter.dimension}
-              options={dimensionOptions}
+              options={validDimensionOptions}
               onChange={(v) => onFieldChange(index, 'dimension', v.value ?? '')}
               width={38}
             />
-            <InlineLabel aria-label="equals">==</InlineLabel>
+            <Select
+              menuShouldPortal
+              placeholder="Operation"
+              value={filter.operator}
+              options={dimensionOperators}
+              onChange={(v) => onFieldChange(index, 'operator', v.value ?? '')}
+            />
             <Input placeholder="" value={filter.filter} onChange={(ev) => onFilterInputChange(index, ev)} />
             <Button
               variant="secondary"
