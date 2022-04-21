@@ -706,3 +706,11 @@ func (hs *HTTPServer) GetDashboardTags(c *models.ReqContext) {
 
 	c.JSON(http.StatusOK, query.Result)
 }
+
+// Sets sharing configuration for dashboard
+func (hs *HTTPServer) ShareDashboard(c *models.ReqContext) response.Response {
+	return response.JSON(http.StatusOK, util.DynMap{
+		"status":   "success",
+		"isPublic": false,
+	})
+}

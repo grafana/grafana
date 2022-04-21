@@ -355,14 +355,19 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Get("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))
 			dashboardRoute.Delete("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsDelete)), routing.Wrap(hs.DeleteDashboardByUID))
 
-			if hs.ThumbService != nil {
-				dashboardRoute.Get("/uid/:uid/img/:kind/:theme", hs.ThumbService.GetImage)
-
-				if hs.Features.IsEnabled(featuremgmt.FlagDashboardPreviewsAdmin) {
-					dashboardRoute.Post("/uid/:uid/img/:kind/:theme", reqGrafanaAdmin, hs.ThumbService.SetImage)
-					dashboardRoute.Put("/uid/:uid/img/:kind/:theme", reqGrafanaAdmin, hs.ThumbService.UpdateThumbnailState)
+			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
+				if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+					dashUidRoute.Post("/sharing", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(hs.ShareDashboard))
 				}
-			}
+
+				if hs.ThumbService != nil {
+					dashUidRoute.Get("/img/:kind/:theme", hs.ThumbService.GetImage)
+					if hs.Features.IsEnabled(featuremgmt.FlagDashboardPreviewsAdmin) {
+						dashUidRoute.Post("/img/:kind/:theme", reqGrafanaAdmin, hs.ThumbService.SetImage)
+						dashUidRoute.Put("/img/:kind/:theme", reqGrafanaAdmin, hs.ThumbService.UpdateThumbnailState)
+					}
+				}
+			})
 
 			dashboardRoute.Post("/calculate-diff", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(hs.CalculateDashboardDiff))
 			dashboardRoute.Post("/trim", routing.Wrap(hs.TrimDashboard))
