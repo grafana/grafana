@@ -82,5 +82,28 @@ describe('MultiFilters', () => {
         'my-key': ['my-value1', 'my-value2'],
       });
     });
+
+    describe('when editing an existing filter item key', () => {
+      it('it should change the key and call onChange', async () => {
+        const filters = { 'my-key': ['my-value'] };
+        const onChange = jest.fn();
+        render(<MultiFilter filters={filters} onChange={onChange} />);
+
+        const filterItemElement = screen.getByTestId('cloudwatch-multifilter-item');
+        expect(filterItemElement).toBeInTheDocument();
+        expect(within(filterItemElement).getByDisplayValue('my-key')).toBeInTheDocument();
+        expect(within(filterItemElement).getByDisplayValue('my-value')).toBeInTheDocument();
+
+        const keyElement = screen.getByTestId('cloudwatch-multifilter-item-key');
+        expect(keyElement).toBeInTheDocument();
+        userEvent.type(keyElement!, '2');
+        fireEvent.blur(keyElement!);
+
+        expect(within(filterItemElement).getByDisplayValue('my-key2')).toBeInTheDocument();
+        expect(onChange).toHaveBeenCalledWith({
+          'my-key2': ['my-value'],
+        });
+      });
+    });
   });
 });

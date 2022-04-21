@@ -9,9 +9,10 @@ export interface Props {
   filter: MultiFilterCondition;
   onChange: (value: MultiFilterCondition) => void;
   onDelete: () => void;
+  keyPlaceholder?: string;
 }
 
-export const MultiFilterItem: FunctionComponent<Props> = ({ filter, onChange, onDelete }) => {
+export const MultiFilterItem: FunctionComponent<Props> = ({ filter, onChange, onDelete, keyPlaceholder }) => {
   const [localKey, setLocalKey] = useState(filter.key || '');
   const [localValue, setLocalValue] = useState(filter.value?.join(', ') || '');
   const theme = useTheme2();
@@ -24,11 +25,11 @@ export const MultiFilterItem: FunctionComponent<Props> = ({ filter, onChange, on
           data-testid="cloudwatch-multifilter-item-key"
           aria-label="Filter key"
           value={localKey}
-          placeholder="key"
+          placeholder={keyPlaceholder ?? 'key'}
           onChange={(e) => setLocalKey(e.currentTarget.value)}
           onBlur={() => {
             if (localKey && localKey !== filter.key) {
-              onChange({ key: localKey, value: undefined });
+              onChange({ ...filter, key: localKey });
             }
           }}
         />
@@ -42,7 +43,7 @@ export const MultiFilterItem: FunctionComponent<Props> = ({ filter, onChange, on
           placeholder="value1, value2,..."
           onChange={(e) => setLocalValue(e.currentTarget.value)}
           onBlur={() => {
-            const newValues = localValue.replace(' ', '').split(',');
+            const newValues = localValue.split(',').map((v) => v.trim());
             if (localValue && newValues !== filter.value) {
               onChange({ ...filter, value: newValues });
             }

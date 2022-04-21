@@ -171,13 +171,14 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           <InlineField
             label="Filters"
             labelWidth={20}
-            tooltip='Pre-defined ec2:DescribeInstances filters/tags and the values to filter on. Tags should be formatted "tag:<name>" '
+            tooltip='Pre-defined ec2:DescribeInstances filters/tags and the values to filter on. Tags should be formatted "tag:<name>. See the documentation for more details.'
           >
             <MultiFilter
               filters={parsedQuery.ec2Filters}
               onChange={(filters) => {
                 onChange({ ...parsedQuery, ec2Filters: filters });
               }}
+              keyPlaceholder="filter/tag"
             />
           </InlineField>
         </>
@@ -196,6 +197,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
               onChange={(filters) => {
                 onChange({ ...parsedQuery, tags: filters });
               }}
+              keyPlaceholder="tag"
             />
           </InlineField>
         </>

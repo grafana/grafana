@@ -7,6 +7,7 @@ import { MultiFilterItem } from './MultiFilterItem';
 export interface Props {
   filters?: MultiFilters;
   onChange: (filters: MultiFilters) => void;
+  keyPlaceholder?: string;
 }
 
 export interface MultiFilterCondition {
@@ -28,7 +29,7 @@ const filterConditionsToMultiFilters = (filters: MultiFilterCondition[]) => {
   return res;
 };
 
-export const MultiFilter: React.FC<Props> = ({ filters, onChange }) => {
+export const MultiFilter: React.FC<Props> = ({ filters, onChange, keyPlaceholder }) => {
   const [items, setItems] = useState<MultiFilterCondition[]>([]);
   useEffect(() => setItems(filters ? multiFiltersToFilterConditions(filters) : []), [filters]);
   const onFiltersChange = (newItems: Array<Partial<MultiFilterCondition>>) => {
@@ -42,13 +43,23 @@ export const MultiFilter: React.FC<Props> = ({ filters, onChange }) => {
     }
   };
 
-  return <EditorList items={items} onChange={onFiltersChange} renderItem={renderFilter} />;
+  return <EditorList items={items} onChange={onFiltersChange} renderItem={makeRenderFilter(keyPlaceholder)} />;
 };
 
-function renderFilter(
-  item: MultiFilterCondition,
-  onChange: (item: MultiFilterCondition) => void,
-  onDelete: () => void
-) {
-  return <MultiFilterItem filter={item} onChange={(item) => onChange(item)} onDelete={onDelete} />;
+function makeRenderFilter(keyPlaceholder?: string) {
+  function renderFilter(
+    item: MultiFilterCondition,
+    onChange: (item: MultiFilterCondition) => void,
+    onDelete: () => void
+  ) {
+    return (
+      <MultiFilterItem
+        filter={item}
+        onChange={(item) => onChange(item)}
+        onDelete={onDelete}
+        keyPlaceholder={keyPlaceholder}
+      />
+    );
+  }
+  return renderFilter;
 }
