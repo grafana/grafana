@@ -60,10 +60,6 @@ type Store interface {
 	GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error
 	NewSession(ctx context.Context) *DBSession
 	WithDbSession(ctx context.Context, callback DBTransactionFunc) error
-	GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error
-	GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) error
-	SavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error
-	PatchPreferences(ctx context.Context, cmd *models.PatchPreferencesCommand) error
 	GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSetting, error)
 	GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error
 	UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error
