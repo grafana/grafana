@@ -37,8 +37,6 @@ var migTitle = "move dashboard alerts to unified alerting"
 
 var rmMigTitle = "remove unified alerting data"
 
-const clearMigrationEntryTitle = "clear migration entry %q"
-
 type MigrationError struct {
 	AlertId int64
 	Err     error
@@ -58,33 +56,29 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 	}
 
 	_, migrationRun := logs[migTitle]
+	forceMigration := mg.Cfg.UnifiedAlerting.ForceMigration
 
-	switch {
-	case mg.Cfg.UnifiedAlerting.IsEnabled() && !migrationRun:
-		// Remove the migration entry that removes all unified alerting data. This is so when the feature
-		// flag is removed in future the "remove unified alerting data" migration will be run again.
-		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, rmMigTitle), &clearMigrationEntry{
-			migrationID: rmMigTitle,
-		})
-		if err != nil {
-			mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
+	migrationID := migTitle
+	var skipMigrationLog bool
+	if mg.Cfg.UnifiedAlerting.IsEnabled() {
+		if migrationRun && forceMigration {
+			// If the migration has already run but we need to re-run it,
+			// remove all UA data before re-migrating.
+			mg.AddMigration(rmMigTitle, &rmMigration{})
+
+			// Skip migrations log and rename the migration to re-run it.
+			skipMigrationLog = true
+			migrationID = fmt.Sprintf("force %s", migTitle)
 		}
-		mg.AddMigration(migTitle, &migration{
+
+		// Migrate legacy data to UA.
+		mg.AddMigration(migrationID, &migration{
 			seenChannelUIDs:           make(map[string]struct{}),
 			migratedChannelsPerOrg:    make(map[int64]map[*notificationChannel]struct{}),
 			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
 			silences:                  make(map[int64][]*pb.MeshSilence),
+			skipMigrationLog:          skipMigrationLog,
 		})
-	case !mg.Cfg.UnifiedAlerting.IsEnabled() && setting.ClearUAData && migrationRun:
-		// Remove the migration entry that creates unified alerting data. This is so when the feature
-		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
-		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, migTitle), &clearMigrationEntry{
-			migrationID: migTitle,
-		})
-		if err != nil {
-			mg.Logger.Error("alert migration error: could not clear dashboard alert migration", "error", err)
-		}
-		mg.AddMigration(rmMigTitle, &rmMigration{})
 	}
 }
 
@@ -219,6 +213,9 @@ type migration struct {
 	silences                  map[int64][]*pb.MeshSilence
 	portedChannelGroupsPerOrg map[int64]map[string]string // Org -> Channel group key -> receiver name.
 	lastReceiverID            int                         // For the auto generated receivers.
+
+	// This allows us to conditionally skip the migration logs.
+	skipMigrationLog bool
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
@@ -508,6 +505,11 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 	return nil
 }
 
+// SkipMigrationLog allows us to force a re-migration if we need to.
+func (m *migration) SkipMigrationLog() bool {
+	return m.skipMigrationLog
+}
+
 type AlertConfiguration struct {
 	ID    int64 `xorm:"pk autoincr 'id'"`
 	OrgID int64 `xorm:"org_id"`
@@ -517,7 +519,8 @@ type AlertConfiguration struct {
 	CreatedAt                 int64 `xorm:"created"`
 }
 
-// rmMigration removes Grafana 8 alert data
+// rmMigration removes Grafana 8 alert data.
+// This migration is not recorded in the migration_log so that it can re-run several times.
 type rmMigration struct {
 	migrator.MigrationBase
 }
@@ -587,11 +590,9 @@ func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	return nil
 }
 
-// rmMigrationWithoutLogging is similar migration to rmMigration
-// but is not recorded in the migration_log table so that it can rerun in the future
-type rmMigrationWithoutLogging = rmMigration
-
-func (m *rmMigrationWithoutLogging) SkipMigrationLog() bool {
+// SkipMigrationLog prevents the migration from being recorded
+// in the migration_log table so that it can rerun in the future
+func (m *rmMigration) SkipMigrationLog() bool {
 	return true
 }
 

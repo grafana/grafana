@@ -77,6 +77,9 @@ type UnifiedAlertingSettings struct {
 	BaseInterval time.Duration
 	// DefaultRuleEvaluationInterval default interval between evaluations of a rule.
 	DefaultRuleEvaluationInterval time.Duration
+
+	// Wipe out all existing UA data and re-migrate.
+	ForceMigration bool
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -243,6 +246,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if uaMinInterval > uaCfg.DefaultRuleEvaluationInterval {
 		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
 	}
+
+	uaCfg.ForceMigration = ua.Key("force_migration").MustBool()
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil
