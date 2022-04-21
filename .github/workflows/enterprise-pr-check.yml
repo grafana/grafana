@@ -11,4 +11,4 @@ jobs:
           repository: grafana/grafana-enterprise
           event-type: oss-pull-request
           client-payload:
-            '{"source_branch": "${{ github.head_ref }}", "target_branch": "${{ github.base_ref }}", "pr_number": "${{ github.event.issue.number }}"}'
+            '{"source_branch": "${{ github.head_ref }}", "target_branch": "${{ github.base_ref }}", "pr_number": "${{ github.event.number }}"}'
