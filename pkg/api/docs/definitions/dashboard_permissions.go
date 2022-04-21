@@ -9,6 +9,10 @@ import (
 //
 // Gets all existing permissions for the given dashboard.
 //
+// Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsWithUid) instead
+//
+// Deprecated: true
+//
 // Responses:
 // 200: getDashboardPermissionsResponse
 // 401: unauthorisedError
@@ -20,7 +24,11 @@ import (
 //
 // Updates permissions for a dashboard.
 //
+// Please refer to [updated API](#/dashboard_permissions/postDashboardPermissionsWithUid) instead
+//
 // This operation will remove existing permissions if they’re not included in the request.
+//
+// Deprecated: true
 //
 // Responses:
 // 200: okResponse

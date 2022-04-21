@@ -2954,9 +2954,11 @@
     },
     "/dashboards/id/{DashboardID}/permissions": {
       "get": {
+        "description": "Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsWithUid) instead",
         "tags": ["dashboard_permissions"],
         "summary": "Gets all existing permissions for the given dashboard.",
         "operationId": "getDashboardPermissions",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2985,10 +2987,11 @@
         }
       },
       "post": {
-        "description": "This operation will remove existing permissions if they’re not included in the request.",
+        "description": "Please refer to [updated API](#/dashboard_permissions/postDashboardPermissionsWithUid) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
         "tags": ["dashboard_permissions"],
         "summary": "Updates permissions for a dashboard.",
         "operationId": "postDashboardPermissions",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -3032,7 +3035,16 @@
       "post": {
         "tags": ["dashboard_versions"],
         "summary": "Restore a dashboard to a given dashboard version.",
-        "operationId": "restoreDashboardVersionWithUid",
+        "operationId": "restoreDashboardVersion",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardID",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/postDashboardResponse"
@@ -3107,7 +3119,23 @@
       "get": {
         "tags": ["dashboard_versions"],
         "summary": "Get a specific dashboard version.",
-        "operationId": "getDashboardVersionWithUid",
+        "operationId": "getDashboardVersion",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardVersionID",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/dashboardVersionResponse"
