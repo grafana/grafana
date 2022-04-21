@@ -36,6 +36,7 @@ export interface AzureMonitorQuery extends DeprecatedAzureMonitorQuery {
  * Azure Monitor Metrics sub-query properties
  */
 export interface AzureMetricQuery {
+  resourceUri?: string;
   resourceGroup?: string;
 
   /** Resource type */

@@ -5,6 +5,7 @@ import { StatusPanelOptions } from './types';
 import { TimelineChart } from '../state-timeline/TimelineChart';
 import { TimelineMode } from '../state-timeline/types';
 import { prepareTimelineFields, prepareTimelineLegendItems } from '../state-timeline/utils';
+import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 
 interface TimelinePanelProps extends PanelProps<StatusPanelOptions> {}
 
@@ -43,7 +44,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
       <div className="panel-empty">
         <p>
           Too many points to visualize properly. <br />
-          Update the query to return fewer points. <br />({frames[0].length} points recieved)
+          Update the query to return fewer points. <br />({frames[0].length} points received)
         </p>
       </div>
     );
@@ -68,6 +69,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
             <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />
+            <OutsideRangePlugin config={config} range={timeRange} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
       }}

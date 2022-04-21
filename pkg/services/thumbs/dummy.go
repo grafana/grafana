@@ -2,6 +2,7 @@ package thumbs
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
@@ -39,19 +40,19 @@ func (ds *dummyService) GetDashboardPreviewsSetupSettings(c *models.ReqContext) 
 func (ds *dummyService) StartCrawler(c *models.ReqContext) response.Response {
 	result := make(map[string]string)
 	result["error"] = "Not enabled"
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 func (ds *dummyService) StopCrawler(c *models.ReqContext) response.Response {
 	result := make(map[string]string)
 	result["error"] = "Not enabled"
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 func (ds *dummyService) CrawlerStatus(c *models.ReqContext) response.Response {
 	result := make(map[string]string)
 	result["error"] = "Not enabled"
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 func (ds *dummyService) Run(ctx context.Context) error {

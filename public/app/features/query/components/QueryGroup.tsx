@@ -111,7 +111,10 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onChangeDataSource = async (newSettings: DataSourceInstanceSettings) => {
     const { dsSettings } = this.state;
-    const queries = updateQueries(newSettings, this.state.queries, dsSettings);
+    const currentDS = dsSettings ? await getDataSourceSrv().get(dsSettings.uid) : undefined;
+    const nextDS = await getDataSourceSrv().get(newSettings.uid);
+
+    const queries = await updateQueries(nextDS, this.state.queries, currentDS);
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
     this.onChange({

@@ -3,7 +3,6 @@ package dashboardsnapshots
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -11,23 +10,15 @@ import (
 )
 
 type Service struct {
-	Bus            bus.Bus
 	SQLStore       sqlstore.Store
 	SecretsService secrets.Service
 }
 
-func ProvideService(bus bus.Bus, store sqlstore.Store, secretsService secrets.Service) *Service {
+func ProvideService(store sqlstore.Store, secretsService secrets.Service) *Service {
 	s := &Service{
-		Bus:            bus,
 		SQLStore:       store,
 		SecretsService: secretsService,
 	}
-
-	s.Bus.AddHandler(s.CreateDashboardSnapshot)
-	s.Bus.AddHandler(s.GetDashboardSnapshot)
-	s.Bus.AddHandler(s.DeleteDashboardSnapshot)
-	s.Bus.AddHandler(s.SearchDashboardSnapshots)
-	s.Bus.AddHandler(s.DeleteExpiredSnapshots)
 
 	return s
 }
@@ -49,7 +40,7 @@ func (s *Service) CreateDashboardSnapshot(ctx context.Context, cmd *models.Creat
 }
 
 func (s *Service) GetDashboardSnapshot(ctx context.Context, query *models.GetDashboardSnapshotQuery) error {
-	err := s.SQLStore.GetDashboardSnapshot(query)
+	err := s.SQLStore.GetDashboardSnapshot(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -75,8 +66,8 @@ func (s *Service) DeleteDashboardSnapshot(ctx context.Context, cmd *models.Delet
 	return s.SQLStore.DeleteDashboardSnapshot(ctx, cmd)
 }
 
-func (s *Service) SearchDashboardSnapshots(_ context.Context, query *models.GetDashboardSnapshotsQuery) error {
-	return s.SQLStore.SearchDashboardSnapshots(query)
+func (s *Service) SearchDashboardSnapshots(ctx context.Context, query *models.GetDashboardSnapshotsQuery) error {
+	return s.SQLStore.SearchDashboardSnapshots(ctx, query)
 }
 
 func (s *Service) DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error {

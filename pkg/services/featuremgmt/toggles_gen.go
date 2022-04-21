@@ -21,7 +21,7 @@ const (
 
 	// FlagServiceAccounts
 	// support service accounts
-	FlagServiceAccounts = "service-accounts"
+	FlagServiceAccounts = "serviceAccounts"
 
 	// FlagDatabaseMetrics
 	// Add prometheus metrics for database tables
@@ -107,6 +107,10 @@ const (
 	// only execute the query saved in a panel
 	FlagValidatedQueries = "validatedQueries"
 
+	// FlagPublicDashboards
+	// enables public access to dashboards
+	FlagPublicDashboards = "publicDashboards"
+
 	// FlagLokiLive
 	// support websocket streaming for loki (early prototype)
 	FlagLokiLive = "lokiLive"
@@ -154,4 +158,8 @@ const (
 	// FlagExplore2Dashboard
 	// Experimental Explore to Dashboard workflow
 	FlagExplore2Dashboard = "explore2Dashboard"
+
+	// FlagPersistNotifications
+	// PoC Notifications page
+	FlagPersistNotifications = "persistNotifications"
 )

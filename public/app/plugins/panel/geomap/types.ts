@@ -5,6 +5,8 @@ import BaseLayer from 'ol/layer/Base';
 import Units from 'ol/proj/Units';
 import { StyleConfig } from './style/types';
 import { MapCenterID } from './view';
+import { Subject } from 'rxjs';
+import { FeatureLike } from 'ol/Feature';
 
 export interface ControlsOptions {
   // Zoom (upper left)
@@ -80,4 +82,5 @@ export interface MapLayerState<TConfig = any> extends LayerElement {
   layer: BaseLayer; // the openlayers instance
   onChange: (cfg: MapLayerOptions<TConfig>) => void;
   isBasemap?: boolean;
+  mouseEvents: Subject<FeatureLike | undefined>;
 }

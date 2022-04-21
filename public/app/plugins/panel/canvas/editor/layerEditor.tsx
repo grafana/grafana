@@ -81,7 +81,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
           category: ['Layout'],
           id: 'content',
           path: '__', // not used
-          name: 'Anchor',
+          name: 'Constraints',
           editor: PlacementEditor,
           settings: {
             scene: opts.scene,

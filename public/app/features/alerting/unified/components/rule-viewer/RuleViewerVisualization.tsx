@@ -9,6 +9,8 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { PanelPluginsButtonGroup, SupportedPanelPlugins } from '../PanelPluginsButtonGroup';
 import { TABLE, TIMESERIES } from '../../utils/constants';
+import { Authorize } from '../Authorize';
+import { AccessControlAction } from 'app/types';
 
 type RuleViewerVisualizationProps = {
   data?: PanelData;
@@ -91,20 +93,22 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
                     />
                   ) : null}
                   <PanelPluginsButtonGroup onChange={setPanel} value={panel} size="md" />
-                  {!isExpressionQuery(query.model) && (
-                    <>
-                      <div className={styles.spacing} />
-                      <LinkButton
-                        size="md"
-                        variant="secondary"
-                        icon="compass"
-                        target="_blank"
-                        href={createExploreLink(dsSettings, query)}
-                      >
-                        View in Explore
-                      </LinkButton>
-                    </>
-                  )}
+                  <Authorize actions={[AccessControlAction.DataSourcesExplore]}>
+                    {!isExpressionQuery(query.model) && (
+                      <>
+                        <div className={styles.spacing} />
+                        <LinkButton
+                          size="md"
+                          variant="secondary"
+                          icon="compass"
+                          target="_blank"
+                          href={createExploreLink(dsSettings, query)}
+                        >
+                          View in Explore
+                        </LinkButton>
+                      </>
+                    )}
+                  </Authorize>
                 </div>
               </div>
               <PanelRenderer

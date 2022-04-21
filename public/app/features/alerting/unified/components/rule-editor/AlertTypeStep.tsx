@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Field, Input, InputControl, useStyles2 } from '@grafana/ui';
+import { Field, Icon, Input, InputControl, Label, Tooltip, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
@@ -10,6 +10,9 @@ import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import { CloudRulesSourcePicker } from './CloudRulesSourcePicker';
 import { checkForPathSeparator } from './util';
 import { RuleTypePicker } from './rule-types/RuleTypePicker';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
+import { Stack } from '@grafana/experimental';
 
 interface Props {
   editingExistingRule: boolean;
@@ -23,6 +26,8 @@ const recordingRuleNameValidationPattern = {
 
 export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   const styles = useStyles2(getStyles);
+
+  const { enabledRuleTypes, defaultRuleType } = getAvailableRuleTypes();
 
   const {
     register,
@@ -38,27 +43,25 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
 
   return (
     <RuleEditorSection stepNo={1} title="Rule type">
-      <Field
-        disabled={editingExistingRule}
-        error={errors.type?.message}
-        invalid={!!errors.type?.message}
-        data-testid="alert-type-picker"
-      >
-        <InputControl
-          render={({ field: { onChange } }) => (
-            <RuleTypePicker
-              aria-label="Rule type"
-              selected={getValues('type') ?? RuleFormType.grafana}
-              onChange={onChange}
-            />
-          )}
-          name="type"
-          control={control}
-          rules={{
-            required: { value: true, message: 'Please select alert type' },
-          }}
-        />
-      </Field>
+      {!editingExistingRule && (
+        <Field error={errors.type?.message} invalid={!!errors.type?.message} data-testid="alert-type-picker">
+          <InputControl
+            render={({ field: { onChange } }) => (
+              <RuleTypePicker
+                aria-label="Rule type"
+                selected={getValues('type') ?? defaultRuleType}
+                onChange={onChange}
+                enabledTypes={enabledRuleTypes}
+              />
+            )}
+            name="type"
+            control={control}
+            rules={{
+              required: { value: true, message: 'Please select alert type' },
+            }}
+          />
+        </Field>
+      )}
 
       <Field
         className={styles.formInput}
@@ -118,30 +121,80 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
         dataSourceName && <GroupAndNamespaceFields rulesSourceName={dataSourceName} />}
 
       {ruleFormType === RuleFormType.grafana && (
-        <Field
-          label="Folder"
-          className={styles.formInput}
-          error={errors.folder?.message}
-          invalid={!!errors.folder?.message}
-          data-testid="folder-picker"
-        >
-          <InputControl
-            render={({ field: { ref, ...field } }) => (
-              <RuleFolderPicker {...field} enableCreateNew={true} enableReset={true} />
-            )}
-            name="folder"
-            rules={{
-              required: { value: true, message: 'Please select a folder' },
-              validate: {
-                pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
-              },
-            }}
-          />
-        </Field>
+        <div className={styles.flexRow}>
+          <Field
+            label={
+              <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
+                <Stack gap={0.5}>
+                  Folder
+                  <Tooltip
+                    placement="top"
+                    content={
+                      <div>
+                        Each folder has unique folder permission. When you store multiple rules in a folder, the folder
+                        access permissions get assigned to the rules.
+                      </div>
+                    }
+                  >
+                    <Icon name="info-circle" size="xs" />
+                  </Tooltip>
+                </Stack>
+              </Label>
+            }
+            className={styles.formInput}
+            error={errors.folder?.message}
+            invalid={!!errors.folder?.message}
+            data-testid="folder-picker"
+          >
+            <InputControl
+              render={({ field: { ref, ...field } }) => (
+                <RuleFolderPicker inputId="folder" {...field} enableCreateNew={true} enableReset={true} />
+              )}
+              name="folder"
+              rules={{
+                required: { value: true, message: 'Please select a folder' },
+                validate: {
+                  pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
+                },
+              }}
+            />
+          </Field>
+          <Field
+            label="Group"
+            data-testid="group-picker"
+            description="Rules within the same group are evaluated after the same time interval."
+            className={styles.formInput}
+            error={errors.group?.message}
+            invalid={!!errors.group?.message}
+          >
+            <Input
+              id="group"
+              {...register('group', {
+                required: { value: true, message: 'Must enter a group name' },
+              })}
+            />
+          </Field>
+        </div>
       )}
     </RuleEditorSection>
   );
 };
+
+function getAvailableRuleTypes() {
+  const canCreateGrafanaRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate);
+  const canCreateCloudRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
+  const defaultRuleType = canCreateGrafanaRules ? RuleFormType.grafana : RuleFormType.cloudAlerting;
+
+  const enabledRuleTypes: RuleFormType[] = [];
+  if (canCreateGrafanaRules) {
+    enabledRuleTypes.push(RuleFormType.grafana);
+  }
+  if (canCreateCloudRules) {
+    enabledRuleTypes.push(RuleFormType.cloudAlerting, RuleFormType.cloudRecording);
+  }
+
+  return { enabledRuleTypes, defaultRuleType };
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   formInput: css`
@@ -154,5 +207,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
+    align-items: flex-end;
   `,
 });

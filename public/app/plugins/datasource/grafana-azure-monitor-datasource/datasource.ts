@@ -17,6 +17,7 @@ import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
 import AppInsightsDatasource from './components/deprecated/app_insights/app_insights_datasource';
 import InsightsAnalyticsDatasource from './components/deprecated/insights_analytics/insights_analytics_datasource';
+import { gtGrafana9 } from './components/deprecated/utils';
 import { getAzureCloud } from './credentials';
 import ResourcePickerData from './resourcePicker/resourcePickerData';
 import {
@@ -174,7 +175,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     promises.push(this.azureMonitorDatasource.testDatasource());
     promises.push(this.azureLogAnalyticsDatasource.testDatasource());
 
-    if (this.appInsightsDatasource?.isConfigured()) {
+    if (!gtGrafana9() && this.appInsightsDatasource?.isConfigured()) {
       promises.push(this.appInsightsDatasource.testDatasource());
     }
 
@@ -214,49 +215,6 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       this.replaceTemplateVariable(subscriptionId),
       this.replaceTemplateVariable(resourceGroup),
       this.replaceTemplateVariable(metricDefinition)
-    );
-  }
-
-  getMetricNames(
-    subscriptionId: string,
-    resourceGroup: string,
-    metricDefinition: string,
-    resourceName: string,
-    metricNamespace: string
-  ) {
-    return this.azureMonitorDatasource.getMetricNames(
-      this.replaceTemplateVariable(subscriptionId),
-      this.replaceTemplateVariable(resourceGroup),
-      this.replaceTemplateVariable(metricDefinition),
-      this.replaceTemplateVariable(resourceName),
-      this.replaceTemplateVariable(metricNamespace)
-    );
-  }
-
-  getMetricNamespaces(subscriptionId: string, resourceGroup: string, metricDefinition: string, resourceName: string) {
-    return this.azureMonitorDatasource.getMetricNamespaces(
-      this.replaceTemplateVariable(subscriptionId),
-      this.replaceTemplateVariable(resourceGroup),
-      this.replaceTemplateVariable(metricDefinition),
-      this.replaceTemplateVariable(resourceName)
-    );
-  }
-
-  getMetricMetadata(
-    subscriptionId: string,
-    resourceGroup: string,
-    metricDefinition: string,
-    resourceName: string,
-    metricNamespace: string,
-    metricName: string
-  ) {
-    return this.azureMonitorDatasource.getMetricMetadata(
-      this.replaceTemplateVariable(subscriptionId),
-      this.replaceTemplateVariable(resourceGroup),
-      this.replaceTemplateVariable(metricDefinition),
-      this.replaceTemplateVariable(resourceName),
-      this.replaceTemplateVariable(metricNamespace),
-      this.replaceTemplateVariable(metricName)
     );
   }
 
