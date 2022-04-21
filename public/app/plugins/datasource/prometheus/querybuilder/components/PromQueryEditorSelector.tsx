@@ -27,7 +27,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
-      reportInteraction('cloud_user_clicked_prometheus_editor_mode', {
+      reportInteraction('user_prometheus_editor_mode_clicked', {
         newEditor: newMetricEditorMode,
         previousEditor: query.editorMode ?? '',
         newQuery: !query.expr,
