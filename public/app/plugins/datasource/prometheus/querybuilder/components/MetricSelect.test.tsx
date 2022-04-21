@@ -29,7 +29,7 @@ describe('MetricSelect', () => {
     render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'new');
+    await userEvent.type(input, 'new');
     await waitFor(() => expect(screen.getByText('Create: new')).toBeInTheDocument());
   });
 
@@ -37,7 +37,7 @@ describe('MetricSelect', () => {
     render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'unique');
+    await userEvent.type(input, 'unique');
     await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(3));
   });
 
@@ -45,7 +45,7 @@ describe('MetricSelect', () => {
     render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'more unique');
+    await userEvent.type(input, 'more unique');
     await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(2));
   });
 
@@ -53,7 +53,7 @@ describe('MetricSelect', () => {
     render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'more unique metric');
+    await userEvent.type(input, 'more unique metric');
     await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(2));
   });
 
@@ -61,7 +61,7 @@ describe('MetricSelect', () => {
     const { container } = render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'more');
+    await userEvent.type(input, 'more');
     await waitFor(() => expect(container.querySelectorAll('mark')).toHaveLength(1));
   });
 
@@ -69,7 +69,7 @@ describe('MetricSelect', () => {
     const { container } = render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'more metric');
+    await userEvent.type(input, 'more metric');
     await waitFor(() => expect(container.querySelectorAll('mark')).toHaveLength(2));
   });
 
@@ -77,7 +77,7 @@ describe('MetricSelect', () => {
     const { container } = render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'unique metric');
+    await userEvent.type(input, 'unique metric');
     await waitFor(() => expect(container.querySelectorAll('mark')).toHaveLength(4));
   });
 
@@ -85,12 +85,12 @@ describe('MetricSelect', () => {
     const { container } = render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'new');
+    await userEvent.type(input, 'new');
     await waitFor(() => expect(container.querySelector('mark')).not.toBeInTheDocument());
   });
 });
 
 async function openMetricSelect() {
   const select = await screen.getByText('Select metric').parentElement!;
-  userEvent.click(select);
+  await userEvent.click(select);
 }
