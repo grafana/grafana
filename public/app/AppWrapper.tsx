@@ -95,7 +95,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                   <GlobalStyles />
                   <div className="grafana-app">
                     <Router history={locationService.getHistory()}>
-                      {newNavigationEnabled ? <NavBarNext /> : <NavBar />}
+                      {ready && <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>}
                       <main className="main-view">
                         {pageBanners.map((Banner, index) => (
                           <Banner key={index.toString()} />
