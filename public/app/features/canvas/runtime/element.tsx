@@ -15,8 +15,6 @@ import { Scene } from './scene';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
 let counter = 0;
-const startTime = Date.now();
-
 export class ElementState implements LayerElement {
   // UID necessary for moveable to work (for now)
   readonly UID = counter++;
@@ -75,7 +73,6 @@ export class ElementState implements LayerElement {
     const style: React.CSSProperties = {
       position: 'absolute',
       transform: 'translate(0px, 0px)',
-      maxWidth: Date.now(),
     };
 
     switch (vertical) {
@@ -136,9 +133,6 @@ export class ElementState implements LayerElement {
     this.options.placement = placement;
     this.sizeStyle = style;
     if (this.div) {
-      this.div.style.maxWidth = `${Date.now() - startTime}px`;
-      this.div.style.minWidth = '1px';
-
       for (const key in this.sizeStyle) {
         let newStyle = (this.sizeStyle as any)[key];
 
@@ -150,7 +144,7 @@ export class ElementState implements LayerElement {
       }
 
       for (const key in this.dataStyle) {
-        let newStyle = (this.sizeStyle as any)[key];
+        let newStyle = (this.dataStyle as any)[key];
 
         if (!isNaN(newStyle)) {
           newStyle += 'px';
