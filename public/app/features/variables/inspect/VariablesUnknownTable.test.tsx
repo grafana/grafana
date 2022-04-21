@@ -122,7 +122,7 @@ describe('VariablesUnknownTable', () => {
           });
 
           // make sure we report the interaction for slow expansion
-          expect(reportInteractionSpy).toHaveBeenCalledTimes(2);
+          await waitFor(() => expect(reportInteractionSpy).toHaveBeenCalledTimes(2));
           expect(reportInteractionSpy.mock.calls[0][0]).toEqual('Unknown variables section expanded');
           expect(reportInteractionSpy.mock.calls[1][0]).toEqual('Slow unknown variables expansion');
           expect(reportInteractionSpy.mock.calls[1][1]).toEqual({ elapsed: 1000 });
