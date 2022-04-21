@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -285,31 +286,6 @@ func Test_QueryData_response_data_frame_names(t *testing.T) {
 		return datasourceInfo{}, nil
 	})
 	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
-
-	t.Run("where user defines search expression and alias is defined, then frame name prioritizes period and stat from expression over input", func(t *testing.T) {
-		query := newTestQuery(t, queryParameters{
-			MetricQueryType:  MetricQueryTypeSearch, // contributes to isUserDefinedSearchExpression = true
-			MetricEditorMode: MetricEditorModeRaw,   // contributes to isUserDefinedSearchExpression = true
-			Alias:            "{{period}} {{stat}}",
-			Expression:       `SEARCH('{AWS/EC2,InstanceId} MetricName="CPUUtilization"', 'Average', 300)`, // period 300 and stat 'Average' parsed from this expression
-			Statistic:        "Maximum",                                                                    // stat parsed from expression takes precedence over 'Maximum'
-			Period:           "1200",                                                                       // period parsed from expression takes precedence over 1200
-		})
-
-		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
-			Queries: []backend.DataQuery{
-				{
-					RefID:     "A",
-					TimeRange: backend.TimeRange{From: time.Now().Add(time.Hour * -2), To: time.Now().Add(time.Hour * -1)},
-					JSON:      query,
-				},
-			},
-		})
-
-		assert.NoError(t, err)
-		assert.Equal(t, "300 Average", resp.Responses["A"].Frames[0].Name)
-	})
 
 	t.Run("where no alias is provided and query is math expression, then frame name is queryId", func(t *testing.T) {
 		query := newTestQuery(t, queryParameters{
