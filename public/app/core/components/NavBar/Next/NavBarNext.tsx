@@ -96,6 +96,7 @@ export const NavBarNext = React.memo(() => {
             <NavBarItemWithoutMenu
               isActive={isMatchOrChildMatch(homeItem, activeItem)}
               label="Home"
+              elClassName={styles.grafanaLogoInner}
               className={styles.grafanaLogo}
               url={homeItem.url}
             >
@@ -177,7 +178,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     zIndex: theme.zIndex.sidemenu,
     padding: `${theme.spacing(1)} 0`,
     position: 'relative',
-    width: theme.spacing(7),
+    width: `calc(${theme.spacing(7)} + 1px)`,
     borderRight: `1px solid ${theme.colors.border.weak}`,
 
     [theme.breakpoints.down('md')]: {
@@ -213,13 +214,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   grafanaLogo: css({
+    alignItems: 'stretch',
+    display: 'flex',
+    flexShrink: 0,
+    justifyContent: 'stretch',
+  }),
+  grafanaLogoInner: css({
     alignItems: 'center',
     display: 'flex',
-    img: {
-      height: theme.spacing(3),
-      width: theme.spacing(3),
-    },
+    height: '100%',
     justifyContent: 'center',
+    width: '100%',
+
+    '> div': {
+      height: 'auto',
+      width: 'auto',
+    },
   }),
   search: css({
     display: 'none',
