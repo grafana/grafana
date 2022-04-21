@@ -23,10 +23,10 @@ describe('NavBarMenu', () => {
     expect(closeButton).toBeInTheDocument();
   });
 
-  it('clicking the close button calls the onClose callback', () => {
+  it('clicking the close button calls the onClose callback', async () => {
     const closeButton = screen.getByRole('button', { name: 'Close navigation menu' });
     expect(closeButton).toBeInTheDocument();
-    userEvent.click(closeButton);
+    await userEvent.click(closeButton);
     expect(mockOnClose).toHaveBeenCalled();
   });
 });

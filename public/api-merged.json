@@ -3564,9 +3564,11 @@
     },
     "/dashboards/id/{DashboardID}/permissions": {
       "get": {
+        "description": "Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsWithUid) instead",
         "tags": ["dashboard_permissions"],
         "summary": "Gets all existing permissions for the given dashboard.",
         "operationId": "getDashboardPermissions",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -3595,10 +3597,11 @@
         }
       },
       "post": {
-        "description": "This operation will remove existing permissions if they’re not included in the request.",
+        "description": "Please refer to [updated API](#/dashboard_permissions/postDashboardPermissionsWithUid) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
         "tags": ["dashboard_permissions"],
         "summary": "Updates permissions for a dashboard.",
         "operationId": "postDashboardPermissions",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -3895,6 +3898,82 @@
         "responses": {
           "200": {
             "$ref": "#/responses/deleteDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/uid/{uid}/permissions": {
+      "get": {
+        "tags": ["dashboard_permissions"],
+        "summary": "Gets all existing permissions for the given dashboard.",
+        "operationId": "getDashboardPermissionsWithUid",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getDashboardPermissionsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "This operation will remove existing permissions if they’re not included in the request.",
+        "tags": ["dashboard_permissions"],
+        "summary": "Updates permissions for a dashboard.",
+        "operationId": "postDashboardPermissionsWithUid",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UID",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateDashboardAclCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -8159,14 +8238,6 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
-          },
-          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -8174,6 +8245,14 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -8207,16 +8286,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           }
@@ -13521,7 +13600,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "x-go-name": "Id"
+          "x-go-name": "ID"
         },
         "target": {
           "type": "string",
@@ -13536,7 +13615,7 @@
           "x-go-name": "Url"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
     },
     "NavbarPreference": {
       "type": "object",
@@ -14616,7 +14695,7 @@
           "x-go-name": "HomeTab"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
     },
     "Receiver": {
       "type": "object",

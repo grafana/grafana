@@ -51,7 +51,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/cuetsy v0.0.0-20211119211437-8c25464cc9bf
-	github.com/grafana/grafana-aws-sdk v0.10.1
+	github.com/grafana/grafana-aws-sdk v0.10.3
 	github.com/grafana/grafana-azure-sdk-go v1.1.0
 	github.com/grafana/grafana-plugin-sdk-go v0.131.0
 	github.com/grafana/loki v1.6.2-0.20211015002020-7832783b1caa
@@ -294,6 +294,10 @@ replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
 replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.2
 
 replace github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.7
+
+// Upgraded to fix CVE-2020-26066. This can be removed when go.opentelemetry.io/collector and github.com/influxdata/telegraf are upgraded
+// github.com/tidwall/match v1.0.1 should not be used.
+replace github.com/tidwall/match => github.com/tidwall/match v1.1.1
 
 // Thema's thema CLI requires cobra, which eventually works its way down to go-hclog@v1.0.0.
 // Upgrading affects backend plugins: https://github.com/grafana/grafana/pull/47653#discussion_r850508593
