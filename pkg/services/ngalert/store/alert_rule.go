@@ -266,7 +266,7 @@ func (st DBstore) GetOrgAlertRules(ctx context.Context, query *ngmodels.ListAler
 func (st DBstore) GetRuleGroups(ctx context.Context, query *ngmodels.ListRuleGroupsQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		ruleGroups := make([]string, 0)
-		if err := sess.SQL(`SELECT DISTINCT rule_group FROM alert_rule`).Find(&ruleGroups); err != nil {
+		if err := sess.Table("alert_rule").Distinct("rule_group").Find(&ruleGroups); err != nil {
 			return err
 		}
 		query.Result = ruleGroups
