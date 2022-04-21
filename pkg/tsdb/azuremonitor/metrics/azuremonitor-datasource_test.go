@@ -127,6 +127,39 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			expectedInterval:        "PT1M",
 			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
 		},
+		{
+			name: "has dimensionFilter*s* property with not equals operator",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain":        "PT1M",
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "ne", Filter: "test"}},
+				"top":              "30",
+			},
+			queryInterval:           duration,
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "%24filter=blob+ne+%27test%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+		},
+		{
+			name: "has dimensionFilter*s* property with startsWith operator",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain":        "PT1M",
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "sw", Filter: "test"}},
+				"top":              "30",
+			},
+			queryInterval:           duration,
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "%24filter=blob+sw+%27test%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+		},
+		{
+			name: "correctly sets dimension operator to eq (irrespective of operator) when filter value is unspecified or \"*\"",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain":        "PT1M",
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "sw", Filter: "*"}, {Dimension: "tier", Operator: "ne", Filter: "*"}},
+				"top":              "30",
+			},
+			queryInterval:           duration,
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27tier+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+		},
 	}
 
 	commonAzureModelProps := map[string]interface{}{
@@ -606,6 +639,126 @@ func TestAzureMonitorCreateRequest(t *testing.T) {
 			if !cmp.Equal(req.Header, tt.expectedHeaders) {
 				t.Errorf("Unexpected HTTP headers: %v", cmp.Diff(req.Header, tt.expectedHeaders))
 			}
+		})
+	}
+}
+
+func TestAzureMonitorDimensionFilters(t *testing.T) {
+	datasource := &AzureMonitorDatasource{}
+	dsInfo := types.DatasourceInfo{
+		Settings: types.AzureMonitorSettings{
+			SubscriptionId: "default-subscription",
+		},
+	}
+
+	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+	duration, _ := time.ParseDuration("400s")
+
+	tests := []struct {
+		name                         string
+		azureMonitorVariedProperties map[string]interface{}
+		azureMonitorQueryTarget      string
+		expectedInterval             string
+		queryInterval                time.Duration
+	}{
+		{
+			name: "has dimensionFilter*s* property with the equals operator",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain":        "PT1M",
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: "*"}},
+				"top":              "30",
+			},
+			queryInterval:           duration,
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+		},
+		{
+			name: "has dimensionFilter*s* property with two dimensions",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain":        "PT1M",
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: "*"}, {Dimension: "tier", Operator: "eq", Filter: "*"}},
+				"top":              "30",
+			},
+			queryInterval:           duration,
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27+and+tier+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+		},
+		{
+			name: "has a dimension filter without specifying a top",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain":       "PT1M",
+				"dimension":       "blob",
+				"dimensionFilter": "*",
+			},
+			queryInterval:           duration,
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+		},
+	}
+
+	commonAzureModelProps := map[string]interface{}{
+		"aggregation":      "Average",
+		"resourceGroup":    "grafanastaging",
+		"resourceName":     "grafana",
+		"metricDefinition": "Microsoft.Compute/virtualMachines",
+		"metricNamespace":  "Microsoft.Compute-virtualMachines",
+		"metricName":       "Percentage CPU",
+
+		"alias":     "testalias",
+		"queryType": "Azure Monitor",
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for k, v := range commonAzureModelProps {
+				tt.azureMonitorVariedProperties[k] = v
+			}
+			azureMonitorJSON, _ := json.Marshal(tt.azureMonitorVariedProperties)
+			tsdbQuery := []backend.DataQuery{
+				{
+					JSON: []byte(fmt.Sprintf(`{
+							"subscription": "12345678-aaaa-bbbb-cccc-123456789abc",
+							"azureMonitor": %s
+						}`, string(azureMonitorJSON))),
+					RefID:    "A",
+					Interval: tt.queryInterval,
+					TimeRange: backend.TimeRange{
+						From: fromStart,
+						To:   fromStart.Add(34 * time.Minute),
+					},
+				},
+			}
+
+			azureMonitorQuery := &types.AzureMonitorQuery{
+				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+				UrlComponents: map[string]string{
+					"metricDefinition": "Microsoft.Compute/virtualMachines",
+					"resourceGroup":    "grafanastaging",
+					"resourceName":     "grafana",
+					"subscription":     "12345678-aaaa-bbbb-cccc-123456789abc",
+				},
+				Target: tt.azureMonitorQueryTarget,
+				RefID:  "A",
+				Alias:  "testalias",
+				TimeRange: backend.TimeRange{
+					From: fromStart,
+					To:   fromStart.Add(34 * time.Minute),
+				},
+			}
+
+			queries, err := datasource.buildQueries(tsdbQuery, dsInfo)
+			require.NoError(t, err)
+			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(simplejson.Json{}), cmpopts.IgnoreFields(types.AzureMonitorQuery{}, "Params")); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			expected := `http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/` +
+				`TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%222018-03-15T13%3A00%3A00Z%22%2C%22endTime%22%3A%222018-03-15T13%3A34%3A00Z%22%7D%7D/` +
+				`ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C` +
+				`%22name%22%3A%22Percentage+CPU%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22Microsoft.Compute-virtualMachines%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Percentage+CPU%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D`
+			actual, err := getQueryUrl(queries[0], "http://ds")
+			require.NoError(t, err)
+			require.Equal(t, expected, actual)
 		})
 	}
 }
