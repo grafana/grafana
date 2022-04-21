@@ -27,10 +27,8 @@ func TestTicker(t *testing.T) {
 	}
 	t.Run("should not drop ticks", func(t *testing.T) {
 		clk := clock.NewMock()
-		intervalSec := rand.Int63n(100) + 10
-		interval := time.Duration(intervalSec) * time.Second
-		last := clk.Now()
-		ticker := NewTicker(last, 0, clk, intervalSec)
+		interval := time.Duration(rand.Int63n(100)+10) * time.Second
+		ticker := NewTicker(clk, interval)
 
 		ticks := rand.Intn(9) + 1
 		jitter := rand.Int63n(int64(interval) - 1)
@@ -63,10 +61,8 @@ func TestTicker(t *testing.T) {
 
 	t.Run("should not put anything to channel until it's time", func(t *testing.T) {
 		clk := clock.NewMock()
-		intervalSec := rand.Int63n(9) + 1
-		interval := time.Duration(intervalSec) * time.Second
-		last := clk.Now()
-		ticker := NewTicker(last, 0, clk, intervalSec)
+		interval := time.Duration(rand.Int63n(9)+1) * time.Second
+		ticker := NewTicker(clk, interval)
 		expectedTick := clk.Now().Add(interval)
 		for {
 			require.Empty(t, ticker.C)
@@ -85,10 +81,8 @@ func TestTicker(t *testing.T) {
 
 	t.Run("should put the tick in the channel immediately if it is behind", func(t *testing.T) {
 		clk := clock.NewMock()
-		intervalSec := rand.Int63n(9) + 1
-		interval := time.Duration(intervalSec) * time.Second
-		last := clk.Now()
-		ticker := NewTicker(last, 0, clk, intervalSec)
+		interval := time.Duration(rand.Int63n(9)+1) * time.Second
+		ticker := NewTicker(clk, interval)
 
 		//  We can expect the first tick to be at a consistent interval. Take a snapshot of the clock now, before we advance it.
 		expectedTick := clk.Now().Add(interval)
