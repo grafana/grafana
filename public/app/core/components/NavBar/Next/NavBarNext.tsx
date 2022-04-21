@@ -7,14 +7,7 @@ import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { config, locationService } from '@grafana/runtime';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { KioskMode, StoreState } from 'app/types';
-import {
-  enrichConfigItems,
-  getActiveItem,
-  isMatchOrChildMatch,
-  isSearchActive,
-  SEARCH_ITEM_ID,
-  NAV_MENU_PORTAL_CONTAINER_ID,
-} from '../utils';
+import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from '../utils';
 import { OrgSwitcher } from '../../OrgSwitcher';
 import { NavBarMenu } from './NavBarMenu';
 import NavBarItem from './NavBarItem';
@@ -23,6 +16,7 @@ import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { FocusScope } from '@react-aria/focus';
 import { NavBarContext } from '../context';
 import { NavBarToggle } from './NavBarToggle';
+import { NavBarMenuPortalContainer } from './NavBarMenuPortalContainer';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -82,8 +76,7 @@ export const NavBarNext = React.memo(() => {
           }}
         >
           <FocusScope>
-            <div id={NAV_MENU_PORTAL_CONTAINER_ID} className={styles.menuPortalContainer} />
-
+            <NavBarMenuPortalContainer />
             <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
               <Icon name="bars" size="xl" />
             </div>
@@ -249,12 +242,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     top: '43px',
     right: '0px',
     transform: `translateX(50%)`,
-  }),
-  menuPortalContainer: css({
-    left: 0,
-    position: 'fixed',
-    right: 0,
-    top: 0,
-    zIndex: theme.zIndex.sidemenu,
   }),
 });

@@ -14,7 +14,7 @@ import { FocusScope } from '@react-aria/focus';
 import { NavBarItemMenuContext, useNavBarContext } from '../context';
 import { NavFeatureHighlight } from '../NavFeatureHighlight';
 import { reportExperimentView } from '@grafana/runtime';
-import { getNavMenuPortalContainer } from '../utils';
+import { getNavMenuPortalContainer } from './NavBarMenuPortalContainer';
 
 export interface NavBarItemMenuTriggerProps extends MenuTriggerProps {
   children: ReactElement;
