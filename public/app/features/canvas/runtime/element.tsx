@@ -1,5 +1,5 @@
 import React, { CSSProperties } from 'react';
-import { OnDrag, OnDragStart, OnResize } from 'react-moveable/declaration/types';
+import { OnDrag, OnResize } from 'react-moveable/declaration/types';
 
 import {
   BackgroundImageSize,
@@ -15,6 +15,7 @@ import { Scene } from './scene';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
 let counter = 0;
+
 export class ElementState implements LayerElement {
   // UID necessary for moveable to work (for now)
   readonly UID = counter++;
@@ -314,13 +315,6 @@ export class ElementState implements LayerElement {
     this.updateLayout();
   };
 
-  tempPosition = {
-    top: 0,
-    left: 0,
-    width: 0,
-    height: 0,
-  };
-
   applyDrag = (event: OnDrag) => {
     event.target.style.transform = event.transform;
   };
@@ -397,7 +391,6 @@ export class ElementState implements LayerElement {
 
   render() {
     const { item } = this;
-
     return (
       <div key={this.UID} ref={this.initElement}>
         <item.display key={`${this.UID}/${this.revId}`} config={this.options.config} data={this.data} />
