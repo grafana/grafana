@@ -189,18 +189,16 @@ describe('VariableEditor', () => {
       // set filter value
       const valueElement = screen.getByTestId('cloudwatch-multifilter-item-value');
       expect(valueElement).toBeInTheDocument();
-      userEvent.type(valueElement!, ',baz');
+      await userEvent.type(valueElement!, ',baz');
       fireEvent.blur(valueElement!);
 
       expect(screen.getByDisplayValue('foo, bar, baz')).toBeInTheDocument();
-      await waitFor(() => {
-        expect(onChange).toHaveBeenCalledWith({
-          ...defaultQuery,
-          queryType: VariableQueryType.EC2InstanceAttributes,
-          region: 'a1',
-          attributeName: 'Tags.blah',
-          ec2Filters: { s4: ['foo', 'bar', 'baz'] },
-        });
+      expect(onChange).toHaveBeenCalledWith({
+        ...defaultQuery,
+        queryType: VariableQueryType.EC2InstanceAttributes,
+        region: 'a1',
+        attributeName: 'Tags.blah',
+        ec2Filters: { s4: ['foo', 'bar', 'baz'] },
       });
     });
   });
@@ -228,19 +226,17 @@ describe('VariableEditor', () => {
 
       expect(ds.datasource.getMetrics).toHaveBeenCalledWith('z2', 'b1');
       expect(ds.datasource.getDimensionKeys).toHaveBeenCalledWith('z2', 'b1');
-      await waitFor(() => {
-        expect(props.onChange).toHaveBeenCalledWith({
-          ...defaultQuery,
-          refId: 'CloudWatchVariableQueryEditor-VariableQuery',
-          queryType: VariableQueryType.DimensionValues,
-          namespace: 'z2',
-          region: 'b1',
-          // metricName i3 exists in the new region and should not be removed
-          metricName: 'i3',
-          // dimensionKey s4 and valueDimension do not exist in the new region and should be removed
-          dimensionKey: '',
-          dimensionFilters: {},
-        });
+      expect(props.onChange).toHaveBeenCalledWith({
+        ...defaultQuery,
+        refId: 'CloudWatchVariableQueryEditor-VariableQuery',
+        queryType: VariableQueryType.DimensionValues,
+        namespace: 'z2',
+        region: 'b1',
+        // metricName i3 exists in the new region and should not be removed
+        metricName: 'i3',
+        // dimensionKey s4 and valueDimension do not exist in the new region and should be removed
+        dimensionKey: '',
+        dimensionFilters: {},
       });
     });
   });
