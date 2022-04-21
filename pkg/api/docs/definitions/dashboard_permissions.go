@@ -30,7 +30,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /dashboards/uid/{uid}/permissions dashboard_permissions getDashboardPermissions
+// swagger:route GET /dashboards/uid/{uid}/permissions dashboard_permissions getDashboardPermissionsWithUid
 //
 // Gets all existing permissions for the given dashboard.
 //
@@ -41,7 +41,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route POST /dashboards/uid/{uid}/permissions dashboard_permissions postDashboardPermissions
+// swagger:route POST /dashboards/uid/{uid}/permissions dashboard_permissions postDashboardPermissionsWithUid
 //
 // Updates permissions for a dashboard.
 //
