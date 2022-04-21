@@ -205,6 +205,10 @@ If true, it establishes a secure connection to Loki. Defaults to true.
 
 If true, the feature is enabled. Defaults to false.
 
+### allow_sign_up
+
+If true, allow new Grafana users to be created through SAML logins. Defaults to true.
+
 ### certificate
 
 Base64-encoded public X.509 certificate. Used to sign requests to the IdP.
