@@ -102,6 +102,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       className={styles.element}
       {...buttonProps}
       {...keyboardProps}
+      {...hoverProps}
       ref={ref as React.RefObject<HTMLButtonElement>}
       onClick={item?.onClick}
       aria-label={label}
@@ -116,6 +117,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
         <Link
           {...buttonProps}
           {...keyboardProps}
+          {...hoverProps}
           ref={ref as React.RefObject<HTMLAnchorElement>}
           href={item.url}
           target={item.target}
@@ -132,6 +134,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           onClick={item?.onClick}
           {...buttonProps}
           {...keyboardProps}
+          {...hoverProps}
           ref={ref as React.RefObject<HTMLAnchorElement>}
           className={styles.element}
           aria-label={label}
@@ -180,7 +183,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   });
 
   return (
-    <div className={cx(styles.element, 'dropdown')} {...focusWithinProps} {...hoverProps}>
+    <div className={cx(styles.element, 'dropdown')} {...focusWithinProps}>
       {element}
       {state.isOpen && (
         <OverlayContainer portalContainer={getNavMenuPortalContainer()}>

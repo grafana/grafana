@@ -49,8 +49,8 @@ describe('Explore: Query History', () => {
     await waitForExplore();
 
     // and a user runs a query and opens query history
-    inputQuery(USER_INPUT);
-    runQuery();
+    await inputQuery(USER_INPUT);
+    await runQuery();
     await openQueryHistory();
 
     // the query that was run is in query history
@@ -80,8 +80,8 @@ describe('Explore: Query History', () => {
     await waitForExplore();
     await openQueryHistory();
 
-    inputQuery('query #2');
-    runQuery();
+    await inputQuery('query #2');
+    await runQuery();
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}']);
   });
 
@@ -135,8 +135,8 @@ describe('Explore: Query History', () => {
     await switchToQueryHistoryTab('Settings');
 
     // change settings
-    selectStarredTabFirst();
-    selectOnlyActiveDataSource();
+    await selectStarredTabFirst();
+    await selectOnlyActiveDataSource();
     await closeQueryHistory();
     await openQueryHistory();
 

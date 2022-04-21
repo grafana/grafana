@@ -75,6 +75,7 @@ async function getTestContext(
 
   await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalled());
   expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1);
+  jest.clearAllMocks();
 
   return { rerender, getLibraryPanelsSpy, getSpy, getAllPanelPluginMetaSpy };
 }
@@ -91,18 +92,18 @@ describe('LibraryPanelsSearch', () => {
     describe('and user searches for library panel by name or description', () => {
       it('should call api with correct params', async () => {
         const { getLibraryPanelsSpy } = await getTestContext();
-        getLibraryPanelsSpy.mockClear();
 
-        userEvent.type(screen.getByPlaceholderText(/search by name/i), 'a');
+        await userEvent.type(screen.getByPlaceholderText(/search by name/i), 'a');
         await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalled());
-        expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1);
-        expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
-          searchString: 'a',
-          folderFilter: [],
-          page: 0,
-          typeFilter: [],
-          perPage: 40,
-        });
+        await waitFor(() =>
+          expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
+            searchString: 'a',
+            folderFilter: [],
+            page: 0,
+            typeFilter: [],
+            perPage: 40,
+          })
+        );
       });
     });
   });
@@ -119,18 +120,18 @@ describe('LibraryPanelsSearch', () => {
     describe('and user changes sorting', () => {
       it('should call api with correct params', async () => {
         const { getLibraryPanelsSpy } = await getTestContext({ showSort: true });
-        getLibraryPanelsSpy.mockClear();
 
-        userEvent.type(screen.getByText(/sort \(default a–z\)/i), 'Desc{enter}');
-        await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1));
-        expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
-          searchString: '',
-          sortDirection: 'alpha-desc',
-          folderFilter: [],
-          page: 0,
-          typeFilter: [],
-          perPage: 40,
-        });
+        await userEvent.type(screen.getByText(/sort \(default a–z\)/i), 'Desc{enter}');
+        await waitFor(() =>
+          expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
+            searchString: '',
+            sortDirection: 'alpha-desc',
+            folderFilter: [],
+            page: 0,
+            typeFilter: [],
+            perPage: 40,
+          })
+        );
       });
     });
   });
@@ -147,18 +148,18 @@ describe('LibraryPanelsSearch', () => {
     describe('and user changes panel filter', () => {
       it('should call api with correct params', async () => {
         const { getLibraryPanelsSpy } = await getTestContext({ showPanelFilter: true });
-        getLibraryPanelsSpy.mockClear();
 
-        userEvent.type(screen.getByRole('combobox', { name: /panel type filter/i }), 'Graph{enter}');
-        userEvent.type(screen.getByRole('combobox', { name: /panel type filter/i }), 'Time Series{enter}');
-        await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1));
-        expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
-          searchString: '',
-          folderFilter: [],
-          page: 0,
-          typeFilter: ['graph', 'timeseries'],
-          perPage: 40,
-        });
+        await userEvent.type(screen.getByRole('combobox', { name: /panel type filter/i }), 'Graph{enter}');
+        await userEvent.type(screen.getByRole('combobox', { name: /panel type filter/i }), 'Time Series{enter}');
+        await waitFor(() =>
+          expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
+            searchString: '',
+            folderFilter: [],
+            page: 0,
+            typeFilter: ['graph', 'timeseries'],
+            perPage: 40,
+          })
+        );
       });
     });
   });
@@ -175,20 +176,20 @@ describe('LibraryPanelsSearch', () => {
     describe('and user changes folder filter', () => {
       it('should call api with correct params', async () => {
         const { getLibraryPanelsSpy } = await getTestContext({ showFolderFilter: true });
-        getLibraryPanelsSpy.mockClear();
 
-        userEvent.click(screen.getByRole('combobox', { name: /folder filter/i }));
-        userEvent.type(screen.getByRole('combobox', { name: /folder filter/i }), '{enter}', {
+        await userEvent.click(screen.getByRole('combobox', { name: /folder filter/i }));
+        await userEvent.type(screen.getByRole('combobox', { name: /folder filter/i }), '{enter}', {
           skipClick: true,
         });
-        await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1));
-        expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
-          searchString: '',
-          folderFilter: ['0'],
-          page: 0,
-          typeFilter: [],
-          perPage: 40,
-        });
+        await waitFor(() =>
+          expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
+            searchString: '',
+            folderFilter: ['0'],
+            page: 0,
+            typeFilter: [],
+            perPage: 40,
+          })
+        );
       });
     });
   });

@@ -3068,6 +3068,12 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - yarn install --immutable
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.4
+  name: yarn-install
+- commands:
   - ./bin/grabpl artifacts npm retrieve --tag v${TAG}
   depends_on:
   - grabpl
@@ -4530,6 +4536,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: aea46d49d8ad417e04e7b6bc48a7a02affb1b53a1048d0970d4ec7a0d9858eaf
+hmac: 9380beb722ab1276e9219ae41fa07c84db1e7dc249f69e42386f868c026e1795
 
 ...
