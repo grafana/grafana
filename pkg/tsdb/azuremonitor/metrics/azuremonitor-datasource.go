@@ -34,7 +34,7 @@ type AzureMonitorDatasource struct {
 var (
 	// Used to convert the aggregation value to the Azure enum for deep linking
 	aggregationTypeMap   = map[string]int{"None": 0, "Total": 1, "Minimum": 2, "Maximum": 3, "Average": 4, "Count": 7}
-	resourceNameLandmark = regexp.MustCompile(`(?i)(/\w+/providers/Microsoft\.Insights/metrics)`)
+	resourceNameLandmark = regexp.MustCompile(`(?i)(/(?P<resourceName>\w+)/providers/Microsoft\.Insights/metrics)`)
 )
 
 const azureMonitorAPIVersion = "2018-01-01"
@@ -89,11 +89,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 
 		resourceName := azJSONModel.ResourceName
 		if resourceName == "" {
-			match := resourceNameLandmark.FindString(azureURL)
-			if match != "" {
-				index := strings.Index(match, "/providers/Microsoft.Insights/metrics")
-				resourceName = match[1:index]
-			}
+			resourceName = extractResourceNameFromMetricsURL(azureURL)
 		}
 
 		urlComponents := map[string]string{}
@@ -485,4 +481,21 @@ func toGrafanaUnit(unit string) string {
 	// "ByteSeconds", "Cores", "MilliCores", and "NanoCores" all both:
 	// 1. Do not have a corresponding unit in Grafana's current list.
 	// 2. Do not have the unit listed in any of Azure Monitor's supported metrics anyways.
+}
+
+func extractResourceNameFromMetricsURL(url string) string {
+	matches := resourceNameLandmark.FindStringSubmatch(url)
+	resourceName := ""
+
+	if matches == nil {
+		return resourceName
+	}
+
+	for i, name := range resourceNameLandmark.SubexpNames() {
+		if name == "resourceName" {
+			resourceName = matches[i]
+		}
+	}
+
+	return resourceName
 }
