@@ -243,7 +243,7 @@ How long the SPs metadata is valid. Defaults to 48 hours.
 
 ### assertion_attribute_name
 
-Friendly name or name of the attribute within the SAML assertion to use as the user name.
+Friendly name or name of the attribute within the SAML assertion to use as the user name. Alternatively, this can be a template with variables that match the names of attributes within the SAML assertion.
 
 ### assertion_attribute_login
 
