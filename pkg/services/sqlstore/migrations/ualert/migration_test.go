@@ -573,7 +573,6 @@ func getAlertNameToUidMap(t *testing.T, x *xorm.Engine, orgId int64) map[string]
 // replaceAlertNameMatcherWithRuleUid replaces the stub matchers based on alert_name with the rule_uid's generated during migration.
 func replaceAlertNameMatcherWithRuleUid(t *testing.T, rts []*ualert.Route, alertUids map[string]string) {
 	for _, rt := range rts {
-
 		if len(rt.Matchers) > 0 {
 			// Replace alert name matcher with generated rule_uid matcher
 			for _, m := range rt.Matchers {
