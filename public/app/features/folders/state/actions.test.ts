@@ -55,6 +55,7 @@ describe('folder actions', () => {
         createWarningNotification('Error checking folder permissions', 'Server error')
       );
       notificationAction.payload.id = expect.any(String);
+      notificationAction.payload.timestamp = expect.any(Number);
 
       expect(dispatchedActions).toEqual([
         expect.objectContaining(notificationAction),
