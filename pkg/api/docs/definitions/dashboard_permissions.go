@@ -75,3 +75,10 @@ type GetDashboardPermissionsResponse struct {
 	// in: body
 	Body []*models.DashboardAclInfoDTO `json:"body"`
 }
+
+// swagger:parameters postDashboardPermissionsWithUid updateFolderPermissions
+type PostDashboardPermissionsParamUID struct {
+	// in:body
+	// required:true
+	Body dtos.UpdateDashboardAclCommand
+}
