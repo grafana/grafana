@@ -180,14 +180,15 @@ describe('LibraryPanelsSearch', () => {
         await userEvent.type(screen.getByRole('combobox', { name: /folder filter/i }), '{enter}', {
           skipClick: true,
         });
-        await waitFor(() => expect(getLibraryPanelsSpy).toHaveBeenCalledTimes(1));
-        expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
-          searchString: '',
-          folderFilter: ['0'],
-          page: 0,
-          typeFilter: [],
-          perPage: 40,
-        });
+        await waitFor(() =>
+          expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
+            searchString: '',
+            folderFilter: ['0'],
+            page: 0,
+            typeFilter: [],
+            perPage: 40,
+          })
+        );
       });
     });
   });
