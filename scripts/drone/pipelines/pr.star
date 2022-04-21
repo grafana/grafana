@@ -29,7 +29,6 @@ load(
     'validate_scuemata_step',
     'ensure_cuetsified_step',
     'test_a11y_frontend_step',
-    'enterprise_init_downstream_step',
     'enterprise_downstream_step',
 )
 
@@ -72,7 +71,6 @@ def pr_pipelines(edition):
         test_frontend_step(),
     ]
     build_steps = [
-        # enterprise_init_downstream_step(edition=edition),
         enterprise_downstream_step(edition=edition, ver_mode=ver_mode),
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
         build_frontend_step(edition=edition, ver_mode=ver_mode),

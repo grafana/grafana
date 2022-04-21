@@ -1,0 +1,14 @@
+name: Enterprise PR check
+on: pull_request
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+          repository: grafana/grafana-enterprise
+          event-type: oss-pull-request
+          client-payload:
+            '{"source_branch": "${{ github.head_ref }}", "target_branch": "${{ github.base_ref }}", "pr_number": "${{ github.event.issue.number }}"}'

@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'at-enterprise-check'
+grabpl_version = 'v2.9.34'
 build_image = 'grafana/build-container:1.5.3'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -180,24 +180,6 @@ def lint_drone_step():
         ],
     }
 
-def enterprise_init_downstream_step(edition):
-    if edition in ('enterprise', 'enterprise2'):
-        return None
-
-    return {
-        'name': 'init-enterprise-downstream',
-        'image': build_image,
-        'commands': [
-            './bin/grabpl init-enterprise-downstream --github-token $$env:GITHUB_TOKEN',
-        ],
-        'environment': {
-            'GITHUB_TOKEN': from_secret(github_token),
-        },
-        'depends_on': [
-            'initialize',
-        ],
-    }
-
 def enterprise_downstream_step(edition, ver_mode):
     if edition in ('enterprise', 'enterprise2'):
         return None
@@ -208,11 +190,7 @@ def enterprise_downstream_step(edition, ver_mode):
     else:
         repo += 'main'
 
-    # dependencies = []
-    # if ver_mode == 'pr':
-    #     dependencies = [ 'init-enterprise-downstream' ]
-
-    return {
+    step = {
         'name': 'trigger-enterprise-downstream',
         'image': 'grafana/drone-downstream',
         'settings': {
@@ -227,8 +205,12 @@ def enterprise_downstream_step(edition, ver_mode):
                 'OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}',
             ],
         },
-        # 'depends_on': dependencies,
     }
+
+    if ver_mode == 'pr':
+        step.update({ 'failure': 'ignore' })
+
+    return step
 
 
 def lint_backend_step(edition):
