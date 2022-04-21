@@ -33,6 +33,7 @@ func TestRegistry(t *testing.T) {
 		}
 
 		require.Empty(t, invalidNames)
+		// acronyms can be configured as needed via `ConfigureAcronym` function from `./strcase/camel.go`
 	})
 
 }
