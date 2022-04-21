@@ -34,7 +34,7 @@ type AzureMonitorDatasource struct {
 var (
 	// Used to convert the aggregation value to the Azure enum for deep linking
 	aggregationTypeMap   = map[string]int{"None": 0, "Total": 1, "Minimum": 2, "Maximum": 3, "Average": 4, "Count": 7}
-	resourceNameLandmark = regexp.MustCompile(`(?i)(/(?P<resourceName>\w+)/providers/Microsoft\.Insights/metrics)`)
+	resourceNameLandmark = regexp.MustCompile(`(?i)(/(?P<resourceName>[\w-\.]+)/providers/Microsoft\.Insights/metrics)`)
 )
 
 const azureMonitorAPIVersion = "2018-01-01"

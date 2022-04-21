@@ -677,17 +677,17 @@ func TestAzureMonitorCreateRequest(t *testing.T) {
 
 func TestExtractResourceNameFromMetricsURL(t *testing.T) {
 	t.Run("it should extract the resourceName from a well-formed Metrics URL", func(t *testing.T) {
-		url := "/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/Microsoft.Compute/virtualMachines/GithubTestDataVM/providers/microsoft.insights/metrics"
-		expected := "GithubTestDataVM"
+		url := "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/Grafana-Test.VM/providers/microsoft.insights/metrics"
+		expected := "Grafana-Test.VM"
 		require.Equal(t, expected, extractResourceNameFromMetricsURL((url)))
 	})
 	t.Run("it should extract the resourceName from a well-formed Metrics URL in a case insensitive manner", func(t *testing.T) {
-		url := "/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/Microsoft.Compute/virtualMachines/GithubTestDataVM/pRoViDeRs/MiCrOsOfT.iNsIgHtS/mEtRiCs"
-		expected := "GithubTestDataVM"
+		url := "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/Grafana-Test.VM/pRoViDeRs/MiCrOsOfT.iNsIgHtS/mEtRiCs"
+		expected := "Grafana-Test.VM"
 		require.Equal(t, expected, extractResourceNameFromMetricsURL((url)))
 	})
 	t.Run("it should return an empty string if no match is found", func(t *testing.T) {
-		url := "/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/Microsoft.Compute/virtualMachines/GithubTestDataVM/providers/microsoft.insights/nope-this-part-does-not-match"
+		url := "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/Grafana-Test.VM/providers/microsoft.insights/nope-this-part-does-not-match"
 		expected := ""
 		require.Equal(t, expected, extractResourceNameFromMetricsURL((url)))
 	})
