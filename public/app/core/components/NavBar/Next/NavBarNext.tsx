@@ -76,7 +76,6 @@ export const NavBarNext = React.memo(() => {
           }}
         >
           <FocusScope>
-            <NavBarMenuPortalContainer />
             <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
               <Icon name="bars" size="xl" />
             </div>
@@ -86,6 +85,8 @@ export const NavBarNext = React.memo(() => {
               isExpanded={menuOpen}
               onClick={() => setMenuOpen(!menuOpen)}
             />
+
+            <NavBarMenuPortalContainer />
 
             <ul className={styles.itemList}>
               <NavBarItemWithoutMenu
