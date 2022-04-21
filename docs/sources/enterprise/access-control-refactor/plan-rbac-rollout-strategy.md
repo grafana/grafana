@@ -105,3 +105,36 @@ We've compiled the following permissions rollout scenarios based on current Graf
 1. Create a folder for each geography, for example, create a `US` folder and an `EU` folder.
 1. Add dashboards to each folder.
 1. Assign US users to the `US` dashboard and assign EU users to the `EU` folder.
+
+# RBAC implementation scenarios
+
+xxxxx
+
+## Enable an editor to create custom roles
+
+By default, the Grafana Server Admin is the only user who can create and manage custom roles. If you want your users to do the same, you have two options:
+
+1. Create a basic role assignment and map `fixed:permissions:admin:edit` and `fixed:permissions:admin:read` fixed roles to the `Editor` basic role.
+1. [Create a custom role]({{< ref "#create-your-custom-role" >}}) with `roles.builtin:add` and `roles:write` permissions, then create a basic role assignment for `Editor` organization role.
+
+Note that any user with the ability to modify roles can only create, update or delete roles with permissions they themselves have been granted. For example, a user with the `Editor` role would be able to create and manage roles only with the permissions they have, or with a subset of them.
+
+# Enable viewers to create reports
+
+This section describes two ways that you can enable viewers to create reports.
+
+- Assign the `fixed:reporting:admin:edit` role to the `Viewer` basic role. For more information about assigning a fixed role to a basic role, refer to [Remove or restore a basic role using provisioning]({{< relref "../provision-custom-roles/remove-restore-basic-role.md" >}})
+
+  > **Note:** The `fixed:reporting:admin:edit` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Role-based access control fixed role definitions]({{< relref "../rbac-fixed-role-definitions.md" >}}).
+
+- [Create a custom role]({{< ref "./create-custom-role-using-http-api.md" >}}) that includes the `reports.admin:write` permission, and add the custom role to the `Viewer` basic role.
+  - For more information about creating a custom role, refer to [Create, update, or delete a custom role using Grafana provisioning](../provision-custom-roles/create-update-delete-custom-role.md).
+  - For more information about assigning a custom role to a basic role, refer to [Assign a custom role to a basic role]({{< relref "../provision-custom-roles/assigning-custom-roles.md" >}})
+
+# Prevent a Grafana Admin from creating and inviting users
+
+This topic describes how to remove the `users:create` permissions from the Grafana Admin role, which prevents the Grafana Admin from creating users and inviting them to join an organization.
+
+1. [View basic role assignments]({{< relref "../basic-role-definitions.md" >}}) to determine which basic role assignments are available.
+1. To determine which role provides `users:create` permission, refer to refer to [fixed roles]({{< relref "../rbac-fixed-role-definitions.md" >}}).
+1. Use the [Role-based access control HTTP API]({{< relref "../../../http_api/access_control.md" >}}) or Grafana provisioning to [remove the basic role assignment]({{< relref "../provision-custom-roles/remove-restore-basic-role.md" >}}).

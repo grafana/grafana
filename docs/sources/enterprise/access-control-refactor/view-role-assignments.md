@@ -3,7 +3,7 @@ title: 'View basic role assignments using the HTTP API'
 menuTitle: 'View basic role assignments using the HTTP API'
 description: 'xxx.'
 aliases: [xxx]
-weight: 50
+weight: 70
 keywords:
   - xxx
 ---

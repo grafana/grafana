@@ -3,7 +3,7 @@ title: 'Role-based access control permissions actions and scopes'
 menuTitle: 'RBAC permissions actions and scopes'
 description: 'xxx.'
 aliases: [xxx]
-weight: 100
+weight: 110
 keywords:
   - xxx
 ---

@@ -73,3 +73,27 @@ For more information about sending an HTTP request to the check endpoint, refer 
 If you have created a folder with the name `General` or `general`, you cannot manage its permissions with RBAC.
 
 If you set [folder permissions]({{< relref "../../administration/manage-users-and-permissions/manage-dashboard-permissions/_index.md" >}}) for a folder named `General` or `general`, the system disregards the folder when RBAC is enabled.
+
+# Enable Grafana to provision custom roles
+
+Before you create or update custom roles, you must enable custom role provisioning in Grafana.
+
+Grafana performs provisioning during startup. After you make a change to the configuration file, you can reload it during runtime. You do not need to restart the Grafana server for your changes to take effect.
+
+## Before you begin
+
+- Ensure that you have administration privileges to the Grafana server.
+
+**To enable Grafana to provision custom roles:**
+
+Not sure about these steps, making them up.
+
+1. Sign in to the Grafana server.
+
+1. Locate the Grafana configuration file.
+
+1. Place the Grafana configuration file in the following location: **provisioning/access-control**.
+
+1. Reload the provisioning configuration file.
+
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../http_api/admin/#reload-provisioning-configurations" >}}).
