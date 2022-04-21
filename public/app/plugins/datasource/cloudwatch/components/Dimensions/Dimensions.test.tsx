@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, act, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 import { CloudWatchMetricsQuery } from '../../types';
 import userEvent from '@testing-library/user-event';
@@ -60,7 +60,7 @@ describe('Dimensions', () => {
       const onChange = jest.fn();
       render(<Dimensions {...props} query={props.query} onChange={onChange} dimensionKeys={[]} />);
 
-      userEvent.click(screen.getByLabelText('Add'));
+      await userEvent.click(screen.getByLabelText('Add'));
       expect(screen.getByTestId('cloudwatch-dimensions-filter-item')).toBeInTheDocument();
       expect(onChange).not.toHaveBeenCalled();
     });
@@ -74,13 +74,13 @@ describe('Dimensions', () => {
         <Dimensions {...props} query={props.query} onChange={onChange} dimensionKeys={[]} />
       );
 
-      userEvent.click(screen.getByLabelText('Add'));
+      await userEvent.click(screen.getByLabelText('Add'));
       const filterItemElement = screen.getByTestId('cloudwatch-dimensions-filter-item');
       expect(filterItemElement).toBeInTheDocument();
 
       const keyElement = container.querySelector('#cloudwatch-dimensions-filter-item-key');
       expect(keyElement).toBeInTheDocument();
-      userEvent.type(keyElement!, 'my-key');
+      await userEvent.type(keyElement!, 'my-key');
       fireEvent.keyDown(keyElement!, { keyCode: 13 });
       expect(onChange).not.toHaveBeenCalled();
     });
@@ -95,24 +95,20 @@ describe('Dimensions', () => {
       );
 
       const label = await screen.findByLabelText('Add');
-      userEvent.click(label);
+      await userEvent.click(label);
       const filterItemElement = screen.getByTestId('cloudwatch-dimensions-filter-item');
       expect(filterItemElement).toBeInTheDocument();
 
       const keyElement = container.querySelector('#cloudwatch-dimensions-filter-item-key');
       expect(keyElement).toBeInTheDocument();
-      await act(async () => {
-        userEvent.type(keyElement!, 'my-key');
-        fireEvent.keyDown(keyElement!, { keyCode: 13 });
-      });
+      await userEvent.type(keyElement!, 'my-key');
+      fireEvent.keyDown(keyElement!, { keyCode: 13 });
       expect(onChange).not.toHaveBeenCalled();
 
       const valueElement = container.querySelector('#cloudwatch-dimensions-filter-item-value');
       expect(valueElement).toBeInTheDocument();
-      await act(async () => {
-        userEvent.type(valueElement!, 'my-value');
-        fireEvent.keyDown(valueElement!, { keyCode: 13 });
-      });
+      await userEvent.type(valueElement!, 'my-value');
+      fireEvent.keyDown(valueElement!, { keyCode: 13 });
       expect(onChange).not.toHaveBeenCalledWith({
         ...props.query,
         dimensions: {

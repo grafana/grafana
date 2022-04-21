@@ -196,7 +196,7 @@ func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl_EditorsCanAdmin(t *testi
 	})
 }
 
-func TestTeamAPIEndpoint_CreateTeam_FGAC(t *testing.T) {
+func TestTeamAPIEndpoint_CreateTeam_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 
 	setInitCtxSignedInViewer(sc.initCtx)
@@ -215,7 +215,7 @@ func TestTeamAPIEndpoint_CreateTeam_FGAC(t *testing.T) {
 	})
 }
 
-func TestTeamAPIEndpoint_SearchTeams_FGAC(t *testing.T) {
+func TestTeamAPIEndpoint_SearchTeams_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	// Seed three teams
 	for i := 1; i <= 3; i++ {
@@ -259,7 +259,7 @@ func TestTeamAPIEndpoint_SearchTeams_FGAC(t *testing.T) {
 	})
 }
 
-func TestTeamAPIEndpoint_GetTeamByID_FGAC(t *testing.T) {
+func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	sc.db = sqlstore.InitTestDB(t)
 
@@ -289,7 +289,7 @@ func TestTeamAPIEndpoint_GetTeamByID_FGAC(t *testing.T) {
 // Given a team with a user, when the user is granted X permission,
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
 // else return 403
-func TestTeamAPIEndpoint_UpdateTeam_FGAC(t *testing.T) {
+func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	sc.db = sqlstore.InitTestDB(t)
 	_, err := sc.db.CreateTeam("team1", "", 1)
@@ -338,7 +338,7 @@ func TestTeamAPIEndpoint_UpdateTeam_FGAC(t *testing.T) {
 // Given a team with a user, when the user is granted X permission,
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsDelete with teams:id:1 scope
 // else return 403
-func TestTeamAPIEndpoint_DeleteTeam_FGAC(t *testing.T) {
+func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	sc.db = sqlstore.InitTestDB(t)
 	_, err := sc.db.CreateTeam("team1", "", 1)
@@ -370,7 +370,7 @@ func TestTeamAPIEndpoint_DeleteTeam_FGAC(t *testing.T) {
 // Given a team with a user, when the user is granted X permission,
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsRead with teams:id:1 scope
 // else return 403
-func TestTeamAPIEndpoint_GetTeamPreferences_FGAC(t *testing.T) {
+func TestTeamAPIEndpoint_GetTeamPreferences_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	sc.db = sqlstore.InitTestDB(t)
 	_, err := sc.db.CreateTeam("team1", "", 1)
@@ -396,7 +396,7 @@ func TestTeamAPIEndpoint_GetTeamPreferences_FGAC(t *testing.T) {
 // Given a team with a user, when the user is granted X permission,
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
 // else return 403
-func TestTeamAPIEndpoint_UpdateTeamPreferences_FGAC(t *testing.T) {
+func TestTeamAPIEndpoint_UpdateTeamPreferences_RBAC(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	sc.db = sqlstore.InitTestDB(t)
 	_, err := sc.db.CreateTeam("team1", "", 1)

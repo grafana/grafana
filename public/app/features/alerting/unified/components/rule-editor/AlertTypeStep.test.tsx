@@ -33,7 +33,7 @@ function renderAlertTypeStep() {
 }
 
 describe('RuleTypePicker', () => {
-  describe('FGAC', () => {
+  describe('RBAC', () => {
     it('Should display grafana, mimir alert and mimir recording buttons when user has rule create and write permissions', async () => {
       jest.spyOn(contextSrv, 'hasPermission').mockImplementation((action) => {
         return [AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite].includes(

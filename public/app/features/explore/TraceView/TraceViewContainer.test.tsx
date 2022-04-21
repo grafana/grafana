@@ -35,75 +35,75 @@ function renderTraceViewContainer(frames = [frameOld]) {
 }
 
 describe('TraceViewContainer', () => {
-  it('toggles children visibility', () => {
+  it('toggles children visibility', async () => {
     renderTraceViewContainer();
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
-    userEvent.click(screen.getAllByText('', { selector: 'span[data-test-id="SpanTreeOffset--indentGuide"]' })[0]);
+    await userEvent.click(screen.getAllByText('', { selector: 'span[data-test-id="SpanTreeOffset--indentGuide"]' })[0]);
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(1);
 
-    userEvent.click(screen.getAllByText('', { selector: 'span[data-test-id="SpanTreeOffset--indentGuide"]' })[0]);
+    await userEvent.click(screen.getAllByText('', { selector: 'span[data-test-id="SpanTreeOffset--indentGuide"]' })[0]);
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
   });
 
-  it('toggles collapses and expands one level of spans', () => {
+  it('toggles collapses and expands one level of spans', async () => {
     renderTraceViewContainer();
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
-    userEvent.click(screen.getByLabelText('Collapse +1'));
+    await userEvent.click(screen.getByLabelText('Collapse +1'));
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(2);
-    userEvent.click(screen.getByLabelText('Expand +1'));
+    await userEvent.click(screen.getByLabelText('Expand +1'));
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
   });
 
-  it('toggles collapses and expands all levels', () => {
+  it('toggles collapses and expands all levels', async () => {
     renderTraceViewContainer();
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
-    userEvent.click(screen.getByLabelText('Collapse All'));
+    await userEvent.click(screen.getByLabelText('Collapse All'));
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(1);
-    userEvent.click(screen.getByLabelText('Expand All'));
+    await userEvent.click(screen.getByLabelText('Expand All'));
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
   });
 
-  it('searches for spans', () => {
+  it('searches for spans', async () => {
     renderTraceViewContainer();
-    userEvent.type(screen.getByPlaceholderText('Find...'), '1ed38015486087ca');
+    await userEvent.type(screen.getByPlaceholderText('Find...'), '1ed38015486087ca');
     expect(
       (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[0].parentNode! as HTMLElement).className
     ).toContain('rowMatchingFilter');
   });
 
-  it('can select next/prev results', () => {
+  it('can select next/prev results', async () => {
     renderTraceViewContainer();
-    userEvent.type(screen.getByPlaceholderText('Find...'), 'logproto');
+    await userEvent.type(screen.getByPlaceholderText('Find...'), 'logproto');
     const nextResultButton = screen.getByTestId('trace-page-search-bar-next-result-button');
     const prevResultButton = screen.getByTestId('trace-page-search-bar-prev-result-button');
     const suffix = screen.getByTestId('trace-page-search-bar-suffix');
 
-    userEvent.click(nextResultButton);
+    await userEvent.click(nextResultButton);
     expect(suffix.textContent).toBe('1 of 2');
     expect(
       (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[1].parentNode! as HTMLElement).className
     ).toContain('rowFocused');
-    userEvent.click(nextResultButton);
+    await userEvent.click(nextResultButton);
     expect(suffix.textContent).toBe('2 of 2');
     expect(
       (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[2].parentNode! as HTMLElement).className
     ).toContain('rowFocused');
-    userEvent.click(nextResultButton);
+    await userEvent.click(nextResultButton);
     expect(suffix.textContent).toBe('1 of 2');
     expect(
       (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[1].parentNode! as HTMLElement).className
     ).toContain('rowFocused');
-    userEvent.click(prevResultButton);
+    await userEvent.click(prevResultButton);
     expect(suffix.textContent).toBe('2 of 2');
     expect(
       (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[2].parentNode! as HTMLElement).className
     ).toContain('rowFocused');
-    userEvent.click(prevResultButton);
+    await userEvent.click(prevResultButton);
     expect(suffix.textContent).toBe('1 of 2');
     expect(
       (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[1].parentNode! as HTMLElement).className
     ).toContain('rowFocused');
-    userEvent.click(prevResultButton);
+    await userEvent.click(prevResultButton);
     expect(suffix.textContent).toBe('2 of 2');
     expect(
       (screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' })[2].parentNode! as HTMLElement).className

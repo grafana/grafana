@@ -24,7 +24,7 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:        "service-accounts",
+			Name:        "serviceAccounts",
 			Description: "support service accounts",
 			State:       FeatureStateBeta,
 		},

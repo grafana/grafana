@@ -22,9 +22,9 @@ describe('SelectBase', () => {
     render(<SelectBase menuShouldPortal onChange={onChangeHandler} />);
   });
 
-  it('renders empty options information', () => {
+  it('renders empty options information', async () => {
     render(<SelectBase menuShouldPortal onChange={onChangeHandler} />);
-    userEvent.click(screen.getByText(/choose/i));
+    await userEvent.click(screen.getByText(/choose/i));
     expect(screen.queryByText(/no options found/i)).toBeVisible();
   });
 
@@ -54,7 +54,7 @@ describe('SelectBase', () => {
 
     render(<Test />);
     expect(screen.queryByText('Test label')).toBeInTheDocument();
-    userEvent.click(screen.getByText('clear value'));
+    await userEvent.click(screen.getByText('clear value'));
     expect(screen.queryByText('Test label')).not.toBeInTheDocument();
   });
 
@@ -186,9 +186,9 @@ describe('SelectBase', () => {
   });
 
   describe('options', () => {
-    it('renders menu with provided options', () => {
+    it('renders menu with provided options', async () => {
       render(<SelectBase menuShouldPortal options={options} onChange={onChangeHandler} />);
-      userEvent.click(screen.getByText(/choose/i));
+      await userEvent.click(screen.getByText(/choose/i));
       const menuOptions = screen.getAllByLabelText('Select option');
       expect(menuOptions).toHaveLength(2);
     });
