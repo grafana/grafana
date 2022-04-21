@@ -92,10 +92,10 @@ describe('TraceView', () => {
     renderTraceViewNew();
     expect(screen.queryByText(/Tags/)).toBeFalsy();
     const spanView = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[0];
-    userEvent.click(spanView);
+    await userEvent.click(spanView);
     expect(screen.queryByText(/Tags/)).toBeTruthy();
 
-    userEvent.click(spanView);
+    await userEvent.click(spanView);
     screen.debug(screen.queryAllByText(/Tags/));
     expect(screen.queryByText(/Tags/)).toBeFalsy();
   });
@@ -109,36 +109,36 @@ describe('TraceView', () => {
     expect(ticks()).toBe('0μs274.5μs549μs823.5μs1.1ms');
   });
 
-  it('correctly shows processes for each span', () => {
+  it('correctly shows processes for each span', async () => {
     renderTraceView();
     let table: HTMLElement;
     expect(screen.queryAllByText('', { selector: 'div[data-test-id="span-view"]' }).length).toBe(3);
 
     const firstSpan = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[0];
-    userEvent.click(firstSpan);
-    userEvent.click(screen.getByText(/Process/));
+    await userEvent.click(firstSpan);
+    await userEvent.click(screen.getByText(/Process/));
     table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-1');
-    userEvent.click(firstSpan);
+    await userEvent.click(firstSpan);
 
     const secondSpan = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[1];
-    userEvent.click(secondSpan);
-    userEvent.click(screen.getByText(/Process/));
+    await userEvent.click(secondSpan);
+    await userEvent.click(screen.getByText(/Process/));
     table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-2');
-    userEvent.click(secondSpan);
+    await userEvent.click(secondSpan);
 
     const thirdSpan = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[2];
-    userEvent.click(thirdSpan);
-    userEvent.click(screen.getByText(/Process/));
+    await userEvent.click(thirdSpan);
+    await userEvent.click(screen.getByText(/Process/));
     table = screen.getByText('', { selector: 'div[data-test-id="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-3');
   });
 
-  it('resets detail view for new trace with the identical spanID', () => {
+  it('resets detail view for new trace with the identical spanID', async () => {
     const { rerender } = render(getTraceView([frameOld]));
     const span = screen.getAllByText('', { selector: 'div[data-test-id="span-view"]' })[2];
-    userEvent.click(span);
+    await userEvent.click(span);
     //Process is in detail view
     expect(screen.getByText(/Process/)).toBeInTheDocument();
 

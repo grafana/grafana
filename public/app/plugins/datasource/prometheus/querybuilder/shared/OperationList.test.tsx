@@ -36,7 +36,7 @@ describe('OperationList', () => {
     const { onChange } = setup();
     const removeOperationButtons = screen.getAllByTitle('Remove operation');
     expect(removeOperationButtons).toHaveLength(2);
-    userEvent.click(removeOperationButtons[1]);
+    await userEvent.click(removeOperationButtons[1]);
     expect(onChange).toBeCalledWith({
       labels: [{ label: 'instance', op: '=', value: 'localhost:9090' }],
       metric: 'random_metric',
@@ -46,7 +46,7 @@ describe('OperationList', () => {
 
   it('adds an operation', async () => {
     const { onChange } = setup();
-    addOperation('Aggregations', 'Min');
+    await addOperation('Aggregations', 'Min');
     expect(onChange).toBeCalledWith({
       labels: [{ label: 'instance', op: '=', value: 'localhost:9090' }],
       metric: 'random_metric',

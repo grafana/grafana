@@ -83,9 +83,9 @@ describe('MetricsQueryEditor', () => {
     const checkbox = await screen.findByLabelText('web-server');
     expect(checkbox).toBeInTheDocument();
     expect(checkbox).not.toBeChecked();
-    userEvent.click(checkbox);
+    await userEvent.click(checkbox);
     expect(checkbox).toBeChecked();
-    userEvent.click(await screen.findByRole('button', { name: 'Apply' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Apply' }));
 
     expect(onChange).toBeCalledTimes(1);
     expect(onChange).toBeCalledWith(
@@ -136,9 +136,9 @@ describe('MetricsQueryEditor', () => {
     const checkbox = await screen.findByLabelText('db-server');
     expect(checkbox).toBeInTheDocument();
     expect(checkbox).not.toBeChecked();
-    userEvent.click(checkbox);
+    await userEvent.click(checkbox);
     expect(checkbox).toBeChecked();
-    userEvent.click(await screen.findByRole('button', { name: 'Apply' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Apply' }));
 
     expect(onChange).toBeCalledTimes(1);
     expect(onChange).toBeCalledWith(
