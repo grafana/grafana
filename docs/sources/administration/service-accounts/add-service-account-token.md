@@ -14,7 +14,7 @@ You can create a service account token using the Grafana UI or via the API. For 
 
 ## Before you begin
 
-- Ensure you have added the `service-accounts` feature toggle to Grafana. For more information about adding the `service-accounts` feature toggle, refer to [Enable service accounts]({{< relref "./enable-service-accounts.md#">}}).
+- Ensure you have added the `serviceAccounts` feature toggle to Grafana. For more information about adding the feature toggle, refer to [Enable service accounts]({{< relref "./enable-service-accounts.md#">}}).
 - Ensure you have permission to create and edit service accounts. For more information about user roles, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#">}}).
 - [Create a service account in Grafana]({{< relref "./create-service-account.md#">}}).
 

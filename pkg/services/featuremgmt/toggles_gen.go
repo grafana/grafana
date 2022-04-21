@@ -21,7 +21,7 @@ const (
 
 	// FlagServiceAccounts
 	// support service accounts
-	FlagServiceAccounts = "service-accounts"
+	FlagServiceAccounts = "serviceAccounts"
 
 	// FlagDatabaseMetrics
 	// Add prometheus metrics for database tables
