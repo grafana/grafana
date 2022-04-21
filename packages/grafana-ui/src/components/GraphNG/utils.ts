@@ -35,8 +35,8 @@ function applySpanNullsThresholds(frame: DataFrame) {
   return frame;
 }
 
-function isNumericBarField(f: Field) {
-  return f.type === FieldType.number && f.config.custom?.drawStyle === GraphDrawStyle.Bars;
+function isBarField(f: Field) {
+  return f.config.custom?.drawStyle === GraphDrawStyle.Bars;
 }
 
 export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
@@ -47,7 +47,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
 
   frames.forEach((frame) => {
     frame.fields.forEach((f) => {
-      if (isNumericBarField(f)) {
+      if (isBarField(f)) {
         // prevent minesweeper-expansion of nulls (gaps) when joining bars
         // since bar width is determined from the minimum distance between non-undefined values
         // (this strategy will still retain any original pre-join nulls, though)
@@ -94,7 +94,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
         if (fi === 0) {
           let lastVal = vals[vals.length - 1];
           vals.push(lastVal + minXDelta, lastVal + 2 * minXDelta);
-        } else if (isNumericBarField(f)) {
+        } else if (isBarField(f)) {
           vals.push(null, null);
         } else {
           vals.push(undefined, undefined);
