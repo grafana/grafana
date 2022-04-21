@@ -103,7 +103,7 @@ export const NavBarNext = React.memo(() => {
               <Icon name="grafana" size="xl" />
             </NavBarItemWithoutMenu>
 
-            <CustomScrollbar hideHorizontalTrack>
+            <CustomScrollbar hideVerticalTrack hideHorizontalTrack>
               <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
                 <Icon name="search" size="xl" />
               </NavBarItem>
