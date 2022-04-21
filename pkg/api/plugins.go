@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -75,7 +74,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			Category:      pluginDef.Category,
 			Info:          pluginDef.Info,
 			Dependencies:  pluginDef.Dependencies,
-			DefaultNavUrl: path.Join(hs.Cfg.AppSubURL, pluginDef.DefaultNavURL),
+			DefaultNavUrl: hs.RelativeURL(pluginDef.DefaultNavURL),
 			State:         pluginDef.State,
 			Signature:     pluginDef.Signature,
 			SignatureType: pluginDef.SignatureType,
@@ -94,7 +93,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		}
 
 		if listItem.DefaultNavUrl == "" || !listItem.Enabled {
-			listItem.DefaultNavUrl = hs.Cfg.AppSubURL + "/plugins/" + listItem.Id + "/"
+			listItem.DefaultNavUrl = hs.RelativeURL("/plugins/") + listItem.Id + "/"
 		}
 
 		// filter out disabled plugins
@@ -131,7 +130,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		Includes:      plugin.Includes,
 		BaseUrl:       plugin.BaseURL,
 		Module:        plugin.Module,
-		DefaultNavUrl: path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
+		DefaultNavUrl: hs.RelativeURL(plugin.DefaultNavURL),
 		State:         plugin.State,
 		Signature:     plugin.Signature,
 		SignatureType: plugin.SignatureType,

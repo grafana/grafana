@@ -133,14 +133,14 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 				// the user is already logged so instead of rendering the login page with error
 				// it should be redirected to the home page.
 				c.Logger.Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
-				redirectTo = hs.Cfg.AppSubURL + "/"
+				redirectTo = hs.RelativeURL("/")
 			}
 			cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 			c.Redirect(redirectTo)
 			return
 		}
 
-		c.Redirect(hs.Cfg.AppSubURL + "/")
+		c.Redirect(hs.RelativeURL("/"))
 		return
 	}
 
@@ -157,7 +157,7 @@ func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
 		return false
 	}
 	for key := range oauthInfos {
-		redirectUrl := hs.Cfg.AppSubURL + "/login/" + key
+		redirectUrl := hs.RelativeURL("/login/", key)
 		c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
 		c.Redirect(redirectUrl, 307)
 		return true
@@ -287,7 +287,7 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 
 func (hs *HTTPServer) Logout(c *models.ReqContext) {
 	if hs.samlSingleLogoutEnabled() {
-		c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
+		c.Redirect(hs.RelativeURL("/logout/saml"))
 		return
 	}
 
@@ -302,7 +302,7 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 		c.Redirect(setting.SignoutRedirectUrl)
 	} else {
 		hs.log.Info("Successful Logout", "User", c.Email)
-		c.Redirect(hs.Cfg.AppSubURL + "/login")
+		c.Redirect(hs.RelativeURL("/login"))
 	}
 }
 
@@ -338,7 +338,7 @@ func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...
 		hs.log.Error("Failed to set encrypted cookie", "err", err)
 	}
 
-	ctx.Redirect(hs.Cfg.AppSubURL + "/login")
+	ctx.Redirect(hs.RelativeURL("/login"))
 }
 
 func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err error, v ...interface{}) *response.RedirectResponse {
@@ -347,7 +347,7 @@ func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err erro
 		hs.log.Error("Failed to set encrypted cookie", "err", err)
 	}
 
-	return response.Redirect(hs.Cfg.AppSubURL + "/login")
+	return response.Redirect(hs.RelativeURL("/login"))
 }
 
 func (hs *HTTPServer) samlEnabled() bool {
