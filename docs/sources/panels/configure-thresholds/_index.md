@@ -4,7 +4,7 @@ aliases = ["/docs/grafana/latest/panels/thresholds/", "/docs/grafana/latest/pane
 weight = 300
 +++
 
-# Configure thresholds in a dashboard
+# Configure visualization thresholds
 
 This section includes information about using thresholds in your visualizations.
 
