@@ -32,7 +32,7 @@ import (
 )
 
 var (
-	x       *xorm.Engine
+	// x       *xorm.Engine
 	dialect migrator.Dialect
 
 	sqlog log.Logger = log.New("sqlstore")
@@ -101,8 +101,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine
 
 	ss.Dialect = migrator.NewDialect(ss.engine)
 
-	// temporarily still set global var
-	x = ss.engine
 	dialect = ss.Dialect
 
 	// Init repo instances
