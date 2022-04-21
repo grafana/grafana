@@ -251,6 +251,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     transform: `translateX(50%)`,
   }),
   menuPortalContainer: css({
+    left: 0,
+    position: 'fixed',
+    right: 0,
+    top: 0,
     zIndex: theme.zIndex.sidemenu,
   }),
 });
