@@ -10,6 +10,7 @@ import { ShareExport } from './ShareExport';
 import { ShareLibraryPanel } from './ShareLibraryPanel';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
+import { SharePublic } from './SharePublic';
 import { ShareModalTabModel } from './types';
 
 const customDashboardTabs: ShareModalTabModel[] = [];
@@ -51,6 +52,8 @@ function getTabs(props: Props) {
     tabs.push({ label: 'Export', value: 'export', component: ShareExport });
     tabs.push(...customDashboardTabs);
   }
+
+  tabs.push({ label: 'Share Publicly', value: 'share', component: SharePublic });
 
   return tabs;
 }
