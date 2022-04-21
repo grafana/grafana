@@ -319,6 +319,7 @@
     "js-yaml": "^4.1.0",
     "json-source-map": "0.6.1",
     "jsurl": "^0.1.5",
+    "kbar": "^0.1.0-beta.30",
     "lezer-promql": "0.22.0",
     "lodash": "4.17.21",
     "logfmt": "^1.3.2",
