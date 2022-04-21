@@ -1,5 +1,5 @@
 import { XYFieldMatchers } from './types';
-import { ArrayVector, DataFrame, FieldConfig, FieldType, outerJoinDataFrames, TimeRange } from '@grafana/data';
+import { ArrayVector, DataFrame, Field, FieldConfig, FieldType, outerJoinDataFrames, TimeRange } from '@grafana/data';
 import { nullToUndefThreshold } from './nullToUndefThreshold';
 import { applyNullInsertThreshold } from './nullInsertThreshold';
 import {
@@ -35,7 +35,28 @@ function applySpanNullsThresholds(frame: DataFrame) {
   return frame;
 }
 
+function isBarsField(f: Field) {
+  return f.type === FieldType.number && f.config.custom?.drawStyle === GraphDrawStyle.Bars;
+}
+
 export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
+  // make bar widths of all series uniform (equal to narrowest bar series)
+  // find smallest distance between x points
+  let minXDelta = Infinity;
+
+  frames.forEach((frame) => {
+    const xField = frame.fields[0];
+    const xVals = xField.values.toArray();
+
+    if (frame.fields.some(isBarsField)) {
+      for (let i = 0; i < xVals.length; i++) {
+        if (i > 0) {
+          minXDelta = Math.min(minXDelta, xVals[i] - xVals[i - 1]);
+        }
+      }
+    }
+  });
+
   let alignedFrame = outerJoinDataFrames({
     frames: frames.map((frame) => {
       let fr = applyNullInsertThreshold(frame, null, timeRange?.to.valueOf());
@@ -44,7 +65,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
       // since bar width is determined from the minimum distance between non-undefined values
       // (this strategy will still retain any original pre-join nulls, though)
       fr.fields.forEach((f) => {
-        if (f.type === FieldType.number && f.config.custom?.drawStyle === GraphDrawStyle.Bars) {
+        if (isBarsField(f)) {
           f.config.custom = {
             ...f.config.custom,
             spanNulls: -1,
@@ -59,7 +80,27 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
     keepOriginIndices: true,
   });
 
-  return alignedFrame && applySpanNullsThresholds(alignedFrame);
+  if (alignedFrame) {
+    alignedFrame = applySpanNullsThresholds(alignedFrame);
+
+    // append 2 null vals at minXDelta to bar series
+    if (minXDelta !== Infinity) {
+      alignedFrame.fields.forEach((f, fi) => {
+        let vals = f.values.toArray();
+
+        if (fi === 0) {
+          let lastVal = vals[vals.length - 1];
+          vals.push(lastVal + minXDelta, lastVal + 2 * minXDelta);
+        } else if (isBarsField(f)) {
+          vals.push(null, null);
+        } else {
+          vals.push(undefined, undefined);
+        }
+      });
+    }
+
+    return alignedFrame;
+  }
 }
 
 export function buildScaleKey(config: FieldConfig<GraphFieldConfig>) {
