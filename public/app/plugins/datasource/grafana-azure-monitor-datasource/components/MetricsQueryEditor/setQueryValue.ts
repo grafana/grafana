@@ -167,11 +167,12 @@ export function setAllowedTimeGrains(
   query: AzureMonitorQuery,
   allowedTimeGrainsMs: AzureMonitorOption<string>[]
 ): AzureMonitorQuery {
+  console.log(allowedTimeGrainsMs);
   return {
     ...query,
     azureMonitor: {
       ...query.azureMonitor,
-      allowedTimeGrainsMs,
+      allowedTimeGrainsMs: [],
     },
   };
 }

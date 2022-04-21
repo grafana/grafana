@@ -230,7 +230,7 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
           label: v,
           value: v,
         }));
-
+        console.log('==', metadata.supportedTimeGrains);
         setMetricMetadata({
           aggOptions: aggregations,
           timeGrains: metadata.supportedTimeGrains,
