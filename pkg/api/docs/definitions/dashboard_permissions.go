@@ -63,7 +63,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:parameters postDashboardPermissions updateFolderPermissions
+// swagger:parameters postDashboardPermissions updateFolderPermissions postDashboardPermissionsWithUid
 type PostDashboardPermissionsParam struct {
 	// in:body
 	// required:true
@@ -74,11 +74,4 @@ type PostDashboardPermissionsParam struct {
 type GetDashboardPermissionsResponse struct {
 	// in: body
 	Body []*models.DashboardAclInfoDTO `json:"body"`
-}
-
-// swagger:parameters postDashboardPermissionsWithUid updateFolderPermissions
-type PostDashboardPermissionsParamUID struct {
-	// in:body
-	// required:true
-	Body dtos.UpdateDashboardAclCommand
 }

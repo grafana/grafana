@@ -2398,6 +2398,14 @@
             "name": "uid",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateDashboardAclCommand"
+            }
           }
         ],
         "responses": {
