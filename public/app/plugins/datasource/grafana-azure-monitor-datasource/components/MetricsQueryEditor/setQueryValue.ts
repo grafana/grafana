@@ -1,4 +1,4 @@
-import { AzureMetricDimension, AzureMonitorOption, AzureMonitorQuery } from '../../types';
+import { AzureMetricDimension, AzureMonitorQuery } from '../../types';
 
 export function setResource(query: AzureMonitorQuery, resourceURI: string | undefined): AzureMonitorQuery {
   return {
@@ -159,20 +159,6 @@ export function setTimeGrain(query: AzureMonitorQuery, timeGrain: string): Azure
     azureMonitor: {
       ...query.azureMonitor,
       timeGrain: timeGrain,
-    },
-  };
-}
-
-export function setAllowedTimeGrains(
-  query: AzureMonitorQuery,
-  allowedTimeGrainsMs: AzureMonitorOption<string>[]
-): AzureMonitorQuery {
-  console.log(allowedTimeGrainsMs);
-  return {
-    ...query,
-    azureMonitor: {
-      ...query.azureMonitor,
-      allowedTimeGrainsMs: [],
     },
   };
 }
