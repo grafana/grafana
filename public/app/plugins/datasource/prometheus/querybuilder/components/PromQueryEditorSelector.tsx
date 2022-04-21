@@ -18,7 +18,7 @@ import { PromQuery } from '../../types';
 import { FeedbackLink } from '../shared/FeedbackLink';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
-  const { onChange, onRunQuery, data } = props;
+  const { onChange, onRunQuery, data, app } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
 
@@ -27,10 +27,11 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
-      reportInteraction('user_prometheus_editor_mode_clicked', {
+      reportInteraction('user_grafana_prometheus_editor_mode_clicked', {
         newEditor: newMetricEditorMode,
         previousEditor: query.editorMode ?? '',
         newQuery: !query.expr,
+        app: app ?? '',
       });
 
       if (newMetricEditorMode === QueryEditorMode.Builder) {
@@ -43,7 +44,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
       }
       changeEditorMode(query, newMetricEditorMode, onChange);
     },
-    [onChange, query]
+    [onChange, query, app]
   );
 
   useEffect(() => {
