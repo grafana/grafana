@@ -40,7 +40,6 @@ export class ElementState implements LayerElement {
       horizontal: HorizontalConstraint.Left,
     };
     options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0 };
-    this.updateLayout();
     const scene = this.getScene();
     if (!options.name) {
       const newName = scene?.getNextElementName();
@@ -65,7 +64,8 @@ export class ElementState implements LayerElement {
     return this.options.name;
   }
 
-  updateLayout() {
+  /** Use the configured options to update CSS style properties directly on the wrapper dif **/
+  applyLayoutStylesToDiv() {
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
     const placement = this.options.placement ?? ({} as Placement);
@@ -211,7 +211,7 @@ export class ElementState implements LayerElement {
 
     this.options.placement = placement;
 
-    this.updateLayout();
+    this.applyLayoutStylesToDiv();
     this.revId++;
   }
 
@@ -312,7 +312,7 @@ export class ElementState implements LayerElement {
 
   initElement = (target: HTMLDivElement) => {
     this.div = target;
-    this.updateLayout();
+    this.applyLayoutStylesToDiv();
   };
 
   applyDrag = (event: OnDrag) => {
