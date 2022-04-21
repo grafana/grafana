@@ -81,19 +81,26 @@ func TestTicker(t *testing.T) {
 		interval := time.Duration(intervalSec) * time.Second
 		last := clk.Now()
 		ticker := NewTicker(last, 0, clk, intervalSec)
-		expectedTick := clk.Now().Add(interval)
-		require.Empty(t, ticker.C)
-		jitter := time.Duration(rand.Int63n(interval.Milliseconds()-1)) * time.Millisecond
-		clk.Add(interval)          // make it put the first tick
-		clk.Add(interval + jitter) // make it put the second tick
 
+		//  We can expect the first tick to be at a consistent interval. Take a snapshot of the clock now, before we advance it.
+		expectedTick := clk.Now().Add(interval)
+
+		require.Empty(t, ticker.C)
+
+		clk.Add(interval) // advance the clock by the interval to make the ticker tick the first time.
+		clk.Add(interval) // advance the clock by the interval to make the ticker tick the second time.
+
+		// Irregardless of wall time, the first tick should be initial clock + interval.
 		actual1 := readChanOrFail(t, ticker.C)
+		require.Equal(t, expectedTick, actual1)
+
 		var actual2 time.Time
 		require.Eventually(t, func() bool {
 			actual2 = readChanOrFail(t, ticker.C)
 			return true
 		}, time.Second, 10*time.Millisecond)
-		require.Equal(t, expectedTick, actual1)
+
+		// Similarly, the second tick should be last tick + interval irregardless of wall time.
 		require.Equal(t, expectedTick.Add(interval), actual2)
 	})
 }
