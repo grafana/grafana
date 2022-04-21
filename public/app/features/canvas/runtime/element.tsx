@@ -53,7 +53,6 @@ export class ElementState implements LayerElement {
     while (trav) {
       if (trav.isRoot()) {
         return trav.scene;
-        break;
       }
       trav = trav.parent;
     }
@@ -79,22 +78,29 @@ export class ElementState implements LayerElement {
       case VerticalConstraint.Top:
         placement.top = placement.top ?? 0;
         placement.height = placement.height ?? 100;
-        style.top = placement.top;
-        style.height = placement.height;
+        style.top = `${placement.top}px`;
+        style.height = `${placement.height}px`;
         delete placement.bottom;
         break;
       case VerticalConstraint.Bottom:
         placement.bottom = placement.bottom ?? 0;
         placement.height = placement.height ?? 100;
-        style.bottom = placement.bottom;
-        style.height = placement.height;
+        style.bottom = `${placement.bottom}px`;
+        style.height = `${placement.height}px`;
         delete placement.top;
         break;
       case VerticalConstraint.TopBottom:
         placement.top = placement.top ?? 0;
         placement.bottom = placement.bottom ?? 0;
-        style.top = placement.top;
-        style.bottom = placement.bottom;
+        style.top = `${placement.top}px`;
+        style.bottom = `${placement.bottom}px`;
+        delete placement.height;
+        break;
+      case VerticalConstraint.Scale:
+        placement.top = placement.top ?? 0;
+        placement.bottom = placement.bottom ?? 0;
+        style.top = `${placement.top}%`;
+        style.bottom = `${placement.bottom}%`;
         delete placement.height;
         break;
     }
@@ -103,22 +109,22 @@ export class ElementState implements LayerElement {
       case HorizontalConstraint.Left:
         placement.left = placement.left ?? 0;
         placement.width = placement.width ?? 100;
-        style.left = placement.left;
-        style.width = placement.width;
+        style.left = `${placement.left}px`;
+        style.width = `${placement.width}px`;
         delete placement.right;
         break;
       case HorizontalConstraint.Right:
         placement.right = placement.right ?? 0;
         placement.width = placement.width ?? 100;
-        style.right = placement.right;
-        style.width = placement.width;
+        style.right = `${placement.right}px`;
+        style.width = `${placement.width}px`;
         delete placement.left;
         break;
       case HorizontalConstraint.LeftRight:
         placement.left = placement.left ?? 0;
         placement.right = placement.right ?? 0;
-        style.left = placement.left;
-        style.right = placement.right;
+        style.left = `${placement.left}px`;
+        style.right = `${placement.right}px`;
         delete placement.width;
         break;
       case HorizontalConstraint.Scale:
@@ -134,23 +140,11 @@ export class ElementState implements LayerElement {
     this.sizeStyle = style;
     if (this.div) {
       for (const key in this.sizeStyle) {
-        let newStyle = (this.sizeStyle as any)[key];
-
-        if (!isNaN(newStyle)) {
-          newStyle += 'px';
-        }
-
-        this.div.style[key as any] = newStyle;
+        this.div.style[key as any] = (this.sizeStyle as any)[key];
       }
 
       for (const key in this.dataStyle) {
-        let newStyle = (this.dataStyle as any)[key];
-
-        if (!isNaN(newStyle)) {
-          newStyle += 'px';
-        }
-
-        this.div.style[key as any] = newStyle;
+        this.div.style[key as any] = (this.dataStyle as any)[key];
       }
     }
   }
@@ -189,6 +183,10 @@ export class ElementState implements LayerElement {
         placement.top = relativeTop;
         placement.bottom = relativeBottom;
         break;
+      case VerticalConstraint.Scale:
+        placement.top = (relativeTop / (parentContainer?.height ?? height)) * 100;
+        placement.bottom = (relativeBottom / (parentContainer?.height ?? height)) * 100;
+        break;
     }
 
     switch (horizontal) {
@@ -205,8 +203,8 @@ export class ElementState implements LayerElement {
         placement.right = relativeRight;
         break;
       case HorizontalConstraint.Scale:
-        placement.left = relativeLeft / (parentContainer?.width ?? width);
-        placement.right = relativeRight / (parentContainer?.width ?? width);
+        placement.left = (relativeLeft / (parentContainer?.width ?? width)) * 100;
+        placement.right = (relativeRight / (parentContainer?.width ?? width)) * 100;
         break;
     }
 
