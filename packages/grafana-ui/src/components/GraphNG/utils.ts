@@ -45,10 +45,9 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
   let minXDelta = Infinity;
 
   frames.forEach((frame) => {
-    const xField = frame.fields[0];
-    const xVals = xField.values.toArray();
-
     if (frame.fields.some(isBarsField)) {
+      const xVals = frame.fields[0].values.toArray();
+
       for (let i = 0; i < xVals.length; i++) {
         if (i > 0) {
           minXDelta = Math.min(minXDelta, xVals[i] - xVals[i - 1]);
@@ -101,6 +100,8 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
 
     return alignedFrame;
   }
+
+  return null;
 }
 
 export function buildScaleKey(config: FieldConfig<GraphFieldConfig>) {
