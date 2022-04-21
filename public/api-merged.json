@@ -1607,7 +1607,7 @@
         }
       }
     },
-    "/alertmanager/{Recipient}/api/v2/alerts": {
+    "/alertmanager/{DatasourceID}/api/v2/alerts": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": ["alertmanager"],
@@ -1657,8 +1657,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           }
@@ -1696,8 +1696,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           }
@@ -1718,7 +1718,7 @@
         }
       }
     },
-    "/alertmanager/{Recipient}/api/v2/alerts/groups": {
+    "/alertmanager/{DatasourceID}/api/v2/alerts/groups": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": ["alertmanager"],
@@ -1768,8 +1768,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           }
@@ -1790,7 +1790,7 @@
         }
       }
     },
-    "/alertmanager/{Recipient}/api/v2/silence/{SilenceId}": {
+    "/alertmanager/{DatasourceID}/api/v2/silence/{SilenceId}": {
       "get": {
         "description": "get silence",
         "tags": ["alertmanager"],
@@ -1805,8 +1805,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           }
@@ -1840,8 +1840,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           }
@@ -1862,7 +1862,7 @@
         }
       }
     },
-    "/alertmanager/{Recipient}/api/v2/silences": {
+    "/alertmanager/{DatasourceID}/api/v2/silences": {
       "get": {
         "description": "get silences",
         "tags": ["alertmanager"],
@@ -1880,8 +1880,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           }
@@ -1916,8 +1916,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           }
@@ -1938,7 +1938,7 @@
         }
       }
     },
-    "/alertmanager/{Recipient}/api/v2/status": {
+    "/alertmanager/{DatasourceID}/api/v2/status": {
       "get": {
         "description": "get alertmanager status and configuration",
         "tags": ["alertmanager"],
@@ -1947,8 +1947,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           }
@@ -1969,7 +1969,7 @@
         }
       }
     },
-    "/alertmanager/{Recipient}/config/api/v1/alerts": {
+    "/alertmanager/{DatasourceID}/config/api/v1/alerts": {
       "get": {
         "description": "gets an Alerting config",
         "tags": ["alertmanager"],
@@ -1978,8 +1978,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           }
@@ -2014,8 +2014,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           }
@@ -2043,8 +2043,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           }
@@ -2065,7 +2065,7 @@
         }
       }
     },
-    "/alertmanager/{Recipient}/config/api/v1/receivers/test": {
+    "/alertmanager/{DatasourceID}/config/api/v1/receivers/test": {
       "post": {
         "tags": ["alertmanager"],
         "summary": "Test Grafana managed receivers without saving them.",
@@ -2081,8 +2081,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           }
@@ -3508,6 +3508,137 @@
         "responses": {
           "200": {
             "$ref": "#/responses/deleteDatasourceByNameResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route}": {
+      "get": {
+        "description": "Proxies all calls to the actual data source.",
+        "tags": ["datasources"],
+        "summary": "Data source proxy GET calls.",
+        "operationId": "datasourceProxyGETByUIDcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "datasource_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined",
+        "tags": ["datasources"],
+        "summary": "Data source proxy POST calls.",
+        "operationId": "datasourceProxyPOSTByUIDcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "datasource_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "202": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Proxies all calls to the actual data source.",
+        "tags": ["datasources"],
+        "summary": "Data source proxy DELETE calls.",
+        "operationId": "datasourceProxyDELETEByUIDcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "datasource_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -5529,7 +5660,7 @@
         }
       }
     },
-    "/prometheus/{Recipient}/api/v1/alerts": {
+    "/prometheus/{DatasourceID}/api/v1/alerts": {
       "get": {
         "description": "gets the current alerts",
         "tags": ["prometheus"],
@@ -5538,8 +5669,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           }
@@ -5554,7 +5685,7 @@
         }
       }
     },
-    "/prometheus/{Recipient}/api/v1/rules": {
+    "/prometheus/{DatasourceID}/api/v1/rules": {
       "get": {
         "description": "gets the evaluation statuses of all rules",
         "tags": ["prometheus"],
@@ -5563,8 +5694,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           }
@@ -5574,6 +5705,98 @@
             "description": "RuleResponse",
             "schema": {
               "$ref": "#/definitions/RuleResponse"
+            }
+          }
+        }
+      }
+    },
+    "/provisioning/contact-points": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get all the contact points.",
+        "operationId": "RouteGetContactpoints",
+        "responses": {
+          "200": {
+            "description": "Route",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "put": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Update an existing contact point.",
+        "operationId": "RoutePutContactpoints",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/responses/Accepted"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Create a contact point.",
+        "operationId": "RoutePostContactpoints",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/responses/Accepted"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/provisioning/contact-points/{ID}": {
+      "delete": {
+        "consumes": ["application/json"],
+        "tags": ["provisioning"],
+        "summary": "Delete a contact point.",
+        "operationId": "RouteDeleteContactpoints",
+        "responses": {
+          "202": {
+            "$ref": "#/responses/Accepted"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
             }
           }
         }
@@ -5786,7 +6009,7 @@
         }
       }
     },
-    "/ruler/{Recipient}/api/v1/rules": {
+    "/ruler/{DatasourceID}/api/v1/rules": {
       "get": {
         "description": "List rule groups",
         "produces": ["application/json"],
@@ -5796,8 +6019,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           },
@@ -5823,7 +6046,7 @@
         }
       }
     },
-    "/ruler/{Recipient}/api/v1/rules/{Namespace}": {
+    "/ruler/{DatasourceID}/api/v1/rules/{Namespace}": {
       "get": {
         "description": "Get rule groups by namespace",
         "produces": ["application/json"],
@@ -5833,8 +6056,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           },
@@ -5863,8 +6086,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           },
@@ -5899,8 +6122,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           },
@@ -5921,7 +6144,7 @@
         }
       }
     },
-    "/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}": {
+    "/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname}": {
       "get": {
         "description": "Get rule group",
         "produces": ["application/json"],
@@ -5931,8 +6154,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           },
@@ -5966,8 +6189,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           },
@@ -7559,7 +7782,7 @@
         }
       }
     },
-    "/v1/rule/test/{Recipient}": {
+    "/v1/rule/test/{DatasourceID}": {
       "post": {
         "description": "Test a rule against external data source ruler",
         "consumes": ["application/json"],
@@ -7570,8 +7793,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "Recipient should be the numeric datasource id",
-            "name": "Recipient",
+            "description": "DatasourceID should be the numeric datasource id",
+            "name": "DatasourceID",
             "in": "path",
             "required": true
           },
@@ -7608,7 +7831,10 @@
           "x-go-name": "Name"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         },
         "secondsToLive": {
           "type": "integer",
@@ -7698,7 +7924,10 @@
           "x-go-name": "Name"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         },
         "sendEmail": {
           "type": "boolean",
@@ -7715,7 +7944,10 @@
           "x-go-name": "LoginOrEmail"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -8431,7 +8663,10 @@
           "x-go-name": "Name"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -8765,7 +9000,10 @@
           "x-go-name": "PermissionName"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         },
         "slug": {
           "type": "string",
@@ -8832,7 +9070,10 @@
           "$ref": "#/definitions/PermissionType"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         },
         "teamId": {
           "type": "integer",
@@ -9623,6 +9864,38 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
+    },
+    "EmbeddedContactPoint": {
+      "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
+      "type": "object",
+      "properties": {
+        "disableResolveMessage": {
+          "type": "boolean",
+          "x-go-name": "DisableResolveMessage"
+        },
+        "name": {
+          "description": "Name is used as grouping key in the UI. Contact points with the\nsame name will be grouped in the UI.",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "provanance": {
+          "type": "string",
+          "x-go-name": "Provenance"
+        },
+        "settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "uid": {
+          "description": "UID is the unique identifier of the contact point. This will be\nautomatically set be the Grafana.",
+          "type": "string",
+          "x-go-name": "UID"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
     "ErrorResponseBody": {
       "type": "object",
@@ -12150,6 +12423,10 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
+    "Provenance": {
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
+    },
     "PushoverConfig": {
       "type": "object",
       "properties": {
@@ -12348,10 +12625,6 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
-    "RoleType": {
-      "type": "string",
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
-    },
     "Route": {
       "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
       "type": "object",
@@ -12396,6 +12669,9 @@
         },
         "object_matchers": {
           "$ref": "#/definitions/ObjectMatchers"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "receiver": {
           "type": "string",
@@ -13155,7 +13431,10 @@
           "x-go-name": "OrgId"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         },
         "status": {
           "$ref": "#/definitions/TempUserStatus"
@@ -13697,7 +13976,10 @@
       "type": "object",
       "properties": {
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -13844,7 +14126,10 @@
           "x-go-name": "OrgId"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -14373,6 +14658,7 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": ["labels", "annotations", "endsAt", "fingerprint", "receivers", "startsAt", "status", "updatedAt"],
       "properties": {
@@ -14422,9 +14708,7 @@
           "format": "date-time",
           "x-go-name": "UpdatedAt"
         }
-      },
-      "x-go-name": "GettableAlert",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "gettableAlerts": {
       "description": "GettableAlerts gettable alerts",
@@ -14606,7 +14890,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt"],
       "properties": {
@@ -14640,9 +14923,12 @@
           "format": "date-time",
           "x-go-name": "StartsAt"
         }
-      }
+      },
+      "x-go-name": "PostableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": ["name"],
       "properties": {
@@ -14651,9 +14937,7 @@
           "type": "string",
           "x-go-name": "Name"
         }
-      },
-      "x-go-name": "Receiver",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "silence": {
       "description": "Silence silence",

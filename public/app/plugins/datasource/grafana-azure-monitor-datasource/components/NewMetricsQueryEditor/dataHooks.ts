@@ -29,7 +29,7 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
         return;
       }
 
-      const results = await datasource.azureMonitorDatasource.newGetMetricNamespaces(resourceUri);
+      const results = await datasource.azureMonitorDatasource.getMetricNamespaces({ resourceUri });
       const options = formatOptions(results, metricNamespace);
 
       // Do some cleanup of the query state if need be
@@ -55,7 +55,7 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
         return;
       }
 
-      const results = await datasource.azureMonitorDatasource.newGetMetricNames(resourceUri, metricNamespace);
+      const results = await datasource.azureMonitorDatasource.getMetricNames({ resourceUri, metricNamespace });
       const options = formatOptions(results, metricName);
 
       return options;
@@ -87,7 +87,7 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
     }
 
     datasource.azureMonitorDatasource
-      .newGetMetricMetadata(resourceUri, metricNamespace, metricName)
+      .getMetricMetadata({ resourceUri, metricNamespace, metricName })
       .then((metadata) => {
         // TODO: Move the aggregationTypes and timeGrain defaults into `getMetricMetadata`
         const aggregations = (metadata.supportedAggTypes || [metadata.primaryAggType]).map((v) => ({

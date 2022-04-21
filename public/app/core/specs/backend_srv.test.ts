@@ -264,10 +264,15 @@ describe('backendSrv', () => {
               data: {
                 message: 'Something failed',
                 error: 'Error',
+                traceID: 'bogus-trace-id',
               },
             } as FetchError
           );
-          expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertError, ['Something failed', '']);
+          expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertError, [
+            'Something failed',
+            '',
+            'bogus-trace-id',
+          ]);
         });
       });
     });

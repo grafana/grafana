@@ -8,7 +8,7 @@ import Selecto from 'selecto';
 import { config } from 'app/core/config';
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
-import { Anchor, CanvasGroupOptions, DEFAULT_CANVAS_ELEMENT_CONFIG, Placement } from 'app/features/canvas';
+import { CanvasGroupOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import {
   ColorDimensionConfig,
   ResourceDimensionConfig,
@@ -112,7 +112,6 @@ export class Scene {
     this.width = width;
     this.height = height;
     this.style = { width, height };
-    this.root.updateSize(width, height);
 
     if (this.selecto?.getSelectedTargets().length) {
       this.clearCurrentSelection();
@@ -157,44 +156,16 @@ export class Scene {
     this.save();
   }
 
-  toggleAnchor(element: ElementState, k: keyof Anchor) {
-    const { div } = element;
-    if (!div) {
-      console.log('Not ready');
-      return;
-    }
-
-    const w = element.parent?.width ?? 100;
-    const h = element.parent?.height ?? 100;
-
-    // Get computed position....
-    const info = div.getBoundingClientRect(); // getElementInfo(div, element.parent?.div);
-    console.log('DIV info', div);
-
-    const placement: Placement = {
-      top: info.top,
-      left: info.left,
-      width: info.width,
-      height: info.height,
-      bottom: h - info.bottom,
-      right: w - info.right,
-    };
-
-    console.log('PPP', placement);
-
-    // // TODO: needs to recalculate placement based on absolute values...
-    // element.anchor[k] = !Boolean(element.anchor[k]);
-    // element.placement = placement;
-    // element.validatePlacement();
-    // element.revId++;
-    // this.revId++;
-    //    this.save();
-
-    this.moved.next(Date.now());
-  }
-
-  save = () => {
+  save = (updateMoveable = false) => {
     this.onSave(this.root.getSaveModel());
+
+    if (updateMoveable) {
+      setTimeout(() => {
+        if (this.div) {
+          this.initMoveable(true);
+        }
+      }, 100);
+    }
   };
 
   private findElementByTarget = (target: HTMLElement | SVGElement): ElementState | undefined => {
@@ -262,8 +233,8 @@ export class Scene {
   initMoveable = (destroySelecto = false, allowChanges = true) => {
     const targetElements = this.generateTargetElements(this.root.elements);
 
-    if (destroySelecto) {
-      this.selecto?.destroy();
+    if (destroySelecto && this.selecto) {
+      this.selecto.destroy();
     }
 
     this.selecto = new Selecto({
@@ -295,9 +266,8 @@ export class Scene {
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
 
-        if (targetedElement && targetedElement.parent) {
-          const parent = targetedElement.parent;
-          targetedElement.updateSize(parent.width, parent.height);
+        if (targetedElement) {
+          targetedElement?.setPlacementFromConstraint();
         }
       })
       .on('resize', (event) => {
@@ -311,6 +281,13 @@ export class Scene {
           targetedElement!.applyResize(event);
         });
         this.moved.next(Date.now()); // TODO only on end
+      })
+      .on('resizeEnd', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+
+        if (targetedElement) {
+          targetedElement?.setPlacementFromConstraint();
+        }
       });
 
     let targets: Array<HTMLElement | SVGElement> = [];

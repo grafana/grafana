@@ -292,8 +292,8 @@ func Instrument(
 
 		// TODO: We could look up the datasource type via our datasource service
 		var backend string
-		recipient := web.Params(c.Req)[":Recipient"]
-		if recipient == apimodels.GrafanaBackend.String() || recipient == "" {
+		datasourceID := web.Params(c.Req)[":DatasourceID"]
+		if datasourceID == apimodels.GrafanaBackend.String() || datasourceID == "" {
 			backend = GrafanaBackend
 		} else {
 			backend = ProxyBackend

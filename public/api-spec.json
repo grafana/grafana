@@ -2574,6 +2574,137 @@
         }
       }
     },
+    "/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route}": {
+      "get": {
+        "description": "Proxies all calls to the actual data source.",
+        "tags": ["datasources"],
+        "summary": "Data source proxy GET calls.",
+        "operationId": "datasourceProxyGETByUIDcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "datasource_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined",
+        "tags": ["datasources"],
+        "summary": "Data source proxy POST calls.",
+        "operationId": "datasourceProxyPOSTByUIDcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "datasource_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "202": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "description": "Proxies all calls to the actual data source.",
+        "tags": ["datasources"],
+        "summary": "Data source proxy DELETE calls.",
+        "operationId": "datasourceProxyDELETEByUIDcalls",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "DatasourceUID",
+            "name": "datasource_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "DatasourceProxyRoute",
+            "name": "datasource_proxy_route",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": ""
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/proxy/{datasource_id}/{datasource_proxy_route}": {
       "get": {
         "description": "Proxies all calls to the actual data source.",
@@ -5947,7 +6078,10 @@
           "x-go-name": "Name"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         },
         "secondsToLive": {
           "type": "integer",
@@ -6037,7 +6171,10 @@
           "x-go-name": "Name"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         },
         "sendEmail": {
           "type": "boolean",
@@ -6054,7 +6191,10 @@
           "x-go-name": "LoginOrEmail"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -6636,7 +6776,10 @@
           "x-go-name": "Name"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -6865,7 +7008,10 @@
           "x-go-name": "PermissionName"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         },
         "slug": {
           "type": "string",
@@ -6932,7 +7078,10 @@
           "$ref": "#/definitions/PermissionType"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         },
         "teamId": {
           "type": "integer",
@@ -8848,10 +8997,6 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
-    "RoleType": {
-      "type": "string",
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
-    },
     "SaveDashboardCommand": {
       "type": "object",
       "properties": {
@@ -9129,7 +9274,10 @@
           "x-go-name": "OrgId"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         },
         "status": {
           "$ref": "#/definitions/TempUserStatus"
@@ -9462,7 +9610,10 @@
       "type": "object",
       "properties": {
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -9609,7 +9760,10 @@
           "x-go-name": "OrgId"
         },
         "role": {
-          "$ref": "#/definitions/RoleType"
+          "type": "string",
+          "enum": ["Viewer", "Editor", "Admin"],
+          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+          "x-go-name": "Role"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"

@@ -12,6 +12,7 @@ import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { config } from 'app/core/config';
 import { PanelDataErrorView } from '@grafana/runtime';
+import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -36,7 +37,15 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2), [data]);
 
   if (!frames) {
-    return <PanelDataErrorView panelId={id} data={data} needsTimeField={true} needsNumberField={true} />;
+    return (
+      <PanelDataErrorView
+        panelId={id}
+        fieldConfig={fieldConfig}
+        data={data}
+        needsTimeField={true}
+        needsNumberField={true}
+      />
+    );
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
@@ -126,6 +135,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
                 onThresholdsChange={onThresholdsChange}
               />
             )}
+
+            <OutsideRangePlugin config={config} range={timeRange} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
       }}

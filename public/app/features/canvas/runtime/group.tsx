@@ -8,6 +8,7 @@ import { LayerActionID } from 'app/plugins/panel/canvas/types';
 import { cloneDeep } from 'lodash';
 import { Scene } from './scene';
 import { RootElement } from './root';
+import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
 export const groupItemDummy: CanvasElementItem = {
   id: 'group',
@@ -53,27 +54,6 @@ export class GroupState extends ElementState {
     return false;
   }
 
-  // The parent size, need to set our own size based on offsets
-  updateSize(width: number, height: number) {
-    super.updateSize(width, height);
-    if (!this.parent) {
-      this.width = width;
-      this.height = height;
-      this.sizeStyle.width = width;
-      this.sizeStyle.height = height;
-    }
-
-    // Update children with calculated size
-    for (const elem of this.elements) {
-      elem.updateSize(this.width, this.height);
-    }
-
-    // The group forced to full width (for now)
-    this.sizeStyle.width = width;
-    this.sizeStyle.height = height;
-    this.sizeStyle.position = 'absolute';
-  }
-
   updateData(ctx: DimensionContext) {
     super.updateData(ctx);
     for (const elem of this.elements) {
@@ -113,21 +93,50 @@ export class GroupState extends ElementState {
           return;
         }
         const opts = cloneDeep(element.options);
-        if (element.anchor.top) {
-          opts.placement!.top! += 10;
-        }
-        if (element.anchor.left) {
-          opts.placement!.left! += 10;
-        }
-        if (element.anchor.bottom) {
-          opts.placement!.bottom! += 10;
-        }
-        if (element.anchor.right) {
-          opts.placement!.right! += 10;
+
+        const { constraint, placement: oldPlacement } = element.options;
+        const { vertical, horizontal } = constraint ?? {};
+        const placement = oldPlacement ?? ({} as Placement);
+
+        switch (vertical) {
+          case VerticalConstraint.Top:
+          case VerticalConstraint.TopBottom:
+            if (placement.top == null) {
+              placement.top = 25;
+            } else {
+              placement.top += 10;
+            }
+            break;
+          case VerticalConstraint.Bottom:
+            if (placement.bottom == null) {
+              placement.bottom = 100;
+            } else {
+              placement.bottom -= 10;
+            }
+            break;
         }
 
+        switch (horizontal) {
+          case HorizontalConstraint.Left:
+          case HorizontalConstraint.LeftRight:
+            if (placement.left == null) {
+              placement.left = 50;
+            } else {
+              placement.left += 10;
+            }
+            break;
+          case HorizontalConstraint.Right:
+            if (placement.right == null) {
+              placement.right = 50;
+            } else {
+              placement.right -= 10;
+            }
+            break;
+        }
+
+        opts.placement = placement;
+
         const copy = new ElementState(element.item, opts, this);
-        copy.updateSize(element.width, element.height);
         copy.updateData(this.scene.context);
         if (updateName) {
           copy.options.name = this.scene.getNextElementName();
