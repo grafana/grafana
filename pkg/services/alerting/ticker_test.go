@@ -1,6 +1,8 @@
 package alerting
 
 import (
+	"context"
+	"fmt"
 	"math/rand"
 	"sync"
 	"testing"
@@ -11,11 +13,13 @@ import (
 )
 
 func TestTicker(t *testing.T) {
-	readChanOrFail := func(t *testing.T, c chan time.Time) time.Time {
+	readChanOrFail := func(t *testing.T, ctx context.Context, c chan time.Time) time.Time {
 		t.Helper()
 		select {
 		case tick := <-c:
 			return tick
+		case <-ctx.Done():
+			require.Failf(t, fmt.Sprintf("%v", ctx.Err()), "timeout reading the channel")
 		default:
 			require.Failf(t, "channel is empty but it should have a tick", "")
 		}
@@ -71,7 +75,11 @@ func TestTicker(t *testing.T) {
 				break
 			}
 		}
-		actual := readChanOrFail(t, ticker.C)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		t.Cleanup(func() {
+			cancel()
+		})
+		actual := readChanOrFail(t, ctx, ticker.C)
 		require.Equal(t, expectedTick, actual)
 	})
 
@@ -90,13 +98,18 @@ func TestTicker(t *testing.T) {
 		clk.Add(interval) // advance the clock by the interval to make the ticker tick the first time.
 		clk.Add(interval) // advance the clock by the interval to make the ticker tick the second time.
 
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		t.Cleanup(func() {
+			cancel()
+		})
+
 		// Irregardless of wall time, the first tick should be initial clock + interval.
-		actual1 := readChanOrFail(t, ticker.C)
+		actual1 := readChanOrFail(t, ctx, ticker.C)
 		require.Equal(t, expectedTick, actual1)
 
 		var actual2 time.Time
 		require.Eventually(t, func() bool {
-			actual2 = readChanOrFail(t, ticker.C)
+			actual2 = readChanOrFail(t, ctx, ticker.C)
 			return true
 		}, time.Second, 10*time.Millisecond)
 
