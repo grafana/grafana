@@ -15,7 +15,7 @@ const horizontalOptions: Array<SelectableValue<HorizontalConstraint>> = [
   { label: 'Left', value: HorizontalConstraint.Left },
   { label: 'Right', value: HorizontalConstraint.Right },
   { label: 'Left and right', value: HorizontalConstraint.LeftRight },
-  { label: 'Center', value: HorizontalConstraint.Center },
+  // { label: 'Center', value: HorizontalConstraint.Center },
   { label: 'Scale', value: HorizontalConstraint.Scale },
 ];
 
@@ -23,7 +23,7 @@ const verticalOptions: Array<SelectableValue<VerticalConstraint>> = [
   { label: 'Top', value: VerticalConstraint.Top },
   { label: 'Bottom', value: VerticalConstraint.Bottom },
   { label: 'Top and bottom', value: VerticalConstraint.TopBottom },
-  { label: 'Center', value: VerticalConstraint.Center },
+  // { label: 'Center', value: VerticalConstraint.Center },
   { label: 'Scale', value: VerticalConstraint.Scale },
 ];
 

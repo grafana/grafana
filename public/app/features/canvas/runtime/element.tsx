@@ -135,23 +135,29 @@ export class ElementState implements LayerElement {
 
     this.options.placement = placement;
     this.sizeStyle = style;
-    console.log('sizeStyle', this.sizeStyle);
     if (this.div) {
       this.div.style.maxWidth = `${Date.now() - startTime}px`;
       this.div.style.minWidth = '1px';
-      // style={{ ...this.sizeStyle, ...this.dataStyle }}
-      const style = this.div.style;
 
       for (const key in this.sizeStyle) {
-        this.div.style[key as any] = (this.sizeStyle as any)[key];
+        let newStyle = (this.sizeStyle as any)[key];
+
+        if (!isNaN(newStyle)) {
+          newStyle += 'px';
+        }
+
+        this.div.style[key as any] = newStyle;
       }
 
       for (const key in this.dataStyle) {
-        this.div.style[key as any] = (this.dataStyle as any)[key];
-      }
+        let newStyle = (this.sizeStyle as any)[key];
 
-      console.log('calling updateLayout;;;', style.cssText);
-      this.div.setAttribute('a', 'hello');
+        if (!isNaN(newStyle)) {
+          newStyle += 'px';
+        }
+
+        this.div.style[key as any] = newStyle;
+      }
     }
   }
 
@@ -160,7 +166,6 @@ export class ElementState implements LayerElement {
     const { vertical, horizontal } = constraint ?? {};
 
     const elementContainer = this.div && this.div.getBoundingClientRect();
-    console.log(elementContainer, this.div?.style.transform, 'calling setPlacement form constraint');
     const parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
 
     const relativeTop =
@@ -214,8 +219,7 @@ export class ElementState implements LayerElement {
     this.options.placement = placement;
 
     this.updateLayout();
-    this.onChange(this.options);
-    console.log('called onChange / update placement', this.options);
+    this.revId++;
   }
 
   updateData(ctx: DimensionContext) {
@@ -437,14 +441,9 @@ export class ElementState implements LayerElement {
   render() {
     const { item } = this;
 
-    console.log('rendering element', { revId: this.revId, uid: this.UID });
-
-    const key = `${this.UID}/${this.revId}`;
-    // <div style={{ ...this.sizeStyle, ...this.dataStyle }} ref={this.initElement}>
-
     return (
       <div key={this.UID} ref={this.initElement}>
-        <item.display key={key} config={this.options.config} data={this.data} />
+        <item.display key={`${this.UID}/${this.revId}`} config={this.options.config} data={this.data} />
       </div>
     );
   }
