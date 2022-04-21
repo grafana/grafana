@@ -15,7 +15,7 @@ describe('AnnotationsSettings', () => {
     grafana: mockDataSource(
       {
         name: 'Grafana',
-        uid: 'Grafana',
+        uid: 'uid1',
         type: 'grafana',
         isDefault: true,
       },
@@ -24,7 +24,7 @@ describe('AnnotationsSettings', () => {
     Testdata: mockDataSource(
       {
         name: 'Testdata',
-        uid: 'Testdata',
+        uid: 'uid2',
         type: 'testdata',
         isDefault: true,
       },
@@ -33,7 +33,7 @@ describe('AnnotationsSettings', () => {
     Prometheus: mockDataSource(
       {
         name: 'Prometheus',
-        uid: 'Prometheus',
+        uid: 'uid3',
         type: 'prometheus',
       },
       { annotations: true }
@@ -63,7 +63,7 @@ describe('AnnotationsSettings', () => {
         list: [
           {
             builtIn: 1,
-            datasource: { uid: 'Grafana', type: 'grafana' },
+            datasource: { uid: 'uid1', type: 'grafana' },
             enable: true,
             hide: true,
             iconColor: 'rgba(0, 211, 255, 1)',
@@ -120,12 +120,12 @@ describe('AnnotationsSettings', () => {
     ).toBeInTheDocument();
   });
 
-  test('it renders a sortable table of annotations', async () => {
+  test('it renders the anotation names or uid if annotation doesnt exist', async () => {
     const annotationsList = [
       ...dashboard.annotations.list,
       {
         builtIn: 0,
-        datasource: { uid: 'Prometheus', type: 'prometheus' },
+        datasource: { uid: 'uid3', type: 'prometheus' },
         enable: true,
         hide: true,
         iconColor: 'rgba(0, 211, 255, 1)',
@@ -134,7 +134,41 @@ describe('AnnotationsSettings', () => {
       },
       {
         builtIn: 0,
-        datasource: { uid: 'Prometheus', type: 'prometheus' },
+        datasource: { uid: 'deletedAnnotationId', type: 'prometheus' },
+        enable: true,
+        hide: true,
+        iconColor: 'rgba(0, 211, 255, 1)',
+        name: 'Annotation 2',
+        type: 'dashboard',
+      },
+    ];
+    const dashboardWithAnnotations = {
+      ...dashboard,
+      annotations: {
+        list: [...annotationsList],
+      },
+    };
+    render(<AnnotationsSettings dashboard={dashboardWithAnnotations} />);
+    // Check that we have the correct annotations
+    expect(screen.queryByText(/prometheus/i)).toBeInTheDocument();
+    expect(screen.queryByText(/deletedAnnotationId/i)).toBeInTheDocument();
+  });
+
+  test('it renders a sortable table of annotations', async () => {
+    const annotationsList = [
+      ...dashboard.annotations.list,
+      {
+        builtIn: 0,
+        datasource: { uid: 'uid3', type: 'prometheus' },
+        enable: true,
+        hide: true,
+        iconColor: 'rgba(0, 211, 255, 1)',
+        name: 'Annotation 2',
+        type: 'dashboard',
+      },
+      {
+        builtIn: 0,
+        datasource: { uid: 'uid3', type: 'prometheus' },
         enable: true,
         hide: true,
         iconColor: 'rgba(0, 211, 255, 1)',
