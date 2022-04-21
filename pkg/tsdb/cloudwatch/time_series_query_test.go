@@ -208,7 +208,6 @@ func Test_QueryData_response_data_frame_names(t *testing.T) {
 		return &cwClient
 	}
 	labelFromGetMetricData := "some label"
-
 	cwClient = fakeCWClient{
 		GetMetricDataOutput: cloudwatch.GetMetricDataOutput{
 			MetricDataResults: []*cloudwatch.MetricDataResult{
@@ -265,7 +264,7 @@ func Test_QueryData_response_data_frame_names(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t, "query id", resp.Responses["A"].Frames[0].Name)
+		assert.Equal(t, queryId, resp.Responses["A"].Frames[0].Name)
 	})
 
 	t.Run("where no alias provided and query type is MetricQueryTypeQuery, then frame name is label", func(t *testing.T) {
