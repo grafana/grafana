@@ -47,6 +47,7 @@ export const MultiFilterItem: FunctionComponent<Props> = ({ filter, onChange, on
             if (localValue && newValues !== filter.value) {
               onChange({ ...filter, value: newValues });
             }
+            setLocalValue(newValues.join(', '));
           }}
         />
 

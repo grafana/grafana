@@ -44,6 +44,7 @@ describe('MultiFilters', () => {
       render(<MultiFilter filters={filters} onChange={onChange} />);
 
       userEvent.click(screen.getByLabelText('Add'));
+
       await waitFor(() => {
         const filterItemElement = screen.getByTestId('cloudwatch-multifilter-item');
         expect(filterItemElement).toBeInTheDocument();
@@ -52,11 +53,12 @@ describe('MultiFilters', () => {
       const keyElement = screen.getByTestId('cloudwatch-multifilter-item-key');
       expect(keyElement).toBeInTheDocument();
       userEvent.type(keyElement!, 'my-key');
+      fireEvent.blur(keyElement!);
 
       await waitFor(() => {
         expect(screen.getByDisplayValue('my-key')).toBeInTheDocument();
+        expect(onChange).not.toHaveBeenCalled();
       });
-      expect(onChange).not.toHaveBeenCalled();
     });
   });
 
@@ -68,25 +70,27 @@ describe('MultiFilters', () => {
 
       const label = await screen.findByLabelText('Add');
       userEvent.click(label);
-      await waitFor(() => {
-        const filterItemElement = screen.getByTestId('cloudwatch-multifilter-item');
-        expect(filterItemElement).toBeInTheDocument();
-      });
+      const filterItemElement = await screen.findByTestId('cloudwatch-multifilter-item');
+      expect(filterItemElement).toBeInTheDocument();
 
       const keyElement = screen.getByTestId('cloudwatch-multifilter-item-key');
       expect(keyElement).toBeInTheDocument();
       userEvent.type(keyElement!, 'my-key');
       fireEvent.blur(keyElement!);
-      expect(screen.getByDisplayValue('my-key')).toBeInTheDocument();
-      expect(onChange).not.toHaveBeenCalled();
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('my-key')).toBeInTheDocument();
+        expect(onChange).not.toHaveBeenCalled();
+      });
 
       const valueElement = screen.getByTestId('cloudwatch-multifilter-item-value');
       expect(valueElement).toBeInTheDocument();
       userEvent.type(valueElement!, 'my-value1,my-value2');
       fireEvent.blur(valueElement!);
-      expect(screen.getByDisplayValue('my-value1,my-value2')).toBeInTheDocument();
-      expect(onChange).toHaveBeenCalledWith({
-        'my-key': ['my-value1', 'my-value2'],
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('my-value1, my-value2')).toBeInTheDocument();
+        expect(onChange).toHaveBeenCalledWith({
+          'my-key': ['my-value1', 'my-value2'],
+        });
       });
     });
   });
@@ -108,9 +112,9 @@ describe('MultiFilters', () => {
 
       await waitFor(() => {
         expect(within(filterItemElement).getByDisplayValue('my-key2')).toBeInTheDocument();
-      });
-      expect(onChange).toHaveBeenCalledWith({
-        'my-key2': ['my-value'],
+        expect(onChange).toHaveBeenCalledWith({
+          'my-key2': ['my-value'],
+        });
       });
     });
   });

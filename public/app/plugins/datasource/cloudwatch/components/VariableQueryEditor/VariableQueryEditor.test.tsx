@@ -192,6 +192,7 @@ describe('VariableEditor', () => {
       userEvent.type(valueElement!, ',baz');
       fireEvent.blur(valueElement!);
 
+      expect(screen.getByDisplayValue('foo, bar, baz')).toBeInTheDocument();
       await waitFor(() => {
         expect(onChange).toHaveBeenCalledWith({
           ...defaultQuery,
