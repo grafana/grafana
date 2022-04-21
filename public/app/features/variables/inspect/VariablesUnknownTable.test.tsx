@@ -107,19 +107,12 @@ describe('VariablesUnknownTable', () => {
         it('then it should report slow expansion', async () => {
           const variable = customBuilder().withId('Renamed Variable').withName('Renamed Variable').build();
           const usages = [{ variable, nodes: [], edges: [], showGraph: false }];
-          const { reportInteractionSpy, rerender } = await getTestContext({}, usages);
+          const { reportInteractionSpy } = await getTestContext({}, usages);
           const dateNowStart = 1000;
           const dateNowStop = 2000;
           Date.now = jest.fn().mockReturnValueOnce(dateNowStart).mockReturnValue(dateNowStop);
 
           await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
-          const props: VariablesUnknownTableProps = {
-            variables: [],
-            dashboard: null,
-          };
-          await act(async () => {
-            rerender(<VariablesUnknownTable {...props} />);
-          });
 
           // make sure we report the interaction for slow expansion
           await waitFor(() => expect(reportInteractionSpy).toHaveBeenCalledTimes(2));
