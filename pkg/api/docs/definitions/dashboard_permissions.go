@@ -30,6 +30,31 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 
+// swagger:route GET /dashboards/uid/{uid}/permissions dashboard_permissions getDashboardPermissions
+//
+// Gets all existing permissions for the given dashboard.
+//
+// Responses:
+// 200: getDashboardPermissionsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route POST /dashboards/uid/{uid}/permissions dashboard_permissions postDashboardPermissions
+//
+// Updates permissions for a dashboard.
+//
+// This operation will remove existing permissions if they’re not included in the request.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
 // swagger:parameters postDashboardPermissions updateFolderPermissions
 type PostDashboardPermissionsParam struct {
 	// in:body

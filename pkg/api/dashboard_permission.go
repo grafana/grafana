@@ -19,7 +19,7 @@ import (
 func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.Response {
 	var dashID int64
 	var err error
-	dashUID := web.Params(c.Req)[":dashboardUid"]
+	dashUID := web.Params(c.Req)[":uid"]
 	if dashUID == "" {
 		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
 		if err != nil {
@@ -79,7 +79,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		return response.Error(400, err.Error(), err)
 	}
 
-	dashUID := web.Params(c.Req)[":dashboardUid"]
+	dashUID := web.Params(c.Req)[":uid"]
 	if dashUID == "" {
 		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
 		if err != nil {
