@@ -31,7 +31,7 @@ describe('LabelFilters', () => {
 
   it('adds new label', async () => {
     const { onChange } = setup([{ label: 'foo', op: '=', value: 'bar' }]);
-    userEvent.click(getAddButton());
+    await userEvent.click(getAddButton());
     expect(screen.getAllByText(/Choose/)).toHaveLength(2);
     const { name, value } = getLabelSelects(1);
     await selectOptionInTest(name, 'baz');
@@ -44,7 +44,7 @@ describe('LabelFilters', () => {
 
   it('removes label', async () => {
     const { onChange } = setup([{ label: 'foo', op: '=', value: 'bar' }]);
-    userEvent.click(screen.getByLabelText(/remove/));
+    await userEvent.click(screen.getByLabelText(/remove/));
     expect(onChange).toBeCalledWith([]);
   });
 

@@ -1,39 +1,41 @@
 import {
   DataQuery,
+  DataSourceRef,
+  getDefaultRelativeTimeRange,
+  IntervalValues,
   rangeUtil,
   RelativeTimeRange,
   ScopedVars,
-  getDefaultRelativeTimeRange,
   TimeRange,
-  IntervalValues,
-  DataSourceRef,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
+  AlertQuery,
   Annotations,
   GrafanaAlertStateDecision,
-  AlertQuery,
   Labels,
   PostableRuleGrafanaRuleDTO,
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 import { EvalFunction } from '../../state/alertDef';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { getRulesAccess } from './access-control';
 import { Annotation } from './constants';
 import { isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
 import { parseInterval } from './time';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
-export const getDefaultFormValues = (): RuleFormValues =>
-  Object.freeze({
+export const getDefaultFormValues = (): RuleFormValues => {
+  const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
+
+  return Object.freeze({
     name: '',
     labels: [{ key: '', value: '' }],
     annotations: [
@@ -42,7 +44,8 @@ export const getDefaultFormValues = (): RuleFormValues =>
       { key: Annotation.runbookURL, value: '' },
     ],
     dataSourceName: null,
-    type: !contextSrv.isEditor ? RuleFormType.grafana : undefined, // viewers can't create prom alerts
+    type: canCreateGrafanaRules ? RuleFormType.grafana : canCreateCloudRules ? RuleFormType.cloudAlerting : undefined, // viewers can't create prom alerts
+    group: '',
 
     // grafana
     folder: null,
@@ -54,12 +57,12 @@ export const getDefaultFormValues = (): RuleFormValues =>
     evaluateFor: '5m',
 
     // cortex / loki
-    group: '',
     namespace: '',
     expression: '',
     forTime: 1,
     forTimeUnit: 'm',
   });
+};
 
 export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
   const { name, expression, forTime, forTimeUnit, type } = values;
@@ -115,6 +118,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         ...defaultFormValues,
         name: ga.title,
         type: RuleFormType.grafana,
+        group: group.name,
         evaluateFor: rule.for || '0',
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
         noDataState: ga.no_data_state,

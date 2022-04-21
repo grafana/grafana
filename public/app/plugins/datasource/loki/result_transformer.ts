@@ -45,7 +45,7 @@ const UUID_NAMESPACE = '6ec946da-0f49-47a8-983a-1d76d17e7c92';
 /**
  * Transforms LokiStreamResult structure into a dataFrame. Used when doing standard queries
  */
-export function lokiStreamsToRawDataFrame(streams: LokiStreamResult[], reverse?: boolean, refId?: string): DataFrame {
+export function lokiStreamsToRawDataFrame(streams: LokiStreamResult[], refId?: string): DataFrame {
   const labels = new ArrayVector<{}>([]);
   const times = new ArrayVector<string>([]);
   const timesNs = new ArrayVector<string>([]);
@@ -72,11 +72,11 @@ export function lokiStreamsToRawDataFrame(streams: LokiStreamResult[], reverse?:
     }
   }
 
-  return constructDataFrame(times, timesNs, lines, uids, labels, reverse, refId);
+  return constructDataFrame(times, timesNs, lines, uids, labels, refId);
 }
 
 /**
- * Constructs dataFrame with supplied fields and other data. Also makes sure it is properly reversed if needed.
+ * Constructs dataFrame with supplied fields and other data.
  */
 function constructDataFrame(
   times: ArrayVector<string>,
@@ -84,7 +84,6 @@ function constructDataFrame(
   lines: ArrayVector<string>,
   uids: ArrayVector<string>,
   labels: ArrayVector<{}>,
-  reverse?: boolean,
   refId?: string
 ) {
   const dataFrame = {
@@ -98,12 +97,6 @@ function constructDataFrame(
     ],
     length: times.length,
   };
-
-  if (reverse) {
-    const mutableDataFrame = new MutableDataFrame(dataFrame);
-    mutableDataFrame.reverse();
-    return mutableDataFrame;
-  }
 
   return dataFrame;
 }
@@ -330,10 +323,9 @@ function lokiStatsToMetaStat(stats: LokiStats | undefined): QueryResultMetaStat[
 
 export function lokiStreamsToDataFrames(
   response: LokiStreamResponse,
-  target: { refId: string; expr?: string },
+  target: LokiQuery,
   limit: number,
-  config: LokiOptions,
-  reverse = false
+  config: LokiOptions
 ): DataFrame[] {
   const data = limit > 0 ? response.data.result : [];
   const stats: QueryResultMetaStat[] = lokiStatsToMetaStat(response.data.stats);
@@ -350,7 +342,7 @@ export function lokiStreamsToDataFrames(
     preferredVisualisationType: 'logs',
   };
 
-  const dataFrame = lokiStreamsToRawDataFrame(data, reverse, target.refId);
+  const dataFrame = lokiStreamsToRawDataFrame(data, target.refId);
   enhanceDataFrame(dataFrame, config);
 
   if (meta.custom && dataFrame.fields.some((f) => f.labels && Object.keys(f.labels).some((l) => l === '__error__'))) {

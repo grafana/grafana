@@ -31,7 +31,7 @@ import (
 //       201: Ack
 //       400: ValidationError
 
-// swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
+// swagger:route POST /api/alertmanager/{DatasourceID}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
 //
 // sets an Alerting config
 //
@@ -47,7 +47,7 @@ import (
 //       200: GettableUserConfig
 //       400: ValidationError
 
-// swagger:route GET /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RouteGetAlertingConfig
+// swagger:route GET /api/alertmanager/{DatasourceID}/config/api/v1/alerts alertmanager RouteGetAlertingConfig
 //
 // gets an Alerting config
 //
@@ -63,7 +63,7 @@ import (
 //       200: Ack
 //       400: ValidationError
 
-// swagger:route DELETE /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RouteDeleteAlertingConfig
+// swagger:route DELETE /api/alertmanager/{DatasourceID}/config/api/v1/alerts alertmanager RouteDeleteAlertingConfig
 //
 // deletes the Alerting config for a tenant
 //
@@ -79,7 +79,7 @@ import (
 //       200: GettableStatus
 //       400: ValidationError
 
-// swagger:route GET /api/alertmanager/{Recipient}/api/v2/status alertmanager RouteGetAMStatus
+// swagger:route GET /api/alertmanager/{DatasourceID}/api/v2/status alertmanager RouteGetAMStatus
 //
 // get alertmanager status and configuration
 //
@@ -95,7 +95,7 @@ import (
 //       200: gettableAlerts
 //       400: ValidationError
 
-// swagger:route GET /api/alertmanager/{Recipient}/api/v2/alerts alertmanager RouteGetAMAlerts
+// swagger:route GET /api/alertmanager/{DatasourceID}/api/v2/alerts alertmanager RouteGetAMAlerts
 //
 // get alertmanager alerts
 //
@@ -111,7 +111,7 @@ import (
 //       200: Ack
 //       400: ValidationError
 
-// swagger:route POST /api/alertmanager/{Recipient}/api/v2/alerts alertmanager RoutePostAMAlerts
+// swagger:route POST /api/alertmanager/{DatasourceID}/api/v2/alerts alertmanager RoutePostAMAlerts
 //
 // create alertmanager alerts
 //
@@ -127,7 +127,7 @@ import (
 //       200: alertGroups
 //       400: ValidationError
 
-// swagger:route GET /api/alertmanager/{Recipient}/api/v2/alerts/groups alertmanager RouteGetAMAlertGroups
+// swagger:route GET /api/alertmanager/{DatasourceID}/api/v2/alerts/groups alertmanager RouteGetAMAlertGroups
 //
 // get alertmanager alerts
 //
@@ -149,7 +149,7 @@ import (
 //       408: Failure
 //       409: AlertManagerNotReady
 
-// swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/receivers/test alertmanager RoutePostTestReceivers
+// swagger:route POST /api/alertmanager/{DatasourceID}/config/api/v1/receivers/test alertmanager RoutePostTestReceivers
 //
 // Test Grafana managed receivers without saving them.
 //
@@ -171,7 +171,7 @@ import (
 //       200: gettableSilences
 //       400: ValidationError
 
-// swagger:route GET /api/alertmanager/{Recipient}/api/v2/silences alertmanager RouteGetSilences
+// swagger:route GET /api/alertmanager/{DatasourceID}/api/v2/silences alertmanager RouteGetSilences
 //
 // get silences
 //
@@ -187,7 +187,7 @@ import (
 //       201: gettableSilence
 //       400: ValidationError
 
-// swagger:route POST /api/alertmanager/{Recipient}/api/v2/silences alertmanager RouteCreateSilence
+// swagger:route POST /api/alertmanager/{DatasourceID}/api/v2/silences alertmanager RouteCreateSilence
 //
 // create silence
 //
@@ -203,7 +203,7 @@ import (
 //       200: gettableSilence
 //       400: ValidationError
 
-// swagger:route GET /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId} alertmanager RouteGetSilence
+// swagger:route GET /api/alertmanager/{DatasourceID}/api/v2/silence/{SilenceId} alertmanager RouteGetSilence
 //
 // get silence
 //
@@ -219,7 +219,7 @@ import (
 //       200: Ack
 //       400: ValidationError
 
-// swagger:route DELETE /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId} alertmanager RouteDeleteSilence
+// swagger:route DELETE /api/alertmanager/{DatasourceID}/api/v2/silence/{SilenceId} alertmanager RouteDeleteSilence
 //
 // delete silence
 //
@@ -448,9 +448,9 @@ type BodyAlertingConfig struct {
 // testing routes
 // swagger:parameters RouteTestReceiverConfig RouteTestRuleConfig
 type DatasourceReference struct {
-	// Recipient should be the numeric datasource id
+	// DatasourceID should be the numeric datasource id
 	// in:path
-	Recipient int
+	DatasourceID int
 }
 
 // swagger:model

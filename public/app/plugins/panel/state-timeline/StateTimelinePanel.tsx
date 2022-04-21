@@ -6,6 +6,7 @@ import { TimelineChart } from './TimelineChart';
 import { prepareTimelineFields, prepareTimelineLegendItems } from './utils';
 import { StateTimelineTooltip } from './StateTimelineTooltip';
 import { getLastStreamingDataFramePacket } from 'app/features/live/data/StreamingDataFrame';
+import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 
 interface TimelinePanelProps extends PanelProps<TimelineOptions> {}
 
@@ -114,6 +115,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
               timeZone={timeZone}
               renderTooltip={renderCustomTooltip}
             />
+            <OutsideRangePlugin config={config} range={timeRange} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
       }}

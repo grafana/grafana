@@ -1,3 +1,4 @@
+import { locationService } from '@grafana/runtime';
 import { render } from '@testing-library/react';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
@@ -5,6 +6,7 @@ import { AccessControlAction } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 import React from 'react';
 import { Provider } from 'react-redux';
+import { Router } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';
 import { mockCombinedRule, mockDataSource } from '../../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -16,7 +18,7 @@ const ui = {
 };
 
 describe('RuleListGroupView', () => {
-  describe('FGAC', () => {
+  describe('RBAC', () => {
     jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
 
     it('Should display Grafana rules when the user has the alert rule read permission', () => {
@@ -76,7 +78,9 @@ function renderRuleList(namespaces: CombinedRuleNamespace[]) {
 
   render(
     <Provider store={store}>
-      <RuleListGroupView namespaces={namespaces} expandAll />
+      <Router history={locationService.getHistory()}>
+        <RuleListGroupView namespaces={namespaces} expandAll />
+      </Router>
     </Provider>
   );
 }
