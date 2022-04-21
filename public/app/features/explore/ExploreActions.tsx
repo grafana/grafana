@@ -24,7 +24,9 @@ const ExploreActionsFunction: FC<Props> = ({ exploreId, splitted }: Props) => {
         id: 'explore/run-query',
         name: 'Run Query',
         keywords: 'query',
-        perform: () => runQueries(exploreId),
+        perform: () => {
+          runQueries(exploreId);
+        },
         section: 'Explore',
       },
     ];

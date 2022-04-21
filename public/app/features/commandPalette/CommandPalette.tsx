@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import {
-  KBarProvider,
   KBarAnimator,
   KBarPortal,
   KBarPositioner,
@@ -116,11 +115,3 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
   }),
 });
-
-export const CommandPaletteContainer = () => {
-  return (
-    <KBarProvider actions={[]} options={{ enableHistory: true }}>
-      <CommandPalette />
-    </KBarProvider>
-  );
-};
