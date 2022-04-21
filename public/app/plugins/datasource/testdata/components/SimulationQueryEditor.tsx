@@ -10,6 +10,7 @@ export const SimulationQueryEditor = ({ onChange, query }: EditorProps) => {
   const options = [
     { label: 'Flight', value: 'flight' },
     { label: 'Sine', value: 'sine' },
+    { label: 'Tank', value: 'tank' },
   ];
 
   const onUpdateKey = (key: typeof simQuery.key) => {

@@ -17,7 +17,7 @@ const mocks = {
 };
 
 describe('useIsRuleEditable', () => {
-  describe('FGAC enabled', () => {
+  describe('RBAC enabled', () => {
     jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
     describe('Grafana rules', () => {
       it('Should allow editing when the user has the alert rule update permission and folder permissions', () => {

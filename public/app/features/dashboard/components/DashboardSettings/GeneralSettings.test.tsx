@@ -48,9 +48,9 @@ describe('General Settings', () => {
   describe('when timezone is changed', () => {
     it('should call update function', async () => {
       const { props } = setupTestContext({});
-      userEvent.click(screen.getByTestId(selectors.components.TimeZonePicker.containerV2));
+      await userEvent.click(screen.getByTestId(selectors.components.TimeZonePicker.containerV2));
       const timeZonePicker = screen.getByTestId(selectors.components.TimeZonePicker.containerV2);
-      userEvent.click(byRole('combobox').get(timeZonePicker));
+      await userEvent.click(byRole('combobox').get(timeZonePicker));
       await selectOptionInTest(timeZonePicker, 'Browser Time');
       expect(props.updateTimeZone).toHaveBeenCalledWith('browser');
       expect(props.dashboard.timezone).toBe('browser');
