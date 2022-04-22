@@ -23,13 +23,16 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
   ];
 
   const validDimensionOptions = useMemo(() => {
+    // We filter out any dimensions that have already been used in a filter as the API doesn't support having multiple filters with the same dimension name.
+    // The Azure portal also doesn't support this feature so it makes sense for consistency.
     let t = dimensionOptions;
-    let dimensionFilters = query.azureMonitor?.dimensionFilters;
-    if (dimensionFilters !== undefined && dimensionFilters.length > 0) {
-      t = dimensionOptions.filter((val) => !dimensionFilters?.find((dimension) => dimension.dimension === val.value));
+    if (dimensionFilters.length) {
+      t = dimensionOptions.filter(
+        (val) => !dimensionFilters.some((dimensionFilter) => dimensionFilter.dimension === val.value)
+      );
     }
     return t;
-  }, [query.azureMonitor?.dimensionFilters, dimensionOptions]);
+  }, [dimensionFilters, dimensionOptions]);
 
   const addFilter = () => {
     onQueryChange(appendDimensionFilter(query));
