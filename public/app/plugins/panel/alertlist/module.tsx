@@ -301,6 +301,12 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       name: 'Error',
       defaultValue: true,
       category: ['Alert state filter'],
+    })
+    .addBooleanSwitch({
+      path: 'stateFilter.silenced',
+      name: 'Silenced',
+      defaultValue: false,
+      category: ['Alert state filter'],
     });
 });
 

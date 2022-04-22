@@ -25,7 +25,7 @@ export const RuleStats: FC<Props> = ({ showInactive, showRecording, group, names
   const calculated = useMemo(() => {
     const stats = { ...emptyStats };
     const calcRule = (rule: CombinedRule) => {
-      if (rule.promRule && isAlertingRule(rule.promRule)) {
+      if (rule.promRule && isAlertingRule(rule.promRule) && rule.promRule.state !== PromAlertingRuleState.Silenced) {
         stats[rule.promRule.state] += 1;
       }
       if (rule.promRule?.health === 'err' || rule.promRule?.health === 'error') {

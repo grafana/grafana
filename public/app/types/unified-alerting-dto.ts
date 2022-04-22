@@ -9,6 +9,7 @@ export enum PromAlertingRuleState {
   Firing = 'firing',
   Inactive = 'inactive',
   Pending = 'pending',
+  Silenced = 'silenced',
 }
 
 export enum GrafanaAlertState {

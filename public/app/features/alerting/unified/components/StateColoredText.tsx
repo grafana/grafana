@@ -24,6 +24,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   [PromAlertingRuleState.Firing]: css`
     color: ${theme.colors.error.text};
   `,
+  [PromAlertingRuleState.Silenced]: css`
+    color: ${theme.colors.text.secondary};
+  `,
   neutral: css`
     color: ${theme.colors.text.secondary};
   `,

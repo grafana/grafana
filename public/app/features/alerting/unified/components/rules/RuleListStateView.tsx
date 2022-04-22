@@ -17,7 +17,7 @@ export const RuleListStateView: FC<Props> = ({ namespaces }) => {
   const filters = getFiltersFromUrlParams(useQueryParams()[0]);
 
   const groupedRules = useMemo(() => {
-    const result: GroupedRules = {
+    const result: Omit<GroupedRules, PromAlertingRuleState.Silenced> = {
       [PromAlertingRuleState.Firing]: [],
       [PromAlertingRuleState.Inactive]: [],
       [PromAlertingRuleState.Pending]: [],
@@ -26,7 +26,11 @@ export const RuleListStateView: FC<Props> = ({ namespaces }) => {
     namespaces.forEach((namespace) =>
       namespace.groups.forEach((group) =>
         group.rules.forEach((rule) => {
-          if (rule.promRule && isAlertingRule(rule.promRule)) {
+          if (
+            rule.promRule &&
+            isAlertingRule(rule.promRule) &&
+            rule.promRule.state !== PromAlertingRuleState.Silenced
+          ) {
             result[rule.promRule.state].push(rule);
           }
         })

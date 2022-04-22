@@ -113,7 +113,8 @@ function filterRules(options: PanelProps<UnifiedAlertListOptions>['options'], ru
       return (
         (options.stateFilter.firing && rule.rule.state === PromAlertingRuleState.Firing) ||
         (options.stateFilter.pending && rule.rule.state === PromAlertingRuleState.Pending) ||
-        (options.stateFilter.inactive && rule.rule.state === PromAlertingRuleState.Inactive)
+        (options.stateFilter.inactive && rule.rule.state === PromAlertingRuleState.Inactive) ||
+        (options.stateFilter.silenced && rule.rule.state === PromAlertingRuleState.Silenced)
       );
     });
   }

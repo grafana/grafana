@@ -101,6 +101,7 @@ export const alertStateToState: Record<PromAlertingRuleState | GrafanaAlertState
   [AlertState.OK]: 'good',
   [AlertState.Pending]: 'warning',
   [AlertState.Unknown]: 'info',
+  [PromAlertingRuleState.Silenced]: 'silenced',
 };
 
 export function getFirstActiveAt(promRule: AlertingRule) {

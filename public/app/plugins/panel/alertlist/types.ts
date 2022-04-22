@@ -44,6 +44,7 @@ interface StateFilter {
   noData: boolean;
   normal: boolean;
   error: boolean;
+  silenced: boolean;
 }
 
 export interface UnifiedAlertListOptions {

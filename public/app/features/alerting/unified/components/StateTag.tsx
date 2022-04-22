@@ -3,7 +3,7 @@ import { useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import React, { FC } from 'react';
 
-export type State = 'good' | 'bad' | 'warning' | 'neutral' | 'info';
+export type State = 'good' | 'bad' | 'warning' | 'neutral' | 'info' | 'silenced';
 
 type Props = {
   state: State;
