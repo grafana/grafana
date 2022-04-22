@@ -2,7 +2,11 @@
 title: 'Assign RBAC roles'
 menuTitle: 'Assign RBAC roles'
 description: 'xxx.'
-aliases: [xxx]
+aliases:
+  [
+    docs/grafana/latest/enterprise/access-control/manage-role-assignments/manage-user-role-assignments/,
+    docs/grafana/latest/enterprise/access-control/manage-role-assignments/manage-built-in-role-assignments/,
+  ]
 weight: 40
 keywords:
   - xxx
@@ -10,7 +14,7 @@ keywords:
 
 # Assign RBAC roles
 
-xxxxx.
+In this topic you'll learn how to use the role picker, provisioning, and the HTTP API to assign fixed and custom roles to users and teams.
 
 ## Assign fixed roles using the role picker
 
@@ -30,7 +34,7 @@ In both cases, the assignment applies only to the user or team within the affect
 - [Plan your RBAC rollout strategy]({{< relref "./plan-rbac-rollout-strategy.md" >}})
 - Identify the fixed roles that you want to assign to the user or team.
 
-  For more information about available fixed roles, refer to [Role-based access control fixed role definitions]({{< relref "./rbac-fixed-role-definitions.md" >}}).
+  For more information about available fixed roles, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions.md" >}}).
 
 - Ensure that your Grafana user has the correct permissions:
   - If you are assigning permissions to a user or team within an organization, you must have organization administrator or server administrator permissions.
@@ -44,7 +48,7 @@ In both cases, the assignment applies only to the user or team within the affect
 1. Sign in to Grafana.
 1. Switch to the organization that contains the user or team.
 
-   For more information about switching organizations, refer to [Switch organizations](../../../administration/manage-user-preferences/_index.md#switch-organizations).
+   For more information about switching organizations, refer to [Switch organizations](../../administration/manage-user-preferences/_index.md#switch-organizations).
 
 1. Hover your cursor over **Configuration** (the gear icon) in the left navigation menu, and click **Users** or **Teams**.
 1. In the **Role** column, select the fixed role that you want to assign to the user or team.
@@ -60,19 +64,19 @@ In both cases, the assignment applies only to the user or team within the affect
 1. Click a user.
 1. In the **Organizations** section, select a role within an organization that you want to assign to the user.
 1. Click **Update**.
-1. If required, continue assigning roles to the user in other organizations.
 
 ![User role picker in Organization](/static/img/docs/enterprise/user_role_picker_in_org.png)
 
-## Assign a fixed role to a team using provisioning
+## Assign fixed or custom roles to a team using provisioning
 
-Need information here on why a user would want to complete this task. What are the benefits over using the role picker?
+Instead of using the Grafana role picker, you can use file-based provisioning to assign fixed roles to teams. If you have a large number of teams, provisioning can provide an easier approach to assigning and managing role assignments.
 
-> **Note:** If you want to remove a fixed role assignment from a team, remove it from the YAML file, save your changes, and restart Grafana.
+> **Note:** If you want to remove a fixed role assignment from a team, remove it from the YAML file, save your changes, and reload the configuration file.
 
-### Before you begin
+**Before you begin:**
 
-- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../../administration/manage-users-and-permissions/manage-teams/_index.md">}}).
+- [Enable role provisioning]({{< relref "./enable-rbac-and-provisioning#enable-role-provisioning" >}})
+- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../administration/manage-users-and-permissions/manage-teams/_index.md">}})
 
 **To assign a fixed role to a team:**
 
@@ -89,7 +93,7 @@ Need information here on why a user would want to complete this task. What are t
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
 
 The following example assigns the `users:writer` fixed role to the `user editors` and `user admins` teams:
 
@@ -108,18 +112,6 @@ roles:
         orgId: 1
 ```
 
-## Assign a custom role to a team using provisioning
-
-Need information here on why a user would want to complete this task. What are the benefits? Is this the only way that a custom role can be assigned to a team, or does a custom role appear in the role picker?
-
-Not sure what to do with this prose: Assignments to basic roles will be ignored. Use `addDefaultAssignments` and `removeDefaultAssignments` instead.
-
-> **Note:** If you want to remove a custom role assignment from a team, remove it from the YAML file, save your changes, and restart Grafana.
-
-### Before you begin
-
-- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../../administration/manage-users-and-permissions/manage-teams/_index.md">}}).
-
 **To assign a custom role to a team:**
 
 1. Open the YAML configuration file.
@@ -137,7 +129,7 @@ Not sure what to do with this prose: Assignments to basic roles will be ignored.
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
 
 The following example assigns the `custom:users:writer` role to the `user editors` and `user admins` teams:
 
@@ -163,14 +155,50 @@ roles:
         orgId: 1
 ```
 
+## Assign a fixed role to a basic role using provisioning
+
+If you want to extend the permissions of a basic role, and you identify a fixed role that meets your permission requirements, you can assign a fixed role to a basic role.
+
+**Before you begin:**
+
+- [Enable role provisioning]({{< relref "./enable-rbac-and-provisioning#enable-role-provisioning" >}})
+- Determine which fixed role you want to add to a basic role
+
+**To add a fixed role to a basic role:**
+
+1. Open the YAML configuration file and locate the `addDefaultAssignments` section.
+
+1. Refer to the following table to add attributes and values.
+
+| Attribute     | Description                       |
+| ------------- | --------------------------------- |
+| `builtInRole` | Enter the name of the basic role. |
+| `fixedRole`   | Enter the name of the fixed role. |
+
+1. Reload the provisioning configuration file.
+
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
+
+The following example restores a default basic and fixed role assignment.
+
+```yaml
+# config file version
+apiVersion: 1
+
+# list of default basic role assignments that should be added back
+addDefaultAssignments:
+  - builtInRole: 'Admin'
+    fixedRole: 'fixed:reporting:admin:read'
+```
+
 ## Assign a custom role to a basic role using provisioning
 
-Information here about why a user would want to do this. What are the benefits?
+If you want to extend the permissions of a basic role, and assigning fixed roles to the basic role does not meet your permission requirements, you can create a custom role and assign that role to a basic role.
 
-### Before you begin
+**Before you begin:**
 
-- [Enable Grafana to provision custom roles]({{< relref "./enable-provisioning.md" >}}).
-- [Add a custom role]({{< relref "./create-update-delete-custom-role.md" >}})
+- [Enable role provisioning]({{< relref "./enable-rbac-and-provisioning#enable-role-provisioning" >}})
+- [Add a custom role]({{< relref "./manage-rbac-roles#create-custom-role" >}})
 
 **To assign a custom role to a basic role:**
 
@@ -188,7 +216,7 @@ Information here about why a user would want to do this. What are the benefits?
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
 
 The following example assigns the `users:editor` custom role to the basic editor and admin roles.
 
@@ -216,9 +244,11 @@ roles:
 
 ## Assign a custom role to a basic role using the HTTP API
 
-After you create a custom role, you can assign it to a basic role. For more information about the HTTP API, refer to [Create a basic role assignment]({{< relref "../../../http_api/access_control.md#create-a-basic-role-assignment" >}}).
+As an alternative to assigning roles using the role picker or provisioning, you can use the Grafana HTTP API to assign fixed and custom roles to users and teams. For more information about the HTTP API, refer to [Create a basic role assignment]({{< relref "../../http_api/access_control.md#create-a-basic-role-assignment" >}}).
 
-### Example request
+The following example shows you how to assign a custom role to a basic role using the HTTP API.
+
+**Example request**
 
 ```
 curl --location --request POST '<grafana_url>/api/access-control/builtin-roles' \
@@ -231,7 +261,7 @@ curl --location --request POST '<grafana_url>/api/access-control/builtin-roles' 
 }'
 ```
 
-#### Example response
+**Example response**
 
 ```
 {

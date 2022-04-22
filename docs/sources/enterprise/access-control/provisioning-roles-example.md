@@ -3,7 +3,7 @@ title: 'Example role configuration file using Grafana provisioning'
 menuTitle: 'Provisioning roles example'
 description: 'xxx.'
 aliases: [xxx]
-weight: 80
+weight: 60
 keywords:
   - xxx
 ---

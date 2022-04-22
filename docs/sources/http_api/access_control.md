@@ -1,11 +1,11 @@
 +++
-title = "Role-based access control HTTP API"
-description = "RBAC access control API"
+title = "RBAC HTTP API"
+description = ""
 keywords = ["grafana", "http", "documentation", "api", "role-based-access-control", "acl", "enterprise"]
 aliases = ["/docs/grafana/latest/http_api/accesscontrol/"]
 +++
 
-# Role-based access control API
+# RBAC API
 
 > Role-based access control API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 

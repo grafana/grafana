@@ -1,27 +1,28 @@
-+++
-title = "Permissions"
-description = "Understand fine-grained access control permissions"
-keywords = ["grafana", "fine-grained access-control", "roles", "permissions", "enterprise"]
-weight = 110
-+++
+---
+title: 'RBAC permissions actions and scopes'
+menuTitle: 'RBAC permissions actions and scopes'
+description: 'xxx.'
+aliases: [docs/grafana/latest/enterprise/access-control/permissions/]
+weight: 80
+keywords:
+  - xxx
+---
 
-# Permissions
+# RBAC permissions actions and scopes
 
-A permission is an action and a scope. When creating a fine-grained access control, consider what specific action a user should be allowed to perform, and on what resources (its scope).
+A permission is comprised of an action and a scope. When creating a custom role, consider the actions the user can perform and the resource on which to perform them.
 
-To grant permissions to a user, you create a built-in role assignment to map a role to a built-in role. A built-in role assignment _modifies_ to one of the existing built-in roles in Grafana (Viewer, Editor, Admin). For more information, refer to [Built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}).
-
-To learn more about which permissions are used for which resources, refer to [Resources with fine-grained permissions]({{< relref "./_index.md#resources-with-fine-grained-permissions" >}}).
+To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions]({{< relref "./about-rbac.md#fixed-roles" >}}).
 
 action
-: The specific action on a resource defines what a user is allowed to perform if they have permission with the relevant action assigned to it.
+: An action describes what tasks a user can perform on a resource.
 
 scope
-: The scope describes where an action can be performed, such as reading a specific user profile. In such case, a permission is associated with the scope `users:<userId>` to the relevant role.
+: A scope describes where an action can be performed, such as reading a specific user profile. In this example, a permission is associated with the scope `users:<userId>` to the relevant role.
 
 ## Action definitions
 
-The following list contains fine-grained access control actions.
+The following list contains role-based access control actions.
 
 | Action                               | Applicable scope                                                                            | Description                                                                                                                                                                                      |
 | ------------------------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -137,20 +138,20 @@ The following list contains fine-grained access control actions.
 
 ## Scope definitions
 
-The following list contains fine-grained access control scopes.
+The following list contains role-based access control scopes.
 
 | Scopes                                                                               | Descriptions                                                                                                                                                                                                                                       |
 | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `permissions:delegate`                                                               | The scope is only applicable for roles associated with the Access Control itself and indicates that you can delegate your permissions only, or a subset of it, by creating a new role or making an assignment.                                     |
 | `roles:*` <br> `roles:uid:*`                                                         | Restrict an action to a set of roles. For example, `roles:*` matches any role and `roles:uid:randomuid` matches only the role whose UID is `randomuid`.                                                                                            |
 | `reports:*` <br> `reports:id:*`                                                      | Restrict an action to a set of reports. For example, `reports:*` matches any report and `reports:id:1` matches the report whose ID is `1`.                                                                                                         |
-| `services:accesscontrol`                                                             | Restrict an action to target only the fine-grained access control service. You can use this in conjunction with the `status:accesscontrol` actions.                                                                                                |
+| `services:accesscontrol`                                                             | Restrict an action to target only the role-based access control service. You can use this in conjunction with the `status:accesscontrol` actions.                                                                                                  |
 | `global.users:*` <br> `global.users:id:*`                                            | Restrict an action to a set of global users. For example, `global.users:*` matches any user and `global.users:id:1` matches the user whose ID is `1`.                                                                                              |
 | `teams:*` <br> `teams:id:*`                                                          | Restrict an action to a set of teams from an organization. For example, `teams:*` matches any team and `teams:id:1` matches the team whose ID is `1`.                                                                                              |
 | `users:*` <br> `users:id:*`                                                          | Restrict an action to a set of users from an organization. For example, `users:*` matches any user and `users:id:1` matches the user whose ID is `1`.                                                                                              |
 | `orgs:*` <br> `orgs:id:*`                                                            | Restrict an action to a set of organizations. For example, `orgs:*` matches any organization and `orgs:id:1` matches the organization whose ID is `1`.                                                                                             |
 | `settings:*`                                                                         | Restrict an action to a subset of settings. For example, `settings:*` matches all settings, `settings:auth.saml:*` matches all SAML settings, and `settings:auth.saml:enabled` matches the enable property on the SAML settings.                   |
-| `provisioners:*`                                                                     | Restrict an action to a set of provisioners. For example, `provisioners:*` matches any provisioner, and `provisioners:accesscontrol` matches the fine-grained access control [provisioner]({{< relref "./provisioning.md" >}}).                    |
+| `provisioners:*`                                                                     | Restrict an action to a set of provisioners. For example, `provisioners:*` matches any provisioner, and `provisioners:accesscontrol` matches the role-based access control [provisioner]({{< relref "./provisioning.md" >}}).                      |
 | `datasources:*`<br>`datasources:id:*`<br>`datasources:uid:*`<br>`datasources:name:*` | Restrict an action to a set of data sources. For example, `datasources:*` matches any data source, and `datasources:name:postgres` matches the data source named `postgres`.                                                                       |
 | `folders:*`<br>`folders:id:*`                                                        | Restrict an action to a set of folders. For example, `folders:*` matches any folder, and `folders:id:1` matches the folder whose ID is `1`.                                                                                                        |
 | `dashboards:*`<br>`dashboards:id:*`                                                  | Restrict an action to a set of dashboards. For example, `dashboards:*` matches any dashboard, and `dashboards:id:1` matches the dashboard whose ID is `1`.                                                                                         |

@@ -24,7 +24,7 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 ## Access control
 
-When [Role-basedaccess control]({{< relref "../enterprise/access-control/_index.md" >}}) is enabled, you need to have the relevant [Permissions]({{< relref "../enterprise/access-control/permissions.md" >}}) to create and manage reports.
+When [RBAC]({{< relref "../enterprise/access-control/_index.md" >}}) is enabled, you need to have the relevant [Permissions]({{< relref "../enterprise/access-control/rbac-fixed-basic-role-definitions" >}}) to create and manage reports.
 
 ## Create or update a report
 
