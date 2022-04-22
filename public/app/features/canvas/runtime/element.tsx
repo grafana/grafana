@@ -72,8 +72,9 @@ export class ElementState implements LayerElement {
 
     const style: React.CSSProperties = {
       position: 'absolute',
-      transform: 'translate(0px, 0px)',
     };
+
+    const translate = ['0px', '0px'];
 
     switch (vertical) {
       case VerticalConstraint.Top:
@@ -96,6 +97,14 @@ export class ElementState implements LayerElement {
         style.top = `${placement.top}px`;
         style.bottom = `${placement.bottom}px`;
         delete placement.height;
+        break;
+      case VerticalConstraint.Center:
+        placement.top = placement.top ?? 0;
+        placement.height = placement.height ?? 100;
+        translate[1] = '-50%';
+        style.top = `calc(50% - ${placement.top}px)`;
+        style.height = `${placement.height}px`;
+        delete placement.bottom;
         break;
       case VerticalConstraint.Scale:
         placement.top = placement.top ?? 0;
@@ -128,6 +137,14 @@ export class ElementState implements LayerElement {
         style.right = `${placement.right}px`;
         delete placement.width;
         break;
+      case HorizontalConstraint.Center:
+        placement.left = placement.left ?? 0;
+        placement.width = placement.width ?? 100;
+        translate[0] = '-50%';
+        style.left = `calc(50% - ${placement.left}px)`;
+        style.width = `${placement.width}px`;
+        delete placement.right;
+        break;
       case HorizontalConstraint.Scale:
         placement.left = placement.left ?? 0;
         placement.right = placement.right ?? 0;
@@ -137,6 +154,7 @@ export class ElementState implements LayerElement {
         break;
     }
 
+    style.transform = `translate(${translate[0]}, ${translate[1]})`;
     this.options.placement = placement;
     this.sizeStyle = style;
     if (this.div) {
@@ -184,6 +202,13 @@ export class ElementState implements LayerElement {
         placement.top = relativeTop;
         placement.bottom = relativeBottom;
         break;
+      case VerticalConstraint.Center:
+        const elementCenter = elementContainer ? relativeTop + height / 2 : 0;
+        const parentCenter = parentContainer ? parentContainer.height / 2 : 0;
+        const distanceFromCenter = parentCenter - elementCenter;
+        placement.top = distanceFromCenter;
+        placement.height = height;
+        break;
       case VerticalConstraint.Scale:
         placement.top = (relativeTop / (parentContainer?.height ?? height)) * 100;
         placement.bottom = (relativeBottom / (parentContainer?.height ?? height)) * 100;
@@ -202,6 +227,13 @@ export class ElementState implements LayerElement {
       case HorizontalConstraint.LeftRight:
         placement.left = relativeLeft;
         placement.right = relativeRight;
+        break;
+      case HorizontalConstraint.Center:
+        const elementCenter = elementContainer ? relativeLeft + width / 2 : 0;
+        const parentCenter = parentContainer ? parentContainer.width / 2 : 0;
+        const distanceFromCenter = parentCenter - elementCenter;
+        placement.left = distanceFromCenter;
+        placement.width = width;
         break;
       case HorizontalConstraint.Scale:
         placement.left = (relativeLeft / (parentContainer?.width ?? width)) * 100;
@@ -385,8 +417,6 @@ export class ElementState implements LayerElement {
         style.height = `${placement!.height}px`;
       }
     }
-
-    // TODO: Center + Scale
   };
 
   render() {
