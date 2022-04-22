@@ -502,18 +502,15 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
           let yMin = yMins[i];
           let yMax = yMaxs[i];
 
-          let xMaxOff = xOffs.get(xMax);
-          if (xMaxOff == null) {
+          if (!xOffs.has(xMax)) {
             xOffs.set(xMax, Math.round(valToPosX(xMax, scaleX, xDim, xOff)));
           }
 
-          let yMinOff = yOffs.get(yMin);
-          if (yMinOff == null) {
+          if (!yOffs.has(yMin)) {
             yOffs.set(yMin, Math.round(valToPosY(yMin, scaleY, yDim, yOff)));
           }
 
-          let yMaxOff = yOffs.get(yMax);
-          if (yMaxOff == null) {
+          if (!yOffs.has(yMax)) {
             yOffs.set(yMax, Math.round(valToPosY(yMax, scaleY, yDim, yOff)));
           }
         }
