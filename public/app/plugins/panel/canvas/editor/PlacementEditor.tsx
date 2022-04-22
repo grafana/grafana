@@ -58,6 +58,12 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
     settings.scene.save(true);
   };
 
+  const onPositionChange = (value: number | undefined, placement: keyof Placement) => {
+    element.options.placement![placement] = value ?? element.options.placement![placement];
+    element.applyLayoutStylesToDiv();
+    settings.scene.clearCurrentSelection();
+  };
+
   return (
     <div>
       <VerticalGroup>
@@ -80,7 +86,7 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
             return (
               <InlineFieldRow key={p}>
                 <InlineField label={p} labelWidth={8} grow={true}>
-                  <NumberInput value={v} onChange={(v) => console.log('TODO, edit!!!', p, v)} />
+                  <NumberInput value={v} onChange={(v) => onPositionChange(v, p)} />
                 </InlineField>
               </InlineFieldRow>
             );
