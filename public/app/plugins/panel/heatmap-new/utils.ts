@@ -473,6 +473,63 @@ export const countsToFills = (u: uPlot, seriesIdx: number, palette: string[]) =>
   return indexedFills;
 };
 
+export const getHeatmapFrames = (dataFrame: DataFrame): Array<Field | undefined> => {
+  const xField: Field | undefined = dataFrame.fields.find((f) => f.name === 'xMin');
+  const yField: Field | undefined = dataFrame.fields.find((f) => f.name === 'yMin');
+  const countField: Field | undefined = dataFrame.fields.find((f) => f.name === 'count');
+
+  return [xField, yField, countField];
+};
+
+export const getHeatmapArrays = (dataFrame: DataFrame): Array<number[] | undefined> => {
+  const [xField, yField, countField] = getHeatmapFrames(dataFrame);
+  return [xField?.values.toArray(), yField?.values.toArray(), countField?.values.toArray()];
+};
+
+export const getDataMapping = (heatmapData: HeatmapData, origData: DataFrame): Array<number[] | null> => {
+  const [xs, ys, counts] = getHeatmapArrays(heatmapData.heatmap!);
+  const xos: number[] | undefined = origData.fields.find((f: Field) => f.type === 'time')?.values.toArray();
+  const yos: number[] | undefined = origData.fields.find((f: Field) => f.type === 'number')?.values.toArray();
+
+  if (xs && ys && counts && xos && yos) {
+    const mapping: Array<number[] | null> = new Array(counts.length).fill(null);
+    const xsmin = xs[0];
+    const yosmin = Math.min(...yos);
+    xos.forEach((xo: number, yoindex: number) => {
+      const yo = yos[yoindex];
+      const xsrow = Math.floor((xo - xsmin) / heatmapData.xBucketSize!);
+      const yscol = Math.floor((yo - yosmin) / heatmapData.yBucketSize!);
+      const index = xsrow * heatmapData.yBucketCount! + yscol;
+      const count = counts[index];
+      if (!mapping[index] && count > 0) {
+        mapping[index] = [];
+      }
+      mapping[index]?.push(yoindex);
+    });
+    return mapping;
+  }
+  return [null];
+};
+
+export const resolveMappingToData = (data: DataFrame, indicies: number[] | null): DataFrame[] => {
+  if (indicies === null) {
+    return [];
+  }
+  return indicies.map((index: number, i: number) => {
+    return {
+      name: `${i + 1}`,
+      fields: data.fields.map((f: Field) => {
+        return {
+          ...f,
+          values: new ArrayVector([f.values.get(index)]),
+          length: 1,
+        };
+      }),
+      length: data.fields.length,
+    };
+  });
+};
+
 export const findExemplarFrameInPanelData = (data: PanelData): DataFrame | undefined => {
   if (data.annotations) {
     let e = data.annotations.find((frame: DataFrame) => frame.meta?.custom?.resultType === 'exemplar');

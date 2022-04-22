@@ -1,24 +1,24 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-// import { PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
 import { DataFrame, GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
-import { Portal, UPlotChart, useTheme2, VizLayout, LegendDisplayMode, usePanelContext, useStyles2 } from '@grafana/ui';
+import { Portal, UPlotChart, useTheme2, VizLayout, LegendDisplayMode, useStyles2 } from '@grafana/ui';
 import { PanelDataErrorView } from '@grafana/runtime';
 
 import { HeatmapData, prepareHeatmapData } from './fields';
 import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
 import {
-  // findExemplarFrameInPanelData,
+  findExemplarFrameInPanelData,
+  findDataFramesInPanelData,
   HeatmapHoverEvent,
   prepConfig,
-  // translateMatrixIndex,
-  lookupDataInCell,
+  getDataMapping,
+  resolveMappingToData,
 } from './utils';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
-// import { HeatmapCalculationMode } from 'app/features/transformers/calculateHeatmap/models.gen';
-import { HeatmapLookup } from './types';
+import { HeatmapCalculationMode } from 'app/features/transformers/calculateHeatmap/models.gen';
+// import { HeatmapLookup } from './types';
 import { HeatmapTab } from './hovertabs/HeatmapTab';
 import { ExemplarTab } from './hovertabs/ExemplarTab';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
@@ -44,34 +44,38 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
 
-  console.log('data', data);
-  const [info, exemplars] = useMemo((): HeatmapData[] => {
-    const heatmap = prepareHeatmapData(
-      {
-        heatmap: data.series,
-        exemplars: data.annotations!,
-      },
-      options,
-      theme
-    );
-    return [
-      {
-        ...heatmap,
-        layers: undefined,
-        heatmap: heatmap.layers?.['heatmap'],
-      },
-      {
-        ...heatmap,
-        layers: undefined,
-        heatmap: heatmap.layers?.['exemplars'],
-      },
-    ];
+  const [info, infoMapping, exemplars, exemplarMapping] = useMemo(() => {
+    let exemplars: HeatmapData | undefined = undefined;
+    const infoFrame = findDataFramesInPanelData(data);
+    const info = prepareHeatmapData(infoFrame!, options, theme);
+    const infoMapping = getDataMapping(info, infoFrame?.[0]!);
+    const exemplarsFrame: DataFrame | undefined = findExemplarFrameInPanelData(data);
+    let exemplarMapping: Array<number[] | null> = [null];
+    if (exemplarsFrame) {
+      exemplars = prepareHeatmapData(
+        [exemplarsFrame],
+        {
+          ...options,
+          heatmap: {
+            xAxis: {
+              mode: HeatmapCalculationMode.Size,
+              value: info.xBucketSize?.toString(),
+            },
+            yAxis: {
+              mode: HeatmapCalculationMode.Size,
+              value: info.yBucketSize?.toString(),
+            },
+          },
+        },
+        theme
+      );
+      exemplarMapping = getDataMapping(exemplars, exemplarsFrame!);
+    }
+    return [info, infoMapping, exemplars, exemplarMapping];
   }, [data, options, theme]);
 
-  console.log('info', info, 'exemplars', exemplars);
-
-  const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap?.fields]);
-  const { onSplitOpen } = usePanelContext();
+  const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
+  // const { onSplitOpen } = usePanelContext();
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
@@ -136,19 +140,19 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     });
   });
 
-  const getExemplarValuesInCell = useCallback(
-    (lookupRange: HeatmapLookup): DataFrame[] | undefined => {
-      return lookupDataInCell(lookupRange, data.annotations?.[0]!, onSplitOpen, timeRange, timeZone);
-    },
-    [data.annotations, onSplitOpen, timeRange, timeZone]
-  );
+  // const getExemplarValuesInCell = useCallback(
+  //   (lookupRange: HeatmapLookup): DataFrame[] | undefined => {
+  //     return lookupDataInCell(lookupRange, data.annotations?.[0]!, onSplitOpen, timeRange, timeZone);
+  //   },
+  //   [data.annotations, onSplitOpen, timeRange, timeZone]
+  // );
 
-  const getDataValuesInCell = useCallback(
-    (lookupRange: HeatmapLookup): DataFrame[] | undefined => {
-      return lookupDataInCell(lookupRange, data.series?.[0]!, onSplitOpen, timeRange, timeZone);
-    },
-    [data.series, onSplitOpen, timeRange, timeZone]
-  );
+  // const getDataValuesInCell = useCallback(
+  //   (lookupRange: HeatmapLookup): DataFrame[] | undefined => {
+  //     return lookupDataInCell(lookupRange, data.series?.[0]!, onSplitOpen, timeRange, timeZone);
+  //   },
+  //   [data.series, onSplitOpen, timeRange, timeZone]
+  // );
 
   const renderLegend = () => {
     if (options.legend.displayMode === LegendDisplayMode.Hidden || !info.heatmap) {
@@ -197,16 +201,12 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
           <HeatmapHoverView
             ttip={{
               layers: [
-                ...HeatmapTab({
-                  heatmapData: info,
-                  index: hover.index,
-                  getValuesInCell: getDataValuesInCell,
+                HeatmapTab({
+                  data: resolveMappingToData(data.series[0], infoMapping[hover.index]),
                   options: { showHistogram: options.tooltip.yHistogram, timeZone },
                 }),
                 ExemplarTab({
-                  heatmapData: exemplars,
-                  getValuesInCell: getExemplarValuesInCell,
-                  index: hover.index,
+                  data: resolveMappingToData(data.annotations?.[0]!, exemplarMapping[hover.index]),
                 }),
               ],
               hover,

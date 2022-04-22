@@ -1,6 +1,5 @@
 import { NumericRange, DataFrame, DataHoverPayload } from '@grafana/data';
 import { LayerElement } from 'app/core/components/Layers/types';
-import { HeatmapData } from './fields';
 import { HeatmapHoverEvent } from './utils';
 
 export interface HeatmapLayerState<TConfig = any> extends LayerElement {
@@ -34,8 +33,6 @@ export interface HeatmapHoverPayload extends DataHoverPayload {
 }
 
 export interface HeatmapHoverProps<TOptions = any> {
-  heatmapData: HeatmapData;
-  getValuesInCell?: (lookupRange: HeatmapLookup) => DataFrame[] | undefined;
-  index: number;
+  data: DataFrame[];
   options?: TOptions;
 }
