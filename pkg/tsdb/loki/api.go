@@ -29,6 +29,8 @@ func makeRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.
 	qs := url.Values{}
 	qs.Set("query", query.Expr)
 
+	qs.Set("direction", string(query.Direction))
+
 	// MaxLines defaults to zero when not received,
 	// and Loki does not like limit=0, even when it is not needed
 	// (for example for metric queries), so we

@@ -1,4 +1,5 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
+
 import { QueryEditorMode } from '../prometheus/querybuilder/shared/types';
 
 export interface LokiInstantQueryRequest {
@@ -29,9 +30,15 @@ export enum LokiQueryType {
   Stream = 'stream',
 }
 
+export enum LokiQueryDirection {
+  Backward = 'backward',
+  Forward = 'forward',
+}
+
 export interface LokiQuery extends DataQuery {
   queryType?: LokiQueryType;
   expr: string;
+  direction?: LokiQueryDirection;
   legendFormat?: string;
   maxLines?: number;
   resolution?: number;

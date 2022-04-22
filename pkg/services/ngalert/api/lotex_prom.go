@@ -78,12 +78,12 @@ func (p *LotexProm) RouteGetRuleStatuses(ctx *models.ReqContext) response.Respon
 }
 
 func (p *LotexProm) getEndpoints(ctx *models.ReqContext) (*promEndpoints, error) {
-	recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":Recipient"], 10, 64)
+	datasourceID, err := strconv.ParseInt(web.Params(ctx.Req)[":DatasourceID"], 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("recipient is invalid")
+		return nil, fmt.Errorf("datasource ID is invalid")
 	}
 
-	ds, err := p.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), recipient, ctx.SignedInUser, ctx.SkipCache)
+	ds, err := p.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), datasourceID, ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
 		return nil, err
 	}

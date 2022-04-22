@@ -1,6 +1,7 @@
-import { SelectableValue } from '@grafana/data';
 import React from 'react';
 import { ActionMeta as SelectActionMeta, GroupBase, OptionsOrGroups } from 'react-select';
+
+import { SelectableValue } from '@grafana/data';
 
 export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 export type ActionMeta = SelectActionMeta<{}>;

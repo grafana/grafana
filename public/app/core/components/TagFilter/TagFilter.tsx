@@ -1,11 +1,12 @@
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { components } from 'react-select';
-import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
-import { escapeStringForRegex, GrafanaTheme2 } from '@grafana/data';
 
-import { TagOption } from './TagOption';
+import { escapeStringForRegex, GrafanaTheme2 } from '@grafana/data';
+import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
+
 import { TagBadge } from './TagBadge';
+import { TagOption } from './TagOption';
 
 export interface TermCount {
   term: string;

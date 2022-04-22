@@ -1,12 +1,15 @@
-import { CombinedRule, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { useAsync } from 'react-use';
+
+import { CombinedRule, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+
 import { fetchPromAndRulerRulesAction } from '../state/actions';
 import { AsyncRequestMapSlice, AsyncRequestState, initialAsyncRequestState } from '../utils/redux';
 import * as ruleId from '../utils/rule-id';
 import { isRulerNotSupportedResponse } from '../utils/rules';
+
 import { useCombinedRuleNamespaces } from './useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 

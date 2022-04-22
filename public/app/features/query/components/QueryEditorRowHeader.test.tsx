@@ -1,10 +1,12 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { Props, QueryEditorRowHeader } from './QueryEditorRowHeader';
+import React from 'react';
+
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
+
+import { Props, QueryEditorRowHeader } from './QueryEditorRowHeader';
 
 const mockDS = mockDataSource({
   name: 'CloudManager',

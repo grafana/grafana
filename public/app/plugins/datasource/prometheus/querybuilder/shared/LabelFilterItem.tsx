@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Select } from '@grafana/ui';
+
 import { SelectableValue, toOption } from '@grafana/data';
-import { QueryBuilderLabelFilter } from './types';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
+
+import { QueryBuilderLabelFilter } from './types';
 
 export interface Props {
   defaultOp: string;

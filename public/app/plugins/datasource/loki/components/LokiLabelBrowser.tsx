@@ -1,4 +1,9 @@
+import { css, cx } from '@emotion/css';
+import { sortBy } from 'lodash';
 import React, { ChangeEvent } from 'react';
+import { FixedSizeList } from 'react-window';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
   HighlightPart,
@@ -10,12 +15,9 @@ import {
   BrowserLabel as LokiLabel,
   fuzzyMatch,
 } from '@grafana/ui';
-import LokiLanguageProvider from '../language_provider';
+
 import PromQlLanguageProvider from '../../prometheus/language_provider';
-import { css, cx } from '@emotion/css';
-import { FixedSizeList } from 'react-window';
-import { GrafanaTheme2 } from '@grafana/data';
-import { sortBy } from 'lodash';
+import LokiLanguageProvider from '../language_provider';
 
 // Hard limit on labels to render
 const MAX_LABEL_COUNT = 1000;

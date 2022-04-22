@@ -1,17 +1,18 @@
+import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { AlertManagerPicker } from '../AlertManagerPicker';
-import { MatcherFilter } from './MatcherFilter';
-import { AlertStateFilter } from './AlertStateFilter';
-import { GroupBy } from './GroupBy';
-import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanager/types';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
-import { css } from '@emotion/css';
 import { getFiltersFromUrlParams } from '../../utils/misc';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { AlertManagerPicker } from '../AlertManagerPicker';
+
+import { AlertStateFilter } from './AlertStateFilter';
+import { GroupBy } from './GroupBy';
+import { MatcherFilter } from './MatcherFilter';
 
 interface Props {
   groups: AlertmanagerGroup[];

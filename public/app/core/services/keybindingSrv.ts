@@ -1,14 +1,17 @@
 import Mousetrap from 'mousetrap';
+
 import 'mousetrap-global-bind';
 import 'mousetrap/plugins/global-bind/mousetrap-global-bind';
 import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
-import { DashboardModel } from 'app/features/dashboard/state';
-import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardProxy';
-import { locationService } from '@grafana/runtime';
-import { exitKioskMode, toggleKioskMode } from '../navigation/kiosk';
+import { ShareModal } from 'app/features/dashboard/components/ShareModal';
+import { DashboardModel } from 'app/features/dashboard/state';
+
+import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
+import { getDatasourceSrv } from '../../features/plugins/datasource_srv';
 import {
   RemovePanelEvent,
   ShiftTimeEvent,
@@ -17,12 +20,12 @@ import {
   ZoomOutEvent,
   AbsoluteTimeEvent,
 } from '../../types/events';
+import { HelpModal } from '../components/help/HelpModal';
 import { contextSrv } from '../core';
-import { getDatasourceSrv } from '../../features/plugins/datasource_srv';
-import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
+import { exitKioskMode, toggleKioskMode } from '../navigation/kiosk';
+
 import { toggleTheme } from './toggleTheme';
 import { withFocusedPanel } from './withFocusedPanelId';
-import { HelpModal } from '../components/help/HelpModal';
 
 export class KeybindingSrv {
   reset() {
