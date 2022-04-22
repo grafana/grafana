@@ -8,7 +8,7 @@ import {
   getValueFormat,
   GrafanaTheme2,
 } from '@grafana/data';
-import { bucketsToScanlines, calculateHeatmapFromData } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
 
 export const enum BucketLayout {
@@ -19,7 +19,6 @@ export const enum BucketLayout {
 export interface HeatmapData {
   // List of heatmap frames
   heatmap?: DataFrame;
-  layers?: Record<string, DataFrame>;
 
   yAxisValues?: Array<number | string | null>;
 
@@ -40,25 +39,25 @@ export interface HeatmapData {
 }
 
 export function prepareHeatmapData(
-  layers: Record<string, DataFrame[]> | undefined,
+  frames: DataFrame[] | undefined,
   options: PanelOptions,
   theme: GrafanaTheme2
 ): HeatmapData {
-  if (!layers || !Object.keys(layers).length) {
+  if (!frames?.length) {
     return {};
   }
 
+  console.log("I'm preparing heatmap data and I got frames", frames);
   const { source } = options;
   if (source === HeatmapSourceMode.Calculate) {
     // TODO, check for error etc
-    return getHeatmapData(calculateHeatmapFromData(layers!, options.heatmap ?? {}), theme);
+    return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), theme);
   }
 
-  const frames = layers?.['heatmap'] || [];
   // Find a well defined heatmap
   let scanlinesHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanlines);
   if (scanlinesHeatmap) {
-    return getHeatmapData({ heatmap: scanlinesHeatmap }, theme);
+    return getHeatmapData(scanlinesHeatmap, theme);
   }
 
   let bucketsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapBuckets);
@@ -67,20 +66,19 @@ export function prepareHeatmapData(
       yAxisValues: frames[0].fields.flatMap((field) =>
         field.type === FieldType.number ? getFieldDisplayName(field) : []
       ),
-      ...getHeatmapData({ heatmap: bucketsToScanlines(bucketsHeatmap) }, theme),
+      ...getHeatmapData(bucketsToScanlines(bucketsHeatmap), theme),
     };
   }
 
   if (source === HeatmapSourceMode.Data) {
-    return getHeatmapData({ heatmap: bucketsToScanlines(frames[0]) }, theme);
+    return getHeatmapData(bucketsToScanlines(frames[0]), theme);
   }
 
   // TODO, check for error etc
-  return getHeatmapData(calculateHeatmapFromData({ heatmap: frames }, options.heatmap ?? {}), theme);
+  return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), theme);
 }
 
-const getHeatmapData = (layers: Record<string, DataFrame>, theme: GrafanaTheme2): HeatmapData => {
-  const frame = layers['heatmap'];
+const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => {
   if (frame.meta?.type !== DataFrameType.HeatmapScanlines) {
     return {
       warning: 'Expected heatmap scanlines format',
@@ -117,7 +115,7 @@ const getHeatmapData = (layers: Record<string, DataFrame>, theme: GrafanaTheme2)
   // The "count" field
   const disp = frame.fields[2].display ?? getValueFormat('short');
   return {
-    layers,
+    heatmap: frame,
     xBucketSize: xBinIncr,
     yBucketSize: yBinIncr,
     xBucketCount: xBinQty,
