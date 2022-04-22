@@ -13,7 +13,6 @@ import { createDatasourcesList, SortOrder } from 'app/core/utils/richHistory';
 import RichHistoryCard from './RichHistoryCard';
 import { getSortOrderOptions } from './RichHistory';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
-import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 
 export interface Props {
   queries: RichHistoryQuery[];
@@ -86,16 +85,10 @@ export function RichHistoryStarredTab(props: Props) {
   const listOfDatasources = createDatasourcesList();
 
   useEffect(() => {
-    let datasourceFilters: string[];
-    if (
-      supportedFeatures().lastUsedDataSourcesAvailable &&
-      richHistorySettings.activeDatasourceOnly &&
-      richHistorySettings.lastUsedDatasourceFilters
-    ) {
-      datasourceFilters = richHistorySettings.lastUsedDatasourceFilters;
-    } else {
-      datasourceFilters = [activeDatasourceInstance];
-    }
+    const datasourceFilters =
+      richHistorySettings.activeDatasourceOnly && richHistorySettings.lastUsedDatasourceFilters
+        ? richHistorySettings.lastUsedDatasourceFilters
+        : [activeDatasourceInstance];
     const filters: RichHistorySearchFilters = {
       search: '',
       sortOrder: SortOrder.Descending,

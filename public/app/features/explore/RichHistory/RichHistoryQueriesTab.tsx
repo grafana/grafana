@@ -138,12 +138,10 @@ export function RichHistoryQueriesTab(props: Props) {
   const listOfDatasources = createDatasourcesList();
 
   useEffect(() => {
-    let datasourceFilters: string[];
-    if (!richHistorySettings.activeDatasourceOnly && richHistorySettings.lastUsedDatasourceFilters) {
-      datasourceFilters = richHistorySettings.lastUsedDatasourceFilters;
-    } else {
-      datasourceFilters = [activeDatasourceInstance];
-    }
+    const datasourceFilters =
+      richHistorySettings.activeDatasourceOnly && richHistorySettings.lastUsedDatasourceFilters
+        ? richHistorySettings.lastUsedDatasourceFilters
+        : [activeDatasourceInstance];
     const filters: RichHistorySearchFilters = {
       search: '',
       sortOrder: SortOrder.Descending,

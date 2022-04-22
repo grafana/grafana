@@ -9,7 +9,7 @@ export const fromDTO = (dto: RichHistoryRemoteStorageDTO): RichHistoryQuery => {
     id: dto.uid,
     createdAt: dto.createdAt,
     datasourceName: datasource?.name || '', // will be show on the list as coming from a removed data source
-    datasourceUid: dto.datasourceUid || '',
+    datasourceUid: dto.datasourceUid,
     starred: dto.starred,
     comment: dto.comment,
     queries: dto.queries,
