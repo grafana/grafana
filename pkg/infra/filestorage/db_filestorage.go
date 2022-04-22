@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -208,7 +209,7 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 		}
 
 		if len(cmd.Properties) != 0 {
-			if err = upsertProperties(sess, now, cmd, pathHash); err != nil {
+			if err = upsertProperties(s.db.Dialect, sess, now, cmd, pathHash); err != nil {
 				if rollbackErr := sess.Rollback(); rollbackErr != nil {
 					s.log.Error("failed while rolling back upsert", "path", cmd.Path)
 				}
@@ -222,7 +223,7 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 	return err
 }
 
-func upsertProperties(sess *sqlstore.DBSession, now time.Time, cmd *UpsertFileCommand, pathHash string) error {
+func upsertProperties(dialect migrator.Dialect, sess *sqlstore.DBSession, now time.Time, cmd *UpsertFileCommand, pathHash string) error {
 	fileMeta := &fileMeta{}
 	_, err := sess.Table("file_meta").Where("path_hash = ?", pathHash).Delete(fileMeta)
 	if err != nil {
@@ -230,23 +231,25 @@ func upsertProperties(sess *sqlstore.DBSession, now time.Time, cmd *UpsertFileCo
 	}
 
 	for key, val := range cmd.Properties {
-		if err := upsertProperty(sess, now, pathHash, key, val); err != nil {
+		if err := upsertProperty(dialect, sess, now, pathHash, key, val); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func upsertProperty(sess *sqlstore.DBSession, now time.Time, pathHash string, key string, val string) error {
+func upsertProperty(dialect migrator.Dialect, sess *sqlstore.DBSession, now time.Time, pathHash string, key string, val string) error {
 	existing := &fileMeta{}
-	exists, err := sess.Table("file_meta").Where("path_hash = ?", pathHash).Where("key = ?", key).Get(existing)
+
+	keyEqualsCondition := fmt.Sprintf("%s = ?", dialect.Quote("key"))
+	exists, err := sess.Table("file_meta").Where("path_hash = ?", pathHash).Where(keyEqualsCondition, key).Get(existing)
 	if err != nil {
 		return err
 	}
 
 	if exists {
 		existing.Value = val
-		_, err = sess.Where("path_hash = ?", pathHash).Where("key = ?", key).Update(existing)
+		_, err = sess.Where("path_hash = ?", pathHash).Where(keyEqualsCondition, key).Update(existing)
 	} else {
 		_, err = sess.Insert(&fileMeta{
 			PathHash: pathHash,
