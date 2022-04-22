@@ -1,18 +1,10 @@
-<<<<<<< HEAD
-=======
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { TemplateSrv } from 'app/features/templating/template_srv';
->>>>>>> cc5bfd9134 (remove extra logic for graphite /functions endpoint returning {} #46681)
 import { isArray } from 'lodash';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import { AbstractLabelMatcher, AbstractLabelOperator, dateTime, getFrameDisplayName } from '@grafana/data';
-<<<<<<< HEAD
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
-=======
->>>>>>> cc5bfd9134 (remove extra logic for graphite /functions endpoint returning {} #46681)
 
 import { fromString } from './configuration/parseLokiLabelMappings';
 import { GraphiteDatasource } from './datasource';
