@@ -7,13 +7,7 @@ import { CustomScrollbar, Icon, IconName, useTheme2 } from '@grafana/ui';
 import { config, locationService } from '@grafana/runtime';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { KioskMode, StoreState } from 'app/types';
-import {
-  enrichConfigItems,
-  getActiveItem,
-  isMatchOrChildMatch,
-  isSearchActive,
-  SEARCH_ITEM_ID,
-} from '../utils';
+import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from '../utils';
 import { OrgSwitcher } from '../../OrgSwitcher';
 import { NavBarMenu } from './NavBarMenu';
 import NavBarItem from './NavBarItem';
@@ -123,7 +117,11 @@ export const NavBarNext = React.memo(() => {
 
                 {pluginItems.length > 0 &&
                   pluginItems.map((link, index) => (
-                    <NavBarItem key={`${link.id}-${index}`} isActive={isMatchOrChildMatch(link, activeItem)} link={link}>
+                    <NavBarItem
+                      key={`${link.id}-${index}`}
+                      isActive={isMatchOrChildMatch(link, activeItem)}
+                      link={link}
+                    >
                       {link.icon && <Icon name={link.icon as IconName} size="xl" />}
                       {link.img && <img src={link.img} alt={`${link.text} logo`} />}
                     </NavBarItem>
