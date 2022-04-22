@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Select, Input, HorizontalGroup, VerticalGroup, MultiSelect } from '@grafana/ui';
 
 import { Field } from '../Field';
 import { AzureMetricDimension, AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types';
 import { appendDimensionFilter, removeDimensionFilter, setDimensionFilterValue } from './setQueryValue';
-import { SelectableValue, Labels, DataFrame } from '@grafana/data';
+import { SelectableValue, DataFrame } from '@grafana/data';
 
 interface DimensionFieldsProps extends AzureQueryEditorFieldProps {
   dimensionOptions: AzureMonitorOption[];
@@ -20,7 +20,9 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
     [query.azureMonitor?.dimensionFilters]
   );
 
-  const dimensionLabels = useMemo(() => {
+  const [dimensionLabels, setDimensionLabels] = useState<DimensionLabels>({});
+
+  useEffect(() => {
     let labelsObj: DimensionLabels = {};
     if (data?.series.length) {
       const series: DataFrame[] = data.series.flat();
@@ -41,8 +43,8 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
         }
       }
     }
-    return labelsObj;
-  }, [dimensionFilters]);
+    setDimensionLabels((prevLabels) => ({ ...labelsObj, ...prevLabels }));
+  }, [data?.series]);
 
   const dimensionOperators: Array<SelectableValue<string>> = [
     { label: '==', value: 'eq' },
@@ -84,7 +86,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
     }
   };
 
-  const onMultiSelectFilterChange = (index: number, v: SelectableValue<string>[]) => {
+  const onMultiSelectFilterChange = (index: number, v: Array<SelectableValue<string>>) => {
     onFieldChange(
       index,
       'filter',
