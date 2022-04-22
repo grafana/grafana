@@ -36,6 +36,16 @@ func runTestCase(t *testing.T, testCase fsTestCase, ctx context.Context, filesto
 	}
 }
 
+type backend string
+
+const (
+	backendSQL           backend = "sql"
+	backendSQLNested     backend = "sqlNested"
+	backendInMem         backend = "inMem"
+	backendLocalFS       backend = "localFS"
+	backendLocalFSNested backend = "localFSNested"
+)
+
 func runTests(createCases func() []fsTestCase, t *testing.T) {
 	var testLogger log.Logger
 	var sqlStore *sqlstore.SQLStore
@@ -115,31 +125,37 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 
 	backends := []struct {
 		setup func()
-		name  string
+		name  backend
 	}{
 		{
 			setup: setupLocalFs,
-			name:  "Local FS",
+			name:  backendLocalFS,
 		},
 		{
 			setup: setupLocalFsNestedPath,
-			name:  "Local FS with nested path",
+			name:  backendLocalFSNested,
 		},
 		{
 			setup: setupInMemFS,
-			name:  "In-mem FS",
+			name:  backendInMem,
 		},
 		{
 			setup: setupSqlFS,
-			name:  "SQL FS",
+			name:  backendSQL,
 		},
 		{
 			setup: setupSqlFSNestedPath,
-			name:  "SQL FS with nested path",
+			name:  backendSQLNested,
 		},
 	}
 
+	skipBackends := map[backend]bool{}
+
 	for _, backend := range backends {
+		if skipBackends[backend.name] {
+			continue
+		}
+
 		for _, tt := range createCases() {
 			t.Run(fmt.Sprintf("%s: %s", backend.name, tt.name), func(t *testing.T) {
 				backend.setup()
