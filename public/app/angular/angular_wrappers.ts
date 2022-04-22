@@ -16,14 +16,12 @@ import { TimePickerSettings } from 'app/features/dashboard/components/DashboardS
 import { AnnotationQueryEditor as CloudMonitoringAnnotationQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/AnnotationQueryEditor';
 import { QueryEditor as CloudMonitoringQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/QueryEditor';
 import { AnnotationQueryEditor as CloudWatchAnnotationQueryEditor } from 'app/plugins/datasource/cloudwatch/components/AnnotationQueryEditor';
-import QueryEditor from 'app/plugins/datasource/grafana-azure-monitor-datasource/components/QueryEditor/QueryEditor';
-
 import EmptyListCTA from '../core/components/EmptyListCTA/EmptyListCTA';
 import { Footer } from '../core/components/Footer/Footer';
+import { HelpModal } from '../core/components/help/HelpModal';
 import PageHeader from '../core/components/PageHeader/PageHeader';
 import { MetricSelect } from '../core/components/Select/MetricSelect';
 import { TagFilter } from '../core/components/TagFilter/TagFilter';
-import { HelpModal } from '../core/components/help/HelpModal';
 import { SearchField, SearchResults, SearchResultsFilter } from '../features/search';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 
@@ -196,12 +194,6 @@ export function registerAngularDirectives() {
     ['onRefreshIntervalChange', { watchDepth: 'reference', wrapApply: true }],
     ['onNowDelayChange', { watchDepth: 'reference', wrapApply: true }],
     ['onHideTimePickerChange', { watchDepth: 'reference', wrapApply: true }],
-  ]);
-
-  react2AngularDirective('azureMonitorQueryEditor', QueryEditor, [
-    'query',
-    ['datasource', { watchDepth: 'reference' }],
-    'onChange',
   ]);
 
   react2AngularDirective('clipboardButton', ClipboardButton, [
