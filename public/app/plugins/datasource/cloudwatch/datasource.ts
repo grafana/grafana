@@ -54,6 +54,7 @@ import {
   MetricQuery,
   MetricQueryType,
   MetricRequest,
+  MultiFilters,
   StartQueryRequest,
   TSDBResponse,
 } from './types';
@@ -720,7 +721,7 @@ export class CloudWatchDatasource
     return this.doMetricResourceRequest('ec2-instance-attribute', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       attributeName: this.templateSrv.replace(attributeName),
-      filters: JSON.stringify(filters),
+      filters: JSON.stringify(this.convertMultiFilterFormat(filters, 'filter key')),
     });
   }
 
@@ -728,7 +729,7 @@ export class CloudWatchDatasource
     return this.doMetricResourceRequest('resource-arns', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       resourceType: this.templateSrv.replace(resourceType),
-      tags: JSON.stringify(tags),
+      tags: JSON.stringify(this.convertMultiFilterFormat(tags, 'tag name')),
     });
   }
 
@@ -836,18 +837,40 @@ export class CloudWatchDatasource
         return { ...result, [key]: null };
       }
 
-      const valueVar = this.templateSrv
-        .getVariables()
-        .find(({ name }) => name === this.templateSrv.getVariableName(value));
-      if (valueVar) {
-        if ((valueVar as unknown as VariableWithMultiSupport).multi) {
-          const values = this.templateSrv.replace(value, scopedVars, 'pipe').split('|');
-          return { ...result, [key]: values };
-        }
-        return { ...result, [key]: [this.templateSrv.replace(value, scopedVars)] };
-      }
+      const newValues = this.getVariableValue(value, scopedVars);
+      return { ...result, [key]: newValues };
+    }, {});
+  }
 
-      return { ...result, [key]: [value] };
+  // get the value for a given template variable
+  getVariableValue(value: string, scopedVars: ScopedVars): string[] {
+    const variableName = this.templateSrv.getVariableName(value);
+    const valueVar = this.templateSrv.getVariables().find(({ name }) => {
+      return name === variableName;
+    });
+    if (variableName && valueVar) {
+      if ((valueVar as unknown as VariableWithMultiSupport).multi) {
+        // rebuild the variable name to handle old migrated queries
+        const values = this.templateSrv.replace('$' + variableName, scopedVars, 'pipe').split('|');
+        return values;
+      }
+      return [this.templateSrv.replace(value, scopedVars)];
+    }
+    return [value];
+  }
+
+  convertMultiFilterFormat(multiFilters: MultiFilters, fieldName?: string) {
+    return Object.entries(multiFilters).reduce((result, [key, values]) => {
+      key = this.replace(key, {}, true, fieldName);
+      if (!values) {
+        return { ...result, [key]: null };
+      }
+      const initialVal: string[] = [];
+      const newValues = values.reduce((result, value) => {
+        const vals = this.getVariableValue(value, {});
+        return [...result, ...vals];
+      }, initialVal);
+      return { ...result, [key]: newValues };
     }, {});
   }
 
