@@ -213,17 +213,6 @@ func TestAlertmanagerConfig(t *testing.T) {
 		require.Equal(t, 202, response.Status())
 	})
 
-	t.Run("assert provenance status is returned", func(t *testing.T) {
-		t.Run("when routes are provisioned", func(t *testing.T) {
-			sut := createSut(t, nil)
-			rc := createRequestCtxInOrg(1)
-
-			response := sut.RouteGetAlertingConfig(rc)
-
-			require.Equal(t, 200, response.Status())
-		})
-	})
-
 	t.Run("when objects are not provisioned", func(t *testing.T) {
 		t.Run("route from GET config has no provenance", func(t *testing.T) {
 			sut := createSut(t, nil)
