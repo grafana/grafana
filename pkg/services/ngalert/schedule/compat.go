@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/url"
 	"path"
-	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
@@ -109,21 +108,12 @@ func errorAlert(labels, annotations data.Labels, alertState *state.State, urlStr
 	}
 }
 
-func FromAlertStateToPostableAlerts(firingStates []*state.State, stateManager *state.Manager, appURL *url.URL) apimodels.PostableAlerts {
+func FromAlertStateToPostableAlerts(firingStates []*state.State, appURL *url.URL) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
-	var sentAlerts []*state.State
-	ts := time.Now()
-
 	for _, alertState := range firingStates {
-		if !alertState.NeedsSending(stateManager.ResendDelay) {
-			continue
-		}
 		alert := stateToPostableAlert(alertState, appURL)
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *alert)
-		alertState.LastSentAt = ts
-		sentAlerts = append(sentAlerts, alertState)
 	}
-	stateManager.Put(sentAlerts)
 	return alerts
 }
 
@@ -133,9 +123,6 @@ func FromAlertsStateToStoppedAlert(firingStates []*state.State, appURL *url.URL,
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 	ts := clock.Now()
 	for _, alertState := range firingStates {
-		if alertState.State == eval.Normal || alertState.State == eval.Pending {
-			continue
-		}
 		postableAlert := stateToPostableAlert(alertState, appURL)
 		postableAlert.EndsAt = strfmt.DateTime(ts)
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *postableAlert)
