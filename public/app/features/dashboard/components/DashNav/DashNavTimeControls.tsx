@@ -1,17 +1,10 @@
-// Libraries
 import React, { Component } from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import { dateMath, TimeRange, TimeZone } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-
-// Types
-
-// Components
 import { defaultIntervals, RefreshPicker, ToolbarButtonRow } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
-
-// Utils & Services
 import { appEvents } from 'app/core/core';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 

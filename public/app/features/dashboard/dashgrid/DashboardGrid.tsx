@@ -1,11 +1,8 @@
-// Libraries
 import classNames from 'classnames';
 import React, { PureComponent, CSSProperties } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
-
-// Components
 import { Subscription } from 'rxjs';
 
 import { config } from '@grafana/runtime';
@@ -15,8 +12,6 @@ import { DashboardPanelsChangedEvent } from 'app/types/events';
 
 import { AddPanelWidget } from '../components/AddPanelWidget';
 import { DashboardRow } from '../components/DashboardRow';
-
-// Types
 import { DashboardModel, PanelModel } from '../state';
 import { GridPos } from '../state/PanelModel';
 

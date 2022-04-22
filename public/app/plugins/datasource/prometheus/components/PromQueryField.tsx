@@ -12,8 +12,6 @@ import {
   SuggestionsState,
   Icon,
 } from '@grafana/ui';
-
-// dom also includes Element polyfills
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 

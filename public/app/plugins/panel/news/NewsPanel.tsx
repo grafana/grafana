@@ -1,8 +1,5 @@
-// Libraries
 import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
-
-// Utils & Services
 import { Unsubscribable } from 'rxjs';
 
 import { PanelProps, DataFrameView, dateTimeFormat, GrafanaTheme2, textUtil } from '@grafana/data';
@@ -15,8 +12,6 @@ import { loadFeed } from './feed';
 import { PanelOptions } from './models.gen';
 import { NewsItem } from './types';
 import { feedToDataFrame } from './utils';
-
-// Types
 
 interface Props extends PanelProps<PanelOptions> {}
 

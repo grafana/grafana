@@ -1,4 +1,3 @@
-// Libaries
 import {
   cloneDeep,
   defaults as _defaults,
@@ -13,8 +12,6 @@ import {
   pull,
   some,
 } from 'lodash';
-
-// Constants
 import { Subscription } from 'rxjs';
 
 import {
@@ -35,10 +32,7 @@ import {
 import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
-// Utils & Services
 import { contextSrv } from 'app/core/services/context_srv';
-
-// Types
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';

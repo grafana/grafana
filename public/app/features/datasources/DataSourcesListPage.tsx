@@ -1,21 +1,15 @@
-// Libraries
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-// Services & Utils
 import { IconName } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import Page from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { contextSrv } from 'app/core/core';
-// Components
-
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState, AccessControlAction } from 'app/types';
 
 import DataSourcesList from './DataSourcesList';
-// Types
-// Actions
 import { loadDataSources } from './state/actions';
 import { setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/reducers';
 import {

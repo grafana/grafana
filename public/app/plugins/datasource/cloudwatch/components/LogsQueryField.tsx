@@ -1,4 +1,3 @@
-// Libraries
 import { css } from '@emotion/css';
 import { intersectionBy, debounce, unionBy } from 'lodash';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
@@ -15,9 +14,6 @@ import {
   TypeaheadInput,
   TypeaheadOutput,
 } from '@grafana/ui';
-
-// Utils & Services
-// dom also includes Element polyfills
 import { InputActionMeta } from '@grafana/ui/src/components/Select/types';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -27,9 +23,6 @@ import { ExploreId } from 'app/types';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchLanguageProvider } from '../language_provider';
 import syntax from '../syntax';
-
-// Types
-
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 

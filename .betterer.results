@@ -68,8 +68,8 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/slate-plugins/runner.test.tsx:2165687770": [
       [3, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/slate-plugins/suggestions.test.tsx:4138775391": [
-      [1, 18, 13, "RegExp match", "2409514259"]
+    "packages/grafana-ui/src/slate-plugins/suggestions.test.tsx:3654981205": [
+      [0, 18, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/CanvasSpanGraph.test.js:3515574241": [
       [15, 19, 13, "RegExp match", "2409514259"]
@@ -278,8 +278,8 @@ exports[`no enzyme tests`] = {
     "public/app/features/users/UsersActionBar.test.tsx:4031641375": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/users/UsersListPage.test.tsx:2626906707": [
-      [1, 19, 13, "RegExp match", "2409514259"]
+    "public/app/features/users/UsersListPage.test.tsx:3908145117": [
+      [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/users/UsersTable.test.tsx:3051231816": [
       [1, 19, 13, "RegExp match", "2409514259"]
@@ -290,7 +290,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:2974837543": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.test.tsx:3888529428": [
+    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.test.tsx:2097436158": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/elasticsearch/configuration/ConfigEditor.test.tsx:1089831034": [

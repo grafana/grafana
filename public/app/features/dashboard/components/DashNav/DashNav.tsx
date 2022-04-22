@@ -1,9 +1,7 @@
-// Libaries
 import React, { FC, ReactNode } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
-// Utils & Services
 import { locationUtil, textUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpdate } from '@grafana/ui';
@@ -13,13 +11,7 @@ import { DashboardCommentsModal } from 'app/features/dashboard/components/Dashbo
 import { SaveDashboardProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardProxy';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-
-// Components
-// State
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-
-// Types
-
 import { KioskMode } from 'app/types';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';

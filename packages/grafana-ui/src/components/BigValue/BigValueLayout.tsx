@@ -1,15 +1,11 @@
-// Libraries
 import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
-// Utils
 import { formattedValueToString, DisplayValue, FieldConfig, FieldType } from '@grafana/data';
 import { GraphDrawStyle, GraphFieldConfig } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../utils';
 import { calculateFontSize } from '../../utils/measureText';
-
-// Types
 import { Sparkline } from '../Sparkline/Sparkline';
 
 import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';

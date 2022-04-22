@@ -1,8 +1,5 @@
-// Libraries
 import { each, find, findIndex, flattenDeep, isArray, isBoolean, isNumber, isString, map, max, some } from 'lodash';
 
-// Utils
-// Types
 import {
   AnnotationQuery,
   DataLink,
@@ -26,8 +23,6 @@ import {
   ValueMap,
   ValueMapping,
 } from '@grafana/data';
-
-// Constants
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/editors/registry';

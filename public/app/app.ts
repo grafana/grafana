@@ -7,13 +7,12 @@ import './polyfills/old-mediaquerylist'; // Safari < 14 does not have mql.addEve
 import 'file-saver';
 import 'jquery';
 
-// eslint-disable-next-line lodash/import-scope
-import _ from 'lodash';
+import 'app/features/all';
+
+import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import config from 'app/core/config';
-// @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import {
   locationUtil,
   monacoLanguageRegistry,
@@ -24,10 +23,6 @@ import {
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
-import { arrayMove } from 'app/core/utils/arrayMove';
-
-import { preloadPlugins } from './features/plugins/pluginPreloader';
-
 import {
   locationService,
   registerEchoBackend,
@@ -37,15 +32,11 @@ import {
   setLocationSrv,
   setQueryRunnerFactory,
 } from '@grafana/runtime';
-
-import { Echo } from './core/services/echo/Echo';
-import { reportPerformance } from './core/services/echo/EchoSrv';
-import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
-
-import 'app/features/all';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
 import { getScrollbarWidth } from '@grafana/ui';
+import config from 'app/core/config';
+import { arrayMove } from 'app/core/utils/arrayMove';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
@@ -56,6 +47,9 @@ import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks
 import { ModalManager } from './core/services/ModalManager';
 import { backendSrv } from './core/services/backend_srv';
 import { contextSrv } from './core/services/context_srv';
+import { Echo } from './core/services/echo/Echo';
+import { reportPerformance } from './core/services/echo/EchoSrv';
+import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
@@ -65,6 +59,7 @@ import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
+import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { initWindowRuntime } from './features/runtime/init';
 import { variableAdapters } from './features/variables/adapters';

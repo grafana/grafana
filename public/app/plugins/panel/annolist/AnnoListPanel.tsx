@@ -1,9 +1,6 @@
-// Libraries
 import { css } from '@emotion/css';
 import { FocusScope } from '@react-aria/focus';
 import React, { PureComponent } from 'react';
-
-// Types
 import { Subscription } from 'rxjs';
 
 import {

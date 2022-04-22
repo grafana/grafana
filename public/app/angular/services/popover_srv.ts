@@ -1,5 +1,4 @@
 import { extend } from 'lodash';
-
 // @ts-ignore
 import Drop from 'tether-drop';
 

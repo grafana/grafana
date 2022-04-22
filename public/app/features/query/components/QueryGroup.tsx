@@ -1,10 +1,5 @@
-// Libraries
 import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
-
-// Components
-// Services
-// Types
 import { Unsubscribable } from 'rxjs';
 
 import {

@@ -1,7 +1,6 @@
-// eslint-disable-next-line lodash/import-scope
 import { render, screen, fireEvent } from '@testing-library/react';
 import { shallow } from 'enzyme';
-import _, { DebouncedFunc } from 'lodash';
+import _, { DebouncedFunc } from 'lodash'; // eslint-disable-line lodash/import-scope
 import React from 'react';
 import { act } from 'react-dom/test-utils';
 

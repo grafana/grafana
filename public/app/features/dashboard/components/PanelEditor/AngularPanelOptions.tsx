@@ -1,12 +1,8 @@
-// Libraries
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-// Utils and services
 import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
-
-// Types
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import { changePanelPlugin } from 'app/features/panel/state/actions';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
