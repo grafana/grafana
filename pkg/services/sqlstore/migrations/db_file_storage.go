@@ -10,7 +10,10 @@ func addDbFileStorageMigration(mg *migrator.Migrator) {
 		Columns: []*migrator.Column{
 			{Name: "path", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 			{Name: "path_hash", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+
+			// parent_folder_path_hash is an optimization for a common use case - list all files in a given folder
 			{Name: "parent_folder_path_hash", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+
 			{Name: "contents", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
