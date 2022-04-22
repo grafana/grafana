@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/prometheus/alertmanager/pkg/labels"
 
@@ -37,11 +38,11 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[string]da
 	// allChannels: channelUID -> channelConfig
 	allChannelsPerOrg, defaultChannelsPerOrg, err := m.getNotificationChannelMap()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load notification channels: %w", err)
 	}
 
 	amConfigPerOrg := make(amConfigsPerOrg, len(allChannelsPerOrg))
-	for orgID := range allChannelsPerOrg {
+	for orgID, channels := range allChannelsPerOrg {
 		amConfig := &PostableUserConfig{
 			AlertmanagerConfig: PostableApiAlertingConfig{
 				Receivers: make([]*PostableApiReceiver, 0),
@@ -50,14 +51,14 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[string]da
 		amConfigPerOrg[orgID] = amConfig
 
 		// Create all newly migrated receivers from legacy notification channels.
-		receiversMap, receivers, err := m.createReceivers(allChannelsPerOrg[orgID])
+		receiversMap, receivers, err := m.createReceivers(channels)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to create receiver in orgId %d: %w", orgID, err)
 		}
 
 		// No need to create an Alertmanager configuration if there are no receivers left that aren't obsolete.
 		if len(receivers) == 0 {
-			m.mg.Logger.Info("no available receivers", "orgId", orgID)
+			m.mg.Logger.Warn("no available receivers", "orgId", orgID)
 			continue
 		}
 
@@ -73,7 +74,7 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[string]da
 		}
 		defaultReceiver, defaultRoute, err := m.createDefaultRouteAndReceiver(defaultChannels)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to create default route & receiver in orgId %d: %w", orgID, err)
 		}
 		amConfig.AlertmanagerConfig.Route = defaultRoute
 		if defaultReceiver != nil {
@@ -85,7 +86,7 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[string]da
 			for ruleUid, da := range rules {
 				route, err := m.createRouteForAlert(ruleUid, da, receiversMap, defaultReceivers)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("failed to create route for alert %s in orgId %d: %w", da.Name, orgID, err)
 				}
 
 				if route != nil {
@@ -97,7 +98,7 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[string]da
 		// Validate the alertmanager configuration produced, this gives a chance to catch bad configuration at migration time.
 		// Validation between legacy and unified alerting can be different (e.g. due to bug fixes) so this would fail the migration in that case.
 		if err := m.validateAlertmanagerConfig(orgID, amConfig); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to validate AlertmanagerConfig in orgId %d: %w", orgID, err)
 		}
 	}
 
