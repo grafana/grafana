@@ -1,8 +1,9 @@
-import React, { HTMLAttributes, useEffect } from 'react';
 import { css, cx } from '@emotion/css';
-import { useStyles2 } from '@grafana/ui';
+import React, { HTMLAttributes, useEffect } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportExperimentView } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
 
 export interface Props extends HTMLAttributes<HTMLSpanElement> {
   text?: string;

@@ -1,10 +1,10 @@
 import { PanelPlugin } from '@grafana/data';
+import { GroupState } from 'app/features/canvas/runtime/group';
 
 import { CanvasPanel, InstanceState } from './CanvasPanel';
-import { PanelOptions } from './models.gen';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
-import { GroupState } from 'app/features/canvas/runtime/group';
+import { PanelOptions } from './models.gen';
 
 export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
   .setNoPadding() // extend to panel edges

@@ -52,6 +52,7 @@ export interface PanelInspectActionSupplier {
 // (window as any).grafanaPanelInspectActionSupplier = dummySupplier;
 
 import React, { ComponentType } from 'react';
+
 import { PanelData } from '@grafana/data';
 
 interface InspectActionsTabProps {

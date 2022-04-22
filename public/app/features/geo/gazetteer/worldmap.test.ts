@@ -2,6 +2,7 @@ import { getGazetteer } from './gazetteer';
 
 let backendResults: any = { hello: 'world' };
 import countriesJSON from '../../../../gazetteer/countries.json';
+
 import { toLonLat } from 'ol/proj';
 
 jest.mock('@grafana/runtime', () => ({

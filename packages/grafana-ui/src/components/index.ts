@@ -231,16 +231,15 @@ export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatu
 export { InlineFormLabel } from './FormLabel/FormLabel';
 
 // Select
-import { AsyncSelect, Select } from './Forms/Legacy/Select/Select';
+import { FormField } from './FormField/FormField';
+import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
 import { IndicatorsContainer } from './Forms/Legacy/Select/IndicatorsContainer';
 import { NoOptionsMessage } from './Forms/Legacy/Select/NoOptionsMessage';
+import { AsyncSelect, Select } from './Forms/Legacy/Select/Select';
 
 //Input
-import { Input, LegacyInputStatus } from './Forms/Legacy/Input/Input';
-import { FormField } from './FormField/FormField';
-import { SecretFormField } from './SecretFormField/SecretFormField';
-
 import { Switch } from './Forms/Legacy/Switch/Switch';
+import { SecretFormField } from './SecretFormField/SecretFormField';
 
 const LegacyForms = {
   SecretFormField,

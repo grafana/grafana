@@ -1,3 +1,7 @@
+import React, { FC, useMemo, useState } from 'react';
+import { useObservable } from 'react-use';
+import AutoSizer from 'react-virtualized-auto-sizer';
+
 import {
   ApplyFieldOverrideOptions,
   DataTransformerConfig,
@@ -8,15 +12,13 @@ import {
 } from '@grafana/data';
 import { Button, Table } from '@grafana/ui';
 import { config } from 'app/core/config';
-import React, { FC, useMemo, useState } from 'react';
-import { useObservable } from 'react-use';
+import { useAppNotification } from 'app/core/copy/appNotification';
+import { QueryGroupOptions } from 'app/types';
+
+import Page from '../../core/components/Page/Page';
+import { PanelRenderer } from '../panel/components/PanelRenderer';
 import { QueryGroup } from '../query/components/QueryGroup';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
-import { QueryGroupOptions } from 'app/types';
-import Page from '../../core/components/Page/Page';
-import AutoSizer from 'react-virtualized-auto-sizer';
-import { PanelRenderer } from '../panel/components/PanelRenderer';
-import { useAppNotification } from 'app/core/copy/appNotification';
 
 interface State {
   queryRunner: PanelQueryRunner;

@@ -1,11 +1,14 @@
+import { css, cx } from '@emotion/css';
 import React from 'react';
-import { VizLegendBaseProps, VizLegendItem } from './types';
+
+import { GrafanaTheme } from '@grafana/data';
+
+import { useStyles } from '../../themes';
 import { InlineList } from '../List/InlineList';
 import { List } from '../List/List';
-import { css, cx } from '@emotion/css';
-import { useStyles } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
+
 import { VizLegendListItem } from './VizLegendListItem';
+import { VizLegendBaseProps, VizLegendItem } from './types';
 
 export interface Props<T> extends VizLegendBaseProps<T> {}
 

@@ -1,8 +1,11 @@
+import { useMemo } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { AlertmanagerConfig } from 'app/plugins/datasource/alertmanager/types';
-import { useMemo } from 'react';
+
 import { timeIntervalToString } from '../utils/alertmanager';
 import { initialAsyncRequestState } from '../utils/redux';
+
 import { useAlertManagerSourceName } from './useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 

@@ -1,5 +1,7 @@
 import { waitFor } from '@testing-library/react';
+
 import { ExploreId } from '../../../../types';
+
 import { withinExplore } from './setup';
 
 export const assertQueryHistoryExists = (query: string, exploreId: ExploreId = ExploreId.left) => {

@@ -1,4 +1,5 @@
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+
 import { sortRulesByName, flattenGrafanaManagedRules } from './useCombinedRuleNamespaces';
 
 describe('flattenGrafanaManagedRules', () => {

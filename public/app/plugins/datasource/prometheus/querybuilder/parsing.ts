@@ -1,7 +1,6 @@
-import { parser } from 'lezer-promql';
 import { SyntaxNode } from '@lezer/common';
-import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
-import { PromVisualQuery, PromVisualQueryBinary } from './types';
+import { parser } from 'lezer-promql';
+
 import { binaryScalarDefs } from './binaryScalarOperations';
 import {
   ErrorName,
@@ -12,6 +11,8 @@ import {
   makeError,
   replaceVariables,
 } from './shared/parsingUtils';
+import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
+import { PromVisualQuery, PromVisualQueryBinary } from './types';
 
 /**
  * Parses a PromQL query into a visual query model.

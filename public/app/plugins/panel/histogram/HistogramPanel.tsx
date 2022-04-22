@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
+
 import { PanelProps, buildHistogram, getHistogramFields } from '@grafana/data';
+import { useTheme2 } from '@grafana/ui';
 
 import { Histogram, getBucketSize } from './Histogram';
 import { PanelOptions } from './models.gen';
-import { useTheme2 } from '@grafana/ui';
 
 type Props = PanelProps<PanelOptions>;
 

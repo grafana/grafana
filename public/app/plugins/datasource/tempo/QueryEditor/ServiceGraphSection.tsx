@@ -1,11 +1,14 @@
 import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
-import { getDS } from './utils';
+
 import { InlineField, InlineFieldRow } from '@grafana/ui';
-import { AdHocVariableFilter } from '../../../../features/variables/types';
-import { TempoQuery } from '../datasource';
+
 import { AdHocFilter } from '../../../../features/variables/adhoc/picker/AdHocFilter';
+import { AdHocVariableFilter } from '../../../../features/variables/types';
 import { PrometheusDatasource } from '../../prometheus/datasource';
+import { TempoQuery } from '../datasource';
+
+import { getDS } from './utils';
 
 export function ServiceGraphSection({
   graphDatasourceUid,

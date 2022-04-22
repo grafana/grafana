@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { css } from '@emotion/css';
 import {
   KBarAnimator,
   KBarPortal,
@@ -11,16 +11,19 @@ import {
   useRegisterActions,
   useKBar,
 } from 'kbar';
-import { useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
-import { ResultItem } from './ResultItem';
-import getGlobalActions from './actions/global.static.actions';
-import getDashboardNavActions from './actions/dashboard.nav.actions';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { StoreState } from 'app/types';
-import { css } from '@emotion/css';
-import { keybindingSrv } from '../../core/services/keybindingSrv';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction, locationService } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
+import { StoreState } from 'app/types';
+
+import { keybindingSrv } from '../../core/services/keybindingSrv';
+
+import { ResultItem } from './ResultItem';
+import getDashboardNavActions from './actions/dashboard.nav.actions';
+import getGlobalActions from './actions/global.static.actions';
 
 /**
  * Wrap all the components from KBar here.

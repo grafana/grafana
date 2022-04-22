@@ -1,12 +1,15 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+
+import { StoreState } from 'app/types';
+
+import { initPanelState } from '../../panel/state/actions';
+import { setPanelInstanceState } from '../../panel/state/reducers';
+import { DashboardModel, PanelModel } from '../state';
+
+import { LazyLoader } from './LazyLoader';
 import { PanelChrome } from './PanelChrome';
 import { PanelChromeAngular } from './PanelChromeAngular';
-import { DashboardModel, PanelModel } from '../state';
-import { StoreState } from 'app/types';
-import { setPanelInstanceState } from '../../panel/state/reducers';
-import { initPanelState } from '../../panel/state/actions';
-import { LazyLoader } from './LazyLoader';
 
 export interface OwnProps {
   panel: PanelModel;

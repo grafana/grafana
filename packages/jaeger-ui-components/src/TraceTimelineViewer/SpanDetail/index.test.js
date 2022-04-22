@@ -14,17 +14,19 @@
 
 jest.mock('../utils');
 
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
+
+import LabeledList from '../../common/LabeledList';
+import traceGenerator from '../../demo/trace-generators';
+import transformTraceData from '../../model/transform-trace-data';
+import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
 import DetailState from './DetailState';
+
 import SpanDetail from './index';
-import { formatDuration } from '../utils';
-import LabeledList from '../../common/LabeledList';
-import traceGenerator from '../../demo/trace-generators';
-import transformTraceData from '../../model/transform-trace-data';
 
 describe('<SpanDetail>', () => {
   let wrapper;

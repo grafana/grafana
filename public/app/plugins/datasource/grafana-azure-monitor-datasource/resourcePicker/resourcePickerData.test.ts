@@ -4,8 +4,9 @@ import {
   createMockARGSubscriptionResponse,
 } from '../__mocks__/argResourcePickerResponse';
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
-import ResourcePickerData from './resourcePickerData';
 import { AzureGraphResponse } from '../types';
+
+import ResourcePickerData from './resourcePickerData';
 
 const createResourcePickerData = (responses: AzureGraphResponse[]) => {
   const instanceSettings = createMockInstanceSetttings();

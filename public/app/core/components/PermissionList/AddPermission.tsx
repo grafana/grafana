@@ -1,10 +1,11 @@
-import React, { Component } from 'react';
 import { css } from '@emotion/css';
-import config from 'app/core/config';
-import { UserPicker } from 'app/core/components/Select/UserPicker';
-import { TeamPicker } from 'app/core/components/Select/TeamPicker';
-import { Button, Form, HorizontalGroup, Select, stylesFactory } from '@grafana/ui';
+import React, { Component } from 'react';
+
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { Button, Form, HorizontalGroup, Select, stylesFactory } from '@grafana/ui';
+import { TeamPicker } from 'app/core/components/Select/TeamPicker';
+import { UserPicker } from 'app/core/components/Select/UserPicker';
+import config from 'app/core/config';
 import { OrgUser, Team } from 'app/types';
 import {
   dashboardPermissionLevels,
@@ -14,6 +15,7 @@ import {
   NewDashboardAclItem,
   OrgRole,
 } from 'app/types/acl';
+
 import { CloseButton } from '../CloseButton/CloseButton';
 
 export interface Props {

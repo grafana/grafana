@@ -4,18 +4,20 @@ import { connect, ConnectedProps } from 'react-redux';
 
 // Components
 import Page from 'app/core/components/Page/Page';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { PluginDashboard, StoreState } from 'app/types';
+
+import { importDashboard, removeDashboard } from '../dashboard/state/actions';
+import { loadPluginDashboards } from '../plugins/admin/state/actions';
+
 import DashboardTable from './DashboardsTable';
 
 // Actions & Selectors
-import { getNavModel } from 'app/core/selectors/navModel';
 import { loadDataSource } from './state/actions';
-import { loadPluginDashboards } from '../plugins/admin/state/actions';
-import { importDashboard, removeDashboard } from '../dashboard/state/actions';
 import { getDataSource } from './state/selectors';
 
 // Types
-import { PluginDashboard, StoreState } from 'app/types';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 

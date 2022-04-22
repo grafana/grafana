@@ -1,9 +1,11 @@
-import React, { ChangeEvent } from 'react';
 import { css } from '@emotion/css';
+import React, { ChangeEvent } from 'react';
+
 import { dateTime } from '@grafana/data';
-import { DatePicker } from '../DatePicker/DatePicker';
-import { Props as InputProps, Input } from '../../Input/Input';
+
 import { useStyles } from '../../../themes';
+import { Props as InputProps, Input } from '../../Input/Input';
+import { DatePicker } from '../DatePicker/DatePicker';
 
 export const formatDate = (date: Date | string) => dateTime(date).format('L');
 

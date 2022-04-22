@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import React, { FC } from 'react';
-import { DeleteButton, Icon, IconName, Tooltip, useTheme2 } from '@grafana/ui';
+
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { DeleteButton, Icon, IconName, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { ApiKey } from '../../types';
-import { css } from '@emotion/css';
 
 interface Props {
   apiKeys: ApiKey[];

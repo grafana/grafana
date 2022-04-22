@@ -1,21 +1,24 @@
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+
 import { LoadingState } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
+
 import { PromQueryEditorProps } from '../../components/types';
+import { PromQuery } from '../../types';
 import { promQueryModeller } from '../PromQueryModeller';
+import { buildVisualQueryFromString } from '../parsing';
+import { FeedbackLink } from '../shared/FeedbackLink';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from '../shared/QueryHeaderSwitch';
 import { QueryEditorMode } from '../shared/types';
-import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
-import { buildVisualQueryFromString } from '../parsing';
-import { PromQueryCodeEditor } from './PromQueryCodeEditor';
-import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
-import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { changeEditorMode, getQueryWithDefaults } from '../state';
-import { PromQuery } from '../../types';
-import { FeedbackLink } from '../shared/FeedbackLink';
+
+import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
+import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
+import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
+import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
   const { onChange, onRunQuery, data, app } = props;

@@ -1,6 +1,7 @@
+import { Story } from '@storybook/react';
 import React from 'react';
 import { ValidateResult } from 'react-hook-form';
-import { Story } from '@storybook/react';
+
 import {
   Field,
   Legend,
@@ -14,8 +15,10 @@ import {
   TextArea,
   RadioButtonGroup,
 } from '@grafana/ui';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
+
 import mdx from './Form.mdx';
 
 export default {

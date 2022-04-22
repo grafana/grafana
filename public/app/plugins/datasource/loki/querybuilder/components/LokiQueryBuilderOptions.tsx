@@ -1,12 +1,14 @@
 import React from 'react';
-import { EditorRow, EditorField } from '@grafana/experimental';
+
 import { SelectableValue } from '@grafana/data';
+import { EditorRow, EditorField } from '@grafana/experimental';
 import { RadioButtonGroup, Select } from '@grafana/ui';
-import { LokiQuery, LokiQueryType } from '../../types';
-import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
-import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
 import { AutoSizeInput } from 'app/plugins/datasource/prometheus/querybuilder/shared/AutoSizeInput';
+import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
+
+import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
 import { isMetricsQuery } from '../../datasource';
+import { LokiQuery, LokiQueryType } from '../../types';
 
 export interface Props {
   query: LokiQuery;

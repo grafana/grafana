@@ -1,11 +1,14 @@
+import { css } from '@emotion/css';
 import React from 'react';
-import { PlaylistDTO } from './types';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Card, LinkButton, ModalsController, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { GrafanaTheme2 } from '@grafana/data';
-import { css } from '@emotion/css';
+
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
+
 import { ShareModal } from './ShareModal';
+import { PlaylistDTO } from './types';
 
 interface Props {
   setStartPlaylist: (playlistItem: PlaylistDTO) => void;

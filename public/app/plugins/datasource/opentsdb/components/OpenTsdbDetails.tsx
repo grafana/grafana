@@ -1,9 +1,11 @@
 import React, { SyntheticEvent } from 'react';
+
 import { InlineFormLabel, LegacyForms } from '@grafana/ui';
 const { Select, Input } = LegacyForms;
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
-import { OpenTsdbOptions } from '../types';
+
 import { useUniqueId } from '../../influxdb/components/useUniqueId';
+import { OpenTsdbOptions } from '../types';
 
 const tsdbVersions = [
   { label: '<=2.1', value: 1 },

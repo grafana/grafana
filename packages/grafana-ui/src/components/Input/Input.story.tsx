@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
 import { Story, Meta } from '@storybook/react';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import mdx from './Input.mdx';
-import { getAvailableIcons, IconName } from '../../types';
+import React, { useState } from 'react';
+
 import { KeyValue } from '@grafana/data';
 import { Field, Icon, Button, Input } from '@grafana/ui';
+
+import { getAvailableIcons, IconName } from '../../types';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import mdx from './Input.mdx';
 
 const prefixSuffixOpts = {
   None: null,

@@ -1,21 +1,22 @@
 // Libraries
+import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 // Utils & Services
-import { CustomScrollbar, stylesFactory } from '@grafana/ui';
+import { Unsubscribable } from 'rxjs';
 
+import { PanelProps, DataFrameView, dateTimeFormat, GrafanaTheme2, textUtil } from '@grafana/data';
+import { RefreshEvent } from '@grafana/runtime';
+import { CustomScrollbar, stylesFactory } from '@grafana/ui';
 import config from 'app/core/config';
-import { feedToDataFrame } from './utils';
+
+import { DEFAULT_FEED_URL } from './constants';
 import { loadFeed } from './feed';
+import { PanelOptions } from './models.gen';
+import { NewsItem } from './types';
+import { feedToDataFrame } from './utils';
 
 // Types
-import { PanelProps, DataFrameView, dateTimeFormat, GrafanaTheme2, textUtil } from '@grafana/data';
-import { NewsItem } from './types';
-import { PanelOptions } from './models.gen';
-import { DEFAULT_FEED_URL } from './constants';
-import { css, cx } from '@emotion/css';
-import { RefreshEvent } from '@grafana/runtime';
-import { Unsubscribable } from 'rxjs';
 
 interface Props extends PanelProps<PanelOptions> {}
 

@@ -12,13 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css } from '@emotion/css';
-
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
-import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
+import * as React from 'react';
+import { createRef, RefObject } from 'react';
+
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
+
+import { Accessors } from '../ScrollManager';
+import { PEER_SERVICE } from '../constants/tag-keys';
+import { SpanLinkFunc, TNil } from '../types';
+import TTraceTimeline from '../types/TTraceTimeline';
+import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
+import { getColorByKey } from '../utils/color-generator';
 
 import ListView from './ListView';
 import SpanBarRow from './SpanBarRow';
@@ -32,13 +40,6 @@ import {
   spanContainsErredSpan,
   ViewedBoundsFunctionType,
 } from './utils';
-import { Accessors } from '../ScrollManager';
-import { getColorByKey } from '../utils/color-generator';
-import { SpanLinkFunc, TNil } from '../types';
-import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
-import TTraceTimeline from '../types/TTraceTimeline';
-import { PEER_SERVICE } from '../constants/tag-keys';
-import { createRef, RefObject } from 'react';
 
 type TExtractUiFindFromStateReturn = {
   uiFind: string | undefined;

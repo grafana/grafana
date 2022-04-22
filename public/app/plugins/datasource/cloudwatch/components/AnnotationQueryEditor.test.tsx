@@ -1,8 +1,10 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
+
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
 import { CloudWatchAnnotationQuery } from '../types';
+
 import { AnnotationQueryEditor } from './AnnotationQueryEditor';
 
 const ds = setupMockedDataSource({
