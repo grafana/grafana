@@ -16,6 +16,7 @@ import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { FocusScope } from '@react-aria/focus';
 import { NavBarContext } from '../context';
 import { NavBarToggle } from './NavBarToggle';
+import { NavBarMenuPortalContainer } from './NavBarMenuPortalContainer';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -84,6 +85,8 @@ export const NavBarNext = React.memo(() => {
               isExpanded={menuOpen}
               onClick={() => setMenuOpen(!menuOpen)}
             />
+
+            <NavBarMenuPortalContainer />
 
             <ul className={styles.itemList}>
               <NavBarItemWithoutMenu

@@ -1,6 +1,6 @@
 import React, { ReactElement, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { getPortalContainer, Icon, IconName, Link, useTheme2 } from '@grafana/ui';
+import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { MenuTriggerProps } from '@react-types/menu';
 import { useMenuTriggerState } from '@react-stately/menu';
@@ -14,6 +14,7 @@ import { FocusScope } from '@react-aria/focus';
 import { NavBarItemMenuContext, useNavBarContext } from '../context';
 import { NavFeatureHighlight } from '../NavFeatureHighlight';
 import { reportExperimentView } from '@grafana/runtime';
+import { getNavMenuPortalContainer } from './NavBarMenuPortalContainer';
 
 export interface NavBarItemMenuTriggerProps extends MenuTriggerProps {
   children: ReactElement;
@@ -185,7 +186,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     <div className={cx(styles.element, 'dropdown')} {...focusWithinProps}>
       {element}
       {state.isOpen && (
-        <OverlayContainer portalContainer={getPortalContainer()}>
+        <OverlayContainer portalContainer={getNavMenuPortalContainer()}>
           <NavBarItemMenuContext.Provider
             value={{
               menuProps,

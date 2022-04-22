@@ -33,7 +33,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: '50%',
     marginRight: 0,
-    zIndex: theme.zIndex.sidemenu,
+    zIndex: theme.zIndex.sidemenu + 1,
 
     [theme.breakpoints.down('md')]: {
       display: 'none',
