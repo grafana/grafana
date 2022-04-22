@@ -77,7 +77,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, lockS
 	canRunCrawler := true
 	crawlerAuth, err := authSetupService.Setup(context.Background())
 	if err != nil {
-		logger.Error("Failed to setup auth for the dashboard previews crawler", "err", err)
+		logger.Error("failed to setup auth for the dashboard previews crawler", "err", err)
 		canRunCrawler = false
 	}
 	t := &thumbService{
