@@ -141,20 +141,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     });
   });
 
-  // const getExemplarValuesInCell = useCallback(
-  //   (lookupRange: HeatmapLookup): DataFrame[] | undefined => {
-  //     return lookupDataInCell(lookupRange, data.annotations?.[0]!, onSplitOpen, timeRange, timeZone);
-  //   },
-  //   [data.annotations, onSplitOpen, timeRange, timeZone]
-  // );
-
-  // const getDataValuesInCell = useCallback(
-  //   (lookupRange: HeatmapLookup): DataFrame[] | undefined => {
-  //     return lookupDataInCell(lookupRange, data.series?.[0]!, onSplitOpen, timeRange, timeZone);
-  //   },
-  //   [data.series, onSplitOpen, timeRange, timeZone]
-  // );
-
   const renderLegend = () => {
     if (options.legend.displayMode === LegendDisplayMode.Hidden || !info.heatmap) {
       return null;
@@ -204,6 +190,8 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
               layers: [
                 HeatmapTab({
                   data: resolveMappingToData(data.series[0], infoMapping[hover.index]),
+                  heatmapData: info,
+                  index: hover.index,
                   options: { showHistogram: options.tooltip.yHistogram, timeZone },
                 }),
                 ExemplarTab({
