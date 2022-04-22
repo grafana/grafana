@@ -166,12 +166,34 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             placeholder="attribute name"
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, attributeName: value })}
             label="Attribute Name"
-            tooltip='Attribute or tag to query on. Tags should be formatted "Tags.<name>".'
+            tooltip={
+              <>
+                {'Attribute or tag to query on. Tags should be formatted "Tags.<name>". '}
+                <a
+                  href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/#selecting-attributes"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  See the documentation for more details
+                </a>
+              </>
+            }
           />
           <InlineField
             label="Filters"
             labelWidth={20}
-            tooltip='Pre-defined ec2:DescribeInstances filters/tags and the values to filter on. Tags should be formatted "tag:<name>. See the documentation for more details.'
+            tooltip={
+              <>
+                <a
+                  href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/#selecting-attributes"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Pre-defined ec2:DescribeInstances filters/tags
+                </a>
+                {' and the values to filter on. Tags should be formatted tag:<name>.'}
+              </>
+            }
           >
             <MultiFilter
               filters={parsedQuery.ec2Filters}

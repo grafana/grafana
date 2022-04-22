@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react';
 
-import { InlineField, Input } from '@grafana/ui';
+import { InlineField, Input, PopoverContent } from '@grafana/ui';
 
 const LABEL_WIDTH = 20;
 
@@ -9,7 +9,7 @@ interface VariableTextFieldProps {
   placeholder: string;
   value: string;
   label: string;
-  tooltip?: string;
+  tooltip?: PopoverContent;
 }
 
 export const VariableTextField: FC<VariableTextFieldProps> = ({ label, onBlur, placeholder, value, tooltip }) => {
