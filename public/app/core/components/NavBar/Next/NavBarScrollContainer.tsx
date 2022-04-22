@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
-import { CustomScrollbar, useTheme2 } from '@grafana/ui';
+import { CustomScrollbar, Icon, useTheme2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 
 export interface Props {
@@ -10,22 +10,23 @@ export interface Props {
 export const NavBarScrollContainer = ({ children }: Props) => {
   const [showScrollTopIndicator, setShowTopScrollIndicator] = useState(false);
   const [showScrollBottomIndicator, setShowBottomScrollIndicator] = useState(false);
-  const scrollTopRef = useRef<HTMLDivElement>(null);
-  const scrollBottomRef = useRef<HTMLDivElement>(null);
+  const scrollTopMarker = useRef<HTMLDivElement>(null);
+  const scrollBottomMarker = useRef<HTMLDivElement>(null);
   const theme = useTheme2();
   const styles = getStyles(theme);
 
+  // Here we observe the top and bottom markers to determine if we should show the scroll indicators
   useEffect(() => {
     const intersectionObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        if (entry.target === scrollTopRef.current) {
+        if (entry.target === scrollTopMarker.current) {
           setShowTopScrollIndicator(!entry.isIntersecting);
-        } else if (entry.target === scrollBottomRef.current) {
+        } else if (entry.target === scrollBottomMarker.current) {
           setShowBottomScrollIndicator(!entry.isIntersecting);
         }
       });
     });
-    [scrollTopRef, scrollBottomRef].forEach((ref) => {
+    [scrollTopMarker, scrollBottomMarker].forEach((ref) => {
       if (ref.current) {
         intersectionObserver.observe(ref.current);
       }
@@ -34,18 +35,25 @@ export const NavBarScrollContainer = ({ children }: Props) => {
   }, []);
 
   return (
-    <CustomScrollbar
-      className={cx(styles.scrollContainer, {
-        [styles.scrollTopVisible]: showScrollTopIndicator,
-        [styles.scrollBottomVisible]: showScrollBottomIndicator,
-      })}
-      hideVerticalTrack
-      hideHorizontalTrack
-    >
+    <CustomScrollbar className={styles.scrollContainer} hideVerticalTrack hideHorizontalTrack>
+      <div
+        className={cx(styles.scrollTopIndicator, {
+          [styles.scrollIndicatorVisible]: showScrollTopIndicator,
+        })}
+      >
+        <Icon className={styles.scrollTopIcon} name="angle-up" />
+      </div>
       <div className={styles.scrollContent}>
-        <div className={styles.scrollTopMarker} ref={scrollTopRef}></div>
+        <div className={styles.scrollTopMarker} ref={scrollTopMarker}></div>
         {children}
-        <div className={styles.scrollBottomMarker} ref={scrollBottomRef}></div>
+        <div className={styles.scrollBottomMarker} ref={scrollBottomMarker}></div>
+      </div>
+      <div
+        className={cx(styles.scrollBottomIndicator, {
+          [styles.scrollIndicatorVisible]: showScrollBottomIndicator,
+        })}
+      >
+        <Icon className={styles.scrollBottomIcon} name="angle-down" />
       </div>
     </CustomScrollbar>
   );
@@ -70,36 +78,48 @@ const getStyles = (theme: GrafanaTheme2) => ({
   scrollContent: css({
     position: 'relative',
   }),
-  scrollContainer: css({
-    '&:before, &:after': {
-      content: "''",
-      color: theme.colors.text.primary,
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      height: theme.spacing(6),
-      opacity: 0,
-      pointerEvents: 'none',
-      transition: 'opacity 0.2s ease-in-out',
-      zIndex: theme.zIndex.sidemenu - 1,
-    },
-    '&:before': {
-      top: 0,
-      background: `linear-gradient(0deg, transparent, ${theme.colors.background.canvas})`,
-    },
-    '&:after': {
-      bottom: 0,
-      background: `linear-gradient(0deg, ${theme.colors.background.canvas}, transparent)`,
-    },
+  scrollContainer: css`
+    .scrollbar-view {
+      position: static !important;
+    }
+  `,
+  scrollTopIndicator: css({
+    background: `linear-gradient(0deg, transparent, ${theme.colors.background.canvas})`,
+    height: theme.spacing(6),
+    left: 0,
+    opacity: 0,
+    pointerEvents: 'none',
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    transition: theme.transitions.create('opacity'),
+    zIndex: theme.zIndex.sidemenu,
   }),
-  scrollTopVisible: css({
-    '&:before': {
-      opacity: 1,
-    },
+  scrollBottomIndicator: css({
+    background: `linear-gradient(0deg, ${theme.colors.background.canvas}, transparent)`,
+    bottom: 0,
+    height: theme.spacing(6),
+    left: 0,
+    opacity: 0,
+    pointerEvents: 'none',
+    position: 'absolute',
+    right: 0,
+    transition: theme.transitions.create('opacity'),
+    zIndex: theme.zIndex.sidemenu,
   }),
-  scrollBottomVisible: css({
-    '&:after': {
-      opacity: 1,
-    },
+  scrollIndicatorVisible: css({
+    opacity: 1,
+  }),
+  scrollTopIcon: css({
+    left: '50%',
+    position: 'absolute',
+    top: 0,
+    transform: 'translateX(-50%)',
+  }),
+  scrollBottomIcon: css({
+    bottom: 0,
+    left: '50%',
+    position: 'absolute',
+    transform: 'translateX(-50%)',
   }),
 });
