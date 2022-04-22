@@ -31,7 +31,7 @@
     "ts-loader", // we should remove ts-loader and use babel-loader instead
     "ora" // we should bump this once we move to esm modules
   ],
-  "ignorePaths": ["packages/grafana-toolkit/package.json", "emails/**", "plugins-bundled/**", "**/mocks/**"],
+  "ignorePaths": ["emails/**", "plugins-bundled/**", "**/mocks/**"],
   "labels": ["area/frontend", "dependencies"],
   "packageRules": [
     {
