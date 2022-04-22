@@ -1,16 +1,19 @@
-import React, { Component } from 'react';
-import { GrafanaTheme, PanelProps } from '@grafana/data';
-import { PanelOptions } from './models.gen';
-import { Subscription } from 'rxjs';
-import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
-import { CanvasGroupOptions } from 'app/features/canvas';
-import { Scene } from 'app/features/canvas/runtime/scene';
-import { Button, PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
-import { ElementState } from 'app/features/canvas/runtime/element';
 import { css } from '@emotion/css';
+import React, { Component } from 'react';
+import { Subscription } from 'rxjs';
+
+import { PanelProps, GrafanaTheme } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime/src';
-import { InlineEdit } from './InlineEdit';
+import { PanelContext, PanelContextRoot, Button, stylesFactory } from '@grafana/ui';
+import { CanvasGroupOptions } from 'app/features/canvas';
+import { ElementState } from 'app/features/canvas/runtime/element';
+import { Scene } from 'app/features/canvas/runtime/scene';
+import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
+
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+
+import { InlineEdit } from './InlineEdit';
+import { PanelOptions } from './models.gen';
 
 interface Props extends PanelProps<PanelOptions> {}
 
