@@ -31,11 +31,11 @@ type dbFileStorage struct {
 	log log.Logger
 }
 
-func NewDbStorage(log log.Logger, db *sqlstore.SQLStore, pathFilters *PathFilters, rootFolder string) FileStorage {
+func NewDbStorage(log log.Logger, db *sqlstore.SQLStore, filter PathFilter, rootFolder string) FileStorage {
 	return newWrapper(log, &dbFileStorage{
 		log: log,
 		db:  db,
-	}, pathFilters, rootFolder)
+	}, filter, rootFolder)
 }
 
 func (s dbFileStorage) getProperties(sess *sqlstore.DBSession, lowerCasePaths []string) (map[string]map[string]string, error) {
@@ -268,40 +268,8 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 			sess.Where("path LIKE ?", "%/")
 		}
 
-		if len(options.PathFilters.allowedPrefixes)+len(options.PathFilters.allowedPaths) > 0 {
-			queries := make([]string, 0)
-			args := make([]interface{}, 0)
-			for _, prefix := range options.PathFilters.allowedPrefixes {
-				queries = append(queries, "LOWER(path) LIKE ?")
-				args = append(args, prefix+"%")
-			}
-
-			for _, path := range options.PathFilters.allowedPaths {
-				queries = append(queries, "LOWER(path) = ?")
-				args = append(args, path)
-			}
-			sess.Where(strings.Join(queries, " OR "), args...)
-		}
-
-		if options.PathFilters.disallowedPrefixes != nil && len(options.PathFilters.disallowedPrefixes) > 0 {
-			queries := make([]string, 0)
-			args := make([]interface{}, 0)
-			for _, prefix := range options.PathFilters.disallowedPrefixes {
-				queries = append(queries, "LOWER(path) NOT LIKE ?")
-				args = append(args, prefix+"%")
-			}
-			sess.Where(strings.Join(queries, " AND "), args...)
-		}
-
-		if options.PathFilters.disallowedPaths != nil && len(options.PathFilters.disallowedPaths) > 0 {
-			queries := make([]string, 0)
-			args := make([]interface{}, 0)
-			for _, path := range options.PathFilters.disallowedPaths {
-				queries = append(queries, "LOWER(path) != ?")
-				args = append(args, path)
-			}
-			sess.Where(strings.Join(queries, " AND "), args...)
-		}
+		sqlFilter := options.Filter.asSQLFilter()
+		sess.Where(sqlFilter.Where, sqlFilter.Args...)
 
 		sess.OrderBy("path")
 

@@ -91,7 +91,7 @@ describe('Render', () => {
       updateOptions: onUpdate,
     }));
     expect(screen.queryByText('is no longer supported', { exact: false })).toBeInTheDocument();
-    userEvent.click(screen.getByText('Clear Azure Monitor Logs Credentials'));
+    await userEvent.click(screen.getByText('Clear Azure Monitor Logs Credentials'));
     expect(onUpdate).toHaveBeenCalled();
     const newOpts = onUpdate.mock.calls[0][0]({});
     expect(newOpts).toEqual({ jsonData: { azureLogAnalyticsSameAs: true } });

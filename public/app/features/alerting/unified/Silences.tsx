@@ -1,20 +1,21 @@
 import React, { FC, useEffect, useCallback } from 'react';
-import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
-
 import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
+
+import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
+import { Silence } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types';
+
+import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { Authorize } from './components/Authorize';
+import SilencesEditor from './components/silences/SilencesEditor';
 import SilencesTable from './components/silences/SilencesTable';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAmAlertsAction, fetchSilencesAction } from './state/actions';
 import { SILENCES_POLL_INTERVAL_MS } from './utils/constants';
 import { AsyncRequestState, initialAsyncRequestState } from './utils/redux';
-import SilencesEditor from './components/silences/SilencesEditor';
-import { AlertManagerPicker } from './components/AlertManagerPicker';
-import { Silence } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
-import { Authorize } from './components/Authorize';
 
 const Silences: FC = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();

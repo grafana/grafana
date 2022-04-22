@@ -1,7 +1,9 @@
-import React from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } from '@grafana/data';
+
 import { Props, Table } from './Table';
 
 function getDefaultDataFrame(): DataFrame {
@@ -159,11 +161,11 @@ describe('Table', () => {
   });
 
   describe('when sorting with column header', () => {
-    it('then correct rows should be rendered', () => {
+    it('then correct rows should be rendered', async () => {
       getTestContext();
 
-      userEvent.click(within(getColumnHeader(/temperature/)).getByText(/temperature/i));
-      userEvent.click(within(getColumnHeader(/temperature/)).getByText(/temperature/i));
+      await userEvent.click(within(getColumnHeader(/temperature/)).getByText(/temperature/i));
+      await userEvent.click(within(getColumnHeader(/temperature/)).getByText(/temperature/i));
 
       const rows = within(getTable()).getAllByRole('row');
       expect(rows).toHaveLength(5);

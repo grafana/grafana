@@ -5,6 +5,7 @@ import { prompt } from 'inquirer';
 import { kebabCase } from 'lodash';
 import path from 'path';
 import gitPromise from 'simple-git';
+
 import { promptConfirm, promptInput } from '../../utils/prompt';
 import { rmdir } from '../../utils/rmdir';
 import { useSpinner } from '../../utils/useSpinner';

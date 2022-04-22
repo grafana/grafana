@@ -1,5 +1,13 @@
-import { ArrayVector, createTheme } from '@grafana/data';
-import { makeEdgesDataFrame, makeNodesDataFrame, processNodes } from './utils';
+import { ArrayVector, createTheme, DataFrame, FieldType, MutableDataFrame } from '@grafana/data';
+
+import {
+  getEdgeFields,
+  getNodeFields,
+  getNodeGraphDataFrames,
+  makeEdgesDataFrame,
+  makeNodesDataFrame,
+  processNodes,
+} from './utils';
 
 describe('processNodes', () => {
   const theme = createTheme();
@@ -62,14 +70,14 @@ describe('processNodes', () => {
         mainStat: {
           config: {},
           index: 3,
-          name: 'mainStat',
+          name: 'mainstat',
           type: 'number',
           values: new ArrayVector([0.1, 0.1, 0.1]),
         },
         secondaryStat: {
           config: {},
           index: 4,
-          name: 'secondaryStat',
+          name: 'secondarystat',
           type: 'number',
           values: new ArrayVector([2, 2, 2]),
         },
@@ -106,14 +114,14 @@ describe('processNodes', () => {
         mainStat: {
           config: {},
           index: 3,
-          name: 'mainStat',
+          name: 'mainstat',
           type: 'number',
           values: new ArrayVector([0.1, 0.1, 0.1]),
         },
         secondaryStat: {
           config: {},
           index: 4,
-          name: 'secondaryStat',
+          name: 'secondarystat',
           type: 'number',
           values: new ArrayVector([2, 2, 2]),
         },
@@ -150,14 +158,14 @@ describe('processNodes', () => {
         mainStat: {
           config: {},
           index: 3,
-          name: 'mainStat',
+          name: 'mainstat',
           type: 'number',
           values: new ArrayVector([0.1, 0.1, 0.1]),
         },
         secondaryStat: {
           config: {},
           index: 4,
-          name: 'secondaryStat',
+          name: 'secondarystat',
           type: 'number',
           values: new ArrayVector([2, 2, 2]),
         },
@@ -203,5 +211,86 @@ describe('processNodes', () => {
         name: 'arc__errors',
       },
     ]);
+  });
+
+  it('detects dataframes correctly', () => {
+    const validFrames = [
+      new MutableDataFrame({
+        refId: 'hasPreferredVisualisationType',
+        fields: [],
+        meta: {
+          preferredVisualisationType: 'nodeGraph',
+        },
+      }),
+      new MutableDataFrame({
+        refId: 'hasName',
+        fields: [],
+        name: 'nodes',
+      }),
+      new MutableDataFrame({
+        refId: 'nodes', // hasRefId
+        fields: [],
+      }),
+      new MutableDataFrame({
+        refId: 'hasValidNodesShape',
+        fields: [{ name: 'id', type: FieldType.string }],
+      }),
+      new MutableDataFrame({
+        refId: 'hasValidEdgesShape',
+        fields: [
+          { name: 'id', type: FieldType.string },
+          { name: 'source', type: FieldType.string },
+          { name: 'target', type: FieldType.string },
+        ],
+      }),
+    ];
+    const invalidFrames = [
+      new MutableDataFrame({
+        refId: 'invalidData',
+        fields: [],
+      }),
+    ];
+    const frames = [...validFrames, ...invalidFrames];
+
+    const nodeGraphFrames = getNodeGraphDataFrames(frames as DataFrame[]);
+    expect(nodeGraphFrames.length).toBe(5);
+    expect(nodeGraphFrames).toEqual(validFrames);
+  });
+
+  it('getting fields is case insensitive', () => {
+    const nodeFrame = new MutableDataFrame({
+      refId: 'nodes',
+      fields: [
+        { name: 'id', type: FieldType.string, values: ['id'] },
+        { name: 'title', type: FieldType.string, values: ['title'] },
+        { name: 'SUBTITLE', type: FieldType.string, values: ['subTitle'] },
+        { name: 'mainstat', type: FieldType.string, values: ['mainStat'] },
+        { name: 'seconDarysTat', type: FieldType.string, values: ['secondaryStat'] },
+      ],
+    });
+
+    const nodeFields = getNodeFields(nodeFrame);
+    expect(nodeFields.id).toBeDefined();
+    expect(nodeFields.title).toBeDefined();
+    expect(nodeFields.subTitle).toBeDefined();
+    expect(nodeFields.mainStat).toBeDefined();
+    expect(nodeFields.secondaryStat).toBeDefined();
+
+    const edgeFrame = new MutableDataFrame({
+      refId: 'nodes',
+      fields: [
+        { name: 'id', type: FieldType.string, values: ['id'] },
+        { name: 'source', type: FieldType.string, values: ['title'] },
+        { name: 'TARGET', type: FieldType.string, values: ['subTitle'] },
+        { name: 'mainstat', type: FieldType.string, values: ['mainStat'] },
+        { name: 'secondarystat', type: FieldType.string, values: ['secondaryStat'] },
+      ],
+    });
+    const edgeFields = getEdgeFields(edgeFrame);
+    expect(edgeFields.id).toBeDefined();
+    expect(edgeFields.source).toBeDefined();
+    expect(edgeFields.target).toBeDefined();
+    expect(edgeFields.mainStat).toBeDefined();
+    expect(edgeFields.secondaryStat).toBeDefined();
   });
 });

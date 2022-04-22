@@ -1,4 +1,6 @@
 import React from 'react';
+import uPlot from 'uplot';
+
 import {
   ArrayVector,
   DataFrame,
@@ -20,6 +22,7 @@ import {
   getFieldConfigWithMinMax,
   ThresholdsMode,
 } from '@grafana/data';
+import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
   FIXED_UNIT,
   SeriesVisibilityChangeMode,
@@ -27,12 +30,12 @@ import {
   UPlotConfigPrepFn,
   VizLegendItem,
 } from '@grafana/ui';
-import { getConfig, TimelineCoreOptions } from './timeline';
-import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
-import { TimelineFieldConfig, TimelineOptions } from './types';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
-import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
-import uPlot from 'uplot';
+
+import { preparePlotData2, getStackingGroups } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+
+import { getConfig, TimelineCoreOptions } from './timeline';
+import { TimelineFieldConfig, TimelineOptions } from './types';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
@@ -153,7 +156,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
 
   builder.setTooltipInterpolator(interpolateTooltip);
 
-  builder.setPrepData(preparePlotData);
+  builder.setPrepData((frames) => preparePlotData2(frames[0], getStackingGroups(frames[0])));
 
   builder.setCursor(coreConfig.cursor);
 

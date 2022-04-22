@@ -1,10 +1,12 @@
 import { CombinedState, combineReducers, Reducer } from 'redux';
-import { initialOptionPickerState, optionsPickerReducer, OptionsPickerState } from '../pickers/OptionsPicker/reducer';
+
 import { initialVariableEditorState, variableEditorReducer, VariableEditorState } from '../editor/reducer';
-import { variablesReducer } from './variablesReducer';
-import { initialTransactionState, transactionReducer, TransactionState } from './transactionReducer';
 import { initialVariableInspectState, variableInspectReducer, VariableInspectState } from '../inspect/reducer';
+import { initialOptionPickerState, optionsPickerReducer, OptionsPickerState } from '../pickers/OptionsPicker/reducer';
+
+import { initialTransactionState, transactionReducer, TransactionState } from './transactionReducer';
 import { initialVariablesState, VariablesState } from './types';
+import { variablesReducer } from './variablesReducer';
 
 export interface TemplatingState {
   editor: VariableEditorState;

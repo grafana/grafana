@@ -1,6 +1,8 @@
-import React, { PureComponent, ReactNode, ComponentType } from 'react';
 import { captureException } from '@sentry/browser';
+import React, { PureComponent, ReactNode, ComponentType } from 'react';
+
 import { Alert } from '../Alert/Alert';
+
 import { ErrorWithStack } from './ErrorWithStack';
 
 export interface ErrorInfo {

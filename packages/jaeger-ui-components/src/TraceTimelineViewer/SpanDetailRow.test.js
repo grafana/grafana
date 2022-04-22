@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
+
 import { createTheme } from '@grafana/data';
 
-import { UnthemedSpanDetailRow } from './SpanDetailRow';
 import SpanDetail from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
+import { UnthemedSpanDetailRow } from './SpanDetailRow';
 import SpanTreeOffset from './SpanTreeOffset';
 
 jest.mock('./SpanTreeOffset');

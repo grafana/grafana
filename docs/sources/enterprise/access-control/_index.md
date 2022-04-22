@@ -39,6 +39,7 @@ Fine-grained access control is available for the following capabilities:
 - [Manage teams]({{< relref "../../administration/manage-users-and-permissions/manage-teams/_index.md" >}})
 - [Manage dashboards and folders]({{< relref "../../dashboards/_index.md" >}})
 - [Manage annotations]({{< relref "../../visualizations/annotations.md" >}})
+- [Alerting]({{< relref "../../alerting/unified-alerting/_index.md">}})
 
 To learn about specific endpoints where you can use fine-grained access control, refer to [Permissions]({{< relref "./permissions.md" >}}) and to the relevant [API]({{< relref "../../http_api/_index.md" >}}) documentation.
 

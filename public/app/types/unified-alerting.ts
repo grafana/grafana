@@ -1,6 +1,7 @@
 /* Prometheus internal models */
 
 import { AlertState, DataSourceInstanceSettings } from '@grafana/data';
+
 import {
   PromAlertingRuleState,
   PromRuleType,

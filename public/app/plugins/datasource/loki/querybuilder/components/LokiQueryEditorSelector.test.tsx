@@ -1,11 +1,14 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LokiDatasource } from '../../datasource';
 import { cloneDeep, defaultsDeep } from 'lodash';
-import { LokiQuery, LokiQueryType } from '../../types';
-import { LokiQueryEditorSelector } from './LokiQueryEditorSelector';
+import React from 'react';
+
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
+
+import { LokiDatasource } from '../../datasource';
+import { LokiQuery, LokiQueryType } from '../../types';
+
+import { LokiQueryEditorSelector } from './LokiQueryEditorSelector';
 
 const defaultQuery = {
   refId: 'A',
@@ -73,49 +76,42 @@ describe('LokiQueryEditorSelector', () => {
 
   it('changes to builder mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Code);
-    switchToMode(QueryEditorMode.Builder);
+    await switchToMode(QueryEditorMode.Builder);
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
       queryType: LokiQueryType.Range,
       editorMode: QueryEditorMode.Builder,
-      visualQuery: {
-        labels: [
-          { label: 'label1', op: '=', value: 'foo' },
-          { label: 'label2', op: '=', value: 'bar' },
-        ],
-        operations: [],
-      },
     });
   });
 
-  // it('Can enable preview', async () => {
-  //   const { onChange } = renderWithMode(QueryEditorMode.Builder);
-  //   expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
+  it('Can enable raw query', async () => {
+    const { onChange } = renderWithMode(QueryEditorMode.Builder);
+    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
 
-  //   screen.getByLabelText('Preview').click();
+    screen.getByLabelText('Raw query').click();
 
-  //   expect(onChange).toBeCalledWith({
-  //     refId: 'A',
-  //     expr: defaultQuery.expr,
-  //     range: true,
-  //     editorMode: QueryEditorMode.Builder,
-  //     editorPreview: true,
-  //   });
-  // });
+    expect(onChange).toBeCalledWith({
+      refId: 'A',
+      expr: defaultQuery.expr,
+      queryType: 'range',
+      editorMode: QueryEditorMode.Builder,
+      rawQuery: true,
+    });
+  });
 
-  // it('Should show preview', async () => {
-  //   renderWithProps({
-  //     editorPreview: true,
-  //     editorMode: QueryEditorMode.Builder,
-  //     expr: 'my_metric',
-  //   });
-  //   expect(screen.getByLabelText('selector').textContent).toBe('my_metric');
-  // });
+  it('Should show raw query', async () => {
+    renderWithProps({
+      rawQuery: true,
+      editorMode: QueryEditorMode.Builder,
+      expr: '{job="grafana"}',
+    });
+    expect(screen.getByLabelText('selector').textContent).toBe('{job="grafana"}');
+  });
 
   it('changes to code mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Builder);
-    switchToMode(QueryEditorMode.Code);
+    await switchToMode(QueryEditorMode.Code);
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
@@ -126,7 +122,7 @@ describe('LokiQueryEditorSelector', () => {
 
   it('changes to explain mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Code);
-    switchToMode(QueryEditorMode.Explain);
+    await switchToMode(QueryEditorMode.Explain);
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
@@ -141,7 +137,7 @@ describe('LokiQueryEditorSelector', () => {
       expr: 'rate({instance="host.docker.internal:3000"}[$__interval])',
       editorMode: QueryEditorMode.Code,
     });
-    switchToMode(QueryEditorMode.Builder);
+    await switchToMode(QueryEditorMode.Builder);
     rerender(
       <LokiQueryEditorSelector
         {...defaultProps}
@@ -185,7 +181,7 @@ function expectExplain() {
   expect(screen.getByText(/Fetch all log/)).toBeInTheDocument();
 }
 
-function switchToMode(mode: QueryEditorMode) {
+async function switchToMode(mode: QueryEditorMode) {
   const label = {
     [QueryEditorMode.Code]: /Code/,
     [QueryEditorMode.Explain]: /Explain/,
@@ -193,5 +189,5 @@ function switchToMode(mode: QueryEditorMode) {
   }[mode];
 
   const switchEl = screen.getByLabelText(label);
-  userEvent.click(switchEl);
+  await userEvent.click(switchEl);
 }

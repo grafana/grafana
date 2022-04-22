@@ -1,5 +1,13 @@
-import { ApiKey, ServiceAccountDTO, ThunkResult, ServiceAccountFilter } from '../../../types';
+import { debounce } from 'lodash';
+
 import { getBackendSrv, locationService } from '@grafana/runtime';
+import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
+
+import { contextSrv } from '../../../core/services/context_srv';
+import { ServiceAccountDTO, ThunkResult, ServiceAccountFilter, AccessControlAction } from '../../../types';
+import { ServiceAccountToken } from '../CreateServiceAccountTokenModal';
+
 import {
   acOptionsLoaded,
   builtInRolesLoaded,
@@ -13,19 +21,23 @@ import {
   serviceAccountTokensLoaded,
   serviceAccountToRemoveLoaded,
 } from './reducers';
-import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
-import { debounce } from 'lodash';
 
 const BASE_URL = `/api/serviceaccounts`;
 
 export function fetchACOptions(): ThunkResult<void> {
   return async (dispatch) => {
     try {
-      const options = await fetchRoleOptions();
-      dispatch(acOptionsLoaded(options));
-      const builtInRoles = await fetchBuiltinRoles();
-      dispatch(builtInRolesLoaded(builtInRoles));
+      if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+        const options = await fetchRoleOptions();
+        dispatch(acOptionsLoaded(options));
+      }
+      if (
+        contextSrv.licensedAccessControlEnabled() &&
+        contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)
+      ) {
+        const builtInRoles = await fetchBuiltinRoles();
+        dispatch(builtInRolesLoaded(builtInRoles));
+      }
     } catch (error) {
       console.error(error);
     }
@@ -55,7 +67,7 @@ export function loadServiceAccount(saID: number): ThunkResult<void> {
 
 export function createServiceAccountToken(
   saID: number,
-  token: ApiKey,
+  token: ServiceAccountToken,
   onTokenCreated: (key: string) => void
 ): ThunkResult<void> {
   return async (dispatch) => {

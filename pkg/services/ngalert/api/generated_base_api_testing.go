@@ -62,11 +62,11 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApiForkingService, m *met
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/v1/rule/test/{Recipient}"),
-			api.authorize(http.MethodPost, "/api/v1/rule/test/{Recipient}"),
+			toMacaronPath("/api/v1/rule/test/{DatasourceID}"),
+			api.authorize(http.MethodPost, "/api/v1/rule/test/{DatasourceID}"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/v1/rule/test/{Recipient}",
+				"/api/v1/rule/test/{DatasourceID}",
 				srv.RouteTestRuleConfig,
 				m,
 			),

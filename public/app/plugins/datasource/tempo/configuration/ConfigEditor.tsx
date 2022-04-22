@@ -1,12 +1,14 @@
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { DataSourceHttpSettings } from '@grafana/ui';
-import { TraceToLogsSettings } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import React from 'react';
-import { ServiceGraphSettings } from './ServiceGraphSettings';
+
+import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SearchSettings } from './SearchSettings';
+import { DataSourceHttpSettings } from '@grafana/ui';
 import { NodeGraphSettings } from 'app/core/components/NodeGraphSettings';
+import { TraceToLogsSettings } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
+
 import { LokiSearchSettings } from './LokiSearchSettings';
+import { SearchSettings } from './SearchSettings';
+import { ServiceGraphSettings } from './ServiceGraphSettings';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 

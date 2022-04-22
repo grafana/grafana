@@ -1,10 +1,11 @@
+import React, { PureComponent } from 'react';
+
 import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
   updateDatasourcePluginSecureJsonDataOption,
 } from '@grafana/data';
 import { Alert, Button, InlineFormLabel, LegacyForms } from '@grafana/ui';
-import React, { PureComponent } from 'react';
 
 import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData } from '../../../types';
 import { Props } from '../../ConfigEditor';
