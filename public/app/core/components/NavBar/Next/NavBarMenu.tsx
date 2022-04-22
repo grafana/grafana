@@ -5,6 +5,7 @@ import { CollapsableSection, CustomScrollbar, Icon, IconButton, IconName, useSty
 import { FocusScope } from '@react-aria/focus';
 import { useDialog } from '@react-aria/dialog';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
+import { Branding } from 'app/core/components/Branding/Branding';
 import { css, cx } from '@emotion/css';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
@@ -266,12 +267,7 @@ function NavItem({
           isActive={link === activeItem}
         >
           <div className={styles.savedItemsMenuItemWrapper}>
-            <div className={styles.iconContainer}>
-              {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-              {link.img && (
-                <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
-              )}
-            </div>
+            <div className={styles.iconContainer}>{getLinkIcon(link)}</div>
             <span className={styles.linkText}>{link.text}</span>
           </div>
         </NavBarItemWithoutMenu>
@@ -362,10 +358,7 @@ function CollapsibleNavItem({
         className={styles.collapsibleMenuItem}
         elClassName={styles.collapsibleIcon}
       >
-        {link.img && (
-          <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
-        )}
-        {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+        {getLinkIcon(link)}
       </NavBarItemWithoutMenu>
       <div className={styles.collapsibleSectionWrapper}>
         <CollapsableSection
@@ -443,4 +436,16 @@ const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
 
 function linkHasChildren(link: NavModelItem): link is NavModelItem & { children: NavModelItem[] } {
   return Boolean(link.children && link.children.length > 0);
+}
+
+function getLinkIcon(link: NavModelItem) {
+  if (link.id === 'home') {
+    return <Branding.MenuLogo />;
+  } else if (link.icon) {
+    return <Icon name={link.icon as IconName} size="xl" />;
+  } else if (link.img) {
+    return <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />;
+  } else {
+    return null;
+  }
 }

@@ -6,6 +6,7 @@ import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { CustomScrollbar, Icon, IconName, useTheme2 } from '@grafana/ui';
 import { config, locationService } from '@grafana/runtime';
 import { getKioskMode } from 'app/core/navigation/kiosk';
+import { Branding } from 'app/core/components/Branding/Branding';
 import { KioskMode, StoreState } from 'app/types';
 import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from '../utils';
 import { OrgSwitcher } from '../../OrgSwitcher';
@@ -96,7 +97,7 @@ export const NavBarNext = React.memo(() => {
                 className={styles.grafanaLogo}
                 url={homeItem.url}
               >
-                <Icon name="grafana" size="xl" />
+                <Branding.MenuLogo />
               </NavBarItemWithoutMenu>
 
               <CustomScrollbar hideVerticalTrack hideHorizontalTrack>
