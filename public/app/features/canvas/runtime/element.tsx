@@ -64,7 +64,7 @@ export class ElementState implements LayerElement {
     return this.options.name;
   }
 
-  /** Use the configured options to update CSS style properties directly on the wrapper dif **/
+  /** Use the configured options to update CSS style properties directly on the wrapper div **/
   applyLayoutStylesToDiv() {
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
