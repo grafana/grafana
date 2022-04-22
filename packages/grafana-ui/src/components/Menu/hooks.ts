@@ -1,5 +1,6 @@
 import { RefObject, useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
+
 import { MenuItemElement } from './MenuItem';
 
 const modulo = (a: number, n: number) => ((a % n) + n) % n;

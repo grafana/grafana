@@ -1,10 +1,12 @@
+import { css } from '@emotion/css';
 import React, { FC, ReactElement } from 'react';
+
 import { selectors } from '@grafana/e2e-selectors';
+import { Button, Form, Input, Field } from '@grafana/ui';
+
+import { PasswordField } from '../PasswordField/PasswordField';
 
 import { FormModel } from './LoginCtrl';
-import { Button, Form, Input, Field } from '@grafana/ui';
-import { css } from '@emotion/css';
-import { PasswordField } from '../PasswordField/PasswordField';
 
 interface Props {
   children: ReactElement;

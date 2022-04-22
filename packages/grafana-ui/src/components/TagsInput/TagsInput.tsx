@@ -1,10 +1,13 @@
-import React, { ChangeEvent, KeyboardEvent, FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { Button } from '../Button';
-import { TagItem } from './TagItem';
-import { useStyles, useTheme2 } from '../../themes/ThemeContext';
+import React, { ChangeEvent, KeyboardEvent, FC, useState } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
+
+import { useStyles, useTheme2 } from '../../themes/ThemeContext';
+import { Button } from '../Button';
 import { Input } from '../Input/Input';
+
+import { TagItem } from './TagItem';
 
 export interface Props {
   placeholder?: string;

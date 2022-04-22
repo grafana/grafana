@@ -1,8 +1,11 @@
-import React from 'react';
 import { shallow } from 'enzyme';
-import { MetricSelect } from './MetricSelect';
+import React from 'react';
+
 import { LegacyForms } from '@grafana/ui';
+
 import { expect } from '../../../../test/lib/common';
+
+import { MetricSelect } from './MetricSelect';
 
 const { Select } = LegacyForms;
 

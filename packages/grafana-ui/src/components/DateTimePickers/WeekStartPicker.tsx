@@ -1,7 +1,9 @@
 import React, { useCallback } from 'react';
+
 import { SelectableValue } from '@grafana/data';
-import { Select } from '../Select/Select';
 import { selectors } from '@grafana/e2e-selectors';
+
+import { Select } from '../Select/Select';
 
 export interface Props {
   onChange: (weekStart: string) => void;

@@ -1,6 +1,7 @@
+import { TemplateSrvStub } from 'test/specs/helpers';
+
 import gfunc from '../gfunc';
 import GraphiteQuery from '../graphite_query';
-import { TemplateSrvStub } from 'test/specs/helpers';
 
 describe('Graphite query model', () => {
   const ctx: any = {

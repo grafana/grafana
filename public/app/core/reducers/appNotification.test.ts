@@ -1,6 +1,8 @@
-import { appNotificationsReducer, clearAppNotification, notifyApp } from './appNotification';
-import { AppNotificationSeverity, AppNotificationsState, AppNotificationTimeout } from 'app/types/';
+import { AppNotificationSeverity, AppNotificationsState } from 'app/types/';
 
+import { appNotificationsReducer, clearNotification, notifyApp } from './appNotification';
+
+const timestamp = 1649849468889;
 describe('clear alert', () => {
   it('should filter alert', () => {
     const id1 = '1767d3d9-4b99-40eb-ab46-de734a66f21d';
@@ -14,7 +16,8 @@ describe('clear alert', () => {
           icon: 'success',
           title: 'test',
           text: 'test alert',
-          timeout: AppNotificationTimeout.Success,
+          showing: true,
+          timestamp,
         },
         [id2]: {
           id: id2,
@@ -22,12 +25,14 @@ describe('clear alert', () => {
           icon: 'warning',
           title: 'test2',
           text: 'test alert fail 2',
-          timeout: AppNotificationTimeout.Warning,
+          showing: true,
+          timestamp,
         },
       },
+      lastRead: timestamp - 10,
     };
 
-    const result = appNotificationsReducer(initialState, clearAppNotification(id2));
+    const result = appNotificationsReducer(initialState, clearNotification(id2));
 
     const expectedResult: AppNotificationsState = {
       byId: {
@@ -37,9 +42,11 @@ describe('clear alert', () => {
           icon: 'success',
           title: 'test',
           text: 'test alert',
-          timeout: AppNotificationTimeout.Success,
+          showing: true,
+          timestamp,
         },
       },
+      lastRead: timestamp - 10,
     };
 
     expect(result).toEqual(expectedResult);
@@ -60,7 +67,8 @@ describe('notify', () => {
           icon: 'success',
           title: 'test',
           text: 'test alert',
-          timeout: AppNotificationTimeout.Success,
+          showing: true,
+          timestamp,
         },
         [id2]: {
           id: id2,
@@ -68,9 +76,11 @@ describe('notify', () => {
           icon: 'warning',
           title: 'test2',
           text: 'test alert fail 2',
-          timeout: AppNotificationTimeout.Warning,
+          showing: true,
+          timestamp,
         },
       },
+      lastRead: timestamp - 10,
     };
 
     const result = appNotificationsReducer(
@@ -81,7 +91,8 @@ describe('notify', () => {
         icon: 'info',
         title: 'test3',
         text: 'test alert info 3',
-        timeout: AppNotificationTimeout.Success,
+        showing: true,
+        timestamp: 1649802870373,
       })
     );
 
@@ -93,7 +104,8 @@ describe('notify', () => {
           icon: 'success',
           title: 'test',
           text: 'test alert',
-          timeout: AppNotificationTimeout.Success,
+          timestamp,
+          showing: true,
         },
         [id2]: {
           id: id2,
@@ -101,7 +113,8 @@ describe('notify', () => {
           icon: 'warning',
           title: 'test2',
           text: 'test alert fail 2',
-          timeout: AppNotificationTimeout.Warning,
+          timestamp,
+          showing: true,
         },
         [id3]: {
           id: id3,
@@ -109,9 +122,11 @@ describe('notify', () => {
           icon: 'info',
           title: 'test3',
           text: 'test alert info 3',
-          timeout: AppNotificationTimeout.Success,
+          timestamp: 1649802870373,
+          showing: true,
         },
       },
+      lastRead: timestamp - 10,
     };
 
     expect(result).toEqual(expectedResult);
@@ -126,9 +141,11 @@ describe('notify', () => {
           icon: 'success',
           title: 'test',
           text: 'test alert',
-          timeout: AppNotificationTimeout.Success,
+          showing: true,
+          timestamp,
         },
       },
+      lastRead: timestamp - 10,
     };
 
     const result = appNotificationsReducer(
@@ -139,7 +156,8 @@ describe('notify', () => {
         icon: 'success',
         title: 'test',
         text: 'test alert',
-        timeout: AppNotificationTimeout.Success,
+        showing: true,
+        timestamp,
       })
     );
 
@@ -151,9 +169,11 @@ describe('notify', () => {
           icon: 'success',
           title: 'test',
           text: 'test alert',
-          timeout: AppNotificationTimeout.Success,
+          showing: true,
+          timestamp,
         },
       },
+      lastRead: timestamp - 10,
     };
 
     expect(result).toEqual(expectedResult);

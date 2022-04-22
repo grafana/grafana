@@ -4,6 +4,7 @@ import {
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
 } from 'app/features/transformers/calculateHeatmap/models.gen';
+
 import { HeatmapSourceMode, PanelOptions, defaultPanelOptions } from './models.gen';
 
 /**

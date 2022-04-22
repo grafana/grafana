@@ -1,6 +1,7 @@
-import { FilterInput } from '@grafana/ui';
 import React, { useState, useRef } from 'react';
 import { useDebounce } from 'react-use';
+
+import { FilterInput } from '@grafana/ui';
 
 interface Props {
   value?: string;

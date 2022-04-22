@@ -180,7 +180,7 @@ func JSONStreaming(status int, body interface{}) StreamingResponse {
 func Success(message string) *NormalResponse {
 	resp := make(map[string]interface{})
 	resp["message"] = message
-	return JSON(200, resp)
+	return JSON(http.StatusOK, resp)
 }
 
 // Error creates an error response.

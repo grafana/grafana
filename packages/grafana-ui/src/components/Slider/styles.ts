@@ -1,7 +1,9 @@
-import { stylesFactory } from '../../themes';
-import { GrafanaTheme2 } from '@grafana/data';
-import { css as cssCore } from '@emotion/react';
 import { css } from '@emotion/css';
+import { css as cssCore } from '@emotion/react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { stylesFactory } from '../../themes';
 
 export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: boolean, hasMarks = false) => {
   const { spacing } = theme;

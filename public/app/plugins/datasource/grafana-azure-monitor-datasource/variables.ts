@@ -1,3 +1,5 @@
+import { from, lastValueFrom, Observable } from 'rxjs';
+
 import {
   CustomVariableSupport,
   DataQueryRequest,
@@ -6,7 +8,6 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { from, lastValueFrom, Observable } from 'rxjs';
 
 import VariableEditor from './components/VariableEditor/VariableEditor';
 import DataSource from './datasource';
@@ -81,22 +82,11 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
     }
 
     if (query.kind === 'MetricNamespaceQuery') {
-      return this.datasource.getMetricNamespaces(
-        this.replaceVariable(query.subscription),
-        this.replaceVariable(query.resourceGroup),
-        this.replaceVariable(query.metricDefinition),
-        this.replaceVariable(query.resourceName)
-      );
+      return this.datasource.azureMonitorDatasource.getMetricNamespaces(query);
     }
 
     if (query.kind === 'MetricNamesQuery') {
-      return this.datasource.getMetricNames(
-        this.replaceVariable(query.subscription),
-        this.replaceVariable(query.resourceGroup),
-        this.replaceVariable(query.metricDefinition),
-        this.replaceVariable(query.resourceName),
-        this.replaceVariable(query.metricNamespace)
-      );
+      return this.datasource.azureMonitorDatasource.getMetricNames(query);
     }
 
     if (query.kind === 'WorkspacesQuery') {

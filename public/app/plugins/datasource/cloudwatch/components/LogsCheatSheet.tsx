@@ -1,10 +1,12 @@
-import React, { PureComponent } from 'react';
-import { stripIndent, stripIndents } from 'common-tags';
-import { QueryEditorHelpProps } from '@grafana/data';
-import Prism from 'prismjs';
-import tokenizer from '../syntax';
-import { flattenTokens } from '@grafana/ui/src/slate-plugins/slate-prism';
 import { css, cx } from '@emotion/css';
+import { stripIndent, stripIndents } from 'common-tags';
+import Prism from 'prismjs';
+import React, { PureComponent } from 'react';
+
+import { QueryEditorHelpProps } from '@grafana/data';
+import { flattenTokens } from '@grafana/ui/src/slate-plugins/slate-prism';
+
+import tokenizer from '../syntax';
 import { CloudWatchQuery } from '../types';
 
 interface QueryExample {

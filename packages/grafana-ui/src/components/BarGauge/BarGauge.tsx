@@ -1,6 +1,7 @@
 // Library
 import React, { CSSProperties, PureComponent, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
+
 import {
   DisplayProcessor,
   DisplayValue,
@@ -19,9 +20,10 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
-import { calculateFontSize, measureText } from '../../utils/measureText';
+
 import { Themeable2 } from '../../types';
+import { calculateFontSize, measureText } from '../../utils/measureText';
+import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 const MIN_VALUE_HEIGHT = 18;
 const MAX_VALUE_HEIGHT = 50;
