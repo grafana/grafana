@@ -4092,10 +4092,10 @@ __metadata:
     "@babel/preset-env": ^7.16.11
     "@babel/preset-react": ^7.16.7
     "@babel/preset-typescript": ^7.16.7
-    "@grafana/data": "workspace:*"
+    "@grafana/data": 9.0.0-pre
     "@grafana/eslint-config": ^3.0.0
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": "workspace:*"
+    "@grafana/ui": 9.0.0-pre
     "@jest/core": 27.5.1
     "@types/command-exists": ^1.2.0
     "@types/eslint": 8.4.1
@@ -4168,9 +4168,6 @@ __metadata:
     typescript: 4.6.4
     url-loader: ^4.1.1
     webpack: ^5.72.0
-  peerDependencies:
-    "@grafana/data": "*"
-    "@grafana/ui": "*"
   bin:
     grafana-toolkit: ./bin/grafana-toolkit.js
   languageName: unknown
