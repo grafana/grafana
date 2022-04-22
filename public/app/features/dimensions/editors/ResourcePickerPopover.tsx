@@ -5,11 +5,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { FocusScope } from '@react-aria/focus';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
+import { config } from 'app/core/config';
 
 import { MediaType, PickerTabType, ResourceFolderName } from '../types';
 import { FolderPickerTab } from './FolderPickerTab';
 import { URLPickerTab } from './URLPickerTab';
-
+import { FileUploader } from './FileUploader';
 interface Props {
   value?: string; //img/icons/unicons/0-plus.svg
   onChange: (value?: string) => void;
@@ -31,11 +32,19 @@ export const ResourcePickerPopover = (props: Props) => {
 
   const [newValue, setNewValue] = useState<string>(value ?? '');
   const [activePicker, setActivePicker] = useState<PickerTabType>(PickerTabType.Folder);
+  const [formData, setFormData] = useState<FormData>(new FormData());
+  const [upload, setUpload] = useState<boolean>(false);
 
   const getTabClassName = (tabName: PickerTabType) => {
     return `${styles.resourcePickerPopoverTab} ${activePicker === tabName && styles.resourcePickerPopoverActiveTab}`;
   };
-
+  const getRequest = async (formData: FormData) => {
+    const response = await fetch('/api/storage/upload', {
+      method: 'POST',
+      body: formData,
+    });
+    return response.json();
+  };
   const renderFolderPicker = () => (
     <FolderPickerTab
       value={value}
@@ -47,13 +56,23 @@ export const ResourcePickerPopover = (props: Props) => {
   );
 
   const renderURLPicker = () => <URLPickerTab newValue={newValue} setNewValue={setNewValue} mediaType={mediaType} />;
-
+  const renderUploader = () => (
+    <FileUploader
+      mediaType={mediaType}
+      setNewValue={setNewValue}
+      setFormData={setFormData}
+      setUpload={setUpload}
+      getRequest={getRequest}
+    />
+  );
   const renderPicker = () => {
     switch (activePicker) {
       case PickerTabType.Folder:
         return renderFolderPicker();
       case PickerTabType.URL:
         return renderURLPicker();
+      case PickerTabType.Upload:
+        return renderUploader();
       default:
         return renderFolderPicker();
     }
@@ -73,6 +92,16 @@ export const ResourcePickerPopover = (props: Props) => {
             <button className={getTabClassName(PickerTabType.URL)} onClick={() => setActivePicker(PickerTabType.URL)}>
               URL
             </button>
+            {config.featureToggles['storageLocalUpload'] ? (
+              <button
+                className={getTabClassName(PickerTabType.Upload)}
+                onClick={() => setActivePicker(PickerTabType.Upload)}
+              >
+                Upload
+              </button>
+            ) : (
+              ''
+            )}
           </div>
           <div className={styles.resourcePickerPopoverContent}>
             {renderPicker()}
@@ -83,7 +112,12 @@ export const ResourcePickerPopover = (props: Props) => {
               <Button
                 className={styles.button}
                 variant={newValue && newValue !== value ? 'primary' : 'secondary'}
-                onClick={() => onChange(newValue)}
+                onClick={() => {
+                  if (upload) {
+                    getRequest(formData);
+                  }
+                  onChange(newValue);
+                }}
               >
                 Select
               </Button>
