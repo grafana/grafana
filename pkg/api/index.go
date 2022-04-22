@@ -26,7 +26,15 @@ const (
 )
 
 func (hs *HTTPServer) RelativeURL(pathComponents ...string) string {
-	return path.Join(append([]string{hs.Cfg.AppSubURL}, pathComponents...)...)
+	// retain trailing slash if provided
+	trailingSlash := strings.HasSuffix(pathComponents[len(pathComponents)-1], "/")
+	path := path.Join(append([]string{hs.Cfg.AppSubURL}, pathComponents...)...)
+
+	if trailingSlash {
+		path = path + "/"
+	}
+
+	return path
 }
 
 func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {

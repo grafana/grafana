@@ -185,7 +185,7 @@ func TestLoginViewRedirect(t *testing.T) {
 		{
 			desc:        "grafana invalid relative url starting with the subpath",
 			url:         "/grafanablah",
-			redirectURL: "/grafana",
+			redirectURL: "/grafana/",
 			appURL:      "http://localhost:3000/",
 			appSubURL:   "/grafana",
 			status:      302,
@@ -201,7 +201,7 @@ func TestLoginViewRedirect(t *testing.T) {
 		{
 			desc:        "relative url with missing subpath",
 			url:         "/profile",
-			redirectURL: "/grafana",
+			redirectURL: "/grafana/",
 			appURL:      "http://localhost:3000/",
 			appSubURL:   "/grafana",
 			status:      302,

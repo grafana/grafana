@@ -93,7 +93,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		}
 
 		if listItem.DefaultNavUrl == "" || !listItem.Enabled {
-			listItem.DefaultNavUrl = hs.RelativeURL("/plugins", listItem.Id)
+			listItem.DefaultNavUrl = hs.RelativeURL("/plugins", listItem.Id, "/")
 		}
 
 		// filter out disabled plugins
