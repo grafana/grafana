@@ -161,7 +161,11 @@ export function getAppRoutes(): RouteDescriptor[] {
           () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
           [AccessControlAction.DataSourcesExplore]
         ),
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
+      component: SafeDynamicImport(() =>
+        config.exploreEnabled
+          ? import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')
+          : import(/* webpackChunkName: "explore-feature-toggle-page" */ 'app/features/explore/FeatureTogglePage')
+      ),
     },
     {
       path: '/a/:pluginId/',
