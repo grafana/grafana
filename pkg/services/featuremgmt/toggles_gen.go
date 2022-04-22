@@ -166,4 +166,8 @@ const (
 	// FlagCommandPalette
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"
+
+	// FlagQueryHistory
+	// New query history saved in backend
+	FlagQueryHistory = "queryHistory"
 )

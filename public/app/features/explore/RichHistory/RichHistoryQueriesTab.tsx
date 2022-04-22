@@ -138,10 +138,11 @@ export function RichHistoryQueriesTab(props: Props) {
   const listOfDatasources = createDatasourcesList();
 
   useEffect(() => {
+    // PLAN 6: what if activeDatasourceInstance is not defined?
     const datasourceFilters =
       richHistorySettings.activeDatasourceOnly && activeDatasourceInstance
         ? [activeDatasourceInstance]
-        : richHistorySettings.lastUsedDatasourceFilters;
+        : richHistorySettings.lastUsedDatasourceFilters || [activeDatasourceInstance!];
     const filters: RichHistorySearchFilters = {
       search: '',
       sortOrder: SortOrder.Descending,
@@ -198,7 +199,8 @@ export function RichHistoryQueriesTab(props: Props) {
               className={styles.multiselect}
               menuShouldPortal
               options={listOfDatasources.map((ds) => {
-                return { value: ds.name, label: ds.name };
+                // PLAN 2: both uid and name should be supported
+                return { value: ds.uid, label: ds.name };
               })}
               value={richHistorySearchFilters.datasourceFilters}
               placeholder="Filter queries for data sources(s)"
@@ -232,7 +234,10 @@ export function RichHistoryQueriesTab(props: Props) {
                 {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
               </div>
               {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
-                const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
+                // PLAN 2: support for both uid and name
+                const idx = listOfDatasources.findIndex(
+                  (d) => d.uid === q.datasourceUid || d.name === q.datasourceName
+                );
                 return (
                   <RichHistoryCard
                     query={q}

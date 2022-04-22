@@ -224,5 +224,10 @@ var (
 			Description: "Enable command palette",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "queryHistory",
+			Description: "New query history saved in backend",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
