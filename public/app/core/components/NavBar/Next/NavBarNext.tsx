@@ -6,15 +6,9 @@ import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { CustomScrollbar, Icon, IconName, useTheme2 } from '@grafana/ui';
 import { config, locationService } from '@grafana/runtime';
 import { getKioskMode } from 'app/core/navigation/kiosk';
+import { Branding } from 'app/core/components/Branding/Branding';
 import { KioskMode, StoreState } from 'app/types';
-import {
-  enrichConfigItems,
-  getActiveItem,
-  isMatchOrChildMatch,
-  isSearchActive,
-  SEARCH_ITEM_ID,
-  NAV_MENU_PORTAL_CONTAINER_ID,
-} from '../utils';
+import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from '../utils';
 import { OrgSwitcher } from '../../OrgSwitcher';
 import { NavBarMenu } from './NavBarMenu';
 import NavBarItem from './NavBarItem';
@@ -22,6 +16,8 @@ import { useSelector } from 'react-redux';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarContext } from '../context';
 import { NavBarToggle } from './NavBarToggle';
+import { NavBarMenuPortalContainer } from './NavBarMenuPortalContainer';
+import { FocusScope } from '@react-aria/focus';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -102,8 +98,7 @@ export const NavBarNext = React.memo(() => {
             setMenuIdOpen: setMenuIdOpen,
           }}
         >
-          <div id={NAV_MENU_PORTAL_CONTAINER_ID} className={styles.menuPortalContainer} />
-
+        <FocusScope>
           <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
             <Icon name="bars" size="xl" />
           </div>
@@ -114,6 +109,8 @@ export const NavBarNext = React.memo(() => {
             onClick={() => setMenuOpen(!menuOpen)}
           />
 
+          <NavBarMenuPortalContainer />
+
           <ul className={styles.itemList}>
             <NavBarItemWithoutMenu
               isActive={isMatchOrChildMatch(homeItem, activeItem)}
@@ -122,7 +119,7 @@ export const NavBarNext = React.memo(() => {
               className={styles.grafanaLogo}
               url={homeItem.url}
             >
-              <Icon name="grafana" size="xl" />
+              <Branding.MenuLogo />
             </NavBarItemWithoutMenu>
 
             <CustomScrollbar
@@ -178,6 +175,7 @@ export const NavBarNext = React.memo(() => {
               </NavBarItem>
             ))}
           </ul>
+        </FocusScope>
         </NavBarContext.Provider>
       </nav>
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
@@ -330,12 +328,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       zIndex: theme.zIndex.sidemenu - 1,
     },
     '&:before': {
-      borderTop: `1px solid ${theme.colors.border.medium}`,
       top: 0,
       background: `linear-gradient(0deg, transparent, ${theme.colors.background.canvas})`,
     },
     '&:after': {
-      borderBottom: `1px solid ${theme.colors.border.medium}`,
       bottom: 0,
       background: `linear-gradient(0deg, ${theme.colors.background.canvas}, transparent)`,
     },

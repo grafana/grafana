@@ -42,7 +42,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
   const team = getTeam(state.team, teamId);
   let defaultPage = 'members';
   if (contextSrv.accessControlEnabled()) {
-    // With FGAC the settings page will always be available
+    // With RBAC the settings page will always be available
     if (!team || !contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)) {
       defaultPage = 'settings';
     }

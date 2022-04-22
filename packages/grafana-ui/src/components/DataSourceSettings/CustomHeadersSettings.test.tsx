@@ -54,13 +54,13 @@ function assertRowCount(configuredInputCount: number, passwordInputCount: number
 }
 
 describe('Render', () => {
-  it('should add a new header', () => {
+  it('should add a new header', async () => {
     setup();
     const b = screen.getByRole('button', { name: 'Add header' });
     expect(b).toBeInTheDocument();
     assertRowCount(0, 0);
 
-    userEvent.click(b);
+    await userEvent.click(b);
     assertRowCount(0, 1);
   });
 
@@ -71,7 +71,7 @@ describe('Render', () => {
     expect(b.getAttribute('type')).toBe('button');
   });
 
-  it('should remove a header', () => {
+  it('should remove a header', async () => {
     const { onChange } = setup({
       dataSourceConfig: {
         jsonData: {
@@ -87,14 +87,14 @@ describe('Render', () => {
 
     assertRowCount(1, 0);
 
-    userEvent.click(b);
+    await userEvent.click(b);
     assertRowCount(0, 0);
 
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange.mock.calls[0][0].jsonData).toStrictEqual({});
   });
 
-  it('when removing a just-created header, it should clean up secureJsonData', () => {
+  it('when removing a just-created header, it should clean up secureJsonData', async () => {
     const { onChange } = setup({
       dataSourceConfig: {
         jsonData: {
@@ -109,7 +109,7 @@ describe('Render', () => {
     // we remove the row
     const removeButton = screen.getByRole('button', { name: 'Remove header' });
     expect(removeButton).toBeInTheDocument();
-    userEvent.click(removeButton);
+    await userEvent.click(removeButton);
     assertRowCount(0, 0);
     expect(onChange).toHaveBeenCalled();
 
@@ -119,7 +119,7 @@ describe('Render', () => {
     expect(lastCall[0].secureJsonData).not.toHaveProperty('httpHeaderValue1');
   });
 
-  it('should reset a header', () => {
+  it('should reset a header', async () => {
     setup({
       dataSourceConfig: {
         jsonData: {
@@ -135,7 +135,7 @@ describe('Render', () => {
     expect(b).toBeInTheDocument();
 
     assertRowCount(1, 0);
-    userEvent.click(b);
+    await userEvent.click(b);
     assertRowCount(0, 1);
   });
 });
