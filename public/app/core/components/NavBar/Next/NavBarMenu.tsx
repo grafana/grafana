@@ -391,7 +391,7 @@ const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
     display: 'grid',
     gridAutoFlow: 'column',
-    gridTemplateColumns: '56px auto',
+    gridTemplateColumns: `${theme.spacing(7)} auto`,
   }),
   collapsibleMenuItem: css({
     height: theme.spacing(6),
