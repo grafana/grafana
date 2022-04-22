@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"math/rand"
 	"net/http"
 	"testing"
@@ -12,14 +13,17 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
@@ -208,6 +212,31 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 		require.Equal(t, 202, response.Status())
 	})
+
+	t.Run("when objects are not provisioned", func(t *testing.T) {
+		t.Run("route from GET config has no provenance", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+
+			response := sut.RouteGetAlertingConfig(rc)
+
+			body := asGettableUserConfig(t, response)
+			require.Equal(t, ngmodels.ProvenanceNone, body.AlertmanagerConfig.Route.Provenance)
+		})
+	})
+
+	t.Run("when objects are provisioned", func(t *testing.T) {
+		t.Run("route from GET config has expected provenance", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+			setRouteProvenance(t, 1, sut.mam.ProvStore)
+
+			response := sut.RouteGetAlertingConfig(rc)
+
+			body := asGettableUserConfig(t, response)
+			require.Equal(t, ngmodels.ProvenanceAPI, body.AlertmanagerConfig.Route.Provenance)
+		})
+	})
 }
 
 func TestRouteCreateSilence(t *testing.T) {
@@ -346,19 +375,16 @@ func createSut(t *testing.T, accessControl accesscontrol.AccessControl) Alertman
 	t.Helper()
 
 	mam := createMultiOrgAlertmanager(t)
-	configs := map[int64]*ngmodels.AlertConfiguration{
-		1: {AlertmanagerConfiguration: validConfig, OrgID: 1},
-		2: {AlertmanagerConfiguration: validConfig, OrgID: 2},
-		3: {AlertmanagerConfiguration: brokenConfig, OrgID: 3},
-	}
-	configStore := notifier.NewFakeConfigStore(t, configs)
-	secrets := fakes.NewFakeSecretsService()
 	if accessControl == nil {
 		accessControl = acMock.New().WithDisabled()
 	}
 	log := log.NewNopLogger()
-	crypto := notifier.NewCrypto(secrets, &configStore, log)
-	return AlertmanagerSrv{mam: mam, crypto: crypto, ac: accessControl, log: log}
+	return AlertmanagerSrv{
+		mam:    mam,
+		crypto: mam.Crypto,
+		ac:     accessControl,
+		log:    log,
+	}
 }
 
 func createAmConfigRequest(t *testing.T) apimodels.PostableUserConfig {
@@ -381,6 +407,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	}
 	configStore := notifier.NewFakeConfigStore(t, configs)
 	orgStore := notifier.NewFakeOrgStore(t, []int64{1, 2, 3})
+	provStore := provisioning.NewFakeProvisioningStore()
 	tmpDir := t.TempDir()
 	kvStore := notifier.NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -394,9 +421,12 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
 			DisabledOrgs:                   map[int64]struct{}{5: {}},
 		}, // do not poll in tests.
+		IsFeatureToggleEnabled: func(key string) bool {
+			return key == featuremgmt.FlagAlertProvisioning
+		},
 	}
 
-	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
 	require.NoError(t, err)
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)
@@ -459,4 +489,31 @@ func silenceGen(mutatorFuncs ...func(*apimodels.PostableSilence)) func() apimode
 
 func withEmptyID(silence *apimodels.PostableSilence) {
 	silence.ID = ""
+}
+
+func createRequestCtxInOrg(org int64) *models.ReqContext {
+	return &models.ReqContext{
+		Context: &web.Context{
+			Req: &http.Request{},
+		},
+		SignedInUser: &models.SignedInUser{
+			OrgId: org,
+		},
+	}
+}
+
+// setRouteProvenance marks an org's routing tree as provisioned.
+func setRouteProvenance(t *testing.T, org int64, ps provisioning.ProvisioningStore) {
+	t.Helper()
+	adp := provisioning.ProvenanceOrgAdapter{Inner: &apimodels.Route{}, OrgID: org}
+	err := ps.SetProvenance(context.Background(), adp, ngmodels.ProvenanceAPI)
+	require.NoError(t, err)
+}
+
+func asGettableUserConfig(t *testing.T, r response.Response) *apimodels.GettableUserConfig {
+	t.Helper()
+	body := &apimodels.GettableUserConfig{}
+	err := json.Unmarshal(r.Body(), body)
+	require.NoError(t, err)
+	return body
 }
