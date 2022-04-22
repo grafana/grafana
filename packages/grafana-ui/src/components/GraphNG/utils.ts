@@ -12,8 +12,8 @@ import { applyNullInsertThreshold } from './nullInsertThreshold';
 import { nullToUndefThreshold } from './nullToUndefThreshold';
 import { XYFieldMatchers } from './types';
 
-function isBarField(f: Field) {
-  return f.config.custom?.drawStyle === GraphDrawStyle.Bars;
+function isVisibleBarField(f: Field) {
+  return f.config.custom?.drawStyle === GraphDrawStyle.Bars && !f.config.custom?.hideFrom?.viz;
 }
 
 // will mutate the DataFrame's fields' values
@@ -24,7 +24,7 @@ function applySpanNullsThresholds(frame: DataFrame) {
   for (let i = 0; i < frame.fields.length; i++) {
     let field = frame.fields[i];
 
-    if (field === refField || isBarField(field)) {
+    if (field === refField || isVisibleBarField(field)) {
       continue;
     }
 
@@ -48,7 +48,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
 
   frames.forEach((frame) => {
     frame.fields.forEach((f) => {
-      if (isBarField(f)) {
+      if (isVisibleBarField(f)) {
         // prevent minesweeper-expansion of nulls (gaps) when joining bars
         // since bar width is determined from the minimum distance between non-undefined values
         // (this strategy will still retain any original pre-join nulls, though)
@@ -67,7 +67,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
 
   if (numBarSeries > 1) {
     frames.forEach((frame) => {
-      if (!frame.fields.some(isBarField)) {
+      if (!frame.fields.some(isVisibleBarField)) {
         return;
       }
 
@@ -99,7 +99,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
         if (fi === 0) {
           let lastVal = vals[vals.length - 1];
           vals.push(lastVal + minXDelta, lastVal + 2 * minXDelta);
-        } else if (isBarField(f)) {
+        } else if (isVisibleBarField(f)) {
           vals.push(null, null);
         } else {
           vals.push(undefined, undefined);

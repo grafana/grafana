@@ -207,7 +207,7 @@ describe('GraphNG utils', () => {
     expect(result).toMatchSnapshot();
   });
 
-  test('preparePlotFrame appends min bar spaced nulls when >= 2 bar series', () => {
+  test('preparePlotFrame appends min bar spaced nulls when > 1 bar series', () => {
     const df1: DataFrame = {
       name: 'A',
       length: 5,
@@ -280,6 +280,19 @@ describe('GraphNG utils', () => {
           config: {
             custom: {
               drawStyle: GraphDrawStyle.Line,
+            },
+          },
+          values: new ArrayVector([4, 4]),
+        },
+        {
+          name: 'value',
+          type: FieldType.number,
+          config: {
+            custom: {
+              drawStyle: GraphDrawStyle.Bars,
+              hideFrom: {
+                viz: true, // should ignore hidden bar series
+              },
             },
           },
           values: new ArrayVector([4, 4]),
@@ -431,6 +444,41 @@ describe('GraphNG utils', () => {
             "state": Object {
               "origin": Object {
                 "fieldIndex": 1,
+                "frameIndex": 2,
+              },
+            },
+            "type": "number",
+            "values": Array [
+              4,
+              4,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+            ],
+          },
+          Object {
+            "config": Object {
+              "custom": Object {
+                "drawStyle": "bars",
+                "hideFrom": Object {
+                  "viz": true,
+                },
+              },
+            },
+            "labels": Object {
+              "name": "C",
+            },
+            "name": "value",
+            "state": Object {
+              "origin": Object {
+                "fieldIndex": 2,
                 "frameIndex": 2,
               },
             },
