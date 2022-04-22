@@ -1,12 +1,14 @@
-package middleware
+package csrf
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestMiddlewareCSRF(t *testing.T) {
@@ -118,7 +120,10 @@ func csrfScenario(t *testing.T, cookieName, method, origin, host string) *httpte
 	})
 
 	rr := httptest.NewRecorder()
-	handler := CSRF(cookieName, log.New())(testHandler)
+	cfg := setting.NewCfg()
+	cfg.LoginCookieName = cookieName
+	service := ProvideCSRFFilter(cfg)
+	handler := service.Middleware(log.New())(testHandler)
 	handler.ServeHTTP(rr, req)
 	return rr
 }

@@ -13,6 +13,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/middleware/csrf"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
@@ -71,8 +76,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type HTTPServer struct {
@@ -149,6 +152,7 @@ type HTTPServer struct {
 	PluginSettings               *pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
 	preferenceService            pref.Service
+	csrf                         csrf.Service
 }
 
 type ServerOptions struct {
@@ -180,7 +184,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
 	dashboardsnapshotsService *dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings *pluginSettings.Service,
-	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
+	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service, csrfService csrf.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -254,6 +258,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		permissionServices:           permissionsServices,
 		AvatarCacheServer:            avatarCacheServer,
 		preferenceService:            preferenceService,
+		csrf:                         csrfService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -481,7 +486,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.Recovery(hs.Cfg))
-	m.UseMiddleware(middleware.CSRF(hs.Cfg.LoginCookieName, hs.log))
+	m.UseMiddleware(hs.csrf.Middleware(hs.log))
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
