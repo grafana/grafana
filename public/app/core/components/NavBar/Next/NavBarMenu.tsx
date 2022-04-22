@@ -5,6 +5,7 @@ import { CollapsableSection, CustomScrollbar, Icon, IconButton, IconName, useSty
 import { FocusScope } from '@react-aria/focus';
 import { useDialog } from '@react-aria/dialog';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
+import { Branding } from 'app/core/components/Branding/Branding';
 import { css, cx } from '@emotion/css';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
@@ -267,9 +268,21 @@ function NavItem({
         >
           <div className={styles.savedItemsMenuItemWrapper}>
             <div className={styles.iconContainer}>
-              {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-              {link.img && (
-                <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
+              {link.id === 'home' ? (
+                <Branding.MenuLogo />
+              ) : (
+                <>
+                  {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+                  {link.img && (
+                    <img
+                      src={link.img}
+                      alt={`${link.text} logo`}
+                      height="24"
+                      width="24"
+                      style={{ borderRadius: '50%' }}
+                    />
+                  )}
+                </>
               )}
             </div>
             <span className={styles.linkText}>{link.text}</span>
