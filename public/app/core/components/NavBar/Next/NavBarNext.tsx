@@ -7,7 +7,7 @@ import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { CustomScrollbar, Icon, IconName, useTheme2 } from '@grafana/ui';
+import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { KioskMode, StoreState } from 'app/types';
@@ -20,6 +20,7 @@ import NavBarItem from './NavBarItem';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarMenu } from './NavBarMenu';
 import { NavBarMenuPortalContainer } from './NavBarMenuPortalContainer';
+import { NavBarScrollContainer } from './NavBarScrollContainer';
 import { NavBarToggle } from './NavBarToggle';
 
 const onOpenSearch = () => {
@@ -103,7 +104,7 @@ export const NavBarNext = React.memo(() => {
                 <Branding.MenuLogo />
               </NavBarItemWithoutMenu>
 
-              <CustomScrollbar hideVerticalTrack hideHorizontalTrack>
+              <NavBarScrollContainer>
                 <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
                   <Icon name="search" size="xl" />
                 </NavBarItem>
@@ -130,7 +131,7 @@ export const NavBarNext = React.memo(() => {
                       {link.img && <img src={link.img} alt={`${link.text} logo`} />}
                     </NavBarItem>
                   ))}
-              </CustomScrollbar>
+              </NavBarScrollContainer>
 
               {configItems.map((link, index) => (
                 <NavBarItem
