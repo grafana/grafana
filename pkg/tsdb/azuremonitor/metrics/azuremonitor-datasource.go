@@ -368,6 +368,10 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl string) (string,
 		return "", err
 	}
 	escapedChart := url.QueryEscape(string(chartDef))
+	// Azure Portal will timeout if the chart definition includes a space character encoded as '+'.
+	// url.QueryEscape encodes spaces as '+'.
+	// Note: this will not encode '+' literals as those are already encoded as '%2B' by url.QueryEscape
+	escapedChart = strings.ReplaceAll(escapedChart, "+", "%20")
 
 	return fmt.Sprintf("%s/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%s/ChartDefinition/%s", azurePortalUrl, escapedTime, escapedChart), nil
 }
