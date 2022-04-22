@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
-import { Segment } from '@grafana/ui';
+
 import { SelectableValue } from '@grafana/data';
+import { Segment } from '@grafana/ui';
 
 interface Props {
   value: string;

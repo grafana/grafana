@@ -1,6 +1,6 @@
-import React, { FC, useMemo } from 'react';
 import { css } from '@emotion/css';
-import { IconButton, Label, Select, stylesFactory, useTheme } from '@grafana/ui';
+import React, { FC, useMemo } from 'react';
+
 import {
   SelectableValue,
   getFrameDisplayName,
@@ -8,9 +8,10 @@ import {
   StandardEditorProps,
   getFieldDisplayName,
 } from '@grafana/data';
+import { IconButton, Label, Select, stylesFactory, useTheme } from '@grafana/ui';
 
-import { XYDimensionConfig, XYChartOptions } from './models.gen';
 import { getXYDimensions, isGraphable } from './dims';
+import { XYDimensionConfig, XYChartOptions } from './models.gen';
 
 interface XYInfo {
   numberFields: Array<SelectableValue<string>>;

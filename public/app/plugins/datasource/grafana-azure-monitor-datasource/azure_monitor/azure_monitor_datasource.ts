@@ -1,7 +1,8 @@
+import { filter, startsWith } from 'lodash';
+
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { filter, startsWith } from 'lodash';
 
 import { resourceTypeDisplayNames } from '../azureMetadata';
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
@@ -21,6 +22,7 @@ import {
   GetMetricMetadataQuery,
 } from '../types';
 import { routeNames } from '../utils/common';
+
 import ResponseParser from './response_parser';
 import SupportedNamespaces from './supported_namespaces';
 import UrlBuilder from './url_builder';

@@ -1,13 +1,15 @@
 import React, { FC } from 'react';
 import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
-import { Field, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
-import { SelectableValue, StandardEditorProps } from '@grafana/data';
 
-import { PanelOptions } from '../models.gen';
-import { CanvasEditorOptions } from './elementEditor';
+import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { Field, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
 import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/features/canvas';
 import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
+
+import { PanelOptions } from '../models.gen';
+
+import { CanvasEditorOptions } from './elementEditor';
 
 const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width', 'height'];
 

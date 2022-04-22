@@ -1,7 +1,8 @@
-import { backendSrv } from '../services/backend_srv';
-import { fromDTO, toDTO } from './localStorageConverter';
 import { RichHistoryQuery } from '../../types';
+import { backendSrv } from '../services/backend_srv';
+
 import { RichHistoryLocalStorageDTO } from './RichHistoryLocalStorage';
+import { fromDTO, toDTO } from './localStorageConverter';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),

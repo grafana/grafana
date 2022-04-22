@@ -1,5 +1,7 @@
-import { getBackendSrv, locationService } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
+import { isEmpty } from 'lodash';
+
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -24,7 +26,7 @@ import {
   StateHistoryItem,
 } from 'app/types/unified-alerting';
 import { PromApplication, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
-import { isEmpty } from 'lodash';
+
 import {
   addAlertManagers,
   createOrUpdateSilence,

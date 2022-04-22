@@ -1,8 +1,8 @@
-import { Observable } from 'rxjs';
 import { ComponentType } from 'react';
+import { Observable } from 'rxjs';
 
-import { QueryEditorProps } from './datasource';
 import { DataFrame } from './dataFrame';
+import { QueryEditorProps } from './datasource';
 import { DataQuery, DataSourceRef } from './query';
 
 /**

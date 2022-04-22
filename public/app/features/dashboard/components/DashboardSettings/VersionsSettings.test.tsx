@@ -1,12 +1,13 @@
-import React from 'react';
-import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
 import { within } from '@testing-library/dom';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { UserEvent } from '@testing-library/user-event/dist/types/setup';
+import React from 'react';
+
 import { historySrv } from '../VersionHistory/HistorySrv';
+
 import { VersionsSettings, VERSIONS_FETCH_LIMIT } from './VersionsSettings';
 import { versions, diffs } from './__mocks__/versions';
-import { UserEvent } from '@testing-library/user-event/dist/types/setup';
 
 jest.mock('../VersionHistory/HistorySrv');
 

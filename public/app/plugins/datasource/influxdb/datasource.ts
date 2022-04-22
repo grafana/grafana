@@ -2,13 +2,7 @@ import { cloneDeep, extend, get, groupBy, has, isString, map as _map, omit, pick
 import { lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  BackendDataSourceResponse,
-  DataSourceWithBackend,
-  FetchResponse,
-  frameToMetricFindValue,
-  getBackendSrv,
-} from '@grafana/runtime';
+
 import {
   AnnotationEvent,
   ArrayVector,
@@ -29,15 +23,23 @@ import {
   TimeSeries,
   AnnotationQueryRequest,
 } from '@grafana/data';
-import InfluxSeries from './influx_series';
-import InfluxQueryModel from './influx_query_model';
-import ResponseParser from './response_parser';
-import { InfluxQueryBuilder } from './query_builder';
-import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { FluxQueryEditor } from './components/FluxQueryEditor';
-import { buildRawQuery } from './queryUtils';
+import {
+  BackendDataSourceResponse,
+  DataSourceWithBackend,
+  FetchResponse,
+  frameToMetricFindValue,
+  getBackendSrv,
+} from '@grafana/runtime';
 import config from 'app/core/config';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+
+import { FluxQueryEditor } from './components/FluxQueryEditor';
+import InfluxQueryModel from './influx_query_model';
+import InfluxSeries from './influx_series';
+import { buildRawQuery } from './queryUtils';
+import { InfluxQueryBuilder } from './query_builder';
+import ResponseParser from './response_parser';
+import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
 
 // we detect the field type based on the value-array
 function getFieldType(values: unknown[]): FieldType {

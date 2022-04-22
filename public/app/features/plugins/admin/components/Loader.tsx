@@ -1,5 +1,7 @@
 import React from 'react';
+
 import { LoadingPlaceholder } from '@grafana/ui';
+
 import { Page } from './Page';
 
 export interface Props {

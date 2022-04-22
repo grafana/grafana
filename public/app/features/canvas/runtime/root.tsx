@@ -1,4 +1,5 @@
 import { CanvasGroupOptions, CanvasElementOptions } from 'app/features/canvas';
+
 import { GroupState } from './group';
 import { Scene } from './scene';
 

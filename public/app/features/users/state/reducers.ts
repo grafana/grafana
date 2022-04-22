@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { OrgUser, UsersState } from 'app/types';
 import config from 'app/core/config';
+import { OrgUser, UsersState } from 'app/types';
 
 export const initialState: UsersState = {
   users: [] as OrgUser[],

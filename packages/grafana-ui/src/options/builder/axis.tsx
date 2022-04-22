@@ -1,4 +1,5 @@
 import React from 'react';
+
 import {
   FieldConfigEditorBuilder,
   FieldOverrideEditorProps,
@@ -6,8 +7,9 @@ import {
   identityOverrideProcessor,
   SelectableValue,
 } from '@grafana/data';
-import { graphFieldOptions, Select, HorizontalGroup, RadioButtonGroup } from '../../index';
 import { AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
+
+import { graphFieldOptions, Select, HorizontalGroup, RadioButtonGroup } from '../../index';
 
 /**
  * @alpha

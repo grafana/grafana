@@ -1,4 +1,5 @@
 import { merge } from 'lodash';
+
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { palette } from './palette';
 import { DeepPartial, ThemeRichColor } from './types';

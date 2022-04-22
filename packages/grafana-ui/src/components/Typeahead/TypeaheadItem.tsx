@@ -1,12 +1,14 @@
+import { css, cx } from '@emotion/css';
 import React from 'react';
-
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
-import { css, cx } from '@emotion/css';
+
 import { GrafanaTheme } from '@grafana/data';
-import { CompletionItem, CompletionItemKind } from '../../types/completion';
-import { PartialHighlighter } from './PartialHighlighter';
+
 import { useStyles } from '../../themes/ThemeContext';
+import { CompletionItem, CompletionItemKind } from '../../types/completion';
+
+import { PartialHighlighter } from './PartialHighlighter';
 
 interface Props {
   isSelected: boolean;

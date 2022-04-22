@@ -1,3 +1,5 @@
+import { lastValueFrom } from 'rxjs';
+
 import {
   ArrayVector,
   DataFrame,
@@ -9,11 +11,12 @@ import {
   Vector,
 } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
-import { lastValueFrom } from 'rxjs';
-import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+
 import { QueryFilters } from './types';
+
 import { QueryResult } from '.';
 
 // The raw restuls from query server

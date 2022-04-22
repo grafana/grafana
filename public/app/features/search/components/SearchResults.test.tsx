@@ -1,10 +1,12 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Props, SearchResults } from './SearchResults';
 import { generalFolder, searchResults } from '../testData';
 import { SearchLayout } from '../types';
+
+import { Props, SearchResults } from './SearchResults';
 
 beforeEach(() => {
   jest.clearAllMocks();

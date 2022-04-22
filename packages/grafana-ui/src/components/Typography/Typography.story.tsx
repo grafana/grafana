@@ -1,6 +1,8 @@
 import React from 'react';
+
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { VerticalGroup } from '../Layout/Layout';
+
 import { Typography } from './Typography';
 
 export default {
