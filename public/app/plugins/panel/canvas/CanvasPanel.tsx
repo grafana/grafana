@@ -1,17 +1,22 @@
-import { Component } from 'react';
-import { PanelProps } from '@grafana/data';
+import React, { Component } from 'react';
+import { GrafanaTheme, PanelProps } from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { Subscription } from 'rxjs';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 import { CanvasGroupOptions } from 'app/features/canvas';
 import { Scene } from 'app/features/canvas/runtime/scene';
-import { PanelContext, PanelContextRoot } from '@grafana/ui';
+import { Button, PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
+import { css } from '@emotion/css';
+import { config, locationService } from '@grafana/runtime/src';
+import { InlineEdit } from './InlineEdit';
+import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 interface Props extends PanelProps<PanelOptions> {}
 
 interface State {
   refresh: number;
+  openInlineEdit: boolean;
 }
 
 export interface InstanceState {
@@ -26,11 +31,14 @@ export class CanvasPanel extends Component<Props, State> {
   readonly scene: Scene;
   private subs = new Subscription();
   needsReload = false;
+  styles = getStyles(config.theme);
+  isEditing = locationService.getSearchObject().editPanel !== undefined;
 
   constructor(props: Props) {
     super(props);
     this.state = {
       refresh: 0,
+      openInlineEdit: false,
     };
 
     // Only the initial options are ever used.
@@ -110,6 +118,10 @@ export class CanvasPanel extends Component<Props, State> {
       changed = true;
     }
 
+    if (this.state.openInlineEdit !== nextState.openInlineEdit) {
+      changed = true;
+    }
+
     // After editing, the options are valid, but the scene was in a different panel or inline editing mode has changed
     const shouldUpdateSceneAndPanel =
       (this.needsReload && this.props.options !== nextProps.options) ||
@@ -129,7 +141,53 @@ export class CanvasPanel extends Component<Props, State> {
     return changed;
   }
 
+  inlineEditButtonClick = (open: boolean) => {
+    this.setState({ openInlineEdit: open });
+  };
+
+  renderInlineEdit = () => {
+    const dashboard = getDashboardSrv().getCurrent();
+
+    if (!dashboard || !this.props.id) {
+      return null;
+    }
+
+    const panel = dashboard.getPanelById(this.props.id);
+
+    if (!panel) {
+      return null;
+    }
+
+    return <InlineEdit panel={panel} dashboard={dashboard} onClose={() => this.inlineEditButtonClick(false)} />;
+  };
+
   render() {
-    return this.scene.render();
+    return (
+      <>
+        {this.scene.render()}
+        {this.props.options.inlineEditing && !this.isEditing && (
+          <div>
+            <div className={this.styles.inlineEditButton}>
+              <Button
+                size="md"
+                variant="secondary"
+                icon="edit"
+                data-inlineeditpanelid={this.props.id}
+                onClick={() => this.inlineEditButtonClick(true)}
+              />
+            </div>
+            {this.state.openInlineEdit && this.renderInlineEdit()}
+          </div>
+        )}
+      </>
+    );
   }
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  inlineEditButton: css`
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+  `,
+}));
