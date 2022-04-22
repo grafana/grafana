@@ -304,3 +304,5 @@ replace github.com/tidwall/match => github.com/tidwall/match v1.1.1
 // Upgrading affects backend plugins: https://github.com/grafana/grafana/pull/47653#discussion_r850508593
 // No harm to Thema because it's only a dependency in its main package.
 replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
+
+replace github.com/microcosm-cc/bluemonday => github.com/microcosm-cc/bluemonday v1.0.18
