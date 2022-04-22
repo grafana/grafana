@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { LegendDisplayMode } from '@grafana/schema';
+import { Subscription } from 'rxjs';
+
 import {
   DataHoverClearEvent,
   DataHoverEvent,
@@ -9,11 +10,7 @@ import {
   getFieldDisplayValues,
   PanelProps,
 } from '@grafana/data';
-
-import { PieChart } from './PieChart';
-
-import { PieChartLegendOptions, PieChartLegendValues, PieChartOptions } from './types';
-import { Subscription } from 'rxjs';
+import { LegendDisplayMode } from '@grafana/schema';
 import {
   SeriesVisibilityChangeBehavior,
   usePanelContext,
@@ -22,6 +19,9 @@ import {
   VizLegend,
   VizLegendItem,
 } from '@grafana/ui';
+
+import { PieChart } from './PieChart';
+import { PieChartLegendOptions, PieChartLegendValues, PieChartOptions } from './types';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {

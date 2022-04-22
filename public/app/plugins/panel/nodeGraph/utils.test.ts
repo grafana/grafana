@@ -1,4 +1,5 @@
 import { ArrayVector, createTheme } from '@grafana/data';
+
 import { makeEdgesDataFrame, makeNodesDataFrame, processNodes } from './utils';
 
 describe('processNodes', () => {

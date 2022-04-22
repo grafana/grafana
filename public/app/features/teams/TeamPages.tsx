@@ -1,23 +1,25 @@
+import { includes } from 'lodash';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { includes } from 'lodash';
+
+import { NavModel } from '@grafana/data';
+import { featureEnabled } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
-import config from 'app/core/config';
 import Page from 'app/core/components/Page/Page';
+import { UpgradeBox } from 'app/core/components/Upgrade/UpgradeBox';
+import config from 'app/core/config';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction, StoreState } from 'app/types';
+
+import TeamGroupSync, { TeamSyncUpgradeContent } from './TeamGroupSync';
 import TeamMembers from './TeamMembers';
 import TeamPermissions from './TeamPermissions';
 import TeamSettings from './TeamSettings';
-import TeamGroupSync, { TeamSyncUpgradeContent } from './TeamGroupSync';
-import { AccessControlAction, StoreState } from 'app/types';
 import { loadTeam, loadTeamMembers } from './state/actions';
-import { getTeam, getTeamMembers, isSignedInUserTeamAdmin } from './state/selectors';
 import { getTeamLoadingNav } from './state/navModel';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { contextSrv } from 'app/core/services/context_srv';
-import { NavModel } from '@grafana/data';
-import { featureEnabled } from '@grafana/runtime';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { UpgradeBox } from 'app/core/components/Upgrade/UpgradeBox';
+import { getTeam, getTeamMembers, isSignedInUserTeamAdmin } from './state/selectors';
 
 interface TeamPageRouteParams {
   id: string;

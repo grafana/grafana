@@ -1,4 +1,5 @@
 import { DeprecatedAzureMonitorQuery } from '../components/deprecated/types';
+
 import { GrafanaTemplateVariableQuery } from './templateVariables';
 
 export enum AzureQueryType {

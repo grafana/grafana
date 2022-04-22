@@ -1,5 +1,7 @@
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
+
 import { getDatasourceAPIId } from '../utils/datasource';
+
 import { rulerUrlBuilder } from './ruler';
 
 jest.mock('../utils/datasource');

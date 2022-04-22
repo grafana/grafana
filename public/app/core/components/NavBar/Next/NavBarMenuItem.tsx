@@ -1,7 +1,8 @@
+import { css, cx } from '@emotion/css';
 import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
-import { css, cx } from '@emotion/css';
 
 export interface Props {
   icon?: IconName;

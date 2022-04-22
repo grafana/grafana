@@ -1,12 +1,14 @@
 import React from 'react';
+import SVG from 'react-inlinesvg';
+
 import { DataFrameView, DataSourceRef, Field } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import SVG from 'react-inlinesvg';
 import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
 import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
 
-import { FieldAccess, TableColumn } from './Table';
 import { LocationInfo } from '../../service';
+
+import { FieldAccess, TableColumn } from './Table';
 
 export const generateColumns = (
   data: DataFrameView<FieldAccess>,

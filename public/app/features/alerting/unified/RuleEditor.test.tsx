@@ -1,25 +1,28 @@
 import { Matcher, render, waitFor, screen } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { BackendSrv, locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
-import { configureStore } from 'app/store/configureStore';
-import RuleEditor from './RuleEditor';
-import { Route, Router } from 'react-router-dom';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
+import { Route, Router } from 'react-router-dom';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
+
+import { DataSourceInstanceSettings } from '@grafana/data';
+import { BackendSrv, locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { selectOptionInTest } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { mockDataSource, MockDataSourceSrv } from './mocks';
-import userEvent from '@testing-library/user-event';
-import { DataSourceInstanceSettings } from '@grafana/data';
-import { getAllDataSources } from './utils/config';
-import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { getDefaultQueries } from './utils/rule-form';
-import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
+import { configureStore } from 'app/store/configureStore';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
+
+import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
+
+import RuleEditor from './RuleEditor';
 import { fetchBuildInfo } from './api/buildInfo';
+import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
+import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
+import { mockDataSource, MockDataSourceSrv } from './mocks';
+import { getAllDataSources } from './utils/config';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { getDefaultQueries } from './utils/rule-form';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name

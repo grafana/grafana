@@ -1,12 +1,15 @@
-import React, { FunctionComponent, useMemo } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FunctionComponent, useMemo } from 'react';
 import { useAsyncFn } from 'react-use';
+
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { InputGroup, AccessoryButton } from '@grafana/experimental';
 import { Select, stylesFactory, useTheme2 } from '@grafana/ui';
+
 import { CloudWatchDatasource } from '../../datasource';
 import { CloudWatchMetricsQuery, Dimensions } from '../../types';
 import { appendTemplateVariables } from '../../utils/utils';
+
 import { DimensionFilterCondition } from './Dimensions';
 
 export interface Props {

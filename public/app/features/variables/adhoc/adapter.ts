@@ -1,14 +1,15 @@
 import { cloneDeep } from 'lodash';
 
-import { AdHocVariableModel } from '../types';
 import { dispatch } from '../../../store/store';
 import { VariableAdapter } from '../adapters';
-import { AdHocPicker } from './picker/AdHocPicker';
-import { adHocVariableReducer, initialAdHocVariableModelState } from './reducer';
+import { AdHocVariableModel } from '../types';
+import { toKeyedVariableIdentifier } from '../utils';
+
 import { AdHocVariableEditor } from './AdHocVariableEditor';
 import { setFiltersFromUrl } from './actions';
+import { AdHocPicker } from './picker/AdHocPicker';
+import { adHocVariableReducer, initialAdHocVariableModelState } from './reducer';
 import * as urlParser from './urlParser';
-import { toKeyedVariableIdentifier } from '../utils';
 
 const noop = async () => {};
 

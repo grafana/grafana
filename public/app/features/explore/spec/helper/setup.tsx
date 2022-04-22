@@ -1,10 +1,10 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { within } from '@testing-library/dom';
 import { EnhancedStore } from '@reduxjs/toolkit';
+import { within } from '@testing-library/dom';
+import { render, screen } from '@testing-library/react';
+import { fromPairs } from 'lodash';
+import React from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
-import { fromPairs } from 'lodash';
 
 import { DataSourceApi, DataSourceInstanceSettings, QueryEditorProps, ScopedVars } from '@grafana/data';
 import { locationService, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
@@ -12,12 +12,11 @@ import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
 import { configureStore } from 'app/store/configureStore';
 
-import Wrapper from '../../Wrapper';
-import { initialUserState } from '../../../profile/state/reducers';
-
 import { LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../../../plugins/datasource/loki/types';
 import { ExploreId } from '../../../../types';
+import { initialUserState } from '../../../profile/state/reducers';
+import Wrapper from '../../Wrapper';
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
 

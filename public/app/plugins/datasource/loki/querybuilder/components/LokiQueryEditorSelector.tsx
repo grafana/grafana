@@ -1,21 +1,23 @@
 import { css } from '@emotion/css';
+import React, { useCallback, useState } from 'react';
+
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { Button, useStyles2, ConfirmModal } from '@grafana/ui';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
-import React, { useCallback, useState } from 'react';
+
 import { LokiQueryEditorProps } from '../../components/types';
 import { LokiQuery } from '../../types';
-
 import { lokiQueryModeller } from '../LokiQueryModeller';
+import { buildVisualQueryFromString } from '../parsing';
 import { getQueryWithDefaults } from '../state';
 import { getDefaultEmptyQuery, LokiVisualQuery } from '../types';
+
 import { LokiQueryBuilder } from './LokiQueryBuilder';
 import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplaind';
 import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
 import { LokiQueryCodeEditor } from './LokiQueryCodeEditor';
-import { buildVisualQueryFromString } from '../parsing';
 
 export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) => {
   const { onChange, onRunQuery, data } = props;

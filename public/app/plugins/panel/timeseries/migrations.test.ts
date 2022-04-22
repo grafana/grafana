@@ -1,7 +1,9 @@
-import { PanelModel, FieldConfigSource } from '@grafana/data';
-import { graphPanelChangedHandler } from './migrations';
 import { cloneDeep } from 'lodash';
+
+import { PanelModel, FieldConfigSource } from '@grafana/data';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
+
+import { graphPanelChangedHandler } from './migrations';
 
 describe('Graph Migrations', () => {
   let prevFieldConfig: FieldConfigSource;

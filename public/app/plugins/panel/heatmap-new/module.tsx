@@ -1,8 +1,14 @@
 import React from 'react';
-import { GraphFieldConfig, VisibilityMode } from '@grafana/schema';
+
 import { Field, FieldType, PanelPlugin } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { GraphFieldConfig, VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
+import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
+
+import { ColorScale } from './ColorScale';
 import { HeatmapPanel } from './HeatmapPanel';
+import { heatmapChangedHandler } from './migrations';
 import {
   PanelOptions,
   defaultPanelOptions,
@@ -10,12 +16,8 @@ import {
   HeatmapColorMode,
   HeatmapColorScale,
 } from './models.gen';
-import { HeatmapSuggestionsSupplier } from './suggestions';
-import { heatmapChangedHandler } from './migrations';
-import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 import { colorSchemes, quantizeScheme } from './palettes';
-import { config } from '@grafana/runtime';
-import { ColorScale } from './ColorScale';
+import { HeatmapSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
   .useFieldConfig()

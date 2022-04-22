@@ -1,8 +1,10 @@
 import React from 'react';
+
+import { selectors } from '@grafana/e2e-selectors';
 import { Button, ButtonVariant, ModalsController, FullWidthButtonContainer } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
+
 import { SaveDashboardProxy } from './SaveDashboardProxy';
-import { selectors } from '@grafana/e2e-selectors';
 
 interface SaveDashboardButtonProps {
   dashboard: DashboardModel;

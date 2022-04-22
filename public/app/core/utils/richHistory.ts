@@ -1,28 +1,26 @@
-// Libraries
 import { omit } from 'lodash';
 
-// Services & Utils
 import { DataQuery, DataSourceApi, dateTimeFormat, ExploreUrlState, urlUtil } from '@grafana/data';
-import { dispatch } from 'app/store/store';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
-
-// Types
-import { RichHistoryQuery } from 'app/types/explore';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { getRichHistoryStorage } from '../history/richHistoryStorageProvider';
-import {
-  RichHistoryServiceError,
-  RichHistoryStorageWarning,
-  RichHistoryStorageWarningDetails,
-} from '../history/RichHistoryStorage';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
 import {
   filterQueriesByDataSource,
   filterQueriesBySearchFilter,
   filterQueriesByTime,
   sortQueries,
 } from 'app/core/history/richHistoryLocalStorageUtils';
+import { dispatch } from 'app/store/store';
+import { RichHistoryQuery } from 'app/types/explore';
+
+import {
+  RichHistoryServiceError,
+  RichHistoryStorageWarning,
+  RichHistoryStorageWarningDetails,
+} from '../history/RichHistoryStorage';
+import { getRichHistoryStorage } from '../history/richHistoryStorageProvider';
+
 import { SortOrder } from './richHistoryTypes';
 
 export { SortOrder };

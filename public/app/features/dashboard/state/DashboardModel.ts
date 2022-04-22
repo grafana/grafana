@@ -13,15 +13,8 @@ import {
   pull,
   some,
 } from 'lodash';
-// Constants
-import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
-// Utils & Services
-import { contextSrv } from 'app/core/services/context_srv';
-// Types
-import { GridPos, PanelModel } from './PanelModel';
-import { TimeModel } from './TimeModel';
-import { DashboardMigrator } from './DashboardMigrator';
+import { Subscription } from 'rxjs';
+
 import {
   AnnotationQuery,
   AppEvent,
@@ -37,26 +30,33 @@ import {
   TimeZone,
   UrlQueryValue,
 } from '@grafana/data';
-import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
-import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
+import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
+import { contextSrv } from 'app/core/services/context_srv';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
-import { dispatch } from '../../../store/store';
-import { isAllVariable } from '../../variables/utils';
+import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
+import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
 import { DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
-import { getTimeSrv } from '../services/TimeSrv';
-import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
-import { deleteScopeVars, isOnTheSameGridRow } from './utils';
-import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
-import { Subscription } from 'rxjs';
+
 import { appEvents } from '../../../core/core';
+import { dispatch } from '../../../store/store';
 import {
   VariablesChanged,
   VariablesChangedEvent,
   VariablesChangedInUrl,
   VariablesTimeRangeProcessDone,
 } from '../../variables/types';
+import { isAllVariable } from '../../variables/utils';
+import { getTimeSrv } from '../services/TimeSrv';
+import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
+
+import { DashboardMigrator } from './DashboardMigrator';
+import { GridPos, PanelModel } from './PanelModel';
+import { TimeModel } from './TimeModel';
+import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
 export interface CloneOptions {
   saveVariables?: boolean;

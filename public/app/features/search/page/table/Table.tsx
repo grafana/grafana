@@ -1,13 +1,15 @@
+import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 import { useTable, useBlockLayout, Column, TableOptions, Cell } from 'react-table';
-import { DataFrame, DataFrameType, DataFrameView, DataSourceRef, Field, GrafanaTheme2 } from '@grafana/data';
-import { css } from '@emotion/css';
-import { useStyles2 } from '@grafana/ui';
 import { FixedSizeList } from 'react-window';
+
+import { DataFrame, DataFrameType, DataFrameView, DataSourceRef, Field, GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
 
 import { LocationInfo } from '../../service';
+
 import { generateColumns } from './columns';
 
 type Props = {

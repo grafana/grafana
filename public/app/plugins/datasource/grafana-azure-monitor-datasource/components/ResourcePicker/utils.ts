@@ -1,4 +1,5 @@
 import produce from 'immer';
+
 import { ResourceRow, ResourceRowGroup } from './types';
 
 // This regex matches URIs representing:

@@ -1,8 +1,10 @@
-import { DataTransformerID } from './ids';
-import { DataTransformerInfo } from '../../types/transformations';
 import { map } from 'rxjs/operators';
-import { DataFrame } from '../../types/dataFrame';
+
 import { getFieldDisplayName } from '../../field/fieldState';
+import { DataFrame } from '../../types/dataFrame';
+import { DataTransformerInfo } from '../../types/transformations';
+
+import { DataTransformerID } from './ids';
 
 /**
  * Options for renameByRegexTransformer

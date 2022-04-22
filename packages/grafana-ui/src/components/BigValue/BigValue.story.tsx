@@ -1,5 +1,11 @@
-import React from 'react';
 import { Story, Meta } from '@storybook/react';
+import React from 'react';
+
+import { ArrayVector, FieldSparkline, FieldType } from '@grafana/data';
+
+import { useTheme2 } from '../../themes';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
 import {
   BigValue,
   BigValueColorMode,
@@ -8,10 +14,7 @@ import {
   BigValueTextMode,
   Props,
 } from './BigValue';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './BigValue.mdx';
-import { useTheme2 } from '../../themes';
-import { ArrayVector, FieldSparkline, FieldType } from '@grafana/data';
 
 export default {
   title: 'Visualizations/BigValue',

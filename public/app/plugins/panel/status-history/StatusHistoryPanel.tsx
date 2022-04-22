@@ -1,11 +1,14 @@
 import React, { useMemo } from 'react';
+
 import { PanelProps } from '@grafana/data';
 import { TooltipPlugin, useTheme2, ZoomPlugin } from '@grafana/ui';
-import { StatusPanelOptions } from './types';
+
 import { TimelineChart } from '../state-timeline/TimelineChart';
 import { TimelineMode } from '../state-timeline/types';
 import { prepareTimelineFields, prepareTimelineLegendItems } from '../state-timeline/utils';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+
+import { StatusPanelOptions } from './types';
 
 interface TimelinePanelProps extends PanelProps<StatusPanelOptions> {}
 

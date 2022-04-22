@@ -1,16 +1,9 @@
-// Libraries
-import React, { memo, FormEvent, createRef, useState, ReactElement } from 'react';
 import { css } from '@emotion/css';
+import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
+import React, { memo, FormEvent, createRef, useState, ReactElement } from 'react';
 
-// Components
-import { Tooltip } from '../Tooltip/Tooltip';
-import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
-
-// Utils & Services
-import { stylesFactory } from '../../themes/stylesFactory';
-import { withTheme, useTheme } from '../../themes/ThemeContext';
-
-// Types
 import {
   isDateTime,
   rangeUtil,
@@ -21,13 +14,16 @@ import {
   TimeZone,
   dateMath,
 } from '@grafana/data';
-import { Themeable } from '../../types';
-import { quickOptions } from './options';
-import { ButtonGroup, ToolbarButton } from '../Button';
 import { selectors } from '@grafana/e2e-selectors';
-import { useDialog } from '@react-aria/dialog';
-import { useOverlay } from '@react-aria/overlays';
-import { FocusScope } from '@react-aria/focus';
+
+import { withTheme, useTheme } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes/stylesFactory';
+import { Themeable } from '../../types';
+import { ButtonGroup, ToolbarButton } from '../Button';
+import { Tooltip } from '../Tooltip/Tooltip';
+
+import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
+import { quickOptions } from './options';
 
 /** @public */
 export interface TimeRangePickerProps extends Themeable {

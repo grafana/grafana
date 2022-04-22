@@ -1,39 +1,41 @@
-import React, { createRef } from 'react';
 import { css, cx } from '@emotion/css';
-import { compose } from 'redux';
+import memoizeOne from 'memoize-one';
+import React, { createRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import memoizeOne from 'memoize-one';
+import { compose } from 'redux';
+import { Unsubscribable } from 'rxjs';
+
+import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2 } from '@grafana/ui';
-import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
-
-import LogsContainer from './LogsContainer';
-import { QueryRows } from './QueryRows';
-import TableContainer from './TableContainer';
-import RichHistoryContainer from './RichHistory/RichHistoryContainer';
-import ExploreQueryInspector from './ExploreQueryInspector';
-import { splitOpen } from './state/main';
-import { changeSize, changeGraphStyle } from './state/explorePane';
-import { makeAbsoluteTime, updateTimeRange } from './state/time';
-import { addQueryRow, loadLogsVolumeData, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
-import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
-import { StoreState } from 'app/types';
-import { ExploreToolbar } from './ExploreToolbar';
-import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
-import { getTimeZone } from '../profile/state/selectors';
-import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
-import { NodeGraphContainer } from './NodeGraphContainer';
-import { ResponseErrorContainer } from './ResponseErrorContainer';
-import { TraceViewContainer } from './TraceView/TraceViewContainer';
-import { ExploreGraph } from './ExploreGraph';
-import { LogsVolumePanel } from './LogsVolumePanel';
-import { ExploreGraphLabel } from './ExploreGraphLabel';
 import appEvents from 'app/core/app_events';
-import { AbsoluteTimeEvent } from 'app/types/events';
-import { Unsubscribable } from 'rxjs';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
+import { StoreState } from 'app/types';
+import { AbsoluteTimeEvent } from 'app/types/events';
+import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
+
+import { getTimeZone } from '../profile/state/selectors';
+
+import { ExploreGraph } from './ExploreGraph';
+import { ExploreGraphLabel } from './ExploreGraphLabel';
+import ExploreQueryInspector from './ExploreQueryInspector';
+import { ExploreToolbar } from './ExploreToolbar';
+import LogsContainer from './LogsContainer';
+import { LogsVolumePanel } from './LogsVolumePanel';
+import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
+import { NodeGraphContainer } from './NodeGraphContainer';
+import { QueryRows } from './QueryRows';
+import { ResponseErrorContainer } from './ResponseErrorContainer';
+import RichHistoryContainer from './RichHistory/RichHistoryContainer';
+import { SecondaryActions } from './SecondaryActions';
+import TableContainer from './TableContainer';
+import { TraceViewContainer } from './TraceView/TraceViewContainer';
+import { changeSize, changeGraphStyle } from './state/explorePane';
+import { splitOpen } from './state/main';
+import { addQueryRow, loadLogsVolumeData, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
+import { makeAbsoluteTime, updateTimeRange } from './state/time';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

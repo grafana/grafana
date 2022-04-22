@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { useEffectOnce } from 'react-use';
-import { css } from '@emotion/css';
-import { Alert, useStyles2 } from '@grafana/ui';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, useStyles2 } from '@grafana/ui';
 import { AppNotification, timeoutMap } from 'app/types';
 
 interface Props {

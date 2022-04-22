@@ -1,13 +1,13 @@
-import React, { CSSProperties } from 'react';
 import { css } from '@emotion/css';
+import Moveable from 'moveable';
+import React, { CSSProperties } from 'react';
 import { ReplaySubject, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
-import Moveable from 'moveable';
 import Selecto from 'selecto';
 
-import { config } from 'app/core/config';
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { Anchor, CanvasGroupOptions, DEFAULT_CANVAS_ELEMENT_CONFIG, Placement } from 'app/features/canvas';
 import {
   ColorDimensionConfig,
@@ -24,10 +24,11 @@ import {
   getTextDimensionFromData,
   getScalarDimensionFromData,
 } from 'app/features/dimensions/utils';
-import { ElementState } from './element';
-import { RootElement } from './root';
-import { GroupState } from './group';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
+
+import { ElementState } from './element';
+import { GroupState } from './group';
+import { RootElement } from './root';
 
 export interface SelectionParams {
   targets: Array<HTMLElement | SVGElement>;

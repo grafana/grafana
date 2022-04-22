@@ -1,11 +1,13 @@
 import React, { FC } from 'react';
+
 import { DataFrame, DataTransformerID, getFrameDisplayName, SelectableValue } from '@grafana/data';
 import { Field, HorizontalGroup, Select, Switch, VerticalGroup } from '@grafana/ui';
-import { getPanelInspectorStyles } from './styles';
-import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { PanelModel } from 'app/features/dashboard/state';
 import { DetailText } from 'app/features/inspector/DetailText';
+import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
+
+import { getPanelInspectorStyles } from './styles';
 
 interface Props {
   options: GetDataOptions;

@@ -1,5 +1,6 @@
-import { InlineField, Input } from '@grafana/ui';
 import React, { FC, useState } from 'react';
+
+import { InlineField, Input } from '@grafana/ui';
 
 const LABEL_WIDTH = 20;
 const TEXT_WIDTH = 100;

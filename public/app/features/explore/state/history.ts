@@ -1,3 +1,6 @@
+import { AnyAction, createAction } from '@reduxjs/toolkit';
+
+import { DataQuery, HistoryItem } from '@grafana/data';
 import {
   addToRichHistory,
   deleteAllFromRichHistory,
@@ -7,9 +10,8 @@ import {
   updateStarredInRichHistory,
 } from 'app/core/utils/richHistory';
 import { ExploreId, ExploreItemState, ExploreState, RichHistoryQuery, ThunkResult } from 'app/types';
+
 import { richHistoryLimitExceededAction, richHistoryStorageFullAction, richHistoryUpdatedAction } from './main';
-import { DataQuery, HistoryItem } from '@grafana/data';
-import { AnyAction, createAction } from '@reduxjs/toolkit';
 
 //
 // Actions and Payloads

@@ -1,25 +1,26 @@
 import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
 import { default as ReactSelect } from 'react-select';
-import Creatable from 'react-select/creatable';
 import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
+import Creatable from 'react-select/creatable';
 
+import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
-import { useCustomSelectStyles } from './resetSelectStyles';
-import { SelectMenu, SelectMenuOptions } from './SelectMenu';
-import { IndicatorsContainer } from './IndicatorsContainer';
-import { ValueContainer } from './ValueContainer';
-import { InputControl } from './InputControl';
-import { SelectContainer } from './SelectContainer';
+
 import { DropdownIndicator } from './DropdownIndicator';
+import { IndicatorsContainer } from './IndicatorsContainer';
+import { InputControl } from './InputControl';
+import { MultiValueContainer, MultiValueRemove } from './MultiValue';
+import { SelectContainer } from './SelectContainer';
+import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { SelectOptionGroup } from './SelectOptionGroup';
 import { SingleValue } from './SingleValue';
-import { MultiValueContainer, MultiValueRemove } from './MultiValue';
-import { useTheme2 } from '../../themes';
+import { ValueContainer } from './ValueContainer';
 import { getSelectStyles } from './getSelectStyles';
-import { cleanValue, findSelectedValue } from './utils';
+import { useCustomSelectStyles } from './resetSelectStyles';
 import { ActionMeta, SelectBaseProps, SelectValue } from './types';
+import { cleanValue, findSelectedValue } from './utils';
 
 interface ExtraValuesIndicatorProps {
   maxVisibleValues?: number | undefined;

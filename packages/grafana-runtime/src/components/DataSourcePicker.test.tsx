@@ -1,7 +1,8 @@
-import React from 'react';
-import { DataSourcePicker } from './DataSourcePicker';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import { DataSourcePicker } from './DataSourcePicker';
 
 jest.mock('../services/dataSourceSrv');
 

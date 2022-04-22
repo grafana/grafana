@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import { dateMath, GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import React from 'react';
-import { useStyles2 } from '@grafana/ui';
-import SilencedAlertsTable from './SilencedAlertsTable';
 
+import { dateMath, GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+
+import SilencedAlertsTable from './SilencedAlertsTable';
 import { SilenceTableItem } from './SilencesTable';
 
 interface Props {

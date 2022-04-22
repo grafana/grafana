@@ -1,10 +1,12 @@
-import RichHistoryLocalStorage, { MAX_HISTORY_ITEMS } from './RichHistoryLocalStorage';
-import store from 'app/core/store';
-import { RichHistoryQuery } from '../../types';
 import { DataQuery } from '@grafana/data';
+import store from 'app/core/store';
+
 import { afterEach, beforeEach } from '../../../test/lib/common';
-import { RichHistoryStorageWarning } from './RichHistoryStorage';
+import { RichHistoryQuery } from '../../types';
 import { backendSrv } from '../services/backend_srv';
+
+import RichHistoryLocalStorage, { MAX_HISTORY_ITEMS } from './RichHistoryLocalStorage';
+import { RichHistoryStorageWarning } from './RichHistoryStorage';
 
 const key = 'grafana.explore.richHistory';
 

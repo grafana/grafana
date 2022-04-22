@@ -1,19 +1,19 @@
-import React, { PureComponent } from 'react';
-import tinycolor from 'tinycolor2';
 import { css, cx } from '@emotion/css';
-import { LogRowModel, findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
 import memoizeOne from 'memoize-one';
-
+import React, { PureComponent } from 'react';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
-import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
-import { Themeable2 } from '../../types/theme';
-import { withTheme2 } from '../../themes/index';
-import { getLogRowStyles } from './getLogRowStyles';
+import tinycolor from 'tinycolor2';
 
-//Components
-import { LogRowContext } from './LogRowContext';
+import { LogRowModel, findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
+
+import { withTheme2 } from '../../themes/index';
+import { Themeable2 } from '../../types/theme';
+
 import { LogMessageAnsi } from './LogMessageAnsi';
+import { LogRowContext } from './LogRowContext';
+import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
+import { getLogRowStyles } from './getLogRowStyles';
 
 export const MAX_CHARACTERS = 100000;
 

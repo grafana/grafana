@@ -1,16 +1,18 @@
-import React from 'react';
-import { CoreApp, GrafanaTheme2, PanelDataSummary, VisualizationSuggestionsBuilder } from '@grafana/data';
-import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { PanelDataErrorViewProps } from '@grafana/runtime';
-import { CardButton } from 'app/core/components/CardButton';
+import React from 'react';
 import { useDispatch } from 'react-redux';
-import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/state/reducers';
-import { changePanelPlugin } from '../state/actions';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import store from 'app/core/store';
+
+import { CoreApp, GrafanaTheme2, PanelDataSummary, VisualizationSuggestionsBuilder } from '@grafana/data';
+import { PanelDataErrorViewProps } from '@grafana/runtime';
+import { usePanelContext, useStyles2 } from '@grafana/ui';
+import { CardButton } from 'app/core/components/CardButton';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
+import store from 'app/core/store';
+import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+
+import { changePanelPlugin } from '../state/actions';
 
 export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   const styles = useStyles2(getStyles);

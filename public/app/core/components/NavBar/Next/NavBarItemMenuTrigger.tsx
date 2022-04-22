@@ -1,19 +1,20 @@
-import React, { ReactElement, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { MenuTriggerProps } from '@react-types/menu';
-import { useMenuTriggerState } from '@react-stately/menu';
-import { useMenuTrigger } from '@react-aria/menu';
-import { useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions';
 import { useButton } from '@react-aria/button';
 import { useDialog } from '@react-aria/dialog';
-import { DismissButton, OverlayContainer, useOverlay, useOverlayPosition } from '@react-aria/overlays';
 import { FocusScope } from '@react-aria/focus';
+import { useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions';
+import { useMenuTrigger } from '@react-aria/menu';
+import { DismissButton, OverlayContainer, useOverlay, useOverlayPosition } from '@react-aria/overlays';
+import { useMenuTriggerState } from '@react-stately/menu';
+import { MenuTriggerProps } from '@react-types/menu';
+import React, { ReactElement, useEffect, useState } from 'react';
 
-import { NavBarItemMenuContext, useNavBarContext } from '../context';
-import { NavFeatureHighlight } from '../NavFeatureHighlight';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { reportExperimentView } from '@grafana/runtime';
+import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
+
+import { NavFeatureHighlight } from '../NavFeatureHighlight';
+import { NavBarItemMenuContext, useNavBarContext } from '../context';
 
 export interface NavBarItemMenuTriggerProps extends MenuTriggerProps {
   children: ReactElement;

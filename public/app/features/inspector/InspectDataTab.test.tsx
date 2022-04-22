@@ -1,7 +1,9 @@
-import React, { ComponentProps } from 'react';
-import { DataFrame, FieldType } from '@grafana/data';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React, { ComponentProps } from 'react';
+
+import { DataFrame, FieldType } from '@grafana/data';
+
 import { InspectDataTab } from './InspectDataTab';
 
 // the mock below gets rid of this warning from recompose:

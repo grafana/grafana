@@ -1,5 +1,6 @@
-import { transformSubmitData } from './notificationChannels';
 import { NotificationChannelDTO } from '../../../types';
+
+import { transformSubmitData } from './notificationChannels';
 
 const basicFormData: NotificationChannelDTO = {
   id: 1,

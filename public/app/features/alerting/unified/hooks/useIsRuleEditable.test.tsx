@@ -1,10 +1,13 @@
-import React from 'react';
 import { renderHook } from '@testing-library/react-hooks';
+import React from 'react';
+import { Provider } from 'react-redux';
+
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction, FolderDTO, StoreState } from 'app/types';
-import { Provider } from 'react-redux';
+
 import { mockFolder, mockRulerAlertingRule, mockRulerGrafanaRule } from '../mocks';
+
 import { useFolder } from './useFolder';
 import { useIsRuleEditable } from './useIsRuleEditable';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';

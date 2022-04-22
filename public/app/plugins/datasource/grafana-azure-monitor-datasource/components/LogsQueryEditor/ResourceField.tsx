@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
-import React, { useCallback, useEffect, useState } from 'react';
 
 import Datasource from '../../datasource';
 import { AzureQueryEditorFieldProps, AzureResourceSummaryItem } from '../../types';
@@ -10,6 +11,7 @@ import ResourcePicker from '../ResourcePicker';
 import { ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceURI } from '../ResourcePicker/utils';
 import { Space } from '../Space';
+
 import { setResource } from './setQueryValue';
 
 function parseResourceDetails(resourceURI: string) {

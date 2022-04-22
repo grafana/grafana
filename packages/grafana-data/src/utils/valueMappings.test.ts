@@ -1,5 +1,6 @@
-import { getValueMappingResult, isNumeric } from './valueMappings';
 import { ValueMapping, MappingType, SpecialValueMatch } from '../types';
+
+import { getValueMappingResult, isNumeric } from './valueMappings';
 
 const testSet1: ValueMapping[] = [
   {

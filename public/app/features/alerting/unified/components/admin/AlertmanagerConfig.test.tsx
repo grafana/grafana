@@ -1,34 +1,37 @@
+import { render, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { getAllDataSources } from '../../utils/config';
+import { Provider } from 'react-redux';
+import { Router } from 'react-router-dom';
+import { byLabelText, byRole, byTestId } from 'testing-library-selector';
+
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
+import store from 'app/core/store';
+import {
+  AlertManagerCortexConfig,
+  AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
+} from 'app/plugins/datasource/alertmanager/types';
+import { configureStore } from 'app/store/configureStore';
+
 import {
   fetchAlertManagerConfig,
   deleteAlertManagerConfig,
   updateAlertManagerConfig,
   fetchStatus,
 } from '../../api/alertmanager';
-import { configureStore } from 'app/store/configureStore';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import AlertmanagerConfig from './AlertmanagerConfig';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
-import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../../utils/constants';
-import { render, waitFor } from '@testing-library/react';
-import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 import {
   mockDataSource,
   MockDataSourceSrv,
   someCloudAlertManagerConfig,
   someCloudAlertManagerStatus,
 } from '../../mocks';
+import { getAllDataSources } from '../../utils/config';
+import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
-import { contextSrv } from 'app/core/services/context_srv';
-import store from 'app/core/store';
-import userEvent from '@testing-library/user-event';
-import {
-  AlertManagerCortexConfig,
-  AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
-} from 'app/plugins/datasource/alertmanager/types';
+
+import AlertmanagerConfig from './AlertmanagerConfig';
 
 jest.mock('../../api/alertmanager');
 jest.mock('../../api/grafana');
