@@ -205,6 +205,10 @@ type Dashboard struct {
 	Data  *simplejson.Json
 }
 
+type DashboardSharingConfig struct {
+	IsPublic bool `json:"isPublic"`
+}
+
 func (d *Dashboard) SetId(id int64) {
 	d.Id = id
 	d.Data.Set("id", id)
@@ -410,6 +414,12 @@ type DeleteDashboardCommand struct {
 
 type DeleteOrphanedProvisionedDashboardsCommand struct {
 	ReaderNames []string
+}
+
+type SaveDashboardSharingConfigCommand struct {
+	Uid                    string
+	OrgId                  int64
+	DashboardSharingConfig DashboardSharingConfig
 }
 
 //

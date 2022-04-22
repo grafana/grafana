@@ -9,6 +9,7 @@ import { ShareEmbed } from './ShareEmbed';
 import { SharePublic } from './SharePublic';
 import { ShareModalTabModel } from './types';
 import { contextSrv } from 'app/core/core';
+import { config } from 'app/core/config';
 import { ShareLibraryPanel } from './ShareLibraryPanel';
 
 const customDashboardTabs: ShareModalTabModel[] = [];
@@ -51,7 +52,9 @@ function getTabs(props: Props) {
     tabs.push(...customDashboardTabs);
   }
 
-  tabs.push({ label: 'Share Publicly', value: 'share', component: SharePublic });
+  if (Boolean(config.featureToggles['publicDashboards'])) {
+    tabs.push({ label: 'Share Publicly', value: 'share', component: SharePublic });
+  }
 
   return tabs;
 }
