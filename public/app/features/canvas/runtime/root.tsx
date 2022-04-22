@@ -5,19 +5,15 @@ import { Scene } from './scene';
 export class RootElement extends GroupState {
   constructor(public options: CanvasGroupOptions, public scene: Scene, private changeCallback: () => void) {
     super(options, scene);
+
+    this.sizeStyle = {
+      height: '100%',
+      width: '100%',
+    };
   }
 
   isRoot(): this is RootElement {
     return true;
-  }
-
-  // The parent size is always fullsize
-  updateSize(width: number, height: number) {
-    super.updateSize(width, height);
-    this.width = width;
-    this.height = height;
-    this.sizeStyle.width = width;
-    this.sizeStyle.height = height;
   }
 
   // root type can not change
@@ -28,10 +24,10 @@ export class RootElement extends GroupState {
   }
 
   getSaveModel(): CanvasGroupOptions {
-    const { placement, anchor, ...rest } = this.options;
+    const { placement, constraint, ...rest } = this.options;
 
     return {
-      ...rest, // everything except placement & anchor
+      ...rest, // everything except placement & constraint
       elements: this.elements.map((v) => v.getSaveModel()),
     };
   }

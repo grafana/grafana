@@ -38,7 +38,6 @@ export class LayerElementListEditor extends PureComponent<Props> {
     const newElementOptions = item.getNewOptions() as CanvasElementOptions;
     newElementOptions.type = item.id;
     const newElement = new ElementState(item, newElementOptions, layer);
-    newElement.updateSize(newElement.width, newElement.height);
     newElement.updateData(layer.scene.context);
     layer.elements.push(newElement);
     layer.scene.save();

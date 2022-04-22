@@ -349,7 +349,7 @@ describe('Browse list of plugins', () => {
     expect(listOption).not.toBeChecked();
 
     // Switch to "list" view
-    userEvent.click(listOption);
+    await userEvent.click(listOption);
     expect(gridOption).not.toBeChecked();
     expect(listOption).toBeChecked();
 
