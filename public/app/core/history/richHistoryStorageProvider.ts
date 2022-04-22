@@ -7,5 +7,5 @@ const richHistoryLocalStorage = new RichHistoryLocalStorage();
 const richHistoryRemoteStorage = new RichHistoryRemoteStorage();
 
 export const getRichHistoryStorage = (): RichHistoryStorage => {
-  return config.featureToggles.queryHistory ? richHistoryRemoteStorage : richHistoryLocalStorage;
+  return config.featureToggles.newQueryHistory ? richHistoryRemoteStorage : richHistoryLocalStorage;
 };

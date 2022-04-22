@@ -225,8 +225,8 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "queryHistory",
-			Description: "New query history saved in backend",
+			Name:        "newQueryHistory",
+			Description: "New query history saved in the database instead of browser local storage",
 			State:       FeatureStateAlpha,
 		},
 	}
