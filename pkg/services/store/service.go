@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -66,19 +64,10 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		}).setReadOnly(true).setBuiltin(true),
 	}
 
-	storage := filepath.Join(cfg.DataPath, "storage")
-	_ = os.MkdirAll(storage, 0700)
-
-	if features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
-		upload := filepath.Join(storage, "upload")
-		_ = os.MkdirAll(upload, 0700)
-		roots = append(roots, newDiskStorage("upload", "Local file upload", &StorageLocalDiskConfig{
-			Path: upload,
-			Roots: []string{
-				"/",
-			},
-		}).setBuiltin(true))
+	if features.IsEnabled(featuremgmt.FlagStorage) {
+		roots = append(roots, newSQLStorage("upload", "Local file upload", &StorageSQLConfig{}, sql).setBuiltin(true))
 	}
+
 	s := newStandardStorageService(roots)
 	s.sql = sql
 	return s
