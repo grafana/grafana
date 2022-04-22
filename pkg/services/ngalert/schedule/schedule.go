@@ -156,6 +156,8 @@ func (sch *schedule) Run(ctx context.Context) error {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
+	defer sch.ticker.Stop()
+
 	go func() {
 		defer wg.Done()
 		if err := sch.schedulePeriodic(ctx); err != nil {
