@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/grafana/grafana/pkg/services/alerting/metrics"
 )
 
 // Ticker is a ticker to power the alerting scheduler. it's like a time.Ticker, except:
@@ -19,56 +19,36 @@ type Ticker struct {
 	clock    clock.Clock
 	last     time.Time
 	interval time.Duration
+	metrics  *metrics.Ticker
 }
 
-var (
-	lastTick = promauto.NewGauge(prometheus.GaugeOpts{
-		Namespace: "grafana",
-		Subsystem: "alerting",
-		Name:      "ticker_last_consumed_tick",
-		Help:      "Timestamp of the last consumed tick",
-	})
-	nextTick = promauto.NewGauge(prometheus.GaugeOpts{
-		Namespace: "grafana",
-		Subsystem: "alerting",
-		Name:      "ticker_next_tick",
-		Help:      "Timestamp of the next tick",
-	})
-	interval = promauto.NewGauge(prometheus.GaugeOpts{
-		Namespace: "grafana",
-		Subsystem: "alerting",
-		Name:      "ticker_interval",
-		Help:      "Duration of the ticker interval",
-	})
-)
-
 // NewTicker returns a Ticker that ticks on interval marks (or very shortly after) starting at c.Now(), and never drops ticks. interval should not be negative or zero.
-func NewTicker(c clock.Clock, interval time.Duration) *Ticker {
+func NewTicker(c clock.Clock, interval time.Duration, metric *metrics.Ticker) *Ticker {
 	if interval <= 0 {
 		panic(fmt.Errorf("non-positive interval [%v] is not allowed", interval))
 	}
-
 	t := &Ticker{
 		C:        make(chan time.Time),
 		clock:    c,
 		last:     c.Now(),
 		interval: interval,
+		metrics:  metric,
 	}
+	metric.IntervalSeconds.Set(t.interval.Seconds()) // Seconds report fractional part as well, so it matches the format of the timestamp we report below
 	go t.run()
 	return t
 }
 
 func (t *Ticker) run() {
-	interval.Set(t.interval.Seconds()) // Seconds report fractional part as well, so it matches the format of the timestamp we report below
 	for {
 		next := t.last.Add(t.interval) // calculate the time of the next tick
-		nextTick.Set(float64(next.UnixNano()) / 1e9)
+		t.metrics.NextTickTime.Set(float64(next.UnixNano()) / 1e9)
 		diff := t.clock.Now().Sub(next) // calculate the difference between the current time and the next tick
 		// if difference is not negative, then it should tick
 		if diff >= 0 {
 			t.C <- next
 			t.last = next
-			lastTick.Set(float64(next.UnixNano()) / 1e9)
+			t.metrics.LastTickTime.Set(float64(next.UnixNano()) / 1e9)
 			continue
 		}
 		// tick is too young. try again when ...

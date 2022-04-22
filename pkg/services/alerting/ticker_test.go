@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,7 +29,7 @@ func TestTicker(t *testing.T) {
 	t.Run("should not drop ticks", func(t *testing.T) {
 		clk := clock.NewMock()
 		interval := time.Duration(rand.Int63n(100)+10) * time.Second
-		ticker := NewTicker(clk, interval)
+		ticker := NewTicker(clk, interval, prometheus.NewRegistry())
 
 		ticks := rand.Intn(9) + 1
 		jitter := rand.Int63n(int64(interval) - 1)
@@ -62,7 +63,7 @@ func TestTicker(t *testing.T) {
 	t.Run("should not put anything to channel until it's time", func(t *testing.T) {
 		clk := clock.NewMock()
 		interval := time.Duration(rand.Int63n(9)+1) * time.Second
-		ticker := NewTicker(clk, interval)
+		ticker := NewTicker(clk, interval, prometheus.NewRegistry())
 		expectedTick := clk.Now().Add(interval)
 		for {
 			require.Empty(t, ticker.C)
@@ -82,7 +83,7 @@ func TestTicker(t *testing.T) {
 	t.Run("should put the tick in the channel immediately if it is behind", func(t *testing.T) {
 		clk := clock.NewMock()
 		interval := time.Duration(rand.Int63n(9)+1) * time.Second
-		ticker := NewTicker(clk, interval)
+		ticker := NewTicker(clk, interval, prometheus.NewRegistry())
 
 		//  We can expect the first tick to be at a consistent interval. Take a snapshot of the clock now, before we advance it.
 		expectedTick := clk.Now().Add(interval)
