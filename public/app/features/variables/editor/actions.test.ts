@@ -56,8 +56,15 @@ describe('switchToListMode', () => {
     const mockDispatch = jest.fn();
 
     switchToListMode(null)(mockDispatch, mockGetState, undefined);
+    const keyedAction = {
+      type: expect.any(String),
+      payload: {
+        key: 'null',
+        action: expect.any(Object),
+      },
+    };
     expect(mockDispatch).toHaveBeenCalledTimes(2);
-    expect(mockDispatch.mock.calls[0][0]).toEqual(toKeyedAction('null', expect.any(Object)));
-    expect(mockDispatch.mock.calls[1][0]).toEqual(toKeyedAction('null', expect.any(Object)));
+    expect(mockDispatch.mock.calls[0][0]).toMatchObject(keyedAction);
+    expect(mockDispatch.mock.calls[1][0]).toMatchObject(keyedAction);
   });
 });

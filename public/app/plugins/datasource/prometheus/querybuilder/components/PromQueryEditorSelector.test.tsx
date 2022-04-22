@@ -18,6 +18,13 @@ jest.mock('../../components/monaco-query-field/MonacoQueryFieldWrapper', () => {
   };
 });
 
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
+  };
+});
+
 const defaultQuery = {
   refId: 'A',
   expr: 'metric{label1="foo", label2="bar"}',
