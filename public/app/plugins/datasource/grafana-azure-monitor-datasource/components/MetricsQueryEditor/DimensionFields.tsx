@@ -24,7 +24,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
 
   useEffect(() => {
     let labelsObj: DimensionLabels = {};
-    if (data?.series.length) {
+    if (data?.series?.length) {
       const series: DataFrame[] = data.series.flat();
       const fields = series.flatMap((item) => item.fields);
       const labels = fields
