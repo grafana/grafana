@@ -229,7 +229,11 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []UpdateRule) erro
 // GetOrgAlertRules is a handler for retrieving alert rules of specific organisation.
 func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		q := sess.Table("alert_rule").Where("org_id = ?", query.OrgID)
+		q := sess.Table("alert_rule")
+
+		if query.OrgID >= 0 {
+			q = q.Where("org_id = ?", query.OrgID)
+		}
 
 		if query.DashboardUID != "" {
 			q = q.Where("dashboard_uid = ?", query.DashboardUID)
