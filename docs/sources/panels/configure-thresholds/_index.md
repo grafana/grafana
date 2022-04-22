@@ -65,7 +65,7 @@ Delete a threshold when it is no longer relevant to your business operations. Wh
 
    a. Edit the panel to which you want to add a threshold.
 
-   b. On the panel display options, locate the **Thresholds** section and click **+ Add threshold**.
+   b. In the options side pane, locate the **Thresholds** section and click **+ Add threshold**.
 
    c. Selct a threshold color, number, and mode.
    Threshold mode applies to all thresholds on this panel.
