@@ -331,6 +331,9 @@ type Cfg struct {
 	JWTAuthJWKSetFile    string
 	JWTAuthAutoSignUp    bool
 
+	// Access Control
+	RBACEnabled bool
+
 	// Dataproxy
 	SendUserHeader                 bool
 	DataProxyLogging               bool
@@ -1342,6 +1345,11 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
 
 	return nil
+}
+
+func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
+	rbac := iniFile.Section("rbac")
+	cfg.RBACEnabled = rbac.Key("enabled").MustBool(true)
 }
 
 func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
