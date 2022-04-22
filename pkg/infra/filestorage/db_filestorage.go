@@ -192,8 +192,6 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 				return err
 			}
 
-			fmt.Println("Adding file " + cmd.Path + " under " + parentFolderPath)
-
 			file := &file{
 				Path:                 cmd.Path,
 				PathHash:             pathHash,
