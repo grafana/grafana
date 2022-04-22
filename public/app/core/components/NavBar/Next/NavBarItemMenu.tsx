@@ -78,14 +78,11 @@ function getStyles(theme: GrafanaTheme2, reverseDirection?: boolean) {
     menu: css`
       background-color: ${theme.colors.background.primary};
       border: 1px solid ${theme.components.panel.borderColor};
-      bottom: ${reverseDirection ? 0 : 'auto'};
       box-shadow: ${theme.shadows.z3};
       display: flex;
       flex-direction: column;
-      left: 100%;
       list-style: none;
       min-width: 140px;
-      top: ${reverseDirection ? 'auto' : 0};
       transition: ${theme.transitions.create('opacity')};
       z-index: ${theme.zIndex.sidemenu};
     `,

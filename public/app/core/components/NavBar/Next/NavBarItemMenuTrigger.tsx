@@ -1,6 +1,6 @@
 import React, { ReactElement, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { getPortalContainer, Icon, IconName, Link, useTheme2 } from '@grafana/ui';
+import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { MenuTriggerProps } from '@react-types/menu';
 import { useMenuTriggerState } from '@react-stately/menu';
@@ -14,6 +14,7 @@ import { FocusScope } from '@react-aria/focus';
 import { NavBarItemMenuContext, useNavBarContext } from '../context';
 import { NavFeatureHighlight } from '../NavFeatureHighlight';
 import { reportExperimentView } from '@grafana/runtime';
+import { getNavMenuPortalContainer } from './NavBarMenuPortalContainer';
 
 export interface NavBarItemMenuTriggerProps extends MenuTriggerProps {
   children: ReactElement;
@@ -101,6 +102,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       className={styles.element}
       {...buttonProps}
       {...keyboardProps}
+      {...hoverProps}
       ref={ref as React.RefObject<HTMLButtonElement>}
       onClick={item?.onClick}
       aria-label={label}
@@ -115,6 +117,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
         <Link
           {...buttonProps}
           {...keyboardProps}
+          {...hoverProps}
           ref={ref as React.RefObject<HTMLAnchorElement>}
           href={item.url}
           target={item.target}
@@ -131,6 +134,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           onClick={item?.onClick}
           {...buttonProps}
           {...keyboardProps}
+          {...hoverProps}
           ref={ref as React.RefObject<HTMLAnchorElement>}
           className={styles.element}
           aria-label={label}
@@ -179,10 +183,10 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   });
 
   return (
-    <div className={cx(styles.element, 'dropdown')} {...focusWithinProps} {...hoverProps}>
+    <div className={cx(styles.element, 'dropdown')} {...focusWithinProps}>
       {element}
       {state.isOpen && (
-        <OverlayContainer portalContainer={getPortalContainer()}>
+        <OverlayContainer portalContainer={getNavMenuPortalContainer()}>
           <NavBarItemMenuContext.Provider
             value={{
               menuProps,

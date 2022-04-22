@@ -8,6 +8,9 @@ import { getFooterLinks } from '../Footer/Footer';
 import { HelpModal } from '../help/HelpModal';
 
 export const SEARCH_ITEM_ID = 'search';
+export const NAV_MENU_PORTAL_CONTAINER_ID = 'navbar-menu-portal-container';
+
+export const getNavMenuPortalContainer = () => document.getElementById(NAV_MENU_PORTAL_CONTAINER_ID) ?? document.body;
 
 export const getForcedLoginUrl = (url: string) => {
   const queryParams = new URLSearchParams(url.split('?')[1]);

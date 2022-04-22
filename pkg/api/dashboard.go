@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -408,20 +409,21 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 // GetHomeDashboard returns the home dashboard.
 func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
-	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
+	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.SignedInUser.UserId}
 	homePage := hs.Cfg.HomePage
 
-	if err := hs.SQLStore.GetPreferencesWithDefaults(c.Req.Context(), &prefsQuery); err != nil {
+	preference, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
+	if err != nil {
 		return response.Error(500, "Failed to get preferences", err)
 	}
 
-	if prefsQuery.Result.HomeDashboardId == 0 && len(homePage) > 0 {
+	if preference.HomeDashboardID == 0 && len(homePage) > 0 {
 		homePageRedirect := dtos.DashboardRedirect{RedirectUri: homePage}
 		return response.JSON(http.StatusOK, &homePageRedirect)
 	}
 
-	if prefsQuery.Result.HomeDashboardId != 0 {
-		slugQuery := models.GetDashboardRefByIdQuery{Id: prefsQuery.Result.HomeDashboardId}
+	if preference.HomeDashboardID != 0 {
+		slugQuery := models.GetDashboardRefByIdQuery{Id: preference.HomeDashboardID}
 		err := hs.SQLStore.GetDashboardUIDById(c.Req.Context(), &slugQuery)
 		if err == nil {
 			url := models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)

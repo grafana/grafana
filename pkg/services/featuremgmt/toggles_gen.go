@@ -21,7 +21,7 @@ const (
 
 	// FlagServiceAccounts
 	// support service accounts
-	FlagServiceAccounts = "service-accounts"
+	FlagServiceAccounts = "serviceAccounts"
 
 	// FlagDatabaseMetrics
 	// Add prometheus metrics for database tables
@@ -162,4 +162,8 @@ const (
 	// FlagPersistNotifications
 	// PoC Notifications page
 	FlagPersistNotifications = "persistNotifications"
+
+	// FlagCommandPalette
+	// Enable command palette
+	FlagCommandPalette = "commandPalette"
 )

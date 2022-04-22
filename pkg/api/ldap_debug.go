@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -274,7 +275,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 	// over another.
 	for _, configGroup := range serverConfig.Groups {
 		for _, userGroup := range user.Groups {
-			if configGroup.GroupDN == userGroup {
+			if strings.EqualFold(configGroup.GroupDN, userGroup) {
 				r := &LDAPRoleDTO{GroupDN: configGroup.GroupDN, OrgId: configGroup.OrgId, OrgRole: configGroup.OrgRole}
 				orgRoles = append(orgRoles, *r)
 				break
@@ -289,7 +290,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 		var matched bool
 
 		for _, orgRole := range orgRoles {
-			if orgRole.GroupDN == userGroup { // we already matched it
+			if strings.EqualFold(orgRole.GroupDN, userGroup) { // we already matched it
 				matched = true
 				break
 			}

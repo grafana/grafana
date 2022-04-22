@@ -18,6 +18,13 @@ jest.mock('../../components/monaco-query-field/MonacoQueryFieldWrapper', () => {
   };
 });
 
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
+  };
+});
+
 const defaultQuery = {
   refId: 'A',
   expr: 'metric{label1="foo", label2="bar"}',
@@ -81,7 +88,7 @@ describe('PromQueryEditorSelector', () => {
 
   it('changes to builder mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Code);
-    switchToMode(QueryEditorMode.Builder);
+    await switchToMode(QueryEditorMode.Builder);
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
@@ -116,7 +123,7 @@ describe('PromQueryEditorSelector', () => {
 
   it('changes to code mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Builder);
-    switchToMode(QueryEditorMode.Code);
+    await switchToMode(QueryEditorMode.Code);
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
@@ -127,7 +134,7 @@ describe('PromQueryEditorSelector', () => {
 
   it('changes to explain mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Code);
-    switchToMode(QueryEditorMode.Explain);
+    await switchToMode(QueryEditorMode.Explain);
     expect(onChange).toBeCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
@@ -142,7 +149,7 @@ describe('PromQueryEditorSelector', () => {
       expr: 'rate(test_metric{instance="host.docker.internal:3000"}[$__interval])',
       editorMode: QueryEditorMode.Code,
     });
-    switchToMode(QueryEditorMode.Builder);
+    await switchToMode(QueryEditorMode.Builder);
     rerender(
       <PromQueryEditorSelector
         {...defaultProps}
@@ -187,7 +194,7 @@ function expectExplain() {
   expect(screen.getByText(/Fetch all series/)).toBeInTheDocument();
 }
 
-function switchToMode(mode: QueryEditorMode) {
+async function switchToMode(mode: QueryEditorMode) {
   const label = {
     [QueryEditorMode.Code]: /Code/,
     [QueryEditorMode.Explain]: /Explain/,
@@ -195,5 +202,5 @@ function switchToMode(mode: QueryEditorMode) {
   }[mode];
 
   const switchEl = screen.getByLabelText(label);
-  userEvent.click(switchEl);
+  await userEvent.click(switchEl);
 }

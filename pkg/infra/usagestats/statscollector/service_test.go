@@ -3,10 +3,13 @@ package statscollector
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -348,8 +353,14 @@ func (pr fakePluginStore) Plugins(_ context.Context, pluginTypes ...plugins.Type
 	return result
 }
 
-func createService(t testing.TB, cfg *setting.Cfg, store sqlstore.Store) *Service {
+func createService(t testing.TB, cfg *setting.Cfg, store sqlstore.Store, opts ...func(*serviceOptions)) *Service {
 	t.Helper()
+
+	o := &serviceOptions{datasources: mockDatasourceService{}}
+
+	for _, opt := range opts {
+		opt(o)
+	}
 
 	return ProvideService(
 		&usagestats.UsageStatsMock{},
@@ -358,5 +369,32 @@ func createService(t testing.TB, cfg *setting.Cfg, store sqlstore.Store) *Servic
 		&mockSocial{},
 		&fakePluginStore{},
 		featuremgmt.WithFeatures("feature1", "feature2"),
+		o.datasources,
+		httpclient.NewProvider(),
 	)
+}
+
+type serviceOptions struct {
+	datasources datasources.DataSourceService
+}
+
+func withDatasources(ds datasources.DataSourceService) func(*serviceOptions) {
+	return func(options *serviceOptions) {
+		options.datasources = ds
+	}
+}
+
+type mockDatasourceService struct {
+	datasources.DataSourceService
+
+	datasources []*models.DataSource
+}
+
+func (s mockDatasourceService) GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
+	query.Result = s.datasources
+	return nil
+}
+
+func (s mockDatasourceService) GetHTTPTransport(ds *models.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
+	return provider.GetTransport()
 }

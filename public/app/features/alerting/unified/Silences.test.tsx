@@ -12,7 +12,7 @@ import { DataSourceType } from './utils/datasource';
 import { parseMatchers } from './utils/alertmanager';
 import { AlertState, MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
-import userEvent from '@testing-library/user-event';
+import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 
@@ -171,7 +171,8 @@ describe('Silences', () => {
       await waitFor(() => expect(mocks.api.fetchAlerts).toHaveBeenCalled());
 
       const queryBar = ui.queryBar.get();
-      userEvent.paste(queryBar, 'foo=bar');
+      await userEvent.click(queryBar);
+      await userEvent.paste('foo=bar');
 
       await waitFor(() => expect(ui.silenceRow.getAll()).toHaveLength(1));
     },
@@ -254,40 +255,40 @@ describe('Silence edit', () => {
       const startDateString = dateTime(start).format('YYYY-MM-DD');
       const endDateString = dateTime(end).format('YYYY-MM-DD');
 
-      userEvent.clear(ui.editor.durationInput.get());
-      userEvent.type(ui.editor.durationInput.get(), '1d');
+      await userEvent.clear(ui.editor.durationInput.get());
+      await userEvent.type(ui.editor.durationInput.get(), '1d');
 
       await waitFor(() => expect(ui.editor.durationInput.query()).toHaveValue('1d'));
       await waitFor(() => expect(ui.editor.timeRange.get()).toHaveTextContent(startDateString));
       await waitFor(() => expect(ui.editor.timeRange.get()).toHaveTextContent(endDateString));
 
-      userEvent.type(ui.editor.matcherName.get(), 'foo');
-      userEvent.type(ui.editor.matcherOperatorSelect.get(), '=');
-      userEvent.tab();
-      userEvent.type(ui.editor.matcherValue.get(), 'bar');
+      await userEvent.type(ui.editor.matcherName.get(), 'foo');
+      await userEvent.type(ui.editor.matcherOperatorSelect.get(), '=');
+      await userEvent.tab();
+      await userEvent.type(ui.editor.matcherValue.get(), 'bar');
 
       // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-      userEvent.click(ui.editor.addMatcherButton.get(), undefined, { skipPointerEventsCheck: true });
-      userEvent.type(ui.editor.matcherName.getAll()[1], 'bar');
-      userEvent.type(ui.editor.matcherOperatorSelect.getAll()[1], '!=');
-      userEvent.tab();
-      userEvent.type(ui.editor.matcherValue.getAll()[1], 'buzz');
+      await userEvent.click(ui.editor.addMatcherButton.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
+      await userEvent.type(ui.editor.matcherName.getAll()[1], 'bar');
+      await userEvent.type(ui.editor.matcherOperatorSelect.getAll()[1], '!=');
+      await userEvent.tab();
+      await userEvent.type(ui.editor.matcherValue.getAll()[1], 'buzz');
 
       // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-      userEvent.click(ui.editor.addMatcherButton.get(), undefined, { skipPointerEventsCheck: true });
-      userEvent.type(ui.editor.matcherName.getAll()[2], 'region');
-      userEvent.type(ui.editor.matcherOperatorSelect.getAll()[2], '=~');
-      userEvent.tab();
-      userEvent.type(ui.editor.matcherValue.getAll()[2], 'us-west-.*');
+      await userEvent.click(ui.editor.addMatcherButton.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
+      await userEvent.type(ui.editor.matcherName.getAll()[2], 'region');
+      await userEvent.type(ui.editor.matcherOperatorSelect.getAll()[2], '=~');
+      await userEvent.tab();
+      await userEvent.type(ui.editor.matcherValue.getAll()[2], 'us-west-.*');
 
       // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-      userEvent.click(ui.editor.addMatcherButton.get(), undefined, { skipPointerEventsCheck: true });
-      userEvent.type(ui.editor.matcherName.getAll()[3], 'env');
-      userEvent.type(ui.editor.matcherOperatorSelect.getAll()[3], '!~');
-      userEvent.tab();
-      userEvent.type(ui.editor.matcherValue.getAll()[3], 'dev|staging');
+      await userEvent.click(ui.editor.addMatcherButton.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
+      await userEvent.type(ui.editor.matcherName.getAll()[3], 'env');
+      await userEvent.type(ui.editor.matcherOperatorSelect.getAll()[3], '!~');
+      await userEvent.tab();
+      await userEvent.type(ui.editor.matcherValue.getAll()[3], 'dev|staging');
 
-      userEvent.click(ui.editor.submit.get());
+      await userEvent.click(ui.editor.submit.get());
 
       await waitFor(() =>
         expect(mocks.api.createOrUpdateSilence).toHaveBeenCalledWith(

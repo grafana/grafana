@@ -3,9 +3,10 @@ import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { Icon, IconName, useTheme2 } from '@grafana/ui';
+import { CustomScrollbar, Icon, IconName, useTheme2 } from '@grafana/ui';
 import { config, locationService } from '@grafana/runtime';
 import { getKioskMode } from 'app/core/navigation/kiosk';
+import { Branding } from 'app/core/components/Branding/Branding';
 import { KioskMode, StoreState } from 'app/types';
 import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from '../utils';
 import { OrgSwitcher } from '../../OrgSwitcher';
@@ -13,9 +14,10 @@ import { NavBarMenu } from './NavBarMenu';
 import NavBarItem from './NavBarItem';
 import { useSelector } from 'react-redux';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
-import { FocusScope } from '@react-aria/focus';
 import { NavBarContext } from '../context';
 import { NavBarToggle } from './NavBarToggle';
+import { NavBarMenuPortalContainer } from './NavBarMenuPortalContainer';
+import { FocusScope } from '@react-aria/focus';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -85,37 +87,47 @@ export const NavBarNext = React.memo(() => {
               onClick={() => setMenuOpen(!menuOpen)}
             />
 
+            <NavBarMenuPortalContainer />
+
             <ul className={styles.itemList}>
               <NavBarItemWithoutMenu
+                elClassName={styles.grafanaLogoInner}
                 isActive={isMatchOrChildMatch(homeItem, activeItem)}
                 label="Home"
                 className={styles.grafanaLogo}
                 url={homeItem.url}
               >
-                <Icon name="grafana" size="xl" />
+                <Branding.MenuLogo />
               </NavBarItemWithoutMenu>
-              <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
-                <Icon name="search" size="xl" />
-              </NavBarItem>
 
-              {coreItems.map((link, index) => (
-                <NavBarItem
-                  key={`${link.id}-${index}`}
-                  isActive={isMatchOrChildMatch(link, activeItem)}
-                  link={{ ...link, subTitle: undefined, onClick: undefined }}
-                >
-                  {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-                  {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+              <CustomScrollbar hideVerticalTrack hideHorizontalTrack>
+                <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
+                  <Icon name="search" size="xl" />
                 </NavBarItem>
-              ))}
 
-              {pluginItems.length > 0 &&
-                pluginItems.map((link, index) => (
-                  <NavBarItem key={`${link.id}-${index}`} isActive={isMatchOrChildMatch(link, activeItem)} link={link}>
+                {coreItems.map((link, index) => (
+                  <NavBarItem
+                    key={`${link.id}-${index}`}
+                    isActive={isMatchOrChildMatch(link, activeItem)}
+                    link={{ ...link, subTitle: undefined, onClick: undefined }}
+                  >
                     {link.icon && <Icon name={link.icon as IconName} size="xl" />}
                     {link.img && <img src={link.img} alt={`${link.text} logo`} />}
                   </NavBarItem>
                 ))}
+
+                {pluginItems.length > 0 &&
+                  pluginItems.map((link, index) => (
+                    <NavBarItem
+                      key={`${link.id}-${index}`}
+                      isActive={isMatchOrChildMatch(link, activeItem)}
+                      link={link}
+                    >
+                      {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+                      {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+                    </NavBarItem>
+                  ))}
+              </CustomScrollbar>
 
               {configItems.map((link, index) => (
                 <NavBarItem
@@ -168,7 +180,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     zIndex: theme.zIndex.sidemenu,
     padding: `${theme.spacing(1)} 0`,
     position: 'relative',
-    width: theme.spacing(7),
+    width: `calc(${theme.spacing(7)} + 1px)`,
     borderRight: `1px solid ${theme.colors.border.weak}`,
 
     [theme.breakpoints.down('md')]: {
@@ -204,13 +216,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   grafanaLogo: css({
+    alignItems: 'stretch',
+    display: 'flex',
+    flexShrink: 0,
+    justifyContent: 'stretch',
+  }),
+  grafanaLogoInner: css({
     alignItems: 'center',
     display: 'flex',
-    img: {
-      height: theme.spacing(3),
-      width: theme.spacing(3),
-    },
+    height: '100%',
     justifyContent: 'center',
+    width: '100%',
+
+    '> div': {
+      height: 'auto',
+      width: 'auto',
+    },
   }),
   search: css({
     display: 'none',
@@ -240,5 +261,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     top: '43px',
     right: '0px',
     transform: `translateX(50%)`,
+  }),
+  menuPortalContainer: css({
+    zIndex: theme.zIndex.sidemenu,
   }),
 });
