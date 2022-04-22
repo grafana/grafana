@@ -11,8 +11,6 @@ import PostgresQueryModel from 'app/plugins/datasource/postgres/postgres_query_m
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
 import ResponseParser from './response_parser';
-
-//Types
 import { PostgresOptions, PostgresQuery, PostgresQueryForInterpolation } from './types';
 
 export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, PostgresOptions> {

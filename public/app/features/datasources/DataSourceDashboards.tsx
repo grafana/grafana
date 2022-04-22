@@ -1,8 +1,6 @@
-// Libraries
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-// Components
 import Page from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -12,12 +10,8 @@ import { importDashboard, removeDashboard } from '../dashboard/state/actions';
 import { loadPluginDashboards } from '../plugins/admin/state/actions';
 
 import DashboardTable from './DashboardsTable';
-
-// Actions & Selectors
 import { loadDataSource } from './state/actions';
 import { getDataSource } from './state/selectors';
-
-// Types
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 

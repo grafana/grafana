@@ -1,11 +1,9 @@
-// Libraries
 import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import React, { memo, FormEvent, createRef, useState, ReactElement } from 'react';
 
-// Components
 import {
   isDateTime,
   rangeUtil,
@@ -25,11 +23,6 @@ import { ButtonGroup, ToolbarButton } from '../Button';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
-
-// Utils & Services
-
-// Types
-
 import { quickOptions } from './options';
 
 /** @public */

@@ -1,14 +1,8 @@
-// Libraries
 import { css } from '@emotion/css';
 import React, { PureComponent, ChangeEvent, FocusEvent } from 'react';
 
-// Utils
 import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
-
-// Components
 import { Switch, Input, InlineField, InlineFormLabel, stylesFactory } from '@grafana/ui';
-
-// Types
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { config } from 'app/core/config';
 import { QueryGroupOptions } from 'app/types';

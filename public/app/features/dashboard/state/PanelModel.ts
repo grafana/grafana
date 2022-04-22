@@ -1,8 +1,6 @@
-// Libraries
 import { cloneDeep, defaultsDeep, isArray, isEqual, keys } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
-// Utils
 import {
   DataConfigSource,
   DataFrameDTO,
@@ -22,8 +20,6 @@ import {
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import config from 'app/core/config';
 import { getNextRefIdChar } from 'app/core/utils/query';
-// Types
-
 import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
@@ -36,6 +32,7 @@ import { PanelModelLibraryPanel } from '../../library-panels/types';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 import { getTimeSrv } from '../services/TimeSrv';
+import { TimeOverrideResult } from '../utils/panel';
 
 import {
   filterFieldConfigOverrides,
@@ -51,8 +48,6 @@ export interface GridPos {
   h: number;
   static?: boolean;
 }
-
-import { TimeOverrideResult } from '../utils/panel';
 
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,

@@ -3,9 +3,6 @@ import Prism, { Grammar, LanguageMap } from 'prismjs';
 import React, { memo, RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { Popper as ReactPopper } from 'react-popper';
 import usePrevious from 'react-use/lib/usePrevious';
-
-// @ts-ignore
-
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
 

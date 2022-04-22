@@ -1,15 +1,9 @@
-// Libraries
 import { debounce, isNil } from 'lodash';
 import React, { Component } from 'react';
 
-// Components
 import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';
-
-// Utils & Services
-
-// Types
 import { OrgUser } from 'app/types';
 
 export interface Props {

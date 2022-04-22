@@ -1,8 +1,6 @@
 import { css } from '@emotion/css';
 import { uniqBy } from 'lodash';
 import React, { useState, useEffect } from 'react';
-
-// Types
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
@@ -10,9 +8,6 @@ import { stylesFactory, useTheme, Select, MultiSelect, FilterInput } from '@graf
 import { filterAndSortQueries, createDatasourcesList, SortOrder } from 'app/core/utils/richHistory';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
-// Utils
-
-// Components
 import { sortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
 

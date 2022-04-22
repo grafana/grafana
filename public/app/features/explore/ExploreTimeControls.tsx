@@ -1,15 +1,7 @@
-// Libaries
 import React, { Component } from 'react';
 
-// Types
 import { TimeRange, TimeZone, RawTimeRange, dateTimeForTimeZone, dateMath } from '@grafana/data';
-
-// State
-
-// Components
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
-
-// Utils & Services
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { ExploreId } from 'app/types';
 

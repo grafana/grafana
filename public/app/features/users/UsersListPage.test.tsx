@@ -6,9 +6,6 @@ import { NavModel } from '@grafana/data';
 import { Invitee, OrgUser } from 'app/types';
 
 import { Props, UsersListPage } from './UsersListPage';
-
-// import { getMockUser } from './__mocks__/userMocks';
-
 import { setUsersSearchPage, setUsersSearchQuery } from './state/reducers';
 
 jest.mock('../../core/app_events', () => ({

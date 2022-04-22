@@ -1,15 +1,13 @@
 import { Story, Meta } from '@storybook/react';
 import React, { FC, useEffect, useState } from 'react';
 
-import { useTheme, VizLegend } from '@grafana/ui';
-import {} from './VizLegendListItem';
 import { DisplayValue, getColorForTheme, GrafanaTheme } from '@grafana/data';
+import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
+import { useTheme, VizLegend } from '@grafana/ui';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { VizLegendItem } from './types';
-
-import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
 
 export default {
   title: 'Visualizations/VizLegend',

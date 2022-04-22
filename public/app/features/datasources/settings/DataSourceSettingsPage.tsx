@@ -1,11 +1,4 @@
 import React, { PureComponent } from 'react';
-
-// Components
-// Services & Utils
-
-// Actions & selectors
-
-// Types
 import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceSettings, urlUtil } from '@grafana/data';

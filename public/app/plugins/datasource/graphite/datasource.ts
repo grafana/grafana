@@ -21,8 +21,6 @@ import {
 import { getBackendSrv } from '@grafana/runtime';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-
-// Types
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
 
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';

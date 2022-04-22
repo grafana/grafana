@@ -1,3 +1,7 @@
+import * as webpack from 'webpack';
+
+import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
+
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const fs = require('fs');
@@ -11,10 +15,6 @@ const util = require('util');
 
 const readdirPromise = util.promisify(fs.readdir);
 const accessPromise = util.promisify(fs.access);
-
-import * as webpack from 'webpack';
-
-import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
 
 export interface WebpackConfigurationOptions {
   watch?: boolean;

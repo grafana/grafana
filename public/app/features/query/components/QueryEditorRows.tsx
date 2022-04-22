@@ -1,7 +1,4 @@
-// Libraries
 import React, { PureComponent } from 'react';
-
-// Types
 import { DragDropContext, DragStart, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {

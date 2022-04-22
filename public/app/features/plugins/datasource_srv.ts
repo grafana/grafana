@@ -1,5 +1,3 @@
-// Services & Utils
-// Types
 import {
   AppEvents,
   DataSourceApi,
@@ -17,8 +15,6 @@ import {
   getLegacyAngularInjector,
   getBackendSrv,
 } from '@grafana/runtime';
-
-// Pretend Datasource
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';

@@ -1,18 +1,9 @@
-// Store
-
-// Models
 import { isString as _isString } from 'lodash';
 
 import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel } from '@grafana/data';
-
-// Utils
 import { getTemplateSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
-
-// Services
-
-// Constants
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
 import store from 'app/core/store';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';

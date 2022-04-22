@@ -1,4 +1,3 @@
-// Services & Utils
 import { locationUtil, setWeekStart } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
@@ -9,13 +8,9 @@ import store from 'app/core/store';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-
-// Actions
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { toStateKey } from 'app/features/variables/utils';
 import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
-
-// Types
 
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';

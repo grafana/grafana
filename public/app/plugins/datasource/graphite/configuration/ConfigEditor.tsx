@@ -1,13 +1,12 @@
 import React, { PureComponent } from 'react';
 
-import { Alert, DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
-const { Select, Switch } = LegacyForms;
 import {
   DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceJsonDataOptionChecked,
 } from '@grafana/data';
+import { Alert, DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { GraphiteOptions, GraphiteType } from '../types';
@@ -15,6 +14,8 @@ import { DEFAULT_GRAPHITE_VERSION, GRAPHITE_VERSIONS } from '../versions';
 
 import { MappingsConfiguration } from './MappingsConfiguration';
 import { fromString, toString } from './parseLokiLabelMappings';
+
+const { Select, Switch } = LegacyForms;
 
 export const SHOW_MAPPINGS_HELP_KEY = 'grafana.datasources.graphite.config.showMappingsHelp';
 
