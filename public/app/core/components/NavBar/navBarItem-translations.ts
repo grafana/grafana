@@ -1,5 +1,5 @@
-import { defineMessage } from '@lingui/macro';
 import { MessageDescriptor } from '@lingui/core';
+import { defineMessage } from '@lingui/macro';
 
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
 // Because the navigation content is dynamic (defined in the backend), we can not use

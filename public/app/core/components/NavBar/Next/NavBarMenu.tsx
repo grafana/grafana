@@ -1,17 +1,20 @@
+import { css, cx } from '@emotion/css';
+import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
+import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import React, { useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
+import { useLocalStorage } from 'react-use';
+
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { CollapsableSection, CustomScrollbar, Icon, IconButton, IconName, useStyles2, useTheme2 } from '@grafana/ui';
-import { FocusScope } from '@react-aria/focus';
-import { useDialog } from '@react-aria/dialog';
-import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import { Branding } from 'app/core/components/Branding/Branding';
-import { css, cx } from '@emotion/css';
-import { NavBarMenuItem } from './NavBarMenuItem';
-import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+
+import { Branding } from '../../Branding/Branding';
 import { isMatchOrChildMatch } from '../utils';
+
+import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarToggle } from './NavBarToggle';
-import { useLocalStorage } from 'react-use';
 
 export interface Props {
   activeItem?: NavModelItem;

@@ -1,5 +1,3 @@
-import { preparePlotFrame } from './utils';
-import { preparePlotConfigBuilder } from '../TimeSeries/utils';
 import {
   createTheme,
   DashboardCursorSync,
@@ -21,6 +19,10 @@ import {
   VisibilityMode,
   StackingMode,
 } from '@grafana/schema';
+
+import { preparePlotConfigBuilder } from '../TimeSeries/utils';
+
+import { preparePlotFrame } from './utils';
 
 function mockDataFrame() {
   const df1 = new MutableDataFrame({

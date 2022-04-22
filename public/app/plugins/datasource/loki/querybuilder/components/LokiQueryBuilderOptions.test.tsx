@@ -1,8 +1,10 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { LokiQuery, LokiQueryType } from '../../types';
-import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import { LokiQuery, LokiQueryType } from '../../types';
+
+import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
 
 describe('LokiQueryBuilderOptions', () => {
   it('Can change query type', async () => {

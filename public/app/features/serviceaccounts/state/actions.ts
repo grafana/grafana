@@ -1,5 +1,13 @@
-import { ServiceAccountDTO, ThunkResult, ServiceAccountFilter, AccessControlAction } from '../../../types';
+import { debounce } from 'lodash';
+
 import { getBackendSrv, locationService } from '@grafana/runtime';
+import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
+
+import { contextSrv } from '../../../core/services/context_srv';
+import { ServiceAccountDTO, ThunkResult, ServiceAccountFilter, AccessControlAction } from '../../../types';
+import { ServiceAccountToken } from '../CreateServiceAccountTokenModal';
+
 import {
   acOptionsLoaded,
   builtInRolesLoaded,
@@ -13,11 +21,6 @@ import {
   serviceAccountTokensLoaded,
   serviceAccountToRemoveLoaded,
 } from './reducers';
-import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
-import { debounce } from 'lodash';
-import { contextSrv } from '../../../core/services/context_srv';
-import { ServiceAccountToken } from '../CreateServiceAccountTokenModal';
 
 const BASE_URL = `/api/serviceaccounts`;
 

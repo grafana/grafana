@@ -1,4 +1,9 @@
 import { css } from '@emotion/css';
+import { fromPairs } from 'lodash';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useAsyncFn, useMount, useMountedState } from 'react-use';
+import { AsyncState } from 'react-use/lib/useAsyncFn';
+
 import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import {
   ButtonCascader,
@@ -14,10 +19,7 @@ import {
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
-import { fromPairs } from 'lodash';
-import React, { useCallback, useMemo, useState } from 'react';
-import { useAsyncFn, useMount, useMountedState } from 'react-use';
-import { AsyncState } from 'react-use/lib/useAsyncFn';
+
 import { apiPrefix } from './constants';
 import { ZipkinDatasource } from './datasource';
 import { ZipkinQuery, ZipkinQueryType, ZipkinSpan } from './types';

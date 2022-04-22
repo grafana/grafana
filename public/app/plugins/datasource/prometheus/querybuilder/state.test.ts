@@ -1,4 +1,5 @@
 import { CoreApp } from '@grafana/data';
+
 import { QueryEditorMode } from './shared/types';
 import { changeEditorMode, getQueryWithDefaults } from './state';
 

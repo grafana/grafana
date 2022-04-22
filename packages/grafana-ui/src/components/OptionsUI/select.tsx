@@ -1,5 +1,7 @@
 import React from 'react';
+
 import { FieldConfigEditorProps, SelectFieldConfigSettings, SelectableValue } from '@grafana/data';
+
 import { Select } from '../Select/Select';
 
 interface State<T> {

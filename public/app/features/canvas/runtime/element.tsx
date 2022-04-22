@@ -1,18 +1,20 @@
 import React, { CSSProperties } from 'react';
 import { OnDrag, OnResize } from 'react-moveable/declaration/types';
 
+import { LayerElement } from 'app/core/components/Layers/types';
 import {
   BackgroundImageSize,
   CanvasElementItem,
   CanvasElementOptions,
   canvasElementRegistry,
 } from 'app/features/canvas';
-import { DimensionContext } from 'app/features/dimensions';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
-import { GroupState } from './group';
-import { LayerElement } from 'app/core/components/Layers/types';
-import { Scene } from './scene';
+import { DimensionContext } from 'app/features/dimensions';
+
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
+
+import { GroupState } from './group';
+import { Scene } from './scene';
 
 let counter = 0;
 

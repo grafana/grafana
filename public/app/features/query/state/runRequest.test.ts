@@ -1,3 +1,5 @@
+import { Observable, Subscriber, Subscription } from 'rxjs';
+
 import {
   DataFrame,
   DataQueryRequest,
@@ -8,12 +10,13 @@ import {
   LoadingState,
   PanelData,
 } from '@grafana/data';
-import { Observable, Subscriber, Subscription } from 'rxjs';
-import { runRequest } from './runRequest';
-import { deepFreeze } from '../../../../test/core/redux/reducerTester';
-import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { setEchoSrv } from '@grafana/runtime';
+
+import { deepFreeze } from '../../../../test/core/redux/reducerTester';
 import { Echo } from '../../../core/services/echo/Echo';
+import { DashboardModel } from '../../dashboard/state/DashboardModel';
+
+import { runRequest } from './runRequest';
 
 jest.mock('app/core/services/backend_srv');
 

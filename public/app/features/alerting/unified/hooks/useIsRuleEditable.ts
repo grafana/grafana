@@ -1,7 +1,9 @@
 import { contextSrv } from 'app/core/services/context_srv';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+
 import { getRulesPermissions } from '../utils/access-control';
 import { isGrafanaRulerRule } from '../utils/rules';
+
 import { useFolder } from './useFolder';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 

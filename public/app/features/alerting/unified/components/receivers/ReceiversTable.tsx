@@ -1,21 +1,24 @@
-import { Button, ConfirmModal, Modal, useStyles2 } from '@grafana/ui';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { css } from '@emotion/css';
 import React, { FC, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, ConfirmModal, Modal, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+
+import { Authorize } from '../../components/Authorize';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { deleteReceiverAction } from '../../state/actions';
 import { getAlertTableStyles } from '../../styles/table';
+import { getNotificationsPermissions } from '../../utils/access-control';
+import { isReceiverUsed } from '../../utils/alertmanager';
+import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
+import { makeAMLink } from '../../utils/misc';
 import { extractNotifierTypeCounts } from '../../utils/receivers';
 import { ActionIcon } from '../rules/ActionIcon';
+
 import { ReceiversSection } from './ReceiversSection';
-import { makeAMLink } from '../../utils/misc';
-import { GrafanaTheme2 } from '@grafana/data';
-import { css } from '@emotion/css';
-import { isReceiverUsed } from '../../utils/alertmanager';
-import { useDispatch } from 'react-redux';
-import { deleteReceiverAction } from '../../state/actions';
-import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
-import { Authorize } from '../../components/Authorize';
-import { contextSrv } from 'app/core/services/context_srv';
-import { getNotificationsPermissions } from '../../utils/access-control';
 
 interface Props {
   config: AlertManagerCortexConfig;

@@ -1,13 +1,14 @@
-import { variableAdapters } from '../adapters';
-import { createConstantVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { updateConstantVariableOptions } from './actions';
+import { variableAdapters } from '../adapters';
 import { getRootReducer, RootReducerType } from '../state/helpers';
-import { ConstantVariableModel, initialVariableModelState, VariableOption } from '../types';
-import { createConstantOptionsFromQuery } from './reducer';
-import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
+import { ConstantVariableModel, initialVariableModelState, VariableOption } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
+import { updateConstantVariableOptions } from './actions';
+import { createConstantVariableAdapter } from './adapter';
+import { createConstantOptionsFromQuery } from './reducer';
 
 describe('constant actions', () => {
   variableAdapters.setInit(() => [createConstantVariableAdapter()]);

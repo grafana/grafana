@@ -1,9 +1,11 @@
 import React, { FC } from 'react';
+
+import { LdapUser } from 'app/types';
+
+import { LdapUserGroups } from './LdapUserGroups';
 import { LdapUserMappingInfo } from './LdapUserMappingInfo';
 import { LdapUserPermissions } from './LdapUserPermissions';
-import { LdapUserGroups } from './LdapUserGroups';
 import { LdapUserTeams } from './LdapUserTeams';
-import { LdapUser } from 'app/types';
 
 interface Props {
   ldapUser: LdapUser;

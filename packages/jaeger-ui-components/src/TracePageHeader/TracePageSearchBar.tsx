@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
-import cx from 'classnames';
 import { css } from '@emotion/css';
+import cx from 'classnames';
+import * as React from 'react';
+import { memo } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import * as markers from './TracePageSearchBar.markers';
 import UiFindInput from '../common/UiFindInput';
-
 import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
+
+import * as markers from './TracePageSearchBar.markers';
 // eslint-disable-next-line no-duplicate-imports
-import { memo } from 'react';
-import { GrafanaTheme2 } from '@grafana/data';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {

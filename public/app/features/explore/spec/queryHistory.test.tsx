@@ -1,6 +1,17 @@
 import React from 'react';
+
 import { serializeStateToUrlParam } from '@grafana/data';
-import { setupExplore, tearDown, waitForExplore } from './helper/setup';
+
+import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+import { ExploreId } from '../../../types';
+
+import {
+  assertDataSourceFilterVisibility,
+  assertQueryHistory,
+  assertQueryHistoryExists,
+  assertQueryHistoryIsStarred,
+  assertQueryHistoryTabIsSelected,
+} from './helper/assert';
 import {
   closeQueryHistory,
   deleteQueryHistory,
@@ -12,16 +23,8 @@ import {
   starQueryHistory,
   switchToQueryHistoryTab,
 } from './helper/interactions';
-import {
-  assertDataSourceFilterVisibility,
-  assertQueryHistory,
-  assertQueryHistoryExists,
-  assertQueryHistoryIsStarred,
-  assertQueryHistoryTabIsSelected,
-} from './helper/assert';
 import { makeLogsQueryResponse } from './helper/query';
-import { ExploreId } from '../../../types';
-import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return {

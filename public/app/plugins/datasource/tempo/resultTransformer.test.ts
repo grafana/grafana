@@ -1,3 +1,5 @@
+import { collectorTypes } from '@opentelemetry/exporter-collector';
+
 import {
   ArrayVector,
   FieldType,
@@ -6,6 +8,7 @@ import {
   DataSourceInstanceSettings,
   dateTime,
 } from '@grafana/data';
+
 import {
   SearchResponse,
   createTableFrame,
@@ -21,7 +24,6 @@ import {
   otlpResponse,
   tempoSearchResponse,
 } from './testResponse';
-import { collectorTypes } from '@opentelemetry/exporter-collector';
 
 const defaultSettings: DataSourceInstanceSettings = {
   id: 0,
