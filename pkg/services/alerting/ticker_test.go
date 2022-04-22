@@ -18,7 +18,6 @@ import (
 )
 
 func TestTicker(t *testing.T) {
-
 	readChanOrFail := func(t *testing.T, c chan time.Time) time.Time {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		t.Cleanup(func() {
