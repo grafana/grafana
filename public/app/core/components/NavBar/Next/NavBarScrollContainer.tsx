@@ -79,6 +79,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   scrollContent: css({
     position: 'relative',
   }),
+  // override the scroll container position so that the scroll indicators
+  // are positioned at the top and bottom correctly.
+  // react-custom-scrollbars doesn't provide any way for us to hook in nicely,
+  // so we have to override with !important. feelsbad.
   scrollContainer: css`
     .scrollbar-view {
       position: static !important;
