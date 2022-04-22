@@ -1,5 +1,6 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
+
 import { LoadingState, LogLevel, LogRowModel, MutableDataFrame, toUtc } from '@grafana/data';
 
 import { Logs } from './Logs';

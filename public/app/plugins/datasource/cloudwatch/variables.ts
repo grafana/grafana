@@ -1,11 +1,12 @@
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+
 import { CustomVariableSupport, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 
-import { CloudWatchDatasource } from './datasource';
-import { VariableQuery, VariableQueryType } from './types';
-import { migrateVariableQuery } from './migrations';
 import { VariableQueryEditor } from './components/VariableQueryEditor/VariableQueryEditor';
+import { CloudWatchDatasource } from './datasource';
+import { migrateVariableQuery } from './migrations';
+import { VariableQuery, VariableQueryType } from './types';
 
 export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchDatasource, VariableQuery> {
   private readonly datasource: CloudWatchDatasource;
@@ -91,11 +92,13 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     if (!dimensionKey || !metricName) {
       return [];
     }
-    var filterJson = {};
-    if (dimensionFilters) {
-      filterJson = JSON.parse(dimensionFilters);
-    }
-    const keys = await this.datasource.getDimensionValues(region, namespace, metricName, dimensionKey, filterJson);
+    const keys = await this.datasource.getDimensionValues(
+      region,
+      namespace,
+      metricName,
+      dimensionKey,
+      dimensionFilters ?? {}
+    );
     return keys.map((s: { label: string; value: string }) => ({
       text: s.label,
       value: s.value,
@@ -119,7 +122,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     if (!attributeName) {
       return [];
     }
-    var filterJson = {};
+    let filterJson = {};
     if (ec2Filters) {
       filterJson = JSON.parse(ec2Filters);
     }
@@ -135,7 +138,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     if (!resourceType) {
       return [];
     }
-    var tagJson = {};
+    let tagJson = {};
     if (tags) {
       tagJson = JSON.parse(tags);
     }

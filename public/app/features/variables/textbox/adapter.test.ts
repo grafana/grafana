@@ -1,7 +1,8 @@
 import { variableAdapters } from '../adapters';
-import { createTextBoxVariableAdapter } from './adapter';
 import { textboxBuilder } from '../shared/testing/builders';
 import { VariableHide } from '../types';
+
+import { createTextBoxVariableAdapter } from './adapter';
 
 variableAdapters.setInit(() => [createTextBoxVariableAdapter()]);
 

@@ -39,6 +39,8 @@ type RuleStore interface {
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
 	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
 	GetOrgAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
+	// GetRuleGroups returns the unique rule groups across all organizations.
+	GetRuleGroups(ctx context.Context, query *ngmodels.ListRuleGroupsQuery) error
 	GetAlertRules(ctx context.Context, query *ngmodels.GetAlertRulesQuery) error
 	GetUserVisibleNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
@@ -257,6 +259,17 @@ func (st DBstore) GetOrgAlertRules(ctx context.Context, query *ngmodels.ListAler
 		}
 
 		query.Result = alertRules
+		return nil
+	})
+}
+
+func (st DBstore) GetRuleGroups(ctx context.Context, query *ngmodels.ListRuleGroupsQuery) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		ruleGroups := make([]string, 0)
+		if err := sess.Table("alert_rule").Distinct("rule_group").Find(&ruleGroups); err != nil {
+			return err
+		}
+		query.Result = ruleGroups
 		return nil
 	})
 }

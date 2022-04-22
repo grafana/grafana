@@ -6,19 +6,19 @@ import {
   Field,
   GrafanaTheme2,
   PanelData,
-  SplitOpen,
   systemDateFormats,
   TimeRange,
   TimeZone,
   ValueLinkConfig,
 } from '@grafana/data';
-import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
-import { UPlotConfigBuilder } from '@grafana/ui';
 import uPlot from 'uplot';
 
+import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
+import { UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
+
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
+
 import { BucketLayout, HeatmapData } from './fields';
-import { HeatmapLookup } from './types';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
 interface PathbuilderOpts {
@@ -511,7 +511,9 @@ export const getDataMapping = (heatmapData: HeatmapData, origData: DataFrame): A
   return [null];
 };
 
-export const resolveMappingToData = (data: DataFrame, indicies: number[] | null): DataFrame[] => {
+export const resolveMappingToData = (data: DataFrame, indicies: number[] | null, timeRange: TimeRange): DataFrame[] => {
+  const { onSplitOpen } = usePanelContext();
+
   if (!indicies) {
     return [];
   }
@@ -521,11 +523,18 @@ export const resolveMappingToData = (data: DataFrame, indicies: number[] | null)
     return {
       name: `${i + 1}`,
       fields: data.fields.map((f: Field) => {
-        return {
+        const newField = {
           ...f,
           values: new ArrayVector([f.values.get(index)]),
           length: 1,
         };
+        if (f.config.links?.length) {
+          // We have links to configure. Add a getLinks function to the field
+          newField.getLinks = (config: ValueLinkConfig) => {
+            return getFieldLinksForExplore({ field: f, rowIndex: i, splitOpenFn: onSplitOpen, range: timeRange });
+          };
+        }
+        return newField;
       }),
       length: data.fields.length,
     };
@@ -585,62 +594,4 @@ export const translateMatrixIndex = (index: number, bucketCountFrom: number, buc
   }
 
   return row * bucketCountTo + Math.floor(column / bucketCountTo) + (column % bucketCountTo);
-};
-
-export const lookupDataInCell = (
-  lookupRange: HeatmapLookup,
-  lookupData: DataFrame,
-  onSplitOpen: SplitOpen | undefined,
-  timeRange: TimeRange,
-  timeZone: TimeZone
-): DataFrame[] | undefined => {
-  const timeField: Field | undefined = lookupData.fields.find((f: Field) => f.type === 'time');
-  const valueField: Field | undefined = lookupData.fields.find((f: Field) => f.type === 'number');
-  if (timeField && valueField) {
-    const minIndex: number = timeField.values.toArray().findIndex((value: number) => value >= lookupRange.xRange.min!);
-    const count: number = timeField.values
-      .toArray()
-      .slice(minIndex)
-      .findIndex((value: number) => value >= lookupRange.xRange.max!);
-
-    // Now find the relevant values in the value field.
-    const indicies: number[] = valueField.values
-      .toArray()
-      .slice(minIndex, minIndex + count)
-      .reduce((tally: number[], curr: number, i: number) => {
-        if (curr >= lookupRange.yRange?.min! && curr < lookupRange.yRange?.max!) {
-          tally.push(i + minIndex);
-        }
-        return tally;
-      }, []);
-
-    return indicies.map((annotationIndex: number, index: number) => {
-      return {
-        name: `${index + 1}`,
-        fields: (lookupData.fields || []).map((f: Field, rowIndex: number) => {
-          const newField: Field = {
-            ...f,
-            values: new ArrayVector([f.values.get(annotationIndex)]),
-          };
-          if (f.config.links?.length) {
-            // We have links to configure. Add a getLinks function to the field
-            newField.getLinks = (config: ValueLinkConfig) => {
-              return getFieldLinksForExplore({ field: f, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
-            };
-          }
-          if (f.type === 'time') {
-            newField.display = (value: number) => {
-              return {
-                numeric: value,
-                text: timeFormatter(value, timeZone),
-              };
-            };
-          }
-          return newField;
-        }),
-        length: 1,
-      };
-    });
-  }
-  return undefined;
 };

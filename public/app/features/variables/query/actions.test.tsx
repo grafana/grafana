@@ -1,11 +1,26 @@
 import React from 'react';
-import { DataSourceRef, getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { expect } from 'test/lib/common';
 
-import { variableAdapters } from '../adapters';
-import { createQueryVariableAdapter } from './adapter';
+import { DataSourceRef, getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { setDataSourceSrv } from '@grafana/runtime';
+
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
+import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+import { notifyApp } from '../../../core/reducers/appNotification';
+import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { variableAdapters } from '../adapters';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
+import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
+import {
+  addVariableEditorError,
+  changeVariableEditorExtended,
+  initialVariableEditorState,
+  removeVariableEditorError,
+  setIdInEditor,
+} from '../editor/reducer';
+import { updateOptions } from '../state/actions';
 import { getPreloadedState, getRootReducer, RootReducerType } from '../state/helpers';
-import { QueryVariableModel, VariableHide, VariableQueryEditorProps, VariableRefresh, VariableSort } from '../types';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import {
   addVariable,
   changeVariableProp,
@@ -14,6 +29,11 @@ import {
   variableStateFailed,
   variableStateFetching,
 } from '../state/sharedReducer';
+import { variablesInitTransaction } from '../state/transactionReducer';
+import { QueryVariableModel, VariableHide, VariableQueryEditorProps, VariableRefresh, VariableSort } from '../types';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
+import { setVariableQueryRunner, VariableQueryRunner } from './VariableQueryRunner';
 import {
   changeQueryVariableDataSource,
   changeQueryVariableQuery,
@@ -22,26 +42,8 @@ import {
   initQueryVariableEditor,
   updateQueryVariableOptions,
 } from './actions';
+import { createQueryVariableAdapter } from './adapter';
 import { updateVariableOptions } from './reducer';
-import {
-  addVariableEditorError,
-  changeVariableEditorExtended,
-  initialVariableEditorState,
-  removeVariableEditorError,
-  setIdInEditor,
-} from '../editor/reducer';
-import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
-import { expect } from 'test/lib/common';
-import { updateOptions } from '../state/actions';
-import { notifyApp } from '../../../core/reducers/appNotification';
-import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
-import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
-import { setVariableQueryRunner, VariableQueryRunner } from './VariableQueryRunner';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { variablesInitTransaction } from '../state/transactionReducer';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
-import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 const mocks: Record<string, any> = {
   datasource: {

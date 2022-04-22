@@ -1,5 +1,5 @@
-import { DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 import { AwsAuthDataSourceSecureJsonData, AwsAuthDataSourceJsonData } from '@grafana/aws-sdk';
+import { DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 
 export interface Dimensions {
   [key: string]: string | string[];
@@ -33,6 +33,13 @@ export interface SQLExpression {
   orderBy?: QueryEditorFunctionExpression;
   orderByDirection?: string;
   limit?: number;
+}
+
+export interface DimensionsQuery extends DataQuery {
+  namespace: string;
+  region: string;
+  metricName?: string;
+  dimensions?: Dimensions;
 }
 
 export interface CloudWatchMetricsQuery extends DataQuery {
@@ -386,7 +393,7 @@ export interface VariableQuery extends DataQuery {
   region: string;
   metricName: string;
   dimensionKey: string;
-  dimensionFilters: string;
+  dimensionFilters?: Dimensions;
   ec2Filters: string;
   instanceID: string;
   attributeName: string;

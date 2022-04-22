@@ -1,7 +1,9 @@
-import React from 'react';
 import { action } from '@storybook/addon-actions';
-import { ClickOutsideWrapper } from './ClickOutsideWrapper';
+import React from 'react';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import { ClickOutsideWrapper } from './ClickOutsideWrapper';
 import mdx from './ClickOutsideWrapper.mdx';
 
 export default {

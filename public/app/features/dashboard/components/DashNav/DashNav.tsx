@@ -1,26 +1,24 @@
-// Libaries
 import React, { FC, ReactNode } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-// Utils & Services
+
+import { locationUtil, textUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpdate } from '@grafana/ui';
+import config from 'app/core/config';
+import { toggleKioskMode } from 'app/core/navigation/kiosk';
+import { DashboardCommentsModal } from 'app/features/dashboard/components/DashboardComments/DashboardCommentsModal';
+import { SaveDashboardProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardProxy';
+import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-// Components
+import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
+import { KioskMode } from 'app/types';
+
+import { getDashboardSrv } from '../../services/DashboardSrv';
+import { DashboardModel } from '../../state';
+
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpdate } from '@grafana/ui';
-import { locationUtil, textUtil } from '@grafana/data';
-// State
-import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-// Types
-import { DashboardModel } from '../../state';
-import { KioskMode } from 'app/types';
-import { ShareModal } from 'app/features/dashboard/components/ShareModal';
-import { SaveDashboardProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardProxy';
-import { DashboardCommentsModal } from 'app/features/dashboard/components/DashboardComments/DashboardCommentsModal';
-import { locationService } from '@grafana/runtime';
-import { toggleKioskMode } from 'app/core/navigation/kiosk';
-import { getDashboardSrv } from '../../services/DashboardSrv';
-import config from 'app/core/config';
 
 const mapDispatchToProps = {
   updateTimeZoneForSession,

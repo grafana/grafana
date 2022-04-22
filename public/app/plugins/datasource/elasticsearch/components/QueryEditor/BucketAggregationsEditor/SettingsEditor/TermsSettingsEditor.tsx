@@ -1,14 +1,13 @@
+import { uniqueId } from 'lodash';
 import React, { useRef } from 'react';
-import { InlineField, Select, Input } from '@grafana/ui';
-import { Terms } from '../aggregations';
-import { useDispatch } from '../../../../hooks/useStatelessReducer';
-import { inlineFieldProps } from '.';
-import { bucketAggregationConfig, orderByOptions, orderOptions, sizeOptions } from '../utils';
-import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatableSelectPersistedBehaviour';
-import { changeBucketAggregationSetting } from '../state/actions';
-import { useQuery } from '../../ElasticsearchQueryContext';
+
 import { SelectableValue } from '@grafana/data';
+import { InlineField, Select, Input } from '@grafana/ui';
+
+import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { describeMetric } from '../../../../utils';
+import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatableSelectPersistedBehaviour';
+import { useQuery } from '../../ElasticsearchQueryContext';
 import {
   ExtendedStatMetaType,
   ExtendedStats,
@@ -16,7 +15,11 @@ import {
   MetricAggregation,
   Percentiles,
 } from '../../MetricAggregationsEditor/aggregations';
-import { uniqueId } from 'lodash';
+import { Terms } from '../aggregations';
+import { changeBucketAggregationSetting } from '../state/actions';
+import { bucketAggregationConfig, orderByOptions, orderOptions, sizeOptions } from '../utils';
+
+import { inlineFieldProps } from '.';
 
 interface Props {
   bucketAgg: Terms;

@@ -1,9 +1,11 @@
-import React, { memo } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { memo } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+
 import { GrafanaTheme2, TimeOption } from '@grafana/data';
+
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
-import { v4 as uuidv4 } from 'uuid';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

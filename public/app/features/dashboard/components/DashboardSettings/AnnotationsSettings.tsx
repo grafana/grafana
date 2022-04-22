@@ -1,8 +1,11 @@
+import React, { useState } from 'react';
+
 import { AnnotationQuery, getDataSourceRef } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import React, { useState } from 'react';
+
 import { DashboardModel } from '../../state/DashboardModel';
 import { AnnotationSettingsEdit, AnnotationSettingsList, newAnnotationName } from '../AnnotationSettings';
+
 import { DashboardSettingsHeader } from './DashboardSettingsHeader';
 
 interface Props {
