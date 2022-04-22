@@ -98,84 +98,84 @@ export const NavBarNext = React.memo(() => {
             setMenuIdOpen: setMenuIdOpen,
           }}
         >
-        <FocusScope>
-          <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
-            <Icon name="bars" size="xl" />
-          </div>
+          <FocusScope>
+            <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
+              <Icon name="bars" size="xl" />
+            </div>
 
-          <NavBarToggle
-            className={styles.menuExpandIcon}
-            isExpanded={menuOpen}
-            onClick={() => setMenuOpen(!menuOpen)}
-          />
+            <NavBarToggle
+              className={styles.menuExpandIcon}
+              isExpanded={menuOpen}
+              onClick={() => setMenuOpen(!menuOpen)}
+            />
 
-          <NavBarMenuPortalContainer />
+            <NavBarMenuPortalContainer />
 
-          <ul className={styles.itemList}>
-            <NavBarItemWithoutMenu
-              isActive={isMatchOrChildMatch(homeItem, activeItem)}
-              label="Home"
-              elClassName={styles.grafanaLogoInner}
-              className={styles.grafanaLogo}
-              url={homeItem.url}
-            >
-              <Branding.MenuLogo />
-            </NavBarItemWithoutMenu>
+            <ul className={styles.itemList}>
+              <NavBarItemWithoutMenu
+                isActive={isMatchOrChildMatch(homeItem, activeItem)}
+                label="Home"
+                elClassName={styles.grafanaLogoInner}
+                className={styles.grafanaLogo}
+                url={homeItem.url}
+              >
+                <Branding.MenuLogo />
+              </NavBarItemWithoutMenu>
 
-            <CustomScrollbar
-              className={cx(styles.scrollContainer, {
-                [styles.scrollTopVisible]: showScrollTopIndicator,
-                [styles.scrollBottomVisible]: showScrollBottomIndicator,
-              })}
-              hideVerticalTrack
-              hideHorizontalTrack
-            >
-              <div className={styles.scrollContent}>
-                <div className={styles.scrollTopMarker} ref={scrollTopRef}></div>
-                <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
-                  <Icon name="search" size="xl" />
-                </NavBarItem>
-
-                {coreItems.map((link, index) => (
-                  <NavBarItem
-                    key={`${link.id}-${index}`}
-                    isActive={isMatchOrChildMatch(link, activeItem)}
-                    link={{ ...link, subTitle: undefined, onClick: undefined }}
-                  >
-                    {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-                    {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+              <CustomScrollbar
+                className={cx(styles.scrollContainer, {
+                  [styles.scrollTopVisible]: showScrollTopIndicator,
+                  [styles.scrollBottomVisible]: showScrollBottomIndicator,
+                })}
+                hideVerticalTrack
+                hideHorizontalTrack
+              >
+                <div className={styles.scrollContent}>
+                  <div className={styles.scrollTopMarker} ref={scrollTopRef}></div>
+                  <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
+                    <Icon name="search" size="xl" />
                   </NavBarItem>
-                ))}
 
-                {pluginItems.length > 0 &&
-                  pluginItems.map((link, index) => (
+                  {coreItems.map((link, index) => (
                     <NavBarItem
                       key={`${link.id}-${index}`}
                       isActive={isMatchOrChildMatch(link, activeItem)}
-                      link={link}
+                      link={{ ...link, subTitle: undefined, onClick: undefined }}
                     >
                       {link.icon && <Icon name={link.icon as IconName} size="xl" />}
                       {link.img && <img src={link.img} alt={`${link.text} logo`} />}
                     </NavBarItem>
                   ))}
-                <div className={styles.scrollBottomMarker} ref={scrollBottomRef} />
-              </div>
-            </CustomScrollbar>
 
-            {configItems.map((link, index) => (
-              <NavBarItem
-                key={`${link.id}-${index}`}
-                isActive={isMatchOrChildMatch(link, activeItem)}
-                reverseMenuDirection
-                link={link}
-                className={cx({ [styles.verticalSpacer]: index === 0 })}
-              >
-                {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-                {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-              </NavBarItem>
-            ))}
-          </ul>
-        </FocusScope>
+                  {pluginItems.length > 0 &&
+                    pluginItems.map((link, index) => (
+                      <NavBarItem
+                        key={`${link.id}-${index}`}
+                        isActive={isMatchOrChildMatch(link, activeItem)}
+                        link={link}
+                      >
+                        {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+                        {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+                      </NavBarItem>
+                    ))}
+                  <div className={styles.scrollBottomMarker} ref={scrollBottomRef} />
+                </div>
+              </CustomScrollbar>
+
+              {configItems.map((link, index) => (
+                <NavBarItem
+                  key={`${link.id}-${index}`}
+                  isActive={isMatchOrChildMatch(link, activeItem)}
+                  reverseMenuDirection
+                  link={link}
+                  className={cx({ [styles.verticalSpacer]: index === 0 })}
+                >
+                  {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+                  {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+                </NavBarItem>
+              ))}
+            </ul>
+          </FocusScope>
         </NavBarContext.Provider>
       </nav>
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
