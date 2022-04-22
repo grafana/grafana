@@ -1,7 +1,7 @@
+// @ts-ignore
 import baron from 'baron';
 import $ from 'jquery';
 
-// @ts-ignore
 import coreModule from 'app/angular/core_module';
 
 const scrollBarHTML = `

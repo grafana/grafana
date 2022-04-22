@@ -1,3 +1,4 @@
+// @ts-ignore
 import System from 'systemjs/dist/system.js';
 
 import { config } from '../config';
