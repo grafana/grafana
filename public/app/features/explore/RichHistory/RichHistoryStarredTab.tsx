@@ -68,7 +68,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-// PLAN 7: all changes from query tab should be applied here
 export function RichHistoryStarredTab(props: Props) {
   const {
     updateFilters,
@@ -89,7 +88,7 @@ export function RichHistoryStarredTab(props: Props) {
     const datasourceFilters =
       richHistorySettings.activeDatasourceOnly && activeDatasourceInstance
         ? [activeDatasourceInstance]
-        : richHistorySettings.lastUsedDatasourceFilters;
+        : richHistorySettings.lastUsedDatasourceFilters || [activeDatasourceInstance!];
     const filters: RichHistorySearchFilters = {
       search: '',
       sortOrder: SortOrder.Descending,

@@ -138,7 +138,6 @@ export function RichHistoryQueriesTab(props: Props) {
   const listOfDatasources = createDatasourcesList();
 
   useEffect(() => {
-    // PLAN 6: what if activeDatasourceInstance is not defined?
     const datasourceFilters =
       richHistorySettings.activeDatasourceOnly && activeDatasourceInstance
         ? [activeDatasourceInstance]

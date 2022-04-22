@@ -160,6 +160,7 @@ export interface ExploreItemState {
    */
   richHistory: RichHistoryQuery[];
   richHistorySearchFilters?: RichHistorySearchFilters;
+  richHistoryMoreItemsAvailable?: boolean;
 
   /**
    * We are using caching to store query responses of queries run from logs navigation.

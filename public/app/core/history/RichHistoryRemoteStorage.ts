@@ -46,7 +46,6 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
     return {
       activeDatasourceOnly: false,
       lastUsedDatasourceFilters: undefined,
-      // PLAN 5: what about filtering from and to?
       retentionPeriod: 14,
       starredTabAsFirstTab: false,
     };
@@ -83,8 +82,7 @@ function buildQueryParams(filters: RichHistorySearchFilters): string {
   if (filters.sortOrder) {
     params = params + `&sort=${filters.sortOrder}`;
   }
-  // PLAN 4: support for pagination
-  params = params + `&limit=10`;
+  params = params + `&limit=100`;
   params = params + `&page=1`;
   if (filters.starred) {
     params = params + `&onlyStarred=${filters.starred}`;
