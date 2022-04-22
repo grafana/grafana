@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
+// @ts-ignore
 import Highlighter from 'react-highlight-words';
 
 import { SelectableValue, toOption, GrafanaTheme2 } from '@grafana/data';

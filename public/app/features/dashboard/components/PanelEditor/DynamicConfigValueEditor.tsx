@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
+// @ts-ignore
 import Highlighter from 'react-highlight-words';
 
 import {
