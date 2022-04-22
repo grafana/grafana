@@ -242,13 +242,11 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
-	amConfigPerOrg, receiversPerOrg, defaultReceiversPerOrg, err := m.setupAlertmanagerConfigs()
-	if err != nil {
-		return err
-	}
-
 	// cache for folders created for dashboards that have custom permissions
 	folderCache := make(map[string]*dashboard)
+
+	// Store of newly created rules to later create routes
+	rulesPerOrg := make(map[int64]map[string]dashAlert)
 
 	for _, da := range dashAlerts {
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
@@ -346,16 +344,15 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
-		if _, ok := amConfigPerOrg[rule.OrgID]; !ok {
-			m.mg.Logger.Info("no configuration found", "org", rule.OrgID)
+		if _, ok := rulesPerOrg[rule.OrgID]; !ok {
+			rulesPerOrg[rule.OrgID] = make(map[string]dashAlert)
+		}
+		if _, ok := rulesPerOrg[rule.OrgID][rule.UID]; !ok {
+			rulesPerOrg[rule.OrgID][rule.UID] = da
 		} else {
-			route, err := m.createRouteForAlert(rule.UID, da, receiversPerOrg[rule.OrgID], defaultReceiversPerOrg[rule.OrgID])
-			if err != nil {
-				return err
-			}
-
-			if route != nil {
-				amConfigPerOrg[rule.OrgID].AlertmanagerConfig.Route.Routes = append(amConfigPerOrg[rule.OrgID].AlertmanagerConfig.Route.Routes, route)
+			return MigrationError{
+				Err:     fmt.Errorf("duplicate generated rule UID"),
+				AlertId: da.Id,
 			}
 		}
 
@@ -385,30 +382,19 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 	}
 
-	for orgID, amConfig := range amConfigPerOrg {
-		// No channels, hence don't require Alertmanager config - skip it.
-		if len(receiversPerOrg[orgID]) == 0 {
-			m.mg.Logger.Info("alert migration: no notification channel found, skipping Alertmanager config")
-			continue
-		}
-
-		// Encrypt the secure settings before we continue.
-		if err := amConfig.EncryptSecureSettings(); err != nil {
-			return err
-		}
-
-		// Validate the alertmanager configuration produced, this gives a chance to catch bad configuration at migration time.
-		// Validation between legacy and unified alerting can be different (e.g. due to bug fixes) so this would fail the migration in that case.
-		if err := m.validateAlertmanagerConfig(orgID, amConfig); err != nil {
-			return err
-		}
-
-		if err := m.writeAlertmanagerConfig(orgID, amConfig); err != nil {
-			return err
-		}
-
+	for orgID := range rulesPerOrg {
 		if err := m.writeSilencesFile(orgID); err != nil {
 			m.mg.Logger.Error("alert migration error: failed to write silence file", "err", err)
+		}
+	}
+
+	amConfigPerOrg, err := m.setupAlertmanagerConfigs(rulesPerOrg)
+	if err != nil {
+		return err
+	}
+	for orgID, amConfig := range amConfigPerOrg {
+		if err := m.writeAlertmanagerConfig(orgID, amConfig); err != nil {
+			return err
 		}
 	}
 
