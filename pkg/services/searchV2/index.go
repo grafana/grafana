@@ -82,7 +82,7 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 		case <-fullReIndexTicker.C:
 			started := time.Now()
 			i.reIndexFromScratch()
-			i.logger.Info("Full re-indexing finished", "full_re_index_elapsed", time.Since(started))
+			i.logger.Info("Full re-indexing finished", "fullReIndexElapsed", time.Since(started))
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -107,7 +107,7 @@ func (i *dashboardIndex) reIndexFromScratch() {
 			continue
 		}
 		cancel()
-		i.logger.Info("Re-indexed dashboards for organization", "orgId", orgID, "org_re_index_elapsed", time.Since(started))
+		i.logger.Info("Re-indexed dashboards for organization", "orgId", orgID, "orgReIndexElapsed", time.Since(started))
 		i.mu.Lock()
 		i.dashboards[orgID] = dashboards
 		i.mu.Unlock()
@@ -134,7 +134,7 @@ func (i *dashboardIndex) applyIndexUpdates(ctx context.Context, lastEventID int6
 		}
 		lastEventID = e.Id
 	}
-	i.logger.Info("Index updates applied", "index_events_applied_elapsed", time.Since(started), "numEvents", len(events))
+	i.logger.Info("Index updates applied", "indexEventsAppliedElapsed", time.Since(started), "numEvents", len(events))
 	return lastEventID
 }
 
