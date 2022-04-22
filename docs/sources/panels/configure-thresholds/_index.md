@@ -67,7 +67,7 @@ Delete a threshold when it is no longer relevant to your business operations. Wh
 
    b. In the options side pane, locate the **Thresholds** section and click **+ Add threshold**.
 
-   c. Selct a threshold color, number, and mode.
+   c. Select a threshold color, number, and mode.
    Threshold mode applies to all thresholds on this panel.
 
    d. For a time-series panel, select a **Show thresholds** option.
