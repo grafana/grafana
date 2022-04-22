@@ -183,6 +183,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
   }
 
   if (!xField || !yField) {
+    console.error('No heatmap fields found', frames);
     throw 'no heatmap fields found';
   }
 

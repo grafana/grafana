@@ -512,7 +512,7 @@ export const getDataMapping = (heatmapData: HeatmapData, origData: DataFrame): A
 };
 
 export const resolveMappingToData = (data: DataFrame, indicies: number[] | null): DataFrame[] => {
-  if (indicies === null) {
+  if (!indicies) {
     return [];
   }
   console.log('dataframe', data, 'indicies', indicies);

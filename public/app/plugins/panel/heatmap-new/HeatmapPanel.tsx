@@ -176,6 +176,20 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     );
   }
 
+  console.log(
+    'info',
+    info,
+    'infoMapping',
+    infoMapping,
+    'exemplars',
+    exemplars,
+    'exemplarMapping',
+    exemplarMapping,
+    'index',
+    hover?.index,
+    'eindex',
+    translateMatrixIndex(hover?.index!, info.yBucketCount!, exemplars?.yBucketCount!)
+  );
   return (
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
@@ -199,6 +213,9 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
                     data.annotations?.[0]!,
                     exemplarMapping[translateMatrixIndex(hover?.index!, info.yBucketCount!, exemplars?.yBucketCount!)]
                   ),
+                  heatmapData: exemplars!,
+                  index: translateMatrixIndex(hover?.index!, info.yBucketCount!, exemplars?.yBucketCount!),
+                  options: { timeZone },
                 }),
               ],
               hover,

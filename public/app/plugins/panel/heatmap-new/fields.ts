@@ -47,7 +47,6 @@ export function prepareHeatmapData(
     return {};
   }
 
-  console.log("I'm preparing heatmap data and I got frames", frames);
   const { source } = options;
   if (source === HeatmapSourceMode.Calculate) {
     // TODO, check for error etc
