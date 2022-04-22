@@ -1,7 +1,9 @@
-import { getStackingGroups, preparePlotData2, timeFormatToTemplate } from './utils';
+import Units from 'ol/proj/Units';
+
 import { FieldType, MutableDataFrame } from '@grafana/data';
 import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
-import Units from 'ol/proj/Units';
+
+import { getStackingGroups, preparePlotData2, timeFormatToTemplate } from './utils';
 
 describe('timeFormatToTemplate', () => {
   it.each`

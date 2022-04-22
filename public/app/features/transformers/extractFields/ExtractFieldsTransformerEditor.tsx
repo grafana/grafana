@@ -1,4 +1,5 @@
 import React from 'react';
+
 import {
   DataTransformerID,
   FieldNamePickerConfigSettings,
@@ -8,9 +9,9 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-
 import { InlineField, InlineFieldRow, InlineSwitch, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+
 import { ExtractFieldsOptions, extractFieldsTransformer } from './extractFields';
 import { FieldExtractorID, fieldExtractors } from './fieldExtractors';
 

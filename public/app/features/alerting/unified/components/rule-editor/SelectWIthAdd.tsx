@@ -1,6 +1,7 @@
+import React, { FC, useEffect, useMemo, useState } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Input, Select } from '@grafana/ui';
-import React, { FC, useEffect, useMemo, useState } from 'react';
 
 interface Props {
   onChange: (value: string) => void;

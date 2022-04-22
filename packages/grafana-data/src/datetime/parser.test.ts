@@ -1,5 +1,5 @@
-import { dateTimeParse } from './parser';
 import { systemDateFormats } from './formats';
+import { dateTimeParse } from './parser';
 
 describe('dateTimeParse', () => {
   it('should be able to parse using default format', () => {

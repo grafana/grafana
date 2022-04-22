@@ -1,9 +1,11 @@
 import React, { ChangeEvent, FC, FormEvent, useEffect, useState } from 'react';
-import { EventsWithValidation, LegacyForms, ValidationEvents, Button, Select, InlineField } from '@grafana/ui';
-import { NewApiKey, OrgRole } from '../../types';
+
 import { rangeUtil, SelectableValue } from '@grafana/data';
-import { SlideDown } from '../../core/components/Animations/SlideDown';
+import { EventsWithValidation, LegacyForms, ValidationEvents, Button, Select, InlineField } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+
+import { SlideDown } from '../../core/components/Animations/SlideDown';
+import { NewApiKey, OrgRole } from '../../types';
 
 const { Input } = LegacyForms;
 const ROLE_OPTIONS: Array<SelectableValue<OrgRole>> = Object.keys(OrgRole).map((role) => ({

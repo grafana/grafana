@@ -1,9 +1,10 @@
-import React, { ReactNode } from 'react';
-import { formatDistanceToNow } from 'date-fns';
 import { css } from '@emotion/css';
+import { formatDistanceToNow } from 'date-fns';
+import React, { ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { getIconFromSeverity } from '@grafana/ui/src/components/Alert/Alert';
 import { Icon, IconButton, IconName, useTheme2 } from '@grafana/ui';
+import { getIconFromSeverity } from '@grafana/ui/src/components/Alert/Alert';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 

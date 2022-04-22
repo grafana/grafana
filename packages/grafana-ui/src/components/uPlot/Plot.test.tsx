@@ -1,13 +1,15 @@
-import React from 'react';
-import { UPlotChart } from './Plot';
 import { render } from '@testing-library/react';
+import createMockRaf from 'mock-raf';
+import React from 'react';
+import uPlot from 'uplot';
+
 import { ArrayVector, dateTime, FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
 import { GraphFieldConfig, GraphDrawStyle } from '@grafana/schema';
-import uPlot from 'uplot';
-import createMockRaf from 'mock-raf';
+
+import { UPlotChart } from './Plot';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
-import { preparePlotData2, getStackingGroups } from './utils';
 import { SeriesProps } from './config/UPlotSeriesBuilder';
+import { preparePlotData2, getStackingGroups } from './utils';
 
 const mockRaf = createMockRaf();
 const setDataMock = jest.fn();

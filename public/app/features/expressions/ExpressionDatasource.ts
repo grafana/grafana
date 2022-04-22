@@ -1,3 +1,5 @@
+import { Observable, from, mergeMap } from 'rxjs';
+
 import {
   DataQueryRequest,
   DataQueryResponse,
@@ -6,11 +8,11 @@ import {
   PluginType,
   ScopedVars,
 } from '@grafana/data';
-import { ExpressionQuery, ExpressionQueryType } from './types';
-import { ExpressionQueryEditor } from './ExpressionQueryEditor';
 import { DataSourceWithBackend, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { Observable, from, mergeMap } from 'rxjs';
+
+import { ExpressionQueryEditor } from './ExpressionQueryEditor';
+import { ExpressionQuery, ExpressionQueryType } from './types';
 
 /**
  * This is a singleton instance that just pretends to be a DataSource

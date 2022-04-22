@@ -1,9 +1,12 @@
+import { isEqual } from 'lodash';
+import React, { useEffect, useState } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { EditorFieldGroup, EditorList } from '@grafana/experimental';
 import { Field } from '@grafana/ui';
-import { isEqual } from 'lodash';
-import React, { useEffect, useState } from 'react';
+
 import { QueryBuilderLabelFilter } from '../shared/types';
+
 import { LabelFilterItem } from './LabelFilterItem';
 
 export interface Props {

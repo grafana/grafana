@@ -1,4 +1,6 @@
 import $ from 'jquery';
+
+import { CurrentUserDTO } from '@grafana/data';
 import {
   EchoBackend,
   EchoEventType,
@@ -7,7 +9,7 @@ import {
   isPageviewEvent,
   PageviewEchoEvent,
 } from '@grafana/runtime';
-import { CurrentUserDTO } from '@grafana/data';
+
 import { getUserIdentifier } from '../../utils';
 
 export interface RudderstackBackendOptions {

@@ -1,6 +1,7 @@
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings, TableData } from '@grafana/data';
 
 import Datasource from '../datasource';
+
 import { AzureMonitorQuery } from './query';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;

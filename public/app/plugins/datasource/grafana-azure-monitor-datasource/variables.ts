@@ -1,3 +1,5 @@
+import { from, lastValueFrom, Observable } from 'rxjs';
+
 import {
   CustomVariableSupport,
   DataQueryRequest,
@@ -6,7 +8,6 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { from, lastValueFrom, Observable } from 'rxjs';
 
 import VariableEditor from './components/VariableEditor/VariableEditor';
 import DataSource from './datasource';

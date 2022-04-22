@@ -1,8 +1,11 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
-import { LokiDatasource } from '../../datasource';
+import React from 'react';
+
 import { addOperation } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList.testUtils';
+
+import { LokiDatasource } from '../../datasource';
+
+import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
 
 describe('LokiQueryBuilderContainer', () => {
   it('translates query between string and model', async () => {
