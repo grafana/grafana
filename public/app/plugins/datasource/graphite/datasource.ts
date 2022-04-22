@@ -1,20 +1,17 @@
-import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
 import { each, indexOf, isArray, isString, map as _map } from 'lodash';
 import { lastValueFrom, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
-  AbstractLabelMatcher,
-  AbstractLabelOperator,
-  AbstractQuery,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceWithQueryExportSupport,
   dateMath,
+  AbstractQuery,
+  AbstractLabelOperator,
+  AbstractLabelMatcher,
   MetricFindValue,
   QueryResultMetaStat,
   ScopedVars,
@@ -22,6 +19,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
+<<<<<<< HEAD
 <<<<<<< HEAD
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -32,12 +30,22 @@ import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 import gfunc, { FuncDefs, FuncInstance } from './gfunc';
 import { default as GraphiteQueryModel } from './graphite_query';
 =======
+=======
+import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
+>>>>>>> 8967f8df3e (add graphite functions list logic back in to see why alert test broke)
 
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
+
 import gfunc, { FuncDefs, FuncInstance } from './gfunc';
+<<<<<<< HEAD
 import GraphiteQueryModel from './graphite_query';
 // Types
 >>>>>>> cc5bfd9134 (remove extra logic for graphite /functions endpoint returning {} #46681)
+=======
+import { default as GraphiteQueryModel } from './graphite_query';
+>>>>>>> 8967f8df3e (add graphite functions list logic back in to see why alert test broke)
 import {
   GraphiteLokiMapping,
   GraphiteMetricLokiMatcher,
@@ -761,22 +769,35 @@ export class GraphiteDatasource
     const httpOptions = {
       method: 'GET',
       url: '/functions',
-      // to work around Graphite returning invalid JSON
-      responseType: 'text',
     };
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
         map((results: any) => {
-          // Fix for a Graphite bug: https://github.com/graphite-project/graphite-web/issues/2609
-          // There is a fix for it https://github.com/graphite-project/graphite-web/pull/2612 but
-          // it was merged to master in July 2020 but it has never been released (the last Graphite
-          // release was 1.1.7 - March 2020). The bug was introduced in Graphite 1.1.7, in versions
-          // 1.1.0 - 1.1.6 /functions endpoint returns a valid JSON
-          const fixedData = JSON.parse(results.data.replace(/"default": ?Infinity/g, '"default": 1e9999'));
+          if (results.status !== 200 || typeof results.data !== 'object') {
+            if (typeof results.data === 'string') {
+              // Fix for a Graphite bug: https://github.com/graphite-project/graphite-web/issues/2609
+              // There is a fix for it https://github.com/graphite-project/graphite-web/pull/2612 but
+              // it was merged to master in July 2020 but it has never been released (the last Graphite
+              // release was 1.1.7 - March 2020). The bug was introduced in Graphite 1.1.7, in versions
+              // 1.1.0 - 1.1.6 /functions endpoint returns a valid JSON
+              const fixedData = JSON.parse(results.data.replace(/"default": ?Infinity/g, '"default": 1e9999'));
+              this.funcDefs = gfunc.parseFuncDefs(fixedData);
+            } else {
+              this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
+            }
+          } else {
+            this.funcDefs = gfunc.parseFuncDefs(results.data);
+          }
 
-          this.funcDefs = gfunc.parseFuncDefs(fixedData);
-
+          // When /functions endpoint returns application/json response but containing invalid JSON the fix above
+          // wont' be triggered due to the changes in https://github.com/grafana/grafana/pull/45598 (parsing happens
+          // in fetch and Graphite receives an empty object and no error). In such cases, when the provided JSON
+          // seems empty we fallback to the hardcoded list of functions.
+          // See also: https://github.com/grafana/grafana/issues/45948
+          if (Object.keys(this.funcDefs).length === 0) {
+            this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
+          }
           return this.funcDefs;
         }),
         catchError((error: any) => {
