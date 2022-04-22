@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
+import pluralize from 'pluralize';
+import React, { FC, useMemo } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
 import { LoadingPlaceholder, useStyles } from '@grafana/ui';
-import React, { FC, useMemo } from 'react';
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { RulesGroup } from './RulesGroup';
-import { getRulesDataSources, getRulesSourceName } from '../../utils/datasource';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
-import pluralize from 'pluralize';
+
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { getRulesDataSources, getRulesSourceName } from '../../utils/datasource';
+
+import { RulesGroup } from './RulesGroup';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];

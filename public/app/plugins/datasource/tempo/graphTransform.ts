@@ -8,6 +8,7 @@ import {
   NodeGraphDataFrameFieldNames as Fields,
   TimeRange,
 } from '@grafana/data';
+
 import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '../../../core/utils/tracing';
 
 /**

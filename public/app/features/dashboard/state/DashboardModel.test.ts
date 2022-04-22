@@ -1,13 +1,14 @@
 import { keys as _keys } from 'lodash';
-import { DashboardModel } from '../state/DashboardModel';
-import { PanelModel } from '../state/PanelModel';
+
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
+import { expect } from '../../../../test/lib/common';
 import { variableAdapters } from '../../variables/adapters';
 import { createAdHocVariableAdapter } from '../../variables/adhoc/adapter';
-import { createQueryVariableAdapter } from '../../variables/query/adapter';
 import { createCustomVariableAdapter } from '../../variables/custom/adapter';
-import { expect } from '../../../../test/lib/common';
+import { createQueryVariableAdapter } from '../../variables/query/adapter';
 import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
+import { DashboardModel } from '../state/DashboardModel';
+import { PanelModel } from '../state/PanelModel';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 

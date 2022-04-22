@@ -2,21 +2,23 @@
 import classNames from 'classnames';
 import React, { PureComponent } from 'react';
 import { default as ReactSelect, components } from 'react-select';
-import Creatable from 'react-select/creatable';
 import { default as ReactAsyncSelect } from 'react-select/async';
+import Creatable from 'react-select/creatable';
 
 // Components
-import { SelectOption } from './SelectOption';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+
+import { ThemeContext } from '../../../../themes';
+import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
 import { SelectOptionGroup } from '../../../Select/SelectOptionGroup';
 import { SingleValue } from '../../../Select/SingleValue';
+import resetSelectStyles from '../../../Select/resetSelectStyles';
 import { SelectCommonProps, SelectAsyncProps } from '../../../Select/types';
+import { Tooltip, PopoverContent } from '../../../Tooltip';
+
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
-import resetSelectStyles from '../../../Select/resetSelectStyles';
-import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
-import { Tooltip, PopoverContent } from '../../../Tooltip';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { ThemeContext } from '../../../../themes';
+import { SelectOption } from './SelectOption';
 
 /**
  * Changes in new selects:

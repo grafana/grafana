@@ -1,5 +1,6 @@
-import { Icon } from '@grafana/ui';
 import React, { FC } from 'react';
+
+import { Icon } from '@grafana/ui';
 
 interface RuleLocationProps {
   namespace: string;

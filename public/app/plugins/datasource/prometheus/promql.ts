@@ -1,4 +1,5 @@
 import { Grammar } from 'prismjs';
+
 import { CompletionItem } from '@grafana/ui';
 
 // When changing RATE_RANGES, check if Loki/LogQL ranges should be changed too

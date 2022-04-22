@@ -1,10 +1,12 @@
-import { FC, useEffect, useState } from 'react';
 import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
+import { FC, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+
 import { ExploreId } from 'app/types';
+
 import { splitOpen, splitClose } from './state/main';
-import { isSplit } from './state/selectors';
 import { runQueries } from './state/query';
+import { isSplit } from './state/selectors';
 
 interface Props {
   exploreIdLeft: ExploreId;

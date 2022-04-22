@@ -1,7 +1,9 @@
-import React from 'react';
-import { RangeSlider } from '@grafana/ui';
-import { RangeSliderProps } from './types';
 import { Meta, Story } from '@storybook/react';
+import React from 'react';
+
+import { RangeSlider } from '@grafana/ui';
+
+import { RangeSliderProps } from './types';
 
 export default {
   title: 'Forms/Slider/Range',

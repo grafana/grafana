@@ -1,21 +1,23 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+
 import { SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
 
-import { DataSourceVariableModel, VariableWithMultiSupport } from '../types';
-import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
-import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { initialVariableEditorState } from '../editor/reducer';
-import { initDataSourceVariableEditor } from './actions';
 import { StoreState } from '../../../types';
-import { changeVariableMultiValue } from '../state/actions';
+import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableSelectField } from '../editor/VariableSelectField';
 import { VariableTextField } from '../editor/VariableTextField';
-import { getVariablesState } from '../state/selectors';
-import { selectors } from '@grafana/e2e-selectors';
+import { initialVariableEditorState } from '../editor/reducer';
 import { getDatasourceVariableEditorState } from '../editor/selectors';
+import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
+import { changeVariableMultiValue } from '../state/actions';
+import { getVariablesState } from '../state/selectors';
+import { DataSourceVariableModel, VariableWithMultiSupport } from '../types';
+
+import { initDataSourceVariableEditor } from './actions';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
   const {

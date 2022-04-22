@@ -1,7 +1,4 @@
-import { XYFieldMatchers } from './types';
 import { ArrayVector, DataFrame, FieldConfig, FieldType, outerJoinDataFrames, TimeRange } from '@grafana/data';
-import { nullToUndefThreshold } from './nullToUndefThreshold';
-import { applyNullInsertThreshold } from './nullInsertThreshold';
 import {
   AxisPlacement,
   GraphDrawStyle,
@@ -9,7 +6,11 @@ import {
   ScaleDistribution,
   ScaleDistributionConfig,
 } from '@grafana/schema';
+
 import { FIXED_UNIT } from './GraphNG';
+import { applyNullInsertThreshold } from './nullInsertThreshold';
+import { nullToUndefThreshold } from './nullToUndefThreshold';
+import { XYFieldMatchers } from './types';
 
 // will mutate the DataFrame's fields' values
 function applySpanNullsThresholds(frame: DataFrame) {

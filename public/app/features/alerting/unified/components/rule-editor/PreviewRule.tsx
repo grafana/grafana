@@ -1,14 +1,17 @@
 import { css } from '@emotion/css';
-import { dateTimeFormatISO, GrafanaTheme2, LoadingState } from '@grafana/data';
-import { Alert, Button, HorizontalGroup, useStyles2 } from '@grafana/ui';
 import React, { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
+
+import { dateTimeFormatISO, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { Alert, Button, HorizontalGroup, useStyles2 } from '@grafana/ui';
+
 import { previewAlertRule } from '../../api/preview';
 import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
 import { PreviewRuleRequest, PreviewRuleResponse } from '../../types/preview';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+
 import { PreviewRuleResult } from './PreviewRuleResult';
 
 const fields: Array<keyof RuleFormValues> = ['type', 'dataSourceName', 'condition', 'queries', 'expression'];

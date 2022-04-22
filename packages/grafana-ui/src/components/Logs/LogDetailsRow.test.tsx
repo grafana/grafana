@@ -1,5 +1,6 @@
-import React, { ComponentProps } from 'react';
 import { screen, render, fireEvent } from '@testing-library/react';
+import React, { ComponentProps } from 'react';
+
 import { LogDetailsRow } from './LogDetailsRow';
 
 type Props = ComponentProps<typeof LogDetailsRow>;

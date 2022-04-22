@@ -1,5 +1,7 @@
 import { css, CSSObject } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
 import { getScrollbarWidth } from '../../utils';
 
 export const getTableStyles = (theme: GrafanaTheme2) => {
