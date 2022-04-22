@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
@@ -30,7 +31,11 @@ const SQLOrderByGroup: React.FC<SQLBuilderSelectRowProps> = ({ query, onQueryCha
   return (
     <EditorFieldGroup>
       <EditorField label="Order by" optional width={16}>
-        <>
+        <div
+          className={css`
+            display: flex;
+          `}
+        >
           <Select
             aria-label="Order by"
             onChange={({ value }) => value && onQueryChange(setOrderBy(query, value))}
@@ -46,14 +51,13 @@ const SQLOrderByGroup: React.FC<SQLBuilderSelectRowProps> = ({ query, onQueryCha
               onClick={() => onQueryChange(setSql(query, { orderBy: undefined }))}
             />
           )}
-        </>
+        </div>
       </EditorField>
 
-      <EditorField label="Direction" width={16}>
+      <EditorField label="Direction" disabled={!orderBy} width={16}>
         <Select
           aria-label="Direction"
           inputId="cloudwatch-sql-order-by-direction"
-          disabled={!orderBy}
           value={orderByDirection ? toOption(orderByDirection) : orderByDirections[0]}
           options={appendTemplateVariables(datasource, orderByDirections)}
           onChange={(item) => item && onQueryChange(setSql(query, { orderByDirection: item.value }))}
