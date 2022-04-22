@@ -1,11 +1,11 @@
 import { MutableRefObject, RefObject } from 'react';
-import { GrafanaTheme2, TimeRange } from '@grafana/data';
-import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
+import { DataFrameType, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import uPlot from 'uplot';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
-import { BucketLayout, HeatmapData } from './fields';
+import { BucketLayout, HeatmapDataDense } from './fields';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -33,7 +33,7 @@ export interface HeatmapZoomEvent {
 }
 
 interface PrepConfigOpts {
-  dataRef: RefObject<HeatmapData>;
+  dataRef: RefObject<HeatmapDataDense>;
   theme: GrafanaTheme2;
   onhover?: null | ((evt?: HeatmapHoverEvent | null) => void);
   onclick?: null | ((evt?: any) => void);
@@ -60,6 +60,10 @@ export function prepConfig(opts: PrepConfigOpts) {
     cellGap,
     hideThreshold,
   } = opts;
+
+  const pxRatio = devicePixelRatio;
+
+  let heatmapType = dataRef.current?.heatmap?.meta?.type;
 
   let qt: Quadtree;
   let hRect: Rect | null;
@@ -195,13 +199,20 @@ export function prepConfig(opts: PrepConfigOpts) {
     // distribution: ScaleDistribution.Ordinal, // does not work with facets/scatter yet
     orientation: ScaleOrientation.Vertical,
     direction: ScaleDirection.Up,
+    // should be tweakable manually
+    distribution: heatmapType === DataFrameType.HeatmapCellsSparse ? ScaleDistribution.Log : ScaleDistribution.Linear,
+    log: 10,
     range: (u, dataMin, dataMax) => {
       let bucketSize = dataRef.current?.yBucketSize;
 
-      if (dataRef.current?.yLayout === BucketLayout.le) {
-        dataMin -= bucketSize!;
+      if (bucketSize) {
+        if (dataRef.current?.yLayout === BucketLayout.le) {
+          dataMin -= bucketSize!;
+        } else {
+          dataMax += bucketSize!;
+        }
       } else {
-        dataMax += bucketSize!;
+        // how to expand scale range if inferred non-regular or log buckets?
       }
 
       return [dataMin, dataMax];
@@ -245,6 +256,8 @@ export function prepConfig(opts: PrepConfigOpts) {
       : undefined,
   });
 
+  let pathBuilder = heatmapType === DataFrameType.HeatmapCellsDense ? heatmapPathsDense : heatmapPathsSparse;
+
   builder.addSeries({
     facets: [
       {
@@ -257,7 +270,7 @@ export function prepConfig(opts: PrepConfigOpts) {
         auto: true,
       },
     ],
-    pathBuilder: heatmapPaths({
+    pathBuilder: pathBuilder({
       each: (u, seriesIdx, dataIdx, x, y, xSize, ySize) => {
         qt.add({
           x: x - u.bbox.left,
@@ -274,7 +287,10 @@ export function prepConfig(opts: PrepConfigOpts) {
       yCeil: dataRef.current?.yLayout === BucketLayout.le,
       disp: {
         fill: {
-          values: (u, seriesIdx) => countsToFills(u, seriesIdx, palette),
+          values: (u, seriesIdx) => {
+            let countFacetIdx = heatmapType === DataFrameType.HeatmapCellsDense ? 2 : 3;
+            return countsToFills(u, u.data[seriesIdx][countFacetIdx] as unknown as number[], palette);
+          },
           index: palette,
         },
       },
@@ -293,8 +309,8 @@ export function prepConfig(opts: PrepConfigOpts) {
       if (seriesIdx === 1) {
         hRect = null;
 
-        let cx = u.cursor.left! * devicePixelRatio;
-        let cy = u.cursor.top! * devicePixelRatio;
+        let cx = u.cursor.left! * pxRatio;
+        let cy = u.cursor.top! * pxRatio;
 
         qt.get(cx, cy, 1, 1, (o) => {
           if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
@@ -311,10 +327,10 @@ export function prepConfig(opts: PrepConfigOpts) {
         let isHovered = hRect && seriesIdx === hRect.sidx;
 
         return {
-          left: isHovered ? hRect!.x / devicePixelRatio : -10,
-          top: isHovered ? hRect!.y / devicePixelRatio : -10,
-          width: isHovered ? hRect!.w / devicePixelRatio : 0,
-          height: isHovered ? hRect!.h / devicePixelRatio : 0,
+          left: isHovered ? hRect!.x / pxRatio : -10,
+          top: isHovered ? hRect!.y / pxRatio : -10,
+          width: isHovered ? hRect!.w / pxRatio : 0,
+          height: isHovered ? hRect!.h / pxRatio : 0,
         };
       },
     },
@@ -323,8 +339,10 @@ export function prepConfig(opts: PrepConfigOpts) {
   return builder;
 }
 
-export function heatmapPaths(opts: PathbuilderOpts) {
+export function heatmapPathsDense(opts: PathbuilderOpts) {
   const { disp, each, gap, hideThreshold = 0, xCeil = false, yCeil = false } = opts;
+
+  const pxRatio = devicePixelRatio;
 
   return (u: uPlot, seriesIdx: number) => {
     uPlot.orient(
@@ -373,7 +391,7 @@ export function heatmapPaths(opts: PathbuilderOpts) {
         const autoGapFactor = 0.05;
 
         // tile gap control
-        let xGap = gap != null ? gap * devicePixelRatio : Math.max(0, autoGapFactor * Math.min(xSize, ySize));
+        let xGap = gap != null ? gap * pxRatio : Math.max(0, autoGapFactor * Math.min(xSize, ySize));
         let yGap = xGap;
 
         // clamp min tile size to 1px
@@ -429,9 +447,141 @@ export function heatmapPaths(opts: PathbuilderOpts) {
   };
 }
 
-export const countsToFills = (u: uPlot, seriesIdx: number, palette: string[]) => {
-  let counts = u.data[seriesIdx][2] as unknown as number[];
+// accepts xMax, yMin, yMax, count
+// xbinsize? x tile sizes are uniform?
+export function heatmapPathsSparse(opts: PathbuilderOpts) {
+  const { disp, each, gap, hideThreshold = 0 } = opts;
 
+  const pxRatio = devicePixelRatio;
+
+  return (u: uPlot, seriesIdx: number) => {
+    uPlot.orient(
+      u,
+      seriesIdx,
+      (
+        series,
+        dataX,
+        dataY,
+        scaleX,
+        scaleY,
+        valToPosX,
+        valToPosY,
+        xOff,
+        yOff,
+        xDim,
+        yDim,
+        moveTo,
+        lineTo,
+        rect,
+        arc
+      ) => {
+        //console.time('heatmapPathsSparse');
+
+        let d = u.data[seriesIdx];
+        const xMaxs = d[0] as unknown as number[]; // xMax, do we get interval?
+        const yMins = d[1] as unknown as number[];
+        const yMaxs = d[2] as unknown as number[];
+        const counts = d[3] as unknown as number[];
+        const dlen = xMaxs.length;
+
+        // fill colors are mapped from interpolating densities / counts along some gradient
+        // (should be quantized to 64 colors/levels max. e.g. 16)
+        let fills = disp.fill.values(u, seriesIdx);
+        let fillPalette = disp.fill.index ?? [...new Set(fills)];
+
+        let fillPaths = fillPalette.map((color) => new Path2D());
+
+        // cache all tile bounds
+        let xOffs = new Map();
+        let yOffs = new Map();
+
+        for (let i = 0; i < xMaxs.length; i++) {
+          let xMax = xMaxs[i];
+          let yMin = yMins[i];
+          let yMax = yMaxs[i];
+
+          let xMaxOff = xOffs.get(xMax);
+          if (xMaxOff == null) {
+            xOffs.set(xMax, Math.round(valToPosX(xMax, scaleX, xDim, xOff)));
+          }
+
+          let yMinOff = yOffs.get(yMin);
+          if (yMinOff == null) {
+            yOffs.set(yMin, Math.round(valToPosY(yMin, scaleY, yDim, yOff)));
+          }
+
+          let yMaxOff = yOffs.get(yMax);
+          if (yMaxOff == null) {
+            yOffs.set(yMax, Math.round(valToPosY(yMax, scaleY, yDim, yOff)));
+          }
+        }
+
+        const autoGapFactor = 0.05;
+
+        // uniform x size (interval, step)
+        let xSizeUniform = xOffs.get(xMaxs.find((v) => v !== xMaxs[0])) - xOffs.get(xMaxs[0]);
+
+        for (let i = 0; i < dlen; i++) {
+          if (counts[i] <= hideThreshold) {
+            continue;
+          }
+
+          let xMax = xMaxs[i];
+          let yMin = yMins[i];
+          let yMax = yMaxs[i];
+
+          let xMaxPx = xOffs.get(xMax); // xSize is from interval, or inferred delta?
+          let yMinPx = yOffs.get(yMin);
+          let yMaxPx = yOffs.get(yMax);
+
+          let xSize = xSizeUniform;
+          let ySize = yMinPx - yMaxPx;
+
+          // tile gap control
+          let xGap = gap != null ? gap * pxRatio : Math.max(0, autoGapFactor * Math.min(xSize, ySize));
+          let yGap = xGap;
+
+          // clamp min tile size to 1px
+          xSize = Math.max(1, Math.round(xSize - xGap));
+          ySize = Math.max(1, Math.round(ySize - yGap));
+
+          let x = xMaxPx;
+          let y = yMinPx;
+
+          // filter out 0 counts and out of view
+          // if (
+          //   xs[i] + xBinIncr >= scaleX.min! &&
+          //   xs[i] - xBinIncr <= scaleX.max! &&
+          //   ys[i] + yBinIncr >= scaleY.min! &&
+          //   ys[i] - yBinIncr <= scaleY.max!
+          // ) {
+          let fillPath = fillPaths[fills[i]];
+
+          rect(fillPath, x, y, xSize, ySize);
+
+          each(u, 1, i, x, y, xSize, ySize);
+          //  }
+        }
+
+        u.ctx.save();
+        //	u.ctx.globalAlpha = 0.8;
+        u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+        u.ctx.clip();
+        fillPaths.forEach((p, i) => {
+          u.ctx.fillStyle = fillPalette[i];
+          u.ctx.fill(p);
+        });
+        u.ctx.restore();
+
+        //console.timeEnd('heatmapPathsSparse');
+
+        return null;
+      }
+    );
+  };
+}
+
+export const countsToFills = (u: uPlot, counts: number[], palette: string[]) => {
   // TODO: integrate 1e-9 hideThreshold?
   const hideThreshold = 0;
 

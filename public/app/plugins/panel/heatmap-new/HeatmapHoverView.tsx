@@ -2,12 +2,12 @@ import React, { useEffect, useRef } from 'react';
 import { Field, FieldType, formattedValueToString, getFieldDisplayName, LinkModel } from '@grafana/data';
 
 import { HeatmapHoverEvent } from './utils';
-import { BucketLayout, HeatmapData } from './fields';
+import { BucketLayout, HeatmapDataDense } from './fields';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 type Props = {
-  data: HeatmapData;
+  data: HeatmapDataDense;
   hover: HeatmapHoverEvent;
   showHistogram?: boolean;
 };

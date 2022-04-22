@@ -34,7 +34,7 @@ export interface HeatmapCardStats {
   max: number;
 }
 
-export interface HeatmapData {
+export interface HeatmapDataDense {
   [key: string]: {
     x: number;
     buckets: Bucket;

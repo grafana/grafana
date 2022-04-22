@@ -556,7 +556,7 @@ function mergeHeatmapFrames(frames: DataFrame[]): DataFrame[] {
       ...frames[0],
       meta: {
         ...frames[0].meta,
-        type: DataFrameType.HeatmapBuckets,
+        type: DataFrameType.HeatmapRowsDense,
       },
       fields: [timeField!, ...countFields],
     },

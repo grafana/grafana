@@ -90,7 +90,7 @@
     "slate-plain-serializer": "0.7.10",
     "tinycolor2": "1.4.2",
     "tslib": "2.3.1",
-    "uplot": "1.6.19",
+    "uplot": "leeoniya/uPlot#4b8f468c998d984bf0921de265b4852f483bd046",
     "uuid": "8.3.2"
   },
   "devDependencies": {
