@@ -184,6 +184,27 @@ func (d *DashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models
 	return cmd.Result, err
 }
 
+func (d *DashboardStore) SaveDashboardSharingConfig(cmd models.SaveDashboardSharingConfigCommand) (*models.DashboardSharingConfig, error) {
+	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		affectedRowCount, err := sess.Table("dashboard").Where("org_id = ? AND uid = ?", cmd.OrgId, cmd.Uid).Update(map[string]interface{}{"is_public": cmd.DashboardSharingConfig.IsPublic})
+		if err != nil {
+			return err
+		}
+
+		if affectedRowCount == 0 {
+			return models.ErrDashboardNotFound
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &cmd.DashboardSharingConfig, nil
+}
+
 func (d *DashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int64, items []*models.DashboardAcl) error {
 	return d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// delete existing items

@@ -19,7 +19,7 @@ export class SharePublic extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      isPublic: false,
+      isPublic: props.dashboard.meta.isPublic ?? false,
     };
   }
 

@@ -9,6 +9,7 @@ import (
 // DashboardService is a service for operating on dashboards.
 type DashboardService interface {
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
+	SaveDashboardSharingConfig(ctx context.Context, dto *SaveDashboardSharingConfigDTO) (*models.DashboardSharingConfig, error)
 	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error)
 	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
@@ -44,6 +45,7 @@ type Store interface {
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
 	SaveProvisionedDashboard(cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error)
+	SaveDashboardSharingConfig(cmd models.SaveDashboardSharingConfigCommand) (*models.DashboardSharingConfig, error)
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
 	// SaveAlerts saves dashboard alerts.

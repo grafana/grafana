@@ -340,6 +340,26 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *m.SaveDa
 	return dash, nil
 }
 
+// SaveDashboardSharingConfig is a helper method to persist the sharing config
+// to the database. It handles validations for sharing config and persistence
+func (dr *DashboardServiceImpl) SaveDashboardSharingConfig(ctx context.Context, dto *m.SaveDashboardSharingConfigDTO) (*models.DashboardSharingConfig, error) {
+
+	cmd := models.SaveDashboardSharingConfigCommand{
+		Uid:                    dto.Uid,
+		OrgId:                  dto.OrgId,
+		DashboardSharingConfig: dto.DashboardSharingConfig,
+	}
+
+	fmt.Printf("%#v\n", cmd)
+
+	dashboardSharingConfig, err := dr.dashboardStore.SaveDashboardSharingConfig(cmd)
+	if err != nil {
+		return nil, fmt.Errorf("saving dashboard failed: %w", err)
+	}
+
+	return dashboardSharingConfig, nil
+}
+
 // DeleteDashboard removes dashboard from the DB. Errors out if the dashboard was provisioned. Should be used for
 // operations by the user where we want to make sure user does not delete provisioned dashboard.
 func (dr *DashboardServiceImpl) DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error {
