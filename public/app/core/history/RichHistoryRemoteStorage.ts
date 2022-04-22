@@ -2,9 +2,8 @@ import { RichHistoryQuery } from 'app/types/explore';
 import RichHistoryStorage, { RichHistoryStorageWarningDetails } from './RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../utils/richHistoryTypes';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery, DataSourceInstanceSettings } from '../../../../packages/grafana-data';
+import { DataQuery } from '../../../../packages/grafana-data';
 import { fromDTO } from './remoteStorageConverter';
-import { find } from 'lodash';
 
 export type RichHistoryRemoteStorageDTO = {
   uid: string;
@@ -67,12 +66,7 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
 function buildQueryParams(filters: RichHistorySearchFilters): string {
   let params = `${filters.datasourceFilters
     .map((datasourceName) => {
-      // PLAN: make it more generic?
-      const datasource = find(
-        getDataSourceSrv().getList(),
-        (settings: DataSourceInstanceSettings) => settings.name === datasourceName
-      );
-      const uid = datasource!.uid;
+      const uid = getDataSourceSrv().getInstanceSettings(datasourceName)!.uid;
       return `datasourceUid=${encodeURIComponent(uid)}`;
     })
     .join('&')}`;
