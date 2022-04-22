@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
@@ -139,15 +140,27 @@ type AzureMonitorJSONQuery struct {
 // AzureMonitorDimensionFilter is the model for the frontend sent for azureMonitor metric
 // queries like "BlobType", "eq", "*"
 type AzureMonitorDimensionFilter struct {
-	Dimension string `json:"dimension"`
-	Operator  string `json:"operator"`
-	Filter    string `json:"filter"`
+	Dimension string   `json:"dimension"`
+	Operator  string   `json:"operator"`
+	Filter    []string `json:"filter"`
 }
 
 func (a AzureMonitorDimensionFilter) String() string {
 	filter := "*"
-	if a.Filter != "" {
-		filter = a.Filter
+	if len(a.Filter) >= 1 {
+		if len(a.Filter) == 1 {
+			filter = a.Filter[0]
+		} else {
+			var filterStrings []string
+			for _, filter := range a.Filter {
+				filterStrings = append(filterStrings, fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter))
+			}
+			if a.Operator == "eq" {
+				return strings.Join(filterStrings, " or ")
+			} else {
+				return strings.Join(filterStrings, " and ")
+			}
+		}
 	}
 	return fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter)
 }

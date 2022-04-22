@@ -1,20 +1,48 @@
 import React, { useMemo } from 'react';
-import { Button, Select, Input, HorizontalGroup, VerticalGroup } from '@grafana/ui';
+import { Button, Select, Input, HorizontalGroup, VerticalGroup, MultiSelect } from '@grafana/ui';
 
 import { Field } from '../Field';
 import { AzureMetricDimension, AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types';
 import { appendDimensionFilter, removeDimensionFilter, setDimensionFilterValue } from './setQueryValue';
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, Labels, DataFrame } from '@grafana/data';
 
 interface DimensionFieldsProps extends AzureQueryEditorFieldProps {
   dimensionOptions: AzureMonitorOption[];
 }
 
-const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptions, onQueryChange }) => {
+interface DimensionLabels {
+  [key: string]: Set<string>;
+}
+
+const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensionOptions, onQueryChange }) => {
   const dimensionFilters = useMemo(
     () => query.azureMonitor?.dimensionFilters ?? [],
     [query.azureMonitor?.dimensionFilters]
   );
+
+  const dimensionLabels = useMemo(() => {
+    let labelsObj: DimensionLabels = {};
+    if (data?.series.length) {
+      const series: DataFrame[] = data.series.flat();
+      const fields = series.flatMap((item) => item.fields);
+      const labels = fields
+        .map((item) => item.labels)
+        .flat()
+        .filter((item) => item!);
+      for (const label of labels) {
+        if (label) {
+          for (const [dimension, value] of Object.entries(label)) {
+            if (labelsObj[dimension]) {
+              labelsObj[dimension].add(value);
+            } else {
+              labelsObj[dimension] = new Set([value]);
+            }
+          }
+        }
+      }
+    }
+    return labelsObj;
+  }, [dimensionFilters]);
 
   const dimensionOperators: Array<SelectableValue<string>> = [
     { label: '==', value: 'eq' },
@@ -52,8 +80,16 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
 
   const onFilterInputChange = (index: number, ev: React.FormEvent) => {
     if (ev.target instanceof HTMLInputElement) {
-      onFieldChange(index, 'filter', ev.target.value);
+      onFieldChange(index, 'filter', [ev.target.value]);
     }
+  };
+
+  const onMultiSelectFilterChange = (index: number, v: SelectableValue<string>[]) => {
+    onFieldChange(
+      index,
+      'filter',
+      v.map((item) => item.value!)
+    );
   };
 
   return (
@@ -76,7 +112,21 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
               options={dimensionOperators}
               onChange={(v) => onFieldChange(index, 'operator', v.value ?? '')}
             />
-            <Input placeholder="" value={filter.filter} onChange={(ev) => onFilterInputChange(index, ev)} />
+            {filter.operator === 'eq' || filter.operator === 'ne' ? (
+              <MultiSelect
+                menuShouldPortal
+                placeholder="Select or add value(s)"
+                value={filter.filter}
+                options={[...(dimensionLabels[filter.dimension.toLowerCase()] ?? [])].map((item) => ({
+                  value: item,
+                  label: item,
+                }))}
+                onChange={(v) => onMultiSelectFilterChange(index, v)}
+              />
+            ) : (
+              <Input placeholder="" value={filter.filter} onChange={(ev) => onFilterInputChange(index, ev)} />
+            )}
+
             <Button
               variant="secondary"
               size="md"
