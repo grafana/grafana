@@ -67,6 +67,10 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
 
   if (numBarSeries > 1) {
     frames.forEach((frame) => {
+      if (!frame.fields.some(isBarField)) {
+        return;
+      }
+
       const xVals = frame.fields[0].values.toArray();
 
       for (let i = 0; i < xVals.length; i++) {
