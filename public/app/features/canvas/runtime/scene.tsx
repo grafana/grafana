@@ -255,21 +255,20 @@ export class Scene {
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         targetedElement!.applyDrag(event);
-        this.moved.next(Date.now()); // TODO only on end
       })
       .on('dragGroup', (e) => {
         e.events.forEach((event) => {
           const targetedElement = this.findElementByTarget(event.target);
           targetedElement!.applyDrag(event);
         });
-        this.moved.next(Date.now()); // TODO only on end
       })
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
-
         if (targetedElement) {
           targetedElement?.setPlacementFromConstraint();
         }
+
+        this.moved.next(Date.now());
       })
       .on('resize', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
