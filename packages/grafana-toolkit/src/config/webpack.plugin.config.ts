@@ -98,13 +98,13 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
     new CopyWebpackPlugin({
       patterns: [
         // If src/README.md exists use it; otherwise the root README
-        { from: hasREADME ? 'README.md' : '../README.md', to: '.', force: true, priority: 1 },
-        { from: 'plugin.json', to: '.' },
+        { from: hasREADME ? 'README.md' : '../README.md', to: '.', force: true, priority: 1, noErrorOnMissing: true },
+        { from: 'plugin.json', to: '.', noErrorOnMissing: true },
         { from: '**/README.md', to: '[path]README.md', priority: 0, noErrorOnMissing: true },
-        { from: '../LICENSE', to: '.' },
-        { from: '../CHANGELOG.md', to: '.', force: true },
+        { from: '../LICENSE', to: '.', noErrorOnMissing: true },
+        { from: '../CHANGELOG.md', to: '.', force: true, noErrorOnMissing: true },
         { from: '**/*.{json, svg, png, html}', to: '.', noErrorOnMissing: true },
-        { from: 'img/**/*', to: '.' },
+        { from: 'img/**/*', to: '.', noErrorOnMissing: true },
         { from: 'libs/**/*', to: '.', noErrorOnMissing: true },
         { from: 'static/**/*', to: '.', noErrorOnMissing: true },
       ],
@@ -217,7 +217,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
               cacheDirectory: true,
               cacheCompression: false,
               presets: [
-                [require.resolve('@babel/preset-env'), { modules: false, debug: true, targets }],
+                [require.resolve('@babel/preset-env'), { modules: false, targets }],
                 [
                   require.resolve('@babel/preset-typescript'),
                   {
