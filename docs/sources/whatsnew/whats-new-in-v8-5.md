@@ -58,7 +58,7 @@ The Bar gauge panel now supports scrolling to support displaying large datasets 
 
 ### Template variable substitution
 
-We’ve added support to substitute template variables to transformations. This allows dashboards to be more interactive with transformations when a user inputs calculations and $**interval and $**interval_ms.
+We’ve added support to substitute template variables to transformations. This allows dashboards to be more interactive with transformations when a user inputs calculations and `$__interval` and `$__interval_ms`.
 
 ### Grouping to matrix
 
