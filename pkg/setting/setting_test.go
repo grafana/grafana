@@ -2,6 +2,7 @@ package setting
 
 import (
 	"bufio"
+	"fmt"
 	"math/rand"
 	"net/url"
 	"os"
@@ -303,27 +304,38 @@ func TestLoadingSettings(t *testing.T) {
 
 func TestParseAppURLAndSubURL(t *testing.T) {
 	testCases := []struct {
+		valid             bool
 		rootURL           string
 		expectedAppURL    string
 		expectedAppSubURL string
 	}{
-		{rootURL: "http://localhost:3000/", expectedAppURL: "http://localhost:3000/"},
-		{rootURL: "http://localhost:3000", expectedAppURL: "http://localhost:3000/"},
-		{rootURL: "http://localhost:3000/grafana", expectedAppURL: "http://localhost:3000/grafana/", expectedAppSubURL: "/grafana"},
-		{rootURL: "http://localhost:3000/grafana/", expectedAppURL: "http://localhost:3000/grafana/", expectedAppSubURL: "/grafana"},
+		{valid: true, rootURL: "http://localhost:3000/", expectedAppURL: "http://localhost:3000/"},
+		{valid: true, rootURL: "http://localhost:3000", expectedAppURL: "http://localhost:3000"},
+		{valid: true, rootURL: "http://localhost:3000/grafana", expectedAppURL: "http://localhost:3000/grafana", expectedAppSubURL: "/grafana"},
+		{valid: true, rootURL: "http://localhost:3000/grafana/", expectedAppURL: "http://localhost:3000/grafana/", expectedAppSubURL: "/grafana"},
+		{valid: false, rootURL: "/"},
+		{valid: false, rootURL: "//grafana.com"},
+		{valid: false, rootURL: "grafana.com"},
+		{valid: false, rootURL: "/my/local/path"},
 	}
 
 	for _, tc := range testCases {
-		f := ini.Empty()
-		cfg := NewCfg()
-		s, err := f.NewSection("server")
-		require.NoError(t, err)
-		_, err = s.NewKey("root_url", tc.rootURL)
-		require.NoError(t, err)
-		appURL, appSubURL, err := cfg.parseAppUrlAndSubUrl(s)
-		require.NoError(t, err)
-		require.Equal(t, tc.expectedAppURL, appURL)
-		require.Equal(t, tc.expectedAppSubURL, appSubURL)
+		t.Run(fmt.Sprintf("%v is valid? %v", tc.rootURL, tc.valid), func(t *testing.T) {
+			f := ini.Empty()
+			cfg := NewCfg()
+			s, err := f.NewSection("server")
+			require.NoError(t, err)
+			_, err = s.NewKey("root_url", tc.rootURL)
+			require.NoError(t, err)
+			appURL, appSubURL, err := cfg.parseAppUrlAndSubUrl(s)
+			if tc.valid {
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedAppURL, appURL)
+				require.Equal(t, tc.expectedAppSubURL, appSubURL)
+			} else {
+				require.Error(t, err)
+			}
+		})
 	}
 }
 

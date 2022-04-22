@@ -450,15 +450,21 @@ type CommandLineArgs struct {
 func (cfg Cfg) parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
 	appUrl := valueAsString(section, "root_url", "http://localhost:3000/")
 
-	if appUrl[len(appUrl)-1] != '/' {
-		appUrl += "/"
-	}
-
 	// Check if has app suburl.
 	url, err := url.Parse(appUrl)
 	if err != nil {
 		cfg.Logger.Error("Invalid root_url.", "url", appUrl, "error", err)
-		os.Exit(1)
+		return "", "", errors.New(fmt.Sprint("Invalid root_url:", err))
+	}
+
+	if len(url.Host) == 0 {
+		cfg.Logger.Error("Invalid root_url. root_url must have a host component.", "url", appUrl)
+		return "", "", errors.New(fmt.Sprint("Invalid root_url: ", appUrl, " root_url must have a host component."))
+	}
+
+	if len(url.Scheme) == 0 {
+		cfg.Logger.Error("Invalid root_url. root_url must have a scheme component.", "url", appUrl)
+		return "", "", errors.New(fmt.Sprint("Invalid root_url: ", appUrl, " root_url must have a scheme component."))
 	}
 
 	appSubUrl := strings.TrimSuffix(url.Path, "/")
