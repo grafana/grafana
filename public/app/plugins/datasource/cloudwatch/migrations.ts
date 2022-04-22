@@ -3,7 +3,6 @@ import { omit } from 'lodash';
 import { AnnotationQuery, DataQuery } from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
 
-
 import {
   MetricEditorMode,
   CloudWatchAnnotationQuery,
