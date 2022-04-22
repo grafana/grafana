@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -19,6 +20,7 @@ type ProvisioningSrv struct {
 	log                 log.Logger
 	policies            NotificationPolicyService
 	contactPointService ContactPointService
+	templates           TemplateService
 }
 
 type ContactPointService interface {
@@ -26,6 +28,10 @@ type ContactPointService interface {
 	CreateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint, p alerting_models.Provenance) (apimodels.EmbeddedContactPoint, error)
 	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint, p alerting_models.Provenance) error
 	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error
+}
+
+type TemplateService interface {
+	GetTemplates(ctx context.Context, orgID int64) (map[string]string, error)
 }
 
 type NotificationPolicyService interface {
@@ -90,4 +96,28 @@ func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *models.ReqContext) respon
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "contactpoint deleted"})
+}
+
+func (srv *ProvisioningSrv) RouteGetTemplates(c *models.ReqContext) response.Response {
+	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	result := make([]definitions.MessageTemplate, len(templates))
+	for k, v := range templates {
+		result = append(result, definitions.MessageTemplate{Name: k, Template: v})
+	}
+	return response.JSON(http.StatusOK, result)
+}
+
+func (srv *ProvisioningSrv) RouteGetTemplate(c *models.ReqContext) response.Response {
+	id := web.Params(c.Req)[":ID"]
+	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	if tmpl, ok := templates[id]; ok {
+		return response.JSON(http.StatusOK, definitions.MessageTemplate{Name: id, Template: tmpl})
+	}
+	return response.Empty(http.StatusNotFound)
 }
