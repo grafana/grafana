@@ -19,8 +19,6 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
@@ -28,24 +26,8 @@ import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/data
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
 import gfunc, { FuncDefs, FuncInstance } from './gfunc';
-import { default as GraphiteQueryModel } from './graphite_query';
-=======
-=======
-import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
->>>>>>> 8967f8df3e (add graphite functions list logic back in to see why alert test broke)
-
-import { getSearchFilterScopedVar } from '../../../features/variables/utils';
-
-import gfunc, { FuncDefs, FuncInstance } from './gfunc';
-<<<<<<< HEAD
 import GraphiteQueryModel from './graphite_query';
 // Types
->>>>>>> cc5bfd9134 (remove extra logic for graphite /functions endpoint returning {} #46681)
-=======
-import { default as GraphiteQueryModel } from './graphite_query';
->>>>>>> 8967f8df3e (add graphite functions list logic back in to see why alert test broke)
 import {
   GraphiteLokiMapping,
   GraphiteMetricLokiMatcher,
