@@ -1,5 +1,5 @@
-// @ts-ignore
 import { render, screen } from '@testing-library/react';
+// @ts-ignore
 import RCCascader from 'rc-cascader';
 import React from 'react';
 

@@ -1,12 +1,11 @@
 import { css, cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
+// @ts-ignore
 import Highlighter from 'react-highlight-words';
 import tinycolor from 'tinycolor2';
 
 import { LogRowModel, findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
-
-// @ts-ignore
 
 import { withTheme2 } from '../../themes/index';
 import { Themeable2 } from '../../types/theme';
@@ -15,8 +14,6 @@ import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowContext } from './LogRowContext';
 import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
 import { getLogRowStyles } from './getLogRowStyles';
-
-//Components
 
 export const MAX_CHARACTERS = 100000;
 

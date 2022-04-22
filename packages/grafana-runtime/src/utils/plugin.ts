@@ -1,8 +1,7 @@
+// @ts-ignore
 import System from 'systemjs/dist/system.js';
 
 import { config } from '../config';
-
-// @ts-ignore
 
 /**
  * Option to specify a plugin css that should be applied for the dark
