@@ -22,11 +22,11 @@ It’s been tricky to work with more than a small number of Grafana-managed aler
 
 Choose useful group names, and move alert rules between groups.
 
-{{< figure src="/static/img/docs/alerting/unified/rule-grouping-8-5.png" max-width="38000px" caption="Rule group" >}}
+{{< figure src="/static/img/docs/alerting/unified/rule-grouping-8-5.png" max-width="400px" caption="Rule group" >}}
 
 Rules in a group are evaluated together, so you can also set the interval for the entire group.
 
-{{< figure src="/static/img/docs/alerting/unified/rule-grouping-details-8-5.png" max-width="38000px" caption="Rule group details" >}}
+{{< figure src="/static/img/docs/alerting/unified/rule-grouping-details-8-5.png" max-width="350px" caption="Rule group details" >}}
 
 ## Analytics
 
@@ -36,11 +36,11 @@ When enabled, a check runs every 10 minutes. It will notify, via the UI, when a 
 
 Plugin update available:
 
-{{< figure src="/static/img/docs/analytics/github-plugin-update-available-8-5.png" max-width="1200px" caption="Plugin-available" >}}
+{{< figure src="/static/img/docs/analytics/github-plugin-update-available-8-5.png" max-width="450px" caption="Grafana-update-available" >}}
 
 Grafana update available:
 
-{{< figure src="/static/img/docs/analytics/github-plugin-version-8-5.png" max-width="1200px" caption="Grafana-update-available" >}}
+{{< figure src="/static/img/docs/analytics/github-plugin-version-8-5.png" max-width="450px" caption="Grafana-update-available" >}}
 
 ## Dashboard Panels
 
@@ -50,9 +50,9 @@ In addition to RSS feeds, the News panel now supports Atom feeds, allowing you t
 
 The Bar gauge panel now supports scrolling to support displaying large datasets while maintaining the readability of labels. You can set a min width or height for the bars (depending on the chart’s orientation), allowing the content to overflow in the container and become scrollable.
 
-{{< figure src="/static/img/docs/bar-gauge-panel/vertical-view-8-5.png" max-width="1200px" caption="Vertical view" >}}
+{{< figure src="/static/img/docs/bar-gauge-panel/vertical-view-8-5.png" max-width="400px" caption="Vertical view" >}}
 
-{{< figure src="/static/img/docs/bar-gauge-panel/horizontal-view-8-5.png" max-width="1200px" caption="Horizontal view" >}}
+{{< figure src="/static/img/docs/bar-gauge-panel/horizontal-view-8-5.png" max-width="400px" caption="Horizontal view" >}}
 
 ## Transformations
 
@@ -69,23 +69,23 @@ A new transformation is available that helps you structure data in a matrix form
 Available by switching on the ‘newNavigation’ feature toggle.
 You can expand the navigation bar for a better overview of Grafana’s features and installed integrations.
 This feature is currently in a beta version and we would appreciate your feedback. Sign up for a call with the Grafana team - it only takes 30 minutes, and you'll receive a $40 USD gift card as a token of appreciation for your time.
-US, UK, Canada, Australia, France, Germany, or South Africa: sign up here
-Everywhere else in the world: sign up here
+US, UK, Canada, Australia, France, Germany, or South Africa: sign up [here](https://www.userinterviews.com/projects/Hz3DyNNwWA/apply);
+Everywhere else in the world: sign up [here](https://www.userinterviews.com/projects/Hz3DyNNwWA/apply).
 
-{{< figure src="/static/img/docs/navigation/new-navigation-8-5.png" max-width="1200px" caption="New nav panel" >}}
+{{< figure src="/static/img/docs/navigation/new-navigation-8-5.png" max-width="400px" caption="New nav panel" >}}
 
 ## Notifications list for error alerts (Beta)
 
 Available by switching on the ‘persistNotifications’ feature toggle.
 In order to support debugging issues in Grafana, error alerts that appear when viewing a dashboard now include a trace ID, and these alerts can be accessed under Profile / Notifications.
 
-{{< figure src="/static/img/docs/navigation/nav-profile-notification-8-5.png" max-width="1200px" caption="Alert error list" >}}
+{{< figure src="/static/img/docs/navigation/nav-profile-notification-8-5.png" max-width="200px" caption="New nav panel" >}}
 
 ## Service accounts (beta)
 
 Service accounts are a major evolution for machine access within Grafana. You can create multiple API tokens per service account with independent expiration dates, and temporarily disable a service account without deleting it. These benefits make Service Accounts a more flexible way for Terraform and other apps to authenticate with Grafana. Service accounts also work with [fine-grained access control](https://grafana.com/docs/grafana/latest/enterprise/access-control/) in [Grafana Enterprise](https://grafana.com/docs/grafana/latest/enterprise/): you can improve security by granting service accounts specific roles to limit the functions they can perform. Service accounts are available in beta; you can try them out by enabling the `service-accounts` [feature toggle](https://grafana.com/docs/grafana/latest/administration/service-accounts/enable-service-accounts) or, if you use Grafana Cloud, [reaching out to our support team](https://grafana.com/orgs/raintank/tickets#) for early access. Learn more about Service Accounts in our [docs](https://grafana.com/docs/grafana/latest/administration/service-accounts).
 
-{{< figure src="/static/img/docs/service-accounts/configure-8-5.png" max-width="1200px" caption="Configure service accounts" >}}
+{{< figure src="/static/img/docs/service-accounts/configure-8-5.png" max-width="400px" caption="Configure service accounts" >}}
 
 ## Observability
 
@@ -123,4 +123,4 @@ You can already keep secrets in Grafana’s database (like data source credentia
 
 Reports are a great way to share Grafana dashboards by email with users who don’t regularly sign in to Grafana. In 8.5, we’ve revamped the Report authoring UI to make it quicker and easier for you to create reports. View report details at a glance in list view, consider one configuration step at a time, and save reports for later. Also, Grafana will now emit a log every time a report is sent, so you can confirm its status or learn about send errors. Learn more about Reporting in our [docs](https://grafana.com/docs/grafana/latest/enterprise/reporting/).
 
-{{< figure src="/static/img/docs/enterprise/report-new-report-8-5.png" max-width="1200px" caption="New report" >}}
+{{< figure src="/static/img/docs/enterprise/report-new-report-8-5.png" max-width="350px" caption="New report" >}}

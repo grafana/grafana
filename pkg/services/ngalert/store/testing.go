@@ -178,6 +178,26 @@ func (f *FakeRuleStore) GetOrgAlertRules(_ context.Context, q *models.ListAlertR
 	q.Result = rules
 	return nil
 }
+
+func (f *FakeRuleStore) GetRuleGroups(_ context.Context, q *models.ListRuleGroupsQuery) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, *q)
+
+	m := make(map[string]struct{})
+	for _, rules := range f.Rules {
+		for _, rule := range rules {
+			m[rule.RuleGroup] = struct{}{}
+		}
+	}
+
+	for s := range m {
+		q.Result = append(q.Result, s)
+	}
+
+	return nil
+}
+
 func (f *FakeRuleStore) GetAlertRules(_ context.Context, q *models.GetAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
