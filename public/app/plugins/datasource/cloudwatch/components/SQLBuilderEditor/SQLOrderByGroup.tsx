@@ -1,8 +1,7 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, EditorField, EditorFieldGroup } from '@grafana/experimental';
+import { AccessoryButton, EditorField, EditorFieldGroup, InputGroup } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 
 import { ASC, DESC, STATISTICS } from '../../cloudwatch-sql/language';
@@ -31,11 +30,7 @@ const SQLOrderByGroup: React.FC<SQLBuilderSelectRowProps> = ({ query, onQueryCha
   return (
     <EditorFieldGroup>
       <EditorField label="Order by" optional width={16}>
-        <div
-          className={css`
-            display: flex;
-          `}
-        >
+        <InputGroup>
           <Select
             aria-label="Order by"
             onChange={({ value }) => value && onQueryChange(setOrderBy(query, value))}
@@ -51,7 +46,7 @@ const SQLOrderByGroup: React.FC<SQLBuilderSelectRowProps> = ({ query, onQueryCha
               onClick={() => onQueryChange(setSql(query, { orderBy: undefined }))}
             />
           )}
-        </div>
+        </InputGroup>
       </EditorField>
 
       <EditorField label="Direction" disabled={!orderBy} width={16}>
