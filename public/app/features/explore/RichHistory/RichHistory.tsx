@@ -13,6 +13,7 @@ import { RichHistorySettingsTab } from './RichHistorySettingsTab';
 import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
 import { RichHistoryStarredTab } from './RichHistoryStarredTab';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
+import { debounce } from 'lodash';
 
 export enum Tabs {
   RichHistory = 'Query history',
@@ -30,9 +31,11 @@ export const sortOrderOptions = [
 export interface RichHistoryProps extends Themeable {
   richHistory: RichHistoryQuery[];
   richHistorySettings: RichHistorySettings;
-  richHistorySearchFilters: RichHistorySearchFilters;
+  richHistorySearchFilters?: RichHistorySearchFilters;
   updateHistorySettings: (settings: RichHistorySettings) => void;
   updateHistorySearchFilters: (exploreId: ExploreId, filters: RichHistorySearchFilters) => void;
+  loadRichHistory: (exploreId: ExploreId) => void;
+  clearRichHistoryResults: (exploreId: ExploreId) => void;
   deleteRichHistory: () => void;
   activeDatasourceInstance?: string;
   firstTab: Tabs;
@@ -46,12 +49,22 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
     this.props.updateHistorySettings({ ...this.props.richHistorySettings, ...settingsToUpdate });
   };
 
-  updateFilters = (filtersToUpdate: Partial<RichHistorySearchFilters>) => {
-    this.props.updateHistorySearchFilters(this.props.exploreId, {
-      ...this.props.richHistorySearchFilters,
+  updateFilters = (filtersToUpdate?: Partial<RichHistorySearchFilters>) => {
+    const filters = {
+      ...this.props.richHistorySearchFilters!,
       ...filtersToUpdate,
-    });
+    };
+    this.props.updateHistorySearchFilters(this.props.exploreId, filters);
+    this.loadRichHistory();
   };
+
+  clearResults = () => {
+    this.props.clearRichHistoryResults(this.props.exploreId);
+  };
+
+  loadRichHistory = debounce(() => {
+    this.props.loadRichHistory(this.props.exploreId);
+  }, 300);
 
   onChangeRetentionPeriod = (retentionPeriod: SelectableValue<number>) => {
     if (retentionPeriod.value !== undefined) {
@@ -65,39 +78,9 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
   toggleActiveDatasourceOnly = () =>
     this.updateSettings({ activeDatasourceOnly: !this.props.richHistorySettings.activeDatasourceOnly });
 
-  onSelectDatasourceFilters = (datasourceFilters: SelectableValue[]) => this.updateFilters({ datasourceFilters });
-
-  onChangeSortOrder = (sortOrder: SortOrder) => this.updateFilters({ sortOrder });
-
-  /* If user selects activeDatasourceOnly === true, set datasource filter to currently active datasource.
-   * Filtering based on datasource won't be available. Otherwise set to null, as filtering will be
-   * available for user.
-   */
-  initFilters() {
-    if (this.props.richHistorySettings.activeDatasourceOnly && this.props.activeDatasourceInstance) {
-      this.onSelectDatasourceFilters([
-        { label: this.props.activeDatasourceInstance, value: this.props.activeDatasourceInstance },
-      ]);
-    }
-  }
-
-  componentDidMount() {
-    this.initFilters();
-  }
-
-  /**
-   * Updating filters on didMount and didUpdate because we don't know when activeDatasourceInstance is ready
-   */
-  componentDidUpdate(prevProps: RichHistoryProps) {
-    if (this.props.activeDatasourceInstance !== prevProps.activeDatasourceInstance) {
-      this.initFilters();
-    }
-  }
-
   render() {
-    const { activeDatasourceOnly, retentionPeriod } = this.props.richHistorySettings;
-    const { datasourceFilters, sortOrder } = this.props.richHistorySearchFilters;
-    const { richHistory, height, exploreId, deleteRichHistory, onClose, firstTab } = this.props;
+    const { richHistory, height, exploreId, deleteRichHistory, onClose, firstTab, activeDatasourceInstance } =
+      this.props;
 
     const QueriesTab: TabConfig = {
       label: 'Query history',
@@ -105,12 +88,11 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
       content: (
         <RichHistoryQueriesTab
           queries={richHistory}
-          sortOrder={sortOrder}
-          datasourceFilters={datasourceFilters}
-          activeDatasourceOnly={activeDatasourceOnly}
-          retentionPeriod={retentionPeriod}
-          onChangeSortOrder={this.onChangeSortOrder}
-          onSelectDatasourceFilters={this.onSelectDatasourceFilters}
+          updateFilters={this.updateFilters}
+          clearRichHistoryResults={() => this.props.clearRichHistoryResults(this.props.exploreId)}
+          activeDatasourceInstance={activeDatasourceInstance}
+          richHistorySettings={this.props.richHistorySettings}
+          richHistorySearchFilters={this.props.richHistorySearchFilters}
           exploreId={exploreId}
           height={height}
         />
@@ -124,11 +106,11 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
       content: (
         <RichHistoryStarredTab
           queries={richHistory}
-          sortOrder={sortOrder}
-          datasourceFilters={datasourceFilters}
-          activeDatasourceOnly={activeDatasourceOnly}
-          onChangeSortOrder={this.onChangeSortOrder}
-          onSelectDatasourceFilters={this.onSelectDatasourceFilters}
+          activeDatasourceInstance={activeDatasourceInstance}
+          updateFilters={this.updateFilters}
+          clearRichHistoryResults={() => this.props.clearRichHistoryResults(this.props.exploreId)}
+          richHistorySettings={this.props.richHistorySettings}
+          richHistorySearchFilters={this.props.richHistorySearchFilters}
           exploreId={exploreId}
         />
       ),
