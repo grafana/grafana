@@ -9,10 +9,12 @@ func addDbFileStorageMigration(mg *migrator.Migrator) {
 		Name: "file",
 		Columns: []*migrator.Column{
 			{Name: "path", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
-			{Name: "path_hash", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+
+			// 191 is the maximum length of indexable VARCHAR fields in MySQL 5.6 <= with utf8mb4 encoding
+			{Name: "path_hash", Type: migrator.DB_NVarchar, Length: 191, Nullable: false},
 
 			// parent_folder_path_hash is an optimization for a common use case - list all files in a given folder
-			{Name: "parent_folder_path_hash", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "parent_folder_path_hash", Type: migrator.DB_NVarchar, Length: 191, Nullable: false},
 
 			{Name: "contents", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
@@ -33,8 +35,8 @@ func addDbFileStorageMigration(mg *migrator.Migrator) {
 	fileMetaTable := migrator.Table{
 		Name: "file_meta",
 		Columns: []*migrator.Column{
-			{Name: "path_hash", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "key", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "path_hash", Type: migrator.DB_NVarchar, Length: 191, Nullable: false},
+			{Name: "key", Type: migrator.DB_NVarchar, Length: 191, Nullable: false},
 			{Name: "value", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
 		},
 		Indices: []*migrator.Index{
