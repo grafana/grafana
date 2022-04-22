@@ -1,9 +1,10 @@
-import { BackendSrv } from 'app/core/services/backend_srv';
 import { of } from 'rxjs';
 
 import { setBackendSrv } from '@grafana/runtime';
+import { BackendSrv } from 'app/core/services/backend_srv';
 
 import { ContextSrv, User } from '../../../core/services/context_srv';
+
 import { GraphiteDatasource } from './datasource';
 
 interface Context {
