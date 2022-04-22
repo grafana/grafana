@@ -1,16 +1,12 @@
-import { GraphiteDatasource } from './datasource';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { of } from 'rxjs';
-import { ContextSrv, User } from '../../../core/services/context_srv';
+
 import { setBackendSrv } from '@grafana/runtime';
 
-jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
-}));
+import { ContextSrv, User } from '../../../core/services/context_srv';
+import { GraphiteDatasource } from './datasource';
 
 interface Context {
-  templateSrv: TemplateSrv;
   ds: GraphiteDatasource;
 }
 
@@ -27,9 +23,8 @@ describe('graphiteDatasource integration with backendSrv and fetch', () => {
         rollupIndicatorEnabled: true,
       },
     };
-    const templateSrv = new TemplateSrv();
-    const ds = new GraphiteDatasource(instanceSettings, templateSrv);
-    ctx = { templateSrv, ds };
+    const ds = new GraphiteDatasource(instanceSettings);
+    ctx = { ds };
   });
 
   describe('returns a list of functions', () => {
@@ -139,7 +134,6 @@ function mockBackendSrv(data: string) {
     user,
   } as any as ContextSrv;
   const logoutMock = jest.fn();
-  const parseRequestOptionsMock = jest.fn().mockImplementation((options) => options);
 
   const mockedBackendSrv = new BackendSrv({
     fromFetch: fromFetchMock,
@@ -147,8 +141,6 @@ function mockBackendSrv(data: string) {
     contextSrv: contextSrvMock,
     logout: logoutMock,
   });
-
-  mockedBackendSrv['parseRequestOptions'] = parseRequestOptionsMock;
 
   setBackendSrv(mockedBackendSrv);
 }
