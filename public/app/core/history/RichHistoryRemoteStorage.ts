@@ -1,7 +1,19 @@
 import { RichHistoryQuery } from 'app/types/explore';
 import RichHistoryStorage, { RichHistoryStorageWarningDetails } from './RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../utils/richHistoryTypes';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { DataQuery, DataSourceInstanceSettings } from '../../../../packages/grafana-data';
+import { fromDTO } from './remoteStorageConverter';
+import { find } from 'lodash';
+
+export type RichHistoryRemoteStorageDTO = {
+  uid: string;
+  createdAt: number;
+  datasourceUid: string;
+  starred: boolean;
+  comment: string;
+  queries: DataQuery[];
+};
 
 export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   async addToRichHistory(
@@ -12,7 +24,7 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
       queries: newRichHistoryQuery.queries,
     });
     return {
-      richHistoryQuery: result,
+      richHistoryQuery: fromDTO(result),
     };
   }
 
@@ -27,7 +39,7 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   async getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryQuery[]> {
     const params = buildQueryParams(filters);
     const queryHistory = await getBackendSrv().get(`/api/query-history?${params}`);
-    return queryHistory.result.queryHistory || [];
+    return (queryHistory.result.queryHistory || []).map(fromDTO);
   }
 
   async getSettings(): Promise<RichHistorySettings> {
@@ -54,7 +66,17 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
 }
 
 function buildQueryParams(filters: RichHistorySearchFilters): string {
-  let params = `${filters.datasourceFilters.map((uid) => `datasourceUid=${encodeURIComponent(uid)}`).join('&')}`;
+  let params = `${filters.datasourceFilters
+    .map((datasourceName) => {
+      // PLAN: make it more generic?
+      const datasource = find(
+        getDataSourceSrv().getList(),
+        (settings: DataSourceInstanceSettings) => settings.name === datasourceName
+      );
+      const uid = datasource!.uid;
+      return `datasourceUid=${encodeURIComponent(uid)}`;
+    })
+    .join('&')}`;
   if (filters.search) {
     params = params + `&searchString=${filters.search}`;
   }

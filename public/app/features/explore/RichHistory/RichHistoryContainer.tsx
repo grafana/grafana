@@ -32,8 +32,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
   return {
     richHistory,
     firstTab,
-    // PLAN 2: this should handle both, uid and name
-    activeDatasourceInstance: datasourceInstance?.uid,
+    activeDatasourceInstance: datasourceInstance?.name,
     richHistorySettings,
     richHistorySearchFilters,
   };

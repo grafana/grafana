@@ -14,6 +14,7 @@ import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
 import { RichHistoryStarredTab } from './RichHistoryStarredTab';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 import { debounce } from 'lodash';
+import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 
 export enum Tabs {
   RichHistory = 'Query history',
@@ -21,12 +22,13 @@ export enum Tabs {
   Settings = 'Settings',
 }
 
-export const sortOrderOptions = [
-  { label: 'Newest first', value: SortOrder.Descending },
-  { label: 'Oldest first', value: SortOrder.Ascending },
-  { label: 'Data source A-Z', value: SortOrder.DatasourceAZ },
-  { label: 'Data source Z-A', value: SortOrder.DatasourceZA },
-];
+export const getSortOrderOptions = () =>
+  [
+    { label: 'Newest first', value: SortOrder.Descending },
+    { label: 'Oldest first', value: SortOrder.Ascending },
+    { label: 'Data source A-Z', value: SortOrder.DatasourceAZ },
+    { label: 'Data source Z-A', value: SortOrder.DatasourceZA },
+  ].filter((option) => supportedFeatures().availableFilters.includes(option.value));
 
 export interface RichHistoryProps extends Themeable {
   richHistory: RichHistoryQuery[];

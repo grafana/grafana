@@ -1,8 +1,13 @@
 export enum SortOrder {
   Descending = 'Descending',
   Ascending = 'Ascending',
-  // PLAN 2: remote storage won't support it. make it deprecated. make the api return list of supported settings?
+  /**
+   * @deprecated supported only by local storage. It will be removed in the future
+   */
   DatasourceAZ = 'Datasource A-Z',
+  /**
+   * @deprecated supported only by local storage. It will be removed in the future
+   */
   DatasourceZA = 'Datasource Z-A',
 }
 

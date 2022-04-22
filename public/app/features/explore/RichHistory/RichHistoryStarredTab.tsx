@@ -11,7 +11,7 @@ import { createDatasourcesList, SortOrder } from 'app/core/utils/richHistory';
 
 // Components
 import RichHistoryCard from './RichHistoryCard';
-import { sortOrderOptions } from './RichHistory';
+import { getSortOrderOptions } from './RichHistory';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 
 export interface Props {
@@ -138,8 +138,8 @@ export function RichHistoryStarredTab(props: Props) {
           <div aria-label="Sort queries" className={styles.sort}>
             <Select
               menuShouldPortal
-              value={sortOrderOptions.filter((order) => order.value === richHistorySearchFilters.sortOrder)}
-              options={sortOrderOptions}
+              value={getSortOrderOptions().filter((order) => order.value === richHistorySearchFilters.sortOrder)}
+              options={getSortOrderOptions()}
               placeholder="Sort queries by"
               onChange={(e: SelectableValue<SortOrder>) => updateFilters({ sortOrder: e.value })}
             />

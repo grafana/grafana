@@ -17,7 +17,7 @@ import {
 
 // Components
 import RichHistoryCard from './RichHistoryCard';
-import { sortOrderOptions } from './RichHistory';
+import { getSortOrderOptions } from './RichHistory';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 
 export interface Props {
@@ -199,8 +199,7 @@ export function RichHistoryQueriesTab(props: Props) {
               className={styles.multiselect}
               menuShouldPortal
               options={listOfDatasources.map((ds) => {
-                // PLAN 2: both uid and name should be supported
-                return { value: ds.uid, label: ds.name };
+                return { value: ds.name, label: ds.name };
               })}
               value={richHistorySearchFilters.datasourceFilters}
               placeholder="Filter queries for data sources(s)"
@@ -220,8 +219,8 @@ export function RichHistoryQueriesTab(props: Props) {
           <div aria-label="Sort queries" className={styles.sort}>
             <Select
               menuShouldPortal
-              value={sortOrderOptions.filter((order) => order.value === richHistorySearchFilters.sortOrder)}
-              options={sortOrderOptions}
+              value={getSortOrderOptions().filter((order) => order.value === richHistorySearchFilters.sortOrder)}
+              options={getSortOrderOptions()}
               placeholder="Sort queries by"
               onChange={(e: SelectableValue<SortOrder>) => updateFilters({ sortOrder: e.value })}
             />
@@ -234,10 +233,7 @@ export function RichHistoryQueriesTab(props: Props) {
                 {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
               </div>
               {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
-                // PLAN 2: support for both uid and name
-                const idx = listOfDatasources.findIndex(
-                  (d) => d.uid === q.datasourceUid || d.name === q.datasourceName
-                );
+                const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
                 return (
                   <RichHistoryCard
                     query={q}

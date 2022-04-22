@@ -163,21 +163,20 @@ export function RichHistoryCard(props: Props) {
 
   useEffect(() => {
     const getQueryDsInstance = async () => {
-      const ds = await getDataSourceSrv().get(query.datasourceUid);
+      const ds = await getDataSourceSrv().get(query.datasourceName);
       setQueryDsInstance(ds);
     };
 
     getQueryDsInstance();
-  }, [query.datasourceUid]);
+  }, [query.datasourceName]);
 
   const theme = useTheme();
   const styles = getStyles(theme, isRemoved);
 
   const onRunQuery = async () => {
     const queriesToRun = query.queries;
-    // PLAN 3: revise checking the name. query is RichHistoryQuery, it won't have the data source name in it
-    if (queryDsInstance!.name !== datasourceInstance?.name) {
-      await changeDatasource(exploreId, queryDsInstance!.name, { importQueries: true });
+    if (query.datasourceName !== datasourceInstance?.name) {
+      await changeDatasource(exploreId, query.datasourceName, { importQueries: true });
       setQueries(exploreId, queriesToRun);
     } else {
       setQueries(exploreId, queriesToRun);
@@ -288,7 +287,7 @@ export function RichHistoryCard(props: Props) {
         <div className={styles.datasourceContainer}>
           <img src={dsImg} aria-label="Data source icon" />
           <div aria-label="Data source name">
-            {isRemoved ? 'Data source does not exist anymore' : queryDsInstance?.name}
+            {isRemoved ? 'Data source does not exist anymore' : query.datasourceName}
           </div>
         </div>
         {queryActionButtons}
@@ -313,7 +312,7 @@ export function RichHistoryCard(props: Props) {
         {!activeUpdateComment && (
           <div className={styles.runButton}>
             <Button variant="secondary" onClick={onRunQuery} disabled={isRemoved}>
-              {datasourceInstance?.name === queryDsInstance?.name ? 'Run query' : 'Switch data source and run query'}
+              {datasourceInstance?.name === query.datasourceName ? 'Run query' : 'Switch data source and run query'}
             </Button>
           </div>
         )}
