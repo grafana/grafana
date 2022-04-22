@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
-import { DataFrame, FieldType, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import { isString } from 'lodash';
 import { FeatureLike } from 'ol/Feature';
+import React, { useState } from 'react';
+
+import { DataFrame, FieldType, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
+import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
 
 import { GeomapLayerHover } from '../event';
+
 import { DataHoverRow } from './DataHoverRow';
-import { isString } from 'lodash';
 
 type Props = {
   layers: GeomapLayerHover[];

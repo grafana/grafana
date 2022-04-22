@@ -1,8 +1,9 @@
-import React from 'react';
-import { Cascader, CascaderOption, CascaderProps } from './Cascader';
 import { act, render, screen } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { UserEvent } from '@testing-library/user-event/dist/types/setup';
+import React from 'react';
+
+import { Cascader, CascaderOption, CascaderProps } from './Cascader';
 
 const options = [
   {

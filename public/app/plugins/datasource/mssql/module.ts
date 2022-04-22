@@ -1,8 +1,9 @@
+import { DataSourcePlugin } from '@grafana/data';
+
+import { MssqlConfigCtrl } from './config_ctrl';
 import { MssqlDatasource } from './datasource';
 import { MssqlQueryCtrl } from './query_ctrl';
-import { MssqlConfigCtrl } from './config_ctrl';
 import { MssqlQuery } from './types';
-import { DataSourcePlugin } from '@grafana/data';
 
 const defaultQuery = `SELECT
     <time_column> as time,

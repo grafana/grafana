@@ -1,5 +1,7 @@
-import { CombinedRuleGroup } from 'app/types/unified-alerting';
 import React, { FC } from 'react';
+
+import { CombinedRuleGroup } from 'app/types/unified-alerting';
+
 import { DetailsField } from '../DetailsField';
 
 interface Props {

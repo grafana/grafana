@@ -1,7 +1,8 @@
 import React, { FC } from 'react';
+import { useSelector } from 'react-redux';
+
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
 
 interface Props {

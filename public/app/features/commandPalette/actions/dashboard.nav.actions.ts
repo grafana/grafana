@@ -1,5 +1,6 @@
-import { locationService, getBackendSrv } from '@grafana/runtime';
 import { Action } from 'kbar';
+
+import { locationService, getBackendSrv } from '@grafana/runtime';
 
 async function getDashboardNav(parentId: string): Promise<Action[]> {
   const data: Array<{ type: string; title: string; url: string }> = await getBackendSrv().get('/api/search');

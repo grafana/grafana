@@ -1,7 +1,9 @@
 import { Location } from 'history';
+
 import { NavModelItem, NavSection } from '@grafana/data';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
+
 import { ShowModalReactEvent } from '../../../types/events';
 import appEvents from '../../app_events';
 import { getFooterLinks } from '../Footer/Footer';

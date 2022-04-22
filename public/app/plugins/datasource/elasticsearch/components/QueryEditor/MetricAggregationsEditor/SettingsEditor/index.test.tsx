@@ -1,10 +1,13 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { SettingsEditor } from '.';
-import { ElasticsearchProvider } from '../../ElasticsearchQueryContext';
+import React from 'react';
+
+import { getDefaultTimeRange } from '@grafana/data';
+
 import { ElasticDatasource } from '../../../../datasource';
 import { ElasticsearchQuery } from '../../../../types';
-import { getDefaultTimeRange } from '@grafana/data';
+import { ElasticsearchProvider } from '../../ElasticsearchQueryContext';
+
+import { SettingsEditor } from '.';
 
 describe('Settings Editor', () => {
   describe('Raw Data', () => {

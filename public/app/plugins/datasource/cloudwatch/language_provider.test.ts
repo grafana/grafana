@@ -1,9 +1,10 @@
-import { Value } from 'slate';
-import { TypeaheadOutput } from '@grafana/ui';
-import { CloudWatchDatasource } from './datasource';
-import { GetLogGroupFieldsResponse } from './types';
-import { CloudWatchLanguageProvider } from './language_provider';
 import Prism, { Token } from 'prismjs';
+import { Value } from 'slate';
+
+import { TypeaheadOutput } from '@grafana/ui';
+
+import { CloudWatchDatasource } from './datasource';
+import { CloudWatchLanguageProvider } from './language_provider';
 import {
   AGGREGATION_FUNCTIONS_STATS,
   BOOLEAN_FUNCTIONS,
@@ -14,6 +15,7 @@ import {
   STRING_FUNCTIONS,
   FIELD_AND_FILTER_FUNCTIONS,
 } from './syntax';
+import { GetLogGroupFieldsResponse } from './types';
 
 const fields = ['field1', '@message'];
 
