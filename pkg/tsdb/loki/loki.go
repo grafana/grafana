@@ -29,6 +29,7 @@ var (
 	_ backend.QueryDataHandler    = (*Service)(nil)
 	_ backend.StreamHandler       = (*Service)(nil)
 	_ backend.CallResourceHandler = (*Service)(nil)
+	_ backend.CheckHealthHandler  = (*Service)(nil)
 )
 
 func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
@@ -62,6 +63,11 @@ type QueryJSONModel struct {
 	Resolution   int64  `json:"resolution"`
 	MaxLines     int    `json:"maxLines"`
 	VolumeQuery  bool   `json:"volumeQuery"`
+}
+
+type LokiLabelsResponse struct {
+	Status string   `json:"status"`
+	Data   []string `json:"data"`
 }
 
 func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
@@ -161,6 +167,17 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		result.Responses[query.RefID] = queryRes
 	}
 	return result, nil
+}
+
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	dsInfo, err := s.getDSInfo(req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, s.plog)
+
+	return checkHealth(ctx, api, s.plog)
 }
 
 // we extracted this part of the functionality to make it easy to unit-test it

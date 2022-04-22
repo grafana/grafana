@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -201,4 +202,33 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourceURL string) ([]byte, e
 	}
 
 	return io.ReadAll(resp.Body)
+}
+
+type mockedRoundTripper struct {
+	statusCode    int
+	responseBytes []byte
+	contentType   string
+	err           error
+}
+
+func (mockedRT *mockedRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	if mockedRT.err != nil {
+		return nil, mockedRT.err
+	}
+
+	header := http.Header{}
+	header.Add("Content-Type", mockedRT.contentType)
+	return &http.Response{
+		StatusCode: mockedRT.statusCode,
+		Header:     header,
+		Body:       ioutil.NopCloser(bytes.NewReader(mockedRT.responseBytes)),
+	}, nil
+}
+
+func makeMockedAPI(statusCode int, contentType string, responseBytes []byte, err error) *LokiAPI {
+	client := http.Client{
+		Transport: &mockedRoundTripper{statusCode: statusCode, contentType: contentType, responseBytes: responseBytes, err: err},
+	}
+
+	return newLokiAPI(&client, "http://localhost:9999", log.New("test"))
 }

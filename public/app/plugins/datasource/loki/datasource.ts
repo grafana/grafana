@@ -689,6 +689,11 @@ export class LokiDatasource
   };
 
   testDatasource() {
+    if (config.featureToggles.lokiBackendMode) {
+      // this will call the healthcheck in the backend
+      return super.testDatasource();
+    }
+
     // Consider only last 10 minutes otherwise request takes too long
     const startMs = Date.now() - 10 * 60 * 1000;
     const start = `${startMs}000000`; // API expects nanoseconds
