@@ -1,16 +1,19 @@
+import { intersectionWith, isEqual } from 'lodash';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+
 import { Button, ConfirmModal, HorizontalGroup, IconButton } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
+import { getNotificationsPermissions } from '../../utils/access-control';
+import { matcherFieldToMatcher, parseMatchers } from '../../utils/alertmanager';
 import { prepareItems } from '../../utils/dynamicTable';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { EmptyArea } from '../EmptyArea';
+import { Matchers } from '../silences/Matchers';
+
 import { AmRoutesExpandedForm } from './AmRoutesExpandedForm';
 import { AmRoutesExpandedRead } from './AmRoutesExpandedRead';
-import { Matchers } from '../silences/Matchers';
-import { matcherFieldToMatcher, parseMatchers } from '../../utils/alertmanager';
-import { intersectionWith, isEqual } from 'lodash';
-import { EmptyArea } from '../EmptyArea';
-import { contextSrv } from 'app/core/services/context_srv';
-import { getNotificationsPermissions } from '../../utils/access-control';
 
 export interface AmRoutesTableProps {
   isAddMode: boolean;

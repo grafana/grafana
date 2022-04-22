@@ -1,8 +1,11 @@
-import React from 'react';
 import { shallow } from 'enzyme';
-import { RichHistoryCard, Props } from './RichHistoryCard';
-import { ExploreId, RichHistoryQuery } from '../../../types/explore';
+import React from 'react';
+
 import { DataSourceApi, DataQuery } from '@grafana/data';
+
+import { ExploreId, RichHistoryQuery } from '../../../types/explore';
+
+import { RichHistoryCard, Props } from './RichHistoryCard';
 
 const starRichHistoryMock = jest.fn();
 

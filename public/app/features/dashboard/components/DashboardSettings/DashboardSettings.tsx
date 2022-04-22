@@ -1,25 +1,28 @@
+import { css, cx } from '@emotion/css';
+import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { FocusScope } from '@react-aria/focus';
-import { useDialog } from '@react-aria/dialog';
-import { useOverlay } from '@react-aria/overlays';
-import { css, cx } from '@emotion/css';
+
+import { GrafanaTheme2, locationUtil } from '@grafana/data';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, CustomScrollbar, Icon, IconName, PageToolbar, stylesFactory, useForceUpdate } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardModel } from '../../state/DashboardModel';
-import { SaveDashboardAsButton, SaveDashboardButton } from '../SaveDashboard/SaveDashboardButton';
+import { AccessControlAction } from 'app/types';
+
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
-import { DashboardPermissions } from '../DashboardPermissions/DashboardPermissions';
+import { DashboardModel } from '../../state/DashboardModel';
 import { AccessControlDashboardPermissions } from '../DashboardPermissions/AccessControlDashboardPermissions';
-import { GeneralSettings } from './GeneralSettings';
+import { DashboardPermissions } from '../DashboardPermissions/DashboardPermissions';
+import { SaveDashboardAsButton, SaveDashboardButton } from '../SaveDashboard/SaveDashboardButton';
+
 import { AnnotationsSettings } from './AnnotationsSettings';
+import { GeneralSettings } from './GeneralSettings';
+import { JsonEditorSettings } from './JsonEditorSettings';
 import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
-import { JsonEditorSettings } from './JsonEditorSettings';
-import { GrafanaTheme2, locationUtil } from '@grafana/data';
-import { locationService, reportInteraction } from '@grafana/runtime';
-import { AccessControlAction } from 'app/types';
 
 export interface Props {
   dashboard: DashboardModel;

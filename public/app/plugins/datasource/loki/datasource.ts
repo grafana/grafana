@@ -1,8 +1,8 @@
 // Libraries
 import { cloneDeep, isEmpty, map as lodashMap } from 'lodash';
+import Prism from 'prismjs';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import Prism from 'prismjs';
 
 // Types
 import {
@@ -34,19 +34,29 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchError, getBackendSrv, config, DataSourceWithBackend } from '@grafana/runtime';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { addLabelToQuery } from './add_label_to_query';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
+import { queryLogsVolume } from 'app/core/logs_model';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+
+import { serializeParams } from '../../../core/utils/fetch';
+import { renderLegendFormat } from '../prometheus/legend';
+
+import { addLabelToQuery } from './add_label_to_query';
+import { transformBackendResult } from './backendResultTransformer';
+import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
+import LanguageProvider from './language_provider';
+import { LiveStreams, LokiLiveTarget } from './live_streams';
+import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
 import {
   lokiResultsToTableModel,
   lokiStreamResultToDataFrame,
   lokiStreamsToDataFrames,
   processRangeQueryResponse,
 } from './result_transformer';
-import { transformBackendResult } from './backendResultTransformer';
-import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
-
+import { doLokiChannelStream } from './streaming';
+import syntax from './syntax';
 import {
   LokiOptions,
   LokiQuery,
@@ -56,15 +66,6 @@ import {
   LokiStreamResponse,
   LokiStreamResult,
 } from './types';
-import { LiveStreams, LokiLiveTarget } from './live_streams';
-import LanguageProvider from './language_provider';
-import { serializeParams } from '../../../core/utils/fetch';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import syntax from './syntax';
-import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
-import { queryLogsVolume } from 'app/core/logs_model';
-import { doLokiChannelStream } from './streaming';
-import { renderLegendFormat } from '../prometheus/legend';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;

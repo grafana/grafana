@@ -4,9 +4,11 @@ import './transferHandlers';
 
 import * as comlink from 'comlink';
 import { asyncScheduler, Observable, observeOn } from 'rxjs';
+
 import { LiveChannelAddress, LiveChannelEvent } from '@grafana/data';
-import { promiseWithRemoteObservableAsObservable } from './remoteObservable';
+
 import { createWorker } from './createCentrifugeServiceWorker';
+import { promiseWithRemoteObservableAsObservable } from './remoteObservable';
 
 export class CentrifugeServiceWorkerProxy implements CentrifugeSrv {
   private centrifugeWorker;

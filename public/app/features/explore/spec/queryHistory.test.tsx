@@ -1,11 +1,14 @@
 import React from 'react';
+
 import { serializeStateToUrlParam } from '@grafana/data';
-import { setupExplore, tearDown, waitForExplore } from './helper/setup';
-import { deleteQueryHistory, inputQuery, openQueryHistory, runQuery, starQueryHistory } from './helper/interactions';
-import { assertQueryHistory, assertQueryHistoryExists, assertQueryHistoryIsStarred } from './helper/assert';
-import { makeLogsQueryResponse } from './helper/query';
-import { ExploreId } from '../../../types';
+
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+import { ExploreId } from '../../../types';
+
+import { assertQueryHistory, assertQueryHistoryExists, assertQueryHistoryIsStarred } from './helper/assert';
+import { deleteQueryHistory, inputQuery, openQueryHistory, runQuery, starQueryHistory } from './helper/interactions';
+import { makeLogsQueryResponse } from './helper/query';
+import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return {

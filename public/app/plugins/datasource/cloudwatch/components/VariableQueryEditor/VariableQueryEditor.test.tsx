@@ -1,8 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { select } from 'react-select-event';
-import { VariableQueryType } from '../../types';
+
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
+import { VariableQueryType } from '../../types';
+
 import { VariableQueryEditor, Props } from './VariableQueryEditor';
 
 const defaultQuery = {

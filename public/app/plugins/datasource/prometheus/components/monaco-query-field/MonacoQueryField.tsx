@@ -1,13 +1,15 @@
-import React, { useRef, useEffect } from 'react';
-import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { useLatest } from 'react-use';
 import { promLanguageDefinition } from 'monaco-promql';
+import React, { useRef, useEffect } from 'react';
+import { useLatest } from 'react-use';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
+import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
+
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
+import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,

@@ -1,9 +1,11 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
 import { within } from '@testing-library/dom';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
 import { historySrv } from '../VersionHistory/HistorySrv';
+
 import { VersionsSettings, VERSIONS_FETCH_LIMIT } from './VersionsSettings';
 import { versions, diffs } from './__mocks__/versions';
 

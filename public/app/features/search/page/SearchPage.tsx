@@ -1,17 +1,19 @@
-import React from 'react';
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Input, useStyles2, Spinner, Button } from '@grafana/ui';
-import { config } from '@grafana/runtime';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import { css } from '@emotion/css';
-
-import Page from 'app/core/components/Page/Page';
+import React from 'react';
 import { useAsync } from 'react-use';
-import { getGrafanaSearcher, QueryFilters } from '../service';
-import { Table } from './table/Table';
+import AutoSizer from 'react-virtualized-auto-sizer';
+
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Input, useStyles2, Spinner, Button } from '@grafana/ui';
+import Page from 'app/core/components/Page/Page';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { getTermCounts } from '../service/backend';
+
 import { useSearchQuery } from '../hooks/useSearchQuery';
+import { getGrafanaSearcher, QueryFilters } from '../service';
+import { getTermCounts } from '../service/backend';
+
+import { Table } from './table/Table';
 
 const node: NavModelItem = {
   id: 'search',

@@ -1,8 +1,9 @@
-import React from 'react';
-import { IconButton, useTheme2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import classnames from 'classnames';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { IconButton, useTheme2 } from '@grafana/ui';
 
 export interface Props {
   className?: string;

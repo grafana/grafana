@@ -1,5 +1,5 @@
-import { DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 import { AwsAuthDataSourceSecureJsonData, AwsAuthDataSourceJsonData } from '@grafana/aws-sdk';
+import { DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 
 export interface Dimensions {
   [key: string]: string | string[];

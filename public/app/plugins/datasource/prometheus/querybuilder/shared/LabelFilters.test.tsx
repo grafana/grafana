@@ -1,10 +1,12 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import { selectOptionInTest } from '../../../../../../../packages/grafana-ui';
+import { getLabelSelects } from '../testUtils';
+
 import { LabelFilters } from './LabelFilters';
 import { QueryBuilderLabelFilter } from './types';
-import { getLabelSelects } from '../testUtils';
-import { selectOptionInTest } from '../../../../../../../packages/grafana-ui';
 
 describe('LabelFilters', () => {
   it('renders empty input without labels', async () => {

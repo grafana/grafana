@@ -1,7 +1,8 @@
-import { configure } from 'enzyme';
-import { EventBusSrv } from '@grafana/data';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
+import { configure } from 'enzyme';
 import $ from 'jquery';
+
+import { EventBusSrv } from '@grafana/data';
 import 'mutationobserver-shim';
 import './mocks/workers';
 

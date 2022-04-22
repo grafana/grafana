@@ -1,21 +1,25 @@
 // Libraries
+import classNames from 'classnames';
 import React, { PureComponent, CSSProperties } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
-import classNames from 'classnames';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 // Components
+import { Subscription } from 'rxjs';
+
+import { config } from '@grafana/runtime';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
+import { DashboardPanelsChangedEvent } from 'app/types/events';
+
 import { AddPanelWidget } from '../components/AddPanelWidget';
 import { DashboardRow } from '../components/DashboardRow';
 
 // Types
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
-import { DashboardPanel } from './DashboardPanel';
+
 import { DashboardModel, PanelModel } from '../state';
-import { Subscription } from 'rxjs';
-import { DashboardPanelsChangedEvent } from 'app/types/events';
 import { GridPos } from '../state/PanelModel';
-import { config } from '@grafana/runtime';
+
+import { DashboardPanel } from './DashboardPanel';
 
 export interface Props {
   dashboard: DashboardModel;

@@ -1,14 +1,17 @@
-import React from 'react';
+import { TraceData, TraceSpanData } from '@jaegertracing/jaeger-ui-components/src/types/trace';
 import { render, prettyDOM, screen } from '@testing-library/react';
-import { TraceView } from './TraceView';
+import userEvent from '@testing-library/user-event';
+import React from 'react';
+import { Provider } from 'react-redux';
+
+import { DataFrame, MutableDataFrame, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { ExploreId } from 'app/types';
-import { TraceData, TraceSpanData } from '@jaegertracing/jaeger-ui-components/src/types/trace';
-import { DataFrame, MutableDataFrame, getDefaultTimeRange, LoadingState } from '@grafana/data';
+
 import { configureStore } from '../../../store/configureStore';
-import { Provider } from 'react-redux';
+
+import { TraceView } from './TraceView';
 import { transformDataFrames } from './utils/transform';
-import userEvent from '@testing-library/user-event';
 
 function getTraceView(frames: DataFrame[]) {
   const store = configureStore();

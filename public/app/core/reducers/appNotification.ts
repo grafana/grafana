@@ -1,5 +1,6 @@
-import { config } from '@grafana/runtime';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+import { config } from '@grafana/runtime';
 import { AppNotification, AppNotificationSeverity, AppNotificationsState } from 'app/types/';
 
 export const STORAGE_KEY = 'notifications';

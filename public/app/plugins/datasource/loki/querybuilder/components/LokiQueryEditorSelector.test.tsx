@@ -1,11 +1,14 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LokiDatasource } from '../../datasource';
 import { cloneDeep, defaultsDeep } from 'lodash';
-import { LokiQuery, LokiQueryType } from '../../types';
-import { LokiQueryEditorSelector } from './LokiQueryEditorSelector';
+import React from 'react';
+
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
+
+import { LokiDatasource } from '../../datasource';
+import { LokiQuery, LokiQueryType } from '../../types';
+
+import { LokiQueryEditorSelector } from './LokiQueryEditorSelector';
 
 const defaultQuery = {
   refId: 'A',

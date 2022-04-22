@@ -1,10 +1,13 @@
 import { configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
-import { setStore } from './store';
-import { StoreState } from 'app/types/store';
-import { addReducer, createRootReducer } from '../core/reducers/root';
-import { buildInitialState } from '../core/reducers/navModel';
 import { ThunkMiddlewareFor } from '@reduxjs/toolkit/src/getDefaultMiddleware';
 import { AnyAction } from 'redux';
+
+import { StoreState } from 'app/types/store';
+
+import { buildInitialState } from '../core/reducers/navModel';
+import { addReducer, createRootReducer } from '../core/reducers/root';
+
+import { setStore } from './store';
 
 export function addRootReducer(reducers: any) {
   // this is ok now because we add reducers before configureStore is called

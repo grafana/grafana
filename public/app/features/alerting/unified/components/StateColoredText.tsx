@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
+import React, { FC } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
-import { css } from '@emotion/css';
-import React, { FC } from 'react';
 
 type Props = {
   status: PromAlertingRuleState | 'neutral';

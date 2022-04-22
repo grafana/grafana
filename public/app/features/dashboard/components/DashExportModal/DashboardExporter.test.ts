@@ -1,13 +1,16 @@
 import { find } from 'lodash';
-import config from 'app/core/config';
-import { DashboardExporter, LibraryElementExport } from './DashboardExporter';
-import { DashboardModel } from '../../state/DashboardModel';
+
 import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta } from '@grafana/data';
+import config from 'app/core/config';
+
+import { LibraryElementKind } from '../../../library-panels/types';
 import { variableAdapters } from '../../../variables/adapters';
 import { createConstantVariableAdapter } from '../../../variables/constant/adapter';
-import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
-import { LibraryElementKind } from '../../../library-panels/types';
+import { createQueryVariableAdapter } from '../../../variables/query/adapter';
+import { DashboardModel } from '../../state/DashboardModel';
+
+import { DashboardExporter, LibraryElementExport } from './DashboardExporter';
 
 jest.mock('app/core/store', () => {
   return {

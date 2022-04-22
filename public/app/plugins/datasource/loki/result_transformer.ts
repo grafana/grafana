@@ -1,6 +1,6 @@
 import { capitalize, groupBy, isEmpty } from 'lodash';
-import { v5 as uuidv5 } from 'uuid';
 import { of } from 'rxjs';
+import { v5 as uuidv5 } from 'uuid';
 
 import {
   FieldType,
@@ -19,9 +19,11 @@ import {
   ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-
 import { getTemplateSrv, getDataSourceSrv } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
+
+import { renderLegendFormat } from '../prometheus/legend';
+
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import {
   LokiRangeQueryRequest,
@@ -38,7 +40,6 @@ import {
   LokiStreamResponse,
   LokiStats,
 } from './types';
-import { renderLegendFormat } from '../prometheus/legend';
 
 const UUID_NAMESPACE = '6ec946da-0f49-47a8-983a-1d76d17e7c92';
 

@@ -1,5 +1,12 @@
-import { DashboardModel, PanelModel } from '../../../state';
+import { pick } from 'lodash';
+
+import store from 'app/core/store';
+import { initPanelState } from 'app/features/panel/state/actions';
+import { cleanUpPanelState, panelModelAndPluginReady } from 'app/features/panel/state/reducers';
 import { ThunkResult } from 'app/types';
+
+import { DashboardModel, PanelModel } from '../../../state';
+
 import {
   closeEditor,
   PANEL_EDITOR_UI_STATE_STORAGE_KEY,
@@ -8,10 +15,6 @@ import {
   setPanelEditorUIState,
   updateEditorInitState,
 } from './reducers';
-import { cleanUpPanelState, panelModelAndPluginReady } from 'app/features/panel/state/reducers';
-import store from 'app/core/store';
-import { pick } from 'lodash';
-import { initPanelState } from 'app/features/panel/state/actions';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return async (dispatch) => {

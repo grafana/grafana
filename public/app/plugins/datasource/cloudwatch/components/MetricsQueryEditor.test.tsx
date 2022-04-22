@@ -1,13 +1,16 @@
-import React from 'react';
-import renderer from 'react-test-renderer';
 import { render, screen, act } from '@testing-library/react';
+import React from 'react';
 import selectEvent from 'react-select-event';
+import renderer from 'react-test-renderer';
+
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { MetricsQueryEditor, normalizeQuery, Props } from './MetricsQueryEditor';
-import { CloudWatchDatasource } from '../datasource';
+
 import { CustomVariableModel, initialVariableModelState } from '../../../../features/variables/types';
+import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../types';
+
+import { MetricsQueryEditor, normalizeQuery, Props } from './MetricsQueryEditor';
 
 const setup = () => {
   const instanceSettings = {

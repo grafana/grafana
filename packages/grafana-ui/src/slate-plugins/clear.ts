@@ -1,5 +1,6 @@
-import { Plugin } from '@grafana/slate-react';
 import { Editor as CoreEditor } from 'slate';
+
+import { Plugin } from '@grafana/slate-react';
 
 // Clears the rest of the line after the caret
 export function ClearPlugin(): Plugin {

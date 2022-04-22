@@ -1,8 +1,10 @@
+import React, { FC, useEffect, useMemo } from 'react';
+import { useFormContext } from 'react-hook-form';
+
 import { SelectableValue } from '@grafana/data';
 import { Field, InputControl, Select } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
-import React, { FC, useEffect, useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
+
 import { RuleFormValues } from '../../types/rule-form';
 
 export const ConditionField: FC = () => {

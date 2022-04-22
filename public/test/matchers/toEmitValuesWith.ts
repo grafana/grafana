@@ -1,6 +1,7 @@
-import { Observable, Subscription } from 'rxjs';
-import { expectObservable, forceObservableCompletion } from './utils';
 import { matcherHint, printReceived } from 'jest-matcher-utils';
+import { Observable, Subscription } from 'rxjs';
+
+import { expectObservable, forceObservableCompletion } from './utils';
 
 function tryExpectations(received: any[], expectations: (received: any[]) => void): jest.CustomMatcherResult {
   try {

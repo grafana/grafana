@@ -1,6 +1,6 @@
 import React from 'react';
-import NestedRow from './NestedRow';
 
+import NestedRow from './NestedRow';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
 
 interface NestedRowsProps {

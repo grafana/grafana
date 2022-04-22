@@ -1,16 +1,18 @@
-import React from 'react';
+import { within } from '@testing-library/dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { within } from '@testing-library/dom';
+import React from 'react';
+
 import { OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import TestProvider from '../../../test/helpers/TestProvider';
 
-import { Props, UserProfileEditPage } from './UserProfileEditPage';
-import { initialUserState } from './state/reducers';
+import TestProvider from '../../../test/helpers/TestProvider';
 import { getNavModel } from '../../core/selectors/navModel';
 import { backendSrv } from '../../core/services/backend_srv';
 import { TeamPermissionLevel } from '../../types';
+
+import { Props, UserProfileEditPage } from './UserProfileEditPage';
+import { initialUserState } from './state/reducers';
 
 const defaultProps: Props = {
   ...initialUserState,

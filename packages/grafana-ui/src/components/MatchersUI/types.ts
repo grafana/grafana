@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { DataFrame, RegistryItem, FieldMatcherInfo } from '@grafana/data';
 
 export interface FieldMatcherUIRegistryItem<TOptions> extends RegistryItem {

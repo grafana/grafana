@@ -1,5 +1,6 @@
-import { getTemplateProxyForField } from './templateProxies';
 import { toDataFrame } from '../dataframe';
+
+import { getTemplateProxyForField } from './templateProxies';
 
 describe('Template proxies', () => {
   it('supports name and displayName', () => {

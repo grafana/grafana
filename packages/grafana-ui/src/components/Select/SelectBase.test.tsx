@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { selectOptionInTest } from './test-utils';
+import React, { useState } from 'react';
+
 import { SelectableValue } from '@grafana/data';
+
 import { SelectBase } from './SelectBase';
+import { selectOptionInTest } from './test-utils';
 
 describe('SelectBase', () => {
   const onChangeHandler = () => jest.fn();

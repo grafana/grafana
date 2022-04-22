@@ -1,11 +1,13 @@
 import { render } from '@testing-library/react';
-import { contextSrv } from 'app/core/services/context_srv';
-import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction } from 'app/types';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
 import { byText } from 'testing-library-selector';
+
+import { contextSrv } from 'app/core/services/context_srv';
+import { configureStore } from 'app/store/configureStore';
+import { AccessControlAction } from 'app/types';
+
 import { AlertTypeStep } from './AlertTypeStep';
 
 const ui = {

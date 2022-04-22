@@ -1,9 +1,9 @@
-import { QueryEditorProps } from '@grafana/data';
-import { Alert } from '@grafana/ui';
-import { config } from '@grafana/runtime';
-
 import { debounce } from 'lodash';
 import React, { useCallback, useMemo } from 'react';
+
+import { QueryEditorProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Alert } from '@grafana/ui';
 
 import AzureMonitorDatasource from '../../datasource';
 import {
@@ -16,13 +16,14 @@ import {
 } from '../../types';
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor';
-import ApplicationInsightsEditor from '../deprecated/components/ApplicationInsightsEditor';
-import InsightsAnalyticsEditor from '../deprecated/components/InsightsAnalyticsEditor';
-import { gtGrafana9 } from '../deprecated/utils';
 import LogsQueryEditor from '../LogsQueryEditor';
 import MetricsQueryEditor from '../MetricsQueryEditor';
 import NewMetricsQueryEditor from '../NewMetricsQueryEditor/MetricsQueryEditor';
 import { Space } from '../Space';
+import ApplicationInsightsEditor from '../deprecated/components/ApplicationInsightsEditor';
+import InsightsAnalyticsEditor from '../deprecated/components/InsightsAnalyticsEditor';
+import { gtGrafana9 } from '../deprecated/utils';
+
 import QueryTypeField from './QueryTypeField';
 import usePreparedQuery from './usePreparedQuery';
 

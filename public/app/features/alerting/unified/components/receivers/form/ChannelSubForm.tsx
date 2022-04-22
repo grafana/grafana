@@ -1,13 +1,16 @@
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { NotifierDTO } from 'app/types';
-import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
-import { Alert, Button, Field, InputControl, Select, useStyles2 } from '@grafana/ui';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useFormContext, FieldErrors } from 'react-hook-form';
+
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Alert, Button, Field, InputControl, Select, useStyles2 } from '@grafana/ui';
+import { NotifierDTO } from 'app/types';
+
+import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType } from '../../../types/receiver-form';
+
 import { ChannelOptions } from './ChannelOptions';
 import { CollapsibleSection } from './CollapsibleSection';
-import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 
 interface Props<R> {
   defaultValues: R;

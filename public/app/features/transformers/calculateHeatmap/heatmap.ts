@@ -1,3 +1,5 @@
+import { map } from 'rxjs';
+
 import {
   ArrayVector,
   DataFrame,
@@ -10,7 +12,7 @@ import {
   getFieldDisplayName,
   Field,
 } from '@grafana/data';
-import { map } from 'rxjs';
+
 import { HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
 import { niceLinearIncrs, niceTimeIncrs } from './utils';
 

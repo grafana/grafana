@@ -1,14 +1,17 @@
-import { AnyAction } from 'redux';
-import { DataSourceSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { ExploreUrlState, serializeStateToUrlParam, SplitOpen, UrlQueryMap } from '@grafana/data';
-import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
-import { ExploreId, ExploreItemState, ExploreState, RichHistoryQuery } from 'app/types/explore';
-import { paneReducer } from './explorePane';
 import { createAction } from '@reduxjs/toolkit';
-import { getUrlStateFromPaneState, makeExplorePaneState } from './utils';
+import { AnyAction } from 'redux';
+
+import { ExploreUrlState, serializeStateToUrlParam, SplitOpen, UrlQueryMap } from '@grafana/data';
+import { DataSourceSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
+import { PanelModel } from 'app/features/dashboard/state';
+import { ExploreId, ExploreItemState, ExploreState, RichHistoryQuery } from 'app/types/explore';
+
 import { ThunkResult } from '../../../types';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
-import { PanelModel } from 'app/features/dashboard/state';
+
+import { paneReducer } from './explorePane';
+import { getUrlStateFromPaneState, makeExplorePaneState } from './utils';
 
 //
 // Actions and Payloads

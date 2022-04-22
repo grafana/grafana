@@ -1,4 +1,5 @@
 import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
+
 import { makeIdField } from './makeIdField';
 
 function makeFrame(timestamps: number[], values: string[], timestampNss: string[], refId?: string): DataFrame {

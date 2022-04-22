@@ -1,12 +1,14 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
 import { within } from '@testing-library/dom';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
 import { selectors } from '@grafana/e2e-selectors';
 import { setAngularLoader, setDataSourceSrv } from '@grafana/runtime';
-import { AnnotationsSettings } from './AnnotationsSettings';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+
+import { AnnotationsSettings } from './AnnotationsSettings';
 
 describe('AnnotationsSettings', () => {
   let dashboard: any;

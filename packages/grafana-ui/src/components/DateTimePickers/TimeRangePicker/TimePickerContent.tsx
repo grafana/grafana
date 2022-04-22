@@ -1,18 +1,21 @@
-import { GrafanaTheme2, isDateTime, rangeUtil, RawTimeRange, TimeOption, TimeRange, TimeZone } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import React, { memo, useMemo, useState } from 'react';
 import { useMedia } from 'react-use';
+
+import { GrafanaTheme2, isDateTime, rangeUtil, RawTimeRange, TimeOption, TimeRange, TimeZone } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { FilterInput } from '../..';
 import { stylesFactory, useTheme2 } from '../../../themes';
+import { getFocusStyles } from '../../../themes/mixins';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Icon } from '../../Icon/Icon';
-import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
+
+import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeForm } from './TimeRangeForm';
 import { TimeRangeList } from './TimeRangeList';
-import { TimePickerFooter } from './TimePickerFooter';
-import { getFocusStyles } from '../../../themes/mixins';
-import { selectors } from '@grafana/e2e-selectors';
-import { FilterInput } from '../..';
+import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
 
 interface Props {
   value: TimeRange;

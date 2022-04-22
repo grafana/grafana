@@ -1,6 +1,6 @@
+import { defaultAddOperationHandler } from './shared/operationUtils';
 import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
 import { PromOperationId, PromVisualQueryOperationCategory } from './types';
-import { defaultAddOperationHandler } from './shared/operationUtils';
 
 export const binaryScalarDefs = [
   {

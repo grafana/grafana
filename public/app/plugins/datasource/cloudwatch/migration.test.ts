@@ -1,4 +1,5 @@
 import { DataQuery } from '@grafana/data';
+
 import {
   migrateMultipleStatsAnnotationQuery,
   migrateMultipleStatsMetricsQuery,

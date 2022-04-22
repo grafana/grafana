@@ -2,16 +2,17 @@
 import { toString, toNumber as _toNumber, isEmpty, isBoolean, isArray, join } from 'lodash';
 
 // Types
+import { getFieldTypeFromValue } from '../dataframe/processDataFrame';
+import { toUtc, dateTimeParse } from '../datetime';
+import { GrafanaTheme2 } from '../themes/types';
+import { KeyValue, TimeZone } from '../types';
 import { Field, FieldType } from '../types/dataFrame';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
-import { getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
-import { getValueMappingResult } from '../utils/valueMappings';
-import { toUtc, dateTimeParse } from '../datetime';
-import { KeyValue, TimeZone } from '../types';
-import { getScaleCalculator } from './scale';
-import { GrafanaTheme2 } from '../themes/types';
 import { anyToNumber } from '../utils/anyToNumber';
-import { getFieldTypeFromValue } from '../dataframe/processDataFrame';
+import { getValueMappingResult } from '../utils/valueMappings';
+import { getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
+
+import { getScaleCalculator } from './scale';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;

@@ -4,13 +4,15 @@ import tinycolor from 'tinycolor2';
 
 // Utils
 import { formattedValueToString, DisplayValue, FieldConfig, FieldType } from '@grafana/data';
+import { GraphDrawStyle, GraphFieldConfig } from '@grafana/schema';
+
+import { getTextColorForBackground } from '../../utils';
 import { calculateFontSize } from '../../utils/measureText';
 
 // Types
-import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
-import { getTextColorForBackground } from '../../utils';
-import { GraphDrawStyle, GraphFieldConfig } from '@grafana/schema';
 import { Sparkline } from '../Sparkline/Sparkline';
+
+import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
