@@ -328,9 +328,30 @@ You can contribute to grafana-toolkit by helping develop it or by debugging it.
 
 Typically plugins should be developed using the `@grafana/toolkit` installed from npm. However, when working on the toolkit, you might want to use the local version. Follow the steps below to develop with a local version:
 
+#### Prerequisites
+
+For the following to work make sure to have a plugin that uses yarn berry and yarn PnP to test changes against. Feel free to clone the panel plugin [here](https://github.com/jackw/plugin-yarn-berry) if need be.
+
 1. Clone [Grafana repository](https://github.com/grafana/grafana).
 2. Navigate to the directory you have cloned Grafana repo to and then run `yarn install --immutable`.
-3. Navigate to the directory where your plugin code is and then run `yarn link <GRAFANA_DIR>/packages/grafana-toolkit`. This uses yarn berry's `portal` protocol to "link" both the grafana-toolkit package and it's dependencies into your plugin code allowing you to develop toolkit and test changes against plugin code.
+3. Open `packages/grafana-toolkit/package.json`, delete any mention of `@grafana/data` and `@grafana/ui`. Then add the following:
+
+```
+  "devDependencies": {
+    "@grafana/data": "workspace:*",
+    "@grafana/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "@grafana/data": "*",
+    "@grafana/ui": "*"
+  }
+```
+
+**DO NOT commit this `package.json` code change. It is required to resolve these `@grafana` packages from the plugin for development purposes only.**
+
+4. Run `yarn` in the grafana repo.
+5. Navigate to the directory where your plugin code is and then run `yarn link <GRAFANA_DIR>/packages/grafana-toolkit`. This uses yarn berry's `portal` protocol to "link" the grafana-toolkit package and resolve it's dependencies into your plugin code allowing you to develop toolkit and test changes against plugin code.
+6. Make the required changes to Grafana toolkit.
 
 ### Debug grafana-toolkit
 
