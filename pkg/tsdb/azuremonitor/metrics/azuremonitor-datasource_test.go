@@ -98,7 +98,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			name: "has dimensionFilter*s* property with one dimension",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
-				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: "*"}},
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: []string{"*"}}},
 				"top":              "30",
 			},
 			queryInterval:           duration,
@@ -109,7 +109,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			name: "has dimensionFilter*s* property with two dimensions",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
-				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: "*"}, {Dimension: "tier", Operator: "eq", Filter: "*"}},
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: []string{"*"}}, {Dimension: "tier", Operator: "eq", Filter: []string{"*"}}},
 				"top":              "30",
 			},
 			queryInterval:           duration,
@@ -131,7 +131,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			name: "has dimensionFilter*s* property with not equals operator",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
-				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "ne", Filter: "test"}},
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "ne", Filter: []string{"test"}}},
 				"top":              "30",
 			},
 			queryInterval:           duration,
@@ -142,7 +142,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			name: "has dimensionFilter*s* property with startsWith operator",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
-				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "sw", Filter: "test"}},
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "sw", Filter: []string{"test"}}},
 				"top":              "30",
 			},
 			queryInterval:           duration,
@@ -150,10 +150,10 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			azureMonitorQueryTarget: "%24filter=blob+sw+%27test%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
 		},
 		{
-			name: "correctly sets dimension operator to eq (irrespective of operator) when filter value is unspecified or \"*\"",
+			name: "correctly sets dimension operator to eq (irrespective of operator) when filter value is unspecified",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
-				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "sw", Filter: "*"}, {Dimension: "tier", Operator: "ne", Filter: "*"}},
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "sw", Filter: []string{}}, {Dimension: "tier", Operator: "ne", Filter: []string{}}},
 				"top":              "30",
 			},
 			queryInterval:           duration,
