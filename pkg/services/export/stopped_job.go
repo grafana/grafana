@@ -13,3 +13,7 @@ func (e *stoppedJob) getStatus() ExportStatus {
 		Changed: time.Now().UnixMilli(),
 	}
 }
+
+func (e *stoppedJob) getConfig() ExportConfig {
+	return ExportConfig{}
+}

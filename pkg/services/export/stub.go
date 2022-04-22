@@ -7,6 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+var _ ExportService = new(StubExport)
+
 type StubExport struct{}
 
 func (ex *StubExport) HandleGetStatus(c *models.ReqContext) response.Response {

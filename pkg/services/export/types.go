@@ -26,3 +26,8 @@ type GitExportConfig struct {
 	// Keeping all history is nice, but much slower
 	ExcludeHistory bool `json:"excludeHistory"`
 }
+
+type Job interface {
+	getStatus() ExportStatus
+	getConfig() ExportConfig
+}

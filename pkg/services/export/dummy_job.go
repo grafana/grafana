@@ -11,9 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-type Job interface {
-	getStatus() ExportStatus
-}
+var _ Job = new(dummyExportJob)
 
 type dummyExportJob struct {
 	logger log.Logger
@@ -90,4 +88,11 @@ func (e *dummyExportJob) getStatus() ExportStatus {
 	defer e.statusMu.Unlock()
 
 	return e.status
+}
+
+func (e *dummyExportJob) getConfig() ExportConfig {
+	e.statusMu.Lock()
+	defer e.statusMu.Unlock()
+
+	return e.cfg
 }
