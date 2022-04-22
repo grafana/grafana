@@ -239,14 +239,14 @@ func upsertProperties(sess *sqlstore.DBSession, now time.Time, cmd *UpsertFileCo
 
 func upsertProperty(sess *sqlstore.DBSession, now time.Time, pathHash string, key string, val string) error {
 	existing := &fileMeta{}
-	exists, err := sess.Table("file_meta").Where("path_hash = ? AND key = ?", pathHash, key).Get(existing)
+	exists, err := sess.Table("file_meta").Where("path_hash = ?", pathHash).Where("key = ?", key).Get(existing)
 	if err != nil {
 		return err
 	}
 
 	if exists {
 		existing.Value = val
-		_, err = sess.Where("path_hash = ? AND key = ?", pathHash, key).Update(existing)
+		_, err = sess.Where("path_hash = ?", pathHash).Where("key = ?", key).Update(existing)
 	} else {
 		_, err = sess.Insert(&fileMeta{
 			PathHash: pathHash,
