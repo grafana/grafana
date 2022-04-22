@@ -2,12 +2,8 @@ package export
 
 import (
 	"encoding/json"
-	"fmt"
-	"math"
-	"math/rand"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -30,8 +26,7 @@ type StandardExport struct {
 	mutex  sync.Mutex
 
 	// updated with mutex
-	status ExportStatus
-	cfg    ExportConfig
+	exportJob Job
 }
 
 func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles) ExportService {
@@ -40,8 +35,9 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles)
 	}
 
 	return &StandardExport{
-		sql:    sql,
-		logger: log.New("export"),
+		sql:       sql,
+		logger:    log.New("export_service"),
+		exportJob: &stoppedJob{},
 	}
 }
 
@@ -49,15 +45,7 @@ func (ex *StandardExport) HandleGetStatus(c *models.ReqContext) response.Respons
 	ex.mutex.Lock()
 	defer ex.mutex.Unlock()
 
-	if ex.status.Started > 0 {
-		return response.JSON(http.StatusOK, ex.status)
-	}
-
-	// The system is not currently running
-	return response.JSON(http.StatusOK, ExportStatus{
-		Running: false,
-		Changed: time.Now().UnixMilli(),
-	})
+	return response.JSON(http.StatusOK, ex.exportJob.getStatus())
 }
 
 func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Response {
@@ -67,60 +55,21 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 		return response.Error(http.StatusBadRequest, "unable to read config", err)
 	}
 
-	if cfg.Format != "git" {
-		return response.Error(http.StatusBadRequest, "only git format supported for now", err)
-	}
-
 	ex.mutex.Lock()
 	defer ex.mutex.Unlock()
 
-	if ex.status.Running {
+	status := ex.exportJob.getStatus()
+	if status.Running {
+		ex.logger.Error("export already running")
 		return response.Error(http.StatusLocked, "export already running", nil)
 	}
 
-	ex.cfg = cfg
-	ex.status = ExportStatus{
-		Running: true,
-		Target:  "git export",
-		Started: time.Now().UnixMilli(),
+	job, err := startDummyExportJob(cfg)
+	if err != nil {
+		ex.logger.Error("failed to start export job", "err", err)
+		return response.Error(http.StatusBadRequest, "failed to start export job", err)
 	}
-	go ex.doExport()
 
-	return response.JSON(http.StatusOK, ex.status)
-}
-
-// This will replace the running instance
-func (ex *StandardExport) doExport() {
-	defer func() {
-		s := ex.status
-		if err := recover(); err != nil {
-			ex.logger.Error("export panic", "error", err)
-			s.Status = fmt.Sprintf("ERROR: %v", err)
-		}
-		// Make sure it finishes OK
-		if s.Finished < 10 {
-			s.Finished = time.Now().UnixMilli()
-		}
-		s.Running = false
-		if s.Status == "" {
-			s.Status = "done"
-		}
-		ex.status = s
-	}()
-
-	ex.status.Running = true
-	ex.status.Count = int64(math.Round(10 + rand.Float64()*20))
-	ex.status.Current = 0
-
-	ticker := time.NewTicker(1 * time.Second)
-	for t := range ticker.C {
-		ex.status.Changed = t.UnixMilli()
-		ex.status.Current++
-		ex.status.Last = fmt.Sprintf("ITEM: %d", ex.status.Current)
-
-		// Stop after 20 seconds
-		if ex.status.Current >= ex.status.Count {
-			break
-		}
-	}
+	ex.exportJob = job
+	return response.JSON(http.StatusOK, ex.exportJob.getStatus())
 }
