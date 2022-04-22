@@ -17,7 +17,7 @@ export class HeatmapSuggestionsSupplier {
       return;
     }
 
-    const info = prepareHeatmapData({ heatmap: builder.data.series }, defaultPanelOptions, config.theme2);
+    const info = prepareHeatmapData(builder.data.series, defaultPanelOptions, config.theme2);
     if (!info || info.warning) {
       return;
     }

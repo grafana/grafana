@@ -16,7 +16,7 @@ describe('Heatmap transformer', () => {
       ],
     });
 
-    const heatmap = calculateHeatmapFromData({ heatmap: [data] }, options);
+    const heatmap = calculateHeatmapFromData([data], options);
 
     expect(heatmap).toBeDefined();
   });

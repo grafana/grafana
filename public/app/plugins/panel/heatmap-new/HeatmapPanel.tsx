@@ -14,6 +14,7 @@ import {
   prepConfig,
   getDataMapping,
   resolveMappingToData,
+  translateMatrixIndex,
 } from './utils';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
@@ -128,7 +129,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   builder.addHook('draw', (u: uPlot) => {
     ExemplarsPlugin({
       u,
-      exemplars,
+      exemplars: exemplars!,
       config: builder,
       theme: {
         ...theme,
@@ -206,7 +207,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
                   options: { showHistogram: options.tooltip.yHistogram, timeZone },
                 }),
                 ExemplarTab({
-                  data: resolveMappingToData(data.annotations?.[0]!, exemplarMapping[hover.index]),
+                  data: resolveMappingToData(
+                    data.annotations?.[0]!,
+                    exemplarMapping[translateMatrixIndex(hover?.index!, info.yBucketCount!, exemplars?.yBucketCount!)]
+                  ),
                 }),
               ],
               hover,

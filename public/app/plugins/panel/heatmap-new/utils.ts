@@ -515,6 +515,8 @@ export const resolveMappingToData = (data: DataFrame, indicies: number[] | null)
   if (indicies === null) {
     return [];
   }
+  console.log('dataframe', data, 'indicies', indicies);
+
   return indicies.map((index: number, i: number) => {
     return {
       name: `${i + 1}`,
