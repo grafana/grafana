@@ -17,14 +17,23 @@ import (
 )
 
 func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.Response {
-	dashID, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+	var dashID int64
+	var err error
+	dashUID := web.Params(c.Req)[":uid"]
+	if dashUID == "" {
+		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+		}
 	}
 
-	_, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, dashUID)
 	if rsp != nil {
 		return rsp
+	}
+
+	if dashID == 0 {
+		dashID = dash.Id
 	}
 
 	g := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
@@ -60,6 +69,8 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 }
 
 func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.Response {
+	var dashID int64
+	var err error
 	apiCmd := dtos.UpdateDashboardAclCommand{}
 	if err := web.Bind(c.Req, &apiCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -68,14 +79,21 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		return response.Error(400, err.Error(), err)
 	}
 
-	dashID, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+	dashUID := web.Params(c.Req)[":uid"]
+	if dashUID == "" {
+		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, 0, dashUID)
 	if rsp != nil {
 		return rsp
+	}
+
+	if dashUID != "" {
+		dashID = dash.Id
 	}
 
 	g := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)

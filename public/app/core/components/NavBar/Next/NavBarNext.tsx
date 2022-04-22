@@ -13,7 +13,6 @@ import {
   isMatchOrChildMatch,
   isSearchActive,
   SEARCH_ITEM_ID,
-  NAV_MENU_PORTAL_CONTAINER_ID,
 } from '../utils';
 import { OrgSwitcher } from '../../OrgSwitcher';
 import { NavBarMenu } from './NavBarMenu';
@@ -22,6 +21,8 @@ import { useSelector } from 'react-redux';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarContext } from '../context';
 import { NavBarToggle } from './NavBarToggle';
+import { NavBarMenuPortalContainer } from './NavBarMenuPortalContainer';
+import { FocusScope } from '@react-aria/focus';
 
 const onOpenSearch = () => {
   locationService.partial({ search: 'open' });
@@ -80,67 +81,69 @@ export const NavBarNext = React.memo(() => {
             setMenuIdOpen: setMenuIdOpen,
           }}
         >
-          <div id={NAV_MENU_PORTAL_CONTAINER_ID} className={styles.menuPortalContainer} />
+          <FocusScope>
+            <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
+              <Icon name="bars" size="xl" />
+            </div>
 
-          <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
-            <Icon name="bars" size="xl" />
-          </div>
+            <NavBarToggle
+              className={styles.menuExpandIcon}
+              isExpanded={menuOpen}
+              onClick={() => setMenuOpen(!menuOpen)}
+            />
 
-          <NavBarToggle
-            className={styles.menuExpandIcon}
-            isExpanded={menuOpen}
-            onClick={() => setMenuOpen(!menuOpen)}
-          />
+            <NavBarMenuPortalContainer />
 
-          <ul className={styles.itemList}>
-            <NavBarItemWithoutMenu
-              isActive={isMatchOrChildMatch(homeItem, activeItem)}
-              label="Home"
-              elClassName={styles.grafanaLogoInner}
-              className={styles.grafanaLogo}
-              url={homeItem.url}
-            >
-              <Icon name="grafana" size="xl" />
-            </NavBarItemWithoutMenu>
+            <ul className={styles.itemList}>
+              <NavBarItemWithoutMenu
+                elClassName={styles.grafanaLogoInner}
+                isActive={isMatchOrChildMatch(homeItem, activeItem)}
+                label="Home"
+                className={styles.grafanaLogo}
+                url={homeItem.url}
+              >
+                <Icon name="grafana" size="xl" />
+              </NavBarItemWithoutMenu>
 
-            <CustomScrollbar hideVerticalTrack hideHorizontalTrack>
-              <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
-                <Icon name="search" size="xl" />
-              </NavBarItem>
+              <CustomScrollbar hideVerticalTrack hideHorizontalTrack>
+                <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem}>
+                  <Icon name="search" size="xl" />
+                </NavBarItem>
 
-              {coreItems.map((link, index) => (
+                {coreItems.map((link, index) => (
+                  <NavBarItem
+                    key={`${link.id}-${index}`}
+                    isActive={isMatchOrChildMatch(link, activeItem)}
+                    link={{ ...link, subTitle: undefined, onClick: undefined }}
+                  >
+                    {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+                    {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+                  </NavBarItem>
+                ))}
+
+                {pluginItems.length > 0 &&
+                  pluginItems.map((link, index) => (
+                    <NavBarItem key={`${link.id}-${index}`} isActive={isMatchOrChildMatch(link, activeItem)} link={link}>
+                      {link.icon && <Icon name={link.icon as IconName} size="xl" />}
+                      {link.img && <img src={link.img} alt={`${link.text} logo`} />}
+                    </NavBarItem>
+                  ))}
+              </CustomScrollbar>
+
+              {configItems.map((link, index) => (
                 <NavBarItem
                   key={`${link.id}-${index}`}
                   isActive={isMatchOrChildMatch(link, activeItem)}
-                  link={{ ...link, subTitle: undefined, onClick: undefined }}
+                  reverseMenuDirection
+                  link={link}
+                  className={cx({ [styles.verticalSpacer]: index === 0 })}
                 >
                   {link.icon && <Icon name={link.icon as IconName} size="xl" />}
                   {link.img && <img src={link.img} alt={`${link.text} logo`} />}
                 </NavBarItem>
               ))}
-
-              {pluginItems.length > 0 &&
-                pluginItems.map((link, index) => (
-                  <NavBarItem key={`${link.id}-${index}`} isActive={isMatchOrChildMatch(link, activeItem)} link={link}>
-                    {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-                    {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-                  </NavBarItem>
-                ))}
-            </CustomScrollbar>
-
-            {configItems.map((link, index) => (
-              <NavBarItem
-                key={`${link.id}-${index}`}
-                isActive={isMatchOrChildMatch(link, activeItem)}
-                reverseMenuDirection
-                link={link}
-                className={cx({ [styles.verticalSpacer]: index === 0 })}
-              >
-                {link.icon && <Icon name={link.icon as IconName} size="xl" />}
-                {link.img && <img src={link.img} alt={`${link.text} logo`} />}
-              </NavBarItem>
-            ))}
-          </ul>
+            </ul>
+          </FocusScope>
         </NavBarContext.Provider>
       </nav>
       {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}

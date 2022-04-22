@@ -95,13 +95,13 @@ describe('Rules group tests', () => {
       expect(ui.editGroupButton.query()).not.toBeInTheDocument();
     });
 
-    it('Delete button click should display confirmation modal', () => {
+    it('Delete button click should display confirmation modal', async () => {
       // Arrange
       hasRulerMock.mockReturnValue(true);
 
       // Act
       renderRulesGroup(namespace, group);
-      userEvent.click(ui.deleteGroupButton.get());
+      await userEvent.click(ui.deleteGroupButton.get());
 
       // Assert
       expect(ui.confirmDeleteModal.header.get()).toBeInTheDocument();
