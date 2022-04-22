@@ -22,7 +22,7 @@ import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/uti
 
 export interface Props {
   queries: RichHistoryQuery[];
-  activeDatasourceInstance?: string;
+  activeDatasourceInstance: string;
   updateFilters: (filtersToUpdate?: Partial<RichHistorySearchFilters>) => void;
   clearRichHistoryResults: () => void;
   richHistorySettings: RichHistorySettings;
@@ -138,10 +138,12 @@ export function RichHistoryQueriesTab(props: Props) {
   const listOfDatasources = createDatasourcesList();
 
   useEffect(() => {
-    const datasourceFilters =
-      richHistorySettings.activeDatasourceOnly && activeDatasourceInstance
-        ? [activeDatasourceInstance]
-        : richHistorySettings.lastUsedDatasourceFilters || [activeDatasourceInstance!];
+    let datasourceFilters: string[];
+    if (!richHistorySettings.activeDatasourceOnly && richHistorySettings.lastUsedDatasourceFilters) {
+      datasourceFilters = richHistorySettings.lastUsedDatasourceFilters;
+    } else {
+      datasourceFilters = [activeDatasourceInstance];
+    }
     const filters: RichHistorySearchFilters = {
       search: '',
       sortOrder: SortOrder.Descending,

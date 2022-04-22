@@ -13,14 +13,17 @@ export const getRichHistoryStorage = (): RichHistoryStorage => {
 
 interface RichHistorySupportedFeatures {
   availableFilters: SortOrder[];
+  lastUsedDataSourcesAvailable: boolean;
 }
 
 export const supportedFeatures = (): RichHistorySupportedFeatures => {
   return config.featureToggles.newQueryHistory
     ? {
         availableFilters: [SortOrder.Descending, SortOrder.Ascending],
+        lastUsedDataSourcesAvailable: false,
       }
     : {
         availableFilters: [SortOrder.Descending, SortOrder.Ascending, SortOrder.DatasourceAZ, SortOrder.DatasourceZA],
+        lastUsedDataSourcesAvailable: true,
       };
 };

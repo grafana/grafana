@@ -13,10 +13,11 @@ import { createDatasourcesList, SortOrder } from 'app/core/utils/richHistory';
 import RichHistoryCard from './RichHistoryCard';
 import { getSortOrderOptions } from './RichHistory';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
+import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 
 export interface Props {
   queries: RichHistoryQuery[];
-  activeDatasourceInstance?: string;
+  activeDatasourceInstance: string;
   updateFilters: (filtersToUpdate: Partial<RichHistorySearchFilters>) => void;
   clearRichHistoryResults: () => void;
   richHistorySearchFilters?: RichHistorySearchFilters;
@@ -85,10 +86,16 @@ export function RichHistoryStarredTab(props: Props) {
   const listOfDatasources = createDatasourcesList();
 
   useEffect(() => {
-    const datasourceFilters =
-      richHistorySettings.activeDatasourceOnly && activeDatasourceInstance
-        ? [activeDatasourceInstance]
-        : richHistorySettings.lastUsedDatasourceFilters || [activeDatasourceInstance!];
+    let datasourceFilters: string[];
+    if (
+      supportedFeatures().lastUsedDataSourcesAvailable &&
+      richHistorySettings.activeDatasourceOnly &&
+      richHistorySettings.lastUsedDatasourceFilters
+    ) {
+      datasourceFilters = richHistorySettings.lastUsedDatasourceFilters;
+    } else {
+      datasourceFilters = [activeDatasourceInstance];
+    }
     const filters: RichHistorySearchFilters = {
       search: '',
       sortOrder: SortOrder.Descending,
@@ -117,7 +124,7 @@ export function RichHistoryStarredTab(props: Props) {
               className={styles.multiselect}
               menuShouldPortal
               options={listOfDatasources.map((ds) => {
-                return { value: ds.uid, label: ds.name };
+                return { value: ds.name, label: ds.name };
               })}
               value={richHistorySearchFilters.datasourceFilters}
               placeholder="Filter queries for data sources(s)"

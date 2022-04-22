@@ -39,7 +39,7 @@ export interface RichHistoryProps extends Themeable {
   loadRichHistory: (exploreId: ExploreId) => void;
   clearRichHistoryResults: (exploreId: ExploreId) => void;
   deleteRichHistory: () => void;
-  activeDatasourceInstance?: string;
+  activeDatasourceInstance: string;
   firstTab: Tabs;
   exploreId: ExploreId;
   height: number;

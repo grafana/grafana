@@ -19,6 +19,7 @@ import {
 import { DataQuery, HistoryItem } from '@grafana/data';
 import { AnyAction, createAction } from '@reduxjs/toolkit';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
+import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 
 //
 // Actions and Payloads
@@ -161,12 +162,14 @@ export const updateHistorySearchFilters = (
   return async (dispatch, getState) => {
     await dispatch(richHistorySearchFiltersUpdatedAction({ exploreId, filters: { ...filters } }));
     const currentSettings = getState().explore.richHistorySettings!;
-    await dispatch(
-      updateHistorySettings({
-        ...currentSettings,
-        lastUsedDatasourceFilters: filters.datasourceFilters,
-      })
-    );
+    if (supportedFeatures().lastUsedDataSourcesAvailable) {
+      await dispatch(
+        updateHistorySettings({
+          ...currentSettings,
+          lastUsedDatasourceFilters: filters.datasourceFilters,
+        })
+      );
+    }
   };
 };
 
