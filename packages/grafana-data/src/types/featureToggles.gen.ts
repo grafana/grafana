@@ -51,6 +51,7 @@ export interface FeatureToggles {
   saveDashboardDrawer?: boolean;
   storage?: boolean;
   alertProvisioning?: boolean;
+  export?: boolean;
   storageLocalUpload?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
   explore2Dashboard?: boolean;
