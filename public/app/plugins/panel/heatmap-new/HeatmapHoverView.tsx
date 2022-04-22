@@ -1,9 +1,12 @@
-import React, { createRef } from 'react';
-import { VizTooltipContainer } from '@grafana/ui';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
-import { HeatmapHoverPayload } from './types';
+import React, { createRef } from 'react';
+
+import { VizTooltipContainer } from '@grafana/ui';
+
 import { ComplexDataHoverView } from './components/ComplexDataHoverView';
+import { HeatmapHoverPayload } from './types';
+
 interface Props {
   ttip?: HeatmapHoverPayload;
   isOpen: boolean;
@@ -31,7 +34,6 @@ export const HeatmapHoverView = ({ ttip, onClose, isOpen }: Props) => {
     </>
   );
 };
-
 
 // import React, { useEffect, useRef } from 'react';
 

@@ -1,5 +1,6 @@
 import { NumericRange, DataFrame, DataHoverPayload } from '@grafana/data';
 import { LayerElement } from 'app/core/components/Layers/types';
+
 import { HeatmapData } from './fields';
 import { HeatmapHoverEvent } from './utils';
 

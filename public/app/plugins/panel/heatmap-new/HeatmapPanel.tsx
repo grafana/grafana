@@ -3,20 +3,17 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange, DataFrame } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import {
-  Portal,
-  UPlotChart,
-  useStyles2,
-  useTheme2,
-  VizLayout,
-  LegendDisplayMode,
-} from '@grafana/ui';
+import { Portal, UPlotChart, useStyles2, useTheme2, VizLayout, LegendDisplayMode, usePanelContext } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+import { HeatmapCalculationMode } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { HeatmapData, prepareHeatmapData } from './fields';
+import { ExemplarTab } from './hovertabs/ExemplarTab';
+import { HeatmapTab } from './hovertabs/HeatmapTab';
 import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
+import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import {
   findExemplarFrameInPanelData,
   findDataFramesInPanelData,
@@ -25,12 +22,8 @@ import {
   getDataMapping,
   resolveMappingToData,
   translateMatrixIndex,
+  getHeatmapArrays,
 } from './utils';
-import { HeatmapCalculationMode } from 'app/features/transformers/calculateHeatmap/models.gen';
-// import { HeatmapLookup } from './types';
-import { HeatmapTab } from './hovertabs/HeatmapTab';
-import { ExemplarTab } from './hovertabs/ExemplarTab';
-import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
@@ -53,8 +46,9 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
 
-  const [info, infoMapping, exemplars, exemplarMapping] = useMemo(() => {
+  const [info, infoMapping, exemplars, exemplarMapping, exemplarPalette] = useMemo(() => {
     let exemplars: HeatmapData | undefined = undefined;
+    let exemplarPalette: string[] = [];
     const infoFrame = findDataFramesInPanelData(data);
     const info = prepareHeatmapData(infoFrame!, options, theme);
     const infoMapping = getDataMapping(info, infoFrame?.[0]!);
@@ -79,8 +73,17 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
         theme
       );
       exemplarMapping = getDataMapping(exemplars, exemplarsFrame!);
+      const countField = getHeatmapArrays(exemplars.heatmap!)[2];
+      const countMax = Math.max(...countField!);
+      exemplarPalette = quantizeScheme(
+        {
+          ...options.color,
+          steps: countMax,
+        },
+        theme
+      );
     }
-    return [info, infoMapping, exemplars, exemplarMapping];
+    return [info, infoMapping, exemplars, exemplarMapping, exemplarPalette];
   }, [data, options, theme]);
 
   const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
@@ -89,6 +92,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   const [hover, setHover] = useState<HeatmapHoverEvent | undefined>(undefined);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
   const isToolTipOpen = useRef<boolean>(false);
+  const { onSplitOpen } = usePanelContext();
 
   const onCloseToolTip = () => {
     isToolTipOpen.current = false;
@@ -141,9 +145,10 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
         ...theme,
         visualization: {
           ...theme.visualization,
-          palette,
+          palette: exemplarPalette,
         },
       },
+      options,
     });
   });
 
@@ -209,7 +214,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
             ttip={{
               layers: [
                 HeatmapTab({
-                  data: resolveMappingToData(data.series[0], infoMapping[hover.index], timeRange),
+                  data: resolveMappingToData(data.series[0], infoMapping[hover.index], onSplitOpen, timeRange),
                   heatmapData: info,
                   index: hover.index,
                   options: { showHistogram: options.tooltip.yHistogram, timeZone },
@@ -218,6 +223,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
                   data: resolveMappingToData(
                     data.annotations?.[0]!,
                     exemplarMapping[translateMatrixIndex(hover?.index!, info.yBucketCount!, exemplars?.yBucketCount!)],
+                    onSplitOpen,
                     timeRange
                   ),
                   heatmapData: exemplars!,

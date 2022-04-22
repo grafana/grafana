@@ -1,4 +1,6 @@
 import { MutableRefObject, RefObject } from 'react';
+import uPlot from 'uplot';
+
 import {
   ArrayVector,
   DataFrame,
@@ -6,20 +8,19 @@ import {
   Field,
   GrafanaTheme2,
   PanelData,
+  SplitOpen,
   systemDateFormats,
   TimeRange,
   TimeZone,
   ValueLinkConfig,
 } from '@grafana/data';
-import uPlot from 'uplot';
-
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
-import { UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
+import { UPlotConfigBuilder } from '@grafana/ui';
+import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { BucketLayout, HeatmapData } from './fields';
-import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -511,9 +512,12 @@ export const getDataMapping = (heatmapData: HeatmapData, origData: DataFrame): A
   return [null];
 };
 
-export const resolveMappingToData = (data: DataFrame, indicies: number[] | null, timeRange: TimeRange): DataFrame[] => {
-  const { onSplitOpen } = usePanelContext();
-
+export const resolveMappingToData = (
+  data: DataFrame,
+  indicies: number[] | null,
+  onSplitOpen: SplitOpen | undefined,
+  timeRange: TimeRange
+): DataFrame[] => {
   if (!indicies) {
     return [];
   }
