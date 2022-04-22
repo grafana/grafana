@@ -178,7 +178,7 @@ func TestContactPointInUse(t *testing.T) {
 func createContactPointServiceSut(secretService secrets.Service) *ContactPointService {
 	return &ContactPointService{
 		amStore:           newFakeAMConfigStore(),
-		provenanceStore:   newFakeProvisioningStore(),
+		provenanceStore:   NewFakeProvisioningStore(),
 		xact:              newNopTransactionManager(),
 		encryptionService: secretService,
 		log:               log.NewNopLogger(),
