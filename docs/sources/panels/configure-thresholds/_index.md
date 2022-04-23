@@ -26,13 +26,13 @@ Thresholds provide one method for you to conditionally style and color your visu
 
 You can use thresholds to:
 
-- Color grid lines or grid ares areas in the [Time series visualization]({{< relref "../../visualizations/time-series" >}})
-- Color lines in the [Time-series panel]({{< relref "../../visualizations/time-series/graph-color-scheme/#from-thresholds" >}})
-- Color the background or value text in the [Stat panel]({{< relref "../../visualizations/stat-panel" >}})
-- Color the gauge and threshold markers in the [Gauge panel]({{< relref "../../visualizations/gauge-panel" >}})
-- Color markers in the [Geomap panel]({{< relref "../../visualizations/geomap" >}})
-- Color cell text or background in the [Table panel]({{< relref "../../visualizations/table" >}})
-- Define regions and region colors in the [State timeline panel]({{< relref "../../visualizations/state-timeline" >}})
+- Color grid lines or grid ares areas in the [Time-series visualization]({{< relref "../../visualizations/time-series" >}})
+- Color lines in the [Time-series visualization]({{< relref "../../visualizations/time-series/graph-color-scheme/#from-thresholds" >}})
+- Color the background or value text in the [Stat visualization]({{< relref "../../visualizations/stat-panel" >}})
+- Color the gauge and threshold markers in the [Gauge visualization]({{< relref "../../visualizations/gauge-panel" >}})
+- Color markers in the [Geomap visualization]({{< relref "../../visualizations/geomap" >}})
+- Color cell text or background in the [Table visualization]({{< relref "../../visualizations/table" >}})
+- Define regions and region colors in the [State timeline visualization]({{< relref "../../visualizations/state-timeline" >}})
 
 There are two types of thresholds:
 
@@ -55,12 +55,6 @@ You can add as many thresholds to a panel as you want. Grafana automatically sor
 
 Delete a threshold when it is no longer relevant to your business operations. When you delete a threshold, the system removes the threshold from all visualizations that include the threshold.
 
-**Before you begin:**
-
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}})
-
-**To add or delete a threshold**:
-
 1. To add a threshold:
 
    a. Edit the panel to which you want to add a threshold.
@@ -77,12 +71,6 @@ Delete a threshold when it is no longer relevant to your business operations. Wh
 ## Add a threshold to a legacy graph panel
 
 In the Graph panel visualization, thresholds enable you to add lines or sections to a graph to make it easier to recognize when the graph crosses a threshold.
-
-**Before you begin:**
-
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}})
-
-**To add a threshold to a graph panel**:
 
 1. Navigate to the graph panel to which you want to add a threshold.
 1. On the **Panel** tab, click **Thresholds**.
