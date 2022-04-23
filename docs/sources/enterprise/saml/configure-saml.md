@@ -97,7 +97,7 @@ Grafana provides configuration options that let you modify which keys to look at
 
 ##### The `assertion_attribute_name` option
 
-`assertion_attribute_name` is a special assertion mapping that can either be a simple key, indicating a mapping to a single assertion attribute on the SAML response, or a complex template with variables using the `$__saml{<variable>}` syntax. When Grafana reads the SAML configuration, it uses a regular expression match to determine which form the property is in. Grafana will log helpful error messages on startup if this property is misconfigured.
+`assertion_attribute_name` is a special assertion mapping that can either be a simple key, indicating a mapping to a single assertion attribute on the SAML response, or a complex template with variables using the `$__saml{<attribute>}` syntax. Grafana will log error messages on startup if this property is misconfigured.
 
 **Examples**
 
