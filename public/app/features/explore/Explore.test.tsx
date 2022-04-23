@@ -1,12 +1,14 @@
-import React from 'react';
-import { DataSourceApi, LoadingState, CoreApp, createTheme } from '@grafana/data';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { Provider } from 'react-redux';
+import { AutoSizerProps } from 'react-virtualized-auto-sizer';
+
+import { DataSourceApi, LoadingState, CoreApp, createTheme } from '@grafana/data';
+import { configureStore } from 'app/store/configureStore';
 import { ExploreId } from 'app/types/explore';
+
 import { Explore, Props } from './Explore';
 import { scanStopAction } from './state/query';
-import { Provider } from 'react-redux';
-import { configureStore } from 'app/store/configureStore';
-import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { createEmptyQueryResponse } from './state/utils';
 
 const makeEmptyQueryResponse = (loadingState: LoadingState) => {

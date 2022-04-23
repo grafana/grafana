@@ -1,9 +1,10 @@
+import { of } from 'rxjs';
+
 import { dateTime } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from 'app/features/variables/custom/reducer';
 import { CustomVariableModel } from 'app/features/variables/types';
-import { of } from 'rxjs';
 
 import { TemplateSrvMock } from '../../../../features/templating/template_srv.mock';
 import { CloudWatchDatasource } from '../datasource';

@@ -1,12 +1,14 @@
 import React from 'react';
-import { HttpSettingsBaseProps } from './types';
-import { DataSourceSettings } from '@grafana/data';
+
 import {
   AwsAuthDataSourceSecureJsonData,
   AwsAuthDataSourceJsonData,
   ConnectionConfig,
   ConnectionConfigProps,
 } from '@grafana/aws-sdk';
+import { DataSourceSettings } from '@grafana/data';
+
+import { HttpSettingsBaseProps } from './types';
 
 export const SigV4AuthSettings: React.FC<HttpSettingsBaseProps> = (props) => {
   const { dataSourceConfig, onChange } = props;

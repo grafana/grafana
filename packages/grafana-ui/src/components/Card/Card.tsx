@@ -1,9 +1,12 @@
-import React, { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
 import { useStyles2, useTheme2 } from '../../themes';
-import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
 import { getFocusStyles } from '../../themes/mixins';
+
+import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
 
 /**
  * @public
@@ -232,12 +235,17 @@ const Meta = memo(({ children, className, separator = '|' }: ChildProps & { sepa
   const styles = useStyles2(getMetaStyles);
   let meta = children;
 
+  const filtered = React.Children.toArray(children).filter(Boolean);
+  if (!filtered.length) {
+    return null;
+  }
+  meta = filtered.map((element, i) => (
+    <div key={`element_${i}`} className={styles.metadataItem}>
+      {element}
+    </div>
+  ));
   // Join meta data elements by separator
-  if (Array.isArray(children) && separator) {
-    const filtered = React.Children.toArray(children).filter(Boolean);
-    if (!filtered.length) {
-      return null;
-    }
+  if (filtered.length > 1 && separator) {
     meta = filtered.reduce((prev, curr, i) => [
       prev,
       <span key={`separator_${i}`} className={styles.separator}>
@@ -261,6 +269,9 @@ const getMetaStyles = (theme: GrafanaTheme2) => ({
     margin: theme.spacing(0.5, 0, 0),
     lineHeight: theme.typography.bodySmall.lineHeight,
     overflowWrap: 'anywhere',
+  }),
+  metadataItem: css({
+    // Needed to allow for clickable children in metadata
     zIndex: 0,
   }),
   separator: css({

@@ -1,5 +1,6 @@
-import { Alert, Button } from '@grafana/ui';
 import React, { FunctionComponent, useMemo } from 'react';
+
+import { Alert, Button } from '@grafana/ui';
 
 import { getCredentials } from '../../../credentials';
 import { AzureDataSourceSettings } from '../../../types';

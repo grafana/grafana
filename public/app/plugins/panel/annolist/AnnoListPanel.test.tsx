@@ -1,14 +1,16 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import { AnnotationEvent, FieldConfigSource, getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+
+import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+import { backendSrv } from '../../../core/services/backend_srv';
+import { setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 import { AnnoListPanel, Props } from './AnnoListPanel';
-import { AnnotationEvent, FieldConfigSource, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { AnnoOptions } from './types';
-import { backendSrv } from '../../../core/services/backend_srv';
-import userEvent from '@testing-library/user-event';
-import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
-import { setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
-import { locationService } from '@grafana/runtime';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -200,7 +202,7 @@ describe('AnnoListPanel', () => {
 
         getMock.mockClear();
         expect(screen.getByText(/result text/i)).toBeInTheDocument();
-        userEvent.click(screen.getByText(/result text/i));
+        await userEvent.click(screen.getByText(/result text/i));
         await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
 
         expect(getMock).toHaveBeenCalledWith('/api/search', { dashboardIds: 14 });
@@ -215,7 +217,7 @@ describe('AnnoListPanel', () => {
 
         getMock.mockClear();
         expect(screen.getByText('Result tag B')).toBeInTheDocument();
-        userEvent.click(screen.getByText('Result tag B'));
+        await userEvent.click(screen.getByText('Result tag B'));
 
         expect(getMock).toHaveBeenCalledTimes(1);
         expect(getMock).toHaveBeenCalledWith(
@@ -239,7 +241,7 @@ describe('AnnoListPanel', () => {
 
         getMock.mockClear();
         expect(screen.getByRole('img')).toBeInTheDocument();
-        userEvent.click(screen.getByRole('img'));
+        await userEvent.click(screen.getByRole('img'));
 
         expect(getMock).toHaveBeenCalledTimes(1);
         expect(getMock).toHaveBeenCalledWith(

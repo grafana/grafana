@@ -1,13 +1,17 @@
-import React, { FC } from 'react';
 import { css } from '@emotion/css';
+import React, { FC } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
+
+import { Authorize } from '../../components/Authorize';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
+import { getNotificationsPermissions } from '../../utils/access-control';
+import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
+
 import { AmRootRouteForm } from './AmRootRouteForm';
 import { AmRootRouteRead } from './AmRootRouteRead';
-import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
-import { Authorize } from '../../components/Authorize';
-import { getNotificationsPermissions } from '../../utils/access-control';
+
 export interface AmRootRouteProps {
   isEditMode: boolean;
   onEnterEditMode: () => void;

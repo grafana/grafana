@@ -1,6 +1,7 @@
-import { getFieldMatcher } from '../matchers';
-import { FieldMatcherID } from './ids';
 import { toDataFrame } from '../../dataframe/processDataFrame';
+import { getFieldMatcher } from '../matchers';
+
+import { FieldMatcherID } from './ids';
 import { ByNamesMatcherMode } from './nameMatcher';
 
 describe('Field Name by Regexp Matcher', () => {

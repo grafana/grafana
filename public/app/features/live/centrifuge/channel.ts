@@ -1,3 +1,13 @@
+import Centrifuge, {
+  JoinLeaveContext,
+  PublicationContext,
+  SubscribeErrorContext,
+  SubscribeSuccessContext,
+  SubscriptionEvents,
+  UnsubscribeContext,
+} from 'centrifuge/dist/centrifuge';
+import { Subject, of, Observable } from 'rxjs';
+
 import {
   LiveChannelStatusEvent,
   LiveChannelEvent,
@@ -8,16 +18,6 @@ import {
   DataFrameJSON,
   isValidLiveChannelAddress,
 } from '@grafana/data';
-import Centrifuge, {
-  JoinLeaveContext,
-  PublicationContext,
-  SubscribeErrorContext,
-  SubscribeSuccessContext,
-  SubscriptionEvents,
-  UnsubscribeContext,
-} from 'centrifuge/dist/centrifuge';
-
-import { Subject, of, Observable } from 'rxjs';
 
 /**
  * Internal class that maps Centrifuge support to GrafanaLive

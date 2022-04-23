@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
 
 import CopyIcon from '../../common/CopyIcon';
+import { ubInlineBlock } from '../../uberUtilityStyles';
 
 import KeyValuesTable, { LinkValue } from './KeyValuesTable';
-import { ubInlineBlock } from '../../uberUtilityStyles';
 
 describe('LinkValue', () => {
   const title = 'titleValue';

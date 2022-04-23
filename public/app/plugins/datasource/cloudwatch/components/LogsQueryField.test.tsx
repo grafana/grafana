@@ -1,14 +1,16 @@
-import React from 'react';
-import { shallow } from 'enzyme';
-import { CloudWatchLogsQueryField } from './LogsQueryField';
-import { ExploreId } from '../../../../types';
-import { DescribeLogGroupsRequest } from '../types';
-import { SelectableValue } from '@grafana/data';
-// eslint-disable-next-line lodash/import-scope
-import _, { DebouncedFunc } from 'lodash';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { shallow } from 'enzyme';
+import _, { DebouncedFunc } from 'lodash'; // eslint-disable-line lodash/import-scope
+import React from 'react';
 import { act } from 'react-dom/test-utils';
+
+import { SelectableValue } from '@grafana/data';
+
+import { ExploreId } from '../../../../types';
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
+import { DescribeLogGroupsRequest } from '../types';
+
+import { CloudWatchLogsQueryField } from './LogsQueryField';
 
 jest
   .spyOn(_, 'debounce')

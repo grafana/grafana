@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
+
 import { Tooltip } from '@grafana/ui';
 
-import ReferencesButton, { getStyles } from './ReferencesButton';
-import transformTraceData from '../model/transform-trace-data';
 import traceGenerator from '../demo/trace-generators';
+import transformTraceData from '../model/transform-trace-data';
 import ReferenceLink from '../url/ReferenceLink';
+
+import ReferencesButton, { getStyles } from './ReferencesButton';
 
 describe(ReferencesButton, () => {
   const trace = transformTraceData(traceGenerator.trace({ numberOfSpans: 10 }));

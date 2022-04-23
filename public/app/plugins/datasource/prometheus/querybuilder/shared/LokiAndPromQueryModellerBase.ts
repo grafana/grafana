@@ -1,5 +1,7 @@
 import { Registry } from '@grafana/data';
+
 import { PromVisualQueryOperationCategory } from '../types';
+
 import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationDef, VisualQueryModeller } from './types';
 
 export interface VisualQueryBinary<T> {

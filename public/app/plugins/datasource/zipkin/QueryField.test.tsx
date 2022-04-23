@@ -1,9 +1,11 @@
-import { CascaderOption } from '@grafana/ui';
-import { act, renderHook } from '@testing-library/react-hooks';
 import { render, screen } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react-hooks';
 import React from 'react';
-import { ZipkinDatasource } from './datasource';
+
+import { CascaderOption } from '@grafana/ui';
+
 import { ZipkinQueryField, useLoadOptions, useServices } from './QueryField';
+import { ZipkinDatasource } from './datasource';
 import { ZipkinQuery } from './types';
 
 describe('QueryField', () => {

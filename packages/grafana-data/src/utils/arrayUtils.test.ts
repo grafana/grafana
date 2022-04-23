@@ -1,4 +1,5 @@
 import { SortOrder } from '@grafana/schema';
+
 import { sortValues } from './arrayUtils';
 
 describe('arrayUtils', () => {

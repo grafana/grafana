@@ -2,6 +2,7 @@ import { MonoTypeOperatorFunction, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import { DataFrame, DataTransformerConfig } from '../types';
+
 import { standardTransformersRegistry, TransformerRegistryItem } from './standardTransformersRegistry';
 
 const getOperator =

@@ -1,9 +1,10 @@
 import { lastValueFrom, of } from 'rxjs';
+
 import { DataFrame, getFrameDisplayName, toUtc } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
-
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+
 import AppInsightsDatasource from './app_insights_datasource';
 
 const templateSrv = new TemplateSrv();

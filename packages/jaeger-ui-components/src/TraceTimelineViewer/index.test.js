@@ -12,14 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
+
 import { createTheme } from '@grafana/data';
 
-import TraceTimelineViewer from './index';
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
+
 import TimelineHeaderRow from './TimelineHeaderRow';
+
+import TraceTimelineViewer from './index';
 
 describe('<TraceTimelineViewer>', () => {
   const trace = transformTraceData(traceGenerator.trace({}));

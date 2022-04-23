@@ -1,7 +1,9 @@
-import React from 'react';
-import { FooterItem } from './types';
-import { KeyValue } from '@grafana/data';
 import { css } from '@emotion/css';
+import React from 'react';
+
+import { KeyValue } from '@grafana/data';
+
+import { FooterItem } from './types';
 
 export interface FooterProps {
   value: FooterItem;

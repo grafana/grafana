@@ -1,10 +1,12 @@
-import React from 'react';
-import { testIds } from '../../components/LokiQueryEditor';
-import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
+import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { LokiQueryEditorProps } from '../../components/types';
+import { useStyles2 } from '@grafana/ui';
+
+import { testIds } from '../../components/LokiQueryEditor';
 import { LokiQueryField } from '../../components/LokiQueryField';
+import { LokiQueryEditorProps } from '../../components/types';
 
 export function LokiQueryCodeEditor({ query, datasource, range, onRunQuery, onChange, data }: LokiQueryEditorProps) {
   const styles = useStyles2(getStyles);

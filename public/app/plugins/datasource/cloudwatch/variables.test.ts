@@ -1,6 +1,6 @@
+import { setupMockedDataSource } from './__mocks__/CloudWatchDataSource';
 import { VariableQuery, VariableQueryType } from './types';
 import { CloudWatchVariableSupport } from './variables';
-import { setupMockedDataSource } from './__mocks__/CloudWatchDataSource';
 
 const defaultQuery: VariableQuery = {
   queryType: VariableQueryType.Regions,

@@ -12,18 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css, cx } from '@emotion/css';
-import { Icon, useStyles2 } from '@grafana/ui';
-
-import AccordianKeyValues from './AccordianKeyValues';
+import * as React from 'react';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import IoIosArrowRight from 'react-icons/lib/io/ios-arrow-right';
-import { TraceSpanReference } from '../../types/trace';
-import ReferenceLink from '../../url/ReferenceLink';
-import { uAlignIcon, ubMb1 } from '../../uberUtilityStyles';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
+
 import { autoColor } from '../../Theme';
+import { TraceSpanReference } from '../../types/trace';
+import { uAlignIcon, ubMb1 } from '../../uberUtilityStyles';
+import ReferenceLink from '../../url/ReferenceLink';
+
+import AccordianKeyValues from './AccordianKeyValues';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

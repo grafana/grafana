@@ -1,7 +1,9 @@
-import { Alert } from '@grafana/ui';
-import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
+
+import { Alert } from '@grafana/ui';
+import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
+
 import { updateAlertManagerConfigAction } from '../../../state/actions';
 import { CloudChannelValues, ReceiverFormValues, CloudChannelMap } from '../../../types/receiver-form';
 import { cloudNotifierTypes } from '../../../utils/cloud-alertmanager-notifier-types';
@@ -12,6 +14,7 @@ import {
   formValuesToCloudReceiver,
   updateConfigWithReceiver,
 } from '../../../utils/receiver-form';
+
 import { CloudCommonChannelSettings } from './CloudCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
 

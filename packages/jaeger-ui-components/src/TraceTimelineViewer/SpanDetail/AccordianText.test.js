@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { mount } from 'enzyme';
+import React from 'react';
+
 import AccordianText from './AccordianText';
 import TextList from './TextList';
 

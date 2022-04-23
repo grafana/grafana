@@ -1,3 +1,8 @@
+import { cloneDeep, find, findLast, isEmpty, isString, set } from 'lodash';
+import React from 'react';
+import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
+import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
+
 import {
   DataFrame,
   DataQueryError,
@@ -25,10 +30,6 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { store } from 'app/store/store';
 import { AppNotificationTimeout } from 'app/types';
-import { cloneDeep, find, findLast, isEmpty, isString, set } from 'lodash';
-import React from 'react';
-import { from, lastValueFrom, merge, Observable, of, throwError, zip } from 'rxjs';
-import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
 
 import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
@@ -73,6 +74,7 @@ const displayAlert = (datasourceName: string, region: string) =>
       createErrorNotification(
         `CloudWatch request limit reached in ${region} for data source ${datasourceName}`,
         '',
+        undefined,
         React.createElement(ThrottlingErrorMessage, { region }, null)
       )
     )
