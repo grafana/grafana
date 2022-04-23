@@ -16,19 +16,21 @@ var _ Job = new(dummyExportJob)
 type dummyExportJob struct {
 	logger log.Logger
 
-	statusMu sync.Mutex
-	status   ExportStatus
-	cfg      ExportConfig
+	statusMu    sync.Mutex
+	status      ExportStatus
+	cfg         ExportConfig
+	broadcaster statusBroadcaster
 }
 
-func startDummyExportJob(cfg ExportConfig) (Job, error) {
+func startDummyExportJob(cfg ExportConfig, broadcaster statusBroadcaster) (Job, error) {
 	if cfg.Format != "git" {
 		return nil, errors.New("only git format is supported")
 	}
 
 	job := &dummyExportJob{
-		logger: log.New("dummy_export_job"),
-		cfg:    cfg,
+		logger:      log.New("dummy_export_job"),
+		cfg:         cfg,
+		broadcaster: broadcaster,
 		status: ExportStatus{
 			Running: true,
 			Target:  "git export",
@@ -38,6 +40,7 @@ func startDummyExportJob(cfg ExportConfig) (Job, error) {
 		},
 	}
 
+	broadcaster(job.status)
 	go job.start()
 	return job, nil
 }
@@ -62,6 +65,7 @@ func (e *dummyExportJob) start() {
 			s.Status = "done"
 		}
 		e.status = s
+		e.broadcaster(s)
 	}()
 
 	e.logger.Info("Starting dummy export job")
@@ -72,10 +76,11 @@ func (e *dummyExportJob) start() {
 		e.status.Changed = t.UnixMilli()
 		e.status.Current++
 		e.status.Last = fmt.Sprintf("ITEM: %d", e.status.Current)
-
-		// Stop after 20 seconds
-		shouldStop := e.status.Current >= e.status.Count
 		e.statusMu.Unlock()
+
+		// Wait till we are done
+		shouldStop := e.status.Current >= e.status.Count
+		e.broadcaster(e.status)
 
 		if shouldStop {
 			break

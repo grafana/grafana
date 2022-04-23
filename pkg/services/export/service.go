@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -23,19 +24,21 @@ type ExportService interface {
 type StandardExport struct {
 	logger log.Logger
 	sql    *sqlstore.SQLStore
+	glive  *live.GrafanaLive
 	mutex  sync.Mutex
 
 	// updated with mutex
 	exportJob Job
 }
 
-func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles) ExportService {
+func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, gl *live.GrafanaLive) ExportService {
 	if !features.IsEnabled(featuremgmt.FlagExport) {
 		return &StubExport{}
 	}
 
 	return &StandardExport{
 		sql:       sql,
+		glive:     gl,
 		logger:    log.New("export_service"),
 		exportJob: &stoppedJob{},
 	}
@@ -64,7 +67,9 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 		return response.Error(http.StatusLocked, "export already running", nil)
 	}
 
-	job, err := startDummyExportJob(cfg)
+	job, err := startDummyExportJob(cfg, func(s ExportStatus) {
+		ex.broadcastStatus(c.OrgId, s)
+	})
 	if err != nil {
 		ex.logger.Error("failed to start export job", "err", err)
 		return response.Error(http.StatusBadRequest, "failed to start export job", err)
@@ -72,4 +77,17 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 
 	ex.exportJob = job
 	return response.JSON(http.StatusOK, ex.exportJob.getStatus())
+}
+
+func (ex *StandardExport) broadcastStatus(orgID int64, s ExportStatus) {
+	msg, err := json.Marshal(s)
+	if err != nil {
+		ex.logger.Warn("Error making message", "err", err)
+		return
+	}
+	err = ex.glive.Publish(orgID, "grafana/broadcast/export", msg)
+	if err != nil {
+		ex.logger.Warn("Error Publish message", "err", err)
+		return
+	}
 }

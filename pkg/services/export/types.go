@@ -31,3 +31,6 @@ type Job interface {
 	getStatus() ExportStatus
 	getConfig() ExportConfig
 }
+
+// Will broadcast the live status
+type statusBroadcaster func(s ExportStatus)
