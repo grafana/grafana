@@ -61,10 +61,10 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 - [Organizations]({{< relref "../../administration/manage-organizations/_index.md" >}})
 - [Provisioning]({{< relref "../../administration/provisioning/_index.md" >}})
 - [Reports]({{< relref "../reporting.md" >}})
-- [Roles]({{< relref "../../administration/manage-users-permissions/_index.md" >}})
+- [Roles]({{< relref "../../administration/manage-users-and-permissions/_index.md" >}})
 - [Settings]({{< relref "../settings-updates.md" >}})
 - [Service accounts]({{< relref "../../administration/service-accounts/_index.md" >}})
-- [Teams]({{< relref "../../administration/manage-users-permissions/manage-teams/_index.md" >}})
+- [Teams]({{< relref "../../administration/manage-users-and-permissions/manage-teams/_index.md" >}})
 - [Users]({{< relref "../../administration/manage-users-and-permissions/manage-server-users/_index.md" >}})
 
 To learn more about the permissions associated with each fixed role, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions.md" >}}).

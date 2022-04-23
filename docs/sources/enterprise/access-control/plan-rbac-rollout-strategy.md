@@ -51,7 +51,7 @@ For example:
    - If a team does not exist in Grafana, team sync creates it.
    - If a team exists in Grafana, team sync updates it.
 
-   For more information about team sync, refer to [Team sync]({{< relref "../../team-sync.md" >}}).
+   For more information about team sync, refer to [Team sync]({{< relref "../team-sync.md" >}}).
 
 1. In Grafana, assign RBAC permissions to roles and teams.
 
@@ -164,7 +164,7 @@ This section describes two ways that you can enable viewers to create reports.
 
 - Assign the `fixed:reporting:admin:edit` role to the `Viewer` basic role. For more information about assigning a fixed role to a basic role, refer to [Assign a fixed role to a basic role using provisioning]({{< relref "./assign-rbac-roles#assign-a-fixed-role-to-a-basic-role-using-provisioning" >}}).
 
-  > **Note:** The `fixed:reporting:admin:edit` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Fixed role definitions]({{< relref "../rbac-fixed-basic-role-definitions#fixed-role-definitions" >}}).
+  > **Note:** The `fixed:reporting:admin:edit` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions#fixed-role-definitions" >}}).
 
 - [Create a custom role]({{< ref "./manage-rbac-roles#create-custom-roles" >}}) that includes the `reports.admin:write` permission, and add the custom role to the `Viewer` basic role.
   - For more information about assigning a custom role to a basic role, refer to [Assign a custom role to a basic role using provisioning]({{< relref "./assign-rbac-roles#assign-a-custom-role-to-a-basic-role-using-provisioning" >}}) or [Assign a custom role to a basic role using the HTTP API]({{< relref "./assign-rbac-roles#assign-a-custom-role-to-a-basic-role-using-the-http-api" >}}).
