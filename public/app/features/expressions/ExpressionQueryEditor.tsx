@@ -1,12 +1,14 @@
 import React, { PureComponent } from 'react';
+
 import { DataSourceApi, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, Select } from '@grafana/ui';
-import { Resample } from './components/Resample';
-import { Reduce } from './components/Reduce';
-import { Math } from './components/Math';
+
 import { ClassicConditions } from './components/ClassicConditions';
-import { getDefaults } from './utils/expressionTypes';
+import { Math } from './components/Math';
+import { Reduce } from './components/Reduce';
+import { Resample } from './components/Resample';
 import { ExpressionQuery, ExpressionQueryType, gelTypes } from './types';
+import { getDefaults } from './utils/expressionTypes';
 
 type Props = QueryEditorProps<DataSourceApi<ExpressionQuery>, ExpressionQuery>;
 

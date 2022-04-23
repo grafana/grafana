@@ -1,4 +1,6 @@
 import { lastValueFrom, Observable, of } from 'rxjs';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
+
 import {
   DataFrame,
   dataFrameToJSON,
@@ -9,9 +11,8 @@ import {
   MutableDataFrame,
   PluginType,
 } from '@grafana/data';
-
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+
 import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './datasource';
 import mockJson from './mockJsonResponse.json';
 

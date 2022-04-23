@@ -6,13 +6,14 @@ import {
   ReducerID,
   standardEditorsRegistry,
 } from '@grafana/data';
-import { TablePanel } from './TablePanel';
-import { PanelOptions, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
 import { TableFieldOptions } from '@grafana/schema';
-import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { TableCellDisplayMode } from '@grafana/ui';
-import { TableSuggestionsSupplier } from './suggestions';
+
 import { PaginationEditor } from './PaginationEditor';
+import { TablePanel } from './TablePanel';
+import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
+import { PanelOptions, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
+import { TableSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)

@@ -1,6 +1,7 @@
-import { RangeJSON, Range as SlateRange, Editor as CoreEditor } from 'slate';
-import { Plugin } from '@grafana/slate-react';
 import { isKeyHotkey } from 'is-hotkey';
+import { RangeJSON, Range as SlateRange, Editor as CoreEditor } from 'slate';
+
+import { Plugin } from '@grafana/slate-react';
 
 const isIndentLeftHotkey = isKeyHotkey('mod+[');
 const isShiftTabHotkey = isKeyHotkey('shift+tab');

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { IconName } from '../../types';
+
 import { SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { useTheme2 } from '../../themes';
+import { IconName } from '../../types';
+import { ComponentSize } from '../../types/size';
 import { Button, ButtonVariant } from '../Button';
 import { Select } from '../Select/Select';
-import { ComponentSize } from '../../types/size';
-import { selectors } from '@grafana/e2e-selectors';
-import { useTheme2 } from '../../themes';
 
 export interface ValuePickerProps<T> {
   /** Label to display on the picker button */

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+
 import { FieldOverrideEditorProps, FieldType, getFieldDisplayName, SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 

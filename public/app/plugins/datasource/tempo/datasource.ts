@@ -1,5 +1,7 @@
+import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
 import { EMPTY, from, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, mergeMap, toArray } from 'rxjs/operators';
+
 import {
   DataQuery,
   DataQueryRequest,
@@ -11,7 +13,6 @@ import {
   LoadingState,
   ScopedVars,
 } from '@grafana/data';
-import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import {
   config,
   BackendSrvRequest,
@@ -20,12 +21,15 @@ import {
   TemplateSrv,
   getTemplateSrv,
 } from '@grafana/runtime';
+import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
+import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
+
 import { LokiOptions, LokiQuery } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
+
 import {
   failedMetric,
   histogramMetric,
@@ -39,7 +43,6 @@ import {
   transformFromOTLP as transformFromOTEL,
   createTableFrameFromSearch,
 } from './resultTransformer';
-import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
 export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';

@@ -1,6 +1,8 @@
 import React from 'react';
-import { ResourcePermission } from './types';
+
 import { Button, Icon, Select, Tooltip } from '@grafana/ui';
+
+import { ResourcePermission } from './types';
 
 interface Props {
   item: ResourcePermission;

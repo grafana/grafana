@@ -1,12 +1,15 @@
 import React, { useEffect, useMemo } from 'react';
+
 import { SelectableValue, toOption } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { Select, Switch } from '@grafana/ui';
+
 import { STATISTICS } from '../../cloudwatch-sql/language';
 import { CloudWatchDatasource } from '../../datasource';
 import { useDimensionKeys, useMetrics, useNamespaces } from '../../hooks';
 import { CloudWatchMetricsQuery } from '../../types';
 import { appendTemplateVariables } from '../../utils/utils';
+
 import {
   getMetricNameFromExpression,
   getNamespaceFromExpression,

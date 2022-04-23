@@ -422,7 +422,7 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 			continue
 		}
 
-		if isMemberOf(memberOf, group.GroupDN) {
+		if IsMemberOf(memberOf, group.GroupDN) {
 			extUser.OrgRoles[group.OrgId] = group.OrgRole
 			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
 				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin

@@ -1,13 +1,14 @@
+import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { TransactionStatus } from '../types';
+
 import {
   initialKeyedVariablesState,
   keyedVariablesReducer,
   KeyedVariablesState,
   toKeyedAction,
 } from './keyedVariablesReducer';
-import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { initialTransactionState, variablesCompleteTransaction, variablesInitTransaction } from './transactionReducer';
-import { TransactionStatus } from '../types';
 import { getInitialTemplatingState } from './reducers';
+import { initialTransactionState, variablesCompleteTransaction, variablesInitTransaction } from './transactionReducer';
 
 describe('dashboardVariablesReducer', () => {
   describe('when an toUidAction is dispatched', () => {

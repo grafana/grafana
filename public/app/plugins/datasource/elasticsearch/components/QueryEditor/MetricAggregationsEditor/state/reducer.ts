@@ -1,4 +1,5 @@
 import { Action } from '@reduxjs/toolkit';
+
 import { defaultMetricAgg } from '../../../../query_def';
 import { ElasticsearchQuery } from '../../../../types';
 import { removeEmpty } from '../../../../utils';
@@ -10,6 +11,7 @@ import {
   MetricAggregation,
 } from '../aggregations';
 import { getChildren, metricAggregationConfig } from '../utils';
+
 import {
   addMetric,
   changeMetricAttribute,

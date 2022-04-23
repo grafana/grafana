@@ -1,8 +1,8 @@
 import { Labels } from './data';
 import { DataFrame } from './dataFrame';
+import { DataQueryResponse } from './datasource';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
-import { DataQueryResponse } from './datasource';
 
 /**
  * Mapping of log level abbreviation to canonical log level.

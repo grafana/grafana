@@ -1,3 +1,8 @@
+import { css } from '@emotion/css';
+import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
+import React, { RefObject, useCallback, useMemo, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+
 import {
   DataFrame,
   DataLink,
@@ -12,23 +17,21 @@ import {
   SplitOpen,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
 import { Trace, TracePageHeader, TraceTimelineViewer, TTraceTimeline } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
-import React, { RefObject, useCallback, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+
 import { changePanelState } from '../state/explorePane';
+
 import { createSpanLinkFactory } from './createSpanLink';
+import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
 import { useViewRange } from './useViewRange';
-import { css } from '@emotion/css';
-import { useStyles2 } from '@grafana/ui';
-import { useChildrenState } from './useChildrenState';
-import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   noDataMsg: css`

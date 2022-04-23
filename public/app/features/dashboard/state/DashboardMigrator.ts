@@ -1,11 +1,5 @@
-// Libraries
 import { each, find, findIndex, flattenDeep, isArray, isBoolean, isNumber, isString, map, max, some } from 'lodash';
-// Utils
-import getFactors from 'app/core/utils/factors';
-import kbn from 'app/core/utils/kbn';
-// Types
-import { PanelModel } from './PanelModel';
-import { DashboardModel } from './DashboardModel';
+
 import {
   AnnotationQuery,
   DataLink,
@@ -29,7 +23,10 @@ import {
   ValueMap,
   ValueMapping,
 } from '@grafana/data';
-// Constants
+import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/editors/registry';
+import { config } from 'app/core/config';
 import {
   DEFAULT_PANEL_SPAN,
   DEFAULT_ROW_HEIGHT,
@@ -38,24 +35,26 @@ import {
   GRID_COLUMN_COUNT,
   MIN_PANEL_HEIGHT,
 } from 'app/core/constants';
+import getFactors from 'app/core/utils/factors';
+import kbn from 'app/core/utils/kbn';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
-import { VariableHide } from '../../variables/types';
-import { config } from 'app/core/config';
-import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
-import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
-import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
-import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
-import { labelsToFieldsTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/labelsToFields';
-import { mergeTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
 import {
   migrateCloudWatchQuery,
   migrateMultipleStatsAnnotationQuery,
   migrateMultipleStatsMetricsQuery,
 } from 'app/plugins/datasource/cloudwatch/migrations';
 import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from 'app/plugins/datasource/cloudwatch/types';
-import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/editors/registry';
-import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
+import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
+
+import { labelsToFieldsTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/labelsToFields';
+import { mergeTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
+import { VariableHide } from '../../variables/types';
+
+import { DashboardModel } from './DashboardModel';
+import { PanelModel } from './PanelModel';
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);

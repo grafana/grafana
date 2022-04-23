@@ -1,11 +1,13 @@
-import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
-import { Playlist } from './types';
-import { PlaylistNewPage } from './PlaylistNewPage';
-import { backendSrv } from '../../core/services/backend_srv';
 import { locationService } from '@grafana/runtime';
+
+import { backendSrv } from '../../core/services/backend_srv';
+
+import { PlaylistNewPage } from './PlaylistNewPage';
+import { Playlist } from './types';
 
 jest.mock('./usePlaylist', () => ({
   // so we don't need to add dashboard items in test
@@ -66,7 +68,7 @@ describe('PlaylistNewPage', () => {
       const { backendSrvMock } = getTestContext();
 
       expect(locationService.getLocation().pathname).toEqual('/');
-      userEvent.type(screen.getByRole('textbox', { name: /playlist name/i }), 'A Name');
+      await userEvent.type(screen.getByRole('textbox', { name: /playlist name/i }), 'A Name');
       fireEvent.submit(screen.getByRole('button', { name: /save/i }));
       await waitFor(() => expect(backendSrvMock).toHaveBeenCalledTimes(1));
       expect(backendSrvMock).toHaveBeenCalledWith('/api/playlists', {

@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+
 import {
   DataTransformerID,
   SelectableValue,
@@ -8,6 +9,7 @@ import {
   GroupingToMatrixTransformerOptions,
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<GroupingToMatrixTransformerOptions>> = ({

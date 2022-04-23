@@ -4,6 +4,7 @@ import Datasource from '../../datasource';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import { hasOption, toOption } from '../../utils/common';
 import { useAsyncState } from '../../utils/useAsyncState';
+
 import { setMetricNamespace, setSubscriptionID } from './setQueryValue';
 
 export interface MetricMetadata {
@@ -153,7 +154,12 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
         return;
       }
 
-      const results = await datasource.getMetricNamespaces(subscription, resourceGroup, metricDefinition, resourceName);
+      const results = await datasource.azureMonitorDatasource.getMetricNamespaces({
+        subscription,
+        resourceGroup,
+        metricDefinition,
+        resourceName,
+      });
       const options = formatOptions(results, metricNamespace);
 
       // Do some cleanup of the query state if need be
@@ -180,13 +186,13 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
         return;
       }
 
-      const results = await datasource.getMetricNames(
+      const results = await datasource.azureMonitorDatasource.getMetricNames({
         subscription,
         resourceGroup,
         metricDefinition,
         resourceName,
-        metricNamespace
-      );
+        metricNamespace,
+      });
 
       const options = formatOptions(results, metricName);
 
@@ -217,8 +223,8 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
       return;
     }
 
-    datasource
-      .getMetricMetadata(subscription, resourceGroup, metricDefinition, resourceName, metricNamespace, metricName)
+    datasource.azureMonitorDatasource
+      .getMetricMetadata({ subscription, resourceGroup, metricDefinition, resourceName, metricNamespace, metricName })
       .then((metadata) => {
         // TODO: Move the aggregationTypes and timeGrain defaults into `getMetricMetadata`
         const aggregations = (metadata.supportedAggTypes || [metadata.primaryAggType]).map((v) => ({

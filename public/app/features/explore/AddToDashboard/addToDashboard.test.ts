@@ -1,9 +1,11 @@
 import { DataQuery, MutableDataFrame } from '@grafana/data';
-import { ExplorePanelData } from 'app/types';
-import { createEmptyQueryResponse } from '../state/utils';
-import { setDashboardInLocalStorage } from './addToDashboard';
-import * as api from 'app/features/dashboard/state/initDashboard';
 import { backendSrv } from 'app/core/services/backend_srv';
+import * as api from 'app/features/dashboard/state/initDashboard';
+import { ExplorePanelData } from 'app/types';
+
+import { createEmptyQueryResponse } from '../state/utils';
+
+import { setDashboardInLocalStorage } from './addToDashboard';
 
 describe('addPanelToDashboard', () => {
   let spy: jest.SpyInstance;
