@@ -1,7 +1,9 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { TracesPanel } from './TracesPanel';
+import React from 'react';
+
 import { LoadingState, PanelProps } from '@grafana/data';
+
+import { TracesPanel } from './TracesPanel';
 
 describe('TracesPanel', () => {
   it('shows no data message when no data supplied', async () => {
