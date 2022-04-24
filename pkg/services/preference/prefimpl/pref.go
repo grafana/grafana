@@ -34,6 +34,7 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 	if err != nil {
 		return nil, err
 	}
+	s.cfg.Logger.Error("Prefere", "theme", listQuery)
 
 	res := s.GetDefaults()
 	for _, p := range prefs {
