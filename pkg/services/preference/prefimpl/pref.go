@@ -25,16 +25,20 @@ func ProvideService(db db.DB, cfg *setting.Cfg) pref.Service {
 }
 
 func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreferenceWithDefaultsQuery) (*pref.Preference, error) {
+	if query.OrgID == 0 {
+		return nil, errors.New("missing OrgID in call to Preferences.GetWithDefaults")
+	}
+
 	listQuery := &pref.Preference{
 		Teams:  query.Teams,
 		OrgID:  query.OrgID,
 		UserID: query.UserID,
 	}
+
 	prefs, err := s.store.List(ctx, listQuery)
 	if err != nil {
 		return nil, err
 	}
-	s.cfg.Logger.Error("Prefere", "theme", listQuery)
 
 	res := s.GetDefaults()
 	for _, p := range prefs {
