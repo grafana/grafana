@@ -114,7 +114,7 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
     if (simKey.uid) {
       path += '/' + simKey.uid;
     }
-    ds.postResource('sim/' + path, { cfg });
+    ds.postResource('sim/' + path, cfg);
   };
   return (
     <>
