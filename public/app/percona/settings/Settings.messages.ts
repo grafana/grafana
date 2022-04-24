@@ -1,7 +1,5 @@
 export const GUI_DOC_URL =
   'https://www.percona.com/doc/percona-monitoring-and-management/2.x/manage/server-admin-gui.html';
-export const DATA_RETENTION_URL =
-  'https://www.percona.com/doc/percona-monitoring-and-management/2.x/faq.html#how-to-control-data-retention-for-pmm';
 export const HOW_TO_DOC_URL = 'https://www.percona.com/doc/percona-monitoring-and-management/2.x/how-to';
 
 export const Messages = {
@@ -10,8 +8,9 @@ export const Messages = {
     retentionLabel: 'Data retention',
     retentionTooltip: 'This is the value for how long data will be stored.',
     retentionUnits: 'days',
+    retentionLink: `${GUI_DOC_URL}#data-retention`,
     telemetryLabel: 'Telemetry',
-    telemetryLink: `${GUI_DOC_URL}#server-admin-gui-telemetry`,
+    telemetryLink: `${GUI_DOC_URL}#telemetry`,
     telemetryTooltip: 'Option to send usage data back to Percona to let us make our product better.',
     telemetryDisclaimer:
       'Disabling Telemetry while Advisor Checks/Alerting is on will prevent PMM from downloading checks and alert templates.',
