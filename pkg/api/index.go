@@ -168,12 +168,12 @@ func (hs *HTTPServer) ReqCanAdminTeams(c *models.ReqContext) bool {
 	return c.OrgRole == models.ROLE_ADMIN || (hs.Cfg.EditorsCanAdmin && c.OrgRole == models.ROLE_EDITOR)
 }
 
-func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dtos.NavLink, error) {
+func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *pref.Preference) ([]*dtos.NavLink, error) {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	navTree := []*dtos.NavLink{}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
-		savedItemsLinks, err := hs.buildSavedItemsNavLinks(c)
+		savedItemsLinks, err := hs.buildSavedItemsNavLinks(c, prefs)
 		if err != nil {
 			return nil, err
 		}
@@ -411,16 +411,11 @@ func (hs *HTTPServer) addHelpLinks(navTree []*dtos.NavLink, c *models.ReqContext
 	return navTree
 }
 
-func (hs *HTTPServer) buildSavedItemsNavLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
+func (hs *HTTPServer) buildSavedItemsNavLinks(c *models.ReqContext, prefs *pref.Preference) ([]*dtos.NavLink, error) {
 	savedItemsChildNavs := []*dtos.NavLink{}
 
 	// query preferences table for any saved items
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.SignedInUser.UserId}
-	preference, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
-	if err != nil {
-		return nil, err
-	}
-	savedItems := preference.JSONData.Navbar.SavedItems
+	savedItems := prefs.JSONData.Navbar.SavedItems
 
 	if len(savedItems) > 0 {
 		for _, savedItem := range savedItems {
@@ -665,7 +660,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 
 	settings["dateFormats"] = hs.Cfg.DateFormats
 
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.SignedInUser.UserId}
+	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.UserId, OrgID: c.OrgId, Teams: c.Teams}
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	if err != nil {
 		return nil, err
@@ -690,7 +685,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		settings["appSubUrl"] = ""
 	}
 
-	navTree, err := hs.getNavTree(c, hasEditPerm)
+	navTree, err := hs.getNavTree(c, hasEditPerm, prefs)
 	if err != nil {
 		return nil, err
 	}

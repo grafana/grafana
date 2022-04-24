@@ -30,6 +30,7 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 		OrgID:  query.OrgID,
 		UserID: query.UserID,
 	}
+
 	prefs, err := s.store.List(ctx, listQuery)
 	if err != nil {
 		return nil, err
