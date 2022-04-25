@@ -453,6 +453,11 @@ func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opt
 	return store
 }
 
+func InitTestDBWithAC(t ITestDB) *SQLStore {
+	store := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
+	return store
+}
+
 // InitTestDB initializes the test DB.
 func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()

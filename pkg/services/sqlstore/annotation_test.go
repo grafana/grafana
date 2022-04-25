@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -338,10 +337,7 @@ func TestAnnotations(t *testing.T) {
 }
 
 func TestAnnotationListingWithRBAC(t *testing.T) {
-	sql := sqlstore.InitTestDB(t)
-	sql.Cfg.IsFeatureToggleEnabled = func(key string) bool {
-		return key == featuremgmt.FlagAccesscontrol
-	}
+	sql := sqlstore.InitTestDBWithAC(t)
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
 	dashboardStore := dashboardstore.ProvideDashboardStore(sql)
 
