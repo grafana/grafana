@@ -46,6 +46,8 @@ func (s *QueryHistoryService) searchHandler(c *models.ReqContext) response.Respo
 		Sort:           c.Query("sort"),
 		Page:           c.QueryInt("page"),
 		Limit:          c.QueryInt("limit"),
+		From:           c.QueryInt64("from"),
+		To:             c.QueryInt64("to"),
 	}
 
 	result, err := s.SearchInQueryHistory(c.Req.Context(), c.SignedInUser, query)
