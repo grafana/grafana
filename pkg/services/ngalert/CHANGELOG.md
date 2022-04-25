@@ -51,7 +51,7 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [BUGFIX] (Legacy) Templates: Parse notification templates using all the matches of the alert rule when going from `Alerting` to `OK` in legacy alerting #47355
 - [BUGFIX] Scheduler: Fix state manager to support OK option of `AlertRule.ExecErrState` #47670
 - [ENHANCEMENT] Templates: Enable the use of classic condition values in templates #46971
-- [ENHANCEMENT] Scheduler: Ticker expose new metrics. In legacy, metrics are prefixed with `legacy_` #47828, #xxxx 
+- [ENHANCEMENT] Scheduler: Ticker expose new metrics. In legacy, metrics are prefixed with `legacy_` #47828, #48190 
     - `grafana_alerting_ticker_last_consumed_tick_timestamp_seconds`
     - `grafana_alerting_ticker_next_tick_timestamp_seconds`
     - `grafana_alerting_ticker_interval_seconds`
