@@ -9,9 +9,9 @@ import { stylesFactory, useTheme2 } from '@grafana/ui';
 
 // Types
 
-const drawerSlide = keyframes`
+const drawerSlide = (theme: GrafanaTheme2) => keyframes`
   0% {
-    transform: translateY(400px);
+    transform: translateY(${theme.components.horizontalDrawer.defaultHeight}px);
   }
 
   100% {
@@ -32,7 +32,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     drawerActive: css`
       opacity: 1;
-      animation: 0.5s ease-out ${drawerSlide};
+      animation: 0.5s ease-out ${drawerSlide(theme)};
     `,
     rzHandle: css`
       background: ${theme.colors.secondary.main};
@@ -66,7 +66,7 @@ export function ExploreDrawer(props: Props) {
   return (
     <Resizable
       className={cx(styles.container, styles.drawerActive)}
-      defaultSize={{ width: drawerWidth, height: '400px' }}
+      defaultSize={{ width: drawerWidth, height: `${theme.components.horizontalDrawer.defaultHeight}px` }}
       handleClasses={{ top: styles.rzHandle }}
       enable={{
         top: true,
