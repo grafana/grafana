@@ -20,7 +20,7 @@ Your rollout strategy should help you answer the following questions:
 
 ## Review basic role and fixed role definitions
 
-As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role defintions. In addition to assigning fixed roles to any user and team, you can also assign fixed roles to basic roles and custom roles. This flexibilty means that there are many combinations of fixed role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use.
+As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role definitions. In addition to assigning fixed roles to any user and team, you can also assign fixed roles to basic roles and custom roles. This flexibility means that there are many combinations of fixed role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use.
 
 To learn more about basic roles and fixed roles, refer to the following documentation:
 
