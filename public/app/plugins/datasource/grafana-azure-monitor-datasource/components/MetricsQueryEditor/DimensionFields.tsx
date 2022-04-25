@@ -82,9 +82,11 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
     onQueryChange(setDimensionFilterValue(query, filterIndex, fieldName, value));
   };
 
-  const onFilterInputChange = (index: number, ev: React.FormEvent) => {
-    if (ev.target instanceof HTMLInputElement) {
-      onFieldChange(index, 'filter', [ev.target.value]);
+  const onFilterInputChange = (index: number, v: SelectableValue<string>) => {
+    if (v) {
+      onFieldChange(index, 'filter', [v.value!]);
+    } else {
+      onFieldChange(index, 'filter', []);
     }
   };
 
@@ -129,7 +131,18 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
                 onChange={(v) => onMultiSelectFilterChange(index, v)}
               />
             ) : (
-              <Input placeholder="" value={filter.filter} onChange={(ev) => onFilterInputChange(index, ev)} />
+              <Select
+                menuShouldPortal
+                placeholder="Select value"
+                value={filter.filter ? filter.filter[0] : ''}
+                allowCustomValue
+                options={[...(dimensionLabels[filter.dimension.toLowerCase()] ?? [])].map((item) => ({
+                  value: item,
+                  label: item,
+                }))}
+                onChange={(v) => onFilterInputChange(index, v)}
+                isClearable
+              />
             )}
 
             <Button
