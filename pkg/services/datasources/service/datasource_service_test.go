@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	encJson "encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -748,7 +747,7 @@ func TestService_GetDecryptedValues(t *testing.T) {
 		jsonData := map[string]string{
 			"password": "securePassword",
 		}
-		jsonString, err := json.Marshal(jsonData)
+		jsonString, err := encJson.Marshal(jsonData)
 		require.NoError(t, err)
 
 		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, secretType, string(jsonString))
