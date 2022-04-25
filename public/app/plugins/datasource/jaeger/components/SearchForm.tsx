@@ -1,14 +1,17 @@
 import { css } from '@emotion/css';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelect, InlineField, InlineFieldRow, Input } from '@grafana/ui';
-import React, { useCallback, useEffect, useState } from 'react';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { dispatch } from 'app/store/store';
+
 import { JaegerDatasource } from '../datasource';
 import { JaegerQuery } from '../types';
 import { transformToLogfmt } from '../util';
+
 import { AdvancedOptions } from './AdvancedOptions';
-import { dispatch } from 'app/store/store';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification } from 'app/core/copy/appNotification';
 
 type Props = {
   datasource: JaegerDatasource;

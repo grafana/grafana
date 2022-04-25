@@ -1,12 +1,13 @@
 // Libraries
-import React, { memo } from 'react';
 import { css, cx } from '@emotion/css';
 import { map } from 'lodash';
+import React, { memo } from 'react';
 
 // Types
-import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select } from '@grafana/ui';
+
 import { LokiQuery, LokiQueryType } from '../types';
 
 export interface LokiOptionFieldsProps {

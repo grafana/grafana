@@ -1,31 +1,42 @@
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+
 import { LoadingState } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
+
 import { PromQueryEditorProps } from '../../components/types';
+import { PromQuery } from '../../types';
 import { promQueryModeller } from '../PromQueryModeller';
+import { buildVisualQueryFromString } from '../parsing';
+import { FeedbackLink } from '../shared/FeedbackLink';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from '../shared/QueryHeaderSwitch';
 import { QueryEditorMode } from '../shared/types';
-import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
-import { buildVisualQueryFromString } from '../parsing';
-import { PromQueryCodeEditor } from './PromQueryCodeEditor';
-import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
-import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { changeEditorMode, getQueryWithDefaults } from '../state';
-import { PromQuery } from '../../types';
-import { FeedbackLink } from '../shared/FeedbackLink';
+
+import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
+import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
+import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
+import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 
 export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) => {
-  const { onChange, onRunQuery, data } = props;
+  const { onChange, onRunQuery, data, app } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
 
-  const query = getQueryWithDefaults(props.query, props.app);
+  const query = getQueryWithDefaults(props.query, app);
   const editorMode = query.editorMode!;
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
+      reportInteraction('user_grafana_prometheus_editor_mode_clicked', {
+        newEditor: newMetricEditorMode,
+        previousEditor: query.editorMode ?? '',
+        newQuery: !query.expr,
+        app: app ?? '',
+      });
+
       if (newMetricEditorMode === QueryEditorMode.Builder) {
         const result = buildVisualQueryFromString(query.expr || '');
         // If there are errors, give user a chance to decide if they want to go to builder as that can loose some data.
@@ -36,7 +47,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
       }
       changeEditorMode(query, newMetricEditorMode, onChange);
     },
-    [onChange, query]
+    [onChange, query, app]
   );
 
   useEffect(() => {

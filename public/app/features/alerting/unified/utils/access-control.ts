@@ -1,6 +1,7 @@
-import { AccessControlAction } from 'app/types';
-import { isGrafanaRulesSource } from './datasource';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
+
+import { isGrafanaRulesSource } from './datasource';
 
 type RulesSourceType = 'grafana' | 'external';
 

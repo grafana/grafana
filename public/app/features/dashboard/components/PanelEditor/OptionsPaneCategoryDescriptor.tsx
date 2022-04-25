@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 

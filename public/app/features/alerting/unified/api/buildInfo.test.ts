@@ -1,5 +1,7 @@
-import { PromApplication } from 'app/types/unified-alerting-dto';
 import { of, throwError } from 'rxjs';
+
+import { PromApplication } from 'app/types/unified-alerting-dto';
+
 import { fetchDataSourceBuildInfo } from './buildInfo';
 import { fetchRules } from './prometheus';
 import { fetchTestRulerRulesGroup } from './ruler';

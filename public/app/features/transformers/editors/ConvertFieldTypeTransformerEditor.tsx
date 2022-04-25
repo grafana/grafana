@@ -1,4 +1,5 @@
 import React, { ChangeEvent, useCallback } from 'react';
+
 import {
   DataTransformerID,
   FieldNamePickerConfigSettings,
@@ -9,11 +10,11 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-
 import { ConvertFieldTypeTransformerOptions } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
-import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
+
 import { ConvertFieldTypeOptions } from '../../../../../packages/grafana-data/src/transformations/transformers/convertFieldType';
+import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
 
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
   settings: { width: 24 },

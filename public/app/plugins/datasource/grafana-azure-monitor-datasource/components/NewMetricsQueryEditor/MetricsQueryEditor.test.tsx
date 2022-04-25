@@ -1,17 +1,19 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import { selectOptionInTest } from '@grafana/ui';
 
-import MetricsQueryEditor from './MetricsQueryEditor';
-import createMockQuery from '../../__mocks__/query';
 import createMockDatasource from '../../__mocks__/datasource';
+import createMockQuery from '../../__mocks__/query';
 import createMockResourcePickerData from '../../__mocks__/resourcePickerData';
 import {
   createMockResourceGroupsBySubscription,
   createMockSubscriptions,
   mockResourcesByResourceGroup,
 } from '../../__mocks__/resourcePickerRows';
+
+import MetricsQueryEditor from './MetricsQueryEditor';
 
 const variableOptionGroup = {
   label: 'Template variables',
@@ -83,9 +85,9 @@ describe('MetricsQueryEditor', () => {
     const checkbox = await screen.findByLabelText('web-server');
     expect(checkbox).toBeInTheDocument();
     expect(checkbox).not.toBeChecked();
-    userEvent.click(checkbox);
+    await userEvent.click(checkbox);
     expect(checkbox).toBeChecked();
-    userEvent.click(await screen.findByRole('button', { name: 'Apply' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Apply' }));
 
     expect(onChange).toBeCalledTimes(1);
     expect(onChange).toBeCalledWith(
@@ -136,9 +138,9 @@ describe('MetricsQueryEditor', () => {
     const checkbox = await screen.findByLabelText('db-server');
     expect(checkbox).toBeInTheDocument();
     expect(checkbox).not.toBeChecked();
-    userEvent.click(checkbox);
+    await userEvent.click(checkbox);
     expect(checkbox).toBeChecked();
-    userEvent.click(await screen.findByRole('button', { name: 'Apply' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Apply' }));
 
     expect(onChange).toBeCalledTimes(1);
     expect(onChange).toBeCalledWith(

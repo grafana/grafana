@@ -1,23 +1,26 @@
 import React, { lazy, PureComponent, RefObject, Suspense } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { ExploreId } from 'app/types/explore';
-import { PageToolbar, SetInterval, ToolbarButton, ToolbarButtonRow } from '@grafana/ui';
+
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
 import { config, DataSourcePicker } from '@grafana/runtime';
-import { StoreState } from 'app/types/store';
+import { PageToolbar, SetInterval, ToolbarButton, ToolbarButtonRow } from '@grafana/ui';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
-import { changeDatasource } from './state/datasource';
-import { splitClose, splitOpen } from './state/main';
-import { syncTimes, changeRefreshInterval } from './state/time';
-import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
+import { ExploreId } from 'app/types/explore';
+import { StoreState } from 'app/types/store';
+
+import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
 import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
+import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
+
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { RunButton } from './RunButton';
-import { LiveTailControls } from './useLiveTailControls';
+import { changeDatasource } from './state/datasource';
+import { splitClose, splitOpen } from './state/main';
 import { cancelQueries, runQueries } from './state/query';
 import { isSplit } from './state/selectors';
-import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
+import { syncTimes, changeRefreshInterval } from './state/time';
+import { LiveTailControls } from './useLiveTailControls';
 
 const AddToDashboard = lazy(() =>
   import('./AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))

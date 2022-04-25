@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
 
-import TimelineHeaderRow from './TimelineHeaderRow';
-import TimelineColumnResizer from './TimelineColumnResizer';
-import TimelineViewingLayer from './TimelineViewingLayer';
 import Ticks from '../Ticks';
+
 import { TimelineCollapser } from './TimelineCollapser';
+import TimelineColumnResizer from './TimelineColumnResizer';
+import TimelineHeaderRow from './TimelineHeaderRow';
+import TimelineViewingLayer from './TimelineViewingLayer';
 
 describe('<TimelineHeaderRow>', () => {
   let wrapper;

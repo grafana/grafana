@@ -1,4 +1,5 @@
 import { toDataFrame, FieldType } from '@grafana/data';
+
 import { rowsToFields } from './rowsToFields';
 
 describe('Rows to fields', () => {

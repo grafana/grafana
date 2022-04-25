@@ -1,8 +1,10 @@
 import React from 'react';
+
 import { DataSourceSettings } from '@grafana/data';
 
-import { DataSourceHttpSettings } from './DataSourceHttpSettings';
 import { UseState } from '../../utils/storybook/UseState';
+
+import { DataSourceHttpSettings } from './DataSourceHttpSettings';
 import mdx from './DataSourceHttpSettings.mdx';
 
 const settingsMock: DataSourceSettings<any, any> = {

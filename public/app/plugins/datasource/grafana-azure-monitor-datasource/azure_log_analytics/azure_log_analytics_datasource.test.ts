@@ -5,6 +5,7 @@ import createMockQuery from '../__mocks__/query';
 import { singleVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
 import { AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from '../types';
+
 import FakeSchemaData from './__mocks__/schema';
 import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';
 
@@ -137,10 +138,7 @@ describe('AzureLogAnalyticsDatasource', () => {
 
     it('should include template variables as global parameters', async () => {
       const result = await ctx.ds.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
-      expect(result.globalParameters.map((f: { name: string }) => f.name)).toEqual([
-        `$${singleVariable.name}`,
-        '$__timeFilter',
-      ]);
+      expect(result.globalParameters.map((f: { name: string }) => f.name)).toEqual([`$${singleVariable.name}`]);
     });
   });
 

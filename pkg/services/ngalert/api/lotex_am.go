@@ -60,12 +60,12 @@ func (am *LotexAM) withAMReq(
 	extractor func(*response.NormalResponse) (interface{}, error),
 	headers map[string]string,
 ) response.Response {
-	recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":Recipient"], 10, 64)
+	datasourceID, err := strconv.ParseInt(web.Params(ctx.Req)[":DatasourceID"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "Recipient is invalid", err)
+		return response.Error(http.StatusBadRequest, "DatasourceID is invalid", err)
 	}
 
-	ds, err := am.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), recipient, ctx.SignedInUser, ctx.SkipCache)
+	ds, err := am.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), datasourceID, ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			return ErrResp(http.StatusForbidden, err, "Access denied to datasource")

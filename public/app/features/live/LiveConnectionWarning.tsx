@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
+import React, { PureComponent } from 'react';
+import { Unsubscribable } from 'rxjs';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, getGrafanaLiveSrv } from '@grafana/runtime';
 import { Alert, stylesFactory } from '@grafana/ui';
-import React, { PureComponent } from 'react';
-import { Unsubscribable } from 'rxjs';
 import { contextSrv } from 'app/core/services/context_srv';
 
 export interface Props {}

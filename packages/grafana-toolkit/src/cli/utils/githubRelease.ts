@@ -1,10 +1,12 @@
+import { AxiosResponse } from 'axios';
+import fs = require('fs');
+import path = require('path');
+
 import { getPluginId } from '../../config/utils/getPluginId';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 import { getCiFolder } from '../../plugins/env';
-import path = require('path');
-import fs = require('fs');
+
 import GithubClient from './githubClient';
-import { AxiosResponse } from 'axios';
 
 const resolveContentType = (extension: string): string => {
   if (extension.startsWith('.')) {
