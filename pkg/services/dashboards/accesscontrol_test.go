@@ -15,16 +15,16 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestNewNameScopeResolver(t *testing.T) {
+func TestNewFolderNameScopeResolver(t *testing.T) {
 	t.Run("prefix should be expected", func(t *testing.T) {
-		prefix, _ := NewNameScopeResolver(&FakeDashboardStore{})
+		prefix, _ := NewFolderNameScopeResolver(&FakeDashboardStore{})
 		require.Equal(t, "folders:name:", prefix)
 	})
 
 	t.Run("resolver should convert to uid scope", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
 
-		_, resolver := NewNameScopeResolver(dashboardStore)
+		_, resolver := NewFolderNameScopeResolver(dashboardStore)
 
 		orgId := rand.Int63()
 		title := "Very complex :title with: and /" + util.GenerateShortUID()
@@ -46,14 +46,14 @@ func TestNewNameScopeResolver(t *testing.T) {
 	})
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
-		_, resolver := NewNameScopeResolver(dashboardStore)
+		_, resolver := NewFolderNameScopeResolver(dashboardStore)
 
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:id:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})
 	t.Run("resolver should fail if resource of input scope is empty", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
-		_, resolver := NewNameScopeResolver(dashboardStore)
+		_, resolver := NewFolderNameScopeResolver(dashboardStore)
 
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:name:")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
@@ -61,7 +61,7 @@ func TestNewNameScopeResolver(t *testing.T) {
 	t.Run("returns 'not found' if folder does not exist", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
 
-		_, resolver := NewNameScopeResolver(dashboardStore)
+		_, resolver := NewFolderNameScopeResolver(dashboardStore)
 
 		orgId := rand.Int63()
 		dashboardStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(nil, models.ErrDashboardNotFound).Once()
@@ -74,16 +74,16 @@ func TestNewNameScopeResolver(t *testing.T) {
 	})
 }
 
-func TestNewIDScopeResolver(t *testing.T) {
+func TestNewFolderIDScopeResolver(t *testing.T) {
 	t.Run("prefix should be expected", func(t *testing.T) {
-		prefix, _ := NewIDScopeResolver(&FakeDashboardStore{})
+		prefix, _ := NewFolderIDScopeResolver(&FakeDashboardStore{})
 		require.Equal(t, "folders:id:", prefix)
 	})
 
 	t.Run("resolver should convert to uid scope", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
 
-		_, resolver := NewIDScopeResolver(dashboardStore)
+		_, resolver := NewFolderIDScopeResolver(dashboardStore)
 
 		orgId := rand.Int63()
 		uid := util.GenerateShortUID()
@@ -102,7 +102,7 @@ func TestNewIDScopeResolver(t *testing.T) {
 	})
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
-		_, resolver := NewIDScopeResolver(dashboardStore)
+		_, resolver := NewFolderIDScopeResolver(dashboardStore)
 
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:uid:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
@@ -113,7 +113,7 @@ func TestNewIDScopeResolver(t *testing.T) {
 			dashboardStore = &FakeDashboardStore{}
 			orgId          = rand.Int63()
 			scope          = "folders:id:0"
-			_, resolver    = NewIDScopeResolver(dashboardStore)
+			_, resolver    = NewFolderIDScopeResolver(dashboardStore)
 		)
 
 		resolved, err := resolver.Resolve(context.Background(), orgId, scope)
@@ -125,7 +125,7 @@ func TestNewIDScopeResolver(t *testing.T) {
 
 	t.Run("resolver should fail if resource of input scope is empty", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
-		_, resolver := NewIDScopeResolver(dashboardStore)
+		_, resolver := NewFolderIDScopeResolver(dashboardStore)
 
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:id:")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
@@ -133,7 +133,7 @@ func TestNewIDScopeResolver(t *testing.T) {
 	t.Run("returns 'not found' if folder does not exist", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
 
-		_, resolver := NewIDScopeResolver(dashboardStore)
+		_, resolver := NewFolderIDScopeResolver(dashboardStore)
 
 		orgId := rand.Int63()
 		dashboardStore.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(nil, models.ErrDashboardNotFound).Once()
