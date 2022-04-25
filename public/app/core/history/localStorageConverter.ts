@@ -1,6 +1,3 @@
-import { find } from 'lodash';
-
-import { DataSourceInstanceSettings } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { RichHistoryQuery } from '../../types';

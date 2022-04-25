@@ -13,6 +13,7 @@ import {
 } from 'app/core/utils/richHistory';
 import { ExploreId, ExploreItemState, ExploreState, RichHistoryQuery, ThunkResult } from 'app/types';
 
+import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 
 import {

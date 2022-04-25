@@ -13,7 +13,7 @@ import {
 } from 'app/core/utils/richHistory';
 import { ExploreId, RichHistoryQuery } from 'app/types/explore';
 
-import { sortOrderOptions } from './RichHistory';
+import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
 
 export interface Props {

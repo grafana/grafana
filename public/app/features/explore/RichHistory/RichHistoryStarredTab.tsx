@@ -11,7 +11,7 @@ import {
 } from 'app/core/utils/richHistory';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
-import { sortOrderOptions } from './RichHistory';
+import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
 
 export interface Props {

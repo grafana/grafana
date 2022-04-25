@@ -1,8 +1,10 @@
-import { RichHistoryQuery } from 'app/types/explore';
-import RichHistoryStorage, { RichHistoryStorageWarningDetails } from './RichHistoryStorage';
-import { RichHistorySearchFilters, RichHistorySettings } from '../utils/richHistoryTypes';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { RichHistoryQuery } from 'app/types/explore';
+
 import { DataQuery } from '../../../../packages/grafana-data';
+import { RichHistorySearchFilters, RichHistorySettings } from '../utils/richHistoryTypes';
+
+import RichHistoryStorage, { RichHistoryStorageWarningDetails } from './RichHistoryStorage';
 import { fromDTO } from './remoteStorageConverter';
 
 export type RichHistoryRemoteStorageDTO = {

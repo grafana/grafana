@@ -6,6 +6,8 @@ import { Themeable, withTheme, TabbedContainer, TabConfig } from '@grafana/ui';
 import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
+import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
+
 import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
 import { RichHistorySettingsTab } from './RichHistorySettingsTab';
 import { RichHistoryStarredTab } from './RichHistoryStarredTab';
