@@ -65,8 +65,9 @@ export const CommandPalette = () => {
     }
 
     return () => {
-      keybindingSrv.reset();
-      keybindingSrv.initGlobals();
+      keybindingSrv.bindGlobal('esc', () => {
+        keybindingSrv.globalEsc();
+      });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showing]);
