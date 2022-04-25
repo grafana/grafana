@@ -29,7 +29,8 @@ import {
   Silence,
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
-import { FolderDTO } from 'app/types';
+import { AccessControlAction, FolderDTO } from 'app/types';
+import { contextSrv } from 'app/core/services/context_srv';
 
 let nextDataSourceId = 1;
 
@@ -464,4 +465,14 @@ export const mockFolder = (partial?: Partial<FolderDTO>): FolderDTO => {
     canSave: true,
     ...partial,
   };
+};
+
+export const enableRBAC = () => {
+  jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
+};
+
+export const grantUserPermissions = (permissions: AccessControlAction[]) => {
+  jest
+    .spyOn(contextSrv, 'hasPermission')
+    .mockImplementation((action) => permissions.includes(action as AccessControlAction));
 };
