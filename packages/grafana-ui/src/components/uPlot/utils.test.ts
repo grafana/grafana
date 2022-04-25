@@ -230,29 +230,29 @@ describe('preparePlotData2', () => {
         ],
       });
       expect(preparePlotData2(df, getStackingGroups(df))).toMatchInlineSnapshot(`
-              Array [
-                Array [
-                  9997,
-                  9998,
-                  9999,
-                ],
-                Array [
-                  -10,
-                  20,
-                  10,
-                ],
-                Array [
-                  10,
-                  10,
-                  10,
-                ],
-                Array [
-                  20,
-                  20,
-                  20,
-                ],
-              ]
-          `);
+        Array [
+          Array [
+            9997,
+            9998,
+            9999,
+          ],
+          Array [
+            -10,
+            20,
+            10,
+          ],
+          Array [
+            10,
+            10,
+            10,
+          ],
+          Array [
+            20,
+            20,
+            20,
+          ],
+        ]
+      `);
     });
 
     it('standard', () => {
@@ -289,14 +289,14 @@ describe('preparePlotData2', () => {
             10,
           ],
           Array [
-            0,
-            30,
-            20,
+            10,
+            10,
+            10,
           ],
           Array [
-            20,
-            50,
-            40,
+            30,
+            30,
+            30,
           ],
         ]
       `);
@@ -345,19 +345,19 @@ describe('preparePlotData2', () => {
             10,
           ],
           Array [
+            10,
+            10,
+            10,
+          ],
+          Array [
+            -30,
             0,
-            30,
-            20,
+            -10,
           ],
           Array [
+            -40,
+            -10,
             -20,
-            -20,
-            -20,
-          ],
-          Array [
-            -30,
-            -30,
-            -30,
           ],
         ]
       `);
@@ -413,14 +413,14 @@ describe('preparePlotData2', () => {
             10,
           ],
           Array [
-            0,
-            30,
-            20,
+            10,
+            10,
+            10,
           ],
           Array [
-            20,
-            50,
-            40,
+            30,
+            30,
+            30,
           ],
           Array [
             1,
