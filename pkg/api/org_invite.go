@@ -86,7 +86,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 			},
 		}
 
-		if err := hs.AlertNG.NotificationService.SendEmailCommandHandler(c.Req.Context(), &emailCmd); err != nil {
+		if err := hs.NotificationService.SendEmailCommandHandler(c.Req.Context(), &emailCmd); err != nil {
 			if errors.Is(err, models.ErrSmtpNotEnabled) {
 				return response.Error(412, err.Error(), err)
 			}
@@ -126,7 +126,7 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *models.ReqContext, user *models
 			},
 		}
 
-		if err := hs.AlertNG.NotificationService.SendEmailCommandHandler(c.Req.Context(), &emailCmd); err != nil {
+		if err := hs.NotificationService.SendEmailCommandHandler(c.Req.Context(), &emailCmd); err != nil {
 			return response.Error(500, "Failed to send email invited_to_org", err)
 		}
 	}
