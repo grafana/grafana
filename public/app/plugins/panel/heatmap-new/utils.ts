@@ -11,7 +11,7 @@ import { BucketLayout, HeatmapDataDense } from './fields';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
-  gap?: number | null;
+  gap?: number;
   hideThreshold?: number;
   xCeil?: boolean;
   yCeil?: boolean;
@@ -341,10 +341,16 @@ export function prepConfig(opts: PrepConfigOpts) {
   return builder;
 }
 
+const CRISP_EDGES_GAP_MIN = 4;
+
 export function heatmapPathsDense(opts: PathbuilderOpts) {
-  const { disp, each, gap, hideThreshold = 0, xCeil = false, yCeil = false } = opts;
+  const { disp, each, gap = 1, hideThreshold = 0, xCeil = false, yCeil = false } = opts;
 
   const pxRatio = devicePixelRatio;
+
+  const round = gap >= CRISP_EDGES_GAP_MIN ? Math.round : (v: number) => v;
+
+  const cellGap = Math.round(gap * pxRatio);
 
   return (u: uPlot, seriesIdx: number) => {
     uPlot.orient(
@@ -390,15 +396,9 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         let xSize = Math.abs(valToPosX(xBinIncr, scaleX, xDim, xOff) - valToPosX(0, scaleX, xDim, xOff));
         let ySize = Math.abs(valToPosY(yBinIncr, scaleY, yDim, yOff) - valToPosY(0, scaleY, yDim, yOff));
 
-        const autoGapFactor = 0.05;
-
-        // tile gap control
-        let xGap = gap != null ? gap * pxRatio : Math.max(0, autoGapFactor * Math.min(xSize, ySize));
-        let yGap = xGap;
-
         // clamp min tile size to 1px
-        xSize = Math.max(1, Math.round(xSize - xGap));
-        ySize = Math.max(1, Math.round(ySize - yGap));
+        xSize = Math.max(1, round(xSize - cellGap));
+        ySize = Math.max(1, round(ySize - cellGap));
 
         // bucket agg direction
         // let xCeil = false;
@@ -408,9 +408,9 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
         let yOffset = yCeil ? 0 : -ySize;
 
         // pre-compute x and y offsets
-        let cys = ys.slice(0, yBinQty).map((y) => Math.round(valToPosY(y, scaleY, yDim, yOff) + yOffset));
+        let cys = ys.slice(0, yBinQty).map((y) => round(valToPosY(y, scaleY, yDim, yOff) + yOffset));
         let cxs = Array.from({ length: xBinQty }, (v, i) =>
-          Math.round(valToPosX(xs[i * yBinQty], scaleX, xDim, xOff) + xOffset)
+          round(valToPosX(xs[i * yBinQty], scaleX, xDim, xOff) + xOffset)
         );
 
         for (let i = 0; i < dlen; i++) {
@@ -452,9 +452,13 @@ export function heatmapPathsDense(opts: PathbuilderOpts) {
 // accepts xMax, yMin, yMax, count
 // xbinsize? x tile sizes are uniform?
 export function heatmapPathsSparse(opts: PathbuilderOpts) {
-  const { disp, each, gap, hideThreshold = 0 } = opts;
+  const { disp, each, gap = 1, hideThreshold = 0 } = opts;
 
   const pxRatio = devicePixelRatio;
+
+  const round = gap >= CRISP_EDGES_GAP_MIN ? Math.round : (v: number) => v;
+
+  const cellGap = Math.round(gap * pxRatio);
 
   return (u: uPlot, seriesIdx: number) => {
     uPlot.orient(
@@ -503,19 +507,17 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
           let yMax = yMaxs[i];
 
           if (!xOffs.has(xMax)) {
-            xOffs.set(xMax, Math.round(valToPosX(xMax, scaleX, xDim, xOff)));
+            xOffs.set(xMax, round(valToPosX(xMax, scaleX, xDim, xOff)));
           }
 
           if (!yOffs.has(yMin)) {
-            yOffs.set(yMin, Math.round(valToPosY(yMin, scaleY, yDim, yOff)));
+            yOffs.set(yMin, round(valToPosY(yMin, scaleY, yDim, yOff)));
           }
 
           if (!yOffs.has(yMax)) {
-            yOffs.set(yMax, Math.round(valToPosY(yMax, scaleY, yDim, yOff)));
+            yOffs.set(yMax, round(valToPosY(yMax, scaleY, yDim, yOff)));
           }
         }
-
-        const autoGapFactor = 0.05;
 
         // uniform x size (interval, step)
         let xSizeUniform = xOffs.get(xMaxs.find((v) => v !== xMaxs[0])) - xOffs.get(xMaxs[0]);
@@ -536,13 +538,9 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
           let xSize = xSizeUniform;
           let ySize = yMinPx - yMaxPx;
 
-          // tile gap control
-          let xGap = gap != null ? gap * pxRatio : Math.max(0, autoGapFactor * Math.min(xSize, ySize));
-          let yGap = xGap;
-
           // clamp min tile size to 1px
-          xSize = Math.max(1, Math.round(xSize - xGap));
-          ySize = Math.max(1, Math.round(ySize - yGap));
+          xSize = Math.max(1, xSize - cellGap);
+          ySize = Math.max(1, ySize - cellGap);
 
           let x = xMaxPx;
           let y = yMinPx;
