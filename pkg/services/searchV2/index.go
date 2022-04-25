@@ -139,25 +139,25 @@ func (i *dashboardIndex) applyIndexUpdates(ctx context.Context, lastEventID int6
 }
 
 func (i *dashboardIndex) applyEventOnIndex(ctx context.Context, e *store.EntityEvent) error {
-	if !strings.HasPrefix(e.Grn, "database/") {
-		i.logger.Warn("unknown storage", "grn", e.Grn)
+	if !strings.HasPrefix(e.EntityId, "database/") {
+		i.logger.Warn("unknown storage", "entityId", e.EntityId)
 		return nil
 	}
-	parts := strings.Split(strings.TrimPrefix(e.Grn, "database/"), "/")
+	parts := strings.Split(strings.TrimPrefix(e.EntityId, "database/"), "/")
 	if len(parts) != 3 {
-		i.logger.Error("can't parse GRN", "grn", e.Grn)
+		i.logger.Error("can't parse entityId", "entityId", e.EntityId)
 		return nil
 	}
 	orgIDStr := parts[0]
 	kind := parts[1]
 	dashboardUID := parts[2]
 	if kind != "dashboard" {
-		i.logger.Error("unknown kind in GRN", "grn", e.Grn)
+		i.logger.Error("unknown kind in entityId", "entityId", e.EntityId)
 		return nil
 	}
 	orgID, err := strconv.Atoi(orgIDStr)
 	if err != nil {
-		i.logger.Error("can't extract org ID", "grn", e.Grn)
+		i.logger.Error("can't extract org ID", "entityId", e.EntityId)
 		return nil
 	}
 	return i.applyDashboardEvent(ctx, int64(orgID), dashboardUID, e.EventType)

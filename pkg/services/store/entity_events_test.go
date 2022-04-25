@@ -30,7 +30,7 @@ func TestEntityEventsService(t *testing.T) {
 		setup()
 
 		err := service.SaveEvent(ctx, SaveEventCmd{
-			Grn:       "database/dash/1",
+			EntityId:  "database/dash/1",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
@@ -46,35 +46,35 @@ func TestEntityEventsService(t *testing.T) {
 
 	t.Run("Should retrieve last entity event", func(t *testing.T) {
 		setup()
-		lastEventGrn := "database/dash/1"
+		lastEventEntityId := "database/dash/1"
 
 		err := service.SaveEvent(ctx, SaveEventCmd{
-			Grn:       "database/dash/3",
+			EntityId:  "database/dash/3",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
 		err = service.SaveEvent(ctx, SaveEventCmd{
-			Grn:       "database/dash/2",
+			EntityId:  "database/dash/2",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
 		err = service.SaveEvent(ctx, SaveEventCmd{
-			Grn:       lastEventGrn,
+			EntityId:  lastEventEntityId,
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
 
 		lastEv, err := service.GetLastEvent(ctx)
 		require.NoError(t, err)
-		require.Equal(t, lastEventGrn, lastEv.Grn)
+		require.Equal(t, lastEventEntityId, lastEv.EntityId)
 	})
 
 	t.Run("Should retrieve sorted events after an id", func(t *testing.T) {
 		setup()
-		lastEventGrn := "database/dash/1"
+		lastEventEntityId := "database/dash/1"
 
 		err := service.SaveEvent(ctx, SaveEventCmd{
-			Grn:       "database/dash/3",
+			EntityId:  "database/dash/3",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
@@ -82,12 +82,12 @@ func TestEntityEventsService(t *testing.T) {
 		firstEvId := firstEv.Id
 
 		err = service.SaveEvent(ctx, SaveEventCmd{
-			Grn:       "database/dash/2",
+			EntityId:  "database/dash/2",
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
 		err = service.SaveEvent(ctx, SaveEventCmd{
-			Grn:       lastEventGrn,
+			EntityId:  lastEventEntityId,
 			EventType: EntityEventTypeCreate,
 		})
 		require.NoError(t, err)
@@ -95,22 +95,22 @@ func TestEntityEventsService(t *testing.T) {
 		evs, err := service.GetAllEventsAfter(ctx, firstEvId)
 		require.NoError(t, err)
 		require.Len(t, evs, 2)
-		require.Equal(t, evs[0].Grn, "database/dash/2")
-		require.Equal(t, evs[1].Grn, lastEventGrn)
+		require.Equal(t, evs[0].EntityId, "database/dash/2")
+		require.Equal(t, evs[1].EntityId, lastEventEntityId)
 	})
 
 	t.Run("Should delete old events", func(t *testing.T) {
 		setup()
 		_ = service.SaveEvent(ctx, SaveEventCmd{
-			Grn:       "database/dash/3",
+			EntityId:  "database/dash/3",
 			EventType: EntityEventTypeCreate,
 		})
 		_ = service.SaveEvent(ctx, SaveEventCmd{
-			Grn:       "database/dash/2",
+			EntityId:  "database/dash/2",
 			EventType: EntityEventTypeCreate,
 		})
 		_ = service.SaveEvent(ctx, SaveEventCmd{
-			Grn:       "database/dash/1",
+			EntityId:  "database/dash/1",
 			EventType: EntityEventTypeCreate,
 		})
 
@@ -135,4 +135,49 @@ func TestEntityEventsService(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, evs, 0)
 	})
+}
+
+func TestCreateDatabaseEntityId(t *testing.T) {
+	tests := []struct {
+		name       string
+		entityType EntityType
+		orgId      int64
+		internalId interface{}
+		expected   string
+	}{
+		{
+			name:       "int64 internal id",
+			entityType: EntityTypeDashboard,
+			orgId:      10,
+			internalId: int64(45),
+			expected:   "database/10/dashboard/45",
+		},
+		{
+			name:       "big-ish int64 internal id",
+			entityType: EntityTypeDashboard,
+			orgId:      10,
+			internalId: int64(12412421),
+			expected:   "database/10/dashboard/12412421",
+		},
+		{
+			name:       "int internal id",
+			entityType: EntityTypeDashboard,
+			orgId:      10,
+			internalId: int(1244),
+			expected:   "database/10/dashboard/1244",
+		},
+		{
+			name:       "string internal id",
+			entityType: EntityTypeDashboard,
+			orgId:      10,
+			internalId: "string-internal-id",
+			expected:   "database/10/dashboard/string-internal-id",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, CreateDatabaseEntityId(tt.internalId, tt.orgId, tt.entityType))
+		})
+	}
 }

@@ -281,7 +281,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 
 	if hs.entityEventsService != nil {
 		if err := hs.entityEventsService.SaveEvent(c.Req.Context(), store.SaveEventCmd{
-			Grn:       createDashboardGrn(dash.OrgId, dash.Uid),
+			EntityId:  store.CreateDatabaseEntityId(dash.Uid, dash.OrgId, store.EntityTypeDashboard),
 			EventType: store.EntityEventTypeDelete,
 		}); err != nil {
 			hs.log.Warn("failed to save dashboard entity event", "uid", dash.Uid, "error", err)
@@ -299,10 +299,6 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
 		"id":      dash.Id,
 	})
-}
-
-func createDashboardGrn(orgId int64, uid string) string {
-	return fmt.Sprintf("database/%d/dashboard/%s", orgId, uid)
 }
 
 func (hs *HTTPServer) PostDashboard(c *models.ReqContext) response.Response {
@@ -379,7 +375,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	if dashboard != nil && hs.entityEventsService != nil {
 		if err := hs.entityEventsService.SaveEvent(ctx, store.SaveEventCmd{
-			Grn:       createDashboardGrn(dashboard.OrgId, dashboard.Uid),
+			EntityId:  store.CreateDatabaseEntityId(dashboard.Uid, dashboard.OrgId, store.EntityTypeDashboard),
 			EventType: store.EntityEventTypeUpdate,
 		}); err != nil {
 			hs.log.Warn("failed to save dashboard entity event", "uid", dashboard.Uid, "error", err)

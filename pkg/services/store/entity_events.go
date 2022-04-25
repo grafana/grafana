@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -18,15 +19,34 @@ const (
 	EntityEventTypeUpdate EntityEventType = "update"
 )
 
+type EntityType string
+
+const (
+	EntityTypeDashboard EntityType = "dashboard"
+)
+
+// CreateDatabaseEntityId creates entityId for entities stored in the existing SQL tables
+func CreateDatabaseEntityId(internalId interface{}, orgId int64, entityType EntityType) string {
+	var internalIdAsString string
+	switch id := internalId.(type) {
+	case string:
+		internalIdAsString = id
+	default:
+		internalIdAsString = fmt.Sprintf("%#v", internalId)
+	}
+
+	return fmt.Sprintf("database/%d/%s/%s", orgId, entityType, internalIdAsString)
+}
+
 type EntityEvent struct {
 	Id        int64
 	EventType EntityEventType
-	Grn       string
+	EntityId  string
 	Created   int64
 }
 
 type SaveEventCmd struct {
-	Grn       string
+	EntityId  string
 	EventType EntityEventType
 }
 
@@ -58,7 +78,7 @@ func (e *entityEventService) SaveEvent(ctx context.Context, cmd SaveEventCmd) er
 	return e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Insert(&EntityEvent{
 			EventType: cmd.EventType,
-			Grn:       cmd.Grn,
+			EntityId:  cmd.EntityId,
 			Created:   time.Now().Unix(),
 		})
 		return err
