@@ -1,19 +1,14 @@
+import { debounce } from 'lodash';
 import React, { PureComponent } from 'react';
 
-//Services & Utils
-import { SortOrder } from 'app/core/utils/richHistory';
-import { Themeable, withTheme, TabbedContainer, TabConfig } from '@grafana/ui';
-
-//Types
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { SelectableValue } from '@grafana/data';
+import { Themeable, withTheme, TabbedContainer, TabConfig } from '@grafana/ui';
+import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
+import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
-//Components
-import { RichHistorySettingsTab } from './RichHistorySettingsTab';
 import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
+import { RichHistorySettingsTab } from './RichHistorySettingsTab';
 import { RichHistoryStarredTab } from './RichHistoryStarredTab';
-import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
-import { debounce } from 'lodash';
 
 export enum Tabs {
   RichHistory = 'Query history',
