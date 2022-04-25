@@ -307,7 +307,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
             inputEl={
               <MultiSelect
                 aria-label="Log Groups"
-                menuShouldPortal
                 allowCustomValue={allowCustomValue}
                 options={unionBy(availableLogGroups, selectedLogGroups, 'value')}
                 value={selectedLogGroups}

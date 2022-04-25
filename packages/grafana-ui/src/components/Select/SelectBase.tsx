@@ -119,8 +119,6 @@ export function SelectBase<T>({
   maxVisibleValues,
   menuPlacement = 'auto',
   menuPosition,
-  // TODO change this to default to true for Grafana 9
-  menuShouldPortal = false,
   noOptionsMessage = 'No options found',
   onBlur,
   onChange,
@@ -229,7 +227,7 @@ export function SelectBase<T>({
     menuPlacement: menuPlacement === 'auto' && closeToBottom ? 'top' : menuPlacement,
     menuPosition,
     menuShouldBlockScroll: true,
-    menuPortalTarget: menuShouldPortal ? document.body : undefined,
+    menuPortalTarget: document.body,
     menuShouldScrollIntoView: false,
     onBlur,
     onChange: onChangeWithEmpty,

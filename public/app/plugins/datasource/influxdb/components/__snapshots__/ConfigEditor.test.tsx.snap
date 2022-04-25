@@ -26,7 +26,7 @@ exports[`Render should disable basic auth password input 1`] = `
               "value": "InfluxQL",
             }
           }
-          menuShouldPortal={true}
+          ={true}
           onChange={[Function]}
           options={
             Array [
@@ -198,7 +198,7 @@ exports[`Render should disable basic auth password input 1`] = `
           className="width-10"
           defaultValue="POST"
           inputId="influxdb-config42-http-method"
-          menuShouldPortal={true}
+          ={true}
           onChange={[Function]}
           options={
             Array [
@@ -293,7 +293,7 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
               "value": "InfluxQL",
             }
           }
-          menuShouldPortal={true}
+          ={true}
           onChange={[Function]}
           options={
             Array [
@@ -465,7 +465,7 @@ exports[`Render should hide basic auth fields when switch off 1`] = `
           className="width-10"
           defaultValue="POST"
           inputId="influxdb-config42-http-method"
-          menuShouldPortal={true}
+          ={true}
           onChange={[Function]}
           options={
             Array [
@@ -560,7 +560,7 @@ exports[`Render should hide white listed cookies input when browser access chose
               "value": "InfluxQL",
             }
           }
-          menuShouldPortal={true}
+          ={true}
           onChange={[Function]}
           options={
             Array [
@@ -732,7 +732,7 @@ exports[`Render should hide white listed cookies input when browser access chose
           className="width-10"
           defaultValue="POST"
           inputId="influxdb-config42-http-method"
-          menuShouldPortal={true}
+          ={true}
           onChange={[Function]}
           options={
             Array [
@@ -827,7 +827,7 @@ exports[`Render should render component 1`] = `
               "value": "InfluxQL",
             }
           }
-          menuShouldPortal={true}
+          ={true}
           onChange={[Function]}
           options={
             Array [
@@ -999,7 +999,7 @@ exports[`Render should render component 1`] = `
           className="width-10"
           defaultValue="POST"
           inputId="influxdb-config42-http-method"
-          menuShouldPortal={true}
+          ={true}
           onChange={[Function]}
           options={
             Array [

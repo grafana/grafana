@@ -46,7 +46,6 @@ export const SimulationQueryEditor = ({ onChange, query }: EditorProps) => {
       <InlineFieldRow>
         <InlineField labelWidth={14} label="Simulation" tooltip="">
           <Select
-            menuShouldPortal
             options={options}
             value={options.find((item) => item.value === simQuery.key?.type)}
             onChange={onTypeChange}

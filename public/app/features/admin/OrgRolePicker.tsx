@@ -17,7 +17,6 @@ const options = Object.keys(OrgRole).map((key) => ({ label: key, value: key }));
 export function OrgRolePicker({ value, onChange, 'aria-label': ariaLabel, inputId, autoFocus, ...restProps }: Props) {
   return (
     <Select
-      menuShouldPortal
       inputId={inputId}
       value={value}
       options={options}

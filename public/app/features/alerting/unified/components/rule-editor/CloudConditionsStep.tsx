@@ -41,7 +41,6 @@ export const CloudConditionsStep: FC = () => {
             name="forTimeUnit"
             render={({ field: { onChange, ref, ...field } }) => (
               <Select
-                menuShouldPortal
                 {...field}
                 options={timeOptions}
                 onChange={(value) => onChange(value?.value)}
