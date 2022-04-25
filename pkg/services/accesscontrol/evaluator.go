@@ -14,7 +14,7 @@ type Evaluator interface {
 	// Evaluate permissions that are grouped by action
 	Evaluate(permissions map[string][]string) (bool, error)
 	// MutateScopes executes a sequence of ScopeModifier functions on all embedded scopes of an evaluator and returns a new Evaluator
-	MutateScopes(context.Context, ...ScopeMutator) (Evaluator, error)
+	MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error)
 	// String returns a string representation of permission required by the evaluator
 	fmt.Stringer
 	fmt.GoStringer
@@ -89,22 +89,18 @@ func match(scope, target string) (bool, error) {
 	return scope == target, nil
 }
 
-func (p permissionEvaluator) MutateScopes(ctx context.Context, modifiers ...ScopeMutator) (Evaluator, error) {
-	var err error
+func (p permissionEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
 	if p.Scopes == nil {
 		return EvalPermission(p.Action), nil
 	}
 
 	scopes := make([]string, 0, len(p.Scopes))
 	for _, scope := range p.Scopes {
-		modified := scope
-		for _, modifier := range modifiers {
-			modified, err = modifier(ctx, modified)
-			if err != nil {
-				return nil, err
-			}
+		mutated, err := mutate(ctx, scope)
+		if err != nil {
+			return nil, err
 		}
-		scopes = append(scopes, modified)
+		scopes = append(scopes, mutated...)
 	}
 	return EvalPermission(p.Action, scopes...), nil
 }
@@ -137,10 +133,10 @@ func (a allEvaluator) Evaluate(permissions map[string][]string) (bool, error) {
 	return true, nil
 }
 
-func (a allEvaluator) MutateScopes(ctx context.Context, modifiers ...ScopeMutator) (Evaluator, error) {
+func (a allEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
 	var modified []Evaluator
 	for _, e := range a.allOf {
-		i, err := e.MutateScopes(ctx, modifiers...)
+		i, err := e.MutateScopes(ctx, mutate)
 		if err != nil {
 			return nil, err
 		}
@@ -191,10 +187,10 @@ func (a anyEvaluator) Evaluate(permissions map[string][]string) (bool, error) {
 	return false, nil
 }
 
-func (a anyEvaluator) MutateScopes(ctx context.Context, modifiers ...ScopeMutator) (Evaluator, error) {
+func (a anyEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
 	var modified []Evaluator
 	for _, e := range a.anyOf {
-		i, err := e.MutateScopes(ctx, modifiers...)
+		i, err := e.MutateScopes(ctx, mutate)
 		if err != nil {
 			return nil, err
 		}
