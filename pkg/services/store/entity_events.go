@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -55,6 +56,7 @@ type SaveEventCmd struct {
 //go:generate mockery --name EntityEventsService --structname MockEntityEventsService --inpackage --filename entity_events_mock.go
 type EntityEventsService interface {
 	registry.BackgroundService
+	registry.CanBeDisabled
 	SaveEvent(ctx context.Context, cmd SaveEventCmd) error
 	GetLastEvent(ctx context.Context) (*EntityEvent, error)
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*EntityEvent, error)
@@ -62,16 +64,22 @@ type EntityEventsService interface {
 	deleteEventsOlderThan(ctx context.Context, duration time.Duration) error
 }
 
-func ProvideEntityEventsService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) EntityEventsService {
+func ProvideEntityEventsService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, features featuremgmt.FeatureToggles) EntityEventsService {
+	if !features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {
+		return &dummyEntityEventsService{}
+	}
+
 	return &entityEventService{
-		sql: sqlStore,
-		log: log.New("entity-events"),
+		sql:      sqlStore,
+		features: features,
+		log:      log.New("entity-events"),
 	}
 }
 
 type entityEventService struct {
-	sql *sqlstore.SQLStore
-	log log.Logger
+	sql      *sqlstore.SQLStore
+	log      log.Logger
+	features featuremgmt.FeatureToggles
 }
 
 func (e *entityEventService) SaveEvent(ctx context.Context, cmd SaveEventCmd) error {
@@ -117,6 +125,10 @@ func (e *entityEventService) deleteEventsOlderThan(ctx context.Context, duration
 	})
 }
 
+func (e *entityEventService) IsDisabled() bool {
+	return false
+}
+
 func (e *entityEventService) Run(ctx context.Context) error {
 	clean := time.NewTicker(1 * time.Hour)
 
@@ -136,3 +148,32 @@ func (e *entityEventService) Run(ctx context.Context) error {
 		}
 	}
 }
+
+type dummyEntityEventsService struct {
+}
+
+func (d dummyEntityEventsService) Run(ctx context.Context) error {
+	return nil
+}
+
+func (d dummyEntityEventsService) IsDisabled() bool {
+	return false
+}
+
+func (d dummyEntityEventsService) SaveEvent(ctx context.Context, cmd SaveEventCmd) error {
+	return nil
+}
+
+func (d dummyEntityEventsService) GetLastEvent(ctx context.Context) (*EntityEvent, error) {
+	return nil, nil
+}
+
+func (d dummyEntityEventsService) GetAllEventsAfter(ctx context.Context, id int64) ([]*EntityEvent, error) {
+	return make([]*EntityEvent, 0), nil
+}
+
+func (d dummyEntityEventsService) deleteEventsOlderThan(ctx context.Context, duration time.Duration) error {
+	return nil
+}
+
+var _ EntityEventsService = &dummyEntityEventsService{}

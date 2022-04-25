@@ -14,7 +14,6 @@ import (
 )
 
 func TestEntityEventsService(t *testing.T) {
-
 	var ctx context.Context
 	var service EntityEventsService
 
