@@ -19,7 +19,7 @@ interface RichHistorySupportedFeatures {
 }
 
 export const supportedFeatures = (): RichHistorySupportedFeatures => {
-  return config.featureToggles.newQueryHistory
+  return config.queryHistoryEnabled
     ? {
         availableFilters: [SortOrder.Descending, SortOrder.Ascending],
         lastUsedDataSourcesAvailable: false,
