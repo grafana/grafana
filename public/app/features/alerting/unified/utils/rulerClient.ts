@@ -226,7 +226,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
       rules: newRules,
     });
 
-    return { uid: '', ruleSourceName: GRAFANA_RULES_SOURCE_NAME };
+    return { uid: existingRule.rule.grafana_alert.uid, ruleSourceName: GRAFANA_RULES_SOURCE_NAME };
   };
 
   // Would be nice to somehow align checking of ruler type between different methods
