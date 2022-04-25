@@ -1,20 +1,23 @@
-import React, { useState, useCallback } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { useState, useCallback } from 'react';
+
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { BasicAuthSettings } from './BasicAuthSettings';
-import { HttpProxySettings } from './HttpProxySettings';
-import { TLSAuthSettings } from './TLSAuthSettings';
-import { CustomHeadersSettings } from './CustomHeadersSettings';
-import { Select } from '../Select/Select';
+
+import { useTheme } from '../../themes';
+import { FormField } from '../FormField/FormField';
+import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { Input } from '../Forms/Legacy/Input/Input';
 import { Switch } from '../Forms/Legacy/Switch/Switch';
 import { Icon } from '../Icon/Icon';
-import { FormField } from '../FormField/FormField';
-import { InlineFormLabel } from '../FormLabel/FormLabel';
+import { Select } from '../Select/Select';
 import { TagsInput } from '../TagsInput/TagsInput';
+
+import { BasicAuthSettings } from './BasicAuthSettings';
+import { CustomHeadersSettings } from './CustomHeadersSettings';
+import { HttpProxySettings } from './HttpProxySettings';
 import { SigV4AuthSettings } from './SigV4AuthSettings';
-import { useTheme } from '../../themes';
+import { TLSAuthSettings } from './TLSAuthSettings';
 import { HttpSettingsProps } from './types';
 
 const ACCESS_OPTIONS: Array<SelectableValue<string>> = [

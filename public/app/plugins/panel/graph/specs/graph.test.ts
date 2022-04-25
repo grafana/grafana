@@ -1,13 +1,14 @@
-import { GraphCtrl } from '../module';
+import $ from 'jquery';
+
+import { dateTime, EventBusSrv } from '@grafana/data';
 import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
-
 import TimeSeries from 'app/core/time_series2';
-import $ from 'jquery';
-import { graphDirective, GraphElement } from '../graph';
-import { dateTime, EventBusSrv } from '@grafana/data';
+
 import { DashboardModel } from '../../../../features/dashboard/state';
+import { graphDirective, GraphElement } from '../graph';
+import { GraphCtrl } from '../module';
 
 jest.mock('../event_manager', () => ({
   EventManager: class EventManagerMock {

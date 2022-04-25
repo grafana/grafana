@@ -1,6 +1,8 @@
 import React, { PropsWithChildren, useMemo } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+
 import { VariableSelectField } from '../editor/VariableSelectField';
 import { VariableRefresh } from '../types';
 

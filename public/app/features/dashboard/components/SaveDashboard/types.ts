@@ -1,4 +1,5 @@
 import { CloneOptions, DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+
 import { Diffs } from '../VersionHistory/utils';
 
 export interface SaveDashboardData {

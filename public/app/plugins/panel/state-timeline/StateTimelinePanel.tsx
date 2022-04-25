@@ -1,12 +1,15 @@
 import React, { useCallback, useMemo } from 'react';
+
 import { DataFrame, FieldType, PanelProps } from '@grafana/data';
 import { TooltipPlugin, useTheme2, ZoomPlugin, usePanelContext } from '@grafana/ui';
-import { TimelineMode, TimelineOptions } from './types';
-import { TimelineChart } from './TimelineChart';
-import { prepareTimelineFields, prepareTimelineLegendItems } from './utils';
-import { StateTimelineTooltip } from './StateTimelineTooltip';
 import { getLastStreamingDataFramePacket } from 'app/features/live/data/StreamingDataFrame';
+
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+
+import { StateTimelineTooltip } from './StateTimelineTooltip';
+import { TimelineChart } from './TimelineChart';
+import { TimelineMode, TimelineOptions } from './types';
+import { prepareTimelineFields, prepareTimelineLegendItems } from './utils';
 
 interface TimelinePanelProps extends PanelProps<TimelineOptions> {}
 

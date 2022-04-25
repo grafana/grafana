@@ -1,6 +1,7 @@
-import { Plugin } from '@grafana/slate-react';
 import { Editor as CoreEditor, Annotation } from 'slate';
 import { v4 as uuidv4 } from 'uuid';
+
+import { Plugin } from '@grafana/slate-react';
 
 const BRACES: any = {
   '[': ']',

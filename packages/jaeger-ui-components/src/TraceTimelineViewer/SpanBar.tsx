@@ -12,18 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import cx from 'classnames';
 import { css } from '@emotion/css';
+import cx from 'classnames';
 import { groupBy as _groupBy } from 'lodash';
 import React, { useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+
 import { autoColor } from '../Theme';
-import { TraceSpan } from '../types/trace';
+import { Popover } from '../common/Popover';
 import { TNil } from '../types';
+import { TraceSpan } from '../types/trace';
+
 import AccordianLogs from './SpanDetail/AccordianLogs';
 import { ViewedBoundsFunctionType } from './utils';
-import { Popover } from '../common/Popover';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

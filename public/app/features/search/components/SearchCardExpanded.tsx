@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import classNames from 'classnames';
+import React, { useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Spinner, TagList, useTheme2 } from '@grafana/ui';
+
 import { DashboardSectionItem } from '../types';
+
 import { getThumbnailURL } from './SearchCard';
 
 export interface Props {

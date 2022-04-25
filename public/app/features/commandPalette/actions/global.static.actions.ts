@@ -1,6 +1,7 @@
-import { locationService } from '@grafana/runtime';
-import { NavModelItem } from '@grafana/data';
 import { Action, Priority } from 'kbar';
+
+import { NavModelItem } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 
 export default (navBarTree: NavModelItem[]) => {
   const globalActions: Action[] = [

@@ -1,5 +1,7 @@
 import React, { MouseEventHandler } from 'react';
+
 import { PanelPluginMeta } from '@grafana/data';
+
 import { PanelTypeCard } from './PanelTypeCard';
 
 interface Props {

@@ -1,3 +1,7 @@
+import { cloneDeep, upperFirst } from 'lodash';
+import { forkJoin, Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import {
   DataFrame,
   DataQueryRequest,
@@ -8,9 +12,6 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { cloneDeep, upperFirst } from 'lodash';
-import { forkJoin, Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';

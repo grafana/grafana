@@ -1,10 +1,10 @@
 import { DataSourcePlugin } from '@grafana/data';
-import { LokiDatasource } from './datasource';
 
+import { LokiAnnotationsQueryCtrl } from './LokiAnnotationsQueryCtrl';
 import LokiCheatSheet from './components/LokiCheatSheet';
 import LokiQueryEditorByApp from './components/LokiQueryEditorByApp';
-import { LokiAnnotationsQueryCtrl } from './LokiAnnotationsQueryCtrl';
 import { ConfigEditor } from './configuration/ConfigEditor';
+import { LokiDatasource } from './datasource';
 
 export const plugin = new DataSourcePlugin(LokiDatasource)
   .setQueryEditor(LokiQueryEditorByApp)

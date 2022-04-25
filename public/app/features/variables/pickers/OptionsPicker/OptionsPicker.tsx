@@ -1,24 +1,26 @@
 import React, { ComponentType, PureComponent } from 'react';
-import { bindActionCreators } from 'redux';
 import { connect, ConnectedProps } from 'react-redux';
-import { ClickOutsideWrapper } from '@grafana/ui';
-import { LoadingState } from '@grafana/data';
+import { bindActionCreators } from 'redux';
 
+import { LoadingState } from '@grafana/data';
+import { ClickOutsideWrapper } from '@grafana/ui';
 import { StoreState, ThunkDispatch } from 'app/types';
+
+import { isMulti } from '../../guard';
+import { getVariableQueryRunner } from '../../query/VariableQueryRunner';
+import { formatVariableLabel } from '../../shared/formatVariable';
+import { toKeyedAction } from '../../state/keyedVariablesReducer';
+import { getVariablesState } from '../../state/selectors';
+import { KeyedVariableIdentifier } from '../../state/types';
+import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../types';
+import { toKeyedVariableIdentifier } from '../../utils';
 import { VariableInput } from '../shared/VariableInput';
+import { VariableLink } from '../shared/VariableLink';
+import { VariableOptions } from '../shared/VariableOptions';
+import { NavigationKey, VariablePickerProps } from '../types';
+
 import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, openOptions } from './actions';
 import { initialOptionPickerState, OptionsPickerState, toggleAllOptions, toggleOption } from './reducer';
-import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../types';
-import { VariableOptions } from '../shared/VariableOptions';
-import { isMulti } from '../../guard';
-import { NavigationKey, VariablePickerProps } from '../types';
-import { formatVariableLabel } from '../../shared/formatVariable';
-import { KeyedVariableIdentifier } from '../../state/types';
-import { getVariableQueryRunner } from '../../query/VariableQueryRunner';
-import { VariableLink } from '../shared/VariableLink';
-import { getVariablesState } from '../../state/selectors';
-import { toKeyedAction } from '../../state/keyedVariablesReducer';
-import { toKeyedVariableIdentifier } from '../../utils';
 
 export const optionPickerFactory = <Model extends VariableWithOptions | VariableWithMultiSupport>(): ComponentType<
   VariablePickerProps<Model>

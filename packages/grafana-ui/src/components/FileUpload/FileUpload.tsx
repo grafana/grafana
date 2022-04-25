@@ -1,11 +1,13 @@
-import React, { FC, FormEvent, useCallback, useState } from 'react';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { Icon } from '../index';
+import React, { FC, FormEvent, useCallback, useState } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
 import { stylesFactory, useTheme2 } from '../../themes';
 import { ComponentSize } from '../../types/size';
-import { getButtonStyles } from '../Button';
 import { trimFileName } from '../../utils/file';
+import { getButtonStyles } from '../Button';
+import { Icon } from '../index';
 
 export interface Props {
   /** Callback function to handle uploaded file  */

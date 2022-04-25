@@ -1,4 +1,5 @@
 import { VariableOption, VariableWithOptions } from 'app/features/variables/types';
+
 import { VariableBuilder } from './variableBuilder';
 
 export class OptionsVariableBuilder<T extends VariableWithOptions> extends VariableBuilder<T> {

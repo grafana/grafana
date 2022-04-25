@@ -1,14 +1,16 @@
 import React from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { VariableTextField } from './VariableTextField';
+import { InlineField } from '@grafana/ui';
+
+import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
 import { useDimensionKeys, useMetrics, useNamespaces, useRegions } from '../../hooks';
-import { CloudWatchJsonData, CloudWatchQuery, VariableQuery, VariableQueryType } from '../../types';
 import { migrateVariableQuery } from '../../migrations';
+import { CloudWatchJsonData, CloudWatchQuery, VariableQuery, VariableQueryType } from '../../types';
+
 import { VariableQueryField } from './VariableQueryField';
-import { Dimensions } from '..';
-import { InlineField } from '@grafana/ui';
+import { VariableTextField } from './VariableTextField';
 
 export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData, VariableQuery>;
 
