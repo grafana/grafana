@@ -26,6 +26,7 @@ export const getPanelInspectorStyles = stylesFactory(() => {
     content: css`
       flex-grow: 1;
       height: 100%;
+      overflow: scroll;
     `,
     editor: css`
       font-family: monospace;
