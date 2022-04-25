@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
+import React, { useState } from 'react';
+
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineSwitch, Input } from '@grafana/ui';
-import React, { useState } from 'react';
+
 import { ExemplarTraceIdDestination } from '../types';
 
 type Props = {

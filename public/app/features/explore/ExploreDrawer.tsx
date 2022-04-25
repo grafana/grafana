@@ -1,13 +1,13 @@
 // Libraries
-import React from 'react';
-import { Resizable, ResizeCallback } from 're-resizable';
 import { css, cx, keyframes } from '@emotion/css';
+import { Resizable, ResizeCallback } from 're-resizable';
+import React from 'react';
 
 // Services & Utils
+import { GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory, useTheme2 } from '@grafana/ui';
 
 // Types
-import { GrafanaTheme2 } from '@grafana/data';
 
 const drawerSlide = keyframes`
   0% {

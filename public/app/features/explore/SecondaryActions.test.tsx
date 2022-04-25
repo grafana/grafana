@@ -1,6 +1,7 @@
-import React from 'react';
-import { noop } from 'lodash';
 import { shallow } from 'enzyme';
+import { noop } from 'lodash';
+import React from 'react';
+
 import { SecondaryActions } from './SecondaryActions';
 
 const addQueryRowButtonSelector = '[aria-label="Add row button"]';

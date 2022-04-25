@@ -1,19 +1,22 @@
 import React from 'react';
+
 import { PanelPlugin } from '@grafana/data';
-import { TagsInput } from '@grafana/ui';
-import { AlertList } from './AlertList';
-import { UnifiedAlertList } from './UnifiedAlertList';
-import { AlertListOptions, GroupMode, ShowOption, SortOrder, UnifiedAlertListOptions } from './types';
-import { alertListPanelMigrationHandler } from './AlertListMigrationHandler';
 import { config, DataSourcePicker } from '@grafana/runtime';
+import { TagsInput } from '@grafana/ui';
 import { RuleFolderPicker } from 'app/features/alerting/unified/components/rule-editor/RuleFolderPicker';
+
 import {
   ALL_FOLDER,
   GENERAL_FOLDER,
   ReadonlyFolderPicker,
 } from '../../../core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
-import { AlertListSuggestionsSupplier } from './suggestions';
+
+import { AlertList } from './AlertList';
+import { alertListPanelMigrationHandler } from './AlertListMigrationHandler';
 import { GroupBy } from './GroupByWithLoading';
+import { UnifiedAlertList } from './UnifiedAlertList';
+import { AlertListSuggestionsSupplier } from './suggestions';
+import { AlertListOptions, GroupMode, ShowOption, SortOrder, UnifiedAlertListOptions } from './types';
 
 function showIfCurrentState(options: AlertListOptions) {
   return options.showOptions === ShowOption.Current;

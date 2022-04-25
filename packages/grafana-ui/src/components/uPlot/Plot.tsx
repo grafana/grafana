@@ -1,7 +1,8 @@
 import React, { createRef } from 'react';
 import uPlot, { AlignedData, Options } from 'uplot';
-import { DEFAULT_PLOT_CONFIG, pluginLog } from './utils';
+
 import { PlotProps } from './types';
+import { DEFAULT_PLOT_CONFIG, pluginLog } from './utils';
 
 function sameDims(prevProps: PlotProps, nextProps: PlotProps) {
   return nextProps.width === prevProps.width && nextProps.height === prevProps.height;

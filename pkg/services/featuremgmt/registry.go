@@ -24,7 +24,7 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:        "service-accounts",
+			Name:        "serviceAccounts",
 			Description: "support service accounts",
 			State:       FeatureStateBeta,
 		},
@@ -39,14 +39,10 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "dashboardPreviewsScheduler",
-			Description: "Schedule automatic updates to dashboard previews",
-			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "dashboardPreviewsAdmin",
-			Description: "Manage the dashboard previews crawler process from the UI",
-			State:       FeatureStateAlpha,
+			Name:            "dashboardPreviewsAdmin",
+			Description:     "Manage the dashboard previews crawler process from the UI",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
 		},
 		{
 			Name:        "live-config",
@@ -212,6 +208,17 @@ var (
 			Description:  "Experimental Explore to Dashboard workflow",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
+		},
+		{
+			Name:         "persistNotifications",
+			Description:  "PoC Notifications page",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "commandPalette",
+			Description: "Enable command palette",
+			State:       FeatureStateAlpha,
 		},
 	}
 )

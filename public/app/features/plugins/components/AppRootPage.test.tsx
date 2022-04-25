@@ -1,14 +1,17 @@
 import { act, render, screen } from '@testing-library/react';
 import React, { Component } from 'react';
-import AppRootPage from './AppRootPage';
-import { getPluginSettings } from '../pluginSettings';
-import { importAppPlugin } from '../plugin_loader';
-import { getMockPlugin } from '../__mocks__/pluginMocks';
-import { AppPlugin, PluginType, AppRootProps, NavModelItem } from '@grafana/data';
 import { Route, Router } from 'react-router-dom';
+
+import { AppPlugin, PluginType, AppRootProps, NavModelItem } from '@grafana/data';
 import { locationService, setEchoSrv } from '@grafana/runtime';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
+
+import { getMockPlugin } from '../__mocks__/pluginMocks';
+import { getPluginSettings } from '../pluginSettings';
+import { importAppPlugin } from '../plugin_loader';
+
+import AppRootPage from './AppRootPage';
 
 jest.mock('../pluginSettings', () => ({
   getPluginSettings: jest.fn(),

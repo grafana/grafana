@@ -1,10 +1,12 @@
-import React, { useMemo, useState } from 'react';
-import { Modal } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { SaveDashboardForm } from './forms/SaveDashboardForm';
+import React, { useMemo, useState } from 'react';
+
+import { Modal } from '@grafana/ui';
+
 import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
-import { useDashboardSave } from './useDashboardSave';
+import { SaveDashboardForm } from './forms/SaveDashboardForm';
 import { SaveDashboardModalProps, SaveDashboardOptions, SaveDashboardData } from './types';
+import { useDashboardSave } from './useDashboardSave';
 
 export const SaveDashboardModal: React.FC<SaveDashboardModalProps> = ({ dashboard, onDismiss, onSaveSuccess }) => {
   const { state, onDashboardSave } = useDashboardSave(dashboard);

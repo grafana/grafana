@@ -1,6 +1,8 @@
+import { useCallback } from 'react';
+
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import store from 'app/core/store';
-import { useCallback } from 'react';
+
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
 import { getAlertManagerDataSources, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 

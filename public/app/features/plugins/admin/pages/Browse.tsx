@@ -1,22 +1,24 @@
-import React, { ReactElement } from 'react';
 import { css } from '@emotion/css';
-import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2, Tooltip } from '@grafana/ui';
+import React, { ReactElement } from 'react';
+import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+
+import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { locationSearchToObject } from '@grafana/runtime';
+import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2, Tooltip } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { StoreState } from 'app/types/store';
+
+import { HorizontalGroup } from '../components/HorizontalGroup';
+import { Page as PluginPage } from '../components/Page';
 import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
-import { useHistory } from '../hooks/useHistory';
-import { PluginAdminRoutes, PluginListDisplayMode } from '../types';
-import { Page as PluginPage } from '../components/Page';
-import { HorizontalGroup } from '../components/HorizontalGroup';
-import { Page } from 'app/core/components/Page/Page';
-import { useSelector } from 'react-redux';
-import { StoreState } from 'app/types/store';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { useGetAllWithFilters, useIsRemotePluginsAvailable, useDisplayMode } from '../state/hooks';
 import { Sorters } from '../helpers';
+import { useHistory } from '../hooks/useHistory';
+import { useGetAllWithFilters, useIsRemotePluginsAvailable, useDisplayMode } from '../state/hooks';
+import { PluginAdminRoutes, PluginListDisplayMode } from '../types';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
   const location = useLocation();

@@ -1,4 +1,5 @@
 import { LinkModel } from '@grafana/data';
+
 import { MenuItemProps } from '../components/Menu/MenuItem';
 import { IconName } from '../types';
 
