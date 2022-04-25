@@ -97,7 +97,7 @@ func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response 
 		return response.Error(404, "Data source not found", err)
 	}
 
-	dto := convertModelToDtos(filtered[0])
+	dto := hs.convertModelToDtos(c.Req.Context(), filtered[0])
 
 	// Add accesscontrol metadata
 	dto.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, datasources.ScopePrefix, dto.UID)
@@ -128,7 +128,7 @@ func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Respon
 		return response.Error(403, "Cannot delete read-only data source", nil)
 	}
 
-	cmd := &models.DeleteDataSourceCommand{ID: id, OrgID: c.OrgId}
+	cmd := &models.DeleteDataSourceCommand{ID: id, OrgID: c.OrgId, Name: ds.Name}
 
 	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
@@ -156,7 +156,7 @@ func (hs *HTTPServer) GetDataSourceByUID(c *models.ReqContext) response.Response
 		return response.Error(404, "Data source not found", err)
 	}
 
-	dto := convertModelToDtos(filtered[0])
+	dto := hs.convertModelToDtos(c.Req.Context(), filtered[0])
 
 	// Add accesscontrol metadata
 	dto.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, datasources.ScopePrefix, dto.UID)
@@ -184,7 +184,7 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *models.ReqContext) response.Respo
 		return response.Error(403, "Cannot delete read-only data source", nil)
 	}
 
-	cmd := &models.DeleteDataSourceCommand{UID: uid, OrgID: c.OrgId}
+	cmd := &models.DeleteDataSourceCommand{UID: uid, OrgID: c.OrgId, Name: ds.Name}
 
 	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
@@ -265,7 +265,7 @@ func (hs *HTTPServer) AddDataSource(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to add datasource", err)
 	}
 
-	ds := convertModelToDtos(cmd.Result)
+	ds := hs.convertModelToDtos(c.Req.Context(), cmd.Result)
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message":    "Datasource added",
 		"id":         cmd.Result.Id,
@@ -327,7 +327,7 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to query datasource", err)
 	}
 
-	datasourceDTO := convertModelToDtos(query.Result)
+	datasourceDTO := hs.convertModelToDtos(c.Req.Context(), query.Result)
 
 	hs.Live.HandleDatasourceUpdate(c.OrgId, datasourceDTO.UID)
 
@@ -408,7 +408,7 @@ func (hs *HTTPServer) GetDataSourceByName(c *models.ReqContext) response.Respons
 		return response.Error(404, "Data source not found", err)
 	}
 
-	dto := convertModelToDtos(filtered[0])
+	dto := hs.convertModelToDtos(c.Req.Context(), filtered[0])
 	return response.JSON(http.StatusOK, &dto)
 }
 
@@ -457,7 +457,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 	hs.callPluginResource(c, plugin.ID, ds.Uid)
 }
 
-func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
+func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *models.DataSource) dtos.DataSource {
 	dto := dtos.DataSource{
 		Id:                ds.Id,
 		UID:               ds.Uid,
@@ -480,9 +480,12 @@ func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
 		ReadOnly:          ds.ReadOnly,
 	}
 
-	for k, v := range ds.SecureJsonData {
-		if len(v) > 0 {
-			dto.SecureJsonFields[k] = true
+	secrets, err := hs.DataSourcesService.DecryptedValues(ctx, ds)
+	if err == nil {
+		for k, v := range secrets {
+			if len(v) > 0 {
+				dto.SecureJsonFields[k] = true
+			}
 		}
 	}
 
@@ -510,7 +513,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 		return response.Error(http.StatusInternalServerError, "Unable to find datasource plugin", err)
 	}
 
-	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn())
+	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn(c.Req.Context()))
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Unable to get datasource model", err)
 	}
@@ -561,9 +564,9 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, payload)
 }
 
-func (hs *HTTPServer) decryptSecureJsonDataFn() func(map[string][]byte) map[string]string {
-	return func(m map[string][]byte) map[string]string {
-		decryptedJsonData, err := hs.SecretsService.DecryptJsonData(context.Background(), m)
+func (hs *HTTPServer) decryptSecureJsonDataFn(ctx context.Context) func(ds *models.DataSource) map[string]string {
+	return func(ds *models.DataSource) map[string]string {
+		decryptedJsonData, err := hs.DataSourcesService.DecryptedValues(ctx, ds)
 		if err != nil {
 			hs.log.Error("Failed to decrypt secure json data", "error", err)
 		}
