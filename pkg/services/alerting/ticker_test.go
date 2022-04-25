@@ -137,7 +137,14 @@ func TestTicker(t *testing.T) {
 
 		expectedMetric := fmt.Sprintf(expectedMetricFmt, interval.Seconds(), 0, float64(expectedTick.UnixNano())/1e9)
 
-		require.NoError(t, testutil.GatherAndCompare(registry, bytes.NewBufferString(expectedMetric), "grafana_alerting_ticker_last_consumed_tick_timestamp_seconds", "grafana_alerting_ticker_next_tick_timestamp_seconds", "grafana_alerting_ticker_interval_seconds"))
+		errs := make(map[string]error, 1)
+		require.Eventuallyf(t, func() bool {
+			err := testutil.GatherAndCompare(registry, bytes.NewBufferString(expectedMetric), "grafana_alerting_ticker_last_consumed_tick_timestamp_seconds", "grafana_alerting_ticker_next_tick_timestamp_seconds", "grafana_alerting_ticker_interval_seconds")
+			if err != nil {
+				errs["error"] = err
+			}
+			return err == nil
+		}, 1*time.Second, 100*time.Millisecond, "failed to wait for metrics to match expected values:\n%v", errs)
 
 		clk.Add(interval)
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -147,6 +154,13 @@ func TestTicker(t *testing.T) {
 		actual := readChanOrFail(t, ctx, ticker.C)
 
 		expectedMetric = fmt.Sprintf(expectedMetricFmt, interval.Seconds(), float64(actual.UnixNano())/1e9, float64(expectedTick.Add(interval).UnixNano())/1e9)
-		require.NoError(t, testutil.GatherAndCompare(registry, bytes.NewBufferString(expectedMetric), "grafana_alerting_ticker_last_consumed_tick_timestamp_seconds", "grafana_alerting_ticker_next_tick_timestamp_seconds", "grafana_alerting_ticker_interval_seconds"))
+
+		require.Eventuallyf(t, func() bool {
+			err := testutil.GatherAndCompare(registry, bytes.NewBufferString(expectedMetric), "grafana_alerting_ticker_last_consumed_tick_timestamp_seconds", "grafana_alerting_ticker_next_tick_timestamp_seconds", "grafana_alerting_ticker_interval_seconds")
+			if err != nil {
+				errs["error"] = err
+			}
+			return err == nil
+		}, 1*time.Second, 100*time.Millisecond, "failed to wait for metrics to match expected values:\n%v", errs)
 	})
 }
