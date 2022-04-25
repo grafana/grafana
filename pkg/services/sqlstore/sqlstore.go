@@ -32,7 +32,6 @@ import (
 )
 
 var (
-	// x       *xorm.Engine
 	dialect migrator.Dialect
 
 	sqlog log.Logger = log.New("sqlstore")
