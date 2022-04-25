@@ -97,6 +97,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		bodyJSON.Set("content", tmpl(d.Content))
 		if tmplErr != nil {
 			d.log.Warn("failed to template Discord notification content", "err", tmplErr.Error())
+			// Reset tmplErr for templating other fields.
 			tmplErr = nil
 		}
 	}
@@ -106,7 +107,6 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		if tmplErr != nil {
 			d.log.Warn("failed to template Discord Avatar URL", "err", tmplErr.Error(), "fallback", d.AvatarURL)
 			bodyJSON.Set("avatar_url", d.AvatarURL)
-			// Reset tmplErr for templating other fields.
 			tmplErr = nil
 		}
 	}
