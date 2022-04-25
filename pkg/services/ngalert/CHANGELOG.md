@@ -55,3 +55,4 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
     - `grafana_alerting_ticker_last_consumed_tick_timestamp_seconds`
     - `grafana_alerting_ticker_next_tick_timestamp_seconds`
     - `grafana_alerting_ticker_interval_seconds`
+- [ENHANCEMENT] Scheduler: ticker to support stopping #48142
