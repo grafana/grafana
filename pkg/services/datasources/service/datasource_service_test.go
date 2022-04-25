@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	encJson "encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -703,6 +705,59 @@ func TestService_HTTPClientOptions(t *testing.T) {
 				}
 			})
 		})
+	})
+}
+
+func TestService_GetDecryptedValues(t *testing.T) {
+	t.Run("should migrate and retrieve values from secure json data", func(t *testing.T) {
+		ds := &models.DataSource{
+			Id:   1,
+			Url:  "https://api.example.com",
+			Type: "prometheus",
+		}
+
+		secretsStore := kvstore.SetupTestService(t)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := ProvideService(nil, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+
+		jsonData := map[string]string{
+			"password": "securePassword",
+		}
+		secureJsonData, err := dsService.SecretsService.EncryptJsonData(context.Background(), jsonData, secrets.WithoutScope())
+
+		require.NoError(t, err)
+		ds.SecureJsonData = secureJsonData
+
+		values, err := dsService.DecryptedValues(context.Background(), ds)
+		require.NoError(t, err)
+
+		require.Equal(t, jsonData, values)
+	})
+
+	t.Run("should retrieve values from secret store", func(t *testing.T) {
+		ds := &models.DataSource{
+			Id:   1,
+			Url:  "https://api.example.com",
+			Type: "prometheus",
+		}
+
+		secretsStore := kvstore.SetupTestService(t)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := ProvideService(nil, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+
+		jsonData := map[string]string{
+			"password": "securePassword",
+		}
+		jsonString, err := json.Marshal(jsonData)
+		require.NoError(t, err)
+
+		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, secretType, string(jsonString))
+		require.NoError(t, err)
+
+		values, err := dsService.DecryptedValues(context.Background(), ds)
+		require.NoError(t, err)
+
+		require.Equal(t, jsonData, values)
 	})
 }
 
