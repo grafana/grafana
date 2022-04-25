@@ -1,17 +1,20 @@
 import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useState } from 'react';
+import { useSelector } from 'react-redux';
 
 import { GrafanaTheme } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, ClipboardButton, HorizontalGroup, stylesFactory, TextArea, useTheme } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { StoreState } from 'app/types';
 
 import { SaveDashboardFormProps } from '../types';
 
 export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard, onCancel }) => {
   const theme = useTheme();
   const notifyApp = useAppNotification();
+  const dashboardTitle = useSelector((state: StoreState) => state.dashboard.title);
   const [dashboardJSON, setDashboardJson] = useState(() => {
     const clone = dashboard.getSaveModelClone();
     delete clone.id;
@@ -22,8 +25,8 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
     const blob = new Blob([dashboardJSON], {
       type: 'application/json;charset=utf-8',
     });
-    saveAs(blob, dashboard.title + '-' + new Date().getTime() + '.json');
-  }, [dashboard.title, dashboardJSON]);
+    saveAs(blob, dashboardTitle + '-' + new Date().getTime() + '.json');
+  }, [dashboardTitle, dashboardJSON]);
 
   const onCopyToClipboardSuccess = useCallback(() => {
     notifyApp.success('Dashboard JSON copied to clipboard');

@@ -5,10 +5,11 @@ import { byRole } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { selectOptionInTest } from '@grafana/ui';
+import { updateTimeZone } from 'app/features/profile/state/reducers';
 
 import { DashboardModel } from '../../state';
 
-import { GeneralSettingsUnconnected as GeneralSettings, Props } from './GeneralSettings';
+import { GeneralSettings, Props } from './GeneralSettings';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
@@ -25,8 +26,6 @@ const setupTestContext = (options: Partial<Props>) => {
       },
       timezone: 'utc',
     } as unknown as DashboardModel,
-    updateTimeZone: jest.fn(),
-    updateWeekStart: jest.fn(),
   };
 
   const props = { ...defaults, ...options };
@@ -54,7 +53,7 @@ describe('General Settings', () => {
       const timeZonePicker = screen.getByTestId(selectors.components.TimeZonePicker.containerV2);
       await userEvent.click(byRole('combobox').get(timeZonePicker));
       await selectOptionInTest(timeZonePicker, 'Browser Time');
-      expect(props.updateTimeZone).toHaveBeenCalledWith('browser');
+      expect(updateTimeZone).toHaveBeenCalledWith('browser');
       expect(props.dashboard.timezone).toBe('browser');
     });
   });

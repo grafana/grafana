@@ -55,6 +55,8 @@ export const mapStateToProps = (state: StoreState) => ({
   initPhase: state.dashboard.initPhase,
   initError: state.dashboard.initError,
   dashboard: state.dashboard.getModel(),
+  dashboardLiveNow: state.dashboard.liveNow,
+  dashboardTitle: state.dashboard.title,
 });
 
 const mapDispatchToProps = {
@@ -132,7 +134,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    const { dashboard, match, templateVarsChangedInUrl } = this.props;
+    const { dashboard, dashboardTitle, match, templateVarsChangedInUrl } = this.props;
     const routeReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter;
 
     if (!dashboard) {
@@ -141,7 +143,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     // if we just got dashboard update title
     if (prevProps.dashboard !== dashboard) {
-      document.title = dashboard.title + ' - ' + Branding.AppTitle;
+      document.title = dashboardTitle + ' - ' + Branding.AppTitle;
     }
 
     if (
@@ -202,7 +204,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   updateLiveTimer = () => {
     let tr: TimeRange | undefined = undefined;
-    if (this.props.dashboard?.liveNow) {
+    if (this.props.dashboardLiveNow) {
       tr = getTimeSrv().timeRange();
     }
     liveTimer.setLiveTimeRange(tr);
@@ -312,7 +314,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, initError, queryParams, theme } = this.props;
+    const { dashboard, dashboardTitle, initError, queryParams, theme } = this.props;
     const { editPanel, viewPanel, updateScrollTop } = this.state;
     const kioskMode = getKioskMode();
     const styles = getStyles(theme, kioskMode);
@@ -333,7 +335,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
             <DashNav
               dashboard={dashboard}
-              title={dashboard.title}
+              title={dashboardTitle}
               folderTitle={dashboard.meta.folderTitle}
               isFullscreen={!!viewPanel}
               onAddPanel={this.onAddPanel}

@@ -100,7 +100,7 @@ export const updateTime = (config: {
     const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
     const timeModel: TimeModel = {
       time: range.raw,
-      refresh: false,
+      refresh: undefined,
       timepicker: {},
       getTimezone: () => timeZone,
       timeRangeUpdated: (rawTimeRange: RawTimeRange) => {

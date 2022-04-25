@@ -70,6 +70,7 @@ const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
     uiState: state.panelEditor.ui,
     tableViewEnabled: state.panelEditor.tableViewEnabled,
     variables: getVariablesByKey(ownProps.dashboard.uid, state),
+    dashboardTitle: state.dashboard.title,
   };
 };
 
@@ -431,7 +432,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   render() {
-    const { dashboard, initDone, updatePanelEditorUIState, uiState } = this.props;
+    const { dashboardTitle, initDone, updatePanelEditorUIState, uiState } = this.props;
     const styles = getStyles(config.theme, this.props);
 
     if (!initDone) {
@@ -440,7 +441,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
-        <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={this.onGoBackToDashboard}>
+        <PageToolbar title={`${dashboardTitle} / Edit Panel`} onGoBack={this.onGoBackToDashboard}>
           {this.renderEditorActions()}
         </PageToolbar>
         <div className={styles.verticalSplitPanesWrapper}>

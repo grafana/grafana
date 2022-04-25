@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { sumBy } from 'lodash';
 import React from 'react';
+import { useSelector } from 'react-redux';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { Modal, ConfirmModal, Button } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { StoreState } from 'app/types';
 
 import { DashboardModel, PanelModel } from '../../state';
 
@@ -18,13 +20,14 @@ type DeleteDashboardModalProps = {
 export const DeleteDashboardModal: React.FC<DeleteDashboardModalProps> = ({ hideModal, dashboard }) => {
   const isProvisioned = dashboard.meta.provisioned;
   const { onDeleteDashboard } = useDashboardDelete(dashboard.uid);
+  const dashboardTitle = useSelector((state: StoreState) => state.dashboard.title);
 
   const [, onConfirm] = useAsyncFn(async () => {
     await onDeleteDashboard();
     hideModal();
   }, [hideModal]);
 
-  const modalBody = getModalBody(dashboard.panels, dashboard.title);
+  const modalBody = getModalBody(dashboard.panels, dashboardTitle);
 
   if (isProvisioned) {
     return <ProvisionedDeleteModal hideModal={hideModal} provisionedId={dashboard.meta.provisionedExternalId!} />;

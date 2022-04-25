@@ -1,9 +1,11 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 
 import { Button, Input, Switch, Form, Field, InputControl, HorizontalGroup } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
+import { StoreState } from 'app/types';
 
 import { SaveDashboardFormProps } from '../types';
 
@@ -47,8 +49,9 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
   onCancel,
   onSuccess,
 }) => {
+  const dashboardTitle = useSelector((state: StoreState) => state.dashboard.title);
   const defaultValues: SaveDashboardAsFormDTO = {
-    title: isNew ? dashboard.title : `${dashboard.title} Copy`,
+    title: isNew ? dashboardTitle : `${dashboardTitle} Copy`,
     $folder: {
       id: dashboard.meta.folderId,
       title: dashboard.meta.folderTitle,

@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/data';
+import { DashboardCursorSync, DataQuery } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { VariableModel } from 'app/features/variables/types';
 
@@ -93,7 +93,16 @@ export interface QueriesToUpdateOnDashboardLoad {
   queries: DataQuery[];
 }
 
-export interface DashboardState {
+export interface DashboardProps {
+  title: string;
+  liveNow: boolean;
+  graphTooltip: DashboardCursorSync;
+  description: string;
+  style: 'dark' | 'light';
+  tags: string[];
+}
+
+export interface DashboardState extends DashboardProps {
   getModel: GetMutableDashboardModelFn;
   initPhase: DashboardInitPhase;
   initError: DashboardInitError | null;

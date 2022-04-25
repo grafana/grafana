@@ -24,8 +24,8 @@ export class TimeSrv {
   time: any;
   refreshTimer: any;
   refresh: any;
-  previousAutoRefresh: any;
-  oldRefresh: string | null | undefined;
+  previousAutoRefresh: string | undefined;
+  oldRefresh: string | undefined;
   timeModel?: TimeModel;
   timeAtLoad: any;
   private autoRefreshBlocked?: boolean;
@@ -165,7 +165,7 @@ export class TimeSrv {
     if (params.get('to') && params.get('to')!.indexOf('now') === -1) {
       this.refresh = false;
       if (this.timeModel) {
-        this.timeModel.refresh = false;
+        this.timeModel.refresh = undefined;
       }
     }
 
@@ -214,7 +214,7 @@ export class TimeSrv {
     return this.timeAtLoad && (this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to);
   }
 
-  setAutoRefresh(interval: any) {
+  setAutoRefresh(interval: string | undefined) {
     if (this.timeModel) {
       this.timeModel.refresh = interval;
     }
@@ -284,10 +284,10 @@ export class TimeSrv {
     // disable refresh if zoom in or zoom out
     if (isDateTime(time.to)) {
       this.oldRefresh = this.timeModel?.refresh || this.oldRefresh;
-      this.setAutoRefresh(false);
+      this.setAutoRefresh(undefined);
     } else if (this.oldRefresh && this.oldRefresh !== this.timeModel?.refresh) {
       this.setAutoRefresh(this.oldRefresh);
-      this.oldRefresh = null;
+      this.oldRefresh = undefined;
     }
 
     if (updateUrl === true) {

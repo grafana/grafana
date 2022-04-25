@@ -105,6 +105,8 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
       mount: (propOverrides?: Partial<Props>) => {
         const store = configureStore();
         const props: Props = {
+          dashboardTitle: '',
+          dashboardLiveNow: false,
           ...getRouteComponentProps({
             match: { params: { slug: 'my-dash', uid: '11' } } as any,
             route: { routeName: DashboardRoutes.Normal } as any,

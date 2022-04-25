@@ -3,6 +3,7 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import React, { useCallback, useMemo, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, locationUtil } from '@grafana/data';
@@ -10,7 +11,7 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, CustomScrollbar, Icon, IconName, PageToolbar, stylesFactory, useForceUpdate } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction, StoreState } from 'app/types';
 
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -151,11 +152,12 @@ export function DashboardSettings({ dashboard, editview }: Props) {
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const canSave = dashboard.meta.canSave;
   const styles = getStyles(config.theme2);
+  const dashboardTitle = useSelector((state: StoreState) => state.dashboard.title);
 
   return (
     <FocusScope contain autoFocus restoreFocus>
       <div className="dashboard-settings" ref={ref} {...overlayProps} {...dialogProps}>
-        <PageToolbar title={`${dashboard.title} / Settings`} parent={folderTitle} onGoBack={onClose} />
+        <PageToolbar title={`${dashboardTitle} / Settings`} parent={folderTitle} onGoBack={onClose} />
         <CustomScrollbar>
           <div className={styles.scrollInner}>
             <div className={styles.settingsWrapper}>

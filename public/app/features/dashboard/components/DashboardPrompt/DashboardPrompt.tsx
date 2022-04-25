@@ -179,7 +179,7 @@ function cleanDashboardFromIgnoredChanges(dashData: any) {
   dash.time = 0;
   dash.refresh = 0;
   dash.schemaVersion = 0;
-  dash.timezone = 0;
+  dash.timezone = '';
 
   // ignore iteration property
   delete dash.iteration;

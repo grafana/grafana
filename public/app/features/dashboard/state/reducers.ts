@@ -1,9 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { PanelPlugin } from '@grafana/data';
+import { DashboardCursorSync, PanelPlugin } from '@grafana/data';
 import { AngularComponent } from '@grafana/runtime';
 import { processAclItems } from 'app/core/utils/acl';
-import { DashboardAclDTO, DashboardInitError, DashboardInitPhase, DashboardState } from 'app/types';
+import { DashboardAclDTO, DashboardInitError, DashboardInitPhase, DashboardProps, DashboardState } from 'app/types';
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
@@ -13,6 +13,12 @@ export const initialState: DashboardState = {
   getModel: () => null,
   permissions: [],
   initError: null,
+  title: '',
+  liveNow: false,
+  graphTooltip: DashboardCursorSync.Off,
+  description: '',
+  style: 'dark',
+  tags: [],
 };
 
 const dashboardSlice = createSlice({
@@ -44,6 +50,9 @@ const dashboardSlice = createSlice({
       state.initError = null;
       state.getModel = () => null;
     },
+    updateDashboard: (state, action: PayloadAction<Partial<DashboardProps>>) => {
+      Object.assign(state, action.payload);
+    },
     addPanel: (state, action: PayloadAction<PanelModel>) => {
       //state.panels[action.payload.id] = { pluginId: action.payload.type };
     },
@@ -73,6 +82,7 @@ export const {
   dashboardInitServices,
   cleanUpDashboard,
   addPanel,
+  updateDashboard,
 } = dashboardSlice.actions;
 
 export const dashboardReducer = dashboardSlice.reducer;

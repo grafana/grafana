@@ -1,24 +1,27 @@
 import React, { useState } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
-import { TimeZone } from '@grafana/data';
+import { DashboardCursorSync, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
+import {
+  updateTimeZoneDashboard as updateTimeZone,
+  updateWeekStartDashboard as updateWeekStart,
+} from 'app/features/dashboard/state/actions';
+import { StoreState } from 'app/types';
 
 import { DashboardModel } from '../../state/DashboardModel';
+import { updateDashboard } from '../../state/reducers';
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
 
 import { PreviewSettings } from './PreviewSettings';
 import { TimePickerSettings } from './TimePickerSettings';
 
-interface OwnProps {
+export interface Props {
   dashboard: DashboardModel;
 }
-
-export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 const GRAPH_TOOLTIP_OPTIONS = [
   { value: 0, label: 'Default' },
@@ -26,8 +29,10 @@ const GRAPH_TOOLTIP_OPTIONS = [
   { value: 2, label: 'Shared Tooltip' },
 ];
 
-export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWeekStart }: Props): JSX.Element {
+export function GeneralSettings({ dashboard }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
+  const dispatch = useDispatch();
+  const { title, liveNow, graphTooltip, description, tags } = useSelector((state: StoreState) => state.dashboard);
 
   const onFolderChange = (folder: { id: number; title: string }) => {
     dashboard.meta.folderId = folder.id;
@@ -39,9 +44,8 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
     dashboard[event.currentTarget.name as 'title' | 'description'] = event.currentTarget.value;
   };
 
-  const onTooltipChange = (graphTooltip: number) => {
-    dashboard.graphTooltip = graphTooltip;
-    setRenderCounter(renderCounter + 1);
+  const onTooltipChange = (graphTooltip: DashboardCursorSync) => {
+    dispatch(updateDashboard({ graphTooltip }));
   };
 
   const onRefreshIntervalChange = (intervals: string[]) => {
@@ -58,24 +62,23 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
   };
 
   const onLiveNowChange = (v: boolean) => {
-    dashboard.liveNow = v;
-    setRenderCounter(renderCounter + 1);
+    dispatch(updateDashboard({ liveNow: v }));
   };
 
   const onTimeZoneChange = (timeZone: TimeZone) => {
     dashboard.timezone = timeZone;
     setRenderCounter(renderCounter + 1);
-    updateTimeZone(timeZone);
+    dispatch(updateTimeZone(timeZone));
   };
 
   const onWeekStartChange = (weekStart: string) => {
     dashboard.weekStart = weekStart;
     setRenderCounter(renderCounter + 1);
-    updateWeekStart(weekStart);
+    dispatch(updateWeekStart(weekStart));
   };
 
   const onTagsChange = (tags: string[]) => {
-    dashboard.tags = tags;
+    dispatch(updateDashboard({ tags }));
     setRenderCounter(renderCounter + 1);
   };
 
@@ -96,13 +99,13 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
       </h3>
       <div className="gf-form-group">
         <Field label="Name">
-          <Input id="title-input" name="title" onBlur={onBlur} defaultValue={dashboard.title} />
+          <Input id="title-input" name="title" onBlur={onBlur} defaultValue={title} />
         </Field>
         <Field label="Description">
-          <Input id="description-input" name="description" onBlur={onBlur} defaultValue={dashboard.description} />
+          <Input id="description-input" name="description" onBlur={onBlur} defaultValue={description} />
         </Field>
         <Field label="Tags">
-          <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} />
+          <TagsInput id="tags-input" tags={tags} onChange={onTagsChange} />
         </Field>
         <Field label="Folder">
           <FolderPicker
@@ -140,7 +143,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
         nowDelay={dashboard.timepicker.nowDelay}
         timezone={dashboard.timezone}
         weekStart={dashboard.weekStart}
-        liveNow={dashboard.liveNow}
+        liveNow={liveNow}
       />
 
       <CollapsableSection label="Panel options" isOpen={true}>
@@ -148,7 +151,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
           label="Graph tooltip"
           description="Controls tooltip and hover highlight behavior across different panels"
         >
-          <RadioButtonGroup onChange={onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} value={dashboard.graphTooltip} />
+          <RadioButtonGroup onChange={onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} value={graphTooltip} />
         </Field>
       </CollapsableSection>
 
@@ -158,12 +161,3 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone, updateWe
     </div>
   );
 }
-
-const mapDispatchToProps = {
-  updateTimeZone: updateTimeZoneDashboard,
-  updateWeekStart: updateWeekStartDashboard,
-};
-
-const connector = connect(null, mapDispatchToProps);
-
-export const GeneralSettings = connector(GeneralSettingsUnconnected);
