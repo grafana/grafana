@@ -1,10 +1,12 @@
 import React from 'react';
-import { PromVisualQuery } from '../types';
+
 import { Stack } from '@grafana/experimental';
+
 import { promQueryModeller } from '../PromQueryModeller';
-import { OperationListExplained } from '../shared/OperationListExplained';
-import { OperationExplainedBox } from '../shared/OperationExplainedBox';
 import { buildVisualQueryFromString } from '../parsing';
+import { OperationExplainedBox } from '../shared/OperationExplainedBox';
+import { OperationListExplained } from '../shared/OperationListExplained';
+import { PromVisualQuery } from '../types';
 
 export interface Props {
   query: string;

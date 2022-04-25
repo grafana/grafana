@@ -1,11 +1,13 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { defaultsDeep } from 'lodash';
-import { PanelDataErrorView } from './PanelDataErrorView';
-import { PanelDataErrorViewProps } from '@grafana/runtime';
-import { getDefaultTimeRange, LoadingState } from '@grafana/data';
+import React from 'react';
 import { Provider } from 'react-redux';
+
+import { getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { PanelDataErrorViewProps } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
+
+import { PanelDataErrorView } from './PanelDataErrorView';
 
 describe('PanelDataErrorView', () => {
   it('show No data when there is no data', () => {

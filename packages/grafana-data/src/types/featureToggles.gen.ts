@@ -19,10 +19,9 @@ export interface FeatureToggles {
   trimDefaults?: boolean;
   envelopeEncryption?: boolean;
   httpclientprovider_azure_auth?: boolean;
-  ['service-accounts']?: boolean;
+  serviceAccounts?: boolean;
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
-  dashboardPreviewsScheduler?: boolean;
   dashboardPreviewsAdmin?: boolean;
   ['live-config']?: boolean;
   ['live-pipeline']?: boolean;
@@ -54,4 +53,6 @@ export interface FeatureToggles {
   storageLocalUpload?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
   explore2Dashboard?: boolean;
+  persistNotifications?: boolean;
+  commandPalette?: boolean;
 }

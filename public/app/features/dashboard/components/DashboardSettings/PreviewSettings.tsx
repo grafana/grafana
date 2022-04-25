@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
+
 import { Button, CollapsableSection, FileUpload } from '@grafana/ui';
-import { getThumbnailURL } from 'app/features/search/components/SearchCard';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getThumbnailURL } from 'app/features/search/components/SearchCard';
 
 interface Props {
   uid: string;

@@ -10,7 +10,7 @@ The data model used in Grafana, namely the [data frame]({{< relref "../../develo
 
 Field options allow you to change how the data is displayed in your visualizations. Options and overrides that you apply do not change the data, they change how Grafana displays the data. When you change an option, it is applied to all fields, meaning all series or columns. For example, if you change the unit to percentage, then all fields with numeric values are displayed in percentages.
 
-For a complete list of field formatting options, refer to [Reference: Standard field definitions]({{< relref "../reference-standard-field-definitions.md" >}}).
+For a complete list of field formatting options, refer to [Standard field definitions]({{< relref "../standard-field-definitions.md" >}}).
 
 > You can apply standard options to most built-in Grafana panels. Some older panels and community panels that have not updated to the new panel and data model will be missing either all or some of these field options.
 
@@ -26,6 +26,6 @@ For a complete list of field formatting options, refer to [Reference: Standard f
 
 1. Select the standard options you want to apply.
 
-   For more information about standard options, refer to [Reference: Standard field definitions]({{< relref "../reference-standard-field-definitions/index.md" >}}).
+   For more information about standard options, refer to [Standard field definitions]({{< relref "../standard-field-definitions/index.md" >}}).
 
 1. To preview your change, click outside of the field option box you are editing or press **Enter**.

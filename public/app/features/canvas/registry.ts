@@ -1,4 +1,5 @@
 import { Registry } from '@grafana/data';
+
 import { CanvasElementItem, CanvasElementOptions } from './element';
 import { buttonItem } from './elements/button';
 import { droneFrontItem } from './elements/droneFront';

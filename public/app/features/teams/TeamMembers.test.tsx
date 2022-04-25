@@ -1,10 +1,13 @@
-import React from 'react';
 import { shallow } from 'enzyme';
-import { Props, State, TeamMembers } from './TeamMembers';
-import { OrgRole, TeamMember } from '../../types';
-import { getMockTeamMembers } from './__mocks__/teamMocks';
-import { User } from 'app/core/services/context_srv';
+import React from 'react';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+
+import { User } from 'app/core/services/context_srv';
+
+import { OrgRole, TeamMember } from '../../types';
+
+import { Props, State, TeamMembers } from './TeamMembers';
+import { getMockTeamMembers } from './__mocks__/teamMocks';
 import { setSearchMemberQuery } from './state/reducers';
 
 const signedInUserId = 1;

@@ -1,6 +1,7 @@
 jest.mock('app/core/core', () => ({}));
 
 import $ from 'jquery';
+
 import GraphTooltip from '../graph_tooltip';
 
 const scope: any = {

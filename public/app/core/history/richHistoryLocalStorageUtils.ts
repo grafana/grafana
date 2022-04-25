@@ -1,5 +1,6 @@
-import { RichHistoryQuery } from '../../types';
 import { omit } from 'lodash';
+
+import { RichHistoryQuery } from '../../types';
 import { SortOrder } from '../utils/richHistoryTypes';
 
 /**

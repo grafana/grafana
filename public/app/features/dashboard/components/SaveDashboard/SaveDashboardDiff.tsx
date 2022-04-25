@@ -1,11 +1,13 @@
-import React from 'react';
 import { css } from '@emotion/css';
+import React from 'react';
+import { useAsync } from 'react-use';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { Spinner, useStyles2 } from '@grafana/ui';
-import { Diffs } from '../VersionHistory/utils';
+
 import { DiffGroup } from '../VersionHistory/DiffGroup';
 import { DiffViewer } from '../VersionHistory/DiffViewer';
-import { GrafanaTheme2 } from '@grafana/data';
-import { useAsync } from 'react-use';
+import { Diffs } from '../VersionHistory/utils';
 
 interface SaveDashboardDiffProps {
   oldValue?: any;

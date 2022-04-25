@@ -36,6 +36,7 @@ type Service struct {
 	cfg                *setting.Cfg
 	features           featuremgmt.FeatureToggles
 	permissionsService accesscontrol.PermissionsService
+	ac                 accesscontrol.AccessControl
 
 	ptc proxyTransportCache
 }
@@ -64,6 +65,7 @@ func ProvideService(
 		cfg:                cfg,
 		features:           features,
 		permissionsService: permissionsServices.GetDataSourceService(),
+		ac:                 ac,
 	}
 
 	ac.RegisterAttributeScopeResolver(NewNameScopeResolver(store))
@@ -159,7 +161,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 		return err
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+	if !s.ac.IsDisabled() {
 		// This belongs in Data source permissions, and we probably want
 		// to do this with a hook in the store and rollback on fail.
 		// We can't use events, because there's no way to communicate

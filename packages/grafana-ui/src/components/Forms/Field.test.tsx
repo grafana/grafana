@@ -1,8 +1,10 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { Input } from '../Input/Input';
-import { Field } from './Field';
 import { Select } from '../Select/Select';
+
+import { Field } from './Field';
 
 describe('Field', () => {
   it('renders the label', () => {

@@ -147,7 +147,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
 	}
-	if err := srv.store.GetOrgAlertRules(c.Req.Context(), &alertRuleQuery); err != nil {
+	if err := srv.store.ListAlertRules(c.Req.Context(), &alertRuleQuery); err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"
 		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
 		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer

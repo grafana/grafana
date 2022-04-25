@@ -1,3 +1,7 @@
+import { cloneDeep, upperFirst } from 'lodash';
+import { forkJoin, Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import {
   DataFrame,
   DataQueryRequest,
@@ -8,9 +12,6 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { cloneDeep, upperFirst } from 'lodash';
-import { forkJoin, Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
@@ -215,49 +216,6 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       this.replaceTemplateVariable(subscriptionId),
       this.replaceTemplateVariable(resourceGroup),
       this.replaceTemplateVariable(metricDefinition)
-    );
-  }
-
-  getMetricNames(
-    subscriptionId: string,
-    resourceGroup: string,
-    metricDefinition: string,
-    resourceName: string,
-    metricNamespace: string
-  ) {
-    return this.azureMonitorDatasource.getMetricNames(
-      this.replaceTemplateVariable(subscriptionId),
-      this.replaceTemplateVariable(resourceGroup),
-      this.replaceTemplateVariable(metricDefinition),
-      this.replaceTemplateVariable(resourceName),
-      this.replaceTemplateVariable(metricNamespace)
-    );
-  }
-
-  getMetricNamespaces(subscriptionId: string, resourceGroup: string, metricDefinition: string, resourceName: string) {
-    return this.azureMonitorDatasource.getMetricNamespaces(
-      this.replaceTemplateVariable(subscriptionId),
-      this.replaceTemplateVariable(resourceGroup),
-      this.replaceTemplateVariable(metricDefinition),
-      this.replaceTemplateVariable(resourceName)
-    );
-  }
-
-  getMetricMetadata(
-    subscriptionId: string,
-    resourceGroup: string,
-    metricDefinition: string,
-    resourceName: string,
-    metricNamespace: string,
-    metricName: string
-  ) {
-    return this.azureMonitorDatasource.getMetricMetadata(
-      this.replaceTemplateVariable(subscriptionId),
-      this.replaceTemplateVariable(resourceGroup),
-      this.replaceTemplateVariable(metricDefinition),
-      this.replaceTemplateVariable(resourceName),
-      this.replaceTemplateVariable(metricNamespace),
-      this.replaceTemplateVariable(metricName)
     );
   }
 
