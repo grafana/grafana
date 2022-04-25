@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { PanelData } from '@grafana/data/src/types';
 import { InlineFieldRow } from '@grafana/ui';
 
 import Datasource from '../../datasource';
@@ -25,7 +26,6 @@ import {
   useSubscriptions,
   useMetricMetadata,
 } from './dataHooks';
-import { PanelData } from '@grafana/data/src/types';
 
 interface MetricsQueryEditorProps {
   data: PanelData | undefined;
