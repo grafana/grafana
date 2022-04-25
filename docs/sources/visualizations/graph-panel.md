@@ -18,7 +18,7 @@ Graph visualizations allow you to apply:
 - [Alerts]({{< relref "../alerting/_index.md" >}}) - This is the only type of visualization that allows you to set alerts.
 - [Transform data]({{< relref "../panels/transform-data/add-transformation-to-data.md" >}})
 - [Add a field override]({{< relref "../panels/override-field-values/add-a-field-override.md" >}})
-- [Add a threshold]({{< relref "../panels/specify-thresholds/add-a-threshold.md" >}})
+- [Configure thresholds]({{< relref "../panels/configure-thresholds/" >}})
 
 ## Display options
 

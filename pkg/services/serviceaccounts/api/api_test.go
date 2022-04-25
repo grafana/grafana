@@ -42,7 +42,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	}()
 
 	orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
-	err := sqlstore.CreateOrg(context.Background(), orgCmd)
+	err := store.CreateOrg(context.Background(), orgCmd)
 	require.Nil(t, err)
 
 	type testCreateSATestCase struct {
