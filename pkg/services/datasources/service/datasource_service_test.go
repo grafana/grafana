@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	encJson "encoding/json"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -225,8 +225,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		setting.SecretKey = "password"
 
-		json := simplejson.New()
-		json.Set("tlsAuthWithCACert", true)
+		sjson := simplejson.New()
+		sjson.Set("tlsAuthWithCACert", true)
 
 		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -273,8 +273,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		setting.SecretKey = "password"
 
-		json := simplejson.New()
-		json.Set("tlsAuth", true)
+		sjson := simplejson.New()
+		sjson.Set("tlsAuth", true)
 
 		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -286,10 +286,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 			Name:     "kubernetes",
 			Url:      "http://k8s:8001",
 			Type:     "Kubernetes",
-			JsonData: json,
+			JsonData: sjson,
 		}
 
-		secureJsonData, err := encJson.Marshal(map[string]string{
+		secureJsonData, err := json.Marshal(map[string]string{
 			"tlsClientCert": clientCert,
 			"tlsClientKey":  clientKey,
 		})
@@ -317,9 +317,9 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		setting.SecretKey = "password"
 
-		json := simplejson.New()
-		json.Set("tlsAuthWithCACert", true)
-		json.Set("serverName", "server-name")
+		sjson := simplejson.New()
+		sjson.Set("tlsAuthWithCACert", true)
+		sjson.Set("serverName", "server-name")
 
 		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -331,10 +331,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 			Name:     "kubernetes",
 			Url:      "http://k8s:8001",
 			Type:     "Kubernetes",
-			JsonData: json,
+			JsonData: sjson,
 		}
 
-		secureJsonData, err := encJson.Marshal(map[string]string{
+		secureJsonData, err := json.Marshal(map[string]string{
 			"tlsCACert": caCert,
 		})
 		require.NoError(t, err)
@@ -360,8 +360,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 			},
 		})
 
-		json := simplejson.New()
-		json.Set("tlsSkipVerify", true)
+		sjson := simplejson.New()
+		sjson.Set("tlsSkipVerify", true)
 
 		secretsStore := kvstore.SetupTestService(t)
 		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -371,7 +371,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			Id:       1,
 			Url:      "http://k8s:8001",
 			Type:     "Kubernetes",
-			JsonData: json,
+			JsonData: sjson,
 		}
 
 		rt1, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
@@ -391,7 +391,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 	t.Run("Should set custom headers if configured in JsonData", func(t *testing.T) {
 		provider := httpclient.NewProvider()
 
-		json := simplejson.NewFromAny(map[string]interface{}{
+		sjson := simplejson.NewFromAny(map[string]interface{}{
 			"httpHeaderName1": "Authorization",
 		})
 
@@ -405,10 +405,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 			Name:     "kubernetes",
 			Url:      "http://k8s:8001",
 			Type:     "Kubernetes",
-			JsonData: json,
+			JsonData: sjson,
 		}
 
-		secureJsonData, err := encJson.Marshal(map[string]string{
+		secureJsonData, err := json.Marshal(map[string]string{
 			"httpHeaderValue1": "Bearer xf5yhfkpsnmgo",
 		})
 		require.NoError(t, err)
@@ -416,7 +416,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, secretType, string(secureJsonData))
 		require.NoError(t, err)
 
-		headers := dsService.getCustomHeaders(json, map[string]string{"httpHeaderValue1": "Bearer xf5yhfkpsnmgo"})
+		headers := dsService.getCustomHeaders(sjson, map[string]string{"httpHeaderValue1": "Bearer xf5yhfkpsnmgo"})
 		require.Equal(t, "Bearer xf5yhfkpsnmgo", headers["Authorization"])
 
 		// 1. Start HTTP test server which checks the request headers
@@ -457,7 +457,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 	t.Run("Should use request timeout if configured in JsonData", func(t *testing.T) {
 		provider := httpclient.NewProvider()
 
-		json := simplejson.NewFromAny(map[string]interface{}{
+		sjson := simplejson.NewFromAny(map[string]interface{}{
 			"timeout": 19,
 		})
 
@@ -469,7 +469,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			Id:       1,
 			Url:      "http://k8s:8001",
 			Type:     "Kubernetes",
-			JsonData: json,
+			JsonData: sjson,
 		}
 
 		client, err := dsService.GetHTTPClient(context.Background(), &ds, provider)
@@ -492,7 +492,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			setting.SigV4AuthEnabled = origSigV4Enabled
 		})
 
-		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
+		sjson, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
 		require.NoError(t, err)
 
 		secretsStore := kvstore.SetupTestService(t)
@@ -501,7 +501,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 
 		ds := models.DataSource{
 			Type:     models.DS_ES,
-			JsonData: json,
+			JsonData: sjson,
 		}
 
 		_, err = dsService.GetHTTPTransport(context.Background(), &ds, provider)
@@ -747,7 +747,7 @@ func TestService_GetDecryptedValues(t *testing.T) {
 		jsonData := map[string]string{
 			"password": "securePassword",
 		}
-		jsonString, err := encJson.Marshal(jsonData)
+		jsonString, err := json.Marshal(jsonData)
 		require.NoError(t, err)
 
 		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, secretType, string(jsonString))
