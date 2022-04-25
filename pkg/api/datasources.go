@@ -487,6 +487,8 @@ func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *models.DataSou
 				dto.SecureJsonFields[k] = true
 			}
 		}
+	} else {
+		datasourcesLogger.Debug("Failed to retrieve datasource secrets to parse secure json fields", "error", err)
 	}
 
 	return dto
