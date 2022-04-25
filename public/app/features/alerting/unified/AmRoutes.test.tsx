@@ -1,8 +1,13 @@
-import React from 'react';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { render, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
+import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
+
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { selectOptionInTest } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import {
   AlertManagerCortexConfig,
   AlertManagerDataSourceJsonData,
@@ -11,18 +16,18 @@ import {
   Route,
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
-import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
+import { AccessControlAction } from 'app/types';
+
 import AmRoutes from './AmRoutes';
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
 import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
 import { getAllDataSources } from './utils/config';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import userEvent from '@testing-library/user-event';
-import { selectOptionInTest } from '@grafana/ui';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('./api/alertmanager');
 jest.mock('./utils/config');
+jest.mock('app/core/services/context_srv');
 
 const mocks = {
   getAllDataSourcesMock: jest.mocked(getAllDataSources),
@@ -32,6 +37,7 @@ const mocks = {
     updateAlertManagerConfig: jest.mocked(updateAlertManagerConfig),
     fetchStatus: jest.mocked(fetchStatus),
   },
+  contextSrv: jest.mocked(contextSrv),
 };
 
 const renderAmRoutes = (alertManagerSourceName?: string) => {
@@ -177,6 +183,9 @@ describe('AmRoutes', () => {
 
   beforeEach(() => {
     mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
+    mocks.contextSrv.hasAccess.mockImplementation(() => true);
+    mocks.contextSrv.hasPermission.mockImplementation(() => true);
+    mocks.contextSrv.evaluatePermission.mockImplementation(() => []);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
   });
 
@@ -266,24 +275,24 @@ describe('AmRoutes', () => {
 
     // open root route for editing
     const rootRouteContainer = await ui.rootRouteContainer.find();
-    userEvent.click(ui.editButton.get(rootRouteContainer));
+    await userEvent.click(ui.editButton.get(rootRouteContainer));
 
     // configure receiver & group by
     const receiverSelect = await ui.receiverSelect.find();
     await clickSelectOption(receiverSelect, 'critical');
 
     const groupSelect = ui.groupSelect.get();
-    userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
+    await userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
 
     // configure timing intervals
-    userEvent.click(byText('Timing options').get(rootRouteContainer));
+    await userEvent.click(byText('Timing options').get(rootRouteContainer));
 
     await updateTiming(ui.groupWaitContainer.get(), '1', 'Minutes');
     await updateTiming(ui.groupIntervalContainer.get(), '4', 'Minutes');
     await updateTiming(ui.groupRepeatContainer.get(), '5', 'Hours');
 
     //save
-    userEvent.click(ui.saveButton.get(rootRouteContainer));
+    await userEvent.click(ui.saveButton.get(rootRouteContainer));
 
     // wait for it to go out of edit mode
     await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
@@ -326,17 +335,17 @@ describe('AmRoutes', () => {
 
     // open root route for editing
     const rootRouteContainer = await ui.rootRouteContainer.find();
-    userEvent.click(ui.editButton.get(rootRouteContainer));
+    await userEvent.click(ui.editButton.get(rootRouteContainer));
 
     // configure receiver & group by
     const receiverSelect = await ui.receiverSelect.find();
     await clickSelectOption(receiverSelect, 'default');
 
     const groupSelect = ui.groupSelect.get();
-    userEvent.type(byRole('combobox').get(groupSelect), 'severity{enter}');
-    userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
+    await userEvent.type(byRole('combobox').get(groupSelect), 'severity{enter}');
+    await userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
     //save
-    userEvent.click(ui.saveButton.get(rootRouteContainer));
+    await userEvent.click(ui.saveButton.get(rootRouteContainer));
 
     // wait for it to go out of edit mode
     await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
@@ -357,6 +366,18 @@ describe('AmRoutes', () => {
       },
       template_files: {},
     });
+  });
+
+  it('hides create and edit button if user does not have permission', () => {
+    mocks.contextSrv.hasAccess.mockImplementation((action) =>
+      [AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsRead].includes(
+        action as AccessControlAction
+      )
+    );
+
+    renderAmRoutes();
+    expect(ui.newPolicyButton.query()).not.toBeInTheDocument();
+    expect(ui.editButton.query()).not.toBeInTheDocument();
   });
 
   it('Show error message if loading Alertmanager config fails', async () => {
@@ -407,8 +428,8 @@ describe('AmRoutes', () => {
 
     // Toggle a save to test new object_matchers
     const rootRouteContainer = await ui.rootRouteContainer.find();
-    userEvent.click(ui.editButton.get(rootRouteContainer));
-    userEvent.click(ui.saveButton.get(rootRouteContainer));
+    await userEvent.click(ui.editButton.get(rootRouteContainer));
+    await userEvent.click(ui.saveButton.get(rootRouteContainer));
 
     await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
 
@@ -478,8 +499,8 @@ describe('AmRoutes', () => {
 
     // Toggle a save to test new object_matchers
     const rootRouteContainer = await ui.rootRouteContainer.find();
-    userEvent.click(ui.editButton.get(rootRouteContainer));
-    userEvent.click(ui.saveButton.get(rootRouteContainer));
+    await userEvent.click(ui.editButton.get(rootRouteContainer));
+    await userEvent.click(ui.saveButton.get(rootRouteContainer));
 
     await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
 
@@ -580,7 +601,7 @@ describe('AmRoutes', () => {
     await renderAmRoutes(dataSources.am.name);
     const rows = await ui.row.findAll();
     expect(rows).toHaveLength(1);
-    userEvent.click(ui.editRouteButton.get(rows[0]));
+    await userEvent.click(ui.editRouteButton.get(rows[0]));
 
     const muteTimingSelect = ui.muteTimingSelect.get();
     await clickSelectOption(muteTimingSelect, 'default-mute');
@@ -589,7 +610,7 @@ describe('AmRoutes', () => {
     const savePolicyButton = ui.savePolicyButton.get();
     expect(savePolicyButton).toBeInTheDocument();
 
-    userEvent.click(savePolicyButton);
+    await userEvent.click(savePolicyButton);
 
     await waitFor(() => expect(savePolicyButton).not.toBeInTheDocument());
 
@@ -618,14 +639,14 @@ describe('AmRoutes', () => {
 });
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
-  userEvent.click(byRole('combobox').get(selectElement));
+  await userEvent.click(byRole('combobox').get(selectElement));
   await selectOptionInTest(selectElement, optionText);
 };
 
 const updateTiming = async (selectElement: HTMLElement, value: string, timeUnit: string): Promise<void> => {
   const input = byRole('textbox').get(selectElement);
   const select = byRole('combobox').get(selectElement);
-  userEvent.type(input, value);
-  userEvent.click(select);
+  await userEvent.type(input, value);
+  await userEvent.click(select);
   await selectOptionInTest(selectElement, timeUnit);
 };

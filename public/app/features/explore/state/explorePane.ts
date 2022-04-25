@@ -1,27 +1,7 @@
-import { AnyAction } from 'redux';
-import { isEqual } from 'lodash';
-
-import {
-  DEFAULT_RANGE,
-  getQueryKeys,
-  parseUrlState,
-  ensureQueries,
-  generateNewKeyAndAddRefIdIfMissing,
-  getTimeRangeFromUrl,
-} from 'app/core/utils/explore';
-import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
-import { queryReducer, runQueries, setQueriesAction } from './query';
-import { datasourceReducer } from './datasource';
-import { timeReducer, updateTime } from './time';
-import { historyReducer } from './history';
-import {
-  makeExplorePaneState,
-  loadAndInitDatasource,
-  createEmptyQueryResponse,
-  getUrlStateFromPaneState,
-  storeGraphStyle,
-} from './utils';
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
+import { isEqual } from 'lodash';
+import { AnyAction } from 'redux';
+
 import {
   EventBusExtended,
   DataQuery,
@@ -32,13 +12,33 @@ import {
   ExplorePanelsState,
   PreferredVisualisationType,
 } from '@grafana/data';
-// Types
-import { ThunkResult } from 'app/types';
-import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { getRichHistory } from '../../../core/utils/richHistory';
-import { richHistoryUpdatedAction, stateSave } from './main';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
+import {
+  DEFAULT_RANGE,
+  getQueryKeys,
+  parseUrlState,
+  ensureQueries,
+  generateNewKeyAndAddRefIdIfMissing,
+  getTimeRangeFromUrl,
+} from 'app/core/utils/explore';
+import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
+import { ThunkResult } from 'app/types';
+import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
+
+import { datasourceReducer } from './datasource';
+import { historyReducer } from './history';
+import { richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction, stateSave } from './main';
+import { queryReducer, runQueries, setQueriesAction } from './query';
+import { timeReducer, updateTime } from './time';
+import {
+  makeExplorePaneState,
+  loadAndInitDatasource,
+  createEmptyQueryResponse,
+  getUrlStateFromPaneState,
+  storeGraphStyle,
+} from './utils';
+// Types
 
 //
 // Actions and Payloads
@@ -181,9 +181,6 @@ export function initializeExplore(
       // user to go back to previous url.
       dispatch(runQueries(exploreId, { replaceUrl: true }));
     }
-
-    const richHistory = await getRichHistory();
-    dispatch(richHistoryUpdatedAction({ richHistory }));
   };
 }
 
@@ -258,6 +255,21 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   state = datasourceReducer(state, action);
   state = timeReducer(state, action);
   state = historyReducer(state, action);
+
+  if (richHistoryUpdatedAction.match(action)) {
+    return {
+      ...state,
+      richHistory: action.payload.richHistory,
+    };
+  }
+
+  if (richHistorySearchFiltersUpdatedAction.match(action)) {
+    const richHistorySearchFilters = action.payload.filters;
+    return {
+      ...state,
+      richHistorySearchFilters,
+    };
+  }
 
   if (changeSizeAction.match(action)) {
     const containerWidth = action.payload.width;

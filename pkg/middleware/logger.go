@@ -19,10 +19,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	cw "github.com/weaveworks/common/tracing"
 )
 
 func Logger(cfg *setting.Cfg) web.Handler {
@@ -33,7 +33,7 @@ func Logger(cfg *setting.Cfg) web.Handler {
 		c.Next()
 
 		timeTaken := time.Since(start) / time.Millisecond
-
+		duration := time.Since(start).String()
 		ctx := contexthandler.FromContext(c.Req.Context())
 		if ctx != nil && ctx.PerfmonTimer != nil {
 			ctx.PerfmonTimer.Observe(float64(timeTaken))
@@ -53,12 +53,13 @@ func Logger(cfg *setting.Cfg) web.Handler {
 				"status", status,
 				"remote_addr", c.RemoteAddr(),
 				"time_ms", int64(timeTaken),
+				"duration", duration,
 				"size", rw.Size(),
 				"referer", req.Referer(),
 			}
 
-			traceID, exist := cw.ExtractTraceID(ctx.Req.Context())
-			if exist {
+			traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
+			if traceID != "" {
 				logParams = append(logParams, "traceID", traceID)
 			}
 

@@ -5,13 +5,24 @@ keywords = ["grafana", "http", "documentation", "api", "annotation", "annotation
 aliases = ["/docs/grafana/latest/http_api/annotations/"]
 +++
 
-# Annotations resources / actions
+# Annotations API
 
-This is the API documentation for the new Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be global annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.
+This is the API documentation for the new Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.
+
+> If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, access to endpoints will be controlled by Fine-grained access control permissions.
+> Refer to specific endpoints to understand what permissions are required.
 
 ## Find Annotations
 
 `GET /api/annotations?from=1506676478816&to=1507281278816&tags=tag1&tags=tag2&limit=100`
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
+
+| Action           | Scope                   |
+| ---------------- | ----------------------- |
+| annotations:read | annotations:type:<type> |
 
 **Example Request**:
 
@@ -32,7 +43,7 @@ Query Parameters:
 - `panelId`: number. Optional. Find annotations that are scoped to a specific panel
 - `userId`: number. Optional. Find annotations created by a specific user
 - `type`: string. Optional. `alert`|`annotation` Return alerts or user created annotations
-- `tags`: string. Optional. Use this to filter global annotations. Global annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. To do an "AND" filtering with multiple tags, specify the tags parameter multiple times e.g. `tags=tag1&tags=tag2`.
+- `tags`: string. Optional. Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. To do an "AND" filtering with multiple tags, specify the tags parameter multiple times e.g. `tags=tag1&tags=tag2`.
 
 **Example Response**:
 
@@ -85,12 +96,20 @@ Content-Type: application/json
 ## Create Annotation
 
 Creates an annotation in the Grafana database. The `dashboardId` and `panelId` fields are optional.
-If they are not specified then a global annotation is created and can be queried in any dashboard that adds
+If they are not specified then an organization annotation is created and can be queried in any dashboard that adds
 the Grafana annotations data source. When creating a region annotation include the timeEnd property.
 
 The format for `time` and `timeEnd` should be epoch numbers in millisecond resolution.
 
 `POST /api/annotations`
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
+
+| Action             | Scope                   |
+| ------------------ | ----------------------- |
+| annotations:create | annotations:type:<type> |
 
 **Example Request**:
 
@@ -132,6 +151,14 @@ format (string with multiple tags being separated by a space).
 
 `POST /api/annotations/graphite`
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
+
+| Action             | Scope                         |
+| ------------------ | ----------------------------- |
+| annotations:create | annotations:type:organization |
+
 **Example Request**:
 
 ```http
@@ -164,6 +191,14 @@ Content-Type: application/json
 `PUT /api/annotations/:id`
 
 Updates all properties of an annotation that matches the specified id. To only update certain property, consider using the [Patch Annotation](#patch-annotation) operation.
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
+
+| Action            | Scope                   |
+| ----------------- | ----------------------- |
+| annotations:write | annotations:type:<type> |
 
 **Example Request**:
 
@@ -202,6 +237,14 @@ Updates one or more properties of an annotation that matches the specified id.
 
 This operation currently supports updating of the `text`, `tags`, `time` and `timeEnd` properties.
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
+
+| Action            | Scope                   |
+| ----------------- | ----------------------- |
+| annotations:write | annotations:type:<type> |
+
 **Example Request**:
 
 ```http
@@ -233,6 +276,14 @@ Content-Type: application/json
 
 Deletes the annotation that matches the specified id.
 
+#### Required permissions
+
+See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
+
+| Action             | Scope                   |
+| ------------------ | ----------------------- |
+| annotations:delete | annotations:type:<type> |
+
 **Example Request**:
 
 ```http
@@ -258,6 +309,14 @@ Content-Type: application/json
 `GET /api/annotations/tags`
 
 Find all the event tags created in the annotations.
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanation.
+
+| Action           | Scope |
+| ---------------- | ----- |
+| annotations:read | N/A   |
 
 **Example Request**:
 

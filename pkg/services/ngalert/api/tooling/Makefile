@@ -7,6 +7,10 @@ SWAGGER_TAG ?= latest
 PATH_DOWN = pkg/services/ngalert/api/tooling
 PATH_UP = ../../../../..
 
+.DEFAULT_GOAL := all
+
+GENERATED_GO_MATCHERS = ./go/*.go
+
 spec.json: $(GO_PKG_FILES)
 	# this is slow because this image does not use the cache
 	# https://github.com/go-swagger/go-swagger/blob/v0.27.0/Dockerfile#L5
@@ -25,6 +29,30 @@ spec.json-mac: ensure_go-swagger_mac $(GO_PKG_FILES)
 post.json: spec.json
 	go run cmd/clean-swagger/main.go -if $(<) -of $@
 
-.PHONY: openapi
-openapi: post.json
+swagger-codegen-api:
+	docker run --rm -v $$(pwd):/local --user $$(id -u):$$(id -g) swaggerapi/swagger-codegen-cli generate \
+	-i /local/post.json \
+	-l go-server \
+	-Dapis \
+	-o /local \
+	--additional-properties packageName=api \
+	-t /local/swagger-codegen/templates \
+	# --import-mappings eval.RelativeTimeRange="github.com/grafana/grafana/pkg/services/ngalert/eval" \
+	# --type-mappings RelativeTimeRange=eval.RelativeTimeRange
+
+copy-files:
+	ls -1 go | xargs -n 1 -I {} mv go/{} ../generated_base_{}
+
+fix:
+	sed -i -e 's/apimodels\.\[\]PostableAlert/apimodels.PostableAlerts/' $(GENERATED_GO_MATCHERS)
+	sed -i -e 's/apimodels\.\[\]UpdateDashboardAclCommand/apimodels.Permissions/' $(GENERATED_GO_MATCHERS)
+	sed -i -e 's/apimodels\.\[\]PostableApiReceiver/apimodels.TestReceiversConfigParams/' $(GENERATED_GO_MATCHERS)
+	goimports -w -v $(GENERATED_GO_MATCHERS)
+
+clean:
+	rm -rf ./go
+
+serve: post.json
 	docker run --rm -p 80:8080 -v $$(pwd):/tmp -e SWAGGER_FILE=/tmp/$(<) swaggerapi/swagger-editor
+
+all: post.json swagger-codegen-api fix copy-files clean	

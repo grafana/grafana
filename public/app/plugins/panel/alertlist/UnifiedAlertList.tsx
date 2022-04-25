@@ -1,28 +1,28 @@
-import React, { useEffect, useMemo } from 'react';
+import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
+import React, { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
+
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
 import { CustomScrollbar, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { css } from '@emotion/css';
-
 import alertDef from 'app/features/alerting/state/alertDef';
-import { GroupMode, SortOrder, UnifiedAlertListOptions } from './types';
-
-import { flattenRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
-import { PromRuleWithLocation } from 'app/types/unified-alerting';
-import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
+import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
+import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
+import { Annotation, RULE_LIST_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
 import {
   getAllRulesSourceNames,
   GRAFANA_DATASOURCE_NAME,
   GRAFANA_RULES_SOURCE_NAME,
 } from 'app/features/alerting/unified/utils/datasource';
+import { flattenRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { Annotation, RULE_LIST_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
+import { PromRuleWithLocation } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
-import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
-import UngroupedModeView from './unified-alerting/UngroupedView';
+
+import { GroupMode, SortOrder, UnifiedAlertListOptions } from './types';
 import GroupedModeView from './unified-alerting/GroupedView';
+import UngroupedModeView from './unified-alerting/UngroupedView';
 
 export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
@@ -49,13 +49,13 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const rules = useMemo(
     () =>
       filterRules(
-        props.options,
+        props,
         sortRules(
           props.options.sortOrder,
           Object.values(promRulesRequests).flatMap(({ result = [] }) => flattenRules(result))
         )
       ),
-    [props.options, promRulesRequests]
+    [props, promRulesRequests]
   );
 
   const noAlertsMessage = rules.length ? '' : 'No alerts';
@@ -95,7 +95,9 @@ function sortRules(sortOrder: SortOrder, rules: PromRuleWithLocation[]) {
   return result;
 }
 
-function filterRules(options: PanelProps<UnifiedAlertListOptions>['options'], rules: PromRuleWithLocation[]) {
+function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: PromRuleWithLocation[]) {
+  const { options, replaceVariables } = props;
+
   let filteredRules = [...rules];
   if (options.dashboardAlerts) {
     const dashboardUid = getDashboardSrv().getCurrent()?.uid;
@@ -104,8 +106,9 @@ function filterRules(options: PanelProps<UnifiedAlertListOptions>['options'], ru
     );
   }
   if (options.alertName) {
+    const replacedName = replaceVariables(options.alertName);
     filteredRules = filteredRules.filter(({ rule: { name } }) =>
-      name.toLocaleLowerCase().includes(options.alertName.toLocaleLowerCase())
+      name.toLocaleLowerCase().includes(replacedName.toLocaleLowerCase())
     );
   }
   if (Object.values(options.stateFilter).some((value) => value)) {
@@ -118,7 +121,8 @@ function filterRules(options: PanelProps<UnifiedAlertListOptions>['options'], ru
     });
   }
   if (options.alertInstanceLabelFilter) {
-    const matchers = parseMatchers(options.alertInstanceLabelFilter);
+    const replacedLabelFilter = replaceVariables(options.alertInstanceLabelFilter);
+    const matchers = parseMatchers(replacedLabelFilter);
     // Reduce rules and instances to only those that match
     filteredRules = filteredRules.reduce((rules, rule) => {
       const filteredAlerts = (rule.rule.alerts ?? []).filter(({ labels }) => labelsMatchMatchers(labels, matchers));

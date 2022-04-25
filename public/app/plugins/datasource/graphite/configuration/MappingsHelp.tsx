@@ -1,5 +1,6 @@
-import { Alert } from '@grafana/ui';
 import React from 'react';
+
+import { Alert } from '@grafana/ui';
 
 type Props = {
   onDismiss: () => void;

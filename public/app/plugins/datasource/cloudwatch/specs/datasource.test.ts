@@ -1,4 +1,7 @@
 import { interval, lastValueFrom, of, throwError } from 'rxjs';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
+import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependencies';
+
 import {
   DataFrame,
   DataQueryErrorType,
@@ -6,10 +9,14 @@ import {
   dateMath,
   getFrameDisplayName,
 } from '@grafana/data';
-
-import * as redux from 'app/store/store';
-import { CloudWatchDatasource } from '../datasource';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import * as redux from 'app/store/store';
+
+import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
+import { CustomVariableModel, initialVariableModelState, VariableHide } from '../../../../features/variables/types';
+import { CloudWatchDatasource } from '../datasource';
 import {
   CloudWatchJsonData,
   CloudWatchLogsQuery,
@@ -19,14 +26,7 @@ import {
   MetricEditorMode,
   MetricQueryType,
 } from '../types';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
-import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependencies';
-import { CustomVariableModel, initialVariableModelState, VariableHide } from '../../../../features/variables/types';
-
 import * as rxjsUtils from '../utils/rxjs/increasingInterval';
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -503,35 +503,6 @@ describe('CloudWatchDatasource', () => {
           expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-2');
           expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'eu-north-1');
           expect(memoizedDebounceSpy).toBeCalledTimes(3);
-        });
-      });
-    });
-    describe('when regions query is used', () => {
-      describe('and region param is left out', () => {
-        it('should use the default region', async () => {
-          const { ds, instanceSettings } = getTestContext();
-          ds.doMetricResourceRequest = jest.fn().mockResolvedValue([]);
-
-          await ds.metricFindQuery('metrics(testNamespace)');
-
-          expect(ds.doMetricResourceRequest).toHaveBeenCalledWith('metrics', {
-            namespace: 'testNamespace',
-            region: instanceSettings.jsonData.defaultRegion,
-          });
-        });
-      });
-
-      describe('and region param is defined by user', () => {
-        it('should use the user defined region', async () => {
-          const { ds } = getTestContext();
-          ds.doMetricResourceRequest = jest.fn().mockResolvedValue([]);
-
-          await ds.metricFindQuery('metrics(testNamespace2, custom-region)');
-
-          expect(ds.doMetricResourceRequest).toHaveBeenCalledWith('metrics', {
-            namespace: 'testNamespace2',
-            region: 'custom-region',
-          });
         });
       });
     });

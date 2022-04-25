@@ -1,14 +1,10 @@
-import React, { useState, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { uniqBy } from 'lodash';
+import React, { useState, useEffect } from 'react';
+import { useDebounce } from 'react-use';
 
-// Types
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
-
-// Utils
-import { stylesFactory, useTheme, RangeSlider, MultiSelect, Select, FilterInput } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-
+import { stylesFactory, useTheme, RangeSlider, MultiSelect, Select, FilterInput } from '@grafana/ui';
 import {
   SortOrder,
   mapNumbertoTimeInSlider,
@@ -16,11 +12,10 @@ import {
   createDatasourcesList,
   filterAndSortQueries,
 } from 'app/core/utils/richHistory';
+import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
-// Components
-import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
-import { useDebounce } from 'react-use';
+import RichHistoryCard from './RichHistoryCard';
 
 export interface Props {
   queries: RichHistoryQuery[];
@@ -200,15 +195,15 @@ export function RichHistoryQueriesTab(props: Props) {
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
           {!activeDatasourceOnly && (
-            <div aria-label="Filter datasources" className={styles.multiselect}>
-              <MultiSelect
-                menuShouldPortal
-                options={listOfDatasources}
-                value={datasourceFilters}
-                placeholder="Filter queries for data sources(s)"
-                onChange={onSelectDatasourceFilters}
-              />
-            </div>
+            <MultiSelect
+              className={styles.multiselect}
+              menuShouldPortal
+              options={listOfDatasources}
+              value={datasourceFilters}
+              placeholder="Filter queries for data sources(s)"
+              aria-label="Filter queries for data sources(s)"
+              onChange={onSelectDatasourceFilters}
+            />
           )}
           <div className={styles.filterInput}>
             <FilterInput

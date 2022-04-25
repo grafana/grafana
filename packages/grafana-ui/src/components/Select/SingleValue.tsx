@@ -1,13 +1,15 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
 import { components, GroupBase, SingleValueProps } from 'react-select';
-import { useDelayedSwitch } from '../../utils/useDelayedSwitch';
-import { useStyles2 } from '../../themes';
-import { SlideOutTransition } from '../transitions/SlideOutTransition';
-import { FadeTransition } from '../transitions/FadeTransition';
-import { Spinner } from '../Spinner/Spinner';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import tinycolor from 'tinycolor2';
+
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
+import { useDelayedSwitch } from '../../utils/useDelayedSwitch';
+import { Spinner } from '../Spinner/Spinner';
+import { FadeTransition } from '../transitions/FadeTransition';
+import { SlideOutTransition } from '../transitions/SlideOutTransition';
 
 const getStyles = (theme: GrafanaTheme2) => {
   const singleValue = css`

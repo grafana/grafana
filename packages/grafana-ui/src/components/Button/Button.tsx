@@ -1,11 +1,13 @@
-import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 import { css, CSSObject, cx } from '@emotion/css';
-import { useTheme2 } from '../../themes';
-import { IconName } from '../../types/icon';
-import { getPropertiesForButtonSize } from '../Forms/commonStyles';
+import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
+
 import { colorManipulator, GrafanaTheme2, ThemeRichColor } from '@grafana/data';
-import { ComponentSize } from '../../types/size';
+
+import { useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { IconName } from '../../types/icon';
+import { ComponentSize } from '../../types/size';
+import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';

@@ -1,4 +1,5 @@
 import { map, clone } from 'lodash';
+
 import { QueryPartDef, QueryPart, functionRenderer, suffixRenderer } from 'app/features/alerting/state/query_part';
 
 const index: any[] = [];

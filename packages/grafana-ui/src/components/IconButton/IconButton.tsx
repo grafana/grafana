@@ -1,13 +1,15 @@
+import { css, cx } from '@emotion/css';
 import React from 'react';
+
+import { GrafanaTheme2, colorManipulator } from '@grafana/data';
+
+import { useTheme2 } from '../../themes/ThemeContext';
+import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { stylesFactory } from '../../themes/stylesFactory';
+import { IconName, IconSize, IconType } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { getSvgSize } from '../Icon/utils';
-import { IconName, IconSize, IconType } from '../../types/icon';
-import { stylesFactory } from '../../themes/stylesFactory';
-import { css, cx } from '@emotion/css';
-import { useTheme2 } from '../../themes/ThemeContext';
-import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { TooltipPlacement, PopoverContent, Tooltip } from '../Tooltip';
-import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 export type IconButtonVariant = 'primary' | 'secondary' | 'destructive';
 

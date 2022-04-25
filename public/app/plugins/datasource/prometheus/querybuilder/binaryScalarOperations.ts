@@ -1,6 +1,6 @@
+import { defaultAddOperationHandler } from './shared/operationUtils';
 import { QueryBuilderOperation, QueryBuilderOperationDef, QueryBuilderOperationParamDef } from './shared/types';
 import { PromOperationId, PromVisualQueryOperationCategory } from './types';
-import { defaultAddOperationHandler } from './shared/operationUtils';
 
 export const binaryScalarDefs = [
   {
@@ -71,18 +71,26 @@ export const binaryScalarDefs = [
   },
 ];
 
+export const binaryScalarOperatorToOperatorName = binaryScalarDefs.reduce((acc, def) => {
+  acc[def.sign] = {
+    id: def.id,
+    comparison: def.comparison,
+  };
+  return acc;
+}, {} as Record<string, { id: string; comparison?: boolean }>);
+
 // Not sure about this one. It could also be a more generic 'Simple math operation' where user specifies
 // both the operator and the operand in a single input
 export const binaryScalarOperations: QueryBuilderOperationDef[] = binaryScalarDefs.map((opDef) => {
   const params: QueryBuilderOperationParamDef[] = [{ name: 'Value', type: 'number' }];
   const defaultParams: any[] = [2];
   if (opDef.comparison) {
-    params.unshift({
+    params.push({
       name: 'Bool',
       type: 'boolean',
       description: 'If checked comparison will return 0 or 1 for the value rather than filtering.',
     });
-    defaultParams.unshift(false);
+    defaultParams.push(false);
   }
 
   return {
@@ -102,8 +110,7 @@ function getSimpleBinaryRenderer(operator: string) {
     let param = model.params[0];
     let bool = '';
     if (model.params.length === 2) {
-      param = model.params[1];
-      bool = model.params[0] ? ' bool' : '';
+      bool = model.params[1] ? ' bool' : '';
     }
 
     return `${innerExpr} ${operator}${bool} ${param}`;

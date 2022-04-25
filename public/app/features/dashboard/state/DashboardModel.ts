@@ -1,4 +1,3 @@
-// Libaries
 import {
   cloneDeep,
   defaults as _defaults,
@@ -13,15 +12,8 @@ import {
   pull,
   some,
 } from 'lodash';
-// Constants
-import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
-// Utils & Services
-import { contextSrv } from 'app/core/services/context_srv';
-// Types
-import { GridPos, PanelModel } from './PanelModel';
-import { TimeModel } from './TimeModel';
-import { DashboardMigrator } from './DashboardMigrator';
+import { Subscription } from 'rxjs';
+
 import {
   AnnotationQuery,
   AppEvent,
@@ -37,26 +29,33 @@ import {
   TimeZone,
   UrlQueryValue,
 } from '@grafana/data';
-import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
-import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
+import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
+import { contextSrv } from 'app/core/services/context_srv';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
-import { dispatch } from '../../../store/store';
-import { isAllVariable } from '../../variables/utils';
+import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
+import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
 import { DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
-import { getTimeSrv } from '../services/TimeSrv';
-import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
-import { deleteScopeVars, isOnTheSameGridRow } from './utils';
-import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
-import { Subscription } from 'rxjs';
+
 import { appEvents } from '../../../core/core';
+import { dispatch } from '../../../store/store';
 import {
   VariablesChanged,
   VariablesChangedEvent,
   VariablesChangedInUrl,
   VariablesTimeRangeProcessDone,
 } from '../../variables/types';
+import { isAllVariable } from '../../variables/utils';
+import { getTimeSrv } from '../services/TimeSrv';
+import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
+
+import { DashboardMigrator } from './DashboardMigrator';
+import { GridPos, PanelModel } from './PanelModel';
+import { TimeModel } from './TimeModel';
+import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -171,6 +170,7 @@ export class DashboardModel implements TimeModel {
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
     this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
+    this.ensurePanelsHaveIds();
     this.formatDate = this.formatDate.bind(this);
 
     this.resetOriginalVariables(true);
@@ -450,6 +450,22 @@ export class DashboardModel implements TimeModel {
 
     this.startRefresh({ panelIds: this.panelsAffectedByVariableChange, refreshAll: false });
     this.panelsAffectedByVariableChange = null;
+  }
+
+  private ensurePanelsHaveIds() {
+    for (const panel of this.panels) {
+      if (!panel.id) {
+        panel.id = this.getNextPanelId();
+      }
+
+      if (panel.panels) {
+        for (const rowPanel of panel.panels) {
+          if (!rowPanel.id) {
+            rowPanel.id = this.getNextPanelId();
+          }
+        }
+      }
+    }
   }
 
   private ensureListExist(data: any) {
@@ -1178,7 +1194,32 @@ export class DashboardModel implements TimeModel {
     return this.getVariablesFromState(this.uid);
   };
 
+  canEditAnnotations(dashboardId: number) {
+    let canEdit = true;
+
+    // if RBAC is enabled there are additional conditions to check
+    if (contextSrv.accessControlEnabled()) {
+      if (dashboardId === 0) {
+        canEdit = !!this.meta.annotationsPermissions?.organization.canEdit;
+      } else {
+        canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
+      }
+    }
+    return this.canEditDashboard() && canEdit;
+  }
+
   canAddAnnotations() {
+    let canAdd = true;
+
+    // if RBAC is enabled there are additional conditions to check
+    if (contextSrv.accessControlEnabled()) {
+      canAdd = !!this.meta.annotationsPermissions?.dashboard.canAdd;
+    }
+
+    return this.canEditDashboard() && canAdd;
+  }
+
+  canEditDashboard() {
     return this.meta.canEdit || this.meta.canMakeEditable;
   }
 

@@ -37,7 +37,7 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, t
 		executors[deprecated.AppInsights] = &deprecated.ApplicationInsightsDatasource{Proxy: proxy}
 	}
 
-	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, *httpClientProvider, executors))
+	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, httpClientProvider, executors))
 
 	s := &Service{
 		im:        im,
@@ -68,7 +68,7 @@ type Service struct {
 	tracer          tracing.Tracer
 }
 
-func getDatasourceService(cfg *setting.Cfg, clientProvider httpclient.Provider, dsInfo types.DatasourceInfo, routeName string) (types.DatasourceService, error) {
+func getDatasourceService(cfg *setting.Cfg, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string) (types.DatasourceService, error) {
 	route := dsInfo.Routes[routeName]
 	client, err := newHTTPClient(route, dsInfo, cfg, clientProvider)
 	if err != nil {
@@ -80,7 +80,7 @@ func getDatasourceService(cfg *setting.Cfg, clientProvider httpclient.Provider, 
 	}, nil
 }
 
-func NewInstanceSettings(cfg *setting.Cfg, clientProvider httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData, err := simplejson.NewJson(settings.JSONData)
 		if err != nil {

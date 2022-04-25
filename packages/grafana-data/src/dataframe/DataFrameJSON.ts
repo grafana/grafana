@@ -1,5 +1,6 @@
 import { DataFrame, FieldType, FieldConfig, Labels, QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
+
 import { guessFieldTypeFromNameAndValue } from './processDataFrame';
 
 /**
@@ -202,7 +203,8 @@ export function dataFrameToJSON(frame: DataFrame): DataFrameJSON {
     meta: frame.meta,
     name: frame.name,
     fields: frame.fields.map((f) => {
-      const { values, ...sfield } = f;
+      const { values, state, display, ...sfield } = f;
+      delete (sfield as any).entities;
       data.values.push(values.toArray());
       return sfield;
     }),

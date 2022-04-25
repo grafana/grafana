@@ -22,9 +22,9 @@ import (
 // but i wanted to test for all of them, to be sure.
 
 func TestSuccessResponse(t *testing.T) {
-	matrixQuery := lokiQuery{Expr: "up(ALERTS)", Step: time.Second * 42, QueryType: QueryTypeRange}
-	vectorQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeInstant}
-	streamsQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeRange}
+	matrixQuery := lokiQuery{Expr: "up(ALERTS)", Step: time.Second * 42, QueryType: QueryTypeRange, Direction: DirectionBackward}
+	vectorQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeInstant, Direction: DirectionBackward}
+	streamsQuery := lokiQuery{Expr: "query1", QueryType: QueryTypeRange, Direction: DirectionBackward}
 
 	tt := []struct {
 		name     string
@@ -38,6 +38,12 @@ func TestSuccessResponse(t *testing.T) {
 		// you can produce Infinity by using `quantile_over_time(42,` (value larger than 1)
 		{name: "parse a matrix response with Infinity", filepath: "matrix_inf", query: matrixQuery},
 		{name: "parse a matrix response with very small step value", filepath: "matrix_small_step", query: matrixQuery},
+
+		// Prometheus handles the `__name__` label in a special way, but Loki should not.
+		{name: "parse a matrix response with __name__ label normally", filepath: "matrix_name", query: matrixQuery},
+
+		// loki adds stats to matrix-responses too
+		{name: "parse a matrix response with stats", filepath: "matrix_with_stats", query: matrixQuery},
 
 		{name: "parse a simple vector response", filepath: "vector_simple", query: vectorQuery},
 		{name: "parse a vector response with special values", filepath: "vector_special_values", query: vectorQuery},
@@ -53,7 +59,7 @@ func TestSuccessResponse(t *testing.T) {
 			bytes, err := os.ReadFile(responseFileName)
 			require.NoError(t, err)
 
-			frames, err := runQuery(context.Background(), makeMockedAPI(200, "application/json", bytes), &test.query)
+			frames, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes), &test.query)
 			require.NoError(t, err)
 
 			dr := &backend.DataResponse{
@@ -113,7 +119,7 @@ func TestErrorResponse(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body), &lokiQuery{QueryType: QueryTypeRange})
+			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward})
 
 			require.Len(t, frames, 0)
 			require.Error(t, err)

@@ -1,5 +1,6 @@
-import { vectorToArray } from './vectorToArray';
 import { Vector } from '../types';
+
+import { vectorToArray } from './vectorToArray';
 
 /** @public */
 export abstract class FunctionalVector<T = any> implements Vector<T>, Iterable<T> {

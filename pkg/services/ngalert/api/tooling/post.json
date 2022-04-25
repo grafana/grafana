@@ -8,6 +8,32 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "AddApiKeyCommand": {
+   "description": "COMMANDS",
+   "properties": {
+    "name": {
+     "type": "string",
+     "x-go-name": "Name"
+    },
+    "role": {
+     "enum": [
+      "Viewer",
+      "Editor",
+      "Admin"
+     ],
+     "type": "string",
+     "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
+     "x-go-name": "Role"
+    },
+    "secondsToLive": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "SecondsToLive"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/models"
+  },
   "Alert": {
    "properties": {
     "activeAt": {
@@ -557,6 +583,38 @@
    "title": "EmailConfig configures notifications via mail.",
    "type": "object",
    "x-go-package": "github.com/prometheus/alertmanager/config"
+  },
+  "EmbeddedContactPoint": {
+   "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
+   "properties": {
+    "disableResolveMessage": {
+     "type": "boolean",
+     "x-go-name": "DisableResolveMessage"
+    },
+    "name": {
+     "description": "Name is used as grouping key in the UI. Contact points with the\nsame name will be grouped in the UI.",
+     "type": "string",
+     "x-go-name": "Name"
+    },
+    "provanance": {
+     "type": "string",
+     "x-go-name": "Provenance"
+    },
+    "settings": {
+     "$ref": "#/definitions/Json"
+    },
+    "type": {
+     "type": "string",
+     "x-go-name": "Type"
+    },
+    "uid": {
+     "description": "UID is the unique identifier of the contact point. This will be\nautomatically set be the Grafana.",
+     "type": "string",
+     "x-go-name": "UID"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "ErrorType": {
    "title": "ErrorType models the different API error types.",
@@ -1933,6 +1991,10 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
+  "Provenance": {
+   "type": "string",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
+  },
   "PushoverConfig": {
    "properties": {
     "expire": {
@@ -2133,6 +2195,9 @@
     },
     "object_matchers": {
      "$ref": "#/definitions/ObjectMatchers"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
     },
     "receiver": {
      "type": "string",
@@ -2803,7 +2868,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2836,9 +2900,9 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object",
-   "x-go-package": "net/url"
+   "x-go-package": "github.com/prometheus/common/config"
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -3035,7 +3099,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3057,7 +3120,9 @@
     "labels",
     "receiver"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "AlertGroup",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroups": {
    "items": {
@@ -3254,7 +3319,6 @@
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3306,7 +3370,9 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
    "items": {
@@ -3487,6 +3553,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3497,9 +3564,7 @@
    "required": [
     "name"
    ],
-   "type": "object",
-   "x-go-name": "Receiver",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "silence": {
    "description": "Silence silence",
@@ -4061,7 +4126,7 @@
     ]
    }
   },
-  "/api/alertmanager/{Recipient}/api/v2/alerts": {
+  "/api/alertmanager/{DatasourceID}/api/v2/alerts": {
    "get": {
     "description": "get alertmanager alerts",
     "operationId": "RouteGetAMAlerts",
@@ -4108,10 +4173,10 @@
       "x-go-name": "Receivers"
      },
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4149,10 +4214,10 @@
       }
      },
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4176,7 +4241,7 @@
     ]
    }
   },
-  "/api/alertmanager/{Recipient}/api/v2/alerts/groups": {
+  "/api/alertmanager/{DatasourceID}/api/v2/alerts/groups": {
    "get": {
     "description": "get alertmanager alerts",
     "operationId": "RouteGetAMAlertGroups",
@@ -4223,10 +4288,10 @@
       "x-go-name": "Receivers"
      },
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4250,7 +4315,7 @@
     ]
    }
   },
-  "/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}": {
+  "/api/alertmanager/{DatasourceID}/api/v2/silence/{SilenceId}": {
    "delete": {
     "description": "delete silence",
     "operationId": "RouteDeleteSilence",
@@ -4262,10 +4327,10 @@
       "type": "string"
      },
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4299,10 +4364,10 @@
       "type": "string"
      },
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4326,7 +4391,7 @@
     ]
    }
   },
-  "/api/alertmanager/{Recipient}/api/v2/silences": {
+  "/api/alertmanager/{DatasourceID}/api/v2/silences": {
    "get": {
     "description": "get silences",
     "operationId": "RouteGetSilences",
@@ -4341,10 +4406,10 @@
       "x-go-name": "Filter"
      },
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4379,10 +4444,10 @@
       }
      },
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4406,16 +4471,16 @@
     ]
    }
   },
-  "/api/alertmanager/{Recipient}/api/v2/status": {
+  "/api/alertmanager/{DatasourceID}/api/v2/status": {
    "get": {
     "description": "get alertmanager status and configuration",
     "operationId": "RouteGetAMStatus",
     "parameters": [
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4439,16 +4504,16 @@
     ]
    }
   },
-  "/api/alertmanager/{Recipient}/config/api/v1/alerts": {
+  "/api/alertmanager/{DatasourceID}/config/api/v1/alerts": {
    "delete": {
     "description": "deletes the Alerting config for a tenant",
     "operationId": "RouteDeleteAlertingConfig",
     "parameters": [
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4476,10 +4541,10 @@
     "operationId": "RouteGetAlertingConfig",
     "parameters": [
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4514,10 +4579,10 @@
       }
      },
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4541,7 +4606,7 @@
     ]
    }
   },
-  "/api/alertmanager/{Recipient}/config/api/v1/receivers/test": {
+  "/api/alertmanager/{DatasourceID}/config/api/v1/receivers/test": {
    "post": {
     "operationId": "RoutePostTestReceivers",
     "parameters": [
@@ -4553,10 +4618,10 @@
       }
      },
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4678,16 +4743,16 @@
     ]
    }
   },
-  "/api/prometheus/{Recipient}/api/v1/alerts": {
+  "/api/prometheus/{DatasourceID}/api/v1/alerts": {
    "get": {
     "description": "gets the current alerts",
     "operationId": "RouteGetAlertStatuses",
     "parameters": [
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4705,16 +4770,16 @@
     ]
    }
   },
-  "/api/prometheus/{Recipient}/api/v1/rules": {
+  "/api/prometheus/{DatasourceID}/api/v1/rules": {
    "get": {
     "description": "gets the evaluation statuses of all rules",
     "operationId": "RouteGetRuleStatuses",
     "parameters": [
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      }
@@ -4729,6 +4794,165 @@
     },
     "tags": [
      "prometheus"
+    ]
+   }
+  },
+  "/api/provisioning/contact-points": {
+   "get": {
+    "operationId": "RouteGetContactpoints",
+    "responses": {
+     "200": {
+      "description": "Route",
+      "schema": {
+       "$ref": "#/definitions/Route"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Get all the contact points.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePostContactpoints",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/EmbeddedContactPoint"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "$ref": "#/responses/Accepted"
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Create a contact point.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "put": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePutContactpoints",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/EmbeddedContactPoint"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "$ref": "#/responses/Accepted"
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Update an existing contact point.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/provisioning/contact-points/{ID}": {
+   "delete": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RouteDeleteContactpoints",
+    "responses": {
+     "202": {
+      "$ref": "#/responses/Accepted"
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Delete a contact point.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/provisioning/policies": {
+   "get": {
+    "operationId": "RouteGetPolicyTree",
+    "responses": {
+     "200": {
+      "description": "Route",
+      "schema": {
+       "$ref": "#/definitions/Route"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Get the notification policy tree.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePostPolicyTree",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/Route"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "$ref": "#/responses/Accepted"
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Sets the notification policy tree.",
+    "tags": [
+     "provisioning"
     ]
    }
   },
@@ -4913,16 +5137,16 @@
     ]
    }
   },
-  "/api/ruler/{Recipient}/api/v1/rules": {
+  "/api/ruler/{DatasourceID}/api/v1/rules": {
    "get": {
     "description": "List rule groups",
     "operationId": "RouteGetRulesConfig",
     "parameters": [
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      },
@@ -4954,16 +5178,16 @@
     ]
    }
   },
-  "/api/ruler/{Recipient}/api/v1/rules/{Namespace}": {
+  "/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}": {
    "delete": {
     "description": "Delete namespace",
     "operationId": "RouteDeleteNamespaceRulesConfig",
     "parameters": [
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      },
@@ -4991,10 +5215,10 @@
     "operationId": "RouteGetNamespaceRulesConfig",
     "parameters": [
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      },
@@ -5029,10 +5253,10 @@
     "operationId": "RoutePostNameRulesConfig",
     "parameters": [
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      },
@@ -5063,16 +5287,16 @@
     ]
    }
   },
-  "/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}": {
+  "/api/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname}": {
    "delete": {
     "description": "Delete rule group",
     "operationId": "RouteDeleteRuleGroupConfig",
     "parameters": [
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      },
@@ -5106,10 +5330,10 @@
     "operationId": "RouteGetRulegGroupConfig",
     "parameters": [
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      },
@@ -5315,7 +5539,7 @@
     ]
    }
   },
-  "/api/v1/rule/test/{Recipient}": {
+  "/api/v1/rule/test/{DatasourceID}": {
    "post": {
     "consumes": [
      "application/json"
@@ -5324,10 +5548,10 @@
     "operationId": "RouteTestRuleConfig",
     "parameters": [
      {
-      "description": "Recipient should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource id",
       "format": "int64",
       "in": "path",
-      "name": "Recipient",
+      "name": "DatasourceID",
       "required": true,
       "type": "integer"
      },

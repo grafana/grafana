@@ -7,22 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
 
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
-
-func (ss *SQLStore) addAlertQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.HandleAlertsQuery)
-	bus.AddHandler("sql", ss.GetAlertById)
-	bus.AddHandler("sql", ss.GetAllAlertQueryHandler)
-	bus.AddHandler("sql", ss.SetAlertState)
-	bus.AddHandler("sql", ss.GetAlertStatesForDashboard)
-	bus.AddHandler("sql", ss.PauseAlert)
-	bus.AddHandler("sql", ss.PauseAllAlerts)
-}
 
 func (ss *SQLStore) GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {

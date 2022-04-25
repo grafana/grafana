@@ -1,3 +1,5 @@
+import uPlot, { Series } from 'uplot';
+
 import {
   colorManipulator,
   DataFrameFieldIndex,
@@ -7,7 +9,6 @@ import {
   GrafanaTheme2,
   ThresholdsConfig,
 } from '@grafana/data';
-import uPlot, { Series } from 'uplot';
 import {
   BarAlignment,
   BarConfig,
@@ -19,7 +20,9 @@ import {
   PointsConfig,
   VisibilityMode,
 } from '@grafana/schema';
+
 import { PlotConfigBuilder } from '../types';
+
 import { getHueGradientFn, getOpacityGradientFn, getScaleGradientFn } from './gradientFills';
 
 export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsConfig {
@@ -213,7 +216,7 @@ function mapDrawStyleToPathBuilder(
   lineInterpolation?: LineInterpolation,
   barAlignment = 0,
   barWidthFactor = 0.6,
-  barMaxWidth = Infinity
+  barMaxWidth = 200
 ): Series.PathBuilder {
   const pathBuilders = uPlot.paths;
 

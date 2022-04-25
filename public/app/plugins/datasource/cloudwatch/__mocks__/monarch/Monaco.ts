@@ -1,4 +1,5 @@
 import { monacoTypes } from '@grafana/ui';
+
 import { Monaco } from '../../monarch/types';
 import * as SQLTestData from '../cloudwatch-sql-test-data';
 import * as MetricMathTestData from '../metric-math-test-data';

@@ -1,13 +1,17 @@
-import React from 'react';
-import { LokiVisualQuery } from '../types';
-import { LokiDatasource } from '../../datasource';
+import React, { useMemo } from 'react';
+
+import { DataSourceApi, SelectableValue } from '@grafana/data';
+import { EditorRow } from '@grafana/experimental';
 import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
+import { OperationsEditorRow } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationsEditorRow';
 import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
+
+import { LokiDatasource } from '../../datasource';
 import { lokiQueryModeller } from '../LokiQueryModeller';
-import { DataSourceApi, SelectableValue } from '@grafana/data';
-import { EditorRow, EditorRows } from '@grafana/experimental';
-import { QueryPreview } from './QueryPreview';
+import { LokiOperationId, LokiVisualQuery } from '../types';
+
+import { NestedQueryList } from './NestedQueryList';
 
 export interface Props {
   query: LokiVisualQuery;
@@ -56,8 +60,20 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
     return result[forLabelInterpolated] ?? [];
   };
 
+  const labelFilterError: string | undefined = useMemo(() => {
+    const { labels, operations: op } = query;
+    if (!labels.length && op.length) {
+      // We don't want to show error for initial state with empty line contains operation
+      if (op.length === 1 && op[0].id === LokiOperationId.LineContains && op[0].params[0] === '') {
+        return undefined;
+      }
+      return 'You need to specify at least 1 label filter (stream selector)';
+    }
+    return undefined;
+  }, [query]);
+
   return (
-    <EditorRows>
+    <>
       <EditorRow>
         <LabelFilters
           onGetLabelNames={(forLabel: Partial<QueryBuilderLabelFilter>) =>
@@ -68,9 +84,10 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
           }
           labelsFilters={query.labels}
           onChange={onChangeLabels}
+          error={labelFilterError}
         />
       </EditorRow>
-      <EditorRow>
+      <OperationsEditorRow>
         <OperationList
           queryModeller={lokiQueryModeller}
           query={query}
@@ -78,13 +95,11 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
           onRunQuery={onRunQuery}
           datasource={datasource as DataSourceApi}
         />
-      </EditorRow>
-      {!nested && (
-        <EditorRow>
-          <QueryPreview query={query} />
-        </EditorRow>
+      </OperationsEditorRow>
+      {query.binaryQueries && query.binaryQueries.length > 0 && (
+        <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
       )}
-    </EditorRows>
+    </>
   );
 });
 

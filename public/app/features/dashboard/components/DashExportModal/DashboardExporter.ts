@@ -1,14 +1,15 @@
 import { defaults, each, sortBy } from 'lodash';
 
-import config from 'app/core/config';
-import { DashboardModel } from '../../state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state';
 import { PanelPluginMeta } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { VariableOption, VariableRefresh } from '../../../variables/types';
-import { isConstant, isQuery } from '../../../variables/guard';
-import { LibraryElementKind } from '../../../library-panels/types';
+import config from 'app/core/config';
+import { PanelModel } from 'app/features/dashboard/state';
+
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
+import { LibraryElementKind } from '../../../library-panels/types';
+import { isConstant, isQuery } from '../../../variables/guard';
+import { VariableOption, VariableRefresh } from '../../../variables/types';
+import { DashboardModel } from '../../state/DashboardModel';
 
 interface Input {
   name: string;
@@ -126,15 +127,18 @@ export class DashboardExporter {
     };
 
     const processPanel = (panel: PanelModel) => {
-      if (panel.datasource !== undefined && panel.datasource !== null) {
+      const isRegularPanel =
+        (panel.repeatPanelId === undefined || panel.repeatPanelId === null) &&
+        !('collapsed' in panel) &&
+        !('panels' in panel);
+
+      if (isRegularPanel) {
         templateizeDatasourceUsage(panel);
       }
 
       if (panel.targets) {
         for (const target of panel.targets) {
-          if (target.datasource !== undefined) {
-            templateizeDatasourceUsage(target);
-          }
+          templateizeDatasourceUsage(target);
         }
       }
 

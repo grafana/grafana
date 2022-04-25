@@ -1,6 +1,7 @@
+import { ValidateResult } from 'react-hook-form';
+
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
-import { ValidateResult } from 'react-hook-form';
 
 export function queriesWithUpdatedReferences(
   queries: AlertQuery[],

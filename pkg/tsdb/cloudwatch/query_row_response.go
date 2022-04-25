@@ -4,25 +4,29 @@ import "github.com/aws/aws-sdk-go/service/cloudwatch"
 
 // queryRowResponse represents the GetMetricData response for a query row in the query editor.
 type queryRowResponse struct {
-	ID                      string
-	RequestExceededMaxLimit bool
-	PartialData             bool
-	Labels                  []string
-	HasArithmeticError      bool
-	ArithmeticErrorMessage  string
-	Metrics                 map[string]*cloudwatch.MetricDataResult
-	StatusCode              string
+	ID                     string
+	ErrorCodes             map[string]bool
+	PartialData            bool
+	Labels                 []string
+	HasArithmeticError     bool
+	ArithmeticErrorMessage string
+	Metrics                map[string]*cloudwatch.MetricDataResult
+	StatusCode             string
 }
 
 func newQueryRowResponse(id string) queryRowResponse {
 	return queryRowResponse{
-		ID:                      id,
-		RequestExceededMaxLimit: false,
-		PartialData:             false,
-		HasArithmeticError:      false,
-		ArithmeticErrorMessage:  "",
-		Labels:                  []string{},
-		Metrics:                 map[string]*cloudwatch.MetricDataResult{},
+		ID: id,
+		ErrorCodes: map[string]bool{
+			maxMetricsExceeded:         false,
+			maxQueryTimeRangeExceeded:  false,
+			maxQueryResultsExceeded:    false,
+			maxMatchingResultsExceeded: false},
+		PartialData:            false,
+		HasArithmeticError:     false,
+		ArithmeticErrorMessage: "",
+		Labels:                 []string{},
+		Metrics:                map[string]*cloudwatch.MetricDataResult{},
 	}
 }
 

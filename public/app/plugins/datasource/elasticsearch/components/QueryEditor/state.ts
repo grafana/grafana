@@ -1,4 +1,5 @@
 import { Action, createAction } from '@reduxjs/toolkit';
+
 import { ElasticsearchQuery } from '../../types';
 
 /**

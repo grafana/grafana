@@ -1,13 +1,16 @@
 import React, { SyntheticEvent } from 'react';
-import { EditorRow, EditorField } from '@grafana/experimental';
+
 import { CoreApp, SelectableValue } from '@grafana/data';
+import { EditorRow, EditorField } from '@grafana/experimental';
 import { RadioButtonGroup, Select, Switch } from '@grafana/ui';
-import { QueryOptionGroup } from '../shared/QueryOptionGroup';
-import { PromQuery } from '../../types';
-import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from '../../components/PromQueryEditor';
+
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
-import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';
+import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from '../../components/PromQueryEditor';
+import { PromQuery } from '../../types';
 import { AutoSizeInput } from '../shared/AutoSizeInput';
+import { QueryOptionGroup } from '../shared/QueryOptionGroup';
+
+import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';
 
 export interface Props {
   query: PromQuery;
@@ -48,7 +51,11 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
   return (
     <EditorRow>
       <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, formatOption.label!, queryTypeLabel)}>
-        <PromQueryLegendEditor query={query} onChange={onChange} onRunQuery={onRunQuery} />
+        <PromQueryLegendEditor
+          legendFormat={query.legendFormat}
+          onChange={(legendFormat) => onChange({ ...query, legendFormat })}
+          onRunQuery={onRunQuery}
+        />
         <EditorField
           label="Min step"
           tooltip={
@@ -71,12 +78,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
           <Select value={formatOption} allowCustomValue onChange={onChangeFormat} options={FORMAT_OPTIONS} />
         </EditorField>
         <EditorField label="Type">
-          <RadioButtonGroup
-            id="options.query.type"
-            options={queryTypeOptions}
-            value={queryTypeValue}
-            onChange={onQueryTypeChange}
-          />
+          <RadioButtonGroup options={queryTypeOptions} value={queryTypeValue} onChange={onQueryTypeChange} />
         </EditorField>
         {shouldShowExemplarSwitch(query, app) && (
           <EditorField label="Exemplars">

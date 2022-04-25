@@ -110,11 +110,11 @@ func (f *ForkedRulerApi) forkRoutePostNameRulesConfig(ctx *models.ReqContext, co
 }
 
 func (f *ForkedRulerApi) forkRouteDeleteNamespaceGrafanaRulesConfig(ctx *models.ReqContext) response.Response {
-	return f.GrafanaRuler.RouteDeleteNamespaceRulesConfig(ctx)
+	return f.GrafanaRuler.RouteDeleteAlertRules(ctx)
 }
 
 func (f *ForkedRulerApi) forkRouteDeleteGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
-	return f.GrafanaRuler.RouteDeleteRuleGroupConfig(ctx)
+	return f.GrafanaRuler.RouteDeleteAlertRules(ctx)
 }
 
 func (f *ForkedRulerApi) forkRouteGetNamespaceGrafanaRulesConfig(ctx *models.ReqContext) response.Response {

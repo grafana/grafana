@@ -1,7 +1,10 @@
-import React from 'react';
 import { mount } from 'enzyme';
-import { ExploreId } from '../../../types/explore';
+import React from 'react';
+
 import { SortOrder } from 'app/core/utils/richHistory';
+
+import { ExploreId } from '../../../types/explore';
+
 import { RichHistoryStarredTab, Props } from './RichHistoryStarredTab';
 
 jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
@@ -34,12 +37,12 @@ describe('RichHistoryStarredTab', () => {
   describe('select datasource', () => {
     it('should render select datasource if activeDatasourceOnly is false', () => {
       const wrapper = setup();
-      expect(wrapper.find({ 'aria-label': 'Filter datasources' })).toHaveLength(1);
+      expect(wrapper.find({ 'aria-label': 'Filter queries for data sources(s)' }).exists()).toBeTruthy();
     });
 
     it('should not render select datasource if activeDatasourceOnly is true', () => {
       const wrapper = setup({ activeDatasourceOnly: true });
-      expect(wrapper.find({ 'aria-label': 'Filter datasources' })).toHaveLength(0);
+      expect(wrapper.find({ 'aria-label': 'Filter queries for data sources(s)' }).exists()).toBeFalsy();
     });
   });
 });

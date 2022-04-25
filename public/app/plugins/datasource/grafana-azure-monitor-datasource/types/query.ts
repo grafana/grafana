@@ -1,4 +1,5 @@
 import { DeprecatedAzureMonitorQuery } from '../components/deprecated/types';
+
 import { GrafanaTemplateVariableQuery } from './templateVariables';
 
 export enum AzureQueryType {
@@ -36,6 +37,7 @@ export interface AzureMonitorQuery extends DeprecatedAzureMonitorQuery {
  * Azure Monitor Metrics sub-query properties
  */
 export interface AzureMetricQuery {
+  resourceUri?: string;
   resourceGroup?: string;
 
   /** Resource type */

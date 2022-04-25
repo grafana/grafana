@@ -1,10 +1,13 @@
-import RichHistoryLocalStorage, { MAX_HISTORY_ITEMS } from './RichHistoryLocalStorage';
-import store from 'app/core/store';
-import { RichHistoryQuery } from '../../types';
 import { DataQuery } from '@grafana/data';
+import store from 'app/core/store';
+
 import { afterEach, beforeEach } from '../../../test/lib/common';
-import { RichHistoryStorageWarning } from './RichHistoryStorage';
+import { RichHistoryQuery } from '../../types';
 import { backendSrv } from '../services/backend_srv';
+import { RichHistorySettings } from '../utils/richHistoryTypes';
+
+import RichHistoryLocalStorage, { MAX_HISTORY_ITEMS } from './RichHistoryLocalStorage';
+import { RichHistoryStorageWarning } from './RichHistoryStorage';
 
 const key = 'grafana.explore.richHistory';
 
@@ -98,6 +101,19 @@ describe('RichHistoryLocalStorage', () => {
       await storage.deleteRichHistory(mockItem.id);
       expect(await storage.getRichHistory()).toEqual([]);
       expect(store.getObject(key)).toEqual([]);
+    });
+
+    it('should save and read settings', async () => {
+      const settings: RichHistorySettings = {
+        retentionPeriod: 2,
+        starredTabAsFirstTab: true,
+        activeDatasourceOnly: true,
+        lastUsedDatasourceFilters: [{ value: 'foobar' }],
+      };
+      await storage.updateSettings(settings);
+      const storageSettings = storage.getSettings();
+
+      expect(settings).toMatchObject(storageSettings);
     });
   });
 

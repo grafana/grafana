@@ -1,8 +1,10 @@
 import React, { FunctionComponent, PropsWithChildren, ReactElement, useMemo } from 'react';
-import { VariableHide, VariableModel } from '../types';
+
 import { selectors } from '@grafana/e2e-selectors';
-import { variableAdapters } from '../adapters';
 import { Tooltip } from '@grafana/ui';
+
+import { variableAdapters } from '../adapters';
+import { VariableHide, VariableModel } from '../types';
 
 interface Props {
   variable: VariableModel;

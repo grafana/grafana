@@ -1,8 +1,11 @@
 import { find } from 'lodash';
+
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { RichHistoryLocalStorageDTO } from './RichHistoryLocalStorage';
+
 import { RichHistoryQuery } from '../../types';
+
+import { RichHistoryLocalStorageDTO } from './RichHistoryLocalStorage';
 
 export const fromDTO = (dto: RichHistoryLocalStorageDTO): RichHistoryQuery => {
   const datasource = find(

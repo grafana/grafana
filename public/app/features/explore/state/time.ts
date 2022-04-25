@@ -1,4 +1,5 @@
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
+
 import {
   AbsoluteTimeRange,
   dateTimeForTimeZone,
@@ -7,16 +8,18 @@ import {
   sortLogsResult,
   TimeRange,
 } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
-
 import { getTimeRange, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
+import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { ExploreItemState, ThunkResult } from 'app/types';
 import { ExploreId } from 'app/types/explore';
-import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
+
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { TimeModel } from '../../dashboard/state/TimeModel';
-import { runQueries } from './query';
+
 import { syncTimesAction, stateSave } from './main';
+import { runQueries } from './query';
 
 //
 // Actions and Payloads
@@ -105,7 +108,11 @@ export const updateTime = (config: {
       },
     };
 
+    // We need to re-initialize TimeSrv because it might have been triggered by the other Explore pane (when split)
     getTimeSrv().init(timeModel);
+    // After re-initializing TimeSrv we need to update the time range in Template service for interpolation
+    // of __from and __to variables
+    getTemplateSrv().updateTimeRange(getTimeSrv().timeRange());
 
     dispatch(changeRangeAction({ exploreId, range, absoluteRange }));
   };

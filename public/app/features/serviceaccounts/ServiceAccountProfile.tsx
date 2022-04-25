@@ -1,8 +1,11 @@
-import React, { PureComponent, useRef, useState } from 'react';
-import { Role, ServiceAccountDTO } from 'app/types';
 import { css, cx } from '@emotion/css';
+import React, { PureComponent, useRef, useState } from 'react';
+
 import { dateTimeFormat, GrafanaTheme2, OrgRole, TimeZone } from '@grafana/data';
 import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
+import { Role, ServiceAccountDTO, AccessControlAction } from 'app/types';
+
 import { ServiceAccountRoleRow } from './ServiceAccountRoleRow';
 
 interface Props {
@@ -25,6 +28,8 @@ export function ServiceAccountProfile({
 }: Props) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDisableModal, setShowDisableModal] = useState(false);
+
+  const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
 
   const deleteServiceAccountRef = useRef<HTMLButtonElement | null>(null);
   const showDeleteServiceAccountModal = (show: boolean) => () => {
@@ -66,18 +71,27 @@ export function ServiceAccountProfile({
 
   return (
     <>
-      <h3 className="page-heading">Information</h3>
-      <a href="org/serviceaccounts">
-        <Button variant="link" icon="backward" />
-      </a>
+      <div style={{ marginBottom: '10px' }}>
+        <a href="org/serviceaccounts" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+          <Button variant="link" icon="backward" />
+        </a>
+        <h1
+          className="page-heading"
+          style={{ display: 'inline-block', verticalAlign: 'middle', margin: '0!important', marginBottom: '0px' }}
+        >
+          {serviceAccount.name}
+        </h1>
+      </div>
+      <span style={{ marginBottom: '10px' }}>Information</span>
       <div className="gf-form-group">
         <div className="gf-form">
           <table className="filter-table form-inline">
             <tbody>
               <ServiceAccountProfileRow
-                label="Display Name"
+                label="Name"
                 value={serviceAccount.name}
                 onChange={onServiceAccountNameChange}
+                disabled={!ableToWrite}
               />
               <ServiceAccountProfileRow label="ID" value={serviceAccount.login} />
               <ServiceAccountRoleRow
@@ -87,7 +101,7 @@ export function ServiceAccountProfile({
                 builtInRoles={builtInRoles}
                 roleOptions={roleOptions}
               />
-              <ServiceAccountProfileRow label="Teams" value={serviceAccount.teams.join(', ')} />
+              {/* <ServiceAccountProfileRow label="Teams" value={serviceAccount.teams.join(', ')} /> */}
               <ServiceAccountProfileRow
                 label="Creation date"
                 value={dateTimeFormat(serviceAccount.createdAt, { timeZone })}
@@ -102,6 +116,7 @@ export function ServiceAccountProfile({
               variant="destructive"
               onClick={showDeleteServiceAccountModal(true)}
               ref={deleteServiceAccountRef}
+              disabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsDelete)}
             >
               Delete service account
             </Button>
@@ -115,7 +130,7 @@ export function ServiceAccountProfile({
             />
           </>
           {serviceAccount.isDisabled ? (
-            <Button type={'button'} variant="secondary" onClick={handleServiceAccountEnable}>
+            <Button type={'button'} variant="secondary" onClick={handleServiceAccountEnable} disabled={!ableToWrite}>
               Enable service account
             </Button>
           ) : (
@@ -125,6 +140,7 @@ export function ServiceAccountProfile({
                 variant="secondary"
                 onClick={showDisableServiceAccountModal(true)}
                 ref={disableServiceAccountRef}
+                disabled={!ableToWrite}
               >
                 Disable service account
               </Button>
@@ -160,6 +176,7 @@ interface ServiceAccountProfileRowProps {
   value?: string;
   inputType?: string;
   onChange?: (value: string) => void;
+  disabled?: boolean;
 }
 
 interface ServiceAccountProfileRowState {
@@ -218,6 +235,7 @@ export class ServiceAccountProfileRow extends PureComponent<
   };
 
   onSave = () => {
+    this.setState({ editing: false });
     if (this.props.onChange) {
       this.props.onChange(this.state.value);
     }
@@ -240,7 +258,7 @@ export class ServiceAccountProfileRow extends PureComponent<
           <label htmlFor={inputId}>{label}</label>
         </td>
         <td className="width-25" colSpan={2}>
-          {this.state.editing ? (
+          {!this.props.disabled && this.state.editing ? (
             <Input
               id={inputId}
               type={inputType}
@@ -257,10 +275,12 @@ export class ServiceAccountProfileRow extends PureComponent<
         <td>
           {this.props.onChange && (
             <ConfirmButton
+              closeOnConfirm
               confirmText="Save"
-              onClick={this.onEditClick}
               onConfirm={this.onSave}
+              onClick={this.onEditClick}
               onCancel={this.onCancelClick}
+              disabled={this.props.disabled}
             >
               Edit
             </ConfirmButton>

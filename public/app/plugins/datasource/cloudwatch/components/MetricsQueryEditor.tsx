@@ -1,7 +1,9 @@
 import React, { ChangeEvent, PureComponent } from 'react';
+
 import { QueryEditorProps } from '@grafana/data';
 import { EditorField, EditorRow, Space } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
+
 import { CloudWatchDatasource } from '../datasource';
 import { isMetricsQuery } from '../guards';
 import {
@@ -11,8 +13,10 @@ import {
   MetricEditorMode,
   MetricQueryType,
 } from '../types';
-import { Alias, MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor, SQLCodeEditor } from './';
+
 import QueryHeader from './QueryHeader';
+
+import { Alias, MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor, SQLCodeEditor } from './';
 
 export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
 

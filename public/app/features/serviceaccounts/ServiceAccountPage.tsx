@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { getNavModel } from 'app/core/selectors/navModel';
+
+import { getTimeZone, NavModel } from '@grafana/data';
+import { Button } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import { ServiceAccountProfile } from './ServiceAccountProfile';
-import { StoreState, ServiceAccountDTO, ApiKey, Role } from 'app/types';
+import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { StoreState, ServiceAccountDTO, ApiKey, Role, AccessControlAction } from 'app/types';
+
+import { CreateTokenModal, ServiceAccountToken } from './CreateServiceAccountTokenModal';
+import { ServiceAccountProfile } from './ServiceAccountProfile';
+import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
 import {
   deleteServiceAccountToken,
   loadServiceAccount,
@@ -14,11 +21,6 @@ import {
   updateServiceAccount,
   deleteServiceAccount,
 } from './state/actions';
-import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
-import { getTimeZone, NavModel } from '@grafana/data';
-import { Button, VerticalGroup } from '@grafana/ui';
-import { CreateTokenModal } from './CreateTokenModal';
-import { contextSrv } from 'app/core/core';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   navModel: NavModel;
@@ -77,7 +79,7 @@ const ServiceAccountPageUnconnected = ({
     const serviceAccountId = parseInt(match.params.id, 10);
     loadServiceAccount(serviceAccountId);
     loadServiceAccountTokens(serviceAccountId);
-    if (contextSrv.accessControlEnabled()) {
+    if (contextSrv.licensedAccessControlEnabled()) {
       fetchACOptions();
     }
   }, [match, loadServiceAccount, loadServiceAccountTokens, fetchACOptions]);
@@ -86,7 +88,7 @@ const ServiceAccountPageUnconnected = ({
     deleteServiceAccountToken(parseInt(match.params.id, 10), key.id!);
   };
 
-  const onCreateToken = (token: ApiKey) => {
+  const onCreateToken = (token: ServiceAccountToken) => {
     createServiceAccountToken(serviceAccount.id, token, setNewToken);
   };
 
@@ -110,14 +112,28 @@ const ServiceAccountPageUnconnected = ({
             />
           </>
         )}
-        <VerticalGroup spacing="md">
-          <Button onClick={() => setIsModalOpen(true)}>Add token</Button>
-          <h3 className="page-heading">Tokens</h3>
-          {tokens && (
-            <ServiceAccountTokensTable tokens={tokens} timeZone={timezone} onDelete={onDeleteServiceAccountToken} />
-          )}
-        </VerticalGroup>
-        <CreateTokenModal isOpen={isModalOpen} token={newToken} onCreateToken={onCreateToken} onClose={onModalClose} />
+        <div className="page-action-bar" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 className="page-heading" style={{ marginBottom: '0px' }}>
+            Tokens
+          </h3>
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            disabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite)}
+          >
+            Add token
+          </Button>
+        </div>
+        {tokens && (
+          <ServiceAccountTokensTable tokens={tokens} timeZone={timezone} onDelete={onDeleteServiceAccountToken} />
+        )}
+        {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && (
+          <CreateTokenModal
+            isOpen={isModalOpen}
+            token={newToken}
+            onCreateToken={onCreateToken}
+            onClose={onModalClose}
+          />
+        )}
       </Page.Contents>
     </Page>
   );

@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -61,11 +62,11 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApiForkingService, m *met
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/v1/rule/test/{Recipient}"),
-			api.authorize(http.MethodPost, "/api/v1/rule/test/{Recipient}"),
+			toMacaronPath("/api/v1/rule/test/{DatasourceID}"),
+			api.authorize(http.MethodPost, "/api/v1/rule/test/{DatasourceID}"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/v1/rule/test/{Recipient}",
+				"/api/v1/rule/test/{DatasourceID}",
 				srv.RouteTestRuleConfig,
 				m,
 			),
@@ -80,5 +81,5 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApiForkingService, m *met
 				m,
 			),
 		)
-	})
+	}, middleware.ReqSignedIn)
 }

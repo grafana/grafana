@@ -1,4 +1,6 @@
+import { css } from '@emotion/css';
 import React from 'react';
+
 import {
   DataTransformerID,
   KeyValue,
@@ -8,9 +10,8 @@ import {
   getFieldDisplayName,
   stringToJsRegex,
 } from '@grafana/data';
-import { Field, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
-import { css } from '@emotion/css';
 import { FilterFieldsByNameTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByName';
+import { Field, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
 
 interface FilterByNameTransformerEditorProps extends TransformerUIProps<FilterFieldsByNameTransformerOptions> {}
 

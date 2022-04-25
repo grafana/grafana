@@ -1,4 +1,8 @@
+import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
+import { Plugin, Node } from 'slate';
+
+import { QueryEditorProps } from '@grafana/data';
 import {
   SlatePrism,
   TypeaheadOutput,
@@ -9,15 +13,14 @@ import {
   DOMUtil,
   Icon,
 } from '@grafana/ui';
-import { Plugin, Node } from 'slate';
-import { LokiLabelBrowser } from './LokiLabelBrowser';
-import { QueryEditorProps } from '@grafana/data';
-import { LokiQuery, LokiOptions } from '../types';
-import { LanguageMap, languages as prismLanguages } from 'prismjs';
+import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
+
+import { LokiDatasource } from '../datasource';
 import LokiLanguageProvider from '../language_provider';
 import { shouldRefreshLabels } from '../language_utils';
-import LokiDatasource from '../datasource';
-import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
+import { LokiQuery, LokiOptions } from '../types';
+
+import { LokiLabelBrowser } from './LokiLabelBrowser';
 
 const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
 
@@ -71,6 +74,7 @@ interface LokiQueryFieldState {
 
 export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
   plugins: Plugin[];
+  _isMounted = false;
 
   constructor(props: LokiQueryFieldProps) {
     super(props);
@@ -90,8 +94,15 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   }
 
   async componentDidMount() {
+    this._isMounted = true;
     await this.props.datasource.languageProvider.start();
-    this.setState({ labelsLoaded: true });
+    if (this._isMounted) {
+      this.setState({ labelsLoaded: true });
+    }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   componentDidUpdate(prevProps: LokiQueryFieldProps) {
