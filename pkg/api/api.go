@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -420,13 +421,15 @@ func (hs *HTTPServer) registerRoutes() {
 		// Validated query
 		apiRoute.Post("/dashboards/org/:orgId/uid/:dashboardUid/panels/:panelId/query", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.QueryMetricsFromDashboard))
 
-		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
-			alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))
-			alertsRoute.Post("/:alertId/pause", reqEditorRole, routing.Wrap(hs.PauseAlert))
-			alertsRoute.Get("/:alertId", hs.ValidateOrgAlert, routing.Wrap(hs.GetAlert))
-			alertsRoute.Get("/", routing.Wrap(hs.GetAlerts))
-			alertsRoute.Get("/states-for-dashboard", routing.Wrap(hs.GetAlertStatesForDashboard))
-		})
+		if !hs.Cfg.UnifiedAlerting.IsEnabled() && setting.AlertingEnabled != nil && *setting.AlertingEnabled {
+			apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
+				alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))
+				alertsRoute.Post("/:alertId/pause", reqEditorRole, routing.Wrap(hs.PauseAlert))
+				alertsRoute.Get("/:alertId", hs.ValidateOrgAlert, routing.Wrap(hs.GetAlert))
+				alertsRoute.Get("/", routing.Wrap(hs.GetAlerts))
+				alertsRoute.Get("/states-for-dashboard", routing.Wrap(hs.GetAlertStatesForDashboard))
+			})
+		}
 
 		var notifiersAuthHandler web.Handler
 		if hs.Cfg.UnifiedAlerting.IsEnabled() {
