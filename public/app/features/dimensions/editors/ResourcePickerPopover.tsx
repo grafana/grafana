@@ -2,14 +2,18 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
+import React, { createRef, useState } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
+import { Button, ButtonGroup, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { MediaType, PickerTabType, ResourceFolderName } from '../types';
 
+import { FileUploader } from './FileUploader';
 import { FolderPickerTab } from './FolderPickerTab';
 import { URLPickerTab } from './URLPickerTab';
-import { FileUploader } from './FileUploader';
-import { getBackendSrv } from '@grafana/runtime';
 
 interface Props {
   value?: string; //img/icons/unicons/0-plus.svg
