@@ -1,14 +1,12 @@
 ---
-title: 'Plan your Grafana role-based access control rollout strategy'
+title: 'Plan your Grafana RBAC rollout strategy'
 menuTitle: 'Plan your RBAC rollout strategy'
-description: 'xxx.'
+description: 'Plan your RBAC rollout strategy before you begin assigning roles to users and teams.'
 aliases: [docs/grafana/latest/enterprise/access-control/usage-scenarios/]
 weight: 20
-keywords:
-  - xxx
 ---
 
-# Plan your role-based access control rollout strategy
+# Plan your RBAC rollout strategy
 
 An RBAC rollout strategy helps you determine _how_ you want to implement RBAC prior to assigning RBAC roles to users and teams.
 

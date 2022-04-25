@@ -1,11 +1,9 @@
 ---
-title: 'RBAC permissions actions and scopes'
+title: 'Grafana RBAC permissions actions and scopes'
 menuTitle: 'RBAC permissions actions and scopes'
-description: 'xxx.'
+description: 'Learn about Grafana RBAC permissions actions and scopes.'
 aliases: [docs/grafana/latest/enterprise/access-control/permissions/]
 weight: 80
-keywords:
-  - xxx
 ---
 
 # RBAC permissions actions and scopes
@@ -40,7 +38,7 @@ The following list contains role-based access control actions.
 | `reports:send`                       | `reports:*`                                                                                 | Send a report email.                                                                                                                                                                             |
 | `reports.settings:write`             | n/a                                                                                         | Update report settings.                                                                                                                                                                          |
 | `reports.settings:read`              | n/a                                                                                         | Read report settings.                                                                                                                                                                            |
-| `provisioning:reload`                | `provisioners:*`                                                                            | Reload provisioning files. To find the exact scope for specific provisioner, see [Scope definitions]({{< relref "./permissions.md#scope-definitions" >}}).                                       |
+| `provisioning:reload`                | `provisioners:*`                                                                            | Reload provisioning files. To find the exact scope for specific provisioner, see [Scope definitions]({{< relref "#scope-definitions" >}}).                                                       |
 | `teams.roles:list`                   | `teams:*`                                                                                   | List roles assigned directly to a team.                                                                                                                                                          |
 | `teams.roles:add`                    | `permissions:delegate`                                                                      | Assign a role to a team.                                                                                                                                                                         |
 | `teams.roles:remove`                 | `permissions:delegate`                                                                      | Unassign a role from a team.                                                                                                                                                                     |

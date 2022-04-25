@@ -1,11 +1,9 @@
 ---
 title: 'Example role configuration file using Grafana provisioning'
 menuTitle: 'Provisioning roles example'
-description: 'xxx.'
-aliases: [xxx]
+description: 'View an example YAML provisioning file that configures Grafana role assignments.'
+aliases: []
 weight: 60
-keywords:
-  - xxx
 ---
 
 # Example role configuration file using Grafana provisioning

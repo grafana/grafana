@@ -23,9 +23,13 @@ This section describes how to enable RBAC by setting a feature flag or adding an
 
 > **Note:** The environment variable overrides access control settings in the configuration file, if any exist.
 
+</br>
+
 **Before you begin:**
 
 - Ensure that you have administration privileges to the Grafana server.
+
+</br>
 
 **To enable RBAC:**
 
@@ -63,9 +67,13 @@ If you choose to use provisioning to assign and manage role, you must first enab
 
 Grafana performs provisioning during startup. After you make a change to the configuration file, you can reload it during runtime. You do not need to restart the Grafana server for your changes to take effect.
 
+</br>
+
 **Before you begin:**
 
 - Ensure that you have administration privileges to the Grafana server.
+
+</br>
 
 **To enable Grafana to provision custom roles:**
 

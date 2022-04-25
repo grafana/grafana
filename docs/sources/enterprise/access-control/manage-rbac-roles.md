@@ -145,7 +145,7 @@ Create a custom role when the default roles and fixed roles do not meet your per
 
 **Before you begin:**
 
-- [Plan your RBAC rollout strategy]({{< relref "./plan-rbac-rollout-strategy" >}})
+- [Plan your RBAC rollout strategy]({{< relref "./plan-rbac-rollout-strategy" >}}).
 - Determine which permissions you want to add to the custom role. To see a list of actions and scope, refer to [RBAC permissions actions and scopes]({{< relref "./custom-role-actions-scopes.md" >}}).
 - [Enable role provisioning]({{< relref "./enable-rbac-and-provisioning#enable-rbac" >}}).
 - Ensure that you have permissions to create a custom role.
@@ -275,9 +275,13 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
 
 If the basic role definitions that are available by default do not meet your requirements, you can change them by removing fixed role permissions from basic roles.
 
+</br>
+
 **Before you begin:**
 
 - Determine the fixed roles you want to remove from a basic role. For more information about the fixed roles associated with basic roles, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions#basic-role-assignments" >}}).
+
+</br>
 
 **To remove a fixed role from a basic role:**
 
@@ -285,10 +289,10 @@ If the basic role definitions that are available by default do not meet your req
 
 1. Refer to the following table to add attributes and values.
 
-| Attribute     | Description                       |
-| ------------- | --------------------------------- |
-| `builtInRole` | Enter the name of the basic role. |
-| `fixedRole`   | Enter the name of the fixed role. |
+   | Attribute     | Description                       |
+   | ------------- | --------------------------------- |
+   | `builtInRole` | Enter the name of the basic role. |
+   | `fixedRole`   | Enter the name of the fixed role. |
 
 1. Reload the provisioning configuration file.
 
@@ -312,10 +316,14 @@ Delete a custom role when you no longer need it. When you delete a custom role, 
 
 > **Note:** If you use the same configuration file to both add and remove roles, the system deletes roles identified in the `deleteRoles` section before it adds roles identified in the `roles` section.
 
-### Before you begin
+</br>
+
+**Before you begin:**
 
 - Identify the role or roles that you want to delete.
 - Ensure that you have access to the YAML configuration file.
+
+</br>
 
 **To delete a custom role:**
 
@@ -327,7 +335,7 @@ Delete a custom role when you no longer need it. When you delete a custom role, 
    | --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
    | `name`    | The name of the custom role you want to delete. You can add a `uid` instead of a role name. The role `name` or the `uid` are required. |
    | `orgId`   | Identifies the organization to which the role belongs.                                                                                 |
-   | `force`   | What does this do?                                                                                                                     |
+   | `force`   | Sets the force parameter.                                                                                                              |
 
 1. Reload the provisioning configuration file.
 

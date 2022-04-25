@@ -1,11 +1,9 @@
 ---
-title: 'About RBAC'
+title: 'About RBAC in Grafana'
 menuTitle: 'About RBAC'
-description: 'xxx.'
+description: 'Role-based access control (RBAC) provides a standardized way of granting, changing, and revoking access so that users can view and modify Grafana resources, such as users and reports.'
 aliases: [docs/grafana/latest/enterprise/access-control/, docs/grafana/latest/enterprise/access-control/roles/]
 weight: 10
-keywords:
-  - xxx
 ---
 
 # About RBAC
