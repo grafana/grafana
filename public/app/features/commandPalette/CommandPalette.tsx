@@ -19,8 +19,6 @@ import { reportInteraction, locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { StoreState } from 'app/types';
 
-import { keybindingSrv } from '../../core/services/keybindingSrv';
-
 import { ResultItem } from './ResultItem';
 import getDashboardNavActions from './actions/dashboard.nav.actions';
 import getGlobalActions from './actions/global.static.actions';
@@ -33,8 +31,7 @@ import getGlobalActions from './actions/global.static.actions';
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
   const [actions, setActions] = useState<Action[]>([]);
-  const { notHidden, query, showing } = useKBar((state) => ({
-    notHidden: state.visualState !== VisualState.hidden,
+  const { showing } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
   }));
   const isNotLogin = locationService.getLocation().pathname !== '/login';
@@ -43,12 +40,6 @@ export const CommandPalette = () => {
     return {
       navBarTree: state.navBarTree,
     };
-  });
-
-  keybindingSrv.bind('esc', () => {
-    if (notHidden) {
-      query.setVisualState(VisualState.animatingOut);
-    }
   });
 
   useEffect(() => {
