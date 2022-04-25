@@ -115,16 +115,17 @@ export function getStackingGroups(frame: DataFrame) {
     // will this be stacked up or down after any transforms applied
     let vals = values.toArray();
     let transform = custom.transform;
+    let firstValue = vals.find((v) => v != null);
     let stackDir =
       transform === GraphTransform.Constant
-        ? vals[0] > 0
+        ? firstValue >= 0
           ? StackDirection.Pos
           : StackDirection.Neg
         : transform === GraphTransform.NegativeY
-        ? vals.some((v) => v > 0)
+        ? firstValue >= 0
           ? StackDirection.Neg
           : StackDirection.Pos
-        : vals.some((v) => v > 0)
+        : firstValue >= 0
         ? StackDirection.Pos
         : StackDirection.Neg;
 
