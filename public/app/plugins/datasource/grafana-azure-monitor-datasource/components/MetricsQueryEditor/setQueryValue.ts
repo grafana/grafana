@@ -180,7 +180,7 @@ export function setDimensionFilters(query: AzureMonitorQuery, dimensions: AzureM
 export function appendDimensionFilter(
   query: AzureMonitorQuery,
   dimension = '',
-  operator = '',
+  operator = 'eq',
   filter = ['']
 ): AzureMonitorQuery {
   const existingFilters = query.azureMonitor?.dimensionFilters ?? [];

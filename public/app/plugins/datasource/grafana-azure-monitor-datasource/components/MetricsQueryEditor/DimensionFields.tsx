@@ -113,6 +113,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
               value={filter.operator}
               options={dimensionOperators}
               onChange={(v) => onFieldChange(index, 'operator', v.value ?? '')}
+              allowCustomValue
             />
             {filter.operator === 'eq' || filter.operator === 'ne' ? (
               <MultiSelect
