@@ -1,13 +1,16 @@
 import React from 'react';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
-import Datasource from '../../datasource';
+
 import { Alert, InlineFieldRow } from '@grafana/ui';
-import { ResourceRowType } from '../ResourcePicker/types';
+
+import Datasource from '../../datasource';
+import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import ResourceField from '../ResourceField';
-import QueryField from './QueryField';
+import { ResourceRowType } from '../ResourcePicker/types';
+
 import FormatAsField from './FormatAsField';
-import useMigrations from './useMigrations';
+import QueryField from './QueryField';
 import { setResource } from './setQueryValue';
+import useMigrations from './useMigrations';
 
 interface LogsQueryEditorProps {
   query: AzureMonitorQuery;

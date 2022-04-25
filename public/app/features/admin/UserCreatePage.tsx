@@ -1,12 +1,14 @@
 import React, { useCallback } from 'react';
 import { connect } from 'react-redux';
-import { Form, Button, Input, Field } from '@grafana/ui';
+import { useHistory } from 'react-router-dom';
+
 import { NavModel } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { StoreState } from '../../types';
-import { getNavModel } from '../../core/selectors/navModel';
+import { Form, Button, Input, Field } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import { useHistory } from 'react-router-dom';
+
+import { getNavModel } from '../../core/selectors/navModel';
+import { StoreState } from '../../types';
 
 interface UserCreatePageProps {
   navModel: NavModel;

@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	cw "github.com/weaveworks/common/tracing"
 )
 
 const (
@@ -98,8 +97,8 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 	mContext.Req = mContext.Req.WithContext(context.WithValue(mContext.Req.Context(), reqContextKey{}, reqContext))
 	mContext.Map(mContext.Req)
 
-	traceID, exists := cw.ExtractTraceID(mContext.Req.Context())
-	if exists {
+	traceID := tracing.TraceIDFromContext(mContext.Req.Context(), false)
+	if traceID != "" {
 		reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 	}
 

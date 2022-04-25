@@ -1,5 +1,7 @@
-import { PromApplication } from 'app/types/unified-alerting-dto';
 import { of, throwError } from 'rxjs';
+
+import { PromApplication } from 'app/types/unified-alerting-dto';
+
 import { fetchDataSourceBuildInfo } from './buildInfo';
 import { fetchRules } from './prometheus';
 import { fetchTestRulerRulesGroup } from './ruler';
@@ -8,6 +10,7 @@ const fetch = jest.fn();
 
 jest.mock('./prometheus');
 jest.mock('./ruler');
+jest.mock('app/core/services/context_srv', () => {});
 jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({ fetch }),
 }));

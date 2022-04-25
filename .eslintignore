@@ -20,3 +20,6 @@ vendor
 # Auto-generated localisation files
 public/locales/_build/
 public/locales/**/*.js
+
+# Auto-generated icon file
+packages/grafana-ui/src/components/Icon/iconBundle.ts

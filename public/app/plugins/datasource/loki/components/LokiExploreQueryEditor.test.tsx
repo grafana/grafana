@@ -1,13 +1,16 @@
-import React from 'react';
 import { mount, shallow } from 'enzyme';
+import React from 'react';
 import { act } from 'react-dom/test-utils';
+
+import { ExploreMode, LoadingState, PanelData, toUtc, TimeRange } from '@grafana/data';
+
+import { LokiDatasource } from '../datasource';
+import LokiLanguageProvider from '../language_provider';
+import { makeMockLokiDatasource } from '../mocks';
+import { LokiQuery } from '../types';
+
 import { LokiExploreQueryEditor } from './LokiExploreQueryEditor';
 import { LokiOptionFields } from './LokiOptionFields';
-import { LokiDatasource } from '../datasource';
-import { LokiQuery } from '../types';
-import { ExploreMode, LoadingState, PanelData, toUtc, TimeRange } from '@grafana/data';
-import { makeMockLokiDatasource } from '../mocks';
-import LokiLanguageProvider from '../language_provider';
 
 const setup = (renderMethod: any, propOverrides?: object) => {
   const datasource: LokiDatasource = makeMockLokiDatasource({});

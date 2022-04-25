@@ -1,20 +1,23 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import Page from 'app/core/components/Page/Page';
-import AlertRuleItem from './AlertRuleItem';
-import appEvents from 'app/core/app_events';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { AlertRule, StoreState } from 'app/types';
-import { getAlertRulesAsync, togglePauseAlertRule } from './state/actions';
-import { getAlertRuleItems, getSearchQuery } from './state/selectors';
+
 import { SelectableValue } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { setSearchQuery } from './state/reducers';
 import { Button, FilterInput, LinkButton, Select, VerticalGroup } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
+import Page from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { AlertRule, StoreState } from 'app/types';
+
 import { ShowModalReactEvent } from '../../types/events';
+
 import { AlertHowToModal } from './AlertHowToModal';
+import AlertRuleItem from './AlertRuleItem';
 import { UnifiedAlertingPromotion } from './components/UnifiedAlertingPromotion';
+import { getAlertRulesAsync, togglePauseAlertRule } from './state/actions';
+import { setSearchQuery } from './state/reducers';
+import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 
 function mapStateToProps(state: StoreState) {
   return {

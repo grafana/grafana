@@ -1,18 +1,20 @@
 import { css } from '@emotion/css';
+import React, { FC, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { useAsync } from 'react-use';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LinkButton, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { contextSrv } from 'app/core/services/context_srv';
 import { RuleIdentifier } from 'app/types/unified-alerting';
-import React, { FC, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { useAsync } from 'react-use';
+
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
 import { useIsRuleEditable } from './hooks/useIsRuleEditable';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAllPromBuildInfoAction, fetchEditableRuleAction } from './state/actions';
+import { useRulesAccess } from './utils/accessControlHooks';
 import * as ruleId from './utils/rule-id';
 
 interface ExistingRuleEditorProps {
@@ -38,6 +40,7 @@ const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
       </Page.Contents>
     );
   }
+
   if (error) {
     return (
       <Page.Contents>
@@ -47,12 +50,15 @@ const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
       </Page.Contents>
     );
   }
+
   if (!result) {
     return <AlertWarning title="Rule not found">Sorry! This rule does not exist.</AlertWarning>;
   }
+
   if (isEditable === false) {
     return <AlertWarning title="Cannot edit rule">Sorry! You do not have permission to edit this rule.</AlertWarning>;
   }
+
   return <AlertRuleForm existing={result} />;
 };
 
@@ -67,8 +73,14 @@ const RuleEditor: FC<RuleEditorProps> = ({ match }) => {
     await dispatch(fetchAllPromBuildInfoAction());
   }, [dispatch]);
 
-  if (!(contextSrv.hasEditPermissionInFolders || contextSrv.isEditor)) {
+  const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
+
+  if (!canCreateGrafanaRules && !canCreateCloudRules) {
     return <AlertWarning title="Cannot create rules">Sorry! You are not allowed to create rules.</AlertWarning>;
+  }
+
+  if (identifier && !canEditRules(identifier.ruleSourceName)) {
+    return <AlertWarning title="Cannot edit rules">Sorry! You are not allowed to edit rules.</AlertWarning>;
   }
 
   if (loading) {

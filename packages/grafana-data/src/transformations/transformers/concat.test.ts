@@ -1,4 +1,5 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
+
 import { concatenateFields, ConcatenateFrameNameMode } from './concat';
 
 export const simpleABC = toDataFrame({

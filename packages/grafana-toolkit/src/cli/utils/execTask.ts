@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
-import { Task } from '../tasks/task';
 import chalk from 'chalk';
+
+import { Task } from '../tasks/task';
 
 interface TaskBasicOptions {
   // Don't print task details when running

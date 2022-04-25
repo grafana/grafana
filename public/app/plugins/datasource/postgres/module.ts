@@ -1,8 +1,9 @@
+import { DataSourcePlugin } from '@grafana/data';
+
+import { PostgresConfigCtrl } from './config_ctrl';
 import { PostgresDatasource } from './datasource';
 import { PostgresQueryCtrl } from './query_ctrl';
-import { PostgresConfigCtrl } from './config_ctrl';
 import { PostgresQuery } from './types';
-import { DataSourcePlugin } from '@grafana/data';
 
 const defaultQuery = `SELECT
   extract(epoch from time_column) AS time,

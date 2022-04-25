@@ -1,4 +1,5 @@
 import { QueryEditorProps } from '@grafana/data';
+
 import { LokiDatasource } from '../datasource';
 import { LokiOptions, LokiQuery } from '../types';
 

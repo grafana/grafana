@@ -1,18 +1,20 @@
-import React, { FC, useEffect, useMemo } from 'react';
 import { isEmpty, uniq } from 'lodash';
-import { Icon, MultiSelect } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import React, { FC, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
-import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
+
+import { SelectableValue } from '@grafana/data';
+import { Icon, MultiSelect } from '@grafana/ui';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
+import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
 import { getAllRulesSourceNames } from 'app/features/alerting/unified/utils/datasource';
-import { PromRuleType } from 'app/types/unified-alerting-dto';
-import { AlertingRule } from 'app/types/unified-alerting';
-import { isPrivateLabel } from './util';
 import {
   isAsyncRequestMapSliceFulfilled,
   isAsyncRequestMapSlicePending,
 } from 'app/features/alerting/unified/utils/redux';
+import { AlertingRule } from 'app/types/unified-alerting';
+import { PromRuleType } from 'app/types/unified-alerting-dto';
+
+import { isPrivateLabel } from './util';
 
 interface Props {
   id: string;

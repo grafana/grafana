@@ -2,14 +2,16 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import ResourcePicker from '.';
 import createMockResourcePickerData from '../../__mocks__/resourcePickerData';
 import {
   createMockResourceGroupsBySubscription,
   createMockSubscriptions,
   mockResourcesByResourceGroup,
 } from '../../__mocks__/resourcePickerRows';
+
 import { ResourceRowType } from './types';
+
+import ResourcePicker from '.';
 
 const noResourceURI = '';
 const singleSubscriptionSelectionURI = '/subscriptions/def-456';
@@ -100,7 +102,7 @@ describe('AzureMonitor ResourcePicker', () => {
     advancedSection.click();
 
     const advancedInput = await screen.findByLabelText('Resource URI');
-    userEvent.type(advancedInput, '/subscriptions/def-123');
+    await userEvent.type(advancedInput, '/subscriptions/def-123');
 
     const applyButton = screen.getByRole('button', { name: 'Apply' });
     applyButton.click();

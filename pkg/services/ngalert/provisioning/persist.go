@@ -24,3 +24,20 @@ type ProvisioningStore interface {
 type TransactionManager interface {
 	InTransaction(ctx context.Context, work func(ctx context.Context) error) error
 }
+
+type ProvenanceOrgAdapter struct {
+	Inner models.ProvisionableInOrg
+	OrgID int64
+}
+
+func (a ProvenanceOrgAdapter) ResourceType() string {
+	return a.Inner.ResourceType()
+}
+
+func (a ProvenanceOrgAdapter) ResourceID() string {
+	return a.Inner.ResourceID()
+}
+
+func (a ProvenanceOrgAdapter) ResourceOrgID() int64 {
+	return a.OrgID
+}

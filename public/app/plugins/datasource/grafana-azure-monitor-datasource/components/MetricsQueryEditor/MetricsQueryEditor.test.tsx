@@ -1,11 +1,12 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
+
 import { selectOptionInTest } from '@grafana/ui';
 
-import MetricsQueryEditor from './MetricsQueryEditor';
-
-import createMockQuery from '../../__mocks__/query';
 import createMockDatasource from '../../__mocks__/datasource';
+import createMockQuery from '../../__mocks__/query';
+
+import MetricsQueryEditor from './MetricsQueryEditor';
 
 const variableOptionGroup = {
   label: 'Template variables',
@@ -79,7 +80,7 @@ describe('Azure Monitor QueryEditor', () => {
     const mockDatasource = createMockDatasource();
     const onChange = jest.fn();
     const mockQuery = createMockQuery();
-    mockDatasource.getMetricNames = jest.fn().mockResolvedValue([
+    mockDatasource.azureMonitorDatasource.getMetricNames = jest.fn().mockResolvedValue([
       {
         value: 'metric-a',
         text: 'Metric A',
