@@ -247,7 +247,6 @@ var wireBasicSet = wire.NewSet(
 	cuectx.ProvideCUEContext,
 	cuectx.ProvideThemaLibrary,
 	csrf.ProvideCSRFFilter,
-	wire.Bind(new(csrf.Service), new(&csrf.Implementation)),
 )
 
 var wireSet = wire.NewSet(
