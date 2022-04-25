@@ -20,6 +20,7 @@ interface Props extends PanelProps<PanelOptions> {}
 interface State {
   refresh: number;
   openInlineEdit: boolean;
+  selectedElements: ElementState[];
 }
 
 export interface InstanceState {
@@ -42,6 +43,7 @@ export class CanvasPanel extends Component<Props, State> {
     this.state = {
       refresh: 0,
       openInlineEdit: false,
+      selectedElements: [],
     };
 
     // Only the initial options are ever used.
@@ -82,6 +84,8 @@ export class CanvasPanel extends Component<Props, State> {
               selected: v,
               layer: this.scene.root,
             });
+
+            this.setState({ selectedElements: v });
           },
         })
       );
@@ -100,6 +104,7 @@ export class CanvasPanel extends Component<Props, State> {
       ...options,
       root,
     });
+
     this.setState({ refresh: this.state.refresh + 1 });
     // console.log('send changes', root);
   };
@@ -122,6 +127,10 @@ export class CanvasPanel extends Component<Props, State> {
     }
 
     if (this.state.openInlineEdit !== nextState.openInlineEdit) {
+      changed = true;
+    }
+
+    if (this.state.selectedElements !== nextState.selectedElements) {
       changed = true;
     }
 
@@ -161,7 +170,14 @@ export class CanvasPanel extends Component<Props, State> {
       return null;
     }
 
-    return <InlineEdit panel={panel} dashboard={dashboard} onClose={() => this.inlineEditButtonClick(false)} />;
+    return (
+      <InlineEdit
+        panel={panel}
+        dashboard={dashboard}
+        onClose={() => this.inlineEditButtonClick(false)}
+        selectedElements={this.state.selectedElements}
+      />
+    );
   };
 
   render() {
@@ -175,8 +191,9 @@ export class CanvasPanel extends Component<Props, State> {
                 size="md"
                 variant="secondary"
                 icon="edit"
-                data-inlineeditpanelid={this.props.id}
+                data-btninlineedit={this.props.id}
                 onClick={() => this.inlineEditButtonClick(true)}
+                disabled={!this.state.selectedElements.length}
               />
             </div>
             {this.state.openInlineEdit && this.renderInlineEdit()}
@@ -192,5 +209,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     position: absolute;
     bottom: 8px;
     left: 8px;
+    z-index: 10000;
   `,
 }));
