@@ -241,7 +241,6 @@ var wireBasicSet = wire.NewSet(
 	comments.ProvideService,
 	guardian.ProvideService,
 	secretsStore.ProvideService,
-	prefimpl.ProvideService,
 	avatar.ProvideAvatarCacheServer,
 	authproxy.ProvideAuthProxy,
 	statscollector.ProvideService,
