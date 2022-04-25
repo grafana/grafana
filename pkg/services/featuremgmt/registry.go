@@ -191,6 +191,12 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:            "export",
+			Description:     "Export grafana instance (to git, etc)",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:            "storageLocalUpload",
 			Description:     "allow uploads to local storage",
 			State:           FeatureStateAlpha,

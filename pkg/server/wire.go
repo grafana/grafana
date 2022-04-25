@@ -50,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
@@ -175,6 +176,7 @@ var wireBasicSet = wire.NewSet(
 	searchV2.ProvideService,
 	store.ProvideService,
 	store.ProvideHTTPService,
+	export.ProvideService,
 	live.ProvideService,
 	pushhttp.ProvideService,
 	plugincontext.ProvideService,
