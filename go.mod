@@ -301,6 +301,8 @@ replace github.com/hashicorp/consul => github.com/hashicorp/consul v1.10.2
 
 replace github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.7
 
+replace github.com/tidwall/gjson => github.com/tidwall/gjson v1.14.1
+
 // Upgraded to fix CVE-2020-26066. This can be removed when go.opentelemetry.io/collector and github.com/influxdata/telegraf are upgraded
 // github.com/tidwall/match v1.0.1 should not be used.
 replace github.com/tidwall/match => github.com/tidwall/match v1.1.1

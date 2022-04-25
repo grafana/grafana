@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -25,8 +26,9 @@ type Service struct {
 }
 
 var (
-	_ backend.QueryDataHandler = (*Service)(nil)
-	_ backend.StreamHandler    = (*Service)(nil)
+	_ backend.QueryDataHandler    = (*Service)(nil)
+	_ backend.StreamHandler       = (*Service)(nil)
+	_ backend.CallResourceHandler = (*Service)(nil)
 )
 
 func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
@@ -89,6 +91,40 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 	}
 }
 
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	url := req.URL
+
+	// a very basic is-this-url-valid check
+	if req.Method != "GET" {
+		return fmt.Errorf("invalid resource method: %s", req.Method)
+	}
+	if (!strings.HasPrefix(url, "/loki/api/v1/label?")) &&
+		(!strings.HasPrefix(url, "/loki/api/v1/label/")) && // the `/label/$label_name/values` form
+		(!strings.HasPrefix(url, "/loki/api/v1/series?")) {
+		return fmt.Errorf("invalid resource URL: %s", url)
+	}
+
+	dsInfo, err := s.getDSInfo(req.PluginContext)
+	if err != nil {
+		return err
+	}
+
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, s.plog)
+	bytes, err := api.RawQuery(ctx, url)
+
+	if err != nil {
+		return err
+	}
+
+	return sender.Send(&backend.CallResourceResponse{
+		Status: http.StatusOK,
+		Headers: map[string][]string{
+			"content-type": {"application/json"},
+		},
+		Body: bytes,
+	})
+}
+
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
@@ -129,7 +165,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 // we extracted this part of the functionality to make it easy to unit-test it
 func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery) (data.Frames, error) {
-	value, err := api.Query(ctx, *query)
+	value, err := api.DataQuery(ctx, *query)
 	if err != nil {
 		return data.Frames{}, err
 	}

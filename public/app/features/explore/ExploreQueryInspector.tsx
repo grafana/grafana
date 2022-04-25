@@ -71,7 +71,7 @@ export function ExploreQueryInspector(props: Props) {
     tabs.push(errorTab);
   }
   return (
-    <ExploreDrawer width={width} onResize={() => {}}>
+    <ExploreDrawer width={width}>
       <TabbedContainer tabs={tabs} onClose={onClose} closeIconTooltip="Close query inspector" />
     </ExploreDrawer>
   );

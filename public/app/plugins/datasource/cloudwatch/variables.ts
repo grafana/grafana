@@ -1,6 +1,7 @@
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { CustomVariableSupport, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { CloudWatchDatasource } from './datasource';
 import { VariableQuery, VariableQueryType } from './types';
@@ -9,10 +10,12 @@ import { VariableQueryEditor } from './components/VariableQueryEditor/VariableQu
 
 export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchDatasource, VariableQuery> {
   private readonly datasource: CloudWatchDatasource;
+  private readonly templateSrv: TemplateSrv;
 
-  constructor(datasource: CloudWatchDatasource) {
+  constructor(datasource: CloudWatchDatasource, templateSrv: TemplateSrv = getTemplateSrv()) {
     super();
     this.datasource = datasource;
+    this.templateSrv = templateSrv;
     this.query = this.query.bind(this);
   }
 
@@ -123,7 +126,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     }
     let filterJson = {};
     if (ec2Filters) {
-      filterJson = JSON.parse(ec2Filters);
+      filterJson = JSON.parse(this.templateSrv.replace(ec2Filters));
     }
     const values = await this.datasource.getEc2InstanceAttribute(region, attributeName, filterJson);
     return values.map((s: { label: string; value: string }) => ({
@@ -139,7 +142,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     }
     let tagJson = {};
     if (tags) {
-      tagJson = JSON.parse(tags);
+      tagJson = JSON.parse(this.templateSrv.replace(tags));
     }
     const keys = await this.datasource.getResourceARNs(region, resourceType, tagJson);
     return keys.map((s: { label: string; value: string }) => ({

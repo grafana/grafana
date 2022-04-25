@@ -4,7 +4,7 @@ import { useLocalStorage } from 'react-use';
 
 export const useShowDashboardPreviews = () => {
   const previewFeatureEnabled = Boolean(config.featureToggles.dashboardPreviews);
-  const [showPreviews, setShowPreviews] = useLocalStorage<boolean>(PREVIEWS_LOCAL_STORAGE_KEY, previewFeatureEnabled);
+  const [showPreviews, setShowPreviews] = useLocalStorage<boolean>(PREVIEWS_LOCAL_STORAGE_KEY, false);
 
   return { showPreviews: Boolean(showPreviews && previewFeatureEnabled), previewFeatureEnabled, setShowPreviews };
 };
