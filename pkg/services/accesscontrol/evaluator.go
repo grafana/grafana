@@ -22,7 +22,7 @@ type Evaluator interface {
 
 var _ Evaluator = new(permissionEvaluator)
 
-// EvalPermission returns an evaluator that will require all scopes in combination with action to match
+// EvalPermission returns an evaluator that will require at least one of passed scopes to match
 func EvalPermission(action string, scopes ...string) Evaluator {
 	return permissionEvaluator{Action: action, Scopes: scopes}
 }
@@ -43,29 +43,19 @@ func (p permissionEvaluator) Evaluate(permissions map[string][]string) (bool, er
 	}
 
 	for _, target := range p.Scopes {
-		var err error
-		var matches bool
-
 		for _, scope := range userScopes {
-			matches, err = match(scope, target)
-			if err != nil {
-				return false, err
+			if match(scope, target) {
+				return true, nil
 			}
-			if matches {
-				break
-			}
-		}
-		if !matches {
-			return false, nil
 		}
 	}
 
-	return true, nil
+	return false, nil
 }
 
-func match(scope, target string) (bool, error) {
+func match(scope, target string) bool {
 	if scope == "" {
-		return false, nil
+		return false
 	}
 
 	if !ValidateScope(scope) {
@@ -74,7 +64,7 @@ func match(scope, target string) (bool, error) {
 			"scope", scope,
 			"reason", "scopes should not contain meta-characters like * or ?, except in the last position",
 		)
-		return false, nil
+		return false
 	}
 
 	prefix, last := scope[:len(scope)-1], scope[len(scope)-1]
@@ -82,11 +72,11 @@ func match(scope, target string) (bool, error) {
 	if last == '*' {
 		if strings.HasPrefix(target, prefix) {
 			logger.Debug("matched scope", "user scope", scope, "target scope", target)
-			return true, nil
+			return true
 		}
 	}
 
-	return scope == target, nil
+	return scope == target
 }
 
 func (p permissionEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
