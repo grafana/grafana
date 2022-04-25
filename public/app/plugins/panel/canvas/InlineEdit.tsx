@@ -1,9 +1,10 @@
 import { cx, css } from '@emotion/css';
 import React, { useRef, useState } from 'react';
 import Draggable from 'react-draggable';
+import { Resizable } from 'react-resizable';
 import { useClickAway } from 'react-use';
 
-import { GrafanaTheme, PanelModel } from '@grafana/data';
+import { GrafanaTheme, PanelModel, Dimensions2D } from '@grafana/data';
 import { stylesFactory, useTheme } from '@grafana/ui/src';
 import store from 'app/core/store';
 
@@ -30,8 +31,13 @@ export const InlineEdit = ({ panel, dashboard, onClose, selectedElements }: Prop
   const defaultX = btnInlineEdit.x - btnInlineEdit.width + OFFSET;
   const defaultY = -OFFSET - defaultMeasurements.height;
 
-  const savedPlacement = store.getObject(inlineEditKey, { x: defaultX, y: defaultY });
-  // const [measurements, setMeasurements] = useState<Dimensions2D>({ width: defaultMeasurements.width, height: defaultMeasurements.height });
+  const savedPlacement = store.getObject(inlineEditKey, {
+    x: defaultX,
+    y: defaultY,
+    w: defaultMeasurements.width,
+    h: defaultMeasurements.height,
+  });
+  const [measurements, setMeasurements] = useState<Dimensions2D>({ width: savedPlacement.w, height: savedPlacement.h });
   const [placement, setPlacement] = useState({ x: savedPlacement.x, y: savedPlacement.y });
 
   useClickAway(ref, () => {
@@ -40,27 +46,38 @@ export const InlineEdit = ({ panel, dashboard, onClose, selectedElements }: Prop
     }
   });
 
-  const handleStop = (event: any, dragElement: any) => {
+  const onDragStop = (event: any, dragElement: any) => {
     setPlacement({ x: dragElement.x, y: dragElement.y });
-    storeInlineEditDetails(dragElement.x, dragElement.y);
+    saveToStore(dragElement.x, dragElement.y, measurements.width, measurements.height);
   };
 
-  const storeInlineEditDetails = (xVal: number, yVal: number) => {
-    store.setObject(inlineEditKey, { x: xVal, y: yVal });
+  const onResizeStop = (event: React.MouseEvent, { size }) => {
+    setMeasurements({ width: size.width, height: size.height });
+    saveToStore(placement.x, placement.y, size.width, size.height);
+  };
+
+  const saveToStore = (x: number, y: number, width: number, height: number) => {
+    store.setObject(inlineEditKey, { x: x, y: y, w: width, h: height });
   };
 
   return (
-    <Draggable handle="strong" onStop={handleStop} position={{ x: placement.x, y: savedPlacement.y }}>
-      <div className={cx('box', 'no-cursor', `${styles.inlineEditorContainer}`)} ref={ref}>
-        <strong className={cx('cursor', `${styles.inlineEditorHeader}`)}>{panel.title}</strong>
-        <div style={{ overflow: 'scroll' }}>
-          <div className={styles.inlineEditorContent}>
-            {selectedElements.map((v, index) => {
-              return <span key={index}>{v.getName()}</span>;
-            })}
+    <Draggable handle="strong" onStop={onDragStop} position={{ x: placement.x, y: savedPlacement.y }}>
+      <Resizable height={measurements.height} width={measurements.width} onResize={onResizeStop}>
+        <div
+          className={cx('box', 'no-cursor', `${styles.inlineEditorContainer}`)}
+          style={{ height: `${measurements.height}px`, width: `${measurements.width}px` }}
+          ref={ref}
+        >
+          <strong className={cx('cursor', `${styles.inlineEditorHeader}`)}>{panel.title}</strong>
+          <div style={{ overflow: 'scroll' }}>
+            <div className={styles.inlineEditorContent}>
+              {selectedElements.map((v, index) => {
+                return <span key={index}>{v.getName()}</span>;
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      </Resizable>
     </Draggable>
   );
 };
