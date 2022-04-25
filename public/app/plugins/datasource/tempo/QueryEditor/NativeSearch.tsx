@@ -70,7 +70,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     try {
       setIsLoading((prevValue) => ({ ...prevValue, [name]: false }));
       const options = await lp.getOptions(name);
-      const filteredOptions = options.filter((item) => (item.value ? item.value?.indexOf(query) > -1 : ''));
+      const filteredOptions = options.filter((item) => (item.value ? item.value?.indexOf(query) > -1 : false));
       return filteredOptions;
     } catch (error) {
       if (error?.status === 404) {
@@ -110,15 +110,8 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     return getNameOptions(query, 'name');
   };
 
-  const serviceNameSearch = debounce(getServiceNameOptions, 500, {
-    leading: true,
-    trailing: true,
-  });
-
-  const spanNameSearch = debounce(getSpanNameOptions, 500, {
-    leading: true,
-    trailing: true,
-  });
+  const serviceNameSearch = debounce(getServiceNameOptions, 500, { leading: true, trailing: true });
+  const spanNameSearch = debounce(getSpanNameOptions, 500, { leading: true, trailing: true });
 
   useEffect(() => {
     const fetchOptions = async () => {

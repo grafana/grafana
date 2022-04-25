@@ -52,7 +52,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
           value: service,
         }));
 
-        const filteredOptions = serviceOptions.filter((item) => (item.value ? item.value?.indexOf(query) > -1 : ''));
+        const filteredOptions = serviceOptions.filter((item) => (item.value ? item.value?.indexOf(query) > -1 : false));
         return filteredOptions;
       } catch (error) {
         dispatch(notifyApp(createErrorNotification('Error', error)));
@@ -72,15 +72,8 @@ export function SearchForm({ datasource, query, onChange }: Props) {
     return loadServices(`/api/services/${encodeURIComponent(query.service!)}/operations`, 'operations', userQuery);
   };
 
-  const serviceSearch = debounce(getServiceOptions, 500, {
-    leading: true,
-    trailing: true,
-  });
-
-  const operationSearch = debounce(getOperationOptions, 500, {
-    leading: true,
-    trailing: true,
-  });
+  const serviceSearch = debounce(getServiceOptions, 500, { leading: true, trailing: true });
+  const operationSearch = debounce(getOperationOptions, 500, { leading: true, trailing: true });
 
   useEffect(() => {
     const getServices = async () => {
