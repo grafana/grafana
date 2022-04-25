@@ -1,10 +1,13 @@
-import React, { HTMLAttributes } from 'react';
-import { Label } from './Label';
-import { stylesFactory, useTheme2 } from '../../themes';
 import { css, cx } from '@emotion/css';
+import React, { HTMLAttributes } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { FieldValidationMessage } from './FieldValidationMessage';
+
+import { stylesFactory, useTheme2 } from '../../themes';
 import { getChildId } from '../../utils/reactUtils';
+
+import { FieldValidationMessage } from './FieldValidationMessage';
+import { Label } from './Label';
 
 export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Form input element, i.e Input or Switch */

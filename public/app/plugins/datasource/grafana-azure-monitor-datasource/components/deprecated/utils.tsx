@@ -1,5 +1,6 @@
-import { config } from '@grafana/runtime';
 import { gt, valid } from 'semver';
+
+import { config } from '@grafana/runtime';
 
 import { AzureDataSourceSettings } from '../../types';
 

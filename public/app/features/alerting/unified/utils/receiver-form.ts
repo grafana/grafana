@@ -1,3 +1,5 @@
+import { isArray } from 'lodash';
+
 import {
   AlertManagerCortexConfig,
   GrafanaManagedReceiverConfig,
@@ -5,7 +7,7 @@ import {
   Route,
 } from 'app/plugins/datasource/alertmanager/types';
 import { CloudNotifierType, NotifierDTO, NotifierType } from 'app/types';
-import { isArray } from 'lodash';
+
 import {
   CloudChannelConfig,
   CloudChannelMap,

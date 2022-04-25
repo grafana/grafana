@@ -1,5 +1,6 @@
-import { DataQueryRequest, DataQueryResponseData, toDataFrame } from '@grafana/data';
 import { from } from 'rxjs';
+
+import { DataQueryRequest, DataQueryResponseData, toDataFrame } from '@grafana/data';
 
 import createMockDatasource from './__mocks__/datasource';
 import { invalidSubscriptionError } from './__mocks__/errors';

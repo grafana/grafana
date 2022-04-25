@@ -1,10 +1,11 @@
-import { SelectableValue } from '@grafana/data';
-import { Select } from '@grafana/ui';
 import React, { useCallback, useState } from 'react';
 
+import { SelectableValue } from '@grafana/data';
+import { Select } from '@grafana/ui';
+
 import { AzureMonitorQuery, AzureQueryType, DeprecatedAzureQueryType } from '../../types';
-import { gtGrafana9 } from '../deprecated/utils';
 import { Field } from '../Field';
+import { gtGrafana9 } from '../deprecated/utils';
 
 interface QueryTypeFieldProps {
   query: AzureMonitorQuery;

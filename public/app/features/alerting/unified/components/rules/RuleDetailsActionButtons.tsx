@@ -1,4 +1,8 @@
 import { css } from '@emotion/css';
+import React, { FC, Fragment, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
@@ -7,9 +11,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 import { RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
-import React, { FC, Fragment, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { deleteRuleAction } from '../../state/actions';

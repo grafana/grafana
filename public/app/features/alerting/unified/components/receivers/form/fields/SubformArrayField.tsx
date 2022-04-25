@@ -1,11 +1,14 @@
 import React, { FC } from 'react';
-import { NotificationChannelOption } from 'app/types';
 import { FieldError, DeepMap, useFormContext } from 'react-hook-form';
+
 import { Button, useStyles2 } from '@grafana/ui';
-import { CollapsibleSection } from '../CollapsibleSection';
-import { ActionIcon } from '../../../rules/ActionIcon';
-import { OptionField } from './OptionField';
 import { useControlledFieldArray } from 'app/features/alerting/unified/hooks/useControlledFieldArray';
+import { NotificationChannelOption } from 'app/types';
+
+import { ActionIcon } from '../../../rules/ActionIcon';
+import { CollapsibleSection } from '../CollapsibleSection';
+
+import { OptionField } from './OptionField';
 import { getReceiverFormFieldStyles } from './styles';
 
 interface Props {

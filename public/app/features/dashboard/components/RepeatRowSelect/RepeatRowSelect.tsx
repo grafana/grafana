@@ -1,10 +1,11 @@
 import React, { FC, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { Select } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
 
-import { getLastKey, getVariablesByKey } from '../../../variables/state/selectors';
+import { SelectableValue } from '@grafana/data';
+import { Select } from '@grafana/ui';
+
 import { StoreState } from '../../../../types';
+import { getLastKey, getVariablesByKey } from '../../../variables/state/selectors';
 
 export interface Props {
   id?: string;

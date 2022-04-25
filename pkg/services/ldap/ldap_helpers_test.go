@@ -21,7 +21,7 @@ func TestIsMemberOf(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(fmt.Sprintf("isMemberOf(%v, \"%s\") = %v", tc.memberOf, tc.group, tc.expected), func(t *testing.T) {
-			assert.Equal(t, tc.expected, isMemberOf(tc.memberOf, tc.group))
+			assert.Equal(t, tc.expected, IsMemberOf(tc.memberOf, tc.group))
 		})
 	}
 }

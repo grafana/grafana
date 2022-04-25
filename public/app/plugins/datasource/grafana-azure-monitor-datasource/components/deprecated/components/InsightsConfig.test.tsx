@@ -1,8 +1,10 @@
-import { Button, LegacyForms } from '@grafana/ui';
 import { shallow } from 'enzyme';
 import React from 'react';
 
+import { Button, LegacyForms } from '@grafana/ui';
+
 import { Props } from '../../ConfigEditor';
+
 import InsightsConfig from './InsightsConfig';
 
 const { Input } = LegacyForms;

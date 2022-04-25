@@ -1,6 +1,8 @@
 import { lastValueFrom, Observable, of } from 'rxjs';
+
 import { DataQuery, DataQueryResponse, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
 
 export type AlertManagerQuery = {

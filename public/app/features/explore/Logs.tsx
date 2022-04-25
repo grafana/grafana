@@ -1,8 +1,8 @@
-import React, { PureComponent, createRef } from 'react';
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
-import { TooltipDisplayMode } from '@grafana/schema';
+import React, { PureComponent, createRef } from 'react';
+
 import {
   rangeUtil,
   RawTimeRange,
@@ -21,6 +21,7 @@ import {
   GrafanaTheme2,
   LoadingState,
 } from '@grafana/data';
+import { TooltipDisplayMode } from '@grafana/schema';
 import {
   RadioButtonGroup,
   LogRows,
@@ -31,12 +32,13 @@ import {
   withTheme2,
   Themeable2,
 } from '@grafana/ui';
-import store from 'app/core/store';
+import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
+import store from 'app/core/store';
+
+import { ExploreGraph } from './ExploreGraph';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import { ExploreGraph } from './ExploreGraph';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',

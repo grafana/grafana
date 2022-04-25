@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
+
+import { locationService } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
-import { locationService } from '@grafana/runtime';
 
 export const useDashboardDelete = (uid: string) => {
   const [state, onDeleteDashboard] = useAsyncFn(() => deleteDashboard(uid, false), []);

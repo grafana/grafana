@@ -1,9 +1,12 @@
-import React from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '../../themes';
-import { MenuItemProps } from './MenuItem';
 import { uniqueId } from 'lodash';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
+
+import { MenuItemProps } from './MenuItem';
 
 /** @internal */
 export interface MenuItemsGroup<T = any> {

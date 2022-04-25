@@ -1,4 +1,5 @@
 import { DashboardQuery, SearchQueryParams, SearchAction, SearchLayout } from '../types';
+
 import {
   ADD_TAG,
   CLEAR_FILTERS,

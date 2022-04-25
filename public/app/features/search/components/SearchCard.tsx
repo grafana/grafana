@@ -1,13 +1,16 @@
-import React, { useCallback, useRef, useState } from 'react';
 import { css } from '@emotion/css';
+import React, { useCallback, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Portal, TagList, useTheme2 } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { Icon, Portal, TagList, useTheme2 } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
+
 import { DashboardSectionItem, OnToggleChecked } from '../types';
-import { SearchCheckbox } from './SearchCheckbox';
+
 import { SearchCardExpanded } from './SearchCardExpanded';
+import { SearchCheckbox } from './SearchCheckbox';
 
 const DELAY_BEFORE_EXPANDING = 500;
 
