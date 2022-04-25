@@ -1,24 +1,36 @@
-import React, { useRef } from 'react';
-import { GrafanaTheme2, PanelModel } from '@grafana/data';
+import React, { useRef, useState } from 'react';
+import { GrafanaTheme, PanelModel } from '@grafana/data';
 import { DashboardModel } from '../../../features/dashboard/state';
 import Draggable from 'react-draggable';
-import { useTheme2 } from '@grafana/ui/src';
+import { stylesFactory, useTheme } from '@grafana/ui/src';
 import { cx, css } from '@emotion/css';
 import { useClickAway } from 'react-use';
+import { ElementState } from '../../../features/canvas/runtime/element';
+import store from 'app/core/store';
 
 type Props = {
   onClose?: () => void;
   panel: PanelModel;
   dashboard: DashboardModel;
+  selectedElements: ElementState[];
 };
 
-export const InlineEdit = ({ panel, dashboard, onClose }: Props) => {
-  console.log('InlineEdit');
-  console.log(panel);
-  const theme = useTheme2();
-  const bbox = document.querySelector(`[data-inlineeditpanelid="${panel.id}"]`)!.getBoundingClientRect();
+const OFFSET = 8;
+
+export const InlineEdit = ({ panel, dashboard, onClose, selectedElements }: Props) => {
+  const theme = useTheme();
+  const btnInlineEdit = document.querySelector(`[data-btninlineedit="${panel.id}"]`)!.getBoundingClientRect();
   const ref = useRef<HTMLDivElement>(null);
-  const styles = getStyles(theme, bbox);
+  const styles = getStyles(theme);
+  const inlineEditKey = `inlineEditPanel-${panel.id}`;
+
+  const defaultMeasurements = { width: 350, height: 400 };
+  const defaultX = btnInlineEdit.x - btnInlineEdit.width + OFFSET;
+  const defaultY = -OFFSET - defaultMeasurements.height;
+
+  const savedPlacement = store.getObject(inlineEditKey, { x: defaultX, y: defaultY });
+  // const [measurements, setMeasurements] = useState<Dimensions2D>({ width: defaultMeasurements.width, height: defaultMeasurements.height });
+  const [placement, setPlacement] = useState({ x: savedPlacement.x, y: savedPlacement.y });
 
   useClickAway(ref, () => {
     if (onClose) {
@@ -26,48 +38,54 @@ export const InlineEdit = ({ panel, dashboard, onClose }: Props) => {
     }
   });
 
+  const handleStop = (event: any, dragElement: any) => {
+    setPlacement({ x: dragElement.x, y: dragElement.y });
+    storeInlineEditDetails(dragElement.x, dragElement.y);
+  };
+
+  const storeInlineEditDetails = (xVal: number, yVal: number) => {
+    store.setObject(inlineEditKey, { x: xVal, y: yVal });
+  };
+
   return (
-    <Draggable handle="strong">
-      <div className={cx('box', 'no-cursor', 'react-resizable', `${styles.inlineEditorContainer}`)} ref={ref}>
-        <strong className="cursor">
-          <div>Drag here</div>
-        </strong>
+    <Draggable handle="strong" onStop={handleStop} position={{ x: placement.x, y: savedPlacement.y }}>
+      <div className={cx('box', 'no-cursor', `${styles.inlineEditorContainer}`)} ref={ref}>
+        <strong className={cx('cursor', `${styles.inlineEditorHeader}`)}>{panel.title}</strong>
         <div style={{ overflow: 'scroll' }}>
-          <div style={{ whiteSpace: 'pre-wrap' }}>
-            I have long scrollable content with a handle
-            {'\n' + Array(40).fill('x').join('\n')}
+          <div className={styles.inlineEditorContent}>
+            {selectedElements.map((v, index) => {
+              return <span key={index}>{v.getName()}</span>;
+            })}
           </div>
         </div>
-        <span className="react-resizable-handle react-resizable-handle-se" />
       </div>
     </Draggable>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, bbox: DOMRect) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   inlineEditorContainer: css`
     display: flex;
     flex-direction: column;
     position: absolute;
-    top: ${bbox.y - 150}px;
-    left: ${bbox.x + bbox.width + 5}px;
-    background: ${theme.colors.background}; //panelBg
+    background: ${theme.colors.panelBg};
     box-shadow: 5px 5px 20px -5px #000000;
-    width: 300px;
-    height: 500px;
+    width: 350px;
+    height: 400px;
+    z-index: 100000;
+    opacity: 1;
   `,
-  rzHandle: css`
-    background: ${theme.colors.secondary.main};
-    transition: 0.3s background ease-in-out;
-    position: relative;
-    width: 200px !important;
-    height: 7px !important;
-    left: calc(50% - 100px) !important;
-    top: -4px !important;
-    cursor: grab;
-    border-radius: 4px;
-    &:hover {
-      background: ${theme.colors.secondary.shade};
-    }
+  inlineEditorHeader: css`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: ${theme.colors.pageHeaderBg};
+    border: 1px solid ${theme.colors.pageHeaderBorder};
+    height: 40px;
+    cursor: move;
   `,
-});
+  inlineEditorContent: css`
+    white-space: pre-wrap;
+    padding: 10px;
+  `,
+}));
