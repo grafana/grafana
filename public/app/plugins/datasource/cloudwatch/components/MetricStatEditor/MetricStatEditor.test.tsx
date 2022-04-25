@@ -135,8 +135,8 @@ describe('MetricStatEditor', () => {
       expect(namespaceSelect).toBeInTheDocument();
       expect(metricsSelect).toBeInTheDocument();
 
-      await selectEvent.select(namespaceSelect, 'n1');
-      await selectEvent.select(metricsSelect, 'm1');
+      await selectEvent.select(namespaceSelect, 'n1', { container: document.body });
+      await selectEvent.select(metricsSelect, 'm1', { container: document.body });
 
       expect(onChange.mock.calls).toEqual([
         [{ ...propsNamespaceMetrics.query, namespace: 'n1' }], // First call, namespace select
@@ -165,7 +165,7 @@ describe('MetricStatEditor', () => {
       expect(screen.getByText('n2')).toBeInTheDocument();
       expect(screen.getByText('oldNamespaceMetric')).toBeInTheDocument();
 
-      await selectEvent.select(namespaceSelect, 'n1');
+      await selectEvent.select(namespaceSelect, 'n1', { container: document.body });
 
       expect(onChange.mock.calls).toEqual([[{ ...propsNamespaceMetrics.query, metricName: '', namespace: 'n1' }]]);
     });
@@ -181,7 +181,7 @@ describe('MetricStatEditor', () => {
       expect(screen.getByText('n1')).toBeInTheDocument();
       expect(screen.getByText('m1')).toBeInTheDocument();
 
-      await selectEvent.select(namespaceSelect, 'n2');
+      await selectEvent.select(namespaceSelect, 'n2', { container: document.body });
 
       expect(onChange).toHaveBeenCalledTimes(1);
       expect(onChange.mock.calls).toEqual([[{ ...propsNamespaceMetrics.query, metricName: 'm1', namespace: 'n2' }]]);
