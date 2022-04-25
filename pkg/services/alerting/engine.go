@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/metrics"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -77,7 +79,6 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator models.Plug
 		sqlStore:           sqlStore,
 		dashAlertExtractor: dashAlertExtractor,
 	}
-	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New(), 1)
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
 	e.evalHandler = NewEvalHandler(e.DataService)
@@ -92,6 +93,7 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator models.Plug
 
 // Run starts the alerting service background process.
 func (e *AlertEngine) Run(ctx context.Context) error {
+	e.ticker = NewTicker(clock.New(), 1*time.Second, metrics.NewTickerMetrics(prometheus.DefaultRegisterer))
 	alertGroup, ctx := errgroup.WithContext(ctx)
 	alertGroup.Go(func() error { return e.alertingTicker(ctx) })
 	alertGroup.Go(func() error { return e.runJobDispatcher(ctx) })

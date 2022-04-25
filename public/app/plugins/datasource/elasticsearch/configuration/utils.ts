@@ -1,7 +1,10 @@
-import { DataSourceSettings } from '@grafana/data';
 import { valid } from 'semver';
+
+import { DataSourceSettings } from '@grafana/data';
+
 import { ElasticsearchOptions } from '../types';
 import { coerceESVersion } from '../utils';
+
 import { defaultMaxConcurrentShardRequests } from './ElasticDetails';
 
 export const coerceOptions = (

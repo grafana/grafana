@@ -1,8 +1,11 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { selectOptionInTest } from '@grafana/ui';
-import { Props, SearchResultsFilter } from './SearchResultsFilter';
+
 import { SearchLayout } from '../types';
+
+import { Props, SearchResultsFilter } from './SearchResultsFilter';
 
 jest.mock('app/core/services/search_srv');
 

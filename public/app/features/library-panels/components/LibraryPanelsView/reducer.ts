@@ -1,8 +1,9 @@
 import { createAction } from '@reduxjs/toolkit';
+import { AnyAction } from 'redux';
+
 import { LoadingState } from '@grafana/data';
 
 import { LibraryElementDTO } from '../../types';
-import { AnyAction } from 'redux';
 
 export interface LibraryPanelsViewState {
   loadingState: LoadingState;

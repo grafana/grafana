@@ -1,9 +1,11 @@
-import React from 'react';
 import { shallow } from 'enzyme';
-import UsersTable, { Props } from './UsersTable';
-import { OrgUser } from 'app/types';
-import { getMockUsers } from './__mocks__/userMocks';
+import React from 'react';
+
 import { ConfirmModal } from '@grafana/ui';
+import { OrgUser } from 'app/types';
+
+import UsersTable, { Props } from './UsersTable';
+import { getMockUsers } from './__mocks__/userMocks';
 
 jest.mock('app/core/core', () => ({
   contextSrv: {

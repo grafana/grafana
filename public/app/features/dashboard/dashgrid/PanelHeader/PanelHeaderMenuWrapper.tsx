@@ -1,8 +1,11 @@
 import React, { FC } from 'react';
+
 import { ClickOutsideWrapper } from '@grafana/ui';
-import { PanelHeaderMenuProvider } from './PanelHeaderMenuProvider';
-import { PanelHeaderMenu } from './PanelHeaderMenu';
+
 import { DashboardModel, PanelModel } from '../../state';
+
+import { PanelHeaderMenu } from './PanelHeaderMenu';
+import { PanelHeaderMenuProvider } from './PanelHeaderMenuProvider';
 
 interface Props {
   panel: PanelModel;

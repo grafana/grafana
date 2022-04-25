@@ -1,8 +1,9 @@
 import { lastValueFrom } from 'rxjs';
-import { getBackendSrv } from '@grafana/runtime';
 
+import { getBackendSrv } from '@grafana/runtime';
 import { RuleNamespace } from 'app/types/unified-alerting';
 import { PromRulesResponse } from 'app/types/unified-alerting-dto';
+
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 export interface FetchPromRulesFilter {

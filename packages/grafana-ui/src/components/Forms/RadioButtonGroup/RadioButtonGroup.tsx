@@ -1,11 +1,14 @@
-import React, { useCallback, useEffect, useRef } from 'react';
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
+import React, { useCallback, useEffect, useRef } from 'react';
+
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { RadioButtonSize, RadioButton } from './RadioButton';
-import { Icon } from '../../Icon/Icon';
-import { IconName } from '../../../types/icon';
+
 import { useStyles2 } from '../../../themes';
+import { IconName } from '../../../types/icon';
+import { Icon } from '../../Icon/Icon';
+
+import { RadioButtonSize, RadioButton } from './RadioButton';
 
 export interface RadioButtonGroupProps<T> {
   value?: T;

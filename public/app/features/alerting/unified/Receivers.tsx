@@ -1,9 +1,11 @@
-import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
-import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+
+import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
+
 import { AlertManagerPicker } from './components/AlertManagerPicker';
+import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { EditReceiverView } from './components/receivers/EditReceiverView';
 import { EditTemplateView } from './components/receivers/EditTemplateView';
 import { GlobalConfigForm } from './components/receivers/GlobalConfigForm';

@@ -239,7 +239,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
 	comments.ProvideService,
 	guardian.ProvideService,
-	prefimpl.ProvideService,
 	avatar.ProvideAvatarCacheServer,
 	authproxy.ProvideAuthProxy,
 	statscollector.ProvideService,
@@ -253,6 +252,7 @@ var wireSet = wire.NewSet(
 	wireBasicSet,
 	sqlstore.ProvideService,
 	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
+	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.TempUserStore), new(*sqlstore.SQLStore)),
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -260,6 +260,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	prefimpl.ProvideService,
 )
 
 var wireTestSet = wire.NewSet(
@@ -268,6 +269,7 @@ var wireTestSet = wire.NewSet(
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
 	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
+	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.TempUserStore), new(*mockstore.SQLStoreMock)),
@@ -276,6 +278,8 @@ var wireTestSet = wire.NewSet(
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
 	mockstore.NewSQLStoreMock,
 	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
+	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	prefimpl.ProvideService,
 )
 
 func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*Server, error) {

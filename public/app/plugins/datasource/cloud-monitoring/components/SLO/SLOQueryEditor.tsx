@@ -1,11 +1,13 @@
-import { SelectableValue } from '@grafana/data';
 import React from 'react';
 
-import { Selector, Service, SLO } from '.';
+import { SelectableValue } from '@grafana/data';
+
 import { AliasBy, AlignmentPeriod, AlignmentPeriodLabel, Project, QueryEditorRow } from '..';
 import { SELECT_WIDTH } from '../../constants';
 import CloudMonitoringDatasource from '../../datasource';
 import { AlignmentTypes, CustomMetaData, SLOQuery } from '../../types';
+
+import { Selector, Service, SLO } from '.';
 
 export interface Props {
   refId: string;

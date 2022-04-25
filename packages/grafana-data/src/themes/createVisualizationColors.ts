@@ -1,4 +1,5 @@
 import { FALLBACK_COLOR } from '../types';
+
 import { ThemeColors } from './createColors';
 
 /**

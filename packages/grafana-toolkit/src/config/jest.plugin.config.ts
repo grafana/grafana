@@ -1,5 +1,5 @@
-import path = require('path');
 import fs from 'fs';
+import path = require('path');
 
 export const allowedJestConfigOverrides = [
   'snapshotSerializers',

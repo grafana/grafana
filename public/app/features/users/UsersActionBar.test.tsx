@@ -1,7 +1,8 @@
-import React from 'react';
 import { shallow } from 'enzyme';
-import { Props, UsersActionBar } from './UsersActionBar';
+import React from 'react';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+
+import { Props, UsersActionBar } from './UsersActionBar';
 import { setUsersSearchQuery } from './state/reducers';
 
 jest.mock('app/core/core', () => ({
