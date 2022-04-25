@@ -73,7 +73,15 @@ type BackgroundServiceRegistry struct {
 }
 
 func NewBackgroundServiceRegistry(services ...registry.BackgroundService) *BackgroundServiceRegistry {
-	return &BackgroundServiceRegistry{services}
+	svc := make([]registry.BackgroundService, 0, len(services))
+	// injected services can be nil (for example if disabled). filter out those nil references
+	for _, s := range services {
+		if s == nil {
+			continue
+		}
+		svc = append(svc, s)
+	}
+	return &BackgroundServiceRegistry{svc}
 }
 
 func (r *BackgroundServiceRegistry) GetServices() []registry.BackgroundService {
