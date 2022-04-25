@@ -128,7 +128,9 @@ Display all Y-axes on the right side.
 
 #### Hidden
 
-Hide the Y-axes.
+Hide all axes.
+
+If you want to selectively hide axes, you need to [add an override]({{< relref "../panels/override-field-values/add-a-field-override.md" >}}) targeting specific fields.
 
 ### Label
 
