@@ -72,7 +72,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   featureToggles: FeatureToggles = {};
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
-
   dashboardPreviews: {
     systemRequirements: {
       met: boolean;
