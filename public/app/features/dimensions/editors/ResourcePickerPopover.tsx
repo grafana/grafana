@@ -110,9 +110,6 @@ export const ResourcePickerPopover = (props: Props) => {
               <Button
                 className={styles.button}
                 variant={newValue && newValue !== value ? 'primary' : 'secondary'}
-                // TODO: put upload call here to avoid uploading to storage until
-                // user confirms. However, the drawback is we can't preview the
-                // image before hitting select. Maybe revisit the flow?
                 onClick={() => {
                   if (upload) {
                     fetch('/api/storage/upload', {

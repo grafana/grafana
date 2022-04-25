@@ -138,14 +138,13 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
   const removeFile = (file: DropzoneFile) => {
     const newFiles = files.filter((f) => file.id !== f.id);
     setFiles(newFiles);
-    onFileRemove && onFileRemove(file);
+    onFileRemove?.(file);
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     ...options,
     useFsAccessApi: false,
     onDrop,
-    accept: options?.accept,
   });
   const theme = useTheme2();
   const styles = getStyles(theme, isDragActive);

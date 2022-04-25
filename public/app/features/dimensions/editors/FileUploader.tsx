@@ -1,8 +1,9 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
-import { FileDropzone, useTheme2, Button, DropzoneFile } from '@grafana/ui';
+import { FileDropzone, useStyles2, Button, DropzoneFile, Field } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { MediaType } from '../types';
+import SVG from 'react-inlinesvg';
 interface Props {
   setFormData: Dispatch<SetStateAction<FormData>>;
   mediaType: MediaType;
@@ -14,23 +15,38 @@ interface ErrorResponse {
   message: string;
 }
 export function FileDropzoneCustomChildren({ secondaryText = 'Drag and drop here or browse' }) {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.iconWrapper}>
       <small className={styles.small}>{secondaryText}</small>
-      <Button icon="upload">Upload</Button>
+      <Button type="button" icon="upload">
+        Upload
+      </Button>
     </div>
   );
 }
 export const FileUploader = ({ mediaType, setFormData, setUpload, error }: Props) => {
+  console.log(error);
+  const styles = useStyles2(getStyles);
   const [dropped, setDropped] = useState<boolean>(false);
+  const [file, setFile] = useState<string>('');
+
+  const Preview = () => (
+    <Field label="Preview">
+      <div className={styles.iconPreview}>
+        {mediaType === MediaType.Icon && <SVG src={file} className={styles.img} />}
+        {mediaType === MediaType.Image && <img src={file} className={styles.img} />}
+      </div>
+    </Field>
+  );
+
   const onFileRemove = (file: DropzoneFile) => {
     fetch(`/api/storage/delete/upload/${file.file.name}`, {
       method: 'DELETE',
     }).catch((error) => console.error('cannot delete file', error));
   };
+
   const acceptableFiles =
     mediaType === 'icon' ? 'image/svg+xml' : 'image/jpeg,image/png,image/gif,image/png, image/webp';
   return (
@@ -43,13 +59,21 @@ export const FileUploader = ({ mediaType, setFormData, setUpload, error }: Props
         onDrop: (acceptedFiles: File[]) => {
           let formData = new FormData();
           formData.append('file', acceptedFiles[0]);
+          setFile(URL.createObjectURL(acceptedFiles[0]));
           setDropped(true);
           setFormData(formData);
           setUpload(true);
         },
       }}
     >
-      {error && dropped ? <p>{error.message}</p> : <FileDropzoneCustomChildren />}
+      {error.message !== '' && dropped ? (
+        <p>{error.message}</p>
+      ) : dropped ? (
+        <Preview />
+      ) : (
+        <FileDropzoneCustomChildren />
+      )}
+      {/* {dropped ? <Preview /> : error ? <p>{error.message}</p> : <FileDropzoneCustomChildren />} */}
     </FileDropzone>
   );
 };
