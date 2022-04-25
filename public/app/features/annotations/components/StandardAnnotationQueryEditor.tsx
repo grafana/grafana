@@ -1,15 +1,17 @@
+import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { lastValueFrom } from 'rxjs';
-import { css, cx } from '@emotion/css';
+
 import { AnnotationEventMappings, AnnotationQuery, DataQuery, DataSourceApi, LoadingState } from '@grafana/data';
 import { Button, Icon, IconName, Spinner } from '@grafana/ui';
-
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { standardAnnotationSupport } from '../standardAnnotationSupport';
-import { executeAnnotationQuery } from '../executeAnnotationQuery';
 import { PanelModel } from 'app/features/dashboard/state';
+
+import { executeAnnotationQuery } from '../executeAnnotationQuery';
+import { standardAnnotationSupport } from '../standardAnnotationSupport';
 import { AnnotationQueryResponse } from '../types';
+
 import { AnnotationFieldMapper } from './AnnotationResultMapper';
 
 interface Props {

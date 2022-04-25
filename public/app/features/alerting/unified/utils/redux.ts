@@ -1,8 +1,9 @@
 import { AsyncThunk, createSlice, Draft, isAsyncThunkAction, PayloadAction, SerializedError } from '@reduxjs/toolkit';
-import { FetchError } from '@grafana/runtime';
-import { AppEvents } from '@grafana/data';
 
+import { AppEvents } from '@grafana/data';
+import { FetchError } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
+
 import { isFetchError } from './alertmanager';
 
 export interface AsyncRequestState<T> {

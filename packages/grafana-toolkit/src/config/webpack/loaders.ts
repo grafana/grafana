@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+
 import { getPluginId } from '../utils/getPluginId';
 
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');

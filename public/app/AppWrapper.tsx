@@ -1,25 +1,27 @@
-import React, { ComponentType } from 'react';
-import { Router, Route, Redirect, Switch } from 'react-router-dom';
-import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
-import { Provider } from 'react-redux';
-import { store } from 'app/store/store';
-import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider, PortalContainer } from '@grafana/ui';
-import { GrafanaApp } from './app';
-import { getAppRoutes } from 'app/routes/routes';
-import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
-import { RouteDescriptor } from './core/navigation/types';
-import { contextSrv } from './core/services/context_srv';
-import { NavBar } from './core/components/NavBar/NavBar';
-import { NavBarNext } from './core/components/NavBar/Next/NavBarNext';
-import { GrafanaRoute } from './core/navigation/GrafanaRoute';
-import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
-import { SearchWrapper } from 'app/features/search';
-import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { Action, KBarProvider } from 'kbar';
-import { CommandPalette } from './features/commandPalette/CommandPalette';
-import { I18nProvider } from './core/localisation';
+import React, { ComponentType } from 'react';
+import { Provider } from 'react-redux';
+import { Router, Route, Redirect, Switch } from 'react-router-dom';
+
+import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
+import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider, PortalContainer } from '@grafana/ui';
+import { SearchWrapper } from 'app/features/search';
+import { getAppRoutes } from 'app/routes/routes';
+import { store } from 'app/store/store';
+
 import { AngularRoot } from './angular/AngularRoot';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
+import { GrafanaApp } from './app';
+import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
+import { NavBar } from './core/components/NavBar/NavBar';
+import { NavBarNext } from './core/components/NavBar/Next/NavBarNext';
+import { I18nProvider } from './core/localisation';
+import { GrafanaRoute } from './core/navigation/GrafanaRoute';
+import { RouteDescriptor } from './core/navigation/types';
+import { contextSrv } from './core/services/context_srv';
+import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
+import { CommandPalette } from './features/commandPalette/CommandPalette';
+import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 
 interface AppWrapperProps {
   app: GrafanaApp;

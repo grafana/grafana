@@ -1,3 +1,5 @@
+import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
+
 import {
   AbsoluteTimeRange,
   DataSourceApi,
@@ -10,11 +12,11 @@ import {
 } from '@grafana/data';
 import { ExplorePanelData } from 'app/types';
 import { ExploreGraphStyle, ExploreItemState } from 'app/types/explore';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
+
 import store from '../../../core/store';
 import { clearQueryKeys, lastUsedDatasourceKeyForOrgId, toGraphStyle } from '../../../core/utils/explore';
+import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { toRawTimeRange } from '../utils/time';
-import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',

@@ -3,6 +3,7 @@ import { renderHook } from '@testing-library/react-hooks';
 import createMockDatasource from '../../__mocks__/datasource';
 import Datasource from '../../datasource';
 import { AzureMetricQuery, AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
+
 import {
   DataHook,
   updateSubscriptions,

@@ -1,5 +1,6 @@
-import React, { ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 

@@ -1,7 +1,8 @@
-import React from 'react';
 import { action } from '@storybook/addon-actions';
+import React from 'react';
 
 import { TimeZonePicker } from '@grafana/ui';
+
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 

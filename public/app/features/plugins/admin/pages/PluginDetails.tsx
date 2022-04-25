@@ -1,22 +1,24 @@
-import React, { useEffect } from 'react';
 import { css } from '@emotion/css';
+import React, { useEffect } from 'react';
 import { usePrevious } from 'react-use';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, TabsBar, TabContent, Tab, Alert, IconName } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
+import { useStyles2, TabsBar, TabContent, Tab, Alert, IconName } from '@grafana/ui';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
-import { PluginDetailsHeader } from '../components/PluginDetailsHeader';
-import { PluginDetailsBody } from '../components/PluginDetailsBody';
-import { Page as PluginPage } from '../components/Page';
-import { Loader } from '../components/Loader';
-import { PluginTabLabels, PluginTabIds, PluginDetailsTab } from '../types';
-import { useGetSingle, useFetchStatus, useFetchDetailsStatus } from '../state/hooks';
-import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 import { AppNotificationSeverity } from 'app/types';
+
+import { Loader } from '../components/Loader';
+import { Page as PluginPage } from '../components/Page';
+import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
+import { PluginDetailsHeader } from '../components/PluginDetailsHeader';
+import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
+import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
+import { useGetSingle, useFetchStatus, useFetchDetailsStatus } from '../state/hooks';
+import { PluginTabLabels, PluginTabIds, PluginDetailsTab } from '../types';
 
 type Props = GrafanaRouteComponentProps<{ pluginId?: string }>;
 

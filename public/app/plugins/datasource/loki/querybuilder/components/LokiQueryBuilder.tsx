@@ -1,13 +1,16 @@
 import React, { useMemo } from 'react';
-import { LokiOperationId, LokiVisualQuery } from '../types';
-import { LokiDatasource } from '../../datasource';
-import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
-import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
-import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
-import { lokiQueryModeller } from '../LokiQueryModeller';
+
 import { DataSourceApi, SelectableValue } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
+import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
+import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
 import { OperationsEditorRow } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationsEditorRow';
+import { QueryBuilderLabelFilter } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
+
+import { LokiDatasource } from '../../datasource';
+import { lokiQueryModeller } from '../LokiQueryModeller';
+import { LokiOperationId, LokiVisualQuery } from '../types';
+
 import { NestedQueryList } from './NestedQueryList';
 
 export interface Props {
