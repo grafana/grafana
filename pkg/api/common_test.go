@@ -329,35 +329,32 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 }
 
 func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessControl bool) accessControlScenarioContext {
-	// Use a new conf
-	features := featuremgmt.WithFeatures("accesscontrol", enableAccessControl)
-	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
-
-	return setupHTTPServerWithCfg(t, useFakeAccessControl, enableAccessControl, cfg)
+	return setupHTTPServerWithCfg(t, useFakeAccessControl, enableAccessControl, setting.NewCfg())
 }
 
 func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl bool, enableAccessControl bool) accessControlScenarioContext {
 	// Use a new conf
-	features := featuremgmt.WithFeatures("accesscontrol", enableAccessControl)
 	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
-
 	db := sqlstore.InitTestDB(t)
-	db.Cfg = cfg
+	db.Cfg = setting.NewCfg()
 
 	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, mockstore.NewSQLStoreMock())
 }
 
 func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg) accessControlScenarioContext {
-	db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
+	var db *sqlstore.SQLStore
+	if useFakeAccessControl && enableAccessControl {
+		db = sqlstore.InitTestDBWithAC(t)
+	} else {
+		db = sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
+	}
 	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, db)
 }
 
 func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore, store sqlstore.Store) accessControlScenarioContext {
 	t.Helper()
 
-	features := featuremgmt.WithFeatures("accesscontrol", enableAccessControl)
+	features := featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol, enableAccessControl)
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	var acmock *accesscontrolmock.Mock
