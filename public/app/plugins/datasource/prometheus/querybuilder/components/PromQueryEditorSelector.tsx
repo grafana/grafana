@@ -30,7 +30,7 @@ export const PromQueryEditorSelector = React.memo<PromQueryEditorProps>((props) 
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
-      reportInteraction('user_grafana_prometheus_editor_mode_clicked', {
+      reportInteraction('cloud_user_grafana_prometheus_editor_mode_clicked', {
         newEditor: newMetricEditorMode,
         previousEditor: query.editorMode ?? '',
         newQuery: !query.expr,
