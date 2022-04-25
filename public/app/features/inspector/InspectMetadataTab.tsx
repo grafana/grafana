@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { DataSourceApi, PanelData } from '@grafana/data';
 
 interface InspectMetadataTabProps {

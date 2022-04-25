@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { RefreshPicker, defaultIntervals } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 

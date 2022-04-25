@@ -1,5 +1,6 @@
-import { Alert, Input } from '@grafana/ui';
 import React from 'react';
+
+import { Alert, Input } from '@grafana/ui';
 
 import { Field } from '../../../Field';
 import { DeprecatedAzureMonitorQuery } from '../../types';

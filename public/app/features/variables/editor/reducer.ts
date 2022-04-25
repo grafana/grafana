@@ -1,5 +1,7 @@
-import { DataSourceApi, DataSourceRef } from '@grafana/data';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+import { DataSourceApi, DataSourceRef } from '@grafana/data';
+
 import { VariablePayload } from '../state/types';
 import { VariableQueryEditorType } from '../types';
 

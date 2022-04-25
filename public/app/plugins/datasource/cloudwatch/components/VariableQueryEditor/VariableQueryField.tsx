@@ -1,6 +1,8 @@
+import React from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { InlineField, Select } from '@grafana/ui';
-import React from 'react';
+
 import { VariableQueryType } from '../../types';
 
 const LABEL_WIDTH = 20;

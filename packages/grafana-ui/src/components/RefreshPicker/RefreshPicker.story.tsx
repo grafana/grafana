@@ -1,10 +1,12 @@
-import React from 'react';
 import { action } from '@storybook/addon-actions';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { UseState } from '../../utils/storybook/UseState';
+import React from 'react';
+
 import { RefreshPicker } from '@grafana/ui';
-import { StoryExample } from '../../utils/storybook/StoryExample';
+
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
+import { StoryExample } from '../../utils/storybook/StoryExample';
+import { UseState } from '../../utils/storybook/UseState';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup } from '../Layout/Layout';
 
 export default {

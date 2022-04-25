@@ -1,8 +1,11 @@
-import React from 'react';
-import { Slider } from '@grafana/ui';
-import { SliderProps } from './types';
-import { Orientation } from '../../types/orientation';
 import { Story, Meta } from '@storybook/react';
+import React from 'react';
+
+import { Slider } from '@grafana/ui';
+
+import { Orientation } from '../../types/orientation';
+
+import { SliderProps } from './types';
 
 export default {
   title: 'Forms/Slider',

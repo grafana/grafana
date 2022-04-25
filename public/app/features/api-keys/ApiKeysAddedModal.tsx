@@ -1,10 +1,12 @@
-﻿import React, { useCallback } from 'react';
-import { css } from '@emotion/css';
-import { Alert, Field, Modal, useStyles2, Input, Icon, ClipboardButton } from '@grafana/ui';
+﻿import { css } from '@emotion/css';
+import React, { useCallback } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, Field, Modal, useStyles2, Input, Icon, ClipboardButton } from '@grafana/ui';
+
 import { notifyApp } from '../../core/actions';
-import { dispatch } from '../../store/store';
 import { createSuccessNotification } from '../../core/copy/appNotification';
+import { dispatch } from '../../store/store';
 
 export interface Props {
   onDismiss: () => void;

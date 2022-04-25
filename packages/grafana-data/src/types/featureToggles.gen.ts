@@ -22,7 +22,6 @@ export interface FeatureToggles {
   serviceAccounts?: boolean;
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
-  dashboardPreviewsScheduler?: boolean;
   dashboardPreviewsAdmin?: boolean;
   ['live-config']?: boolean;
   ['live-pipeline']?: boolean;
@@ -56,4 +55,5 @@ export interface FeatureToggles {
   explore2Dashboard?: boolean;
   tracing?: boolean;
   persistNotifications?: boolean;
+  commandPalette?: boolean;
 }

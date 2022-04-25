@@ -1,8 +1,9 @@
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
+
+import { getTheme } from '../../themes';
 
 import { UnThemedLogLabels as LogLabels } from './LogLabels';
-import { getTheme } from '../../themes';
 
 describe('<LogLabels />', () => {
   it('renders notice when no labels are found', () => {

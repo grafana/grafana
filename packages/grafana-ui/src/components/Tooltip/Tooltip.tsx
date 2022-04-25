@@ -1,10 +1,13 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
+
 import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
-import { css } from '@emotion/css';
+
 import { useStyles2 } from '../../themes/ThemeContext';
-import { PopoverContent, TooltipPlacement } from './types';
 import { Portal } from '../Portal/Portal';
+
+import { PopoverContent, TooltipPlacement } from './types';
 
 export interface TooltipProps {
   theme?: 'info' | 'error' | 'info-alt';

@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -30,7 +29,7 @@ type ContactPointService interface {
 }
 
 type NotificationPolicyService interface {
-	GetPolicyTree(ctx context.Context, orgID int64) (provisioning.EmbeddedRoutingTree, error)
+	GetPolicyTree(ctx context.Context, orgID int64) (apimodels.Route, error)
 	UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p alerting_models.Provenance) error
 }
 

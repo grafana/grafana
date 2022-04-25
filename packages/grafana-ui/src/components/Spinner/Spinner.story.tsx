@@ -1,7 +1,10 @@
-import React from 'react';
 import { Meta, Story } from '@storybook/react';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import React from 'react';
+
 import { Spinner } from '@grafana/ui';
+
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
 import { Props } from './Spinner';
 import mdx from './Spinner.mdx';
 

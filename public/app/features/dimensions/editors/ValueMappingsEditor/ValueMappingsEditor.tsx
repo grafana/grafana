@@ -1,10 +1,13 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { GrafanaTheme2, MappingType, StandardEditorProps, ValueMapping } from '@grafana/data';
 import { css } from '@emotion/css';
-import { buildEditRowModels, editModelToSaveModel, ValueMappingsEditorModal } from './ValueMappingsEditorModal';
+import React, { useCallback, useMemo, useState } from 'react';
+
+import { GrafanaTheme2, MappingType, StandardEditorProps, ValueMapping } from '@grafana/data';
 import { useStyles2, VerticalGroup, Icon, ColorPicker, Button, Modal } from '@grafana/ui';
+
 import { MediaType, ResourceFolderName, ResourcePickerSize } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';
+
+import { buildEditRowModels, editModelToSaveModel, ValueMappingsEditorModal } from './ValueMappingsEditorModal';
 
 export interface Props extends StandardEditorProps<ValueMapping[], any, any> {
   showIcon?: boolean;

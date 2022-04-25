@@ -1,11 +1,14 @@
-import React from 'react';
 import { Story, Meta } from '@storybook/react';
-import { BarGauge, BarGaugeDisplayMode } from '@grafana/ui';
+import React from 'react';
+
 import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
-import { Props } from './BarGauge';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import mdx from './BarGauge.mdx';
+import { BarGauge, BarGaugeDisplayMode } from '@grafana/ui';
+
 import { useTheme2 } from '../../themes';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import { Props } from './BarGauge';
+import mdx from './BarGauge.mdx';
 
 export default {
   title: 'Visualizations/BarGauge',

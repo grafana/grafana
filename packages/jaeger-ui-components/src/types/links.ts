@@ -1,5 +1,6 @@
-import { TraceSpan } from './trace';
 import React from 'react';
+
+import { TraceSpan } from './trace';
 
 export type SpanLinkDef = {
   href: string;

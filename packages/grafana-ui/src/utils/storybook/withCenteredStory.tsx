@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { RenderFunction } from '../../types';
 
 interface CenteredStoryProps {

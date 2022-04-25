@@ -66,7 +66,7 @@ type EmbeddedContactPoint struct {
 	Type                  string           `json:"type" binding:"required"`
 	Settings              *simplejson.Json `json:"settings" binding:"required"`
 	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Provenance            string           `json:"provanance"`
+	Provenance            string           `json:"provenance"`
 }
 
 const RedactedValue = "[REDACTED]"
