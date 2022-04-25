@@ -3939,9 +3939,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/input-datasource@workspace:plugins-bundled/internal/input-datasource"
   dependencies:
-    "@grafana/data": 8.5.0-beta.1
-    "@grafana/toolkit": 8.5.0-beta.1
-    "@grafana/ui": 8.5.0-beta.1
+    "@grafana/data": 8.5.0
+    "@grafana/toolkit": 8.5.0
+    "@grafana/ui": 8.5.0
     "@types/jest": 26.0.15
     "@types/lodash": 4.14.149
     "@types/react": 17.0.30
@@ -3982,12 +3982,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/data@8.5.0-beta.1, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
+"@grafana/data@8.5.0, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
   version: 0.0.0-use.local
   resolution: "@grafana/data@workspace:packages/grafana-data"
   dependencies:
     "@braintree/sanitize-url": 6.0.0
-    "@grafana/schema": 8.5.0-beta.1
+    "@grafana/schema": 8.5.0
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 21.0.2
     "@rollup/plugin-json": 4.1.0
@@ -4018,7 +4018,7 @@ __metadata:
     history: 4.10.1
     lodash: 4.17.21
     marked: 4.0.12
-    moment: 2.29.1
+    moment: 2.29.2
     moment-timezone: 0.5.34
     ol: 6.14.1
     papaparse: 5.3.2
@@ -4040,7 +4040,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@8.5.0-beta.1, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
+"@grafana/e2e-selectors@8.5.0, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
@@ -4064,7 +4064,7 @@ __metadata:
     "@babel/core": 7.17.8
     "@babel/preset-env": 7.16.11
     "@cypress/webpack-preprocessor": 5.11.1
-    "@grafana/e2e-selectors": 8.5.0-beta.1
+    "@grafana/e2e-selectors": 8.5.0
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-commonjs": 21.0.2
@@ -4171,10 +4171,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
-    "@grafana/data": 8.5.0-beta.1
-    "@grafana/e2e-selectors": 8.5.0-beta.1
+    "@grafana/data": 8.5.0
+    "@grafana/e2e-selectors": 8.5.0
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 8.5.0-beta.1
+    "@grafana/ui": 8.5.0
     "@rollup/plugin-commonjs": 21.0.2
     "@rollup/plugin-node-resolve": 13.1.3
     "@sentry/browser": 6.19.1
@@ -4203,7 +4203,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/schema@8.5.0-beta.1, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
+"@grafana/schema@8.5.0, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
@@ -4250,16 +4250,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/toolkit@8.5.0-beta.1, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
+"@grafana/toolkit@8.5.0, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
   version: 0.0.0-use.local
   resolution: "@grafana/toolkit@workspace:packages/grafana-toolkit"
   dependencies:
     "@babel/core": 7.13.14
     "@babel/preset-env": 7.13.12
-    "@grafana/data": 8.5.0-beta.1
+    "@grafana/data": 8.5.0
     "@grafana/eslint-config": 2.5.2
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 8.5.0-beta.1
+    "@grafana/ui": 8.5.0
     "@jest/core": 26.6.3
     "@rushstack/eslint-patch": 1.0.6
     "@types/command-exists": ^1.2.0
@@ -4343,7 +4343,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/ui@8.5.0-beta.1, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
+"@grafana/ui@8.5.0, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
   version: 0.0.0-use.local
   resolution: "@grafana/ui@workspace:packages/grafana-ui"
   dependencies:
@@ -4351,9 +4351,9 @@ __metadata:
     "@emotion/css": 11.7.1
     "@emotion/react": 11.8.2
     "@grafana/aws-sdk": 0.0.35
-    "@grafana/data": 8.5.0-beta.1
-    "@grafana/e2e-selectors": 8.5.0-beta.1
-    "@grafana/schema": 8.5.0-beta.1
+    "@grafana/data": 8.5.0
+    "@grafana/e2e-selectors": 8.5.0
+    "@grafana/schema": 8.5.0
     "@grafana/slate-react": 0.22.10-grafana
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mdx-js/react": 1.6.22
@@ -4440,7 +4440,7 @@ __metadata:
     lodash: 4.17.21
     memoize-one: 6.0.0
     mock-raf: 1.0.1
-    moment: 2.29.1
+    moment: 2.29.2
     monaco-editor: ^0.31.1
     ol: 6.14.1
     postcss: 8.4.12
@@ -4589,9 +4589,9 @@ __metadata:
   resolution: "@jaegertracing/jaeger-ui-components@workspace:packages/jaeger-ui-components"
   dependencies:
     "@emotion/css": 11.7.1
-    "@grafana/data": 8.5.0-beta.1
+    "@grafana/data": 8.5.0
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 8.5.0-beta.1
+    "@grafana/ui": 8.5.0
     "@types/classnames": ^2.2.7
     "@types/deep-freeze": ^0.1.1
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
@@ -4614,7 +4614,7 @@ __metadata:
     lodash: 4.17.21
     lru-memoize: ^1.1.0
     memoize-one: 6.0.0
-    moment: 2.29.1
+    moment: 2.29.2
     moment-timezone: 0.5.34
     prop-types: 15.8.1
     react: 17.0.2
@@ -5180,15 +5180,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/monaco-kusto@npm:4.1.6":
-  version: 4.1.6
-  resolution: "@kusto/monaco-kusto@npm:4.1.6"
+"@kusto/monaco-kusto@npm:5.1.1":
+  version: 5.1.1
+  resolution: "@kusto/monaco-kusto@npm:5.1.1"
   dependencies:
     "@kusto/language-service": 2.0.0-beta.0
     "@kusto/language-service-next": 0.0.54
   peerDependencies:
-    monaco-editor: ^0.24.0
-  checksum: c01440cc8a8511e3afdf6c63e99e23cac976237f423d083384e3ee0605935fba5b69cc20627d45bc56bac82ce42ec6f613282d24b12b3dc0a3456ab5ff631238
+    monaco-editor: 0.33.0
+  checksum: 51771a0a128640d6385d693200ef1128fa2d55250e4f8db97aa4e9c46350dc94c93238958a9a9640939c6813caad117fe3a858b50e7b72a413baa78e964a359c
   languageName: node
   linkType: hard
 
@@ -10116,6 +10116,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/json5@npm:^0.0.29":
+  version: 0.0.29
+  resolution: "@types/json5@npm:0.0.29"
+  checksum: e60b153664572116dfea673c5bda7778dbff150498f44f998e34b5886d8afc47f16799280e4b6e241c0472aef1bc36add771c569c68fc5125fc2ae519a3eb9ac
+  languageName: node
+  linkType: hard
+
 "@types/jsurl@npm:^1.2.28":
   version: 1.2.30
   resolution: "@types/jsurl@npm:1.2.30"
@@ -10374,7 +10381,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/rc-time-picker@npm:^3":
+"@types/rc-time-picker@npm:3.4.1":
   version: 3.4.1
   resolution: "@types/rc-time-picker@npm:3.4.1"
   dependencies:
@@ -12897,6 +12904,18 @@ __metadata:
     define-properties: ^1.1.3
     es-abstract: ^1.19.0
   checksum: 9cc6414b111abfc7717e39546e4887b1e5ec74df8f1618d83425deaa95752bf05d475d1d241253b4d88d4a01f8e1bc84845ad5b7cc2047f8db2f614512acd40e
+  languageName: node
+  linkType: hard
+
+"array.prototype.flat@npm:^1.2.5":
+  version: 1.3.0
+  resolution: "array.prototype.flat@npm:1.3.0"
+  dependencies:
+    call-bind: ^1.0.2
+    define-properties: ^1.1.3
+    es-abstract: ^1.19.2
+    es-shim-unscopables: ^1.0.0
+  checksum: 2a652b3e8dc0bebb6117e42a5ab5738af0203a14c27341d7bb2431467bdb4b348e2c5dc555dfcda8af0a5e4075c400b85311ded73861c87290a71a17c3e0a257
   languageName: node
   linkType: hard
 
@@ -16909,7 +16928,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:2.6.9, debug@npm:^2.2.0, debug@npm:^2.3.3, debug@npm:^2.6.0":
+"debug@npm:2.6.9, debug@npm:^2.2.0, debug@npm:^2.3.3, debug@npm:^2.6.0, debug@npm:^2.6.9":
   version: 2.6.9
   resolution: "debug@npm:2.6.9"
   dependencies:
@@ -18033,6 +18052,34 @@ __metadata:
   languageName: node
   linkType: hard
 
+"es-abstract@npm:^1.19.2":
+  version: 1.19.5
+  resolution: "es-abstract@npm:1.19.5"
+  dependencies:
+    call-bind: ^1.0.2
+    es-to-primitive: ^1.2.1
+    function-bind: ^1.1.1
+    get-intrinsic: ^1.1.1
+    get-symbol-description: ^1.0.0
+    has: ^1.0.3
+    has-symbols: ^1.0.3
+    internal-slot: ^1.0.3
+    is-callable: ^1.2.4
+    is-negative-zero: ^2.0.2
+    is-regex: ^1.1.4
+    is-shared-array-buffer: ^1.0.2
+    is-string: ^1.0.7
+    is-weakref: ^1.0.2
+    object-inspect: ^1.12.0
+    object-keys: ^1.1.1
+    object.assign: ^4.1.2
+    string.prototype.trimend: ^1.0.4
+    string.prototype.trimstart: ^1.0.4
+    unbox-primitive: ^1.0.1
+  checksum: 55199b0f179a12b3b0ec9c9f2e3a27a7561686e4f88d46f9ef32c836448a336e367c14d8f792612fc83a64113896e478259e4dffbbcffb3efdd06650f6360324
+  languageName: node
+  linkType: hard
+
 "es-array-method-boxes-properly@npm:^1.0.0":
   version: 1.0.0
   resolution: "es-array-method-boxes-properly@npm:1.0.0"
@@ -18060,6 +18107,15 @@ __metadata:
   version: 0.9.3
   resolution: "es-module-lexer@npm:0.9.3"
   checksum: 84bbab23c396281db2c906c766af58b1ae2a1a2599844a504df10b9e8dc77ec800b3211fdaa133ff700f5703d791198807bba25d9667392d27a5e9feda344da8
+  languageName: node
+  linkType: hard
+
+"es-shim-unscopables@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "es-shim-unscopables@npm:1.0.0"
+  dependencies:
+    has: ^1.0.3
+  checksum: 83e95cadbb6ee44d3644dfad60dcad7929edbc42c85e66c3e99aefd68a3a5c5665f2686885cddb47dfeabfd77bd5ea5a7060f2092a955a729bbd8834f0d86fa1
   languageName: node
   linkType: hard
 
@@ -18236,6 +18292,49 @@ __metadata:
   bin:
     eslint-config-prettier: bin/cli.js
   checksum: 0d0f5c32e7a0ad91249467ce71ca92394ccd343178277d318baf32063b79ea90216f4c81d1065d60f96366fdc60f151d4d68ae7811a58bd37228b84c2083f893
+  languageName: node
+  linkType: hard
+
+"eslint-import-resolver-node@npm:^0.3.6":
+  version: 0.3.6
+  resolution: "eslint-import-resolver-node@npm:0.3.6"
+  dependencies:
+    debug: ^3.2.7
+    resolve: ^1.20.0
+  checksum: 6266733af1e112970e855a5bcc2d2058fb5ae16ad2a6d400705a86b29552b36131ffc5581b744c23d550de844206fb55e9193691619ee4dbf225c4bde526b1c8
+  languageName: node
+  linkType: hard
+
+"eslint-module-utils@npm:^2.7.3":
+  version: 2.7.3
+  resolution: "eslint-module-utils@npm:2.7.3"
+  dependencies:
+    debug: ^3.2.7
+    find-up: ^2.1.0
+  checksum: 77048263f309167a1e6a1e1b896bfb5ddd1d3859b2e2abbd9c32c432aee13d610d46e6820b1ca81b37fba437cf423a404bc6649be64ace9148a3062d1886a678
+  languageName: node
+  linkType: hard
+
+"eslint-plugin-import@npm:^2.26.0":
+  version: 2.26.0
+  resolution: "eslint-plugin-import@npm:2.26.0"
+  dependencies:
+    array-includes: ^3.1.4
+    array.prototype.flat: ^1.2.5
+    debug: ^2.6.9
+    doctrine: ^2.1.0
+    eslint-import-resolver-node: ^0.3.6
+    eslint-module-utils: ^2.7.3
+    has: ^1.0.3
+    is-core-module: ^2.8.1
+    is-glob: ^4.0.3
+    minimatch: ^3.1.2
+    object.values: ^1.1.5
+    resolve: ^1.22.0
+    tsconfig-paths: ^3.14.1
+  peerDependencies:
+    eslint: ^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8
+  checksum: 0bf77ad80339554481eafa2b1967449e1f816b94c7a6f9614ce33fb4083c4e6c050f10d241dd50b4975d47922880a34de1e42ea9d8e6fd663ebb768baa67e655
   languageName: node
   linkType: hard
 
@@ -19317,7 +19416,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"find-up@npm:^2.0.0":
+"find-up@npm:^2.0.0, find-up@npm:^2.1.0":
   version: 2.1.0
   resolution: "find-up@npm:2.1.0"
   dependencies:
@@ -20427,7 +20526,7 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
-    "@kusto/monaco-kusto": 4.1.6
+    "@kusto/monaco-kusto": 5.1.1
     "@lezer/common": 0.15.12
     "@lezer/lr": 0.15.8
     "@lingui/cli": 3.13.2
@@ -20494,7 +20593,7 @@ __metadata:
     "@types/papaparse": 5.3.2
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.26.0
-    "@types/rc-time-picker": ^3
+    "@types/rc-time-picker": 3.4.1
     "@types/react": 17.0.42
     "@types/react-beautiful-dnd": 13.1.2
     "@types/react-dom": 17.0.14
@@ -20561,6 +20660,7 @@ __metadata:
     enzyme-to-json: 3.6.2
     eslint: 8.11.0
     eslint-config-prettier: 8.5.0
+    eslint-plugin-import: ^2.26.0
     eslint-plugin-jest: 26.1.2
     eslint-plugin-jsdoc: 38.0.6
     eslint-plugin-lodash: 7.4.0
@@ -20605,7 +20705,7 @@ __metadata:
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.6.0
     minisearch: 5.0.0-beta1
-    moment: 2.29.1
+    moment: 2.29.2
     moment-timezone: 0.5.34
     monaco-editor: ^0.31.1
     monaco-promql: ^1.7.2
@@ -20817,6 +20917,13 @@ __metadata:
   version: 1.0.2
   resolution: "has-symbols@npm:1.0.2"
   checksum: 2309c426071731be792b5be43b3da6fb4ed7cbe8a9a6bcfca1862587709f01b33d575ce8f5c264c1eaad09fca2f9a8208c0a2be156232629daa2dd0c0740976b
+  languageName: node
+  linkType: hard
+
+"has-symbols@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "has-symbols@npm:1.0.3"
+  checksum: a054c40c631c0d5741a8285010a0777ea0c068f99ed43e5d6eb12972da223f8af553a455132fdb0801bdcfa0e0f443c0c03a68d8555aa529b3144b446c3f2410
   languageName: node
   linkType: hard
 
@@ -22400,6 +22507,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-negative-zero@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "is-negative-zero@npm:2.0.2"
+  checksum: f3232194c47a549da60c3d509c9a09be442507616b69454716692e37ae9f37c4dea264fb208ad0c9f3efd15a796a46b79df07c7e53c6227c32170608b809149a
+  languageName: node
+  linkType: hard
+
 "is-npm@npm:^5.0.0":
   version: 5.0.0
   resolution: "is-npm@npm:5.0.0"
@@ -22565,6 +22679,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-shared-array-buffer@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "is-shared-array-buffer@npm:1.0.2"
+  dependencies:
+    call-bind: ^1.0.2
+  checksum: 9508929cf14fdc1afc9d61d723c6e8d34f5e117f0bffda4d97e7a5d88c3a8681f633a74f8e3ad1fe92d5113f9b921dc5ca44356492079612f9a247efbce7032a
+  languageName: node
+  linkType: hard
+
 "is-ssh@npm:^1.3.0":
   version: 1.3.3
   resolution: "is-ssh@npm:1.3.3"
@@ -22655,6 +22778,15 @@ __metadata:
   dependencies:
     call-bind: ^1.0.0
   checksum: fdafb7b955671dd2f9658ff47c86e4025c0650fc68a3542a40e5a75898a763b1abd6b1e1f9f13207eed49541cdd76af67d73c44989ea358b201b70274cf8f6c1
+  languageName: node
+  linkType: hard
+
+"is-weakref@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "is-weakref@npm:1.0.2"
+  dependencies:
+    call-bind: ^1.0.2
+  checksum: 95bd9a57cdcb58c63b1c401c60a474b0f45b94719c30f548c891860f051bc2231575c290a6b420c6bc6e7ed99459d424c652bd5bf9a1d5259505dc35b4bf83de
   languageName: node
   linkType: hard
 
@@ -26000,10 +26132,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimist@npm:^1.1.1, minimist@npm:^1.2.0, minimist@npm:^1.2.5":
-  version: 1.2.5
-  resolution: "minimist@npm:1.2.5"
-  checksum: 86706ce5b36c16bfc35c5fe3dbb01d5acdc9a22f2b6cc810b6680656a1d2c0e44a0159c9a3ba51fb072bb5c203e49e10b51dcd0eec39c481f4c42086719bae52
+"minimist@npm:^1.1.1, minimist@npm:^1.2.0, minimist@npm:^1.2.5, minimist@npm:^1.2.6":
+  version: 1.2.6
+  resolution: "minimist@npm:1.2.6"
+  checksum: d15428cd1e11eb14e1233bcfb88ae07ed7a147de251441d61158619dfb32c4d7e9061d09cab4825fdee18ecd6fce323228c8c47b5ba7cd20af378ca4048fb3fb
   languageName: node
   linkType: hard
 
@@ -26243,10 +26375,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment@npm:2.29.1, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1":
-  version: 2.29.1
-  resolution: "moment@npm:2.29.1"
-  checksum: 1e14d5f422a2687996be11dd2d50c8de3bd577c4a4ca79ba5d02c397242a933e5b941655de6c8cb90ac18f01cc4127e55b4a12ae3c527a6c0a274e455979345e
+"moment@npm:2.29.2, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1":
+  version: 2.29.2
+  resolution: "moment@npm:2.29.2"
+  checksum: ee850b5776485e2af0775ceb3cfebaa7d7638f0a750fe0678fcae24c310749f96c1938808384bd422a55e5703834a71fcb09c8a1d36d9cf847f6ed0205d7a3e5
   languageName: node
   linkType: hard
 
@@ -32121,7 +32253,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve@npm:^1.3.2":
+"resolve@npm:^1.22.0, resolve@npm:^1.3.2":
   version: 1.22.0
   resolution: "resolve@npm:1.22.0"
   dependencies:
@@ -32173,7 +32305,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve@patch:resolve@^1.3.2#~builtin<compat/resolve>":
+"resolve@patch:resolve@^1.22.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.3.2#~builtin<compat/resolve>":
   version: 1.22.0
   resolution: "resolve@patch:resolve@npm%3A1.22.0#~builtin<compat/resolve>::version=1.22.0&hash=07638b"
   dependencies:
@@ -35411,6 +35543,18 @@ __metadata:
     typescript:
       optional: true
   checksum: c2a698b85d521298fe6f2435fbf2d3dc5834b423ea25abd321805ead3f399dbeedce7ca09492d7eb005b9d2c009c6b9587055bc3ab273dc6b9e40eefd7edb5b2
+  languageName: node
+  linkType: hard
+
+"tsconfig-paths@npm:^3.14.1":
+  version: 3.14.1
+  resolution: "tsconfig-paths@npm:3.14.1"
+  dependencies:
+    "@types/json5": ^0.0.29
+    json5: ^1.0.1
+    minimist: ^1.2.6
+    strip-bom: ^3.0.0
+  checksum: 8afa01c673ebb4782ba53d3a12df97fa837ce524f8ad38ee4e2b2fd57f5ac79abc21c574e9e9eb014d93efe7fe8214001b96233b5c6ea75bd1ea82afe17a4c6d
   languageName: node
   linkType: hard
 

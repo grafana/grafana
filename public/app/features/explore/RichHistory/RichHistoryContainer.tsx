@@ -1,21 +1,15 @@
-// Libraries
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-// Services & Utils
-import store from 'app/core/store';
 import { RICH_HISTORY_SETTING_KEYS } from 'app/core/history/richHistoryLocalStorageUtils';
-
-// Types
+import store from 'app/core/store';
 import { ExploreItemState, StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
-// Components, enums
-import { RichHistory, Tabs } from './RichHistory';
-
-//Actions
-import { deleteRichHistory, loadRichHistory } from '../state/history';
 import { ExploreDrawer } from '../ExploreDrawer';
+import { deleteRichHistory, loadRichHistory } from '../state/history';
+
+import { RichHistory, Tabs } from './RichHistory';
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;

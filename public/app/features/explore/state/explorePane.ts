@@ -1,27 +1,7 @@
-import { AnyAction } from 'redux';
-import { isEqual } from 'lodash';
-
-import {
-  DEFAULT_RANGE,
-  getQueryKeys,
-  parseUrlState,
-  ensureQueries,
-  generateNewKeyAndAddRefIdIfMissing,
-  getTimeRangeFromUrl,
-} from 'app/core/utils/explore';
-import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
-import { queryReducer, runQueries, setQueriesAction } from './query';
-import { datasourceReducer } from './datasource';
-import { timeReducer, updateTime } from './time';
-import { historyReducer } from './history';
-import {
-  makeExplorePaneState,
-  loadAndInitDatasource,
-  createEmptyQueryResponse,
-  getUrlStateFromPaneState,
-  storeGraphStyle,
-} from './utils';
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
+import { isEqual } from 'lodash';
+import { AnyAction } from 'redux';
+
 import {
   EventBusExtended,
   DataQuery,
@@ -32,12 +12,33 @@ import {
   ExplorePanelsState,
   PreferredVisualisationType,
 } from '@grafana/data';
-// Types
-import { ThunkResult } from 'app/types';
-import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { richHistoryUpdatedAction, stateSave } from './main';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
+import {
+  DEFAULT_RANGE,
+  getQueryKeys,
+  parseUrlState,
+  ensureQueries,
+  generateNewKeyAndAddRefIdIfMissing,
+  getTimeRangeFromUrl,
+} from 'app/core/utils/explore';
+import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
+import { ThunkResult } from 'app/types';
+import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
+
+import { datasourceReducer } from './datasource';
+import { historyReducer } from './history';
+import { richHistoryUpdatedAction, stateSave } from './main';
+import { queryReducer, runQueries, setQueriesAction } from './query';
+import { timeReducer, updateTime } from './time';
+import {
+  makeExplorePaneState,
+  loadAndInitDatasource,
+  createEmptyQueryResponse,
+  getUrlStateFromPaneState,
+  storeGraphStyle,
+} from './utils';
+// Types
 
 //
 // Actions and Payloads

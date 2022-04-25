@@ -1,6 +1,7 @@
-import { DataFrame, TIME_SERIES_VALUE_FIELD_NAME, FieldType } from '../types';
-import { getFieldDisplayName, getFrameDisplayName } from './fieldState';
 import { toDataFrame } from '../dataframe';
+import { DataFrame, TIME_SERIES_VALUE_FIELD_NAME, FieldType } from '../types';
+
+import { getFieldDisplayName, getFrameDisplayName } from './fieldState';
 
 interface TitleScenario {
   frames: DataFrame[];

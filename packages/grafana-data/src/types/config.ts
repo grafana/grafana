@@ -1,10 +1,12 @@
+import { SystemDateFormatSettings } from '../datetime';
+import { MapLayerOptions } from '../geo/layer';
+import { GrafanaTheme2 } from '../themes';
+
 import { DataSourceInstanceSettings } from './datasource';
+import { FeatureToggles } from './featureToggles.gen';
 import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
-import { SystemDateFormatSettings } from '../datetime';
-import { GrafanaTheme2 } from '../themes';
-import { MapLayerOptions } from '../geo/layer';
-import { FeatureToggles } from './featureToggles.gen';
+
 import { NavLinkDTO, OrgRole } from '.';
 
 /**
@@ -42,6 +44,7 @@ export interface LicenseInfo {
   stateInfo: string;
   edition: GrafanaEdition;
   enabledFeatures: { [key: string]: boolean };
+  trialExpiry?: number;
 }
 
 /**
@@ -180,4 +183,5 @@ export interface GrafanaConfig {
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
   angularSupportEnabled: boolean;
+  feedbackLinksEnabled: boolean;
 }

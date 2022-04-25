@@ -1,10 +1,12 @@
-import { Select, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
+import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
-import { PromVisualQuery } from '../types';
+import Highlighter from 'react-highlight-words';
+
 import { SelectableValue, toOption, GrafanaTheme2 } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
-import { css } from '@emotion/css';
-import Highlighter from 'react-highlight-words';
+import { Select, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
+
+import { PromVisualQuery } from '../types';
 
 // We are matching words split with space
 const splitSeparator = ' ';

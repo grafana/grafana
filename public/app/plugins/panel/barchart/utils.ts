@@ -1,3 +1,6 @@
+import { orderBy } from 'lodash';
+import { Padding } from 'uplot';
+
 import {
   ArrayVector,
   DataFrame,
@@ -12,11 +15,7 @@ import {
   reduceField,
   VizOrientation,
 } from '@grafana/data';
-import { BarChartFieldConfig, PanelOptions, defaultBarChartFieldConfig } from './models.gen';
-import { BarChartDisplayValues } from './types';
-import { BarsOptions, getConfig } from './bars';
-import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui';
-import { Padding } from 'uplot';
+import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
   AxisPlacement,
   ScaleDirection,
@@ -25,9 +24,13 @@ import {
   StackingMode,
   VizLegendOptions,
 } from '@grafana/schema';
-import { collectStackingGroups, orderIdsByCalcs } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
-import { orderBy } from 'lodash';
+import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui';
+import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 import { findField } from 'app/features/dimensions';
+
+import { BarsOptions, getConfig } from './bars';
+import { BarChartFieldConfig, PanelOptions, defaultBarChartFieldConfig } from './models.gen';
+import { BarChartDisplayValues } from './types';
 
 function getBarCharScaleOrientation(orientation: VizOrientation) {
   if (orientation === VizOrientation.Vertical) {
@@ -156,7 +159,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
   let seriesIndex = 0;
   const legendOrdered = isLegendOrdered(legend);
-  const stackingGroups: Map<string, number[]> = new Map();
 
   // iterate the y values
   for (let i = 1; i < frame.fields.length; i++) {
@@ -237,20 +239,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
         grid: { show: customConfig.axisGridShow },
       });
     }
-
-    collectStackingGroups(field, stackingGroups, seriesIndex);
   }
 
-  if (stackingGroups.size !== 0) {
-    for (const [_, seriesIds] of stackingGroups.entries()) {
-      const seriesIdxs = orderIdsByCalcs({ ids: seriesIds, legend, frame });
-      for (let j = seriesIdxs.length - 1; j > 0; j--) {
-        builder.addBand({
-          series: [seriesIdxs[j], seriesIdxs[j - 1]],
-        });
-      }
-    }
-  }
+  let stackingGroups = getStackingGroups(frame);
+
+  builder.setStackingGroups(stackingGroups);
 
   return builder;
 };
@@ -311,7 +304,13 @@ export function prepareBarChartDisplayValues(
   }
 
   // Bar chart requires a single frame
-  const frame = series.length === 1 ? series[0] : outerJoinDataFrames({ frames: series, enforceSort: false });
+  const frame =
+    series.length === 1
+      ? maybeSortFrame(
+          series[0],
+          series[0].fields.findIndex((f) => f.type === FieldType.time)
+        )
+      : outerJoinDataFrames({ frames: series });
   if (!frame) {
     return { warn: 'Unable to join data' } as BarChartDisplayValues;
   }

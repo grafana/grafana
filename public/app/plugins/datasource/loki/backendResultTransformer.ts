@@ -1,8 +1,9 @@
 import { DataQueryRequest, DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta } from '@grafana/data';
-import { LokiQuery, LokiQueryType } from './types';
+
+import { makeIdField } from './makeIdField';
 import { makeTableFrames } from './makeTableFrames';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
-import { makeIdField } from './makeIdField';
+import { LokiQuery, LokiQueryType } from './types';
 
 function isMetricFrame(frame: DataFrame): boolean {
   return frame.fields.every((field) => field.type === FieldType.time || field.type === FieldType.number);

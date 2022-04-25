@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -53,8 +52,6 @@ func loggedInUserScenario(t *testing.T, desc string, url string, routePattern st
 
 func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = sqlStore
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
@@ -82,8 +79,6 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 
 func anonymousUserScenario(t *testing.T, desc string, method string, url string, routePattern string, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
@@ -197,7 +192,9 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, sqlStore)
-	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy)
+	loginService := &logintest.LoginServiceFake{}
+	authenticator := &logintest.AuthenticatorFake{}
+	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, authenticator)
 
 	return ctxHdlr
 }
@@ -238,7 +235,6 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 	store := sqlstore.InitTestDB(t)
 	hs := &HTTPServer{
 		Cfg:                cfg,
-		Bus:                bus.GetBus(),
 		Live:               newTestLive(t, store),
 		Features:           features,
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
@@ -329,7 +325,6 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	return &HTTPServer{
 		Cfg:           cfg,
 		Features:      features,
-		Bus:           bus.GetBus(),
 		AccessControl: accesscontrolmock.New().WithDisabled(),
 	}
 }
@@ -380,7 +375,6 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 	hs := &HTTPServer{
 		Cfg:                cfg,
 		Features:           features,
-		Bus:                bus.GetBus(),
 		Live:               newTestLive(t, db),
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routeRegister,

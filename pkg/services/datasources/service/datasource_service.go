@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
@@ -29,12 +28,12 @@ import (
 )
 
 type Service struct {
-	Bus                bus.Bus
 	SQLStore           *sqlstore.SQLStore
 	SecretsService     secrets.Service
 	cfg                *setting.Cfg
 	features           featuremgmt.FeatureToggles
 	permissionsService accesscontrol.PermissionsService
+	ac                 accesscontrol.AccessControl
 
 	ptc               proxyTransportCache
 	dsDecryptionCache secureJSONDecryptionCache
@@ -61,11 +60,10 @@ type cachedDecryptedJSON struct {
 }
 
 func ProvideService(
-	bus bus.Bus, store *sqlstore.SQLStore, secretsService secrets.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
+	store *sqlstore.SQLStore, secretsService secrets.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
 ) *Service {
 	s := &Service{
-		Bus:            bus,
 		SQLStore:       store,
 		SecretsService: secretsService,
 		ptc: proxyTransportCache{
@@ -77,15 +75,8 @@ func ProvideService(
 		cfg:                cfg,
 		features:           features,
 		permissionsService: permissionsServices.GetDataSourceService(),
+		ac:                 ac,
 	}
-
-	s.Bus.AddHandler(s.GetDataSources)
-	s.Bus.AddHandler(s.GetDataSourcesByType)
-	s.Bus.AddHandler(s.GetDataSource)
-	s.Bus.AddHandler(s.AddDataSource)
-	s.Bus.AddHandler(s.DeleteDataSource)
-	s.Bus.AddHandler(s.UpdateDataSource)
-	s.Bus.AddHandler(s.GetDefaultDataSource)
 
 	ac.RegisterAttributeScopeResolver(NewNameScopeResolver(store))
 	ac.RegisterAttributeScopeResolver(NewIDScopeResolver(store))
@@ -173,7 +164,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 		return err
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+	if !s.ac.IsDisabled() {
 		// This belongs in Data source permissions, and we probably want
 		// to do this with a hook in the store and rollback on fail.
 		// We can't use events, because there's no way to communicate

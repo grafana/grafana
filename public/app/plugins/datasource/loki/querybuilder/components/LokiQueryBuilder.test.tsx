@@ -1,10 +1,13 @@
-import React from 'react';
 import { render, screen, getAllByRole, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LokiQueryBuilder } from './LokiQueryBuilder';
+import React from 'react';
+
+import { PanelData } from '@grafana/data';
+
 import { LokiDatasource } from '../../datasource';
 import { LokiVisualQuery } from '../types';
-import { PanelData } from '@grafana/data';
+
+import { LokiQueryBuilder } from './LokiQueryBuilder';
 
 const defaultQuery: LokiVisualQuery = {
   labels: [{ op: '=', label: 'baz', value: 'bar' }],

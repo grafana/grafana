@@ -1,20 +1,23 @@
-import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { css, cx } from '@emotion/css';
+import { FocusScope } from '@react-aria/focus';
 import { cloneDeep } from 'lodash';
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { config, locationService } from '@grafana/runtime';
+import { Icon, IconName, useTheme2 } from '@grafana/ui';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { KioskMode, StoreState } from 'app/types';
-import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from '../utils';
+
 import { OrgSwitcher } from '../../OrgSwitcher';
-import { NavBarMenu } from './NavBarMenu';
-import NavBarItem from './NavBarItem';
-import { useSelector } from 'react-redux';
-import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
-import { FocusScope } from '@react-aria/focus';
 import { NavBarContext } from '../context';
+import { enrichConfigItems, getActiveItem, isMatchOrChildMatch, isSearchActive, SEARCH_ITEM_ID } from '../utils';
+
+import NavBarItem from './NavBarItem';
+import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+import { NavBarMenu } from './NavBarMenu';
 import { NavBarToggle } from './NavBarToggle';
 
 const onOpenSearch = () => {

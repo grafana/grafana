@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
 import { css } from '@emotion/css';
+import React, { useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
@@ -15,17 +16,21 @@ import {
   RadioButtonGroup,
   useStyles2,
 } from '@grafana/ui';
-import { ApiKey, OrgRole } from 'app/types';
 
 const EXPIRATION_OPTIONS = [
   { label: 'No expiration', value: false },
   { label: 'Set expiration date', value: true },
 ];
 
+export type ServiceAccountToken = {
+  name: string;
+  secondsToLive: number;
+};
+
 interface CreateTokenModalProps {
   isOpen: boolean;
   token: string;
-  onCreateToken: (token: ApiKey) => void;
+  onCreateToken: (token: ServiceAccountToken) => void;
   onClose: () => void;
 }
 
@@ -64,8 +69,11 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Crea
           <FieldSet>
             <Field
               label="Display name"
-              description="Optional name to easily identify the token"
+              description="name to easily identify the token"
               className={styles.modalRow}
+              // for now this is required
+              // need to make this optional in backend as well
+              required={true}
             >
               <Input
                 name="tokenName"
@@ -92,7 +100,6 @@ export const CreateTokenModal = ({ isOpen, token, onCreateToken, onClose }: Crea
             onClick={() =>
               onCreateToken({
                 name: newTokenName,
-                role: OrgRole.Viewer,
                 secondsToLive: getSecondsToLive(newTokenExpirationDate),
               })
             }

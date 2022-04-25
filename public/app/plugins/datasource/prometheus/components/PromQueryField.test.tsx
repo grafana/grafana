@@ -1,11 +1,14 @@
+import { render, screen } from '@testing-library/react';
 // @ts-ignore
 import RCCascader from 'rc-cascader';
 import React from 'react';
-import PromQlLanguageProvider from '../language_provider';
-import PromQueryField from './PromQueryField';
+
 import { DataSourceInstanceSettings, PanelData, LoadingState, DataFrame } from '@grafana/data';
+
+import PromQlLanguageProvider from '../language_provider';
 import { PromOptions } from '../types';
-import { render, screen } from '@testing-library/react';
+
+import PromQueryField from './PromQueryField';
 
 // the monaco-based editor uses lazy-loading and that does not work
 // well with this test, and we do not need the monaco-related

@@ -1,13 +1,15 @@
-import React from 'react';
-import { SelectableValue } from '@grafana/data';
 import { render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import { byTestId } from 'testing-library-selector';
 
-import * as api from './api';
-import { FolderInfo, PermissionLevelString } from '../../../../types';
-import { ALL_FOLDER, GENERAL_FOLDER, ReadonlyFolderPicker, ReadonlyFolderPickerProps } from './ReadonlyFolderPicker';
+import { SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+
+import { FolderInfo, PermissionLevelString } from '../../../../types';
+
+import { ALL_FOLDER, GENERAL_FOLDER, ReadonlyFolderPicker, ReadonlyFolderPickerProps } from './ReadonlyFolderPicker';
+import * as api from './api';
 
 const FOLDERS = [
   { value: GENERAL_FOLDER, label: GENERAL_FOLDER.title },

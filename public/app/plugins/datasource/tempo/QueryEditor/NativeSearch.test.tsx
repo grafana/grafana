@@ -1,8 +1,10 @@
-import NativeSearch from './NativeSearch';
-import React from 'react';
 import { act, render, screen } from '@testing-library/react';
-import { TempoDatasource, TempoQuery } from '../datasource';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import { TempoDatasource, TempoQuery } from '../datasource';
+
+import NativeSearch from './NativeSearch';
 
 const getOptions = jest.fn().mockImplementation(() => {
   return Promise.resolve([

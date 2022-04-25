@@ -1,7 +1,9 @@
-import React from 'react';
 import { mount } from 'enzyme';
-import { RichHistorySettings, RichHistorySettingsProps } from './RichHistorySettings';
+import React from 'react';
+
 import { Select, Switch } from '@grafana/ui';
+
+import { RichHistorySettings, RichHistorySettingsProps } from './RichHistorySettings';
 
 const setup = (propOverrides?: Partial<RichHistorySettingsProps>) => {
   const props: RichHistorySettingsProps = {

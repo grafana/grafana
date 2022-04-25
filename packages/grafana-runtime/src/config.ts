@@ -1,4 +1,5 @@
 import { merge } from 'lodash';
+
 import {
   BootData,
   BuildInfo,
@@ -36,6 +37,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   externalUserMngLinkName = '';
   externalUserMngInfo = '';
   allowOrgCreate = false;
+  feedbackLinksEnabled = true;
   disableLoginForm = false;
   defaultDatasource = ''; // UID
   alertingEnabled = false;

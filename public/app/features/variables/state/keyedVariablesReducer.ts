@@ -1,8 +1,10 @@
-import { AnyAction } from 'redux';
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
+import { AnyAction } from 'redux';
+
+import { toStateKey } from '../utils';
+
 import { getTemplatingReducers, TemplatingState } from './reducers';
 import { variablesInitTransaction } from './transactionReducer';
-import { toStateKey } from '../utils';
 
 export interface KeyedVariablesState {
   lastKey?: string;

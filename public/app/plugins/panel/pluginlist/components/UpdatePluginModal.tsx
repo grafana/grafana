@@ -1,7 +1,8 @@
-import React from 'react';
-import { Modal, stylesFactory, useStyles } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
+import React from 'react';
+
+import { GrafanaTheme } from '@grafana/data';
+import { Modal, stylesFactory, useStyles } from '@grafana/ui';
 
 interface Props {
   pluginName: string;

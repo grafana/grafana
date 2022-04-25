@@ -1,7 +1,9 @@
-import React from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } from '@grafana/data';
+
 import { Props, Table } from './Table';
 
 function getDefaultDataFrame(): DataFrame {

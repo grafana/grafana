@@ -1,16 +1,19 @@
+import { css, cx } from '@emotion/css';
+import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
+import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import React, { useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
+import { useLocalStorage } from 'react-use';
+
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { CollapsableSection, CustomScrollbar, Icon, IconButton, IconName, useStyles2, useTheme2 } from '@grafana/ui';
-import { FocusScope } from '@react-aria/focus';
-import { useDialog } from '@react-aria/dialog';
-import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import { css, cx } from '@emotion/css';
-import { NavBarMenuItem } from './NavBarMenuItem';
-import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+
 import { isMatchOrChildMatch } from '../utils';
+
+import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarToggle } from './NavBarToggle';
-import { useLocalStorage } from 'react-use';
 
 export interface Props {
   activeItem?: NavModelItem;
@@ -96,7 +99,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     bottom: 0,
     flexDirection: 'column',
     left: 0,
-    whiteSpace: 'nowrap',
     paddingTop: theme.spacing(1),
     marginRight: theme.spacing(1.5),
     right: 0,
@@ -126,6 +128,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   itemList: css({
     display: 'grid',
     gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
+    minWidth: '300px',
   }),
   menuCollapseIcon: css({
     position: 'absolute',
@@ -147,6 +150,10 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const overlayTransition = {
     ...commonTransition,
     transitionProperty: 'background-color, box-shadow, width',
+    // this is needed to prevent a horizontal scrollbar during the animation on firefox
+    '.scrollbar-view': {
+      overflow: 'hidden !important',
+    },
   };
 
   const backdropTransition = {
@@ -283,7 +290,6 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
   }),
   item: css({
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
-    whiteSpace: 'normal',
     '&::before': {
       display: 'none',
     },
@@ -312,6 +318,7 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
   }),
   iconContainer: css({
+    display: 'flex',
     placeContent: 'center',
   }),
   savedItemsMenuItemWrapper: css({
@@ -324,7 +331,7 @@ const getNavItemStyles = (theme: GrafanaTheme2) => ({
   linkText: css({
     fontSize: theme.typography.pxToRem(14),
     justifySelf: 'start',
-    paddingLeft: theme.spacing(0.5),
+    padding: theme.spacing(0.5, 4.25, 0.5, 0.5),
   }),
 });
 
@@ -356,6 +363,7 @@ function CollapsibleNavItem({
           onClose();
         }}
         className={styles.collapsibleMenuItem}
+        elClassName={styles.collapsibleIcon}
       >
         {link.img && (
           <img src={link.img} alt={`${link.text} logo`} height="24" width="24" style={{ borderRadius: '50%' }} />
@@ -392,6 +400,9 @@ const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
     height: theme.spacing(6),
     width: theme.spacing(7),
     display: 'grid',
+  }),
+  collapsibleIcon: css({
+    display: 'grid',
     placeContent: 'center',
   }),
   collapsibleSectionWrapper: css({
@@ -403,7 +414,8 @@ const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
   collapseWrapper: css({
     paddingLeft: theme.spacing(0.5),
     paddingRight: theme.spacing(4.25),
-    height: theme.spacing(6),
+    minHeight: theme.spacing(6),
+    overflowWrap: 'anywhere',
     alignItems: 'center',
     color: theme.colors.text.secondary,
     '&:hover, &:focus-within': {

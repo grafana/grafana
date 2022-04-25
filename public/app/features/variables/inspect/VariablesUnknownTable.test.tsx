@@ -1,10 +1,12 @@
-import React from 'react';
-import * as runtime from '@grafana/runtime';
 import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import * as runtime from '@grafana/runtime';
+
+import { customBuilder } from '../shared/testing/builders';
 
 import { VariablesUnknownTable, VariablesUnknownTableProps } from './VariablesUnknownTable';
-import { customBuilder } from '../shared/testing/builders';
 import * as utils from './utils';
 import { UsagesToNetwork } from './utils';
 

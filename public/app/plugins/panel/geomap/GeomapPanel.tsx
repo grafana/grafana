@@ -1,14 +1,19 @@
-import React, { Component, ReactNode } from 'react';
-import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
+import { css } from '@emotion/css';
+import { Global } from '@emotion/react';
+import { cloneDeep } from 'lodash';
 import { Collection, Map as OpenLayersMap, MapBrowserEvent, PluggableMap, View } from 'ol';
 import Attribution from 'ol/control/Attribution';
-import Zoom from 'ol/control/Zoom';
 import ScaleLine from 'ol/control/ScaleLine';
+import Zoom from 'ol/control/Zoom';
+import { Coordinate } from 'ol/coordinate';
 import { createEmpty, extend, isEmpty } from 'ol/extent';
 import { defaults as interactionDefaults } from 'ol/interaction';
+import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 import BaseLayer from 'ol/layer/Base';
 import VectorLayer from 'ol/layer/Vector';
-import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
+import { fromLonLat, toLonLat } from 'ol/proj';
+import React, { Component, ReactNode } from 'react';
+import { Subscription } from 'rxjs';
 
 import {
   PanelData,
@@ -21,23 +26,18 @@ import {
   FrameGeometrySourceMode,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
+import { PanelEditExitedEvent } from 'app/types/events';
 
+import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
+import { GeomapTooltip } from './GeomapTooltip';
+import { DebugOverlay } from './components/DebugOverlay';
+import { GeomapHoverPayload, GeomapLayerHover } from './event';
+import { getGlobalStyles } from './globalStyles';
+import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
+import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
 import { ControlsOptions, GeomapPanelOptions, MapLayerState, MapViewConfig } from './types';
 import { centerPointRegistry, MapCenterID } from './view';
-import { fromLonLat, toLonLat } from 'ol/proj';
-import { Coordinate } from 'ol/coordinate';
-import { css } from '@emotion/css';
-import { PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
-import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
-import { DebugOverlay } from './components/DebugOverlay';
-import { getGlobalStyles } from './globalStyles';
-import { Global } from '@emotion/react';
-import { GeomapHoverPayload, GeomapLayerHover } from './event';
-import { Subscription } from 'rxjs';
-import { PanelEditExitedEvent } from 'app/types/events';
-import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
-import { cloneDeep } from 'lodash';
-import { GeomapTooltip } from './GeomapTooltip';
 
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;

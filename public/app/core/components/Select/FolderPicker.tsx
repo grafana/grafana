@@ -1,13 +1,14 @@
-import React, { PureComponent } from 'react';
 import { debounce } from 'lodash';
-import { AsyncSelect } from '@grafana/ui';
+import React, { PureComponent } from 'react';
+
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-
-import appEvents from '../../app_events';
+import { AsyncSelect } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
+
 import { AccessControlAction, PermissionLevelString } from '../../../types';
+import appEvents from '../../app_events';
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;

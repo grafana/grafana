@@ -1,5 +1,6 @@
-import { ArrayVector, CoreApp, DataFrame, DataQueryRequest, DataQueryResponse, FieldType, toUtc } from '@grafana/data';
 import { cloneDeep } from 'lodash';
+
+import { ArrayVector, CoreApp, DataFrame, DataQueryRequest, DataQueryResponse, FieldType, toUtc } from '@grafana/data';
 
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiQuery } from './types';

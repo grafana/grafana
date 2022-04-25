@@ -1,24 +1,28 @@
-import angular from 'angular';
+import 'angular';
+
 import 'angular-route';
 import 'angular-sanitize';
 import 'angular-bindonce';
 import 'vendor/bootstrap/bootstrap';
 import 'vendor/angular-other/angular-strap';
-import { config } from 'app/core/config';
+import angular from 'angular'; //eslint-disable-line no-duplicate-imports
+import { extend } from 'lodash';
+
+import { getTemplateSrv } from '@grafana/runtime';
 import coreModule, { angularModules } from 'app/angular/core_module';
+import appEvents from 'app/core/app_events';
+import { config } from 'app/core/config';
+import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { exposeToPlugin } from 'app/features/plugins/plugin_loader';
+import * as sdk from 'app/plugins/sdk';
+
 import { registerAngularDirectives } from './angular_wrappers';
 import { initAngularRoutingBridge } from './bridgeReactAngularRouting';
 import { monkeyPatchInjectorWithPreAssignedBindings } from './injectorMonkeyPatch';
-import { extend } from 'lodash';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getTemplateSrv } from '@grafana/runtime';
-import { registerComponents } from './registerComponents';
-import { exposeToPlugin } from 'app/features/plugins/plugin_loader';
-import appEvents from 'app/core/app_events';
-import { contextSrv } from 'app/core/services/context_srv';
-import * as sdk from 'app/plugins/sdk';
 import { promiseToDigest } from './promiseToDigest';
+import { registerComponents } from './registerComponents';
 
 export class AngularApp {
   ngModuleDependencies: any[];

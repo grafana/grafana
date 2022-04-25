@@ -1,12 +1,18 @@
-import React from 'react';
+import { SerializedError } from '@reduxjs/toolkit';
 import { render, waitFor } from '@testing-library/react';
-import { configureStore } from 'app/store/configureStore';
+import userEvent from '@testing-library/user-event';
+import React from 'react';
 import { Provider } from 'react-redux';
-import RuleList from './RuleList';
+import { Router } from 'react-router-dom';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
-import { getAllDataSources } from './utils/config';
-import { fetchRules } from './api/prometheus';
+
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { configureStore } from 'app/store/configureStore';
+import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
+
+import RuleList from './RuleList';
 import { fetchBuildInfo } from './api/buildInfo';
+import { fetchRules } from './api/prometheus';
 import { fetchRulerRules, deleteRulerRulesGroup, deleteNamespace, setRulerRuleGroup } from './api/ruler';
 import {
   mockDataSource,
@@ -19,12 +25,8 @@ import {
   somePromRules,
   someRulerRules,
 } from './mocks';
+import { getAllDataSources } from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import { SerializedError } from '@reduxjs/toolkit';
-import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
-import userEvent from '@testing-library/user-event';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { Router } from 'react-router-dom';
 
 jest.mock('./api/buildInfo');
 jest.mock('./api/prometheus');
@@ -192,10 +194,10 @@ describe('RuleList', () => {
     expect(groups).toHaveLength(5);
 
     expect(groups[0]).toHaveTextContent('foofolder');
-    expect(groups[1]).toHaveTextContent('default > group-1');
-    expect(groups[2]).toHaveTextContent('default > group-1');
-    expect(groups[3]).toHaveTextContent('default > group-2');
-    expect(groups[4]).toHaveTextContent('lokins > group-1');
+    expect(groups[1]).toHaveTextContent('default group-1');
+    expect(groups[2]).toHaveTextContent('default group-1');
+    expect(groups[3]).toHaveTextContent('default group-2');
+    expect(groups[4]).toHaveTextContent('lokins group-1');
 
     const errors = await ui.cloudRulesSourceErrors.find();
 

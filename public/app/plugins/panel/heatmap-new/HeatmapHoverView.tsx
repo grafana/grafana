@@ -1,10 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { Field, FieldType, formattedValueToString, LinkModel } from '@grafana/data';
 
-import { HeatmapHoverEvent } from './utils';
-import { BucketLayout, HeatmapData } from './fields';
+import { Field, FieldType, formattedValueToString, LinkModel } from '@grafana/data';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+
+import { BucketLayout, HeatmapData } from './fields';
+import { HeatmapHoverEvent } from './utils';
 
 type Props = {
   data: HeatmapData;

@@ -1,7 +1,9 @@
-import { locationService } from '@grafana/runtime';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+
+import { locationService } from '@grafana/runtime';
+
 import { PanelNotSupported, Props } from './PanelNotSupported';
 import { PanelEditorTabId } from './types';
 

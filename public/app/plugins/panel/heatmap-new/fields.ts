@@ -7,6 +7,7 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
+
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
 
 export const enum BucketLayout {

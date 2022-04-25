@@ -1,10 +1,12 @@
-import React from 'react';
-import { InfluxQuery } from '../../types';
-import InfluxDatasource from '../../datasource';
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Editor } from './Editor';
+import React from 'react';
+
+import InfluxDatasource from '../../datasource';
 import * as mockedMeta from '../../influxQLMetadataQuery';
+import { InfluxQuery } from '../../types';
+
+import { Editor } from './Editor';
 
 jest.mock('../../influxQLMetadataQuery', () => {
   return {

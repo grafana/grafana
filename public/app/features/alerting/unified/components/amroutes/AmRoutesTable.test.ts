@@ -1,6 +1,8 @@
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
+
 import { FormAmRoute } from '../../types/amroutes';
 import { MatcherFieldValue } from '../../types/silence-form';
+
 import { deleteRoute, getFilteredRoutes, updatedRoute } from './AmRoutesTable';
 
 const defaultAmRoute: FormAmRoute = {

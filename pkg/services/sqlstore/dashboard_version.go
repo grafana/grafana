@@ -4,16 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-func (ss *SQLStore) addDashboardVersionQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetDashboardVersion)
-	bus.AddHandler("sql", ss.GetDashboardVersions)
-	bus.AddHandler("sql", ss.DeleteExpiredVersions)
-}
 
 // GetDashboardVersion gets the dashboard version for the given dashboard ID and version number.
 func (ss *SQLStore) GetDashboardVersion(ctx context.Context, query *models.GetDashboardVersionQuery) error {

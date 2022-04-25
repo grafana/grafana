@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -16,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -70,7 +71,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	pluginStore plugins.Store, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore, secretsService secrets.Service,
 	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles,
-	bus bus.Bus) (*GrafanaLive, error) {
+	accessControl accesscontrol.AccessControl) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		Features:              toggles,
@@ -82,7 +83,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		SQLStore:              sqlStore,
 		SecretsService:        secretsService,
 		queryDataService:      queryDataService,
-		bus:                   bus,
 		channels:              make(map[string]models.ChannelHandler),
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]models.ChannelHandlerFactory),
@@ -242,7 +242,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
-	g.GrafanaScope.Features["comment"] = features.NewCommentHandler(commentmodel.NewPermissionChecker(g.SQLStore, g.Features))
+	g.GrafanaScope.Features["comment"] = features.NewCommentHandler(commentmodel.NewPermissionChecker(g.SQLStore, g.Features, accessControl))
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
@@ -407,7 +407,6 @@ type GrafanaLive struct {
 	SecretsService        secrets.Service
 	pluginStore           plugins.Store
 	queryDataService      *query.Service
-	bus                   bus.Bus
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller
@@ -1367,6 +1366,11 @@ func handleLog(msg centrifuge.LogEntry) {
 func (g *GrafanaLive) sampleLiveStats() {
 	numClients := g.node.Hub().NumClients()
 	numUsers := g.node.Hub().NumUsers()
+	numChannels := g.node.Hub().NumChannels()
+	var numNodes int
+	if info, err := g.node.Info(); err == nil {
+		numNodes = len(info.Nodes)
+	}
 
 	g.usageStats.sampleCount++
 	g.usageStats.numClientsSum += numClients
@@ -1376,16 +1380,16 @@ func (g *GrafanaLive) sampleLiveStats() {
 		g.usageStats.numClientsMax = numClients
 	}
 
-	if numClients < g.usageStats.numClientsMin {
-		g.usageStats.numClientsMin = numClients
-	}
-
 	if numUsers > g.usageStats.numUsersMax {
 		g.usageStats.numUsersMax = numUsers
 	}
 
-	if numUsers < g.usageStats.numUsersMin {
-		g.usageStats.numUsersMin = numUsers
+	if numNodes > g.usageStats.numNodesMax {
+		g.usageStats.numNodesMax = numNodes
+	}
+
+	if numChannels > g.usageStats.numChannelsMax {
+		g.usageStats.numChannelsMax = numChannels
 	}
 }
 
@@ -1393,38 +1397,65 @@ func (g *GrafanaLive) resetLiveStats() {
 	g.usageStats = usageStats{}
 }
 
+func getHistogramMetric(val int, bounds []int, metricPrefix string) string {
+	for _, bound := range bounds {
+		if val <= bound {
+			return metricPrefix + "le_" + strconv.Itoa(bound)
+		}
+	}
+	return metricPrefix + "le_inf"
+}
+
+func (g *GrafanaLive) collectLiveStats(_ context.Context) (map[string]interface{}, error) {
+	liveUsersAvg := 0
+	liveClientsAvg := 0
+
+	if g.usageStats.sampleCount > 0 {
+		liveUsersAvg = g.usageStats.numUsersSum / g.usageStats.sampleCount
+		liveClientsAvg = g.usageStats.numClientsSum / g.usageStats.sampleCount
+	}
+
+	var liveEnabled int
+	if g.Cfg.LiveMaxConnections != 0 {
+		liveEnabled = 1
+	}
+
+	var liveHAEnabled int
+	if g.Cfg.LiveHAEngine != "" {
+		liveHAEnabled = 1
+	}
+
+	metrics := map[string]interface{}{
+		"stats.live_enabled.count":      liveEnabled,
+		"stats.live_ha_enabled.count":   liveHAEnabled,
+		"stats.live_samples.count":      g.usageStats.sampleCount,
+		"stats.live_users_max.count":    g.usageStats.numUsersMax,
+		"stats.live_users_avg.count":    liveUsersAvg,
+		"stats.live_clients_max.count":  g.usageStats.numClientsMax,
+		"stats.live_clients_avg.count":  liveClientsAvg,
+		"stats.live_channels_max.count": g.usageStats.numChannelsMax,
+		"stats.live_nodes_max.count":    g.usageStats.numNodesMax,
+	}
+
+	metrics[getHistogramMetric(g.usageStats.numClientsMax, []int{0, 10, 100, 1000, 10000, 100000}, "stats.live_clients_")] = 1
+	metrics[getHistogramMetric(g.usageStats.numUsersMax, []int{0, 10, 100, 1000, 10000, 100000}, "stats.live_users_")] = 1
+	metrics[getHistogramMetric(g.usageStats.numChannelsMax, []int{0, 10, 100, 1000, 10000, 100000}, "stats.live_channels_")] = 1
+	metrics[getHistogramMetric(g.usageStats.numNodesMax, []int{1, 3, 9}, "stats.live_nodes_")] = 1
+
+	return metrics, nil
+}
+
 func (g *GrafanaLive) registerUsageMetrics() {
 	g.usageStatsService.RegisterSendReportCallback(g.resetLiveStats)
-
-	g.usageStatsService.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
-		liveUsersAvg := 0
-		liveClientsAvg := 0
-
-		if g.usageStats.sampleCount > 0 {
-			liveUsersAvg = g.usageStats.numUsersSum / g.usageStats.sampleCount
-			liveClientsAvg = g.usageStats.numClientsSum / g.usageStats.sampleCount
-		}
-
-		metrics := map[string]interface{}{
-			"stats.live_samples.count":     g.usageStats.sampleCount,
-			"stats.live_users_max.count":   g.usageStats.numUsersMax,
-			"stats.live_users_min.count":   g.usageStats.numUsersMin,
-			"stats.live_users_avg.count":   liveUsersAvg,
-			"stats.live_clients_max.count": g.usageStats.numClientsMax,
-			"stats.live_clients_min.count": g.usageStats.numClientsMin,
-			"stats.live_clients_avg.count": liveClientsAvg,
-		}
-
-		return metrics, nil
-	})
+	g.usageStatsService.RegisterMetricsFunc(g.collectLiveStats)
 }
 
 type usageStats struct {
-	numClientsMax int
-	numClientsMin int
-	numClientsSum int
-	numUsersMax   int
-	numUsersMin   int
-	numUsersSum   int
-	sampleCount   int
+	numClientsMax  int
+	numClientsSum  int
+	numUsersMax    int
+	numUsersSum    int
+	sampleCount    int
+	numNodesMax    int
+	numChannelsMax int
 }

@@ -1,6 +1,8 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+
 import { formattedValueToString, GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
 import {
   Portal,
   UPlotChart,
@@ -10,15 +12,14 @@ import {
   VizTooltipContainer,
   LegendDisplayMode,
 } from '@grafana/ui';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
+import { ColorScale } from './ColorScale';
+import { HeatmapHoverView } from './HeatmapHoverView';
 import { HeatmapData, prepareHeatmapData } from './fields';
 import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
 import { HeatmapHoverEvent, prepConfig } from './utils';
-import { HeatmapHoverView } from './HeatmapHoverView';
-import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
-import { ColorScale } from './ColorScale';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 

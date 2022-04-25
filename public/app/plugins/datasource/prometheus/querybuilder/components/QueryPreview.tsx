@@ -1,9 +1,11 @@
-import React from 'react';
-import { useTheme2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
 import Prism from 'prismjs';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
+import { useTheme2 } from '@grafana/ui';
+
 import { promqlGrammar } from '../../promql';
 
 export interface Props {
@@ -18,7 +20,7 @@ export function QueryPreview({ query }: Props) {
   return (
     <EditorRow>
       <EditorFieldGroup>
-        <EditorField label="Preview">
+        <EditorField label="Raw query">
           <div
             className={cx(styles.editorField, 'prism-syntax-highlight')}
             aria-label="selector"
