@@ -220,10 +220,5 @@ var (
 			Description: "Enable command palette",
 			State:       FeatureStateAlpha,
 		},
-		{
-			Name:        "newQueryHistory",
-			Description: "New query history saved in the database instead of browser local storage",
-			State:       FeatureStateAlpha,
-		},
 	}
 )

@@ -162,8 +162,4 @@ const (
 	// FlagCommandPalette
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"
-
-	// FlagNewQueryHistory
-	// New query history saved in the database instead of browser local storage
-	FlagNewQueryHistory = "newQueryHistory"
 )

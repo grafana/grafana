@@ -106,6 +106,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   unifiedAlertingEnabled = false;
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
+  queryHistoryEnabled = false;
   recordedQueries = {
     enabled: true,
   };

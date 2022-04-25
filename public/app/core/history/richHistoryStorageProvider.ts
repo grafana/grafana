@@ -10,7 +10,7 @@ const richHistoryLocalStorage = new RichHistoryLocalStorage();
 const richHistoryRemoteStorage = new RichHistoryRemoteStorage();
 
 export const getRichHistoryStorage = (): RichHistoryStorage => {
-  return config.featureToggles.newQueryHistory ? richHistoryRemoteStorage : richHistoryLocalStorage;
+  return config.queryHistoryEnabled ? richHistoryRemoteStorage : richHistoryLocalStorage;
 };
 
 interface RichHistorySupportedFeatures {
