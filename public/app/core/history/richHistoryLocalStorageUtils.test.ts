@@ -1,6 +1,8 @@
-import { SortOrder } from '../utils/richHistory';
-import { RichHistoryQuery } from '../../types';
 import { DataQuery } from '@grafana/data';
+import { SortOrder } from 'app/core/utils/richHistory';
+
+import { RichHistoryQuery } from '../../types';
+
 import { filterAndSortQueries } from './richHistoryLocalStorageUtils';
 
 interface MockQuery extends DataQuery {

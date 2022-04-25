@@ -1,3 +1,5 @@
+import { lastValueFrom } from 'rxjs';
+
 import { urlUtil } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import {
@@ -15,9 +17,9 @@ import {
   TestReceiversResult,
   ExternalAlertmanagerConfig,
 } from 'app/plugins/datasource/alertmanager/types';
-import { lastValueFrom } from 'rxjs';
-import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+
 import { isFetchError } from '../utils/alertmanager';
+import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 // "grafana" for grafana-managed, otherwise a datasource name
 export async function fetchAlertManagerConfig(alertManagerSourceName: string): Promise<AlertManagerCortexConfig> {

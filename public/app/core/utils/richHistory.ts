@@ -1,25 +1,23 @@
-// Libraries
 import { omit } from 'lodash';
 
-// Services & Utils
 import { DataQuery, DataSourceApi, dateTimeFormat, ExploreUrlState, urlUtil } from '@grafana/data';
-import { dispatch } from 'app/store/store';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
-
-// Types
-import { RichHistoryQuery } from 'app/types/explore';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { getRichHistoryStorage } from '../history/richHistoryStorageProvider';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
+import { dispatch } from 'app/store/store';
+import { RichHistoryQuery } from 'app/types/explore';
+
 import {
   RichHistoryServiceError,
   RichHistoryStorageWarning,
   RichHistoryStorageWarningDetails,
 } from '../history/RichHistoryStorage';
+import { getRichHistoryStorage } from '../history/richHistoryStorageProvider';
+
 import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from './richHistoryTypes';
 
-export { SortOrder };
+export { RichHistorySearchFilters, RichHistorySettings, SortOrder };
 
 /*
  * Add queries to rich history. Save only queries within the retention period, or that are starred.

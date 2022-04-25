@@ -1,9 +1,11 @@
-import { DeleteDashboardConfig } from './deleteDashboard';
+import { v4 as uuidv4 } from 'uuid';
+
 import { e2e } from '../index';
 import { getDashboardUid } from '../support/url';
-import { setDashboardTimeRange, TimeRangeConfig } from './setDashboardTimeRange';
-import { v4 as uuidv4 } from 'uuid';
+
+import { DeleteDashboardConfig } from './deleteDashboard';
 import { selectOption } from './selectOption';
+import { setDashboardTimeRange, TimeRangeConfig } from './setDashboardTimeRange';
 
 export interface AddAnnotationConfig {
   dataSource: string;

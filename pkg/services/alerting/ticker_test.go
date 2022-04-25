@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math/rand"
@@ -9,7 +10,11 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/alerting/metrics"
 )
 
 func TestTicker(t *testing.T) {
@@ -27,10 +32,8 @@ func TestTicker(t *testing.T) {
 	}
 	t.Run("should not drop ticks", func(t *testing.T) {
 		clk := clock.NewMock()
-		intervalSec := rand.Int63n(100) + 10
-		interval := time.Duration(intervalSec) * time.Second
-		last := clk.Now()
-		ticker := NewTicker(last, 0, clk, intervalSec)
+		interval := time.Duration(rand.Int63n(100)+10) * time.Second
+		ticker := NewTicker(clk, interval, metrics.NewTickerMetrics(prometheus.NewRegistry()))
 
 		ticks := rand.Intn(9) + 1
 		jitter := rand.Int63n(int64(interval) - 1)
@@ -63,10 +66,8 @@ func TestTicker(t *testing.T) {
 
 	t.Run("should not put anything to channel until it's time", func(t *testing.T) {
 		clk := clock.NewMock()
-		intervalSec := rand.Int63n(9) + 1
-		interval := time.Duration(intervalSec) * time.Second
-		last := clk.Now()
-		ticker := NewTicker(last, 0, clk, intervalSec)
+		interval := time.Duration(rand.Int63n(9)+1) * time.Second
+		ticker := NewTicker(clk, interval, metrics.NewTickerMetrics(prometheus.NewRegistry()))
 		expectedTick := clk.Now().Add(interval)
 		for {
 			require.Empty(t, ticker.C)
@@ -85,10 +86,8 @@ func TestTicker(t *testing.T) {
 
 	t.Run("should put the tick in the channel immediately if it is behind", func(t *testing.T) {
 		clk := clock.NewMock()
-		intervalSec := rand.Int63n(9) + 1
-		interval := time.Duration(intervalSec) * time.Second
-		last := clk.Now()
-		ticker := NewTicker(last, 0, clk, intervalSec)
+		interval := time.Duration(rand.Int63n(9)+1) * time.Second
+		ticker := NewTicker(clk, interval, metrics.NewTickerMetrics(prometheus.NewRegistry()))
 
 		//  We can expect the first tick to be at a consistent interval. Take a snapshot of the clock now, before we advance it.
 		expectedTick := clk.Now().Add(interval)
@@ -115,5 +114,39 @@ func TestTicker(t *testing.T) {
 
 		// Similarly, the second tick should be last tick + interval irregardless of wall time.
 		require.Equal(t, expectedTick.Add(interval), actual2)
+	})
+
+	t.Run("should report metrics", func(t *testing.T) {
+		clk := clock.NewMock()
+		clk.Set(time.Now())
+		interval := time.Duration(rand.Int63n(9)+1) * time.Second
+		registry := prometheus.NewPedanticRegistry()
+		ticker := NewTicker(clk, interval, metrics.NewTickerMetrics(registry))
+		expectedTick := clk.Now().Add(interval)
+
+		expectedMetricFmt := `# HELP grafana_alerting_ticker_interval_seconds Interval at which the ticker is meant to tick.
+                    # TYPE grafana_alerting_ticker_interval_seconds gauge
+                    grafana_alerting_ticker_interval_seconds %v
+                    # HELP grafana_alerting_ticker_last_consumed_tick_timestamp_seconds Timestamp of the last consumed tick in seconds.
+                    # TYPE grafana_alerting_ticker_last_consumed_tick_timestamp_seconds gauge
+                    grafana_alerting_ticker_last_consumed_tick_timestamp_seconds %v
+                    # HELP grafana_alerting_ticker_next_tick_timestamp_seconds Timestamp of the next tick in seconds before it is consumed.
+                    # TYPE grafana_alerting_ticker_next_tick_timestamp_seconds gauge
+                    grafana_alerting_ticker_next_tick_timestamp_seconds %v
+					`
+
+		expectedMetric := fmt.Sprintf(expectedMetricFmt, interval.Seconds(), 0, float64(expectedTick.UnixNano())/1e9)
+
+		require.NoError(t, testutil.GatherAndCompare(registry, bytes.NewBufferString(expectedMetric), "grafana_alerting_ticker_last_consumed_tick_timestamp_seconds", "grafana_alerting_ticker_next_tick_timestamp_seconds", "grafana_alerting_ticker_interval_seconds"))
+
+		clk.Add(interval)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		t.Cleanup(func() {
+			cancel()
+		})
+		actual := readChanOrFail(t, ctx, ticker.C)
+
+		expectedMetric = fmt.Sprintf(expectedMetricFmt, interval.Seconds(), float64(actual.UnixNano())/1e9, float64(expectedTick.Add(interval).UnixNano())/1e9)
+		require.NoError(t, testutil.GatherAndCompare(registry, bytes.NewBufferString(expectedMetric), "grafana_alerting_ticker_last_consumed_tick_timestamp_seconds", "grafana_alerting_ticker_next_tick_timestamp_seconds", "grafana_alerting_ticker_interval_seconds"))
 	})
 }

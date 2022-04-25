@@ -1,6 +1,7 @@
+import React, { FC, useMemo } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import React, { FC, useMemo } from 'react';
 
 import { SELECT_WIDTH } from '../constants';
 import { getAlignmentPickerData } from '../functions';

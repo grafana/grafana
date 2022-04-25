@@ -1,11 +1,13 @@
-import React, { useCallback, useState } from 'react';
 import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
-import { Button, ClipboardButton, HorizontalGroup, stylesFactory, TextArea, useTheme } from '@grafana/ui';
-import { SaveDashboardFormProps } from '../types';
+import React, { useCallback, useState } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
-import { useAppNotification } from 'app/core/copy/appNotification';
 import { Stack } from '@grafana/experimental';
+import { Button, ClipboardButton, HorizontalGroup, stylesFactory, TextArea, useTheme } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
+
+import { SaveDashboardFormProps } from '../types';
 
 export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard, onCancel }) => {
   const theme = useTheme();

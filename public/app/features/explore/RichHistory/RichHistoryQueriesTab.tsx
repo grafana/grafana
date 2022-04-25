@@ -1,24 +1,20 @@
-import React, { useEffect } from 'react';
 import { css } from '@emotion/css';
+import React, { useEffect } from 'react';
 
-// Types
-import { ExploreId, RichHistoryQuery } from 'app/types/explore';
-
-// Utils
-import { FilterInput, MultiSelect, RangeSlider, Select, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-
+import { FilterInput, MultiSelect, RangeSlider, Select, stylesFactory, useTheme } from '@grafana/ui';
 import {
   createDatasourcesList,
   mapNumbertoTimeInSlider,
   mapQueriesToHeadings,
   SortOrder,
+  RichHistorySearchFilters,
+  RichHistorySettings,
 } from 'app/core/utils/richHistory';
+import { ExploreId, RichHistoryQuery } from 'app/types/explore';
 
-// Components
+import { sortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
-import { getSortOrderOptions } from './RichHistory';
-import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 
 export interface Props {
   queries: RichHistoryQuery[];

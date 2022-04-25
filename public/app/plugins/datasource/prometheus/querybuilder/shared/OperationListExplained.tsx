@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { OperationExplainedBox } from './OperationExplainedBox';
 import { QueryWithOperations, VisualQueryModeller } from './types';
 

@@ -2,13 +2,14 @@ import { map } from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
 import { CoreApp, SelectableValue } from '@grafana/data';
+import { InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
+
 import { PromQuery } from '../types';
 
-import PromQueryField from './PromQueryField';
-import PromLink from './PromLink';
 import { PromExemplarField } from './PromExemplarField';
+import PromLink from './PromLink';
+import PromQueryField from './PromQueryField';
 import { PromQueryEditorProps } from './types';
 
 const { Switch } = LegacyForms;

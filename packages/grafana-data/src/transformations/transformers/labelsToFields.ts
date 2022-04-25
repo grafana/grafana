@@ -1,9 +1,10 @@
 import { map } from 'rxjs/operators';
 
-import { DataFrame, Field, FieldType, SynchronousDataTransformerInfo } from '../../types';
-import { DataTransformerID } from './ids';
-import { ArrayVector } from '../../vector';
 import { getFieldDisplayName } from '../..';
+import { DataFrame, Field, FieldType, SynchronousDataTransformerInfo } from '../../types';
+import { ArrayVector } from '../../vector';
+
+import { DataTransformerID } from './ids';
 
 export enum LabelsToFieldsMode {
   Columns = 'columns', // default mode

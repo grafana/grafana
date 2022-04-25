@@ -1,17 +1,19 @@
 import { chain } from 'lodash';
-import { getTemplateSrv } from '@grafana/runtime';
-import { stringToJsRegex } from '@grafana/data';
 
-import { KeyedVariableIdentifier } from '../state/types';
+import { stringToJsRegex } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+
 import { ThunkResult } from '../../../types';
-import { createDataSourceOptions } from './reducer';
-import { validateVariableSelectionState } from '../state/actions';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { getVariable } from '../state/selectors';
-import { DataSourceVariableModel } from '../types';
 import { changeVariableEditorExtended } from '../editor/reducer';
+import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { getVariable } from '../state/selectors';
+import { KeyedVariableIdentifier } from '../state/types';
+import { DataSourceVariableModel } from '../types';
 import { toVariablePayload } from '../utils';
+
+import { createDataSourceOptions } from './reducer';
 
 export interface DataSourceVariableActionDependencies {
   getDatasourceSrv: typeof getDatasourceSrv;

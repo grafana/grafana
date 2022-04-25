@@ -1,7 +1,8 @@
-import { DashboardAcl } from './acl';
 import { DataQuery } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { VariableModel } from 'app/features/variables/types';
+
+import { DashboardAcl } from './acl';
 
 export interface DashboardDTO {
   redirectUri?: string;

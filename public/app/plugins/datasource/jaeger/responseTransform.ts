@@ -7,6 +7,7 @@ import {
   TraceSpanRow,
 } from '@grafana/data';
 import { transformTraceData } from '@jaegertracing/jaeger-ui-components';
+
 import { JaegerResponse, Span, TraceProcess, TraceResponse } from './types';
 
 export function createTraceFrame(data: TraceResponse): DataFrame {
