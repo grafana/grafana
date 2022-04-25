@@ -117,14 +117,14 @@ export function getStackingGroups(frame: DataFrame) {
     let transform = custom.transform;
     let stackDir =
       transform === GraphTransform.Constant
-        ? vals[0] > 0
+        ? vals[0] != null && vals[0] >= 0
           ? StackDirection.Pos
           : StackDirection.Neg
         : transform === GraphTransform.NegativeY
-        ? vals.some((v) => v > 0)
+        ? vals.some((v) => v != null && v >= 0)
           ? StackDirection.Neg
           : StackDirection.Pos
-        : vals.some((v) => v > 0)
+        : vals.some((v) => v != null && v >= 0)
         ? StackDirection.Pos
         : StackDirection.Neg;
 

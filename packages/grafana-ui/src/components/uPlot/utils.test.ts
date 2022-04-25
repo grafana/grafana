@@ -580,13 +580,13 @@ describe('auto stacking groups', () => {
           "dir": -1,
           "series": Array [
             1,
-            3,
           ],
         },
         Object {
           "dir": 1,
           "series": Array [
             2,
+            3,
           ],
         },
       ]
@@ -622,11 +622,6 @@ describe('auto stacking groups', () => {
           "series": Array [
             1,
             2,
-          ],
-        },
-        Object {
-          "dir": -1,
-          "series": Array [
             3,
           ],
         },
