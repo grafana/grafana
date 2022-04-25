@@ -1,7 +1,9 @@
+import React from 'react';
+
 import { PanelData, QueryResultMetaStat, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+
 import { InspectStatsTable } from './InspectStatsTable';
-import React from 'react';
 
 interface InspectStatsTabProps {
   data: PanelData;

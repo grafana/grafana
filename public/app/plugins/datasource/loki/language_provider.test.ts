@@ -1,11 +1,11 @@
 import Plain from 'slate-plain-serializer';
 
-import LanguageProvider, { LokiHistoryItem } from './language_provider';
+import { AbstractLabelOperator } from '@grafana/data';
 import { TypeaheadInput } from '@grafana/ui';
 
-import { makeMockLokiDatasource } from './mocks';
 import { LokiDatasource } from './datasource';
-import { AbstractLabelOperator } from '@grafana/data';
+import LanguageProvider, { LokiHistoryItem } from './language_provider';
+import { makeMockLokiDatasource } from './mocks';
 import { LokiQueryType } from './types';
 
 jest.mock('app/store/store', () => ({

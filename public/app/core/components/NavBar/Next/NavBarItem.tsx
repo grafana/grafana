@@ -1,18 +1,20 @@
-import React, { ReactNode } from 'react';
-import { Item } from '@react-stately/collections';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme2, locationUtil, NavMenuItemType, NavModelItem } from '@grafana/data';
-import { IconName, useTheme2 } from '@grafana/ui';
-import { locationService } from '@grafana/runtime';
-
-import { NavBarMenuItem } from './NavBarMenuItem';
-import { getNavBarItemWithoutMenuStyles, NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
-import { NavBarItemMenuTrigger } from './NavBarItemMenuTrigger';
-import { NavBarItemMenu } from './NavBarItemMenu';
-import { getNavModelItemKey } from '../utils';
 import { useLingui } from '@lingui/react';
-import menuItemTranslations from '../navBarItem-translations';
+import { Item } from '@react-stately/collections';
+import React, { ReactNode } from 'react';
+
+import { GrafanaTheme2, locationUtil, NavMenuItemType, NavModelItem } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { IconName, useTheme2 } from '@grafana/ui';
+
 import { useNavBarContext } from '../context';
+import menuItemTranslations from '../navBarItem-translations';
+import { getNavModelItemKey } from '../utils';
+
+import { NavBarItemMenu } from './NavBarItemMenu';
+import { NavBarItemMenuTrigger } from './NavBarItemMenuTrigger';
+import { getNavBarItemWithoutMenuStyles, NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
+import { NavBarMenuItem } from './NavBarMenuItem';
 
 export interface Props {
   isActive?: boolean;
@@ -102,12 +104,13 @@ const NavBarItem = ({
               const translationKey = item.id && menuItemTranslations[item.id];
               const itemText = translationKey ? i18n._(translationKey) : item.text;
               const isSection = item.menuItemType === NavMenuItemType.Section;
+              const icon = item.showIconInNavbar && !isSection ? (item.icon as IconName) : undefined;
 
               return (
                 <Item key={getNavModelItemKey(item)} textValue={item.text}>
                   <NavBarMenuItem
                     isDivider={!isSection && item.divider}
-                    icon={isSection ? undefined : (item.icon as IconName)}
+                    icon={icon}
                     target={item.target}
                     text={itemText}
                     url={item.url}

@@ -1,28 +1,28 @@
+import { css } from '@emotion/css';
 import React, { FC, useMemo, useState } from 'react';
+import { useForm, FormProvider, UseFormWatch } from 'react-hook-form';
+import { useDispatch } from 'react-redux';
+import { Link } from 'react-router-dom';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { PageToolbar, Button, useStyles2, CustomScrollbar, Spinner, ConfirmModal } from '@grafana/ui';
-import { css } from '@emotion/css';
+import { useAppNotification } from 'app/core/copy/appNotification';
+import { useCleanup } from 'app/core/hooks/useCleanup';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { RuleWithLocation } from 'app/types/unified-alerting';
+
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { initialAsyncRequestState } from '../../utils/redux';
+import { rulerRuleToFormValues, getDefaultFormValues, getDefaultQueries } from '../../utils/rule-form';
+import * as ruleId from '../../utils/rule-id';
 
 import { AlertTypeStep } from './AlertTypeStep';
-import { DetailsStep } from './DetailsStep';
-import { QueryStep } from './QueryStep';
-import { useForm, FormProvider, UseFormWatch } from 'react-hook-form';
-
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { initialAsyncRequestState } from '../../utils/redux';
-import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
-import { RuleWithLocation } from 'app/types/unified-alerting';
-import { useDispatch } from 'react-redux';
-import { useCleanup } from 'app/core/hooks/useCleanup';
-import { rulerRuleToFormValues, getDefaultFormValues, getDefaultQueries } from '../../utils/rule-form';
-import { Link } from 'react-router-dom';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { useAppNotification } from 'app/core/copy/appNotification';
-
 import { CloudConditionsStep } from './CloudConditionsStep';
+import { DetailsStep } from './DetailsStep';
 import { GrafanaConditionsStep } from './GrafanaConditionsStep';
-import * as ruleId from '../../utils/rule-id';
+import { QueryStep } from './QueryStep';
 import { RuleInspector } from './RuleInspector';
 
 type Props = {

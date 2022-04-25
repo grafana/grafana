@@ -1,6 +1,8 @@
-import React, { FC, useState } from 'react';
 import { cx } from '@emotion/css';
+import React, { FC, useState } from 'react';
+
 import { Button, Collapse, Field, Form, Input, InputControl, Link, MultiSelect, Select, useStyles2 } from '@grafana/ui';
+
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
 import {
   mapMultiSelectValueToStrings,
@@ -11,6 +13,7 @@ import {
 } from '../../utils/amroutes';
 import { makeAMLink } from '../../utils/misc';
 import { timeOptions } from '../../utils/time';
+
 import { getFormStyles } from './formStyles';
 
 export interface AmRootRouteFormProps {

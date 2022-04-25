@@ -1,8 +1,10 @@
 import React, { FC } from 'react';
 import { useAsync } from 'react-use';
-import { Icon, Select } from '@grafana/ui';
+
 import { SelectableValue } from '@grafana/data';
+import { Icon, Select } from '@grafana/ui';
 import { DEFAULT_SORT } from 'app/features/search/constants';
+
 import { SearchSrv } from '../../services/search_srv';
 
 const searchSrv = new SearchSrv();

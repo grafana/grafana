@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -35,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/searchusers"
@@ -236,7 +236,6 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 	store := sqlstore.InitTestDB(t)
 	hs := &HTTPServer{
 		Cfg:                cfg,
-		Bus:                bus.GetBus(),
 		Live:               newTestLive(t, store),
 		Features:           features,
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
@@ -327,7 +326,6 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	return &HTTPServer{
 		Cfg:           cfg,
 		Features:      features,
-		Bus:           bus.GetBus(),
 		AccessControl: accesscontrolmock.New().WithDisabled(),
 	}
 }
@@ -378,13 +376,13 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 	hs := &HTTPServer{
 		Cfg:                cfg,
 		Features:           features,
-		Bus:                bus.GetBus(),
 		Live:               newTestLive(t, db),
 		QuotaService:       &quota.QuotaService{Cfg: cfg},
 		RouteRegister:      routeRegister,
 		SQLStore:           store,
 		searchUsersService: searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
 		dashboardService:   dashboardservice.ProvideDashboardService(cfg, dashboardsStore, nil, features, accesscontrolmock.NewPermissionsServicesMock()),
+		preferenceService:  preftest.NewPreferenceServiceFake(),
 	}
 
 	// Defining the accesscontrol service has to be done before registering routes
@@ -405,7 +403,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		// Perform role registration
 		err := hs.declareFixedRoles()
 		require.NoError(t, err)
-		err = ac.RegisterFixedRoles()
+		err = ac.RegisterFixedRoles(context.Background())
 		require.NoError(t, err)
 		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, database.ProvideService(db))
 		require.NoError(t, err)

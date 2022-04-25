@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -52,6 +51,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
@@ -85,7 +85,6 @@ type HTTPServer struct {
 
 	PluginContextProvider        *plugincontext.Provider
 	RouteRegister                routing.RouteRegister
-	Bus                          bus.Bus
 	RenderService                rendering.Service
 	Cfg                          *setting.Cfg
 	Features                     *featuremgmt.FeatureManager
@@ -149,13 +148,14 @@ type HTTPServer struct {
 	DashboardsnapshotsService    *dashboardsnapshots.Service
 	PluginSettings               *pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
+	preferenceService            pref.Service
 }
 
 type ServerOptions struct {
 	Listener net.Listener
 }
 
-func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
+func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	renderService rendering.Service, licensing models.Licensing, hooksService *hooks.HooksService,
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
 	pluginRequestValidator models.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
@@ -180,7 +180,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
 	dashboardsnapshotsService *dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings *pluginSettings.Service,
-	avatarCacheServer *avatar.AvatarCacheServer,
+	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -188,7 +188,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	hs := &HTTPServer{
 		Cfg:                          cfg,
 		RouteRegister:                routeRegister,
-		Bus:                          bus,
 		RenderService:                renderService,
 		License:                      licensing,
 		HooksService:                 hooksService,
@@ -254,6 +253,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		PluginSettings:               pluginSettings,
 		permissionServices:           permissionsServices,
 		AvatarCacheServer:            avatarCacheServer,
+		preferenceService:            preferenceService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

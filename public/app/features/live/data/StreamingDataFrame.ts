@@ -301,7 +301,7 @@ export class StreamingDataFrame implements DataFrame {
       if (values.length !== this.fields.length) {
         if (this.fields.length) {
           throw new Error(
-            `push message mismatch.  Expected: ${this.fields.length}, recieved: ${values.length} (labels=${
+            `push message mismatch.  Expected: ${this.fields.length}, received: ${values.length} (labels=${
               this.pushMode === PushMode.labels
             })`
           );

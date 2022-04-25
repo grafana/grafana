@@ -14,6 +14,7 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	ol "github.com/opentracing/opentracing-go/log"
+	"github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/zipkin"
 	"go.opentelemetry.io/otel/attribute"
@@ -50,6 +51,21 @@ func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 	}
 
 	return ots, ots.initOpentelemetryTracer()
+}
+
+type traceKey struct{}
+type traceValue struct {
+	ID        string
+	IsSampled bool
+}
+
+func TraceIDFromContext(c context.Context, requireSampled bool) string {
+	v := c.Value(traceKey{})
+	// Return traceID if a) it is present and b) it is sampled when requireSampled param is true
+	if trace, ok := v.(traceValue); ok && (!requireSampled || trace.IsSampled) {
+		return trace.ID
+	}
+	return ""
 }
 
 type Opentracing struct {
@@ -172,6 +188,9 @@ func (ts *Opentracing) Run(ctx context.Context) error {
 func (ts *Opentracing) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, spanName)
 	opentracingSpan := OpentracingSpan{span: span}
+	if sctx, ok := span.Context().(jaeger.SpanContext); ok {
+		ctx = context.WithValue(ctx, traceKey{}, traceValue{sctx.TraceID().String(), sctx.IsSampled()})
+	}
 	return ctx, opentracingSpan
 }
 

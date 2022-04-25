@@ -36,7 +36,7 @@ func (hs *HTTPServer) GetAPIKeys(c *models.ReqContext) response.Response {
 		}
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 // DeleteAPIKey deletes an API key
@@ -69,6 +69,9 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 	}
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
+	}
+	if !c.OrgRole.Includes(cmd.Role) {
+		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
 	}
 
 	if hs.Cfg.ApiKeyMaxSecondsToLive != -1 {
@@ -104,5 +107,5 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 		Key:  newKeyInfo.ClientSecret,
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }

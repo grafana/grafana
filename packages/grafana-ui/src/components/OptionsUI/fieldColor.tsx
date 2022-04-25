@@ -1,4 +1,6 @@
+import { css } from '@emotion/css';
 import React, { CSSProperties, FC } from 'react';
+
 import {
   FieldConfigEditorProps,
   FieldColorModeId,
@@ -11,12 +13,13 @@ import {
   FieldColorSeriesByMode,
   getFieldColorMode,
 } from '@grafana/data';
-import { Select } from '../Select/Select';
-import { ColorValueEditor } from './color';
+
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { css } from '@emotion/css';
 import { Field } from '../Forms/Field';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
+import { Select } from '../Select/Select';
+
+import { ColorValueEditor } from './color';
 
 export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | undefined, FieldColorConfigSettings>> = ({
   value,

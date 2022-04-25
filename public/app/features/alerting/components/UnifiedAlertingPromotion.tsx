@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
+import { useLocalStorage } from 'react-use';
 
 import { Alert } from '@grafana/ui';
-import { useLocalStorage } from 'react-use';
 
 export const LOCAL_STORAGE_KEY = 'grafana.legacyalerting.unifiedalertingpromo';
 

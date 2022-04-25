@@ -1,3 +1,6 @@
+import { isString } from 'lodash';
+import { map } from 'rxjs/operators';
+
 import {
   ArrayVector,
   DataFrame,
@@ -8,8 +11,7 @@ import {
   SynchronousDataTransformerInfo,
 } from '@grafana/data';
 import { findField } from 'app/features/dimensions';
-import { isString } from 'lodash';
-import { map } from 'rxjs/operators';
+
 import { FieldExtractorID, fieldExtractors } from './fieldExtractors';
 
 export interface ExtractFieldsOptions {

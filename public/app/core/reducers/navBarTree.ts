@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
 import { NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 

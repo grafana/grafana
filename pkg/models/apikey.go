@@ -26,6 +26,7 @@ type ApiKey struct {
 
 // ---------------------
 // COMMANDS
+// swagger:model
 type AddApiKeyCommand struct {
 	Name          string   `json:"name" binding:"Required"`
 	Role          RoleType `json:"role" binding:"Required"`

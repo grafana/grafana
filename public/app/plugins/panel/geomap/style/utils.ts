@@ -1,5 +1,6 @@
 import { config } from '@grafana/runtime';
 import { TextDimensionMode } from 'app/features/dimensions';
+
 import { getMarkerMaker } from './markers';
 import { defaultStyleConfig, StyleConfig, StyleConfigFields, StyleConfigState } from './types';
 

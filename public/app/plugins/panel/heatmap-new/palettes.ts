@@ -1,8 +1,10 @@
-import { GrafanaTheme2 } from '@grafana/data';
 import * as d3 from 'd3';
 import * as d3ScaleChromatic from 'd3-scale-chromatic';
-import { HeatmapColorOptions, defaultPanelOptions, HeatmapColorMode, HeatmapColorScale } from './models.gen';
 import tinycolor from 'tinycolor2';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { HeatmapColorOptions, defaultPanelOptions, HeatmapColorMode, HeatmapColorScale } from './models.gen';
 
 // https://observablehq.com/@d3/color-schemes?collection=@d3/d3-scale-chromatic
 

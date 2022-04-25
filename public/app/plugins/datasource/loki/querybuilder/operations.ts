@@ -1,5 +1,8 @@
-import { createAggregationOperation } from '../../prometheus/querybuilder/aggregations';
-import { getPromAndLokiOperationDisplayName } from '../../prometheus/querybuilder/shared/operationUtils';
+import {
+  createAggregationOperation,
+  createAggregationOperationWithParam,
+  getPromAndLokiOperationDisplayName,
+} from '../../prometheus/querybuilder/shared/operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
@@ -7,6 +10,7 @@ import {
   VisualQueryModeller,
 } from '../../prometheus/querybuilder/shared/types';
 import { FUNCTIONS } from '../syntax';
+
 import { binaryScalarOperations } from './binaryScalarOperations';
 import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
@@ -16,8 +20,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     LokiOperationId.Min,
     LokiOperationId.Max,
     LokiOperationId.Avg,
-    LokiOperationId.TopK,
-    LokiOperationId.BottomK,
     LokiOperationId.Stddev,
     LokiOperationId.Stdvar,
     LokiOperationId.Count,
@@ -27,6 +29,20 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       orderRank: LokiOperationOrder.Last,
     })
   );
+
+  const aggregationsWithParam = [LokiOperationId.TopK, LokiOperationId.BottomK].flatMap((opId) => {
+    return createAggregationOperationWithParam(
+      opId,
+      {
+        params: [{ name: 'K-value', type: 'number' }],
+        defaultParams: [5],
+      },
+      {
+        addOperationHandler: addLokiOperation,
+        orderRank: LokiOperationOrder.Last,
+      }
+    );
+  });
 
   const list: QueryBuilderOperationDef[] = [
     createRangeOperation(LokiOperationId.Rate),
@@ -44,6 +60,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     createRangeOperation(LokiOperationId.StddevOverTime),
     createRangeOperation(LokiOperationId.QuantileOverTime),
     ...aggregations,
+    ...aggregationsWithParam,
     {
       id: LokiOperationId.Json,
       name: 'Json',
@@ -145,7 +162,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       renderer: (model, def, innerExpr) => `${innerExpr} | line_format \`${model.params[0]}\``,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
-        `This will replace log line using a specified template. The template can refer to stream labels and extracted labels. 
+        `This will replace log line using a specified template. The template can refer to stream labels and extracted labels.
 
         Example: \`{{.status_code}} - {{.message}}\`
 
@@ -166,7 +183,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       renderer: (model, def, innerExpr) => `${innerExpr} | label_format ${model.params[1]}=\`${model.params[0]}\``,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
-        `This will change name of label to desired new label. In the example below, label "error_level" will be renamed to "level". 
+        `This will change name of label to desired new label. In the example below, label "error_level" will be renamed to "level".
 
         Example: error_level=\`level\`
 

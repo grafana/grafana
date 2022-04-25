@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	ServiceAccountFeatureToggleNotFound = "FeatureToggle service-accounts not found, try adding it to your custom.ini"
+	ServiceAccountFeatureToggleNotFound = "FeatureToggle serviceAccounts not found, try adding it to your custom.ini"
 )
 
 type ServiceAccountsService struct {
@@ -67,4 +67,12 @@ func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgI
 		return nil
 	}
 	return sa.store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
+}
+
+func (sa *ServiceAccountsService) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
+	if !sa.features.IsEnabled(featuremgmt.FlagServiceAccounts) {
+		sa.log.Debug(ServiceAccountFeatureToggleNotFound)
+		return 0, nil
+	}
+	return sa.store.RetrieveServiceAccountIdByName(ctx, orgID, name)
 }

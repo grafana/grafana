@@ -1,12 +1,13 @@
+import { uniq } from 'lodash';
 import React from 'react';
 import { Redirect } from 'react-router-dom';
+
+import { OrgRole } from '@grafana/data';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { RouteDescriptor } from 'app/core/navigation/types';
-import { uniq } from 'lodash';
-import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
-import { OrgRole } from '@grafana/data';
+
 import { evaluateAccess } from './unified/utils/access-control';
 
 const commonRoutes: RouteDescriptor[] = [
@@ -101,11 +102,10 @@ const unifiedRoutes: RouteDescriptor[] = [
   },
   {
     path: '/alerting/routes',
-    roles: () =>
-      contextSrv.evaluatePermission(config.unifiedAlertingEnabled ? () => ['Editor', 'Admin'] : () => [], [
-        AccessControlAction.AlertingNotificationsRead,
-        AccessControlAction.AlertingNotificationsExternalRead,
-      ]),
+    roles: evaluateAccess(
+      [AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsExternalRead],
+      [OrgRole.Editor, OrgRole.Admin]
+    ),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/AmRoutes')
     ),
@@ -263,6 +263,10 @@ const unifiedRoutes: RouteDescriptor[] = [
   {
     path: '/alerting/:sourceName/:name/find',
     pageClass: 'page-alerting',
+    roles: evaluateAccess(
+      [AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead],
+      [OrgRole.Viewer, OrgRole.Editor, OrgRole.Admin]
+    ),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertingRedirectToRule"*/ 'app/features/alerting/unified/RedirectToRuleViewer')
     ),
