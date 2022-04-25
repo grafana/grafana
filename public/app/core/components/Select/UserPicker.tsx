@@ -1,16 +1,10 @@
-// Libraries
-import React, { Component } from 'react';
 import { debounce, isNil } from 'lodash';
+import React, { Component } from 'react';
 
-// Components
-import { AsyncSelect } from '@grafana/ui';
-
-// Utils & Services
-import { getBackendSrv } from '@grafana/runtime';
-
-// Types
-import { OrgUser } from 'app/types';
 import { SelectableValue } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
+import { AsyncSelect } from '@grafana/ui';
+import { OrgUser } from 'app/types';
 
 export interface Props {
   onSelected: (user: SelectableValue<OrgUser['userId']>) => void;

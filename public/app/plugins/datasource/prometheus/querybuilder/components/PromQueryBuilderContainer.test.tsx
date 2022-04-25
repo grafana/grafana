@@ -1,13 +1,15 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
-import { PrometheusDatasource } from '../../datasource';
-import { EmptyLanguageProviderMock } from '../../language_provider.mock';
-import PromQlLanguageProvider from '../../language_provider';
-import { addOperation } from '../shared/OperationList.testUtils';
-import { PromQuery } from '../../types';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import { PrometheusDatasource } from '../../datasource';
+import PromQlLanguageProvider from '../../language_provider';
+import { EmptyLanguageProviderMock } from '../../language_provider.mock';
+import { PromQuery } from '../../types';
+import { addOperation } from '../shared/OperationList.testUtils';
 import { getOperationParamId } from '../shared/operationUtils';
+
+import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 
 describe('PromQueryBuilderContainer', () => {
   it('translates query between string and model', async () => {

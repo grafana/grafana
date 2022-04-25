@@ -1,5 +1,6 @@
 import { LokiAndPromQueryModellerBase } from '../../prometheus/querybuilder/shared/LokiAndPromQueryModellerBase';
 import { QueryBuilderLabelFilter } from '../../prometheus/querybuilder/shared/types';
+
 import { getOperationDefinitions } from './operations';
 import { LokiOperationId, LokiQueryPattern, LokiVisualQueryOperationCategory } from './types';
 

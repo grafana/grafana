@@ -5,9 +5,11 @@ import {
   RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
+
 import { deleteRulerRulesGroup, fetchRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from '../api/ruler';
 import { RuleFormValues } from '../types/rule-form';
 import * as ruleId from '../utils/rule-id';
+
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { formValuesToRulerGrafanaRuleDTO, formValuesToRulerRuleDTO } from './rule-form';
 import {

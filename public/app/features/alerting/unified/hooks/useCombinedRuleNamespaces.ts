@@ -1,3 +1,5 @@
+import { useMemo, useRef } from 'react';
+
 import {
   CombinedRule,
   CombinedRuleGroup,
@@ -8,7 +10,7 @@ import {
   RulesSource,
 } from 'app/types/unified-alerting';
 import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
-import { useMemo, useRef } from 'react';
+
 import {
   getAllRulesSources,
   getRulesSourceByName,
@@ -16,6 +18,7 @@ import {
   isGrafanaRulesSource,
 } from '../utils/datasource';
 import { isAlertingRule, isAlertingRulerRule, isRecordingRulerRule } from '../utils/rules';
+
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 interface CacheValue {

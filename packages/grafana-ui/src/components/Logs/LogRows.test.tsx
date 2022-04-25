@@ -1,9 +1,11 @@
-import React from 'react';
-import { range } from 'lodash';
-import { LogRows, PREVIEW_LIMIT } from './LogRows';
 import { mount } from 'enzyme';
+import { range } from 'lodash';
+import React from 'react';
+
 import { LogLevel, LogRowModel, LogsDedupStrategy, MutableDataFrame, LogsSortOrder } from '@grafana/data';
+
 import { LogRow } from './LogRow';
+import { LogRows, PREVIEW_LIMIT } from './LogRows';
 
 describe('LogRows', () => {
   it('renders rows', () => {

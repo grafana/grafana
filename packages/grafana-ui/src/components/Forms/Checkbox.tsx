@@ -1,9 +1,12 @@
-import React, { HTMLProps, useCallback } from 'react';
-import { GrafanaTheme2 } from '@grafana/data';
-import { getLabelStyles } from './Label';
-import { stylesFactory, useStyles2 } from '../../themes';
 import { css, cx } from '@emotion/css';
+import React, { HTMLProps, useCallback } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { stylesFactory, useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+
+import { getLabelStyles } from './Label';
 
 export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   label?: string;

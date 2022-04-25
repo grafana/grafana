@@ -1,6 +1,5 @@
 import { NavModel, NavModelItem } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
-
 import { AccessControlAction, FolderDTO } from 'app/types';
 
 export function buildNavModel(folder: FolderDTO): NavModelItem {

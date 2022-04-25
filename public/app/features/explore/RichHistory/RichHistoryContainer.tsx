@@ -7,9 +7,7 @@ import { ExploreItemState, StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
 // Components, enums
-import { RichHistory, Tabs } from './RichHistory';
-
-//Actions
+import { ExploreDrawer } from '../ExploreDrawer';
 import {
   deleteRichHistory,
   initRichHistory,
@@ -18,7 +16,10 @@ import {
   updateHistorySettings,
   updateHistorySearchFilters,
 } from '../state/history';
-import { ExploreDrawer } from '../ExploreDrawer';
+
+import { RichHistory, Tabs } from './RichHistory';
+
+//Actions
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;

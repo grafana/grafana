@@ -1,12 +1,14 @@
-import React, { createRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { Button, ButtonGroup, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
-import { FocusScope } from '@react-aria/focus';
 import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
+import React, { createRef, useState } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, ButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { MediaType, PickerTabType, ResourceFolderName } from '../types';
+
 import { FolderPickerTab } from './FolderPickerTab';
 import { URLPickerTab } from './URLPickerTab';
 

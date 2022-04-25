@@ -1,9 +1,12 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
-import { ExploreId } from '../../../types/explore';
-import { RichHistory, RichHistoryProps, Tabs } from './RichHistory';
+
 import { SortOrder } from '../../../core/utils/richHistoryTypes';
+import { ExploreId } from '../../../types/explore';
+
+import { RichHistory, RichHistoryProps, Tabs } from './RichHistory';
 
 jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
 

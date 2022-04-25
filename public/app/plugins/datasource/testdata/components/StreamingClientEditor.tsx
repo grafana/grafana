@@ -1,6 +1,8 @@
 import React, { ChangeEvent } from 'react';
-import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
+
 import { SelectableValue } from '@grafana/data';
+import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
+
 import { EditorProps } from '../QueryEditor';
 import { StreamingQuery } from '../types';
 

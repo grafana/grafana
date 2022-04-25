@@ -1,7 +1,10 @@
 import React, { memo, useMemo, useCallback } from 'react';
-import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
+
 import { FieldMatcherID, fieldMatchers, SelectableValue, DataFrame } from '@grafana/data';
+
 import { Select } from '../Select/Select';
+
+import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 
 /**
  * UI to configure "fields by frame refId"-matcher.

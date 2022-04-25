@@ -1,11 +1,14 @@
 import React, { PureComponent } from 'react';
-import { Button, ClipboardButton, Field, Icon, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
+
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { Button, ClipboardButton, Field, Icon, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+
 import { VariableRefresh } from '../../../variables/types';
+
 import { ShareModalTabProps } from './types';
 
 const snapshotApiUrl = '/api/snapshots';

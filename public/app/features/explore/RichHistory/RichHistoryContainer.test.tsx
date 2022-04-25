@@ -1,10 +1,11 @@
-import React from 'react';
 import { render } from '@testing-library/react';
+import React from 'react';
 
-import { ExploreId } from '../../../types/explore';
-import { RichHistoryContainer, Props } from './RichHistoryContainer';
-import { Tabs } from './RichHistory';
 import { SortOrder } from '../../../core/utils/richHistoryTypes';
+import { ExploreId } from '../../../types/explore';
+
+import { Tabs } from './RichHistory';
+import { RichHistoryContainer, Props } from './RichHistoryContainer';
 
 jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
 

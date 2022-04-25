@@ -1,9 +1,12 @@
 import React, { FC } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Button, Icon, InlineField, InlineFieldRow } from '@grafana/ui';
-import { Condition } from './Condition';
+
 import { ClassicCondition, ExpressionQuery } from '../types';
 import { defaultCondition } from '../utils/expressionTypes';
+
+import { Condition } from './Condition';
 
 interface Props {
   query: ExpressionQuery;
