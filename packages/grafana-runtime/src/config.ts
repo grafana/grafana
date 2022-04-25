@@ -47,6 +47,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
+  queryHistoryEnabled = false;
   helpEnabled = false;
   profileEnabled = false;
   ldapEnabled = false;
@@ -71,6 +72,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   featureToggles: FeatureToggles = {};
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
+
   dashboardPreviews: {
     systemRequirements: {
       met: boolean;
