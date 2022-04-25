@@ -1,7 +1,8 @@
-import React from 'react';
-import { CustomHeadersSettings, Props } from './CustomHeadersSettings';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import { CustomHeadersSettings, Props } from './CustomHeadersSettings';
 
 const setup = (propOverrides?: object) => {
   const onChange = jest.fn();

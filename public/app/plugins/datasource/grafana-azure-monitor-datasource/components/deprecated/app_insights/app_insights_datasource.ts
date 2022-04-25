@@ -1,6 +1,7 @@
+import { isString } from 'lodash';
+
 import { DataQueryRequest, DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
-import { isString } from 'lodash';
 
 import TimegrainConverter from '../../../time_grain_converter';
 import {
@@ -10,6 +11,7 @@ import {
   DeprecatedAzureQueryType,
 } from '../../../types';
 import { routeNames } from '../../../utils/common';
+
 import ResponseParser from './response_parser';
 
 export interface LogAnalyticsColumn {

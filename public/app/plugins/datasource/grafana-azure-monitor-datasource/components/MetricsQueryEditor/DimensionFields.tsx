@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Select, Input, HorizontalGroup, VerticalGroup, MultiSelect } from '@grafana/ui';
 
-import { Field } from '../Field';
 import { AzureMetricDimension, AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types';
+import { Field } from '../Field';
+
 import { appendDimensionFilter, removeDimensionFilter, setDimensionFilterValue } from './setQueryValue';
 import { SelectableValue, DataFrame } from '@grafana/data';
 

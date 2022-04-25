@@ -1,12 +1,14 @@
-import React, { RefObject, useMemo, useState } from 'react';
-import { Collapse } from '@grafana/ui';
-import { DataFrame, SplitOpen, PanelData } from '@grafana/data';
-import { TraceView } from './TraceView';
-import { ExploreId } from 'app/types/explore';
 import TracePageSearchBar from '@jaegertracing/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar';
+import React, { RefObject, useMemo, useState } from 'react';
+
+import { DataFrame, SplitOpen, PanelData } from '@grafana/data';
+import { Collapse } from '@grafana/ui';
+import { ExploreId } from 'app/types/explore';
+
+import { TraceView } from './TraceView';
+import { useChildrenState } from './useChildrenState';
 import { useSearch } from './useSearch';
 import { transformDataFrames } from './utils/transform';
-import { useChildrenState } from './useChildrenState';
 interface Props {
   dataFrames: DataFrame[];
   splitOpenFn: SplitOpen;

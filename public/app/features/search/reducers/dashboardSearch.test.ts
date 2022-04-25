@@ -1,6 +1,7 @@
+import { searchResults, sections } from '../testData';
+
 import { FETCH_ITEMS, FETCH_RESULTS, TOGGLE_SECTION, MOVE_SELECTION_DOWN, MOVE_SELECTION_UP } from './actionTypes';
 import { searchReducer as reducer, dashboardsSearchState } from './dashboardSearch';
-import { searchResults, sections } from '../testData';
 
 const defaultState = { selectedIndex: 0, loading: false, results: sections as any[], initialLoading: false };
 describe('Dashboard Search reducer', () => {

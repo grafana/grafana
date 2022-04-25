@@ -1,18 +1,19 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { take } from 'lodash';
 import { css, cx } from '@emotion/css';
+import { take } from 'lodash';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, InterpolateFunction, PanelProps } from '@grafana/data';
 import { CustomScrollbar, stylesFactory, useStyles2 } from '@grafana/ui';
 import { Icon, IconProps } from '@grafana/ui/src/components/Icon/Icon';
 import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import impressionSrv from 'app/core/services/impression_srv';
-import { DashboardSearchHit } from 'app/features/search/types';
-import { getStyles } from './styles';
-import { PanelLayout, PanelOptions } from './models.gen';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { SearchCard } from 'app/features/search/components/SearchCard';
+import { DashboardSearchHit } from 'app/features/search/types';
+
+import { PanelLayout, PanelOptions } from './models.gen';
+import { getStyles } from './styles';
 
 type Dashboard = DashboardSearchHit & { isSearchResult?: boolean; isRecent?: boolean };
 

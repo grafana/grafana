@@ -3,6 +3,7 @@ import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
+
 import { isCloudRulesSource, isGrafanaRulesSource } from './datasource';
 import { isGrafanaRulerRule } from './rules';
 

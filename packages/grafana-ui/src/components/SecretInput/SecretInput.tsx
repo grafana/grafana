@@ -1,7 +1,8 @@
 import * as React from 'react';
+
+import { Button } from '../Button';
 import { Input } from '../Input/Input';
 import { HorizontalGroup } from '../Layout/Layout';
-import { Button } from '../Button';
 
 export type Props = React.ComponentProps<typeof Input> & {
   /** TRUE if the secret was already configured. (It is needed as often the backend doesn't send back the actual secret, only the information that it was configured) */

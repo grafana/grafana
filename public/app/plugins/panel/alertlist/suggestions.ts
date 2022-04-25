@@ -1,4 +1,5 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
+
 import { AlertListOptions } from './types';
 
 export class AlertListSuggestionsSupplier {

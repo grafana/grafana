@@ -1,7 +1,7 @@
-import { SelectableValue } from '@grafana/data';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { AliasBy, Project, VisualMetricQueryEditor } from '.';
+import { SelectableValue } from '@grafana/data';
+
 import CloudMonitoringDatasource from '../datasource';
 import { getAlignmentPickerData } from '../functions';
 import {
@@ -15,7 +15,10 @@ import {
   SLOQuery,
   ValueTypes,
 } from '../types';
+
 import { MQLQueryEditor } from './MQLQueryEditor';
+
+import { AliasBy, Project, VisualMetricQueryEditor } from '.';
 
 export interface Props {
   refId: string;

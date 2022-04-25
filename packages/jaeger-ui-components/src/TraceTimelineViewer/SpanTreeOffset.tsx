@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
-import { get as _get } from 'lodash';
-import IoChevronRight from 'react-icons/lib/io/chevron-right';
-import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import { get as _get } from 'lodash';
+import React from 'react';
+import IoChevronRight from 'react-icons/lib/io/chevron-right';
+import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
+import { autoColor } from '../Theme';
 import { TraceSpan } from '../types/trace';
 import spanAncestorIds from '../utils/span-ancestor-ids';
-import { autoColor } from '../Theme';
 
 export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
