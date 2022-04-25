@@ -55,9 +55,9 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Respons
 		"namespace",
 		namespace.Title,
 	}
-	var ruleGroup *string
+	var ruleGroup string
 	if group, ok := web.Params(c.Req)[":Groupname"]; ok {
-		ruleGroup = &group
+		ruleGroup = group
 		loggerCtx = append(loggerCtx, "group", group)
 	}
 	logger := srv.log.New(loggerCtx...)
@@ -181,7 +181,7 @@ func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Resp
 	q := ngmodels.ListAlertRulesQuery{
 		OrgID:         c.SignedInUser.OrgId,
 		NamespaceUIDs: []string{namespace.Uid},
-		RuleGroup:     &ruleGroup,
+		RuleGroup:     ruleGroup,
 	}
 	if err := srv.store.ListAlertRules(c.Req.Context(), &q); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
@@ -496,7 +496,7 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 	q := &ngmodels.ListAlertRulesQuery{
 		OrgID:         orgId,
 		NamespaceUIDs: []string{namespace.Uid},
-		RuleGroup:     &ruleGroupName,
+		RuleGroup:     ruleGroupName,
 	}
 	if err := ruleStore.ListAlertRules(ctx, q); err != nil {
 		return nil, fmt.Errorf("failed to query database for rules in the group %s: %w", ruleGroupName, err)

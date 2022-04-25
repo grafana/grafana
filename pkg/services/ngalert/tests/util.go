@@ -116,7 +116,7 @@ func CreateTestAlertRuleWithLabels(t *testing.T, ctx context.Context, dbstore *s
 	q := models.ListAlertRulesQuery{
 		OrgID:         orgID,
 		NamespaceUIDs: []string{"namespace"},
-		RuleGroup:     &ruleGroup,
+		RuleGroup:     ruleGroup,
 	}
 	err = dbstore.ListAlertRules(ctx, &q)
 	require.NoError(t, err)
