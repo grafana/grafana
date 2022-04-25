@@ -1,7 +1,8 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 
-import { SortOrder } from '../../../core/utils/richHistoryTypes';
+import { SortOrder } from 'app/core/utils/richHistory';
+
 import { ExploreId } from '../../../types/explore';
 
 import { Tabs } from './RichHistory';
