@@ -439,8 +439,13 @@ export class LokiDatasource
   }
 
   async metadataRequest(url: string, params?: Record<string, string | number>) {
-    const res = await lastValueFrom(this._request(url, params, { hideFromInspector: true }));
-    return res.data.data || res.data.values || [];
+    if (config.featureToggles.lokiBackendMode) {
+      const res = await this.getResource(url, params);
+      return res.data || res.values || [];
+    } else {
+      const res = await lastValueFrom(this._request(url, params, { hideFromInspector: true }));
+      return res.data.data || res.data.values || [];
+    }
   }
 
   async metricFindQuery(query: string) {
