@@ -1,7 +1,10 @@
 import { isEqual } from 'lodash';
 import React, { useEffect, useState } from 'react';
+
 import { EditorList } from '@grafana/experimental';
+
 import { MultiFilters } from '../../types';
+
 import { MultiFilterItem } from './MultiFilterItem';
 
 export interface Props {
