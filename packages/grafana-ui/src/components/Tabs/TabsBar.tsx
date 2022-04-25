@@ -23,7 +23,7 @@ const getTabsBarStyles = stylesFactory((theme: GrafanaTheme2, hideBorder = false
     tabs: css`
       position: relative;
       display: flex;
-      height: 41px;
+      height: ${theme.components.menuTabs.height}px;
     `,
   };
 });

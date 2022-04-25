@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -275,7 +274,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 
 	// validations only for RBAC. A user can mass delete all annotations in a (dashboard + panel) or a specific annotation
 	// if has access to that dashboard.
-	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+	if !hs.AccessControl.IsDisabled() {
 		var dashboardId int64
 
 		if cmd.AnnotationId != 0 {
@@ -351,7 +350,7 @@ func (hs *HTTPServer) canSaveAnnotation(c *models.ReqContext, annotation *annota
 	if annotation.GetType() == annotations.Dashboard {
 		return canEditDashboard(c, annotation.DashboardId)
 	} else {
-		if !hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		if hs.AccessControl.IsDisabled() {
 			return c.SignedInUser.HasRole(models.ROLE_EDITOR), nil
 		}
 		return true, nil
@@ -446,7 +445,7 @@ func AnnotationTypeScopeResolver() (string, accesscontrol.AttributeScopeResolveF
 
 func (hs *HTTPServer) canCreateAnnotation(c *models.ReqContext, dashboardId int64) (bool, error) {
 	if dashboardId != 0 {
-		if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		if !hs.AccessControl.IsDisabled() {
 			evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, accesscontrol.ScopeAnnotationsTypeDashboard)
 			if canSave, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator); err != nil || !canSave {
 				return canSave, err
@@ -454,7 +453,7 @@ func (hs *HTTPServer) canCreateAnnotation(c *models.ReqContext, dashboardId int6
 		}
 		return canEditDashboard(c, dashboardId)
 	} else { // organization annotations
-		if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+		if !hs.AccessControl.IsDisabled() {
 			evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, accesscontrol.ScopeAnnotationsTypeOrganization)
 			return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 		} else {
