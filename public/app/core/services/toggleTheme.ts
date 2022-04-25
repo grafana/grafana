@@ -1,9 +1,11 @@
+import { createTheme } from '@grafana/data';
 import { ThemeChangedEvent } from '@grafana/runtime';
+
 import appEvents from '../app_events';
 import { config } from '../config';
-import { PreferencesService } from './PreferencesService';
 import { contextSrv } from '../core';
-import { createTheme } from '@grafana/data';
+
+import { PreferencesService } from './PreferencesService';
 
 export async function toggleTheme(runtimeOnly: boolean) {
   const currentTheme = config.theme;

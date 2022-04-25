@@ -1,6 +1,8 @@
+import React, { FormEvent } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Label, Select } from '@grafana/ui';
-import React, { FormEvent } from 'react';
+
 import { EditorProps } from '../QueryEditor';
 import { SimulationQuery } from '../types';
 

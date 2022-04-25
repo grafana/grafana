@@ -1,17 +1,19 @@
 import React, { PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+
 import { NavModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Form, Spinner } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { NotificationChannelType, NotificationChannelDTO, StoreState } from 'app/types';
+
 import { NotificationChannelForm } from './components/NotificationChannelForm';
 import { loadNotificationChannel, testNotificationChannel, updateNotificationChannel } from './state/actions';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { mapChannelsToSelectableValue, transformSubmitData, transformTestData } from './utils/notificationChannels';
-import { NotificationChannelType, NotificationChannelDTO, StoreState } from 'app/types';
 import { resetSecureField } from './state/reducers';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { mapChannelsToSelectableValue, transformSubmitData, transformTestData } from './utils/notificationChannels';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {}
 

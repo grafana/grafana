@@ -1,13 +1,13 @@
-import React, { CSSProperties } from 'react';
 import { css } from '@emotion/css';
+import Moveable from 'moveable';
+import React, { CSSProperties } from 'react';
 import { ReplaySubject, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
-import Moveable from 'moveable';
 import Selecto from 'selecto';
 
-import { config } from 'app/core/config';
 import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { CanvasGroupOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import {
   ColorDimensionConfig,
@@ -24,10 +24,11 @@ import {
   getTextDimensionFromData,
   getScalarDimensionFromData,
 } from 'app/features/dimensions/utils';
-import { ElementState } from './element';
-import { RootElement } from './root';
-import { GroupState } from './group';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
+
+import { ElementState } from './element';
+import { GroupState } from './group';
+import { RootElement } from './root';
 
 export interface SelectionParams {
   targets: Array<HTMLElement | SVGElement>;
@@ -254,21 +255,20 @@ export class Scene {
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         targetedElement!.applyDrag(event);
-        this.moved.next(Date.now()); // TODO only on end
       })
       .on('dragGroup', (e) => {
         e.events.forEach((event) => {
           const targetedElement = this.findElementByTarget(event.target);
           targetedElement!.applyDrag(event);
         });
-        this.moved.next(Date.now()); // TODO only on end
       })
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
-
         if (targetedElement) {
           targetedElement?.setPlacementFromConstraint();
         }
+
+        this.moved.next(Date.now());
       })
       .on('resize', (event) => {
         const targetedElement = this.findElementByTarget(event.target);

@@ -1,5 +1,6 @@
 import { ThresholdsMode, VisualizationSuggestionsBuilder } from '@grafana/data';
 import { SuggestionName } from 'app/types/suggestions';
+
 import { GaugeOptions } from './types';
 
 export class GaugeSuggestionsSupplier {

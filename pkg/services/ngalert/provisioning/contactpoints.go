@@ -177,9 +177,9 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 		if err != nil {
 			return err
 		}
-		adapter := provenanceOrgAdapter{
-			inner: &contactPoint,
-			orgID: orgID,
+		adapter := ProvenanceOrgAdapter{
+			Inner: &contactPoint,
+			OrgID: orgID,
 		}
 		err = ecp.provenanceStore.SetProvenance(ctx, adapter, provenance)
 		if err != nil {
@@ -218,9 +218,9 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return err
 	}
 	// check that provenance is not changed in a invalid way
-	storedProvenance, err := ecp.provenanceStore.GetProvenance(ctx, provenanceOrgAdapter{
-		inner: &contactPoint,
-		orgID: orgID,
+	storedProvenance, err := ecp.provenanceStore.GetProvenance(ctx, ProvenanceOrgAdapter{
+		Inner: &contactPoint,
+		OrgID: orgID,
 	})
 	if err != nil {
 		return err
@@ -283,9 +283,9 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		if err != nil {
 			return err
 		}
-		adapter := provenanceOrgAdapter{
-			inner: &contactPoint,
-			orgID: orgID,
+		adapter := ProvenanceOrgAdapter{
+			Inner: &contactPoint,
+			OrgID: orgID,
 		}
 		err = ecp.provenanceStore.SetProvenance(ctx, adapter, provenance)
 		if err != nil {
@@ -330,11 +330,11 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 		return err
 	}
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err := ecp.provenanceStore.DeleteProvenance(ctx, provenanceOrgAdapter{
-			inner: &apimodels.EmbeddedContactPoint{
+		err := ecp.provenanceStore.DeleteProvenance(ctx, ProvenanceOrgAdapter{
+			Inner: &apimodels.EmbeddedContactPoint{
 				UID: uid,
 			},
-			orgID: orgID,
+			OrgID: orgID,
 		})
 		if err != nil {
 			return err

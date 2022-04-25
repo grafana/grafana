@@ -1,6 +1,7 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+
 import { histogramTransformer, buildHistogram, histogramFieldsToFrame } from './histogram';
 
 describe('histogram frames frames', () => {

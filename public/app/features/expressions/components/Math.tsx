@@ -1,6 +1,8 @@
-import { InlineField, TextArea } from '@grafana/ui';
 import { css } from '@emotion/css';
 import React, { ChangeEvent, FC } from 'react';
+
+import { InlineField, TextArea } from '@grafana/ui';
+
 import { ExpressionQuery } from '../types';
 
 interface Props {

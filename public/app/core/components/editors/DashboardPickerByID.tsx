@@ -1,8 +1,9 @@
-import React, { FC } from 'react';
 import debounce from 'debounce-promise';
+import React, { FC } from 'react';
+
+import { SelectableValue } from '@grafana/data';
 import { AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { SelectableValue } from '@grafana/data';
 
 /**
  * @deprecated prefer using dashboard uid rather than id

@@ -1,10 +1,12 @@
 import React from 'react';
-import { SaveProvisionedDashboard } from './SaveProvisionedDashboard';
-import { SaveDashboardAsModal } from './SaveDashboardAsModal';
-import { SaveDashboardModalProps } from './types';
-import { SaveDashboardModal } from './SaveDashboardModal';
+
 import { config } from '@grafana/runtime';
+
+import { SaveDashboardAsModal } from './SaveDashboardAsModal';
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
+import { SaveDashboardModal } from './SaveDashboardModal';
+import { SaveProvisionedDashboard } from './SaveProvisionedDashboard';
+import { SaveDashboardModalProps } from './types';
 
 export const SaveDashboardProxy: React.FC<SaveDashboardModalProps> = ({
   dashboard,

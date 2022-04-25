@@ -1,4 +1,5 @@
 import { Vector } from '../types';
+
 import { vectorToArray } from './vectorToArray';
 
 /**

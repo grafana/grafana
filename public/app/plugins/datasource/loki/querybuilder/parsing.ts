@@ -1,5 +1,7 @@
-import { parser } from '@grafana/lezer-logql';
 import { SyntaxNode } from '@lezer/common';
+
+import { parser } from '@grafana/lezer-logql';
+
 import {
   ErrorName,
   getAllByType,
@@ -10,6 +12,7 @@ import {
   replaceVariables,
 } from '../../prometheus/querybuilder/shared/parsingUtils';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../../prometheus/querybuilder/shared/types';
+
 import { binaryScalarDefs } from './binaryScalarOperations';
 import { LokiVisualQuery, LokiVisualQueryBinary } from './types';
 

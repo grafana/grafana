@@ -1,6 +1,8 @@
+import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
+
 import { DataFrame, ensureTimeField, FieldType } from '@grafana/data';
 import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
-import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
+
 import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
 import { buildScaleKey } from '../GraphNG/utils';
