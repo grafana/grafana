@@ -1,9 +1,11 @@
-import React, { Dispatch, SetStateAction, useState } from 'react';
-import { FileDropzone, useStyles2, Button, DropzoneFile, Field } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { MediaType } from '../types';
+import React, { Dispatch, SetStateAction, useState } from 'react';
 import SVG from 'react-inlinesvg';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { FileDropzone, useStyles2, Button, DropzoneFile, Field } from '@grafana/ui';
+
+import { MediaType } from '../types';
 interface Props {
   setFormData: Dispatch<SetStateAction<FormData>>;
   mediaType: MediaType;
@@ -27,7 +29,6 @@ export function FileDropzoneCustomChildren({ secondaryText = 'Drag and drop here
   );
 }
 export const FileUploader = ({ mediaType, setFormData, setUpload, error }: Props) => {
-  console.log(error);
   const styles = useStyles2(getStyles);
   const [dropped, setDropped] = useState<boolean>(false);
   const [file, setFile] = useState<string>('');
@@ -73,7 +74,6 @@ export const FileUploader = ({ mediaType, setFormData, setUpload, error }: Props
       ) : (
         <FileDropzoneCustomChildren />
       )}
-      {/* {dropped ? <Preview /> : error ? <p>{error.message}</p> : <FileDropzoneCustomChildren />} */}
     </FileDropzone>
   );
 };
