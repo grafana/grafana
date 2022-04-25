@@ -55,4 +55,5 @@ export interface FeatureToggles {
   explore2Dashboard?: boolean;
   persistNotifications?: boolean;
   commandPalette?: boolean;
+  coremodelValidation?: boolean;
 }

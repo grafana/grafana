@@ -162,4 +162,8 @@ const (
 	// FlagCommandPalette
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"
+
+	// FlagCoremodelValidation
+	// Validate resources (e.g. dashboards) using coremodel schemas
+	FlagCoremodelValidation = "coremodelValidation"
 )

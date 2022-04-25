@@ -220,5 +220,11 @@ var (
 			Description: "Enable command palette",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:            "coremodelValidation",
+			Description:     "Validate objects (e.g. dashboards) against coremodel schemas",
+			State:           FeatureStateAlpha,
+			RequiresRestart: true,
+		},
 	}
 )
