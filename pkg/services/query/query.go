@@ -68,7 +68,7 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 // QueryData can process queries and return query responses.
-func (s *Service) QueryData(ctx context.Context, user *models.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, handleExpressions bool) (*backend.QueryDataResponse, error) {
+func (s *Service) QueryData(ctx context.Context, user *models.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, handleExpressions bool) (*expr.Response, error) {
 	parsedReq, err := s.parseMetricRequest(ctx, user, skipCache, reqDTO)
 	if err != nil {
 		return nil, err
@@ -76,11 +76,15 @@ func (s *Service) QueryData(ctx context.Context, user *models.SignedInUser, skip
 	if handleExpressions && parsedReq.hasExpression {
 		return s.handleExpressions(ctx, user, parsedReq)
 	}
-	return s.handleQueryData(ctx, user, parsedReq)
+	result, err := s.handleQueryData(ctx, user, parsedReq)
+	if err != nil {
+		return nil, err
+	}
+	return expr.FromBackendResponse(result), nil
 }
 
 // handleExpressions handles POST /api/ds/query when there is an expression.
-func (s *Service) handleExpressions(ctx context.Context, user *models.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) handleExpressions(ctx context.Context, user *models.SignedInUser, parsedReq *parsedRequest) (*expr.Response, error) {
 	exprReq := expr.Request{
 		OrgId:   user.OrgId,
 		Queries: []expr.Query{},

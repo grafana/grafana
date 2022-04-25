@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 )
 
@@ -239,7 +240,7 @@ func union(aResults, bResults Results) []*Union {
 }
 
 func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
-	res := Results{Values{}}
+	res := Results{Values: Values{}}
 	ar, err := e.walk(node.Args[0])
 	if err != nil {
 		return res, err

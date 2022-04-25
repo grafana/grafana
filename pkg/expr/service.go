@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -62,16 +64,18 @@ func (s *Service) BuildPipeline(req *Request) (DataPipeline, error) {
 }
 
 // ExecutePipeline executes an expression pipeline and returns all the results.
-func (s *Service) ExecutePipeline(ctx context.Context, pipeline DataPipeline) (*backend.QueryDataResponse, error) {
-	res := backend.NewQueryDataResponse()
+func (s *Service) ExecutePipeline(ctx context.Context, pipeline DataPipeline) (*Response, error) {
+	res := NewResponse()
 	vars, err := pipeline.execute(ctx, s)
 	if err != nil {
 		return nil, err
 	}
 	for refID, val := range vars {
-		res.Responses[refID] = backend.DataResponse{
-			Frames: val.Values.AsDataFrames(refID),
+		resp := DataResponse{
+			Frames:  val.Values.AsDataFrames(refID),
+			Notices: val.Notices,
 		}
+		res.Responses[refID] = resp
 	}
 	return res, nil
 }
@@ -85,4 +89,34 @@ func DataSourceModel() *models.DataSource {
 		JsonData:       simplejson.New(),
 		SecureJsonData: make(map[string][]byte),
 	}
+}
+
+type DataResponse struct {
+	Frames  data.Frames   `json:"frames"`
+	Error   error         `json:"error,omitempty"`
+	Notices []data.Notice `json:"notices,omitempty"`
+}
+
+type Response struct {
+	// Responses is a map of RefIDs (Unique Query ID) to *DataResponse.
+	Responses map[string]DataResponse `json:"results"`
+}
+
+func NewResponse() *Response {
+	return &Response{Responses: make(map[string]DataResponse)}
+}
+
+func FromBackendResponse(resp *backend.QueryDataResponse) *Response {
+	if resp == nil {
+		return nil
+	}
+	r := NewResponse()
+	for key, rsp := range resp.Responses {
+		r.Responses[key] = DataResponse{
+			Frames:  rsp.Frames,
+			Error:   rsp.Error,
+			Notices: nil,
+		}
+	}
+	return r
 }
