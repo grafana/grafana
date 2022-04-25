@@ -28,6 +28,7 @@ describe('getFieldLinksForExplore', () => {
         return false;
       },
       updateTimeRange(timeRange: TimeRange) {},
+      reevaluateVariable() {},
     });
   });
 

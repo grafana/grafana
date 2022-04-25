@@ -15,7 +15,7 @@ import { DataQuery } from './query';
 import { RawTimeRange, TimeRange } from './time';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
-import { DataSourceRef, WithAccessControlMetadata } from '.';
+import { DataSourceRef, VariableModel, WithAccessControlMetadata } from '.';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -282,6 +282,11 @@ abstract class DataSourceApi<
    * a deprecation warning which can be ignored for time being.
    */
   showContextToggle?(row?: LogRowModel): boolean;
+
+  /**
+   * Called when the value of a query variable for this datasource is changed.
+   */
+  onChangeVariable?(variable: VariableModel): void;
 
   /**
    * Variable query action.

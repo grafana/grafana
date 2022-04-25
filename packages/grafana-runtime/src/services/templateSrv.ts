@@ -27,6 +27,11 @@ export interface TemplateSrv {
    * Update the current time range to be used when interpolating __from / __to variables.
    */
   updateTimeRange(timeRange: TimeRange): void;
+
+  /**
+   * Manually trigger reevaluation of a variable.
+   */
+  reevaluateVariable(variable: VariableModel): void;
 }
 
 let singletonInstance: TemplateSrv;

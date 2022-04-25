@@ -57,5 +57,7 @@ export class TemplateSrvMock implements TemplateSrv {
     return match !== null;
   }
 
+  reevaluateVariable(variable: VariableModel) {}
+
   updateTimeRange(timeRange: TimeRange) {}
 }

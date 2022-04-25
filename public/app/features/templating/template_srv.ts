@@ -3,12 +3,14 @@ import { escape, isString, property } from 'lodash';
 import { deprecationWarning, ScopedVars, TimeRange } from '@grafana/data';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 
+import { dispatch } from '../../store/store';
 import { variableAdapters } from '../variables/adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
 import { isAdHoc } from '../variables/guard';
+import { updateOptions } from '../variables/state/actions';
 import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
 import { AdHocVariableFilter, AdHocVariableModel, VariableModel } from '../variables/types';
-import { variableRegex } from '../variables/utils';
+import { toKeyedVariableIdentifier, variableRegex } from '../variables/utils';
 
 import { FormatOptions, formatRegistry, FormatRegistryID } from './formatRegistry';
 
@@ -58,6 +60,10 @@ export class TemplateSrv implements BaseTemplateSrv {
 
   getVariables(): VariableModel[] {
     return this.dependencies.getVariables();
+  }
+
+  reevaluateVariable(variable: VariableModel) {
+    dispatch(updateOptions(toKeyedVariableIdentifier(variable), true));
   }
 
   updateIndex() {

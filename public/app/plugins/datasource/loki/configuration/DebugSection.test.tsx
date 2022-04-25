@@ -41,6 +41,7 @@ describe('DebugSection', () => {
         return false;
       },
       updateTimeRange(timeRange: TimeRange) {},
+      reevaluateVariable() {},
     });
   });
 

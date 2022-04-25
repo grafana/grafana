@@ -1,6 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import { dispatch } from '../../../store/store';
+import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { VariableAdapter } from '../adapters';
 import { ALL_VARIABLE_TEXT } from '../constants';
 import { optionPickerFactory } from '../pickers';
@@ -25,6 +26,14 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
       return containsVariable(variable.query, variable.datasource?.uid, variable.regex, variableToTest.name);
     },
     setValue: async (variable, option, emitChanges = false) => {
+      if (emitChanges) {
+        getDatasourceSrv()
+          .get(variable.datasource?.uid)
+          .then((datasource) => {
+            datasource.onChangeVariable?.(variable);
+          });
+      }
+
       await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
