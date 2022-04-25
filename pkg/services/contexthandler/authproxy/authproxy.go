@@ -25,9 +25,7 @@ import (
 )
 
 const (
-
-	// CachePrefix is a prefix for the cache key
-	CachePrefix = "auth-proxy-sync-ttl:%s"
+	CachePrefix = "auth-proxy-sync-ttl:%s" // prefix for the cache key
 )
 
 // getLDAPConfig gets LDAP config

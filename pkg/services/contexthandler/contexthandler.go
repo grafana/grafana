@@ -31,9 +31,8 @@ const (
 	InvalidUsernamePassword = "invalid username or password"
 	/* #nosec */
 	InvalidAPIKey = "invalid API key"
+	ServiceName   = "ContextHandler"
 )
-
-const ServiceName = "ContextHandler"
 
 func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
 	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore sqlstore.Store,
@@ -208,14 +207,14 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	// base64 decode key
 	decoded, err := apikeygen.Decode(keyString)
 	if err != nil {
-		reqContext.JsonApiErr(401, InvalidAPIKey, err)
+		reqContext.JsonApiErr(http.StatusUnauthorized, InvalidAPIKey, err)
 		return true
 	}
 
 	// fetch key
 	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
 	if err := h.SQLStore.GetApiKeyByName(reqContext.Req.Context(), &keyQuery); err != nil {
-		reqContext.JsonApiErr(401, InvalidAPIKey, err)
+		reqContext.JsonApiErr(http.StatusUnauthorized, InvalidAPIKey, err)
 		return true
 	}
 
@@ -224,11 +223,11 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	// validate api key
 	isValid, err := apikeygen.IsValid(decoded, apikey.Key)
 	if err != nil {
-		reqContext.JsonApiErr(500, "Validating API key failed", err)
+		reqContext.JsonApiErr(http.StatusInternalServerError, "Validating API key failed", err)
 		return true
 	}
 	if !isValid {
-		reqContext.JsonApiErr(401, InvalidAPIKey, err)
+		reqContext.JsonApiErr(http.StatusUnauthorized, InvalidAPIKey, err)
 		return true
 	}
 
@@ -238,7 +237,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		getTime = time.Now
 	}
 	if apikey.Expires != nil && *apikey.Expires <= getTime().Unix() {
-		reqContext.JsonApiErr(401, "Expired API key", err)
+		reqContext.JsonApiErr(http.StatusUnauthorized, "Expired API key", err)
 		return true
 	}
 
@@ -252,9 +251,8 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		return true
 	}
 
-	//There is a service account attached to the API key
-
-	//Use service account linked to API key as the signed in user
+	// There is a service account attached to the API key
+	// Use service account linked to API key as the signed in user
 	querySignedInUser := models.GetSignedInUserQuery{UserId: *apikey.ServiceAccountId, OrgId: apikey.OrgId}
 	if err := h.SQLStore.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &querySignedInUser); err != nil {
 		reqContext.Logger.Error(
@@ -293,7 +291,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 
 	username, password, err := util.DecodeBasicAuthHeader(header)
 	if err != nil {
-		reqContext.JsonApiErr(401, "Invalid Basic Auth Header", err)
+		reqContext.JsonApiErr(http.StatusUnauthorized, "Invalid Basic Auth Header", err)
 		return true
 	}
 
@@ -312,7 +310,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		if errors.Is(err, models.ErrUserNotFound) {
 			err = login.ErrInvalidCredentials
 		}
-		reqContext.JsonApiErr(401, InvalidUsernamePassword, err)
+		reqContext.JsonApiErr(http.StatusUnauthorized, InvalidUsernamePassword, err)
 		return true
 	}
 
@@ -321,11 +319,8 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 	query := models.GetSignedInUserQuery{UserId: user.Id, OrgId: orgID}
 	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err != nil {
 		reqContext.Logger.Error(
-			"Failed at user signed in",
-			"id", user.Id,
-			"org", orgID,
-		)
-		reqContext.JsonApiErr(401, InvalidUsernamePassword, err)
+			"Failed at user signed in", "id", user.Id, "org", orgID, "error", err)
+		reqContext.JsonApiErr(http.StatusUnauthorized, InvalidUsernamePassword, err)
 		return true
 	}
 
@@ -417,7 +412,7 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 
 	renderUser, exists := h.RenderService.GetRenderUser(reqContext.Req.Context(), key)
 	if !exists {
-		reqContext.JsonApiErr(401, "Invalid Render Key", nil)
+		reqContext.JsonApiErr(http.StatusUnauthorized, "Invalid Render Key", nil)
 		return true
 	}
 
@@ -482,7 +477,7 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 
 	// Check if allowed continuing with this IP
 	if err := h.authProxy.IsAllowedIP(reqContext.Req.RemoteAddr); err != nil {
-		h.handleError(reqContext, err, 407, func(details error) {
+		h.handleError(reqContext, err, http.StatusProxyAuthRequired, func(details error) {
 			logger.Error("Failed to check whitelisted IP addresses", "message", err.Error(), "error", details)
 		})
 		return true
@@ -490,7 +485,7 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 
 	id, err := logUserIn(reqContext, h.authProxy, username, logger, false)
 	if err != nil {
-		h.handleError(reqContext, err, 407, nil)
+		h.handleError(reqContext, err, http.StatusProxyAuthRequired, nil)
 		return true
 	}
 
@@ -511,13 +506,13 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 		}
 		id, err = logUserIn(reqContext, h.authProxy, username, logger, true)
 		if err != nil {
-			h.handleError(reqContext, err, 407, nil)
+			h.handleError(reqContext, err, http.StatusProxyAuthRequired, nil)
 			return true
 		}
 
 		user, err = h.authProxy.GetSignedInUser(id, orgID)
 		if err != nil {
-			h.handleError(reqContext, err, 407, nil)
+			h.handleError(reqContext, err, http.StatusProxyAuthRequired, nil)
 			return true
 		}
 	}
@@ -530,7 +525,7 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 
 	// Remember user data in cache
 	if err := h.authProxy.Remember(reqContext, id); err != nil {
-		h.handleError(reqContext, err, 500, func(details error) {
+		h.handleError(reqContext, err, http.StatusInternalServerError, func(details error) {
 			logger.Error(
 				"Failed to store user in cache",
 				"username", username,

@@ -2,6 +2,7 @@ package contexthandler
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
@@ -23,7 +24,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 	claims, err := h.JWTAuthService.Verify(ctx.Req.Context(), jwtToken)
 	if err != nil {
 		ctx.Logger.Debug("Failed to verify JWT", "error", err)
-		ctx.JsonApiErr(401, InvalidJWT, err)
+		ctx.JsonApiErr(http.StatusUnauthorized, InvalidJWT, err)
 		return true
 	}
 
@@ -33,7 +34,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 
 	if sub == "" {
 		ctx.Logger.Warn("Got a JWT without the mandatory 'sub' claim", "error", err)
-		ctx.JsonApiErr(401, InvalidJWT, err)
+		ctx.JsonApiErr(http.StatusUnauthorized, InvalidJWT, err)
 		return true
 	}
 	extUser := &models.ExternalUserInfo{
@@ -56,7 +57,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 
 	if query.Login == "" && query.Email == "" {
 		ctx.Logger.Debug("Failed to get an authentication claim from JWT")
-		ctx.JsonApiErr(401, InvalidJWT, err)
+		ctx.JsonApiErr(http.StatusUnauthorized, InvalidJWT, err)
 		return true
 	}
 
@@ -80,10 +81,10 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 				"username_claim", query.Login,
 			)
 			err = login.ErrInvalidCredentials
-			ctx.JsonApiErr(401, UserNotFound, err)
+			ctx.JsonApiErr(http.StatusUnauthorized, UserNotFound, err)
 		} else {
 			ctx.Logger.Error("Failed to get signed in user", "error", err)
-			ctx.JsonApiErr(401, InvalidJWT, err)
+			ctx.JsonApiErr(http.StatusUnauthorized, InvalidJWT, err)
 		}
 		return true
 	}
