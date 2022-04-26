@@ -7,9 +7,7 @@ import { withinExplore } from './setup';
 export const assertQueryHistoryExists = async (query: string, exploreId: ExploreId = ExploreId.left) => {
   const selector = withinExplore(exploreId);
 
-  await waitFor(() => {
-    expect(selector.getByText('1 queries')).toBeInTheDocument();
-  });
+  expect(await selector.findByText('1 queries')).toBeInTheDocument();
   const queryItem = selector.getByLabelText('Query text');
   expect(queryItem).toHaveTextContent(query);
 };
