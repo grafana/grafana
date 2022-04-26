@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -23,20 +24,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
 	SQLStore           *sqlstore.SQLStore
+	SecretsStore       kvstore.SecretsKVStore
 	SecretsService     secrets.Service
 	cfg                *setting.Cfg
 	features           featuremgmt.FeatureToggles
 	permissionsService accesscontrol.PermissionsService
 	ac                 accesscontrol.AccessControl
 
-	ptc               proxyTransportCache
-	dsDecryptionCache secureJSONDecryptionCache
+	ptc proxyTransportCache
 }
 
 type proxyTransportCache struct {
@@ -49,28 +51,16 @@ type cachedRoundTripper struct {
 	roundTripper http.RoundTripper
 }
 
-type secureJSONDecryptionCache struct {
-	cache map[int64]cachedDecryptedJSON
-	sync.Mutex
-}
-
-type cachedDecryptedJSON struct {
-	updated time.Time
-	json    map[string]string
-}
-
 func ProvideService(
-	store *sqlstore.SQLStore, secretsService secrets.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
-	ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
+	store *sqlstore.SQLStore, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
 ) *Service {
 	s := &Service{
 		SQLStore:       store,
+		SecretsStore:   secretsStore,
 		SecretsService: secretsService,
 		ptc: proxyTransportCache{
 			cache: make(map[int64]cachedRoundTripper),
-		},
-		dsDecryptionCache: secureJSONDecryptionCache{
-			cache: make(map[int64]cachedDecryptedJSON),
 		},
 		cfg:                cfg,
 		features:           features,
@@ -89,6 +79,8 @@ type DataSourceRetriever interface {
 	// GetDataSource gets a datasource.
 	GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error
 }
+
+const secretType = "datasource"
 
 // NewNameScopeResolver provides an AttributeScopeResolver able to
 // translate a scope prefixed with "datasources:name:" into an uid based scope.
@@ -155,12 +147,17 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *models.GetDat
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 	var err error
-	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+	if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
+		return err
+	}
+
+	secret, err := json.Marshal(cmd.SecureJsonData)
 	if err != nil {
 		return err
 	}
 
-	if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
+	err = s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
+	if err != nil {
 		return err
 	}
 
@@ -186,25 +183,50 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCo
 }
 
 func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
-	return s.SQLStore.DeleteDataSource(ctx, cmd)
+	err := s.SQLStore.DeleteDataSource(ctx, cmd)
+	if err != nil {
+		return err
+	}
+	return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, secretType)
 }
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 	var err error
-	cmd.EncryptedSecureJsonData, err = s.SecretsService.EncryptJsonData(ctx, cmd.SecureJsonData, secrets.WithoutScope())
+	secret, err := json.Marshal(cmd.SecureJsonData)
 	if err != nil {
 		return err
 	}
 
-	return s.SQLStore.UpdateDataSource(ctx, cmd)
+	query := &models.GetDataSourceQuery{
+		Id:    cmd.Id,
+		OrgId: cmd.OrgId,
+	}
+	err = s.SQLStore.GetDataSource(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	err = s.SQLStore.UpdateDataSource(ctx, cmd)
+	if err != nil {
+		return err
+	}
+
+	if query.Result.Name != cmd.Name {
+		err = s.SecretsStore.Rename(ctx, cmd.OrgId, query.Result.Name, secretType, cmd.Name)
+		if err != nil {
+			return err
+		}
+	}
+
+	return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
 }
 
 func (s *Service) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
 	return s.SQLStore.GetDefaultDataSource(ctx, query)
 }
 
-func (s *Service) GetHTTPClient(ds *models.DataSource, provider httpclient.Provider) (*http.Client, error) {
-	transport, err := s.GetHTTPTransport(ds, provider)
+func (s *Service) GetHTTPClient(ctx context.Context, ds *models.DataSource, provider httpclient.Provider) (*http.Client, error) {
+	transport, err := s.GetHTTPTransport(ctx, ds, provider)
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +237,7 @@ func (s *Service) GetHTTPClient(ds *models.DataSource, provider httpclient.Provi
 	}, nil
 }
 
-func (s *Service) GetHTTPTransport(ds *models.DataSource, provider httpclient.Provider,
+func (s *Service) GetHTTPTransport(ctx context.Context, ds *models.DataSource, provider httpclient.Provider,
 	customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
 	s.ptc.Lock()
 	defer s.ptc.Unlock()
@@ -224,7 +246,7 @@ func (s *Service) GetHTTPTransport(ds *models.DataSource, provider httpclient.Pr
 		return t.roundTripper, nil
 	}
 
-	opts, err := s.httpClientOptions(ds)
+	opts, err := s.httpClientOptions(ctx, ds)
 	if err != nil {
 		return nil, err
 	}
@@ -244,58 +266,84 @@ func (s *Service) GetHTTPTransport(ds *models.DataSource, provider httpclient.Pr
 	return rt, nil
 }
 
-func (s *Service) GetTLSConfig(ds *models.DataSource, httpClientProvider httpclient.Provider) (*tls.Config, error) {
-	opts, err := s.httpClientOptions(ds)
+func (s *Service) GetTLSConfig(ctx context.Context, ds *models.DataSource, httpClientProvider httpclient.Provider) (*tls.Config, error) {
+	opts, err := s.httpClientOptions(ctx, ds)
 	if err != nil {
 		return nil, err
 	}
 	return httpClientProvider.GetTLSConfig(*opts)
 }
 
-func (s *Service) DecryptedValues(ds *models.DataSource) map[string]string {
-	s.dsDecryptionCache.Lock()
-	defer s.dsDecryptionCache.Unlock()
-
-	if item, present := s.dsDecryptionCache.cache[ds.Id]; present && ds.Updated.Equal(item.updated) {
-		return item.json
-	}
-
-	json, err := s.SecretsService.DecryptJsonData(context.Background(), ds.SecureJsonData)
+func (s *Service) DecryptedValues(ctx context.Context, ds *models.DataSource) (map[string]string, error) {
+	decryptedValues := make(map[string]string)
+	secret, exist, err := s.SecretsStore.Get(ctx, ds.OrgId, ds.Name, secretType)
 	if err != nil {
-		return map[string]string{}
+		return nil, err
 	}
 
-	s.dsDecryptionCache.cache[ds.Id] = cachedDecryptedJSON{
-		updated: ds.Updated,
-		json:    json,
+	if exist {
+		err := json.Unmarshal([]byte(secret), &decryptedValues)
+		if err != nil {
+			return nil, err
+		}
+	} else if len(ds.SecureJsonData) > 0 {
+		decryptedValues, err = s.MigrateSecrets(ctx, ds)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return json
+	return decryptedValues, nil
 }
 
-func (s *Service) DecryptedValue(ds *models.DataSource, key string) (string, bool) {
-	value, exists := s.DecryptedValues(ds)[key]
-	return value, exists
-}
-
-func (s *Service) DecryptedBasicAuthPassword(ds *models.DataSource) string {
-	if value, ok := s.DecryptedValue(ds, "basicAuthPassword"); ok {
-		return value
+func (s *Service) MigrateSecrets(ctx context.Context, ds *models.DataSource) (map[string]string, error) {
+	secureJsonData, err := s.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
+	if err != nil {
+		return nil, err
 	}
 
-	return ds.BasicAuthPassword
-}
-
-func (s *Service) DecryptedPassword(ds *models.DataSource) string {
-	if value, ok := s.DecryptedValue(ds, "password"); ok {
-		return value
+	jsonData, err := json.Marshal(secureJsonData)
+	if err != nil {
+		return nil, err
 	}
 
-	return ds.Password
+	err = s.SecretsStore.Set(ctx, ds.OrgId, ds.Name, secretType, string(jsonData))
+	return secureJsonData, err
 }
 
-func (s *Service) httpClientOptions(ds *models.DataSource) (*sdkhttpclient.Options, error) {
-	tlsOptions := s.dsTLSOptions(ds)
+func (s *Service) DecryptedValue(ctx context.Context, ds *models.DataSource, key string) (string, bool, error) {
+	values, err := s.DecryptedValues(ctx, ds)
+	if err != nil {
+		return "", false, err
+	}
+	value, exists := values[key]
+	return value, exists, nil
+}
+
+func (s *Service) DecryptedBasicAuthPassword(ctx context.Context, ds *models.DataSource) (string, error) {
+	value, ok, err := s.DecryptedValue(ctx, ds, "basicAuthPassword")
+	if ok {
+		return value, nil
+	}
+
+	return ds.BasicAuthPassword, err
+}
+
+func (s *Service) DecryptedPassword(ctx context.Context, ds *models.DataSource) (string, error) {
+	value, ok, err := s.DecryptedValue(ctx, ds, "password")
+	if ok {
+		return value, nil
+	}
+
+	return ds.Password, err
+}
+
+func (s *Service) httpClientOptions(ctx context.Context, ds *models.DataSource) (*sdkhttpclient.Options, error) {
+	tlsOptions, err := s.dsTLSOptions(ctx, ds)
+	if err != nil {
+		return nil, err
+	}
+
 	timeouts := &sdkhttpclient.TimeoutOptions{
 		Timeout:               s.getTimeout(ds),
 		DialTimeout:           sdkhttpclient.DefaultTimeoutOptions.DialTimeout,
@@ -307,9 +355,15 @@ func (s *Service) httpClientOptions(ds *models.DataSource) (*sdkhttpclient.Optio
 		MaxIdleConnsPerHost:   sdkhttpclient.DefaultTimeoutOptions.MaxIdleConnsPerHost,
 		IdleConnTimeout:       sdkhttpclient.DefaultTimeoutOptions.IdleConnTimeout,
 	}
+
+	decryptedValues, err := s.DecryptedValues(ctx, ds)
+	if err != nil {
+		return nil, err
+	}
+
 	opts := &sdkhttpclient.Options{
 		Timeouts: timeouts,
-		Headers:  s.getCustomHeaders(ds.JsonData, s.DecryptedValues(ds)),
+		Headers:  s.getCustomHeaders(ds.JsonData, decryptedValues),
 		Labels: map[string]string{
 			"datasource_name": ds.Name,
 			"datasource_uid":  ds.Uid,
@@ -320,22 +374,30 @@ func (s *Service) httpClientOptions(ds *models.DataSource) (*sdkhttpclient.Optio
 	if ds.JsonData != nil {
 		opts.CustomOptions = ds.JsonData.MustMap()
 	}
-
 	if ds.BasicAuth {
+		password, err := s.DecryptedBasicAuthPassword(ctx, ds)
+		if err != nil {
+			return opts, err
+		}
+
 		opts.BasicAuth = &sdkhttpclient.BasicAuthOptions{
 			User:     ds.BasicAuthUser,
-			Password: s.DecryptedBasicAuthPassword(ds),
+			Password: password,
 		}
 	} else if ds.User != "" {
+		password, err := s.DecryptedPassword(ctx, ds)
+		if err != nil {
+			return opts, err
+		}
+
 		opts.BasicAuth = &sdkhttpclient.BasicAuthOptions{
 			User:     ds.User,
-			Password: s.DecryptedPassword(ds),
+			Password: password,
 		}
 	}
 
-	// Azure authentication
 	if ds.JsonData != nil && s.features.IsEnabled(featuremgmt.FlagHttpclientproviderAzureAuth) {
-		credentials, err := azcredentials.FromDatasourceData(ds.JsonData.MustMap(), s.DecryptedValues(ds))
+		credentials, err := azcredentials.FromDatasourceData(ds.JsonData.MustMap(), decryptedValues)
 		if err != nil {
 			err = fmt.Errorf("invalid Azure credentials: %s", err)
 			return nil, err
@@ -371,19 +433,27 @@ func (s *Service) httpClientOptions(ds *models.DataSource) (*sdkhttpclient.Optio
 			Profile:       ds.JsonData.Get("sigV4Profile").MustString(),
 		}
 
-		if val, exists := s.DecryptedValue(ds, "sigV4AccessKey"); exists {
-			opts.SigV4.AccessKey = val
+		if val, exists, err := s.DecryptedValue(ctx, ds, "sigV4AccessKey"); err == nil {
+			if exists {
+				opts.SigV4.AccessKey = val
+			}
+		} else {
+			return opts, err
 		}
 
-		if val, exists := s.DecryptedValue(ds, "sigV4SecretKey"); exists {
-			opts.SigV4.SecretKey = val
+		if val, exists, err := s.DecryptedValue(ctx, ds, "sigV4SecretKey"); err == nil {
+			if exists {
+				opts.SigV4.SecretKey = val
+			}
+		} else {
+			return opts, err
 		}
 	}
 
 	return opts, nil
 }
 
-func (s *Service) dsTLSOptions(ds *models.DataSource) sdkhttpclient.TLSOptions {
+func (s *Service) dsTLSOptions(ctx context.Context, ds *models.DataSource) (sdkhttpclient.TLSOptions, error) {
 	var tlsSkipVerify, tlsClientAuth, tlsAuthWithCACert bool
 	var serverName string
 
@@ -401,22 +471,35 @@ func (s *Service) dsTLSOptions(ds *models.DataSource) sdkhttpclient.TLSOptions {
 
 	if tlsClientAuth || tlsAuthWithCACert {
 		if tlsAuthWithCACert {
-			if val, exists := s.DecryptedValue(ds, "tlsCACert"); exists && len(val) > 0 {
-				opts.CACertificate = val
+			if val, exists, err := s.DecryptedValue(ctx, ds, "tlsCACert"); err == nil {
+				if exists && len(val) > 0 {
+					opts.CACertificate = val
+				}
+			} else {
+				return opts, err
 			}
 		}
 
 		if tlsClientAuth {
-			if val, exists := s.DecryptedValue(ds, "tlsClientCert"); exists && len(val) > 0 {
-				opts.ClientCertificate = val
+			if val, exists, err := s.DecryptedValue(ctx, ds, "tlsClientCert"); err == nil {
+				fmt.Print("\n\n\n\n", val, exists, err, "\n\n\n\n")
+				if exists && len(val) > 0 {
+					opts.ClientCertificate = val
+				}
+			} else {
+				return opts, err
 			}
-			if val, exists := s.DecryptedValue(ds, "tlsClientKey"); exists && len(val) > 0 {
-				opts.ClientKey = val
+			if val, exists, err := s.DecryptedValue(ctx, ds, "tlsClientKey"); err == nil {
+				if exists && len(val) > 0 {
+					opts.ClientKey = val
+				}
+			} else {
+				return opts, err
 			}
 		}
 	}
 
-	return opts
+	return opts, nil
 }
 
 func (s *Service) getTimeout(ds *models.DataSource) time.Duration {
