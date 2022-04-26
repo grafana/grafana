@@ -98,7 +98,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	if req.Method != "GET" {
 		return fmt.Errorf("invalid resource method: %s", req.Method)
 	}
-	if (!strings.HasPrefix(url, "/loki/api/v1/label?")) &&
+	if (!strings.HasPrefix(url, "/loki/api/v1/labels?")) &&
 		(!strings.HasPrefix(url, "/loki/api/v1/label/")) && // the `/label/$label_name/values` form
 		(!strings.HasPrefix(url, "/loki/api/v1/series?")) {
 		return fmt.Errorf("invalid resource URL: %s", url)

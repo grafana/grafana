@@ -191,6 +191,12 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:            "export",
+			Description:     "Export grafana instance (to git, etc)",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:            "storageLocalUpload",
 			Description:     "allow uploads to local storage",
 			State:           FeatureStateAlpha,
@@ -218,6 +224,11 @@ var (
 		{
 			Name:        "commandPalette",
 			Description: "Enable command palette",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "savedItems",
+			Description: "Enable Saved Items in the navbar.",
 			State:       FeatureStateAlpha,
 		},
 	}
