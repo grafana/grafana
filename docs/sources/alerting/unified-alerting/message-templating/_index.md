@@ -125,6 +125,13 @@ Template to render entire notification message:
 {{ end }}
 ```
 
+After you save these two templates, use `mymessage` in the notification message field:
+
+```
+Alert summary:
+{{ template "mymessage" . }}
+```
+
 ### HTML in message templates
 
 HTML in alerting message templates is escaped. We do not support rendering of HTML in the resulting notification.
