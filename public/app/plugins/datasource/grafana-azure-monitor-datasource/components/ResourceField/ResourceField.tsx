@@ -128,32 +128,26 @@ interface FormattedResourceProps {
 }
 
 const FormattedResource = ({ resource }: FormattedResourceProps) => {
+  if (resource.resourceName) {
+    return (
+      <span>
+        <Icon name="cube" /> {resource.resourceName}
+      </span>
+    );
+  }
+  if (resource.resourceGroupName) {
+    return (
+      <span>
+        <Icon name="folder" /> {resource.resourceGroupName}
+      </span>
+    );
+  }
   return (
     <span>
       <Icon name="layer-group" /> {resource.subscriptionName}
-      {resource.resourceGroupName && (
-        <>
-          <Separator />
-          <Icon name="folder" /> {resource.resourceGroupName}
-        </>
-      )}
-      {resource.resourceName && (
-        <>
-          <Separator />
-          <Icon name="cube" /> {resource.resourceName}
-        </>
-      )}
     </span>
   );
 };
-
-const Separator = () => (
-  <>
-    <Space layout="inline" h={2} />
-    {'/'}
-    <Space layout="inline" h={2} />
-  </>
-);
 
 export default ResourceField;
 
