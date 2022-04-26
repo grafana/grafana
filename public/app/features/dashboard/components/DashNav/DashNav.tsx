@@ -190,6 +190,10 @@ class DashNav extends PureComponent<Props> {
       return [this.renderPlaylistControls(), this.renderTimeControls()];
     }
 
+    if (kioskMode === KioskMode.Embedded) {
+      return [this.renderTimeControls()];
+    }
+
     if (kioskMode === KioskMode.TV) {
       return [this.renderTimeControls(), tvButton];
     }
@@ -243,11 +247,17 @@ class DashNav extends PureComponent<Props> {
   }
 
   render() {
-    const { isFullscreen, title, folderTitle } = this.props;
+    const { isFullscreen, title, folderTitle, kioskMode } = this.props;
     const onGoBack = isFullscreen ? this.onClose : undefined;
 
     const titleHref = locationUtil.updateSearchParams(window.location.href, '?search=open');
     const parentHref = locationUtil.updateSearchParams(window.location.href, '?search=open&folder=current');
+
+    if (kioskMode === KioskMode.Embedded) {
+      return (
+        <PageToolbar>{this.renderRightActionsButton()}</PageToolbar>
+      )
+    }
 
     return (
       <PageToolbar
