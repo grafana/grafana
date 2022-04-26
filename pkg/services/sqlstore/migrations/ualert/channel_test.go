@@ -3,9 +3,9 @@ package ualert
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func TestFilterReceiversForAlert(t *testing.T) {
@@ -15,7 +15,6 @@ func TestFilterReceiversForAlert(t *testing.T) {
 		receivers        map[uidOrID]*PostableApiReceiver
 		defaultReceivers map[string]struct{}
 		expected         map[string]interface{}
-		expErr           error
 	}{
 		{
 			name: "when an alert has multiple channels, each should filter for the correct receiver",
@@ -123,14 +122,8 @@ func TestFilterReceiversForAlert(t *testing.T) {
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			m := newTestMigration(t)
-			res, err := m.filterReceiversForAlert(tt.da, tt.receivers, tt.defaultReceivers)
-			if tt.expErr != nil {
-				require.Error(t, err)
-				require.EqualError(t, err, tt.expErr.Error())
-				return
-			}
+			res := m.filterReceiversForAlert(tt.da, tt.receivers, tt.defaultReceivers)
 
-			require.NoError(t, err)
 			require.Equal(t, tt.expected, res)
 		})
 	}

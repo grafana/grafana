@@ -151,9 +151,9 @@ func (m *migration) getNotificationChannelMap() (channelsPerOrg, defaultChannels
 
 // Create a notifier (PostableGrafanaReceiver) from a legacy notification channel
 func (m *migration) createNotifier(c *notificationChannel) (*PostableGrafanaReceiver, error) {
-	uid, ok := m.generateChannelUID()
-	if !ok {
-		return nil, errors.New("failed to generate UID for notification channel")
+	uid, err := m.generateChannelUID()
+	if err != nil {
+		return nil, err
 	}
 
 	settings, secureSettings, err := migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
@@ -239,10 +239,7 @@ func (m *migration) createDefaultRouteAndReceiver(defaultChannels []*notificatio
 // Wrapper to select receivers for given alert rules based on associated notification channels and then create the migrated route.
 func (m *migration) createRouteForAlert(ruleUID string, da dashAlert, receivers map[uidOrID]*PostableApiReceiver, defaultReceivers map[string]struct{}) (*Route, error) {
 	// Create route(s) for alert
-	filteredReceiverNames, err := m.filterReceiversForAlert(da, receivers, defaultReceivers)
-	if err != nil {
-		return nil, err
-	}
+	filteredReceiverNames := m.filterReceiversForAlert(da, receivers, defaultReceivers)
 
 	if len(filteredReceiverNames) != 0 {
 		// Only create a route if there are specific receivers, otherwise it defaults to the root-level route.
@@ -295,11 +292,11 @@ func createRoute(ruleUID string, filteredReceiverNames map[string]interface{}) (
 }
 
 // Filter receivers to select those that were associated to the given rule as channels.
-func (m *migration) filterReceiversForAlert(da dashAlert, receivers map[uidOrID]*PostableApiReceiver, defaultReceivers map[string]struct{}) (map[string]interface{}, error) {
+func (m *migration) filterReceiversForAlert(da dashAlert, receivers map[uidOrID]*PostableApiReceiver, defaultReceivers map[string]struct{}) map[string]interface{} {
 	channelIDs := extractChannelIDs(da)
 	if len(channelIDs) == 0 {
 		// If there are no channels associated, we use the default route.
-		return nil, nil
+		return nil
 	}
 
 	// Filter receiver names.
@@ -325,7 +322,7 @@ func (m *migration) filterReceiversForAlert(da dashAlert, receivers map[uidOrID]
 
 	if len(filteredReceiverNames) == 0 || coveredByDefault(filteredReceiverNames) {
 		// Use the default route instead.
-		return nil, nil
+		return nil
 	}
 
 	// Add default receivers alongside rule-specific ones.
@@ -333,19 +330,19 @@ func (m *migration) filterReceiversForAlert(da dashAlert, receivers map[uidOrID]
 		filteredReceiverNames[n] = struct{}{}
 	}
 
-	return filteredReceiverNames, nil
+	return filteredReceiverNames
 }
 
-func (m *migration) generateChannelUID() (string, bool) {
+func (m *migration) generateChannelUID() (string, error) {
 	for i := 0; i < 5; i++ {
 		gen := util.GenerateShortUID()
 		if _, ok := m.seenChannelUIDs[gen]; !ok {
 			m.seenChannelUIDs[gen] = struct{}{}
-			return gen, true
+			return gen, nil
 		}
 	}
 
-	return "", false
+	return "", errors.New("failed to generate UID for notification channel")
 }
 
 // Some settings were migrated from settings to secure settings in between.
@@ -407,7 +404,7 @@ func getLabelForRouteMatching(ruleUID string) (string, string) {
 	return "rule_uid", ruleUID
 }
 
-func extractChannelIDs(d dashAlert) (channelUids []interface{}) {
+func extractChannelIDs(d dashAlert) (channelUids []uidOrID) {
 	// Extracting channel UID/ID.
 	for _, ui := range d.ParsedSettings.Notifications {
 		if ui.UID != "" {
