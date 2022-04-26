@@ -12,15 +12,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
-import {
-  Button,
-  CustomScrollbar,
-  HorizontalGroup,
-  InlineFormLabel,
-  Modal,
-  ScrollbarPosition,
-  stylesFactory,
-} from '@grafana/ui';
+import { Button, CustomScrollbar, HorizontalGroup, InlineFormLabel, Modal, stylesFactory } from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -52,7 +44,6 @@ interface State {
   isLoadingHelp: boolean;
   isPickerOpen: boolean;
   isAddingMixed: boolean;
-  scrollTop: number;
   data: PanelData;
   isHelpOpen: boolean;
   defaultDataSource?: DataSourceApi;
@@ -62,6 +53,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   backendSrv = backendSrv;
   dataSourceSrv = getDataSourceSrv();
   querySubscription: Unsubscribable | null = null;
+  scrollToBottom = false;
 
   state: State = {
     isLoadingHelp: false,
@@ -69,7 +61,6 @@ export class QueryGroup extends PureComponent<Props, State> {
     isPickerOpen: false,
     isAddingMixed: false,
     isHelpOpen: false,
-    scrollTop: 0,
     queries: [],
     data: {
       state: LoadingState.NotStarted,
@@ -162,7 +153,8 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   onScrollBottom = () => {
-    this.setState({ scrollTop: 1000 });
+    // Next render will scroll
+    this.scrollToBottom = true;
   };
 
   onUpdateAndRun = (options: QueryGroupOptions) => {
@@ -249,8 +241,9 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   onAddMixedQuery = (datasource: any) => {
+    this.onScrollBottom();
     this.onAddQuery({ datasource: datasource.name });
-    this.setState({ isAddingMixed: false, scrollTop: this.state.scrollTop + 10000 });
+    this.setState({ isAddingMixed: false });
   };
 
   onMixedPickerBlur = () => {
@@ -261,10 +254,6 @@ export class QueryGroup extends PureComponent<Props, State> {
     const { dsSettings, queries } = this.state;
     this.onQueriesChange(addQuery(queries, query, { type: dsSettings?.type, uid: dsSettings?.uid }));
     this.onScrollBottom();
-  };
-
-  setScrollTop = ({ scrollTop }: ScrollbarPosition) => {
-    this.setState({ scrollTop: scrollTop });
   };
 
   onQueriesChange = (queries: DataQuery[]) => {
@@ -349,11 +338,16 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   render() {
-    const { scrollTop, isHelpOpen, dsSettings } = this.state;
+    const { isHelpOpen, dsSettings } = this.state;
     const styles = getStyles();
 
+    const scrollToBottom = this.scrollToBottom;
+    if (scrollToBottom) {
+      this.scrollToBottom = false;
+    }
+
     return (
-      <CustomScrollbar autoHeightMin="100%" scrollTop={scrollTop} setScrollTop={this.setScrollTop}>
+      <CustomScrollbar autoHeightMin="100%" scrollToBottom={scrollToBottom}>
         <div className={styles.innerWrapper}>
           {this.renderTopSection(styles)}
           {dsSettings && (

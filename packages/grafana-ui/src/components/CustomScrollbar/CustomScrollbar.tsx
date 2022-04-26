@@ -20,6 +20,7 @@ interface Props {
   hideVerticalTrack?: boolean;
   scrollRefCallback?: RefCallback<HTMLDivElement>;
   scrollTop?: number;
+  scrollToBottom?: boolean; // when changed to true, it will scroll to the bootom
   setScrollTop?: (position: ScrollbarPosition) => void;
   autoHeightMin?: number | string;
   updateAfterMountMs?: number;
@@ -41,6 +42,7 @@ export const CustomScrollbar: FC<Props> = ({
   scrollRefCallback,
   updateAfterMountMs,
   scrollTop,
+  scrollToBottom,
   children,
 }) => {
   const ref = useRef<Scrollbars & { view: HTMLDivElement }>(null);
@@ -77,6 +79,15 @@ export const CustomScrollbar: FC<Props> = ({
       }
     }, updateAfterMountMs);
   }, [updateAfterMountMs]);
+
+  useEffect(() => {
+    if (!scrollToBottom) {
+      return;
+    }
+    setTimeout(() => {
+      ref.current?.scrollToBottom();
+    }, 100);
+  }, [ref, scrollToBottom]);
 
   function renderTrack(className: string, hideTrack: boolean | undefined, passedProps: any) {
     if (passedProps.style && hideTrack) {
