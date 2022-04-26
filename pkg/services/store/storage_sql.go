@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
@@ -16,6 +17,15 @@ type rootStorageSQL struct {
 	baseStorageRuntime
 
 	settings *StorageSQLConfig
+}
+
+// getDbRootFolder creates a DB path prefix for a given storage name and orgId.
+// example:
+//   orgId: 5
+//   storageName: "upload"
+//     => prefix: "/5/upload/"
+func getDbStoragePathPrefix(orgId int64, storageName string) string {
+	return filestorage.Join(fmt.Sprintf("%d", orgId), storageName+filestorage.Delimiter)
 }
 
 func newSQLStorage(prefix string, name string, cfg *StorageSQLConfig, sql *sqlstore.SQLStore) *rootStorageSQL {
@@ -42,23 +52,12 @@ func newSQLStorage(prefix string, name string, cfg *StorageSQLConfig, sql *sqlst
 	s := &rootStorageSQL{}
 	s.store = filestorage.NewDbStorage(
 		grafanaStorageLogger,
-		sql, nil, getDbRootFolder(prefix))
+		sql, nil, getDbStoragePathPrefix(1, prefix))
 
 	meta.Ready = true // exists!
 	s.meta = meta
 	s.settings = cfg
 	return s
-}
-
-func getDbRootFolder(prefix string) string {
-	dbRootFolder := prefix
-	if !strings.HasSuffix(dbRootFolder, filestorage.Delimiter) {
-		dbRootFolder = dbRootFolder + filestorage.Delimiter
-	}
-	if !strings.HasPrefix(dbRootFolder, filestorage.Delimiter) {
-		dbRootFolder = filestorage.Delimiter + dbRootFolder
-	}
-	return dbRootFolder
 }
 
 func (s *rootStorageSQL) Write(ctx context.Context, cmd *WriteValueRequest) (*WriteValueResponse, error) {
