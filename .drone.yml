@@ -1222,7 +1222,7 @@ depends_on:
 - main-build-e2e-publish
 - main-integration-tests
 kind: pipeline
-name: windows-main
+name: main-windows
 platform:
   arch: amd64
   os: windows
@@ -1310,9 +1310,9 @@ depends_on:
 - main-test
 - main-build-e2e-publish
 - main-integration-tests
-- windows-main
+- main-windows
 kind: pipeline
-name: publish-main
+name: main-publish
 node:
   type: no-parallel
 platform:
@@ -1364,10 +1364,10 @@ depends_on:
 - main-test
 - main-build-e2e-publish
 - main-integration-tests
-- windows-main
-- publish-main
+- main-windows
+- main-publish
 kind: pipeline
-name: notify-main
+name: main-notify
 platform:
   arch: amd64
   os: linux
@@ -4536,6 +4536,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 9380beb722ab1276e9219ae41fa07c84db1e7dc249f69e42386f868c026e1795
+hmac: 48f6a3ade75e5993b4a49d8f1a5b7d184a63767a108b16c5f71eca6c986da9c7
 
 ...
