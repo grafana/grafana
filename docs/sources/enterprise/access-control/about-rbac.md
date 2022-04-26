@@ -20,6 +20,7 @@ By using RBAC you can provide users with permissions that extend the permissions
 - Create custom roles: for example, a role that allows users to create and edit dashboards, but not delete them
 
 Basic roles contain multiple fixed roles. Fixed roles in turn contain multiple permissions, each of which has an action and a scope. Here is an example of the hierarchy of Basic roles, fixed roles, permissions, actions, and scopes.
+
 - **Basic role:** `Viewer`
   - **Fixed role:** `fixed:datasources:reader`
     - **Permission:**
