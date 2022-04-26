@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	ptr "github.com/xorcare/pointer"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -103,8 +105,14 @@ func TestEngineProcessJob(t *testing.T) {
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
 
+	setting.AlertingEnabled = ptr.Bool(true)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.Enabled = ptr.Bool(false)
+	t.Cleanup(func() {
+		setting.AlertingEnabled = nil
+	})
 	store := &AlertStoreMock{}
-	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, store, setting.NewCfg(), nil)
+	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, store, cfg, nil)
 	setting.AlertingEvaluationTimeout = 30 * time.Second
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3

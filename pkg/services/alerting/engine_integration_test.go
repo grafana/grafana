@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	ptr "github.com/xorcare/pointer"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
@@ -24,7 +26,13 @@ func TestEngineTimeouts(t *testing.T) {
 	usMock := &usagestats.UsageStatsMock{T: t}
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
-	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, nil, setting.NewCfg(), nil)
+	setting.AlertingEnabled = ptr.Bool(true)
+	t.Cleanup(func() {
+		setting.AlertingEnabled = nil
+	})
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.Enabled = ptr.Bool(false)
+	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, nil, cfg, nil)
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3
 	engine.resultHandler = &FakeResultHandler{}
