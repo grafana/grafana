@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
+
 .panel {
   height: 100%;
 }
@@ -34,6 +36,7 @@
 }
 
 .panel-content {
+  font-family: 'Courier Prime', monospace !important;
   color: #333333;
   padding: $panel-padding;
   width: 100%;
