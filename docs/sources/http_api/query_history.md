@@ -92,7 +92,7 @@ Query parameters:
 - **page** - Search supports pagination. Specify which page number to return. Use the limit parameter to specify the number of queries per page.
 - **limit** - Limits the number of returned query history items per page. The default is 100 queries per page.
 - **from** - Start time for the query history search as a second UNIX timestamp.
-- **to** - The end time for the query history search as a second Unix timestamp.
+- **to** - End time for the query history search as a second UNIX timestamp.
 
 **Example request for query history search**:
 
