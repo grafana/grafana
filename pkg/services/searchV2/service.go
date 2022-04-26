@@ -71,13 +71,13 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 
 	err = s.sql.GetSignedInUser(ctx, getSignedInUserQuery)
 	if err != nil {
-		fmt.Printf("error while retrieving user %s\n", err)
+		s.logger.Error("Error while retrieving user", "error", err)
 		rsp.Error = fmt.Errorf("auth error")
 		return rsp
 	}
 
 	if getSignedInUserQuery.Result == nil {
-		fmt.Printf("no user %s", user.Email)
+		s.logger.Error("No user found", "email", user.Email)
 		rsp.Error = fmt.Errorf("auth error")
 		return rsp
 	}
