@@ -216,6 +216,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "tracing",
+			Description:  "Adds trace ID to error notifications",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "persistNotifications",
 			Description:  "PoC Notifications page",
 			State:        FeatureStateAlpha,
