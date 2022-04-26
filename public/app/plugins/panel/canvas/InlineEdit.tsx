@@ -1,26 +1,42 @@
 import { cx, css } from '@emotion/css';
-import React, { useRef, useState } from 'react';
+import { get as lodashGet } from 'lodash';
+import React, { SyntheticEvent, useRef, useState, useMemo } from 'react';
 import Draggable from 'react-draggable';
-import { Resizable } from 'react-resizable';
+import { Resizable, ResizeCallbackData } from 'react-resizable';
 import { useClickAway } from 'react-use';
 
-import { GrafanaTheme, PanelModel, Dimensions2D } from '@grafana/data';
-import { stylesFactory, useTheme } from '@grafana/ui/src';
+import {
+  GrafanaTheme,
+  PanelModel,
+  Dimensions2D,
+  PanelOptionsEditorBuilder,
+  StandardEditorContext,
+} from '@grafana/data';
+import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
+import { NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
+import { stylesFactory, usePanelContext, useTheme } from '@grafana/ui';
 import store from 'app/core/store';
+import { GroupState } from 'app/features/canvas/runtime/group';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
+import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
-import { ElementState } from '../../../features/canvas/runtime/element';
 import { DashboardModel } from '../../../features/dashboard/state';
+
+import { InstanceState } from './CanvasPanel';
+import { getElementEditor } from './editor/elementEditor';
+import { getLayerEditor } from './editor/layerEditor';
 
 type Props = {
   onClose?: () => void;
   panel: PanelModel;
   dashboard: DashboardModel;
-  selectedElements: ElementState[];
 };
 
 const OFFSET = 8;
 
-export const InlineEdit = ({ panel, dashboard, onClose, selectedElements }: Props) => {
+export const InlineEdit = ({ panel, dashboard, onClose }: Props) => {
+  const { instanceState } = usePanelContext();
   const theme = useTheme();
   const btnInlineEdit = document.querySelector(`[data-btninlineedit="${panel.id}"]`)!.getBoundingClientRect();
   const ref = useRef<HTMLDivElement>(null);
@@ -40,6 +56,32 @@ export const InlineEdit = ({ panel, dashboard, onClose, selectedElements }: Prop
   const [measurements, setMeasurements] = useState<Dimensions2D>({ width: savedPlacement.w, height: savedPlacement.h });
   const [placement, setPlacement] = useState({ x: savedPlacement.x, y: savedPlacement.y });
 
+  const pane = useMemo(() => {
+    const state: InstanceState = instanceState;
+    if (!state) {
+      const root = new OptionsPaneCategoryDescriptor({ id: 'root', title: 'root' });
+      return root;
+    }
+    const supplier = (builder: PanelOptionsEditorBuilder<any>, context: StandardEditorContext<any>) => {
+      builder.addNestedOptions(getLayerEditor(instanceState));
+
+      const selection = state.selected;
+      if (selection?.length === 1) {
+        const element = selection[0];
+        if (!(element instanceof GroupState)) {
+          builder.addNestedOptions(
+            getElementEditor({
+              category: [`Selected element (${element.options.name})`],
+              element,
+              scene: state.scene,
+            })
+          );
+        }
+      }
+    };
+    return getOptionsPaneCategoryDescriptor({}, supplier);
+  }, [instanceState]);
+
   useClickAway(ref, () => {
     if (onClose) {
       onClose();
@@ -51,7 +93,8 @@ export const InlineEdit = ({ panel, dashboard, onClose, selectedElements }: Prop
     saveToStore(dragElement.x, dragElement.y, measurements.width, measurements.height);
   };
 
-  const onResizeStop = (event: React.MouseEvent, { size }) => {
+  const onResizeStop = (event: SyntheticEvent<Element, Event>, data: ResizeCallbackData) => {
+    const { size } = data;
     setMeasurements({ width: size.width, height: size.height });
     saveToStore(placement.x, placement.y, size.width, size.height);
   };
@@ -68,12 +111,22 @@ export const InlineEdit = ({ panel, dashboard, onClose, selectedElements }: Prop
           style={{ height: `${measurements.height}px`, width: `${measurements.width}px` }}
           ref={ref}
         >
-          <strong className={cx('cursor', `${styles.inlineEditorHeader}`)}>{panel.title}</strong>
+          <strong className={cx('cursor', `${styles.inlineEditorHeader}`)}>Canvas Inline Editor</strong>
           <div style={{ overflow: 'scroll' }}>
             <div className={styles.inlineEditorContent}>
-              {selectedElements.map((v, index) => {
-                return <span key={index}>{v.getName()}</span>;
-              })}
+              <div>
+                <div>{pane.items.map((v) => v.render())}</div>
+                <div>
+                  {pane.categories.map((c) => {
+                    return (
+                      <div key={c.props.id}>
+                        <h5>{c.props.title}</h5>
+                        <div>{c.items.map((s) => s.render())}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -108,3 +161,39 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     padding: 10px;
   `,
 }));
+
+// 🤮🤮🤮🤮 this oddly does not actually do anything, but structure is required.  I'll try to clean it up...
+function getOptionsPaneCategoryDescriptor<T = any>(
+  props: any,
+  supplier: PanelOptionsSupplier<T>
+): OptionsPaneCategoryDescriptor {
+  const context: StandardEditorContext<unknown, unknown> = {
+    data: props.input,
+    options: props.options,
+  };
+
+  const root = new OptionsPaneCategoryDescriptor({ id: 'root', title: 'root' });
+  const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneCategoryDescriptor => {
+    if (categoryNames?.length) {
+      const key = categoryNames[0];
+      let sub = root.categories.find((v) => v.props.id === key);
+      if (!sub) {
+        sub = new OptionsPaneCategoryDescriptor({ id: key, title: key });
+        root.categories.push(sub);
+      }
+      return sub;
+    }
+    return root;
+  };
+
+  const access: NestedValueAccess = {
+    getValue: (path: string) => lodashGet(props.options, path),
+    onChange: (path: string, value: any) => {
+      props.onChange(setOptionImmutably(props.options as any, path, value));
+    },
+  };
+
+  // Use the panel options loader
+  fillOptionsPaneItems(supplier, access, getOptionsPaneCategory, context);
+  return root;
+}

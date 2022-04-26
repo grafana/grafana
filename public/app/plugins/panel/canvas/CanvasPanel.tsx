@@ -170,14 +170,7 @@ export class CanvasPanel extends Component<Props, State> {
       return null;
     }
 
-    return (
-      <InlineEdit
-        panel={panel}
-        dashboard={dashboard}
-        onClose={() => this.inlineEditButtonClick(false)}
-        selectedElements={this.state.selectedElements}
-      />
-    );
+    return <InlineEdit panel={panel} dashboard={dashboard} onClose={() => this.inlineEditButtonClick(false)} />;
   };
 
   render() {
