@@ -9,9 +9,9 @@ import {
   Label,
   Select,
   Form,
-  Switch,
+  TextArea,
 } from '@grafana/ui';
-import React, { FormEvent, useEffect, useMemo, useState } from 'react';
+import React, { FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 import { EditorProps } from '../QueryEditor';
 import { SimulationQuery } from '../types';
@@ -29,28 +29,16 @@ interface SimInfo {
   forward: boolean;
   config: DataFrameJSON;
 }
-interface Config {
-  tankCapacity: number;
-  fillRate: number;
-  drainRate: number;
-  drainOpen: boolean;
-  pumpOn: boolean;
+interface FormDTO {
+  config: string;
 }
 export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
   const simQuery = query.sim ?? ({} as SimulationQuery);
   const simKey = simQuery.key ?? ({} as typeof simQuery.key);
-  const [cfg, setCfg] = useState<Config>({
-    tankCapacity: 100,
-    fillRate: 1,
-    drainRate: 0.5,
-    drainOpen: false,
-    pumpOn: true,
-  });
 
   // This only changes once
   const info = useAsync(async () => {
     const v = (await ds.getResource('sims')) as SimInfo[];
-    console.log(v);
     return {
       sims: v,
       options: v.map((s) => ({ label: s.name, value: s.type, description: s.description })),
@@ -68,21 +56,13 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
     };
   }, [info.value, simKey?.type]);
 
-  // let config = useAsync(async () => {
-  //   let path = simKey.type + '/' + simKey.tick + 'hz';
-  //   if (simKey.uid) {
-  //     path += '/' + simKey.uid;
-  //   }
-  //   return (await ds.getResource('sim/' + path))?.config;
-  // }, [simKey.type, simKey.tick, simKey.uid]);
-
-  useEffect(() => {
+  let config = useAsync(async () => {
     let path = simKey.type + '/' + simKey.tick + 'hz';
     if (simKey.uid) {
       path += '/' + simKey.uid;
     }
-    ds.getResource('sim/' + path).then((data) => setCfg(data.config));
-  }, [simKey.type, simKey.tick, simKey.uid, ds]);
+    return (await ds.getResource('sim/' + path))?.config;
+  }, [simKey.type, simKey.tick, simKey.uid]);
 
   const onUpdateKey = (key: typeof simQuery.key) => {
     onChange({ ...query, sim: { ...simQuery, key } });
@@ -109,13 +89,14 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
   const onToggleLast = () => {
     onChange({ ...query, sim: { ...simQuery, last: !simQuery.last } });
   };
-  const onSubmitChange = () => {
+  const onSubmitChange = (data: FormDTO) => {
     let path = simKey.type + '/' + simKey.tick + 'hz';
     if (simKey.uid) {
       path += '/' + simKey.uid;
     }
-    ds.postResource('sim/' + path, cfg);
+    ds.postResource('sim/' + path, JSON.parse(data.config));
   };
+
   return (
     <>
       <InlineFieldRow>
@@ -159,54 +140,9 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
       </InlineFieldRow>
       <div>
         <Form onSubmit={onSubmitChange}>
-          {() => (
-            <FieldSet label="Config">
-              <InlineField label="Tank capacity">
-                <Input
-                  type="number"
-                  name="tank capacity"
-                  value={cfg.tankCapacity}
-                  onChange={(e: FormEvent<HTMLInputElement>) => {
-                    setCfg({ ...cfg, tankCapacity: e.currentTarget.valueAsNumber });
-                  }}
-                />
-              </InlineField>
-              <InlineField label="Fill rate">
-                <Input
-                  name="fill rate"
-                  type="number"
-                  value={cfg.fillRate}
-                  onChange={(e: FormEvent<HTMLInputElement>) => {
-                    setCfg({ ...cfg, fillRate: e.currentTarget.valueAsNumber });
-                  }}
-                />
-              </InlineField>
-              <InlineField label="Drain rate">
-                <Input
-                  name="drain rate"
-                  type="number"
-                  value={cfg.drainRate}
-                  onChange={(e: FormEvent<HTMLInputElement>) => {
-                    setCfg({ ...cfg, drainRate: e.currentTarget.valueAsNumber });
-                  }}
-                />
-              </InlineField>
-              <InlineField label="Drain open">
-                <Switch
-                  value={cfg.drainOpen}
-                  onChange={(e: FormEvent<HTMLInputElement>) => {
-                    setCfg({ ...cfg, drainOpen: !cfg.drainOpen });
-                  }}
-                />
-              </InlineField>
-              <InlineField label="Pump on">
-                <Switch
-                  value={cfg.pumpOn}
-                  onChange={(e: FormEvent<HTMLInputElement>) => {
-                    setCfg({ ...cfg, pumpOn: !cfg.pumpOn });
-                  }}
-                />
-              </InlineField>
+          {({ register }) => (
+            <FieldSet>
+              <TextArea {...register('config')} defaultValue={JSON.stringify(config.value, null, 2)} rows={7} />
               <Button type="submit">Submit</Button>
             </FieldSet>
           )}
