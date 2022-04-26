@@ -24,11 +24,15 @@ describe('Slider', () => {
 
   it('renders correct contents', () => {
     render(<Slider {...sliderProps} />);
+
     const slider = screen.getByRole('slider');
+    const sliderInput = screen.getByRole('textbox');
+
     expect(slider).toBeInTheDocument();
     expect(slider).toHaveAttribute('aria-valuemin', '10');
     expect(slider).toHaveAttribute('aria-valuemax', '20');
     expect(slider).toHaveAttribute('aria-valuenow', '10');
+    expect(sliderInput).toHaveValue('10');
   });
 
   it('renders correct contents with a value', () => {
@@ -38,8 +42,8 @@ describe('Slider', () => {
     const sliderInput = screen.getByRole('textbox');
 
     expect(slider).toBeInTheDocument();
-    expect(sliderInput).toHaveValue('15');
     expect(slider).toHaveAttribute('aria-valuenow', '15');
+    expect(sliderInput).toHaveValue('15');
   });
 
   it('allows for custom values to be set in the input', async () => {
