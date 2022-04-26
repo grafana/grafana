@@ -179,7 +179,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		}
 
 		navTree = append(navTree, &dtos.NavLink{
-			Text:       "Saved Items",
+			Text:       "Saved items",
 			Id:         "saved-items",
 			Icon:       "bookmark",
 			SortWeight: dtos.WeightSavedItems,
