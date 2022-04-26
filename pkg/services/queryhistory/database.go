@@ -369,7 +369,7 @@ func (s QueryHistoryService) unstarQueriesOfRemovedUsers(ctx context.Context) (i
 			WHERE query_uid IN (
 				SELECT query_uid FROM query_history_star
 				LEFT JOIN org_user 
-				ON query_history_star.org_id = org_user.org_id AND query_history_star.user_id = org_user.user_id
+				ON ((query_history_star.org_id = org_user.org_id) AND (query_history_star.user_id = org_user.user_id))
 				WHERE org_user.user_id IS NULL OR org_user.org_id IS NULL
 			)`
 
