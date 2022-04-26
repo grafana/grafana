@@ -88,7 +88,11 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 		}
 	}
 
-	addEntityEventsTableMigration(mg)
+	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagPanelTitleSearch) {
+			addEntityEventsTableMigration(mg)
+		}
+	}
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
