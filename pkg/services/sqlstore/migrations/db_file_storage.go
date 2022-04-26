@@ -17,7 +17,12 @@ func addDbFileStorageMigration(mg *migrator.Migrator) {
 			// HTTP Entity tag; md5 hash
 			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false},
 
+			// cache_control HTTP header
+			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
 			{Name: "cache_control", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
+
+			// content_disposition HTTP header - inline/attachment file display
+			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
 			{Name: "content_disposition", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
 
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
