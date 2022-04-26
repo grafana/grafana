@@ -62,9 +62,15 @@ const mockItem2: RichHistoryQuery<MockQuery> = {
 describe('RichHistoryLocalStorage', () => {
   let storage: RichHistoryLocalStorage;
 
+  let now: Date;
+  let old: Date;
+
   beforeEach(async () => {
+    now = new Date(1970, 0, 1);
+    old = new Date(1969, 0, 1);
+
     jest.useFakeTimers('modern');
-    jest.setSystemTime(new Date(1970, 0, 1));
+    jest.setSystemTime(now);
     storage = new RichHistoryLocalStorage();
     await storage.deleteAll();
   });
@@ -74,16 +80,6 @@ describe('RichHistoryLocalStorage', () => {
   });
 
   describe('basic api', () => {
-    let dateSpy: jest.SpyInstance;
-
-    beforeEach(() => {
-      dateSpy = jest.spyOn(Date, 'now').mockImplementation(() => 2);
-    });
-
-    afterEach(() => {
-      dateSpy.mockRestore();
-    });
-
     it('should save query history to localStorage', async () => {
       await storage.addToRichHistory(mockItem);
       expect(store.exists(key)).toBeTruthy();
@@ -134,10 +130,6 @@ describe('RichHistoryLocalStorage', () => {
 
   describe('retention policy and max limits', () => {
     it('should clear old not-starred items', async () => {
-      const now = new Date(2022, 1, 1);
-      const old = new Date(2021, 1, 1);
-      jest.setSystemTime(now);
-
       const historyStarredOld = { starred: true, ts: old.getTime(), queries: [], comment: 'old starred' };
       const historyNotStarredOld = { starred: false, ts: old.getTime(), queries: [], comment: 'new not starred' };
       const historyStarredNew = { starred: true, ts: now.getTime(), queries: [], comment: 'new starred' };
