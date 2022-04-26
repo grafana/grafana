@@ -31,6 +31,9 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) (map[st
 	if err != nil {
 		return nil, err
 	}
+	if q.Result == nil {
+		return nil, fmt.Errorf("no alertmanager configuration present in this org")
+	}
 
 	cfg, err := DeserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
 	if err != nil {
@@ -38,7 +41,7 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) (map[st
 	}
 
 	if cfg.TemplateFiles == nil {
-		return nil, fmt.Errorf("no templates present in current org")
+		return map[string]string{}, nil
 	}
 
 	return cfg.TemplateFiles, nil
