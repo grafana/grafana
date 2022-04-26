@@ -226,5 +226,10 @@ var (
 			Description: "Enable command palette",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "savedItems",
+			Description: "Enable Saved Items in the navbar.",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
