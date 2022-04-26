@@ -3,9 +3,9 @@ import React from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
 import { AppNotification, timeoutMap } from 'app/types';
-import { config } from '@grafana/runtime';
 
 interface Props {
   appNotification: AppNotification;
