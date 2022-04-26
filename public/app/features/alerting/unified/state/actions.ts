@@ -402,6 +402,9 @@ export const saveRuleFormAction = createAsyncThunk(
             const newLocation = `/alerting/${encodeURIComponent(stringifiedIdentifier)}/edit`;
             if (locationService.getLocation().pathname !== newLocation) {
               locationService.replace(newLocation);
+            } else {
+              // refresh the details of the current editable rule after saving
+              thunkAPI.dispatch(fetchEditableRuleAction(identifier));
             }
           }
         })()
