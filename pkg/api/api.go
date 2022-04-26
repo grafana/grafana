@@ -421,6 +421,7 @@ func (hs *HTTPServer) registerRoutes() {
 		// Validated query
 		apiRoute.Post("/dashboards/org/:orgId/uid/:dashboardUid/panels/:panelId/query", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.QueryMetricsFromDashboard))
 
+        // if unified alerting is disabled and old alerting is enabled
 		if !hs.Cfg.UnifiedAlerting.IsEnabled() && setting.AlertingEnabled != nil && *setting.AlertingEnabled {
 			apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
 				alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))
