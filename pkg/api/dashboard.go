@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/coremodel/dashboard"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -295,6 +297,26 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+
+	// Ideally, coremodel validation calls would be integrated into the web
+	// framework. But this does the job for now.
+	if cm, has := hs.CoremodelRegistry.Get("dashboard"); has {
+		schv, err := cmd.Dashboard.Get("schemaVersion").Int()
+
+		// Only try to validate if the schemaVersion is at least the handoff version
+		// (the minimum schemaVersion against which the dashboard schema is known to
+		// work), or if schemaVersion is absent (which will happen once the Thema
+		// schema becomes canonical).
+		if err != nil || schv >= dashboard.HandoffSchemaVersion {
+			// Can't fail, web.Bind() already ensured it's valid JSON
+			b, _ := cmd.Dashboard.Bytes()
+			v, _ := cuectx.JSONtoCUE("dashboard.json", b)
+			if _, err := cm.CurrentSchema().Validate(v); err != nil {
+				return response.Error(http.StatusBadRequest, "invalid dashboard json", err)
+			}
+		}
+	}
+
 	return hs.postDashboard(c, cmd)
 }
 
