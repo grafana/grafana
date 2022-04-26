@@ -130,7 +130,7 @@ interface FormattedResourceProps {
 const FormattedResource = ({ resource }: FormattedResourceProps) => {
   if (resource.resourceName) {
     return (
-      <span>
+      <span style={{ maxWidth: '40px', textOverflow: 'ellipsis' }}>
         <Icon name="cube" /> {resource.resourceName}
       </span>
     );
