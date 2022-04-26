@@ -19,6 +19,8 @@
 package web
 
 import (
+	_ "unsafe"
+
 	"context"
 	"net/http"
 	"reflect"
@@ -55,23 +57,14 @@ func (invoke handlerFuncInvoker) Invoke(params []interface{}) ([]reflect.Value, 
 	return nil, nil
 }
 
+//go:linkname hack_wrap github.com/grafana/grafana/pkg/web/hack.Wrap
+func hack_wrap(Handler) http.HandlerFunc
+
 // validateAndWrapHandler makes sure a handler is a callable function, it panics if not.
 // When the handler is also potential to be any built-in inject.FastInvoker,
 // it wraps the handler automatically to have some performance gain.
 func validateAndWrapHandler(h Handler) Handler {
-	if reflect.TypeOf(h).Kind() != reflect.Func {
-		panic("Macaron handler must be a callable function")
-	}
-
-	if !IsFastInvoker(h) {
-		switch v := h.(type) {
-		case func(*Context):
-			return ContextInvoker(v)
-		case func(http.ResponseWriter, *http.Request):
-			return handlerFuncInvoker(v)
-		}
-	}
-	return h
+	return hack_wrap(h)
 }
 
 // validateAndWrapHandlers preforms validation and wrapping for each input handler.
