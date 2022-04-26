@@ -47,7 +47,7 @@ export function setupMockedDataSource({ data = [], variables }: { data?: any; va
   const fetchMock = jest.fn().mockReturnValue(of({ data }));
   setBackendSrv({ fetch: fetchMock } as any);
 
-  return { datasource, fetchMock };
+  return { datasource, fetchMock, templateService };
 }
 
 export const metricVariable: CustomVariableModel = {
@@ -122,6 +122,22 @@ export const aggregationvariable: CustomVariableModel = {
     { value: 'AVG', text: 'AVG', selected: false },
     { value: 'SUM', text: 'SUM', selected: false },
     { value: 'MIN', text: 'MIN', selected: false },
+  ],
+  multi: false,
+};
+
+export const dimensionVariable: CustomVariableModel = {
+  ...initialCustomVariableModelState,
+  id: 'dimension',
+  name: 'dimension',
+  current: {
+    value: 'env',
+    text: 'env',
+    selected: true,
+  },
+  options: [
+    { value: 'env', text: 'env', selected: false },
+    { value: 'tag', text: 'tag', selected: false },
   ],
   multi: false,
 };
