@@ -8581,8 +8581,8 @@ exports[`no explicit any`] = {
       [415, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
       [500, 65, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/alerting/unified/RuleList.test.tsx:57440713": [
-      [114, 34, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/alerting/unified/RuleList.test.tsx:1404058978": [
+      [119, 34, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/alerting/unified/RuleViewer.test.tsx:1065611706": [
       [18, 48, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -8633,12 +8633,12 @@ exports[`no explicit any`] = {
     "public/app/features/alerting/unified/hooks/useControlledFieldArray.ts:1798110841": [
       [6, 25, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/alerting/unified/mocks.ts:1238288989": [
-      [56, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [94, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [241, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [287, 60, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [287, 65, 3, "Unexpected any. Specify a different type.", "193409811"]
+    "public/app/features/alerting/unified/mocks.ts:3228742750": [
+      [57, 9, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [95, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [242, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [288, 60, 3, "Unexpected any. Specify a different type.", "193409811"],
+      [288, 65, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/alerting/unified/state/actions.ts:1117762435": [
       [566, 79, 3, "Unexpected any. Specify a different type.", "193409811"]
