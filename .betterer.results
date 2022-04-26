@@ -1829,9 +1829,9 @@ exports[`no type assertions`] = {
       [447, 42, 32, "Do not use any type assertions.", "2259972478"],
       [635, 42, 20, "Do not use any type assertions.", "1750699644"]
     ],
-    "public/app/features/alerting/unified/RuleList.test.tsx:57440713": [
-      [114, 21, 16, "Do not use any type assertions.", "2939667099"],
-      [167, 30, 59, "Do not use any type assertions.", "2074025380"]
+    "public/app/features/alerting/unified/RuleList.test.tsx:1404058978": [
+      [119, 21, 16, "Do not use any type assertions.", "2939667099"],
+      [172, 30, 59, "Do not use any type assertions.", "2074025380"]
     ],
     "public/app/features/alerting/unified/RuleList.tsx:744290076": [
       [44, 23, 41, "Do not use any type assertions.", "1149277051"],
@@ -1972,13 +1972,14 @@ exports[`no type assertions`] = {
     "public/app/features/alerting/unified/hooks/useIsRuleEditable.test.tsx:193112464": [
       [115, 64, 29, "Do not use any type assertions.", "2249960884"]
     ],
-    "public/app/features/alerting/unified/mocks.ts:1238288989": [
-      [47, 14, 7, "Do not use any type assertions.", "3399135973"],
-      [48, 10, 252, "Do not use any type assertions.", "102236519"],
-      [48, 10, 228, "Do not use any type assertions.", "3502281036"],
-      [94, 17, 9, "Do not use any type assertions.", "3692209159"],
-      [283, 7, 74, "Do not use any type assertions.", "1528953437"],
-      [283, 7, 44, "Do not use any type assertions.", "934113774"]
+    "public/app/features/alerting/unified/mocks.ts:3228742750": [
+      [48, 14, 7, "Do not use any type assertions.", "3399135973"],
+      [49, 10, 252, "Do not use any type assertions.", "102236519"],
+      [49, 10, 228, "Do not use any type assertions.", "3502281036"],
+      [95, 17, 9, "Do not use any type assertions.", "3692209159"],
+      [284, 7, 74, "Do not use any type assertions.", "1528953437"],
+      [284, 7, 44, "Do not use any type assertions.", "934113774"],
+      [476, 57, 29, "Do not use any type assertions.", "2249960884"]
     ],
     "public/app/features/alerting/unified/state/AlertingQueryRunner.test.ts:838848248": [
       [219, 9, 81, "Do not use any type assertions.", "1125692145"],
