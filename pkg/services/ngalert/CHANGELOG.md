@@ -55,3 +55,4 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
     - `grafana_alerting_ticker_last_consumed_tick_timestamp_seconds`
     - `grafana_alerting_ticker_next_tick_timestamp_seconds`
     - `grafana_alerting_ticker_interval_seconds`
+- [ENHANCEMENT] Migration: Migrate each legacy notification channel to its own contact point, use nested routes to reproduce multi-channel alerts #47291
