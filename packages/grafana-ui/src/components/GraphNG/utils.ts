@@ -13,7 +13,9 @@ import { nullToUndefThreshold } from './nullToUndefThreshold';
 import { XYFieldMatchers } from './types';
 
 function isVisibleBarField(f: Field) {
-  return f.config.custom?.drawStyle === GraphDrawStyle.Bars && !f.config.custom?.hideFrom?.viz;
+  return (
+    f.type === FieldType.number && f.config.custom?.drawStyle === GraphDrawStyle.Bars && !f.config.custom?.hideFrom?.viz
+  );
 }
 
 // will mutate the DataFrame's fields' values
@@ -105,6 +107,8 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
           vals.push(undefined, undefined);
         }
       });
+
+      alignedFrame.length += 2;
     }
 
     return alignedFrame;
