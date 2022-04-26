@@ -505,8 +505,7 @@ func createRequestCtxInOrg(org int64) *models.ReqContext {
 // setRouteProvenance marks an org's routing tree as provisioned.
 func setRouteProvenance(t *testing.T, org int64, ps provisioning.ProvisioningStore) {
 	t.Helper()
-	adp := provisioning.ProvenanceOrgAdapter{Inner: &apimodels.Route{}, OrgID: org}
-	err := ps.SetProvenance(context.Background(), adp, ngmodels.ProvenanceAPI)
+	err := ps.SetProvenance(context.Background(), &apimodels.Route{}, org, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 
