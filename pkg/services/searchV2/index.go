@@ -16,10 +16,14 @@ import (
 )
 
 type dashboardLoader interface {
+	// LoadDashboards returns slice of dashboards. If dashboardUID is empty – then
+	// implementation must return all dashboards in instance to build an entire
+	// dashboard index for an organization. If dashboardUID is not empty – then only
+	// return dashboard with specified UID or empty slice if not found (this is required
+	// to apply partial update).
 	LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error)
 }
 
-// TODO: migrate to a more generic Watch interface to listen for changes.
 type eventStore interface {
 	GetLastEvent(ctx context.Context) (*store.EntityEvent, error)
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*store.EntityEvent, error)
@@ -28,7 +32,7 @@ type eventStore interface {
 type dashboardIndex struct {
 	mu         sync.RWMutex
 	loader     dashboardLoader
-	dashboards map[int64][]dashboard
+	dashboards map[int64][]dashboard // orgId -> []dashboards
 	eventStore eventStore
 	logger     log.Logger
 }
@@ -61,7 +65,7 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 	defer partialUpdateTicker.Stop()
 
 	var lastEventID int64
-	lastEvent, err := i.eventStore.GetLastEvent(context.Background())
+	lastEvent, err := i.eventStore.GetLastEvent(ctx)
 	if err != nil {
 		return err
 	}
@@ -78,10 +82,10 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 	for {
 		select {
 		case <-partialUpdateTicker.C:
-			lastEventID = i.applyIndexUpdates(context.Background(), lastEventID)
+			lastEventID = i.applyIndexUpdates(ctx, lastEventID)
 		case <-fullReIndexTicker.C:
 			started := time.Now()
-			i.reIndexFromScratch()
+			i.reIndexFromScratch(ctx)
 			i.logger.Info("Full re-indexing finished", "fullReIndexElapsed", time.Since(started))
 		case <-ctx.Done():
 			return ctx.Err()
@@ -89,7 +93,7 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 	}
 }
 
-func (i *dashboardIndex) reIndexFromScratch() {
+func (i *dashboardIndex) reIndexFromScratch(ctx context.Context) {
 	i.mu.RLock()
 	orgIDs := make([]int64, 0, len(i.dashboards))
 	for orgID := range i.dashboards {
@@ -99,7 +103,7 @@ func (i *dashboardIndex) reIndexFromScratch() {
 
 	for _, orgID := range orgIDs {
 		started := time.Now()
-		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		ctx, cancel := context.WithTimeout(ctx, time.Minute)
 		dashboards, err := i.loader.LoadDashboards(ctx, orgID, "")
 		if err != nil {
 			cancel()
@@ -121,7 +125,6 @@ func (i *dashboardIndex) applyIndexUpdates(ctx context.Context, lastEventID int6
 		return lastEventID
 	}
 	if len(events) == 0 {
-		i.logger.Debug("no events since last update")
 		return lastEventID
 	}
 	started := time.Now()
@@ -246,10 +249,15 @@ type sqlDashboardLoader struct {
 }
 
 func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error) {
-	dashboards := make([]dashboard, 0, 200)
+	var dashboards []dashboard
+
+	limit := 1
 
 	if dashboardUID == "" {
-		// Add the root folder ID (does not exist in SQL)
+		limit = 200
+		dashboards = make([]dashboard, 0, limit+1)
+
+		// Add the root folder ID (does not exist in SQL).
 		dashboards = append(dashboards, dashboard{
 			id:       0,
 			isFolder: true,
@@ -271,11 +279,10 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		return dashboards, err
 	}
 
-	limit := 200
 	var lastID int64
 
 	for {
-		rows := make([]*dashboardQueryResult, 0, 2)
+		rows := make([]*dashboardQueryResult, 0, limit)
 
 		err = l.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			sess.Table("dashboard").
