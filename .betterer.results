@@ -203,7 +203,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:2357087833": [
       [0, 35, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/dashboard/dashgrid/DashboardGrid.test.tsx:3341831113": [
+    "public/app/features/dashboard/dashgrid/DashboardGrid.test.tsx:2723773538": [
       [0, 35, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/dashboard/dashgrid/PanelHeader/PanelHeaderCorner.test.tsx:2851646279": [
