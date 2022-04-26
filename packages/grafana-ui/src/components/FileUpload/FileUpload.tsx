@@ -44,11 +44,12 @@ export const FileUpload: FC<Props> = ({
 
   return (
     <>
-      <label className={cx(style.button, className)}>
+      <label role="button" className={cx(style.button, className)}>
         <Icon name="upload" className={style.icon} />
         {children}
         <input
           type="file"
+          data-testid="fileUpload"
           id="fileUpload"
           className={style.fileUpload}
           onChange={onChange}

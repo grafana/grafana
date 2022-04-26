@@ -1,33 +1,24 @@
-import { shallow } from 'enzyme';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { FileUpload } from './FileUpload';
 
 describe('FileUpload', () => {
   it('should render upload button with default text and no file name', () => {
-    const wrapper = shallow(<FileUpload onFileUpload={() => {}} />);
-    expect(wrapper.findWhere((comp) => comp.text() === 'Upload file').exists()).toBeTruthy();
-    expect(wrapper.find({ 'aria-label': 'File name' }).exists()).toBeFalsy();
+    render(<FileUpload onFileUpload={() => {}} />);
+    expect(screen.getByRole('button', { name: 'Upload file' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('File name')).not.toBeInTheDocument();
   });
 
-  it("should trim uploaded file's name", () => {
-    const wrapper = shallow(<FileUpload onFileUpload={() => {}} />);
+  it("should trim uploaded file's name", async () => {
+    render(<FileUpload onFileUpload={() => {}} />);
 
-    wrapper.find('input').simulate('change', {
-      currentTarget: {
-        files: [{ name: 'longFileName.something.png' }],
-      },
-    });
-    expect(wrapper.find({ 'aria-label': 'File name' }).exists()).toBeTruthy();
-    // Trim file name longer than 16 chars
-    expect(wrapper.find({ 'aria-label': 'File name' }).text()).toEqual('longFileName.som....png');
+    const mockFile: File = new File(['(⌐□_□)'], 'longFileName.something.png', { type: 'image/png' });
 
-    // Keep the name below the length limit intact
-    wrapper.find('input').simulate('change', {
-      currentTarget: {
-        files: [{ name: 'longFileName.png' }],
-      },
-    });
-    expect(wrapper.find({ 'aria-label': 'File name' }).text()).toEqual('longFileName.png');
+    const fileUploadInput = screen.getByTestId('fileUpload');
+    fireEvent.change(fileUploadInput, { target: { files: [mockFile] } });
+
+    expect(screen.getByLabelText('File name')).toBeInTheDocument();
+    expect(screen.getByLabelText('File name').textContent).toEqual('longFileName.som....png');
   });
 });
