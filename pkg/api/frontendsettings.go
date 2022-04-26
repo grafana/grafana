@@ -248,9 +248,14 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 
 		if ds.Access == models.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
+				password, err := hs.DataSourcesService.DecryptedBasicAuthPassword(c.Req.Context(), ds)
+				if err != nil {
+					return nil, err
+				}
+
 				dsDTO.BasicAuth = util.GetBasicAuthHeader(
 					ds.BasicAuthUser,
-					hs.DataSourcesService.DecryptedBasicAuthPassword(ds),
+					password,
 				)
 			}
 			if ds.WithCredentials {
@@ -258,14 +263,24 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			}
 
 			if ds.Type == models.DS_INFLUXDB_08 {
+				password, err := hs.DataSourcesService.DecryptedPassword(c.Req.Context(), ds)
+				if err != nil {
+					return nil, err
+				}
+
 				dsDTO.Username = ds.User
-				dsDTO.Password = hs.DataSourcesService.DecryptedPassword(ds)
+				dsDTO.Password = password
 				dsDTO.URL = url + "/db/" + ds.Database
 			}
 
 			if ds.Type == models.DS_INFLUXDB {
+				password, err := hs.DataSourcesService.DecryptedPassword(c.Req.Context(), ds)
+				if err != nil {
+					return nil, err
+				}
+
 				dsDTO.Username = ds.User
-				dsDTO.Password = hs.DataSourcesService.DecryptedPassword(ds)
+				dsDTO.Password = password
 				dsDTO.URL = url
 			}
 		}

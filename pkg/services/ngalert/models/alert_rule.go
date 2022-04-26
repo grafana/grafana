@@ -232,6 +232,7 @@ type ListAlertRulesQuery struct {
 	OrgID         int64
 	NamespaceUIDs []string
 	ExcludeOrgs   []int64
+	RuleGroup     string
 
 	// DashboardUID and PanelID are optional and allow filtering rules
 	// to return just those for a dashboard and panel.
@@ -246,21 +247,6 @@ type ListNamespaceAlertRulesQuery struct {
 	OrgID int64
 	// Namespace is the folder slug
 	NamespaceUID string
-
-	Result []*AlertRule
-}
-
-// GetAlertRulesQuery is the query for listing rule group alert rules
-type GetAlertRulesQuery struct {
-	OrgID int64
-	// Namespace is the folder slug
-	NamespaceUID string
-	RuleGroup    *string
-
-	// DashboardUID and PanelID are optional and allow filtering rules
-	// to return just those for a dashboard and panel.
-	DashboardUID string
-	PanelID      int64
 
 	Result []*AlertRule
 }

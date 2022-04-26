@@ -21,7 +21,7 @@ export function makeMockLokiDatasource(labelsAndValues: Labels, series?: SeriesF
   const lokiLabelsAndValuesEndpointRegex = /^\/loki\/api\/v1\/label\/(\w*)\/values/;
   const lokiSeriesEndpointRegex = /^\/loki\/api\/v1\/series/;
 
-  const lokiLabelsEndpoint = `${LOKI_ENDPOINT}/label`;
+  const lokiLabelsEndpoint = `${LOKI_ENDPOINT}/labels`;
   const rangeMock = {
     start: 1560153109000,
     end: 1560163909000,

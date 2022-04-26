@@ -1,8 +1,8 @@
 import React, { ChangeEvent } from 'react';
 
 import { PanelData } from '@grafana/data';
-import { EditorField, EditorHeader, EditorRow, InlineSelect, Space } from '@grafana/experimental';
-import { Input, Switch } from '@grafana/ui';
+import { EditorField, EditorHeader, EditorRow, EditorSwitch, InlineSelect, Space } from '@grafana/experimental';
+import { Input } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../datasource';
 import { useRegions } from '../hooks';
@@ -52,7 +52,7 @@ export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
           />
         </EditorField>
         <EditorField label="Enable Prefix Matching" optional={true}>
-          <Switch
+          <EditorSwitch
             value={query.prefixMatching}
             onChange={(e) => {
               onChange({
@@ -62,18 +62,16 @@ export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
             }}
           />
         </EditorField>
-        <EditorField label="Action" optional={true}>
+        <EditorField label="Action" optional={true} disabled={!query.prefixMatching}>
           <Input
-            disabled={!query.prefixMatching}
             value={query.actionPrefix || ''}
             onChange={(event: ChangeEvent<HTMLInputElement>) =>
               onChange({ ...query, actionPrefix: event.target.value })
             }
           />
         </EditorField>
-        <EditorField label="Alarm Name" optional={true}>
+        <EditorField label="Alarm Name" optional={true} disabled={!query.prefixMatching}>
           <Input
-            disabled={!query.prefixMatching}
             value={query.alarmNamePrefix || ''}
             onChange={(event: ChangeEvent<HTMLInputElement>) =>
               onChange({ ...query, alarmNamePrefix: event.target.value })
