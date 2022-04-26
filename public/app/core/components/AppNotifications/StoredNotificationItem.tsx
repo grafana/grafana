@@ -3,6 +3,7 @@ import { formatDistanceToNow } from 'date-fns';
 import React, { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Icon, IconButton, IconName, useTheme2 } from '@grafana/ui';
 import { getIconFromSeverity } from '@grafana/ui/src/components/Alert/Alert';
 
@@ -27,6 +28,7 @@ export const StoredNotificationItem = ({
 }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme, severity);
+  const showTraceId = config.featureToggles.tracing && traceId;
 
   return (
     <div className={styles.wrapper}>
@@ -35,7 +37,7 @@ export const StoredNotificationItem = ({
       </div>
       <div className={styles.title}>{title}</div>
       <div className={styles.body}>{children}</div>
-      <span className={styles.trace}>{traceId && `Trace ID: ${traceId}`}</span>
+      <span className={styles.trace}>{showTraceId && `Trace ID: ${traceId}`}</span>
       <div className={styles.close}>
         <IconButton aria-label="Close alert" name="times" onClick={onRemove} size="lg" type="button" />
       </div>

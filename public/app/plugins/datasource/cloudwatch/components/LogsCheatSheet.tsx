@@ -229,8 +229,15 @@ export default class LogsCheatSheet extends PureComponent<
       <div
         className="cheat-sheet-item__example"
         key={expr}
-        onClick={(e) =>
-          this.onClickExample({ refId: 'A', expression: expr, queryMode: 'Logs', region: 'default', id: 'A' })
+        onClick={() =>
+          this.onClickExample({
+            refId: this.props.query.refId ?? 'A',
+            expression: expr,
+            queryMode: 'Logs',
+            region: this.props.query.region,
+            id: this.props.query.refId ?? 'A',
+            logGroupNames: 'logGroupNames' in this.props.query ? this.props.query.logGroupNames : [],
+          })
         }
       >
         <pre>{renderHighlightedMarkup(expr, keyPrefix)}</pre>
