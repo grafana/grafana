@@ -17,18 +17,19 @@ const horizontalOptions: Array<SelectableValue<HorizontalConstraint>> = [
   { label: 'Left', value: HorizontalConstraint.Left },
   { label: 'Right', value: HorizontalConstraint.Right },
   { label: 'Left and right', value: HorizontalConstraint.LeftRight },
+  { label: 'Center', value: HorizontalConstraint.Center },
+  { label: 'Scale', value: HorizontalConstraint.Scale },
 ];
 
 const verticalOptions: Array<SelectableValue<VerticalConstraint>> = [
   { label: 'Top', value: VerticalConstraint.Top },
   { label: 'Bottom', value: VerticalConstraint.Bottom },
   { label: 'Top and bottom', value: VerticalConstraint.TopBottom },
+  { label: 'Center', value: VerticalConstraint.Center },
+  { label: 'Scale', value: VerticalConstraint.Scale },
 ];
 
-export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, PanelOptions>> = ({
-  item,
-  onChange,
-}) => {
+export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, PanelOptions>> = ({ item }) => {
   const settings = item.settings;
 
   // Will force a rerender whenever the subject changes
@@ -59,6 +60,12 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
     settings.scene.save(true);
   };
 
+  const onPositionChange = (value: number | undefined, placement: keyof Placement) => {
+    element.options.placement![placement] = value ?? element.options.placement![placement];
+    element.applyLayoutStylesToDiv();
+    settings.scene.clearCurrentSelection();
+  };
+
   return (
     <div>
       <VerticalGroup>
@@ -81,7 +88,7 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
             return (
               <InlineFieldRow key={p}>
                 <InlineField label={p} labelWidth={8} grow={true}>
-                  <NumberInput value={v} onChange={(v) => console.log('TODO, edit!!!', p, v)} />
+                  <NumberInput value={v} onChange={(v) => onPositionChange(v, p)} />
                 </InlineField>
               </InlineFieldRow>
             );

@@ -12,7 +12,7 @@ import (
 type Provider struct{}
 
 func ProvideService(store *sqlstore.SQLStore, ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices, features featuremgmt.FeatureToggles) *Provider {
-	if features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+	if !ac.IsDisabled() {
 		// TODO: Fix this hack, see https://github.com/grafana/grafana-enterprise/issues/2935
 		InitAcessControlGuardian(store, ac, permissionsServices)
 	} else {

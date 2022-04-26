@@ -39,14 +39,10 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "dashboardPreviewsScheduler",
-			Description: "Schedule automatic updates to dashboard previews",
-			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "dashboardPreviewsAdmin",
-			Description: "Manage the dashboard previews crawler process from the UI",
-			State:       FeatureStateAlpha,
+			Name:            "dashboardPreviewsAdmin",
+			Description:     "Manage the dashboard previews crawler process from the UI",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
 		},
 		{
 			Name:        "live-config",
@@ -193,6 +189,12 @@ var (
 			Name:        "alertProvisioning",
 			Description: "Provisioning-friendly routes for alerting",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:            "export",
+			Description:     "Export grafana instance (to git, etc)",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
 		},
 		{
 			Name:            "storageLocalUpload",

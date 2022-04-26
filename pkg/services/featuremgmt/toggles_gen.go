@@ -31,10 +31,6 @@ const (
 	// Create and show thumbnails for dashboard search results
 	FlagDashboardPreviews = "dashboardPreviews"
 
-	// FlagDashboardPreviewsScheduler
-	// Schedule automatic updates to dashboard previews
-	FlagDashboardPreviewsScheduler = "dashboardPreviewsScheduler"
-
 	// FlagDashboardPreviewsAdmin
 	// Manage the dashboard previews crawler process from the UI
 	FlagDashboardPreviewsAdmin = "dashboardPreviewsAdmin"
@@ -146,6 +142,10 @@ const (
 	// FlagAlertProvisioning
 	// Provisioning-friendly routes for alerting
 	FlagAlertProvisioning = "alertProvisioning"
+
+	// FlagExport
+	// Export grafana instance (to git, etc)
+	FlagExport = "export"
 
 	// FlagStorageLocalUpload
 	// allow uploads to local storage
