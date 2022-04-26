@@ -10,6 +10,7 @@ import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertGroup } from './components/alert-groups/AlertGroup';
 import { AlertGroupFilter } from './components/alert-groups/AlertGroupFilter';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
+import { useAlertManagerSources } from './hooks/useAlertManagerSources';
 import { useFilteredAmGroups } from './hooks/useFilteredAmGroups';
 import { useGroupedAlerts } from './hooks/useGroupedAlerts';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
@@ -19,7 +20,8 @@ import { getFiltersFromUrlParams } from './utils/misc';
 import { initialAsyncRequestState } from './utils/redux';
 
 const AlertGroups = () => {
-  const [alertManagerSourceName] = useAlertManagerSourceName();
+  const alertManagers = useAlertManagerSources('instance');
+  const [alertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
   const { groupBy = [] } = getFiltersFromUrlParams(queryParams);

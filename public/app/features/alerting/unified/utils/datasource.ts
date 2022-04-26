@@ -1,9 +1,10 @@
-import { DataSourceJsonData, DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { RulesSource } from 'app/types/unified-alerting';
 
+import { instancesPermissions, notificationsPermissions } from './access-control';
 import { getAllDataSources } from './config';
 
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
@@ -13,6 +14,13 @@ export enum DataSourceType {
   Alertmanager = 'alertmanager',
   Loki = 'loki',
   Prometheus = 'prometheus',
+}
+
+export interface AlertManagerDataSource {
+  name: string;
+  displayName: string;
+  imgUrl: string;
+  meta?: DataSourceInstanceSettings['meta'];
 }
 
 export const RulesDataSourceTypes: string[] = [DataSourceType.Loki, DataSourceType.Prometheus];
@@ -35,6 +43,51 @@ export function getAlertManagerDataSources() {
   return getAllDataSources()
     .filter((ds) => ds.type === DataSourceType.Alertmanager)
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// TODO Refactor or remove
+function getAllAlertManagerDataSources(): AlertManagerDataSource[] {
+  return [
+    {
+      name: GRAFANA_RULES_SOURCE_NAME,
+      displayName: 'Grafana',
+      imgUrl: 'public/img/grafana_icon.svg',
+    },
+    ...getAlertManagerDataSources().map<AlertManagerDataSource>((ds) => ({
+      name: ds.name,
+      displayName: ds.name.slice(0, 37),
+      imgUrl: ds.meta.info.logos.small,
+      meta: ds.meta,
+    })),
+  ];
+}
+
+function getAlertManagerDataSourcesByPermission(permission: 'instance' | 'notification'): AlertManagerDataSource[] {
+  const availableDataSources: AlertManagerDataSource[] = [];
+  const permissions = {
+    instance: instancesPermissions.read,
+    notification: notificationsPermissions.read,
+  };
+
+  if (contextSrv.hasPermission(permissions[permission].grafana)) {
+    availableDataSources.push({
+      name: GRAFANA_RULES_SOURCE_NAME,
+      displayName: 'Grafana',
+      imgUrl: 'public/img/grafana_icon.svg',
+    });
+  }
+
+  if (contextSrv.hasPermission(permissions[permission].external)) {
+    const cloudSources = getAlertManagerDataSources().map<AlertManagerDataSource>((ds) => ({
+      name: ds.name,
+      displayName: ds.name.slice(0, 37),
+      imgUrl: ds.meta.info.logos.small,
+      meta: ds.meta,
+    }));
+    availableDataSources.push(...cloudSources);
+  }
+
+  return availableDataSources;
 }
 
 export function getLotexDataSourceByName(dataSourceName: string): DataSourceInstanceSettings {
@@ -67,6 +120,16 @@ export function getAllRulesSources(): RulesSource[] {
 
   return availableRulesSources;
 }
+
+// TODO use this object to access data sources instead of the functions above
+export const dataSources = {
+  rules: getAllRulesSources(),
+  rulesSourceNames: getAllRulesSourceNames(),
+  alertManagers: {
+    all: getAllAlertManagerDataSources(),
+    byPermission: getAlertManagerDataSourcesByPermission,
+  },
+};
 
 export function getRulesSourceName(rulesSource: RulesSource): string {
   return isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;

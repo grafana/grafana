@@ -12,13 +12,16 @@ import { Authorize } from './components/Authorize';
 import SilencesEditor from './components/silences/SilencesEditor';
 import SilencesTable from './components/silences/SilencesTable';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
+import { useAlertManagerSources } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAmAlertsAction, fetchSilencesAction } from './state/actions';
 import { SILENCES_POLL_INTERVAL_MS } from './utils/constants';
 import { AsyncRequestState, initialAsyncRequestState } from './utils/redux';
 
 const Silences: FC = () => {
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
+  const alertManagers = useAlertManagerSources('instance');
+  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
+
   const dispatch = useDispatch();
   const silences = useUnifiedAlertingSelector((state) => state.silences);
   const alertsRequests = useUnifiedAlertingSelector((state) => state.amAlerts);
@@ -49,14 +52,22 @@ const Silences: FC = () => {
   const getSilenceById = useCallback((id: string) => result && result.find((silence) => silence.id === id), [result]);
 
   if (!alertManagerSourceName) {
-    return <Redirect to="/alerting/silences" />;
+    return (
+      <Alert title="No alert managers available" severity="warning">
+        There are no alert managers available
+      </Alert>
+    );
+    // return <Redirect to="/alerting/silences" />;
   }
 
   return (
     <AlertingPageWrapper pageId="silences">
-      <Authorize actions={[AccessControlAction.AlertingInstancesExternalRead]}>
-        <AlertManagerPicker disabled={!isRoot} current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
-      </Authorize>
+      <AlertManagerPicker
+        disabled={!isRoot}
+        current={alertManagerSourceName}
+        onChange={setAlertManagerSourceName}
+        dataSources={alertManagers}
+      />
       {error && !loading && (
         <Alert severity="error" title="Error loading silences">
           {error.message || 'Unknown error.'}

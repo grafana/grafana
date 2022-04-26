@@ -13,13 +13,15 @@ import { NewReceiverView } from './components/receivers/NewReceiverView';
 import { NewTemplateView } from './components/receivers/NewTemplateView';
 import { ReceiversAndTemplatesView } from './components/receivers/ReceiversAndTemplatesView';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
+import { useAlertManagerSources } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertManagerConfigAction, fetchGrafanaNotifiersAction } from './state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
 
 const Receivers: FC = () => {
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
+  const alertManagers = useAlertManagerSources('notification');
+  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const dispatch = useDispatch();
 
   const location = useLocation();
@@ -63,6 +65,7 @@ const Receivers: FC = () => {
         current={alertManagerSourceName}
         disabled={disableAmSelect}
         onChange={setAlertManagerSourceName}
+        dataSources={alertManagers}
       />
       {error && !loading && (
         <Alert severity="error" title="Error loading Alertmanager config">

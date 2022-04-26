@@ -4,7 +4,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import store from 'app/core/store';
 
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
-import { getAlertManagerDataSources, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { AlertManagerDataSource, getAlertManagerDataSources, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 function isAlertManagerSource(alertManagerSourceName: string): boolean {
   return (
@@ -17,7 +17,9 @@ function isAlertManagerSource(alertManagerSourceName: string): boolean {
  *
  * fallbackUrl - if provided, will redirect to this url if alertmanager provided in query no longer
  */
-export function useAlertManagerSourceName(): [string | undefined, (alertManagerSourceName: string) => void] {
+export function useAlertManagerSourceName(
+  availableAlertManagers: AlertManagerDataSource[]
+): [string | undefined, (alertManagerSourceName: string) => void] {
   const [queryParams, updateQueryParams] = useQueryParams();
 
   const update = useCallback(
@@ -46,11 +48,12 @@ export function useAlertManagerSourceName(): [string | undefined, (alertManagerS
       return [undefined, update];
     }
   }
+
   const storeSource = store.get(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
   if (storeSource && typeof storeSource === 'string' && isAlertManagerSource(storeSource)) {
     update(storeSource);
     return [storeSource, update];
   }
 
-  return [GRAFANA_RULES_SOURCE_NAME, update];
+  return [availableAlertManagers[0]?.name, update];
 }
