@@ -27,7 +27,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
   useEffect(() => {
     let labelsObj: DimensionLabels = {};
     if (data?.series?.length) {
-      const series: DataFrame[] = data.series.flat();
+      const series: DataFrame[] = data.series.flat().filter((series) => series.refId === query.refId);
       const fields = series.flatMap((item) => item.fields);
       const labels = fields
         .map((item) => item.labels)
@@ -46,7 +46,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
       }
     }
     setDimensionLabels((prevLabels) => ({ ...labelsObj, ...prevLabels }));
-  }, [data?.series]);
+  }, [data?.series, query.refId]);
 
   const dimensionOperators: Array<SelectableValue<string>> = [
     { label: '==', value: 'eq' },
