@@ -28,7 +28,6 @@ describe('Slider', () => {
     const slider = screen.getByRole('slider');
     const sliderInput = screen.getByRole('textbox');
 
-    expect(slider).toBeInTheDocument();
     expect(slider).toHaveAttribute('aria-valuemin', '10');
     expect(slider).toHaveAttribute('aria-valuemax', '20');
     expect(slider).toHaveAttribute('aria-valuenow', '10');
@@ -41,7 +40,6 @@ describe('Slider', () => {
     const slider = screen.getByRole('slider');
     const sliderInput = screen.getByRole('textbox');
 
-    expect(slider).toBeInTheDocument();
     expect(slider).toHaveAttribute('aria-valuenow', '15');
     expect(sliderInput).toHaveValue('15');
   });
