@@ -600,6 +600,7 @@ export function createTableFrameFromSearch(data: SearchResponse[], instanceSetti
         name: 'traceID',
         type: FieldType.string,
         config: {
+          unit: 'string',
           displayNameFromDS: 'Trace ID',
           links: [
             {
