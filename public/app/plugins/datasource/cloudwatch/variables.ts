@@ -2,6 +2,7 @@ import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { CustomVariableSupport, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { VariableQueryEditor } from './components/VariableQueryEditor/VariableQueryEditor';
 import { CloudWatchDatasource } from './datasource';
@@ -10,10 +11,12 @@ import { VariableQuery, VariableQueryType } from './types';
 
 export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchDatasource, VariableQuery> {
   private readonly datasource: CloudWatchDatasource;
+  private readonly templateSrv: TemplateSrv;
 
-  constructor(datasource: CloudWatchDatasource) {
+  constructor(datasource: CloudWatchDatasource, templateSrv: TemplateSrv = getTemplateSrv()) {
     super();
     this.datasource = datasource;
+    this.templateSrv = templateSrv;
     this.query = this.query.bind(this);
   }
 

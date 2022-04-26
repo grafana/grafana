@@ -53,7 +53,7 @@ export function setupMockedDataSource({
   const fetchMock = jest.fn().mockReturnValue(of({ data }));
   setBackendSrv({ fetch: fetchMock } as any);
 
-  return { datasource, fetchMock };
+  return { datasource, fetchMock, templateService };
 }
 
 export const metricVariable: CustomVariableModel = {

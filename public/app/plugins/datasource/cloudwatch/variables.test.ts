@@ -1,4 +1,4 @@
-import { setupMockedDataSource } from './__mocks__/CloudWatchDataSource';
+import { dimensionVariable, labelsVariable, setupMockedDataSource } from './__mocks__/CloudWatchDataSource';
 import { VariableQuery, VariableQueryType } from './types';
 import { CloudWatchVariableSupport } from './variables';
 
@@ -14,7 +14,7 @@ const defaultQuery: VariableQuery = {
   refId: '',
 };
 
-const ds = setupMockedDataSource();
+const ds = setupMockedDataSource({ variables: [labelsVariable, dimensionVariable] });
 ds.datasource.getRegions = jest.fn().mockResolvedValue([{ label: 'a', value: 'a' }]);
 ds.datasource.getNamespaces = jest.fn().mockResolvedValue([{ label: 'b', value: 'b' }]);
 ds.datasource.getMetrics = jest.fn().mockResolvedValue([{ label: 'c', value: 'c' }]);
@@ -24,7 +24,7 @@ const getEbsVolumeIds = jest.fn().mockResolvedValue([{ label: 'f', value: 'f' }]
 const getEc2InstanceAttribute = jest.fn().mockResolvedValue([{ label: 'g', value: 'g' }]);
 const getResourceARNs = jest.fn().mockResolvedValue([{ label: 'h', value: 'h' }]);
 
-const variables = new CloudWatchVariableSupport(ds.datasource);
+const variables = new CloudWatchVariableSupport(ds.datasource, ds.templateService);
 
 describe('variables', () => {
   it('should run regions', async () => {
@@ -127,7 +127,7 @@ describe('variables', () => {
 
     it('should run if instance id set', async () => {
       const result = await variables.execute(query);
-      expect(getEc2InstanceAttribute).toBeCalledWith(query.region, query.attributeName, { a: ['b'] });
+      expect(getEc2InstanceAttribute).toBeCalledWith(query.region, query.attributeName, { env: ['b'] });
       expect(result).toEqual([{ text: 'g', value: 'g', expandable: true }]);
     });
   });
@@ -152,7 +152,7 @@ describe('variables', () => {
 
     it('should run if instance id set', async () => {
       const result = await variables.execute(query);
-      expect(getResourceARNs).toBeCalledWith(query.region, query.resourceType, { a: ['b'] });
+      expect(getResourceARNs).toBeCalledWith(query.region, query.resourceType, { a: ['InstanceId', 'InstanceType'] });
       expect(result).toEqual([{ text: 'h', value: 'h', expandable: true }]);
     });
   });
