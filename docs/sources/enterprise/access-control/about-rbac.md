@@ -15,9 +15,16 @@ RBAC extends Grafana basic roles that are included in Grafana OSS, and enables y
 
 By using RBAC you can provide users with permissions that extend the permissions available with basic roles. For example, you can use RBAC to:
 
-- Modify existing basic roles, for example, enable an editor to create reports
-- Assign fixed roles to users and teams
-- Create custom roles
+- Modify existing basic roles: for example, enable an editor to create reports
+- Assign fixed roles to users and teams: for example, grant an engineering team the ability to create data sources
+- Create custom roles: for example, a role that allows users to create and edit dashboards, but not delete them
+
+Basic roles contain multiple fixed roles. Fixed roles in turn contain multiple permissions, each of which has an action and a scope. Here is an example of the hierarchy of Basic roles, fixed roles, permissions, actions, and scopes.
+- **Basic role:** `Viewer`
+  - **Fixed role:** `fixed:datasources:reader`
+    - **Permission:**
+      - **Action:** `datasources:read`
+      - **Scope:** `datasources:*`
 
 ## Basic roles
 
@@ -30,7 +37,7 @@ Grafana includes the following basic roles:
 - Editor
 - Viewer
 
-Each basic role is comprised of a number of _fixed roles_ that control the permissions a basic role has. For example, the viewer basic role contains the following fixed roles:
+Each basic role is comprised of a number of _fixed roles_ that control the permissions a basic role has. For example, the viewer basic role contains the following fixed roles among others:
 
 - `fixed:datasources:id:reader`: Enables the viewer to see the ID of a data source.
 - `fixed:organization:reader`: Enables the viewer to see a list of organizations.
@@ -43,9 +50,9 @@ You can use RBAC to modify the fixed roles associated with any basic role. For m
 
 ## Fixed roles
 
-Grafana Enterprise includes the ability for you to assign discrete fixed roles to users and teams, which enables you fine-grained control over user permissions. Grafana Labs manages fixed role definitions, so you cannot change or delete fixed roles. All fixed roles are _global_, which means that role assignments work across organizations.
+Grafana Enterprise includes the ability for you to assign discrete fixed roles to users and teams. This gives you finer-grained control over user permissions than you would have with basic roles alone. These roles are called "fixed" because you cannot change or delete fixed roles. All fixed roles are _global_, which means that role assignments work across organizations.
 
-Assign fixed roles when the basic roles do not meet your permission requirements. For example, you might want the basic viewer role to also edit dashboards. Or you might want the editor role to also create and manage users. Fixed roles provide users more granular access to create, view, and update the following Grafana resources:
+Assign fixed roles when the basic roles do not meet your permission requirements. For example, you might want a user with the basic viewer role to also edit dashboards. Or, you might want anyone with the editor role to also add and manage users. Fixed roles provide users more granular access to create, view, and update the following Grafana resources:
 
 - [Alerting]({{< relref "../../alerting/unified-alerting/_index.md">}})
 - [Annotations]({{< relref "../../dashboards/annotations.md" >}})
@@ -65,7 +72,7 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 - [Teams]({{< relref "../../administration/manage-users-and-permissions/manage-teams/_index.md" >}})
 - [Users]({{< relref "../../administration/manage-users-and-permissions/manage-server-users/_index.md" >}})
 
-To learn more about the permissions associated with each fixed role, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions.md" >}}).
+To learn more about the permissions you can grant for each resource, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions.md" >}}).
 
 ## Custom roles
 
@@ -73,15 +80,15 @@ If you are a Grafana Enterprise customer, you can create custom roles to manage 
 
 Custom roles contain unique combinations of permissions _actions_ and _scopes_. An action defines the action a use can perform on a Grafana resource. For example, the `teams.roles:list` action means that the use can see a list of role associated with each team.
 
-A scope describes where an action can be performed. For example, the `teams*:` scope restricts the user's action to teams. When paired with the `teams.roles:list` action, this permission prohibits the user from viewing roles associated with any other Grafana resource, for example, organizations.
+A scope describes where an action can be performed. For example, the `teams:1` scope restricts the user's action to the team with ID `1`. When paired with the `teams.roles:list` action, this permission prohibits the user from viewing teams other than team `1`.
 
-Consider creating a custom role when you don't want to modify basic roles, and when fixed roles do not meet your permissions requirements.
+Consider creating a custom role when fixed roles do not meet your permissions requirements.
 
 ### Custom role creation
 
 You can use either of the following methods to create, assign, and manage custom roles:
 
-- Grafana provisioning: You can use a YAML file to configure roles. For more information about using provisioning to create custom roles, refer to [Manage RBAC roles]({{< relref "./manage-rbac-roles.md" >}}). For more information about using provisioning to assign RBAC roles, refer to [Assign RBAC roles]({{< relref "./assign-rbac-roles.md" >}}).
+- Grafana provisioning: You can use a YAML file to configure roles. For more information about using provisioning to create custom roles, refer to [Manage RBAC roles]({{< relref "./manage-rbac-roles.md" >}}). For more information about using provisioning to assign RBAC roles to users or teams, refer to [Assign RBAC roles]({{< relref "./assign-rbac-roles.md" >}}).
 - RBAC API: As an alternative, you can use the Grafana HTTP API to create and manage roles. For more information about the HTTP API, refer to [RBAC API]({{< relref "../../http_api/access_control.md" >}}).
 
 ## Limitation
