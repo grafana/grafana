@@ -7,6 +7,8 @@ func addDbFileStorageMigration(mg *migrator.Migrator) {
 		Name: "file",
 		Columns: []*migrator.Column{
 			{Name: "path", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
+
+			// path_hash is used for indexing. we are using it to circumvent the max length limit of 191 for varchar2 fields in MySQL 5.6
 			{Name: "path_hash", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
 
 			// parent_folder_path_hash is an optimization for a common use case - list all files in a given folder
