@@ -85,7 +85,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 	setupSqlFSNestedPath := func() {
 		commonSetup()
 		sqlStore = sqlstore.InitTestDB(t)
-		filestorage = NewDbStorage(testLogger, sqlStore, nil, "/dashboards/")
+		filestorage = NewDbStorage(testLogger, sqlStore, nil, "/5/dashboards/")
 	}
 
 	setupLocalFs := func() {
@@ -149,7 +149,13 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 		},
 	}
 
-	skipBackends := map[backend]bool{}
+	skipBackends := map[backend]bool{
+		backendInMem:         false,
+		backendSQL:           false,
+		backendLocalFS:       false,
+		backendLocalFSNested: false,
+		backendSQLNested:     false,
+	}
 
 	for _, backend := range backends {
 		if skipBackends[backend.name] {

@@ -2,6 +2,9 @@ package filestorage
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
+
 	// can ignore because we don't need a cryptographically secure hash function
 	// sha1 low chance of collisions and better performance than sha256
 	// nolint:gosec
@@ -21,6 +24,7 @@ type file struct {
 	PathHash             string    `xorm:"path_hash"`
 	ParentFolderPathHash string    `xorm:"parent_folder_path_hash"`
 	Contents             []byte    `xorm:"contents"`
+	ETag                 string    `xorm:"etag"`
 	Updated              time.Time `xorm:"updated"`
 	Created              time.Time `xorm:"created"`
 	Size                 int64     `xorm:"size"`
@@ -38,13 +42,18 @@ type dbFileStorage struct {
 	log log.Logger
 }
 
-func hash(path string) (string, error) {
+func createPathHash(path string) (string, error) {
 	hasher := sha1.New()
 	if _, err := hasher.Write([]byte(strings.ToLower(path))); err != nil {
 		return "", err
 	}
 
 	return fmt.Sprintf("%x", hasher.Sum(nil)), nil
+}
+
+func createContentsHash(contents []byte) string {
+	hash := md5.Sum(contents)
+	return hex.EncodeToString(hash[:])
 }
 
 func NewDbStorage(log log.Logger, db *sqlstore.SQLStore, filter PathFilter, rootFolder string) FileStorage {
@@ -75,7 +84,7 @@ func (s dbFileStorage) getProperties(sess *sqlstore.DBSession, pathHashes []stri
 func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) {
 	var result *File
 
-	pathHash, err := hash(filePath)
+	pathHash, err := createPathHash(filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +130,7 @@ func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) 
 }
 
 func (s dbFileStorage) Delete(ctx context.Context, filePath string) error {
-	pathHash, err := hash(filePath)
+	pathHash, err := createPathHash(filePath)
 	if err != nil {
 		return err
 	}
@@ -156,7 +165,7 @@ func (s dbFileStorage) Delete(ctx context.Context, filePath string) error {
 
 func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error {
 	now := time.Now()
-	pathHash, err := hash(cmd.Path)
+	pathHash, err := createPathHash(cmd.Path)
 	if err != nil {
 		return err
 	}
@@ -174,6 +183,7 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 				contents := cmd.Contents
 				existing.Contents = contents
 				existing.MimeType = cmd.MimeType
+				existing.ETag = createContentsHash(contents)
 				existing.Size = int64(len(contents))
 			}
 
@@ -188,7 +198,7 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 			}
 
 			parentFolderPath := getParentFolderPath(cmd.Path)
-			parentFolderPathHash, err := hash(parentFolderPath)
+			parentFolderPathHash, err := createPathHash(parentFolderPath)
 			if err != nil {
 				return err
 			}
@@ -198,6 +208,7 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 				PathHash:             pathHash,
 				ParentFolderPathHash: parentFolderPathHash,
 				Contents:             contentsToInsert,
+				ETag:                 createContentsHash(contentsToInsert),
 				MimeType:             cmd.MimeType,
 				Size:                 int64(len(contentsToInsert)),
 				Updated:              now,
@@ -267,7 +278,7 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		cursor := ""
 		if paging != nil && paging.After != "" {
-			pagingFolderPathHash, err := hash(paging.After + Delimiter)
+			pagingFolderPathHash, err := createPathHash(paging.After + Delimiter)
 			if err != nil {
 				return err
 			}
@@ -295,10 +306,10 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 			lowerFolderPrefix = lowerFolderPath + Delimiter
 		}
 
-		prefixHash, _ := hash(lowerFolderPrefix)
+		prefixHash, _ := createPathHash(lowerFolderPrefix)
 
 		sess.Where("path_hash != ?", prefixHash)
-		parentHash, err := hash(lowerFolderPath)
+		parentHash, err := createPathHash(lowerFolderPath)
 		if err != nil {
 			return err
 		}
@@ -343,7 +354,7 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 		for i := 0; i < foundLength; i++ {
 			isFolder := strings.HasSuffix(foundFiles[i].Path, Delimiter)
 			if !isFolder {
-				hash, err := hash(foundFiles[i].Path)
+				hash, err := createPathHash(foundFiles[i].Path)
 				if err != nil {
 					return err
 				}
@@ -421,7 +432,7 @@ func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 				currentFolderPath = currentFolderPath + Delimiter
 			}
 
-			currentFolderPathHash, err := hash(currentFolderPath)
+			currentFolderPathHash, err := createPathHash(currentFolderPath)
 			if err != nil {
 				return err
 			}
@@ -437,7 +448,7 @@ func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 				continue
 			}
 
-			currentFolderParentPathHash, err := hash(currentFolderParentPath)
+			currentFolderParentPathHash, err := createPathHash(currentFolderParentPath)
 			if err != nil {
 				return err
 			}
@@ -475,7 +486,7 @@ func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string) error {
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		existing := &file{}
-		internalFolderPathHash, err := hash(folderPath + Delimiter)
+		internalFolderPathHash, err := createPathHash(folderPath + Delimiter)
 		if err != nil {
 			return err
 		}
