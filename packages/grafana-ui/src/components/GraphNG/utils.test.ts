@@ -499,7 +499,7 @@ describe('GraphNG utils', () => {
             ],
           },
         ],
-        "length": 10,
+        "length": 12,
       }
     `);
   });
