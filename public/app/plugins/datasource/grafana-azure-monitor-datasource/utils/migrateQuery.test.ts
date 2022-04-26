@@ -13,7 +13,7 @@ const azureMonitorQueryV7 = {
   azureMonitor: {
     aggregation: 'Average',
     allowedTimeGrainsMs: [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-    dimensionFilters: [{ dimension: 'dependency/success', filter: [''], operator: 'eq' }],
+    dimensionFilters: [{ dimension: 'dependency/success', filter: '', operator: 'eq' }],
     metricDefinition: 'microsoft.insights/components',
     metricName: 'dependencies/duration',
     metricNamespace: 'microsoft.insights/components',
@@ -63,7 +63,7 @@ const modernMetricsQuery: AzureMonitorQuery = {
     aggregation: 'Average',
     alias: '{{ dimensionvalue }}',
     allowedTimeGrainsMs: [60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000],
-    dimensionFilters: [{ dimension: 'dependency/success', filter: [''], operator: 'eq' }],
+    dimensionFilters: [{ dimension: 'dependency/success', filter: '', operator: 'eq' }],
     metricDefinition: 'microsoft.insights/components',
     metricName: 'dependencies/duration',
     metricNamespace: 'microsoft.insights/components',

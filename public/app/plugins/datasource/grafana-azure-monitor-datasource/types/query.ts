@@ -87,5 +87,5 @@ export interface AzureResourceGraphQuery {
 export interface AzureMetricDimension {
   dimension: string;
   operator: string;
-  filter?: string[];
+  filter?: string;
 }

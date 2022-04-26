@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue, DataFrame } from '@grafana/data';
-import { Button, Select, Input, HorizontalGroup, VerticalGroup, MultiSelect } from '@grafana/ui';
+import { Button, Select, HorizontalGroup, VerticalGroup } from '@grafana/ui';
 
 import { AzureMetricDimension, AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types';
 import { Field } from '../Field';
@@ -84,20 +84,11 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
 
   const onFilterInputChange = (index: number, v: SelectableValue<string>) => {
     if (v) {
-      onFieldChange(index, 'filter', [v.value!]);
+      onFieldChange(index, 'filter', v.value);
     } else {
-      onFieldChange(index, 'filter', []);
+      onFieldChange(index, 'filter', '');
     }
   };
-
-  const onMultiSelectFilterChange = (index: number, v: Array<SelectableValue<string>>) => {
-    onFieldChange(
-      index,
-      'filter',
-      v.map((item) => item.value!)
-    );
-  };
-
   return (
     <Field label="Dimension">
       <VerticalGroup spacing="xs">
@@ -119,31 +110,18 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
               onChange={(v) => onFieldChange(index, 'operator', v.value ?? '')}
               allowCustomValue
             />
-            {filter.operator === 'eq' || filter.operator === 'ne' ? (
-              <MultiSelect
-                menuShouldPortal
-                placeholder="Select or add value(s)"
-                value={filter.filter}
-                options={[...(dimensionLabels[filter.dimension.toLowerCase()] ?? [])].map((item) => ({
-                  value: item,
-                  label: item,
-                }))}
-                onChange={(v) => onMultiSelectFilterChange(index, v)}
-              />
-            ) : (
-              <Select
-                menuShouldPortal
-                placeholder="Select value"
-                value={filter.filter ? filter.filter[0] : ''}
-                allowCustomValue
-                options={[...(dimensionLabels[filter.dimension.toLowerCase()] ?? [])].map((item) => ({
-                  value: item,
-                  label: item,
-                }))}
-                onChange={(v) => onFilterInputChange(index, v)}
-                isClearable
-              />
-            )}
+            <Select
+              menuShouldPortal
+              placeholder="Select value"
+              value={filter.filter ? filter.filter[0] : ''}
+              allowCustomValue
+              options={[...(dimensionLabels[filter.dimension.toLowerCase()] ?? [])].map((item) => ({
+                value: item,
+                label: item,
+              }))}
+              onChange={(v) => onFilterInputChange(index, v)}
+              isClearable
+            />
 
             <Button
               variant="secondary"

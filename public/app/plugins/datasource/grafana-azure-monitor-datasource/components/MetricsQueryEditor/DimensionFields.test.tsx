@@ -1,8 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { FieldType } from '@grafana/data';
 import { selectOptionInTest } from '@grafana/ui';
 
 import createMockDatasource from '../../__mocks__/datasource';
@@ -46,7 +45,7 @@ describe('Azure Monitor QueryEditor', () => {
     mockQuery = appendDimensionFilter(mockQuery);
     expect(onQueryChange).toHaveBeenCalledWith({
       ...mockQuery,
-      azureMonitor: { ...mockQuery.azureMonitor, dimensionFilters: [{ dimension: '', operator: 'eq', filter: [''] }] },
+      azureMonitor: { ...mockQuery.azureMonitor, dimensionFilters: [{ dimension: '', operator: 'eq', filter: '*' }] },
     });
     render(
       <DimensionFields
@@ -70,7 +69,7 @@ describe('Azure Monitor QueryEditor', () => {
     let mockQuery = createMockQuery();
     mockQuery.azureMonitor = {
       ...mockQuery.azureMonitor,
-      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: ['*'] }],
+      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '*' }],
     };
     const onQueryChange = jest.fn();
     const dimensionOptions = [
@@ -100,7 +99,7 @@ describe('Azure Monitor QueryEditor', () => {
     let mockQuery = createMockQuery();
     mockQuery.azureMonitor = {
       ...mockQuery.azureMonitor,
-      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: ['*'] }],
+      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '*' }],
     };
 
     mockPanelData.series = [
@@ -129,7 +128,7 @@ describe('Azure Monitor QueryEditor', () => {
         dimensionOptions={dimensionOptions}
       />
     );
-    const labelSelect = await screen.findByText('Select or add value(s)');
+    const labelSelect = await screen.findByText('Select value');
     await user.click(labelSelect);
     const options = await screen.findAllByLabelText('Select option');
     expect(options).toHaveLength(1);
