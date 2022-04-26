@@ -34,6 +34,7 @@ type Service interface {
 	StarQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (QueryHistoryDTO, error)
 	UnstarQueryInQueryHistory(ctx context.Context, user *models.SignedInUser, UID string) (QueryHistoryDTO, error)
 	MigrateQueriesToQueryHistory(ctx context.Context, user *models.SignedInUser, cmd MigrateQueriesToQueryHistoryCommand) (int, int, error)
+	DeleteStaleQueryHistory(ctx context.Context, olderThan int64) (int64, error)
 }
 
 type QueryHistoryService struct {
@@ -69,4 +70,8 @@ func (s QueryHistoryService) UnstarQueryInQueryHistory(ctx context.Context, user
 
 func (s QueryHistoryService) MigrateQueriesToQueryHistory(ctx context.Context, user *models.SignedInUser, cmd MigrateQueriesToQueryHistoryCommand) (int, int, error) {
 	return s.migrateQueries(ctx, user, cmd)
+}
+
+func (s QueryHistoryService) DeleteStaleQueryHistory(ctx context.Context, olderThan int64) (int, error) {
+	return s.deleteStaleQueries(ctx, olderThan)
 }

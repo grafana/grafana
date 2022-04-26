@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -323,4 +324,38 @@ func (s QueryHistoryService) migrateQueries(ctx context.Context, user *models.Si
 	}
 
 	return len(queryHistories), len(starredQueries), nil
+}
+
+func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan int64) (int, error) {
+	var rowsCount int64
+
+	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+		sql := `DELETE 
+			FROM query_history 
+			WHERE uid IN (
+				SELECT uid FROM query_history 
+				LEFT JOIN query_history_star 
+				ON query_history_star.query_uid = query_history.uid
+				WHERE query_history_star.query_uid IS NULL
+			) 	
+			AND query_history.created_at <= ?`
+
+		res, err := session.Exec(sql, strconv.FormatInt(olderThan, 10))
+		if err != nil {
+			return err
+		}
+
+		rowsCount, err = res.RowsAffected()
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	return int(rowsCount), nil
 }
