@@ -1,7 +1,6 @@
 package export
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"math/rand"
@@ -23,10 +22,6 @@ type dummyExportJob struct {
 }
 
 func startDummyExportJob(cfg ExportConfig, broadcaster statusBroadcaster) (Job, error) {
-	if cfg.Format != "git" {
-		return nil, errors.New("only git format is supported")
-	}
-
 	job := &dummyExportJob{
 		logger:      log.New("dummy_export_job"),
 		cfg:         cfg,

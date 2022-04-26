@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -40,9 +39,10 @@ func cleanFileName(name string) string {
 var _ Job = new(gitExportJob)
 
 type gitExportJob struct {
-	logger log.Logger
-	sql    *sqlstore.SQLStore
-	orgID  int64
+	logger  log.Logger
+	sql     *sqlstore.SQLStore
+	orgID   int64
+	rootDir string
 
 	statusMu    sync.Mutex
 	status      ExportStatus
@@ -50,16 +50,13 @@ type gitExportJob struct {
 	broadcaster statusBroadcaster
 }
 
-func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore, orgID int64, broadcaster statusBroadcaster) (Job, error) {
-	if cfg.Format != "git" {
-		return nil, errors.New("only git format is supported")
-	}
-
+func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore, rootDir string, orgID int64, broadcaster statusBroadcaster) (Job, error) {
 	job := &gitExportJob{
 		logger:      log.New("git_export_job"),
 		cfg:         cfg,
 		sql:         sql,
 		orgID:       orgID,
+		rootDir:     rootDir,
 		broadcaster: broadcaster,
 		status: ExportStatus{
 			Running: true,
@@ -108,10 +105,22 @@ func (e *gitExportJob) start() {
 		if s.Status == "" {
 			s.Status = "done"
 		}
+		s.Target = e.rootDir
 		e.status = s
 		e.broadcaster(s)
 	}()
 
+	if true {
+		err := e.doExportWithHistory()
+		if err != nil {
+			e.logger.Error("ERROR", "e", err)
+		}
+	} else {
+		e.doFlatExport()
+	}
+}
+
+func (e *gitExportJob) doFlatExport() {
 	type dashDataQueryResult struct {
 		Id       int64
 		UID      string `xorm:"uid"`
@@ -123,7 +132,7 @@ func (e *gitExportJob) start() {
 		Updated  time.Time
 	}
 
-	target := "/tmp/hello"
+	target := e.rootDir
 	ctx := context.Background()
 	sql := e.sql
 
@@ -255,12 +264,14 @@ func cleanDashboardJSON(data []byte) []byte {
 	return clean
 }
 
-func exportToRepo(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, target string) error {
-	r, err := git.PlainInit(target, false)
+func (e *gitExportJob) doExportWithHistory() error {
+	r, err := git.PlainInit(e.rootDir, false)
 	if err != nil {
 		return err
 	}
 	w, _ := r.Worktree()
+
+	ctx := context.Background()
 
 	// key will allow name or uid
 	lookup := func(ref *extract.DataSourceRef) *extract.DataSourceRef {
@@ -277,9 +288,9 @@ func exportToRepo(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, targ
 	alias := make(map[string]string, 100)
 	ids := make(map[int64]string, 100)
 	folders := make(map[int64]string, 100)
-	users := readusers(ctx, orgID, sql)
+	users := readusers(ctx, e.orgID, e.sql)
 
-	err = sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		type dashDataQueryResult struct {
 			Id       int64
 			UID      string `xorm:"uid"`
@@ -294,7 +305,7 @@ func exportToRepo(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, targ
 		rows := make([]*dashDataQueryResult, 0)
 
 		sess.Table("dashboard").
-			Where("org_id = ?", orgID).
+			Where("org_id = ?", e.orgID).
 			Cols("id", "is_folder", "folder_id", "data", "slug", "created", "updated", "uid")
 
 		err := sess.Find(&rows)
@@ -308,7 +319,7 @@ func exportToRepo(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, targ
 				dash := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
 
 				slug := cleanFileName(dash.Title)
-				fpath := path.Join(target, slug)
+				fpath := path.Join(e.rootDir, slug)
 				err = os.MkdirAll(fpath, 0750)
 				if err != nil {
 					return err
@@ -362,7 +373,7 @@ func exportToRepo(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, targ
 		return err
 	}
 
-	err = os.WriteFile(path.Join(target, "__alias.json"), clean, 0600)
+	err = os.WriteFile(path.Join(e.rootDir, "__alias.json"), clean, 0600)
 	if err != nil {
 		return err
 	}
@@ -372,7 +383,7 @@ func exportToRepo(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, targ
 		return err
 	}
 
-	err = os.WriteFile(path.Join(target, "__ids.json"), clean, 0600)
+	err = os.WriteFile(path.Join(e.rootDir, "__ids.json"), clean, 0600)
 	if err != nil {
 		return err
 	}
@@ -389,7 +400,7 @@ func exportToRepo(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, targ
 	fmt.Printf("folders: %v\n", commit.String())
 	fmt.Printf("ids: %v\n", ids)
 
-	err = sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err = e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		type dashVersionResult struct {
 			DashId    int64     `xorm:"dashboard_id"`
 			Version   int64     `xorm:"version"`
@@ -412,7 +423,7 @@ func exportToRepo(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, targ
 			return err
 		}
 
-		count := 0
+		count := int64(0)
 
 		// Process all folders (only one level deep!!!)
 		for _, row := range rows {
@@ -424,7 +435,7 @@ func exportToRepo(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, targ
 			// ?? remove version, id, and UID?
 			clean = cleanDashboardJSON(row.Data)
 
-			dpath := filepath.Join(target, fpath)
+			dpath := filepath.Join(e.rootDir, fpath)
 			_ = ioutil.WriteFile(dpath, clean, 0644)
 			_, _ = w.Add(fpath)
 
@@ -448,6 +459,11 @@ func exportToRepo(ctx context.Context, orgID int64, sql *sqlstore.SQLStore, targ
 
 			count++
 			fmt.Printf("COMMIT: %d // %s (%d)\n", count, fpath, row.Version)
+
+			e.status.Current = count
+			e.status.Last = fpath
+			e.status.Changed = time.Now().UnixMilli()
+			e.broadcaster(e.status)
 		}
 
 		return nil
