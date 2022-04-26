@@ -32,9 +32,9 @@ To verify ownership of your plugin, you need to generate an API key that you'll 
 
 Public plugins need to be reviewed by the Grafana team before you can sign them.
 
-1. Submit your plugin for review by creating a pull request in the [grafana-plugin-repository](https://github.com/grafana/grafana-plugin-repository).
-1. When your plugin is approved, you're granted a plugin signature level. **Without a plugin signature level, you won't be able to sign your plugin**.
-1. In your plugin directory, sign the plugin with the API key you just created. Grafana Toolkit creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
+1. Submit your plugin for [review]({{< relref "package-a-plugin.md#publishing-your-plugin-for-the-first-time" >}})
+2. When your plugin is approved, you're granted a plugin signature level. **Without a plugin signature level, you won't be able to sign your plugin**.
+3. In your plugin directory, sign the plugin with the API key you just created. Grafana Toolkit creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
 
    ```bash
    export GRAFANA_API_KEY=<YOUR_API_KEY>

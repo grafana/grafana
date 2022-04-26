@@ -26,14 +26,14 @@ export function isGUIDish(input: string) {
   return !!input.match(/^[A-Z0-9]+/i);
 }
 
-export function findRow(rows: ResourceRowGroup, id: string): ResourceRow | undefined {
+export function findRow(rows: ResourceRowGroup, uri: string): ResourceRow | undefined {
   for (const row of rows) {
-    if (row.id.toLowerCase() === id.toLowerCase()) {
+    if (row.uri.toLowerCase() === uri.toLowerCase()) {
       return row;
     }
 
     if (row.children) {
-      const result = findRow(row.children, id);
+      const result = findRow(row.children, uri);
 
       if (result) {
         return result;
@@ -44,9 +44,9 @@ export function findRow(rows: ResourceRowGroup, id: string): ResourceRow | undef
   return undefined;
 }
 
-export function addResources(rows: ResourceRowGroup, targetResourceGroupID: string, newResources: ResourceRowGroup) {
+export function addResources(rows: ResourceRowGroup, targetParentId: string, newResources: ResourceRowGroup) {
   return produce(rows, (draftState) => {
-    const draftRow = findRow(draftState, targetResourceGroupID);
+    const draftRow = findRow(draftState, targetParentId);
 
     if (!draftRow) {
       // This case shouldn't happen often because we're usually coming here from a resource we already have

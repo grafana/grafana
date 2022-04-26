@@ -14,6 +14,8 @@ GO_FILES ?= ./pkg/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 API_DEFINITION_FILES = $(shell find ./pkg/api/docs/definitions -name '*.go' -print)
 SWAGGER_TAG ?= latest
+GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
+GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 
 all: deps build
 
@@ -87,15 +89,15 @@ gen-go: $(WIRE)
 
 build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
 	@echo "build go files"
-	$(GO) run build.go build
+	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
 build-server: ## Build Grafana server.
 	@echo "build server"
-	$(GO) run build.go build-server
+	$(GO) run build.go $(GO_BUILD_FLAGS) build-server
 
 build-cli: ## Build Grafana CLI application.
 	@echo "build grafana-cli"
-	$(GO) run build.go build-cli
+	$(GO) run build.go $(GO_BUILD_FLAGS) build-cli
 
 build-js: ## Build frontend assets.
 	@echo "build frontend"

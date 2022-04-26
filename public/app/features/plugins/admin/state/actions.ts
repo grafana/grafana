@@ -73,6 +73,8 @@ export const install = createAsyncThunk(
 
       return { id, changes } as Update<CatalogPlugin>;
     } catch (e) {
+      console.error(e);
+
       return thunkApi.rejectWithValue('Unknown error.');
     }
   }
@@ -90,6 +92,8 @@ export const uninstall = createAsyncThunk(`${STATE_PREFIX}/uninstall`, async (id
       changes: { isInstalled: false, installedVersion: undefined },
     } as Update<CatalogPlugin>;
   } catch (e) {
+    console.error(e);
+
     return thunkApi.rejectWithValue('Unknown error.');
   }
 });

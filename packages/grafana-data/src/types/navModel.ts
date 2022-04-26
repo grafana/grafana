@@ -20,6 +20,7 @@ export interface NavModelItem {
   onClick?: () => void;
   menuItemType?: NavMenuItemType;
   highlightText?: string;
+  highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
 }
 

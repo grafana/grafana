@@ -76,7 +76,7 @@ Click on the node and select "Show in Graph layout" option to switch back to gra
 
 This visualization needs a specific shape of the data to be returned from the data source in order to correctly display it.
 
-Data source needs to return two data frames, one for nodes and one for edges, and you also have to set `frame.meta.preferredVisualisationType = 'nodeGraph'` on both data frames if you want them to be automatically shown in node graph in Explore.
+Data source needs to return two data frames, one for nodes and one for edges. You have to set `frame.meta.preferredVisualisationType = 'nodeGraph'` on both data frames or name them `nodes` and `edges` respectively for the node graph to render.
 
 ### Node parameters
 

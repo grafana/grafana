@@ -29,14 +29,14 @@ func TestQuery_Metrics(t *testing.T) {
 		NewCWClient = origNewCWClient
 	})
 
-	var cwClient FakeCWClient
+	var cwClient fakeCWClient
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return cwClient
 	}
 
 	t.Run("Custom metrics", func(t *testing.T) {
-		cwClient = FakeCWClient{
+		cwClient = fakeCWClient{
 			Metrics: []*cloudwatch.Metric{
 				{
 					MetricName: aws.String("Test_MetricName"),
@@ -91,7 +91,7 @@ func TestQuery_Metrics(t *testing.T) {
 	})
 
 	t.Run("Dimension keys for custom metrics", func(t *testing.T) {
-		cwClient = FakeCWClient{
+		cwClient = fakeCWClient{
 			Metrics: []*cloudwatch.Metric{
 				{
 					MetricName: aws.String("Test_MetricName"),
@@ -503,7 +503,7 @@ func TestQuery_GetDimensionKeys(t *testing.T) {
 		NewCWClient = origNewCWClient
 	})
 
-	var client FakeCWClient
+	var client fakeCWClient
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return client
@@ -521,7 +521,7 @@ func TestQuery_GetDimensionKeys(t *testing.T) {
 	}
 
 	t.Run("should fetch dimension keys from list metrics api and return unique dimensions when a dimension filter is specified", func(t *testing.T) {
-		client = FakeCWClient{Metrics: metrics, MetricsPerPage: 2}
+		client = fakeCWClient{Metrics: metrics, MetricsPerPage: 2}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
@@ -662,7 +662,7 @@ func TestQuery_ListMetricsPagination(t *testing.T) {
 		NewCWClient = origNewCWClient
 	})
 
-	var client FakeCWClient
+	var client fakeCWClient
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return client
@@ -682,7 +682,7 @@ func TestQuery_ListMetricsPagination(t *testing.T) {
 	}
 
 	t.Run("List Metrics and page limit is reached", func(t *testing.T) {
-		client = FakeCWClient{Metrics: metrics, MetricsPerPage: 2}
+		client = fakeCWClient{Metrics: metrics, MetricsPerPage: 2}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
@@ -697,7 +697,7 @@ func TestQuery_ListMetricsPagination(t *testing.T) {
 	})
 
 	t.Run("List Metrics and page limit is not reached", func(t *testing.T) {
-		client = FakeCWClient{Metrics: metrics, MetricsPerPage: 2}
+		client = fakeCWClient{Metrics: metrics, MetricsPerPage: 2}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})

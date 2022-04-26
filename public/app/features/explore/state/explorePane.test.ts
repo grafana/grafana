@@ -8,6 +8,14 @@ import { of } from 'rxjs';
 jest.mock('../../dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
     init: jest.fn(),
+    timeRange: jest.fn().mockReturnValue({}),
+  }),
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getTemplateSrv: () => ({
+    updateTimeRange: jest.fn(),
   }),
 }));
 
@@ -80,7 +88,7 @@ function setup(state?: any) {
       return Object.values(datasources).map((d) => ({ name: d.name }));
     },
     getInstanceSettings(name: string) {
-      return { name, getRef: () => ({ uid: name }) };
+      return { name, getRef: () => ({ uid: name }), meta: { name } };
     },
     get(name?: string) {
       return Promise.resolve(
@@ -90,6 +98,7 @@ function setup(state?: any) {
               testDatasource: jest.fn(),
               init: jest.fn(),
               name: 'default',
+              meta: {},
             }
       );
     },

@@ -99,7 +99,7 @@ Labels:
 Annotations:
  - ann1 = annv1
 Source: http://localhost/alert1
-Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1
+Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1
 Dashboard: http://localhost/grafana/d/dbuid123
 Panel: http://localhost/grafana/d/dbuid123?viewPanel=puid123
 
@@ -110,7 +110,7 @@ Labels:
 Annotations:
  - ann1 = annv2
 Source: http://localhost/alert2
-Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval2
+Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2
 
 
 **Resolved**
@@ -122,7 +122,7 @@ Labels:
 Annotations:
  - ann1 = annv3
 Source: http://localhost/alert3
-Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval3
+Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval3
 Dashboard: http://localhost/grafana/d/dbuid456
 Panel: http://localhost/grafana/d/dbuid456?viewPanel=puid456
 
@@ -133,7 +133,7 @@ Labels:
 Annotations:
  - ann1 = annv4
 Source: http://localhost/alert4
-Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval4
+Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval4
 `,
 		},
 		{
@@ -150,7 +150,7 @@ Annotations:
 
 Source: http://localhost/alert1
 
-Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1
+Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1
 
 Dashboard: http://localhost/grafana/d/dbuid123
 
@@ -168,7 +168,7 @@ Annotations:
 
 Source: http://localhost/alert2
 
-Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval2
+Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2
 
 
 
@@ -185,7 +185,7 @@ Annotations:
 
 Source: http://localhost/alert3
 
-Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval3
+Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval3
 
 Dashboard: http://localhost/grafana/d/dbuid456
 
@@ -203,7 +203,7 @@ Annotations:
 
 Source: http://localhost/alert4
 
-Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval4
+Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval4
 
 
 `,

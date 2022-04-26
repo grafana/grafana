@@ -67,8 +67,7 @@ const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, request
   useEffect(() => {
     // Assuming we don't have multi-select yet
     const selectedRow = selectedRows[0];
-
-    const containsChild = selectedRow && !!findRow(row.children ?? [], selectedRow.id);
+    const containsChild = selectedRow && !!findRow(row.children ?? [], selectedRow.uri);
 
     if (containsChild) {
       setRowStatus('open');
@@ -203,7 +202,7 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
         <IconButton
           className={styles.collapseButton}
           name={isOpen ? 'angle-down' : 'angle-right'}
-          aria-label={isOpen ? 'Collapse' : 'Expand'}
+          aria-label={isOpen ? `Collapse ${entry.name}` : `Expand ${entry.name}`}
           onClick={handleToggleCollapse}
           id={entry.id}
         />
@@ -215,7 +214,13 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
 
       {isSelectable && (
         <>
-          <Checkbox id={checkboxId} onChange={handleSelectedChanged} disabled={isDisabled} value={isSelected} />
+          <Checkbox
+            id={checkboxId}
+            onChange={handleSelectedChanged}
+            disabled={isDisabled}
+            value={isSelected}
+            className={styles.nestedRowCheckbox}
+          />
           <Space layout="inline" h={2} />
         </>
       )}

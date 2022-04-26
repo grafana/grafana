@@ -6,9 +6,10 @@ import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
 import { useStyles2 } from '../../themes';
 import { TableCellProps } from './types';
 import { GrafanaTheme2 } from '@grafana/data';
+import { getCellLinks } from '../../utils';
 
 export function JSONViewCell(props: TableCellProps): JSX.Element {
-  const { cell, tableStyles, cellProps } = props;
+  const { cell, tableStyles, cellProps, field, row } = props;
 
   const txt = css`
     cursor: pointer;
@@ -28,10 +29,23 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
 
   const content = <JSONTooltip value={value} />;
 
+  const { link, onClick } = getCellLinks(field, row);
+
   return (
     <Tooltip placement="auto-start" content={content} theme="info-alt">
       <div {...cellProps} className={tableStyles.cellContainer}>
-        <div className={cx(tableStyles.cellText, txt)}>{displayValue}</div>
+        {!link && <div className={cx(tableStyles.cellText, txt)}>{value}</div>}
+        {link && (
+          <a
+            href={link.href}
+            onClick={onClick}
+            target={link.target}
+            title={link.title}
+            className={tableStyles.cellLink}
+          >
+            {displayValue}
+          </a>
+        )}
       </div>
     </Tooltip>
   );

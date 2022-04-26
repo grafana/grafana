@@ -1,4 +1,4 @@
-import { ComponentClass } from 'react';
+import { ComponentType } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
@@ -48,7 +48,7 @@ export interface AppPluginMeta<T = KeyValue> extends PluginMeta<T> {
 
 export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
   // Content under: /a/${plugin-id}/*
-  root?: ComponentClass<AppRootProps<T>>;
+  root?: ComponentType<AppRootProps<T>>;
   rootNav?: NavModel; // Initial navigation model
 
   /**
@@ -66,7 +66,7 @@ export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
    *
    * NOTE: this structure will change in 7.2+ so that it is managed with a normal react router
    */
-  setRootPage(root: ComponentClass<AppRootProps<T>>, rootNav?: NavModel) {
+  setRootPage(root: ComponentType<AppRootProps<T>>, rootNav?: NavModel) {
     this.root = root;
     this.rootNav = rootNav;
     return this;

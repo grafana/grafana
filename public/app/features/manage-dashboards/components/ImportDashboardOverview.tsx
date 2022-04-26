@@ -6,7 +6,9 @@ import { ImportDashboardForm } from './ImportDashboardForm';
 import { clearLoadedDashboard, importDashboard } from '../state/actions';
 import { DashboardSource, ImportDashboardDTO } from '../state/reducers';
 import { StoreState } from 'app/types';
-import { locationService } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
+
+const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
 
 const mapStateToProps = (state: StoreState) => {
   const searchObj = locationService.getSearchObject();
@@ -39,6 +41,8 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   };
 
   onSubmit = (form: ImportDashboardDTO) => {
+    reportInteraction(IMPORT_FINISHED_EVENT_NAME);
+
     this.props.importDashboard(form);
   };
 

@@ -26,7 +26,7 @@ backend_04
 Regex:
 
 ```regex
-/.*[01|02]/
+/(01|02)$/
 ```
 
 Result:

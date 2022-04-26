@@ -9,6 +9,8 @@ import {
   LoadingPlaceholder,
   PanelChromeLoadingIndicator,
   Icon,
+  Button,
+  VerticalGroup,
 } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { AlertingQueryRunner } from './state/AlertingQueryRunner';
@@ -28,6 +30,8 @@ import { RuleDetailsExpression } from './components/rules/RuleDetailsExpression'
 import { RuleDetailsAnnotations } from './components/rules/RuleDetailsAnnotations';
 import * as ruleId from './utils/rule-id';
 import { AlertQuery } from '../../../types/unified-alerting-dto';
+import { RuleDetailsFederatedSources } from './components/rules/RuleDetailsFederatedSources';
+import { isFederatedRuleGroup } from './utils/rules';
 
 type RuleViewerProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: string }>;
 
@@ -115,9 +119,24 @@ export function RuleViewer({ match }: RuleViewerProps) {
       </RuleViewerLayout>
     );
   }
+
   const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());
+  const isFederatedRule = isFederatedRuleGroup(rule.group);
+
   return (
     <RuleViewerLayout wrapInContent={false} title={pageTitle}>
+      {isFederatedRule && (
+        <Alert severity="info" title="This rule is part of a federated rule group.">
+          <VerticalGroup>
+            Federated rule groups are currently an experimental feature.
+            <Button fill="text" icon="book">
+              <a href="https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation">
+                Read documentation
+              </a>
+            </Button>
+          </VerticalGroup>
+        </Alert>
+      )}
       <RuleViewerLayoutContent>
         <div>
           <h4>
@@ -143,6 +162,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
           </div>
           <div className={styles.rightSide}>
             <RuleDetailsDataSources rule={rule} rulesSource={rulesSource} />
+            {isFederatedRule && <RuleDetailsFederatedSources group={rule.group} />}
             <DetailsField label="Namespace / Group">{`${rule.namespace.name} / ${rule.group.name}`}</DetailsField>
           </div>
         </div>
@@ -150,7 +170,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
           <RuleDetailsMatchingInstances promRule={rule.promRule} />
         </div>
       </RuleViewerLayoutContent>
-      {data && Object.keys(data).length > 0 && (
+      {!isFederatedRule && data && Object.keys(data).length > 0 && (
         <>
           <div className={styles.queriesTitle}>
             Query results <PanelChromeLoadingIndicator loading={isLoading(data)} onCancel={() => runner.cancel()} />

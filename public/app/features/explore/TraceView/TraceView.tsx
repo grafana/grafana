@@ -20,7 +20,7 @@ import {
   TTraceTimeline,
   UIElementsContext,
 } from '@jaegertracing/jaeger-ui-components';
-import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
+import { TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { StoreState } from 'app/types';

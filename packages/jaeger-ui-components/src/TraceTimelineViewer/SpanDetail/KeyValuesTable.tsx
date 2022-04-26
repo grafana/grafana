@@ -34,7 +34,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       label: KeyValueTable;
       background: ${autoColor(theme, '#fff')};
       border: 1px solid ${autoColor(theme, '#ddd')};
-      margin-bottom: 0.7em;
+      margin-bottom: 0.5rem;
       max-height: 450px;
       overflow: auto;
     `,
@@ -45,9 +45,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     row: css`
       label: row;
       & > td {
-        padding: 0.25rem 0.5rem;
-        padding: 0.25rem 0.5rem;
-        vertical-align: top;
+        padding: 0rem 0.5rem;
       }
       &:nth-child(2n) > td {
         background: ${autoColor(theme, '#f5f5f5')};

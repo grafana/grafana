@@ -1,11 +1,11 @@
 +++
-title = "Dashboard Version History"
+title = "Dashboard version history"
 keywords = ["grafana", "dashboard", "documentation", "version", "history"]
 aliases = ["/docs/grafana/latest/reference/dashboard_history/"]
-weight = 100
+weight = 14
 +++
 
-# Dashboard Version History
+# Dashboard version history
 
 Whenever you save a version of your dashboard, a copy of that version is saved so that previous versions of your dashboard are never lost. A list of these versions is available by entering the dashboard settings and then selecting "Versions" in the left side menu.
 

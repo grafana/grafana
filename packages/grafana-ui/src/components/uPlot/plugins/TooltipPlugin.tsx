@@ -214,7 +214,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       let series: SeriesTableRowProps[] = [];
       const frame = otherProps.data;
       const fields = frame.fields;
-      const sortIdx: Array<[number, number]> = [];
+      const sortIdx: any[] = [];
 
       for (let i = 0; i < fields.length; i++) {
         const field = frame.fields[i];
@@ -232,7 +232,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         const v = otherProps.data.fields[i].values.get(focusedPointIdxs[i]!);
         const display = field.display!(v);
 
-        sortIdx.push([series.length, v]);
+        sortIdx.push(v);
         series.push({
           color: display.color || FALLBACK_COLOR,
           label: getFieldDisplayName(field, frame),
@@ -242,7 +242,16 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
       }
 
       if (sortOrder !== SortOrder.None) {
-        series.sort((a, b) => arrayUtils.sortValues(sortOrder)(a.value, b.value));
+        // create sort reference series array, as Array.sort() mutates the original array
+        const sortRef = [...series];
+        const sortFn = arrayUtils.sortValues(sortOrder);
+
+        series.sort((a, b) => {
+          // get compared values indices to retrieve raw values from sortIdx
+          const aIdx = sortRef.indexOf(a);
+          const bIdx = sortRef.indexOf(b);
+          return sortFn(sortIdx[aIdx], sortIdx[bIdx]);
+        });
       }
 
       tooltip = <SeriesTable series={series} timestamp={xVal} />;

@@ -71,7 +71,7 @@ export class DataSourceDashboards extends PureComponent<Props> {
   };
 
   onRemove = (dashboard: PluginDashboard) => {
-    this.props.removeDashboard(dashboard.importedUri);
+    this.props.removeDashboard(dashboard.uid);
   };
 
   render() {

@@ -53,6 +53,7 @@ Improve an existing plugin with one of our guides:
 - [Build a streaming data source plugin]({{< relref "build-a-streaming-data-source-plugin.md" >}})
 - [Error handling]({{< relref "error-handling.md" >}})
 - [Working with data frames]({{< relref "working-with-data-frames.md" >}})
+- [Development with local Grafana]({{< relref "development-with-local-grafana.md" >}})
 
 ### Concepts
 

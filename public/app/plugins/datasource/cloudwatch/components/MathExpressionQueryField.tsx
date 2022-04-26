@@ -72,6 +72,7 @@ export function MathExpressionQueryField({
         onBlur={(value) => {
           if (value !== query) {
             onChange(value);
+            onRunQuery();
           }
         }}
         onBeforeEditorMount={(monaco: Monaco) =>

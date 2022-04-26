@@ -32,6 +32,8 @@ whitelist =
 # Optionally define more headers to sync other user attributes
 # Example `headers = Name:X-WEBAUTH-NAME Role:X-WEBAUTH-ROLE Email:X-WEBAUTH-EMAIL Groups:X-WEBAUTH-GROUPS`
 headers =
+# Non-ASCII strings in header values are encoded using quoted-printable encoding
+;headers_encoded = false
 # Check out docs on this for more details on the below setting
 enable_login_token = false
 ```

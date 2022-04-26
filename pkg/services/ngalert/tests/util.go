@@ -52,6 +52,10 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 
 // CreateTestAlertRule creates a dummy alert definition to be used by the tests.
 func CreateTestAlertRule(t *testing.T, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64) *models.AlertRule {
+	return CreateTestAlertRuleWithLabels(t, ctx, dbstore, intervalSeconds, orgID, nil)
+}
+
+func CreateTestAlertRuleWithLabels(t *testing.T, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64, labels map[string]string) *models.AlertRule {
 	ruleGroup := fmt.Sprintf("ruleGroup-%s", util.GenerateShortUID())
 	err := dbstore.UpdateRuleGroup(ctx, store.UpdateRuleGroupCmd{
 		OrgID:        orgID,
@@ -62,6 +66,7 @@ func CreateTestAlertRule(t *testing.T, ctx context.Context, dbstore *store.DBsto
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
+						Labels:      labels,
 						Annotations: map[string]string{"testAnnoKey": "testAnnoValue"},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{

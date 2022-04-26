@@ -17,6 +17,13 @@ const dataSources = {
   prom: mockDataSource({
     name: 'prom',
     type: 'prometheus',
+    isDefault: true,
+  }),
+  notDefault: mockDataSource({
+    name: 'prom-not-default',
+    uid: 'prom-not-default-uid',
+    type: 'prometheus',
+    isDefault: false,
   }),
   [MIXED_DATASOURCE_NAME]: mockDataSource({
     name: MIXED_DATASOURCE_NAME,
@@ -1837,6 +1844,33 @@ describe('DashboardModel', () => {
 
     it('should update datasources in panels collapsed rows', () => {
       expect(model.panels[3].panels[0].datasource).toEqual({ type: 'prometheus', uid: 'mock-ds-2' });
+    });
+  });
+
+  describe('when fixing query and panel data source refs out of sync due to default data source change', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [],
+        },
+        panels: [
+          {
+            id: 2,
+            datasource: null,
+            targets: [
+              {
+                datasource: 'prom-not-default',
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('should not update panel datasource to that of query level ds', () => {
+      expect(model.panels[0].datasource?.uid).toEqual('prom-not-default-uid');
     });
   });
 

@@ -2,12 +2,12 @@ import React, { FC } from 'react';
 import { css } from '@emotion/css';
 import { getTagColorsFromName } from '../../utils';
 import { stylesFactory, useTheme } from '../../themes';
-import { Icon } from '../Icon/Icon';
 import { GrafanaTheme } from '@grafana/data';
+import { IconButton } from '../IconButton/IconButton';
 
 interface Props {
   name: string;
-
+  disabled?: boolean;
   onRemove: (tag: string) => void;
 }
 
@@ -36,6 +36,13 @@ const getStyles = stylesFactory(({ theme, name }: { theme: GrafanaTheme; name: s
     nameStyle: css`
       margin-right: 3px;
     `,
+
+    buttonStyles: css`
+      margin: 0;
+      &:hover::before {
+        display: none;
+      }
+    `,
   };
 });
 
@@ -43,14 +50,22 @@ const getStyles = stylesFactory(({ theme, name }: { theme: GrafanaTheme; name: s
  * @internal
  * Only used internally by TagsInput
  * */
-export const TagItem: FC<Props> = ({ name, onRemove }) => {
+export const TagItem: FC<Props> = ({ name, disabled, onRemove }) => {
   const theme = useTheme();
   const styles = getStyles({ theme, name });
 
   return (
     <div className={styles.itemStyle}>
       <span className={styles.nameStyle}>{name}</span>
-      <Icon className="pointer" name="times" onClick={() => onRemove(name)} />
+      <IconButton
+        name="times"
+        size="lg"
+        disabled={disabled}
+        ariaLabel={`Remove ${name}`}
+        onClick={() => onRemove(name)}
+        type="button"
+        className={styles.buttonStyles}
+      />
     </div>
   );
 };

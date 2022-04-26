@@ -10,7 +10,7 @@ export const useFilteredAmGroups = (groups: AlertmanagerGroup[]) => {
   const matchers = parseMatchers(filters.queryString || '');
 
   return useMemo(() => {
-    return groups.reduce((filteredGroup, group) => {
+    return groups.reduce((filteredGroup: AlertmanagerGroup[], group) => {
       const alerts = group.alerts.filter(({ labels, status }) => {
         const labelsMatch = labelsMatchMatchers(labels, matchers);
         const filtersMatch = filters.alertState ? status.state === filters.alertState : true;
@@ -25,6 +25,6 @@ export const useFilteredAmGroups = (groups: AlertmanagerGroup[]) => {
         }
       }
       return filteredGroup;
-    }, [] as AlertmanagerGroup[]);
+    }, []);
   }, [groups, filters, matchers]);
 };

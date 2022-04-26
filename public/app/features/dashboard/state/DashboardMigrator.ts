@@ -67,6 +67,40 @@ export class DashboardMigrator {
     this.dashboard = dashboardModel;
   }
 
+  /**
+   * When changing default datasource which is stored as null Grafana get's into a mixed state where queries have
+   * data source uid & type set that is different from the now new default
+   */
+  syncQueryDataSources() {
+    const dataSourceSrv = getDataSourceSrv();
+    // This only happens in some unit tests that does not set a DataSourceSrv
+    if (!dataSourceSrv) {
+      return;
+    }
+
+    const defaultDS = getDataSourceSrv().getInstanceSettings(null);
+    // if default ds is mixed then skip this
+    if (!defaultDS || defaultDS.meta.mixed) {
+      return;
+    }
+
+    for (const panel of this.dashboard.panels) {
+      // only interested in panels that use default (null) data source
+      if (panel.datasource) {
+        continue;
+      }
+
+      for (const target of panel.targets) {
+        // If query level data source is different from panel
+        if (target.datasource && target.datasource.uid !== defaultDS?.uid) {
+          // set panel level data source to data source on the query as this is more likely the correct one
+          // But impossible to say, and this changes the behavior of of what default means ahead of the big change to default
+          panel.datasource = target.datasource;
+        }
+      }
+    }
+  }
+
   updateSchema(old: any) {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;

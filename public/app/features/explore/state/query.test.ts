@@ -35,6 +35,21 @@ import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv } from '../../dashboard/services/TimeSrv';
 import Mock = jest.Mock;
 
+jest.mock('app/features/dashboard/services/TimeSrv', () => ({
+  ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
+  getTimeSrv: () => ({
+    init: jest.fn(),
+    timeRange: jest.fn().mockReturnValue({}),
+  }),
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getTemplateSrv: () => ({
+    updateTimeRange: jest.fn(),
+  }),
+}));
+
 const t = toUtc();
 const testRange = {
   from: t,

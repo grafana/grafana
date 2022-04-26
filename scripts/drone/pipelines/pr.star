@@ -1,7 +1,10 @@
 load(
     'scripts/drone/steps/lib.star',
     'download_grabpl_step',
-    'initialize_step',
+    'gen_version_step',
+    'yarn_install_step',
+    'wire_install_step',
+    'identify_runner_step',
     'lint_drone_step',
     'lint_backend_step',
     'lint_frontend_step',
@@ -9,6 +12,7 @@ load(
     'shellcheck_step',
     'build_backend_step',
     'build_frontend_step',
+    'build_frontend_package_step',
     'build_plugins_step',
     'test_backend_step',
     'test_backend_integration_step',
@@ -18,8 +22,6 @@ load(
     'e2e_tests_step',
     'e2e_tests_artifacts',
     'build_storybook_step',
-    'build_frontend_docs_step',
-    'build_docs_website_step',
     'copy_packages_for_docker_step',
     'build_docker_images_step',
     'postgres_integration_tests_step',
@@ -47,13 +49,26 @@ load(
     'drone_change_template',
 )
 
+load(
+    'scripts/drone/pipelines/docs.star',
+    'docs_pipelines',
+    'trigger_docs',
+)
+
 ver_mode = 'pr'
 
 def pr_pipelines(edition):
     services = integration_test_services(edition)
     volumes = integration_test_services_volumes()
-    variants = ['linux-x64', 'linux-x64-musl', 'osx64', 'win64', 'armv6',]
+    variants = ['linux-amd64', 'linux-amd64-musl', 'darwin-amd64', 'windows-amd64', 'armv6',]
     include_enterprise2 = edition == 'enterprise'
+    init_steps = [
+        identify_runner_step(),
+        download_grabpl_step(),
+        gen_version_step(ver_mode),
+        wire_install_step(),
+        yarn_install_step(),
+    ]
     test_steps = [
         lint_drone_step(),
         codespell_step(),
@@ -67,6 +82,7 @@ def pr_pipelines(edition):
     build_steps = [
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
+        build_frontend_package_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
         validate_scuemata_step(),
         ensure_cuetsified_step(),
@@ -86,7 +102,7 @@ def pr_pipelines(edition):
             test_backend_integration_step(edition=edition2),
         ])
         build_steps.extend([
-            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
+            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-amd64']),
         ])
 
     # Insert remaining build_steps
@@ -100,8 +116,6 @@ def pr_pipelines(edition):
         e2e_tests_artifacts(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         test_a11y_frontend_step(ver_mode=ver_mode, edition=edition),
-        build_frontend_docs_step(edition=edition),
-        build_docs_website_step(),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, archs=['amd64',]),
     ])
@@ -112,23 +126,28 @@ def pr_pipelines(edition):
             memcached_integration_tests_step(edition=edition, ver_mode=ver_mode),
         ])
         build_steps.extend([
-            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-x64']),
+            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-amd64']),
         ])
 
     trigger = {
-        'event': ['pull_request',],
+        'event': [
+            'pull_request',
+        ],
+        'paths': {
+            'exclude': [
+                'docs/**',
+            ],
+        },
     }
 
     return [
         pipeline(
-            name='pr-test', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
-                + test_steps,
+            name='pr-test', edition=edition, trigger=trigger, services=[], steps=init_steps + test_steps,
         ), pipeline(
-            name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=[download_grabpl_step()] + initialize_step(edition, platform='linux', ver_mode=ver_mode)
-                + build_steps,
+            name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=init_steps + build_steps,
         ), pipeline(
             name='pr-integration-tests', edition=edition, trigger=trigger, services=services,
-            steps=[download_grabpl_step()] + integration_test_steps,
+            steps=[download_grabpl_step(), identify_runner_step(),] + integration_test_steps,
             volumes=volumes,
-        ),
+        ), docs_pipelines(edition, ver_mode, trigger_docs())
     ]

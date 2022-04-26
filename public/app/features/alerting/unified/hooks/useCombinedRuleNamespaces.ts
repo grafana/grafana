@@ -105,6 +105,7 @@ function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, gro
     const combinedGroup: CombinedRuleGroup = {
       name: group.name,
       interval: group.interval,
+      source_tenants: group.source_tenants,
       rules: [],
     };
     combinedGroup.rules = group.rules.map((rule) => rulerRuleToCombinedRule(rule, namespace, combinedGroup));

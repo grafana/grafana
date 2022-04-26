@@ -1,6 +1,6 @@
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { DataSourceHttpSettings } from '@grafana/ui';
-import { TraceToLogsSettings } from 'app/core/components/TraceToLogsSettings';
+import { TraceToLogsSettings } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import React from 'react';
 import { ServiceGraphSettings } from './ServiceGraphSettings';
 import { config } from '@grafana/runtime';

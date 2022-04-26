@@ -3,6 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { css } from '@emotion/css';
 import { AppEvents, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
   Field,
@@ -32,6 +33,8 @@ type DashboardImportPageRouteSearchParams = {
 };
 
 type OwnProps = Themeable2 & GrafanaRouteComponentProps<{}, DashboardImportPageRouteSearchParams>;
+
+const IMPORT_STARTED_EVENT_NAME = 'dashboard_import_loaded';
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'import', undefined, true),
@@ -63,6 +66,10 @@ class UnthemedDashboardImport extends PureComponent<Props> {
   }
 
   onFileUpload = (event: FormEvent<HTMLInputElement>) => {
+    reportInteraction(IMPORT_STARTED_EVENT_NAME, {
+      import_source: 'json_uploaded',
+    });
+
     const { importDashboardJson } = this.props;
     const file = event.currentTarget.files && event.currentTarget.files.length > 0 && event.currentTarget.files[0];
 
@@ -89,10 +96,18 @@ class UnthemedDashboardImport extends PureComponent<Props> {
   };
 
   getDashboardFromJson = (formData: { dashboardJson: string }) => {
+    reportInteraction(IMPORT_STARTED_EVENT_NAME, {
+      import_source: 'json_pasted',
+    });
+
     this.props.importDashboardJson(JSON.parse(formData.dashboardJson));
   };
 
   getGcomDashboard = (formData: { gcomDashboard: string }) => {
+    reportInteraction(IMPORT_STARTED_EVENT_NAME, {
+      import_source: 'gcom',
+    });
+
     let dashboardId;
     const match = /(^\d+$)|dashboards\/(\d+)/.exec(formData.gcomDashboard);
     if (match && match[1]) {

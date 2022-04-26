@@ -64,8 +64,9 @@ export function preparePlotData(
     const customConfig: GraphFieldConfig = f.config.custom || {};
 
     const values = f.values.toArray();
+
     if (customConfig.transform === GraphTransform.NegativeY) {
-      result.push(values.map((v) => v * -1));
+      result.push(values.map((v) => (v == null ? v : v * -1)));
     } else if (customConfig.transform === GraphTransform.Constant) {
       result.push(new Array(values.length).fill(values[0]));
     } else {

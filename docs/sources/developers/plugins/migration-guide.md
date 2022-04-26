@@ -12,31 +12,42 @@ This guide helps you identify the steps you need to take based on the Grafana ve
 
 ## Table of contents
 
-- [From version 8.3.x to 8.4.x](#from-version-83x-to-84x)
-  - [Value Mapping Editor has been removed from @grafana-ui library](#value-mapping-editor-has-been-removed-from-grafana-ui-library)
-  - [Thresholds Editor has been removed from @grafana-ui library](#thresholds-editor-has-been-removed-from-grafana-ui-library)
-  - [8.4 Deprecations](#84-deprecations)
-    - [LocationService replaces getLocationSrv](#locationservice-replaces-getlocationsrv)
-- [From version 7.x.x to 8.x.x](#from-version-7xx-to-8xx)
-  - [Backend plugin v1 support has been dropped](#backend-plugin-v1-support-has-been-dropped)
-    - [1. Add dependency on grafana-plugin-sdk-go](#1-add-dependency-on-grafana-plugin-sdk-go)
-    - [2. Update the way you bootstrap your plugin](#2-update-the-way-you-bootstrap-your-plugin)
-    - [3. Update the plugin package](#3-update-the-plugin-package)
-  - [Sign and load backend plugins](#sign-and-load-backend-plugins)
-  - [Update react-hook-form from v6 to v7](#update-react-hook-form-from-v6-to-v7)
-  - [Update the plugin.json](#update-the-pluginjson)
-  - [Update imports to match emotion 11](#update-imports-to-match-emotion-11)
-  - [8.0 Deprecations](#80-deprecations)
-    - [Grafana theme v1](#grafana-theme-v1)
-- [From version 6.2.x to 7.4.0](#from-version-62x-to-740)
-  - [Legend components](#legend-components)
-- [From version 6.x.x to 7.0.0](#from-version-6xx-to-700)
-  - [What's new in Grafana 7.0?](#whats-new-in-grafana-70)
-  - [Migrate a plugin from Angular to React](#migrate-a-plugin-from-angular-to-react)
-    - [Migrate a panel plugin](#migrate-a-panel-plugin)
-    - [Migrate a data source plugin](#migrate-a-data-source-plugin)
-    - [Migrate to data frames](#migrate-to-data-frames)
-  - [Troubleshoot plugin migration](#troubleshoot-plugin-migration)
+- [Plugin migration guide](#plugin-migration-guide)
+  - [Introduction](#introduction)
+  - [Table of contents](#table-of-contents)
+  - [From version 8.3.x to 8.4.x](#from-version-83x-to-84x)
+    - [Value Mapping Editor has been removed from @grafana-ui library](#value-mapping-editor-has-been-removed-from-grafana-ui-library)
+    - [Thresholds Editor has been removed from @grafana-ui library](#thresholds-editor-has-been-removed-from-grafana-ui-library)
+    - [8.4 deprecations](#84-deprecations)
+      - [LocationService replaces getLocationSrv](#locationservice-replaces-getlocationsrv)
+  - [From version 7.x.x to 8.x.x](#from-version-7xx-to-8xx)
+    - [Backend plugin v1 support has been dropped](#backend-plugin-v1-support-has-been-dropped)
+      - [1. Add dependency on grafana-plugin-sdk-go](#1-add-dependency-on-grafana-plugin-sdk-go)
+      - [2. Update the way you bootstrap your plugin](#2-update-the-way-you-bootstrap-your-plugin)
+      - [3. Update the plugin package](#3-update-the-plugin-package)
+    - [Sign and load backend plugins](#sign-and-load-backend-plugins)
+    - [Update react-hook-form from v6 to v7](#update-react-hook-form-from-v6-to-v7)
+    - [Update the plugin.json](#update-the-pluginjson)
+    - [Update imports to match emotion 11](#update-imports-to-match-emotion-11)
+    - [Update needed for app plugins using dashboards](#update-needed-for-app-plugins-using-dashboards)
+    - [8.0 deprecations](#80-deprecations)
+      - [Grafana theme v1](#grafana-theme-v1)
+  - [From version 6.2.x to 7.4.0](#from-version-62x-to-740)
+    - [Legend components](#legend-components)
+  - [From version 6.5.x to 7.3.0](#from-version-65x-to-730)
+    - [getColorForTheme changes](#getcolorfortheme-changes)
+  - [From version 6.x.x to 7.0.0](#from-version-6xx-to-700)
+    - [What's new in Grafana 7.0?](#whats-new-in-grafana-70)
+      - [New data format](#new-data-format)
+      - [Improved TypeScript support](#improved-typescript-support)
+      - [Grafana Toolkit](#grafana-toolkit)
+      - [Field options](#field-options)
+      - [Backend plugins](#backend-plugins)
+    - [Migrate a plugin from Angular to React](#migrate-a-plugin-from-angular-to-react)
+      - [Migrate a panel plugin](#migrate-a-panel-plugin)
+      - [Migrate a data source plugin](#migrate-a-data-source-plugin)
+      - [Migrate to data frames](#migrate-to-data-frames)
+    - [Troubleshoot plugin migration](#troubleshoot-plugin-migration)
 
 ## From version 8.3.x to 8.4.x
 
@@ -306,6 +317,42 @@ import { cx, css } from 'emotion';
 
 // after
 import { cx, css } from '@emotion/css';
+```
+
+### Update needed for app plugins using dashboards
+
+To make side navigation work properly - app plugins targeting Grafana `8.+` and integrating into the side menu via [addToNav]({{< relref "metadata.md#properties-4" >}}) property need to adjust their `plugin.json` and all dashboard json files to have a matching `uid`.
+
+**`plugin.json`**
+
+```json "linenos=inline,hl_lines=7,linenostart=1"
+{
+  "id": "plugin-id",
+  // ...
+  "includes": [
+    {
+      "type": "dashboard",
+      "name": "(Team) Situation Overview",
+      "path": "dashboards/example-dashboard.json",
+      "addToNav": true,
+      "defaultNav": false,
+      "uid": "l3KqBxCMz"
+    }
+  ]
+  // ...
+}
+```
+
+**`dashboards/example-dashboard.json`**
+
+```json
+{
+  // ...
+  "title": "Example Dashboard",
+  "uid": "l3KqBxCMz",
+  "version": 1
+  // ...
+}
 ```
 
 ### 8.0 deprecations

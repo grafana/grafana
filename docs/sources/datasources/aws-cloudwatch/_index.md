@@ -26,7 +26,7 @@ For authentication options and configuration details, see [AWS authentication]({
 
 Grafana needs permissions granted via IAM to be able to read CloudWatch metrics and EC2 tags/instances/regions/alarms. You can attach these permissions to the IAM role or IAM user configured in the previous step.
 
-Here is a minimal policy example:
+##### Metrics only example:
 
 ```json
 {
@@ -40,7 +40,76 @@ Here is a minimal policy example:
         "cloudwatch:DescribeAlarmHistory",
         "cloudwatch:DescribeAlarms",
         "cloudwatch:ListMetrics",
-        "cloudwatch:GetMetricStatistics",
+        "cloudwatch:GetMetricData",
+        "cloudwatch:GetInsightRuleReport"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowReadingTagsInstancesRegionsFromEC2",
+      "Effect": "Allow",
+      "Action": ["ec2:DescribeTags", "ec2:DescribeInstances", "ec2:DescribeRegions"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowReadingResourcesForTags",
+      "Effect": "Allow",
+      "Action": "tag:GetResources",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+##### Logs only example:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowReadingLogsFromCloudWatch",
+      "Effect": "Allow",
+      "Action": [
+        "logs:DescribeLogGroups",
+        "logs:GetLogGroupFields",
+        "logs:StartQuery",
+        "logs:StopQuery",
+        "logs:GetQueryResults",
+        "logs:GetLogEvents"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowReadingTagsInstancesRegionsFromEC2",
+      "Effect": "Allow",
+      "Action": ["ec2:DescribeTags", "ec2:DescribeInstances", "ec2:DescribeRegions"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowReadingResourcesForTags",
+      "Effect": "Allow",
+      "Action": "tag:GetResources",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+##### Metrics and Logs example:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowReadingMetricsFromCloudWatch",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:DescribeAlarmsForMetric",
+        "cloudwatch:DescribeAlarmHistory",
+        "cloudwatch:DescribeAlarms",
+        "cloudwatch:ListMetrics",
         "cloudwatch:GetMetricData",
         "cloudwatch:GetInsightRuleReport"
       ],

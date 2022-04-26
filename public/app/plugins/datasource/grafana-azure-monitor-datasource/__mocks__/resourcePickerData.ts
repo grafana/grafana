@@ -10,7 +10,6 @@ export default function createMockResourcePickerData(overrides?: DeepPartial<Res
     getResourceGroupsBySubscriptionId: jest.fn().mockResolvedValue([]),
     getResourcesForResourceGroup: jest.fn().mockResolvedValue([]),
     getResourceURIFromWorkspace: jest.fn().mockReturnValue(''),
-    transformVariablesToRow: jest.fn().mockReturnValue({}),
     ...overrides,
   };
 

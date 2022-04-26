@@ -1,7 +1,7 @@
-import React, { MouseEvent } from 'react';
 import { css } from '@emotion/css';
-import { CallToActionCard, Icon, IconName, LinkButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { Button, CallToActionCard, Icon, IconName, LinkButton } from '@grafana/ui';
+import React, { MouseEvent } from 'react';
 
 export interface Props {
   title: string;
@@ -75,8 +75,9 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
       `
     : '';
 
+  const ButtonEl = buttonLink ? LinkButton : Button;
   const ctaElement = (
-    <LinkButton
+    <ButtonEl
       size="lg"
       onClick={onClick}
       href={buttonLink}
@@ -86,7 +87,7 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
       disabled={buttonDisabled}
     >
       {buttonTitle}
-    </LinkButton>
+    </ButtonEl>
   );
 
   return <CallToActionCard className={ctaStyle} message={title} footer={footer()} callToActionElement={ctaElement} />;

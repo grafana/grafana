@@ -120,9 +120,15 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		},
 	}
 
-	u := tmpl(gcn.URL)
 	if tmplErr != nil {
 		gcn.log.Warn("failed to template GoogleChat message", "err", tmplErr.Error())
+		tmplErr = nil
+	}
+
+	u := tmpl(gcn.URL)
+	if tmplErr != nil {
+		gcn.log.Warn("failed to template GoogleChat URL", "err", tmplErr.Error(), "fallback", gcn.URL)
+		u = gcn.URL
 	}
 
 	body, err := json.Marshal(res)

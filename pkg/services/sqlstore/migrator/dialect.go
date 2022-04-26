@@ -27,6 +27,8 @@ type Dialect interface {
 	BooleanStr(bool) string
 	DateTimeFunc(string) string
 
+	OrderBy(order string) string
+
 	CreateIndexSQL(tableName string, index *Index) string
 	CreateTableSQL(table *Table) string
 	AddColumnSQL(tableName string, col *Column) string
@@ -307,4 +309,8 @@ func (b *BaseDialect) Lock(_ LockCfg) error {
 
 func (b *BaseDialect) Unlock(_ LockCfg) error {
 	return nil
+}
+
+func (b *BaseDialect) OrderBy(order string) string {
+	return order
 }

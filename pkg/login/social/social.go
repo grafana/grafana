@@ -45,6 +45,7 @@ type OAuthInfo struct {
 	TeamsUrl               string
 	AllowSignup            bool
 	Name                   string
+	Icon                   string
 	TlsClientCert          string
 	TlsClientKey           string
 	TlsClientCa            string
@@ -81,6 +82,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 			HostedDomain:         sec.Key("hosted_domain").String(),
 			AllowSignup:          sec.Key("allow_sign_up").MustBool(),
 			Name:                 sec.Key("name").MustString(name),
+			Icon:                 sec.Key("icon").String(),
 			TlsClientCert:        sec.Key("tls_client_cert").String(),
 			TlsClientKey:         sec.Key("tls_client_key").String(),
 			TlsClientCa:          sec.Key("tls_client_ca").String(),

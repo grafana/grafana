@@ -5,28 +5,55 @@ import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import { DimensionSupplier } from 'app/features/dimensions';
 import { getThresholdItems } from 'app/plugins/panel/state-timeline/utils';
-import { getMinMaxAndDelta } from '../../../../../../../packages/grafana-data/src/field/scale';
+import { getMinMaxAndDelta } from '@grafana/data/src/field/scale';
+import SVG from 'react-inlinesvg';
+import { StyleConfigState } from '../../style/types';
 
 export interface MarkersLegendProps {
-  color?: DimensionSupplier<string>;
   size?: DimensionSupplier<number>;
+  layerName?: string;
+  styleConfig?: StyleConfigState;
 }
 
 export function MarkersLegend(props: MarkersLegendProps) {
-  const { color } = props;
+  const { layerName, styleConfig } = props;
   const theme = useTheme2();
+  const style = getStyles(theme);
 
-  if (!color || (!color.field && color.fixed)) {
+  if (!styleConfig) {
+    return <></>;
+  }
+  const { color, opacity} = styleConfig?.base ?? {};
+  const symbol = styleConfig?.config.symbol?.fixed;
+
+  const colorField = styleConfig.dims?.color?.field;
+
+  if (color && symbol && !colorField) {
+    return (
+      <div className={style.infoWrap}>
+        <div className={style.fixedColorContainer}>
+          <SVG
+            src={`public/${symbol}`}
+            className={style.legendSymbol}
+            title={'Symbol'}
+            style={{ fill: color, opacity: opacity }}
+          />
+          <span>{layerName}</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (!colorField) {
     return <></>;
   }
 
-  const style = getStyles(theme);
-  const fmt = (v: any) => `${formattedValueToString(color.field!.display!(v))}`;
-  const colorMode = getFieldColorModeForField(color!.field!);
+  const fmt = (v: any) => `${formattedValueToString(colorField.display!(v))}`;
+  const colorMode = getFieldColorModeForField(colorField);
 
   if (colorMode.isContinuous && colorMode.getColors) {
     const colors = colorMode.getColors(config.theme2);
-    const colorRange = getMinMaxAndDelta(color.field!);
+    const colorRange = getMinMaxAndDelta(colorField);
     // TODO: explore showing mean on the gradiant scale
     // const stats = reduceField({
     //   field: color.field!,
@@ -40,7 +67,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
 
     return (
       <>
-        <Label>{color?.field?.name}</Label>
+        <Label>{colorField?.name}</Label>
         <div
           className={style.gradientContainer}
           style={{ backgroundImage: `linear-gradient(to right, ${colors.map((c) => c).join(', ')}` }}
@@ -52,12 +79,12 @@ export function MarkersLegend(props: MarkersLegendProps) {
     );
   }
 
-  const thresholds = color.field?.config?.thresholds;
+  const thresholds = colorField?.config?.thresholds;
   if (!thresholds || thresholds.steps.length < 2) {
     return <div></div>; // don't show anything in the legend
   }
 
-  const items = getThresholdItems(color.field!.config, config.theme2);
+  const items = getThresholdItems(colorField!.config, config.theme2);
   return (
     <div className={style.infoWrap}>
       <div className={style.legend}>
@@ -94,6 +121,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   `,
   legendItem: css`
     white-space: nowrap;
+  `,
+  fixedColorContainer: css`
+    min-width: 80px;
+    font-size: ${theme.typography.bodySmall.fontSize};
+  `,
+  legendSymbol: css`
+    height: 10px;
+    width: 10px;
+    margin: auto;
+    margin-right: 4px;
   `,
   gradientContainer: css`
     min-width: 200px;

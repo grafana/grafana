@@ -44,7 +44,7 @@ func TestDingdingNotifier(t *testing.T) {
 				"msgtype": "link",
 				"link": map[string]interface{}{
 					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
-					"text":       "**Firing**\n\nValue: 1234\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+					"text":       "**Firing**\n\nValue: 1234\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 					"title":      "[FIRING:1]  (val1)",
 				},
 			},
@@ -77,6 +77,64 @@ func TestDingdingNotifier(t *testing.T) {
 					"title":       "[FIRING:2]  ",
 				},
 				"msgtype": "actionCard",
+			},
+			expMsgError: nil,
+		}, {
+			name: "Missing field in template",
+			settings: `{
+				"url": "http://localhost",
+				"message": "I'm a custom template {{ .NotAField }} bad template",
+				"msgType": "actionCard"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"link": map[string]interface{}{
+					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
+					"text":       "I'm a custom template ",
+					"title":      "",
+				},
+				"msgtype": "link",
+			},
+			expMsgError: nil,
+		}, {
+			name: "Invalid template",
+			settings: `{
+				"url": "http://localhost",
+				"message": "I'm a custom template {{ {.NotAField }} bad template",
+				"msgType": "actionCard"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"link": map[string]interface{}{
+					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
+					"text":       "",
+					"title":      "",
+				},
+				"msgtype": "link",
 			},
 			expMsgError: nil,
 		}, {
@@ -116,6 +174,8 @@ func TestDingdingNotifier(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.True(t, ok)
+
+			require.NotEmpty(t, webhookSender.Webhook.Url)
 
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)

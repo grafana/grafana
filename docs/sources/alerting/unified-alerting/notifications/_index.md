@@ -9,7 +9,7 @@ weight = 450
 
 Notification policies determine how alerts are routed to contact points. Policies have a tree structure, where each policy can have one or more child policies. Each policy, except for the root policy, can also match specific alert labels. Each alert is evaluated by the root policy and subsequently by each child policy. If you enable the `Continue matching subsequent sibling nodes` option is enabled for a specific policy, then evaluation continues even after one or more matches. A parent policy’s configuration settings and contact point information govern the behavior of an alert that does not match any of the child policies. A root policy governs any alert that does not match a specific policy.
 
-You can configure Grafana managed notification policies as well as notification policies for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./fundamentals/alertmanager.md" >}}).
+You can configure Grafana managed notification policies as well as notification policies for an [external Alertmanager data source]({{< relref "../../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "../fundamentals/alertmanager.md" >}}).
 
 ## Grouping
 
@@ -33,7 +33,7 @@ You can configure grouping to be `group_by: [alertname]` (take note that the `en
 1. Click **Notification policies**.
 1. From the **Alertmanager** dropdown, select an external Alertmanager. By default, the Grafana Alertmanager is selected.
 1. In the Root policy section, click **Edit** (pen icon).
-1. In **Default contact point**, update the [contact point]({{< relref "./contact-points.md" >}}) to whom notifications should be sent for rules when alert rules do not match any specific policy.
+1. In **Default contact point**, update the [contact point]({{< relref "../contact-points.md" >}}) to whom notifications should be sent for rules when alert rules do not match any specific policy.
 1. In **Group by**, choose labels to group alerts by. If multiple alerts are matched for this policy, then they are grouped by these labels. A notification is sent per group. If the field is empty (default), then all notifications are sent in a single group. Use a special label `...` to group alerts by all labels (which effectively disables grouping).
 1. In **Timing options**, select from the following options:
    - **Group wait** Time to wait to buffer alerts of the same group before sending an initial notification. Default is 30 seconds.
@@ -48,7 +48,7 @@ You can configure grouping to be `group_by: [alertname]` (take note that the `en
 1. From the **Alertmanager** dropdown, select an Alertmanager. By default, the Grafana Alertmanager is selected.
 1. To add a top level specific policy, go to the **Specific routing** section and click **New specific policy**.
 1. In **Matching labels** section, add one or more rules for matching alert labels. For more information, see ["How label matching works"](#how-label-matching-works).
-1. In **Contact point**, add the [contact point]({{< relref "./contact-points.md" >}}) to send notification to if alert matches only this specific policy and not any of the nested policies.
+1. In **Contact point**, add the [contact point]({{< relref "../contact-points.md" >}}) to send notification to if alert matches only this specific policy and not any of the nested policies.
 1. Optionally, enable **Continue matching subsequent sibling nodes** to continue matching nested policies even after the alert matched the parent policy. When this option is enabled, you can get more than one notification. Use it to send notification to a catch-all contact point as well as to one of more specific contact points handled by nested policies.
 1. Optionally, enable **Override grouping** to specify the same grouping as the root policy. If this option is not enabled, the root policy grouping is used.
 1. Optionally, enable **Override general timings** to override the timing options configured in the group notification policy.

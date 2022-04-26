@@ -284,6 +284,19 @@ func (db *PostgresDialect) Lock(cfg LockCfg) error {
 	return nil
 }
 
+// OrderBy normalizes ordering so that nulls end up last in sorting, which they do by default in both sqlite and mysql but not postgres
+// order should be a string like `dashboard.id ASC`
+func (db *PostgresDialect) OrderBy(order string) string {
+	nullSort := "FIRST"
+	normalizedOrder := strings.ToUpper(strings.TrimSpace(order))
+
+	if strings.HasSuffix(normalizedOrder, " DESC") {
+		nullSort = "LAST"
+	}
+
+	return fmt.Sprintf("%s NULLS %s", order, nullSort)
+}
+
 func (db *PostgresDialect) Unlock(cfg LockCfg) error {
 	// trying to release a previously-acquired exclusive session level advisory lock.
 	// it will either return true if the lock is successfully released or

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"xorm.io/xorm"
@@ -100,26 +101,50 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 		}
 
 		for _, k := range keys {
-			provider, ok := providers[k.Provider]
+			provider, ok := providers[kmsproviders.NormalizeProviderID(k.Provider)]
 			if !ok {
-				return fmt.Errorf("could not find encryption provider '%s'", k.Provider)
+				ss.log.Warn(
+					"Could not find provider to re-encrypt data encryption key",
+					"key_id", k.Name,
+					"provider", k.Provider,
+				)
+				continue
 			}
 
 			decrypted, err := provider.Decrypt(ctx, k.EncryptedData)
 			if err != nil {
-				return err
+				ss.log.Warn(
+					"Error while decrypting data encryption key to re-encrypt it",
+					"key_id", k.Name,
+					"provider", k.Provider,
+					"err", err,
+				)
+				continue
 			}
 
 			// Updating current data key by re-encrypting it with current provider.
 			// Accessing the current provider within providers map should be safe.
 			k.Provider = currProvider
+			k.Updated = time.Now()
 			k.EncryptedData, err = providers[currProvider].Encrypt(ctx, decrypted)
 			if err != nil {
-				return err
+				ss.log.Warn(
+					"Error while re-encrypting data encryption key",
+					"key_id", k.Name,
+					"provider", k.Provider,
+					"err", err,
+				)
+				continue
 			}
 
 			if _, err := sess.Table(dataKeysTable).Where("name = ?", k.Name).Update(k); err != nil {
-				return err
+				ss.log.Warn(
+					"Error while re-encrypting data encryption key",
+					"key_id", k.Name,
+					"provider", k.Provider,
+					"err", err,
+				)
+				continue
 			}
 		}
 

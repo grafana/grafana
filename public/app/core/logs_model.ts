@@ -326,24 +326,27 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   const seriesWithFields = logSeries.filter((series) => series.fields.length);
 
   if (seriesWithFields.length) {
-    allSeries = seriesWithFields.map((series) => {
+    seriesWithFields.forEach((series) => {
       const fieldCache = new FieldCache(series);
       const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
+      const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
 
-      if (stringField?.labels) {
-        allLabels.push(stringField.labels);
+      if (stringField !== undefined && timeField !== undefined) {
+        if (stringField?.labels) {
+          allLabels.push(stringField.labels);
+        }
+
+        allSeries.push({
+          series,
+          timeField,
+          timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
+            ? fieldCache.getFieldByName('tsNs')
+            : undefined,
+          stringField,
+          logLevelField: fieldCache.getFieldByName('level'),
+          idField: getIdField(fieldCache),
+        });
       }
-
-      return {
-        series,
-        timeField: fieldCache.getFirstFieldOfType(FieldType.time),
-        timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
-          ? fieldCache.getFieldByName('tsNs')
-          : undefined,
-        stringField,
-        logLevelField: fieldCache.getFieldByName('level'),
-        idField: getIdField(fieldCache),
-      } as LogFields;
     });
   }
 

@@ -27,6 +27,7 @@ import {
   ScaleDistribution,
   StackingMode,
   SortOrder,
+  GraphTransform,
 } from '@grafana/schema';
 import { TimeSeriesOptions } from './types';
 import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
@@ -240,6 +241,12 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
                 fixedColor: v,
                 mode: FieldColorModeId.Fixed,
               },
+            });
+            break;
+          case 'transform':
+            rule.properties.push({
+              id: 'custom.transform',
+              value: v === 'negative-Y' ? GraphTransform.NegativeY : GraphTransform.Constant,
             });
             break;
           default:

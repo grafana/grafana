@@ -97,6 +97,23 @@ describe('nullInsertThreshold Transformer', () => {
     expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, 'c']);
   });
 
+  test('should insert trailing null at end +interval when timeRange.to.valueOf() exceeds threshold', () => {
+    const df = new MutableDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [1, 3, 10] },
+        { name: 'One', type: FieldType.number, values: [4, 6, 8] },
+        { name: 'Two', type: FieldType.string, values: ['a', 'b', 'c'] },
+      ],
+    });
+
+    const result = applyNullInsertThreshold(df, null, 13);
+
+    expect(result.fields[0].values.toArray()).toStrictEqual([1, 2, 3, 4, 10, 11]);
+    expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, 8, null]);
+    expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, 'c', null]);
+  });
+
   // TODO: make this work
   test.skip('should insert nulls at +threshold (when defined) instead of +interval', () => {
     const df = new MutableDataFrame({
@@ -113,23 +130,6 @@ describe('nullInsertThreshold Transformer', () => {
     expect(result.fields[0].values.toArray()).toStrictEqual([5, 6, 7, 8, 11]);
     expect(result.fields[1].values.toArray()).toStrictEqual([4, null, 6, null, 8]);
     expect(result.fields[2].values.toArray()).toStrictEqual(['a', null, 'b', null, 'c']);
-  });
-
-  test('should insert nulls at midpoints between adjacent > interval: 2', () => {
-    const df = new MutableDataFrame({
-      refId: 'A',
-      fields: [
-        { name: 'Time', type: FieldType.time, config: { interval: 2 }, values: [5, 7, 11] },
-        { name: 'One', type: FieldType.number, values: [4, 6, 8] },
-        { name: 'Two', type: FieldType.string, values: ['a', 'b', 'c'] },
-      ],
-    });
-
-    const result = applyNullInsertThreshold(df);
-
-    expect(result.fields[0].values.toArray()).toStrictEqual([5, 7, 9, 11]);
-    expect(result.fields[1].values.toArray()).toStrictEqual([4, 6, null, 8]);
-    expect(result.fields[2].values.toArray()).toStrictEqual(['a', 'b', null, 'c']);
   });
 
   test('should noop on fewer than two values', () => {

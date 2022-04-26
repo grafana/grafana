@@ -73,6 +73,7 @@ func ProvideService(bus bus.Bus, store *sqlstore.SQLStore, secretsService secret
 	s.Bus.AddHandler(s.GetDefaultDataSource)
 
 	ac.RegisterAttributeScopeResolver(NewNameScopeResolver(store))
+	ac.RegisterAttributeScopeResolver(NewUidScopeResolver(store))
 
 	return s
 }
@@ -84,16 +85,15 @@ type DataSourceRetriever interface {
 // NewNameScopeResolver provides an AttributeScopeResolver able to
 // translate a scope prefixed with "datasources:name:" into an id based scope.
 func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
+	prefix := accesscontrol.Scope("datasources", "name", "")
 	dsNameResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
-		dsNames := strings.Split(initialScope, ":")
-		if dsNames[0] != "datasources" || len(dsNames) != 3 {
+		if !strings.HasPrefix(initialScope, prefix) {
 			return "", accesscontrol.ErrInvalidScope
 		}
 
-		dsName := dsNames[2]
-		// Special wildcard case
-		if dsName == "*" {
-			return accesscontrol.Scope("datasources", "id", "*"), nil
+		dsName := initialScope[len(prefix):]
+		if dsName == "" {
+			return "", accesscontrol.ErrInvalidScope
 		}
 
 		query := models.GetDataSourceQuery{Name: dsName, OrgId: orgID}
@@ -101,10 +101,35 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.Attribu
 			return "", err
 		}
 
-		return accesscontrol.Scope("datasources", "id", fmt.Sprintf("%v", query.Result.Id)), nil
+		return accesscontrol.Scope("datasources", "id", strconv.FormatInt(query.Result.Id, 10)), nil
 	}
 
-	return "datasources:name:", dsNameResolver
+	return prefix, dsNameResolver
+}
+
+// NewUidScopeResolver provides an AttributeScopeResolver able to
+// translate a scope prefixed with "datasources:uid:" into an id based scope.
+func NewUidScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
+	prefix := accesscontrol.Scope("datasources", "uid", "")
+	dsUIDResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+		if !strings.HasPrefix(initialScope, prefix) {
+			return "", accesscontrol.ErrInvalidScope
+		}
+
+		dsUID := initialScope[len(prefix):]
+		if dsUID == "" {
+			return "", accesscontrol.ErrInvalidScope
+		}
+
+		query := models.GetDataSourceQuery{Uid: dsUID, OrgId: orgID}
+		if err := db.GetDataSource(ctx, &query); err != nil {
+			return "", err
+		}
+
+		return accesscontrol.Scope("datasources", "id", strconv.FormatInt(query.Result.Id, 10)), nil
+	}
+
+	return prefix, dsUIDResolver
 }
 
 func (s *Service) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {

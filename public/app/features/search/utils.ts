@@ -165,7 +165,7 @@ export const getCheckedUids = (sections: DashboardSection[]): UidsToDelete => {
   }
 
   return sections.reduce((result, section) => {
-    if (section?.id !== 0 && section.checked) {
+    if (section?.id !== 0 && section.checked && section.uid) {
       return { ...result, folders: [...result.folders, section.uid] } as UidsToDelete;
     } else {
       return { ...result, dashboards: getCheckedDashboardsUids(sections) } as UidsToDelete;

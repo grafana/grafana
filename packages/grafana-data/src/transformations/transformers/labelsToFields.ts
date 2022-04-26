@@ -70,7 +70,7 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
             continue;
           }
 
-          const uniqueValues = (uniqueLabels[labelName] ||= new Set());
+          const uniqueValues = uniqueLabels[labelName] ?? (uniqueLabels[labelName] = new Set()); // (Safari 13.1 lacks ??= support)
           uniqueValues.add(field.labels[labelName]);
         }
       }

@@ -328,7 +328,11 @@ func extractNumberSet(frame *data.Frame) ([]mathexp.Number, error) {
 		}
 
 		n := mathexp.NewNumber("", labels)
+
+		// The new value fields' configs gets pointed to the one in the original frame
+		n.Frame.Fields[0].Config = frame.Fields[numericField].Config
 		n.SetValue(&val)
+
 		numbers[rowIdx] = n
 	}
 	return numbers, nil
@@ -358,6 +362,10 @@ func WideToMany(frame *data.Frame) ([]mathexp.Series, error) {
 		f := data.NewFrameOfFieldTypes(frame.Name, l, frame.Fields[tsSchema.TimeIndex].Type(), frame.Fields[valIdx].Type())
 		f.Fields[0].Name = frame.Fields[tsSchema.TimeIndex].Name
 		f.Fields[1].Name = frame.Fields[valIdx].Name
+
+		// The new value fields' configs gets pointed to the one in the original frame
+		f.Fields[1].Config = frame.Fields[valIdx].Config
+
 		if frame.Fields[valIdx].Labels != nil {
 			f.Fields[1].Labels = frame.Fields[valIdx].Labels.Copy()
 		}

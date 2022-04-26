@@ -1,5 +1,5 @@
 import { ArrayVector, DataFrame, DataTransformerID, DataTransformerInfo, FieldType } from '@grafana/data';
-import { createLineBetween } from 'app/features/geo/format/utils';
+import { createGeometryCollection, createLineBetween } from 'app/features/geo/format/utils';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 import { mergeMap, from } from 'rxjs';
 import { SpatialOperation, SpatialAction, SpatialTransformOptions } from './models.gen';
@@ -26,10 +26,17 @@ async function doSetGeometry(frames: DataFrame[], options: SpatialTransformOptio
       const src = getGeometryField(frame, location);
       const target = getGeometryField(frame, targetLocation);
       if (src.field && target.field) {
+        const fields = [...frame.fields];
         const line = createLineBetween(src.field, target.field);
+        const first = fields[0];
+        if (first.type === FieldType.geo && first !== src.field && first !== target.field) {
+          fields[0] = createGeometryCollection(first, line); //
+        } else {
+          fields.unshift(line);
+        }
         return {
           ...frame,
-          fields: [line, ...frame.fields],
+          fields,
         };
       }
       return frame;

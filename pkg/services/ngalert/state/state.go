@@ -64,7 +64,7 @@ func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result
 	case eval.Alerting:
 		a.setEndsAt(alertRule, result)
 	case eval.Pending:
-		if result.EvaluatedAt.Sub(a.StartsAt) > alertRule.For {
+		if result.EvaluatedAt.Sub(a.StartsAt) >= alertRule.For {
 			a.State = eval.Alerting
 			a.StartsAt = result.EvaluatedAt
 			a.setEndsAt(alertRule, result)

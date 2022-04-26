@@ -43,6 +43,7 @@ type Props = PanelProps<GeomapPanelOptions>;
 interface State extends OverlayProps {
   ttip?: GeomapHoverPayload;
   ttipOpen: boolean;
+  legends: ReactNode[];
 }
 
 export interface GeomapLayerActions {
@@ -79,7 +80,7 @@ export class GeomapPanel extends Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = { ttipOpen: false };
+    this.state = { ttipOpen: false, legends: [] };
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
         if (this.mapDiv && this.props.id === evt.payload) {
@@ -108,10 +109,21 @@ export class GeomapPanel extends Component<Props, State> {
       this.dataChanged(nextProps.data);
     }
 
+    // Options changed
+    if (this.props.options !== nextProps.options) {
+      this.optionsChanged(nextProps.options);
+    }
+
     return true; // always?
   }
 
-  /** This funciton will actually update the JSON model */
+  componentDidUpdate(prevProps: Props) {
+    if (this.map && (this.props.height !== prevProps.height || this.props.width !== prevProps.width)) {
+      this.map.updateSize();
+    }
+  }
+
+  /** This function will actually update the JSON model */
   private doOptionsUpdate(selected: number) {
     const { options, onOptionsChange } = this.props;
     const layers = this.layers;
@@ -121,7 +133,7 @@ export class GeomapPanel extends Component<Props, State> {
       layers: layers.slice(1).map((v) => v.options),
     });
 
-    // Notify the the panel editor
+    // Notify the panel editor
     if (this.panelContext.onInstanceStateChange) {
       this.panelContext.onInstanceStateChange({
         map: this.map,
@@ -130,6 +142,8 @@ export class GeomapPanel extends Component<Props, State> {
         actions: this.actions,
       });
     }
+
+    this.setState({ legends: this.getLegends() });
   }
 
   getNextLayerName = () => {
@@ -304,6 +318,8 @@ export class GeomapPanel extends Component<Props, State> {
         actions: this.actions,
       });
     }
+
+    this.setState({ legends: this.getLegends() });
   };
 
   clearTooltip = () => {
@@ -443,6 +459,9 @@ export class GeomapPanel extends Component<Props, State> {
       return false;
     }
 
+    // Just to trigger a state update
+    this.setState({ legends: [] });
+
     this.layers = layers;
     this.doOptionsUpdate(layerIndex);
     return true;
@@ -477,6 +496,7 @@ export class GeomapPanel extends Component<Props, State> {
     if (!options.name) {
       options.name = this.getNextLayerName();
     }
+
     const UID = options.name;
     const state: MapLayerState<any> = {
       // UID, // unique name when added to the map (it may change and will need special handling)
@@ -492,6 +512,7 @@ export class GeomapPanel extends Component<Props, State> {
         this.updateLayer(UID, cfg);
       },
     };
+
     this.byName.set(UID, state);
     (state.layer as any).__state = state;
     return state;
@@ -576,15 +597,26 @@ export class GeomapPanel extends Component<Props, State> {
     this.setState({ topRight });
   }
 
+  getLegends() {
+    const legends: ReactNode[] = [];
+    for (const state of this.layers) {
+      if (state.handler.legend) {
+        legends.push(<div key={state.options.name}>{state.handler.legend}</div>);
+      }
+    }
+
+    return legends;
+  }
+
   render() {
-    const { ttip, ttipOpen, topRight, bottomLeft } = this.state;
+    const { ttip, ttipOpen, topRight, legends } = this.state;
 
     return (
       <>
         <Global styles={this.globalCSS} />
         <div className={this.style.wrap} onMouseLeave={this.clearTooltip}>
           <div className={this.style.map} ref={this.initMapRef}></div>
-          <GeomapOverlay bottomLeft={bottomLeft} topRight={topRight} />
+          <GeomapOverlay bottomLeft={legends} topRight={topRight} />
         </div>
         <GeomapTooltip ttip={ttip} isOpen={ttipOpen} onClose={this.tooltipPopupClosed} />
       </>

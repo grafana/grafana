@@ -84,14 +84,14 @@ type Options struct {
 
 // New instance of the AuthProxy.
 func New(cfg *setting.Cfg, options *Options) *AuthProxy {
-	header := options.Ctx.Req.Header.Get(cfg.AuthProxyHeaderName)
-	return &AuthProxy{
+	auth := &AuthProxy{
 		remoteCache: options.RemoteCache,
 		cfg:         cfg,
 		ctx:         options.Ctx,
 		orgID:       options.OrgID,
-		header:      header,
 	}
+	auth.header = auth.getDecodedHeader(cfg.AuthProxyHeaderName)
+	return auth
 }
 
 // IsEnabled checks if the auth proxy is enabled.
@@ -313,6 +313,17 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 	return upsert.Result.Id, nil
 }
 
+// getDecodedHeader gets decoded value of a header with given headerName
+func (auth *AuthProxy) getDecodedHeader(headerName string) string {
+	headerValue := auth.ctx.Req.Header.Get(headerName)
+
+	if auth.cfg.AuthProxyHeadersEncoded {
+		headerValue = util.DecodeQuotedPrintable(headerValue)
+	}
+
+	return headerValue
+}
+
 // headersIterator iterates over all non-empty supported additional headers
 func (auth *AuthProxy) headersIterator(fn func(field string, header string)) {
 	for _, field := range supportedHeaderFields {
@@ -321,7 +332,7 @@ func (auth *AuthProxy) headersIterator(fn func(field string, header string)) {
 			continue
 		}
 
-		if value := auth.ctx.Req.Header.Get(h); value != "" {
+		if value := auth.getDecodedHeader(h); value != "" {
 			fn(field, strings.TrimSpace(value))
 		}
 	}
