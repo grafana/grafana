@@ -1576,3 +1576,8 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	cfg.LiveAllowedOrigins = originPatterns
 	return nil
 }
+
+// IsLegacyAlertingDisabled returns true if the legacy alerting is disabled
+func (cfg *Cfg) IsLegacyAlertingDisabled() bool {
+	return AlertingEnabled == nil || !*AlertingEnabled || cfg.UnifiedAlerting.IsEnabled()
+}

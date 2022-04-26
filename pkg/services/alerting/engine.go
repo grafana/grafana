@@ -59,12 +59,17 @@ type AlertEngine struct {
 	dashAlertExtractor DashAlertExtractor
 }
 
+// IsDisabled returns true if the alerting service is disabled for this instance.
+func (e *AlertEngine) IsDisabled() bool {
+	return !setting.ExecuteAlerts
+}
+
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, requestValidator models.PluginRequestValidator,
 	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
 	notificationService *notifications.NotificationService, tracer tracing.Tracer, sqlStore AlertStore, cfg *setting.Cfg,
 	dashAlertExtractor DashAlertExtractor) *AlertEngine {
-	if setting.AlertingEnabled == nil || !*setting.AlertingEnabled || !setting.ExecuteAlerts || cfg.UnifiedAlerting.IsEnabled() {
+	if cfg.IsLegacyAlertingDisabled() {
 		return nil
 	}
 	e := &AlertEngine{

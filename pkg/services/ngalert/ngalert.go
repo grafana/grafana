@@ -34,6 +34,9 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService *quota.QuotaService, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
 	folderService dashboards.FolderService, ac accesscontrol.AccessControl) (*AlertNG, error) {
+	if !cfg.UnifiedAlerting.IsEnabled() {
+		return nil, nil
+	}
 	ng := &AlertNG{
 		Cfg:                 cfg,
 		DataSourceCache:     dataSourceCache,
@@ -49,10 +52,6 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		NotificationService: notificationService,
 		folderService:       folderService,
 		accesscontrol:       ac,
-	}
-
-	if ng.IsDisabled() {
-		return nil, nil
 	}
 
 	if err := ng.init(); err != nil {
@@ -182,12 +181,4 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		return ng.MultiOrgAlertmanager.Run(subCtx)
 	})
 	return children.Wait()
-}
-
-// IsDisabled returns true if the alerting service is disable for this instance.
-func (ng *AlertNG) IsDisabled() bool {
-	if ng.Cfg == nil {
-		return true
-	}
-	return !ng.Cfg.UnifiedAlerting.IsEnabled()
 }

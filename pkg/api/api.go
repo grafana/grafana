@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -421,8 +420,8 @@ func (hs *HTTPServer) registerRoutes() {
 		// Validated query
 		apiRoute.Post("/dashboards/org/:orgId/uid/:dashboardUid/panels/:panelId/query", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.QueryMetricsFromDashboard))
 
-        // if unified alerting is disabled and old alerting is enabled
-		if !hs.Cfg.UnifiedAlerting.IsEnabled() && setting.AlertingEnabled != nil && *setting.AlertingEnabled {
+		// if old alerting is enabled
+		if !hs.Cfg.IsLegacyAlertingDisabled() {
 			apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
 				alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))
 				alertsRoute.Post("/:alertId/pause", reqEditorRole, routing.Wrap(hs.PauseAlert))
