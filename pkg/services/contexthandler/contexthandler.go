@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/apikeygen"
+	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -207,7 +208,10 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 
 	// base64 decode key
 	decoded, err := apikeygen.Decode(keyString)
-	if err != nil {
+	if err != nil && strings.HasPrefix(keyString, "gl") {
+		// prefixed decode key
+		decoded, err = apikeygenprefix.Decode(keyString)
+	} else if err != nil {
 		reqContext.JsonApiErr(401, InvalidAPIKey, err)
 		return true
 	}

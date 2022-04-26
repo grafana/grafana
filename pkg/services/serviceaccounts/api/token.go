@@ -8,13 +8,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/components/apikeygen"
+	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-const failedToDeleteMsg = "Failed to delete API key"
+const (
+	failedToDeleteMsg = "Failed to delete API key"
+	ServiceID         = "sa"
+)
 
 type TokenDTO struct {
 	Id                     int64      `json:"id"`
@@ -106,7 +109,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 		}
 	}
 
-	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
+	newKeyInfo, err := apikeygenprefix.New(ServiceID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Generating API key failed", err)
 	}
