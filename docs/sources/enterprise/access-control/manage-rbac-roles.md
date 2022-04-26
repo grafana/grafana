@@ -141,7 +141,7 @@ curl --location --request GET '<grafana_url>/api/access-control/roles/qQui_LCMk'
 
 This section shows you how to create a custom RBAC role using Grafana provisioning and the HTTP API.
 
-Create a custom role when the default roles and fixed roles do not meet your permissions requirements.
+Create a custom role when basic roles and fixed roles do not meet your permissions requirements.
 
 **Before you begin:**
 
@@ -154,7 +154,7 @@ Create a custom role when the default roles and fixed roles do not meet your per
 
 ### Create custom roles using provisioning
 
-File-based provisioning is one method you can use to create custom roles. You cannot create a custom role with permissions that you do not have. For example, if you only have `users:create` permissions, then you cannot create a role that includes other permissions.
+File-based provisioning is one method you can use to create custom roles.
 
 1. Open the YAML configuration file and locate the `roles` section.
 
@@ -223,6 +223,8 @@ roles:
 ### Create custom roles using the HTTP API
 
 The following examples show you how to create a custom role using the Grafana HTTP API. For more information about the HTTP API, refer to [Create a new custom role]({{< relref "../../http_api/access_control.md#create-a-new-custom-role" >}}).
+
+> **Note:** You cannot create a custom role with permissions that you do not have. For example, if you only have `users:create` permissions, then you cannot create a role that includes other permissions.
 
 The following example creates a `custom:users:admin` role and assigns the `users:create` action to it.
 
