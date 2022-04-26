@@ -91,7 +91,7 @@ Query parameters:
 - **onlyStarred** - Search for queries that are starred. Defaults to `false`.
 - **page** - Search supports pagination. Specify which page number to return. Use the limit parameter to specify the number of queries per page.
 - **limit** - Limits the number of returned query history items per page. The default is 100 queries per page.
-- **from** - The start time for the query history search as a second Unix timestamp.
+- **from** - Start time for the query history search as a second UNIX timestamp.
 - **to** - The end time for the query history search as a second Unix timestamp.
 
 **Example request for query history search**:
