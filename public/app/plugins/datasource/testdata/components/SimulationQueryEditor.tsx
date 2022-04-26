@@ -1,3 +1,6 @@
+import React, { FormEvent, useMemo } from 'react';
+import { useAsync } from 'react-use';
+
 import { DataFrameJSON, SelectableValue } from '@grafana/data';
 import {
   InlineField,
@@ -11,8 +14,7 @@ import {
   Form,
   TextArea,
 } from '@grafana/ui';
-import React, { FormEvent, useMemo } from 'react';
-import { useAsync } from 'react-use';
+
 import { EditorProps } from '../QueryEditor';
 import { SimulationQuery } from '../types';
 
