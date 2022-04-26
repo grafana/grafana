@@ -1,6 +1,8 @@
 package backgroundsvcs
 
 import (
+	"reflect"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -76,7 +78,7 @@ func NewBackgroundServiceRegistry(services ...registry.BackgroundService) *Backg
 	svc := make([]registry.BackgroundService, 0, len(services))
 	// injected services can be nil (for example if disabled). filter out those nil references
 	for _, s := range services {
-		if s == nil {
+		if s == nil || reflect.ValueOf(s).IsNil() {
 			continue
 		}
 		svc = append(svc, s)
