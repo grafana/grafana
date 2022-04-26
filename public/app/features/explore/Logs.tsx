@@ -35,6 +35,7 @@ import {
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
 import store from 'app/core/store';
+import { ExploreId } from 'app/types/explore';
 
 import { ExploreGraph } from './ExploreGraph';
 import { LogsMetaRow } from './LogsMetaRow';
@@ -62,6 +63,7 @@ interface Props extends Themeable2 {
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
+  exploreId: ExploreId;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -93,10 +95,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
   topLogsRef = createRef<HTMLDivElement>();
 
   state: State = {
-    showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
-    showTime: store.getBool(SETTINGS_KEYS.showTime, true),
-    wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
-    prettifyLogMessage: store.getBool(SETTINGS_KEYS.prettifyLogMessage, false),
+    showLabels: store.getBool(`${SETTINGS_KEYS.showLabels}_${this.props.exploreId}`, false),
+    showTime: store.getBool(`${SETTINGS_KEYS.showTime}_${this.props.exploreId}`, true),
+    wrapLogMessage: store.getBool(`${SETTINGS_KEYS.wrapLogMessage}_${this.props.exploreId}`, true),
+    prettifyLogMessage: store.getBool(`${SETTINGS_KEYS.prettifyLogMessage}_${this.props.exploreId}`, false),
     dedupStrategy: LogsDedupStrategy.none,
     hiddenLogLevels: [],
     logsSortOrder: store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending,
@@ -141,45 +143,49 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
   onChangeLabels = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { target } = event;
+    const { exploreId } = this.props;
     if (target) {
       const showLabels = target.checked;
       this.setState({
         showLabels,
       });
-      store.set(SETTINGS_KEYS.showLabels, showLabels);
+      store.set(`${SETTINGS_KEYS.showLabels}_${exploreId}`, showLabels);
     }
   };
 
   onChangeTime = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { target } = event;
+    const { exploreId } = this.props;
     if (target) {
       const showTime = target.checked;
       this.setState({
         showTime,
       });
-      store.set(SETTINGS_KEYS.showTime, showTime);
+      store.set(`${SETTINGS_KEYS.showTime}_${exploreId}`, showTime);
     }
   };
 
   onChangewrapLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { target } = event;
+    const { exploreId } = this.props;
     if (target) {
       const wrapLogMessage = target.checked;
       this.setState({
         wrapLogMessage,
       });
-      store.set(SETTINGS_KEYS.wrapLogMessage, wrapLogMessage);
+      store.set(`${SETTINGS_KEYS.wrapLogMessage}_${exploreId}`, wrapLogMessage);
     }
   };
 
   onChangePrettifyLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { target } = event;
+    const { exploreId } = this.props;
     if (target) {
       const prettifyLogMessage = target.checked;
       this.setState({
         prettifyLogMessage,
       });
-      store.set(SETTINGS_KEYS.prettifyLogMessage, prettifyLogMessage);
+      store.set(`${SETTINGS_KEYS.prettifyLogMessage}_${exploreId}`, prettifyLogMessage);
     }
   };
 
@@ -271,6 +277,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       logsQueries,
       clearCache,
       addResultsToCache,
+      exploreId,
     } = this.props;
 
     const {
@@ -324,7 +331,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 onChange={this.onChangeTime}
                 className={styles.horizontalInlineSwitch}
                 transparent
-                id="show-time"
+                id={`show-time_${exploreId}`}
               />
             </InlineField>
             <InlineField label="Unique labels" className={styles.horizontalInlineLabel} transparent>
@@ -333,7 +340,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 onChange={this.onChangeLabels}
                 className={styles.horizontalInlineSwitch}
                 transparent
-                id="unique-labels"
+                id={`unique-labels_${exploreId}`}
               />
             </InlineField>
             <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
@@ -342,7 +349,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 onChange={this.onChangewrapLogMessage}
                 className={styles.horizontalInlineSwitch}
                 transparent
-                id="wrap-lines"
+                id={`wrap-lines_${exploreId}`}
               />
             </InlineField>
             <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
@@ -351,7 +358,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 onChange={this.onChangePrettifyLogMessage}
                 className={styles.horizontalInlineSwitch}
                 transparent
-                id="prettify"
+                id={`prettify_${exploreId}`}
               />
             </InlineField>
             <InlineField label="Dedup" className={styles.horizontalInlineLabel} transparent>
