@@ -10,7 +10,7 @@ import (
 // Coremodels have to be manually added.
 // TODO dynamism
 func ProvideRegistry(
-	feat featuremgmt.FeatureManager,
+	feat *featuremgmt.FeatureManager,
 	dashboard *dashboard.Coremodel,
 ) (*coremodel.Registry, error) {
 	cmlist := []coremodel.Interface{
