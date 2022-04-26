@@ -50,3 +50,4 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [ENHANCEMENT] Templates: Enable the use of classic condition values in templates #46971
 - [CHANGE] Notification URL points to alert view page instead of alert edit page. #47752
 - [FEATURE]  Indicate whether routes are provisioned when GETting Alertmanager configuration #47857
+- [ENHANCEMENT] Migration: Migrate each legacy notification channel to its own contact point, use nested routes to reproduce multi-channel alerts #47291
