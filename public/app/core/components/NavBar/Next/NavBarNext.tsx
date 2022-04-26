@@ -96,7 +96,6 @@ export const NavBarNext = React.memo(() => {
             <ul className={styles.itemList}>
               <NavBarItemWithoutMenu
                 elClassName={styles.grafanaLogoInner}
-                isActive={isMatchOrChildMatch(homeItem, activeItem)}
                 label="Home"
                 className={styles.grafanaLogo}
                 url={homeItem.url}

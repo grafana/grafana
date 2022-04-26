@@ -60,7 +60,7 @@ func (s *Service) detectPrometheusVariant(ctx context.Context, ds *models.DataSo
 		} `json:"data"`
 	}
 
-	c, err := s.datasources.GetHTTPTransport(ds, s.httpClientProvider)
+	c, err := s.datasources.GetHTTPTransport(ctx, ds, s.httpClientProvider)
 	if err != nil {
 		s.log.Error("Failed to get HTTP client for Prometheus data source", "error", err)
 		return "", err
