@@ -105,15 +105,16 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		return response.Error(400, "Invalid theme", nil)
 	}
 	patchCmd := pref.PatchPreferenceCommand{
-		UserID:          userID,
-		OrgID:           orgID,
-		TeamID:          teamId,
-		Theme:           dtoCmd.Theme,
-		Timezone:        dtoCmd.Timezone,
-		WeekStart:       dtoCmd.WeekStart,
-		HomeDashboardID: dtoCmd.HomeDashboardID,
-		Navbar:          dtoCmd.Navbar,
-		QueryHistory:    dtoCmd.QueryHistory,
+		UserID:           userID,
+		OrgID:            orgID,
+		TeamID:           teamId,
+		Theme:            dtoCmd.Theme,
+		Timezone:         dtoCmd.Timezone,
+		WeekStart:        dtoCmd.WeekStart,
+		HomeDashboardID:  dtoCmd.HomeDashboardID,
+		Navbar:           dtoCmd.Navbar,
+		QueryHistory:     dtoCmd.QueryHistory,
+		HomeDashboardUID: dtoCmd.HomeDashboardUID,
 	}
 
 	if err := hs.preferenceService.Patch(ctx, &patchCmd); err != nil {

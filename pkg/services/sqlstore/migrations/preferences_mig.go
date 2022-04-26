@@ -55,4 +55,8 @@ func addPreferencesMigrations(mg *Migrator) {
 	// change column type of preferences.json_data
 	mg.AddMigration("alter preferences.json_data to mediumtext v1", NewRawSQLMigration("").
 		Mysql("ALTER TABLE preferences MODIFY json_data MEDIUMTEXT;"))
+
+	mg.AddMigration("Add column home_dashboard_uid in preferences", NewAddColumnMigration(preferencesV2, &Column{
+		Name: "home_dashboard_uid", Type: DB_NVarchar, Length: 50, Nullable: true,
+	}))
 }

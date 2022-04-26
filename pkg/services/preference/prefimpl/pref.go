@@ -83,15 +83,16 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	if err != nil {
 		if errors.Is(err, pref.ErrPrefNotFound) {
 			preference := &pref.Preference{
-				UserID:          cmd.UserID,
-				OrgID:           cmd.OrgID,
-				TeamID:          cmd.TeamID,
-				HomeDashboardID: cmd.HomeDashboardID,
-				Timezone:        cmd.Timezone,
-				WeekStart:       cmd.WeekStart,
-				Theme:           cmd.Theme,
-				Created:         time.Now(),
-				Updated:         time.Now(),
+				UserID:           cmd.UserID,
+				OrgID:            cmd.OrgID,
+				TeamID:           cmd.TeamID,
+				HomeDashboardID:  cmd.HomeDashboardID,
+				HomeDashboardUID: cmd.HomeDashboardUID,
+				Timezone:         cmd.Timezone,
+				WeekStart:        cmd.WeekStart,
+				Theme:            cmd.Theme,
+				Created:          time.Now(),
+				Updated:          time.Now(),
 			}
 			_, err = s.store.Insert(ctx, preference)
 			if err != nil {
@@ -108,6 +109,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	preference.Version += 1
 	preference.JSONData = &pref.PreferenceJSONData{}
 	preference.HomeDashboardID = cmd.HomeDashboardID
+	preference.HomeDashboardUID = cmd.HomeDashboardUID
 
 	if cmd.Navbar != nil {
 		preference.JSONData.Navbar = *cmd.Navbar
@@ -157,6 +159,10 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		if cmd.QueryHistory.HomeTab != "" {
 			preference.JSONData.QueryHistory.HomeTab = cmd.QueryHistory.HomeTab
 		}
+	}
+
+	if cmd.HomeDashboardUID != nil {
+		preference.HomeDashboardUID = *cmd.HomeDashboardUID
 	}
 
 	if cmd.HomeDashboardID != nil {
