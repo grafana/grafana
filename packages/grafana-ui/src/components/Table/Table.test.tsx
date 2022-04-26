@@ -179,7 +179,7 @@ describe('Table', () => {
   });
 
   describe('on filtering', () => {
-    it('the rows should be filtered', async () => {
+    it('the rows should be filtered', () => {
       getTestContext({
         data: toDataFrame({
           name: 'A',
@@ -200,9 +200,9 @@ describe('Table', () => {
 
       expect(within(getTable()).getAllByRole('row')).toHaveLength(9);
 
-      await userEvent.click(within(getColumnHeader(/number/)).getByRole('filterIcon'));
-      await userEvent.click(screen.getByLabelText('1'));
-      await userEvent.click(screen.getByText('Ok'));
+      userEvent.click(within(getColumnHeader(/number/)).getByRole('filterIcon'));
+      userEvent.click(screen.getByLabelText('1'));
+      userEvent.click(screen.getByText('Ok'));
 
       // 3 + header row
       expect(within(getTable()).getAllByRole('row')).toHaveLength(4);
