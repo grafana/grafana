@@ -238,19 +238,19 @@ def main_pipelines(edition):
         steps=[download_grabpl_step(), identify_runner_step(),] + integration_test_steps,
         volumes=volumes,
     ), pipeline(
-        name='windows-main', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
+        name='main-windows', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
         steps=[identify_runner_step('windows')] + windows_steps,
         depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests'], platform='windows',
     ), notify_pipeline(
         name='notify-drone-changes', slack_channel='slack-webhooks-test', trigger=drone_change_trigger,
         template=drone_change_template, secret='drone-changes-webhook',
     ), pipeline(
-        name='publish-main', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
+        name='main-publish', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),
         steps=[download_grabpl_step(), identify_runner_step(),] + store_steps,
-        depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'windows-main', ],
+        depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'main-windows', ],
     ), notify_pipeline(
-        name='notify-main', slack_channel='grafana-ci-notifications', trigger=dict(trigger, status=['failure']),
-        depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'windows-main', 'publish-main'],
+        name='main-notify', slack_channel='grafana-ci-notifications', trigger=dict(trigger, status=['failure']),
+        depends_on=['main-test', 'main-build-e2e-publish', 'main-integration-tests', 'main-windows', 'main-publish'],
         template=failure_template, secret='slack_webhook'
     )]
 

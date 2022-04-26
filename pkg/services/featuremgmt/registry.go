@@ -191,6 +191,12 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:            "export",
+			Description:     "Export grafana instance (to git, etc)",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:            "storageLocalUpload",
 			Description:     "allow uploads to local storage",
 			State:           FeatureStateAlpha,
@@ -221,10 +227,15 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "savedItems",
+			Description: "Enable Saved Items in the navbar.",
+			State:       FeatureStateAlpha,
+		},
+    {
 			Name:            "coremodelValidation",
 			Description:     "Validate objects (e.g. dashboards) against coremodel schemas",
 			State:           FeatureStateAlpha,
 			RequiresRestart: true,
-		},
+    },
 	}
 )
