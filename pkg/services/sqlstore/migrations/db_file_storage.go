@@ -16,6 +16,10 @@ func addDbFileStorageMigration(mg *migrator.Migrator) {
 
 			// HTTP Entity tag; md5 hash
 			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false},
+
+			{Name: "cache_control", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
+			{Name: "content_disposition", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
+
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},

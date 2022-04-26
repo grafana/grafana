@@ -25,6 +25,8 @@ type file struct {
 	ParentFolderPathHash string    `xorm:"parent_folder_path_hash"`
 	Contents             []byte    `xorm:"contents"`
 	ETag                 string    `xorm:"etag"`
+	CacheControl         string    `xorm:"cache_control"`
+	ContentDisposition   string    `xorm:"content_disposition"`
 	Updated              time.Time `xorm:"updated"`
 	Created              time.Time `xorm:"created"`
 	Size                 int64     `xorm:"size"`
@@ -184,6 +186,8 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 				existing.Contents = contents
 				existing.MimeType = cmd.MimeType
 				existing.ETag = createContentsHash(contents)
+				existing.ContentDisposition = cmd.ContentDisposition
+				existing.CacheControl = cmd.CacheControl
 				existing.Size = int64(len(contents))
 			}
 
@@ -208,6 +212,8 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 				PathHash:             pathHash,
 				ParentFolderPathHash: parentFolderPathHash,
 				Contents:             contentsToInsert,
+				ContentDisposition:   cmd.ContentDisposition,
+				CacheControl:         cmd.CacheControl,
 				ETag:                 createContentsHash(contentsToInsert),
 				MimeType:             cmd.MimeType,
 				Size:                 int64(len(contentsToInsert)),
