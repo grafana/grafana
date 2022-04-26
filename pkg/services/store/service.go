@@ -150,8 +150,11 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 		if err != nil {
 			return nil, err
 		}
+
 		filetype := http.DetectContentType(data)
-		grafanaStorageLogger.Info("inside upload", "filetype", filetype)
+		path := "/" + fileHeader.Filename
+
+		grafanaStorageLogger.Info("uploading a file", "filetype", filetype, "path", path)
 		// only allow images to be uploaded
 		if !isFileTypeValid(filetype) {
 			return &Response{
@@ -161,7 +164,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *models.Signed
 			}, nil
 		}
 		err = upload.Upsert(ctx, &filestorage.UpsertFileCommand{
-			Path:     "/" + fileHeader.Filename,
+			Path:     path,
 			Contents: data,
 		})
 		if err != nil {
