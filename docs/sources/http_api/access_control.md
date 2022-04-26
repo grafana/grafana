@@ -20,7 +20,7 @@ The API does not currently work with an API Token. So in order to use these API 
 
 Returns an indicator to check if role-based access control is enabled or not.
 
-### Required permissions
+#### Required permissions
 
 | Action               | Scope                  |
 | -------------------- | ---------------------- |

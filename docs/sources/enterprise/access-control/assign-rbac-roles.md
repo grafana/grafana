@@ -14,16 +14,16 @@ weight: 40
 
 In this topic you'll learn how to use the role picker, provisioning, and the HTTP API to assign fixed and custom roles to users and teams.
 
-## Assign fixed roles using the role picker
+## Assign fixed roles in the UI using the role picker
 
 This section describes how to:
 
 - Assign a fixed role to a user or team as an organization administrator.
-- Assign a fixed role to a user as a server administration. This approach enables you to assign a fixed role to a user's organizations without needing to switch organizations.
+- Assign a fixed role to a user as a server administrator. This approach enables you to assign a fixed role to a user in multiple organizations, without needing to switch organizations.
 
 In both cases, the assignment applies only to the user or team within the affected organization, and no other organizations. For example, if you grant the user the **Data source editor** role in the **Main** organization, then the user can edit data sources in the **Main** organization, but not in other organizations.
 
-> **Note:** After you apply your changes, the user and team permissions update immediately, and the UI reflects the new permissions the next time they reload their browser or visit another page.
+> **Note:** After you apply your changes, user and team permissions update immediately, and the UI reflects the new permissions the next time they reload their browser or visit another page.
 
 <br/>
 
@@ -34,25 +34,26 @@ In both cases, the assignment applies only to the user or team within the affect
 
   For more information about available fixed roles, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions.md" >}}).
 
-- Ensure that your Grafana user has the correct permissions:
+- Ensure that your own user account has the correct permissions:
   - If you are assigning permissions to a user or team within an organization, you must have organization administrator or server administrator permissions.
   - If you are assigning permissions to a user who belongs to multiple organizations, you must have server administrator permissions.
   - Your Grafana user can also assign fixed role if it has either the `fixed:roles:writer` fixed role assigned to the same organization to which you are assigning RBAC to a user, or a custom role with `users.roles:add` and `users.roles:remove` permissions.
+  - Your own user account must have the roles you are granting. For example, if you would like to grant the `fixed:users:writer` role to a team, you must have that role yourself.
 
 <br/>
 
 **To assign a fixed role to a user or team:**
 
 1. Sign in to Grafana.
-1. Switch to the organization that contains the user or team.
+2. Switch to the organization that contains the user or team.
 
    For more information about switching organizations, refer to [Switch organizations](../../administration/manage-user-preferences/_index.md#switch-organizations).
 
-1. Hover your cursor over **Configuration** (the gear icon) in the left navigation menu, and click **Users** or **Teams**.
-1. In the **Role** column, select the fixed role that you want to assign to the user or team.
-1. Click **Update**.
+3. Hover your cursor over **Configuration** (the gear icon) in the left navigation menu, and click **Users** or **Teams**.
+4. In the **Role** column, select the fixed role that you want to assign to the user or team.
+5. Click **Update**.
 
-![User role picker in an organization](/static/img/docs/enterprise/user_role_picker_global.png)
+![User role picker in an organization](/static/img/docs/enterprise/user_role_picker_in_org.png)
 
 <br/>
 
@@ -63,13 +64,11 @@ In both cases, the assignment applies only to the user or team within the affect
 1. In the **Organizations** section, select a role within an organization that you want to assign to the user.
 1. Click **Update**.
 
-![User role picker in Organization](/static/img/docs/enterprise/user_role_picker_in_org.png)
+![User role picker in Organization](/static/img/docs/enterprise/user_role_picker_global.png)
 
 ## Assign fixed or custom roles to a team using provisioning
 
 Instead of using the Grafana role picker, you can use file-based provisioning to assign fixed roles to teams. If you have a large number of teams, provisioning can provide an easier approach to assigning and managing role assignments.
-
-> **Note:** If you want to remove a fixed role assignment from a team, remove it from the YAML file, save your changes, and reload the configuration file.
 
 </br>
 
@@ -158,6 +157,8 @@ roles:
       - name: 'user admins'
         orgId: 1
 ```
+
+> **Note:** If you want to remove a fixed role assignment from a team, remove it from the YAML file, save your changes, and reload the configuration file.
 
 ## Assign a fixed role to a basic role using provisioning
 
@@ -256,7 +257,7 @@ roles:
 
 ## Assign a custom role to a basic role using the HTTP API
 
-As an alternative to assigning roles using the role picker or provisioning, you can use the Grafana HTTP API to assign fixed and custom roles to users and teams. For more information about the HTTP API, refer to [Create a basic role assignment]({{< relref "../../http_api/access_control.md#create-a-basic-role-assignment" >}}).
+As an alternative to assigning roles using the role picker or provisioning, you can use the Grafana HTTP API to assign fixed and custom roles to users and teams. For more information about the HTTP API, refer to the [RBAC HTTP API documentation]({{< relref "../../http_api/access_control.md#create-a-basic-role-assignment" >}}).
 
 The following example shows you how to assign a custom role to a basic role using the HTTP API.
 
