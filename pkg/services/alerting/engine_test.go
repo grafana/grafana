@@ -100,6 +100,18 @@ func (a *AlertStoreMock) SetAlertState(_ context.Context, _ *models.SetAlertStat
 	return nil
 }
 
+func TestProvideAlertEngine(t *testing.T) {
+	t.Run("should return nil if Alerting is disabled", func(t *testing.T) {
+		setting.AlertingEnabled = ptr.Bool(false)
+		t.Cleanup(func() {
+			setting.AlertingEnabled = nil
+		})
+		cfg := setting.NewCfg()
+		s := ProvideAlertEngine(nil, nil, nil, nil, nil, nil, nil, nil, cfg, nil)
+		require.Nil(t, s)
+	})
+}
+
 func TestEngineProcessJob(t *testing.T) {
 	usMock := &usagestats.UsageStatsMock{T: t}
 	tracer, err := tracing.InitializeTracerForTest()
@@ -113,6 +125,8 @@ func TestEngineProcessJob(t *testing.T) {
 	})
 	store := &AlertStoreMock{}
 	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, store, cfg, nil)
+	require.NotNil(t, engine)
+
 	setting.AlertingEvaluationTimeout = 30 * time.Second
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3
