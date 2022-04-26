@@ -38,10 +38,9 @@ type RuleStore interface {
 	DeleteAlertInstancesByRuleUID(ctx context.Context, orgID int64, ruleUID string) error
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
 	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
-	GetOrgAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
+	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
 	// GetRuleGroups returns the unique rule groups across all organizations.
 	GetRuleGroups(ctx context.Context, query *ngmodels.ListRuleGroupsQuery) error
-	GetAlertRules(ctx context.Context, query *ngmodels.GetAlertRulesQuery) error
 	GetUserVisibleNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
 	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
 	InsertAlertRules(ctx context.Context, rule []ngmodels.AlertRule) error
@@ -228,33 +227,39 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []UpdateRule) erro
 }
 
 // GetOrgAlertRules is a handler for retrieving alert rules of specific organisation.
-func (st DBstore) GetOrgAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error {
+func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		alertRules := make([]*ngmodels.AlertRule, 0)
-		q := "SELECT * FROM alert_rule WHERE org_id = ?"
-		params := []interface{}{query.OrgID}
+		q := sess.Table("alert_rule")
 
-		if len(query.NamespaceUIDs) > 0 {
-			placeholders := make([]string, 0, len(query.NamespaceUIDs))
-			for _, folderUID := range query.NamespaceUIDs {
-				params = append(params, folderUID)
-				placeholders = append(placeholders, "?")
-			}
-			q = fmt.Sprintf("%s AND namespace_uid IN (%s)", q, strings.Join(placeholders, ","))
+		if query.OrgID >= 0 {
+			q = q.Where("org_id = ?", query.OrgID)
 		}
 
 		if query.DashboardUID != "" {
-			params = append(params, query.DashboardUID)
-			q = fmt.Sprintf("%s AND dashboard_uid = ?", q)
+			q = q.Where("dashboard_uid = ?", query.DashboardUID)
 			if query.PanelID != 0 {
-				params = append(params, query.PanelID)
-				q = fmt.Sprintf("%s AND panel_id = ?", q)
+				q = q.Where("panel_id = ?", query.PanelID)
 			}
 		}
 
-		q = fmt.Sprintf("%s ORDER BY id ASC", q)
+		if len(query.NamespaceUIDs) > 0 {
+			args := make([]interface{}, 0, len(query.NamespaceUIDs))
+			in := make([]string, 0, len(query.NamespaceUIDs))
+			for _, namespaceUID := range query.NamespaceUIDs {
+				args = append(args, namespaceUID)
+				in = append(in, "?")
+			}
+			q = q.Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Join(in, ",")), args...)
+		}
 
-		if err := sess.SQL(q, params...).Find(&alertRules); err != nil {
+		if query.RuleGroup != "" {
+			q = q.Where("rule_group = ?", query.RuleGroup)
+		}
+
+		q = q.OrderBy("id ASC")
+
+		alertRules := make([]*ngmodels.AlertRule, 0)
+		if err := q.Find(&alertRules); err != nil {
 			return err
 		}
 
@@ -270,30 +275,6 @@ func (st DBstore) GetRuleGroups(ctx context.Context, query *ngmodels.ListRuleGro
 			return err
 		}
 		query.Result = ruleGroups
-		return nil
-	})
-}
-
-// GetAlertRules is a handler for retrieving rule group alert rules of specific organisation.
-func (st DBstore) GetAlertRules(ctx context.Context, query *ngmodels.GetAlertRulesQuery) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		q := sess.Table("alert_rule").Where("org_id = ? AND namespace_uid = ?", query.OrgID, query.NamespaceUID)
-		if query.RuleGroup != nil {
-			q = q.Where("rule_group = ?", *query.RuleGroup)
-		}
-		if query.DashboardUID != "" {
-			q = q.Where("dashboard_uid = ?", query.DashboardUID)
-			if query.PanelID != 0 {
-				q = q.Where("panel_id = ?", query.PanelID)
-			}
-		}
-
-		alertRules := make([]*ngmodels.AlertRule, 0)
-		if err := q.Find(&alertRules); err != nil {
-			return err
-		}
-
-		query.Result = alertRules
 		return nil
 	})
 }
