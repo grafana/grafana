@@ -15,8 +15,6 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { AnnotationQueryEditor as CloudMonitoringAnnotationQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/AnnotationQueryEditor';
 import { QueryEditor as CloudMonitoringQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/QueryEditor';
-import { AnnotationQueryEditor as CloudWatchAnnotationQueryEditor } from 'app/plugins/datasource/cloudwatch/components/AnnotationQueryEditor';
-import QueryEditor from 'app/plugins/datasource/grafana-azure-monitor-datasource/components/QueryEditor/QueryEditor';
 
 import EmptyListCTA from '../core/components/EmptyListCTA/EmptyListCTA';
 import { Footer } from '../core/components/Footer/Footer';
@@ -125,11 +123,7 @@ export function registerAngularDirectives() {
     ['datasource', { watchDepth: 'reference' }],
     ['templateSrv', { watchDepth: 'reference' }],
   ]);
-  react2AngularDirective('cloudwatchAnnotationQueryEditor', CloudWatchAnnotationQueryEditor, [
-    'query',
-    'onChange',
-    ['datasource', { watchDepth: 'reference' }],
-  ]);
+
   react2AngularDirective('secretFormField', SecretFormField, [
     'value',
     'isConfigured',
@@ -196,12 +190,6 @@ export function registerAngularDirectives() {
     ['onRefreshIntervalChange', { watchDepth: 'reference', wrapApply: true }],
     ['onNowDelayChange', { watchDepth: 'reference', wrapApply: true }],
     ['onHideTimePickerChange', { watchDepth: 'reference', wrapApply: true }],
-  ]);
-
-  react2AngularDirective('azureMonitorQueryEditor', QueryEditor, [
-    'query',
-    ['datasource', { watchDepth: 'reference' }],
-    'onChange',
   ]);
 
   react2AngularDirective('clipboardButton', ClipboardButton, [

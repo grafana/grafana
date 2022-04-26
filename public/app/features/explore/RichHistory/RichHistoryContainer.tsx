@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { useTheme2 } from '@grafana/ui';
 // Types
 import { ExploreItemState, StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
@@ -54,7 +55,8 @@ interface OwnProps {
 export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export function RichHistoryContainer(props: Props) {
-  const [height, setHeight] = useState(400);
+  const theme = useTheme2();
+  const [height, setHeight] = useState(theme.components.horizontalDrawer.defaultHeight);
 
   const {
     richHistory,

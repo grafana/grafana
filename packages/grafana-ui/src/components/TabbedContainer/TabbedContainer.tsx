@@ -28,7 +28,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     tabContent: css`
       padding: ${theme.spacing(2)};
       background-color: ${theme.colors.background.primary};
-      height: 100%;
+      height: calc(100% - ${theme.components.menuTabs.height}px);
     `,
     close: css`
       position: absolute;
