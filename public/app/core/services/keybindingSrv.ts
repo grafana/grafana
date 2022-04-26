@@ -49,7 +49,7 @@ export class KeybindingSrv {
     this.bind('t r', () => toggleTheme(true));
   }
 
-  private globalEsc() {
+  globalEsc() {
     const anyDoc = document as any;
     const activeElement = anyDoc.activeElement;
 
