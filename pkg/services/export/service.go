@@ -67,7 +67,7 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 		return response.Error(http.StatusLocked, "export already running", nil)
 	}
 
-	job, err := startDummyExportJob(cfg, func(s ExportStatus) {
+	job, err := startGitExportJob(cfg, ex.sql, c.OrgId, func(s ExportStatus) {
 		ex.broadcastStatus(c.OrgId, s)
 	})
 	if err != nil {
