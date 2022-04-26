@@ -3,7 +3,6 @@ import { get as lodashGet } from 'lodash';
 import React, { SyntheticEvent, useRef, useState, useMemo } from 'react';
 import Draggable from 'react-draggable';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
-import { useClickAway } from 'react-use';
 
 import {
   GrafanaTheme,
@@ -14,14 +13,12 @@ import {
 } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
-import { stylesFactory, usePanelContext, useTheme } from '@grafana/ui';
+import { IconButton, stylesFactory, usePanelContext, useTheme } from '@grafana/ui';
 import store from 'app/core/store';
 import { GroupState } from 'app/features/canvas/runtime/group';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
-
-import { DashboardModel } from '../../../features/dashboard/state';
 
 import { InstanceState } from './CanvasPanel';
 import { getElementEditor } from './editor/elementEditor';
@@ -30,12 +27,11 @@ import { getLayerEditor } from './editor/layerEditor';
 type Props = {
   onClose?: () => void;
   panel: PanelModel;
-  dashboard: DashboardModel;
 };
 
 const OFFSET = 8;
 
-export const InlineEdit = ({ panel, dashboard, onClose }: Props) => {
+export const InlineEdit = ({ panel, onClose }: Props) => {
   const { instanceState } = usePanelContext();
   const theme = useTheme();
   const btnInlineEdit = document.querySelector(`[data-btninlineedit="${panel.id}"]`)!.getBoundingClientRect();
@@ -82,12 +78,6 @@ export const InlineEdit = ({ panel, dashboard, onClose }: Props) => {
     return getOptionsPaneCategoryDescriptor({}, supplier);
   }, [instanceState]);
 
-  useClickAway(ref, () => {
-    if (onClose) {
-      onClose();
-    }
-  });
-
   const onDragStop = (event: any, dragElement: any) => {
     setPlacement({ x: dragElement.x, y: dragElement.y });
     saveToStore(dragElement.x, dragElement.y, measurements.width, measurements.height);
@@ -111,8 +101,19 @@ export const InlineEdit = ({ panel, dashboard, onClose }: Props) => {
           style={{ height: `${measurements.height}px`, width: `${measurements.width}px` }}
           ref={ref}
         >
-          <strong className={cx('cursor', `${styles.inlineEditorHeader}`)}>Canvas Inline Editor</strong>
-          <div style={{ overflow: 'scroll' }}>
+          <strong className={cx('cursor', `${styles.inlineEditorHeader}`)}>
+            <div className={styles.placeholder} />
+            <div>Canvas Inline Editor</div>
+            <IconButton
+              aria-label="Close dialogue"
+              surface="header"
+              name="times"
+              size="xl"
+              className={styles.inlineEditorClose}
+              onClick={onClose}
+            />
+          </strong>
+          <div style={{ overflow: 'scroll' }} className={styles.inlineEditorContentWrapper}>
             <div className={styles.inlineEditorContent}>
               <div>
                 <div>{pane.items.map((v) => v.render())}</div>
@@ -139,12 +140,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   inlineEditorContainer: css`
     display: flex;
     flex-direction: column;
-    position: absolute;
     background: ${theme.colors.panelBg};
     box-shadow: 5px 5px 20px -5px #000000;
-    width: 350px;
-    height: 400px;
-    z-index: 100000;
+    z-index: 10000;
     opacity: 1;
   `,
   inlineEditorHeader: css`
@@ -159,6 +157,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   inlineEditorContent: css`
     white-space: pre-wrap;
     padding: 10px;
+  `,
+  inlineEditorClose: css`
+    margin-left: auto;
+  `,
+  placeholder: css`
+    width: 24px;
+    height: 24px;
+    visibility: hidden;
+    margin-right: auto;
+  `,
+  inlineEditorContentWrapper: css`
+    overflow: scroll;
   `,
 }));
 
