@@ -453,11 +453,13 @@ func (s dbFileStorage) CreateFolder(ctx context.Context, path string) error {
 				return err
 			}
 
+			contents := make([]byte, 0)
 			file := &file{
 				Path:                 currentFolderPath,
 				PathHash:             currentFolderPathHash,
 				ParentFolderPathHash: currentFolderParentPathHash,
-				Contents:             make([]byte, 0),
+				Contents:             contents,
+				ETag:                 createContentsHash(contents),
 				Updated:              now,
 				MimeType:             DirectoryMimeType,
 				Created:              now,
