@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2, LogLevel } from '@grafana/data';
-import { styleMixins, stylesFactory } from '../../themes';
+import { stylesFactory } from '../../themes';
 
 export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: LogLevel) => {
   let logColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.gray2;
-  const hoverBgColor = styleMixins.hoverColor(theme.colors.background.primary, theme);
+  const hoverBgColor = 'rgba(215, 229, 255, 0.4)';
 
   switch (logLevel) {
     case LogLevel.crit:
