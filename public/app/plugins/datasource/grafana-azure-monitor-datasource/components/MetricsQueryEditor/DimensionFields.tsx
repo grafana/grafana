@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { SelectableValue, DataFrame } from '@grafana/data';
+import { SelectableValue, DataFrame, PanelData } from '@grafana/data';
 import { Button, Select, HorizontalGroup, VerticalGroup } from '@grafana/ui';
 
-import { AzureMetricDimension, AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types';
+import { AzureMetricDimension, AzureMonitorOption, AzureMonitorQuery, AzureQueryEditorFieldProps } from '../../types';
 import { Field } from '../Field';
 
 import { appendDimensionFilter, removeDimensionFilter, setDimensionFilterValue } from './setQueryValue';
@@ -16,24 +16,21 @@ interface DimensionLabels {
   [key: string]: Set<string>;
 }
 
-const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensionOptions, onQueryChange }) => {
-  const dimensionFilters = useMemo(
-    () => query.azureMonitor?.dimensionFilters ?? [],
-    [query.azureMonitor?.dimensionFilters]
-  );
-
+const useDimensionLabels = (data: PanelData | undefined, query: AzureMonitorQuery) => {
   const [dimensionLabels, setDimensionLabels] = useState<DimensionLabels>({});
-
   useEffect(() => {
     let labelsObj: DimensionLabels = {};
     if (data?.series?.length) {
+      // Identify which series' in the dataframe are relevant to the current query
       const series: DataFrame[] = data.series.flat().filter((series) => series.refId === query.refId);
-      const fields = series.flatMap((item) => item.fields);
+      const fields = series.flatMap((series) => series.fields);
+      // Retrieve labels for series fields
       const labels = fields
-        .map((item) => item.labels)
+        .map((fields) => fields.labels)
         .flat()
         .filter((item) => item!);
       for (const label of labels) {
+        // Labels only exist for series that have a dimension selected
         if (label) {
           for (const [dimension, value] of Object.entries(label)) {
             if (labelsObj[dimension]) {
@@ -47,6 +44,16 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
     }
     setDimensionLabels((prevLabels) => ({ ...labelsObj, ...prevLabels }));
   }, [data?.series, query.refId]);
+  return dimensionLabels;
+};
+
+const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensionOptions, onQueryChange }) => {
+  const dimensionFilters = useMemo(
+    () => query.azureMonitor?.dimensionFilters ?? [],
+    [query.azureMonitor?.dimensionFilters]
+  );
+
+  const dimensionLabels = useDimensionLabels(data, query);
 
   const dimensionOperators: Array<SelectableValue<string>> = [
     { label: '==', value: 'eq' },
