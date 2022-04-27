@@ -20,7 +20,8 @@ type UpdatePrefsCmd struct {
 	Theme string `json:"theme"`
 	// The numerical :id of a favorited dashboard
 	// Default:0
-	HomeDashboardID int64 `json:"homeDashboardId"`
+	HomeDashboardID  int64   `json:"homeDashboardId"`
+	HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`
 	// Enum: utc,browser
 	Timezone     string                         `json:"timezone"`
 	WeekStart    string                         `json:"weekStart"`

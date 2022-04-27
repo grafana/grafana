@@ -488,6 +488,10 @@ func (m *SQLStoreMock) GetDashboardUIDById(ctx context.Context, query *models.Ge
 	return m.ExpectedError
 }
 
+func (m *SQLStoreMock) GetDashboardIDByUID(ctx context.Context, query *models.GetDashboardRefByUIdQuery) error {
+	return m.ExpectedError
+}
+
 func (m SQLStoreMock) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
 	query.Result = m.ExpectedDatasource
 	return m.ExpectedError

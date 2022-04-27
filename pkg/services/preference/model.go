@@ -10,20 +10,19 @@ import (
 var ErrPrefNotFound = errors.New("preference not found")
 
 type Preference struct {
-	ID               int64   `xorm:"pk autoincr 'id'"`
-	OrgID            int64   `xorm:"org_id"`
-	UserID           int64   `xorm:"user_id"`
-	TeamID           int64   `xorm:"team_id"`
-	Teams            []int64 `xorm:"extends"`
-	Version          int
-	HomeDashboardID  int64  `xorm:"home_dashboard_id"`
-	HomeDashboardUID string `xorm:"home_dashboard_uid"`
-	Timezone         string
-	WeekStart        string
-	Theme            string
-	Created          time.Time
-	Updated          time.Time
-	JSONData         *PreferenceJSONData `xorm:"json_data"`
+	ID              int64   `xorm:"pk autoincr 'id'"`
+	OrgID           int64   `xorm:"org_id"`
+	UserID          int64   `xorm:"user_id"`
+	TeamID          int64   `xorm:"team_id"`
+	Teams           []int64 `xorm:"extends"`
+	Version         int
+	HomeDashboardID int64 `xorm:"home_dashboard_id"`
+	Timezone        string
+	WeekStart       string
+	Theme           string
+	Created         time.Time
+	Updated         time.Time
+	JSONData        *PreferenceJSONData `xorm:"json_data"`
 }
 
 type GetPreferenceWithDefaultsQuery struct {
@@ -44,7 +43,7 @@ type SavePreferenceCommand struct {
 	TeamID int64
 
 	HomeDashboardID  int64                   `json:"homeDashboardId,omitempty"`
-	HomeDashboardUID string                  `json:"homeDashboardUid,omitempty"`
+	HomeDashboardUID *string                 `json:"homeDashboardUid,omitempty"`
 	Timezone         string                  `json:"timezone,omitempty"`
 	WeekStart        string                  `json:"weekStart,omitempty"`
 	Theme            string                  `json:"theme,omitempty"`

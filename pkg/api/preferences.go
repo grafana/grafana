@@ -26,6 +26,16 @@ func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
 	cmd.UserID = c.UserId
 	cmd.OrgID = c.OrgId
 
+	// get home dashboard with UID then save ID into DB
+	if cmd.HomeDashboardUID != nil {
+		query := models.GetDashboardRefByUIdQuery{UID: *cmd.HomeDashboardUID}
+		err := hs.SQLStore.GetDashboardIDByUID(c.Req.Context(), &query)
+		if err != nil {
+			return response.Error(404, "Dashboard not found", err)
+		}
+		cmd.HomeDashboardID = query.Result.Id
+	}
+
 	if err := hs.preferenceService.Save(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to set home dashboard", err)
 	}
@@ -74,6 +84,17 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 	if dtoCmd.Theme != lightTheme && dtoCmd.Theme != darkTheme && dtoCmd.Theme != defaultTheme {
 		return response.Error(400, "Invalid theme", nil)
 	}
+
+	dashboardID := dtoCmd.HomeDashboardID
+	if dtoCmd.HomeDashboardUID != nil {
+		query := models.GetDashboardQuery{Uid: *dtoCmd.HomeDashboardUID}
+		err := hs.SQLStore.GetDashboard(ctx, &query)
+		if err != nil {
+			return response.Error(404, "Dashboard not found", err)
+		}
+		dashboardID = query.Result.Id
+	}
+
 	saveCmd := pref.SavePreferenceCommand{
 		UserID:          userID,
 		OrgID:           orgID,
@@ -81,7 +102,7 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 		Theme:           dtoCmd.Theme,
 		Timezone:        dtoCmd.Timezone,
 		WeekStart:       dtoCmd.WeekStart,
-		HomeDashboardID: dtoCmd.HomeDashboardID,
+		HomeDashboardID: dashboardID,
 	}
 
 	if err := hs.preferenceService.Save(ctx, &saveCmd); err != nil {
@@ -104,6 +125,19 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	if dtoCmd.Theme != nil && *dtoCmd.Theme != lightTheme && *dtoCmd.Theme != darkTheme && *dtoCmd.Theme != defaultTheme {
 		return response.Error(400, "Invalid theme", nil)
 	}
+
+	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
+	dashboardID := dtoCmd.HomeDashboardID
+
+	if dtoCmd.HomeDashboardUID != nil {
+		query := models.GetDashboardRefByUIdQuery{UID: *dtoCmd.HomeDashboardUID}
+		err := hs.SQLStore.GetDashboardIDByUID(ctx, &query)
+		if err != nil {
+			return response.Error(404, "Dashboard not found", err)
+		}
+		dashboardID = &query.Result.Id
+	}
+
 	patchCmd := pref.PatchPreferenceCommand{
 		UserID:           userID,
 		OrgID:            orgID,
@@ -111,7 +145,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		Theme:            dtoCmd.Theme,
 		Timezone:         dtoCmd.Timezone,
 		WeekStart:        dtoCmd.WeekStart,
-		HomeDashboardID:  dtoCmd.HomeDashboardID,
+		HomeDashboardID:  dashboardID,
 		Navbar:           dtoCmd.Navbar,
 		QueryHistory:     dtoCmd.QueryHistory,
 		HomeDashboardUID: dtoCmd.HomeDashboardUID,
@@ -135,6 +169,7 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *models.ReqContext) response.Respon
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+
 	return hs.updatePreferencesFor(c.Req.Context(), c.OrgId, 0, 0, &dtoCmd)
 }
 
