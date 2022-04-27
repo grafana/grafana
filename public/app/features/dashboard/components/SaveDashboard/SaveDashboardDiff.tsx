@@ -64,7 +64,7 @@ export const SaveDashboardDiff = ({ diff, oldValue, newValue }: SaveDashboardDif
 
       {value.showDiffs && <div className={styles.spacer}>{value.diffs}</div>}
 
-      <h4>JSON Diff</h4>
+      <h4>JSON Model</h4>
       <DiffViewer oldValue={value.oldJSON} newValue={value.newJSON} />
     </div>
   );
