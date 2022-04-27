@@ -364,7 +364,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * Fetches all label keys
    */
   async fetchLabels(): Promise<string[]> {
-    const url = '/loki/api/v1/label';
+    const url = '/loki/api/v1/labels';
     const timeRange = this.datasource.getTimeRangeParams();
     this.labelFetchTs = Date.now().valueOf();
 

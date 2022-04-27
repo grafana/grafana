@@ -1,8 +1,8 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
-import { Select, Switch } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, EditorRow, EditorRows, EditorSwitch } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
 
 import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
@@ -128,7 +128,7 @@ export function MetricStatEditor({
             optional={true}
             tooltip="Only show metrics that exactly match all defined dimension names."
           >
-            <Switch
+            <EditorSwitch
               id={`${query.refId}-cloudwatch-match-exact`}
               value={!!query.matchExact}
               onChange={(e) => {
