@@ -93,7 +93,6 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
   onChange,
   setError,
 }) => {
-  console.log('FIIIIIIIIIIIIIIIIIIIIIII', query.queryType);
   switch (query.queryType) {
     case AzureQueryType.AzureMonitor:
       if (config.featureToggles.azureMonitorResourcePickerForMetrics) {
