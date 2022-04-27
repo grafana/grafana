@@ -45,7 +45,7 @@ func lokiResponseToDataFrames(value *loghttp.QueryResponse, query *lokiQuery) (d
 func lokiMatrixToDataFrames(matrix loghttp.Matrix, query *lokiQuery, stats []data.QueryStat) data.Frames {
 	frames := data.Frames{}
 
-	for _, v := range matrix {
+	for i, v := range matrix {
 		tags := make(map[string]string, len(v.Metric))
 		timeVector := make([]time.Time, 0, len(v.Values))
 		values := make([]float64, 0, len(v.Values))
@@ -64,9 +64,13 @@ func lokiMatrixToDataFrames(matrix loghttp.Matrix, query *lokiQuery, stats []dat
 
 		frame := data.NewFrame("", timeField, valueField)
 		frame.SetMeta(&data.FrameMeta{
-			Stats: stats,
-			Type:  data.FrameTypeTimeSeriesMany,
+			Type: data.FrameTypeTimeSeriesMany,
 		})
+
+		// only add the stats to the first dataframe
+		if i == 0 {
+			frame.Meta.Stats = stats
+		}
 
 		frames = append(frames, frame)
 	}
@@ -77,7 +81,7 @@ func lokiMatrixToDataFrames(matrix loghttp.Matrix, query *lokiQuery, stats []dat
 func lokiVectorToDataFrames(vector loghttp.Vector, query *lokiQuery, stats []data.QueryStat) data.Frames {
 	frames := data.Frames{}
 
-	for _, v := range vector {
+	for i, v := range vector {
 		tags := make(map[string]string, len(v.Metric))
 		timeVector := []time.Time{v.Timestamp.Time().UTC()}
 		values := []float64{float64(v.Value)}
@@ -90,9 +94,13 @@ func lokiVectorToDataFrames(vector loghttp.Vector, query *lokiQuery, stats []dat
 
 		frame := data.NewFrame("", timeField, valueField)
 		frame.SetMeta(&data.FrameMeta{
-			Stats: stats,
-			Type:  data.FrameTypeTimeSeriesMany,
+			Type: data.FrameTypeTimeSeriesMany,
 		})
+
+		// only add the stats to the first dataframe
+		if i == 0 {
+			frame.Meta.Stats = stats
+		}
 
 		frames = append(frames, frame)
 	}
