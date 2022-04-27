@@ -79,7 +79,7 @@ You can use any of the following built-in template options to embed custom templ
 | `default.message`       | Provides a formatted summary of firing and resolved alerts.   |
 | `teams.default.message` | Similar to `default.messsage`, formatted for Microsoft Teams. |
 
-### Custom template examples
+### Example of a custom template
 
 Here's an example of how to use a custom template. You can also use the default template included in the setup.
 
