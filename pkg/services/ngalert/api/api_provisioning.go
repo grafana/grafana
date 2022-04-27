@@ -103,7 +103,7 @@ func (srv *ProvisioningSrv) RouteGetTemplates(c *models.ReqContext) response.Res
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	result := make([]definitions.MessageTemplate, len(templates))
+	result := make([]definitions.MessageTemplate, 0, len(templates))
 	for k, v := range templates {
 		result = append(result, definitions.MessageTemplate{Name: k, Template: v})
 	}
