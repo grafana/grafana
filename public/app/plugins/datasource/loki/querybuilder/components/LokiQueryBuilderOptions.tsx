@@ -18,7 +18,8 @@ export interface Props {
 
 export const LokiQueryBuilderOptions = React.memo<Props>(({ query, onChange, onRunQuery }) => {
   const onQueryTypeChange = (value: LokiQueryType) => {
-    onChange({ ...query, queryType: value });
+    const { instant, range, ...rest } = query;
+    onChange({ ...rest, queryType: value });
     onRunQuery();
   };
 
