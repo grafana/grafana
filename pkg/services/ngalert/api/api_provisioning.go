@@ -63,6 +63,9 @@ func (srv *ProvisioningSrv) RoutePostPolicyTree(c *models.ReqContext, tree defin
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
 	}
+	if errors.Is(err, provisioning.ErrValidation) {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
