@@ -81,7 +81,7 @@ You can use any of the following built-in template options to embed custom templ
 
 ### Custom template examples
 
-Here are a few examples of how to use custom templates.
+Here's an examples of how to use custom templates.
 
 Template to render a single alert:
 
@@ -125,7 +125,7 @@ Template to render entire notification message:
 {{ end }}
 ```
 
-After you save these two templates, use `mymessage` in the notification message field:
+After saving these two templates, use `mymessage` in the notification message field:
 
 ```
 Alert summary:
