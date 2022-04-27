@@ -176,6 +176,6 @@ const (
 	FlagSavedItems = "savedItems"
 
 	// FlagCoremodelValidation
-	// Validate resources (e.g. dashboards) using coremodel schemas
+	// Validate objects (e.g. dashboards) using coremodel schemas
 	FlagCoremodelValidation = "coremodelValidation"
 )
