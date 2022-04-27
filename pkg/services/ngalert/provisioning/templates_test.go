@@ -79,7 +79,7 @@ func TestTemplateService(t *testing.T) {
 func createTemplateServiceSut() *TemplateService {
 	return &TemplateService{
 		config: &MockAMConfigStore{},
-		prov:   newFakeProvisioningStore(),
+		prov:   NewFakeProvisioningStore(),
 		xact:   newNopTransactionManager(),
 		log:    log.NewNopLogger(),
 	}
