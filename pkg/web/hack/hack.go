@@ -3,6 +3,7 @@ package hack
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
@@ -42,4 +43,32 @@ func Wrap(h web.Handler) http.HandlerFunc {
 	}
 
 	panic(fmt.Sprintf("unexpected handler type: %T", h))
+}
+
+func HandlerType(h web.Handler) string {
+	switch h.(type) {
+	case HandlerStd:
+		return "HandlerStd"
+	case HandlerStdCtx:
+		return "HandlerStdCtx"
+	case HandlerReqCtx:
+		return "HandlerReqCtx"
+	case HandlerReqCtxRes:
+		return "HandlerReqCtxRes"
+	case HandlerCtx:
+		return "HandlerCtx"
+	}
+
+	return "Unknown"
+}
+
+const EnvHandlerSummary = "HANDLER_SUMMARY"
+
+func Summary(method, route string, handlers []web.Handler) string {
+	out := new(strings.Builder)
+	fmt.Fprintf(out, "%s %s:\n", method, route)
+	for _, h := range handlers {
+		fmt.Fprintf(out, "\t%s\n", HandlerType(h))
+	}
+	return out.String()
 }

@@ -1,7 +1,10 @@
 package routing
 
 import (
+	"fmt"
+	"github.com/grafana/grafana/pkg/web/hack"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/middleware"
@@ -154,6 +157,10 @@ func (rr *RouteRegisterImpl) route(pattern, method string, handlers ...web.Handl
 		if r.pattern == fullPattern && r.method == method {
 			panic("cannot add duplicate route")
 		}
+	}
+
+	if os.Getenv(hack.EnvHandlerSummary) != "" {
+		fmt.Println(hack.Summary(method, pattern, handlers))
 	}
 
 	rr.routes = append(rr.routes, route{
