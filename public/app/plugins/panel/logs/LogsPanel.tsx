@@ -42,6 +42,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
   const { eventBus } = usePanelContext();
   const { newData, externalLogs } = usePopulateData({ data });
+
   usePanelScroll({
     isAscending,
     messages: newData?.series[0]?.fields[1]?.values?.buffer || [''],
