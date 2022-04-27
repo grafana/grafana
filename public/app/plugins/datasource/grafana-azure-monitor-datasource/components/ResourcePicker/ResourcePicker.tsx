@@ -164,6 +164,7 @@ const ResourcePicker = ({
                     requestNestedRows={requestNestedRows}
                     onRowSelectedChange={handleSelectionChanged}
                     selectableEntryTypes={selectableEntryTypes}
+                    scrollIntoView={true}
                   />
                 ))}
               </tbody>
@@ -187,7 +188,6 @@ const ResourcePicker = ({
                           requestNestedRows={requestNestedRows}
                           onRowSelectedChange={handleSelectionChanged}
                           selectableEntryTypes={selectableEntryTypes}
-                          isSelectionSummary={true}
                         />
                       ))}
                     </tbody>

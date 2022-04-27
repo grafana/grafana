@@ -16,7 +16,7 @@ interface NestedEntryProps {
   isSelectable: boolean;
   isOpen: boolean;
   isDisabled: boolean;
-  isSelectionSummary?: boolean;
+  scrollIntoView?: boolean;
   onToggleCollapse: (row: ResourceRow) => void;
   onSelectedChange: (row: ResourceRow, selected: boolean) => void;
 }
@@ -27,7 +27,7 @@ export const NestedEntry: React.FC<NestedEntryProps> = ({
   isDisabled,
   isOpen,
   isSelectable,
-  isSelectionSummary,
+  scrollIntoView,
   level,
   onToggleCollapse,
   onSelectedChange,
@@ -48,12 +48,12 @@ export const NestedEntry: React.FC<NestedEntryProps> = ({
     [entry, onSelectedChange]
   );
 
-  const checkboxId = `${isSelectionSummary ? 'table' : 'summary'}_checkbox_${entry.uri}`;
+  const checkboxId = `${scrollIntoView ? 'table' : 'summary'}_checkbox_${entry.uri}`;
 
   // Scroll to the selected element if it's not in the view
   // Only do it once, when the component is mounted
   useEffect(() => {
-    if (isSelected && !isSelectionSummary) {
+    if (isSelected && scrollIntoView) {
       document.getElementById(checkboxId)?.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
