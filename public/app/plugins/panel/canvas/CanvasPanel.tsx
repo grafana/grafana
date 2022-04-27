@@ -10,8 +10,6 @@ import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
-import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
-
 import { InlineEdit } from './InlineEdit';
 import { PanelOptions } from './models.gen';
 
@@ -158,19 +156,7 @@ export class CanvasPanel extends Component<Props, State> {
   };
 
   renderInlineEdit = () => {
-    const dashboard = getDashboardSrv().getCurrent();
-
-    if (!dashboard || !this.props.id) {
-      return null;
-    }
-
-    const panel = dashboard.getPanelById(this.props.id);
-
-    if (!panel) {
-      return null;
-    }
-
-    return <InlineEdit panel={panel} onClose={() => this.inlineEditButtonClick(false)} />;
+    return <InlineEdit onClose={() => this.inlineEditButtonClick(false)} />;
   };
 
   render() {
@@ -181,7 +167,7 @@ export class CanvasPanel extends Component<Props, State> {
           <div>
             <div className={this.styles.inlineEditButton}>
               <Button
-                size="md"
+                size="lg"
                 variant="secondary"
                 icon="edit"
                 data-btninlineedit={this.props.id}
@@ -201,6 +187,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     position: absolute;
     bottom: 8px;
     left: 8px;
-    z-index: 10000;
+    z-index: 999;
   `,
 }));

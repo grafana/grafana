@@ -4,13 +4,7 @@ import React, { SyntheticEvent, useRef, useState, useMemo } from 'react';
 import Draggable from 'react-draggable';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
 
-import {
-  GrafanaTheme,
-  PanelModel,
-  Dimensions2D,
-  PanelOptionsEditorBuilder,
-  StandardEditorContext,
-} from '@grafana/data';
+import { GrafanaTheme, Dimensions2D, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { IconButton, stylesFactory, usePanelContext, useTheme } from '@grafana/ui';
@@ -26,18 +20,17 @@ import { getLayerEditor } from './editor/layerEditor';
 
 type Props = {
   onClose?: () => void;
-  panel: PanelModel;
 };
 
 const OFFSET = 8;
 
-export const InlineEdit = ({ panel, onClose }: Props) => {
+export const InlineEdit = ({ onClose }: Props) => {
   const { instanceState } = usePanelContext();
   const theme = useTheme();
-  const btnInlineEdit = document.querySelector(`[data-btninlineedit="${panel.id}"]`)!.getBoundingClientRect();
+  const btnInlineEdit = document.querySelector('[data-btninlineedit]')!.getBoundingClientRect();
   const ref = useRef<HTMLDivElement>(null);
   const styles = getStyles(theme);
-  const inlineEditKey = `inlineEditPanel-${panel.id}`;
+  const inlineEditKey = 'inlineEditPanel';
 
   const defaultMeasurements = { width: 350, height: 400 };
   const defaultX = btnInlineEdit.x - btnInlineEdit.width + OFFSET;
@@ -55,9 +48,9 @@ export const InlineEdit = ({ panel, onClose }: Props) => {
   const pane = useMemo(() => {
     const state: InstanceState = instanceState;
     if (!state) {
-      const root = new OptionsPaneCategoryDescriptor({ id: 'root', title: 'root' });
-      return root;
+      return new OptionsPaneCategoryDescriptor({ id: 'root', title: 'root' });
     }
+
     const supplier = (builder: PanelOptionsEditorBuilder<any>, context: StandardEditorContext<any>) => {
       builder.addNestedOptions(getLayerEditor(instanceState));
 
@@ -75,6 +68,7 @@ export const InlineEdit = ({ panel, onClose }: Props) => {
         }
       }
     };
+
     return getOptionsPaneCategoryDescriptor({}, supplier);
   }, [instanceState]);
 
@@ -104,14 +98,7 @@ export const InlineEdit = ({ panel, onClose }: Props) => {
           <strong className={cx('cursor', `${styles.inlineEditorHeader}`)}>
             <div className={styles.placeholder} />
             <div>Canvas Inline Editor</div>
-            <IconButton
-              aria-label="Close dialogue"
-              surface="header"
-              name="times"
-              size="xl"
-              className={styles.inlineEditorClose}
-              onClick={onClose}
-            />
+            <IconButton name="times" size="xl" className={styles.inlineEditorClose} onClick={onClose} />
           </strong>
           <div style={{ overflow: 'scroll' }} className={styles.inlineEditorContentWrapper}>
             <div className={styles.inlineEditorContent}>
@@ -142,7 +129,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     flex-direction: column;
     background: ${theme.colors.panelBg};
     box-shadow: 5px 5px 20px -5px #000000;
-    z-index: 10000;
+    z-index: 1000;
     opacity: 1;
   `,
   inlineEditorHeader: css`
