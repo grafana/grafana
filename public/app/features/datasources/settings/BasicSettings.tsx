@@ -34,7 +34,7 @@ const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, 
         <InlineField label="Default" labelWidth={8}>
           <InlineSwitch
             id="basic-settings-default"
-            checked={isDefault}
+            value={isDefault}
             onChange={(event: React.FormEvent<HTMLInputElement>) => {
               onDefaultChange(event.currentTarget.checked);
             }}

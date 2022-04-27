@@ -214,7 +214,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
             <InlineField label="Basic auth" labelWidth={LABEL_WIDTH}>
               <InlineSwitch
                 id="http-settings-basic-auth"
-                checked={dataSourceConfig.basicAuth}
+                value={dataSourceConfig.basicAuth}
                 onChange={(event) => {
                   onSettingsChange({ basicAuth: event!.currentTarget.checked });
                 }}
@@ -228,7 +228,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
             >
               <InlineSwitch
                 id="http-settings-with-credentials"
-                checked={dataSourceConfig.withCredentials}
+                value={dataSourceConfig.withCredentials}
                 onChange={(event) => {
                   onSettingsChange({ withCredentials: event!.currentTarget.checked });
                 }}
@@ -245,7 +245,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
               >
                 <InlineSwitch
                   id="http-settings-azure-auth"
-                  checked={azureAuthEnabled}
+                  value={azureAuthEnabled}
                   onChange={(event) => {
                     onSettingsChange(
                       azureAuthSettings.setAzureAuthEnabled(dataSourceConfig, event!.currentTarget.checked)
@@ -261,7 +261,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
               <InlineField label="SigV4 auth" labelWidth={LABEL_WIDTH}>
                 <InlineSwitch
                   id="http-settings-sigv4-auth"
-                  checked={dataSourceConfig.jsonData.sigV4Auth || false}
+                  value={dataSourceConfig.jsonData.sigV4Auth || false}
                   onChange={(event) => {
                     onSettingsChange({
                       jsonData: { ...dataSourceConfig.jsonData, sigV4Auth: event!.currentTarget.checked },
