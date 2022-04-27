@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { FadeTransition, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { NestedEntry } from './NestedEntry';
-import NestedRows from './NestedRows';
 import getStyles from './styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
 import { findRow } from './utils';
@@ -77,16 +76,20 @@ const NestedRow: React.FC<NestedRowProps> = ({
         <td className={styles.cell}>{row.location ?? '-'}</td>
       </tr>
 
-      {isOpen && row.children && Object.keys(row.children).length > 0 && (
-        <NestedRows
-          rows={row.children}
-          selectedRows={selectedRows}
-          level={level + 1}
-          requestNestedRows={requestNestedRows}
-          onRowSelectedChange={onRowSelectedChange}
-          selectableEntryTypes={selectableEntryTypes}
-        />
-      )}
+      {isOpen &&
+        row.children &&
+        Object.keys(row.children).length > 0 &&
+        row.children.map((childRow) => (
+          <NestedRow
+            key={childRow.uri}
+            row={childRow}
+            selectedRows={selectedRows}
+            level={level + 1}
+            requestNestedRows={requestNestedRows}
+            onRowSelectedChange={onRowSelectedChange}
+            selectableEntryTypes={selectableEntryTypes}
+          />
+        ))}
 
       <FadeTransition visible={rowStatus === 'loading'}>
         <tr>

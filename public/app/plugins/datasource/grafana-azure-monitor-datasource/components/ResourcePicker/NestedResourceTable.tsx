@@ -3,7 +3,7 @@ import React from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 
-import NestedRows from './NestedRows';
+import NestedRow from './NestedRow';
 import getStyles from './styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
 
@@ -43,14 +43,17 @@ const NestedResourceTable: React.FC<NestedResourceTableProps> = ({
       <div className={styles.tableScroller}>
         <table className={styles.table}>
           <tbody>
-            <NestedRows
-              rows={rows}
-              selectedRows={selectedRows}
-              level={0}
-              requestNestedRows={requestNestedRows}
-              onRowSelectedChange={onRowSelectedChange}
-              selectableEntryTypes={selectableEntryTypes}
-            />
+            {rows.map((row) => (
+              <NestedRow
+                key={row.uri}
+                row={row}
+                selectedRows={selectedRows}
+                level={0}
+                requestNestedRows={requestNestedRows}
+                onRowSelectedChange={onRowSelectedChange}
+                selectableEntryTypes={selectableEntryTypes}
+              />
+            ))}
           </tbody>
         </table>
       </div>
