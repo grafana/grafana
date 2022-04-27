@@ -18,7 +18,7 @@ export const fromDTO = (dto: RichHistoryLocalStorageDTO): RichHistoryQuery => {
 };
 
 export const toDTO = (richHistoryQuery: RichHistoryQuery): RichHistoryLocalStorageDTO => {
-  const datasource = getDataSourceSrv().getInstanceSettings(richHistoryQuery.datasourceUid);
+  const datasource = getDataSourceSrv().getInstanceSettings({ uid: richHistoryQuery.datasourceUid });
 
   if (!datasource) {
     throw new Error('Datasource not found.');

@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/data';
+import { DataQuery, DataSourceRef } from '@grafana/data';
 import store from 'app/core/store';
 
 import { afterEach, beforeEach } from '../../../test/lib/common';
@@ -16,11 +16,10 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {
-      getList: () => {
-        return [
-          { uid: 'dev-test-uid', name: 'dev-test' },
-          { uid: 'dev-test-2-uid', name: 'dev-test-2' },
-        ];
+      getInstanceSettings: (ref: DataSourceRef | 'string') => {
+        return typeof ref === 'string'
+          ? { uid: ref.slice('name-of-'.length), name: ref }
+          : { uid: ref.uid, name: `name-of-${ref.uid}` };
       },
     };
   },
@@ -43,8 +42,8 @@ const mockItem: RichHistoryQuery<MockQuery> = {
   id: '2',
   createdAt: 2,
   starred: true,
-  datasourceUid: 'dev-test-uid',
-  datasourceName: 'dev-test',
+  datasourceUid: 'dev-test',
+  datasourceName: 'name-of-dev-test',
   comment: 'test',
   queries: [{ refId: 'ref', query: 'query-test' }],
 };
@@ -53,8 +52,8 @@ const mockItem2: RichHistoryQuery<MockQuery> = {
   id: '3',
   createdAt: 3,
   starred: true,
-  datasourceUid: 'dev-test-2-uid',
-  datasourceName: 'dev-test-2',
+  datasourceUid: 'dev-test-2',
+  datasourceName: 'name-of-dev-test-2',
   comment: 'test-2',
   queries: [{ refId: 'ref-2', query: 'query-2' }],
 };
@@ -139,8 +138,8 @@ describe('RichHistoryLocalStorage', () => {
 
       const historyNew = {
         starred: true,
-        datasourceUid: 'dev-test-uid',
-        datasourceName: 'dev-test',
+        datasourceUid: 'dev-test',
+        datasourceName: 'name-of-dev-test',
         comment: 'recently added',
         queries: [{ refId: 'ref' }],
       };
@@ -218,8 +217,8 @@ describe('RichHistoryLocalStorage', () => {
           id: '2',
           createdAt: 2,
           starred: true,
-          datasourceUid: 'dev-test-uid',
-          datasourceName: 'dev-test',
+          datasourceUid: 'dev-test',
+          datasourceName: 'name-of-dev-test',
           comment: 'test',
           queries: [
             {
