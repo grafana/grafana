@@ -40,7 +40,7 @@ const defaultProps = {
 
 describe('AzureMonitor ResourcePicker', () => {
   beforeEach(() => {
-    window.HTMLElement.prototype.scrollIntoView = function () {};
+    window.HTMLElement.prototype.scrollIntoView = jest.fn();
   });
   it('should pre-load subscriptions when there is no existing selection', async () => {
     render(<ResourcePicker {...defaultProps} resourceURI={noResourceURI} />);
@@ -53,20 +53,40 @@ describe('AzureMonitor ResourcePicker', () => {
 
   it('should show a subscription as selected if there is one saved', async () => {
     render(<ResourcePicker {...defaultProps} resourceURI={singleSubscriptionSelectionURI} />);
-    const subscriptionCheckbox = await screen.findByLabelText('Dev Subscription');
-    expect(subscriptionCheckbox).toBeChecked();
+    const subscriptionCheckboxes = await screen.findAllByLabelText('Dev Subscription');
+    expect(subscriptionCheckboxes.length).toBe(2);
+    expect(subscriptionCheckboxes[0]).toBeChecked();
+    expect(subscriptionCheckboxes[1]).toBeChecked();
   });
 
   it('should show a resourceGroup as selected if there is one saved', async () => {
     render(<ResourcePicker {...defaultProps} resourceURI={singleResourceGroupSelectionURI} />);
-    const resourceGroupCheckbox = await screen.findByLabelText('A Great Resource Group');
-    expect(resourceGroupCheckbox).toBeChecked();
+    const resourceGroupCheckboxes = await screen.findAllByLabelText('A Great Resource Group');
+    expect(resourceGroupCheckboxes.length).toBe(2);
+    expect(resourceGroupCheckboxes[0]).toBeChecked();
+    expect(resourceGroupCheckboxes[1]).toBeChecked();
   });
 
   it('should show a resource as selected if there is one saved', async () => {
     render(<ResourcePicker {...defaultProps} resourceURI={singleResourceSelectionURI} />);
-    const resourceCheckbox = await screen.findByLabelText('db-server');
-    expect(resourceCheckbox).toBeChecked();
+    const resourceCheckboxes = await screen.findAllByLabelText('db-server');
+    expect(resourceCheckboxes.length).toBe(2);
+    expect(resourceCheckboxes[0]).toBeChecked();
+    expect(resourceCheckboxes[1]).toBeChecked();
+  });
+
+  it('opens the selected nested resources', async () => {
+    render(<ResourcePicker {...defaultProps} resourceURI={singleResourceSelectionURI} />);
+    const collapseSubscriptionBtn = await screen.findByLabelText('Collapse Dev Subscription');
+    expect(collapseSubscriptionBtn).toBeInTheDocument();
+    const collapseResourceGroupBtn = await screen.findByLabelText('Collapse A Great Resource Group');
+    expect(collapseResourceGroupBtn).toBeInTheDocument();
+  });
+
+  it('scrolls down to the selected resource', async () => {
+    render(<ResourcePicker {...defaultProps} resourceURI={singleResourceSelectionURI} />);
+    await screen.findByLabelText('Collapse A Great Resource Group');
+    expect(window.HTMLElement.prototype.scrollIntoView).toBeCalledTimes(1);
   });
 
   it('should be able to expand a subscription when clicked and reveal resource groups', async () => {
