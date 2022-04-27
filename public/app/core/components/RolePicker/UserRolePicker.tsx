@@ -14,6 +14,8 @@ export interface Props {
   builtInRoles?: { [key: string]: Role[] };
   disabled?: boolean;
   builtinRolesDisabled?: boolean;
+  updateDisabled?: boolean;
+  onApplyRoles?: (newRoles: string[], userId: number, orgId: number | undefined) => void;
 }
 
 export const UserRolePicker: FC<Props> = ({
@@ -25,6 +27,8 @@ export const UserRolePicker: FC<Props> = ({
   builtInRoles,
   disabled,
   builtinRolesDisabled,
+  updateDisabled,
+  onApplyRoles,
 }) => {
   const [{ loading, value: appliedRoles = [] }, getUserRoles] = useAsyncFn(async () => {
     try {
@@ -39,12 +43,21 @@ export const UserRolePicker: FC<Props> = ({
   }, [orgId, userId]);
 
   useEffect(() => {
-    getUserRoles();
+    // only load roles when there is an Org selected
+    if (orgId) {
+      getUserRoles();
+    }
   }, [orgId, userId, getUserRoles]);
 
   const onRolesChange = async (roles: string[]) => {
-    await updateUserRoles(roles, userId, orgId);
-    await getUserRoles();
+    if (!updateDisabled) {
+      await updateUserRoles(roles, userId, orgId);
+      await getUserRoles();
+    } else {
+      if (onApplyRoles) {
+        onApplyRoles(roles, userId, orgId);
+      }
+    }
   };
 
   return (
@@ -59,6 +72,7 @@ export const UserRolePicker: FC<Props> = ({
       disabled={disabled}
       builtinRolesDisabled={builtinRolesDisabled}
       showBuiltInRole
+      updateDisabled={updateDisabled || false}
     />
   );
 };
