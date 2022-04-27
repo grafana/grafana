@@ -81,7 +81,7 @@ You can use any of the following built-in template options to embed custom templ
 
 ### Custom template examples
 
-Here's an examples of how to use custom templates.
+Here's an example of how to use a custom template. You can also use the default template included in the setup.
 
 Template to render a single alert:
 
