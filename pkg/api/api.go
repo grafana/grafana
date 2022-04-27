@@ -379,7 +379,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
 			dashboardRoute.Get("/tags", hs.GetDashboardTags)
 
-			// Deprecated: use /uid/:uid API instead.
+			// Deprecated: use /uid/:uid API instead
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
 				dashIdRoute.Get("/versions", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersions))
 				dashIdRoute.Get("/versions/:id", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersion))
