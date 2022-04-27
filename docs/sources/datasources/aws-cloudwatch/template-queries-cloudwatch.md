@@ -33,13 +33,13 @@ For details about the metrics CloudWatch provides, please refer to the [CloudWat
 
 ### Using variables in queries
 
-Refer to the [variable syntax documentation]({{< relref "../../variables/syntax.md" >}}).
+Variables can be used in the variable form. Refer to the [variable syntax documentation]({{< relref "../../variables/syntax.md" >}}).
 
 ## Using JSON format template variables
 
 Some queries accept filters in JSON format and Grafana supports the conversion of template variables to JSON.
 
-If `env = 'production', 'staging'`, a `Resource ARNs` query with the following filter will return ARNs of EC2 instances where the `Environment` tag is equal to `production` or `staging`.
+For example, if `env = 'production', 'staging'`, a `Resource ARNs` query with the following filter will return ARNs of EC2 instances where the `Environment` tag is equal to `production` or `staging`.
 
 ```javascript
 {"Environment":${env:json}}
