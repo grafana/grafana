@@ -11,6 +11,7 @@ import { useCleanup } from '../../../core/hooks/useCleanup';
 
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { AmRootRoute } from './components/amroutes/AmRootRoute';
 import { AmSpecificRouting } from './components/amroutes/AmSpecificRouting';
 import { MuteTimingsTable } from './components/amroutes/MuteTimingsTable';
@@ -102,7 +103,11 @@ const AmRoutes: FC = () => {
   };
 
   if (!alertManagerSourceName) {
-    return <Redirect to="/alerting/routes" />;
+    return (
+      <AlertingPageWrapper pageId="am-routes">
+        <NoAlertManagerWarning />
+      </AlertingPageWrapper>
+    );
   }
 
   return (

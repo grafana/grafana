@@ -7,6 +7,7 @@ import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { AlertGroup } from './components/alert-groups/AlertGroup';
 import { AlertGroupFilter } from './components/alert-groups/AlertGroupFilter';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
@@ -49,6 +50,14 @@ const AlertGroups = () => {
       clearInterval(interval);
     };
   }, [dispatch, alertManagerSourceName]);
+
+  if (!alertManagerSourceName) {
+    return (
+      <AlertingPageWrapper pageId="groups">
+        <NoAlertManagerWarning />
+      </AlertingPageWrapper>
+    );
+  }
 
   return (
     <AlertingPageWrapper pageId="groups">

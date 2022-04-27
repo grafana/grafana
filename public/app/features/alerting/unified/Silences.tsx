@@ -1,14 +1,13 @@
-import React, { FC, useEffect, useCallback } from 'react';
+import React, { FC, useCallback, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
 
 import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 import { Silence } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
 
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { Authorize } from './components/Authorize';
+import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import SilencesEditor from './components/silences/SilencesEditor';
 import SilencesTable from './components/silences/SilencesTable';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
@@ -52,12 +51,13 @@ const Silences: FC = () => {
   const getSilenceById = useCallback((id: string) => result && result.find((silence) => silence.id === id), [result]);
 
   if (!alertManagerSourceName) {
-    return (
-      <Alert title="No alert managers available" severity="warning">
-        There are no alert managers available
-      </Alert>
+    return isRoot ? (
+      <AlertingPageWrapper pageId="silences">
+        <NoAlertManagerWarning />
+      </AlertingPageWrapper>
+    ) : (
+      <Redirect to="/alerting/silences" />
     );
-    // return <Redirect to="/alerting/silences" />;
   }
 
   return (

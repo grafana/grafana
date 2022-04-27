@@ -6,6 +6,7 @@ import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { EditReceiverView } from './components/receivers/EditReceiverView';
 import { EditTemplateView } from './components/receivers/EditTemplateView';
 import { GlobalConfigForm } from './components/receivers/GlobalConfigForm';
@@ -56,7 +57,13 @@ const Receivers: FC = () => {
   const disableAmSelect = !isRoot;
 
   if (!alertManagerSourceName) {
-    return <Redirect to="/alerting/notifications" />;
+    return isRoot ? (
+      <AlertingPageWrapper pageId="receivers">
+        <NoAlertManagerWarning />
+      </AlertingPageWrapper>
+    ) : (
+      <Redirect to="/alerting/notifications" />
+    );
   }
 
   return (
