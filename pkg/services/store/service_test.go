@@ -63,5 +63,5 @@ func TestUpload(t *testing.T) {
 	}
 	res, err := s.Upload(context.Background(), nil, testForm)
 	require.NoError(t, err)
-	assert.Equal(t, res.statusCode, 200)
+	assert.Equal(t, res.path, "upload")
 }
