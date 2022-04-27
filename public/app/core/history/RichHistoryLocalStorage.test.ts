@@ -12,7 +12,7 @@ import { RichHistoryStorageWarning } from './RichHistoryStorage';
 const key = 'grafana.explore.richHistory';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {
