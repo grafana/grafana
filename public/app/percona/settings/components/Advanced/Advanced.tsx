@@ -5,7 +5,7 @@ import React, { FC, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';
 
 import { Button, Spinner, useTheme, Icon } from '@grafana/ui';
-import { Messages, DATA_RETENTION_URL } from 'app/percona/settings/Settings.messages';
+import { Messages } from 'app/percona/settings/Settings.messages';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import validators from 'app/percona/shared/helpers/validators';
@@ -161,7 +161,7 @@ export const Advanced: FC<AdvancedProps> = ({
                   <span>{retentionLabel}</span>
                   <LinkTooltip
                     tooltipText={retentionTooltip}
-                    link={DATA_RETENTION_URL}
+                    link={Messages.advanced.retentionLink}
                     linkText={tooltipLinkText}
                     icon="info-circle"
                   />
