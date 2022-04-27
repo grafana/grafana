@@ -16,7 +16,7 @@ This section includes instructions for how to view permissions associated with r
 
 ## View basic role assignments using the HTTP API
 
-You can use the [Access control HTTP API]({{< relref "../../http_api/access_control.md#get-all-built-in-role-assignments" >}}) to see all available basic role assignments.
+You can use the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#get-all-built-in-role-assignments" >}}) to see all available basic role assignments.
 The response contains a mapping between one of the organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin` to the custom or fixed roles.
 
 **Before you begin:**
@@ -136,6 +136,8 @@ curl --location --request GET '<grafana_url>/api/access-control/roles/qQui_LCMk'
     "created": "2021-05-13T16:24:26+02:00"
 }
 ```
+
+Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#get-a-role" >}}) for more details.
 
 ## Create custom roles
 
@@ -273,6 +275,8 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
 }
 ```
 
+Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#create-a-new-custom-role" >}}) for more details.
+
 ## Remove a fixed role from a basic role
 
 If the basic role definitions that are available by default do not meet your requirements, you can change them by removing fixed role permissions from basic roles.
@@ -311,6 +315,8 @@ removeDefaultAssignments:
   - builtInRole: 'Grafana Admin'
     fixedRole: 'fixed:permissions:admin'
 ```
+
+You can also remove fixed roles from basic roles using the API. Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#remove-a-built-in-role-assignment" >}}) for more details.
 
 ## Delete a custom role using Grafana provisioning
 
@@ -355,3 +361,5 @@ deleteRoles:
     orgId: 1
     force: true
 ```
+
+You can also delete a custom role using the API. Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#delete-a-custom-role" >}}) for more details.

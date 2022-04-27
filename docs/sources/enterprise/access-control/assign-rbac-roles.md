@@ -160,7 +160,13 @@ roles:
 
 > **Note:** If you want to remove a fixed role assignment from a team, remove it from the YAML file, save your changes, and reload the configuration file.
 
-## Assign a fixed role to a basic role using provisioning
+## Assign a fixed or custom role to a basic role
+
+If you want to extend the permissions of a basic role, you can modify it by adding a fixed role or a basic role to it.
+
+You can also remove fixed or custom roles from basic roles. For example, you can remove the `fixed:users:writer` fixed role from the Administrator basic role if you would prefer that administrators not manage users. Learn more in the topic [remove a fixed role from a basic role]({{< relref "manage-rbac-roles.md#remove-a-fixed-role-from-a-basic-role" >}}).
+
+### Assign a fixed role to a basic role using provisioning
 
 If you want to extend the permissions of a basic role, and you identify a fixed role that meets your permission requirements, you can assign a fixed role to a basic role.
 
@@ -200,7 +206,7 @@ addDefaultAssignments:
     fixedRole: 'fixed:reporting:admin:read'
 ```
 
-## Assign a custom role to a basic role using provisioning
+### Assign a custom role to a basic role using provisioning
 
 If you want to extend the permissions of a basic role, and assigning fixed roles to the basic role does not meet your permission requirements, you can create a custom role and assign that role to a basic role.
 

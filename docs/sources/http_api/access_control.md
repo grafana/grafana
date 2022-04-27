@@ -955,9 +955,11 @@ Content-Type: application/json; charset=UTF-8
 | 404  | Role not found.                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
 
-## Create and remove built-in role assignments
+## Create and remove built-in (basic) role assignments
 
 API set allows to create or remove [basic role assignments]({{< relref "../enterprise/access-control/assign-rbac-roles" >}}) and list current assignments.
+
+> **Note:** Basic roles are referred to as **"built-in"** roles in the API. "Basic" and "built-in" refer to the same thing: the Grafana Administrator, Org Administrator, Editor, and Viewer roles.
 
 ### Get all built-in role assignments
 

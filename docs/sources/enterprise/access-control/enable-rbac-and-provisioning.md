@@ -63,6 +63,9 @@ This section describes how to enable RBAC by setting a feature flag or adding an
 
 ## Enable role provisioning
 
+You can create, change or remove [Custom roles]({{< relref "./roles.md#custom-roles" >}}) and create or remove [built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}), by adding one or more YAML configuration files in the [`provisioning/access-control/`]({{< relref "../../administration/configuration/#provisioning" >}}) directory.
+Refer to [Grafana provisioning]({{< relref "../../administration/configuration/#provisioning" >}}) to learn more about provisioning.
+
 If you choose to use provisioning to assign and manage role, you must first enable it.
 
 Grafana performs provisioning during startup. After you make a change to the configuration file, you can reload it during runtime. You do not need to restart the Grafana server for your changes to take effect.
@@ -71,18 +74,20 @@ Grafana performs provisioning during startup. After you make a change to the con
 
 **Before you begin:**
 
-- Ensure that you have administration privileges to the Grafana server.
+- Ensure that you have access to files on the server where Grafana is running.
 
 </br>
 
-**To enable Grafana to provision custom roles:**
+**To manage and assign RBAC roles using provisioning:**
 
 1. Sign in to the Grafana server.
 
-1. Locate the Grafana configuration file.
+2. Locate the Grafana provisioning folder.
 
-1. Place the Grafana configuration file in the following location: **provisioning/access-control**.
+3. Create a new YAML in the following folder: **provisioning/access-control**. For example, `provisioning/access-control/custom-roles.yml`
 
-1. Reload the provisioning configuration file.
+4. Add RBAC provisioning details to the configuration file. See [manage RBAC roles]({{< relref "manage-rbac-roles.md" >}}) and [assign RBAC roles]({{< relref "assign-rbac-roles.md" >}}) for instructions, and see this [example role provisioning file]({{< relref "provisioning-roles-example.md" >}}) for a complete example of a provisioning file.
+
+5. Reload the provisioning configuration file.
 
    For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
