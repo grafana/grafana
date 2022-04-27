@@ -96,6 +96,33 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
       onFieldChange(index, 'filter', '');
     }
   };
+
+  const getValidDimensionOptions = (selectedDimension: string) => {
+    return validDimensionOptions.concat(dimensionOptions.filter((item) => item.value === selectedDimension));
+  };
+
+  const getValidFilterOptions = (selectedFilter: string | undefined, dimension: string) => {
+    return [
+      ...(dimensionLabels[dimension] ?? []),
+      ...(selectedFilter && selectedFilter !== '*' ? [selectedFilter] : []),
+    ].map((item) => {
+      return {
+        value: item,
+        label: item,
+      };
+    });
+  };
+
+  const getValidOperators = (selectedOperator: string) => {
+    if (!dimensionOperators.includes((operator: SelectableValue) => operator.value === selectedOperator)) {
+      return [
+        ...dimensionOperators,
+        ...(selectedOperator ? [{ label: selectedOperator, value: selectedOperator }] : []),
+      ];
+    }
+    return dimensionOperators;
+  };
+
   return (
     <Field label="Dimension">
       <VerticalGroup spacing="xs">
@@ -105,7 +132,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
               menuShouldPortal
               placeholder="Field"
               value={filter.dimension}
-              options={validDimensionOptions}
+              options={getValidDimensionOptions(filter.dimension)}
               onChange={(v) => onFieldChange(index, 'dimension', v.value ?? '')}
               width={38}
             />
@@ -113,19 +140,16 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
               menuShouldPortal
               placeholder="Operation"
               value={filter.operator}
-              options={dimensionOperators}
+              options={getValidOperators(filter.operator)}
               onChange={(v) => onFieldChange(index, 'operator', v.value ?? '')}
               allowCustomValue
             />
             <Select
               menuShouldPortal
               placeholder="Select value"
-              value={filter.filter ? filter.filter[0] : ''}
+              value={filter.filter ? filter.filter : ''}
               allowCustomValue
-              options={[...(dimensionLabels[filter.dimension.toLowerCase()] ?? [])].map((item) => ({
-                value: item,
-                label: item,
-              }))}
+              options={getValidFilterOptions(filter.filter, filter.dimension)}
               onChange={(v) => onFilterInputChange(index, v)}
               isClearable
             />
