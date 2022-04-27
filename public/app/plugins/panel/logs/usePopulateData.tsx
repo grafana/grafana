@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { cloneDeep } from 'lodash';
-import { DEFAULT_CONTAINER_ID, DEFAULT_HOSTNAME, DEFAULT_MESSAGE, DEFAULT_TIME } from './constants';
+import { DEFAULT_ID, DEFAULT_TS_NS, DEFAULT_LINE, DEFAULT_TS, DEFAULT_TRACEID, DEFAULT_SPANID } from './constants';
 
 interface Props {
   data: any;
@@ -8,6 +8,8 @@ interface Props {
 
 interface ExternalLog {
   msg: string;
+  traceId?: string;
+  spanId?: string;
   timestamp: number;
 }
 
@@ -17,44 +19,27 @@ const usePopulateData = ({ data }: Props) => {
 
   const addMessageToData = (data: any, log: ExternalLog) => {
     data.series = data.series || [];
-    const lastFrame = data.series.length - 1;
-    const index = lastFrame < 0 ? 0 : lastFrame;
-    const series = data.series[index] || {};
-    series.fields = series.fields || [];
-    const fields = series.fields;
-    data.series[index] = series;
 
-    if (!fields[0]) {
-      fields[0] = DEFAULT_TIME;
+    const frame: any = {
+      fields: [
+        DEFAULT_TS(new Date(log.timestamp).toISOString()),
+        DEFAULT_LINE(log),
+        DEFAULT_ID(log.timestamp),
+        DEFAULT_TS_NS(log.timestamp),
+      ],
+      length: 1,
+      refId: 'A',
+    };
+
+    if (log.traceId) {
+      frame.fields.push(DEFAULT_TRACEID(log.traceId));
     }
 
-    if (!fields[1]) {
-      fields[1] = DEFAULT_MESSAGE;
+    if (log.spanId) {
+      frame.fields.push(DEFAULT_SPANID(log.spanId));
     }
 
-    if (!fields[2]) {
-      fields[2] = DEFAULT_CONTAINER_ID;
-    }
-
-    if (!fields[3]) {
-      fields[3] = DEFAULT_HOSTNAME;
-    }
-
-    const time = fields[0];
-    const message = fields[1];
-    const containerId = fields[2];
-    const hostname = fields[3];
-
-    //@ts-ignore
-    time.values.add(log.timestamp);
-    //@ts-ignore
-    message.values.add(log.msg);
-    //@ts-ignore
-    containerId.values.add(log.timestamp);
-    //@ts-ignore
-    hostname.values.add(log.msg);
-
-    data.series[index].length = data.series[index].length ? data.series[index].length + 1 : 1;
+    data.series.push(frame);
 
     return data;
   };
@@ -65,20 +50,27 @@ const usePopulateData = ({ data }: Props) => {
       clonedData = addMessageToData(clonedData, log);
     });
     setNewData(clonedData);
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   useEffect(() => {
     const postMessage = ({ data }: any) => {
-      const msg = JSON.stringify(data);
+      let payload: { msg: string; traceId?: string; spanId?: string };
+      try {
+        payload = JSON.parse(data || '{}');
+      } catch (e) {
+        payload = { msg: data || '' };
+      }
+
       const logs: ExternalLog[] = [...externalLogs];
       const newLog: ExternalLog = {
-        msg,
+        ...payload,
         timestamp: Date.now(),
       };
       logs.push(newLog);
+
       setExternalLogs(logs);
+
       const clonedData = cloneDeep(newData);
       const updatedData = addMessageToData(clonedData, newLog);
       setNewData(updatedData);

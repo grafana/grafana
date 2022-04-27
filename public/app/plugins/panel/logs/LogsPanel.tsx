@@ -75,8 +75,6 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newData, externalLogs, dedupStrategy]);
 
-  console.log(newData);
-
   const getFieldLinks = useCallback(
     (field: Field, rowIndex: number) => {
       return getFieldLinksForExplore({ field, rowIndex, range: newData.timeRange });
