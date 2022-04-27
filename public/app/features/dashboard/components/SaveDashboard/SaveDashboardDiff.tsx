@@ -45,7 +45,7 @@ export const SaveDashboardDiff = ({ diff, oldValue, newValue }: SaveDashboardDif
       schemaChange,
       diffs,
       count,
-      showDiffs: count < 10, // overwhelming if too many changes
+      showDiffs: count < 15, // overwhelming if too many changes
     };
   }, [diff, oldValue, newValue]);
 
