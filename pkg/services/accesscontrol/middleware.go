@@ -37,12 +37,12 @@ func authorize(c *models.ReqContext, ac AccessControl, user *models.SignedInUser
 
 	hasAccess, err := ac.Evaluate(c.Req.Context(), user, injected)
 	if !hasAccess || err != nil {
-		deny(c, injected.GoString(), err)
+		deny(c, injected, err)
 		return
 	}
 }
 
-func deny(c *models.ReqContext, permissions string, err error) {
+func deny(c *models.ReqContext, evaluator Evaluator, err error) {
 	id := newID()
 	if err != nil {
 		c.Logger.Error("Error from access control system", "error", err, "accessErrorID", id)
@@ -51,7 +51,7 @@ func deny(c *models.ReqContext, permissions string, err error) {
 			"Access denied",
 			"userID", c.UserId,
 			"accessErrorID", id,
-			"permissions", permissions,
+			"permissions", evaluator.GoString(),
 		)
 	}
 
@@ -61,13 +61,18 @@ func deny(c *models.ReqContext, permissions string, err error) {
 		return
 	}
 
+	message := ""
+	if evaluator != nil {
+		message = evaluator.String()
+	}
+
 	// If the user triggers an error in the access control system, we
 	// don't want the user to be aware of that, so the user gets the
 	// same information from the system regardless of if it's an
 	// internal server error or access denied.
 	c.JSON(http.StatusForbidden, map[string]string{
 		"title":         "Access denied", // the component needs to pick this up
-		"message":       fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", permissions),
+		"message":       fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", message),
 		"accessErrorId": id,
 	})
 }
@@ -100,7 +105,7 @@ func AuthorizeInOrgMiddleware(ac AccessControl, cache userCache) func(web.Handle
 			userCopy := *(c.SignedInUser)
 			orgID, err := getTargetOrg(c)
 			if err != nil {
-				deny(c, "", fmt.Errorf("failed to get target org: %w", err))
+				deny(c, nil, fmt.Errorf("failed to get target org: %w", err))
 				return
 			}
 			if orgID == GlobalOrgID {
@@ -110,7 +115,7 @@ func AuthorizeInOrgMiddleware(ac AccessControl, cache userCache) func(web.Handle
 			} else {
 				query := models.GetSignedInUserQuery{UserId: c.UserId, OrgId: orgID}
 				if err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query); err != nil {
-					deny(c, "", fmt.Errorf("failed to authenticate user in target org: %w", err))
+					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
 					return
 				}
 				userCopy.OrgId = query.Result.OrgId
