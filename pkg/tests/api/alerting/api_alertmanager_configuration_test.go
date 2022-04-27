@@ -204,6 +204,7 @@ func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 					"secureFields": {
 						"url": true
 					},
+					"provenance": "",
 					"type": "slack",
 					"name": "slack.receiver",
 					"disableResolveMessage": false,
@@ -289,7 +290,8 @@ func TestAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 				},
 				"secureFields": {
 					"url": true
-				}
+				},
+				"provenance": ""
 			}]
 		}]
 	}

@@ -1767,7 +1767,8 @@ var expAlertmanagerConfigFromAPI = `
               "addresses": "test@email.com",
               "singleEmail": true
             },
-            "secureFields": {}
+            "secureFields": {},
+            "provenance": ""
           }
         ]
       },
@@ -1782,7 +1783,8 @@ var expAlertmanagerConfigFromAPI = `
             "settings": {
               "url": "http://CHANNEL_ADDR/dingding_recv/dingding_test"
             },
-            "secureFields": {}
+            "secureFields": {},
+            "provenance": ""
           }
         ]
       },
@@ -1797,7 +1799,8 @@ var expAlertmanagerConfigFromAPI = `
             "settings": {
               "url": "http://CHANNEL_ADDR/discord_recv/discord_test"
             },
-            "secureFields": {}
+            "secureFields": {},
+            "provenance": ""
           }
         ]
       },
@@ -1812,7 +1815,8 @@ var expAlertmanagerConfigFromAPI = `
             "settings": {
               "url": "http://CHANNEL_ADDR/googlechat_recv/googlechat_test"
             },
-            "secureFields": {}
+            "secureFields": {},
+            "provenance": ""
           }
         ]
       },
@@ -1828,7 +1832,8 @@ var expAlertmanagerConfigFromAPI = `
               "kafkaRestProxy": "http://CHANNEL_ADDR",
               "kafkaTopic": "my_kafka_topic"
             },
-            "secureFields": {}
+            "secureFields": {},
+            "provenance": ""
           }
         ]
       },
@@ -1843,7 +1848,8 @@ var expAlertmanagerConfigFromAPI = `
             "settings": {
               "url": "http://CHANNEL_ADDR/victorops_recv/victorops_test"
             },
-            "secureFields": {}
+            "secureFields": {},
+            "provenance": ""
           }
         ]
       },
@@ -1858,7 +1864,8 @@ var expAlertmanagerConfigFromAPI = `
             "settings": {
               "url": "http://CHANNEL_ADDR/teams_recv/teams_test"
             },
-            "secureFields": {}
+            "secureFields": {},
+            "provenance": ""
           }
         ]
       },
@@ -1878,7 +1885,8 @@ var expAlertmanagerConfigFromAPI = `
             },
             "secureFields": {
               "password": true
-            }
+            },
+            "provenance": ""
           }
         ]
       },
@@ -1896,7 +1904,8 @@ var expAlertmanagerConfigFromAPI = `
             },
             "secureFields": {
               "apikey": true
-            }
+            },
+            "provenance": ""
           }
         ]
       },
@@ -1912,7 +1921,8 @@ var expAlertmanagerConfigFromAPI = `
             "secureFields": {
               "userKey": true,
               "apiToken": true
-            }
+            },
+            "provenance": ""
           }
         ]
       },
@@ -1927,7 +1937,8 @@ var expAlertmanagerConfigFromAPI = `
             "settings": {},
             "secureFields": {
               "token": true
-            }
+            },
+            "provenance": ""
           }
         ]
       },
@@ -1945,7 +1956,8 @@ var expAlertmanagerConfigFromAPI = `
             },
             "secureFields": {
               "api_secret": true
-            }
+            },
+            "provenance": ""
           }
         ]
       },
@@ -1962,7 +1974,8 @@ var expAlertmanagerConfigFromAPI = `
             },
             "secureFields": {
               "apiKey": true
-            }
+            },
+            "provenance": ""
           }
         ]
       },
@@ -1977,7 +1990,8 @@ var expAlertmanagerConfigFromAPI = `
             "settings": {
               "url": "http://CHANNEL_ADDR/alertmanager_recv/alertmanager_test"
             },
-            "secureFields": {}
+            "secureFields": {},
+            "provenance": ""
           }
         ]
       },
@@ -1994,7 +2008,8 @@ var expAlertmanagerConfigFromAPI = `
             },
             "secureFields": {
               "bottoken": true
-            }
+            },
+            "provenance": ""
           }
         ]
       },
@@ -2020,7 +2035,8 @@ var expAlertmanagerConfigFromAPI = `
             },
             "secureFields": {
               "url": true
-            }
+            },
+            "provenance": ""
           }
         ]
       },
@@ -2039,7 +2055,8 @@ var expAlertmanagerConfigFromAPI = `
             },
             "secureFields": {
               "token": true
-            }
+            },
+            "provenance": ""
           }
         ]
       },
@@ -2060,7 +2077,8 @@ var expAlertmanagerConfigFromAPI = `
             },
             "secureFields": {
               "integrationKey": true
-            }
+            },
+            "provenance": ""
           }
         ]
       }

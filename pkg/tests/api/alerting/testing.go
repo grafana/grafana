@@ -28,7 +28,8 @@ const defaultAlertmanagerConfigJSON = `
 				"settings": {
 					"addresses": "\u003cexample@email.com\u003e"
 				},
-				"secureFields": {}
+				"secureFields": {},
+				"provenance": ""
 			}]
 		}]
 	}
