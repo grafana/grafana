@@ -146,6 +146,12 @@ export const getStyles = (theme: GrafanaTheme2) => {
         }
       }
       font-size: ${theme.typography.h4.fontSize};
+
+      a {
+        &:hover {
+          text-decoration: underline;
+        }
+      }
     `,
     headerInformationRowSecondary: css`
       font-size: ${theme.typography.body.fontSize};
