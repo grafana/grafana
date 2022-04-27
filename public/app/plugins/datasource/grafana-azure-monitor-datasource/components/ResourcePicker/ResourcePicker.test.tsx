@@ -53,20 +53,26 @@ describe('AzureMonitor ResourcePicker', () => {
 
   it('should show a subscription as selected if there is one saved', async () => {
     render(<ResourcePicker {...defaultProps} resourceURI={singleSubscriptionSelectionURI} />);
-    const subscriptionCheckbox = await screen.findByLabelText('Dev Subscription');
-    expect(subscriptionCheckbox).toBeChecked();
+    const subscriptionCheckboxes = await screen.findAllByLabelText('Dev Subscription');
+    expect(subscriptionCheckboxes.length).toBe(2);
+    expect(subscriptionCheckboxes[0]).toBeChecked();
+    expect(subscriptionCheckboxes[1]).toBeChecked();
   });
 
   it('should show a resourceGroup as selected if there is one saved', async () => {
     render(<ResourcePicker {...defaultProps} resourceURI={singleResourceGroupSelectionURI} />);
-    const resourceGroupCheckbox = await screen.findByLabelText('A Great Resource Group');
-    expect(resourceGroupCheckbox).toBeChecked();
+    const resourceGroupCheckboxes = await screen.findAllByLabelText('A Great Resource Group');
+    expect(resourceGroupCheckboxes.length).toBe(2);
+    expect(resourceGroupCheckboxes[0]).toBeChecked();
+    expect(resourceGroupCheckboxes[1]).toBeChecked();
   });
 
   it('should show a resource as selected if there is one saved', async () => {
     render(<ResourcePicker {...defaultProps} resourceURI={singleResourceSelectionURI} />);
-    const resourceCheckbox = await screen.findByLabelText('db-server');
-    expect(resourceCheckbox).toBeChecked();
+    const resourceCheckboxes = await screen.findAllByLabelText('db-server');
+    expect(resourceCheckboxes.length).toBe(2);
+    expect(resourceCheckboxes[0]).toBeChecked();
+    expect(resourceCheckboxes[1]).toBeChecked();
   });
 
   it('opens the selected nested resources', async () => {
