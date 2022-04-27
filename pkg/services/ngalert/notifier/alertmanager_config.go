@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
@@ -129,11 +128,7 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 
 func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config definitions.GettableApiAlertingConfig, org int64) (definitions.GettableApiAlertingConfig, error) {
 	if config.Route != nil {
-		adp := provisioning.ProvenanceOrgAdapter{
-			Inner: config.Route,
-			OrgID: org,
-		}
-		provenance, err := moa.ProvStore.GetProvenance(ctx, adp)
+		provenance, err := moa.ProvStore.GetProvenance(ctx, config.Route, org)
 		if err != nil {
 			return definitions.GettableApiAlertingConfig{}, err
 		}
