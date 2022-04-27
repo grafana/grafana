@@ -216,6 +216,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "tracing",
+			Description:  "Adds trace ID to error notifications",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "persistNotifications",
 			Description:  "PoC Notifications page",
 			State:        FeatureStateAlpha,
@@ -224,6 +230,11 @@ var (
 		{
 			Name:        "commandPalette",
 			Description: "Enable command palette",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "savedItems",
+			Description: "Enable Saved Items in the navbar.",
 			State:       FeatureStateAlpha,
 		},
 	}
