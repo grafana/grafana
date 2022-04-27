@@ -13,7 +13,7 @@ For an introduction to templating and template variables, refer to the [Templati
 
 ## Query variable
 
-The CloudWatch data source provides the following queries that you can specify in the `Query Type` field in the Variable edit view. They allow you to fill a variable's options list with things like `region`, `namespaces`, `metric names` and `dimension keys/values`.
+The CloudWatch data source provides the following queries that you can specify in the `Query Type` field in the Variable edit view. They enable you to fill a variable's options list with values such as `region`, `namespaces`, `metric names` and `dimension keys/values`.
 
 Read more about the available dimensions in the [CloudWatch Metrics and Dimensions Reference](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CW_Support_For_AWS.html).
 
@@ -39,7 +39,7 @@ Variables can be used in the variable form. Refer to the [variable syntax docume
 
 Some queries accept filters in JSON format and Grafana supports the conversion of template variables to JSON.
 
-For example, if `env = 'production', 'staging'`, a `Resource ARNs` query with the following filter will return ARNs of EC2 instances where the `Environment` tag is equal to `production` or `staging`.
+For example, if `env = 'production', 'staging'`, a `Resource ARNs` query with the following filter returns ARNs of EC2 instances where the `Environment` tag is equal to `production` or `staging`.
 
 ```javascript
 {"Environment":${env:json}}
@@ -92,4 +92,4 @@ Only 1 attribute per instance can be returned. Any flat attribute can be selecte
 - `VirtualizationType`
 - `VpcId`
 
-Tags can be selected by prepending the tag name with `Tags.`. For example, the tag `Name` would be selected with `Tags.Name`.
+You can select tags by prepending the tag name with `Tags.`. For example, the tag `Name` is selected with `Tags.Name`.
