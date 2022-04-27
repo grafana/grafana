@@ -32,9 +32,9 @@ exports[`Render should render component 1`] = `
       labelWidth={8}
     >
       <Switch
-        checked={false}
         id="basic-settings-default"
         onChange={[Function]}
+        value={false}
       />
     </InlineField>
   </div>
