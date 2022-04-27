@@ -1,8 +1,4 @@
-export const GUI_DOC_URL =
-  'https://www.percona.com/doc/percona-monitoring-and-management/2.x/manage/server-admin-gui.html';
-export const DATA_RETENTION_URL =
-  'https://www.percona.com/doc/percona-monitoring-and-management/2.x/faq.html#how-to-control-data-retention-for-pmm';
-export const HOW_TO_DOC_URL = 'https://www.percona.com/doc/percona-monitoring-and-management/2.x/how-to';
+export const HOW_TO_DOC_URL = 'https://www.percona.com/doc/percona-monitoring-and-management/2.x/how-to/configure.html';
 
 export const Messages = {
   advanced: {
@@ -10,13 +6,14 @@ export const Messages = {
     retentionLabel: 'Data retention',
     retentionTooltip: 'This is the value for how long data will be stored.',
     retentionUnits: 'days',
+    retentionLink: `${HOW_TO_DOC_URL}#data-retention`,
     telemetryLabel: 'Telemetry',
-    telemetryLink: `${GUI_DOC_URL}#server-admin-gui-telemetry`,
+    telemetryLink: `${HOW_TO_DOC_URL}#telemetry`,
     telemetryTooltip: 'Option to send usage data back to Percona to let us make our product better.',
     telemetryDisclaimer:
       'Disabling Telemetry while Advisor Checks/Alerting is on will prevent PMM from downloading checks and alert templates.',
     updatesLabel: 'Check for updates',
-    updatesLink: `${GUI_DOC_URL}#check-for-updates`,
+    updatesLink: `${HOW_TO_DOC_URL}#check-for-updates`,
     updatesTooltip: 'Option to check new versions and ability to update PMM from UI.',
     advisorsLabel: 'Advisor Checks',
     sttRareIntervalLabel: 'Rare interval',
@@ -25,24 +22,24 @@ export const Messages = {
     sttCheckIntervalsLabel: 'Execution Intervals',
     sttCheckIntervalTooltip: 'Interval between check runs',
     sttCheckIntervalUnit: 'hours',
-    advisorsLink: `${GUI_DOC_URL}#advisors`,
+    advisorsLink: `${HOW_TO_DOC_URL}#advisors`,
     advisorsTooltip: 'Enable Advisor Checks and get updated checks from Percona.',
     dbaasLabel: 'DBaaS',
     azureDiscoverLabel: 'Microsoft Azure monitoring',
     azureDiscoverTooltip: 'Option to enable/disable Microsoft Azure DB instanced  discovery and monitoring',
-    azureDiscoverLink: `${HOW_TO_DOC_URL}/configure.html#microsoft-azure-feature-toggle`,
+    azureDiscoverLink: `${HOW_TO_DOC_URL}#microsoft-azure-monitoring`,
     dbaasTooltip:
       'Option to enable/disable DBaaS features. Disabling DBaaS does not suspend or remove running clusters.',
-    dbaasLink: `${HOW_TO_DOC_URL}/configure.html#dbaas`,
+    dbaasLink: `${HOW_TO_DOC_URL}#dbaas`,
     publicAddressLabel: 'Public Address',
     publicAddressTooltip: 'Public Address to this PMM server.',
     publicAddressButton: 'Get from browser',
     alertingLabel: 'Integrated Alerting',
     alertingTooltip: 'Option to enable/disable Integrated Alerting features.',
-    alertingLink: `${HOW_TO_DOC_URL}/configure.html#integrated-alerting`,
+    alertingLink: `${HOW_TO_DOC_URL}#integrated-alerting`,
     backupLabel: 'Backup Management',
     backupTooltip: 'Option to enable/disable Backup Management features.',
-    backupLink: `${HOW_TO_DOC_URL}/configure.html#backup-management`,
+    backupLink: `${HOW_TO_DOC_URL}#backup-management`,
     technicalPreviewLegend: 'Technical preview features',
     technicalPreviewDescription:
       'These are technical preview features, not recommended to be used in production environments. Read more\n' +
@@ -55,10 +52,10 @@ export const Messages = {
     warningPost: 'but you need to manage and configure alerts.',
     action: 'Apply Alertmanager settings',
     rulesLabel: 'Prometheus Alerting rules',
-    rulesLink: `${GUI_DOC_URL}#prometheus-alertmanager-integration`,
+    rulesLink: `${HOW_TO_DOC_URL}#prometheus-alertmanager-integration`,
     rulesTooltip: 'Alerting rules in the YAML configuration format.',
     urlLabel: 'Alertmanager URL',
-    urlLink: `${GUI_DOC_URL}#prometheus-alertmanager-integration`,
+    urlLink: `${HOW_TO_DOC_URL}#prometheus-alertmanager-integration`,
     urlTooltip: 'The URL of the external Alertmanager to use.',
   },
   diagnostics: {
@@ -70,7 +67,7 @@ export const Messages = {
   metrics: {
     action: 'Apply changes',
     label: 'Metrics resolution, sec',
-    link: `${GUI_DOC_URL}#server-admin-gui-metrics-resolution`,
+    link: `${HOW_TO_DOC_URL}#server-admin-gui-metrics-resolution`,
     options: {
       rare: 'Rare',
       standard: 'Standard',
@@ -87,7 +84,7 @@ export const Messages = {
   ssh: {
     action: 'Apply SSH key',
     label: 'SSH key',
-    link: `${GUI_DOC_URL}#ssh-key-details`,
+    link: `${HOW_TO_DOC_URL}#ssh-key-details`,
     tooltip: 'Public SSH key to let you login into the server using SSH.',
   },
   service: {
