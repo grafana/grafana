@@ -53,7 +53,7 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
         oldConfig: config,
         alertManagerSourceName,
         successMessage: existing ? 'Contact point updated.' : 'Contact point created.',
-        redirectPath: makeAMLink('/alerting/notifications', alertManagerSourceName),
+        redirectPath: '/alerting/notifications',
       })
     );
   };
