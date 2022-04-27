@@ -4,10 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
+
+type annotationEvent struct {
+	Title string
+	Time  time.Time
+	Tags  string
+	Text  string
+}
 
 func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
 	*backend.QueryDataResponse, error) {
@@ -39,20 +47,20 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	return resp, err
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) transformAnnotationToFrame(annotations []map[string]string, result *backend.DataResponse) {
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) transformAnnotationToFrame(annotations []*annotationEvent, result *backend.DataResponse) {
 	frames := data.Frames{}
 	for _, a := range annotations {
 		frame := &data.Frame{
 			RefID: timeSeriesQuery.getRefID(),
 			Fields: []*data.Field{
-				data.NewField("time", nil, a["time"]),
-				data.NewField("title", nil, a["title"]),
-				data.NewField("tags", nil, a["tags"]),
-				data.NewField("text", nil, a["text"]),
+				data.NewField("time", nil, a.Time),
+				data.NewField("title", nil, a.Title),
+				data.NewField("tags", nil, a.Tags),
+				data.NewField("text", nil, a.Text),
 			},
 			Meta: &data.FrameMeta{
 				Custom: map[string]interface{}{
-					"rowCount": len(a),
+					"rowCount": len(annotations),
 				},
 			},
 		}
