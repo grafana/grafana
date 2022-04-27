@@ -151,51 +151,6 @@ func testScenarioWithMultipleQueriesInQueryHistory(t *testing.T, desc string, fn
 	})
 }
 
-func testScenarioWithMultipleStarredQueriesAndMultipleUsersInQueryHistory(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
-	t.Helper()
-
-	user1 := models.SignedInUser{
-		UserId:     testUserID,
-		Name:       "Signed In User",
-		Login:      "signed_in_user",
-		Email:      "signed.in.user@test.com",
-		OrgId:      testOrgID,
-		OrgRole:    models.ROLE_VIEWER,
-		LastSeenAt: time.Now(),
-	}
-
-	user2 := models.SignedInUser{
-		UserId: int64(10),
-		OrgId:  testOrgID,
-	}
-
-	command := CreateQueryInQueryHistoryCommand{
-		DatasourceUID: testDsUID1,
-		Queries: simplejson.NewFromAny(map[string]interface{}{
-			"expr": "test",
-		}),
-	}
-
-	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
-		// User 1: org_id and user_id stored in db
-		sc.reqContext.Req.Body = mockRequestBody(command)
-		sc.reqContext.SignedInUser = &user1
-		resp := sc.service.createHandler(sc.reqContext)
-		sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": validateAndUnMarshalResponse(t, resp).Result.UID})
-		sc.service.starHandler(sc.reqContext)
-
-		// User 2: user_id not stored in db
-		time.Sleep(1 * time.Second)
-		sc.reqContext.Req.Body = mockRequestBody(command)
-		sc.reqContext.SignedInUser = &user2
-		resp = sc.service.createHandler(sc.reqContext)
-		sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": validateAndUnMarshalResponse(t, resp).Result.UID})
-		sc.service.starHandler(sc.reqContext)
-
-		fn(t, sc)
-	})
-}
-
 func mockRequestBody(v interface{}) io.ReadCloser {
 	b, _ := json.Marshal(v)
 	return io.NopCloser(bytes.NewReader(b))

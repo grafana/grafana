@@ -189,21 +189,13 @@ func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context) {
 }
 
 func (srv *CleanUpService) deleteStaleQueryHistory(ctx context.Context) {
-	// 1. Delete query history from 14+ days ago with exception of starred queries
-	queryHistoryRetention := time.Hour * 24 * 14
-	olderThan := time.Now().Add(-queryHistoryRetention).Unix()
+	// Delete query history from 14+ days ago with exception of starred queries
+	maxQueryHistoryLifetime := time.Hour * 24 * 14
+	olderThan := time.Now().Add(-maxQueryHistoryLifetime).Unix()
 	rowsCount, err := srv.QueryHistoryService.DeleteStaleQueriesInQueryHistory(ctx, olderThan)
 	if err != nil {
 		srv.log.Error("Problem deleting stale query history", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted stale query history", "rows affected", rowsCount)
-	}
-
-	// 2. Remove query history stars of removed users
-	rowsCount, err = srv.QueryHistoryService.UnstarQueryHistoryOfRemovedUsers(ctx)
-	if err != nil {
-		srv.log.Error("Problem with removing query history stars of removed users", "error", err.Error())
-	} else {
-		srv.log.Debug("Removed query history stars of removed users", "rows affected", rowsCount)
 	}
 }

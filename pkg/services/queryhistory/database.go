@@ -361,38 +361,3 @@ func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan i
 
 	return int(rowsCount), nil
 }
-
-func (s QueryHistoryService) unstarQueriesOfRemovedUsers(ctx context.Context) (int, error) {
-	var rowsCount int64
-
-	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
-		sqlRemovedUsers := `DELETE 
-			FROM query_history_star 
-			WHERE query_uid IN (
-				SELECT query_uid FROM (
-					SELECT query_uid FROM query_history_star
-					LEFT JOIN org_user
-					ON query_history_star.user_id = org_user.user_id AND query_history_star.org_id = org_user.org_id
-					WHERE org_user.user_id IS NULL AND org_user.org_id IS NULL
-				) AS q
-			)`
-
-		res, err := session.Exec(sqlRemovedUsers)
-		if err != nil {
-			return err
-		}
-
-		rowsCount, err = res.RowsAffected()
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return 0, err
-	}
-
-	return int(rowsCount), nil
-}
