@@ -83,7 +83,7 @@ You can use any of the following built-in template options to embed custom templ
 
 Here's an example of how to use a custom template. You can also use the default template included in the setup.
 
-Template to render a single alert:
+Step 1: Configure a template to render a single alert.
 
 ```
 {{ define "myalert" }}
@@ -110,7 +110,7 @@ Template to render a single alert:
 {{ end }}
 ```
 
-Template to render entire notification message:
+Step 2: Configure a template to render entire notification message.
 
 ```
 {{ define "mymessage" }}
@@ -125,7 +125,7 @@ Template to render entire notification message:
 {{ end }}
 ```
 
-After saving these two templates, use `mymessage` in the notification message field:
+Step 3: Add `mymessage` in the notification message field.
 
 ```
 Alert summary:
