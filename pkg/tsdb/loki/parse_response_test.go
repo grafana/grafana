@@ -67,6 +67,7 @@ func TestParseResponse(t *testing.T) {
 		testFrame := data.NewFrame("legend Application", field1, field2)
 		testFrame.SetMeta(&data.FrameMeta{
 			ExecutedQueryString: "Expr: up(ALERTS)\nStep: 42s",
+			Type:                data.FrameTypeTimeSeriesMany,
 		})
 
 		if diff := cmp.Diff(testFrame, frame[0], data.FrameTestCompareOptions()...); diff != "" {
