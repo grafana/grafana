@@ -416,6 +416,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
                 <OperationRowHelp>
                   <DatasourceCheatsheet
                     onClickExample={(query) => this.onClickExample(query)}
+                    query={this.props.query}
                     datasource={datasource}
                   />
                 </OperationRowHelp>

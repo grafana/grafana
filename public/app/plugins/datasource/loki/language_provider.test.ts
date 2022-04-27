@@ -259,7 +259,7 @@ describe('Request URL', () => {
 
     const instance = new LanguageProvider(datasourceWithLabels);
     instance.fetchLabels();
-    const expectedUrl = '/loki/api/v1/label';
+    const expectedUrl = '/loki/api/v1/labels';
     expect(datasourceSpy).toHaveBeenCalledWith(expectedUrl, rangeParams);
   });
 });

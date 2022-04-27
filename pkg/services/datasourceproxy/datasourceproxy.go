@@ -115,7 +115,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *models.ReqContext, ds
 
 	proxyPath := getProxyPath(c)
 	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
-		p.OAuthTokenService, p.DataSourcesService, p.tracer, p.secretsService)
+		p.OAuthTokenService, p.DataSourcesService, p.tracer)
 	if err != nil {
 		if errors.Is(err, datasource.URLValidationError{}) {
 			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.Url), err)
