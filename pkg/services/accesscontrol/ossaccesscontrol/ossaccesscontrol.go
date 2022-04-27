@@ -15,11 +15,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.Service,
+func ProvideService(features featuremgmt.FeatureToggles,
 	provider accesscontrol.PermissionsProvider, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
 	var errDeclareRoles error
 	s := ProvideOSSAccessControl(features, provider)
-	s.registerUsageMetrics(usageStats)
+	//s.registerUsageMetrics(usageStats)
 	if !s.IsDisabled() {
 		api := api.AccessControlAPI{
 			RouteRegister: routeRegister,
