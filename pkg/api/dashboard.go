@@ -690,10 +690,10 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 	dashUID := web.Params(c.Req)[":uid"]
 
 	apiCmd := dtos.RestoreDashboardVersionCommand{}
+	if err := web.Bind(c.Req, &apiCmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
 	if dashUID == "" {
-		if err := web.Bind(c.Req, &apiCmd); err != nil {
-			return response.Error(http.StatusBadRequest, "bad request data", err)
-		}
 		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
 		if err != nil {
 			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
