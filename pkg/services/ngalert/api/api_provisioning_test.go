@@ -46,7 +46,7 @@ func TestProvisioningApi(t *testing.T) {
 			response := sut.RoutePostPolicyTree(&rc, tree)
 
 			require.Equal(t, 400, response.Status())
-			expBody := `{"error":"invalid route specification: invalid policy tree","message":"invalid route specification: invalid policy tree"}`
+			expBody := `{"error":"invalid object specification: invalid policy tree","message":"invalid object specification: invalid policy tree"}`
 			require.Equal(t, expBody, string(response.Body()))
 		})
 	})
