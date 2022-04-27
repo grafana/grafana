@@ -1,9 +1,12 @@
 import { LoaderButton } from '@percona/platform-core';
 import React, { FC, useState } from 'react';
 
+import { AppEvents } from '@grafana/data';
 import { IconButton, useStyles } from '@grafana/ui';
 import { CheckService } from 'app/percona/check/Check.service';
 import { Interval } from 'app/percona/check/types';
+
+import { appEvents } from '../../../../core/app_events';
 
 import { Messages } from './AllChecksTab.messages';
 import { ChangeCheckIntervalModal } from './ChangeCheckIntervalModal';
@@ -15,6 +18,7 @@ const formatInterval = (interval: keyof typeof Interval): Interval => Interval[i
 export const CheckTableRow: FC<CheckTableRowProps> = ({ check, onSuccess }) => {
   const styles = useStyles(getStyles);
   const [changeCheckPending, setChangeCheckPending] = useState(false);
+  const [runCheckPending, setRunCheckPending] = useState(false);
   const [checkIntervalModalVisible, setCheckIntervalModalVisible] = useState(false);
   const { name, summary, description, disabled, interval } = check;
 
@@ -37,6 +41,18 @@ export const CheckTableRow: FC<CheckTableRowProps> = ({ check, onSuccess }) => {
     }
   };
 
+  const runIndividualCheck = async () => {
+    setRunCheckPending(true);
+    try {
+      await CheckService.runIndividualDbCheck(name);
+      appEvents.emit(AppEvents.alertSuccess, [`${summary} ${Messages.runIndividualDbCheck}`]);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setRunCheckPending(false);
+    }
+  };
+
   return (
     <>
       <tr key={name}>
@@ -46,6 +62,16 @@ export const CheckTableRow: FC<CheckTableRowProps> = ({ check, onSuccess }) => {
         <td>{formatInterval(interval)}</td>
         <td>
           <div className={styles.actionsWrapper}>
+            <LoaderButton
+              variant="primary"
+              disabled={disabled}
+              size="sm"
+              loading={runCheckPending}
+              onClick={runIndividualCheck}
+              data-testid="check-table-loader-button-run"
+            >
+              {Messages.run}
+            </LoaderButton>
             <LoaderButton
               variant={disabled ? 'primary' : 'destructive'}
               size="sm"

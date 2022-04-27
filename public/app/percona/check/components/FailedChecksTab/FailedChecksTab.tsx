@@ -1,8 +1,7 @@
-import { LoaderButton, logger } from '@percona/platform-core';
+import { logger } from '@percona/platform-core';
 import React, { FC, useEffect, useState, useCallback, useMemo } from 'react';
 import { Cell, Column, Row } from 'react-table';
 
-import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
 import { AlertsReloadContext } from 'app/percona/check/Check.context';
@@ -12,8 +11,6 @@ import { ExtendedTableCellProps, ExtendedTableRowProps, Table } from 'app/percon
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
-import { appEvents } from '../../../../core/app_events';
-
 import { GET_ACTIVE_ALERTS_CANCEL_TOKEN } from './FailedChecksTab.constants';
 import { Messages } from './FailedChecksTab.messages';
 import { getStyles } from './FailedChecksTab.styles';
@@ -21,7 +18,6 @@ import { stripServiceId } from './FailedChecksTab.utils';
 
 export const FailedChecksTab: FC = () => {
   const [fetchAlertsPending, setFetchAlertsPending] = useState(true);
-  const [runChecksPending, setRunChecksPending] = useState(false);
   const [data, setData] = useState<FailedCheckSummary[]>([]);
   const styles = useStyles2(getStyles);
   const [generateToken] = useCancelToken();
@@ -64,18 +60,6 @@ export const FailedChecksTab: FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleRunChecksClick = async () => {
-    setRunChecksPending(true);
-    try {
-      await CheckService.runDbChecks();
-      appEvents.emit(AppEvents.alertSuccess, [Messages.checksExecutionStarted]);
-    } catch (e) {
-      logger.error(e);
-    } finally {
-      setRunChecksPending(false);
-    }
-  };
-
   const getRowProps = (row: Row<FailedCheckSummary>): ExtendedTableRowProps => ({
     key: row.original.serviceId,
     className: styles.row,
@@ -94,20 +78,7 @@ export const FailedChecksTab: FC = () => {
   }, []);
 
   return (
-    <>
-      <div className={styles.header}>
-        <div className={styles.actionButtons} data-testid="db-check-panel-actions">
-          <LoaderButton
-            type="button"
-            size="md"
-            loading={runChecksPending}
-            onClick={handleRunChecksClick}
-            className={styles.runChecksButton}
-          >
-            {Messages.runDbChecks}
-          </LoaderButton>
-        </div>
-      </div>
+    <div className={styles.contentWrapper}>
       <AlertsReloadContext.Provider value={{ fetchAlerts }}>
         {fetchAlertsPending ? (
           <div className={styles.spinner} data-testid="db-checks-failed-checks-spinner">
@@ -125,6 +96,6 @@ export const FailedChecksTab: FC = () => {
           />
         )}
       </AlertsReloadContext.Provider>
-    </>
+    </div>
   );
 };
