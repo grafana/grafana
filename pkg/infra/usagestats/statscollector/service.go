@@ -69,7 +69,7 @@ func ProvideService(
 
 // RegisterProviders is called only once - during Grafana start up
 func (s *Service) RegisterProviders(usageStatProviders []registry.ProvidesUsageStats) {
-	s.log.Info("registering usage stat providers", "usage_stat_providers_len", len(usageStatProviders))
+	s.log.Info("registering usage stat providers", "usageStatsProvidersLen", len(usageStatProviders))
 	s.usageStatProviders = usageStatProviders
 }
 
