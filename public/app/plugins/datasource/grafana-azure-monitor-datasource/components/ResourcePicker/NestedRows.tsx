@@ -23,7 +23,7 @@ const NestedRows: React.FC<NestedRowsProps> = ({
   <>
     {rows.map((row) => (
       <NestedRow
-        key={row.id}
+        key={row.uri}
         row={row}
         selectedRows={selectedRows}
         level={level}

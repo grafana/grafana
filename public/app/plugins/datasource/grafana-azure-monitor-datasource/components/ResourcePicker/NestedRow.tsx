@@ -29,7 +29,7 @@ const NestedRow: React.FC<NestedRowProps> = ({
   const styles = useStyles2(getStyles);
   const [rowStatus, setRowStatus] = useState<'open' | 'closed' | 'loading'>('closed');
 
-  const isSelected = !!selectedRows.find((v) => v.id === row.id);
+  const isSelected = !!selectedRows.find((v) => v.uri === row.uri);
   const isDisabled = selectedRows.length > 0 && !isSelected;
   const isOpen = rowStatus === 'open';
 
@@ -49,7 +49,7 @@ const NestedRow: React.FC<NestedRowProps> = ({
     // Assuming we don't have multi-select yet
     const selectedRow = selectedRows[0];
 
-    const containsChild = selectedRow && !!findRow(row.children ?? [], selectedRow.id);
+    const containsChild = selectedRow && !!findRow(row.children ?? [], selectedRow.uri);
 
     if (containsChild) {
       setRowStatus('open');

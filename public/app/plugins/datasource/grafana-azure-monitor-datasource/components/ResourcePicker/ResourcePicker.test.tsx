@@ -69,6 +69,14 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(resourceCheckbox).toBeChecked();
   });
 
+  it('opens the selected nested resources', async () => {
+    render(<ResourcePicker {...defaultProps} resourceURI={singleResourceSelectionURI} />);
+    const collapseSubscriptionBtn = await screen.findByLabelText('Collapse Dev Subscription');
+    expect(collapseSubscriptionBtn).toBeInTheDocument();
+    const collapseResourceGroupBtn = await screen.findByLabelText('Collapse A Great Resource Group');
+    expect(collapseResourceGroupBtn).toBeInTheDocument();
+  });
+
   it('should be able to expand a subscription when clicked and reveal resource groups', async () => {
     render(<ResourcePicker {...defaultProps} />);
     const expandSubscriptionButton = await screen.findByLabelText('Expand Primary Subscription');
