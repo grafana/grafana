@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	domain "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
@@ -162,8 +163,8 @@ func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Cont
 
 type fakeRejectingNotificationPolicyService struct{}
 
-func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (provisioning.EmbeddedRoutingTree, error) {
-	return provisioning.EmbeddedRoutingTree{}, nil
+func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (apimodels.Route, error) {
+	return apimodels.Route{}, nil
 }
 
 func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p domain.Provenance) error {
