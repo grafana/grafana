@@ -91,6 +91,8 @@ export class Scene {
         // If editing is enabled, clear selecto instance
         const destroySelecto = enableEditing;
         this.initMoveable(destroySelecto, enableEditing);
+        this.currentLayer = this.root;
+        this.selection.next([]);
       }
     }, 100);
     return this.root;
