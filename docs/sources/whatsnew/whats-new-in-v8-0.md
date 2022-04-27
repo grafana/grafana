@@ -283,11 +283,11 @@ Grafana has updated its license from Apache 2.0 to the GNU Affero General Public
 
 These features are included in the Grafana Enterprise edition.
 
-### Fine-grained access control
+### Role-based access control
 
 You can now add or remove detailed permissions from Viewer, Editor, and Admin org roles, to grant users just the right amount of access within Grafana. Available permissions include the ability to view and manage Users, Reports, and the Access Control API itself. Grafana will support more and more permissions over the coming months.
 
-[Fine-grained access control docs]({{< relref "../enterprise/access-control/_index.md" >}}) were added as a result of this feature.
+[Role-based access control docs]({{< relref "../enterprise/access-control/_index.md" >}}) were added as a result of this feature.
 
 ### Data source query caching
 
