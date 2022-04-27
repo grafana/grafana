@@ -45,8 +45,8 @@ export function getAlertManagerDataSources() {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-// TODO Refactor or remove
-function getAllAlertManagerDataSources(): AlertManagerDataSource[] {
+// Used only as a fallback for Alert Group plugin
+export function getAllAlertManagerDataSources(): AlertManagerDataSource[] {
   return [
     {
       name: GRAFANA_RULES_SOURCE_NAME,
@@ -62,7 +62,9 @@ function getAllAlertManagerDataSources(): AlertManagerDataSource[] {
   ];
 }
 
-function getAlertManagerDataSourcesByPermission(permission: 'instance' | 'notification'): AlertManagerDataSource[] {
+export function getAlertManagerDataSourcesByPermission(
+  permission: 'instance' | 'notification'
+): AlertManagerDataSource[] {
   const availableDataSources: AlertManagerDataSource[] = [];
   const permissions = {
     instance: instancesPermissions.read,
@@ -120,16 +122,6 @@ export function getAllRulesSources(): RulesSource[] {
 
   return availableRulesSources;
 }
-
-// TODO use this object to access data sources instead of the functions above
-export const dataSources = {
-  rules: getAllRulesSources(),
-  rulesSourceNames: getAllRulesSourceNames(),
-  alertManagers: {
-    all: getAllAlertManagerDataSources(),
-    byPermission: getAlertManagerDataSourcesByPermission,
-  },
-};
 
 export function getRulesSourceName(rulesSource: RulesSource): string {
   return isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;
