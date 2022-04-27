@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
-
 .panel {
   height: 100%;
 }
@@ -10,8 +8,8 @@
 }
 
 .panel-container {
-  background-color: rgb(255, 255, 255);
-  border: rgb(255, 255, 255);
+  background-color: $fusebit-panel-bg;
+  border: $fusebit-panel-bg;
   position: relative;
   border-radius: 3px;
   height: 100%;
@@ -36,8 +34,8 @@
 }
 
 .panel-content {
-  font-family: 'Courier Prime', monospace !important;
-  color: #333333;
+  font-family: $fusebit-font !important;
+  color: $fusebit-text-color;
   padding: $panel-padding;
   width: 100%;
   flex-grow: 1;
@@ -49,7 +47,7 @@
 }
 
 div.flot-text {
-  color: #333333 !important;
+  color: $fusebit-text-color !important;
 }
 
 .dashboard-solo {
@@ -60,7 +58,7 @@ div.flot-text {
 }
 
 .template-variable {
-  color: #333333;
+  color: $fusebit-text-color;
 }
 
 .panel-solo {

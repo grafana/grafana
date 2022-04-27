@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2, LogLevel } from '@grafana/data';
 import { stylesFactory } from '../../themes';
+import { theme as fusebitTheme } from '../../themes/fusebit';
 
 export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: LogLevel) => {
   let logColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.gray2;
-  const hoverBgColor = 'rgba(215, 229, 255, 0.4)';
+  const hoverBgColor = fusebitTheme.colors.background.primary;
 
   switch (logLevel) {
     case LogLevel.crit:
@@ -45,7 +46,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: L
     `,
     logsRowsTable: css`
       label: logs-rows;
-      font-family: 'Courier Prime', monospace;
+      font-family: ${fusebitTheme.typography.fontFamilyMonospace};
       font-size: ${theme.typography.bodySmall.fontSize};
       width: 100%;
     `,
