@@ -16,13 +16,9 @@ func TestTemplateService(t *testing.T) {
 	t.Run("service returns templates from config file", func(t *testing.T) {
 		sut := createTemplateServiceSut()
 		sut.config.(*MockAMConfigStore).EXPECT().
-			GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-			Run(func(ctx context.Context, q *models.GetLatestAlertmanagerConfigurationQuery) {
-				q.Result = &models.AlertConfiguration{
-					AlertmanagerConfiguration: configWithTemplates,
-				}
-			}).
-			Return(nil)
+			setupGetConfig(models.AlertConfiguration{
+				AlertmanagerConfiguration: configWithTemplates,
+			})
 
 		result, err := sut.GetTemplates(context.Background(), 1)
 
@@ -33,13 +29,9 @@ func TestTemplateService(t *testing.T) {
 	t.Run("service returns empty map when config file contains no templates", func(t *testing.T) {
 		sut := createTemplateServiceSut()
 		sut.config.(*MockAMConfigStore).EXPECT().
-			GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-			Run(func(ctx context.Context, q *models.GetLatestAlertmanagerConfigurationQuery) {
-				q.Result = &models.AlertConfiguration{
-					AlertmanagerConfiguration: defaultConfig,
-				}
-			}).
-			Return(nil)
+			setupGetConfig(models.AlertConfiguration{
+				AlertmanagerConfiguration: defaultConfig,
+			})
 
 		result, err := sut.GetTemplates(context.Background(), 1)
 
@@ -62,13 +54,9 @@ func TestTemplateService(t *testing.T) {
 		t.Run("when config is invalid", func(t *testing.T) {
 			sut := createTemplateServiceSut()
 			sut.config.(*MockAMConfigStore).EXPECT().
-				GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-				Run(func(ctx context.Context, q *models.GetLatestAlertmanagerConfigurationQuery) {
-					q.Result = &models.AlertConfiguration{
-						AlertmanagerConfiguration: brokenConfig,
-					}
-				}).
-				Return(nil)
+				setupGetConfig(models.AlertConfiguration{
+					AlertmanagerConfiguration: brokenConfig,
+				})
 
 			_, err := sut.GetTemplates(context.Background(), 1)
 
@@ -95,6 +83,15 @@ func createTemplateServiceSut() *TemplateService {
 		xact:   newNopTransactionManager(),
 		log:    log.NewNopLogger(),
 	}
+}
+
+func (m *MockAMConfigStore_Expecter) setupGetConfig(ac models.AlertConfiguration) *MockAMConfigStore_Expecter {
+	m.GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
+		Run(func(ctx context.Context, q *models.GetLatestAlertmanagerConfigurationQuery) {
+			q.Result = &ac
+		}).
+		Return(nil)
+	return m
 }
 
 var defaultConfig = setting.GetAlertmanagerDefaultConfiguration()
