@@ -9,6 +9,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/coremodel/dashboard"
+	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -47,10 +50,17 @@ func TestGetHomeDashboard(t *testing.T) {
 	cfg.StaticRootPath = "../../public/"
 	prefService := preftest.NewPreferenceServiceFake()
 
+	// TODO abstract this out for reuse
+	dcm, err := dashboard.ProvideCoremodel(cuectx.ProvideThemaLibrary())
+	require.NoError(t, err)
+	reg, err := coremodel.NewRegistry(dcm)
+	require.NoError(t, err)
+
 	hs := &HTTPServer{
 		Cfg:               cfg,
 		pluginStore:       &fakePluginStore{},
 		SQLStore:          mockstore.NewSQLStoreMock(),
+		CoremodelRegistry: reg,
 		preferenceService: prefService,
 	}
 
