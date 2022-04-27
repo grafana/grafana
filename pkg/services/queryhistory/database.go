@@ -338,7 +338,7 @@ func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan i
 					LEFT JOIN query_history_star
 					ON query_history_star.query_uid = query_history.uid
 					WHERE query_history_star.query_uid IS NULL
-				)
+				) AS q
 			) 	
 			AND query_history.created_at <= ?`
 
@@ -376,7 +376,7 @@ func (s QueryHistoryService) unstarQueriesOfRemovedUsers(ctx context.Context) (i
 					LEFT JOIN org_user
 					ON query_history_star.user_id = org_user.user_id AND query_history_star.org_id = org_user.org_id
 					WHERE org_user.user_id IS NULL AND org_user.org_id IS NULL
-				)
+				) AS q
 			)`
 
 		res, err := session.Exec(sqlRemovedUsers)
