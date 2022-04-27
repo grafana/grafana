@@ -206,6 +206,14 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
     resolve: {
       extensions: ['.ts', '.tsx', '.js'],
       modules: [path.resolve(process.cwd(), 'src'), 'node_modules'],
+      fallback: {
+        buffer: false,
+        fs: false,
+        stream: false,
+        http: false,
+        https: false,
+        string_decoder: false,
+      },
     },
     module: {
       rules: [
@@ -225,12 +233,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
                     allowDeclareFields: true,
                   },
                 ],
-                [
-                  require.resolve('@babel/preset-react'),
-                  {
-                    runtime: 'automatic',
-                  },
-                ],
+                [require.resolve('@babel/preset-react')],
               ],
               plugins: [
                 require.resolve('@babel/plugin-proposal-class-properties'),
