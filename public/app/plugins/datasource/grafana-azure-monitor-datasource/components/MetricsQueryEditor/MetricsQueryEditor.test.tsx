@@ -90,6 +90,7 @@ describe('Azure Monitor QueryEditor', () => {
     ]);
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         subscriptionId="123"
         query={createMockQuery()}
         datasource={mockDatasource}
@@ -130,6 +131,7 @@ describe('Azure Monitor QueryEditor', () => {
     ]);
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         subscriptionId="123"
         query={createMockQuery()}
         datasource={mockDatasource}
@@ -169,6 +171,7 @@ describe('Azure Monitor QueryEditor', () => {
     ]);
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         subscriptionId="123"
         query={createMockQuery()}
         datasource={mockDatasource}
