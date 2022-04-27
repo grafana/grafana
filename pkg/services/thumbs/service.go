@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -52,7 +51,6 @@ type thumbService struct {
 	store                      sqlstore.Store
 	crawlLockServiceActionName string
 	log                        log.Logger
-	usageStatsService          usagestats.Service
 	canRunCrawler              bool
 	settings                   setting.DashboardPreviewsSettings
 }
