@@ -58,7 +58,7 @@ Grant dashboard permissions when you want to restrict or enhance dashboard acces
 1. Select the user or team.
 1. Select the permission and click **Save**.
 
-## Enable viewers to preview dashboards and use Explore
+## Enable viewers to edit (but not save) dashboards and use Explore
 
 By default, the viewer organization role does not allow viewers to create dashboards or use the Explore feature. However, by modifying a configuration setting, you can allow viewers to edit a panel and make changes to a dashboard but not save those changes. This setting also enables viewers to use the Explore feature.
 
