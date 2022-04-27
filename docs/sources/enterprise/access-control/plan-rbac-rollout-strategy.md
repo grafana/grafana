@@ -33,7 +33,7 @@ RBAC is a flexible and powerful feature with many possible permissions assignmen
 
 - **Assign roles to users** when you have a one-off scenario where a small number of users require access to a resource or when you want to assign temporary access. If you have a large number of users, this approach can be difficult to manage as you scale your use of Grafana. For example, a member of your IT department might need the `fixed:licensing:reader` and `fixed:licensing:writer` roles so that they can manage your Grafana Enterprise license.
 
-- **Assign roles to teams** when you have a subset of users that align to your organizational structure, and you want all members of the team to have the same level of access. For example, all members of a particular engineering team might need the `fixed:reports:reader` and `fixed:reports:writer` roles to be able to manage reports. 
+- **Assign roles to teams** when you have a subset of users that align to your organizational structure, and you want all members of the team to have the same level of access. For example, all members of a particular engineering team might need the `fixed:reports:reader` and `fixed:reports:writer` roles to be able to manage reports.
 
   When you assign additional users to a team, the system automatically assigns permissions to those users.
 
@@ -74,16 +74,16 @@ Use any of the following methods to assign RBAC roles to users and teams.
 
 ## Permissions scenarios
 
-We've compiled the following permissions rollout scenarios based on current Grafana implementations. 
+We've compiled the following permissions rollout scenarios based on current Grafana implementations.
 
-  > **Note:** If you have a use case that you'd like to share, feel free to contribute to this docs page. We'd love to hear from you!
+> **Note:** If you have a use case that you'd like to share, feel free to contribute to this docs page. We'd love to hear from you!
 
 ### Provide internal viewer employees with the ability to use Explore, but prevent external viewer contractors from using Explore
 
 1. In Grafana, create a team with the name `Internal employees`.
 1. Assign the `fixed:datasources:querier` role to the `Internal employees` team.
-2. Add internal employees to the `Internal employees` team, or map them from a SAML, LDAP, or Oauth team using [Team Sync]({{< relref "../team-sync.md" >}}).
-3. Assign the viewer role to both internal employees and contractors.
+1. Add internal employees to the `Internal employees` team, or map them from a SAML, LDAP, or Oauth team using [Team Sync]({{< relref "../team-sync.md" >}}).
+1. Assign the viewer role to both internal employees and contractors.
 
 ### Limit viewer, editor, or admin permissions
 
@@ -153,7 +153,7 @@ By default, the Grafana Server Admin is the only user who can create and manage 
 1. Create a basic role assignment and map `fixed:permissions:admin:edit` and `fixed:permissions:admin:read` fixed roles to the `Editor` basic role.
 1. [Create a custom role]({{< ref "./manage-rbac-roles#create-custom-roles" >}}) with `roles.builtin:add` and `roles:write` permissions, then create a basic role assignment for `Editor` organization role.
 
-    > **Note:** any user or service account with the ability to modify roles can only create, update or delete roles with permissions they themselves have been granted. For example, a user with the `Editor` role would be able to create and manage roles only with the permissions they have, or with a subset of them.
+   > **Note:** any user or service account with the ability to modify roles can only create, update or delete roles with permissions they themselves have been granted. For example, a user with the `Editor` role would be able to create and manage roles only with the permissions they have, or with a subset of them.
 
 ### Enable viewers to create reports
 

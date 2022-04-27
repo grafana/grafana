@@ -87,5 +87,5 @@ HTTP API, then the other instances are synchronized through the database and the
 
 ## Control access with role-based access control
 
-If you have [Role-basedaccess control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, you can control who can read or update settings.
+If you have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, you can control who can read or update settings.
 Refer to the [Admin API]({{< relref "../http_api/admin.md#update-settings" >}}) for more information.
