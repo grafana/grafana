@@ -338,7 +338,7 @@ func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessContro
 	return setupHTTPServerWithCfg(t, useFakeAccessControl, enableAccessControl, cfg)
 }
 
-func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl bool, enableAccessControl bool) accessControlScenarioContext {
+func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl bool, enableAccessControl bool, enabledFeatures []string) accessControlScenarioContext {
 	// Use a new conf
 	features := featuremgmt.WithFeatures("accesscontrol", enableAccessControl)
 	cfg := setting.NewCfg()
@@ -347,7 +347,7 @@ func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl bool, enableAc
 	db := sqlstore.InitTestDB(t)
 	db.Cfg = cfg
 
-	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, mockstore.NewSQLStoreMock())
+	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, mockstore.NewSQLStoreMock(), enabledFeatures)
 }
 
 func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg) accessControlScenarioContext {
@@ -356,13 +356,21 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 		featureFlags = append(featureFlags, featuremgmt.FlagAccesscontrol)
 	}
 	db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{FeatureFlags: featureFlags})
-	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, db)
+	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, db, []string{})
 }
 
-func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore, store sqlstore.Store) accessControlScenarioContext {
+func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore, store sqlstore.Store, enabledFeatures []string) accessControlScenarioContext {
 	t.Helper()
 
-	features := featuremgmt.WithFeatures("accesscontrol", enableAccessControl)
+	var featureflags []interface{}
+	if enableAccessControl {
+		featureflags = append(featureflags, featuremgmt.FlagAccesscontrol)
+	}
+	for _, feature := range enabledFeatures {
+		featureflags = append(featureflags, feature)
+	}
+
+	features := featuremgmt.WithFeatures(featureflags...)
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	var acmock *accesscontrolmock.Mock
