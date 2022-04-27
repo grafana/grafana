@@ -333,10 +333,12 @@ func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan i
 		sql := `DELETE 
 			FROM query_history 
 			WHERE uid IN (
-				SELECT uid FROM query_history 
-				LEFT JOIN query_history_star 
-				ON query_history_star.query_uid = query_history.uid
-				WHERE query_history_star.query_uid IS NULL
+				SELECT uid FROM (
+					SELECT uid FROM query_history
+					LEFT JOIN query_history_star
+					ON query_history_star.query_uid = query_history.uid
+					WHERE query_history_star.query_uid IS NULL
+				)
 			) 	
 			AND query_history.created_at <= ?`
 
@@ -346,6 +348,8 @@ func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan i
 		}
 
 		rowsCount, err = res.RowsAffected()
+		fmt.Println("delete affected: ", rowsCount)
+		fmt.Println("delete res: ", res)
 		if err != nil {
 			return err
 		}
@@ -367,10 +371,12 @@ func (s QueryHistoryService) unstarQueriesOfRemovedUsers(ctx context.Context) (i
 		sqlRemovedUsers := `DELETE 
 			FROM query_history_star 
 			WHERE query_uid IN (
-				SELECT query_uid FROM query_history_star
-				LEFT JOIN org_user 
-				ON ((query_history_star.org_id = org_user.org_id) AND (query_history_star.user_id = org_user.user_id))
-				WHERE org_user.user_id IS NULL OR org_user.org_id IS NULL
+				SELECT query_uid FROM (
+					SELECT query_uid FROM query_history_star
+					LEFT JOIN org_user
+					ON query_history_star.user_id = org_user.user_id AND query_history_star.org_id = org_user.org_id
+					WHERE org_user.user_id IS NULL AND org_user.org_id IS NULL
+				)
 			)`
 
 		res, err := session.Exec(sqlRemovedUsers)

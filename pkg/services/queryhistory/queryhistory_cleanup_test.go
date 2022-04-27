@@ -52,11 +52,12 @@ func TestDeleteStaleQueryFromQueryHistory(t *testing.T) {
 }
 
 func TestUnstarQueriesOfRemovedUsers(t *testing.T) {
+	// In this scenario we have queries of existing and removed users
 	testScenarioWithMultipleStarredQueriesAndMultipleUsersInQueryHistory(t, "Removes stars from query history of removed users",
 		func(t *testing.T, sc scenarioContext) {
 			rowsDeleted, err := sc.service.unstarQueriesOfRemovedUsers(context.Background())
 			require.NoError(t, err)
-			require.Equal(t, 2, rowsDeleted)
+			require.Equal(t, 1, rowsDeleted)
 		})
 
 }
