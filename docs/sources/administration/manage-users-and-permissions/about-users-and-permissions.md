@@ -1,6 +1,6 @@
 +++
 title = "About users and permissions"
-aliases = ["docs/sources/manage-users/_index.md", "docs/sources/administration/manage-users-and-permissions/about-users-and-permissions.md", "/docs/grafana/latest/permissions/overview/", "docs/sources/permissions/_index.md", "docs/sources/permissions/organization_roles.md"]
+aliases = ["docs/grafana/latest/manage-users/", "docs/grafana/latest/administration/manage-users-and-permissions/about-users-and-permissions", "/docs/grafana/latest/permissions/overview/", "docs/grafana/latest/permissions/", "docs/grafana/latest/permissions/organization_roles"]
 weight = 100
 +++
 
