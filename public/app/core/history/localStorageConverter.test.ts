@@ -5,7 +5,7 @@ import { RichHistoryLocalStorageDTO } from './RichHistoryLocalStorage';
 import { fromDTO, toDTO } from './localStorageConverter';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {

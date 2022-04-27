@@ -211,18 +211,15 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
  * Create a list of all available data sources
  */
 export function createDatasourcesList() {
-  const datasources: Array<{ name: string; imgUrl: string; uid: string }> = [];
-
-  getDataSourceSrv()
+  return getDataSourceSrv()
     .getList()
-    .forEach((dsSettings) => {
-      datasources.push({
+    .map((dsSettings) => {
+      return {
         name: dsSettings.name,
         uid: dsSettings.uid,
         imgUrl: dsSettings.meta.info.logos.small,
-      });
+      };
     });
-  return datasources;
 }
 
 export function notEmptyQuery(query: DataQuery) {

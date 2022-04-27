@@ -10,7 +10,7 @@ import { RichHistoryStarredTab, Props } from './RichHistoryStarredTab';
 jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => {
     return {
       getList: () => [],
