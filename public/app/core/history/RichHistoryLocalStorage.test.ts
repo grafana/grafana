@@ -129,10 +129,34 @@ describe('RichHistoryLocalStorage', () => {
 
   describe('retention policy and max limits', () => {
     it('should clear old not-starred items', async () => {
-      const historyStarredOld = { starred: true, ts: old.getTime(), queries: [], comment: 'old starred' };
-      const historyNotStarredOld = { starred: false, ts: old.getTime(), queries: [], comment: 'new not starred' };
-      const historyStarredNew = { starred: true, ts: now.getTime(), queries: [], comment: 'new starred' };
-      const historyNotStarredNew = { starred: false, ts: now.getTime(), queries: [], comment: 'new not starred' };
+      const historyStarredOld = {
+        starred: true,
+        ts: old.getTime(),
+        queries: [],
+        comment: 'old starred',
+        datasourceName: 'name-of-dev-test',
+      };
+      const historyNotStarredOld = {
+        starred: false,
+        ts: old.getTime(),
+        queries: [],
+        comment: 'new not starred',
+        datasourceName: 'name-of-dev-test',
+      };
+      const historyStarredNew = {
+        starred: true,
+        ts: now.getTime(),
+        queries: [],
+        comment: 'new starred',
+        datasourceName: 'name-of-dev-test',
+      };
+      const historyNotStarredNew = {
+        starred: false,
+        ts: now.getTime(),
+        queries: [],
+        comment: 'new not starred',
+        datasourceName: 'name-of-dev-test',
+      };
       const history = [historyNotStarredNew, historyStarredNew, historyStarredOld, historyNotStarredOld];
       store.setObject(key, history);
 
@@ -208,7 +232,7 @@ describe('RichHistoryLocalStorage', () => {
           {
             ts: 2,
             starred: true,
-            datasourceName: 'dev-test',
+            datasourceName: 'name-of-dev-test',
             comment: 'test',
             queries: ['test query 1', 'test query 2', 'test query 3'],
           },
@@ -245,7 +269,7 @@ describe('RichHistoryLocalStorage', () => {
           {
             ts: 2,
             starred: true,
-            datasourceName: 'dev-test',
+            datasourceName: 'name-of-dev-test',
             comment: 'test',
             queries: ['{"refId":"A","key":"key1","metrics":[]}', '{"refId":"B","key":"key2","metrics":[]}'],
           },
@@ -254,8 +278,8 @@ describe('RichHistoryLocalStorage', () => {
           id: '2',
           createdAt: 2,
           starred: true,
-          datasourceUid: 'dev-test-uid',
-          datasourceName: 'dev-test',
+          datasourceUid: 'dev-test',
+          datasourceName: 'name-of-dev-test',
           comment: 'test',
           queries: [
             {
