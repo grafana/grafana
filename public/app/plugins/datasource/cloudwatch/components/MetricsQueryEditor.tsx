@@ -147,6 +147,7 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
             width={26}
             optional
             tooltip="ID can be used to reference other queries in math expressions. The ID can include numbers, letters, and underscore, and must start with a lowercase letter."
+            invalid={!!query.id && !/^$|^[a-z][a-zA-Z0-9_]*$/.test(query.id)}
           >
             <Input
               id={`${query.refId}-cloudwatch-metric-query-editor-id`}
@@ -155,7 +156,6 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
                 this.onChange({ ...metricsQuery, id: event.target.value })
               }
               type="text"
-              invalid={!!query.id && !/^$|^[a-z][a-zA-Z0-9_]*$/.test(query.id)}
               value={query.id}
             />
           </EditorField>

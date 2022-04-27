@@ -143,6 +143,10 @@ const (
 	// Provisioning-friendly routes for alerting
 	FlagAlertProvisioning = "alertProvisioning"
 
+	// FlagExport
+	// Export grafana instance (to git, etc)
+	FlagExport = "export"
+
 	// FlagStorageLocalUpload
 	// allow uploads to local storage
 	FlagStorageLocalUpload = "storageLocalUpload"
@@ -162,4 +166,8 @@ const (
 	// FlagCommandPalette
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"
+
+	// FlagSavedItems
+	// Enable Saved Items in the navbar.
+	FlagSavedItems = "savedItems"
 )
