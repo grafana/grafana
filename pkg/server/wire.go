@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/server/usagestatssvcs"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -250,6 +251,7 @@ var wireBasicSet = wire.NewSet(
 	cmreg.ProvideRegistry,
 	cuectx.ProvideCUEContext,
 	cuectx.ProvideThemaLibrary,
+	usagestatssvcs.ProvideUsageStatsProvidersRegistry,
 )
 
 var wireSet = wire.NewSet(
