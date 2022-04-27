@@ -515,11 +515,17 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext
 
 // GetDashboardVersions returns all dashboard versions as JSON
 func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Response {
-	dashID, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
-	}
+	var dashID int64
 
+	var err error
+	dashUID := web.Params(c.Req)[":uid"]
+
+	if dashUID == "" {
+		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+		}
+	}
 	guardian := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
@@ -678,18 +684,29 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Resp
 
 // RestoreDashboardVersion restores a dashboard to the given version.
 func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Response {
+	var dashID int64
+
+	var err error
+	dashUID := web.Params(c.Req)[":uid"]
+
 	apiCmd := dtos.RestoreDashboardVersionCommand{}
-	if err := web.Bind(c.Req, &apiCmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	dashboardId, err := strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+	if dashUID == "" {
+		if err := web.Bind(c.Req, &apiCmd); err != nil {
+			return response.Error(http.StatusBadRequest, "bad request data", err)
+		}
+		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashboardId, "")
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, dashUID)
 	if rsp != nil {
 		return rsp
+	}
+
+	if dashID == 0 {
+		dashID = dash.Id
 	}
 
 	guardian := guardian.New(c.Req.Context(), dash.Id, c.OrgId, c.SignedInUser)
