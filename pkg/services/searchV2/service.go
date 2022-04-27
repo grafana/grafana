@@ -1,49 +1,62 @@
 package searchV2
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"time"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/searchV2/extract"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/searchV2/extract"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type StandardSearchService struct {
+	registry.BackgroundService
+
+	cfg  *setting.Cfg
 	sql  *sqlstore.SQLStore
 	auth FutureAuthService // eventually injected from elsewhere
+
+	logger         log.Logger
+	dashboardIndex *dashboardIndex
 }
 
-func ProvideService(sql *sqlstore.SQLStore) SearchService {
+func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService) SearchService {
 	return &StandardSearchService{
+		cfg: cfg,
 		sql: sql,
 		auth: &simpleSQLAuthService{
 			sql: sql,
 		},
+		dashboardIndex: newDashboardIndex(&sqlDashboardLoader{sql: sql}, entityEventStore),
+		logger:         log.New("searchV2"),
 	}
 }
 
-type dashMeta struct {
-	id        int64
-	is_folder bool
-	folder_id int64
-	slug      string
-	created   time.Time
-	updated   time.Time
-	dash      *extract.DashboardInfo
+func (s *StandardSearchService) IsDisabled() bool {
+	if s.cfg == nil {
+		return true
+	}
+	return !s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagPanelTitleSearch)
 }
 
-func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, query DashboardQuery) *backend.DataResponse {
+func (s *StandardSearchService) Run(ctx context.Context) error {
+	return s.dashboardIndex.run(ctx)
+}
+
+func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, _ DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
-	// Load and parse all dashboards for given orgId
-	dash, err := loadDashboards(ctx, orgId, s.sql)
+	dash, err := s.dashboardIndex.getDashboards(ctx, orgId)
 	if err != nil {
 		rsp.Error = err
 		return rsp
@@ -58,13 +71,13 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 
 	err = s.sql.GetSignedInUser(ctx, getSignedInUserQuery)
 	if err != nil {
-		fmt.Printf("error while retrieving user %s\n", err)
+		s.logger.Error("Error while retrieving user", "error", err)
 		rsp.Error = fmt.Errorf("auth error")
 		return rsp
 	}
 
 	if getSignedInUserQuery.Result == nil {
-		fmt.Printf("no user %s", user.Email)
+		s.logger.Error("No user found", "email", user.Email)
 		rsp.Error = fmt.Errorf("auth error")
 		return rsp
 	}
@@ -80,151 +93,20 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 	return rsp
 }
 
-func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dash []dashMeta) ([]dashMeta, error) {
+func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dash []dashboard) ([]dashboard, error) {
 	filter, err := s.auth.GetDashboardReadFilter(user)
 	if err != nil {
 		return nil, err
 	}
 
 	// create a list of all viewable dashboards for this user
-	res := make([]dashMeta, 0, len(dash))
+	res := make([]dashboard, 0, len(dash))
 	for _, dash := range dash {
-		if filter(dash.dash.UID) || (dash.is_folder && dash.dash.UID == "") { // include the "General" folder
+		if filter(dash.info.UID) || (dash.isFolder && dash.info.UID == "") { // include the "General" folder
 			res = append(res, dash)
 		}
 	}
 	return res, nil
-}
-
-type dashDataQueryResult struct {
-	Id       int64
-	IsFolder bool   `xorm:"is_folder"`
-	FolderID int64  `xorm:"folder_id"`
-	Slug     string `xorm:"slug"`
-	Data     []byte
-	Created  time.Time
-	Updated  time.Time
-}
-
-type dsQueryResult struct {
-	UID       string `xorm:"uid"`
-	Type      string `xorm:"type"`
-	Name      string `xorm:"name"`
-	IsDefault bool   `xorm:"is_default"`
-}
-
-func loadDashboards(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) ([]dashMeta, error) {
-	meta := make([]dashMeta, 0, 200)
-
-	// Add the root folder ID (does not exist in SQL)
-	meta = append(meta, dashMeta{
-		id:        0,
-		is_folder: true,
-		folder_id: 0,
-		slug:      "",
-		created:   time.Now(),
-		updated:   time.Now(),
-		dash: &extract.DashboardInfo{
-			ID:    0,
-			UID:   "",
-			Title: "General",
-		},
-	})
-
-	// key will allow name or uid
-	lookup, err := loadDatasoureLookup(ctx, orgID, sql)
-	if err != nil {
-		return meta, err
-	}
-
-	err = sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rows := make([]*dashDataQueryResult, 0)
-
-		sess.Table("dashboard").
-			Where("org_id = ?", orgID).
-			Cols("id", "is_folder", "folder_id", "data", "slug", "created", "updated")
-
-		err := sess.Find(&rows)
-		if err != nil {
-			return err
-		}
-
-		for _, row := range rows {
-			dash := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
-
-			meta = append(meta, dashMeta{
-				id:        row.Id,
-				is_folder: row.IsFolder,
-				folder_id: row.FolderID,
-				slug:      row.Slug,
-				created:   row.Created,
-				updated:   row.Updated,
-				dash:      dash,
-			})
-		}
-
-		return nil
-	})
-
-	return meta, err
-}
-
-func loadDatasoureLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) (extract.DatasourceLookup, error) {
-	byUID := make(map[string]*extract.DataSourceRef, 50)
-	byName := make(map[string]*extract.DataSourceRef, 50)
-	var defaultDS *extract.DataSourceRef
-
-	err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rows := make([]*dsQueryResult, 0)
-		sess.Table("data_source").
-			Where("org_id = ?", orgID).
-			Cols("uid", "name", "type", "is_default")
-
-		err := sess.Find(&rows)
-		if err != nil {
-			return err
-		}
-
-		for _, row := range rows {
-			ds := &extract.DataSourceRef{
-				UID:  row.UID,
-				Type: row.Type,
-			}
-			byUID[row.UID] = ds
-			byName[row.Name] = ds
-			if row.IsDefault {
-				defaultDS = ds
-			}
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Lookup by UID or name
-	return func(ref *extract.DataSourceRef) *extract.DataSourceRef {
-		if ref == nil {
-			return defaultDS
-		}
-		key := ""
-		if ref.UID != "" {
-			ds, ok := byUID[ref.UID]
-			if ok {
-				return ds
-			}
-			key = ref.UID
-		}
-		if key == "" {
-			return defaultDS
-		}
-		ds, ok := byUID[key]
-		if ok {
-			return ds
-		}
-		return byName[key]
-	}, err
 }
 
 type simpleCounter struct {
@@ -250,7 +132,7 @@ func (c *simpleCounter) toFrame(name string) *data.Frame {
 }
 
 // UGLY... but helpful for now
-func metaToFrame(meta []dashMeta) data.Frames {
+func metaToFrame(meta []dashboard) data.Frames {
 	folderID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
 	folderUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	folderName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
@@ -324,43 +206,43 @@ func metaToFrame(meta []dashMeta) data.Frames {
 	folderCounter := make(map[int64]int64, 20)
 
 	for _, row := range meta {
-		if row.is_folder {
+		if row.isFolder {
 			folderID.Append(row.id)
-			folderUID.Append(row.dash.UID)
-			folderName.Append(row.dash.Title)
+			folderUID.Append(row.info.UID)
+			folderName.Append(row.info.Title)
 			folderDashCount.Append(int64(0)) // filled in later
 			continue
 		}
 
 		dashID.Append(row.id)
-		dashUID.Append(row.dash.UID)
-		dashFolderID.Append(row.folder_id)
-		dashName.Append(row.dash.Title)
-		dashDescr.Append(row.dash.Title)
-		dashSchemaVersion.Append(row.dash.SchemaVersion)
+		dashUID.Append(row.info.UID)
+		dashFolderID.Append(row.folderID)
+		dashName.Append(row.info.Title)
+		dashDescr.Append(row.info.Title)
+		dashSchemaVersion.Append(row.info.SchemaVersion)
 		dashCreated.Append(row.created)
 		dashUpdated.Append(row.updated)
 
 		// Increment the folder counter
-		fcount, ok := folderCounter[row.folder_id]
+		fcount, ok := folderCounter[row.folderID]
 		if !ok {
 			fcount = 0
 		}
-		folderCounter[row.folder_id] = fcount + 1
+		folderCounter[row.folderID] = fcount + 1
 
-		url := fmt.Sprintf("/d/%s/%s", row.dash.UID, row.slug)
+		url := fmt.Sprintf("/d/%s/%s", row.info.UID, row.slug)
 		dashURL.Append(url)
 
 		// stats
-		schemaVersionCounter.add(strconv.FormatInt(row.dash.SchemaVersion, 10))
+		schemaVersionCounter.add(strconv.FormatInt(row.info.SchemaVersion, 10))
 
-		dashTags.Append(toJSONString(row.dash.Tags))
-		dashPanelCount.Append(int64(len(row.dash.Panels)))
-		dashVarCount.Append(int64(len(row.dash.TemplateVars)))
-		dashDSList.Append(dsAsJSONString(row.dash.Datasource))
+		dashTags.Append(toJSONString(row.info.Tags))
+		dashPanelCount.Append(int64(len(row.info.Panels)))
+		dashVarCount.Append(int64(len(row.info.TemplateVars)))
+		dashDSList.Append(dsAsJSONString(row.info.Datasource))
 
 		// Row for each panel
-		for _, panel := range row.dash.Panels {
+		for _, panel := range row.info.Panels {
 			panelDashID.Append(row.id)
 			panelID.Append(panel.ID)
 			panelName.Append(panel.Title)

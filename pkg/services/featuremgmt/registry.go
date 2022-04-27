@@ -216,6 +216,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "tracing",
+			Description:  "Adds trace ID to error notifications",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "persistNotifications",
 			Description:  "PoC Notifications page",
 			State:        FeatureStateAlpha,
@@ -231,11 +237,11 @@ var (
 			Description: "Enable Saved Items in the navbar.",
 			State:       FeatureStateAlpha,
 		},
-    {
+		{
 			Name:            "coremodelValidation",
 			Description:     "Validate objects (e.g. dashboards) against coremodel schemas",
 			State:           FeatureStateAlpha,
 			RequiresRestart: true,
-    },
+		},
 	}
 )

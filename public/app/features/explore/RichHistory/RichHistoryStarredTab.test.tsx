@@ -9,18 +9,36 @@ import { RichHistoryStarredTab, Props } from './RichHistoryStarredTab';
 
 jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
 
-const setup = (propOverrides?: Partial<Props>) => {
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => {
+    return {
+      getList: () => [],
+    };
+  },
+}));
+
+const setup = (activeDatasourceOnly = false) => {
   const props: Props = {
     queries: [],
-    sortOrder: SortOrder.Ascending,
-    activeDatasourceOnly: false,
-    datasourceFilters: [],
+    updateFilters: jest.fn(),
+    clearRichHistoryResults: jest.fn(),
     exploreId: ExploreId.left,
-    onChangeSortOrder: jest.fn(),
-    onSelectDatasourceFilters: jest.fn(),
+    richHistorySettings: {
+      retentionPeriod: 7,
+      starredTabAsFirstTab: false,
+      activeDatasourceOnly,
+      lastUsedDatasourceFilters: [],
+    },
+    richHistorySearchFilters: {
+      search: '',
+      sortOrder: SortOrder.Ascending,
+      datasourceFilters: [],
+      from: 0,
+      to: 7,
+      starred: false,
+    },
   };
-
-  Object.assign(props, propOverrides);
 
   const wrapper = mount(<RichHistoryStarredTab {...props} />);
   return wrapper;
@@ -41,7 +59,7 @@ describe('RichHistoryStarredTab', () => {
     });
 
     it('should not render select datasource if activeDatasourceOnly is true', () => {
-      const wrapper = setup({ activeDatasourceOnly: true });
+      const wrapper = setup(true);
       expect(wrapper.find({ 'aria-label': 'Filter queries for data sources(s)' }).exists()).toBeFalsy();
     });
   });

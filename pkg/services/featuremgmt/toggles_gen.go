@@ -159,6 +159,10 @@ const (
 	// Experimental Explore to Dashboard workflow
 	FlagExplore2Dashboard = "explore2Dashboard"
 
+	// FlagTracing
+	// Adds trace ID to error notifications
+	FlagTracing = "tracing"
+
 	// FlagPersistNotifications
 	// PoC Notifications page
 	FlagPersistNotifications = "persistNotifications"

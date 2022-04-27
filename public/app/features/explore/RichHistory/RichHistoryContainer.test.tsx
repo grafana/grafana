@@ -1,13 +1,23 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 
-import { SortOrder } from '../../../core/utils/richHistoryTypes';
+import { SortOrder } from 'app/core/utils/richHistory';
+
 import { ExploreId } from '../../../types/explore';
 
 import { Tabs } from './RichHistory';
 import { RichHistoryContainer, Props } from './RichHistoryContainer';
 
 jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => {
+    return {
+      getList: () => [],
+    };
+  },
+}));
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
@@ -18,6 +28,8 @@ const setup = (propOverrides?: Partial<Props>) => {
     firstTab: Tabs.RichHistory,
     deleteRichHistory: jest.fn(),
     initRichHistory: jest.fn(),
+    loadRichHistory: jest.fn(),
+    clearRichHistoryResults: jest.fn(),
     updateHistorySearchFilters: jest.fn(),
     updateHistorySettings: jest.fn(),
     onClose: jest.fn(),
@@ -27,6 +39,7 @@ const setup = (propOverrides?: Partial<Props>) => {
       datasourceFilters: [],
       from: 0,
       to: 7,
+      starred: false,
     },
     richHistorySettings: {
       retentionPeriod: 0,
@@ -42,8 +55,8 @@ const setup = (propOverrides?: Partial<Props>) => {
 };
 
 describe('RichHistoryContainer', () => {
-  it('should show loading message when settings and filters are not ready', () => {
-    const { container } = setup({ richHistorySearchFilters: undefined, richHistorySettings: undefined });
+  it('should show loading message when settings are not ready', () => {
+    const { container } = setup({ richHistorySettings: undefined });
     expect(container).toHaveTextContent('Loading...');
   });
   it('should render component with correct width', () => {
