@@ -135,7 +135,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
         &::after {
           content: '|';
           padding: 0 ${theme.spacing()};
-          color: ${theme.colors.text.primary};
         }
         &:last-child::after {
           content: '';
@@ -145,10 +144,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       font-size: ${theme.typography.h4.fontSize};
 
       a {
-        color: ${theme.colors.text.link};
-
         &:hover {
-          color: ${theme.colors.text.link};
           text-decoration: underline;
         }
       }
