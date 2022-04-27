@@ -139,7 +139,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           />
           <InlineField label="Dimensions" labelWidth={20} tooltip="Dimensions to filter the returned values on">
             <Dimensions
-              query={{ ...parsedQuery, dimensions: parsedQuery.dimensionFilters }}
+              metricStat={{ ...parsedQuery, dimensions: parsedQuery.dimensionFilters }}
               onChange={(dimensions) => {
                 onChange({ ...parsedQuery, dimensionFilters: dimensions });
               }}

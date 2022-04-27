@@ -1,16 +1,16 @@
-import { DataQuery } from '@grafana/data';
+import { AnnotationQuery, DataQuery } from '@grafana/data';
 
 import {
+  migrateCloudWatchQuery,
   migrateMultipleStatsAnnotationQuery,
   migrateMultipleStatsMetricsQuery,
-  migrateCloudWatchQuery,
   migrateVariableQuery,
 } from './migrations';
 import {
-  CloudWatchAnnotationQuery,
   CloudWatchMetricsQuery,
-  MetricQueryType,
+  LegacyAnnotationQuery,
   MetricEditorMode,
+  MetricQueryType,
   VariableQueryType,
 } from './types';
 
@@ -77,13 +77,15 @@ describe('migration', () => {
   });
 
   describe('migrateMultipleStatsAnnotationQuery', () => {
-    const annotationToMigrate = {
+    const annotationToMigrate: AnnotationQuery<LegacyAnnotationQuery> = {
       statistics: ['p23.23', 'SampleCount'],
       name: 'Test annotation',
+      enable: false,
+      iconColor: '',
     };
 
-    const newAnnotations = migrateMultipleStatsAnnotationQuery(annotationToMigrate as CloudWatchAnnotationQuery);
-    const newCloudWatchAnnotations = newAnnotations as CloudWatchAnnotationQuery[];
+    const newAnnotations = migrateMultipleStatsAnnotationQuery(annotationToMigrate);
+    const newCloudWatchAnnotations = newAnnotations;
 
     it('should create one new annotation for each stat', () => {
       expect(newAnnotations.length).toBe(1);
@@ -107,11 +109,13 @@ describe('migration', () => {
     });
 
     describe('migrateMultipleStatsAnnotationQuery with only with stat', () => {
-      const annotationToMigrate = {
+      const annotationToMigrate: AnnotationQuery<LegacyAnnotationQuery> = {
         statistics: ['p23.23'],
         name: 'Test annotation',
-      } as CloudWatchAnnotationQuery;
-      const newAnnotations = migrateMultipleStatsAnnotationQuery(annotationToMigrate as CloudWatchAnnotationQuery);
+        enable: false,
+        iconColor: '',
+      };
+      const newAnnotations = migrateMultipleStatsAnnotationQuery(annotationToMigrate);
 
       it('should not create new annotations', () => {
         expect(newAnnotations.length).toBe(0);

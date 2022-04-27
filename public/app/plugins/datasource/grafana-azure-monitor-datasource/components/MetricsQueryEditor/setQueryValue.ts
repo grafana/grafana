@@ -25,6 +25,7 @@ export function setSubscriptionID(query: AzureMonitorQuery, subscriptionID: stri
     subscription: subscriptionID,
     azureMonitor: {
       ...query.azureMonitor,
+      resourceUri: '',
       resourceGroup: undefined,
       metricDefinition: undefined,
       metricNamespace: undefined,
@@ -46,6 +47,7 @@ export function setResourceGroup(query: AzureMonitorQuery, resourceGroup: string
     ...query,
     azureMonitor: {
       ...query.azureMonitor,
+      resourceUri: '',
       resourceGroup: resourceGroup,
       metricDefinition: undefined,
       metricNamespace: undefined,
@@ -68,6 +70,7 @@ export function setResourceType(query: AzureMonitorQuery, resourceType: string |
     ...query,
     azureMonitor: {
       ...query.azureMonitor,
+      resourceUri: '',
       metricDefinition: resourceType,
       resourceName: undefined,
       metricNamespace: undefined,
@@ -90,6 +93,7 @@ export function setResourceName(query: AzureMonitorQuery, resourceName: string |
     ...query,
     azureMonitor: {
       ...query.azureMonitor,
+      resourceUri: '',
       resourceName: resourceName,
       metricNamespace: undefined,
       metricName: undefined,

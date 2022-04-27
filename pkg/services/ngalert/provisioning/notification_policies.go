@@ -47,11 +47,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 		return definitions.Route{}, fmt.Errorf("no route present in current alertmanager config")
 	}
 
-	adapter := ProvenanceOrgAdapter{
-		Inner: cfg.AlertmanagerConfig.Route,
-		OrgID: orgID,
-	}
-	provenance, err := nps.provenanceStore.GetProvenance(ctx, adapter)
+	provenance, err := nps.provenanceStore.GetProvenance(ctx, cfg.AlertmanagerConfig.Route, orgID)
 	if err != nil {
 		return definitions.Route{}, err
 	}
@@ -95,11 +91,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		if err != nil {
 			return err
 		}
-		adapter := ProvenanceOrgAdapter{
-			Inner: &tree,
-			OrgID: orgID,
-		}
-		err = nps.provenanceStore.SetProvenance(ctx, adapter, p)
+		err = nps.provenanceStore.SetProvenance(ctx, &tree, orgID, p)
 		if err != nil {
 			return err
 		}
