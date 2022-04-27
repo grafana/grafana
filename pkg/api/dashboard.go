@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -277,6 +278,16 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		}
 		return response.Error(500, "Failed to delete dashboard", err)
 	}
+
+	if hs.entityEventsService != nil {
+		if err := hs.entityEventsService.SaveEvent(c.Req.Context(), store.SaveEventCmd{
+			EntityId:  store.CreateDatabaseEntityId(dash.Uid, dash.OrgId, store.EntityTypeDashboard),
+			EventType: store.EntityEventTypeDelete,
+		}); err != nil {
+			hs.log.Warn("failed to save dashboard entity event", "uid", dash.Uid, "error", err)
+		}
+	}
+
 	if hs.Live != nil {
 		err := hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.OrgId, c.ToUserDisplayDTO(), dash.Uid)
 		if err != nil {
@@ -361,6 +372,15 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	dashboard, err := hs.dashboardService.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)
+
+	if dashboard != nil && hs.entityEventsService != nil {
+		if err := hs.entityEventsService.SaveEvent(ctx, store.SaveEventCmd{
+			EntityId:  store.CreateDatabaseEntityId(dashboard.Uid, dashboard.OrgId, store.EntityTypeDashboard),
+			EventType: store.EntityEventTypeUpdate,
+		}); err != nil {
+			hs.log.Warn("failed to save dashboard entity event", "uid", dashboard.Uid, "error", err)
+		}
+	}
 
 	if hs.Live != nil {
 		// Tell everyone listening that the dashboard changed

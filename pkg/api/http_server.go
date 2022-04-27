@@ -151,6 +151,7 @@ type HTTPServer struct {
 	PluginSettings               *pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
 	preferenceService            pref.Service
+	entityEventsService          store.EntityEventsService
 }
 
 type ServerOptions struct {
@@ -182,7 +183,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
 	dashboardsnapshotsService *dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings *pluginSettings.Service,
-	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
+	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service, entityEventsService store.EntityEventsService,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -257,6 +258,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		permissionServices:           permissionsServices,
 		AvatarCacheServer:            avatarCacheServer,
 		preferenceService:            preferenceService,
+		entityEventsService:          entityEventsService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
