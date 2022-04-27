@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -55,7 +54,7 @@ func (a *api) getEvaluators(actionRead, actionWrite, scope string) (read, write 
 }
 
 func (a *api) registerEndpoints() {
-	auth := middleware.Middleware(a.ac)
+	auth := accesscontrol.Middleware(a.ac)
 	disable := disableMiddleware(a.ac.IsDisabled())
 	uidSolver := solveUID(a.service.options.UidSolver)
 	inheritanceSolver := solveInheritedScopes(a.service.options.InheritedScopesSolver)
