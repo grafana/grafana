@@ -54,7 +54,7 @@ func TestParseResponse(t *testing.T) {
 
 		labels, err := data.LabelsFromString("app=Application, tag2=tag2")
 		require.NoError(t, err)
-		field1 := data.NewField("time", nil, []time.Time{
+		field1 := data.NewField("Time", nil, []time.Time{
 			time.Date(1970, 1, 1, 0, 0, 1, 0, time.UTC),
 			time.Date(1970, 1, 1, 0, 0, 2, 0, time.UTC),
 			time.Date(1970, 1, 1, 0, 0, 3, 0, time.UTC),
@@ -62,7 +62,7 @@ func TestParseResponse(t *testing.T) {
 			time.Date(1970, 1, 1, 0, 0, 5, 0, time.UTC),
 		})
 		field1.Config = &data.FieldConfig{Interval: float64(42000)}
-		field2 := data.NewField("value", labels, []float64{1, 2, 3, 4, 5})
+		field2 := data.NewField("Value", labels, []float64{1, 2, 3, 4, 5})
 		field2.SetConfig(&data.FieldConfig{DisplayNameFromDS: "legend Application"})
 		testFrame := data.NewFrame("legend Application", field1, field2)
 		testFrame.SetMeta(&data.FrameMeta{
