@@ -151,8 +151,7 @@ func TestAMConfigAccess(t *testing.T) {
 						"secureFields": {},
 						"settings": {
 							"addresses": "<example@email.com>"
-						},
-						"provenance": ""
+						}
 					}]
 				}]
 			}

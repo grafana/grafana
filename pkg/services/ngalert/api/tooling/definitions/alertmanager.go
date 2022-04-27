@@ -1006,7 +1006,7 @@ type GettableGrafanaReceiver struct {
 	DisableResolveMessage bool              `json:"disableResolveMessage"`
 	Settings              *simplejson.Json  `json:"settings"`
 	SecureFields          map[string]bool   `json:"secureFields"`
-	Provenance            models.Provenance `json:"provenance"`
+	Provenance            models.Provenance `json:"provenance,omitempty"`
 }
 
 type PostableGrafanaReceiver struct {
