@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -103,9 +102,9 @@ func (srv *ProvisioningSrv) RouteGetTemplates(c *models.ReqContext) response.Res
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	result := make([]definitions.MessageTemplate, 0, len(templates))
+	result := make([]apimodels.MessageTemplate, 0, len(templates))
 	for k, v := range templates {
-		result = append(result, definitions.MessageTemplate{Name: k, Template: v})
+		result = append(result, apimodels.MessageTemplate{Name: k, Template: v})
 	}
 	return response.JSON(http.StatusOK, result)
 }
@@ -117,7 +116,7 @@ func (srv *ProvisioningSrv) RouteGetTemplate(c *models.ReqContext) response.Resp
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	if tmpl, ok := templates[id]; ok {
-		return response.JSON(http.StatusOK, definitions.MessageTemplate{Name: id, Template: tmpl})
+		return response.JSON(http.StatusOK, apimodels.MessageTemplate{Name: id, Template: tmpl})
 	}
 	return response.Empty(http.StatusNotFound)
 }
