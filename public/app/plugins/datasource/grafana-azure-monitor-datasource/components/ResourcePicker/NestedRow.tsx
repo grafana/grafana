@@ -15,6 +15,7 @@ interface NestedRowProps {
   requestNestedRows: (row: ResourceRow) => Promise<void>;
   onRowSelectedChange: (row: ResourceRow, selected: boolean) => void;
   selectableEntryTypes: ResourceRowType[];
+  isSelectionSummary?: boolean;
 }
 
 const NestedRow: React.FC<NestedRowProps> = ({
@@ -24,6 +25,7 @@ const NestedRow: React.FC<NestedRowProps> = ({
   requestNestedRows,
   onRowSelectedChange,
   selectableEntryTypes,
+  isSelectionSummary,
 }) => {
   const styles = useStyles2(getStyles);
   const [rowStatus, setRowStatus] = useState<'open' | 'closed' | 'loading'>('closed');
@@ -68,6 +70,7 @@ const NestedRow: React.FC<NestedRowProps> = ({
             onToggleCollapse={onRowToggleCollapse}
             onSelectedChange={onRowSelectedChange}
             isSelectable={selectableEntryTypes.some((type) => type === row.type)}
+            isSelectionSummary={isSelectionSummary}
           />
         </td>
 
@@ -88,6 +91,7 @@ const NestedRow: React.FC<NestedRowProps> = ({
             requestNestedRows={requestNestedRows}
             onRowSelectedChange={onRowSelectedChange}
             selectableEntryTypes={selectableEntryTypes}
+            isSelectionSummary={isSelectionSummary}
           />
         ))}
 

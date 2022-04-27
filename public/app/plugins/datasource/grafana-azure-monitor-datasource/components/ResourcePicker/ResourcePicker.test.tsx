@@ -40,7 +40,7 @@ const defaultProps = {
 
 describe('AzureMonitor ResourcePicker', () => {
   beforeEach(() => {
-    window.HTMLElement.prototype.scrollIntoView = function () {};
+    window.HTMLElement.prototype.scrollIntoView = jest.fn();
   });
   it('should pre-load subscriptions when there is no existing selection', async () => {
     render(<ResourcePicker {...defaultProps} resourceURI={noResourceURI} />);
@@ -75,6 +75,12 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(collapseSubscriptionBtn).toBeInTheDocument();
     const collapseResourceGroupBtn = await screen.findByLabelText('Collapse A Great Resource Group');
     expect(collapseResourceGroupBtn).toBeInTheDocument();
+  });
+
+  it('scrolls down to the selected resource', async () => {
+    render(<ResourcePicker {...defaultProps} resourceURI={singleResourceSelectionURI} />);
+    await screen.findByLabelText('Collapse A Great Resource Group');
+    expect(window.HTMLElement.prototype.scrollIntoView).toBeCalledTimes(1);
   });
 
   it('should be able to expand a subscription when clicked and reveal resource groups', async () => {

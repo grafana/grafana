@@ -187,6 +187,7 @@ const ResourcePicker = ({
                           requestNestedRows={requestNestedRows}
                           onRowSelectedChange={handleSelectionChanged}
                           selectableEntryTypes={selectableEntryTypes}
+                          isSelectionSummary={true}
                         />
                       ))}
                     </tbody>
