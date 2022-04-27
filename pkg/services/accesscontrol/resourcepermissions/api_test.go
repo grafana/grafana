@@ -417,59 +417,6 @@ func TestApi_setUserPermission(t *testing.T) {
 	}
 }
 
-type uidSolverTestCase struct {
-	desc           string
-	uid            string
-	resourceID     string
-	expectedStatus int
-}
-
-func TestApi_UidSolver(t *testing.T) {
-	tests := []uidSolverTestCase{
-		{
-			desc:           "expect uid to be mapped to id",
-			uid:            "resourceUID",
-			resourceID:     "1",
-			expectedStatus: http.StatusOK,
-		},
-		{
-			desc:           "expect 404 when uid is not mapped to an id",
-			uid:            "notfound",
-			resourceID:     "1",
-			expectedStatus: http.StatusNotFound,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			userPermissions := []*accesscontrol.Permission{
-				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
-				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
-				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
-			}
-
-			service, sql := setupTestEnvironment(t, userPermissions, withSolver(testOptions, testSolver))
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{
-				1: accesscontrol.GroupScopesByAction(userPermissions),
-			}}, service)
-
-			seedPermissions(t, tt.resourceID, sql, service)
-
-			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.uid)
-			assert.Equal(t, tt.expectedStatus, recorder.Code)
-
-			if tt.expectedStatus == http.StatusOK {
-				checkSeededPermissions(t, permissions)
-			}
-		})
-	}
-}
-
-func withSolver(options Options, solver UidSolver) Options {
-	options.UidSolver = solver
-	return options
-}
-
 type inheritSolverTestCase struct {
 	desc           string
 	resourceID     string
