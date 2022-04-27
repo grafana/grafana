@@ -45,7 +45,7 @@ func TestValidateRoutes(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.desc, func(t *testing.T) {
-				err := c.route.validate()
+				err := c.route.validateChild()
 
 				require.NoError(t, err)
 			})
@@ -114,7 +114,7 @@ func TestValidateRoutes(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.desc, func(t *testing.T) {
-				err := c.route.validate()
+				err := c.route.validateChild()
 
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expMsg)
@@ -129,7 +129,7 @@ func TestValidateRoutes(t *testing.T) {
 				GroupByStr: []string{"abc", "def"},
 			}
 
-			_ = route.validate()
+			_ = route.validateChild()
 
 			require.False(t, route.GroupByAll)
 			require.Equal(t, []model.LabelName{"abc", "def"}, route.GroupBy)
@@ -141,7 +141,7 @@ func TestValidateRoutes(t *testing.T) {
 				GroupByStr: []string{"..."},
 			}
 
-			_ = route.validate()
+			_ = route.validateChild()
 
 			require.True(t, route.GroupByAll)
 			require.Nil(t, route.GroupBy)
@@ -153,9 +153,9 @@ func TestValidateRoutes(t *testing.T) {
 				GroupByStr: []string{"abc", "def"},
 			}
 
-			err := route.validate()
+			err := route.validateChild()
 			require.NoError(t, err)
-			err = route.validate()
+			err = route.validateChild()
 			require.NoError(t, err)
 
 			require.False(t, route.GroupByAll)
@@ -176,7 +176,7 @@ func TestValidateRoutes(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.desc, func(t *testing.T) {
-				err := c.route.ValidateRoot()
+				err := c.route.Validate()
 
 				require.NoError(t, err)
 			})
@@ -247,7 +247,7 @@ func TestValidateRoutes(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.desc, func(t *testing.T) {
-				err := c.route.ValidateRoot()
+				err := c.route.Validate()
 
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expMsg)
