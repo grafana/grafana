@@ -1,14 +1,14 @@
-import { css } from '@emotion/css';
+import { cx } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Icon, Input, LoadingPlaceholder, Tooltip, useStyles2, Collapse, Label } from '@grafana/ui';
 
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
 import messageFromError from '../../utils/messageFromError';
 import { Space } from '../Space';
 
-import NestedResourceTable from './NestedResourceTable';
+import NestedRow from './NestedRow';
+import getStyles from './styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
 import { addResources, findRow, parseResourceURI } from './utils';
 
@@ -142,29 +142,61 @@ const ResourcePicker = ({
         </div>
       ) : (
         <>
-          <NestedResourceTable
-            rows={azureRows}
-            requestNestedRows={requestNestedRows}
-            onRowSelectedChange={handleSelectionChanged}
-            selectedRows={selectedResourceRows}
-            selectableEntryTypes={selectableEntryTypes}
-          />
+          <table className={styles.table}>
+            <thead>
+              <tr className={cx(styles.row, styles.header)}>
+                <td className={styles.cell}>Scope</td>
+                <td className={styles.cell}>Type</td>
+                <td className={styles.cell}>Location</td>
+              </tr>
+            </thead>
+          </table>
+
+          <div className={styles.tableScroller}>
+            <table className={styles.table}>
+              <tbody>
+                {azureRows.map((row) => (
+                  <NestedRow
+                    key={row.uri}
+                    row={row}
+                    selectedRows={selectedResourceRows}
+                    level={0}
+                    requestNestedRows={requestNestedRows}
+                    onRowSelectedChange={handleSelectionChanged}
+                    selectableEntryTypes={selectableEntryTypes}
+                    scrollIntoView={true}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <div className={styles.selectionFooter}>
             {selectedResourceRows.length > 0 && (
               <>
                 <h5>Selection</h5>
-                <NestedResourceTable
-                  rows={selectedResourceRows}
-                  requestNestedRows={requestNestedRows}
-                  onRowSelectedChange={handleSelectionChanged}
-                  selectedRows={selectedResourceRows}
-                  noHeader={true}
-                  selectableEntryTypes={selectableEntryTypes}
-                />
+
+                <div className={styles.tableScroller}>
+                  <table className={styles.table}>
+                    <tbody>
+                      {selectedResourceRows.map((row) => (
+                        <NestedRow
+                          key={row.uri}
+                          row={row}
+                          selectedRows={selectedResourceRows}
+                          level={0}
+                          requestNestedRows={requestNestedRows}
+                          onRowSelectedChange={handleSelectionChanged}
+                          selectableEntryTypes={selectableEntryTypes}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
                 <Space v={2} />
               </>
             )}
+
             <Collapse
               collapsible
               label="Advanced"
@@ -229,18 +261,3 @@ const ResourcePicker = ({
 };
 
 export default ResourcePicker;
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  selectionFooter: css({
-    position: 'sticky',
-    bottom: 0,
-    background: theme.colors.background.primary,
-    paddingTop: theme.spacing(2),
-  }),
-  loadingWrapper: css({
-    textAlign: 'center',
-    paddingTop: theme.spacing(2),
-    paddingBottom: theme.spacing(2),
-    color: theme.colors.text.secondary,
-  }),
-});
