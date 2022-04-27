@@ -1,6 +1,6 @@
 +++
 title = "Force a user to logout from Grafana"
-aliases = ["docs/sources/administration/manage-users-and-permissions/manage-server-users/force-user-logout.md"]
+aliases = ["docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/force-user-logout.md"]
 weight = 90
 +++
 
