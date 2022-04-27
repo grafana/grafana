@@ -55,13 +55,13 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     return resources;
   }
 
-  async fetchNestedRowData(parentRow: ResourceRow, existingRows: ResourceRowGroup): Promise<ResourceRowGroup> {
+  async fetchAndAppendNestedRow(rows: ResourceRowGroup, parentRow: ResourceRow): Promise<ResourceRowGroup> {
     const nestedRows =
       parentRow.type === ResourceRowType.Subscription
         ? await this.getResourceGroupsBySubscriptionId(parentRow.id)
         : await this.getResourcesForResourceGroup(parentRow.id);
 
-    return addResources(existingRows, parentRow.uri, nestedRows);
+    return addResources(rows, parentRow.uri, nestedRows);
   }
 
   // private

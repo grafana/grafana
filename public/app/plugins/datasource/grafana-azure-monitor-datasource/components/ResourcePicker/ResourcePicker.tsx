@@ -86,7 +86,7 @@ const ResourcePicker = ({
       }
 
       try {
-        const nestedRows = await resourcePickerData.fetchNestedRowData(parentRow, rows);
+        const nestedRows = await resourcePickerData.fetchAndAppendNestedRow(rows, parentRow);
         setRows(nestedRows);
       } catch (error) {
         setErrorMessage(messageFromError(error));
