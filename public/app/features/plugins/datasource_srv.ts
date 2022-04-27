@@ -1,5 +1,11 @@
-// Services & Utils
-import { importDataSourcePlugin } from './plugin_loader';
+import {
+  AppEvents,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataSourceRef,
+  DataSourceSelectItem,
+  ScopedVars,
+} from '@grafana/data';
 import {
   GetDataSourceListFilters,
   DataSourceSrv as DataSourceService,
@@ -9,25 +15,18 @@ import {
   getLegacyAngularInjector,
   getBackendSrv,
 } from '@grafana/runtime';
-// Types
-import {
-  AppEvents,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  DataSourceRef,
-  DataSourceSelectItem,
-  ScopedVars,
-} from '@grafana/data';
-// Pretend Datasource
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import appEvents from 'app/core/app_events';
+import config from 'app/core/config';
 import {
   dataSource as expressionDatasource,
   ExpressionDatasourceUID,
   instanceSettings as expressionInstanceSettings,
 } from 'app/features/expressions/ExpressionDatasource';
+
 import { DataSourceVariableModel } from '../variables/types';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import appEvents from 'app/core/app_events';
-import config from 'app/core/config';
+
+import { importDataSourcePlugin } from './plugin_loader';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID

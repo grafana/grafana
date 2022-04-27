@@ -1,4 +1,5 @@
 import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
+
 import { sortDataFrameByTime } from './sortDataFrame';
 
 const inputFrame: DataFrame = {

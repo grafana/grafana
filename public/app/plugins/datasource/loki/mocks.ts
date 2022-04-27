@@ -1,7 +1,9 @@
-import { LokiDatasource, LOKI_ENDPOINT } from './datasource';
 import { DataSourceSettings } from '@grafana/data';
-import { LokiOptions } from './types';
+
 import { createDatasourceSettings } from '../../../features/datasources/mocks';
+
+import { LokiDatasource, LOKI_ENDPOINT } from './datasource';
+import { LokiOptions } from './types';
 
 interface Labels {
   [label: string]: string[];
@@ -19,7 +21,7 @@ export function makeMockLokiDatasource(labelsAndValues: Labels, series?: SeriesF
   const lokiLabelsAndValuesEndpointRegex = /^\/loki\/api\/v1\/label\/(\w*)\/values/;
   const lokiSeriesEndpointRegex = /^\/loki\/api\/v1\/series/;
 
-  const lokiLabelsEndpoint = `${LOKI_ENDPOINT}/label`;
+  const lokiLabelsEndpoint = `${LOKI_ENDPOINT}/labels`;
   const rangeMock = {
     start: 1560153109000,
     end: 1560163909000,

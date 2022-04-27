@@ -395,6 +395,6 @@ func (s mockDatasourceService) GetDataSourcesByType(ctx context.Context, query *
 	return nil
 }
 
-func (s mockDatasourceService) GetHTTPTransport(ds *models.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
+func (s mockDatasourceService) GetHTTPTransport(ctx context.Context, ds *models.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
 	return provider.GetTransport()
 }

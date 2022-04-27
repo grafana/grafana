@@ -1,11 +1,11 @@
+import { ScopedVars } from './ScopedVars';
+import { QueryResultBase, Labels, NullValueMode } from './data';
+import { DataLink, LinkModel } from './dataLink';
+import { DisplayProcessor, DisplayValue } from './displayValue';
+import { FieldColor } from './fieldColor';
 import { ThresholdsConfig } from './thresholds';
 import { ValueMapping } from './valueMapping';
-import { QueryResultBase, Labels, NullValueMode } from './data';
-import { DisplayProcessor, DisplayValue } from './displayValue';
-import { DataLink, LinkModel } from './dataLink';
 import { Vector } from './vector';
-import { FieldColor } from './fieldColor';
-import { ScopedVars } from './ScopedVars';
 
 /** @public */
 export enum FieldType {

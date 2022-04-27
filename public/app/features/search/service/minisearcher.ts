@@ -1,11 +1,13 @@
+import { isArray, isString } from 'lodash';
 import MiniSearch from 'minisearch';
+
 import { ArrayVector, DataFrame, DataSourceRef, Field, FieldType, getDisplayProcessor, Vector } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { GrafanaSearcher, QueryFilters, QueryResponse } from './types';
 import { filterFrame, getRawIndexData, RawIndexData, rawIndexSupplier } from './backend';
+import { GrafanaSearcher, QueryFilters, QueryResponse } from './types';
+
 import { LocationInfo } from '.';
-import { isArray, isString } from 'lodash';
 
 export type SearchResultKind = keyof RawIndexData;
 

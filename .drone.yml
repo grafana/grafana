@@ -1222,7 +1222,7 @@ depends_on:
 - main-build-e2e-publish
 - main-integration-tests
 kind: pipeline
-name: windows-main
+name: main-windows
 platform:
   arch: amd64
   os: windows
@@ -1310,9 +1310,9 @@ depends_on:
 - main-test
 - main-build-e2e-publish
 - main-integration-tests
-- windows-main
+- main-windows
 kind: pipeline
-name: publish-main
+name: main-publish
 node:
   type: no-parallel
 platform:
@@ -1364,10 +1364,10 @@ depends_on:
 - main-test
 - main-build-e2e-publish
 - main-integration-tests
-- windows-main
-- publish-main
+- main-windows
+- main-publish
 kind: pipeline
-name: notify-main
+name: main-notify
 platform:
   arch: amd64
   os: linux
@@ -3068,6 +3068,12 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - yarn install --immutable
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.4
+  name: yarn-install
+- commands:
   - ./bin/grabpl artifacts npm retrieve --tag v${TAG}
   depends_on:
   - grabpl
@@ -4530,6 +4536,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: aea46d49d8ad417e04e7b6bc48a7a02affb1b53a1048d0970d4ec7a0d9858eaf
+hmac: 48f6a3ade75e5993b4a49d8f1a5b7d184a63767a108b16c5f71eca6c986da9c7
 
 ...

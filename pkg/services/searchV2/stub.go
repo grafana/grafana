@@ -28,3 +28,7 @@ func (s *stubSearchService) DoDashboardQuery(ctx context.Context, user *backend.
 
 	return rsp
 }
+
+func (s *stubSearchService) Run(_ context.Context) error {
+	return nil
+}

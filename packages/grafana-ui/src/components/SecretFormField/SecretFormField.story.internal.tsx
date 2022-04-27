@@ -1,10 +1,11 @@
-import React from 'react';
 import { action } from '@storybook/addon-actions';
 import { Meta, Story } from '@storybook/react';
+import React from 'react';
+
+import { UseState } from '../../utils/storybook/UseState';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { SecretFormField, Props } from './SecretFormField';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { UseState } from '../../utils/storybook/UseState';
 
 export default {
   title: 'Forms/SecretFormField',

@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
-import { shallow } from 'enzyme';
 import * as copy from 'copy-to-clipboard';
+import { shallow } from 'enzyme';
+import React from 'react';
+
 import { Button, Tooltip } from '@grafana/ui';
+
 import CopyIcon from './CopyIcon';
 
 jest.mock('copy-to-clipboard');

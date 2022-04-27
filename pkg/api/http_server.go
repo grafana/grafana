@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/ldap"
@@ -51,6 +52,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
@@ -111,6 +113,7 @@ type HTTPServer struct {
 	Live                         *live.GrafanaLive
 	LivePushGateway              *pushhttp.Gateway
 	ThumbService                 thumbs.Service
+	ExportService                export.ExportService
 	StorageService               store.HTTPStorageService
 	ContextHandler               *contexthandler.ContextHandler
 	SQLStore                     sqlstore.Store
@@ -147,6 +150,8 @@ type HTTPServer struct {
 	DashboardsnapshotsService    *dashboardsnapshots.Service
 	PluginSettings               *pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
+	preferenceService            pref.Service
+	entityEventsService          store.EntityEventsService
 }
 
 type ServerOptions struct {
@@ -168,7 +173,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	contextHandler *contexthandler.ContextHandler, features *featuremgmt.FeatureManager,
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
-	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer,
+	quotaService *quota.QuotaService, socialService social.Service, tracer tracing.Tracer, exportService export.ExportService,
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, secretsService secrets.Service, queryDataService *query.Service,
@@ -178,7 +183,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
 	dashboardsnapshotsService *dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings *pluginSettings.Service,
-	avatarCacheServer *avatar.AvatarCacheServer,
+	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service, entityEventsService store.EntityEventsService,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -215,6 +220,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		AccessControl:                accessControl,
 		DataProxy:                    dataSourceProxy,
 		SearchService:                searchService,
+		ExportService:                exportService,
 		Live:                         live,
 		LivePushGateway:              livePushGateway,
 		PluginContextProvider:        plugCtxProvider,
@@ -251,6 +257,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		PluginSettings:               pluginSettings,
 		permissionServices:           permissionsServices,
 		AvatarCacheServer:            avatarCacheServer,
+		preferenceService:            preferenceService,
+		entityEventsService:          entityEventsService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

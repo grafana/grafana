@@ -1,15 +1,18 @@
 import React, { useMemo, useState } from 'react';
-import { Drawer, Tab, TabsBar } from '@grafana/ui';
-import { SaveDashboardData, SaveDashboardModalProps, SaveDashboardOptions } from './types';
-import { jsonDiff } from '../VersionHistory/utils';
 import { useAsync } from 'react-use';
+
+import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { useDashboardSave } from './useDashboardSave';
-import { SaveProvisionedDashboardForm } from './forms/SaveProvisionedDashboardForm';
+
+import { jsonDiff } from '../VersionHistory/utils';
+
+import { SaveDashboardDiff } from './SaveDashboardDiff';
 import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
 import { SaveDashboardForm } from './forms/SaveDashboardForm';
-import { SaveDashboardDiff } from './SaveDashboardDiff';
+import { SaveProvisionedDashboardForm } from './forms/SaveProvisionedDashboardForm';
+import { SaveDashboardData, SaveDashboardModalProps, SaveDashboardOptions } from './types';
+import { useDashboardSave } from './useDashboardSave';
 
 export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCopy }: SaveDashboardModalProps) => {
   const [options, setOptions] = useState<SaveDashboardOptions>({});

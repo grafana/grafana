@@ -1,8 +1,9 @@
-import { getCategories } from './categories';
+import { TimeZone } from '../types';
 import { DecimalCount } from '../types/displayValue';
+
+import { getCategories } from './categories';
 import { toDateTimeValueFormatter } from './dateTimeFormatters';
 import { getOffsetFromSIPrefix, SIPrefix, currency } from './symbolFormatters';
-import { TimeZone } from '../types';
 
 export interface FormattedValue {
   text: string;

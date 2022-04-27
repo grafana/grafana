@@ -1,9 +1,10 @@
-import { ThresholdsMode, Field, FieldType, FieldColorModeId } from '../types';
-import { sortThresholds } from './thresholds';
-import { ArrayVector } from '../vector/ArrayVector';
-import { getScaleCalculator } from './scale';
 import { createTheme } from '../themes';
+import { ThresholdsMode, Field, FieldType, FieldColorModeId } from '../types';
 import { getColorForTheme } from '../utils';
+import { ArrayVector } from '../vector/ArrayVector';
+
+import { getScaleCalculator } from './scale';
+import { sortThresholds } from './thresholds';
 
 describe('getScaleCalculator', () => {
   it('should return percent, threshold and color', () => {

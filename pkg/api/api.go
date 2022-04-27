@@ -354,6 +354,12 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
 			dashboardRoute.Get("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))
 			dashboardRoute.Delete("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsDelete)), routing.Wrap(hs.DeleteDashboardByUID))
+			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
+				dashUidRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
+					dashboardPermissionRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsPermissionsRead)), routing.Wrap(hs.GetDashboardPermissionList))
+					dashboardPermissionRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsPermissionsWrite)), routing.Wrap(hs.UpdateDashboardPermissions))
+				})
+			})
 
 			if hs.ThumbService != nil {
 				dashboardRoute.Get("/uid/:uid/img/:kind/:theme", hs.ThumbService.GetImage)
@@ -371,6 +377,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
 			dashboardRoute.Get("/tags", hs.GetDashboardTags)
 
+			// Deprecated: use /uid/:uid API instead.
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
 				dashIdRoute.Get("/versions", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersions))
 				dashIdRoute.Get("/versions/:id", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersion))
@@ -514,6 +521,11 @@ func (hs *HTTPServer) registerRoutes() {
 			adminRoute.Post("/crawler/start", reqGrafanaAdmin, routing.Wrap(hs.ThumbService.StartCrawler))
 			adminRoute.Post("/crawler/stop", reqGrafanaAdmin, routing.Wrap(hs.ThumbService.StopCrawler))
 			adminRoute.Get("/crawler/status", reqGrafanaAdmin, routing.Wrap(hs.ThumbService.CrawlerStatus))
+		}
+
+		if hs.Features.IsEnabled(featuremgmt.FlagExport) {
+			adminRoute.Get("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleGetStatus))
+			adminRoute.Post("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleRequestExport))
 		}
 
 		adminRoute.Post("/provisioning/dashboards/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersDashboards)), routing.Wrap(hs.AdminProvisioningReloadDashboards))

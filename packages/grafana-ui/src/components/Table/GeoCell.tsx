@@ -1,7 +1,8 @@
-import React from 'react';
-import { TableCellProps } from './types';
-import { Geometry } from 'ol/geom';
 import WKT from 'ol/format/WKT';
+import { Geometry } from 'ol/geom';
+import React from 'react';
+
+import { TableCellProps } from './types';
 
 export function GeoCell(props: TableCellProps): JSX.Element {
   const { cell, tableStyles, cellProps } = props;

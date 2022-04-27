@@ -1,5 +1,7 @@
-import React, { FormEvent, useEffect, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FormEvent, useEffect, useRef, useState } from 'react';
+
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
   Button,
   Checkbox,
@@ -12,7 +14,6 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 import { OrgRole, Role } from 'app/types';
 

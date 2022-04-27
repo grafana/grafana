@@ -5,9 +5,11 @@ import {
   RulerGrafanaRuleDTO,
   RulerRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
+
 import { deleteRulerRulesGroup, fetchRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from '../api/ruler';
 import { RuleFormValues } from '../types/rule-form';
 import * as ruleId from '../utils/rule-id';
+
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { formValuesToRulerGrafanaRuleDTO, formValuesToRulerRuleDTO } from './rule-form';
 import {
@@ -186,28 +188,22 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
 
     await setRulerRuleGroup(rulerConfig, namespace, payload);
 
-    return { uid: '', ruleSourceName: GRAFANA_RULES_SOURCE_NAME };
+    return { uid: newRule.grafana_alert.uid ?? '', ruleSourceName: GRAFANA_RULES_SOURCE_NAME };
   };
 
-  // we can't move the rule in a single atomic operation so we have to
-  // 1. add the rule to the new group
-  // 2. remove the rule from the old one
+  // move the rule to another namespace / groupname
   const moveGrafanaRule = async (
     namespace: string,
     group: { name: string; interval: string },
     existingRule: RuleWithLocation,
     newRule: PostableRuleGrafanaRuleDTO
   ): Promise<RuleIdentifier> => {
+    // make sure our updated alert has the same UID as before
+    // that way the rule is automatically moved to the new namespace / group name
+    copyGrafanaUID(existingRule, newRule);
+
     // add the new rule to the requested namespace and group
     const identifier = await addRuleToNamespaceAndGroup(namespace, group, newRule);
-
-    // remove the rule from the previous namespace and group
-    await deleteRule({
-      ruleSourceName: existingRule.ruleSourceName,
-      namespace: existingRule.namespace,
-      group: existingRule.group,
-      rule: newRule as RulerGrafanaRuleDTO,
-    });
 
     return identifier;
   };
@@ -217,19 +213,13 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     newRule: PostableRuleGrafanaRuleDTO,
     interval: string
   ): Promise<RuleIdentifier> => {
-    // type guard to make sure we're working with a Grafana managed rule
-    if (!isGrafanaRulerRule(existingRule.rule)) {
-      throw new Error('The rule is not a Grafana managed rule');
-    }
-
     // make sure our updated alert has the same UID as before
-    const uid = existingRule.rule.grafana_alert.uid;
-    newRule.grafana_alert.uid = uid;
+    copyGrafanaUID(existingRule, newRule);
 
     // create the new array of rules we want to send to the group
     const newRules = existingRule.group.rules
       .filter((rule): rule is RulerGrafanaRuleDTO => isGrafanaRulerRule(rule))
-      .filter((rule) => rule.grafana_alert.uid !== uid)
+      .filter((rule) => rule.grafana_alert.uid !== existingRule.rule.grafana_alert.uid)
       .concat(newRule as RulerGrafanaRuleDTO);
 
     await setRulerRuleGroup(rulerConfig, existingRule.namespace, {
@@ -238,7 +228,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
       rules: newRules,
     });
 
-    return { uid: '', ruleSourceName: GRAFANA_RULES_SOURCE_NAME };
+    return { uid: existingRule.rule.grafana_alert.uid, ruleSourceName: GRAFANA_RULES_SOURCE_NAME };
   };
 
   // Would be nice to somehow align checking of ruler type between different methods
@@ -249,4 +239,18 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     saveLotexRule,
     saveGrafanaRule,
   };
+}
+
+//copy the Grafana rule UID from the old rule to the new rule
+function copyGrafanaUID(
+  oldRule: RuleWithLocation,
+  newRule: PostableRuleGrafanaRuleDTO
+): asserts oldRule is RuleWithLocation<RulerGrafanaRuleDTO> {
+  // type guard to make sure we're working with a Grafana managed rule
+  if (!isGrafanaRulerRule(oldRule.rule)) {
+    throw new Error('The rule is not a Grafana managed rule');
+  }
+
+  const uid = oldRule.rule.grafana_alert.uid;
+  newRule.grafana_alert.uid = uid;
 }
