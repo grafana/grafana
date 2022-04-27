@@ -223,6 +223,15 @@ func TestAlertmanagerConfig(t *testing.T) {
 			body := asGettableUserConfig(t, response)
 			require.Equal(t, ngmodels.ProvenanceNone, body.AlertmanagerConfig.Route.Provenance)
 		})
+		t.Run("contact point from GET config has no provenance", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+
+			response := sut.RouteGetAlertingConfig(rc)
+
+			body := asGettableUserConfig(t, response)
+			require.Equal(t, ngmodels.ProvenanceNone, body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
+		})
 	})
 
 	t.Run("when objects are provisioned", func(t *testing.T) {
@@ -235,6 +244,26 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 			body := asGettableUserConfig(t, response)
 			require.Equal(t, ngmodels.ProvenanceAPI, body.AlertmanagerConfig.Route.Provenance)
+		})
+		t.Run("contact point from GET config has expected provenance", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+			request := createAmConfigRequest(t)
+
+			_ = sut.RoutePostAlertingConfig(rc, request)
+
+			response := sut.RouteGetAlertingConfig(rc)
+			body := asGettableUserConfig(t, response)
+
+			cpUID := body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].UID
+			require.NotEmpty(t, cpUID)
+
+			setContactPointProvenance(t, 1, cpUID, sut.mam.ProvStore)
+
+			response = sut.RouteGetAlertingConfig(rc)
+			body = asGettableUserConfig(t, response)
+
+			require.Equal(t, ngmodels.ProvenanceAPI, body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
 		})
 	})
 }
@@ -563,9 +592,16 @@ func createRequestCtxInOrg(org int64) *models.ReqContext {
 }
 
 // setRouteProvenance marks an org's routing tree as provisioned.
-func setRouteProvenance(t *testing.T, org int64, ps provisioning.ProvisioningStore) {
+func setRouteProvenance(t *testing.T, orgID int64, ps provisioning.ProvisioningStore) {
 	t.Helper()
-	err := ps.SetProvenance(context.Background(), &apimodels.Route{}, org, ngmodels.ProvenanceAPI)
+	err := ps.SetProvenance(context.Background(), &apimodels.Route{}, orgID, ngmodels.ProvenanceAPI)
+	require.NoError(t, err)
+}
+
+// setContactPointProvenance marks a contact point as provisioned.
+func setContactPointProvenance(t *testing.T, orgID int64, UID string, ps provisioning.ProvisioningStore) {
+	t.Helper()
+	err := ps.SetProvenance(context.Background(), &apimodels.EmbeddedContactPoint{UID: UID}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 
