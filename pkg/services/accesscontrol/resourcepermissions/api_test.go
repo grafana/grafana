@@ -528,13 +528,6 @@ var testInheritedScopeSolver = func(ctx context.Context, orgID int64, id string)
 	return nil, errors.New("not found")
 }
 
-var testSolver = func(ctx context.Context, orgID int64, uid string) (int64, error) {
-	if uid == "resourceUID" {
-		return 1, nil
-	}
-	return 0, errors.New("not found")
-}
-
 func getPermission(t *testing.T, server *web.Mux, resource, resourceID string) ([]resourcePermissionDTO, *httptest.ResponseRecorder) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/%s", resource, resourceID), nil)
 	require.NoError(t, err)
