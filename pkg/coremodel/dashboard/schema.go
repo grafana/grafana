@@ -77,12 +77,15 @@ type model struct {
 			Name       string `json:"name"`
 			Type       string `json:"type"`
 			BuiltIn    uint8  `json:"builtIn"`
-			Datasource string `json:"datasource"`
-			Enable     bool   `json:"enable"`
-			Hide       bool   `json:"hide,omitempty"`
-			IconColor  string `json:"iconColor"`
-			RawQuery   string `json:"rawQuery,omitempty"`
-			ShowIn     int    `json:"showIn"`
+			Datasource struct {
+				Type string `json:"type"`
+				Uid  string `json:"uid"`
+			} `json:"datasource"`
+			Enable    bool   `json:"enable"`
+			Hide      bool   `json:"hide,omitempty"`
+			IconColor string `json:"iconColor"`
+			RawQuery  string `json:"rawQuery,omitempty"`
+			ShowIn    int    `json:"showIn"`
 		} `json:"list"`
 	} `json:"annotations"`
 	Refresh       interface{}   `json:"refresh"` // (bool|string)
