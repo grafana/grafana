@@ -134,7 +134,7 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 		}
 		config.Route.Provenance = provenance
 	}
-	cpProvs, err := moa.ProvStore.GetProvenances(ctx, org, "contactPoint")
+	cpProvs, err := moa.ProvStore.GetProvenances(ctx, org, provisioning.EmbeddedContactPoint{}.ResourceType())
 	if err != nil {
 		return definitions.GettableApiAlertingConfig{}, err
 	}
