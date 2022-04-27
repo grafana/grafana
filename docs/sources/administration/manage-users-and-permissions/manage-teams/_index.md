@@ -1,6 +1,6 @@
 +++
 title = "Manage teams"
-aliases = ["/docs/grafana/latest/manage-users/add-or-remove-user-from-team/","/docs/grafana/latest/manage-users/create-or-remove-team/", "docs/sources/manage-users/manage-teams/index.md", "docs/sources/administration/manage-users-and-permissions/manage-teams/_index.md"]
+aliases = ["/docs/grafana/latest/manage-users/add-or-remove-user-from-team/","/docs/grafana/latest/manage-users/create-or-remove-team/", "docs/grafana/latest/manage-users/manage-teams/index.md", "docs/grafana/latest/administration/manage-users-and-permissions/manage-teams/_index.md"]
 weight = 600
 +++
 
