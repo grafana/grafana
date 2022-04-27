@@ -6,7 +6,7 @@ export const isCloudWatchLogsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwa
   cloudwatchQuery.queryMode === 'Logs';
 
 export const isCloudWatchMetricsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchMetricsQuery =>
-  cloudwatchQuery.queryMode === 'Metrics';
+  cloudwatchQuery.queryMode === 'Metrics' || !cloudwatchQuery.hasOwnProperty('queryMode');
 
 export const isCloudWatchAnnotationQuery = (
   cloudwatchQuery: CloudWatchQuery

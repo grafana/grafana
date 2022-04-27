@@ -167,3 +167,10 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
   }
   throw new Error('unable to parse old variable query');
 }
+
+export function migrateDynamicLabels(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
+  // if (query.hasOwnProperty('label') && query.label === '') {
+
+  // }
+  return query;
+}

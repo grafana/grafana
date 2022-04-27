@@ -20,7 +20,8 @@ type cloudWatchQuery struct {
 	ReturnData       bool
 	Dimensions       map[string][]string
 	Period           int
-	Alias            string
+	Alias            *string
+	Label            string
 	MatchExact       bool
 	UsedExpression   string
 	MetricQueryType  metricQueryType

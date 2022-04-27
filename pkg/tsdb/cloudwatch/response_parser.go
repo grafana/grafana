@@ -150,7 +150,10 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 				timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []*time.Time{})
 				valueField := data.NewField(data.TimeSeriesValueFieldName, labels, []*float64{})
 
-				frameName := formatAlias(query, query.Statistic, labels, label)
+				frameName := label
+				if query.Alias != nil && label == "" {
+					frameName = formatAlias(query, query.Statistic, labels, label)
+				}
 				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: frameName, Links: createDataLinks(deepLink)})
 
 				emptyFrame := data.Frame{
@@ -179,7 +182,10 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 		timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, timestamps)
 		valueField := data.NewField(data.TimeSeriesValueFieldName, labels, points)
 
-		frameName := formatAlias(query, query.Statistic, labels, label)
+		frameName := label
+		if query.Alias != nil && label == "" {
+			frameName = formatAlias(query, query.Statistic, labels, label)
+		}
 		valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: frameName, Links: createDataLinks(deepLink)})
 
 		frame := data.Frame{
@@ -233,13 +239,13 @@ func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]stri
 		stat = strings.Trim(query.Expression[sIndex+1:pIndex], " '")
 	}
 
-	if len(query.Alias) == 0 && query.isMathExpression() {
+	if len(*query.Alias) == 0 && query.isMathExpression() {
 		return query.Id
 	}
-	if len(query.Alias) == 0 && query.isInferredSearchExpression() && !query.isMultiValuedDimensionExpression() {
+	if len(*query.Alias) == 0 && query.isInferredSearchExpression() && !query.isMultiValuedDimensionExpression() {
 		return label
 	}
-	if len(query.Alias) == 0 && query.MetricQueryType == MetricQueryTypeQuery {
+	if len(*query.Alias) == 0 && query.MetricQueryType == MetricQueryTypeQuery {
 		return label
 	}
 
@@ -262,7 +268,7 @@ func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]stri
 		}
 	}
 
-	result := aliasFormat.ReplaceAllFunc([]byte(query.Alias), func(in []byte) []byte {
+	result := aliasFormat.ReplaceAllFunc([]byte(*query.Alias), func(in []byte) []byte {
 		labelName := strings.Replace(string(in), "{{", "", 1)
 		labelName = strings.Replace(labelName, "}}", "", 1)
 		labelName = strings.TrimSpace(labelName)

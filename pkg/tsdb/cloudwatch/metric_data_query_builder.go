@@ -16,6 +16,10 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(query *cloudWatchQuery) (*clou
 		ReturnData: aws.Bool(query.ReturnData),
 	}
 
+	if query.Label != "" {
+		mdq.Label = &query.Label
+	}
+
 	switch query.getGMDAPIMode() {
 	case GMDApiModeMathExpression:
 		mdq.Period = aws.Int64(int64(query.Period))

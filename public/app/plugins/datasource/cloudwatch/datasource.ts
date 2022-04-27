@@ -281,6 +281,7 @@ export class CloudWatchDatasource
         item.id = this.templateSrv.replace(item.id, options.scopedVars);
         item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
         item.sqlExpression = this.templateSrv.replace(item.sqlExpression, options.scopedVars, 'raw');
+        item.label = this.templateSrv.replace(item.label, options.scopedVars, options.scopedVars);
 
         return {
           intervalMs: options.intervalMs,

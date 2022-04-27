@@ -152,7 +152,14 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	}
 	expression := model.Get("expression").MustString("")
 	sqlExpression := model.Get("sqlExpression").MustString("")
-	alias := model.Get("alias").MustString()
+
+	var alias *string = nil
+	aliasValue, _ := model.Get("alias").String()
+	if aliasValue != "" {
+		alias = &aliasValue
+	}
+	label := model.Get("label").MustString("")
+
 	returnData := !model.Get("hide").MustBool(false)
 	queryType := model.Get("type").MustString()
 	if queryType == "" {
@@ -191,6 +198,7 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 		MetricQueryType:  metricQueryType,
 		MetricEditorMode: metricEditorModeValue,
 		SqlExpression:    sqlExpression,
+		Label:            label,
 	}, nil
 }
 
