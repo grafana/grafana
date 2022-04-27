@@ -314,6 +314,7 @@ describe('AzureMonitor: updateSubscriptions', () => {
         azureMonitor: {
           dimensionFilters: [],
           timeGrain: '',
+          resourceUri: '',
         },
       },
     },
@@ -327,6 +328,7 @@ describe('AzureMonitor: updateSubscriptions', () => {
         azureMonitor: {
           dimensionFilters: [],
           timeGrain: '',
+          resourceUri: '',
         },
       },
     },
@@ -341,6 +343,7 @@ describe('AzureMonitor: updateSubscriptions', () => {
         azureMonitor: {
           dimensionFilters: [],
           timeGrain: '',
+          resourceUri: '',
         },
       },
     },

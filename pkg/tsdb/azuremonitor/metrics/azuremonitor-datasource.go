@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -32,7 +33,8 @@ type AzureMonitorDatasource struct {
 
 var (
 	// Used to convert the aggregation value to the Azure enum for deep linking
-	aggregationTypeMap = map[string]int{"None": 0, "Total": 1, "Minimum": 2, "Maximum": 3, "Average": 4, "Count": 7}
+	aggregationTypeMap   = map[string]int{"None": 0, "Total": 1, "Minimum": 2, "Maximum": 3, "Average": 4, "Count": 7}
+	resourceNameLandmark = regexp.MustCompile(`(?i)(/(?P<resourceName>[\w-\.]+)/providers/Microsoft\.Insights/metrics)`)
 )
 
 const azureMonitorAPIVersion = "2018-01-01"
@@ -74,12 +76,6 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 
 		azJSONModel := queryJSONModel.AzureMonitor
 
-		urlComponents := map[string]string{}
-		urlComponents["subscription"] = queryJSONModel.Subscription
-		urlComponents["resourceGroup"] = azJSONModel.ResourceGroup
-		urlComponents["metricDefinition"] = azJSONModel.MetricDefinition
-		urlComponents["resourceName"] = azJSONModel.ResourceName
-
 		ub := urlBuilder{
 			ResourceURI: azJSONModel.ResourceURI,
 			// Legacy, used to reconstruct resource URI if it's not present
@@ -90,6 +86,19 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 			ResourceName:        azJSONModel.ResourceName,
 		}
 		azureURL := ub.BuildMetricsURL()
+
+		resourceName := azJSONModel.ResourceName
+		if resourceName == "" {
+			resourceName = extractResourceNameFromMetricsURL(azureURL)
+		}
+
+		urlComponents := map[string]string{}
+		urlComponents["resourceURI"] = azJSONModel.ResourceURI
+		// Legacy fields used for constructing a deep link to display the query in Azure Portal.
+		urlComponents["subscription"] = queryJSONModel.Subscription
+		urlComponents["resourceGroup"] = azJSONModel.ResourceGroup
+		urlComponents["metricDefinition"] = azJSONModel.MetricDefinition
+		urlComponents["resourceName"] = resourceName
 
 		alias := azJSONModel.Alias
 
@@ -338,12 +347,18 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl string) (string,
 	}
 	escapedTime := url.QueryEscape(string(timespan))
 
-	id := fmt.Sprintf("/subscriptions/%v/resourceGroups/%v/providers/%v/%v",
-		query.UrlComponents["subscription"],
-		query.UrlComponents["resourceGroup"],
-		query.UrlComponents["metricDefinition"],
-		query.UrlComponents["resourceName"],
-	)
+	id := query.UrlComponents["resourceURI"]
+
+	if id == "" {
+		ub := urlBuilder{
+			Subscription:     query.UrlComponents["subscription"],
+			ResourceGroup:    query.UrlComponents["resourceGroup"],
+			MetricDefinition: query.UrlComponents["metricDefinition"],
+			ResourceName:     query.UrlComponents["resourceName"],
+		}
+		id = ub.buildResourceURIFromLegacyQuery()
+	}
+
 	chartDef, err := json.Marshal(map[string]interface{}{
 		"v2charts": []interface{}{
 			map[string]interface{}{
@@ -466,4 +481,21 @@ func toGrafanaUnit(unit string) string {
 	// "ByteSeconds", "Cores", "MilliCores", and "NanoCores" all both:
 	// 1. Do not have a corresponding unit in Grafana's current list.
 	// 2. Do not have the unit listed in any of Azure Monitor's supported metrics anyways.
+}
+
+func extractResourceNameFromMetricsURL(url string) string {
+	matches := resourceNameLandmark.FindStringSubmatch(url)
+	resourceName := ""
+
+	if matches == nil {
+		return resourceName
+	}
+
+	for i, name := range resourceNameLandmark.SubexpNames() {
+		if name == "resourceName" {
+			resourceName = matches[i]
+		}
+	}
+
+	return resourceName
 }

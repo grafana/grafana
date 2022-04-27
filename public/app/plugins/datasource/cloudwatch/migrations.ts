@@ -2,9 +2,9 @@ import { AnnotationQuery, DataQuery } from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
 
 import {
-  MetricEditorMode,
-  CloudWatchAnnotationQuery,
   CloudWatchMetricsQuery,
+  LegacyAnnotationQuery,
+  MetricEditorMode,
   MetricQueryType,
   VariableQuery,
   VariableQueryType,
@@ -36,9 +36,9 @@ export function migrateMultipleStatsMetricsQuery(
 // Migrates an annotation query that use more than one statistic into multiple queries
 // E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
 export function migrateMultipleStatsAnnotationQuery(
-  annotationQuery: CloudWatchAnnotationQuery
+  annotationQuery: AnnotationQuery<LegacyAnnotationQuery>
 ): Array<AnnotationQuery<DataQuery>> {
-  const newAnnotations: CloudWatchAnnotationQuery[] = [];
+  const newAnnotations: Array<AnnotationQuery<LegacyAnnotationQuery>> = [];
 
   if (annotationQuery && 'statistics' in annotationQuery && annotationQuery?.statistics?.length) {
     for (const stat of annotationQuery.statistics.splice(1)) {
@@ -53,7 +53,7 @@ export function migrateMultipleStatsAnnotationQuery(
     delete annotationQuery.statistics;
   }
 
-  return newAnnotations as Array<AnnotationQuery<DataQuery>>;
+  return newAnnotations;
 }
 
 export function migrateCloudWatchQuery(query: CloudWatchMetricsQuery) {
