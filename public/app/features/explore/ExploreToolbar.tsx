@@ -3,18 +3,25 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
 import { config, DataSourcePicker } from '@grafana/runtime';
-import { PageToolbar, SetInterval, ToolbarButton, ToolbarButtonRow } from '@grafana/ui';
+import {
+  defaultIntervals,
+  PageToolbar,
+  RefreshPicker,
+  SetInterval,
+  ToolbarButton,
+  ToolbarButtonRow,
+} from '@grafana/ui';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { ExploreId } from 'app/types/explore';
 import { StoreState } from 'app/types/store';
 
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
+import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
-import { RunButton } from './RunButton';
 import { changeDatasource } from './state/datasource';
 import { splitClose, splitOpen } from './state/main';
 import { cancelQueries, runQueries } from './state/query';
@@ -56,6 +63,35 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
   onChangeTimeSync = () => {
     const { syncTimes, exploreId } = this.props;
     syncTimes(exploreId);
+  };
+
+  renderRefreshPicker = (showSmallTimePicker: boolean) => {
+    const { loading, refreshInterval, isLive } = this.props;
+
+    let refreshPickerText: string | undefined = loading ? 'Cancel' : 'Run query';
+    let refreshPickerTooltip = undefined;
+    let refreshPickerWidth = '108px';
+    if (showSmallTimePicker) {
+      refreshPickerTooltip = refreshPickerText;
+      refreshPickerText = undefined;
+      refreshPickerWidth = '35px';
+    }
+
+    return (
+      <RefreshPicker
+        onIntervalChanged={this.onChangeRefreshInterval}
+        value={refreshInterval}
+        isLoading={loading}
+        text={refreshPickerText}
+        tooltip={refreshPickerTooltip}
+        intervals={getTimeSrv().getValidIntervals(defaultIntervals)}
+        isLive={isLive}
+        onRefresh={() => this.onRunQuery(loading)}
+        noIntervalPicker={isLive}
+        primary={true}
+        width={refreshPickerWidth}
+      />
+    );
   };
 
   render() {
@@ -144,15 +180,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
               />
             )}
 
-            <RunButton
-              refreshInterval={refreshInterval}
-              onChangeRefreshInterval={this.onChangeRefreshInterval}
-              isSmall={splitted || showSmallTimePicker}
-              isLive={isLive}
-              loading={loading || (isLive && !isPaused)}
-              onRun={this.onRunQuery}
-              showDropdown={!isLive}
-            />
+            {this.renderRefreshPicker(showSmallTimePicker)}
 
             {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
 
