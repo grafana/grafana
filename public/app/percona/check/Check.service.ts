@@ -104,6 +104,16 @@ export const CheckService = {
   runDbChecks(token?: CancelToken): Promise<void | {}> {
     return api.post<{}, {}>('/v1/management/SecurityChecks/Start', {}, false, token);
   },
+  runIndividualDbCheck(checkName: string, token?: CancelToken): Promise<void | {}> {
+    return api.post<{}, {}>(
+      '/v1/management/SecurityChecks/Start',
+      {
+        names: [checkName],
+      },
+      false,
+      token
+    );
+  },
   async getAllChecks(token?: CancelToken): Promise<CheckDetails[] | undefined> {
     const response = await api.post<AllChecks, {}>('/v1/management/SecurityChecks/List', {}, false, token);
 

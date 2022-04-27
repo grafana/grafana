@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ isLight, v1: { palette, colors } }: GrafanaTheme2) => {
+export const getStyles = ({ isLight, v1: { palette, colors, spacing } }: GrafanaTheme2) => {
   const backgroundColor = isLight ? 'rgb(247, 247, 249)' : 'rgb(22, 23, 25)';
   const borderColor = isLight ? palette.gray85 : palette.dark7;
   const cellPadding = '12px 8px';
@@ -63,6 +63,24 @@ export const getStyles = ({ isLight, v1: { palette, colors } }: GrafanaTheme2) =
           }
         }
       }
+    `,
+    header: css`
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+    `,
+    runChecksButton: css`
+      width: 140px;
+      align-items: center;
+      display: flex;
+      flex-direction: column;
+    `,
+    actionButtons: css`
+      display: flex;
+      flex: 1;
+      justify-content: flex-end;
+      padding: ${spacing.sm};
+      align-items: center;
     `,
   };
 };

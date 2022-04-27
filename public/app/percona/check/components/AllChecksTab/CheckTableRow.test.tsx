@@ -117,7 +117,7 @@ describe('CheckTableRow::', () => {
     spy.mockClear();
   });
 
-  it('should log an error if the API call fails', async () => {
+  it('should log an error if the API call for check change fails', async () => {
     const spy = jest.spyOn(CheckService, 'changeCheck').mockImplementation(() => {
       throw Error('test');
     });
@@ -125,6 +125,19 @@ describe('CheckTableRow::', () => {
     render(<CheckTableRow check={TEST_CHECK} onSuccess={fakeOnSuccess} />);
 
     fireEvent.click(screen.getByTestId('check-table-loader-button'));
+
+    expect(console.error).toBeCalledTimes(1);
+    spy.mockClear();
+  });
+
+  it('should log an error if the API call for check run fails', async () => {
+    const spy = jest.spyOn(CheckService, 'runIndividualDbCheck').mockImplementation(() => {
+      throw Error('test');
+    });
+
+    render(<CheckTableRow check={TEST_CHECK} onSuccess={fakeOnSuccess} />);
+
+    fireEvent.click(screen.getByTestId('check-table-loader-button-run'));
 
     expect(console.error).toBeCalledTimes(1);
     spy.mockClear();

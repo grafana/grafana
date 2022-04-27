@@ -7,12 +7,15 @@ import { CheckTableRowProps } from './types';
 import { Interval } from 'app/percona/check/types';
 import { ChangeCheckIntervalModal } from './ChangeCheckIntervalModal';
 import { getStyles } from './CheckTableRow.styles';
+import { appEvents } from '../../../../core/app_events';
+import { AppEvents } from '@grafana/data';
 
 const formatInterval = (interval: keyof typeof Interval): Interval => Interval[interval];
 
 export const CheckTableRow: FC<CheckTableRowProps> = ({ check, onSuccess }) => {
   const styles = useStyles(getStyles);
   const [changeCheckPending, setChangeCheckPending] = useState(false);
+  const [runCheckPending, setRunCheckPending] = useState(false);
   const [checkIntervalModalVisible, setCheckIntervalModalVisible] = useState(false);
   const { name, summary, description, disabled, interval } = check;
 
@@ -35,6 +38,18 @@ export const CheckTableRow: FC<CheckTableRowProps> = ({ check, onSuccess }) => {
     }
   };
 
+  const runIndividualCheck = async () => {
+    setRunCheckPending(true);
+    try {
+      await CheckService.runIndividualDbCheck(name);
+      appEvents.emit(AppEvents.alertSuccess, [`${summary} ${Messages.runIndividualDbCheck}`]);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setRunCheckPending(false);
+    }
+  };
+
   return (
     <>
       <tr key={name}>
@@ -44,6 +59,16 @@ export const CheckTableRow: FC<CheckTableRowProps> = ({ check, onSuccess }) => {
         <td>{formatInterval(interval)}</td>
         <td>
           <div className={styles.actionsWrapper}>
+            <LoaderButton
+              variant="primary"
+              disabled={disabled}
+              size="sm"
+              loading={runCheckPending}
+              onClick={runIndividualCheck}
+              data-testid="check-table-loader-button-run"
+            >
+              {Messages.run}
+            </LoaderButton>
             <LoaderButton
               variant={disabled ? 'primary' : 'destructive'}
               size="sm"
