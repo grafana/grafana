@@ -60,7 +60,7 @@ Grant dashboard permissions when you want to restrict or enhance dashboard acces
 
 ## Enable viewers to preview dashboards and use Explore
 
-By default, the viewer organization role does not allow viewers to create dashboards or use the Explore feature. However, by modifying a configuration setting you can allow viewers to create and preview (but not save) dashboards, and use the Explore feature.
+By default, the viewer organization role does not allow viewers to create dashboards or use the Explore feature. However, by modifying a configuration setting, you can allow viewers to edit a panel and make changes to a dashboard but not save those changes. This setting also enables viewers to use the Explore feature.
 
 This modification is useful for public Grafana installations where you want anonymous users to be able to edit panels and queries but not save or create new dashboards.
 
