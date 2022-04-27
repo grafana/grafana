@@ -239,6 +239,66 @@ func TestAlertmanagerConfig(t *testing.T) {
 	})
 }
 
+func TestSilenceCreate(t *testing.T) {
+	makeSilence := func(comment string, createdBy string,
+		startsAt, endsAt strfmt.DateTime, matchers amv2.Matchers) amv2.Silence {
+		return amv2.Silence{
+			Comment:   &comment,
+			CreatedBy: &createdBy,
+			StartsAt:  &startsAt,
+			EndsAt:    &endsAt,
+			Matchers:  matchers,
+		}
+	}
+
+	now := time.Now()
+	dt := func(t time.Time) strfmt.DateTime { return strfmt.DateTime(t) }
+	tru := true
+	testString := "testName"
+	matchers := amv2.Matchers{&amv2.Matcher{Name: &testString, IsEqual: &tru, IsRegex: &tru, Value: &testString}}
+
+	cases := []struct {
+		name    string
+		silence amv2.Silence
+		status  int
+	}{
+		{"Valid Silence",
+			makeSilence("", "tests", dt(now), dt(now.Add(1*time.Second)), matchers),
+			http.StatusAccepted,
+		},
+		{"No Comment Silence",
+			func() amv2.Silence {
+				s := makeSilence("", "tests", dt(now), dt(now.Add(1*time.Second)), matchers)
+				s.Comment = nil
+				return s
+			}(),
+			http.StatusBadRequest,
+		},
+	}
+
+	for _, cas := range cases {
+		t.Run(cas.name, func(t *testing.T) {
+			rc := models.ReqContext{
+				Context: &web.Context{
+					Req: &http.Request{},
+				},
+				SignedInUser: &models.SignedInUser{
+					OrgRole: models.ROLE_EDITOR,
+					OrgId:   1,
+				},
+			}
+
+			srv := createSut(t, nil)
+
+			resp := srv.RouteCreateSilence(&rc, amv2.PostableSilence{
+				ID:      "",
+				Silence: cas.silence,
+			})
+			require.Equal(t, cas.status, resp.Status())
+		})
+	}
+}
+
 func TestRouteCreateSilence(t *testing.T) {
 	tesCases := []struct {
 		name           string
