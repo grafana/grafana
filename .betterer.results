@@ -299,9 +299,6 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/elasticsearch/configuration/DataLinks.test.tsx:248699332": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/grafana-azure-monitor-datasource/components/deprecated/components/InsightsConfig.test.tsx:1107283234": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/plugins/datasource/influxdb/components/ConfigEditor.test.tsx:3456478975": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
