@@ -213,6 +213,8 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
         http: false,
         https: false,
         string_decoder: false,
+        os: false,
+        timers: false,
       },
     },
     module: {
