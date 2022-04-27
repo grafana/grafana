@@ -4,7 +4,6 @@ import {
   migrateMultipleStatsAnnotationQuery,
   migrateMultipleStatsMetricsQuery,
   migrateCloudWatchQuery,
-  migrateQueryAliasFormat,
   migrateVariableQuery,
 } from './migrations';
 import {
@@ -233,47 +232,6 @@ describe('migration', () => {
       expect(query.region).toBe('us-east-1');
       expect(query.resourceType).toBe('rds:db');
       expect(query.tags).toBe('{"environment":["$environment"]}');
-    });
-  });
-
-  describe('migrateQueryAliasFormat', () => {
-    const baseQuery: CloudWatchMetricsQuery = {
-      statistic: 'Average',
-      refId: 'A',
-      id: '',
-      region: 'us-east-2',
-      namespace: 'AWS/EC2',
-      period: '300',
-      alias: '',
-      metricName: 'CPUUtilization',
-      dimensions: {},
-      matchExact: false,
-      expression: '',
-    };
-    describe('old alias should be migrated', () => {
-      const cases = [
-        ['{{  metric     }}', "${PROP('MetricName')}"],
-        ['{{metric}}', "${PROP('MetricName')}"],
-        ['{{namespace}}', "${PROP('Namespace')}"],
-        ['{{period}}', "${PROP('Period')}"],
-        ['{{region}}', "${PROP('Region')}"],
-        ['{{stat}}', "${PROP('Stat')}"],
-        ['{{label}}', '${LABEL}'],
-        ['{{anything_else}}', "${PROP('Dim.anything_else')}"],
-        [
-          'some {{combination}} of {{label}} and {{metric}}',
-          "some ${PROP('Dim.combination')} of ${LABEL} and ${PROP('MetricName')}",
-        ],
-        [
-          'some {{combination  }}{{ label}} and {{metric}}',
-          "some ${PROP('Dim.combination')}${LABEL} and ${PROP('MetricName')}",
-        ],
-      ];
-      test.each(cases)('given old alias %p, it should return %p', (oldAlias, expectedResult) => {
-        const testQuery = { ...baseQuery, alias: `${oldAlias}` };
-        const result = migrateQueryAliasFormat(testQuery);
-        expect(result.alias).toBe(expectedResult);
-      });
     });
   });
 });

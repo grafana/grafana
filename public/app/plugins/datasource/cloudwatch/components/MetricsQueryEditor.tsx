@@ -6,7 +6,6 @@ import { Input } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../datasource';
 import { isMetricsQuery } from '../guards';
-import { migrateQueryAliasFormat } from '../migrations';
 import {
   CloudWatchJsonData,
   CloudWatchMetricsQuery,
@@ -40,7 +39,7 @@ export const normalizeQuery = ({
   metricEditorMode,
   ...rest
 }: CloudWatchMetricsQuery): CloudWatchMetricsQuery => {
-  const normalizedQuery = migrateQueryAliasFormat({
+  const normalizedQuery = {
     queryMode: 'Metrics' as const,
     namespace: namespace ?? '',
     metricName: metricName ?? '',
@@ -55,7 +54,7 @@ export const normalizeQuery = ({
     metricEditorMode: metricEditorMode ?? MetricEditorMode.Builder,
     sqlExpression: sqlExpression ?? '',
     ...rest,
-  });
+  };
   return !rest.hasOwnProperty('matchExact') ? { ...normalizedQuery, matchExact: true } : normalizedQuery;
 };
 

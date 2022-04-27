@@ -167,28 +167,3 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
   }
   throw new Error('unable to parse old variable query');
 }
-
-const aliasPatterns: Record<string, string> = {
-  metric: `PROP('MetricName')`,
-  namespace: `PROP('Namespace')`,
-  period: `PROP('Period')`,
-  region: `PROP('Region')`,
-  stat: `PROP('Stat')`,
-  label: `LABEL`,
-};
-
-export function migrateQueryAliasFormat(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
-  if (!query.alias) {
-    return query;
-  }
-
-  const regex = /{{\s*(.+?)\s*}}/g;
-  query.alias = query.alias?.replace(regex, (match, value) => {
-    if (aliasPatterns.hasOwnProperty(value)) {
-      return `\${${aliasPatterns[value]}}`;
-    }
-    return `\${PROP('Dim.${value}')}`;
-  });
-
-  return query;
-}
