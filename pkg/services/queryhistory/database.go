@@ -348,8 +348,6 @@ func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan i
 		}
 
 		rowsCount, err = res.RowsAffected()
-		fmt.Println("delete affected: ", rowsCount)
-		fmt.Println("delete res: ", res)
 		if err != nil {
 			return err
 		}
