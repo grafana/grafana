@@ -42,7 +42,17 @@ const useDimensionLabels = (data: PanelData | undefined, query: AzureMonitorQuer
         }
       }
     }
-    setDimensionLabels((prevLabels) => ({ ...labelsObj, ...prevLabels }));
+    setDimensionLabels((prevLabels) => {
+      const newLabels: DimensionLabels = {};
+      for (const label of Object.keys(labelsObj)) {
+        if (prevLabels[label] && labelsObj[label].size < prevLabels[label].size) {
+          newLabels[label] = prevLabels[label];
+        } else {
+          newLabels[label] = labelsObj[label];
+        }
+      }
+      return newLabels;
+    });
   }, [data?.series, query.refId]);
   return dimensionLabels;
 };
