@@ -135,7 +135,6 @@ const renderDataSource = <TQuery extends DataQuery>(
   const { alerting, dataSource, onChangeDataSource } = props;
 
   if (!onChangeDataSource) {
-    console.log(dataSource.name);
     return <em className={styles.contextInfo}>({dataSource.name})</em>;
   }
 
