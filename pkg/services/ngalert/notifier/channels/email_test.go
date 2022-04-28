@@ -220,6 +220,24 @@ func TestEmailNotifierIntegration(t *testing.T) {
 				"&lt;li&gt;Firing: AlwaysFiring at warning &lt;/li&gt;",
 			},
 		},
+		{
+			name: "template error",
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "AlwaysFiring", "severity": "warning"},
+						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
+					},
+				},
+			},
+			messageTmpl: `Hi, this is a custom template.
+				{{ if gt (len .Alerts.Firing) 0 }}
+					You have {{ len .Alerts.Firing }} alerts firing.
+					{{ range .Alerts.Firing }} Firing: {{ .DoesNotExist }} at {{ .Labels.severity }} {{ end }}
+				{{ end }}`,
+			expSubject:  "[FIRING:1]  (AlwaysFiring warning)",
+			expSnippets: []string{ExpansionErrorMessage},
+		},
 	}
 
 	for _, c := range cases {

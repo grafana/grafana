@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 // WebhookNotifier is responsible for sending
@@ -112,25 +113,24 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	as, numTruncated := truncateAlerts(wn.MaxAlerts, as)
-	var tmplErr error
-	tmpl, data := TmplText(ctx, wn.tmpl, as, wn.log, &tmplErr)
+
+	expand, data := TmplText(ctx, wn.tmpl, as, wn.log)
+
+	title, _ := expand(DefaultMessageTitleEmbed)
+	message, _ := expand(`{{ template "default.message" . }}`)
 	msg := &webhookMessage{
 		Version:         "1",
 		ExtendedData:    data,
 		GroupKey:        groupKey.String(),
 		TruncatedAlerts: numTruncated,
 		OrgID:           wn.orgID,
-		Title:           tmpl(DefaultMessageTitleEmbed),
-		Message:         tmpl(`{{ template "default.message" . }}`),
+		Title:           title,
+		Message:         message,
 	}
 	if types.Alerts(as...).Status() == model.AlertFiring {
 		msg.State = string(models.AlertStateAlerting)
 	} else {
 		msg.State = string(models.AlertStateOK)
-	}
-
-	if tmplErr != nil {
-		wn.log.Warn("failed to template webhook message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(msg)

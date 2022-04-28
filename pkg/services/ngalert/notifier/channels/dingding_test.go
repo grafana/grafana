@@ -100,12 +100,13 @@ func TestDingdingNotifier(t *testing.T) {
 				},
 			},
 			expMsg: map[string]interface{}{
-				"link": map[string]interface{}{
-					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
-					"text":       "I'm a custom template ",
-					"title":      "",
+				"actionCard": map[string]interface{}{
+					"singleTitle": "More",
+					"singleURL":   "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
+					"text":        ExpansionErrorMessage,
+					"title":       "[FIRING:2]  ",
 				},
-				"msgtype": "link",
+				"msgtype": "actionCard",
 			},
 			expMsgError: nil,
 		}, {
@@ -129,12 +130,13 @@ func TestDingdingNotifier(t *testing.T) {
 				},
 			},
 			expMsg: map[string]interface{}{
-				"link": map[string]interface{}{
-					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
-					"text":       "",
-					"title":      "",
+				"actionCard": map[string]interface{}{
+					"singleTitle": "More",
+					"singleURL":   "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
+					"text":        ExpansionErrorMessage,
+					"title":       "[FIRING:2]  ",
 				},
-				"msgtype": "link",
+				"msgtype": "actionCard",
 			},
 			expMsgError: nil,
 		}, {

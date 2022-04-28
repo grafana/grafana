@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 )
 
 func TestSensuGoNotifier(t *testing.T) {
@@ -128,6 +128,41 @@ func TestSensuGoNotifier(t *testing.T) {
 				"url": "http://sensu-api.local:8080"
 			}`,
 			expInitError: `could not find the API key property in settings`,
+		},
+		{
+			name:     "Templating error",
+			settings: `{"url": "http://sensu-api.local:8080", "apikey": "<apikey>", "entity": "entity-{{ .DoesNotExist }}"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"__alert_rule_uid__": "rule uid", "alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"entity": map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name":      "default",
+						"namespace": "default",
+					},
+				},
+				"check": map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name": "default",
+						"labels": map[string]string{
+							"ruleURL": "http://localhost/alerting/list",
+						},
+					},
+					"output":   "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+					"issued":   timeNow().Unix(),
+					"interval": 86400,
+					"status":   2,
+					"handlers": nil,
+				},
+				"ruleUrl": "http://localhost/alerting/list",
+			},
+			expMsgError: nil,
 		},
 	}
 

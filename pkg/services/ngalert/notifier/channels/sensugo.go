@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 type SensuGoNotifier struct {
@@ -101,18 +102,17 @@ func NewSensuGoNotifier(config *SensuGoConfig, ns notifications.WebhookSender, t
 func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	sn.log.Debug("Sending Sensu Go result")
 
-	var tmplErr error
-	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
+	expand, _ := TmplText(ctx, sn.tmpl, as, sn.log)
 
 	// Sensu Go alerts require an entity and a check. We set it to the user-specified
 	// value (optional), else we fallback and use the grafana rule anme  and ruleID.
-	entity := tmpl(sn.Entity)
-	if entity == "" {
+	entity, err := expand(sn.Entity)
+	if entity == "" || err != nil {
 		entity = "default"
 	}
 
-	check := tmpl(sn.Check)
-	if check == "" {
+	check, err := expand(sn.Check)
+	if check == "" || err != nil {
 		check = "default"
 	}
 
@@ -123,16 +123,18 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		status = 2
 	}
 
-	namespace := tmpl(sn.Namespace)
-	if namespace == "" {
+	namespace, err := expand(sn.Namespace)
+	if namespace == "" || err != nil {
 		namespace = "default"
 	}
 
 	var handlers []string
 	if sn.Handler != "" {
-		handlers = []string{tmpl(sn.Handler)}
+		h, _ := expand(sn.Handler)
+		handlers = []string{h}
 	}
 
+	message, _ := expand(sn.Message)
 	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
 	bodyMsgType := map[string]interface{}{
 		"entity": map[string]interface{}{
@@ -148,17 +150,13 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 					"ruleURL": ruleURL,
 				},
 			},
-			"output":   tmpl(sn.Message),
+			"output":   message,
 			"issued":   timeNow().Unix(),
 			"interval": 86400,
 			"status":   status,
 			"handlers": handlers,
 		},
 		"ruleUrl": ruleURL,
-	}
-
-	if tmplErr != nil {
-		sn.log.Warn("failed to template sensugo message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsgType)

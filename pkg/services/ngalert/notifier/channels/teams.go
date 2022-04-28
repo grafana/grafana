@@ -81,12 +81,13 @@ func NewTeamsNotifier(config *TeamsConfig, ns notifications.WebhookSender, t *te
 
 // Notify send an alert notification to Microsoft teams.
 func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	var tmplErr error
-	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
+	expand, _ := TmplText(ctx, tn.tmpl, as, tn.log)
 
 	ruleURL := joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list", tn.log)
 
-	title := tmpl(tn.Title)
+	title, _ := expand(tn.Title)
+	sectionTitle, _ := expand(tn.SectionTitle)
+	message, _ := expand(tn.Message)
 	body := map[string]interface{}{
 		"@type":    "MessageCard",
 		"@context": "http://schema.org/extensions",
@@ -97,8 +98,8 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		"themeColor": getAlertStatusColor(types.Alerts(as...).Status()),
 		"sections": []map[string]interface{}{
 			{
-				"title": tmpl(tn.SectionTitle),
-				"text":  tmpl(tn.Message),
+				"title": sectionTitle,
+				"text":  message,
 			},
 		},
 		"potentialAction": []map[string]interface{}{
@@ -116,14 +117,9 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		},
 	}
 
-	if tmplErr != nil {
-		tn.log.Warn("failed to template Teams message", "err", tmplErr.Error())
-		tmplErr = nil
-	}
-
-	u := tmpl(tn.URL)
-	if tmplErr != nil {
-		tn.log.Warn("failed to template Teams URL", "err", tmplErr.Error(), "fallback", tn.URL)
+	u, err := expand(tn.URL)
+	if err != nil {
+		tn.log.Warn("failed to template Teams URL", "err", err.Error(), "fallback", tn.URL)
 		u = tn.URL
 	}
 

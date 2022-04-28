@@ -17,6 +17,8 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+var ExpansionErrorMessage = "[template failed to render]"
+
 type ExtendedAlert struct {
 	Status       string      `json:"status"`
 	Labels       template.KV `json:"labels"`
@@ -134,16 +136,19 @@ func ExtendData(data *template.Data, logger log.Logger) *ExtendedData {
 	return extended
 }
 
-func TmplText(ctx context.Context, tmpl *template.Template, alerts []*types.Alert, l log.Logger, tmplErr *error) (func(string) string, *ExtendedData) {
+// TmplText returns the extended template data, as well as a function that expands strings containing templating syntax.
+// If the function encounters an error during template expansion it will return a non-empty message along with the error.
+func TmplText(ctx context.Context, tmpl *template.Template, alerts []*types.Alert, l log.Logger) (func(string) (string, error), *ExtendedData) {
 	promTmplData := notify.GetTemplateData(ctx, tmpl, alerts, l)
 	data := ExtendData(promTmplData, l)
 
-	return func(name string) (s string) {
-		if *tmplErr != nil {
-			return
+	return func(name string) (string, error) {
+		s, err := tmpl.ExecuteTextString(name, data)
+		if err != nil {
+			l.Warn("failed to template message", "receiver", data.Receiver, "err", err.Error())
+			return ExpansionErrorMessage, err
 		}
-		s, *tmplErr = tmpl.ExecuteTextString(name, data)
-		return s
+		return s, nil
 	}, data
 }
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
@@ -50,7 +51,30 @@ func TestVictoropsNotifier(t *testing.T) {
 				"state_message":       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 			},
 			expMsgError: nil,
-		}, {
+		},
+		{
+			name:     "One alert resolved",
+			settings: `{"url": "http://localhost"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+						EndsAt:      time.Now().Add(-1 * time.Minute),
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"alert_url":           "http://localhost/alerting/list",
+				"entity_display_name": "[RESOLVED]  (val1)",
+				"entity_id":           "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
+				"message_type":        "RECOVERY",
+				"monitoring_tool":     "Grafana v" + setting.BuildVersion,
+				"state_message":       "**Resolved**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+			},
+			expMsgError: nil,
+		},
+		{
 			name:     "Multiple alerts",
 			settings: `{"url": "http://localhost"}`,
 			alerts: []*types.Alert{
@@ -101,7 +125,7 @@ func TestVictoropsNotifier(t *testing.T) {
 			},
 			expMsgError: nil,
 		}, {
-			name:     "Missing field in template",
+			name:     "Template error in messageType",
 			settings: `{"url": "http://localhost", "messageType": "custom template {{ .NotAField }} bad template"}`,
 			alerts: []*types.Alert{
 				{
@@ -118,15 +142,15 @@ func TestVictoropsNotifier(t *testing.T) {
 			},
 			expMsg: map[string]interface{}{
 				"alert_url":           "http://localhost/alerting/list",
-				"entity_display_name": "",
+				"entity_display_name": "[FIRING:2]  ",
 				"entity_id":           "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
-				"message_type":        "CUSTOM TEMPLATE ",
+				"message_type":        "CRITICAL",
 				"monitoring_tool":     "Grafana v" + setting.BuildVersion,
-				"state_message":       "",
+				"state_message":       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
 			},
 			expMsgError: nil,
 		}, {
-			name:     "Invalid template",
+			name:     "Invalid template in messageType",
 			settings: `{"url": "http://localhost", "messageType": "custom template {{ {.NotAField }} bad template"}`,
 			alerts: []*types.Alert{
 				{
@@ -143,11 +167,11 @@ func TestVictoropsNotifier(t *testing.T) {
 			},
 			expMsg: map[string]interface{}{
 				"alert_url":           "http://localhost/alerting/list",
-				"entity_display_name": "",
+				"entity_display_name": "[FIRING:2]  ",
 				"entity_id":           "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
 				"message_type":        "CRITICAL",
 				"monitoring_tool":     "Grafana v" + setting.BuildVersion,
-				"state_message":       "",
+				"state_message":       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
 			},
 			expMsgError: nil,
 		}, {

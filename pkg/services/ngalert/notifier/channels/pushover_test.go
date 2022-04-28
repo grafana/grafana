@@ -11,15 +11,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 )
 
 func TestPushoverNotifier(t *testing.T) {
@@ -113,12 +113,21 @@ func TestPushoverNotifier(t *testing.T) {
 				"apiToken": "<apiToken>"
 			}`,
 			expInitError: `user key not found`,
-		}, {
+		},
+		{
 			name: "Missing api key",
 			settings: `{
 				"userKey": "<userKey>"
 			}`,
 			expInitError: `API token not found`,
+		},
+		{
+			name: "Templating error on user key",
+			settings: `{
+				"apiToken": "<apiToken>",
+				"userKey": "{{ .Status "
+			}`,
+			expMsgError: errors.New(`failed to template Pushover UserKey: template: :1: unclosed action`),
 		},
 	}
 

@@ -8,11 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func TestDefaultTemplateString(t *testing.T) {
@@ -76,17 +77,27 @@ func TestDefaultTemplateString(t *testing.T) {
 	require.NoError(t, err)
 	tmpl.ExternalURL = externalURL
 
-	var tmplErr error
 	l := log.New("default-template-test")
-	expand, _ := TmplText(context.Background(), tmpl, alerts, l, &tmplErr)
+	expand, _ := TmplText(context.Background(), tmpl, alerts, l)
 
 	cases := []struct {
 		templateString string
 		expected       string
+		expectedError  string
 	}{
 		{
 			templateString: DefaultMessageTitleEmbed,
 			expected:       `[FIRING:2, RESOLVED:2]  (alert1)`,
+		},
+		{
+			templateString: "{{ .FieldDoesNotExist | toUpper }}",
+			expected:       ExpansionErrorMessage,
+			expectedError:  `template: :1:3: executing "" at <.FieldDoesNotExist>: can't evaluate field FieldDoesNotExist in type *channels.ExtendedData`,
+		},
+		{
+			templateString: "{{ .Status | toUpper ",
+			expected:       ExpansionErrorMessage,
+			expectedError:  `template: :1: unclosed action`,
 		},
 		{
 			templateString: `{{ template "default.message" .}}`,
@@ -212,10 +223,16 @@ Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matc
 
 	for _, c := range cases {
 		t.Run(c.templateString, func(t *testing.T) {
-			act := expand(c.templateString)
-			require.NoError(t, tmplErr)
+			act, err := expand(c.templateString)
+			if c.expectedError != "" {
+				require.Error(t, err)
+				require.EqualError(t, err, c.expectedError)
+				return
+			} else {
+				require.NoError(t, err)
+			}
+
 			require.Equal(t, c.expected, act)
 		})
 	}
-	require.NoError(t, tmplErr)
 }

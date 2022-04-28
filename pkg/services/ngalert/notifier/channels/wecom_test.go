@@ -3,11 +3,9 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"testing"
-
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
@@ -15,6 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 )
 
 func TestWeComNotifier(t *testing.T) {
@@ -80,6 +80,25 @@ func TestWeComNotifier(t *testing.T) {
 			name:         "Error in initing",
 			settings:     `{}`,
 			expInitError: `could not find webhook URL in settings`,
+		},
+		{
+			name:     "Templating error",
+			settings: `{"url": "http://localhost", "message":"{{ .Status "}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"markdown": map[string]interface{}{
+					"content": fmt.Sprintf("# [FIRING:1]  (val1)\n%s\n", ExpansionErrorMessage),
+				},
+				"msgtype": "markdown",
+			},
+			expMsgError: nil,
 		},
 	}
 

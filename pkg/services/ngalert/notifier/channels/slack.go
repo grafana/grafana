@@ -14,12 +14,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
@@ -270,32 +271,34 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 
 func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Alert) (*slackMessage, error) {
 	alerts := types.Alerts(as...)
-	var tmplErr error
-	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
+	expand, _ := TmplText(ctx, sn.tmpl, as, sn.log)
 
 	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
 
+	title, _ := expand(sn.Title)
+	recipient, _ := expand(sn.Recipient)
+	username, _ := expand(sn.Username)
+	iconEmoji, _ := expand(sn.IconEmoji)
+	iconURL, _ := expand(sn.IconURL)
+	text, _ := expand(sn.Text)
 	req := &slackMessage{
-		Channel:   tmpl(sn.Recipient),
-		Username:  tmpl(sn.Username),
-		IconEmoji: tmpl(sn.IconEmoji),
-		IconURL:   tmpl(sn.IconURL),
+		Channel:   recipient,
+		Username:  username,
+		IconEmoji: iconEmoji,
+		IconURL:   iconURL,
 		Attachments: []attachment{
 			{
 				Color:      getAlertStatusColor(alerts.Status()),
-				Title:      tmpl(sn.Title),
-				Fallback:   tmpl(sn.Title),
+				Title:      title,
+				Fallback:   title,
 				Footer:     "Grafana v" + setting.BuildVersion,
 				FooterIcon: FooterIconURL,
 				Ts:         time.Now().Unix(),
 				TitleLink:  ruleURL,
-				Text:       tmpl(sn.Text),
+				Text:       text,
 				Fields:     nil, // TODO. Should be a config.
 			},
 		},
-	}
-	if tmplErr != nil {
-		sn.log.Warn("failed to template Slack message", "err", tmplErr.Error())
 	}
 
 	mentionsBuilder := strings.Builder{}
@@ -310,14 +313,16 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 	}
 	if len(sn.MentionGroups) > 0 {
 		appendSpace()
-		for _, g := range sn.MentionGroups {
-			mentionsBuilder.WriteString(fmt.Sprintf("<!subteam^%s>", tmpl(g)))
+		for _, group := range sn.MentionGroups {
+			g, _ := expand(group)
+			mentionsBuilder.WriteString(fmt.Sprintf("<!subteam^%s>", g))
 		}
 	}
 	if len(sn.MentionUsers) > 0 {
 		appendSpace()
-		for _, u := range sn.MentionUsers {
-			mentionsBuilder.WriteString(fmt.Sprintf("<@%s>", tmpl(u)))
+		for _, user := range sn.MentionUsers {
+			u, _ := expand(user)
+			mentionsBuilder.WriteString(fmt.Sprintf("<@%s>", u))
 		}
 	}
 

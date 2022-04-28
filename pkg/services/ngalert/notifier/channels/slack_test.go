@@ -9,16 +9,16 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/common/model"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSlackNotifier(t *testing.T) {
@@ -186,6 +186,40 @@ func TestSlackNotifier(t *testing.T) {
 						TitleLink:  "http://localhost/alerting/list",
 						Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n",
 						Fallback:   "[FIRING:1]  (val1)",
+						Fields:     nil,
+						Footer:     "Grafana v" + setting.BuildVersion,
+						FooterIcon: "https://grafana.com/assets/img/fav32.png",
+						Color:      "#D63232",
+						Ts:         0,
+					},
+				},
+			},
+			expMsgError: nil,
+		},
+		{
+			name: "Templating error",
+			settings: `{
+				"token": "1234",
+				"recipient": "#testchannel",
+				"title": "{{ .Status "
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: &slackMessage{
+				Channel:  "#testchannel",
+				Username: "Grafana",
+				Attachments: []attachment{
+					{
+						Title:      ExpansionErrorMessage,
+						TitleLink:  "http://localhost/alerting/list",
+						Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+						Fallback:   ExpansionErrorMessage,
 						Fields:     nil,
 						Footer:     "Grafana v" + setting.BuildVersion,
 						FooterIcon: "https://grafana.com/assets/img/fav32.png",

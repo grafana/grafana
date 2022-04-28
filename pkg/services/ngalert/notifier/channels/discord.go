@@ -90,15 +90,16 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		bodyJSON.Set("username", "Grafana")
 	}
 
-	var tmplErr error
-	tmpl, _ := TmplText(ctx, d.tmpl, as, d.log, &tmplErr)
+	expand, _ := TmplText(ctx, d.tmpl, as, d.log)
 
 	if d.Content != "" {
-		bodyJSON.Set("content", tmpl(d.Content))
+		content, _ := expand(d.Content)
+		bodyJSON.Set("content", content)
 	}
 
 	if d.AvatarURL != "" {
-		bodyJSON.Set("avatar_url", tmpl(d.AvatarURL))
+		avatar, _ := expand(d.AvatarURL)
+		bodyJSON.Set("avatar_url", avatar)
 	}
 
 	footer := map[string]interface{}{
@@ -107,7 +108,10 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	embed := simplejson.New()
-	embed.Set("title", tmpl(DefaultMessageTitleEmbed))
+
+	title, _ := expand(DefaultMessageTitleEmbed)
+	embed.Set("title", title)
+
 	embed.Set("footer", footer)
 	embed.Set("type", "rich")
 
@@ -119,10 +123,10 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	bodyJSON.Set("embeds", []interface{}{embed})
 
-	u := tmpl(d.WebhookURL)
-	if tmplErr != nil {
-		d.log.Warn("failed to template Discord message", "err", tmplErr.Error())
-		return false, tmplErr
+	u, err := expand(d.WebhookURL)
+	if err != nil {
+		d.log.Error("failed to template Discord WebhookURL, cannot send alert", "err", err.Error())
+		return false, err
 	}
 
 	body, err := json.Marshal(bodyJSON)

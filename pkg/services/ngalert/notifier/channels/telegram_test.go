@@ -2,17 +2,18 @@ package channels
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"testing"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 )
 
 func TestTelegramNotifier(t *testing.T) {
@@ -82,6 +83,37 @@ func TestTelegramNotifier(t *testing.T) {
 			name:         "Error in initing",
 			settings:     `{}`,
 			expInitError: `could not find Bot Token in settings`,
+		},
+		{
+			name: "Templating error",
+			settings: `{
+				"bottoken": "abcdefgh0123456789",
+				"chatid": "someid",
+				"message": "{{ .Status "
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:       model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations:  model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+						GeneratorURL: "a URL",
+					},
+				},
+			},
+			expMsg: map[string]string{
+				"chat_id":    "someid",
+				"parse_mode": "html",
+				"text":       ExpansionErrorMessage,
+			},
+			expMsgError: nil,
+		},
+		{
+			name: "Templating error on ChatId should fail and return error",
+			settings: `{
+				"bottoken": "abcdefgh0123456789",
+				"chatid": "{{ .Status "
+			}`,
+			expMsgError: errors.New("failed to template Telegram ChatId: template: :1: unclosed action"),
 		},
 	}
 

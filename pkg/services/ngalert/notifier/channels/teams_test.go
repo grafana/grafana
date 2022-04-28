@@ -135,7 +135,7 @@ func TestTeamsNotifier(t *testing.T) {
 				"sections": []map[string]interface{}{
 					{
 						"title": "Details",
-						"text":  "I'm a custom template ",
+						"text":  ExpansionErrorMessage,
 					},
 				},
 				"potentialAction": []map[string]interface{}{
@@ -178,7 +178,7 @@ func TestTeamsNotifier(t *testing.T) {
 				"sections": []map[string]interface{}{
 					{
 						"title": "Details",
-						"text":  "",
+						"text":  ExpansionErrorMessage,
 					},
 				},
 				"potentialAction": []map[string]interface{}{

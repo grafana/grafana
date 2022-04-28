@@ -228,7 +228,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 								Widgets: []widget{
 									textParagraphWidget{
 										Text: text{
-											Text: "I'm a custom template ",
+											Text: ExpansionErrorMessage,
 										},
 									},
 									buttonWidget{
@@ -280,6 +280,11 @@ func TestGoogleChatNotifier(t *testing.T) {
 						Sections: []section{
 							{
 								Widgets: []widget{
+									textParagraphWidget{
+										Text: text{
+											Text: ExpansionErrorMessage,
+										},
+									},
 									buttonWidget{
 										Buttons: []button{
 											{

@@ -8,16 +8,18 @@ import (
 	"mime/multipart"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 var (
 	PushoverEndpoint = "https://api.pushover.net/1/messages.json"
+	DefaultSound     = "default"
 )
 
 // PushoverNotifier is responsible for sending
@@ -162,8 +164,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 
 	alerts := types.Alerts(as...)
 
-	var tmplErr error
-	tmpl, _ := TmplText(ctx, pn.tmpl, as, pn.log, &tmplErr)
+	expand, _ := TmplText(ctx, pn.tmpl, as, pn.log)
 
 	w := multipart.NewWriter(&b)
 	boundary := GetBoundary()
@@ -175,7 +176,11 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	}
 
 	// Add the user token
-	err := w.WriteField("user", tmpl(pn.UserKey))
+	userKey, err := expand(pn.UserKey)
+	if err != nil {
+		return nil, b, fmt.Errorf("failed to template Pushover UserKey: %v", err)
+	}
+	err = w.WriteField("user", userKey)
 	if err != nil {
 		return nil, b, err
 	}
@@ -210,18 +215,24 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 
 	// Add device
 	if pn.Device != "" {
-		err = w.WriteField("device", tmpl(pn.Device))
+		device, _ := expand(pn.Device)
+		err = w.WriteField("device", device)
 		if err != nil {
 			return nil, b, err
 		}
 	}
 
 	// Add sound
-	sound := tmpl(pn.AlertingSound)
+	sound, err := expand(pn.AlertingSound)
 	if alerts.Status() == model.AlertResolved {
-		sound = tmpl(pn.OKSound)
+		sound, err = expand(pn.OKSound)
 	}
-	if sound != "default" {
+	if err != nil {
+		pn.log.Warn("failed to template Pushover sound", "err", err.Error(), "fallback", DefaultSound)
+		sound = DefaultSound
+	}
+
+	if sound != DefaultSound {
 		err = w.WriteField("sound", sound)
 		if err != nil {
 			return nil, b, err
@@ -229,7 +240,8 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	}
 
 	// Add title
-	err = w.WriteField("title", tmpl(DefaultMessageTitleEmbed))
+	title, _ := expand(DefaultMessageTitleEmbed)
+	err = w.WriteField("title", title)
 	if err != nil {
 		return nil, b, err
 	}
@@ -246,13 +258,10 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	}
 
 	// Add message
-	err = w.WriteField("message", tmpl(pn.Message))
+	message, _ := expand(pn.Message)
+	err = w.WriteField("message", message)
 	if err != nil {
 		return nil, b, err
-	}
-
-	if tmplErr != nil {
-		pn.log.Warn("failed to template pushover message", "err", tmplErr.Error())
 	}
 
 	// Mark as html message

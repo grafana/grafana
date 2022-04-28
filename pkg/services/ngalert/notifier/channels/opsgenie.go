@@ -8,14 +8,15 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const (
@@ -114,15 +115,14 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		return true, nil
 	}
 
+	if alerts.Status() == model.AlertResolved && !on.AutoClose {
+		on.log.Debug("Not sending a trigger to Opsgenie", "status", alerts.Status(), "auto close", on.AutoClose)
+		return true, nil
+	}
+
 	bodyJSON, url, err := on.buildOpsgenieMessage(ctx, alerts, as)
 	if err != nil {
 		return false, fmt.Errorf("build Opsgenie message: %w", err)
-	}
-
-	if url == "" {
-		// Resolved alert with no auto close.
-		// Hence skip sending anything.
-		return true, nil
 	}
 
 	body, err := json.Marshal(bodyJSON)
@@ -159,37 +159,29 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		details  = simplejson.New()
 	)
 
-	if alerts.Status() == model.AlertResolved {
+	if alerts.Status() == model.AlertResolved && on.AutoClose {
 		// For resolved notification, we only need the source.
 		// Don't need to run other templates.
-		if on.AutoClose {
-			bodyJSON := simplejson.New()
-			bodyJSON.Set("source", "Grafana")
-			apiURL = fmt.Sprintf("%s/%s/close?identifierType=alias", on.APIUrl, alias)
-			return bodyJSON, apiURL, nil
-		}
-		return nil, "", nil
+		bodyJSON := simplejson.New()
+		bodyJSON.Set("source", "Grafana")
+		apiURL = fmt.Sprintf("%s/%s/close?identifierType=alias", on.APIUrl, alias)
+		return bodyJSON, apiURL, nil
 	}
 
 	ruleURL := joinUrlPath(on.tmpl.ExternalURL.String(), "/alerting/list", on.log)
 
-	var tmplErr error
-	tmpl, data := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
+	expand, data := TmplText(ctx, on.tmpl, as, on.log)
 
-	title := tmpl(DefaultMessageTitleEmbed)
-	description := fmt.Sprintf(
-		"%s\n%s\n\n%s",
-		tmpl(DefaultMessageTitleEmbed),
-		ruleURL,
-		tmpl(`{{ template "default.message" . }}`),
-	)
+	title, _ := expand(DefaultMessageTitleEmbed)
+	message, _ := expand(`{{ template "default.message" . }}`)
+	description := fmt.Sprintf("%s\n%s\n\n%s", title, ruleURL, message)
 
 	var priority string
 
 	// In the new alerting system we've moved away from the grafana-tags. Instead, annotations on the rule itself should be used.
 	lbls := make(map[string]string, len(data.CommonLabels))
 	for k, v := range data.CommonLabels {
-		lbls[k] = tmpl(v)
+		lbls[k], _ = expand(v)
 
 		if k == "og_priority" {
 			if ValidPriorities[v] {
@@ -224,10 +216,11 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 
 	bodyJSON.Set("tags", tags)
 	bodyJSON.Set("details", details)
-	apiURL = tmpl(on.APIUrl)
 
-	if tmplErr != nil {
-		on.log.Warn("failed to template Opsgenie message", "err", tmplErr.Error())
+	apiURL, err = expand(on.APIUrl)
+	if err != nil {
+		on.log.Warn("failed to template Opsgenie APIUrl", "err", err.Error(), "fallback", OpsgenieAlertURL)
+		apiURL = OpsgenieAlertURL
 	}
 
 	return bodyJSON, apiURL, nil

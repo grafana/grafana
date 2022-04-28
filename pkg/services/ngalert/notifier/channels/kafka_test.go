@@ -2,6 +2,7 @@ package channels
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"testing"
 
@@ -101,6 +102,13 @@ func TestKafkaNotifier(t *testing.T) {
 			name:         "Topic missing",
 			settings:     `{"kafkaRestProxy": "http://localhost"}`,
 			expInitError: `could not find kafka topic property in settings`,
+		}, {
+			name: "Topic templating error",
+			settings: `{
+				"kafkaRestProxy": "http://localhost",
+				"kafkaTopic": "{{ .DoesNotExist }}"
+			}`,
+			expMsgError: errors.New(`template: :1:3: executing "" at <.DoesNotExist>: can't evaluate field DoesNotExist in type *channels.ExtendedData`),
 		},
 	}
 
