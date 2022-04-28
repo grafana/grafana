@@ -5,8 +5,8 @@ import (
 )
 
 func addPublicDashboardMigration(mg *Migrator) {
-	var publicDashboardV1 = Table{
-		Name: "public_dashboard",
+	var dashboardPublicCfgV1 = Table{
+		Name: "dashboard_public_config",
 		Columns: []*Column{
 			{Name: "uid", Type: DB_BigInt, IsPrimaryKey: true},
 			{Name: "dashboard_uid", Type: DB_NVarchar, Nullable: false},
@@ -21,6 +21,6 @@ func addPublicDashboardMigration(mg *Migrator) {
 		},
 	}
 
-	mg.AddMigration("create public dashboard v1", NewAddTableMigration(publicDashboardV1))
-	addTableIndicesMigrations(mg, "v1", publicDashboardV1)
+	mg.AddMigration("create dashboard public config v1", NewAddTableMigration(dashboardPublicCfgV1))
+	addTableIndicesMigrations(mg, "v1", dashboardPublicCfgV1)
 }
