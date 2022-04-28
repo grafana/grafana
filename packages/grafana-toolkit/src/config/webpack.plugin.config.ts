@@ -103,7 +103,7 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
         { from: '**/README.md', to: '[path]README.md', priority: 0, noErrorOnMissing: true },
         { from: '../LICENSE', to: '.', noErrorOnMissing: true },
         { from: '../CHANGELOG.md', to: '.', force: true, noErrorOnMissing: true },
-        { from: '**/*.{json, svg, png, html}', to: '.', noErrorOnMissing: true },
+        { from: '**/*.{json,svg,png,html}', to: '.', noErrorOnMissing: true },
         { from: 'img/**/*', to: '.', noErrorOnMissing: true },
         { from: 'libs/**/*', to: '.', noErrorOnMissing: true },
         { from: 'static/**/*', to: '.', noErrorOnMissing: true },
