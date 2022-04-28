@@ -1,6 +1,7 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { InlineFieldRow } from '@grafana/ui';
+import { InlineFieldRow, useStyles2 } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
@@ -98,7 +99,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
         />
       </InlineFieldRow>
 
-      <InlineFieldRow className={styles}>
+      <InlineFieldRow className={styles.row}>
         <MetricNamespaceField
           metricNamespaces={metricNamespaces}
           query={query}
@@ -170,8 +171,8 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
 
 const getStyles = () => ({
   row: css({
-    width: '100%',
-    tableLayout: 'fixed',
+    rowGap: 0,
+    margin: '200px',
   }),
 });
 export default MetricsQueryEditor;
