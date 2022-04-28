@@ -60,7 +60,8 @@ func TestTemplateService(t *testing.T) {
 
 			_, err := sut.GetTemplates(context.Background(), 1)
 
-			require.ErrorContains(t, err, "failed to deserialize")
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "failed to deserialize")
 		})
 
 		t.Run("when no AM config in current org", func(t *testing.T) {
@@ -71,7 +72,8 @@ func TestTemplateService(t *testing.T) {
 
 			_, err := sut.GetTemplates(context.Background(), 1)
 
-			require.ErrorContains(t, err, "no alertmanager configuration")
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "no alertmanager configuration")
 		})
 	})
 }
