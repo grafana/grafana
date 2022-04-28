@@ -47,6 +47,7 @@ type DeleteApiKeyCommand struct {
 type GetApiKeysQuery struct {
 	OrgId          int64
 	IncludeExpired bool
+	User           *SignedInUser
 	Result         []*ApiKey
 }
 
