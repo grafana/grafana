@@ -11,7 +11,9 @@ jest.mock('app/core/core', () => {
     },
     appEvents: {
       subscribe: () => {
-        return { unsubscribe: () => {} };
+        return {
+          unsubscribe: () => {},
+        };
       },
       emit: () => {},
     },
@@ -44,7 +46,7 @@ describe('SharePublic', () => {
       id: 'mockPanelId',
     });
 
-    render(<ShareModal panel={mockPanel} dashboard={mockDashboard} onDismiss={() => console.log('Dismiss!')} />);
+    render(<ShareModal panel={mockPanel} dashboard={mockDashboard} onDismiss={() => {}} />);
 
     expect(screen.getByRole('tablist')).toHaveTextContent('Link');
     expect(screen.getByRole('tablist')).not.toHaveTextContent('Share Publicly');
@@ -59,7 +61,7 @@ describe('SharePublic', () => {
       id: 'mockPanelId',
     });
 
-    render(<ShareModal panel={mockPanel} dashboard={mockDashboard} onDismiss={() => console.log('Dismiss!')} />);
+    render(<ShareModal panel={mockPanel} dashboard={mockDashboard} onDismiss={() => {}} />);
 
     await waitFor(() => screen.getByText('Link'));
     expect(screen.getByRole('tablist')).toHaveTextContent('Link');
