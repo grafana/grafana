@@ -419,6 +419,7 @@ def build_frontend_step(edition, ver_mode):
             'NODE_MODULES': '/drone/src/node_modules',
         },
         'depends_on': [
+            'restore-cache',
             'gen-version',
             'yarn-install',
         ],
@@ -448,6 +449,7 @@ def build_frontend_package_step(edition, ver_mode):
             'NODE_OPTIONS': '--max_old_space_size=8192',
         },
         'depends_on': [
+            'restore-cache',
             'gen-version',
             'yarn-install',
         ],

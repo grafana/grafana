@@ -239,6 +239,7 @@ steps:
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - restore-cache
   - gen-version
   - yarn-install
   environment:
@@ -249,6 +250,7 @@ steps:
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - restore-cache
   - gen-version
   - yarn-install
   environment:
@@ -603,6 +605,7 @@ steps:
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - restore-cache
   - gen-version
   - yarn-install
   environment:
@@ -685,6 +688,6 @@ kind: secret
 name: secret
 ---
 kind: signature
-hmac: afdabb44e96eaae4941adfb2ff719aa7d38fa47e9c29ed70f34ee5cdae592f27
+hmac: e7b373b09fa6482d95107838bf0016e0e67557f8fe5d2974cba6ed43990b822f
 
 ...
