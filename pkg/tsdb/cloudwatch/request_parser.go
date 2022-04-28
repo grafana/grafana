@@ -61,14 +61,19 @@ func migrateLegacyQuery(queries []backend.DataQuery, startTime time.Time, endTim
 			return nil, err
 		}
 
-		withStatistic, err := migrateStatisticsToStatistic(queryJson)
+		migratedWithStatistic, err := migrateStatisticsToStatistic(queryJson)
 		if err != nil {
 			return nil, err
 		}
 
-		withStatisticAndDynamicLabels := migrateAliasToDynamicLabel(withStatistic)
+		migratedQueryJson := migratedWithStatistic
 
-		query.JSON, err = withStatisticAndDynamicLabels.MarshalJSON()
+		_, ok := migratedQueryJson.CheckGet("label")
+		if !ok {
+			migratedQueryJson = migrateAliasToDynamicLabel(migratedWithStatistic)
+		}
+
+		query.JSON, err = migratedQueryJson.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
@@ -126,7 +131,7 @@ func migrateAliasToDynamicLabel(queryJson *simplejson.Json) *simplejson.Json {
 		}
 	}
 
-	queryJson.Set("alias", fullAliasField)
+	queryJson.Set("label", fullAliasField)
 
 	return queryJson
 }
