@@ -7,6 +7,8 @@ import {
   dateTimeFormat,
   Field,
   GrafanaTheme2,
+  incrRoundUp,
+  incrRoundDn,
   PanelData,
   SplitOpen,
   systemDateFormats,
@@ -474,7 +476,7 @@ export const countsToFills = (u: uPlot, seriesIdx: number, palette: string[]) =>
   return indexedFills;
 };
 
-export const getHeatmapFrames = (dataFrame: DataFrame): Array<Field | undefined> => {
+export const getHeatmapFields = (dataFrame: DataFrame): Array<Field | undefined> => {
   const xField: Field | undefined = dataFrame.fields.find((f) => f.name === 'xMin');
   const yField: Field | undefined = dataFrame.fields.find((f) => f.name === 'yMin');
   const countField: Field | undefined = dataFrame.fields.find((f) => f.name === 'count');
@@ -483,29 +485,44 @@ export const getHeatmapFrames = (dataFrame: DataFrame): Array<Field | undefined>
 };
 
 export const getHeatmapArrays = (dataFrame: DataFrame): Array<number[] | undefined> => {
-  const [xField, yField, countField] = getHeatmapFrames(dataFrame);
+  const [xField, yField, countField] = getHeatmapFields(dataFrame);
   return [xField?.values.toArray(), yField?.values.toArray(), countField?.values.toArray()];
 };
 
 export const getDataMapping = (heatmapData: HeatmapData, origData: DataFrame): Array<number[] | null> => {
-  const [xs, ys, counts] = getHeatmapArrays(heatmapData.heatmap!);
+  const [fxs, fys, fcounts] = getHeatmapFields(heatmapData.heatmap!);
   const xos: number[] | undefined = origData.fields.find((f: Field) => f.type === 'time')?.values.toArray();
   const yos: number[] | undefined = origData.fields.find((f: Field) => f.type === 'number')?.values.toArray();
 
-  if (xs && ys && counts && xos && yos) {
-    const mapping: Array<number[] | null> = new Array(counts.length).fill(null);
-    const xsmin = xs[0];
-    const yosmin = Math.min(...yos);
-    xos.forEach((xo: number, yoindex: number) => {
-      const yo = yos[yoindex];
-      const xsrow = Math.floor((xo - xsmin) / heatmapData.xBucketSize!);
-      const yscol = Math.floor((yo - yosmin) / heatmapData.yBucketSize!);
-      const index = xsrow * heatmapData.yBucketCount! + yscol;
-      const count = counts[index];
-      if (!mapping[index] && count > 0) {
-        mapping[index] = [];
+  if (fxs && fys && fcounts && xos && yos) {
+    const mapping: Array<number[] | null> = new Array(heatmapData.xBucketCount! * heatmapData.yBucketCount!).fill(null);
+    const xsmin = fxs.state?.calcs?.min ?? fxs.state?.range?.min ?? fxs.values.get(0);
+    const ysmin = fys.state?.calcs?.min ?? fys.state?.range?.min ?? fys.values.get(0);
+    const xsmax = fxs.values.get(fxs.values.length - 1) + heatmapData.xBucketSize! * heatmapData.xBucketCount!;
+    const ysmax = fys.values.get(fys.values.length - 1) + heatmapData.yBucketSize! * heatmapData.yBucketCount!;
+    xos.forEach((xo: number, i: number) => {
+      const yo = yos[i];
+      const xBucketIdx = Math.floor(incrRoundDn(incrRoundUp((xo - xsmin) / heatmapData.xBucketSize!, 1e-7), 1e-7));
+      const yBucketIdx = Math.floor(incrRoundDn(incrRoundUp((yo - ysmin) / heatmapData.yBucketSize!, 1e-7), 1e-7));
+
+      if (xo < xsmin || xo > xsmax) {
+        return;
       }
-      mapping[index]?.push(yoindex);
+
+      if (yo < ysmin || yo > ysmax) {
+        return;
+      }
+
+      const index = xBucketIdx * heatmapData.yBucketCount! + yBucketIdx;
+      const count = fcounts.values.get(index);
+      if (count > 0) {
+        if (mapping[index] === null) {
+          mapping[index] = [];
+        }
+        mapping[index]?.push(i);
+      }
+
+      // console.log(i, "i", "index", index, "xo", xo, "yo", yo, "xbc", heatmapData.xBucketCount, "xbs", heatmapData.xBucketSize, "ybc", heatmapData.yBucketCount, "ybs", heatmapData.yBucketSize, "xBucketIdx", xBucketIdx, "yBucketIdx", yBucketIdx);
     });
     return mapping;
   }
@@ -518,10 +535,11 @@ export const resolveMappingToData = (
   onSplitOpen: SplitOpen | undefined,
   timeRange: TimeRange
 ): DataFrame[] => {
+  console.log('dataframe', data, 'indicies', indicies);
+
   if (!indicies) {
     return [];
   }
-  console.log('dataframe', data, 'indicies', indicies);
 
   return indicies.map((index: number, i: number) => {
     return {
@@ -590,12 +608,17 @@ export const timeFormatter = (value: number, timeZone: TimeZone) => {
   });
 };
 
-export const translateMatrixIndex = (index: number, bucketCountFrom: number, bucketCountTo: number): number => {
+export const translateMatrixIndex = (
+  index: number,
+  bucketCountFrom: number,
+  bucketCountTo: number,
+  offset = 0
+): number => {
   const row = Math.floor(index / bucketCountFrom);
   const column = index % bucketCountFrom;
   if (column >= bucketCountTo) {
     return -1;
   }
 
-  return row * bucketCountTo + Math.floor(column / bucketCountTo) + (column % bucketCountTo);
+  return row * bucketCountTo + Math.floor(column / bucketCountTo) + (column % bucketCountTo) - row * (offset ?? 0);
 };

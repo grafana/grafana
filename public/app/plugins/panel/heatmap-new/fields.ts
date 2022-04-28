@@ -1,3 +1,5 @@
+import { cloneDeep } from 'lodash';
+
 import {
   DataFrame,
   DataFrameType,
@@ -7,10 +9,15 @@ import {
   getFieldDisplayName,
   getValueFormat,
   GrafanaTheme2,
+  Field,
+  ArrayVector,
+  incrRoundUp,
+  incrRoundDn,
 } from '@grafana/data';
 import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
+import { getHeatmapFields } from './utils';
 
 export const enum BucketLayout {
   le = 'le',
@@ -37,6 +44,41 @@ export interface HeatmapData {
 
   // Errors
   warning?: string;
+}
+
+export function calculatUsingExistingHeatmap(frame: DataFrame, reference: HeatmapData): HeatmapData {
+  const clone = cloneDeep<HeatmapData>(reference);
+  let [fxs, fys, fcounts] = getHeatmapFields(clone.heatmap!);
+  const xos = frame.fields.find((f: Field) => f.type === 'time')?.values.toArray();
+  const yos = frame.fields.find((f: Field) => f.type === 'number')?.values.toArray();
+
+  if (xos && yos && fcounts && fxs && fys && clone.heatmap) {
+    const xsmin = fxs.state?.calcs?.min ?? fxs.state?.range?.min ?? fxs.values.get(0);
+    const ysmin = fys.state?.calcs?.min ?? fys.state?.range?.min ?? fys.values.get(0);
+    const xsmax = xsmin + clone.xBucketSize! * clone.xBucketCount!;
+    const ysmax = ysmin + clone.yBucketSize! * clone.yBucketCount!;
+    let counts = fcounts.values.toArray().fill(0);
+    for (let i = 0; i < xos.length; i++) {
+      const xo = xos[i];
+      const yo = yos[i];
+      const xBucketIdx = Math.floor(incrRoundDn(incrRoundUp((xo - xsmin) / clone.xBucketSize!, 1e-7), 1e-7));
+      const yBucketIdx = Math.floor(incrRoundDn(incrRoundUp((yo - ysmin) / clone.yBucketSize!, 1e-7), 1e-7));
+
+      if (xo < xsmin || xo > xsmax) {
+        continue;
+      }
+
+      if (yo < ysmin || yo > ysmax) {
+        continue;
+      }
+
+      const index = xBucketIdx * clone.yBucketCount! + yBucketIdx;
+      counts[index]++;
+    }
+    clone.heatmap.fields[2].values = new ArrayVector(counts);
+  }
+
+  return clone;
 }
 
 export function prepareHeatmapData(
@@ -109,8 +151,9 @@ const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => 
   // detect x and y bin qtys by detecting layout repetition in x & y data
   let yBinQty = dlen - ys.lastIndexOf(ys[0]);
   let xBinQty = dlen / yBinQty;
-  let yBinIncr = ys[1] - ys[0];
-  let xBinIncr = xs[yBinQty] - xs[0];
+  // Round to 7 decimal places to get rid of any rounding errors
+  let yBinIncr = incrRoundDn(incrRoundUp(ys[1] - ys[0], 1e-7), 1e-7);
+  let xBinIncr = incrRoundDn(incrRoundUp(xs[yBinQty] - xs[0], 1e-7), 1e-7);
 
   // The "count" field
   const disp = frame.fields[2].display ?? getValueFormat('short');

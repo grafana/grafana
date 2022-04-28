@@ -1,8 +1,11 @@
-import { ArrayVector, DataFrame, TimeZone } from '@grafana/data';
 import React from 'react';
+
+import { ArrayVector, DataFrame, TimeZone } from '@grafana/data';
+
 import { DataHoverView } from '../components/DataHoverView';
+import { BucketLayout } from '../fields';
 import { HeatmapHoverProps, HeatmapLayerHover } from '../types';
-import { getHeatmapFrames, timeFormatter } from '../utils';
+import { getHeatmapFields, timeFormatter } from '../utils';
 
 interface HeatmapLayerOptions {
   timeZone: TimeZone;
@@ -20,12 +23,17 @@ export const ExemplarTab = ({
       data: [],
     };
   }
-  const [xField, yField, countField] = getHeatmapFrames(heatmapData?.heatmap!);
+  const [xField, yField, countField] = getHeatmapFields(heatmapData?.heatmap!);
   if (xField && yField && countField && index && index >= 0) {
+    const yValueIdx = index % heatmapData?.yBucketCount! ?? 0;
+
+    const yMinIdx = heatmapData.yLayout === BucketLayout.le ? yValueIdx - 1 : yValueIdx;
+    const yMaxIdx = heatmapData.yLayout === BucketLayout.le ? yValueIdx : yValueIdx + 1;
+
     const xMin: number = xField.values.get(index);
     const xMax: number = xMin + heatmapData.xBucketSize!;
-    const yMin: number = yField.values.get(index);
-    const yMax: number = yMin + heatmapData.yBucketSize!;
+    const yMin: number = yField.values.get(yMinIdx);
+    const yMax: number = yField.values.get(yMaxIdx);
     const count: number = countField.values.get(index);
 
     if (count === 0) {

@@ -1,9 +1,11 @@
 import React, { useRef, useEffect } from 'react';
+
 import { DataFrame, ArrayVector, Field, TimeZone } from '@grafana/data';
+
+import { DataHoverView } from '../components/DataHoverView';
 import { BucketLayout } from '../fields';
 import { HeatmapHoverProps, HeatmapLayerHover } from '../types';
-import { getHeatmapFrames, timeFormatter } from '../utils';
-import { DataHoverView } from '../components/DataHoverView';
+import { getHeatmapFields, timeFormatter } from '../utils';
 
 interface HistogramFooterProps {
   xField: Field;
@@ -109,7 +111,7 @@ export const HeatmapTab = ({
   index,
   options,
 }: HeatmapHoverProps<HeatmapLayerOptions>): HeatmapLayerHover => {
-  const [xField, yField, countField] = getHeatmapFrames(heatmapData?.heatmap!);
+  const [xField, yField, countField] = getHeatmapFields(heatmapData?.heatmap!);
 
   if (xField && yField && countField && index && heatmapData) {
     const yValueIdx = index % heatmapData?.yBucketCount! ?? 0;
@@ -123,6 +125,7 @@ export const HeatmapTab = ({
     const yMax: number = yField.values.get(yMaxIdx);
     const count: number = countField.values.get(index);
 
+    console.log('data', data, 'heatmapData', heatmapData);
     const summaryData: DataFrame = {
       fields: [
         {

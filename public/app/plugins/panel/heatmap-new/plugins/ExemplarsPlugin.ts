@@ -19,7 +19,6 @@ export const ExemplarsPlugin = ({ u, exemplars, config, theme, options }: Exempl
   const cellGap = (options.cellGap ?? 3) - 1;
   const cellSize = options.cellSize ?? 10;
 
-  console.log('optoins', options);
   const xMin = u.scales['x'].min!;
   const xMax = u.scales['x'].max!;
   const yMin = u.scales['y'].min!;
