@@ -7,8 +7,10 @@ import {
   logsSupportedResourceTypesKusto,
   resourceTypeDisplayNames,
 } from '../azureMetadata';
+import SupportedNamespaces from '../azure_monitor/supported_namespaces';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
 import { addResources, parseResourceURI } from '../components/ResourcePicker/utils';
+import { getAzureCloud } from '../credentials';
 import {
   AzureDataSourceJsonData,
   AzureGraphResponse,
@@ -25,10 +27,13 @@ const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-ver
 
 export default class ResourcePickerData extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   private resourcePath: string;
+  private supportedMetricNamespaces: string[];
 
   constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
     this.resourcePath = `${routeNames.resourceGraph}`;
+    const cloud = getAzureCloud(instanceSettings);
+    this.supportedMetricNamespaces = new SupportedNamespaces(cloud).get();
   }
 
   async fetchInitialRows(currentSelection?: string): Promise<ResourceRowGroup> {
@@ -63,6 +68,47 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
 
     return addResources(rows, parentRow.uri, nestedRows);
   }
+
+  search = async (searchPhrase: string, selectableEntryTypes: ResourceRowType[]): Promise<ResourceRowGroup> => {
+    let query;
+    if (selectableEntryTypes.length === 1 && selectableEntryTypes[0] === ResourceRowType.Resource) {
+      query = `
+      resources
+      | where id contains "${searchPhrase}"
+      | where type in (${this.supportedMetricNamespaces.map((ns) => `"${ns.toLowerCase()}"`).join(',')})
+      | order by tolower(name) asc
+      | limit 200
+      `;
+    } else {
+      query = `
+      resources
+      | union resourcecontainers 
+      | where id contains "${searchPhrase}"
+      | where type in (${logsSupportedResourceTypesKusto})
+      | order by tolower(name) asc
+      | limit 200
+      `;
+    }
+    const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(query);
+    return response.map((item) => {
+      const parsedUri = parseResourceURI(item.id);
+      if (!parsedUri || !(parsedUri.resource || parsedUri.resourceGroup || parsedUri.subscriptionID)) {
+        throw new Error('unable to fetch resource details');
+      }
+      return {
+        name: item.name,
+        id: parsedUri.resource || parsedUri.resourceGroup || parsedUri.subscriptionID,
+        uri: item.id,
+        resourceGroupName: item.resourceGroup,
+        type:
+          (parsedUri.resource && ResourceRowType.Resource) ||
+          (parsedUri.resourceGroup && ResourceRowType.ResourceGroup) ||
+          ResourceRowType.Subscription,
+        typeLabel: resourceTypeDisplayNames[item.type] || item.type,
+        location: locationDisplayNames[item.location] || item.location,
+      };
+    });
+  };
 
   // private
   async getSubscriptions(): Promise<ResourceRowGroup> {

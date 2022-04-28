@@ -8,6 +8,7 @@ import messageFromError from '../../utils/messageFromError';
 import { Space } from '../Space';
 
 import NestedRow from './NestedRow';
+import Search from './Search';
 import getStyles from './styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
 import { findRow } from './utils';
@@ -36,6 +37,7 @@ const ResourcePicker = ({
   const [internalSelectedURI, setInternalSelectedURI] = useState<string | undefined>(resourceURI);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(resourceURI?.includes('$'));
+
   // Sync the resourceURI prop to internal state
   useEffect(() => {
     setInternalSelectedURI(resourceURI);
@@ -58,7 +60,7 @@ const ResourcePicker = ({
 
       loadInitialData();
     }
-  }, [resourcePickerData, internalSelectedURI, rows, loadingStatus]);
+  }, [resourcePickerData, internalSelectedURI, loadingStatus]);
 
   // Map the selected item into an array of rows
   const selectedResourceRows = useMemo(() => {
@@ -74,7 +76,7 @@ const ResourcePicker = ({
       : [];
   }, [internalSelectedURI, rows]);
 
-  // Request resources for a expanded resource group
+  // Request resources for an expanded resource group
   const requestNestedRows = useCallback(
     async (parentRow: ResourceRow) => {
       // clear error message (also when loading cached resources)
@@ -104,120 +106,149 @@ const ResourcePicker = ({
     onApply(internalSelectedURI);
   }, [internalSelectedURI, onApply]);
 
+  const handleSearch = useCallback(
+    async (searchWord: string) => {
+      if (!searchWord) {
+        setLoadingStatus('NotStarted');
+        return;
+      }
+      try {
+        setLoadingStatus('Started');
+        const searchResults = await resourcePickerData.search(searchWord, selectableEntryTypes);
+        setRows(searchResults);
+      } catch (err) {
+        setErrorMessage(messageFromError(err));
+      }
+      setLoadingStatus('Done');
+    },
+    [resourcePickerData, setRows, setErrorMessage, setLoadingStatus, selectableEntryTypes]
+  );
+
   return (
     <div>
-      {loadingStatus === 'Started' ? (
-        <div className={styles.loadingWrapper}>
-          <LoadingPlaceholder text={'Loading...'} />
-        </div>
-      ) : (
-        <>
-          <table className={styles.table}>
-            <thead>
-              <tr className={cx(styles.row, styles.header)}>
-                <td className={styles.cell}>Scope</td>
-                <td className={styles.cell}>Type</td>
-                <td className={styles.cell}>Location</td>
+      <Search searchFn={handleSearch} />
+
+      <Space v={2} />
+
+      <table className={styles.table}>
+        <thead>
+          <tr className={cx(styles.row, styles.header)}>
+            <td className={styles.cell}>Scope</td>
+            <td className={styles.cell}>Type</td>
+            <td className={styles.cell}>Location</td>
+          </tr>
+        </thead>
+      </table>
+
+      <div className={styles.tableScroller}>
+        <table className={styles.table}>
+          <tbody>
+            {loadingStatus === 'Started' && (
+              <tr className={cx(styles.row)}>
+                <td className={styles.cell}>
+                  <LoadingPlaceholder text={'Loading...'} />
+                </td>
               </tr>
-            </thead>
-          </table>
-
-          <div className={styles.tableScroller}>
-            <table className={styles.table}>
-              <tbody>
-                {rows.map((row) => (
-                  <NestedRow
-                    key={row.uri}
-                    row={row}
-                    selectedRows={selectedResourceRows}
-                    level={0}
-                    requestNestedRows={requestNestedRows}
-                    onRowSelectedChange={handleSelectionChanged}
-                    selectableEntryTypes={selectableEntryTypes}
-                    scrollIntoView={true}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className={styles.selectionFooter}>
-            {selectedResourceRows.length > 0 && (
-              <>
-                <h5>Selection</h5>
-
-                <div className={styles.tableScroller}>
-                  <table className={styles.table}>
-                    <tbody>
-                      {selectedResourceRows.map((row) => (
-                        <NestedRow
-                          key={row.uri}
-                          row={row}
-                          selectedRows={selectedResourceRows}
-                          level={0}
-                          requestNestedRows={requestNestedRows}
-                          onRowSelectedChange={handleSelectionChanged}
-                          selectableEntryTypes={selectableEntryTypes}
-                        />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <Space v={2} />
-              </>
             )}
+            {loadingStatus === 'Done' && rows.length === 0 && (
+              <tr className={cx(styles.row)}>
+                <td className={styles.cell}>No resources found</td>
+              </tr>
+            )}
+            {loadingStatus === 'Done' &&
+              rows.map((row) => (
+                <NestedRow
+                  key={row.uri}
+                  row={row}
+                  selectedRows={selectedResourceRows}
+                  level={0}
+                  requestNestedRows={requestNestedRows}
+                  onRowSelectedChange={handleSelectionChanged}
+                  selectableEntryTypes={selectableEntryTypes}
+                  scrollIntoView={true}
+                />
+              ))}
+          </tbody>
+        </table>
+      </div>
 
-            <Collapse
-              collapsible
-              label="Advanced"
-              isOpen={isAdvancedOpen}
-              onToggle={() => setIsAdvancedOpen(!isAdvancedOpen)}
-            >
-              <Label htmlFor={`input-${internalSelectedURI}`}>
-                <h6>
-                  Resource URI{' '}
-                  <Tooltip
-                    content={
-                      <>
-                        Manually edit the{' '}
-                        <a
-                          href="https://docs.microsoft.com/en-us/azure/azure-monitor/logs/log-standard-columns#_resourceid"
-                          rel="noopener noreferrer"
-                          target="_blank"
-                        >
-                          resource uri.{' '}
-                        </a>
-                        Supports the use of multiple template variables (ex: /subscriptions/$subId/resourceGroups/$rg)
-                      </>
-                    }
-                    placement="right"
-                    interactive={true}
-                  >
-                    <Icon name="info-circle" />
-                  </Tooltip>
-                </h6>
-              </Label>
-              <Input
-                id={`input-${internalSelectedURI}`}
-                value={internalSelectedURI}
-                onChange={(event) => setInternalSelectedURI(event.currentTarget.value)}
-                placeholder="ex: /subscriptions/$subId"
-              />
-            </Collapse>
+      <div className={styles.selectionFooter}>
+        {selectedResourceRows.length > 0 && (
+          <>
+            <h5>Selection</h5>
+
+            <div className={styles.tableScroller}>
+              <table className={styles.table}>
+                <tbody>
+                  {selectedResourceRows.map((row) => (
+                    <NestedRow
+                      key={row.uri}
+                      row={row}
+                      selectedRows={selectedResourceRows}
+                      level={0}
+                      requestNestedRows={requestNestedRows}
+                      onRowSelectedChange={handleSelectionChanged}
+                      selectableEntryTypes={selectableEntryTypes}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <Space v={2} />
+          </>
+        )}
 
-            <Button disabled={!!errorMessage} onClick={handleApply}>
-              Apply
-            </Button>
+        <Collapse
+          collapsible
+          label="Advanced"
+          isOpen={isAdvancedOpen}
+          onToggle={() => setIsAdvancedOpen(!isAdvancedOpen)}
+        >
+          <Label htmlFor={`input-${internalSelectedURI}`}>
+            <h6>
+              Resource URI{' '}
+              <Tooltip
+                content={
+                  <>
+                    Manually edit the{' '}
+                    <a
+                      href="https://docs.microsoft.com/en-us/azure/azure-monitor/logs/log-standard-columns#_resourceid"
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      resource uri.{' '}
+                    </a>
+                    Supports the use of multiple template variables (ex: /subscriptions/$subId/resourceGroups/$rg)
+                  </>
+                }
+                placement="right"
+                interactive={true}
+              >
+                <Icon name="info-circle" />
+              </Tooltip>
+            </h6>
+          </Label>
+          <Input
+            id={`input-${internalSelectedURI}`}
+            value={internalSelectedURI}
+            onChange={(event) => setInternalSelectedURI(event.currentTarget.value)}
+            placeholder="ex: /subscriptions/$subId"
+          />
+          <Space v={2} />
+        </Collapse>
+        <Space v={2} />
 
-            <Space layout="inline" h={1} />
+        <Button disabled={!!errorMessage} onClick={handleApply}>
+          Apply
+        </Button>
 
-            <Button onClick={onCancel} variant="secondary">
-              Cancel
-            </Button>
-          </div>
-        </>
-      )}
+        <Space layout="inline" h={1} />
+
+        <Button onClick={onCancel} variant="secondary">
+          Cancel
+        </Button>
+      </div>
+
       {errorMessage && (
         <>
           <Space v={2} />
