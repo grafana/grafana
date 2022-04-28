@@ -82,7 +82,8 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       onStopScanning,
       absoluteRange,
       timeZone,
-      visibleRange,
+      histogramRange,
+      logsRange,
       scanning,
       range,
       width,
@@ -141,7 +142,8 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
               onStartScanning={onStartScanning}
               onStopScanning={onStopScanning}
               absoluteRange={absoluteRange}
-              visibleRange={visibleRange}
+              histogramRange={histogramRange}
+              logsRange={logsRange}
               timeZone={timeZone}
               scanning={scanning}
               scanRange={range.raw}
@@ -182,7 +184,8 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     logsMeta: logsResult?.meta,
     logsSeries: logsResult?.series,
     logsQueries: logsResult?.queries,
-    visibleRange: logsResult?.visibleRange,
+    histogramRange: logsResult?.histogramRange,
+    logsRange: logsResult?.logsRange,
     scanning,
     timeZone,
     datasourceInstance,

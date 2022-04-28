@@ -85,7 +85,8 @@ export interface LogsModel {
   meta?: LogsMetaItem[];
   rows: LogRowModel[];
   series?: DataFrame[];
-  visibleRange?: AbsoluteTimeRange;
+  histogramRange?: AbsoluteTimeRange;
+  logsRange?: AbsoluteTimeRange;
   queries?: DataQuery[];
 }
 

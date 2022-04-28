@@ -12,7 +12,7 @@ type Props = {
   timeZone: TimeZone;
   queries: DataQuery[];
   loading: boolean;
-  visibleRange: AbsoluteTimeRange;
+  logsRange: AbsoluteTimeRange;
   logsSortOrder?: LogsSortOrder | null;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   scrollToTopLogs: () => void;
@@ -32,7 +32,7 @@ function LogsNavigation({
   loading,
   onChangeTime,
   scrollToTopLogs,
-  visibleRange,
+  logsRange,
   queries,
   clearCache,
   addResultsToCache,
@@ -43,7 +43,7 @@ function LogsNavigation({
   // These refs are to determine, if we want to clear up logs navigation when totally new query is run
   const expectedQueriesRef = useRef<DataQuery[]>();
   const expectedRangeRef = useRef<AbsoluteTimeRange>();
-  // This ref is to store range span for future queres based on firstly selected time range
+  // This ref is to store range span for future queries based on firstly selected time range
   // e.g. if last 5 min selected, always run 5 min range
   const rangeSpanRef = useRef(0);
 
@@ -55,7 +55,7 @@ function LogsNavigation({
 
   // Main effect to set pages and index
   useEffect(() => {
-    const newPage = { logsRange: visibleRange, queryRange: absoluteRange };
+    const newPage = { logsRange, queryRange: absoluteRange };
     let newPages: LogsPage[] = [];
     // We want to start new pagination if queries change or if absolute range is different than expected
     if (!isEqual(expectedRangeRef.current, absoluteRange) || !isEqual(expectedQueriesRef.current, queries)) {
@@ -80,7 +80,7 @@ function LogsNavigation({
       setCurrentPageIndex(index);
     }
     addResultsToCache();
-  }, [visibleRange, absoluteRange, logsSortOrder, queries, clearCache, addResultsToCache]);
+  }, [logsRange, absoluteRange, logsSortOrder, queries, clearCache, addResultsToCache]);
 
   useEffect(() => {
     clearCache();
@@ -115,7 +115,7 @@ function LogsNavigation({
           });
         } else {
           //If we are on the last page, create new range
-          changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
+          changeTime({ from: logsRange.from - rangeSpanRef.current, to: logsRange.from });
         }
       }}
       disabled={loading}

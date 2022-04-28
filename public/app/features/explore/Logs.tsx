@@ -55,7 +55,8 @@ interface Props extends Themeable2 {
   logsMeta?: LogsMetaItem[];
   logsSeries?: DataFrame[];
   logsQueries?: DataQuery[];
-  visibleRange?: AbsoluteTimeRange;
+  histogramRange?: AbsoluteTimeRange;
+  logsRange?: AbsoluteTimeRange;
   theme: GrafanaTheme2;
   loading: boolean;
   loadingState: LoadingState;
@@ -257,7 +258,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
       logRows,
       logsMeta,
       logsSeries,
-      visibleRange,
+      histogramRange,
+      logsRange,
       loading = false,
       loadingState,
       onClickFilterLabel,
@@ -311,7 +313,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               height={150}
               width={width}
               tooltipDisplayMode={TooltipDisplayMode.Multi}
-              absoluteRange={visibleRange || absoluteRange}
+              absoluteRange={histogramRange || absoluteRange}
               timeZone={timeZone}
               loadingState={loadingState}
               onChangeTime={onChangeTime}
@@ -430,7 +432,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           </div>
           <LogsNavigation
             logsSortOrder={logsSortOrder}
-            visibleRange={visibleRange ?? absoluteRange}
+            logsRange={logsRange ?? absoluteRange}
             absoluteRange={absoluteRange}
             timeZone={timeZone}
             onChangeTime={onChangeTime}

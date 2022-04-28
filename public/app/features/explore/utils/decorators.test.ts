@@ -387,7 +387,11 @@ describe('decorateWithLogsResult', () => {
           ],
         },
       ],
-      visibleRange: undefined,
+      histogramRange: undefined,
+      logsRange: {
+        from: 100,
+        to: 100,
+      },
     });
   });
 

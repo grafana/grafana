@@ -12,7 +12,7 @@ const defaultProps: LogsNavigationProps = {
   queries: [],
   loading: false,
   logsSortOrder: undefined,
-  visibleRange: { from: 1637322959000, to: 1637322981811 },
+  logsRange: { from: 1637322959000, to: 1637322981811 },
   onChangeTime: jest.fn(),
   scrollToTopLogs: jest.fn(),
   addResultsToCache: jest.fn(),
@@ -77,7 +77,7 @@ describe('LogsNavigation', () => {
       <LogsNavigation
         {...defaultProps}
         absoluteRange={{ from: 1637319359000, to: 1637322959000 }}
-        visibleRange={{ from: 1637322938000, to: 1637322959000 }}
+        logsRange={{ from: 1637322938000, to: 1637322959000 }}
         onChangeTime={onChangeTimeMock}
         logsSortOrder={LogsSortOrder.Ascending}
       />
