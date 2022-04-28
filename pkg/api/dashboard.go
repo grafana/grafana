@@ -705,7 +705,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 		return rsp
 	}
 
-	if dashID == 0 {
+	if dash != nil && dash.Id != 0 {
 		dashID = dash.Id
 	}
 
