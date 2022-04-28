@@ -123,35 +123,21 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
 
 	// Silences. External AM.
-	case http.MethodDelete + "/api/alertmanager/{DatasourceID}/api/v2/silence/{SilenceId}":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
-	case http.MethodDelete + "/api/alertmanager/uid/{DatasourceUID}/api/v2/silence/{SilenceId}":
+	case http.MethodDelete + "/api/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId}":
 		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
-	case http.MethodPost + "/api/alertmanager/{DatasourceID}/api/v2/silences":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
-	case http.MethodPost + "/api/alertmanager/uid/{DatasourceUID}/api/v2/silences":
+	case http.MethodPost + "/api/alertmanager/{DatasourceUID}/api/v2/silences":
 		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
-	case http.MethodGet + "/api/alertmanager/{DatasourceID}/api/v2/silence/{SilenceId}":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
-	case http.MethodGet + "/api/alertmanager/uid/{DatasourceUID}/api/v2/silence/{SilenceId}":
+	case http.MethodGet + "/api/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId}":
 		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
-	case http.MethodGet + "/api/alertmanager/{DatasourceID}/api/v2/silences":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
-	case http.MethodGet + "/api/alertmanager/uid/{DatasourceUID}/api/v2/silences":
+	case http.MethodGet + "/api/alertmanager/{DatasourceUID}/api/v2/silences":
 		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
 	// Alert instances. External AM.
-	case http.MethodGet + "/api/alertmanager/{DatasourceID}/api/v2/alerts/groups":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
-	case http.MethodGet + "/api/alertmanager/uid/{DatasourceUID}/api/v2/alerts/groups":
+	case http.MethodGet + "/api/alertmanager/{DatasourceUID}/api/v2/alerts/groups":
 		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
-	case http.MethodGet + "/api/alertmanager/{DatasourceID}/api/v2/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
-	case http.MethodGet + "/api/alertmanager/uid/{DatasourceUID}/api/v2/alerts":
+	case http.MethodGet + "/api/alertmanager/{DatasourceUID}/api/v2/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
-	case http.MethodPost + "/api/alertmanager/{DatasourceID}/api/v2/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
-	case http.MethodPost + "/api/alertmanager/uid/{DatasourceUID}/api/v2/alerts":
+	case http.MethodPost + "/api/alertmanager/{DatasourceUID}/api/v2/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
 	// Prometheus-compatible Paths
@@ -176,25 +162,15 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 
 	// External Alertmanager Paths
-	case http.MethodDelete + "/api/alertmanager/{DatasourceID}/config/api/v1/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsDelete, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
-	case http.MethodDelete + "/api/alertmanager/uid/{DatasourceUID}/config/api/v1/alerts":
+	case http.MethodDelete + "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsDelete, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
-	case http.MethodGet + "/api/alertmanager/{DatasourceID}/api/v2/status":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
-	case http.MethodGet + "/api/alertmanager/uid/{DatasourceUID}/api/v2/status":
+	case http.MethodGet + "/api/alertmanager/{DatasourceUID}/api/v2/status":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
-	case http.MethodGet + "/api/alertmanager/{DatasourceID}/config/api/v1/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
-	case http.MethodGet + "/api/alertmanager/uid/{DatasourceUID}/config/api/v1/alerts":
+	case http.MethodGet + "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
-	case http.MethodPost + "/api/alertmanager/{DatasourceID}/config/api/v1/alerts":
+	case http.MethodPost + "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
-	case http.MethodPost + "/api/alertmanager/uid/{DatasourceUID}/config/api/v1/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
-	case http.MethodPost + "/api/alertmanager/{DatasourceID}/config/api/v1/receivers/test":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
-	case http.MethodPost + "/api/alertmanager/uid/{DatasourceUID}/config/api/v1/receivers/test":
+	case http.MethodPost + "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
 	// Raw Alertmanager Config Paths

@@ -465,454 +465,7 @@
         }
       }
     },
-    "/api/alertmanager/uid/{DatasourceUID}/api/v2/alerts": {
-      "get": {
-        "description": "get alertmanager alerts",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteGetAMAlertsWithUID",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableAlerts",
-            "schema": {
-              "$ref": "#/definitions/gettableAlerts"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create alertmanager alerts",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RoutePostAMAlertsWithUID",
-        "parameters": [
-          {
-            "name": "PostableAlerts",
-            "in": "body",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/postableAlert"
-              }
-            }
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/api/alertmanager/uid/{DatasourceUID}/api/v2/alerts/groups": {
-      "get": {
-        "description": "get alertmanager alerts",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteGetAMAlertGroupsWithUID",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "alertGroups",
-            "schema": {
-              "$ref": "#/definitions/alertGroups"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/api/alertmanager/uid/{DatasourceUID}/api/v2/silence/{SilenceId}": {
-      "get": {
-        "description": "get silence",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteGetSilenceWithUID",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableSilence",
-            "schema": {
-              "$ref": "#/definitions/gettableSilence"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "delete silence",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteDeleteSilenceWithUID",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "SilenceId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/api/alertmanager/uid/{DatasourceUID}/api/v2/silences": {
-      "get": {
-        "description": "get silences",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteGetSilencesWithUID",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "gettableSilences",
-            "schema": {
-              "$ref": "#/definitions/gettableSilences"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "create silence",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteCreateSilenceWithUID",
-        "parameters": [
-          {
-            "name": "Silence",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/postableSilence"
-            }
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "gettableSilence",
-            "schema": {
-              "$ref": "#/definitions/gettableSilence"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/api/alertmanager/uid/{DatasourceUID}/api/v2/status": {
-      "get": {
-        "description": "get alertmanager status and configuration",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteGetAMStatusWithUID",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "GettableStatus",
-            "schema": {
-              "$ref": "#/definitions/GettableStatus"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/api/alertmanager/uid/{DatasourceUID}/config/api/v1/alerts": {
-      "get": {
-        "description": "gets an Alerting config",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteGetAlertingConfigWithUID",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "GettableUserConfig",
-            "schema": {
-              "$ref": "#/definitions/GettableUserConfig"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "sets an Alerting config",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RoutePostAlertingConfigWithUID",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/PostableUserConfig"
-            }
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "deletes the Alerting config for a tenant",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteDeleteAlertingConfigWithUID",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
-    "/api/alertmanager/uid/{DatasourceUID}/config/api/v1/receivers/test": {
-      "post": {
-        "tags": [
-          "alertmanager"
-        ],
-        "summary": "Test Grafana managed receivers without saving them.",
-        "operationId": "RoutePostTestReceiversWithUID",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/TestReceiversConfigBodyParams"
-            }
-          },
-          {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "207": {
-            "description": "MultiStatus",
-            "schema": {
-              "$ref": "#/definitions/MultiStatus"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          },
-          "403": {
-            "description": "PermissionDenied",
-            "schema": {
-              "$ref": "#/definitions/PermissionDenied"
-            }
-          },
-          "404": {
-            "description": "AlertManagerNotFound",
-            "schema": {
-              "$ref": "#/definitions/AlertManagerNotFound"
-            }
-          },
-          "408": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          },
-          "409": {
-            "description": "AlertManagerNotReady",
-            "schema": {
-              "$ref": "#/definitions/AlertManagerNotReady"
-            }
-          }
-        }
-      }
-    },
-    "/api/alertmanager/{DatasourceID}/api/v2/alerts": {
+    "/api/alertmanager/{DatasourceUID}/api/v2/alerts": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": [
@@ -962,10 +515,9 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasoureID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -1003,10 +555,9 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasoureID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -1027,7 +578,7 @@
         }
       }
     },
-    "/api/alertmanager/{DatasourceID}/api/v2/alerts/groups": {
+    "/api/alertmanager/{DatasourceUID}/api/v2/alerts/groups": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": [
@@ -1075,14 +626,6 @@
             "description": "A regex matching receivers to filter alerts by",
             "name": "receiver",
             "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasoureID should be the numeric datasource identifier",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -1101,7 +644,7 @@
         }
       }
     },
-    "/api/alertmanager/{DatasourceID}/api/v2/silence/{SilenceId}": {
+    "/api/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId}": {
       "get": {
         "description": "get silence",
         "tags": [
@@ -1112,14 +655,6 @@
           {
             "type": "string",
             "name": "SilenceId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasoureID should be the numeric datasource identifier",
-            "name": "DatasourceID",
             "in": "path",
             "required": true
           }
@@ -1151,14 +686,6 @@
             "name": "SilenceId",
             "in": "path",
             "required": true
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasoureID should be the numeric datasource identifier",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -1177,7 +704,7 @@
         }
       }
     },
-    "/api/alertmanager/{DatasourceID}/api/v2/silences": {
+    "/api/alertmanager/{DatasourceUID}/api/v2/silences": {
       "get": {
         "description": "get silences",
         "tags": [
@@ -1193,14 +720,6 @@
             "x-go-name": "Filter",
             "name": "filter",
             "in": "query"
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasoureID should be the numeric datasource identifier",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -1231,14 +750,6 @@
             "schema": {
               "$ref": "#/definitions/postableSilence"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasoureID should be the numeric datasource identifier",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -1257,7 +768,7 @@
         }
       }
     },
-    "/api/alertmanager/{DatasourceID}/api/v2/status": {
+    "/api/alertmanager/{DatasourceUID}/api/v2/status": {
       "get": {
         "description": "get alertmanager status and configuration",
         "tags": [
@@ -1266,10 +777,9 @@
         "operationId": "RouteGetAMStatus",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasoureID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -1290,7 +800,7 @@
         }
       }
     },
-    "/api/alertmanager/{DatasourceID}/config/api/v1/alerts": {
+    "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts": {
       "get": {
         "description": "gets an Alerting config",
         "tags": [
@@ -1299,10 +809,9 @@
         "operationId": "RouteGetAlertingConfig",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasoureID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -1337,10 +846,9 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasoureID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -1368,10 +876,9 @@
         "operationId": "RouteDeleteAlertingConfig",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasoureID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -1392,7 +899,7 @@
         }
       }
     },
-    "/api/alertmanager/{DatasourceID}/config/api/v1/receivers/test": {
+    "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test": {
       "post": {
         "tags": [
           "alertmanager"
@@ -1406,14 +913,6 @@
             "schema": {
               "$ref": "#/definitions/TestReceiversConfigBodyParams"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasoureID should be the numeric datasource identifier",
-            "name": "DatasourceID",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -5467,7 +4966,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -5490,6 +4988,8 @@
           "$ref": "#/definitions/receiver"
         }
       },
+      "x-go-name": "AlertGroup",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
@@ -5618,6 +5118,7 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -5677,8 +5178,6 @@
           "x-go-name": "UpdatedAt"
         }
       },
-      "x-go-name": "GettableAlert",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
@@ -5925,6 +5424,7 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "name"
@@ -5936,8 +5436,6 @@
           "x-go-name": "Name"
         }
       },
-      "x-go-name": "Receiver",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/receiver"
     },
     "silence": {

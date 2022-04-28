@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -35,11 +34,6 @@ var endpoints = map[string]map[string]string{
 	},
 }
 
-var (
-	errDataSourceIDInvalid  = errors.New("DatasourceID is invalid")
-	errDataSourceUIDInvalid = errors.New("DatasourceUID is invalid")
-)
-
 const (
 	defaultImplementation = "cortex"
 )
@@ -65,16 +59,18 @@ func (am *LotexAM) withAMReq(
 	extractor func(*response.NormalResponse) (interface{}, error),
 	headers map[string]string,
 ) response.Response {
-	ds, err := am.getDatasourceFromCtx(ctx)
+	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+	if datasourceUID == "" {
+		return response.Error(http.StatusBadRequest, "DatasourceUID is invalid", nil)
+	}
+
+	ds, err := am.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			return ErrResp(http.StatusForbidden, err, "Access denied to datasource")
 		}
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "Unable to find datasource")
-		}
-		if errors.Is(err, errDataSourceIDInvalid) || errors.Is(err, errDataSourceUIDInvalid) {
-			return ErrResp(http.StatusBadRequest, err, "")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "Unable to load datasource meta data")
 	}
@@ -252,22 +248,4 @@ func (am *LotexAM) RoutePostAMAlerts(ctx *models.ReqContext, alerts apimodels.Po
 
 func (am *LotexAM) RoutePostTestReceivers(ctx *models.ReqContext, config apimodels.TestReceiversConfigBodyParams) response.Response {
 	return NotImplementedResp
-}
-
-func (am *LotexAM) getDatasourceFromCtx(ctx *models.ReqContext) (*models.DataSource, error) {
-	datasourceID := web.Params(ctx.Req)[":DatasourceID"]
-	if datasourceID != "" {
-		recipient, err := strconv.ParseInt(datasourceID, 10, 64)
-		if err != nil {
-			return nil, errDataSourceIDInvalid
-		}
-
-		return am.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), recipient, ctx.SignedInUser, ctx.SkipCache)
-	} else {
-		datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
-		if datasourceUID == "" {
-			return nil, errDataSourceUIDInvalid
-		}
-		return am.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
-	}
 }
