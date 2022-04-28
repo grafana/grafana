@@ -128,11 +128,11 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
     "permissions": [
         {
             "action": "folders:read",
-            "scope": "folders:id:92"
+            "scope": "folders:uid:YEcBGYU22"
         },
         {
             "action": "alert.rules:read",
-            "scope": "folders:id:92"
+            "scope": "folders:uid:YEcBGYU22"
         },
         {
             "action": "datasources:query",
