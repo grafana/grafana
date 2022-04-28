@@ -1000,7 +1000,7 @@ describe('LokiDatasource', () => {
   describe('importing queries', () => {
     it('keeps all labels when no labels are loaded', async () => {
       const ds = createLokiDSForTests();
-      fetchMock.mockImplementation(() => of(createFetchResponse({ data: [] })));
+      ds.getResource = () => Promise.resolve({ data: [] });
       const queries = await ds.importFromAbstractQueries([
         {
           refId: 'A',
@@ -1015,7 +1015,9 @@ describe('LokiDatasource', () => {
 
     it('filters out non existing labels', async () => {
       const ds = createLokiDSForTests();
-      fetchMock.mockImplementation(() => of(createFetchResponse({ data: ['foo'] })));
+      ds.getResource = () => {
+        return Promise.resolve({ data: ['foo'] });
+      };
       const queries = await ds.importFromAbstractQueries([
         {
           refId: 'A',

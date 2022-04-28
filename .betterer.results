@@ -29,9 +29,6 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/Graph/GraphTooltip/MultiModeGraphTooltip.test.tsx:1865444105": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/List/AbstractList.test.tsx:2972876749": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "packages/grafana-ui/src/components/Logs/LogLabels.test.tsx:1029448019": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -233,9 +230,6 @@ exports[`no enzyme tests`] = {
     "public/app/features/explore/RichHistory/RichHistoryStarredTab.test.tsx:3776538970": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/explore/RunButton.test.tsx:4267530266": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/explore/SecondaryActions.test.tsx:1177396128": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -298,9 +292,6 @@ exports[`no enzyme tests`] = {
     ],
     "public/app/plugins/datasource/elasticsearch/configuration/DataLinks.test.tsx:248699332": [
       [0, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/plugins/datasource/grafana-azure-monitor-datasource/components/deprecated/components/InsightsConfig.test.tsx:1107283234": [
-      [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/influxdb/components/ConfigEditor.test.tsx:3456478975": [
       [0, 19, 13, "RegExp match", "2409514259"]
