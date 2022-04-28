@@ -233,9 +233,6 @@ exports[`no enzyme tests`] = {
     "public/app/features/explore/RichHistory/RichHistoryStarredTab.test.tsx:3933225580": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/explore/RunButton.test.tsx:4267530266": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/explore/SecondaryActions.test.tsx:1177396128": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
