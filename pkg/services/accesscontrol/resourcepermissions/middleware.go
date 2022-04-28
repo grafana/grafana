@@ -43,3 +43,12 @@ func solveInheritedScopes(solve InheritedScopesSolver) web.Handler {
 		}
 	}
 }
+
+func disableMiddleware(shouldDisable bool) web.Handler {
+	return func(c *models.ReqContext) {
+		if shouldDisable {
+			c.Resp.WriteHeader(http.StatusNotFound)
+			return
+		}
+	}
+}

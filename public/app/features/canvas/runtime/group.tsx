@@ -77,7 +77,7 @@ export class GroupState extends ElementState {
   reinitializeMoveable() {
     // Need to first clear current selection and then re-init moveable with slight delay
     this.scene.clearCurrentSelection();
-    setTimeout(() => this.scene.initMoveable(true), 100);
+    setTimeout(() => this.scene.initMoveable(true, this.scene.isEditingEnabled), 100);
   }
 
   // ??? or should this be on the element directly?

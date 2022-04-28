@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
@@ -15,11 +14,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.Service,
+func ProvideService(features featuremgmt.FeatureToggles,
 	provider accesscontrol.PermissionsProvider, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
 	var errDeclareRoles error
 	s := ProvideOSSAccessControl(features, provider)
-	s.registerUsageMetrics(usageStats)
 	if !s.IsDisabled() {
 		api := api.AccessControlAPI{
 			RouteRegister: routeRegister,
@@ -33,7 +31,6 @@ func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.S
 	return s, errDeclareRoles
 }
 
-// ProvideOSSAccessControl creates an oss implementation of access control without usage stats registration
 func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
 	s := &OSSAccessControlService{
 		features:      features,
@@ -63,12 +60,10 @@ func (ac *OSSAccessControlService) IsDisabled() bool {
 	return !ac.features.IsEnabled(featuremgmt.FlagAccesscontrol)
 }
 
-func (ac *OSSAccessControlService) registerUsageMetrics(usageStats usagestats.Service) {
-	usageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
-		return map[string]interface{}{
-			"stats.oss.accesscontrol.enabled.count": ac.getUsageMetrics(),
-		}, nil
-	})
+func (ac *OSSAccessControlService) GetUsageStats(_ context.Context) map[string]interface{} {
+	return map[string]interface{}{
+		"stats.oss.accesscontrol.enabled.count": ac.getUsageMetrics(),
+	}
 }
 
 func (ac *OSSAccessControlService) getUsageMetrics() interface{} {

@@ -1,17 +1,17 @@
-package middleware
+package accesscontrol_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type middlewareTestCase struct {
@@ -61,7 +61,7 @@ func TestMiddleware(t *testing.T) {
 			server.UseMiddleware(web.Renderer("../../public/views", "[[", "]]"))
 
 			server.Use(contextProvider())
-			server.Use(Middleware(test.ac)(fallback, test.evaluator))
+			server.Use(accesscontrol.Middleware(test.ac)(fallback, test.evaluator))
 
 			endpointCalled := false
 			server.Get("/", func(c *models.ReqContext) {

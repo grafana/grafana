@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -50,6 +51,9 @@ func (srv *ProvisioningSrv) RoutePostPolicyTree(c *models.ReqContext, tree apimo
 	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgId, tree, alerting_models.ProvenanceAPI)
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
+	}
+	if errors.Is(err, provisioning.ErrValidation) {
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")

@@ -16,7 +16,7 @@ Access to these API endpoints is restricted as follows:
 - If you enable `editors_can_admin` configuration flag, then Organization Editors can create teams and manage teams where they are Admin.
   - If you enable `editors_can_admin` configuration flag, Editors can find out whether a team that they are not members of exists by trying to create a team with the same name.
 
-> If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, access to endpoints will be controlled by Fine-grained access control permissions.
+> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, access to endpoints will be controlled by role-based access control permissions.
 > Refer to specific endpoints to understand what permissions are required.
 
 ## Team Search With Paging
