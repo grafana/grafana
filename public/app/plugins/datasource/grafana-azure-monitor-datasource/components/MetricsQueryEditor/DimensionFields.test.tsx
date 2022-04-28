@@ -95,6 +95,21 @@ describe('Azure Monitor QueryEditor', () => {
         dimensionOptions={dimensionOptions}
       />
     );
+    const addDimension = await screen.findByText('Add new dimension');
+    await user.click(addDimension);
+    mockQuery = appendDimensionFilter(mockQuery);
+    render(
+      <DimensionFields
+        data={mockPanelData}
+        subscriptionId="123"
+        query={mockQuery}
+        onQueryChange={onQueryChange}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        setError={() => {}}
+        dimensionOptions={dimensionOptions}
+      />
+    );
     const dimensionSelect = await screen.findByText('Field');
     await user.click(dimensionSelect);
     const options = await screen.findAllByLabelText('Select option');
