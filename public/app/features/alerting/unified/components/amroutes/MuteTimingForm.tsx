@@ -12,7 +12,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
-import { useAlertManagerSources } from '../../hooks/useAlertManagerSources';
+import { useAlertManagersByPermission } from '../../hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { MuteTimingFields } from '../../types/mute-timing-form';
@@ -58,7 +58,7 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
 
 const MuteTimingForm = ({ muteTiming, showError }: Props) => {
   const dispatch = useDispatch();
-  const alertManagers = useAlertManagerSources('notification');
+  const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const styles = useStyles2(getStyles);
 

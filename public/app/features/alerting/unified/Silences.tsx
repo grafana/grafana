@@ -11,14 +11,14 @@ import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import SilencesEditor from './components/silences/SilencesEditor';
 import SilencesTable from './components/silences/SilencesTable';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
-import { useAlertManagerSources } from './hooks/useAlertManagerSources';
+import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAmAlertsAction, fetchSilencesAction } from './state/actions';
 import { SILENCES_POLL_INTERVAL_MS } from './utils/constants';
 import { AsyncRequestState, initialAsyncRequestState } from './utils/redux';
 
 const Silences: FC = () => {
-  const alertManagers = useAlertManagerSources('instance');
+  const alertManagers = useAlertManagersByPermission('instance');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
 
   const dispatch = useDispatch();

@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, ConfirmModal, TextArea, HorizontalGroup, Field, Form, useStyles2 } from '@grafana/ui';
 
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
-import { useAlertManagerSources } from '../../hooks/useAlertManagerSources';
+import { useAlertManagersByPermission } from '../../hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import {
   deleteAlertManagerConfigAction,
@@ -23,7 +23,7 @@ interface FormValues {
 
 export default function AlertmanagerConfig(): JSX.Element {
   const dispatch = useDispatch();
-  const alertManagers = useAlertManagerSources('notification');
+  const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
 
   const [showConfirmDeleteAMConfig, setShowConfirmDeleteAMConfig] = useState(false);

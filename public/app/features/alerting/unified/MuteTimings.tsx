@@ -8,7 +8,7 @@ import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
 import MuteTimingForm from './components/amroutes/MuteTimingForm';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
-import { useAlertManagerSources } from './hooks/useAlertManagerSources';
+import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertManagerConfigAction } from './state/actions';
 import { initialAsyncRequestState } from './utils/redux';
@@ -16,7 +16,7 @@ import { initialAsyncRequestState } from './utils/redux';
 const MuteTimings = () => {
   const [queryParams] = useQueryParams();
   const dispatch = useDispatch();
-  const alertManagers = useAlertManagerSources('notification');
+  const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName] = useAlertManagerSourceName(alertManagers);
 
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);

@@ -2,6 +2,6 @@ import { useMemo } from 'react';
 
 import { getAlertManagerDataSourcesByPermission } from '../utils/datasource';
 
-export function useAlertManagerSources(accessType: 'instance' | 'notification') {
+export function useAlertManagersByPermission(accessType: 'instance' | 'notification') {
   return useMemo(() => getAlertManagerDataSourcesByPermission(accessType), [accessType]);
 }

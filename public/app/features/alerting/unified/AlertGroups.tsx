@@ -11,7 +11,7 @@ import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { AlertGroup } from './components/alert-groups/AlertGroup';
 import { AlertGroupFilter } from './components/alert-groups/AlertGroupFilter';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
-import { useAlertManagerSources } from './hooks/useAlertManagerSources';
+import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useFilteredAmGroups } from './hooks/useFilteredAmGroups';
 import { useGroupedAlerts } from './hooks/useGroupedAlerts';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
@@ -21,7 +21,7 @@ import { getFiltersFromUrlParams } from './utils/misc';
 import { initialAsyncRequestState } from './utils/redux';
 
 const AlertGroups = () => {
-  const alertManagers = useAlertManagerSources('instance');
+  const alertManagers = useAlertManagersByPermission('instance');
   const [alertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
