@@ -136,6 +136,12 @@ export const totalsMetric = 'traces_service_graph_request_total';
 export const failedMetric = 'traces_service_graph_request_failed_total';
 export const histogramMetric = 'traces_service_graph_request_server_seconds_bucket';
 
+export const apmMetric = 'topk(5, sum(rate(traces_spanmetrics_calls_total{%%}[$__range] @ end())) by (span_name))';
+export const apmMetric2 =
+  'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",%%}[$__range] @ end())) by (span_name))';
+export const apmMetric3 =
+  'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",%%}[$__range] @ end())) by (le))';
+
 export const serviceMapMetrics = [
   secondsMetric,
   totalsMetric,
@@ -145,6 +151,8 @@ export const serviceMapMetrics = [
   // 'traces_service_graph_unpaired_spans_total',
   // 'traces_service_graph_untagged_spans_total',
 ];
+
+export const apmMetrics = [apmMetric, apmMetric2, apmMetric3];
 
 /**
  * Map response from multiple prometheus metrics into a node graph data frames with nodes and edges.

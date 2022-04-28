@@ -6,7 +6,18 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { compose } from 'redux';
 import { Unsubscribable } from 'rxjs';
 
-import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  applyFieldOverrides,
+  createTheme,
+  DataFrame,
+  DataQuery,
+  FieldType,
+  GrafanaTheme2,
+  LoadingState,
+  RawTimeRange,
+  toDataFrame,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
@@ -300,6 +311,72 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   memoizedGetNodeGraphDataFrames = memoizeOne(getNodeGraphDataFrames);
+
+  getDefaultDataFrame(): DataFrame {
+    const dataFrame = toDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [1609459200000, 1609470000000, 1609462800000, 1609466400000],
+          config: {
+            custom: {
+              filterable: false,
+            },
+          },
+        },
+        {
+          name: 'temperature',
+          type: FieldType.number,
+          values: [10, NaN, 11, 12],
+          config: {
+            custom: {
+              filterable: false,
+            },
+            links: [
+              {
+                targetBlank: true,
+                title: 'Value link',
+                url: '${__value.text}',
+              },
+            ],
+          },
+        },
+        {
+          name: 'img',
+          type: FieldType.string,
+          values: ['data:image/png;base64,1', 'data:image/png;base64,2', 'data:image/png;base64,3'],
+          config: {
+            custom: {
+              filterable: false,
+              displayMode: 'image',
+            },
+            links: [
+              {
+                targetBlank: true,
+                title: 'Image link',
+                url: '${__value.text}',
+              },
+            ],
+          },
+        },
+      ],
+    });
+    const dataFrames = applyFieldOverrides({
+      data: [dataFrame],
+      fieldConfig: {
+        defaults: {},
+        overrides: [],
+      },
+      replaceVariables: (value, vars, format) => {
+        return vars && value === '${__value.text}' ? vars['__value'].value.text : value;
+      },
+      timeZone: 'utc',
+      theme: createTheme(),
+    });
+    return dataFrames[0];
+  }
 
   renderTraceViewPanel() {
     const { queryResponse, splitOpen, exploreId } = this.props;

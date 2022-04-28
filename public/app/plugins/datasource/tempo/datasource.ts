@@ -3,14 +3,17 @@ import { EMPTY, from, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, mergeMap, toArray } from 'rxjs/operators';
 
 import {
+  ArrayVector,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceJsonData,
+  FieldType,
   isValidGoDuration,
   LoadingState,
+  toDataFrame,
 } from '@grafana/data';
 import { config, BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
@@ -27,6 +30,7 @@ import {
   histogramMetric,
   mapPromMetricsToServiceMap,
   serviceMapMetrics,
+  apmMetrics,
   totalsMetric,
 } from './graphTransform';
 import {
@@ -333,7 +337,10 @@ function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasou
 }
 
 function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string) {
-  return queryServiceMapPrometheus(makePromServiceMapRequest(request), datasourceUid).pipe(
+  const serviceMapRequest = makePromServiceMapRequest(request);
+  const combinedRequest = addApmMetricsToRequest(request, serviceMapRequest);
+
+  return queryServiceMapPrometheus(combinedRequest, datasourceUid).pipe(
     // Just collect all the responses first before processing into node graph data
     toArray(),
     map((responses: DataQueryResponse[]) => {
@@ -348,41 +355,143 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
           makePromLink(
             'Request rate',
             `rate(${totalsMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
-            datasourceUid
+            datasourceUid,
+            false
           ),
           makePromLink(
             'Request histogram',
             `histogram_quantile(0.9, sum(rate(${histogramMetric}{server="\${__data.fields.id}"}[$__rate_interval])) by (le, client, server))`,
-            datasourceUid
+            datasourceUid,
+            false
           ),
           makePromLink(
             'Failed request rate',
             `rate(${failedMetric}{server="\${__data.fields.id}"}[$__rate_interval])`,
-            datasourceUid
+            datasourceUid,
+            false
           ),
         ],
       };
 
+      const df = toDataFrame(responses[0].data[0]);
+      const df2 = toDataFrame(responses[0].data[1]);
+      const df3 = toDataFrame(responses[0].data[2]);
+      df.fields.push(df2.fields[2]);
+      df.fields.push(df3.fields[1]);
+      df.fields.shift();
+      df.fields[0].name = 'Name';
+      df.fields[1].name = 'Rate';
+      df.fields[1].config.links = [];
+      df.fields[1].config.links?.push(
+        makePromLink(
+          'Run ' + apmMetrics[0],
+          buildExpr(apmMetrics[0], request.targets[0].serviceMapQuery),
+          datasourceUid,
+          true
+        )
+      );
+      df.fields[2].name = 'Error Rate';
+      df.fields[2].config.links = [];
+      df.fields[2].config.links?.push(
+        makePromLink(
+          'Run ' + apmMetrics[1],
+          buildExpr(apmMetrics[1], request.targets[0].serviceMapQuery),
+          datasourceUid,
+          true
+        )
+      );
+      df.fields[3].name = 'Duration';
+      df.fields[3].config.links = [];
+      df.fields[3].config.links?.push(
+        makePromLink(
+          'Run ' + apmMetrics[2],
+          buildExpr(apmMetrics[2], request.targets[0].serviceMapQuery),
+          datasourceUid,
+          true
+        )
+      );
+      const linksField = {
+        name: 'Links',
+        type: FieldType.string,
+        values: new ArrayVector(),
+        config: {
+          custom: {
+            filterable: true,
+            instant: true,
+          },
+          links: [makeTempoLink('traces_spanmetrics_calls_total', '')],
+        },
+      };
+      linksField.values.add('Tempo');
+      linksField.values.add('Tempo');
+      linksField.values.add('Tempo');
+      linksField.values.add('Tempo');
+      linksField.values.add('Tempo');
+      df.fields.push(linksField);
+
       return {
-        data: [nodes, edges],
+        data: [df, nodes, edges],
         state: LoadingState.Done,
       };
     })
   );
 }
 
-function makePromLink(title: string, metric: string, datasourceUid: string) {
+function makePromLink(title: string, metric: string, datasourceUid: string, instant: boolean) {
   return {
     url: '',
     title,
     internal: {
       query: {
         expr: metric,
+        instant: instant,
       } as PromQuery,
       datasourceUid,
       datasourceName: 'Prometheus',
     },
   };
+}
+
+function makeTempoLink(title: string, query: string) {
+  return {
+    url: '',
+    title,
+    internal: {
+      query: {
+        queryType: 'nativeSearch',
+        serviceName: 'app',
+        spanName: 'HTTP Client',
+      } as TempoQuery,
+      datasourceUid: 'gdev-tempo-joey',
+      datasourceName: 'Tempo',
+    },
+  };
+}
+
+function buildExpr(metric: string, serviceMapQuery: string | undefined) {
+  var expr = `${metric.replace('%%', '')}`;
+  if (serviceMapQuery) {
+    const filtered = serviceMapQuery.replace('{', '').replace('}', '');
+    expr = `${metric.replace('%%', filtered)}`;
+  }
+  return expr;
+}
+
+function addApmMetricsToRequest(
+  options: DataQueryRequest<TempoQuery>,
+  promQuery: DataQueryRequest<PromQuery>
+): DataQueryRequest<PromQuery> {
+  const metrics = apmMetrics.map((metric) => {
+    const expr = buildExpr(metric, options.targets[0].serviceMapQuery);
+    return {
+      refId: metric,
+      expr: expr,
+      instant: true,
+    };
+  });
+
+  promQuery.targets = metrics.concat(promQuery.targets as any);
+  return promQuery;
 }
 
 function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQueryRequest<PromQuery> {
@@ -393,7 +502,7 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
         refId: metric,
         // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
         // service map at the same time anyway
-        expr: `delta(${metric}${options.targets[0].serviceMapQuery || ''}[$__range])`,
+        expr: `rate(${metric}${options.targets[0].serviceMapQuery || ''}[$__range])`,
         instant: true,
       };
     }),

@@ -49,9 +49,10 @@ export function ServiceGraphSection({
             filters={filters}
             getTagKeysOptions={{
               series: [
-                'traces_service_graph_request_server_seconds_sum',
-                'traces_service_graph_request_total',
-                'traces_service_graph_request_failed_total',
+                // 'traces_service_graph_request_server_seconds_sum',
+                // 'traces_service_graph_request_total',
+                // 'traces_service_graph_request_failed_total',
+                'traces_spanmetrics_calls_total',
               ],
             }}
             addFilter={(filter: AdHocVariableFilter) => {
