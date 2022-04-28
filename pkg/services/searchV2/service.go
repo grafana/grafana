@@ -42,7 +42,7 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 			sql: sql,
 			ac:  ac,
 		},
-		dashboardIndex: newDashboardIndex(&sqlDashboardLoader{sql: sql}, entityEventStore),
+		dashboardIndex: newDashboardIndex(newSQLDashboardLoader(sql), entityEventStore),
 		logger:         log.New("searchV2"),
 	}
 }
@@ -108,7 +108,7 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, _ DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
-	dash, err := s.dashboardIndex.getDashboards(ctx, orgId)
+	dashboards, err := s.dashboardIndex.getDashboards(ctx, orgId)
 	if err != nil {
 		rsp.Error = err
 		return rsp
@@ -120,27 +120,28 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	dash, err = s.applyAuthFilter(signedInUser, orgId, dash)
+	dashboards, err = s.applyAuthFilter(signedInUser, dashboards)
 	if err != nil {
 		rsp.Error = err
 		return rsp
 	}
 
-	rsp.Frames = metaToFrame(dash)
+
+	rsp.Frames = metaToFrame(dashboards)
 
 	return rsp
 }
 
-func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, orgId int64, dash []dashboard) ([]dashboard, error) {
+func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dashboards []dashboard) ([]dashboard, error) {
 	filter, err := s.auth.GetDashboardReadFilter(user)
 	if err != nil {
 		return nil, err
 	}
 
-	// create a list of all viewable dashboards for this user
-	res := make([]dashboard, 0, len(dash))
-	for _, dash := range dash {
-		if filter(dash.info.UID) || (dash.isFolder && dash.info.UID == "") { // include the "General" folder
+	// create a list of all viewable dashboards for this user.
+	res := make([]dashboard, 0, len(dashboards))
+	for _, dash := range dashboards {
+		if filter(dash.uid) || (dash.isFolder && dash.uid == "") { // include the "General" folder
 			res = append(res, dash)
 		}
 	}
@@ -246,14 +247,14 @@ func metaToFrame(meta []dashboard) data.Frames {
 	for _, row := range meta {
 		if row.isFolder {
 			folderID.Append(row.id)
-			folderUID.Append(row.info.UID)
+			folderUID.Append(row.uid)
 			folderName.Append(row.info.Title)
 			folderDashCount.Append(int64(0)) // filled in later
 			continue
 		}
 
 		dashID.Append(row.id)
-		dashUID.Append(row.info.UID)
+		dashUID.Append(row.uid)
 		dashFolderID.Append(row.folderID)
 		dashName.Append(row.info.Title)
 		dashDescr.Append(row.info.Title)
@@ -268,7 +269,7 @@ func metaToFrame(meta []dashboard) data.Frames {
 		}
 		folderCounter[row.folderID] = fcount + 1
 
-		url := fmt.Sprintf("/d/%s/%s", row.info.UID, row.slug)
+		url := fmt.Sprintf("/d/%s/%s", row.uid, row.slug)
 		dashURL.Append(url)
 
 		// stats
