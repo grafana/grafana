@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../..';
-import { DataFrame, Field, FieldType, SynchronousDataTransformerInfo } from '../../types';
+import { DataFrame, Field, FieldType, Labels, SynchronousDataTransformerInfo } from '../../types';
 import { ArrayVector } from '../../vector';
 
 import { DataTransformerID } from './ids';
@@ -9,6 +9,7 @@ import { DataTransformerID } from './ids';
 export enum LabelsToFieldsMode {
   Columns = 'columns', // default mode
   Rows = 'rows',
+  LabelField = 'labelfield',
 }
 export interface LabelsToFieldsOptions {
   mode?: LabelsToFieldsMode;
@@ -25,7 +26,7 @@ export interface LabelsToFieldsOptions {
 export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToFieldsOptions> = {
   id: DataTransformerID.labelsToFields,
   name: 'Labels to fields',
-  description: 'Extract time series labels to fields (columns or rows)',
+  description: 'Extract time series labels to fields (columns or rows or label-field)',
   defaultOptions: {},
 
   operator: (options) => (source) => source.pipe(map((data) => labelsToFieldsTransformer.transformer(options)(data))),
@@ -34,6 +35,10 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
     // Show each label as a field row
     if (options.mode === LabelsToFieldsMode.Rows) {
       return convertLabelsToRows(data, options.keepLabels);
+    }
+
+    if (options.mode === LabelsToFieldsMode.LabelField) {
+      return data.map(convertLabelsLabelField);
     }
 
     const result: DataFrame[] = [];
@@ -97,6 +102,53 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
     return result;
   },
 };
+
+function convertLabelsLabelField(frame: DataFrame): DataFrame {
+  const labelsField = frame.fields.find((f) => f.name === 'labels');
+
+  if (labelsField === undefined) {
+    return frame;
+  }
+
+  const items: Labels[] = labelsField.values.toArray();
+
+  const allNames = Array.from(new Set(items.map((l) => Object.keys(l)).flat()));
+  allNames.sort();
+
+  const data = new Map<string, string[]>();
+  allNames.forEach((name) => {
+    const values = new Array<string>(items.length);
+    // values.fill('');
+    data.set(name, values);
+  });
+
+  items.forEach((labels, i) => {
+    Object.entries(labels).map(([k, v]) => {
+      let cur = data.get(k);
+      if (cur === undefined) {
+        throw new Error('should never happen');
+      }
+      cur[i] = v;
+    });
+  });
+
+  const newFields = [...frame.fields];
+  allNames.forEach((name) => {
+    const values = data.get(name);
+    if (values === undefined) {
+      throw new Error('should never happen');
+    }
+    const field: Field<string> = {
+      name,
+      type: FieldType.string,
+      config: {},
+      values: new ArrayVector(values),
+    };
+    newFields.push(field);
+  });
+
+  return { ...frame, fields: newFields };
+}
 
 function convertLabelsToRows(data: DataFrame[], keepLabels?: string[]): DataFrame[] {
   const result: DataFrame[] = [];

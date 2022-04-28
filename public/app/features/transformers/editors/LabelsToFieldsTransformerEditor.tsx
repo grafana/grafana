@@ -16,6 +16,7 @@ import { InlineField, InlineFieldRow, RadioButtonGroup, Select, FilterPill } fro
 const modes: Array<SelectableValue<LabelsToFieldsMode>> = [
   { value: LabelsToFieldsMode.Columns, label: 'Columns' },
   { value: LabelsToFieldsMode.Rows, label: 'Rows' },
+  { value: LabelsToFieldsMode.LabelField, label: 'LabelField' },
 ];
 
 export const LabelsAsFieldsTransformerEditor: React.FC<TransformerUIProps<LabelsToFieldsOptions>> = ({
