@@ -89,12 +89,8 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
     onQueryChange(setDimensionFilterValue(query, filterIndex, fieldName, value));
   };
 
-  const onFilterInputChange = (index: number, v: SelectableValue<string>) => {
-    if (v) {
-      onFieldChange(index, 'filter', v.value);
-    } else {
-      onFieldChange(index, 'filter', '');
-    }
+  const onFilterInputChange = (index: number, v: SelectableValue<string> | null) => {
+    onFieldChange(index, 'filter', v?.value ?? '');
   };
 
   const getValidDimensionOptions = (selectedDimension: string) => {
@@ -114,13 +110,10 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
   };
 
   const getValidOperators = (selectedOperator: string) => {
-    if (!dimensionOperators.includes((operator: SelectableValue) => operator.value === selectedOperator)) {
-      return [
-        ...dimensionOperators,
-        ...(selectedOperator ? [{ label: selectedOperator, value: selectedOperator }] : []),
-      ];
+    if (dimensionOperators.find((operator: SelectableValue) => operator.value === selectedOperator)) {
+      return dimensionOperators;
     }
-    return dimensionOperators;
+    return [...dimensionOperators, ...(selectedOperator ? [{ label: selectedOperator, value: selectedOperator }] : [])];
   };
 
   return (
