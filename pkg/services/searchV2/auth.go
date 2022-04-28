@@ -15,7 +15,7 @@ type ResourceFilter func(uid string) bool
 
 // FutureAuthService eventually implemented by the security service
 type FutureAuthService interface {
-	GetDashboardReadFilter(user *models.SignedInUser) (ResourceFilter, error)
+	GetDashboardReadFilter(user *models.SignedInUser, orgId int64) (ResourceFilter, error)
 }
 
 var _ FutureAuthService = (*simpleSQLAuthService)(nil)
@@ -43,7 +43,7 @@ func (a *simpleSQLAuthService) getDashboardTableAuthFilter(user *models.SignedIn
 	return permissions.NewAccessControlDashboardPermissionFilter(user, models.PERMISSION_VIEW, searchstore.TypeDashboard)
 }
 
-func (a *simpleSQLAuthService) GetDashboardReadFilter(user *models.SignedInUser) (ResourceFilter, error) {
+func (a *simpleSQLAuthService) GetDashboardReadFilter(user *models.SignedInUser, orgId int64) (ResourceFilter, error) {
 	filter := a.getDashboardTableAuthFilter(user)
 	rows := make([]*dashIdQueryResult, 0)
 
@@ -51,6 +51,7 @@ func (a *simpleSQLAuthService) GetDashboardReadFilter(user *models.SignedInUser)
 		sql, params := filter.Where()
 		sess.Table("dashboard").
 			Where(sql, params...).
+			Where("org_id = ?", orgId).
 			Cols("uid")
 
 		err := sess.Find(&rows)

@@ -120,7 +120,7 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	dash, err = s.applyAuthFilter(signedInUser, dash)
+	dash, err = s.applyAuthFilter(signedInUser, orgId, dash)
 	if err != nil {
 		rsp.Error = err
 		return rsp
@@ -131,8 +131,8 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 	return rsp
 }
 
-func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dash []dashboard) ([]dashboard, error) {
-	filter, err := s.auth.GetDashboardReadFilter(user)
+func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, orgId int64, dash []dashboard) ([]dashboard, error) {
+	filter, err := s.auth.GetDashboardReadFilter(user, orgId)
 	if err != nil {
 		return nil, err
 	}
