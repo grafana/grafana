@@ -135,11 +135,11 @@ We have added an experimental HA setup support for Grafana Live with Redis. This
 
 These features are included in the Grafana Enterprise edition.
 
-### New permissions for fine-grained access control
+### New permissions for role-based access control
 
-Fine-grained access control remains in beta. You can now grant or revoke permissions for Viewers, Editors, or Admins to use Explore mode, configure LDAP or SAML settings, or view the admin/stats page. These new permissions enhance the existing permissions that can be customized, namely permissions to access Users, Orgs, LDAP settings, and Reports in Grafana.
+Role-based access control remains in beta. You can now grant or revoke permissions for Viewers, Editors, or Admins to use Explore mode, configure LDAP or SAML settings, or view the admin/stats page. These new permissions enhance the existing permissions that can be customized, namely permissions to access Users, Orgs, LDAP settings, and Reports in Grafana.
 
-Fine grained access control allows you to customize roles and permissions in Grafana beyond the built-in Viewer, Editor, and Admin roles. As of 8.1, you can modify some of the permissions for any of these built-in roles. This is helpful if you’d like users to have more or fewer access permissions than a given role allows for by default. For an overview of fine-grained access control and a complete list of available permissions, refer to the [Fine grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) documentation.
+Fine grained access control allows you to customize roles and permissions in Grafana beyond the built-in Viewer, Editor, and Admin roles. As of 8.1, you can modify some of the permissions for any of these built-in roles. This is helpful if you’d like users to have more or fewer access permissions than a given role allows for by default. For an overview of role-based access control and a complete list of available permissions, refer to the [Fine grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) documentation.
 
 ### New and improved reporting scheduler
 

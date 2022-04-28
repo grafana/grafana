@@ -74,10 +74,12 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 	}
 
 	// Build on start for orgID 1 but keep lazy for others.
-	_, err = i.getDashboards(ctx, 1)
+	started := time.Now()
+	dashboards, err := i.getDashboards(ctx, 1)
 	if err != nil {
 		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
 	}
+	i.logger.Info("Indexing for main org finished", "mainOrgIndexElapsed", time.Since(started), "numDashboards", len(dashboards))
 
 	for {
 		select {
@@ -245,7 +247,12 @@ func (i *dashboardIndex) getDashboards(ctx context.Context, orgId int64) ([]dash
 }
 
 type sqlDashboardLoader struct {
-	sql *sqlstore.SQLStore
+	sql    *sqlstore.SQLStore
+	logger log.Logger
+}
+
+func newSQLDashboardLoader(sql *sqlstore.SQLStore) *sqlDashboardLoader {
+	return &sqlDashboardLoader{sql: sql, logger: log.New("sqlDashboardLoader")}
 }
 
 func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error) {
@@ -260,6 +267,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		// Add the root folder ID (does not exist in SQL).
 		dashboards = append(dashboards, dashboard{
 			id:       0,
+			uid:      "",
 			isFolder: true,
 			folderID: 0,
 			slug:     "",
@@ -267,7 +275,6 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 			updated:  time.Now(),
 			info: &extract.DashboardInfo{
 				ID:    0,
-				UID:   "",
 				Title: "General",
 			},
 		})
@@ -308,6 +315,11 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		}
 
 		for _, row := range rows {
+			info, err := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
+			if err != nil {
+				l.logger.Warn("Error indexing dashboard data", "error", err, "dashboardId", row.Id, "dashboardSlug", row.Slug)
+				// But append info anyway for now, since we possibly extracted useful information.
+			}
 			dashboards = append(dashboards, dashboard{
 				id:       row.Id,
 				uid:      row.Uid,
@@ -316,7 +328,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 				slug:     row.Slug,
 				created:  row.Created,
 				updated:  row.Updated,
-				info:     extract.ReadDashboard(bytes.NewReader(row.Data), lookup),
+				info:     info,
 			})
 			lastID = row.Id
 		}
