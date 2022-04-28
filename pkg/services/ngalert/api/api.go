@@ -67,6 +67,7 @@ type API struct {
 	QuotaService         *quota.QuotaService
 	Schedule             schedule.ScheduleService
 	TransactionManager   provisioning.TransactionManager
+	ProvenanceStore      provisioning.ProvisioningStore
 	RuleStore            store.RuleStore
 	InstanceStore        store.InstanceStore
 	AlertingStore        AlertingStore
@@ -108,6 +109,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			QuotaService:    api.QuotaService,
 			scheduleService: api.Schedule,
 			store:           api.RuleStore,
+			provenanceStore: api.ProvenanceStore,
 			xactManager:     api.TransactionManager,
 			log:             logger,
 			cfg:             &api.Cfg.UnifiedAlerting,

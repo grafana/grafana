@@ -155,6 +155,7 @@ func (ng *AlertNG) init() error {
 		RuleStore:            store,
 		AlertingStore:        store,
 		AdminConfigStore:     store,
+		ProvenanceStore:      store,
 		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
 		StateManager:         ng.stateManager,
 		AccessControl:        ng.accesscontrol,
