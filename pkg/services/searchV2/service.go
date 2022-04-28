@@ -132,7 +132,7 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 }
 
 func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, orgId int64, dash []dashboard) ([]dashboard, error) {
-	filter, err := s.auth.GetDashboardReadFilter(user, orgId)
+	filter, err := s.auth.GetDashboardReadFilter(user)
 	if err != nil {
 		return nil, err
 	}
