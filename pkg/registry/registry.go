@@ -37,6 +37,7 @@ type UsageStatsProvidersRegistry interface {
 // ProvidesUsageStats is an interface for services that share their usage stats
 type ProvidesUsageStats interface {
 	// GetUsageStats is called on a schedule by the UsageStatsService
+	// Any errors occurring during usage stats collection should be collected and logged within the provider.
 	GetUsageStats(ctx context.Context) map[string]interface{}
 }
 
