@@ -3147,7 +3147,7 @@ depends_on:
 - publish-docker-oss-public
 - publish-docker-enterprise-public
 kind: pipeline
-name: publish-packages
+name: publish-packages-oss
 node:
   type: no-parallel
 platform:
@@ -3179,6 +3179,36 @@ steps:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.1
   name: store-packages-oss
+trigger:
+  event:
+  - promote
+  target:
+  - public
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+depends_on:
+- publish-artifacts-public
+- publish-docker-oss-public
+- publish-docker-enterprise-public
+kind: pipeline
+name: publish-packages-enterprise
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.41/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
 - commands:
   - ./bin/grabpl store-packages --edition enterprise --packages-bucket grafana-downloads
     --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
@@ -4574,6 +4604,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 6f77e9f096880adceaf04b4235d20e1c73b26534da4965a797f30fb30ccbb114
+hmac: 045df48997fde9ae05050441a3635a97a8be4db7b8b0c748c367cee0fc3d2373
 
 ...
