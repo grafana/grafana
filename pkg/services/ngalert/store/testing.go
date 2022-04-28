@@ -166,16 +166,58 @@ func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.
 	return nil
 }
 
-func (f *FakeRuleStore) GetOrgAlertRules(_ context.Context, q *models.ListAlertRulesQuery) error {
+func (f *FakeRuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)
 
-	rules, ok := f.Rules[q.OrgID]
-	if !ok {
-		return nil
+	if err := f.Hook(*q); err != nil {
+		return err
 	}
-	q.Result = rules
+
+	hasDashboard := func(r *models.AlertRule, dashboardUID string, panelID int64) bool {
+		if dashboardUID != "" {
+			if r.DashboardUID == nil || *r.DashboardUID != dashboardUID {
+				return false
+			}
+			if panelID > 0 {
+				if r.PanelID == nil || *r.PanelID != panelID {
+					return false
+				}
+			}
+		}
+		return true
+	}
+
+	hasNamespace := func(r *models.AlertRule, namespaceUIDs []string) bool {
+		if len(namespaceUIDs) > 0 {
+			var ok bool
+			for _, uid := range q.NamespaceUIDs {
+				if uid == r.NamespaceUID {
+					ok = true
+					break
+				}
+			}
+			if !ok {
+				return false
+			}
+		}
+		return true
+	}
+
+	for _, r := range f.Rules[q.OrgID] {
+		if !hasDashboard(r, q.DashboardUID, q.PanelID) {
+			continue
+		}
+		if !hasNamespace(r, q.NamespaceUIDs) {
+			continue
+		}
+		if q.RuleGroup != "" && r.RuleGroup != q.RuleGroup {
+			continue
+		}
+		q.Result = append(q.Result, r)
+	}
+
 	return nil
 }
 
@@ -198,30 +240,6 @@ func (f *FakeRuleStore) GetRuleGroups(_ context.Context, q *models.ListRuleGroup
 	return nil
 }
 
-func (f *FakeRuleStore) GetAlertRules(_ context.Context, q *models.GetAlertRulesQuery) error {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	if err := f.Hook(*q); err != nil {
-		return err
-	}
-	rules, ok := f.Rules[q.OrgID]
-	if !ok {
-		return nil
-	}
-	var result []*models.AlertRule
-	for _, rule := range rules {
-		if q.NamespaceUID != rule.NamespaceUID {
-			continue
-		}
-		if q.RuleGroup != nil && *q.RuleGroup != rule.RuleGroup {
-			continue
-		}
-		result = append(result, rule)
-	}
-	q.Result = result
-	return nil
-}
 func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -238,6 +256,7 @@ func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64,
 	}
 	return namespacesMap, nil
 }
+
 func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
 	folders := f.Folders[orgID]
 	for _, folder := range folders {

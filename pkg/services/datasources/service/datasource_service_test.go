@@ -38,7 +38,7 @@ func TestService(t *testing.T) {
 	})
 
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-	s := ProvideService(sqlStore, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+	s := ProvideService(sqlStore, secretsService, cfg, featuremgmt.WithFeatures(), acmock.New().WithDisabled(), acmock.NewPermissionsServicesMock())
 
 	var ds *models.DataSource
 
