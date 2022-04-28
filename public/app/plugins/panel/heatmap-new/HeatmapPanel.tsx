@@ -1,26 +1,19 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange, DataFrame } from '@grafana/data';
+import { GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { Portal, UPlotChart, useStyles2, useTheme2, VizLayout, LegendDisplayMode, usePanelContext } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 
 import { HeatmapHoverView } from './HeatmapHoverView';
-import { HeatmapData, prepareHeatmapData, calculatUsingExistingHeatmap, findAndPrepareHeatmapData } from './fields';
+import { HeatmapData, findAndPrepareHeatmapData } from './fields';
 import { ExemplarTab } from './hovertabs/ExemplarTab';
 import { HeatmapTab } from './hovertabs/HeatmapTab';
 import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
-import {
-  findExemplarFrameInPanelData,
-  findDataFramesInPanelData,
-  HeatmapHoverEvent,
-  prepConfig,
-  getDataMapping,
-  resolveMappingToData,
-} from './utils';
+import { HeatmapHoverEvent, prepConfig, resolveMappingToData } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
