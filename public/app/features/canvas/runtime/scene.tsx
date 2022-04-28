@@ -52,6 +52,7 @@ export class Scene {
   moveable?: Moveable;
   div?: HTMLDivElement;
   currentLayer?: GroupState;
+  isEditingEnabled?: boolean;
 
   constructor(cfg: CanvasGroupOptions, enableEditing: boolean, public onSave: (cfg: CanvasGroupOptions) => void) {
     this.root = this.load(cfg, enableEditing);
@@ -85,6 +86,8 @@ export class Scene {
       this,
       this.save // callback when changes are made
     );
+
+    this.isEditingEnabled = enableEditing;
 
     setTimeout(() => {
       if (this.div) {
@@ -165,7 +168,7 @@ export class Scene {
     if (updateMoveable) {
       setTimeout(() => {
         if (this.div) {
-          this.initMoveable(true);
+          this.initMoveable(true, this.isEditingEnabled);
         }
       }, 100);
     }
