@@ -1,11 +1,11 @@
-import { fireEvent, render, screen, act, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import selectEvent from 'react-select-event';
 
 import { MetricStatEditor } from '..';
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
-import { CloudWatchMetricsQuery } from '../../types';
+import { MetricStat } from '../../types';
 
 const ds = setupMockedDataSource({
   variables: [],
@@ -15,23 +15,19 @@ ds.datasource.getNamespaces = jest.fn().mockResolvedValue([]);
 ds.datasource.getMetrics = jest.fn().mockResolvedValue([]);
 ds.datasource.getDimensionKeys = jest.fn().mockResolvedValue([]);
 ds.datasource.getVariables = jest.fn().mockReturnValue([]);
-const q: CloudWatchMetricsQuery = {
-  id: '',
+const metricStat: MetricStat = {
   region: 'us-east-2',
   namespace: '',
-  period: '',
-  alias: '',
   metricName: '',
   dimensions: {},
-  matchExact: true,
   statistic: '',
-  expression: '',
-  refId: '',
+  matchExact: true,
 };
 
 const props = {
+  refId: 'A',
   datasource: ds.datasource,
-  query: q,
+  metricStat,
   onChange: jest.fn(),
   onRunQuery: jest.fn(),
 };
@@ -50,7 +46,7 @@ describe('MetricStatEditor', () => {
 
       await userEvent.type(statisticElement, statistic);
       fireEvent.keyDown(statisticElement, { keyCode: 13 });
-      expect(onChange).toHaveBeenCalledWith({ ...props.query, statistic });
+      expect(onChange).toHaveBeenCalledWith({ ...props.metricStat, statistic });
       expect(onRunQuery).toHaveBeenCalled();
     });
 
@@ -96,7 +92,13 @@ describe('MetricStatEditor', () => {
     });
 
     it('should be unchecked when value is false', async () => {
-      render(<MetricStatEditor {...props} query={{ ...props.query, matchExact: false }} disableExpressions={false} />);
+      render(
+        <MetricStatEditor
+          {...props}
+          metricStat={{ ...props.metricStat, matchExact: false }}
+          disableExpressions={false}
+        />
+      );
       expect(await screen.findByLabelText('Match exact - optional')).not.toBeChecked();
     });
   });
@@ -139,24 +141,24 @@ describe('MetricStatEditor', () => {
       await selectEvent.select(metricsSelect, 'm1');
 
       expect(onChange.mock.calls).toEqual([
-        [{ ...propsNamespaceMetrics.query, namespace: 'n1' }], // First call, namespace select
-        [{ ...propsNamespaceMetrics.query, metricName: 'm1' }], // Second call, metric select
+        [{ ...propsNamespaceMetrics.metricStat, namespace: 'n1' }], // First call, namespace select
+        [{ ...propsNamespaceMetrics.metricStat, metricName: 'm1' }], // Second call, metric select
       ]);
       expect(onRunQuery).toHaveBeenCalledTimes(2);
     });
 
-    it('should remove metricName from query if it does not exist in new namespace', async () => {
+    it('should remove metricName from metricStat if it does not exist in new namespace', async () => {
       propsNamespaceMetrics.datasource.getMetrics = jest
         .fn()
         .mockImplementation((namespace: string, region: string) => {
           let mockMetrics =
-            namespace === 'n1' && region === props.query.region
+            namespace === 'n1' && region === props.metricStat.region
               ? metrics
               : [{ value: 'oldNamespaceMetric', label: 'oldNamespaceMetric', text: 'oldNamespaceMetric' }];
           return Promise.resolve(mockMetrics);
         });
-      propsNamespaceMetrics.query.metricName = 'oldNamespaceMetric';
-      propsNamespaceMetrics.query.namespace = 'n2';
+      propsNamespaceMetrics.metricStat.metricName = 'oldNamespaceMetric';
+      propsNamespaceMetrics.metricStat.namespace = 'n2';
 
       await act(async () => {
         render(<MetricStatEditor {...propsNamespaceMetrics} />);
@@ -167,12 +169,12 @@ describe('MetricStatEditor', () => {
 
       await selectEvent.select(namespaceSelect, 'n1');
 
-      expect(onChange.mock.calls).toEqual([[{ ...propsNamespaceMetrics.query, metricName: '', namespace: 'n1' }]]);
+      expect(onChange.mock.calls).toEqual([[{ ...propsNamespaceMetrics.metricStat, metricName: '', namespace: 'n1' }]]);
     });
 
-    it('should not remove metricName from query if it does exist in new namespace', async () => {
-      propsNamespaceMetrics.query.namespace = 'n1';
-      propsNamespaceMetrics.query.metricName = 'm1';
+    it('should not remove metricName from metricStat if it does exist in new namespace', async () => {
+      propsNamespaceMetrics.metricStat.namespace = 'n1';
+      propsNamespaceMetrics.metricStat.metricName = 'm1';
 
       await act(async () => {
         render(<MetricStatEditor {...propsNamespaceMetrics} />);
@@ -184,7 +186,9 @@ describe('MetricStatEditor', () => {
       await selectEvent.select(namespaceSelect, 'n2');
 
       expect(onChange).toHaveBeenCalledTimes(1);
-      expect(onChange.mock.calls).toEqual([[{ ...propsNamespaceMetrics.query, metricName: 'm1', namespace: 'n2' }]]);
+      expect(onChange.mock.calls).toEqual([
+        [{ ...propsNamespaceMetrics.metricStat, metricName: 'm1', namespace: 'n2' }],
+      ]);
     });
   });
 });

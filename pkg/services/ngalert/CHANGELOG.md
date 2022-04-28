@@ -47,7 +47,8 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 
 - [CHANGE] Prometheus Compatible API: Use float-like values for `api/prometheus/grafana/api/v1/alerts` and `api/prometheus/grafana/api/v1/rules` instead of the evaluation string #47216
 - [CHANGE] Notification URL points to alert view page instead of alert edit page. #47752
-- [FEATURE]  Indicate whether routes are provisioned when GETting Alertmanager configuration #47857
+- [FEATURE] Indicate whether routes are provisioned when GETting Alertmanager configuration #47857
+- [FEATURE] Indicate whether contact point is provisioned when GETting Alertmanager configuration #48323
 - [BUGFIX] (Legacy) Templates: Parse notification templates using all the matches of the alert rule when going from `Alerting` to `OK` in legacy alerting #47355
 - [BUGFIX] Scheduler: Fix state manager to support OK option of `AlertRule.ExecErrState` #47670
 - [ENHANCEMENT] Templates: Enable the use of classic condition values in templates #46971
@@ -56,3 +57,4 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
     - `grafana_alerting_ticker_next_tick_timestamp_seconds`
     - `grafana_alerting_ticker_interval_seconds`
 - [ENHANCEMENT] Migration: Migrate each legacy notification channel to its own contact point, use nested routes to reproduce multi-channel alerts #47291
+
