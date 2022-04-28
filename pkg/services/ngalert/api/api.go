@@ -78,6 +78,7 @@ type API struct {
 	AccessControl        accesscontrol.AccessControl
 	Policies             *provisioning.NotificationPolicyService
 	ContactPointService  *provisioning.ContactPointService
+	Templates            *provisioning.TemplateService
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -136,6 +137,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			log:                 logger,
 			policies:            api.Policies,
 			contactPointService: api.ContactPointService,
+			templates:           api.Templates,
 		}), m)
 	}
 }
