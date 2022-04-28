@@ -58,7 +58,6 @@ def yarn_install_step():
             'yarn install --immutable',
         ],
         'depends_on': [
-            'restore-cache',
             'grabpl',
         ],
         'environment': {

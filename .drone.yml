@@ -40,7 +40,6 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on:
-  - restore-cache
   - grabpl
   environment:
     YARN_CACHE_FOLDER: /drone/src/yarncache
@@ -224,7 +223,6 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on:
-  - restore-cache
   - grabpl
   environment:
     YARN_CACHE_FOLDER: /drone/src/yarncache
@@ -577,7 +575,6 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on:
-  - restore-cache
   - grabpl
   environment:
     YARN_CACHE_FOLDER: /drone/src/yarncache
@@ -688,6 +685,6 @@ kind: secret
 name: secret
 ---
 kind: signature
-hmac: fa31f0b96725c591ff95922de93c569d1cf6051d1d44da429e5a7e6e36322082
+hmac: afdabb44e96eaae4941adfb2ff719aa7d38fa47e9c29ed70f34ee5cdae592f27
 
 ...
