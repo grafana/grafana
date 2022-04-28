@@ -58,3 +58,11 @@ type MessageTemplatePayload struct {
 	// in:body
 	Body MessageTemplate
 }
+
+func (t MessageTemplate) ResourceType() string {
+	return "template"
+}
+
+func (t MessageTemplate) ResourceID() string {
+	return t.Name
+}
