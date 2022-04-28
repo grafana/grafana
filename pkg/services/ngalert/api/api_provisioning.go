@@ -124,3 +124,15 @@ func (srv *ProvisioningSrv) RouteGetTemplate(c *models.ReqContext) response.Resp
 	}
 	return response.Empty(http.StatusNotFound)
 }
+
+func (srv *ProvisioningSrv) RoutePostTemplate(c *models.ReqContext, body apimodels.MessageTemplate) response.Response {
+	return response.Error(http.StatusInternalServerError, "not implemented", nil)
+}
+
+func (srv *ProvisioningSrv) RoutePutTemplate(c *models.ReqContext, body apimodels.MessageTemplate) response.Response {
+	return response.Error(http.StatusInternalServerError, "not implemented", nil)
+}
+
+func (srv *ProvisioningSrv) RouteDeleteTemplate(c *models.ReqContext) response.Response {
+	return response.Error(http.StatusInternalServerError, "not implemented", nil)
+}

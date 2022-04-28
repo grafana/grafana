@@ -21,17 +21,24 @@ import (
 
 type ProvisioningApiForkingService interface {
 	RouteDeleteContactpoints(*models.ReqContext) response.Response
+	RouteDeleteTemplate(*models.ReqContext) response.Response
 	RouteGetContactpoints(*models.ReqContext) response.Response
 	RouteGetPolicyTree(*models.ReqContext) response.Response
 	RouteGetTemplate(*models.ReqContext) response.Response
 	RouteGetTemplates(*models.ReqContext) response.Response
 	RoutePostContactpoints(*models.ReqContext) response.Response
 	RoutePostPolicyTree(*models.ReqContext) response.Response
+	RoutePostTemplate(*models.ReqContext) response.Response
 	RoutePutContactpoints(*models.ReqContext) response.Response
+	RoutePutTemplate(*models.ReqContext) response.Response
 }
 
 func (f *ForkedProvisioningApi) RouteDeleteContactpoints(ctx *models.ReqContext) response.Response {
 	return f.forkRouteDeleteContactpoints(ctx)
+}
+
+func (f *ForkedProvisioningApi) RouteDeleteTemplate(ctx *models.ReqContext) response.Response {
+	return f.forkRouteDeleteTemplate(ctx)
 }
 
 func (f *ForkedProvisioningApi) RouteGetContactpoints(ctx *models.ReqContext) response.Response {
@@ -66,12 +73,28 @@ func (f *ForkedProvisioningApi) RoutePostPolicyTree(ctx *models.ReqContext) resp
 	return f.forkRoutePostPolicyTree(ctx, conf)
 }
 
+func (f *ForkedProvisioningApi) RoutePostTemplate(ctx *models.ReqContext) response.Response {
+	conf := apimodels.MessageTemplate{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRoutePostTemplate(ctx, conf)
+}
+
 func (f *ForkedProvisioningApi) RoutePutContactpoints(ctx *models.ReqContext) response.Response {
 	conf := apimodels.EmbeddedContactPoint{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return f.forkRoutePutContactpoints(ctx, conf)
+}
+
+func (f *ForkedProvisioningApi) RoutePutTemplate(ctx *models.ReqContext) response.Response {
+	conf := apimodels.MessageTemplate{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRoutePutTemplate(ctx, conf)
 }
 
 func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingService, m *metrics.API) {
@@ -83,6 +106,16 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 				http.MethodDelete,
 				"/api/provisioning/contact-points/{ID}",
 				srv.RouteDeleteContactpoints,
+				m,
+			),
+		)
+		group.Delete(
+			toMacaronPath("/api/provisioning/templates/{ID}"),
+			api.authorize(http.MethodDelete, "/api/provisioning/templates/{ID}"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/provisioning/templates/{ID}",
+				srv.RouteDeleteTemplate,
 				m,
 			),
 		)
@@ -146,6 +179,16 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 				m,
 			),
 		)
+		group.Post(
+			toMacaronPath("/api/provisioning/templates"),
+			api.authorize(http.MethodPost, "/api/provisioning/templates"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/provisioning/templates",
+				srv.RoutePostTemplate,
+				m,
+			),
+		)
 		group.Put(
 			toMacaronPath("/api/provisioning/contact-points"),
 			api.authorize(http.MethodPut, "/api/provisioning/contact-points"),
@@ -153,6 +196,16 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 				http.MethodPut,
 				"/api/provisioning/contact-points",
 				srv.RoutePutContactpoints,
+				m,
+			),
+		)
+		group.Put(
+			toMacaronPath("/api/provisioning/templates/{ID}"),
+			api.authorize(http.MethodPut, "/api/provisioning/templates/{ID}"),
+			metrics.Instrument(
+				http.MethodPut,
+				"/api/provisioning/templates/{ID}",
+				srv.RoutePutTemplate,
 				m,
 			),
 		)
