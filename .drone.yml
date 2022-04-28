@@ -18,6 +18,7 @@ steps:
       from_secret: tf_google_credentials
     mount:
     - yarncache
+    - node_modules
     restore: "true"
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -179,6 +180,7 @@ steps:
       from_secret: tf_google_credentials
     mount:
     - yarncache
+    - node_modules
     restore: "true"
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -224,6 +226,7 @@ steps:
   - gen-version
   - yarn-install
   environment:
+    NODE_MODULES: /drone/src/node_modules
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.4
   name: build-frontend
@@ -249,6 +252,7 @@ steps:
       from_secret: tf_google_credentials
     mount:
     - yarncache
+    - node_modules
     rebuild: "true"
   when:
     event: pull_request
@@ -379,7 +383,6 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-    YARN_CACHE_FOLDER: /drone/src/yarncache
   image: grafana/build-container:1.5.4
   name: build-storybook
 - commands:
@@ -531,6 +534,7 @@ steps:
       from_secret: tf_google_credentials
     mount:
     - yarncache
+    - node_modules
     restore: "true"
 - commands:
   - mkdir -p bin
@@ -663,6 +667,6 @@ kind: secret
 name: secret
 ---
 kind: signature
-hmac: 2f519bb45c70e79476eda05e8db07382faae08234bbb3da3b5cfdd1ed2088be4
+hmac: 9e17ed5e2a9e4bdc2f6e3418ee42ff01cbb0f4621b87d674b9b675f67591f7ca
 
 ...

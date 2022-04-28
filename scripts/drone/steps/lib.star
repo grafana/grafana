@@ -255,7 +255,6 @@ def build_storybook_step(edition, ver_mode):
         ],
         'environment': {
             'NODE_OPTIONS': '--max_old_space_size=4096',
-            'YARN_CACHE_FOLDER': '/drone/src/yarncache',
         },
         'commands': [
             'yarn storybook:build',
@@ -419,6 +418,7 @@ def build_frontend_step(edition, ver_mode):
         'image': build_image,
         'environment': {
             'NODE_OPTIONS': '--max_old_space_size=8192',
+            'NODE_MODULES': '/drone/src/node_modules',
         },
         'depends_on': [
             'gen-version',
@@ -1187,6 +1187,7 @@ def restore_cache_step():
             'cache_key': "test123",
             'mount': [
                 'yarncache',
+                'node_modules',
             ],
         },
     }
@@ -1204,6 +1205,7 @@ def rebuild_cache_step():
             'rebuild': 'true',
             'mount': [
                 'yarncache',
+                'node_modules',
             ],
         },
         'depends_on': [
