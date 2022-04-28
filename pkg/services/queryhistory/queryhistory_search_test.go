@@ -123,7 +123,18 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 
 	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries using from filter, it should return correct queries",
 		func(t *testing.T, sc scenarioContext) {
-			sc.reqContext.Req.Form.Add("from", strconv.FormatInt(time.Now().Unix()-60, 10))
+			sc.reqContext.Req.Form.Add("from", strconv.FormatInt(time.Now().UnixMilli()-60*1000, 10))
+			resp := sc.service.searchHandler(sc.reqContext)
+			var response QueryHistorySearchResponse
+			err := json.Unmarshal(resp.Body(), &response)
+			require.NoError(t, err)
+			require.Equal(t, 200, resp.Status())
+			require.Equal(t, 3, response.Result.TotalCount)
+		})
+
+	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries using relative from filter, it should return correct queries",
+		func(t *testing.T, sc scenarioContext) {
+			sc.reqContext.Req.Form.Add("from", "now-1m")
 			resp := sc.service.searchHandler(sc.reqContext)
 			var response QueryHistorySearchResponse
 			err := json.Unmarshal(resp.Body(), &response)
@@ -134,7 +145,18 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 
 	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries using from filter, it should return no queries",
 		func(t *testing.T, sc scenarioContext) {
-			sc.reqContext.Req.Form.Add("from", strconv.FormatInt(time.Now().Unix()+60, 10))
+			sc.reqContext.Req.Form.Add("from", strconv.FormatInt(time.Now().UnixMilli()+60*1000, 10))
+			resp := sc.service.searchHandler(sc.reqContext)
+			var response QueryHistorySearchResponse
+			err := json.Unmarshal(resp.Body(), &response)
+			require.NoError(t, err)
+			require.Equal(t, 200, resp.Status())
+			require.Equal(t, 0, response.Result.TotalCount)
+		})
+
+	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries using from filter, it should return no queries",
+		func(t *testing.T, sc scenarioContext) {
+			sc.reqContext.Req.Form.Add("from", "now+1m")
 			resp := sc.service.searchHandler(sc.reqContext)
 			var response QueryHistorySearchResponse
 			err := json.Unmarshal(resp.Body(), &response)
@@ -145,7 +167,18 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 
 	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries using to filter, it should return correct queries",
 		func(t *testing.T, sc scenarioContext) {
-			sc.reqContext.Req.Form.Add("to", strconv.FormatInt(time.Now().Unix(), 10))
+			sc.reqContext.Req.Form.Add("to", strconv.FormatInt(time.Now().UnixMilli(), 10))
+			resp := sc.service.searchHandler(sc.reqContext)
+			var response QueryHistorySearchResponse
+			err := json.Unmarshal(resp.Body(), &response)
+			require.NoError(t, err)
+			require.Equal(t, 200, resp.Status())
+			require.Equal(t, 3, response.Result.TotalCount)
+		})
+
+	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries using to filter, it should return correct queries",
+		func(t *testing.T, sc scenarioContext) {
+			sc.reqContext.Req.Form.Add("to", "now")
 			resp := sc.service.searchHandler(sc.reqContext)
 			var response QueryHistorySearchResponse
 			err := json.Unmarshal(resp.Body(), &response)
@@ -156,7 +189,18 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 
 	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries using to filter, it should return no queries",
 		func(t *testing.T, sc scenarioContext) {
-			sc.reqContext.Req.Form.Add("to", strconv.FormatInt(time.Now().Unix()-60, 10))
+			sc.reqContext.Req.Form.Add("to", strconv.FormatInt(time.Now().UnixMilli()-60*1000, 10))
+			resp := sc.service.searchHandler(sc.reqContext)
+			var response QueryHistorySearchResponse
+			err := json.Unmarshal(resp.Body(), &response)
+			require.NoError(t, err)
+			require.Equal(t, 200, resp.Status())
+			require.Equal(t, 0, response.Result.TotalCount)
+		})
+
+	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries using to filter, it should return no queries",
+		func(t *testing.T, sc scenarioContext) {
+			sc.reqContext.Req.Form.Add("to", "now-1m")
 			resp := sc.service.searchHandler(sc.reqContext)
 			var response QueryHistorySearchResponse
 			err := json.Unmarshal(resp.Body(), &response)
@@ -167,8 +211,8 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 
 	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries using from and to filter, it should return correct queries",
 		func(t *testing.T, sc scenarioContext) {
-			sc.reqContext.Req.Form.Add("to", strconv.FormatInt(time.Now().Unix(), 10))
-			sc.reqContext.Req.Form.Add("from", strconv.FormatInt(time.Now().Unix()-60, 10))
+			sc.reqContext.Req.Form.Add("to", strconv.FormatInt(time.Now().UnixMilli(), 10))
+			sc.reqContext.Req.Form.Add("from", strconv.FormatInt(time.Now().UnixMilli()-60*1000, 10))
 			resp := sc.service.searchHandler(sc.reqContext)
 			var response QueryHistorySearchResponse
 			err := json.Unmarshal(resp.Body(), &response)
@@ -179,8 +223,22 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 
 	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries using from and to filter with other filters, it should return correct queries",
 		func(t *testing.T, sc scenarioContext) {
-			sc.reqContext.Req.Form.Add("to", strconv.FormatInt(time.Now().Unix(), 10))
-			sc.reqContext.Req.Form.Add("from", strconv.FormatInt(time.Now().Unix()-60, 10))
+			sc.reqContext.Req.Form.Add("to", strconv.FormatInt(time.Now().UnixMilli(), 10))
+			sc.reqContext.Req.Form.Add("from", strconv.FormatInt(time.Now().UnixMilli()-60*1000, 10))
+			sc.reqContext.Req.Form.Add("datasourceUid", testDsUID1)
+			sc.reqContext.Req.Form.Add("searchString", "2")
+			resp := sc.service.searchHandler(sc.reqContext)
+			var response QueryHistorySearchResponse
+			err := json.Unmarshal(resp.Body(), &response)
+			require.NoError(t, err)
+			require.Equal(t, 200, resp.Status())
+			require.Equal(t, 2, response.Result.TotalCount)
+		})
+
+	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries using from and to filter with other filters, it should return correct queries",
+		func(t *testing.T, sc scenarioContext) {
+			sc.reqContext.Req.Form.Add("to", "now")
+			sc.reqContext.Req.Form.Add("from", "now-1m")
 			sc.reqContext.Req.Form.Add("datasourceUid", testDsUID1)
 			sc.reqContext.Req.Form.Add("searchString", "2")
 			resp := sc.service.searchHandler(sc.reqContext)
@@ -193,8 +251,8 @@ func TestGetQueriesFromQueryHistory(t *testing.T) {
 
 	testScenarioWithMultipleQueriesInQueryHistory(t, "When users tries to get queries using from and to filter with other filters, it should return no query",
 		func(t *testing.T, sc scenarioContext) {
-			sc.reqContext.Req.Form.Add("to", strconv.FormatInt(time.Now().Unix()-60, 10))
-			sc.reqContext.Req.Form.Add("from", strconv.FormatInt(time.Now().Unix()+60, 10))
+			sc.reqContext.Req.Form.Add("to", strconv.FormatInt(time.Now().UnixMilli()-60, 10))
+			sc.reqContext.Req.Form.Add("from", strconv.FormatInt(time.Now().UnixMilli()+60, 10))
 			sc.reqContext.Req.Form.Add("datasourceUid", testDsUID1)
 			sc.reqContext.Req.Form.Add("searchString", "2")
 			resp := sc.service.searchHandler(sc.reqContext)

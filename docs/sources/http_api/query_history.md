@@ -91,8 +91,7 @@ Query parameters:
 - **onlyStarred** - Search for queries that are starred. Defaults to `false`.
 - **page** - Search supports pagination. Specify which page number to return. Use the limit parameter to specify the number of queries per page.
 - **limit** - Limits the number of returned query history items per page. The default is 100 queries per page.
-- **from** - Start time for the query history search as a second UNIX timestamp.
-- **to** - End time for the query history search as a second UNIX timestamp.
+- **from/to** - Specifies time range for the query history search. The time can be either epoch timestamps in milliseconds or relative using Grafana time units. For example, now-5m.
 
 **Example request for query history search**:
 
