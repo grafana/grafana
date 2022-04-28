@@ -7,8 +7,8 @@ import {
   logsSupportedResourceTypesKusto,
   resourceTypeDisplayNames,
 } from '../azureMetadata';
-import { ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
-import { parseResourceURI } from '../components/ResourcePicker/utils';
+import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
+import { addResources, parseResourceURI } from '../components/ResourcePicker/utils';
 import {
   AzureDataSourceJsonData,
   AzureGraphResponse,
@@ -31,6 +31,40 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     this.resourcePath = `${routeNames.resourceGraph}`;
   }
 
+  async fetchInitialRows(currentSelection?: string): Promise<ResourceRowGroup> {
+    const subscriptions = await this.getSubscriptions();
+    if (!currentSelection) {
+      return subscriptions;
+    }
+
+    let resources = subscriptions;
+    const parsedURI = parseResourceURI(currentSelection);
+    if (parsedURI) {
+      const resourceGroupURI = `/subscriptions/${parsedURI.subscriptionID}/resourceGroups/${parsedURI.resourceGroup}`;
+
+      if (parsedURI.resourceGroup) {
+        const resourceGroups = await this.getResourceGroupsBySubscriptionId(parsedURI.subscriptionID);
+        resources = addResources(resources, `/subscriptions/${parsedURI.subscriptionID}`, resourceGroups);
+      }
+
+      if (parsedURI.resource) {
+        const resourcesForResourceGroup = await this.getResourcesForResourceGroup(resourceGroupURI);
+        resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
+      }
+    }
+    return resources;
+  }
+
+  async fetchAndAppendNestedRow(rows: ResourceRowGroup, parentRow: ResourceRow): Promise<ResourceRowGroup> {
+    const nestedRows =
+      parentRow.type === ResourceRowType.Subscription
+        ? await this.getResourceGroupsBySubscriptionId(parentRow.id)
+        : await this.getResourcesForResourceGroup(parentRow.id);
+
+    return addResources(rows, parentRow.uri, nestedRows);
+  }
+
+  // private
   async getSubscriptions(): Promise<ResourceRowGroup> {
     const query = `
     resources

@@ -10,7 +10,7 @@ import { Space } from '../Space';
 import NestedRow from './NestedRow';
 import getStyles from './styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
-import { addResources, findRow, parseResourceURI } from './utils';
+import { findRow } from './utils';
 
 interface ResourcePickerProps {
   resourcePickerData: ResourcePickerData;
@@ -32,7 +32,7 @@ const ResourcePicker = ({
 
   type LoadingStatus = 'NotStarted' | 'Started' | 'Done';
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>('NotStarted');
-  const [azureRows, setAzureRows] = useState<ResourceRowGroup>([]);
+  const [rows, setRows] = useState<ResourceRowGroup>([]);
   const [internalSelectedURI, setInternalSelectedURI] = useState<string | undefined>(resourceURI);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(resourceURI?.includes('$'));
@@ -47,32 +47,8 @@ const ResourcePicker = ({
       const loadInitialData = async () => {
         try {
           setLoadingStatus('Started');
-          let resources = await resourcePickerData.getSubscriptions();
-          if (!internalSelectedURI) {
-            setAzureRows(resources);
-            setLoadingStatus('Done');
-            return;
-          }
-
-          const parsedURI = parseResourceURI(internalSelectedURI ?? '');
-          if (parsedURI) {
-            const resourceGroupURI = `/subscriptions/${parsedURI.subscriptionID}/resourceGroups/${parsedURI.resourceGroup}`;
-
-            // if a resource group was previously selected, but the resource groups under the parent subscription have not been loaded yet
-            if (parsedURI.resourceGroup && !findRow(resources, resourceGroupURI)) {
-              const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId(
-                parsedURI.subscriptionID
-              );
-              resources = addResources(resources, `/subscriptions/${parsedURI.subscriptionID}`, resourceGroups);
-            }
-
-            // if a resource was previously selected, but the resources under the parent resource group have not been loaded yet
-            if (parsedURI.resource && !findRow(azureRows, parsedURI.resource ?? '')) {
-              const resourcesForResourceGroup = await resourcePickerData.getResourcesForResourceGroup(resourceGroupURI);
-              resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
-            }
-          }
-          setAzureRows(resources);
+          const resources = await resourcePickerData.fetchInitialRows(internalSelectedURI || '');
+          setRows(resources);
           setLoadingStatus('Done');
         } catch (error) {
           setLoadingStatus('Done');
@@ -82,11 +58,11 @@ const ResourcePicker = ({
 
       loadInitialData();
     }
-  }, [resourcePickerData, internalSelectedURI, azureRows, loadingStatus]);
+  }, [resourcePickerData, internalSelectedURI, rows, loadingStatus]);
 
   // Map the selected item into an array of rows
   const selectedResourceRows = useMemo(() => {
-    const found = internalSelectedURI && findRow(azureRows, internalSelectedURI);
+    const found = internalSelectedURI && findRow(rows, internalSelectedURI);
 
     return found
       ? [
@@ -96,34 +72,28 @@ const ResourcePicker = ({
           },
         ]
       : [];
-  }, [internalSelectedURI, azureRows]);
+  }, [internalSelectedURI, rows]);
 
   // Request resources for a expanded resource group
   const requestNestedRows = useCallback(
-    async (resourceGroupOrSubscription: ResourceRow) => {
+    async (parentRow: ResourceRow) => {
       // clear error message (also when loading cached resources)
       setErrorMessage(undefined);
 
       // If we already have children, we don't need to re-fetch them.
-      if (resourceGroupOrSubscription.children?.length) {
+      if (parentRow.children?.length) {
         return;
       }
 
       try {
-        const rows =
-          resourceGroupOrSubscription.type === ResourceRowType.Subscription
-            ? await resourcePickerData.getResourceGroupsBySubscriptionId(resourceGroupOrSubscription.id)
-            : await resourcePickerData.getResourcesForResourceGroup(resourceGroupOrSubscription.id);
-
-        const newRows = addResources(azureRows, resourceGroupOrSubscription.uri, rows);
-
-        setAzureRows(newRows);
+        const nestedRows = await resourcePickerData.fetchAndAppendNestedRow(rows, parentRow);
+        setRows(nestedRows);
       } catch (error) {
         setErrorMessage(messageFromError(error));
         throw error;
       }
     },
-    [resourcePickerData, azureRows]
+    [resourcePickerData, rows]
   );
 
   const handleSelectionChanged = useCallback((row: ResourceRow, isSelected: boolean) => {
@@ -155,7 +125,7 @@ const ResourcePicker = ({
           <div className={styles.tableScroller}>
             <table className={styles.table}>
               <tbody>
-                {azureRows.map((row) => (
+                {rows.map((row) => (
                   <NestedRow
                     key={row.uri}
                     row={row}
