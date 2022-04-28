@@ -155,6 +155,14 @@ export class GroupState extends ElementState {
     }
   };
 
+  /*
+    Next steps:
+      - Make group fit around nested elements boundaries (init) -> pair with Ryan on this initially
+      - Work on addressing moving group / resizing behavior (in regards to nested elements with constraints as well)
+      - Work on addressing group constraint in relation to parent
+      - Clean up?
+  */
+
   render() {
     return (
       <div key={`${this.UID}/${this.revId}`} ref={this.initElement} style={{ ...this.sizeStyle, ...this.dataStyle }}>
