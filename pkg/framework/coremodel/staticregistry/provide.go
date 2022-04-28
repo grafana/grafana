@@ -22,7 +22,7 @@ func ProvideRegistry(
 	// once coremodels are no longer feature flagged
 	var newfunc registryProvider
 	newfunc = coremodel.NewRegistry
-	if feat.IsEnabled(featuremgmt.FlagCoremodelValidation) {
+	if !feat.IsEnabled(featuremgmt.FlagCoremodelValidation) {
 		newfunc = provideStub
 	}
 
