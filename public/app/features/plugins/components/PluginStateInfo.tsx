@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
-import { Badge, BadgeProps } from '@grafana/ui';
+
 import { PluginState } from '@grafana/data';
+import { Badge, BadgeProps } from '@grafana/ui';
 
 interface Props {
   state?: PluginState;

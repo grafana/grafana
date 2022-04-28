@@ -1,13 +1,15 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { LegacyForms, DeleteButton } from '@grafana/ui';
-const { Select } = LegacyForms;
-import { SelectableValue } from '@grafana/data';
 
-import { TeamMember, teamsPermissionLevels, TeamPermissionLevel } from 'app/types';
-import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
-import { updateTeamMember, removeTeamMember } from './state/actions';
+import { SelectableValue } from '@grafana/data';
+import { LegacyForms, DeleteButton } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
+import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
+import { TeamMember, teamsPermissionLevels, TeamPermissionLevel } from 'app/types';
+
+import { updateTeamMember, removeTeamMember } from './state/actions';
+
+const { Select } = LegacyForms;
 
 const mapDispatchToProps = {
   removeTeamMember,

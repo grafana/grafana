@@ -1,8 +1,11 @@
-import React from 'react';
 import { mount } from 'enzyme';
-import { ConfigEditor } from './ConfigEditor';
-import { createDefaultConfigOptions } from '../mocks';
+import React from 'react';
+
 import { DataSourceHttpSettings } from '@grafana/ui';
+
+import { createDefaultConfigOptions } from '../mocks';
+
+import { ConfigEditor } from './ConfigEditor';
 import { DerivedFields } from './DerivedFields';
 
 describe('ConfigEditor', () => {

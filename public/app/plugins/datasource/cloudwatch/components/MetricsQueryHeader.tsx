@@ -1,8 +1,8 @@
 import React, { useCallback, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Button, ConfirmModal, RadioButtonGroup } from '@grafana/ui';
 import { InlineSelect, FlexItem } from '@grafana/experimental';
+import { Button, ConfirmModal, RadioButtonGroup } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchMetricsQuery, CloudWatchQuery, MetricEditorMode, MetricQueryType } from '../types';

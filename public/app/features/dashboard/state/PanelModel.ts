@@ -1,10 +1,6 @@
-// Libraries
 import { cloneDeep, defaultsDeep, isArray, isEqual, keys } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-// Utils
-import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
-import { getNextRefIdChar } from 'app/core/utils/query';
-// Types
+
 import {
   DataConfigSource,
   DataFrameDTO,
@@ -21,24 +17,29 @@ import {
   PanelModel as IPanelModel,
   DataSourceRef,
 } from '@grafana/data';
+import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import config from 'app/core/config';
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { getNextRefIdChar } from 'app/core/utils/query';
+import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
   PanelQueriesChangedEvent,
   PanelTransformationsChangedEvent,
   RenderEvent,
 } from 'app/types/events';
-import { getTimeSrv } from '../services/TimeSrv';
+
+import { PanelModelLibraryPanel } from '../../library-panels/types';
+import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
+import { getTimeSrv } from '../services/TimeSrv';
+import { TimeOverrideResult } from '../utils/panel';
+
 import {
   filterFieldConfigOverrides,
   getPanelOptionsWithDefaults,
   isStandardFieldProp,
   restoreCustomOverrideRules,
 } from './getPanelOptionsWithDefaults';
-import { QueryGroupOptions } from 'app/types';
-import { PanelModelLibraryPanel } from '../../library-panels/types';
 
 export interface GridPos {
   x: number;
@@ -47,8 +48,6 @@ export interface GridPos {
   h: number;
   static?: boolean;
 }
-
-import { TimeOverrideResult } from '../utils/panel';
 
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,

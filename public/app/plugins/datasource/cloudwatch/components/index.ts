@@ -1,4 +1,4 @@
-export { Dimensions } from './MetricStatEditor/Dimensions';
+export { Dimensions } from './Dimensions/Dimensions';
 export { QueryInlineField, QueryField } from './Forms';
 export { Alias } from './Alias';
 export { PanelQueryEditor } from './PanelQueryEditor';

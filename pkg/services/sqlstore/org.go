@@ -149,8 +149,8 @@ func (ss *SQLStore) CreateOrgWithMember(name string, userID int64) (models.Org, 
 	return createOrg(name, userID, ss.engine)
 }
 
-func CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error {
-	org, err := createOrg(cmd.Name, cmd.UserId, x)
+func (ss *SQLStore) CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error {
+	org, err := createOrg(cmd.Name, cmd.UserId, ss.engine)
 	if err != nil {
 		return err
 	}

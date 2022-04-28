@@ -34,7 +34,7 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 		})
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
@@ -44,7 +44,7 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
+	return response.JSON(http.StatusOK, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
@@ -52,13 +52,13 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	folder, err := hs.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, c.OrgId, id)
+	folder, err := hs.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, id, c.OrgId)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
+	return response.JSON(http.StatusOK, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
@@ -72,7 +72,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, folder))
+	return response.JSON(http.StatusOK, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
@@ -86,7 +86,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(c.Req.Context(), cmd.Result.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, hs.toFolderDto(c.Req.Context(), g, cmd.Result))
+	return response.JSON(http.StatusOK, hs.toFolderDto(c.Req.Context(), g, cmd.Result))
 }
 
 func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
@@ -103,7 +103,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"title":   f.Title,
 		"message": fmt.Sprintf("Folder %s deleted", f.Title),
 		"id":      f.Id,

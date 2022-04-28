@@ -1,10 +1,12 @@
+import { css, cx } from '@emotion/css';
 import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { stylesFactory } from '../../themes';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { inputPadding } from '../Forms/commonStyles';
 import { getInputStyles } from '../Input/Input';
-import { css, cx } from '@emotion/css';
-import { stylesFactory } from '../../themes';
-import { GrafanaTheme2 } from '@grafana/data';
 
 interface InputControlProps {
   /** Show an icon as a prefix in the input */

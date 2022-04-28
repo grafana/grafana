@@ -1,5 +1,6 @@
-import { MetricKind, QueryType, ValueTypes } from './types';
 import { GoogleAuthType } from '@grafana/google-sdk';
+
+import { MetricKind, QueryType, ValueTypes } from './types';
 
 // not super excited about using uneven numbers, but this makes it align perfectly with rows that has two fields
 export const INPUT_WIDTH = 71;

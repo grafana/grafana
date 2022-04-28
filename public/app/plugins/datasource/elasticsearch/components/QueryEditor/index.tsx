@@ -1,16 +1,19 @@
-import React from 'react';
-import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
-import { ElasticDatasource } from '../../datasource';
-import { ElasticsearchOptions, ElasticsearchQuery } from '../../types';
-import { ElasticsearchProvider } from './ElasticsearchQueryContext';
-import { InlineField, InlineLabel, Input, QueryField, useStyles2 } from '@grafana/ui';
-import { changeAliasPattern, changeQuery } from './state';
-import { MetricAggregationsEditor } from './MetricAggregationsEditor';
-import { BucketAggregationsEditor } from './BucketAggregationsEditor';
-import { useDispatch } from '../../hooks/useStatelessReducer';
-import { useNextId } from '../../hooks/useNextId';
-import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
 import { css } from '@emotion/css';
+import React from 'react';
+
+import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { InlineField, InlineLabel, Input, QueryField, useStyles2 } from '@grafana/ui';
+
+import { ElasticDatasource } from '../../datasource';
+import { useNextId } from '../../hooks/useNextId';
+import { useDispatch } from '../../hooks/useStatelessReducer';
+import { ElasticsearchOptions, ElasticsearchQuery } from '../../types';
+
+import { BucketAggregationsEditor } from './BucketAggregationsEditor';
+import { ElasticsearchProvider } from './ElasticsearchQueryContext';
+import { MetricAggregationsEditor } from './MetricAggregationsEditor';
+import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
+import { changeAliasPattern, changeQuery } from './state';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
 

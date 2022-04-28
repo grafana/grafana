@@ -1,5 +1,6 @@
 import { LinkedToken } from '../../monarch/LinkedToken';
 import { StatementPosition } from '../../monarch/types';
+
 import { MetricMathTokenTypes } from './types';
 
 export function getStatementPosition(currentToken: LinkedToken | null): StatementPosition {

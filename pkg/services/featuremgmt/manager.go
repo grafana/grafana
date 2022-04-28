@@ -3,6 +3,7 @@ package featuremgmt
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"reflect"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -157,7 +158,7 @@ func (fm *FeatureManager) HandleGetSettings(c *models.ReqContext) {
 
 	res["info"] = vv
 
-	response.JSON(200, res).WriteTo(c)
+	response.JSON(http.StatusOK, res).WriteTo(c)
 }
 
 // WithFeatures is used to define feature toggles for testing.

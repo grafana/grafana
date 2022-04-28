@@ -165,7 +165,7 @@ var (
 			Version:     2,
 			Permissions: accesscontrol.ConcatPermissions(rulesEditorRole.Role.Permissions, instancesEditorRole.Role.Permissions, notificationsEditorRole.Role.Permissions),
 		},
-		Grants: []string{string(models.ROLE_EDITOR)},
+		Grants: []string{string(models.ROLE_EDITOR), string(models.ROLE_ADMIN)},
 	}
 )
 

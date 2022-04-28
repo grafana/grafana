@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -21,7 +22,7 @@ func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
 		return
 	}
 
-	c.JSON(200, settings)
+	c.JSON(http.StatusOK, settings)
 }
 
 // getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
@@ -113,6 +114,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
 		"rudderstackSdkUrl":                   setting.RudderstackSdkUrl,
 		"rudderstackConfigUrl":                setting.RudderstackConfigUrl,
+		"feedbackLinksEnabled":                hs.Cfg.FeedbackLinksEnabled,
 		"applicationInsightsConnectionString": hs.Cfg.ApplicationInsightsConnectionString,
 		"applicationInsightsEndpointUrl":      hs.Cfg.ApplicationInsightsEndpointUrl,
 		"disableLoginForm":                    setting.DisableLoginForm,
@@ -246,9 +248,14 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 
 		if ds.Access == models.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
+				password, err := hs.DataSourcesService.DecryptedBasicAuthPassword(c.Req.Context(), ds)
+				if err != nil {
+					return nil, err
+				}
+
 				dsDTO.BasicAuth = util.GetBasicAuthHeader(
 					ds.BasicAuthUser,
-					hs.DataSourcesService.DecryptedBasicAuthPassword(ds),
+					password,
 				)
 			}
 			if ds.WithCredentials {
@@ -256,14 +263,24 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			}
 
 			if ds.Type == models.DS_INFLUXDB_08 {
+				password, err := hs.DataSourcesService.DecryptedPassword(c.Req.Context(), ds)
+				if err != nil {
+					return nil, err
+				}
+
 				dsDTO.Username = ds.User
-				dsDTO.Password = hs.DataSourcesService.DecryptedPassword(ds)
+				dsDTO.Password = password
 				dsDTO.URL = url + "/db/" + ds.Database
 			}
 
 			if ds.Type == models.DS_INFLUXDB {
+				password, err := hs.DataSourcesService.DecryptedPassword(c.Req.Context(), ds)
+				if err != nil {
+					return nil, err
+				}
+
 				dsDTO.Username = ds.User
-				dsDTO.Password = hs.DataSourcesService.DecryptedPassword(ds)
+				dsDTO.Password = password
 				dsDTO.URL = url
 			}
 		}

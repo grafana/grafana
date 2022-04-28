@@ -1,12 +1,14 @@
-import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
+import React, { PureComponent } from 'react';
+
 import { DataSourceSettings } from '@grafana/data';
+
+import { stylesFactory } from '../../themes';
 import { Button } from '../Button';
 import { FormField } from '../FormField/FormField';
 import { Icon } from '../Icon/Icon';
 import { SecretFormField } from '../SecretFormField/SecretFormField';
-import { stylesFactory } from '../../themes';
 
 export interface CustomHeader {
   id: string;

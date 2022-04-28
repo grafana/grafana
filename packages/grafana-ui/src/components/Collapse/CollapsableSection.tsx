@@ -1,9 +1,11 @@
-import React, { FC, ReactNode, useRef, useState } from 'react';
-import { uniqueId } from 'lodash';
 import { css, cx } from '@emotion/css';
-import { useStyles2 } from '../../themes';
-import { Icon, Spinner } from '..';
+import { uniqueId } from 'lodash';
+import React, { FC, ReactNode, useRef, useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { Icon, Spinner } from '..';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 
 export interface Props {
