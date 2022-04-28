@@ -22,7 +22,7 @@ const SearchTitle = ({term}) => (
 );
 ```
 
-We should prefer using the JSX components (compared to the plain javascript functions, see below) where possible for phrases. Many props can (and probably should) be changed to accept the `React.ReactNode` instead of `string` for phrases put into the DOM.
+Prefer using the JSX components (compared to the plain javascript functions, see below) where possible for phrases. Many props can (and probably should) be changed to accept the `React.ReactNode` instead of `string` for phrases put into the DOM.
 
 Note that Lingui must be able to statically analyse the code to extract the phrase, so the `id` can not be dynamic. e.g. the following will not work:
 
@@ -63,7 +63,7 @@ const placeholder = t({
 return <input type="value" placeholder={placeholder}>
 ```
 
-While the `t` macro can technically be used outside of React functions (e.g, in actions/reducers), we should aim to keep all UI phrases within the React UI functions.
+While the `t` macro can technically be used outside of React functions (e.g, in actions/reducers), aim to keep all UI phrases within the React UI functions.
 
 ## Examples
 
