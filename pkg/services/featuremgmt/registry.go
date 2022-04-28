@@ -176,11 +176,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:        "saveDashboardDrawer",
-			Description: "Use a drawer to show save dashboard dialog",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
 			State:       FeatureStateAlpha,
