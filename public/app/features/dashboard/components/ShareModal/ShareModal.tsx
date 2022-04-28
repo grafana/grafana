@@ -6,7 +6,7 @@ import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
 import { ShareExport } from './ShareExport';
 import { ShareEmbed } from './ShareEmbed';
-import { SharePublic } from './SharePublic';
+import SharePublic from './SharePublic';
 import { ShareModalTabModel } from './types';
 import { contextSrv } from 'app/core/core';
 import { config } from 'app/core/config';
