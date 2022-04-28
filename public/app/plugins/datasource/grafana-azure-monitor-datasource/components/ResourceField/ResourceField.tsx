@@ -1,16 +1,15 @@
-import { css } from '@emotion/css';
+import { cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { AzureQueryEditorFieldProps, AzureMonitorQuery, AzureResourceSummaryItem } from '../../types';
 import { Field } from '../Field';
 import ResourcePicker from '../ResourcePicker';
+import getStyles from '../ResourcePicker/styles';
 import { ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceURI } from '../ResourcePicker/utils';
-import { Space } from '../Space';
 
 function parseResourceDetails(resourceURI: string) {
   const parsed = parseResourceURI(resourceURI);
@@ -128,9 +127,11 @@ interface FormattedResourceProps {
 }
 
 const FormattedResource = ({ resource }: FormattedResourceProps) => {
+  const styles = useStyles2(getStyles);
+
   if (resource.resourceName) {
     return (
-      <span style={{ maxWidth: '40px', textOverflow: 'ellipsis' }}>
+      <span className={cx(styles.truncated, styles.resourceField)}>
         <Icon name="cube" /> {resource.resourceName}
       </span>
     );
@@ -150,9 +151,3 @@ const FormattedResource = ({ resource }: FormattedResourceProps) => {
 };
 
 export default ResourceField;
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  modal: css({
-    width: theme.breakpoints.values.lg,
-  }),
-});

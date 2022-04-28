@@ -66,8 +66,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
   }),
 
+  resourceField: css({
+    width: theme.spacing(38)
+  }),
+
   nestedRowCheckbox: css({
     zIndex: 0,
+  }),
+
+  modal: css({
+    width: theme.breakpoints.values.lg,
   }),
 });
 
