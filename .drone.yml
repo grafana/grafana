@@ -2,8 +2,6 @@
 depends_on: []
 kind: pipeline
 name: pr-test-frontend
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -82,8 +80,6 @@ volumes:
 depends_on: []
 kind: pipeline
 name: pr-test-backend
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -168,8 +164,6 @@ volumes:
 depends_on: []
 kind: pipeline
 name: pr-build-e2e
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -438,8 +432,6 @@ volumes:
 depends_on: []
 kind: pipeline
 name: pr-integration-tests
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -526,8 +518,6 @@ volumes:
 depends_on: []
 kind: pipeline
 name: pr-docs
-node:
-  type: no-parallel
 platform:
   arch: amd64
   os: linux
@@ -659,6 +649,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: c8f1ad9b7b659cbd8d6fc02c5f15502fea5cab5029e2c9c13fdda83fb55f22d3
+hmac: f1f2887484d0a3eba8b51cfb4c6486ed24891d59926cde366cc1c5eb81aa1e71
 
 ...
