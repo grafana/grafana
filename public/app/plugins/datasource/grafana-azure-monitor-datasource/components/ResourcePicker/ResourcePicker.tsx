@@ -107,12 +107,14 @@ const ResourcePicker = ({
   const handleSearch = useCallback(
     async (searchWord: string) => {
       if (!searchWord) {
+        // triggers the use effect above to reload the initial resources
         setStatus('NeedsRefresh');
         return;
       }
       try {
         setStatus('Loading');
-        const searchResults = await resourcePickerData.search(searchWord, selectableEntryTypes);
+        const searchType = selectableEntryTypes.length > 1 ? 'logs' : 'metrics';
+        const searchResults = await resourcePickerData.search(searchWord, searchType);
         setRows(searchResults);
       } catch (err) {
         setErrorMessage(messageFromError(err));

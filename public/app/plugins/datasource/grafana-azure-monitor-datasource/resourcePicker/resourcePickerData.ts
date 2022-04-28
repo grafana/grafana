@@ -69,27 +69,25 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     return addResources(rows, parentRow.uri, nestedRows);
   }
 
-  search = async (searchPhrase: string, selectableEntryTypes: ResourceRowType[]): Promise<ResourceRowGroup> => {
-    let query;
-    if (selectableEntryTypes.length === 1 && selectableEntryTypes[0] === ResourceRowType.Resource) {
-      query = `
-      resources
-      | where id contains "${searchPhrase}"
-      | where type in (${this.supportedMetricNamespaces.map((ns) => `"${ns.toLowerCase()}"`).join(',')})
-      | order by tolower(name) asc
-      | limit 200
-      `;
-    } else {
-      query = `
-      resources
-      | union resourcecontainers 
-      | where id contains "${searchPhrase}"
-      | where type in (${logsSupportedResourceTypesKusto})
-      | order by tolower(name) asc
-      | limit 200
-      `;
-    }
-    const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(query);
+  search = async (searchPhrase: string, searchType: 'logs' | 'metrics'): Promise<ResourceRowGroup> => {
+    const searchQuery = {
+      metrics: `
+        resources
+        | where id contains "${searchPhrase}"
+        | where type in (${this.supportedMetricNamespaces.map((ns) => `"${ns.toLowerCase()}"`).join(',')})
+        | order by tolower(name) asc
+        | limit 200
+      `,
+      logs: `
+        resources
+        | union resourcecontainers 
+        | where id contains "${searchPhrase}"
+        | where type in (${logsSupportedResourceTypesKusto})
+        | order by tolower(name) asc
+        | limit 200
+      `,
+    };
+    const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(searchQuery[searchType]);
     return response.map((item) => {
       const parsedUri = parseResourceURI(item.id);
       if (!parsedUri || !(parsedUri.resource || parsedUri.resourceGroup || parsedUri.subscriptionID)) {
