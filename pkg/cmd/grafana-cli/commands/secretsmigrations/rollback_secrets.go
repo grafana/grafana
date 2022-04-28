@@ -275,6 +275,7 @@ func RollBackSecrets(_ utils.CommandLine, runner runner.Runner) error {
 		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}},
 		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token"}},
 		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type"}},
+		b64Secret{simpleSecret{tableName: "secrets", columnName: "value"}},
 		jsonSecret{tableName: "data_source"},
 		jsonSecret{tableName: "plugin_setting"},
 		alertingSecret{},
