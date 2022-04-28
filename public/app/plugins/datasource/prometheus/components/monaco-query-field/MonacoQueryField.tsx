@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useKBar } from 'kbar';
 import { promLanguageDefinition } from 'monaco-promql';
 import React, { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
@@ -95,8 +94,6 @@ const MonacoQueryField = (props: Props) => {
 
   const theme = useTheme2();
   const styles = getStyles(theme);
-
-  const { query } = useKBar();
 
   useEffect(() => {
     // when we unmount, we unregister the autocomplete-function, if it was registered
@@ -203,8 +200,11 @@ const MonacoQueryField = (props: Props) => {
             onRunQueryRef.current(editor.getValue());
           });
 
+          /* Something in this configuration of monaco doesn't bubble up [mod]+K, which the 
+          command palette uses. Pass the event out of monaco manually
+          */
           editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, function () {
-            query.toggle();
+            global.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
           });
         }}
       />
