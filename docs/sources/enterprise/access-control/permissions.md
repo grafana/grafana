@@ -1,9 +1,10 @@
-+++
-title = "Permissions"
-description = "Understand fine-grained access control permissions"
-keywords = ["grafana", "fine-grained access-control", "roles", "permissions", "enterprise"]
-weight = 110
-+++
+---
+title: 'Grafana RBAC permissions, actions, and scopes'
+menuTitle: 'RBAC permissions, actions, and scopes'
+description: 'Learn about Grafana RBAC permissions, actions, and scopes.'
+aliases: ['/docs/grafana/latest/enterprise/access-control/permissions/']
+weight: 80
+---
 
 # Permissions
 
