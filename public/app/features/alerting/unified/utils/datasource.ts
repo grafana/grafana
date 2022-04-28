@@ -120,5 +120,5 @@ export function getDatasourceAPIUid(dataSourceName: string) {
   if (!ds) {
     throw new Error(`Datasource "${dataSourceName}" not found`);
   }
-  return String(ds.uid);
+  return ds.uid;
 }
