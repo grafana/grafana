@@ -1,16 +1,15 @@
-// Services & Utils
+import { TimeZone } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
-// Actions
-import { loadPluginDashboards } from '../../plugins/admin/state/actions';
-import { cleanUpDashboard, loadDashboardPermissions } from './reducers';
 import { notifyApp } from 'app/core/actions';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { updateTimeZoneForSession, updateWeekStartForSession } from 'app/features/profile/state/reducers';
-// Types
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel, ThunkResult } from 'app/types';
+
+import { loadPluginDashboards } from '../../plugins/admin/state/actions';
 import { cancelVariables } from '../../variables/state/actions';
 import { getTimeSrv } from '../services/TimeSrv';
-import { TimeZone } from '@grafana/data';
+
+import { cleanUpDashboard, loadDashboardPermissions } from './reducers';
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {
   return async (dispatch) => {

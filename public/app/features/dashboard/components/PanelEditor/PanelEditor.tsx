@@ -1,11 +1,12 @@
+import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { css } from '@emotion/css';
 import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
 import {
   HorizontalGroup,
   InlineSwitch,
@@ -15,34 +16,19 @@ import {
   stylesFactory,
   ToolbarButton,
 } from '@grafana/ui';
-
+import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import config from 'app/core/config';
 import { appEvents } from 'app/core/core';
-import { calculatePanelSize } from './utils';
-
-import { PanelEditorTabs } from './PanelEditorTabs';
-import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
-import { OptionsPane } from './OptionsPane';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
-import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
-import { SaveDashboardProxy } from '../SaveDashboard/SaveDashboardProxy';
-import { DashboardPanel } from '../../dashgrid/DashboardPanel';
-
-import { discardPanelChanges, initPanelEditor, updatePanelEditorUIState } from './state/actions';
-
-import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { toggleTableView } from './state/reducers';
-
-import { getPanelEditorTabs } from './state/selectors';
-
-import { StoreState } from 'app/types';
-import { DisplayMode, displayModes, PanelEditorTab } from './types';
-import { DashboardModel, PanelModel } from '../../state';
-import { VisualizationButton } from './VisualizationButton';
-import { PanelOptionsChangedEvent, ShowModalReactEvent } from 'app/types/events';
-import { locationService } from '@grafana/runtime';
-import { UnlinkModal } from '../../../library-panels/components/UnlinkModal/UnlinkModal';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
+import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
+import { getPanelStateForModel } from 'app/features/panel/state/selectors';
+import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
+import { StoreState } from 'app/types';
+import { PanelOptionsChangedEvent, ShowModalReactEvent } from 'app/types/events';
+
+import { notifyApp } from '../../../../core/actions';
+import { UnlinkModal } from '../../../library-panels/components/UnlinkModal/UnlinkModal';
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { getLibraryPanelConnectedDashboards } from '../../../library-panels/state/api';
 import {
@@ -50,11 +36,21 @@ import {
   createPanelLibrarySuccessNotification,
   saveAndRefreshLibraryPanel,
 } from '../../../library-panels/utils';
-import { notifyApp } from '../../../../core/actions';
-import { PanelEditorTableView } from './PanelEditorTableView';
-import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
-import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 import { getVariablesByKey } from '../../../variables/state/selectors';
+import { DashboardPanel } from '../../dashgrid/DashboardPanel';
+import { DashboardModel, PanelModel } from '../../state';
+import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
+import { SaveDashboardProxy } from '../SaveDashboard/SaveDashboardProxy';
+
+import { OptionsPane } from './OptionsPane';
+import { PanelEditorTableView } from './PanelEditorTableView';
+import { PanelEditorTabs } from './PanelEditorTabs';
+import { VisualizationButton } from './VisualizationButton';
+import { discardPanelChanges, initPanelEditor, updatePanelEditorUIState } from './state/actions';
+import { toggleTableView } from './state/reducers';
+import { getPanelEditorTabs } from './state/selectors';
+import { DisplayMode, displayModes, PanelEditorTab } from './types';
+import { calculatePanelSize } from './utils';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -256,7 +252,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                       lazy={false}
                       width={panelSize.width}
                       height={panelSize.height}
-                      skipStateCleanUp={true}
                     />
                   </div>
                 </div>

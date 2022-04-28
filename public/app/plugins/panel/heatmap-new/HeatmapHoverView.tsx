@@ -1,10 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { Field, FieldType, formattedValueToString, LinkModel } from '@grafana/data';
 
-import { HeatmapHoverEvent } from './utils';
-import { BucketLayout, HeatmapData } from './fields';
+import { Field, FieldType, formattedValueToString, getFieldDisplayName, LinkModel } from '@grafana/data';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+
+import { BucketLayout, HeatmapData } from './fields';
+import { HeatmapHoverEvent } from './utils';
 
 type Props = {
   data: HeatmapData;
@@ -26,7 +27,7 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
       const dashboard = getDashboardSrv().getCurrent();
       return dashboard?.formatDate(v, tooltipTimeFormat);
     }
-    return `${v}XX`;
+    return `${v}`;
   };
 
   const xVals = xField?.values.toArray();
@@ -45,7 +46,7 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
       if (yField?.display) {
         return formattedValueToString(yField.display(v));
       }
-      return `${v}YYY`;
+      return `${v}`;
     };
   }
 
@@ -170,7 +171,9 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
         <div>
           Bucket: {yDisp(yBucketMin)} - {yDisp(yBucketMax)}
         </div>
-        <div>Count: {count}</div>
+        <div>
+          {getFieldDisplayName(countField!, data.heatmap)}: {count}
+        </div>
       </div>
       {links.length > 0 && (
         <VerticalGroup>

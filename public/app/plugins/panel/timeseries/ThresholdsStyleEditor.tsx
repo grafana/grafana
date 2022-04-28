@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
-import { GraphTresholdsStyleMode } from '@grafana/schema';
+
 import { FieldOverrideEditorProps, SelectableValue } from '@grafana/data';
+import { GraphTresholdsStyleMode } from '@grafana/schema';
 import { Select } from '@grafana/ui';
 
 export const ThresholdsStyleEditor: React.FC<

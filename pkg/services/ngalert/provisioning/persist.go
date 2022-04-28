@@ -14,8 +14,10 @@ type AMConfigStore interface {
 
 // ProvisioningStore is a store of provisioning data for arbitrary objects.
 type ProvisioningStore interface {
-	GetProvenance(ctx context.Context, o models.Provisionable) (models.Provenance, error)
-	SetProvenance(ctx context.Context, o models.Provisionable, p models.Provenance) error
+	GetProvenance(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error)
+	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
+	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
+	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
 }
 
 // TransactionManager represents the ability to issue and close transactions through contexts.

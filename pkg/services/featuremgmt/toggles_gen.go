@@ -21,7 +21,7 @@ const (
 
 	// FlagServiceAccounts
 	// support service accounts
-	FlagServiceAccounts = "service-accounts"
+	FlagServiceAccounts = "serviceAccounts"
 
 	// FlagDatabaseMetrics
 	// Add prometheus metrics for database tables
@@ -30,10 +30,6 @@ const (
 	// FlagDashboardPreviews
 	// Create and show thumbnails for dashboard search results
 	FlagDashboardPreviews = "dashboardPreviews"
-
-	// FlagDashboardPreviewsScheduler
-	// Schedule automatic updates to dashboard previews
-	FlagDashboardPreviewsScheduler = "dashboardPreviewsScheduler"
 
 	// FlagDashboardPreviewsAdmin
 	// Manage the dashboard previews crawler process from the UI
@@ -147,6 +143,10 @@ const (
 	// Provisioning-friendly routes for alerting
 	FlagAlertProvisioning = "alertProvisioning"
 
+	// FlagExport
+	// Export grafana instance (to git, etc)
+	FlagExport = "export"
+
 	// FlagStorageLocalUpload
 	// allow uploads to local storage
 	FlagStorageLocalUpload = "storageLocalUpload"
@@ -158,4 +158,20 @@ const (
 	// FlagExplore2Dashboard
 	// Experimental Explore to Dashboard workflow
 	FlagExplore2Dashboard = "explore2Dashboard"
+
+	// FlagTracing
+	// Adds trace ID to error notifications
+	FlagTracing = "tracing"
+
+	// FlagPersistNotifications
+	// PoC Notifications page
+	FlagPersistNotifications = "persistNotifications"
+
+	// FlagCommandPalette
+	// Enable command palette
+	FlagCommandPalette = "commandPalette"
+
+	// FlagSavedItems
+	// Enable Saved Items in the navbar.
+	FlagSavedItems = "savedItems"
 )

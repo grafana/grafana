@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
+
 import { createTheme } from '@grafana/data';
 
-import * as markers from './TracePageSearchBar.markers';
-import TracePageSearchBar, { getStyles } from './TracePageSearchBar';
 import UiFindInput from '../common/UiFindInput';
+
+import TracePageSearchBar, { getStyles } from './TracePageSearchBar';
+import * as markers from './TracePageSearchBar.markers';
 
 const defaultProps = {
   forwardedRef: React.createRef(),

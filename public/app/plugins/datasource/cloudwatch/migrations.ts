@@ -1,9 +1,10 @@
 import { AnnotationQuery, DataQuery } from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
+
 import {
-  MetricEditorMode,
-  CloudWatchAnnotationQuery,
   CloudWatchMetricsQuery,
+  LegacyAnnotationQuery,
+  MetricEditorMode,
   MetricQueryType,
   VariableQuery,
   VariableQueryType,
@@ -35,9 +36,9 @@ export function migrateMultipleStatsMetricsQuery(
 // Migrates an annotation query that use more than one statistic into multiple queries
 // E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
 export function migrateMultipleStatsAnnotationQuery(
-  annotationQuery: CloudWatchAnnotationQuery
+  annotationQuery: AnnotationQuery<LegacyAnnotationQuery>
 ): Array<AnnotationQuery<DataQuery>> {
-  const newAnnotations: CloudWatchAnnotationQuery[] = [];
+  const newAnnotations: Array<AnnotationQuery<LegacyAnnotationQuery>> = [];
 
   if (annotationQuery && 'statistics' in annotationQuery && annotationQuery?.statistics?.length) {
     for (const stat of annotationQuery.statistics.splice(1)) {
@@ -52,7 +53,7 @@ export function migrateMultipleStatsAnnotationQuery(
     delete annotationQuery.statistics;
   }
 
-  return newAnnotations as Array<AnnotationQuery<DataQuery>>;
+  return newAnnotations;
 }
 
 export function migrateCloudWatchQuery(query: CloudWatchMetricsQuery) {
@@ -80,7 +81,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     region: '',
     metricName: '',
     dimensionKey: '',
-    dimensionFilters: '',
+    dimensionFilters: {},
     ec2Filters: '',
     instanceID: '',
     attributeName: '',
@@ -122,7 +123,14 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.namespace = dimensionValuesQuery[2];
     newQuery.metricName = dimensionValuesQuery[3];
     newQuery.dimensionKey = dimensionValuesQuery[4];
-    newQuery.dimensionFilters = dimensionValuesQuery[6] || '';
+    newQuery.dimensionFilters = {};
+    if (!!dimensionValuesQuery[6]) {
+      try {
+        newQuery.dimensionFilters = JSON.parse(dimensionValuesQuery[6]);
+      } catch {
+        throw new Error(`unable to migrate poorly formed filters: ${dimensionValuesQuery[6]}`);
+      }
+    }
     return newQuery;
   }
 
@@ -148,7 +156,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.queryType = VariableQueryType.ResourceArns;
     newQuery.region = resourceARNsQuery[1];
     newQuery.resourceType = resourceARNsQuery[2];
-    newQuery.tags = JSON.parse(resourceARNsQuery[3]) || '';
+    newQuery.tags = resourceARNsQuery[3] || '';
     return newQuery;
   }
 

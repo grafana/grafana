@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { InlineField, Select, Alert, Input, InlineFieldRow } from '@grafana/ui';
+
 import {
   QueryEditorProps,
   SelectableValue,
@@ -8,9 +8,11 @@ import {
   DataQueryRequest,
   DataFrame,
 } from '@grafana/data';
+import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { InlineField, Select, Alert, Input, InlineFieldRow } from '@grafana/ui';
+
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
-import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 
 type Props = QueryEditorProps<GrafanaDatasource, GrafanaQuery>;
 

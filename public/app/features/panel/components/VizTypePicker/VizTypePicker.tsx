@@ -1,9 +1,12 @@
-import React, { useMemo } from 'react';
-import { VizTypePickerPlugin } from './VizTypePickerPlugin';
-import { EmptySearchResult, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2, PanelData, PanelPluginMeta } from '@grafana/data';
 import { css } from '@emotion/css';
+import React, { useMemo } from 'react';
+
+import { GrafanaTheme2, PanelData, PanelPluginMeta } from '@grafana/data';
+import { EmptySearchResult, useStyles2 } from '@grafana/ui';
+
 import { filterPluginList, getAllPanelPluginMeta } from '../../state/util';
+
+import { VizTypePickerPlugin } from './VizTypePickerPlugin';
 import { VizTypeChangeDetails } from './types';
 
 export interface Props {

@@ -1,7 +1,8 @@
+import { mount } from 'enzyme';
 import React from 'react';
+
 import { Slider } from './Slider';
 import { SliderProps } from './types';
-import { mount } from 'enzyme';
 
 const sliderProps: SliderProps = {
   min: 10,

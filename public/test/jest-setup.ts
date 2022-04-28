@@ -1,9 +1,17 @@
-import { configure } from 'enzyme';
-import { EventBusSrv } from '@grafana/data';
+// This import has side effects, and must be at the top so jQuery is made global before
+// angular is imported.
+import './global-jquery-shim';
+
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import $ from 'jquery';
+import angular from 'angular';
+import { configure } from 'enzyme';
+
+import { EventBusSrv } from '@grafana/data';
 import 'mutationobserver-shim';
 import './mocks/workers';
+
+import '../vendor/flot/jquery.flot';
+import '../vendor/flot/jquery.flot.time';
 
 const testAppEvents = new EventBusSrv();
 const global = window as any;
@@ -23,10 +31,6 @@ Object.defineProperty(global, 'matchMedia', {
     dispatchEvent: jest.fn(),
   })),
 });
-
-import '../vendor/flot/jquery.flot';
-import '../vendor/flot/jquery.flot.time';
-import angular from 'angular';
 
 angular.module('grafana', ['ngRoute']);
 angular.module('grafana.services', ['ngRoute', '$strap.directives']);

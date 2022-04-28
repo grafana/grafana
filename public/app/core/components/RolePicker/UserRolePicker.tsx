@@ -1,7 +1,9 @@
 import React, { FC, useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
+
 import { contextSrv } from 'app/core/core';
 import { Role, OrgRole, AccessControlAction } from 'app/types';
+
 import { RolePicker } from './RolePicker';
 import { fetchUserRoles, updateUserRoles } from './api';
 

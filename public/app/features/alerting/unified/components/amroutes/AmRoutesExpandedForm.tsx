@@ -1,5 +1,6 @@
-import React, { FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FC, useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
@@ -14,8 +15,13 @@ import {
   Select,
   Switch,
   useStyles2,
+  Badge,
+  VerticalGroup,
 } from '@grafana/ui';
+
+import { useMuteTimingOptions } from '../../hooks/useMuteTimingOptions';
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
+import { matcherFieldOptions } from '../../utils/alertmanager';
 import {
   emptyArrayFieldMatcher,
   mapMultiSelectValueToStrings,
@@ -25,9 +31,8 @@ import {
   stringsToSelectableValues,
 } from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
+
 import { getFormStyles } from './formStyles';
-import { matcherFieldOptions } from '../../utils/alertmanager';
-import { useMuteTimingOptions } from '../../hooks/useMuteTimingOptions';
 
 export interface AmRoutesExpandedFormProps {
   onCancel: () => void;
@@ -56,73 +61,85 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
           <FieldArray name="object_matchers" control={control}>
             {({ fields, append, remove }) => (
               <>
-                <div>Matching labels</div>
-                <div className={styles.matchersContainer}>
-                  {fields.map((field, index) => {
-                    const localPath = `object_matchers[${index}]`;
-                    return (
-                      <HorizontalGroup key={field.id} align="flex-start">
-                        <Field
-                          label="Label"
-                          invalid={!!errors.object_matchers?.[index]?.name}
-                          error={errors.object_matchers?.[index]?.name?.message}
-                        >
-                          <Input
-                            {...register(`${localPath}.name`, { required: 'Field is required' })}
-                            defaultValue={field.name}
-                            placeholder="label"
-                          />
-                        </Field>
-                        <Field label={'Operator'}>
-                          <InputControl
-                            render={({ field: { onChange, ref, ...field } }) => (
-                              <Select
-                                {...field}
-                                className={styles.matchersOperator}
-                                onChange={(value) => onChange(value?.value)}
-                                options={matcherFieldOptions}
-                                aria-label="Operator"
-                                menuShouldPortal
+                <VerticalGroup justify="flex-start" spacing="md">
+                  <div>Matching labels</div>
+                  {fields.length === 0 && (
+                    <Badge
+                      color="orange"
+                      className={styles.noMatchersWarning}
+                      icon="exclamation-triangle"
+                      text="If no matchers are specified, this notification policy will handle all alert instances."
+                    />
+                  )}
+                  {fields.length > 0 && (
+                    <div className={styles.matchersContainer}>
+                      {fields.map((field, index) => {
+                        const localPath = `object_matchers[${index}]`;
+                        return (
+                          <HorizontalGroup key={field.id} align="flex-start">
+                            <Field
+                              label="Label"
+                              invalid={!!errors.object_matchers?.[index]?.name}
+                              error={errors.object_matchers?.[index]?.name?.message}
+                            >
+                              <Input
+                                {...register(`${localPath}.name`, { required: 'Field is required' })}
+                                defaultValue={field.name}
+                                placeholder="label"
                               />
-                            )}
-                            defaultValue={field.operator}
-                            control={control}
-                            name={`${localPath}.operator` as const}
-                            rules={{ required: { value: true, message: 'Required.' } }}
-                          />
-                        </Field>
-                        <Field
-                          label="Value"
-                          invalid={!!errors.object_matchers?.[index]?.value}
-                          error={errors.object_matchers?.[index]?.value?.message}
-                        >
-                          <Input
-                            {...register(`${localPath}.value`, { required: 'Field is required' })}
-                            defaultValue={field.value}
-                            placeholder="value"
-                          />
-                        </Field>
-                        <IconButton
-                          className={styles.removeButton}
-                          tooltip="Remove matcher"
-                          name={'trash-alt'}
-                          onClick={() => remove(index)}
-                        >
-                          Remove
-                        </IconButton>
-                      </HorizontalGroup>
-                    );
-                  })}
-                </div>
-                <Button
-                  className={styles.addMatcherBtn}
-                  icon="plus"
-                  onClick={() => append(emptyArrayFieldMatcher)}
-                  variant="secondary"
-                  type="button"
-                >
-                  Add matcher
-                </Button>
+                            </Field>
+                            <Field label={'Operator'}>
+                              <InputControl
+                                render={({ field: { onChange, ref, ...field } }) => (
+                                  <Select
+                                    {...field}
+                                    className={styles.matchersOperator}
+                                    onChange={(value) => onChange(value?.value)}
+                                    options={matcherFieldOptions}
+                                    aria-label="Operator"
+                                    menuShouldPortal
+                                  />
+                                )}
+                                defaultValue={field.operator}
+                                control={control}
+                                name={`${localPath}.operator` as const}
+                                rules={{ required: { value: true, message: 'Required.' } }}
+                              />
+                            </Field>
+                            <Field
+                              label="Value"
+                              invalid={!!errors.object_matchers?.[index]?.value}
+                              error={errors.object_matchers?.[index]?.value?.message}
+                            >
+                              <Input
+                                {...register(`${localPath}.value`, { required: 'Field is required' })}
+                                defaultValue={field.value}
+                                placeholder="value"
+                              />
+                            </Field>
+                            <IconButton
+                              className={styles.removeButton}
+                              tooltip="Remove matcher"
+                              name={'trash-alt'}
+                              onClick={() => remove(index)}
+                            >
+                              Remove
+                            </IconButton>
+                          </HorizontalGroup>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <Button
+                    className={styles.addMatcherBtn}
+                    icon="plus"
+                    onClick={() => append(emptyArrayFieldMatcher)}
+                    variant="secondary"
+                    type="button"
+                  >
+                    Add matcher
+                  </Button>
+                </VerticalGroup>
               </>
             )}
           </FieldArray>
@@ -375,6 +392,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       & > * + * {
         margin-left: ${theme.spacing(1.5)};
       }
+    `,
+    noMatchersWarning: css`
+      padding: ${theme.spacing(1)} ${theme.spacing(2)};
     `,
   };
 };

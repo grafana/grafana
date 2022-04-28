@@ -1,6 +1,7 @@
+import React, { useEffect } from 'react';
+
 import { Input, measureText } from '@grafana/ui';
 import { Props as InputProps } from '@grafana/ui/src/components/Input/Input';
-import React, { useEffect } from 'react';
 export interface Props extends InputProps {
   /** Sets the min-width to a multiple of 8px. Default value is 10*/
   minWidth?: number;

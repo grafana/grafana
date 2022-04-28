@@ -1,23 +1,19 @@
-// Libraries
 import { chain, difference } from 'lodash';
 import LRU from 'lru-cache';
+import Prism, { Grammar } from 'prismjs';
 
-// Services & Utils
+import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
+import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
 import {
   extractLabelMatchers,
   parseSelector,
   processLabels,
   toPromLikeExpr,
 } from 'app/plugins/datasource/prometheus/language_utils';
-import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
-
-// Types
-import { LokiQuery, LokiQueryType } from './types';
-import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
 
 import { LokiDatasource } from './datasource';
-import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
-import Prism, { Grammar } from 'prismjs';
+import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
+import { LokiQuery, LokiQueryType } from './types';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -368,7 +364,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * Fetches all label keys
    */
   async fetchLabels(): Promise<string[]> {
-    const url = '/loki/api/v1/label';
+    const url = '/loki/api/v1/labels';
     const timeRange = this.datasource.getTimeRangeParams();
     this.labelFetchTs = Date.now().valueOf();
 
