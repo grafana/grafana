@@ -1,8 +1,8 @@
-import { DataSourceRef } from '../../../../packages/grafana-data';
 import { RichHistoryQuery } from '../../types';
 import { SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryRemoteStorage, { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
+import { DataSourceSrvMock } from './RichHistoryStorage';
 
 const getMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -10,15 +10,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     get: getMock,
   }),
-  getDataSourceSrv: () => {
-    return {
-      getInstanceSettings: (ref: DataSourceRef | 'string') => {
-        return typeof ref === 'string'
-          ? { uid: ref.slice('name-of-'.length) }
-          : { uid: ref.uid, name: `name-of-${ref.uid}` };
-      },
-    };
-  },
+  getDataSourceSrv: () => DataSourceSrvMock,
 }));
 
 describe('RichHistoryRemoteStorage', () => {
