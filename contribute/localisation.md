@@ -65,11 +65,11 @@ return <input type="value" placeholder={placeholder}>
 
 While the `t` macro can technically be used outside of React functions (e.g, in actions/reducers), we should aim to keep all UI phrases within the React UI functions.
 
-### Examples
+## Examples
 
 See the [Lingui docs](https://lingui.js.org/ref/macro.html#usage) for more details.
 
-#### Basic usage
+### Basic usage
 
 For fixed phrases:
 
@@ -104,7 +104,7 @@ const userName = user.name;
 </Trans>;
 ```
 
-#### React components and HTML tags
+### React components and HTML tags
 
 Both HTML tags and React components can be included in a phase. The Lingui macro will replace them with placeholder tags for the translators
 
@@ -132,7 +132,7 @@ msgid "page.explainer"
 msgstr "Click <0>here</0> to <1>learn more</1>"
 ```
 
-#### Plurals
+### Plurals
 
 See the [Lingui docs](https://lingui.js.org/ref/macro.html#id1) for more details.
 
@@ -162,6 +162,10 @@ import { Plural } from "@lingui/macro"
 // sharedCount = 3 -> Shared with # people
 ```
 
-#### Date and time
+### Date and time
 
 [Lingui has functions](https://lingui.js.org/ref/core.html#I18n.date) to format dates and times according to the convention to the user's preferred locale, based on the browser [Intl.DateTimeFormat](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat) API. However, as displaying dates and times is fundamental to Grafana, guidelines have not been established for this yet.
+
+## Documentation
+
+[Grafana's documentation](https://grafana.com/docs/grafana/latest/) is not yet open for translation and should be authored in English only.
