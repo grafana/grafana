@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 type NewApiKeyResult struct {
@@ -13,8 +14,9 @@ type NewApiKeyResult struct {
 }
 
 type ApiKeyDTO struct {
-	Id         int64           `json:"id"`
-	Name       string          `json:"name"`
-	Role       models.RoleType `json:"role"`
-	Expiration *time.Time      `json:"expiration,omitempty"`
+	Id            int64                  `json:"id"`
+	Name          string                 `json:"name"`
+	Role          models.RoleType        `json:"role"`
+	Expiration    *time.Time             `json:"expiration,omitempty"`
+	AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
 }
