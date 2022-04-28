@@ -30,7 +30,7 @@ func (ss *SQLStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuer
 		sess = sess.Where("service_account_id IS NULL")
 
 		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
-			filter, err := accesscontrol.Filter(query.User, "id", "apikeys", accesscontrol.ActionAPIKeyRead)
+			filter, err := accesscontrol.Filter(query.User, "id", "apikeys:id:", accesscontrol.ActionAPIKeyRead)
 			if err != nil {
 				return err
 			}
