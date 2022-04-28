@@ -3114,7 +3114,7 @@ steps:
 - commands:
   - ./bin/grabpl artifacts npm retrieve --tag v${TAG}
   depends_on:
-  - grabpl
+  - yarn-install
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -4574,6 +4574,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 7ca5d844d600cf20dd0f568ab2753aa82a57a159a7b9dcf0435fe87003d9447e
+hmac: 6f77e9f096880adceaf04b4235d20e1c73b26534da4965a797f30fb30ccbb114
 
 ...
