@@ -2,6 +2,7 @@ import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ArrayVector } from '../../vector';
+
 import { calculateFieldTransformer } from './calculateField';
 import { isLikelyAscendingVector, outerJoinDataFrames } from './joinDataFrames';
 
@@ -188,7 +189,7 @@ describe('align frames', () => {
       ],
     });
 
-    const out = outerJoinDataFrames({ frames: [series1], enforceSort: true, keepOriginIndices: true })!;
+    const out = outerJoinDataFrames({ frames: [series1], keepOriginIndices: true })!;
     expect(
       out.fields.map((f) => ({
         name: f.name,

@@ -1,27 +1,29 @@
+import { css } from '@emotion/css';
 import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { css } from '@emotion/css';
-import { InlineField, InlineFieldRow, VerticalGroup } from '@grafana/ui';
+
+import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getTemplateSrv } from '@grafana/runtime';
-import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableValue } from '@grafana/data';
+import { InlineField, InlineFieldRow, VerticalGroup } from '@grafana/ui';
 
-import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
-import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
-import { initialVariableEditorState } from '../editor/reducer';
-import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { StoreState } from '../../../types';
-import { changeVariableMultiValue } from '../state/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import { isLegacyQueryEditor, isQueryEditor } from '../guard';
+import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableTextField } from '../editor/VariableTextField';
+import { initialVariableEditorState } from '../editor/reducer';
+import { getQueryVariableEditorState } from '../editor/selectors';
+import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
+import { isLegacyQueryEditor, isQueryEditor } from '../guard';
+import { changeVariableMultiValue } from '../state/actions';
+import { getVariablesState } from '../state/selectors';
+import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
+import { toKeyedVariableIdentifier } from '../utils';
+
 import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from './QueryVariableSortSelect';
-import { getQueryVariableEditorState } from '../editor/selectors';
-import { getVariablesState } from '../state/selectors';
-import { toKeyedVariableIdentifier } from '../utils';
+import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
   const { rootStateKey } = ownProps.variable;

@@ -183,3 +183,7 @@ func (s *Implementation) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateA
 func (s *Implementation) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
 	return s.authInfoStore.SetAuthInfo(ctx, cmd)
 }
+
+func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
+	return s.authInfoStore.GetExternalUserInfoByLogin(ctx, query)
+}

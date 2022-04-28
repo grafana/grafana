@@ -1,9 +1,10 @@
-import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
-import { DisplayProcessor, DisplayValue } from '../types/displayValue';
-import { MappingType, ValueMapping } from '../types/valueMapping';
-import { FieldConfig, FieldType, ThresholdsMode } from '../types';
 import { systemDateFormats } from '../datetime';
 import { createTheme } from '../themes';
+import { FieldConfig, FieldType, ThresholdsMode } from '../types';
+import { DisplayProcessor, DisplayValue } from '../types/displayValue';
+import { MappingType, ValueMapping } from '../types/valueMapping';
+
+import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 
 function getDisplayProcessorFromConfig(config: FieldConfig) {
   return getDisplayProcessor({
@@ -412,6 +413,46 @@ describe('Date display options', () => {
     });
 
     expect(processor('2020-08-01T08:48:43.783337Z').text).toEqual('2020-08-01 08:48:43');
+  });
+
+  it('should handle ISO string dates when in other timezones than UTC', () => {
+    const processor = getDisplayProcessor({
+      timeZone: 'CET',
+      field: {
+        type: FieldType.time,
+        config: {},
+      },
+      theme: createTheme(),
+    });
+
+    expect(processor('2020-08-01T08:48:43.783337Z').text).toEqual('2020-08-01 10:48:43'); //DST
+    expect(processor('2020-12-01T08:48:43.783337Z').text).toEqual('2020-12-01 09:48:43'); //STD
+  });
+
+  it('should handle ISO string dates with timezone offset', () => {
+    const processor = getDisplayProcessor({
+      timeZone: 'utc',
+      field: {
+        type: FieldType.time,
+        config: {},
+      },
+      theme: createTheme(),
+    });
+
+    expect(processor('2020-12-01T08:48:43.783337+02:00').text).toEqual('2020-12-01 06:48:43');
+  });
+
+  it('should handle ISO string dates without timezone qualifier by assuming UTC', () => {
+    const processor = getDisplayProcessor({
+      timeZone: 'CET',
+      field: {
+        type: FieldType.time,
+        config: {},
+      },
+      theme: createTheme(),
+    });
+
+    expect(processor('2020-12-01T08:48:43.783337').text).toEqual('2020-12-01 09:48:43');
   });
 
   describe('number formatting for string values', () => {

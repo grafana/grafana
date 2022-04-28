@@ -91,7 +91,7 @@ func TestMigrations(t *testing.T) {
 	setupTeams(t, x)
 
 	// Create managed user roles with teams permissions (ex: teams:read and teams.permissions:read)
-	setupUnecessaryFGACPermissions(t, x)
+	setupUnecessaryRBACPermissions(t, x)
 
 	team1Scope := accesscontrol.Scope("teams", "id", "1")
 	team2Scope := accesscontrol.Scope("teams", "id", "2")
@@ -203,17 +203,11 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	t.Helper()
 	testDB := sqlutil.SQLite3TestDB()
 
-	const query = `select count(*) as count from migration_log`
-	result := struct{ Count int }{}
-
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
 
 	err = migrator.NewDialect(x).CleanDB()
 	require.NoError(t, err)
-
-	_, err = x.SQL(query).Get(&result)
-	require.Error(t, err)
 
 	mg := migrator.NewMigrator(x, &setting.Cfg{
 		IsFeatureToggleEnabled: func(key string) bool { return key == "accesscontrol" },
@@ -353,7 +347,7 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 	require.Equal(t, int64(5), membersCount, "needed 5 members for this test to run")
 }
 
-func setupUnecessaryFGACPermissions(t *testing.T, x *xorm.Engine) {
+func setupUnecessaryRBACPermissions(t *testing.T, x *xorm.Engine) {
 	t.Helper()
 
 	now := time.Now()

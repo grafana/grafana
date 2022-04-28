@@ -1,15 +1,22 @@
-import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-
-import { Playlist } from './types';
-import { PlaylistEditPage } from './PlaylistEditPage';
-import { backendSrv } from 'app/core/services/backend_srv';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import { locationService } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv';
+
+import { PlaylistEditPage } from './PlaylistEditPage';
+import { Playlist } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as any),
   getBackendSrv: () => backendSrv,
+}));
+
+jest.mock('../../core/components/TagFilter/TagFilter', () => ({
+  TagFilter: () => {
+    return <>mocked-tag-filter</>;
+  },
 }));
 
 async function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
@@ -63,10 +70,10 @@ describe('PlaylistEditPage', () => {
       const { putMock } = await getTestContext();
 
       expect(locationService.getLocation().pathname).toEqual('/');
-      userEvent.clear(screen.getByRole('textbox', { name: /playlist name/i }));
-      userEvent.type(screen.getByRole('textbox', { name: /playlist name/i }), 'A Name');
-      userEvent.clear(screen.getByRole('textbox', { name: /playlist interval/i }));
-      userEvent.type(screen.getByRole('textbox', { name: /playlist interval/i }), '10s');
+      await userEvent.clear(screen.getByRole('textbox', { name: /playlist name/i }));
+      await userEvent.type(screen.getByRole('textbox', { name: /playlist name/i }), 'A Name');
+      await userEvent.clear(screen.getByRole('textbox', { name: /playlist interval/i }));
+      await userEvent.type(screen.getByRole('textbox', { name: /playlist interval/i }), '10s');
       fireEvent.submit(screen.getByRole('button', { name: /save/i }));
       await waitFor(() => expect(putMock).toHaveBeenCalledTimes(1));
       expect(putMock).toHaveBeenCalledWith('/api/playlists/1', {

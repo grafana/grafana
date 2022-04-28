@@ -1,0 +1,24 @@
+{
+  "frames": [
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "Value",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "__name__","call","code","config","dialer_name","endpoint","event","goversion","handler","instance","interval","job","le","listener_name","name","quantile","reason","role","scrape_job","slice","version"
+          ]
+        ]
+      }
+    }
+  ]
+}

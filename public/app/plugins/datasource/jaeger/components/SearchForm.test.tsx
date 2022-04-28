@@ -1,14 +1,18 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
-import { backendSrv } from 'app/core/services/backend_srv';
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
-import { DataQueryRequest, DataSourceInstanceSettings, dateTime, PluginType } from '@grafana/data';
-import { of } from 'rxjs';
-import { JaegerDatasource, JaegerJsonData } from '../datasource';
-import { JaegerQuery } from '../types';
-import React from 'react';
-import SearchForm from './SearchForm';
-import { testResponse } from '../testResponse';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { UserEvent } from '@testing-library/user-event/dist/types/setup';
+import React from 'react';
+import { of } from 'rxjs';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
+
+import { DataQueryRequest, DataSourceInstanceSettings, dateTime, PluginType } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv';
+
+import { JaegerDatasource, JaegerJsonData } from '../datasource';
+import { testResponse } from '../testResponse';
+import { JaegerQuery } from '../types';
+
+import SearchForm from './SearchForm';
 
 describe('SearchForm', () => {
   it('should call the `onChange` function on click of the Input', async () => {
@@ -38,7 +42,7 @@ describe('SearchForm', () => {
     const asyncServiceSelect = await waitFor(() => screen.getByRole('combobox', { name: 'select-service-name' }));
     expect(asyncServiceSelect).toBeInTheDocument();
 
-    userEvent.click(asyncServiceSelect);
+    await userEvent.click(asyncServiceSelect);
 
     const jaegerService = await screen.findByText('jaeger-query');
     expect(jaegerService).toBeInTheDocument();
@@ -68,13 +72,21 @@ describe('SearchForm', () => {
 });
 
 describe('SearchForm', () => {
+  let user: UserEvent;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    // Need to use delay: null here to work with fakeTimers
+    // see https://github.com/testing-library/user-event/issues/833
+    user = userEvent.setup({ delay: null });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should show loader if there is a delay fetching options', async () => {
-    const promise = Promise.resolve();
-    const handleOnChange = jest.fn(() => {
-      setTimeout(() => {
-        return promise;
-      }, 3000);
-    });
+    const handleOnChange = jest.fn();
     const query = {
       ...defaultQuery,
       targets: [
@@ -91,12 +103,19 @@ describe('SearchForm', () => {
 
     render(<SearchForm datasource={ds} query={query} onChange={handleOnChange} />);
 
+    jest.spyOn(ds, 'metadataRequest').mockImplementation(() => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(['jaeger-query']);
+        }, 3000);
+      });
+    });
     const asyncServiceSelect = screen.getByRole('combobox', { name: 'select-service-name' });
-    userEvent.click(asyncServiceSelect);
-    const loader = screen.getByText('Loading options...');
+    await user.click(asyncServiceSelect);
+    expect(screen.getByText('Loading options...')).toBeInTheDocument();
 
-    expect(loader).toBeInTheDocument();
-    await act(() => promise);
+    jest.advanceTimersByTime(3000);
+    await waitFor(() => expect(screen.queryByText('Loading options...')).not.toBeInTheDocument());
   });
 });
 

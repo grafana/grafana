@@ -27,7 +27,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 			for i := 1; i < 4; i++ {
 				cmd = &models.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
-				err = CreateOrg(context.Background(), cmd)
+				err = sqlStore.CreateOrg(context.Background(), cmd)
 				require.NoError(t, err)
 
 				ids = append(ids, cmd.Result.Id)
@@ -44,7 +44,7 @@ func TestAccountDataAccess(t *testing.T) {
 			sqlStore = InitTestDB(t)
 			for i := 1; i < 4; i++ {
 				cmd := &models.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
-				err := CreateOrg(context.Background(), cmd)
+				err := sqlStore.CreateOrg(context.Background(), cmd)
 				require.NoError(t, err)
 			}
 

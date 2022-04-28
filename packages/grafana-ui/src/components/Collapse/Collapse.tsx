@@ -1,9 +1,10 @@
-import React, { FunctionComponent, useState } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FunctionComponent, useState } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
-import { GrafanaTheme2 } from '@grafana/data';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   collapse: css`
@@ -60,7 +61,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   header: css`
     label: collapse__header;
-    padding: ${theme.spacing(1, 2, 0.5, 2)};
+    padding: ${theme.spacing(1, 2, 1, 2)};
     display: flex;
     cursor: inherit;
     transition: all 0.1s linear;
@@ -68,7 +69,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   headerCollapsed: css`
     label: collapse__header--collapsed;
-    padding: ${theme.spacing(1, 2, 0.5, 2)};
+    padding: ${theme.spacing(1, 2, 1, 2)};
   `,
   headerLabel: css`
     label: collapse__header-label;
@@ -137,7 +138,7 @@ export const Collapse: FunctionComponent<Props> = ({
   return (
     <div className={panelClass}>
       <div className={headerClass} onClick={onClickToggle}>
-        {collapsible && <Icon className={style.icon} name={isOpen ? 'angle-up' : 'angle-down'} />}
+        {collapsible && <Icon className={style.icon} name={isOpen ? 'angle-down' : 'angle-right'} />}
         <div className={cx([style.headerLabel])}>{label}</div>
       </div>
       {isOpen && (

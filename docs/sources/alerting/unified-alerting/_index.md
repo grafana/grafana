@@ -8,10 +8,12 @@ weight = 113
 
 Grafana 8.0 has new and improved alerting that centralizes alerting information in a single, searchable view. It is enabled by default for all new OSS instances, and is an [opt-in]({{< relref "./opt-in.md" >}}) feature for older installations that still use legacy dashboard alerting. We encourage you to create issues in the Grafana GitHub repository for bugs found while testing Grafana alerting. See also, [What's New with Grafana alerting]({{< relref "./difference-old-new.md" >}}).
 
+> Refer to [Fine-grained access control]({{< relref "../../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to learn more about controlling access to alerts using fine-grained permissions.
+
 When Grafana alerting is enabled, you can:
 
 - [Create Grafana managed alerting rules]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
-- [Create Cortex or Loki managed alerting rules]({{< relref "alerting-rules/create-cortex-loki-managed-rule.md" >}})
+- [Create Grafana Mimir or Loki managed alerting rules]({{< relref "alerting-rules/create-mimir-loki-managed-rule.md" >}})
 - [View existing alerting rules and manage their current state]({{< relref "alerting-rules/rule-list.md" >}})
 - [View the state and health of alerting rules]({{< relref "./fundamentals/state-and-health.md" >}})
 - [Add or edit an alert contact point]({{< relref "./contact-points.md" >}})

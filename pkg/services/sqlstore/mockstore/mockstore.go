@@ -12,8 +12,9 @@ type OrgListResponse []struct {
 	Response error
 }
 type SQLStoreMock struct {
-	LastGetAlertsQuery *models.GetAlertsQuery
-	LatestUserId       int64
+	LastGetAlertsQuery      *models.GetAlertsQuery
+	LastLoginAttemptCommand *models.CreateLoginAttemptCommand
+	LatestUserId            int64
 
 	ExpectedUser                   *models.User
 	ExpectedDatasource             *models.DataSource
@@ -39,8 +40,12 @@ type SQLStoreMock struct {
 	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
 	ExpectedPersistedDashboards    models.HitList
 	ExpectedSignedInUser           *models.SignedInUser
+	ExpectedAPIKey                 *models.ApiKey
 	ExpectedUserStars              map[int64]bool
-	ExpectedError                  error
+	ExpectedLoginAttempts          int64
+
+	ExpectedError            error
+	ExpectedSetUsingOrgError error
 }
 
 func NewSQLStoreMock() *SQLStoreMock {
@@ -83,7 +88,7 @@ func (m *SQLStoreMock) DeleteDashboardSnapshot(ctx context.Context, cmd *models.
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetDashboardSnapshot(query *models.GetDashboardSnapshotQuery) error {
+func (m *SQLStoreMock) GetDashboardSnapshot(ctx context.Context, query *models.GetDashboardSnapshotQuery) error {
 	query.Result = m.ExpectedDashboardSnapshot
 	return m.ExpectedError
 }
@@ -92,7 +97,7 @@ func (m *SQLStoreMock) HasEditPermissionInFolders(ctx context.Context, query *mo
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) SearchDashboardSnapshots(query *models.GetDashboardSnapshotsQuery) error {
+func (m *SQLStoreMock) SearchDashboardSnapshots(ctx context.Context, query *models.GetDashboardSnapshotsQuery) error {
 	return m.ExpectedError
 }
 
@@ -112,6 +117,9 @@ func (m *SQLStoreMock) GetOrgByNameHandler(ctx context.Context, query *models.Ge
 func (m *SQLStoreMock) CreateOrgWithMember(name string, userID int64) (models.Org, error) {
 	return *m.ExpectedOrg, nil
 }
+func (m *SQLStoreMock) CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error {
+	return m.ExpectedError
+}
 
 func (m *SQLStoreMock) UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error {
 	return m.ExpectedError
@@ -130,6 +138,12 @@ func (m SQLStoreMock) DeleteOrphanedProvisionedDashboards(ctx context.Context, c
 }
 
 func (m *SQLStoreMock) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
+	m.LastLoginAttemptCommand = cmd
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error {
+	query.Result = m.ExpectedLoginAttempts
 	return m.ExpectedError
 }
 
@@ -147,6 +161,7 @@ func (m *SQLStoreMock) GetUserById(ctx context.Context, query *models.GetUserByI
 }
 
 func (m *SQLStoreMock) GetUserByLogin(ctx context.Context, query *models.GetUserByLoginQuery) error {
+	query.Result = m.ExpectedUser
 	return m.ExpectedError
 }
 
@@ -167,7 +182,7 @@ func (m *SQLStoreMock) UpdateUserLastSeenAt(ctx context.Context, cmd *models.Upd
 }
 
 func (m *SQLStoreMock) SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
-	return m.ExpectedError
+	return m.ExpectedSetUsingOrgError
 }
 
 func (m *SQLStoreMock) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
@@ -274,23 +289,6 @@ func (m *SQLStoreMock) NewSession(ctx context.Context) *sqlstore.DBSession {
 }
 
 func (m *SQLStoreMock) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetPreferencesWithDefaults(ctx context.Context, query *models.GetPreferencesWithDefaultsQuery) error {
-	query.Result = &models.Preferences{}
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetPreferences(ctx context.Context, query *models.GetPreferencesQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) SavePreferences(ctx context.Context, cmd *models.SavePreferencesCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) PatchPreferences(ctx context.Context, cmd *models.PatchPreferencesCommand) error {
 	return m.ExpectedError
 }
 
@@ -612,6 +610,7 @@ func (m *SQLStoreMock) GetApiKeyById(ctx context.Context, query *models.GetApiKe
 }
 
 func (m *SQLStoreMock) GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
+	query.Result = m.ExpectedAPIKey
 	return m.ExpectedError
 }
 
@@ -657,5 +656,9 @@ func (m *SQLStoreMock) GetDashboardPermissionsForUser(ctx context.Context, query
 }
 
 func (m *SQLStoreMock) GetDashboardSlugById(ctx context.Context, query *models.GetDashboardSlugByIdQuery) error {
+	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error {
 	return m.ExpectedError
 }

@@ -26,12 +26,11 @@ import (
 
 // ScheduleService is an interface for a service that schedules the evaluation
 // of alert rules.
+//go:generate mockery --name ScheduleService --structname FakeScheduleService --inpackage --filename schedule_mock.go
 type ScheduleService interface {
 	// Run the scheduler until the context is canceled or the scheduler returns
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
-	Pause() error
-	Unpause() error
 
 	// AlertmanagersFor returns all the discovered Alertmanager URLs for the
 	// organization.
@@ -75,7 +74,7 @@ type schedule struct {
 
 	log log.Logger
 
-	evaluator *eval.Evaluator
+	evaluator eval.Evaluator
 
 	ruleStore         store.RuleStore
 	instanceStore     store.InstanceStore
@@ -108,7 +107,7 @@ type SchedulerCfg struct {
 	EvalAppliedFunc         func(models.AlertRuleKey, time.Time)
 	MaxAttempts             int64
 	StopAppliedFunc         func(models.AlertRuleKey)
-	Evaluator               *eval.Evaluator
+	Evaluator               eval.Evaluator
 	RuleStore               store.RuleStore
 	OrgStore                store.OrgStore
 	InstanceStore           store.InstanceStore
@@ -122,7 +121,7 @@ type SchedulerCfg struct {
 
 // NewScheduler returns a new schedule.
 func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url.URL, stateManager *state.Manager) *schedule {
-	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
+	ticker := alerting.NewTicker(cfg.C, cfg.BaseInterval, cfg.Metrics.Ticker)
 
 	sch := schedule{
 		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]*alertRuleInfo)},
@@ -151,24 +150,6 @@ func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url
 		minRuleInterval:         cfg.MinRuleInterval,
 	}
 	return &sch
-}
-
-func (sch *schedule) Pause() error {
-	if sch == nil {
-		return fmt.Errorf("scheduler is not initialised")
-	}
-	sch.ticker.Pause()
-	sch.log.Info("alert rule scheduler paused", "now", sch.clock.Now())
-	return nil
-}
-
-func (sch *schedule) Unpause() error {
-	if sch == nil {
-		return fmt.Errorf("scheduler is not initialised")
-	}
-	sch.ticker.Unpause()
-	sch.log.Info("alert rule scheduler unpaused", "now", sch.clock.Now())
-	return nil
 }
 
 func (sch *schedule) Run(ctx context.Context) error {
@@ -788,7 +769,7 @@ type evaluation struct {
 func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
 	sch.clock = cfg.C
 	sch.baseInterval = cfg.BaseInterval
-	sch.ticker = alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
+	sch.ticker = alerting.NewTicker(cfg.C, cfg.BaseInterval, cfg.Metrics.Ticker)
 	sch.evalAppliedFunc = cfg.EvalAppliedFunc
 	sch.stopAppliedFunc = cfg.StopAppliedFunc
 }

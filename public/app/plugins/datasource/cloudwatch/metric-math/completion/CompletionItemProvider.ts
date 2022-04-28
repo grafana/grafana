@@ -1,7 +1,11 @@
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
+
+import { CloudWatchDatasource } from '../../datasource';
+import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
+import { LinkedToken } from '../../monarch/LinkedToken';
 import { TRIGGER_SUGGEST } from '../../monarch/commands';
 import { SuggestionKind, CompletionItemPriority, StatementPosition } from '../../monarch/types';
-import { LinkedToken } from '../../monarch/LinkedToken';
 import {
   METRIC_MATH_FNS,
   METRIC_MATH_KEYWORDS,
@@ -9,12 +13,10 @@ import {
   METRIC_MATH_PERIODS,
   METRIC_MATH_STATISTIC_KEYWORD_STRINGS,
 } from '../language';
-import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
-import { MetricMathTokenTypes } from './types';
-import { CloudWatchDatasource } from '../../datasource';
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+
 import { getStatementPosition } from './statementPosition';
 import { getSuggestionKinds } from './suggestionKind';
+import { MetricMathTokenTypes } from './types';
 
 type CompletionItem = monacoTypes.languages.CompletionItem;
 

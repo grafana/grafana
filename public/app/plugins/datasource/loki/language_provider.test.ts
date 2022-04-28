@@ -1,11 +1,11 @@
 import Plain from 'slate-plain-serializer';
 
-import LanguageProvider, { LokiHistoryItem } from './language_provider';
+import { AbstractLabelOperator } from '@grafana/data';
 import { TypeaheadInput } from '@grafana/ui';
 
+import { LokiDatasource } from './datasource';
+import LanguageProvider, { LokiHistoryItem } from './language_provider';
 import { makeMockLokiDatasource } from './mocks';
-import LokiDatasource from './datasource';
-import { AbstractLabelOperator } from '@grafana/data';
 import { LokiQueryType } from './types';
 
 jest.mock('app/store/store', () => ({
@@ -259,7 +259,7 @@ describe('Request URL', () => {
 
     const instance = new LanguageProvider(datasourceWithLabels);
     instance.fetchLabels();
-    const expectedUrl = '/loki/api/v1/label';
+    const expectedUrl = '/loki/api/v1/labels';
     expect(datasourceSpy).toHaveBeenCalledWith(expectedUrl, rangeParams);
   });
 });

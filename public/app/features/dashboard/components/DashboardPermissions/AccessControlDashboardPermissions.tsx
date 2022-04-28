@@ -1,8 +1,10 @@
 import React from 'react';
-import { contextSrv } from 'app/core/core';
-import { DashboardModel } from '../../state';
-import { AccessControlAction } from 'app/types';
+
 import { Permissions } from 'app/core/components/AccessControl';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
+
+import { DashboardModel } from '../../state';
 
 interface Props {
   dashboard: DashboardModel;

@@ -1,4 +1,5 @@
 import React, { useCallback, useRef } from 'react';
+
 import { Button, ButtonProps } from '../Button';
 
 /** @deprecated Will be removed in next major release */

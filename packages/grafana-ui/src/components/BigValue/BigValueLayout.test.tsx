@@ -1,6 +1,7 @@
-import { Props, BigValueColorMode, BigValueGraphMode } from './BigValue';
-import { buildLayout, StackedWithChartLayout, WideWithChartLayout } from './BigValueLayout';
 import { ArrayVector, createTheme, FieldType } from '@grafana/data';
+
+import { Props, BigValueColorMode, BigValueGraphMode, BigValueTextMode } from './BigValue';
+import { buildLayout, StackedWithChartLayout, StackedWithNoChartLayout, WideWithChartLayout } from './BigValueLayout';
 
 function getProps(propOverrides?: Partial<Props>): Props {
   const props: Props = {
@@ -20,6 +21,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
         config: {},
       },
     },
+    count: 1,
     theme: createTheme(),
   };
 
@@ -37,6 +39,43 @@ describe('BigValueLayout', () => {
         })
       );
       expect(layout).toBeInstanceOf(StackedWithChartLayout);
+    });
+
+    it('should not include title height when count is 1 and title is auto hidden', () => {
+      const layout = buildLayout(
+        getProps({
+          value: {
+            text: '25',
+            title: '10',
+            numeric: 25,
+          },
+          sparkline: undefined,
+          textMode: BigValueTextMode.Auto,
+          count: 1,
+        })
+      );
+      expect(layout.titleFontSize).toBe(0);
+    });
+
+    it('should not use chart layout if only one sparkline point', () => {
+      const layout = buildLayout(
+        getProps({
+          value: {
+            text: '25',
+            title: '10',
+            numeric: 25,
+          },
+          sparkline: {
+            y: {
+              name: '',
+              values: new ArrayVector([1]),
+              type: FieldType.number,
+              config: {},
+            },
+          },
+        })
+      );
+      expect(layout).toBeInstanceOf(StackedWithNoChartLayout);
     });
 
     it('should auto select to wide layout', () => {

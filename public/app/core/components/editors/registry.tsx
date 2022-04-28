@@ -1,5 +1,3 @@
-import { DashboardPicker, DashboardPickerOptions } from './DashboardPicker';
-import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
 import {
   FieldConfigPropertyItem,
   FieldType,
@@ -13,8 +11,11 @@ import {
   ValueMappingFieldConfigSettings,
   valueMappingsOverrideProcessor,
 } from '@grafana/data';
-import { ValueMappingsEditor } from 'app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor';
+import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
 import { ThresholdsValueEditor } from 'app/features/dimensions/editors/ThresholdsEditor/thresholds';
+import { ValueMappingsEditor } from 'app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor';
+
+import { DashboardPicker, DashboardPickerOptions } from './DashboardPicker';
 
 /**
  * Returns collection of standard option editors definitions

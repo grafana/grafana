@@ -138,6 +138,14 @@ func TestFolderService(t *testing.T) {
 				require.Equal(t, f, actualFolder)
 			})
 
+			t.Run("When creating folder should return error if uid is general", func(t *testing.T) {
+				dash := models.NewDashboardFolder("Test-Folder")
+				dash.Id = rand.Int63()
+
+				_, err := service.CreateFolder(context.Background(), user, orgID, dash.Title, "general")
+				require.ErrorIs(t, err, models.ErrFolderInvalidUID)
+			})
+
 			t.Run("When updating folder should not return access denied error", func(t *testing.T) {
 				dashboardFolder := models.NewDashboardFolder("Folder")
 				dashboardFolder.Id = rand.Int63()

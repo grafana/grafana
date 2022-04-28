@@ -1,7 +1,8 @@
-import { CollectedData, DataCollector } from './DataCollector';
-import { CDPDataCollector } from './CDPDataCollector';
-import { fromPairs } from 'lodash';
 import fs from 'fs';
+import { fromPairs } from 'lodash';
+
+import { CDPDataCollector } from './CDPDataCollector';
+import { CollectedData, DataCollector } from './DataCollector';
 import { formatResults } from './formatting';
 const remoteDebuggingPortOptionPrefix = '--remote-debugging-port=';
 

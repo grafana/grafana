@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -247,7 +246,7 @@ func NewFakeAnnotationsRepo() *fakeAnnotationsRepo {
 	}
 }
 
-func (repo *fakeAnnotationsRepo) Delete(params *annotations.DeleteParams) error {
+func (repo *fakeAnnotationsRepo) Delete(_ context.Context, params *annotations.DeleteParams) error {
 	if params.Id != 0 {
 		delete(repo.annotations, params.Id)
 	} else {
@@ -277,7 +276,7 @@ func (repo *fakeAnnotationsRepo) Find(_ context.Context, query *annotations.Item
 	annotations := []*annotations.ItemDTO{{Id: 1, DashboardId: 0}}
 	return annotations, nil
 }
-func (repo *fakeAnnotationsRepo) FindTags(query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+func (repo *fakeAnnotationsRepo) FindTags(_ context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	result := annotations.FindTagsResult{
 		Tags: []*annotations.TagsDTO{},
 	}
@@ -293,8 +292,6 @@ var fakeAnnoRepo *fakeAnnotationsRepo
 func postAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
 	cmd dtos.PostAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		hs := setupSimpleHTTPServer(nil)
 		store := sqlstore.InitTestDB(t)
 		store.Cfg = hs.Cfg
@@ -324,8 +321,6 @@ func postAnnotationScenario(t *testing.T, desc string, url string, routePattern 
 func putAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
 	cmd dtos.UpdateAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		hs := setupSimpleHTTPServer(nil)
 		store := sqlstore.InitTestDB(t)
 		store.Cfg = hs.Cfg
@@ -354,8 +349,6 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 
 func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType, cmd dtos.PatchAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
 		hs := setupSimpleHTTPServer(nil)
 		store := sqlstore.InitTestDB(t)
 		store.Cfg = hs.Cfg
@@ -385,8 +378,6 @@ func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern
 func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
 	cmd dtos.MassDeleteAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
 		hs := setupSimpleHTTPServer(nil)
 		store := sqlstore.InitTestDB(t)
 		store.Cfg = hs.Cfg
@@ -495,7 +486,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl getting tags for annotations with correct permissions is allowed",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsTagsRead, Scope: accesscontrol.ScopeAnnotationsTagsAll}},
+				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead}},
 				url:         "/api/annotations/tags",
 				method:      http.MethodGet,
 			},
@@ -504,7 +495,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		{
 			name: "AccessControl getting tags for annotations without correct permissions is forbidden",
 			args: args{
-				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsTagsRead}},
+				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite}},
 				url:         "/api/annotations/tags",
 				method:      http.MethodGet,
 			},
@@ -625,6 +616,18 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			want: http.StatusForbidden,
 		},
 		{
+			name: "AccessControl create dashboard annotation with incorrect permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{{
+					Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeOrganization,
+				}},
+				url:    "/api/annotations",
+				method: http.MethodPost,
+				body:   mockRequestBody(postDashboardCmd),
+			},
+			want: http.StatusForbidden,
+		},
+		{
 			name: "AccessControl create organization annotation with permissions is allowed",
 			args: args{
 				permissions: []*accesscontrol.Permission{{
@@ -717,7 +720,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setUpFGACGuardian(t)
+			setUpRBACGuardian(t)
 			sc.acmock.
 				RegisterAttributeScopeResolver(AnnotationTypeScopeResolver())
 			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgId)
@@ -911,7 +914,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setUpFGACGuardian(t)
+			setUpRBACGuardian(t)
 			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgId)
 			dashboardAnnotation := &annotations.Item{Id: 1, DashboardId: 1}
 			organizationAnnotation := &annotations.Item{Id: 2, DashboardId: 0}
@@ -942,7 +945,7 @@ func setUpACL() {
 	guardian.InitLegacyGuardian(store)
 }
 
-func setUpFGACGuardian(t *testing.T) {
+func setUpRBACGuardian(t *testing.T) {
 	origNewGuardian := guardian.New
 	t.Cleanup(func() {
 		guardian.New = origNewGuardian

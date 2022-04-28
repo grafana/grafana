@@ -1,12 +1,14 @@
-import { PanelData } from '@grafana/data';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React, { useEffect, useReducer } from 'react';
 
+import { PanelData } from '@grafana/data';
+
 import { PrometheusDatasource } from '../../datasource';
 import { PromQuery } from '../../types';
-import { buildVisualQueryFromString } from '../parsing';
 import { promQueryModeller } from '../PromQueryModeller';
+import { buildVisualQueryFromString } from '../parsing';
 import { PromVisualQuery } from '../types';
+
 import { PromQueryBuilder } from './PromQueryBuilder';
 import { QueryPreview } from './QueryPreview';
 
@@ -54,7 +56,7 @@ export function PromQueryBuilderContainer(props: Props) {
         onRunQuery={onRunQuery}
         data={data}
       />
-      {query.editorPreview && <QueryPreview query={query.expr} />}
+      {query.rawQuery && <QueryPreview query={query.expr} />}
     </>
   );
 }

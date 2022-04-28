@@ -1,14 +1,16 @@
-import React, { FC, FormEvent, ReactNode, useCallback, useEffect, useState } from 'react';
-import { useMedia } from 'react-use';
-import Calendar from 'react-calendar';
 import { css, cx } from '@emotion/css';
+import React, { FC, FormEvent, ReactNode, useCallback, useEffect, useState } from 'react';
+import Calendar from 'react-calendar';
+import { useMedia } from 'react-use';
+
 import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@grafana/data';
+
 import { Button, ClickOutsideWrapper, HorizontalGroup, Icon, InlineField, Input, Portal } from '../..';
-import { TimeOfDayPicker } from '../TimeOfDayPicker';
-import { getStyles as getCalendarStyles } from '../TimeRangePicker/TimePickerCalendar';
 import { useStyles2, useTheme2 } from '../../../themes';
-import { isValid } from '../utils';
+import { TimeOfDayPicker } from '../TimeOfDayPicker';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
+import { getStyles as getCalendarStyles } from '../TimeRangePicker/TimePickerCalendar';
+import { isValid } from '../utils';
 
 export interface Props {
   /** Input date for the component */

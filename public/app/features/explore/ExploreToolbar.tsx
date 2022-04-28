@@ -1,24 +1,30 @@
-import React, { PureComponent, RefObject } from 'react';
+import React, { lazy, PureComponent, RefObject, Suspense } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { ExploreId } from 'app/types/explore';
-import { PageToolbar, SetInterval, ToolbarButton, ToolbarButtonRow } from '@grafana/ui';
+
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
-import { DataSourcePicker } from '@grafana/runtime';
-import { StoreState } from 'app/types/store';
+import { config, DataSourcePicker } from '@grafana/runtime';
+import { PageToolbar, SetInterval, ToolbarButton, ToolbarButtonRow } from '@grafana/ui';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
-import { changeDatasource } from './state/datasource';
-import { splitClose, splitOpen } from './state/main';
-import { syncTimes, changeRefreshInterval } from './state/time';
-import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
+import { ExploreId } from 'app/types/explore';
+import { StoreState } from 'app/types/store';
+
+import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
 import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
+import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
+
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { RunButton } from './RunButton';
-import { LiveTailControls } from './useLiveTailControls';
+import { changeDatasource } from './state/datasource';
+import { splitClose, splitOpen } from './state/main';
 import { cancelQueries, runQueries } from './state/query';
 import { isSplit } from './state/selectors';
-import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
-import { AddToDashboard } from './AddToDashboard';
+import { syncTimes, changeRefreshInterval } from './state/time';
+import { LiveTailControls } from './useLiveTailControls';
+
+const AddToDashboard = lazy(() =>
+  import('./AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))
+);
 
 interface OwnProps {
   exploreId: ExploreId;
@@ -81,6 +87,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
     return (
       <div ref={topOfExploreViewRef}>
         <PageToolbar
+          aria-label="Explore toolbar"
           title={exploreId === ExploreId.left ? 'Explore' : undefined}
           pageIcon={exploreId === ExploreId.left ? 'compass' : undefined}
           leftItems={[
@@ -115,6 +122,12 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
               </ToolbarButton>
             )}
 
+            {config.featureToggles.explore2Dashboard && (
+              <Suspense fallback={null}>
+                <AddToDashboard exploreId={exploreId} />
+              </Suspense>
+            )}
+
             {!isLive && (
               <ExploreTimeControls
                 exploreId={exploreId}
@@ -130,8 +143,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
                 onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
               />
             )}
-
-            <AddToDashboard exploreId={exploreId} />
 
             <RunButton
               refreshInterval={refreshInterval}

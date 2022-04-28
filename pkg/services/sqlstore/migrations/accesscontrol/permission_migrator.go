@@ -49,7 +49,7 @@ func (m *permissionMigrator) bulkCreateRoles(allRoles []*accesscontrol.Role) ([]
 	// bulk role creations
 	err := batch(len(allRoles), batchSize, func(start, end int) error {
 		roles := allRoles[start:end]
-		createdRoles, err := createRoles(roles, start, end)
+		createdRoles, err := createRoles(roles)
 		if err != nil {
 			return err
 		}
@@ -128,7 +128,7 @@ func (m *permissionMigrator) bulkAssignRoles(allRoles []*accesscontrol.Role) err
 }
 
 // createRoles creates a list of roles and returns their id, orgID, name in a single query
-func (m *permissionMigrator) createRoles(roles []*accesscontrol.Role, start int, end int) ([]*accesscontrol.Role, error) {
+func (m *permissionMigrator) createRoles(roles []*accesscontrol.Role) ([]*accesscontrol.Role, error) {
 	ts := time.Now()
 	createdRoles := make([]*accesscontrol.Role, 0, len(roles))
 	valueStrings := make([]string, len(roles))
@@ -155,7 +155,7 @@ func (m *permissionMigrator) createRoles(roles []*accesscontrol.Role, start int,
 }
 
 // createRolesMySQL creates a list of roles then fetches them
-func (m *permissionMigrator) createRolesMySQL(roles []*accesscontrol.Role, start int, end int) ([]*accesscontrol.Role, error) {
+func (m *permissionMigrator) createRolesMySQL(roles []*accesscontrol.Role) ([]*accesscontrol.Role, error) {
 	ts := time.Now()
 	createdRoles := make([]*accesscontrol.Role, 0, len(roles))
 

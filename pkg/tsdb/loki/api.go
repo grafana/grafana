@@ -25,9 +25,11 @@ func newLokiAPI(client *http.Client, url string, log log.Logger) *LokiAPI {
 	return &LokiAPI{client: client, url: url, log: log}
 }
 
-func makeRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.Request, error) {
+func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.Request, error) {
 	qs := url.Values{}
 	qs.Set("query", query.Expr)
+
+	qs.Set("direction", string(query.Direction))
 
 	// MaxLines defaults to zero when not received,
 	// and Loki does not like limit=0, even when it is not needed
@@ -51,7 +53,13 @@ func makeRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.
 			// is ignored, so it would be nicer to not send it in such cases,
 			// but we cannot detect that situation, so we always send it.
 			// it should not break anything.
-			qs.Set("step", query.Step.String())
+			// NOTE2: we do this at millisecond precision for two reasons:
+			//  a. Loki cannot do steps with better precision anyway,
+			//     so the microsecond & nanosecond part can be ignored.
+			//  b. having it always be number+'ms' makes it more robust and
+			//     precise, as Loki does not support step with float number
+			//     and time-specifier, like "1.5s"
+			qs.Set("step", fmt.Sprintf("%dms", query.Step.Milliseconds()))
 			lokiUrl.Path = "/loki/api/v1/query_range"
 		}
 	case QueryTypeInstant:
@@ -127,8 +135,8 @@ func makeLokiError(body io.ReadCloser) error {
 	return fmt.Errorf("%v", errorMessage)
 }
 
-func (api *LokiAPI) Query(ctx context.Context, query lokiQuery) (*loghttp.QueryResponse, error) {
-	req, err := makeRequest(ctx, api.url, query)
+func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (*loghttp.QueryResponse, error) {
+	req, err := makeDataRequest(ctx, api.url, query)
 	if err != nil {
 		return nil, err
 	}
@@ -155,4 +163,42 @@ func (api *LokiAPI) Query(ctx context.Context, query lokiQuery) (*loghttp.QueryR
 	}
 
 	return &response, nil
+}
+
+func makeRawRequest(ctx context.Context, lokiDsUrl string, resourceURL string) (*http.Request, error) {
+	lokiUrl, err := url.Parse(lokiDsUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	url, err := lokiUrl.Parse(resourceURL)
+	if err != nil {
+		return nil, err
+	}
+
+	return http.NewRequestWithContext(ctx, "GET", url.String(), nil)
+}
+
+func (api *LokiAPI) RawQuery(ctx context.Context, resourceURL string) ([]byte, error) {
+	req, err := makeRawRequest(ctx, api.url, resourceURL)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := api.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			api.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
+
+	if resp.StatusCode/100 != 2 {
+		return nil, makeLokiError(resp.Body)
+	}
+
+	return io.ReadAll(resp.Body)
 }

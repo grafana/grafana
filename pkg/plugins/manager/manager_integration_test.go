@@ -80,13 +80,13 @@ func TestPluginManager_int_init(t *testing.T) {
 	idb := influxdb.ProvideService(hcp)
 	lk := loki.ProvideService(hcp, tracer)
 	otsdb := opentsdb.ProvideService(hcp)
-	pr := prometheus.ProvideService(hcp, tracer)
+	pr := prometheus.ProvideService(hcp, cfg, features, tracer)
 	tmpo := tempo.ProvideService(hcp)
 	td := testdatasource.ProvideService(cfg, features)
 	pg := postgres.ProvideService(cfg)
 	my := mysql.ProvideService(cfg, hcp)
 	ms := mssql.ProvideService(cfg)
-	sv2 := searchV2.ProvideService(sqlstore.InitTestDB(t))
+	sv2 := searchV2.ProvideService(cfg, sqlstore.InitTestDB(t), nil)
 	graf := grafanads.ProvideService(cfg, sv2, nil)
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
@@ -127,7 +127,6 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"news":           {},
 		"nodeGraph":      {},
 		"piechart":       {},
-		"pluginlist":     {},
 		"stat":           {},
 		"state-timeline": {},
 		"status-history": {},
