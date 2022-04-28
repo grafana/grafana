@@ -6,6 +6,7 @@ publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
+drone_cache = 'meltwater/drone-cache:v1.2.2'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
 
@@ -54,11 +55,16 @@ def yarn_install_step():
         'name': 'yarn-install',
         'image': build_image,
         'commands': [
+            'ls -a yarncache',
             'yarn install --immutable',
         ],
         'depends_on': [
+            'restore-cache',
             'grabpl',
         ],
+        'environment': {
+            'YARN_CACHE_FOLDER': '/drone/src/yarncache',
+        },
     }
 
 
@@ -249,6 +255,7 @@ def build_storybook_step(edition, ver_mode):
         ],
         'environment': {
             'NODE_OPTIONS': '--max_old_space_size=4096',
+            'YARN_CACHE_FOLDER': '/drone/src/yarncache',
         },
         'commands': [
             'yarn storybook:build',
@@ -1166,3 +1173,45 @@ def end_to_end_tests_deps(edition):
         'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
         'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
     ]
+
+def restore_cache_step():
+    return {
+        'image': drone_cache,
+        'name': 'restore-cache',
+        'pull': 'always',
+        'settings': {
+            'backend': 'gcs',
+            'json_key': from_secret('tf_google_credentials'),
+            'bucket': 'test-julien',
+            'restore': 'true',
+            'cache_key': "test123",
+            'mount': [
+                'yarncache',
+                'node_modules',
+            ],
+        },
+    }
+
+def rebuild_cache_step():
+    return {
+        'image': drone_cache,
+        'name': 'rebuild-cache',
+        'pull': 'always',
+        'settings': {
+            'backend': 'gcs',
+            'json_key': from_secret('tf_google_credentials'),
+            'bucket': 'test-julien',
+            'cache_key': "test123",
+            'rebuild': 'true',
+            'mount': [
+                'yarncache',
+                'node_modules',
+            ],
+        },
+        'depends_on': [
+            'yarn-install',
+        ],
+        'when': {
+            'event': 'pull_request',
+        },
+    }

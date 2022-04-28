@@ -1,5 +1,6 @@
 load(
     'scripts/drone/steps/lib.star',
+    'restore_cache_step',
     'download_grabpl_step',
     'gen_version_step',
     'yarn_install_step',
@@ -13,6 +14,7 @@ load(
     'build_backend_step',
     'build_frontend_step',
     'build_frontend_package_step',
+    'rebuild_cache_step',
     'build_plugins_step',
     'test_backend_step',
     'test_backend_integration_step',
@@ -70,6 +72,7 @@ trigger = {
 
 def pr_test_frontend():
     init_steps = [
+        restore_cache_step(),
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
@@ -118,6 +121,7 @@ def pr_pipelines(edition):
     variants = ['linux-amd64', 'linux-amd64-musl', 'darwin-amd64', 'windows-amd64', 'armv6', ]
     include_enterprise2 = edition == 'enterprise'
     init_steps = [
+        restore_cache_step(),
         identify_runner_step(),
         download_grabpl_step(),
         gen_version_step(ver_mode),
@@ -128,6 +132,7 @@ def pr_pipelines(edition):
         build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_package_step(edition=edition, ver_mode=ver_mode),
+        rebuild_cache_step(),
         build_plugins_step(edition=edition),
         validate_scuemata_step(),
         ensure_cuetsified_step(),

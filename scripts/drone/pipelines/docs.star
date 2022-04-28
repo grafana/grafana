@@ -1,5 +1,6 @@
 load(
     'scripts/drone/steps/lib.star',
+    'restore_cache_step',
     'build_image',
     'yarn_install_step',
     'identify_runner_step',
@@ -28,6 +29,7 @@ load(
 
 def docs_pipelines(edition, ver_mode, trigger):
     steps = [
+        restore_cache_step(),
         download_grabpl_step(),
         identify_runner_step(),
         gen_version_step(ver_mode),
