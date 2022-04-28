@@ -34,6 +34,7 @@ const ResourcePicker = ({
   type Status = 'NeedsRefresh' | 'Loading' | 'Done';
   const [status, setStatus] = useState<Status>('NeedsRefresh');
   const [rows, setRows] = useState<ResourceRowGroup>([]);
+  const [selectedRows, setSelectedRows] = useState<ResourceRowGroup>([]);
   const [internalSelectedURI, setInternalSelectedURI] = useState<string | undefined>(resourceURI);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(resourceURI?.includes('$'));
@@ -60,18 +61,21 @@ const ResourcePicker = ({
     }
   }, [resourcePickerData, internalSelectedURI, status]);
 
-  // Map the selected item into an array of rows
-  const selectedResourceRows = useMemo(() => {
-    const found = internalSelectedURI && findRow(rows, internalSelectedURI);
+  // set selected row data whenever row or selection changes
+  useEffect(() => {
+    if (!internalSelectedURI) {
+      setSelectedRows([]);
+    }
 
-    return found
-      ? [
-          {
-            ...found,
-            children: undefined,
-          },
-        ]
-      : [];
+    const found = internalSelectedURI && findRow(rows, internalSelectedURI);
+    if (found) {
+      return setSelectedRows([
+        {
+          ...found,
+          children: undefined,
+        },
+      ]);
+    }
   }, [internalSelectedURI, rows]);
 
   // Request resources for an expanded resource group
@@ -107,7 +111,7 @@ const ResourcePicker = ({
   const handleSearch = useCallback(
     async (searchWord: string) => {
       if (!searchWord) {
-        // triggers the use effect above to reload the initial resources
+        // triggers the useeffect above to reload the initial resources
         setStatus('NeedsRefresh');
         return;
       }
@@ -160,7 +164,7 @@ const ResourcePicker = ({
                 <NestedRow
                   key={row.uri}
                   row={row}
-                  selectedRows={selectedResourceRows}
+                  selectedRows={selectedRows}
                   level={0}
                   requestNestedRows={requestNestedRows}
                   onRowSelectedChange={handleSelectionChanged}
@@ -173,18 +177,18 @@ const ResourcePicker = ({
       </div>
 
       <div className={styles.selectionFooter}>
-        {selectedResourceRows.length > 0 && (
+        {selectedRows.length > 0 && (
           <>
             <h5>Selection</h5>
 
             <div className={styles.tableScroller}>
               <table className={styles.table}>
                 <tbody>
-                  {selectedResourceRows.map((row) => (
+                  {selectedRows.map((row) => (
                     <NestedRow
                       key={row.uri}
                       row={row}
-                      selectedRows={selectedResourceRows}
+                      selectedRows={selectedRows}
                       level={0}
                       requestNestedRows={requestNestedRows}
                       onRowSelectedChange={handleSelectionChanged}
