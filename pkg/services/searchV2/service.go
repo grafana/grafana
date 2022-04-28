@@ -93,6 +93,7 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 		return user, nil
 	}
 
+	// TODO: ensure this is cached
 	permissions, err := s.ac.GetUserPermissions(ctx, user,
 		accesscontrol.Options{ReloadCache: false})
 	if err != nil {
