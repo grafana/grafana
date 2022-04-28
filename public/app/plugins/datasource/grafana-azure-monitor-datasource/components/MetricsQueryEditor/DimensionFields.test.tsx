@@ -9,7 +9,7 @@ import createMockPanelData from '../../__mocks__/panelData';
 import createMockQuery from '../../__mocks__/query';
 
 import DimensionFields from './DimensionFields';
-import { appendDimensionFilter } from './setQueryValue';
+import { appendDimensionFilter, setDimensionFilterValue } from './setQueryValue';
 
 const variableOptionGroup = {
   label: 'Template variables',
@@ -155,5 +155,82 @@ describe('Azure Monitor QueryEditor', () => {
     const options = await screen.findAllByLabelText('Select option');
     expect(options).toHaveLength(1);
     expect(options[0]).toHaveTextContent('testlabel');
+  });
+
+  it('correctly updates dimension labels', async () => {
+    let mockQuery = createMockQuery();
+    mockQuery.azureMonitor = {
+      ...mockQuery.azureMonitor,
+      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: 'testlabel' }],
+    };
+
+    mockPanelData.series = [
+      {
+        ...mockPanelData.series[0],
+        fields: [
+          {
+            ...mockPanelData.series[0].fields[0],
+            name: 'Test Dimension 1',
+            labels: { testdimension1: 'testlabel' },
+          },
+        ],
+      },
+    ];
+    const onQueryChange = jest.fn();
+    const dimensionOptions = [{ label: 'Test Dimension 1', value: 'TestDimension1' }];
+    render(
+      <DimensionFields
+        data={mockPanelData}
+        subscriptionId="123"
+        query={mockQuery}
+        onQueryChange={onQueryChange}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        setError={() => {}}
+        dimensionOptions={dimensionOptions}
+      />
+    );
+    await screen.findByText('testlabel');
+    const labelClear = await screen.findByLabelText('select-clear-value');
+    await user.click(labelClear);
+    mockQuery = setDimensionFilterValue(mockQuery, 0, 'filter', '');
+    expect(onQueryChange).toHaveBeenCalledWith({
+      ...mockQuery,
+      azureMonitor: {
+        ...mockQuery.azureMonitor,
+        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '' }],
+      },
+    });
+    mockPanelData.series = [
+      ...mockPanelData.series,
+      {
+        ...mockPanelData.series[0],
+        fields: [
+          {
+            ...mockPanelData.series[0].fields[0],
+            name: 'Test Dimension 1',
+            labels: { testdimension1: 'testlabel2' },
+          },
+        ],
+      },
+    ];
+    render(
+      <DimensionFields
+        data={mockPanelData}
+        subscriptionId="123"
+        query={mockQuery}
+        onQueryChange={onQueryChange}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        setError={() => {}}
+        dimensionOptions={dimensionOptions}
+      />
+    );
+    const labelSelect = await screen.findByText('Select value');
+    await user.click(labelSelect);
+    const options = await screen.findAllByLabelText('Select option');
+    expect(options).toHaveLength(2);
+    expect(options[0]).toHaveTextContent('testlabel');
+    expect(options[1]).toHaveTextContent('testlabel2');
   });
 });
