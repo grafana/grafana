@@ -1,7 +1,7 @@
 import { pick } from 'lodash';
 import React from 'react';
 
-import { ExploreMode, SelectableValue } from '@grafana/data';
+import { SelectableValue, ExploreMode } from '@grafana/data';
 import { EditorHeader, InlineSelect } from '@grafana/experimental';
 
 import { CloudWatchDatasource } from '../datasource';
@@ -70,7 +70,7 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({
 
       <InlineSelect aria-label="Query mode" value={queryMode} options={apiModes} onChange={onQueryModeChange} />
 
-      {queryMode !== ExploreMode.Logs && (
+      {queryMode === ExploreMode.Metrics && (
         <MetricsQueryHeader
           query={query}
           datasource={datasource}

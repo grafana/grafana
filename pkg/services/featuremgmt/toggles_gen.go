@@ -143,6 +143,10 @@ const (
 	// Provisioning-friendly routes for alerting
 	FlagAlertProvisioning = "alertProvisioning"
 
+	// FlagExport
+	// Export grafana instance (to git, etc)
+	FlagExport = "export"
+
 	// FlagStorageLocalUpload
 	// allow uploads to local storage
 	FlagStorageLocalUpload = "storageLocalUpload"
@@ -155,6 +159,10 @@ const (
 	// Experimental Explore to Dashboard workflow
 	FlagExplore2Dashboard = "explore2Dashboard"
 
+	// FlagTracing
+	// Adds trace ID to error notifications
+	FlagTracing = "tracing"
+
 	// FlagPersistNotifications
 	// PoC Notifications page
 	FlagPersistNotifications = "persistNotifications"
@@ -162,4 +170,8 @@ const (
 	// FlagCommandPalette
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"
+
+	// FlagSavedItems
+	// Enable Saved Items in the navbar.
+	FlagSavedItems = "savedItems"
 )

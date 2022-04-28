@@ -1,8 +1,8 @@
 import React, { SyntheticEvent } from 'react';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
-import { EditorRow, EditorField } from '@grafana/experimental';
-import { RadioButtonGroup, Select, Switch } from '@grafana/ui';
+import { EditorRow, EditorField, EditorSwitch } from '@grafana/experimental';
+import { RadioButtonGroup, Select } from '@grafana/ui';
 
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
 import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from '../../components/PromQueryEditor';
@@ -82,7 +82,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
         </EditorField>
         {shouldShowExemplarSwitch(query, app) && (
           <EditorField label="Exemplars">
-            <Switch value={query.exemplar} onChange={onExemplarChange} />
+            <EditorSwitch value={query.exemplar} onChange={onExemplarChange} />
           </EditorField>
         )}
         {query.intervalFactor && query.intervalFactor > 1 && (
