@@ -185,7 +185,7 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
             tooltip="Change time series legend name using this field. See documentation for replacement variable formats."
           >
             <Alias
-              value={query.alias ?? ''}
+              value={metricsQuery.alias ?? ''}
               onChange={(value: string) => this.onChange({ ...metricsQuery, alias: value })}
             />
           </EditorField>
