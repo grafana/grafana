@@ -6,11 +6,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -145,8 +143,8 @@ func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.R
 
 // QueryMetrics returns query metrics
 // POST /api/tsdb/query
-// nolint: staticcheck // legacydata.DataResponse deprecated
-// nolint: staticcheck // legacydata.DataQueryResult deprecated
+//nolint: staticcheck // legacydata.DataResponse deprecated
+//nolint: staticcheck // legacydata.DataQueryResult deprecated
 // Deprecated: use QueryMetricsV2 instead.
 func (hs *HTTPServer) QueryMetrics(c *models.ReqContext) response.Response {
 	reqDto := dtos.MetricRequest{}
@@ -191,21 +189,13 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext) response.Response {
 	return response.JSON(statusCode, &legacyResp)
 }
 
-func toJsonStreamingResponse(qdr *expr.Response) response.Response {
+func toJsonStreamingResponse(qdr *backend.QueryDataResponse) response.Response {
 	statusCode := http.StatusOK
-LOOP:
 	for _, res := range qdr.Responses {
 		if res.Error != nil {
 			statusCode = http.StatusBadRequest
-			break LOOP
-		} else if len(res.Notices) > 0 {
-			for _, notice := range res.Notices {
-				if notice.Severity == data.NoticeSeverityError {
-					statusCode = http.StatusBadRequest
-					break LOOP
-				}
-			}
 		}
 	}
+
 	return response.JSONStreaming(statusCode, qdr)
 }

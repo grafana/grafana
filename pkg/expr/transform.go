@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -56,7 +56,7 @@ type TimeRange struct {
 
 // TransformData takes Queries which are either expressions nodes
 // or are datasource requests.
-func (s *Service) TransformData(ctx context.Context, req *Request) (r *Response, err error) {
+func (s *Service) TransformData(ctx context.Context, req *Request) (r *backend.QueryDataResponse, err error) {
 	if s.isDisabled() {
 		return nil, fmt.Errorf("server side expressions are disabled")
 	}
@@ -95,7 +95,7 @@ func (s *Service) TransformData(ctx context.Context, req *Request) (r *Response,
 	}
 
 	if len(hidden) != 0 {
-		filteredRes := NewResponse()
+		filteredRes := backend.NewQueryDataResponse()
 		for refID, res := range responses.Responses {
 			if _, ok := hidden[refID]; !ok {
 				filteredRes.Responses[refID] = res

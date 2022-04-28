@@ -2,14 +2,12 @@ package mathexp
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 )
 
 // Results is a container for Value interfaces.
 type Results struct {
-	Values  Values
-	Notices []data.Notice
+	Values Values
 }
 
 // Values is a slice of Value interfaces
