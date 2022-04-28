@@ -55,10 +55,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
         let selection: SelectionParams = { targets: [] };
         if (item instanceof GroupState) {
           const targetElements: HTMLDivElement[] = [];
-          item.elements.forEach((element: ElementState) => {
-            targetElements.push(element.div!);
-          });
-
+          targetElements.push(item?.div!);
           selection.targets = targetElements;
           selection.group = item;
           settings.scene.select(selection);

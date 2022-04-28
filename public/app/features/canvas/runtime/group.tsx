@@ -157,7 +157,7 @@ export class GroupState extends ElementState {
 
   render() {
     return (
-      <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }}>
+      <div key={`${this.UID}/${this.revId}`} ref={this.initElement} style={{ ...this.sizeStyle, ...this.dataStyle }}>
         {this.elements.map((v) => v.render())}
       </div>
     );
