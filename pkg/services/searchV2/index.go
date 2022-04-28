@@ -317,7 +317,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		for _, row := range rows {
 			info, err := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
 			if err != nil {
-				l.logger.Debug("Error reading dashboard data", "error", err, "dashboardId", row.Id, "dashboardSlug", row.Slug)
+				l.logger.Warn("Error indexing dashboard data", "error", err, "dashboardId", row.Id, "dashboardSlug", row.Slug)
 				// But append info anyway for now, since we possibly extracted useful information.
 			}
 			dashboards = append(dashboards, dashboard{
