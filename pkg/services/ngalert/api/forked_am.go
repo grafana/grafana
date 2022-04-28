@@ -24,7 +24,7 @@ func NewForkedAM(datasourceCache datasources.CacheService, proxy *LotexAM, grafa
 	}
 }
 
-func (f *ForkedAlertmanagerApi) getServiceByUID(ctx *models.ReqContext) (*LotexAM, error) {
+func (f *ForkedAlertmanagerApi) getService(ctx *models.ReqContext) (*LotexAM, error) {
 	t, err := backendTypeByUID(ctx, f.DatasourceCache)
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func (f *ForkedAlertmanagerApi) getServiceByUID(ctx *models.ReqContext) (*LotexA
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteGetAMStatus(ctx *models.ReqContext) response.Response {
-	s, err := f.getServiceByUID(ctx)
+	s, err := f.getService(ctx)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
 	}
@@ -48,7 +48,7 @@ func (f *ForkedAlertmanagerApi) forkRouteGetAMStatus(ctx *models.ReqContext) res
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteCreateSilence(ctx *models.ReqContext, body apimodels.PostableSilence) response.Response {
-	s, err := f.getServiceByUID(ctx)
+	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -57,7 +57,7 @@ func (f *ForkedAlertmanagerApi) forkRouteCreateSilence(ctx *models.ReqContext, b
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteDeleteAlertingConfig(ctx *models.ReqContext) response.Response {
-	s, err := f.getServiceByUID(ctx)
+	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -66,7 +66,7 @@ func (f *ForkedAlertmanagerApi) forkRouteDeleteAlertingConfig(ctx *models.ReqCon
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteDeleteSilence(ctx *models.ReqContext) response.Response {
-	s, err := f.getServiceByUID(ctx)
+	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -75,7 +75,7 @@ func (f *ForkedAlertmanagerApi) forkRouteDeleteSilence(ctx *models.ReqContext) r
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteGetAlertingConfig(ctx *models.ReqContext) response.Response {
-	s, err := f.getServiceByUID(ctx)
+	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -84,7 +84,7 @@ func (f *ForkedAlertmanagerApi) forkRouteGetAlertingConfig(ctx *models.ReqContex
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteGetAMAlertGroups(ctx *models.ReqContext) response.Response {
-	s, err := f.getServiceByUID(ctx)
+	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -93,7 +93,7 @@ func (f *ForkedAlertmanagerApi) forkRouteGetAMAlertGroups(ctx *models.ReqContext
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteGetAMAlerts(ctx *models.ReqContext) response.Response {
-	s, err := f.getServiceByUID(ctx)
+	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -102,7 +102,7 @@ func (f *ForkedAlertmanagerApi) forkRouteGetAMAlerts(ctx *models.ReqContext) res
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteGetSilence(ctx *models.ReqContext) response.Response {
-	s, err := f.getServiceByUID(ctx)
+	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -111,7 +111,7 @@ func (f *ForkedAlertmanagerApi) forkRouteGetSilence(ctx *models.ReqContext) resp
 }
 
 func (f *ForkedAlertmanagerApi) forkRouteGetSilences(ctx *models.ReqContext) response.Response {
-	s, err := f.getServiceByUID(ctx)
+	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -120,7 +120,7 @@ func (f *ForkedAlertmanagerApi) forkRouteGetSilences(ctx *models.ReqContext) res
 }
 
 func (f *ForkedAlertmanagerApi) forkRoutePostAlertingConfig(ctx *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	s, err := f.getServiceByUID(ctx)
+	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -138,7 +138,7 @@ func (f *ForkedAlertmanagerApi) forkRoutePostAlertingConfig(ctx *models.ReqConte
 }
 
 func (f *ForkedAlertmanagerApi) forkRoutePostAMAlerts(ctx *models.ReqContext, body apimodels.PostableAlerts) response.Response {
-	s, err := f.getServiceByUID(ctx)
+	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
@@ -147,7 +147,7 @@ func (f *ForkedAlertmanagerApi) forkRoutePostAMAlerts(ctx *models.ReqContext, bo
 }
 
 func (f *ForkedAlertmanagerApi) forkRoutePostTestReceivers(ctx *models.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
-	s, err := f.getServiceByUID(ctx)
+	s, err := f.getService(ctx)
 	if err != nil {
 		return ErrResp(400, err, "")
 	}
