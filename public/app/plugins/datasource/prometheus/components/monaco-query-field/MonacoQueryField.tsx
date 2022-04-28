@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useKBar } from 'kbar';
 import { promLanguageDefinition } from 'monaco-promql';
 import React, { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
@@ -94,6 +95,8 @@ const MonacoQueryField = (props: Props) => {
 
   const theme = useTheme2();
   const styles = getStyles(theme);
+
+  const { query } = useKBar();
 
   useEffect(() => {
     // when we unmount, we unregister the autocomplete-function, if it was registered
@@ -198,6 +201,10 @@ const MonacoQueryField = (props: Props) => {
           // FIXME: maybe move this functionality into CodeEditor?
           editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
             onRunQueryRef.current(editor.getValue());
+          });
+
+          editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, function () {
+            query.toggle();
           });
         }}
       />
