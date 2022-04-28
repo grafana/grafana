@@ -98,15 +98,14 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
   };
 
   const getValidFilterOptions = (selectedFilter: string | undefined, dimension: string) => {
-    return [
-      ...(dimensionLabels[dimension] ?? []),
-      ...(selectedFilter && selectedFilter !== '*' ? [selectedFilter] : []),
-    ].map((item) => {
-      return {
-        value: item,
-        label: item,
-      };
-    });
+    const dimensionFilters = Array.from(dimensionLabels[dimension.toLowerCase()] ?? []);
+    if (dimensionFilters.find((filter) => filter === selectedFilter)) {
+      return dimensionFilters.map((filter) => ({ value: filter, label: filter }));
+    }
+    return [...dimensionFilters, ...(selectedFilter && selectedFilter !== '*' ? [selectedFilter] : [])].map((item) => ({
+      value: item,
+      label: item,
+    }));
   };
 
   const getValidOperators = (selectedOperator: string) => {
