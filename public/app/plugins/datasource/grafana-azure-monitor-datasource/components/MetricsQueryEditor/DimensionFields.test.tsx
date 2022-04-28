@@ -61,6 +61,13 @@ describe('Azure Monitor QueryEditor', () => {
     );
     const dimensionSelect = await screen.findByText('Field');
     await selectOptionInTest(dimensionSelect, 'Test Dimension 1');
+    expect(onQueryChange).toHaveBeenCalledWith({
+      ...mockQuery,
+      azureMonitor: {
+        ...mockQuery.azureMonitor,
+        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '*' }],
+      },
+    });
     expect(screen.queryByText('Test Dimension 1')).toBeInTheDocument();
     expect(screen.queryByText('==')).toBeInTheDocument();
   });
