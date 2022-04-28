@@ -134,5 +134,17 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 		}
 		config.Route.Provenance = provenance
 	}
+	cp := definitions.EmbeddedContactPoint{}
+	cpProvs, err := moa.ProvStore.GetProvenances(ctx, org, cp.ResourceType())
+	if err != nil {
+		return definitions.GettableApiAlertingConfig{}, err
+	}
+	for _, receiver := range config.Receivers {
+		for _, contactPoint := range receiver.GrafanaManagedReceivers {
+			if provenance, exists := cpProvs[contactPoint.UID]; exists {
+				contactPoint.Provenance = provenance
+			}
+		}
+	}
 	return config, nil
 }

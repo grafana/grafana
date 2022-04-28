@@ -12,6 +12,8 @@ import { ExploreDrawer } from '../ExploreDrawer';
 import {
   deleteRichHistory,
   initRichHistory,
+  loadRichHistory,
+  clearRichHistoryResults,
   updateHistorySettings,
   updateHistorySearchFilters,
 } from '../state/history';
@@ -40,6 +42,8 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
 
 const mapDispatchToProps = {
   initRichHistory,
+  loadRichHistory,
+  clearRichHistoryResults,
   updateHistorySettings,
   updateHistorySearchFilters,
   deleteRichHistory,
@@ -66,6 +70,8 @@ export function RichHistoryContainer(props: Props) {
     exploreId,
     deleteRichHistory,
     initRichHistory,
+    loadRichHistory,
+    clearRichHistoryResults,
     richHistorySettings,
     updateHistorySettings,
     richHistorySearchFilters,
@@ -74,10 +80,10 @@ export function RichHistoryContainer(props: Props) {
   } = props;
 
   useEffect(() => {
-    initRichHistory(exploreId);
-  }, [initRichHistory, exploreId]);
+    initRichHistory();
+  }, [initRichHistory]);
 
-  if (!richHistorySettings || !richHistorySearchFilters) {
+  if (!richHistorySettings) {
     return <span>Loading...</span>;
   }
 
@@ -100,6 +106,8 @@ export function RichHistoryContainer(props: Props) {
         richHistorySearchFilters={richHistorySearchFilters}
         updateHistorySettings={updateHistorySettings}
         updateHistorySearchFilters={updateHistorySearchFilters}
+        loadRichHistory={loadRichHistory}
+        clearRichHistoryResults={clearRichHistoryResults}
       />
     </ExploreDrawer>
   );
