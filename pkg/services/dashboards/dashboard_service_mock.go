@@ -9,10 +9,11 @@ import (
 type FakeDashboardService struct {
 	DashboardService
 
-	SaveDashboardResult *models.Dashboard
-	SaveDashboardError  error
-	SavedDashboards     []*SaveDashboardDTO
-	ProvisionedDashData *models.DashboardProvisioning
+	SaveDashboardResult              *models.Dashboard
+	SaveDashboardSharingConfigResult *models.DashboardSharingConfig
+	SaveDashboardError               error
+	SavedDashboards                  []*SaveDashboardDTO
+	ProvisionedDashData              *models.DashboardProvisioning
 }
 
 func (s *FakeDashboardService) SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error) {
@@ -23,6 +24,10 @@ func (s *FakeDashboardService) SaveDashboard(ctx context.Context, dto *SaveDashb
 	}
 
 	return s.SaveDashboardResult, s.SaveDashboardError
+}
+
+func (s *FakeDashboardService) SaveDashboardSharingConfig(ctx context.Context, dto *SaveDashboardSharingConfigDTO) (*models.DashboardSharingConfig, error) {
+	return s.SaveDashboardSharingConfigResult, s.SaveDashboardError
 }
 
 func (s *FakeDashboardService) ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error) {
