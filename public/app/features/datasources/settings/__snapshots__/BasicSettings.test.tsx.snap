@@ -18,6 +18,7 @@ exports[`Render should render component 1`] = `
               'preselected in new panels."
       >
         <Input
+          aria-label="Data source settings page name input field"
           id="basic-settings-name"
           onChange={[Function]}
           placeholder="Name"

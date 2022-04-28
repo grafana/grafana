@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineSwitch, Input } from '@grafana/ui';
 
 export interface Props {
@@ -27,6 +28,7 @@ const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, 
               placeholder="Name"
               onChange={(event) => onNameChange(event.currentTarget.value)}
               required
+              aria-label={selectors.pages.DataSource.name}
             />
           </InlineField>
         </div>
