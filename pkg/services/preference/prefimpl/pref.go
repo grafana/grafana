@@ -80,7 +80,6 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 		UserID: cmd.UserID,
 		TeamID: cmd.TeamID,
 	})
-
 	if err != nil {
 		if errors.Is(err, pref.ErrPrefNotFound) {
 			preference := &pref.Preference{

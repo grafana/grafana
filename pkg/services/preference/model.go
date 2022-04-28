@@ -43,7 +43,7 @@ type SavePreferenceCommand struct {
 	TeamID int64
 
 	HomeDashboardID  int64                   `json:"homeDashboardId,omitempty"`
-	HomeDashboardUID *string                 `json:"homeDashboardUid,omitempty"`
+	HomeDashboardUID *string                 `json:"homeDashboardUID,omitempty"`
 	Timezone         string                  `json:"timezone,omitempty"`
 	WeekStart        string                  `json:"weekStart,omitempty"`
 	Theme            string                  `json:"theme,omitempty"`
@@ -57,7 +57,7 @@ type PatchPreferenceCommand struct {
 	TeamID int64
 
 	HomeDashboardID  *int64                  `json:"homeDashboardId,omitempty"`
-	HomeDashboardUID *string                 `json:"homeDashboardUid,omitempty"`
+	HomeDashboardUID *string                 `json:"homeDashboardUID,omitempty"`
 	Timezone         *string                 `json:"timezone,omitempty"`
 	WeekStart        *string                 `json:"weekStart,omitempty"`
 	Theme            *string                 `json:"theme,omitempty"`

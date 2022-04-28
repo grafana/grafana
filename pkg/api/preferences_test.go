@@ -1,13 +1,17 @@
 package api
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,15 +22,23 @@ var (
 	patchOrgPreferencesUrl  = "/api/org/preferences/"
 	patchUserPreferencesUrl = "/api/user/preferences/"
 
-	testUpdateOrgPreferencesCmd    = `{ "theme": "light", "homeDashboardId": 1 }`
-	testPatchOrgPreferencesCmd     = `{"navbar":{"savedItems":[{"id":"snapshots","text":"Snapshots","icon":"camera","url":"/dashboard/snapshots"}]}}`
-	testPatchOrgPreferencesCmdBad  = `this is not json`
-	testPatchUserPreferencesCmd    = `{"navbar":{"savedItems":[{"id":"snapshots","text":"Snapshots","icon":"camera","url":"/dashboard/snapshots"}]}}`
-	testPatchUserPreferencesCmdBad = `this is not json`
+	testUpdateOrgPreferencesCmd                     = `{ "theme": "light", "homeDashboardId": 1 }`
+	testPatchOrgPreferencesCmd                      = `{"navbar":{"savedItems":[{"id":"snapshots","text":"Snapshots","icon":"camera","url":"/dashboard/snapshots"}]}}`
+	testPatchOrgPreferencesCmdBad                   = `this is not json`
+	testPatchUserPreferencesCmd                     = `{"navbar":{"savedItems":[{"id":"snapshots","text":"Snapshots","icon":"camera","url":"/dashboard/snapshots"}]}}`
+	testPatchUserPreferencesCmdBad                  = `this is not json`
+	testUpdateOrgPreferencesWithHomeDashboardUIDCmd = `{ "theme": "light", "homeDashboardUID": "home"}`
 )
 
 func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true, false)
+	sqlstore := mockstore.NewSQLStoreMock()
+	sqlstore.ExpectedDashboard = &models.Dashboard{
+		Uid: "home",
+		Id:  1,
+	}
+	sc.hs.SQLStore = sqlstore
+
 	prefService := preftest.NewPreferenceServiceFake()
 	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
 	sc.hs.preferenceService = prefService
@@ -44,12 +56,24 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 	t.Run("Org Admin can get org preferences", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodGet, getOrgPreferencesURL, nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
+		var resp map[string]interface{}
+		b, err := ioutil.ReadAll(response.Body)
+		assert.NoError(t, err)
+		assert.NoError(t, json.Unmarshal(b, &resp))
+		assert.Equal(t, "home", resp["homeDashboardUID"])
 	})
 }
 
 func TestAPIEndpoint_GetCurrentOrgPreferences_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true, true)
 	setInitCtxSignedInViewer(sc.initCtx)
+
+	sqlstore := mockstore.NewSQLStoreMock()
+	sqlstore.ExpectedDashboard = &models.Dashboard{
+		Uid: "home",
+		Id:  1,
+	}
+	sc.hs.SQLStore = sqlstore
 
 	prefService := preftest.NewPreferenceServiceFake()
 	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
@@ -142,6 +166,17 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 	t.Run("Returns 400 with bad data", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodPut, patchUserPreferencesUrl, input, t)
 		assert.Equal(t, http.StatusBadRequest, response.Code)
+	})
+	input = strings.NewReader(testUpdateOrgPreferencesWithHomeDashboardUIDCmd)
+	sqlstore := mockstore.NewSQLStoreMock()
+	sqlstore.ExpectedDashboard = &models.Dashboard{
+		Uid: "home",
+		Id:  1,
+	}
+	sc.hs.SQLStore = sqlstore
+	t.Run("Returns 200 on success", func(t *testing.T) {
+		response := callAPI(sc.server, http.MethodPatch, patchUserPreferencesUrl, input, t)
+		assert.Equal(t, http.StatusOK, response.Code)
 	})
 }
 

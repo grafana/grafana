@@ -6,12 +6,13 @@ import (
 )
 
 type Prefs struct {
-	Theme           string                      `json:"theme"`
-	HomeDashboardID int64                       `json:"homeDashboardId"`
-	Timezone        string                      `json:"timezone"`
-	WeekStart       string                      `json:"weekStart"`
-	Navbar          pref.NavbarPreference       `json:"navbar,omitempty"`
-	QueryHistory    pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
+	Theme            string                      `json:"theme"`
+	HomeDashboardID  int64                       `json:"homeDashboardId"`
+	HomeDashboardUID string                      `json:"homeDashboardUID,omitempty"`
+	Timezone         string                      `json:"timezone"`
+	WeekStart        string                      `json:"weekStart"`
+	Navbar           pref.NavbarPreference       `json:"navbar,omitempty"`
+	QueryHistory     pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 }
 
 // swagger:model
@@ -41,5 +42,5 @@ type PatchPrefsCmd struct {
 	WeekStart        *string                      `json:"weekStart,omitempty"`
 	Navbar           *pref.NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory     *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
-	HomeDashboardUID *string                      `json:"homeDashboardUid,omitempty"`
+	HomeDashboardUID *string                      `json:"homeDashboardUID,omitempty"`
 }

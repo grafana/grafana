@@ -480,12 +480,3 @@ type GetDashboardRefByIdQuery struct {
 	Id     int64
 	Result *DashboardRef
 }
-
-type GetDashboardRefByUIdQuery struct {
-	UID    string `xorm:"uid"`
-	Result *DashboardRefWithID
-}
-
-type DashboardRefWithID struct {
-	Id int64
-}
