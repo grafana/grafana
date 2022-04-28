@@ -1,5 +1,5 @@
 import { Form } from 'react-final-form';
-import { Button, Spinner, useTheme } from '@grafana/ui';
+import { Button, Spinner, useStyles2 } from '@grafana/ui';
 import React, { FC, useState } from 'react';
 import { TextInputField } from '@percona/platform-core';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
@@ -14,8 +14,7 @@ export interface SlackProps {
 }
 
 export const Slack: FC<SlackProps> = ({ updateSettings, settings }) => {
-  const theme = useTheme();
-  const settingsStyles = getSettingsStyles(theme);
+  const settingsStyles = useStyles2(getSettingsStyles);
   const [loading, setLoading] = useState(false);
 
   const applyChanges = (values: SlackSettings) => {

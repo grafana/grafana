@@ -148,15 +148,6 @@ export interface MetricsResolutions {
   lr: string;
 }
 
-export enum TabKeys {
-  metrics = 'metrics-resolution',
-  advanced = 'advanced-settings',
-  ssh = 'ssh-key',
-  alertManager = 'am-integration',
-  perconaPlatform = 'percona-platform',
-  communication = 'communication',
-}
-
 export enum EmailAuthType {
   NONE = 'NONE',
   PLAIN = 'PLAIN',

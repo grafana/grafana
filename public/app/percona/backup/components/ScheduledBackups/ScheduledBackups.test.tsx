@@ -1,17 +1,27 @@
 import React from 'react';
-import { Table } from 'app/percona/integrated-alerting/components/Table';
-import { stubs } from './__mocks__/ScheduledBackups.service';
+import { render, screen } from '@testing-library/react';
+import { StoreState } from 'app/types';
+import { configureStore } from 'app/store/configureStore';
+import { Provider } from 'react-redux';
 import { ScheduledBackups } from './ScheduledBackups';
-import { render, waitFor } from '@testing-library/react';
 
 jest.mock('./ScheduledBackups.service');
-jest.mock('app/percona/integrated-alerting/components/Table', () => ({
-  Table: jest.fn(({ children }) => <div data-testid="table">{children}</div>),
-}));
 
 describe('ScheduledBackups', () => {
   it('should send correct data to Table', async () => {
-    await waitFor(() => render(<ScheduledBackups />));
-    expect(Table).toHaveBeenCalledWith(expect.objectContaining({ data: stubs }), expect.anything());
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true, isPlatformUser: false },
+            settings: { result: { backupEnabled: true, isConnectedToPortal: false } },
+          },
+        } as StoreState)}
+      >
+        <ScheduledBackups />
+      </Provider>
+    );
+    await screen.findByText('Backup 1');
+    expect(screen.getByText('Location 1')).toBeTruthy();
   });
 });

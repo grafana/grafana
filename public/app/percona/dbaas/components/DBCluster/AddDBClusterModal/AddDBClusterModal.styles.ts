@@ -4,8 +4,6 @@ import { GrafanaTheme } from '@grafana/data';
 export const getStyles = ({ spacing, typography, colors, palette }: GrafanaTheme) => ({
   modalWrapper: css`
     div[data-testid='modal-body'] {
-      left: 21%;
-      top: 4%;
       width: 60%;
       max-width: none;
     }

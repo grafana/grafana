@@ -171,10 +171,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	}
 
 	dashboardChildLinks := hs.buildDashboardNavLinks(c, hasEditPerm)
-	inventoryChildNavs := []*dtos.NavLink{
-		{Text: "Inventory list", Id: "inventory", Url: setting.AppSubUrl + "/inventory", Icon: "percona-inventory", HideFromTabs: true},
-		{Text: "Add instance", Id: "add-instance", Url: setting.AppSubUrl + "/add-instance", Icon: "percona-add", HideFromTabs: true},
-	}
 
 	nodeSummaryChildNavs := []*dtos.NavLink{
 		{Text: "CPU Utilization", Id: "cpu-utilization", Url: setting.AppSubUrl + "/d/node-cpu/cpu-utilization-details", Icon: "percona-cpu", HideFromTabs: true},
@@ -384,29 +380,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	navTree = append(navTree, appLinks...)
 
 	configNodes := []*dtos.NavLink{}
-
-	if c.OrgRole == models.ROLE_ADMIN || c.IsGrafanaAdmin {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:         "PMM Inventory",
-			Icon:         "percona-inventory",
-			Id:           "pmm-inventory",
-			Url:          setting.AppSubUrl + "/inventory",
-			HideFromTabs: true,
-			Children:     inventoryChildNavs,
-		})
-
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:         "Settings",
-			Icon:         "percona-setting",
-			Id:           "pmm-settings",
-			Url:          setting.AppSubUrl + "/settings",
-			HideFromTabs: true,
-		})
-
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
-		})
-	}
 
 	if hasAccess(ac.ReqOrgAdmin, dataSourcesConfigurationAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{

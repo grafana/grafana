@@ -1,7 +1,12 @@
 /* eslint-disable react/display-name */
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC, useState, useEffect, useCallback } from 'react';
 import { Column, Row } from 'react-table';
 import { logger } from '@percona/platform-core';
+import Page from 'app/core/components/Page/Page';
+import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
+import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
+import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
+import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { Button, useStyles } from '@grafana/ui';
 import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
@@ -25,6 +30,7 @@ export const StorageLocations: FC = () => {
   const [selectedLocation, setSelectedLocation] = useState<StorageLocation | null>(null);
   const [data, setData] = useState<StorageLocation[]>([]);
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const navModel = usePerconaNavModel('storage-locations');
   const styles = useStyles(getStyles);
   const columns = React.useMemo(
     (): Array<Column<StorageLocation>> => [
@@ -134,49 +140,59 @@ export const StorageLocations: FC = () => {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const featureSelector = useCallback(getPerconaSettingFlag('backupEnabled'), []);
+
   useEffect(() => {
     getData();
   }, []);
 
   return (
-    <>
-      <div className={styles.addWrapper}>
-        <Button
-          size="md"
-          icon="plus-square"
-          variant="link"
-          data-testid="storage-location-add-modal-button"
-          onClick={() => {
-            setSelectedLocation(null);
-            setAddModalVisible(true);
-          }}
-        >
-          {Messages.add}
-        </Button>
-      </div>
-      <Table
-        data={data}
-        totalItems={data.length}
-        columns={columns}
-        emptyMessage={Messages.storageLocations.table.noData}
-        pendingRequest={pending}
-        renderExpandedRow={renderSelectedSubRow}
-      ></Table>
-      <AddStorageLocationModal
-        location={selectedLocation}
-        isVisible={addModalVisible}
-        waitingLocationValidation={validatingLocation}
-        onClose={() => setAddModalVisible(false)}
-        onAdd={onAdd}
-        onTest={handleTest}
-      ></AddStorageLocationModal>
-      <RemoveStorageLocationModal
-        location={selectedLocation}
-        isVisible={deleteModalVisible}
-        setVisible={setDeleteModalVisible}
-        loading={deletePending}
-        onDelete={handleDelete}
-      />
-    </>
+    <Page navModel={navModel}>
+      <Page.Contents>
+        <TechnicalPreview />
+        <FeatureLoader featureName={Messages.backupManagement} featureSelector={featureSelector}>
+          <div className={styles.addWrapper}>
+            <Button
+              size="md"
+              icon="plus-square"
+              variant="link"
+              data-testid="storage-location-add-modal-button"
+              onClick={() => {
+                setSelectedLocation(null);
+                setAddModalVisible(true);
+              }}
+            >
+              {Messages.add}
+            </Button>
+          </div>
+          <Table
+            data={data}
+            totalItems={data.length}
+            columns={columns}
+            emptyMessage={Messages.storageLocations.table.noData}
+            pendingRequest={pending}
+            renderExpandedRow={renderSelectedSubRow}
+          ></Table>
+          <AddStorageLocationModal
+            location={selectedLocation}
+            isVisible={addModalVisible}
+            waitingLocationValidation={validatingLocation}
+            onClose={() => setAddModalVisible(false)}
+            onAdd={onAdd}
+            onTest={handleTest}
+          ></AddStorageLocationModal>
+          <RemoveStorageLocationModal
+            location={selectedLocation}
+            isVisible={deleteModalVisible}
+            setVisible={setDeleteModalVisible}
+            loading={deletePending}
+            onDelete={handleDelete}
+          />
+        </FeatureLoader>
+      </Page.Contents>
+    </Page>
   );
 };
+
+export default StorageLocations;

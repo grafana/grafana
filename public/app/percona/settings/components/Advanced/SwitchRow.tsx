@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Switch, useTheme } from '@grafana/ui';
+import { Switch, useStyles2 } from '@grafana/ui';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import { SwitchRowProps } from './SwitchRow.types';
@@ -15,9 +15,8 @@ export const SwitchRow: FC<SwitchRowProps> = ({
   dataTestId,
   input,
 }) => {
-  const theme = useTheme();
-  const settingsStyles = getSettingsStyles(theme);
-  const styles = getStyles(theme);
+  const settingsStyles = useStyles2(getSettingsStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.advancedRow} data-testid={dataTestId}>

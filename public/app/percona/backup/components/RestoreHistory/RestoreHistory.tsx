@@ -1,7 +1,12 @@
 /* eslint-disable react/display-name */
-import React, { FC, useState, useMemo, useEffect } from 'react';
+import React, { FC, useState, useMemo, useEffect, useCallback } from 'react';
 import { Column, Row } from 'react-table';
 import { logger } from '@percona/platform-core';
+import Page from 'app/core/components/Page/Page';
+import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
+import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
+import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
+import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { DATABASE_LABELS } from 'app/percona/shared/core';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
@@ -19,6 +24,7 @@ import { DATA_INTERVAL, LIST_RESTORES_CANCEL_TOKEN } from './RestoreHistory.cons
 export const RestoreHistory: FC = () => {
   const [pending, setPending] = useState(true);
   const [data, setData] = useState<Restore[]>([]);
+  const navModel = usePerconaNavModel('restore-history');
   const [generateToken] = useCancelToken();
   const [triggerTimeout] = useRecurringCall();
   const columns = useMemo(
@@ -64,6 +70,9 @@ export const RestoreHistory: FC = () => {
     []
   );
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const featureSelector = useCallback(getPerconaSettingFlag('backupEnabled'), []);
+
   useEffect(() => {
     const getData = async (showLoading = false) => {
       showLoading && setPending(true);
@@ -85,13 +94,22 @@ export const RestoreHistory: FC = () => {
   }, []);
 
   return (
-    <Table
-      columns={columns}
-      data={data}
-      totalItems={data.length}
-      emptyMessage={Messages.restoreHistory.table.noData}
-      pendingRequest={pending}
-      renderExpandedRow={renderSelectedSubRow}
-    />
+    <Page navModel={navModel}>
+      <Page.Contents>
+        <TechnicalPreview />
+        <FeatureLoader featureName={Messages.backupManagement} featureSelector={featureSelector}>
+          <Table
+            columns={columns}
+            data={data}
+            totalItems={data.length}
+            emptyMessage={Messages.restoreHistory.table.noData}
+            pendingRequest={pending}
+            renderExpandedRow={renderSelectedSubRow}
+          />
+        </FeatureLoader>
+      </Page.Contents>
+    </Page>
   );
 };
+
+export default RestoreHistory;

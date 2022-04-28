@@ -83,12 +83,6 @@ export interface ChangeCheckBody {
   }>;
 }
 
-export enum TabKeys {
-  allChecks = 'all-checks',
-  failedChecks = 'failed-checks',
-  rootChecks = 'root-checks',
-}
-
 export interface AlertsReload {
   fetchAlerts: () => Promise<void>;
 }

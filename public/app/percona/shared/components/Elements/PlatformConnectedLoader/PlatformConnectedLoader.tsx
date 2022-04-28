@@ -5,8 +5,9 @@ import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/sele
 import { EmptyBlock } from '../EmptyBlock';
 
 export const PlatformConnectedLoader: FC = ({ children }) => {
-  const { isConnectedToPortal } = useSelector(getPerconaSettings);
   const { isPlatformUser, isAuthorized } = useSelector(getPerconaUser);
+  const { result } = useSelector(getPerconaSettings);
+  const { isConnectedToPortal } = result!;
 
   if (isPlatformUser) {
     return <>{children}</>;

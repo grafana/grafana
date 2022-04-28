@@ -14,21 +14,15 @@ export const SettingsService = {
     const { settings }: SettingsAPIResponse = await api.post('/v1/Settings/Get', {}, disableNotifications, token);
     return toModel(settings);
   },
-  async setSettings(
-    body: SettingsAPIChangePayload,
-    setLoading: LoadingCallback,
-    token?: CancelToken
-  ): Promise<Settings | undefined> {
+  async setSettings(body: SettingsAPIChangePayload, token?: CancelToken): Promise<Settings | undefined> {
     let response;
     try {
-      setLoading(true);
       const { settings }: SettingsAPIResponse = await api.post<any, any>('/v1/Settings/Change', body, false, token);
       response = toModel(settings);
       appEvents.emit(AppEvents.alertSuccess, [Messages.service.success]);
     } catch (e) {
       logger.error(e);
     } finally {
-      setLoading(false);
     }
 
     return response;

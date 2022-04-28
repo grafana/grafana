@@ -8,4 +8,5 @@ export interface SelectInstanceProps {
 
 export interface AddInstanceProps {
   onSelectInstanceType: (arg: InstanceAvailable) => void;
+  showAzure: boolean;
 }

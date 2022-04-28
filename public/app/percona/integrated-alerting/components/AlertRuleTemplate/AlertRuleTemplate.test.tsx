@@ -1,8 +1,10 @@
 import React from 'react';
+import { Provider } from 'react-redux';
+import { StoreState } from 'app/types';
+import { configureStore } from 'app/store/configureStore';
 import { AlertRuleTemplate } from './AlertRuleTemplate';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import { AlertRuleTemplateService } from './AlertRuleTemplate.service';
-import { Overlay } from '../../../shared/components/Elements/Overlay/Overlay';
 
 jest.mock('./AlertRuleTemplate.service');
 jest.mock('@percona/platform-core', () => {
@@ -14,9 +16,6 @@ jest.mock('@percona/platform-core', () => {
     },
   };
 });
-jest.mock('../../../shared/components/Elements/Overlay/Overlay', () => ({
-  Overlay: jest.fn(({ children }) => <div>{children}</div>),
-}));
 
 describe('AlertRuleTemplate', () => {
   afterEach(() => {
@@ -24,7 +23,20 @@ describe('AlertRuleTemplate', () => {
   });
 
   it('should render add modal', async () => {
-    await waitFor(() => render(<AlertRuleTemplate />));
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, alertingEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <AlertRuleTemplate />
+      </Provider>
+    );
+
+    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
 
     expect(screen.queryByTestId('modal-wrapper')).not.toBeInTheDocument();
     const button = screen.getByTestId('alert-rule-template-add-modal-button');
@@ -33,7 +45,20 @@ describe('AlertRuleTemplate', () => {
   });
 
   it('should render table content', async () => {
-    await waitFor(() => render(<AlertRuleTemplate />));
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, alertingEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <AlertRuleTemplate />
+      </Provider>
+    );
+
+    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
 
     expect(screen.getByTestId('table-thead').querySelectorAll('tr')).toHaveLength(1);
     expect(screen.getByTestId('table-tbody').querySelectorAll('tr')).toHaveLength(5);
@@ -45,19 +70,21 @@ describe('AlertRuleTemplate', () => {
       throw Error('test error');
     });
 
-    render(<AlertRuleTemplate />);
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, alertingEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <AlertRuleTemplate />
+      </Provider>
+    );
 
     expect(screen.queryByTestId('table-thead')).not.toBeInTheDocument();
     expect(screen.queryByTestId('table-tbody')).not.toBeInTheDocument();
-    expect(screen.getByTestId('table-no-data')).toBeInTheDocument();
-  });
-
-  it('should have table initially loading', async () => {
-    render(<AlertRuleTemplate />);
-
-    expect(Overlay).toHaveBeenNthCalledWith(1, expect.objectContaining({ isPending: true }), expect.anything());
-
-    expect(Overlay).toHaveBeenNthCalledWith(2, expect.objectContaining({ isPending: false }), expect.anything());
     expect(screen.getByTestId('table-no-data')).toBeInTheDocument();
   });
 });

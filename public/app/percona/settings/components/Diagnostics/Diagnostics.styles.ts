@@ -1,24 +1,20 @@
-import { stylesFactory } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 
-export const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+export const getStyles = ({ v1: { spacing } }: GrafanaTheme2) => ({
   diagnosticsWrapper: css`
-    align-items: flex-end;
-    display: flex;
     flex: 1;
-    flex-direction: column;
   `,
   diagnosticsLabel: css`
     display: flex;
     i {
-      margin-left: ${theme.spacing.xs};
+      margin-left: ${spacing.xs};
     }
   `,
   diagnosticsButton: css`
-    margin-top: ${theme.spacing.md};
+    margin-top: ${spacing.md};
     svg {
-      margin-right: ${theme.spacing.sm};
+      margin-right: ${spacing.sm};
     }
   `,
-}));
+});

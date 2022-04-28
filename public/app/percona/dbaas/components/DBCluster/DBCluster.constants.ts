@@ -30,3 +30,5 @@ export const DATABASE_OPERATORS: Partial<DatabaseOperatorsMap> = {
   [Operators.pxc]: Databases.mysql,
   [Operators.psmdb]: Databases.mongodb,
 };
+
+export const GET_CLUSTERS_CANCEL_TOKEN = 'getClusters';

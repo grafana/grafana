@@ -1,6 +1,4 @@
-import { PageModel } from 'app/core/components/Breadcrumb';
 import { servicesDetailsRender, agentsDetailsRender, nodesDetailsRender } from './ColumnRenderers';
-import { TabKeys } from './Inventory.types';
 
 export const MAIN_COLUMN = ['service_id', 'type', 'service_name', 'custom_labels', 'node_id', 'address', 'port'];
 
@@ -99,31 +97,6 @@ export const inventoryTypes = {
   rds_exporter: 'RDS exporter',
   remote_rds: 'Remote Amazon RDS',
   remote: 'Remote',
-};
-
-export const PAGE_TABS = [
-  {
-    title: 'Services',
-    id: TabKeys.services,
-    path: `inventory/services`,
-  },
-  {
-    title: 'Agents',
-    id: TabKeys.agents,
-    path: `inventory/agents`,
-  },
-  {
-    title: 'Nodes',
-    id: TabKeys.nodes,
-    path: `inventory/nodes`,
-  },
-];
-
-export const PAGE_MODEL: PageModel = {
-  title: 'Inventory',
-  path: 'inventory',
-  id: 'inventory',
-  children: PAGE_TABS.map(({ title, id, path }) => ({ title, id, path })),
 };
 
 export const GET_SERVICES_CANCEL_TOKEN = 'getServices';

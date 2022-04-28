@@ -1,8 +1,7 @@
-import { stylesFactory } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 
-export const getStyles = stylesFactory(({ breakpoints, spacing, typography, border, colors }: GrafanaTheme) => {
+export const getStyles = ({ v1: { breakpoints, spacing, typography, border, colors } }: GrafanaTheme2) => {
   const mq = `@media (max-width: ${breakpoints.md})`;
 
   return {
@@ -15,6 +14,7 @@ export const getStyles = stylesFactory(({ breakpoints, spacing, typography, bord
       display: flex;
       align-items: baseline;
       padding-bottom: ${spacing.md};
+      flex-wrap: wrap;
     `,
     advancedCol: css`
       align-items: center;
@@ -48,6 +48,7 @@ export const getStyles = stylesFactory(({ breakpoints, spacing, typography, bord
     `,
     publicAddressWrapper: css`
       display: flex;
+      flex-wrap: wrap;
       div {
         margin-bottom: 0 !important;
       }
@@ -56,7 +57,7 @@ export const getStyles = stylesFactory(({ breakpoints, spacing, typography, bord
       }
     `,
     publicAddressInput: css`
-      width: 200px;
+      min-width: 150px;
       ${mq} {
         width: 100px;
       }
@@ -79,7 +80,6 @@ export const getStyles = stylesFactory(({ breakpoints, spacing, typography, bord
       border: ${border.width.sm} solid ${colors.pageHeaderBorder};
       padding: ${spacing.md};
       border-radius: ${border.radius.sm};
-      width: 950px;
 
       ${mq} {
         width: 100%;
@@ -113,4 +113,4 @@ export const getStyles = stylesFactory(({ breakpoints, spacing, typography, bord
       fill: ${colors.linkExternal};
     `,
   };
-});
+};

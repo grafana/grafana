@@ -2,6 +2,11 @@
 import React, { FC, useMemo, useState, useEffect, useCallback } from 'react';
 import { Button, useStyles } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
+import Page from 'app/core/components/Page/Page';
+import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
+import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
+import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
+import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { NotificationChannelService } from './NotificationChannel.service';
@@ -9,6 +14,7 @@ import { Table } from '../Table/Table';
 import { useStoredTablePageSize } from '../Table/Pagination';
 import { NotificationChannel as Channel } from './NotificationChannel.types';
 import { Messages } from './NotificationChannel.messages';
+import { Messages as IAMessages } from '../../IntegratedAlerting.messages';
 import { NotificationChannelProvider } from './NotificationChannel.provider';
 import { GET_CHANNELS_CANCEL_TOKEN, NOTIFICATION_CHANNEL_TABLE_ID } from './NotificationChannel.constants';
 import { getStyles } from './NotificationChannel.styles';
@@ -23,6 +29,7 @@ export const NotificationChannel: FC = () => {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(true);
+  const navModel = usePerconaNavModel('integrated-alerting-notification-channels');
   const [data, setData] = useState<Channel[]>([]);
   const [pageSize, setPageSize] = useStoredTablePageSize(NOTIFICATION_CHANNEL_TABLE_ID);
   const [pageIndex, setPageindex] = useState(0);
@@ -86,53 +93,70 @@ export const NotificationChannel: FC = () => {
     [setPageSize, setPageindex]
   );
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const featureSelector = useCallback(getPerconaSettingFlag('alertingEnabled'), []);
+
   useEffect(() => {
     getNotificationChannels();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageSize, pageIndex]);
 
   return (
-    <NotificationChannelProvider.Provider
-      value={{ getNotificationChannels, setSelectedNotificationChannel, setAddModalVisible, setDeleteModalVisible }}
-    >
-      <div className={styles.actionsWrapper}>
-        <Button
-          size="md"
-          icon="plus-square"
-          variant="link"
-          onClick={() => {
-            setSelectedNotificationChannel(null);
-            setAddModalVisible(!addModalVisible);
-          }}
-          data-testid="notification-channel-add-modal-button"
-        >
-          {Messages.addAction}
-        </Button>
-      </div>
-      <Table
-        showPagination
-        totalItems={totalItems}
-        totalPages={totalPages}
-        pageSize={pageSize}
-        pageIndex={pageIndex}
-        onPaginationChanged={handlePaginationChanged}
-        data={data}
-        columns={columns}
-        pendingRequest={pendingRequest}
-        emptyMessage={emptyTable}
-      />
-      <AddNotificationChannelModal
-        isVisible={addModalVisible}
-        setVisible={setAddModalVisible}
-        notificationChannel={selectedNotificationChannel}
-      />
-      <DeleteNotificationChannelModal
-        isVisible={deleteModalVisible}
-        setVisible={setDeleteModalVisible}
-        notificationChannel={selectedNotificationChannel as Channel}
-      />
-    </NotificationChannelProvider.Provider>
+    <Page navModel={navModel}>
+      <Page.Contents>
+        <TechnicalPreview />
+        <FeatureLoader featureName={IAMessages.integratedAlerting} featureSelector={featureSelector}>
+          <NotificationChannelProvider.Provider
+            value={{
+              getNotificationChannels,
+              setSelectedNotificationChannel,
+              setAddModalVisible,
+              setDeleteModalVisible,
+            }}
+          >
+            <div className={styles.actionsWrapper}>
+              <Button
+                size="md"
+                icon="plus-square"
+                variant="link"
+                onClick={() => {
+                  setSelectedNotificationChannel(null);
+                  setAddModalVisible(!addModalVisible);
+                }}
+                data-testid="notification-channel-add-modal-button"
+              >
+                {Messages.addAction}
+              </Button>
+            </div>
+            <Table
+              showPagination
+              totalItems={totalItems}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              pageIndex={pageIndex}
+              onPaginationChanged={handlePaginationChanged}
+              data={data}
+              columns={columns}
+              pendingRequest={pendingRequest}
+              emptyMessage={emptyTable}
+            />
+            <AddNotificationChannelModal
+              isVisible={addModalVisible}
+              setVisible={setAddModalVisible}
+              notificationChannel={selectedNotificationChannel}
+            />
+            <DeleteNotificationChannelModal
+              isVisible={deleteModalVisible}
+              setVisible={setDeleteModalVisible}
+              notificationChannel={selectedNotificationChannel as Channel}
+            />
+          </NotificationChannelProvider.Provider>
+        </FeatureLoader>
+      </Page.Contents>
+    </Page>
   );
 };
 
 NotificationChannel.displayName = 'NotificationChannel';
+
+export default NotificationChannel;

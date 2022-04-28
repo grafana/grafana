@@ -2,9 +2,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 
 export const getStyles = ({ v1: { spacing, palette } }: GrafanaTheme2) => ({
-  pageWrapper: css`
-    margin-bottom: ${spacing.md};
-  `,
   rowProps: css`
     cursor: pointer;
     &:hover {

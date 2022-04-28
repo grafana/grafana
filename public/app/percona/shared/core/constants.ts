@@ -32,6 +32,7 @@ export const OPERATOR_FULL_LABELS = {
   [Databases.haproxy]: '',
 };
 
+export const PERCONA_CANCELLED_ERROR_NAME = 'percona-cancelled-request';
 export const PRIMARY_LABELS = [
   'node_name',
   'type',

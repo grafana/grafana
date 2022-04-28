@@ -46,6 +46,7 @@ export interface NavModel {
    *  Describes breadcrumbs that are used in places such as data source settings., folder page and plugins page.
    */
   breadcrumbs?: NavModelItem[];
+  pageTitle?: string;
 }
 
 export interface NavModelBreadcrumb {

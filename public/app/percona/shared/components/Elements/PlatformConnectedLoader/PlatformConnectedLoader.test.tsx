@@ -10,8 +10,10 @@ describe('PlatformConnectedLoader', () => {
     render(
       <Provider
         store={configureStore({
-          perconaSettings: { isLoading: false, isConnectedToPortal: true },
-          perconaUser: { isAuthorized: true, isPlatformUser: false },
+          percona: {
+            user: { isAuthorized: true, isPlatformUser: false },
+            settings: { loading: false, result: { isConnectedToPortal: true } },
+          },
         } as StoreState)}
       >
         <PlatformConnectedLoader></PlatformConnectedLoader>
@@ -24,8 +26,10 @@ describe('PlatformConnectedLoader', () => {
     render(
       <Provider
         store={configureStore({
-          perconaSettings: { isLoading: false, isConnectedToPortal: false },
-          perconaUser: { isAuthorized: false, isPlatformUser: false },
+          percona: {
+            user: { isAuthorized: false, isPlatformUser: false },
+            settings: { loading: false, result: { isConnectedToPortal: false } },
+          },
         } as StoreState)}
       >
         <PlatformConnectedLoader></PlatformConnectedLoader>
@@ -38,8 +42,10 @@ describe('PlatformConnectedLoader', () => {
     render(
       <Provider
         store={configureStore({
-          perconaSettings: { isLoading: false, isConnectedToPortal: false },
-          perconaUser: { isAuthorized: true, isPlatformUser: false },
+          percona: {
+            user: { isAuthorized: true, isPlatformUser: false },
+            settings: { loading: false, result: { isConnectedToPortal: false } },
+          },
         } as StoreState)}
       >
         <PlatformConnectedLoader></PlatformConnectedLoader>
@@ -52,8 +58,10 @@ describe('PlatformConnectedLoader', () => {
     render(
       <Provider
         store={configureStore({
-          perconaSettings: { isLoading: false, isConnectedToPortal: false },
-          perconaUser: { isAuthorized: true, isPlatformUser: true },
+          percona: {
+            user: { isAuthorized: true, isPlatformUser: true },
+            settings: { loading: false, result: { isConnectedToPortal: false } },
+          },
         } as StoreState)}
       >
         <PlatformConnectedLoader>

@@ -1,7 +1,3 @@
-export interface PlatformProps {
-  isConnected?: boolean;
-}
-
 export interface ConnectRenderProps {
   pmmServerName: string;
   pmmServerId: string;

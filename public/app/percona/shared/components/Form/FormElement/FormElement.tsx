@@ -6,7 +6,6 @@ const style = {
     padding-bottom: 5px;
   `,
   formElementWrapper: css`
-    width: 600px;
     margin-bottom: 20px;
   `,
   fieldLabelColumn: css`

@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
@@ -9,8 +9,10 @@ import { locationService } from '@grafana/runtime';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
 import { KioskMode } from 'app/types';
+import { updateNavIndex } from 'app/core/actions';
 import {
   buildIntegratedAlertingMenuItem,
+  buildInventoryAndSettings,
   enrichConfigItems,
   getActiveItem,
   isMatchOrChildMatch,
@@ -22,8 +24,18 @@ import NavBarItem from './NavBarItem';
 import { NavBarSection } from './NavBarSection';
 import { NavBarMenu } from './NavBarMenu';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
-import { isPmmAdmin } from 'app/percona/shared/helpers/permissions';
 import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/selectors';
+import {
+  PMM_STT_PAGE,
+  PMM_BACKUP_PAGE,
+  PMM_DBAAS_PAGE,
+  PMM_ALERTING_PAGE,
+  PMM_INVENTORY_PAGE,
+  PMM_TICKETS_PAGE,
+  PMM_ENTITLEMENTS_PAGE,
+  getPmmSettingsPage,
+  PMM_ADD_INSTANCE_PAGE,
+} from './constants';
 
 const homeUrl = config.appSubUrl || '/';
 
@@ -42,8 +54,11 @@ export const NavBar: FC = React.memo(() => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
-  const { sttEnabled, alertingEnabled, dbaasEnabled, backupEnabled } = useSelector(getPerconaSettings);
+  const dispatch = useDispatch();
+  const { result } = useSelector(getPerconaSettings);
+  const { isAuthorized } = useSelector(getPerconaUser);
   const { isPlatformUser } = useSelector(getPerconaUser);
+  const { sttEnabled, alertingEnabled, dbaasEnabled, backupEnabled } = result!;
   const query = new URLSearchParams(location.search);
   const kiosk = query.get('kiosk') as KioskMode;
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
@@ -61,52 +76,39 @@ export const NavBar: FC = React.memo(() => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  if (isPmmAdmin(config.bootData.user)) {
+  dispatch(updateNavIndex(getPmmSettingsPage(alertingEnabled)));
+  dispatch(updateNavIndex(PMM_ALERTING_PAGE));
+  dispatch(updateNavIndex(PMM_STT_PAGE));
+  dispatch(updateNavIndex(PMM_DBAAS_PAGE));
+  dispatch(updateNavIndex(PMM_BACKUP_PAGE));
+  dispatch(updateNavIndex(PMM_INVENTORY_PAGE));
+  dispatch(updateNavIndex(PMM_ADD_INSTANCE_PAGE));
+  dispatch(updateNavIndex(PMM_TICKETS_PAGE));
+  dispatch(updateNavIndex(PMM_ENTITLEMENTS_PAGE));
+
+  if (isPlatformUser) {
+    topItems.push(PMM_ENTITLEMENTS_PAGE);
+    topItems.push(PMM_TICKETS_PAGE);
+  }
+
+  if (isAuthorized) {
+    buildInventoryAndSettings(topItems);
+
     if (alertingEnabled) {
       buildIntegratedAlertingMenuItem(topItems);
     }
 
     if (sttEnabled) {
-      topItems.push({
-        id: 'database-checks',
-        icon: 'percona-database-checks',
-        text: 'Advisor Checks',
-        url: `${config.appSubUrl}/pmm-database-checks`,
-      });
+      topItems.push(PMM_STT_PAGE);
     }
 
     if (dbaasEnabled) {
-      topItems.push({
-        id: 'dbaas',
-        text: 'DBaaS',
-        icon: 'database',
-        url: `${config.appSubUrl}/dbaas`,
-      });
+      topItems.push(PMM_DBAAS_PAGE);
     }
 
     if (backupEnabled) {
-      topItems.push({
-        id: 'backup',
-        icon: 'history',
-        text: 'Backup',
-        url: `${config.appSubUrl}/backup`,
-      });
+      topItems.push(PMM_BACKUP_PAGE);
     }
-  }
-
-  if (isPlatformUser) {
-    topItems.push({
-      id: 'entitlements',
-      icon: 'cloud',
-      text: 'Entitlements',
-      url: `${config.appSubUrl}/entitlements`,
-    });
-    topItems.push({
-      id: 'tickets',
-      icon: 'ticket',
-      text: 'Support Tickets',
-      url: `${config.appSubUrl}/tickets`,
-    });
   }
 
   if (kiosk !== null) {

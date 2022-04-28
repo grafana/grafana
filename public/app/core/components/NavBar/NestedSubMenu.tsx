@@ -17,7 +17,7 @@ export const NestedSubMenu: FC<Props> = ({ items = [] }) => {
             {item.icon && <Icon name={item.icon as IconName} className={styles.icon} />}
             {item.text}
           </Link>
-          {!!item.children?.length && (
+          {!!item.children?.length && !!item.children.find((child) => !child.hideFromMenu) && (
             <>
               <span style={{ marginLeft: 'auto' }}>{<Icon name={'angle-right'} />}</span>
               <NestedSubMenu items={item.children} />

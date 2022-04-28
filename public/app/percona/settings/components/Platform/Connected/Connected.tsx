@@ -4,8 +4,8 @@ import { useStyles } from '@grafana/ui';
 import { AppEvents } from '@grafana/data';
 import { Form } from 'react-final-form';
 import { LoaderButton, logger, TextInputField } from '@percona/platform-core';
+import { fetchSettingsAction } from 'app/percona/shared/core/reducers';
 import { appEvents } from 'app/core/app_events';
-import { setSettings } from 'app/percona/shared/core/reducers';
 import { getPerconaServer } from 'app/percona/shared/core/selectors';
 import { PlatformService } from '../Platform.service';
 import { Messages as PlatformMessages } from '../Platform.messages';
@@ -23,7 +23,7 @@ export const Connected: FC = () => {
     try {
       await PlatformService.disconnect();
       appEvents.emit(AppEvents.alertSuccess, [Messages.disconnectSucceeded]);
-      dispatch(setSettings({ isConnectedToPortal: false }));
+      dispatch(fetchSettingsAction());
     } catch (e) {
       logger.error(e);
     } finally {

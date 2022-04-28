@@ -39,6 +39,18 @@ export function getPageStyles(theme: GrafanaTheme2) {
       flex-direction: column;
       width: 100%;
       height: 100%;
+
+      &.vertical-content > .page-container {
+        @media (min-width: ${theme.breakpoints.values.lg}px) {
+          margin-left: auto;
+          width: 70%;
+        }
+
+        @media (min-width: ${maxWidthBreakpoint}px) {
+          margin-left: auto;
+          width: 50%;
+        }
+      }
     }
 
     .page-container {

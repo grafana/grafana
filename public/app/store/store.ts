@@ -1,5 +1,6 @@
-import { StoreState } from 'app/types';
+import { AppDispatch, StoreState } from 'app/types';
 import { Store } from 'redux';
+import { useDispatch } from 'react-redux';
 
 export let store: Store<StoreState>;
 
@@ -26,3 +27,5 @@ export function dispatch(action: any) {
 
   return store.dispatch(action);
 }
+
+export const useAppDispatch = () => useDispatch<AppDispatch>();

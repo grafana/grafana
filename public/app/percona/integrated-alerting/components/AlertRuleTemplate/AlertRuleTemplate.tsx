@@ -2,6 +2,11 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { Button, useStyles } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
+import Page from 'app/core/components/Page/Page';
+import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
+import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
+import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
+import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { Messages } from 'app/percona/integrated-alerting/IntegratedAlerting.messages';
@@ -24,6 +29,7 @@ export const AlertRuleTemplate: FC = () => {
   const styles = useStyles(getStyles);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(true);
+  const navModel = usePerconaNavModel('integrated-alerting-templates');
   const [data, setData] = useState<FormattedTemplate[]>([]);
   const [pageSize, setPageSize] = useStoredTablePageSize(ALERT_RULE_TEMPLATES_TABLE_ID);
   const [pageIndex, setPageindex] = useState(0);
@@ -92,41 +98,51 @@ export const AlertRuleTemplate: FC = () => {
     [setPageSize, setPageindex]
   );
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const featureSelector = useCallback(getPerconaSettingFlag('alertingEnabled'), []);
+
   useEffect(() => {
     getAlertRuleTemplates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageSize, pageIndex]);
 
   return (
-    <>
-      <div className={styles.actionsWrapper}>
-        <Button
-          size="md"
-          icon="plus-square"
-          variant="link"
-          onClick={() => setAddModalVisible(!addModalVisible)}
-          data-testid="alert-rule-template-add-modal-button"
-        >
-          {Messages.alertRuleTemplate.addAction}
-        </Button>
-      </div>
-      <AddAlertRuleTemplateModal
-        isVisible={addModalVisible}
-        setVisible={setAddModalVisible}
-        getAlertRuleTemplates={getAlertRuleTemplates}
-      />
-      <Table
-        showPagination
-        totalItems={totalItems}
-        totalPages={totalPages}
-        pageSize={pageSize}
-        pageIndex={pageIndex}
-        onPaginationChanged={handlePaginationChanged}
-        data={data}
-        columns={columns}
-        pendingRequest={pendingRequest}
-        emptyMessage={noData}
-      />
-    </>
+    <Page navModel={navModel}>
+      <Page.Contents>
+        <TechnicalPreview />
+        <FeatureLoader featureName={Messages.integratedAlerting} featureSelector={featureSelector}>
+          <div className={styles.actionsWrapper}>
+            <Button
+              size="md"
+              icon="plus-square"
+              variant="link"
+              onClick={() => setAddModalVisible(!addModalVisible)}
+              data-testid="alert-rule-template-add-modal-button"
+            >
+              {Messages.alertRuleTemplate.addAction}
+            </Button>
+          </div>
+          <AddAlertRuleTemplateModal
+            isVisible={addModalVisible}
+            setVisible={setAddModalVisible}
+            getAlertRuleTemplates={getAlertRuleTemplates}
+          />
+          <Table
+            showPagination
+            totalItems={totalItems}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            pageIndex={pageIndex}
+            onPaginationChanged={handlePaginationChanged}
+            data={data}
+            columns={columns}
+            pendingRequest={pendingRequest}
+            emptyMessage={noData}
+          />
+        </FeatureLoader>
+      </Page.Contents>
+    </Page>
   );
 };
+
+export default AlertRuleTemplate;
