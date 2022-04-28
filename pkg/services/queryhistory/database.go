@@ -340,7 +340,9 @@ func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan i
 					WHERE query_history_star.query_uid IS NULL
 				) AS q
 			) 	
-			AND query_history.created_at <= ?`
+			AND query_history.created_at <= ?
+			ORDER BY query_history.created_at ASC
+			LIMIT 10000`
 
 		res, err := session.Exec(sql, strconv.FormatInt(olderThan, 10))
 		if err != nil {
