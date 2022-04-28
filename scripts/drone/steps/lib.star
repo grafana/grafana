@@ -55,7 +55,6 @@ def yarn_install_step():
         'name': 'yarn-install',
         'image': build_image,
         'commands': [
-            'if [ -d "yarncache" ]; then ls -a yarncache; fi',
             'yarn install --immutable',
         ],
         'depends_on': [
