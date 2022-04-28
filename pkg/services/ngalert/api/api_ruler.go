@@ -146,7 +146,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 
 	provenanceRecords, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.SignedInUser.OrgId, (&ngmodels.AlertRule{}).ResourceType())
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to get rule group")
+		return ErrResp(http.StatusInternalServerError, err, "failed to get provenance for rule group")
 	}
 
 	for _, r := range q.Result {
