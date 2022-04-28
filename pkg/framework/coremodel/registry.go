@@ -81,8 +81,7 @@ func (r *Registry) addModels(models []Interface) error {
 // is returned if no such coremodel exists.
 func (r *Registry) Get(name string) (cm Interface, has bool) {
 	r.lock.RLock()
-	defer r.lock.Unlock()
-
 	cm, has = r.modelIdx[name]
+	r.lock.RUnlock()
 	return
 }

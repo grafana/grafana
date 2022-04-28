@@ -50,17 +50,11 @@ func TestGetHomeDashboard(t *testing.T) {
 	cfg.StaticRootPath = "../../public/"
 	prefService := preftest.NewPreferenceServiceFake()
 
-	// TODO abstract this out for reuse
-	dcm, err := dashboard.ProvideCoremodel(cuectx.ProvideThemaLibrary())
-	require.NoError(t, err)
-	reg, err := coremodel.NewRegistry(dcm)
-	require.NoError(t, err)
-
 	hs := &HTTPServer{
 		Cfg:               cfg,
 		pluginStore:       &fakePluginStore{},
 		SQLStore:          mockstore.NewSQLStoreMock(),
-		CoremodelRegistry: reg,
+		CoremodelRegistry: setupDashboardCoremodel(t),
 		preferenceService: prefService,
 	}
 
@@ -133,11 +127,12 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		mockSQLStore.ExpectedDashboard = fakeDash
 
 		hs := &HTTPServer{
-			Cfg:           setting.NewCfg(),
-			pluginStore:   &fakePluginStore{},
-			SQLStore:      mockSQLStore,
-			AccessControl: accesscontrolmock.New(),
-			Features:      featuremgmt.WithFeatures(),
+			Cfg:               setting.NewCfg(),
+			pluginStore:       &fakePluginStore{},
+			SQLStore:          mockSQLStore,
+			CoremodelRegistry: setupDashboardCoremodel(t),
+			AccessControl:     accesscontrolmock.New(),
+			Features:          featuremgmt.WithFeatures(),
 		}
 		hs.SQLStore = mockSQLStore
 
@@ -239,6 +234,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			Live:                  newTestLive(t, sql),
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
+			CoremodelRegistry:     setupDashboardCoremodel(t),
 			SQLStore:              mockSQLStore,
 			AccessControl:         accesscontrolmock.New(),
 			dashboardService: service.ProvideDashboardService(
@@ -906,6 +902,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				LibraryPanelService:          &mockLibraryPanelService{},
 				LibraryElementService:        &mockLibraryElementService{},
 				dashboardProvisioningService: mockDashboardProvisioningService{},
+				CoremodelRegistry:            setupDashboardCoremodel(t),
 				SQLStore:                     mockSQLStore,
 				AccessControl:                accesscontrolmock.New(),
 			}
@@ -945,6 +942,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		LibraryElementService: &libraryElementsService,
 		SQLStore:              sc.sqlStore,
 		ProvisioningService:   provisioningService,
+		CoremodelRegistry:     setupDashboardCoremodel(t),
 		AccessControl:         accesscontrolmock.New(),
 		dashboardProvisioningService: service.ProvideDashboardService(
 			cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
@@ -1015,6 +1013,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			pluginStore:           &fakePluginStore{},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
+			CoremodelRegistry:     setupDashboardCoremodel(t),
 			dashboardService:      dashboardService,
 			folderService:         folderService,
 			Features:              featuremgmt.WithFeatures(),
@@ -1046,6 +1045,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			QuotaService:          &quota.QuotaService{Cfg: cfg},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
+			CoremodelRegistry:     setupDashboardCoremodel(t),
 			SQLStore:              sqlmock,
 		}
 
@@ -1080,6 +1080,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			QuotaService:          &quota.QuotaService{Cfg: cfg},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
+			CoremodelRegistry:     setupDashboardCoremodel(t),
 			dashboardService:      mock,
 			SQLStore:              sqlStore,
 			Features:              featuremgmt.WithFeatures(),
@@ -1104,6 +1105,16 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 
 		fn(sc)
 	})
+}
+
+func setupDashboardCoremodel(t *testing.T) *coremodel.Registry {
+	// TODO abstract and generalize this further for wider reuse
+	t.Helper()
+	dcm, err := dashboard.ProvideCoremodel(cuectx.ProvideThemaLibrary())
+	require.NoError(t, err)
+	reg, err := coremodel.NewRegistry(dcm)
+	require.NoError(t, err)
+	return reg
 }
 
 func (sc *scenarioContext) ToJSON() *simplejson.Json {
