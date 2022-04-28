@@ -751,7 +751,8 @@ export class GraphiteDatasource
     const httpOptions = {
       method: 'GET',
       url: '/functions',
-      // add responseType because if this is not defined, backend_srv defaults to json
+      // add responseType because if this is not defined,
+      // backend_srv defaults to json
       responseType: 'text',
     };
 
