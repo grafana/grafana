@@ -1,6 +1,8 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { dateTime } from '@grafana/data';
+
 import { DateTimePicker, Props } from './DateTimePicker';
 
 const renderDatetimePicker = (props?: Props) => {

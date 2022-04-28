@@ -1,15 +1,17 @@
-import React, { ReactElement, useEffect, useRef } from 'react';
 import { css } from '@emotion/css';
-import { useTheme2 } from '@grafana/ui';
-import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
-import { SpectrumMenuProps } from '@react-types/menu';
 import { useMenu } from '@react-aria/menu';
-import { useTreeState } from '@react-stately/tree';
 import { mergeProps } from '@react-aria/utils';
+import { useTreeState } from '@react-stately/tree';
+import { SpectrumMenuProps } from '@react-types/menu';
+import React, { ReactElement, useEffect, useRef } from 'react';
 
-import { getNavModelItemKey } from '../utils';
+import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
+import { useTheme2 } from '@grafana/ui';
+
 import { useNavBarItemMenuContext } from '../context';
-import { NavBarItemMenuItem } from '../NavBarItemMenuItem';
+import { getNavModelItemKey } from '../utils';
+
+import { NavBarItemMenuItem } from './NavBarItemMenuItem';
 
 export interface NavBarItemMenuProps extends SpectrumMenuProps<NavModelItem> {
   onNavigate: (item: NavModelItem) => void;

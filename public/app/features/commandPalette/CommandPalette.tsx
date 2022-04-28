@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { css } from '@emotion/css';
 import {
   KBarAnimator,
   KBarPortal,
@@ -11,16 +11,19 @@ import {
   useRegisterActions,
   useKBar,
 } from 'kbar';
-import { useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
-import { ResultItem } from './ResultItem';
-import getGlobalActions from './actions/global.static.actions';
-import getDashboardNavActions from './actions/dashboard.nav.actions';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { StoreState } from 'app/types';
-import { css } from '@emotion/css';
-import { keybindingSrv } from '../../core/services/keybindingSrv';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction, locationService } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
+import { StoreState } from 'app/types';
+
+import { keybindingSrv } from '../../core/services/keybindingSrv';
+
+import { ResultItem } from './ResultItem';
+import getDashboardNavActions from './actions/dashboard.nav.actions';
+import getGlobalActions from './actions/global.static.actions';
 
 /**
  * Wrap all the components from KBar here.
@@ -30,8 +33,7 @@ import { reportInteraction, locationService } from '@grafana/runtime';
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
   const [actions, setActions] = useState<Action[]>([]);
-  const { notHidden, query, showing } = useKBar((state) => ({
-    notHidden: state.visualState !== VisualState.hidden,
+  const { query, showing } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
   }));
   const isNotLogin = locationService.getLocation().pathname !== '/login';
@@ -40,12 +42,6 @@ export const CommandPalette = () => {
     return {
       navBarTree: state.navBarTree,
     };
-  });
-
-  keybindingSrv.bind('esc', () => {
-    if (notHidden) {
-      query.setVisualState(VisualState.animatingOut);
-    }
   });
 
   useEffect(() => {
@@ -62,7 +58,18 @@ export const CommandPalette = () => {
   useEffect(() => {
     if (showing) {
       reportInteraction('commandPalette_opened');
+
+      keybindingSrv.bindGlobal('esc', () => {
+        query.setVisualState(VisualState.animatingOut);
+      });
     }
+
+    return () => {
+      keybindingSrv.bindGlobal('esc', () => {
+        keybindingSrv.globalEsc();
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showing]);
 
   useRegisterActions(actions, [actions]);

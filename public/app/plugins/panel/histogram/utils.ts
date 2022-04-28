@@ -1,5 +1,4 @@
 import { DataFrame, FieldType } from '@grafana/data';
-
 import {
   histogramFrameBucketMinFieldName,
   histogramFrameBucketMaxFieldName,

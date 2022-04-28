@@ -1,5 +1,8 @@
 import { lastValueFrom, of, throwError } from 'rxjs';
 import { take } from 'rxjs/operators';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
+import { getQueryOptions } from 'test/helpers/getQueryOptions';
+
 import {
   AbstractLabelOperator,
   AnnotationQueryRequest,
@@ -13,16 +16,16 @@ import {
   toUtc,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
-import { isMetricsQuery, LokiDatasource, RangeQueryOptions } from './datasource';
-import { LokiQuery, LokiResponse, LokiResultType } from './types';
-import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { CustomVariableModel } from '../../../features/variables/types';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
+import { CustomVariableModel } from '../../../features/variables/types';
+
+import { isMetricsQuery, LokiDatasource, RangeQueryOptions } from './datasource';
 import { makeMockLokiDatasource } from './mocks';
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
+import { LokiQuery, LokiResponse, LokiResultType } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   // @ts-ignore
@@ -997,7 +1000,7 @@ describe('LokiDatasource', () => {
   describe('importing queries', () => {
     it('keeps all labels when no labels are loaded', async () => {
       const ds = createLokiDSForTests();
-      fetchMock.mockImplementation(() => of(createFetchResponse({ data: [] })));
+      ds.getResource = () => Promise.resolve({ data: [] });
       const queries = await ds.importFromAbstractQueries([
         {
           refId: 'A',
@@ -1012,7 +1015,9 @@ describe('LokiDatasource', () => {
 
     it('filters out non existing labels', async () => {
       const ds = createLokiDSForTests();
-      fetchMock.mockImplementation(() => of(createFetchResponse({ data: ['foo'] })));
+      ds.getResource = () => {
+        return Promise.resolve({ data: ['foo'] });
+      };
       const queries = await ds.importFromAbstractQueries([
         {
           refId: 'A',

@@ -15,18 +15,17 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func ProvideService(cacheService *localcache.CacheService, pluginStore plugins.Store,
-	dataSourceCache datasources.CacheService, secretsService secrets.Service,
+	dataSourceCache datasources.CacheService, dataSourceService datasources.DataSourceService,
 	pluginSettingsService pluginsettings.Service) *Provider {
 	return &Provider{
 		cacheService:          cacheService,
 		pluginStore:           pluginStore,
 		dataSourceCache:       dataSourceCache,
-		secretsService:        secretsService,
+		dataSourceService:     dataSourceService,
 		pluginSettingsService: pluginSettingsService,
 		logger:                log.New("plugincontext"),
 	}
@@ -36,7 +35,7 @@ type Provider struct {
 	cacheService          *localcache.CacheService
 	pluginStore           plugins.Store
 	dataSourceCache       datasources.CacheService
-	secretsService        secrets.Service
+	dataSourceService     datasources.DataSourceService
 	pluginSettingsService pluginsettings.Service
 	logger                log.Logger
 }
@@ -87,7 +86,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, datasourceUID strin
 		if err != nil {
 			return pc, false, errutil.Wrap("Failed to get datasource", err)
 		}
-		datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn())
+		datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn(ctx))
 		if err != nil {
 			return pc, false, errutil.Wrap("Failed to convert datasource", err)
 		}
@@ -122,9 +121,9 @@ func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string,
 	return ps, nil
 }
 
-func (p *Provider) decryptSecureJsonDataFn() func(map[string][]byte) map[string]string {
-	return func(m map[string][]byte) map[string]string {
-		decryptedJsonData, err := p.secretsService.DecryptJsonData(context.Background(), m)
+func (p *Provider) decryptSecureJsonDataFn(ctx context.Context) func(ds *models.DataSource) map[string]string {
+	return func(ds *models.DataSource) map[string]string {
+		decryptedJsonData, err := p.dataSourceService.DecryptedValues(ctx, ds)
 		if err != nil {
 			p.logger.Error("Failed to decrypt secure json data", "error", err)
 		}

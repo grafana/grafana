@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { css } from '@emotion/css';
+import React from 'react';
+
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { TraceSpanReference } from '../types/trace';

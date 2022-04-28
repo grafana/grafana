@@ -1,9 +1,12 @@
-import React from 'react';
 import { mount } from 'enzyme';
+import React from 'react';
 import { act } from 'react-dom/test-utils';
+
 import { DashboardModel } from 'app/features/dashboard/state';
-import { SaveDashboardForm } from './SaveDashboardForm';
+
 import { SaveDashboardOptions } from '../types';
+
+import { SaveDashboardForm } from './SaveDashboardForm';
 
 const prepareDashboardMock = (
   timeChanged: boolean,

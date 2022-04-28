@@ -14,9 +14,10 @@
 
 import React from 'react';
 
+import { TNil } from '../../../types';
+
 import DividerDemo from './DividerDemo';
 import RegionDemo from './RegionDemo';
-import { TNil } from '../../../types';
 
 import './DraggableManagerDemo.css';
 

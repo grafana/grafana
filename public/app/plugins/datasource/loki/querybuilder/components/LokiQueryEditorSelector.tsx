@@ -1,19 +1,22 @@
+import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+
 import { LoadingState } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
+import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
-import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+
 import { LokiQueryEditorProps } from '../../components/types';
+import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
+import { buildVisualQueryFromString } from '../parsing';
 import { getQueryWithDefaults } from '../state';
+
 import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
 import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplained';
 import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
 import { LokiQueryCodeEditor } from './LokiQueryCodeEditor';
-import { buildVisualQueryFromString } from '../parsing';
-import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
-import { LokiQuery } from '../../types';
 
 export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) => {
   const { onChange, onRunQuery, data } = props;

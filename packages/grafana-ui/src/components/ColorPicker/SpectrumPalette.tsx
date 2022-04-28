@@ -1,12 +1,14 @@
-import React, { useMemo, useState } from 'react';
-
-import { RgbaStringColorPicker } from 'react-colorful';
-import tinycolor from 'tinycolor2';
-import ColorInput from './ColorInput';
-import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { useStyles2, useTheme2 } from '../../themes';
+import React, { useMemo, useState } from 'react';
+import { RgbaStringColorPicker } from 'react-colorful';
 import { useThrottleFn } from 'react-use';
+import tinycolor from 'tinycolor2';
+
+import { GrafanaTheme2, colorManipulator } from '@grafana/data';
+
+import { useStyles2, useTheme2 } from '../../themes';
+
+import ColorInput from './ColorInput';
 
 export interface SpectrumPaletteProps {
   color: string;

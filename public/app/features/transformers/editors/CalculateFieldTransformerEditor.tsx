@@ -1,6 +1,8 @@
+import { defaults } from 'lodash';
 import React, { ChangeEvent } from 'react';
 import { of, OperatorFunction } from 'rxjs';
 import { map } from 'rxjs/operators';
+
 import {
   BinaryOperationID,
   binaryOperators,
@@ -15,7 +17,6 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
 import {
   BinaryOptions,
   CalculateFieldMode,
@@ -23,8 +24,7 @@ import {
   getNameFromOptions,
   ReduceOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
-
-import { defaults } from 'lodash';
+import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
 
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 

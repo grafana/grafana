@@ -1,8 +1,10 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { Select, InlineField } from '@grafana/ui';
-import { useCreatableSelectPersistedBehaviour } from './useCreatableSelectPersistedBehaviour';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import { Select, InlineField } from '@grafana/ui';
+
+import { useCreatableSelectPersistedBehaviour } from './useCreatableSelectPersistedBehaviour';
 
 describe('useCreatableSelectPersistedBehaviour', () => {
   it('Should make a Select accept custom values', async () => {
@@ -32,7 +34,7 @@ describe('useCreatableSelectPersistedBehaviour', () => {
     // we type in the input 'Option 2', which should prompt an option creation
     await userEvent.type(input, 'Option 2');
     const creatableOption = screen.getByLabelText('Select option');
-    expect(creatableOption).toHaveTextContent('Create: Option 2');
+    expect(creatableOption).toHaveTextContent('Option 2');
 
     // we click on the creatable option to trigger its creation
     await userEvent.click(creatableOption);

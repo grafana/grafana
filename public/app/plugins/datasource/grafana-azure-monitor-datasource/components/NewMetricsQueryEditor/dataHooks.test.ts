@@ -4,6 +4,7 @@ import createMockDatasource from '../../__mocks__/datasource';
 import Datasource from '../../datasource';
 import { AzureMetricQuery, AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
 import { DataHook } from '../MetricsQueryEditor/dataHooks';
+
 import { useMetricNames, useMetricNamespaces } from './dataHooks';
 
 const WAIT_OPTIONS = {

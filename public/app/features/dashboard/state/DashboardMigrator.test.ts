@@ -1,15 +1,17 @@
 import { each, map } from 'lodash';
+import { expect } from 'test/lib/common';
+
+import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
+import { setDataSourceSrv } from '@grafana/runtime';
+import { config } from 'app/core/config';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
+import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+
+import { VariableHide } from '../../variables/types';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
-import { expect } from 'test/lib/common';
-import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
-import { VariableHide } from '../../variables/types';
-import { config } from 'app/core/config';
-import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 

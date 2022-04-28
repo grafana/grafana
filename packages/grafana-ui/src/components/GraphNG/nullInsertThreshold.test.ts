@@ -1,4 +1,5 @@
 import { ArrayVector, FieldType, MutableDataFrame } from '@grafana/data';
+
 import { applyNullInsertThreshold } from './nullInsertThreshold';
 
 function randInt(min: number, max: number) {

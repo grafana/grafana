@@ -1,14 +1,17 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
 import React, { FC, useState } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
+
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
-import { emptyRoute } from '../../utils/amroutes';
-import { AmRoutesTable } from './AmRoutesTable';
-import { getGridStyles } from './gridStyles';
-import { MuteTimingsTable } from './MuteTimingsTable';
-import { Authorize } from '../Authorize';
 import { getNotificationsPermissions } from '../../utils/access-control';
+import { emptyRoute } from '../../utils/amroutes';
+import { Authorize } from '../Authorize';
+
+import { AmRoutesTable } from './AmRoutesTable';
+import { MuteTimingsTable } from './MuteTimingsTable';
+import { getGridStyles } from './gridStyles';
 
 export interface AmRoutesExpandedReadProps {
   onChange: (routes: FormAmRoute) => void;

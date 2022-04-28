@@ -1,5 +1,6 @@
-import { ArrayVector, DataFrame, DataQueryResponse, FieldType } from '@grafana/data';
 import { cloneDeep } from 'lodash';
+
+import { ArrayVector, DataFrame, DataQueryResponse, FieldType } from '@grafana/data';
 
 import { transformBackendResult } from './backendResultTransformer';
 
