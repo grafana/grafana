@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/screenshot"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -41,11 +42,12 @@ type Manager struct {
 	instanceStore    store.InstanceStore
 	sqlStore         sqlstore.Store
 	dashboardService dashboards.DashboardService
+	screenshotFunc   screenshotFunc
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	ruleStore store.RuleStore, instanceStore store.InstanceStore, sqlStore sqlstore.Store,
-	dashboardService dashboards.DashboardService) *Manager {
+	dashboardService dashboards.DashboardService, screenshots screenshot.ScreenshotService) *Manager {
 	manager := &Manager{
 		cache:            newCache(logger, metrics, externalURL),
 		quit:             make(chan struct{}),
@@ -56,6 +58,7 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		instanceStore:    instanceStore,
 		sqlStore:         sqlStore,
 		dashboardService: dashboardService,
+		screenshotFunc:   NewScreenshotFunc(screenshots),
 	}
 	go manager.recordMetrics()
 	return manager
@@ -163,6 +166,19 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, alertRule *ngModels.A
 	}
 	st.staleResultsHandler(ctx, alertRule, processedResults)
 	return states
+}
+
+//nolint:unused
+func (st *Manager) takeScreenshot(ctx context.Context, alertRule *ngModels.AlertRule, state *State) error {
+	if state.Screenshot.ImageOnDiskPath == "" {
+		screenshot, err := st.screenshotFunc(ctx, alertRule)
+		if err != nil {
+			st.log.Error("failed to take screenshot", "error", err)
+			return err
+		}
+		state.Screenshot = *screenshot
+	}
+	return nil
 }
 
 // Set the current state based on evaluation results
