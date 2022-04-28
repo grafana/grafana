@@ -525,6 +525,7 @@ def test_frontend_step():
         'image': build_image,
         'environment': {
             'TEST_MAX_WORKERS': '50%',
+            'BETTERER_CACHE': '.betterer.cache'
         },
         'depends_on': [
             'yarn-install',
@@ -1187,6 +1188,7 @@ def restore_cache_step():
             'mount': [
                 'yarncache',
                 'node_modules',
+                '.betterer.cache',
             ],
         },
     }
@@ -1205,12 +1207,36 @@ def rebuild_cache_step():
             'mount': [
                 'yarncache',
                 'node_modules',
+                '.betterer.cache',
             ],
         },
         'depends_on': [
             'build-frontend',
             'build-frontend-packages',
             'yarn-install',
+        ],
+        'when': {
+            'event': 'pull_request',
+        },
+    }
+
+def rebuild_cache_step_betterer():
+    return {
+        'image': drone_cache,
+        'name': 'rebuild-cache',
+        'pull': 'always',
+        'settings': {
+            'backend': 'gcs',
+            'json_key': from_secret('tf_google_credentials'),
+            'bucket': 'test-julien',
+            'cache_key': "test123",
+            'rebuild': 'true',
+            'mount': [
+                '.betterer.cache',
+            ],
+        },
+        'depends_on': [
+            'test-frontend',
         ],
         'when': {
             'event': 'pull_request',

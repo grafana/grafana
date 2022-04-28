@@ -21,7 +21,7 @@
     "lint": "yarn run lint:ts && yarn run lint:sass",
     "lint:ts": "eslint . --ext .js,.tsx,.ts --cache",
     "lint:sass": "yarn stylelint '{public/sass,packages}/**/*.scss' --cache",
-    "test:ci": "betterer ci && mkdir -p reports/junit && JEST_JUNIT_OUTPUT_DIR=reports/junit jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
+    "test:ci": "betterer --cache ci && mkdir -p reports/junit && JEST_JUNIT_OUTPUT_DIR=reports/junit jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
     "lint:fix": "yarn lint:ts --fix",
     "packages:build": "lerna run clean && lerna run build --ignore @grafana-plugins/input-datasource",
     "packages:docsExtract": "rm -rf ./reports/docs && lerna run docsExtract",

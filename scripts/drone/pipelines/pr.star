@@ -15,6 +15,7 @@ load(
     'build_frontend_step',
     'build_frontend_package_step',
     'rebuild_cache_step',
+    'rebuild_cache_step_betterer',
     'build_plugins_step',
     'test_backend_step',
     'test_backend_integration_step',
@@ -81,6 +82,7 @@ def pr_test_frontend():
     test_steps = [
         lint_frontend_step(),
         test_frontend_step(),
+        rebuild_cache_step_betterer(),
     ]
     return pipeline(
         name='pr-test-frontend', edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps,
