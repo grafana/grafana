@@ -51,7 +51,7 @@ export const RolePicker = ({
     const distance = window.innerHeight - bottom;
 
     if (distance < MENU_MAX_HEIGHT) {
-      setOffset(bottom - top + 10);
+      setOffset(bottom - top + 10); // Add extra 10px to offset to account for border and outline
     } else {
       setOffset(0);
     }
