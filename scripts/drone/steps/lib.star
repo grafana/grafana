@@ -531,6 +531,7 @@ def test_frontend_step():
             'yarn-install',
         ],
         'commands': [
+            'ls -la node_modules/.cache/',
             'yarn run ci:test-frontend',
         ],
     }

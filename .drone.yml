@@ -58,6 +58,7 @@ steps:
   image: grafana/build-container:1.5.4
   name: lint-frontend
 - commands:
+  - ls -la node_modules/.cache/
   - yarn run ci:test-frontend
   depends_on:
   - yarn-install
@@ -687,6 +688,6 @@ kind: secret
 name: secret
 ---
 kind: signature
-hmac: 63644f116d40f77189aa5cc61d825da40fc841ce6f328b3acc959c5971536893
+hmac: fa31f0b96725c591ff95922de93c569d1cf6051d1d44da429e5a7e6e36322082
 
 ...
