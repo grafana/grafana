@@ -79,7 +79,7 @@ const ResourceField: React.FC<ResourceFieldProps> = ({
       </Modal>
 
       <Field label="Resource">
-        <Button variant="secondary" onClick={handleOpenPicker} type="button">
+        <Button className={styles.resourceFieldButton} variant="secondary" onClick={handleOpenPicker} type="button">
           <ResourceLabel resource={resourceUri} datasource={datasource} />
         </Button>
       </Field>

@@ -67,7 +67,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 
   resourceField: css({
-    width: theme.spacing(38)
+    width: theme.spacing(36),
+  }),
+
+  resourceFieldButton: css({
+    padding: '7px',
+    textAlign: 'left',
   }),
 
   nestedRowCheckbox: css({

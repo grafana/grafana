@@ -43,6 +43,8 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
   onChange,
   setError,
 }) => {
+  const styles = useStyles2(getStyles);
+
   const metricsMetadata = useMetricMetadata(query, datasource, onChange);
   const subscriptions = useSubscriptions(query, datasource, onChange, setError);
   const resourceGroups = useResourceGroups(query, datasource, onChange, setError);
@@ -96,7 +98,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
         />
       </InlineFieldRow>
 
-      <InlineFieldRow>
+      <InlineFieldRow className={styles}>
         <MetricNamespaceField
           metricNamespaces={metricNamespaces}
           query={query}
@@ -166,4 +168,10 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
   );
 };
 
+const getStyles = () => ({
+  row: css({
+    width: '100%',
+    tableLayout: 'fixed',
+  }),
+});
 export default MetricsQueryEditor;
