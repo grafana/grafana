@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { Redirect } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
