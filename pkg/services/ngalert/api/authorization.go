@@ -181,7 +181,9 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Grafana-only Provisioning Read Paths
 	case http.MethodGet + "/api/provisioning/policies",
-		http.MethodGet + "/api/provisioning/contact-points":
+		http.MethodGet + "/api/provisioning/contact-points",
+		http.MethodGet + "/api/provisioning/templates",
+		http.MethodGet + "/api/provisioning/templates/{ID}":
 		return middleware.ReqSignedIn
 
 	case http.MethodPost + "/api/provisioning/policies",
