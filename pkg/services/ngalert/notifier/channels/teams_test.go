@@ -48,7 +48,7 @@ func TestTeamsNotifier(t *testing.T) {
 				"themeColor": "#D63232",
 				"sections": []map[string]interface{}{
 					{
-						"title": "Details",
+						"title": "",
 						"text":  "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 					},
 				},
@@ -66,6 +66,8 @@ func TestTeamsNotifier(t *testing.T) {
 			name: "Custom config with multiple alerts",
 			settings: `{
 				"url": "http://localhost",
+				"title": "{{ .CommonLabels.alertname }}",
+				"sectiontitle": "Details",
 				"message": "{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved"
 			}`,
 			alerts: []*types.Alert{
@@ -84,8 +86,8 @@ func TestTeamsNotifier(t *testing.T) {
 			expMsg: map[string]interface{}{
 				"@type":      "MessageCard",
 				"@context":   "http://schema.org/extensions",
-				"summary":    "[FIRING:2]  ",
-				"title":      "[FIRING:2]  ",
+				"summary":    "alert1",
+				"title":      "alert1",
 				"themeColor": "#D63232",
 				"sections": []map[string]interface{}{
 					{
@@ -107,6 +109,8 @@ func TestTeamsNotifier(t *testing.T) {
 			name: "Missing field in template",
 			settings: `{
 				"url": "http://localhost",
+				"title": "{{ .CommonLabels.alertname }}",
+				"sectiontitle": "Details",
 				"message": "I'm a custom template {{ .NotAField }} bad template"
 			}`,
 			alerts: []*types.Alert{
@@ -125,8 +129,8 @@ func TestTeamsNotifier(t *testing.T) {
 			expMsg: map[string]interface{}{
 				"@type":      "MessageCard",
 				"@context":   "http://schema.org/extensions",
-				"summary":    "[FIRING:2]  ",
-				"title":      "[FIRING:2]  ",
+				"summary":    "alert1",
+				"title":      "alert1",
 				"themeColor": "#D63232",
 				"sections": []map[string]interface{}{
 					{
@@ -148,6 +152,8 @@ func TestTeamsNotifier(t *testing.T) {
 			name: "Invalid template",
 			settings: `{
 				"url": "http://localhost",
+				"title": "{{ .CommonLabels.alertname }}",
+				"sectiontitle": "Details",
 				"message": "I'm a custom template {{ {.NotAField }} bad template"
 			}`,
 			alerts: []*types.Alert{
@@ -166,8 +172,8 @@ func TestTeamsNotifier(t *testing.T) {
 			expMsg: map[string]interface{}{
 				"@type":      "MessageCard",
 				"@context":   "http://schema.org/extensions",
-				"summary":    "[FIRING:2]  ",
-				"title":      "[FIRING:2]  ",
+				"summary":    "alert1",
+				"title":      "alert1",
 				"themeColor": "#D63232",
 				"sections": []map[string]interface{}{
 					{

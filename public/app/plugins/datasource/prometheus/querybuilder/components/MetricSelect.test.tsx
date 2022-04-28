@@ -26,12 +26,12 @@ describe('MetricSelect', () => {
     await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(3));
   });
 
-  it('shows option to create metric when typing', async () => {
+  it('shows option to set custom value when typing', async () => {
     render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    await userEvent.type(input, 'new');
-    await waitFor(() => expect(screen.getByText('Create: new')).toBeInTheDocument());
+    await userEvent.type(input, 'custom value');
+    await waitFor(() => expect(screen.getByText('custom value')).toBeInTheDocument());
   });
 
   it('shows searched options when typing', async () => {

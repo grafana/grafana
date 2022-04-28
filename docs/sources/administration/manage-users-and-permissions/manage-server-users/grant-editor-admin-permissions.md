@@ -1,6 +1,6 @@
 +++
 title = "Grant editors administrator permissions"
-aliases = ["docs/sources/administration/manage-users-and-permissions/manage-server-users/grant-editor-admin-permissions.md"]
+aliases = ["docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/grant-editor-admin-permissions.md"]
 weight = 60
 +++
 
