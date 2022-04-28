@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import React, { useState } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
 
 import { HeatmapLayerHover } from '../types';
+
 import { DataHoverRow } from './DataHoverRow';
 
 type Props = {

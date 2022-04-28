@@ -1,5 +1,6 @@
+import { css } from '@emotion/css';
 import React from 'react';
-import { LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
+
 import {
   arrayUtils,
   DataFrame,
@@ -10,8 +11,9 @@ import {
   GrafanaTheme2,
   LinkModel,
 } from '@grafana/data';
-import { css } from '@emotion/css';
 import { SortOrder } from '@grafana/schema';
+import { LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
+
 import { RenderCallback } from '../types';
 
 export interface Props {
