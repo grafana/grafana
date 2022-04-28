@@ -53,7 +53,7 @@ const Silences: FC = () => {
   if (!alertManagerSourceName) {
     return isRoot ? (
       <AlertingPageWrapper pageId="silences">
-        <NoAlertManagerWarning />
+        <NoAlertManagerWarning availableAlertManagers={alertManagers} />
       </AlertingPageWrapper>
     ) : (
       <Redirect to="/alerting/silences" />

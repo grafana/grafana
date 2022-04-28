@@ -54,7 +54,7 @@ const AlertGroups = () => {
   if (!alertManagerSourceName) {
     return (
       <AlertingPageWrapper pageId="groups">
-        <NoAlertManagerWarning />
+        <NoAlertManagerWarning availableAlertManagers={alertManagers} />
       </AlertingPageWrapper>
     );
   }

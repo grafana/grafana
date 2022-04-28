@@ -59,7 +59,7 @@ const Receivers: FC = () => {
   if (!alertManagerSourceName) {
     return isRoot ? (
       <AlertingPageWrapper pageId="receivers">
-        <NoAlertManagerWarning />
+        <NoAlertManagerWarning availableAlertManagers={alertManagers} />
       </AlertingPageWrapper>
     ) : (
       <Redirect to="/alerting/notifications" />

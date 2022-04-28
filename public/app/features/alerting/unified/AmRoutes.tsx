@@ -105,7 +105,7 @@ const AmRoutes: FC = () => {
   if (!alertManagerSourceName) {
     return (
       <AlertingPageWrapper pageId="am-routes">
-        <NoAlertManagerWarning />
+        <NoAlertManagerWarning availableAlertManagers={alertManagers} />
       </AlertingPageWrapper>
     );
   }
