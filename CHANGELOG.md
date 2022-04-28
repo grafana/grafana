@@ -524,7 +524,7 @@ The access mode "browser" is deprecated in the following data sources and will b
 
 ### Features and enhancements
 
-- **AccessControl:** Apply fine-grained access control to licensing. (Enterprise)
+- **AccessControl:** Apply role-based access control to licensing. (Enterprise)
 - **Alerting:** Add UI for contact point testing with custom annotations and labels. [#40491](https://github.com/grafana/grafana/pull/40491), [@nathanrodman](https://github.com/nathanrodman)
 - **Alerting:** Make alert state indicator in panel header work with Grafana 8 alerts. [#38713](https://github.com/grafana/grafana/pull/38713), [@domasx2](https://github.com/domasx2)
 - **Alerting:** Option for Discord notifier to use webhook name. [#40463](https://github.com/grafana/grafana/pull/40463), [@Skyebold](https://github.com/Skyebold)

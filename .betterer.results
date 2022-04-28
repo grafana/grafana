@@ -230,11 +230,8 @@ exports[`no enzyme tests`] = {
     "public/app/features/explore/LiveLogs.test.tsx:156663779": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/explore/RichHistory/RichHistoryStarredTab.test.tsx:3328200031": [
+    "public/app/features/explore/RichHistory/RichHistoryStarredTab.test.tsx:3933225580": [
       [0, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/RunButton.test.tsx:4267530266": [
-      [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/explore/SecondaryActions.test.tsx:1177396128": [
       [0, 19, 13, "RegExp match", "2409514259"]
@@ -298,9 +295,6 @@ exports[`no enzyme tests`] = {
     ],
     "public/app/plugins/datasource/elasticsearch/configuration/DataLinks.test.tsx:248699332": [
       [0, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/plugins/datasource/grafana-azure-monitor-datasource/components/deprecated/components/InsightsConfig.test.tsx:1107283234": [
-      [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/influxdb/components/ConfigEditor.test.tsx:3456478975": [
       [0, 19, 13, "RegExp match", "2409514259"]

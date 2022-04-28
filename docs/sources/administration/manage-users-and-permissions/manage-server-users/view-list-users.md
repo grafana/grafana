@@ -1,6 +1,6 @@
 +++
 title = "View a list of users"
-aliases = ["docs/sources/administration/manage-users-and-permissions/manage-server-users/view-list-users.md"]
+aliases = ["docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/view-list-users.md"]
 weight = 100
 +++
 
