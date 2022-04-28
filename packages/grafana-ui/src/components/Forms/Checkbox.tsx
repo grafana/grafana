@@ -12,10 +12,11 @@ export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'
   label?: string;
   description?: string;
   value?: boolean;
+  internalValue?: string | number;
 }
 
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ label, description, value, onChange, disabled, className, ...inputProps }, ref) => {
+  ({ label, description, value, internalValue, onChange, disabled, className, ...inputProps }, ref) => {
     const handleOnChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         if (onChange) {
@@ -34,6 +35,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           checked={value}
           disabled={disabled}
           onChange={handleOnChange}
+          value={internalValue}
           {...inputProps}
           ref={ref}
         />
