@@ -1,4 +1,6 @@
+import { css } from '@emotion/css';
 import React from 'react';
+
 import {
   FieldMatcherID,
   GrafanaTheme2,
@@ -7,10 +9,11 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { configFromDataTransformer, ConfigFromQueryTransformOptions } from './configFromQuery';
 import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
-import { css } from '@emotion/css';
+
+import { configFromDataTransformer, ConfigFromQueryTransformOptions } from './configFromQuery';
 
 export interface Props extends TransformerUIProps<ConfigFromQueryTransformOptions> {}
 

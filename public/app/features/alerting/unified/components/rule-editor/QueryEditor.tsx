@@ -1,5 +1,6 @@
-import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
+import React, { PureComponent } from 'react';
+
 import {
   DataQuery,
   getDefaultRelativeTimeRange,
@@ -9,20 +10,22 @@ import {
   RelativeTimeRange,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, HorizontalGroup, stylesFactory } from '@grafana/ui';
 import { config } from '@grafana/runtime';
-import { QueryRows } from './QueryRows';
+import { Button, HorizontalGroup, stylesFactory } from '@grafana/ui';
+import { getNextRefIdChar } from 'app/core/utils/query';
 import {
   dataSource as expressionDatasource,
   ExpressionDatasourceUID,
 } from 'app/features/expressions/ExpressionDatasource';
-import { getNextRefIdChar } from 'app/core/utils/query';
-import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
-import { ExpressionQueryType } from 'app/features/expressions/types';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
-import { AlertingQueryRunner } from '../../state/AlertingQueryRunner';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { ExpressionQueryType } from 'app/features/expressions/types';
+import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
+
+import { AlertingQueryRunner } from '../../state/AlertingQueryRunner';
+
+import { QueryRows } from './QueryRows';
 
 interface Props {
   value?: AlertQuery[];

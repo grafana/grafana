@@ -1,6 +1,7 @@
+import { ArrayVector, DataFrameView, dateTime, MutableDataFrame } from '@grafana/data';
+
 import { createGraphFrames, mapPromMetricsToServiceMap } from './graphTransform';
 import { bigResponse } from './testResponse';
-import { ArrayVector, DataFrameView, dateTime, MutableDataFrame } from '@grafana/data';
 
 describe('createGraphFrames', () => {
   it('transforms basic response into nodes and edges frame', async () => {

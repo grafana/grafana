@@ -1,8 +1,9 @@
+import React from 'react';
+
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { DataSourceHttpSettings } from '@grafana/ui';
 import { NodeGraphSettings } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsSettings } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
-import React from 'react';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 

@@ -1,6 +1,7 @@
 import { Field, FieldType } from '../../../types/dataFrame';
 import { ValueMatcherInfo } from '../../../types/transformations';
 import { ValueMatcherID } from '../ids';
+
 import { RangeValueMatcherOptions } from './types';
 
 const isBetweenValueMatcher: ValueMatcherInfo<RangeValueMatcherOptions<number>> = {

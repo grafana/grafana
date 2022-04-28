@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react';
+
 import { PanelProps, buildHistogram, getHistogramFields } from '@grafana/data';
+import { histogramFieldsToFrame } from '@grafana/data/src/transformations/transformers/histogram';
+import { useTheme2 } from '@grafana/ui';
 
 import { Histogram, getBucketSize } from './Histogram';
 import { PanelOptions } from './models.gen';
-import { useTheme2 } from '@grafana/ui';
 
 type Props = PanelProps<PanelOptions>;
-
-import { histogramFieldsToFrame } from '@grafana/data/src/transformations/transformers/histogram';
 
 export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }) => {
   const theme = useTheme2();

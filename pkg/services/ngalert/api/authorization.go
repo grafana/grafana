@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -23,7 +22,7 @@ var (
 
 //nolint:gocyclo
 func (api *API) authorize(method, path string) web.Handler {
-	authorize := acmiddleware.Middleware(api.AccessControl)
+	authorize := ac.Middleware(api.AccessControl)
 	var eval ac.Evaluator = nil
 
 	// Most routes follow this general authorization approach as a fallback. Exceptions are overridden directly in the below block.

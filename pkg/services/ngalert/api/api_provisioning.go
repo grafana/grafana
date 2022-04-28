@@ -30,7 +30,7 @@ type ContactPointService interface {
 }
 
 type NotificationPolicyService interface {
-	GetPolicyTree(ctx context.Context, orgID int64) (provisioning.EmbeddedRoutingTree, error)
+	GetPolicyTree(ctx context.Context, orgID int64) (apimodels.Route, error)
 	UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p alerting_models.Provenance) error
 }
 
@@ -51,6 +51,9 @@ func (srv *ProvisioningSrv) RoutePostPolicyTree(c *models.ReqContext, tree apimo
 	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgId, tree, alerting_models.ProvenanceAPI)
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
+	}
+	if errors.Is(err, provisioning.ErrValidation) {
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")

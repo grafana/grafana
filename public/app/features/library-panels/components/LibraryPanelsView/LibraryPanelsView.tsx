@@ -1,13 +1,15 @@
+import { css, cx } from '@emotion/css';
 import React, { useMemo, useReducer } from 'react';
 import { useDebounce } from 'react-use';
-import { css, cx } from '@emotion/css';
-import { Pagination, useStyles } from '@grafana/ui';
-import { GrafanaTheme, LoadingState } from '@grafana/data';
 
-import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
+import { GrafanaTheme, LoadingState } from '@grafana/data';
+import { Pagination, useStyles } from '@grafana/ui';
+
 import { LibraryElementDTO } from '../../types';
-import { changePage, initialLibraryPanelsViewState, libraryPanelsViewReducer } from './reducer';
+import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
+
 import { asyncDispatcher, deleteLibraryPanel, searchForLibraryPanels } from './actions';
+import { changePage, initialLibraryPanelsViewState, libraryPanelsViewReducer } from './reducer';
 
 interface LibraryPanelViewProps {
   className?: string;

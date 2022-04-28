@@ -1,7 +1,7 @@
 import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
-import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
-import { Alert } from 'app/types/unified-alerting';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
+import { Alert } from 'app/types/unified-alerting';
+import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
 function withState(state: GrafanaAlertState, labels?: {}): Alert {
   return { activeAt: '', annotations: {}, labels: labels || {}, state: state, value: '' };

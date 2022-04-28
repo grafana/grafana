@@ -3,6 +3,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { RulesSource } from 'app/types/unified-alerting';
+
 import { getAllDataSources } from './config';
 
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';

@@ -82,7 +82,7 @@ def retrieve_npm_packages_step():
         'name': 'retrieve-npm-packages',
         'image': publish_image,
         'depends_on': [
-            'grabpl',
+            'yarn-install',
         ],
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
@@ -423,6 +423,7 @@ def publish_npm_pipelines(mode):
     }
     steps = [
         download_grabpl_step(),
+        yarn_install_step(),
         retrieve_npm_packages_step(),
         release_npm_packages_step()
     ]

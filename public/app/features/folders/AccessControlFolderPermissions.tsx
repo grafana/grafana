@@ -1,14 +1,15 @@
 import React, { useEffect } from 'react';
-import { Permissions } from 'app/core/components/AccessControl';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { Permissions } from 'app/core/components/AccessControl';
 import Page from 'app/core/components/Page/Page';
-import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/core';
-import { getLoadingNav } from './state/navModel';
-import { AccessControlAction, StoreState } from 'app/types';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { AccessControlAction, StoreState } from 'app/types';
+
 import { getFolderByUid } from './state/actions';
+import { getLoadingNav } from './state/navModel';
 
 interface RouteProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 

@@ -1,17 +1,19 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { LegacyForms, Tooltip, Icon, Button, useTheme2 } from '@grafana/ui';
-const { Input } = LegacyForms;
-
-import { StoreState, TeamGroup } from '../../types';
-import { addTeamGroup, loadTeamGroups, removeTeamGroup } from './state/actions';
-import { getTeamGroups } from './state/selectors';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { UpgradeBox, UpgradeContent, UpgradeContentProps } from 'app/core/components/Upgrade/UpgradeBox';
 import { highlightTrial } from 'app/features/admin/utils';
+
+import { StoreState, TeamGroup } from '../../types';
+
+import { addTeamGroup, loadTeamGroups, removeTeamGroup } from './state/actions';
+import { getTeamGroups } from './state/selectors';
+
+const { Input } = LegacyForms;
 
 function mapStateToProps(state: StoreState) {
   return {
