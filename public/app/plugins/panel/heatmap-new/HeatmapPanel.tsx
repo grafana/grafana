@@ -170,20 +170,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     );
   }
 
-  console.log(
-    'data',
-    data,
-    'info',
-    info,
-    'infoMapping',
-    infoMapping,
-    'exemplars',
-    exemplars,
-    'exemplarMapping',
-    exemplarMapping,
-    'index',
-    hover?.index
-  );
   return (
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
