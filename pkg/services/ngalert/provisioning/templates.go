@@ -50,10 +50,15 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) (map[st
 }
 
 func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl definitions.MessageTemplate, p models.Provenance) error {
+	err := tmpl.Validate()
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
+	}
+
 	q := models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
 	}
-	err := t.config.GetLatestAlertmanagerConfiguration(ctx, &q)
+	err = t.config.GetLatestAlertmanagerConfiguration(ctx, &q)
 	if err != nil {
 		return err
 	}
@@ -63,8 +68,6 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 	if err != nil {
 		return err
 	}
-
-	// TODO: validate
 
 	cfg.TemplateFiles[tmpl.Name] = tmpl.Template
 

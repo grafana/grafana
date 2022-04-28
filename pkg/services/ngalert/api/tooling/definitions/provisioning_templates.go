@@ -1,5 +1,7 @@
 package definitions
 
+import "fmt"
+
 // swagger:route GET /api/provisioning/templates provisioning RouteGetTemplates
 //
 // Get all message templates.
@@ -65,4 +67,15 @@ func (t MessageTemplate) ResourceType() string {
 
 func (t MessageTemplate) ResourceID() string {
 	return t.Name
+}
+
+func (t MessageTemplate) Validate() error {
+	if t.Name == "" {
+		return fmt.Errorf("template must have a name")
+	}
+	if t.Template == "" {
+		return fmt.Errorf("template must have content")
+	}
+
+	return nil
 }
