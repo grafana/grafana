@@ -52,6 +52,7 @@ const copyFiles = () => {
     'CHANGELOG.md',
     'config/circleci/config.yml',
     'bin/grafana-toolkit.js',
+    'src/config/.browserslistrc',
     'src/config/prettier.plugin.config.json',
     'src/config/prettier.plugin.rc.js',
     'src/config/tsconfig.plugin.json',
