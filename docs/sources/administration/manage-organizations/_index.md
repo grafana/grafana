@@ -6,7 +6,7 @@ weight: 300
 aliases:
   [
     '/docs/grafana/latest/manage-users/server-admin/',
-    '/docs/grafana/latest/manage-users/server-admin/server-admin-manage-orgs/',
+    "/docs/grafana/latest/manage-users/server-admin/server-admin-manage-orgs/",
   ]
 keywords:
   - organizations
