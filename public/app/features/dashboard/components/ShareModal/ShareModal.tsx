@@ -10,7 +10,7 @@ import { ShareExport } from './ShareExport';
 import { ShareLibraryPanel } from './ShareLibraryPanel';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
-import { SharePublic } from './SharePublic';
+import SharePublic from './SharePublic';
 import { ShareModalTabModel } from './types';
 import { config } from 'app/core/config';
 
