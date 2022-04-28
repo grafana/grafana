@@ -596,7 +596,7 @@
      "type": "string",
      "x-go-name": "Name"
     },
-    "provanance": {
+    "provenance": {
      "type": "string",
      "x-go-name": "Provenance"
     },
@@ -881,6 +881,9 @@
     "name": {
      "type": "string",
      "x-go-name": "Name"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
     },
     "secureFields": {
      "additionalProperties": {
@@ -2868,7 +2871,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2901,9 +2903,9 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object",
-   "x-go-package": "net/url"
+   "x-go-package": "github.com/prometheus/common/config"
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -3126,11 +3128,12 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "AlertGroups",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -3250,7 +3253,6 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3309,7 +3311,9 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableAlert",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableAlerts": {
    "items": {
@@ -3320,7 +3324,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3372,14 +3375,17 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "GettableSilences",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "labelSet": {
    "additionalProperties": {
@@ -3508,7 +3514,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3548,7 +3553,9 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "PostableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
    "description": "Receiver receiver",
@@ -4282,6 +4289,13 @@
       "name": "receiver",
       "type": "string",
       "x-go-name": "Receivers"
+     },
+     {
+      "description": "DatasoureUID should be the datasource UID identifier",
+      "in": "path",
+      "name": "DatasourceUID",
+      "required": true,
+      "type": "string"
      }
     ],
     "responses": {
@@ -4313,6 +4327,13 @@
       "name": "SilenceId",
       "required": true,
       "type": "string"
+     },
+     {
+      "description": "DatasoureUID should be the datasource UID identifier",
+      "in": "path",
+      "name": "DatasourceUID",
+      "required": true,
+      "type": "string"
      }
     ],
     "responses": {
@@ -4340,6 +4361,13 @@
      {
       "in": "path",
       "name": "SilenceId",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "description": "DatasoureUID should be the datasource UID identifier",
+      "in": "path",
+      "name": "DatasourceUID",
       "required": true,
       "type": "string"
      }
@@ -4376,6 +4404,13 @@
       "name": "filter",
       "type": "array",
       "x-go-name": "Filter"
+     },
+     {
+      "description": "DatasoureUID should be the datasource UID identifier",
+      "in": "path",
+      "name": "DatasourceUID",
+      "required": true,
+      "type": "string"
      }
     ],
     "responses": {
@@ -4406,6 +4441,13 @@
       "schema": {
        "$ref": "#/definitions/postableSilence"
       }
+     },
+     {
+      "description": "DatasoureUID should be the datasource UID identifier",
+      "in": "path",
+      "name": "DatasourceUID",
+      "required": true,
+      "type": "string"
      }
     ],
     "responses": {
@@ -4568,6 +4610,13 @@
       "schema": {
        "$ref": "#/definitions/TestReceiversConfigBodyParams"
       }
+     },
+     {
+      "description": "DatasoureUID should be the datasource UID identifier",
+      "in": "path",
+      "name": "DatasourceUID",
+      "required": true,
+      "type": "string"
      }
     ],
     "responses": {
