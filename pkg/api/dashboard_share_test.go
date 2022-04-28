@@ -4,20 +4,15 @@ import (
 	"fmt"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"strings"
 	"testing"
 )
-
-// create test
-// create http server
-// post req to save dashboard config
-// assert 404 when no feature flag
 
 func TestReturns404WhenFeatureNotEnabled(t *testing.T) {
 	sc := setupHTTPServerWithMockDb(t, false, false, []string{featuremgmt.FlagPublicDashboards})
@@ -33,14 +28,11 @@ func TestReturns404WhenFeatureNotEnabled(t *testing.T) {
 		&fakeOAuthTokenService{},
 	)
 
-	sc.hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards, false)
-	dashboardUid := "1"
-
 	t.Run("get 404 when feature flag off", func(t *testing.T) {
 		response := callAPI(
 			sc.server,
 			http.MethodPost,
-			fmt.Sprintf("/api/dashboards/uid/%s/sharing", dashboardUid),
+			fmt.Sprintf("/api/dashboards/uid/1/sharing"),
 			strings.NewReader("{ isPublic: true }"),
 			t,
 		)
@@ -50,7 +42,6 @@ func TestReturns404WhenFeatureNotEnabled(t *testing.T) {
 
 func TestReturnsSuccessWhenFeatureEnabledAndSetsPublicFlagOnDashboard(t *testing.T) {
 	sc := setupHTTPServerWithMockDb(t, false, false, []string{featuremgmt.FlagPublicDashboards})
-
 	setInitCtxSignedInViewer(sc.initCtx)
 	sc.hs.queryDataService = query.ProvideService(
 		nil,
@@ -63,17 +54,11 @@ func TestReturnsSuccessWhenFeatureEnabledAndSetsPublicFlagOnDashboard(t *testing
 	)
 
 	sc.hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards, true)
-	mockDb := sc.hs.SQLStore.(*mockstore.SQLStoreMock)
-	dashboardJson, _ := simplejson.NewFromReader(strings.NewReader(""))
+	sc.hs.dashboardService = &dashboards.FakeDashboardService{
+		SaveDashboardSharingConfigResult: &models.DashboardSharingConfig{IsPublic: true},
+	}
 
 	t.Run("get 200 when feature flag on and public flag set on dashboard", func(t *testing.T) {
-		mockDb.ExpectedDashboard = &models.Dashboard{
-			Uid:   "1",
-			OrgId: testOrgID,
-			Data:  dashboardJson,
-		}
-		mockDb.ExpectedError = nil
-
 		response := callAPI(
 			sc.server,
 			http.MethodPost,
@@ -82,10 +67,9 @@ func TestReturnsSuccessWhenFeatureEnabledAndSetsPublicFlagOnDashboard(t *testing
 			t,
 		)
 
-		fmt.Println(response.Body)
-
 		assert.Equal(t, http.StatusOK, response.Code)
-		//respJSON, _ := simplejson.NewJson(response.Body.Bytes())
-		//assert.Equal(t, "true", respJSON.Get("isPublic"))
+		respJSON, _ := simplejson.NewJson(response.Body.Bytes())
+		val, _ := respJSON.Get("isPublic").Bool()
+		assert.Equal(t, true, val)
 	})
 }
