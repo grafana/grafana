@@ -31,8 +31,8 @@ const ResourcePicker = ({
 }: ResourcePickerProps) => {
   const styles = useStyles2(getStyles);
 
-  type LoadingStatus = 'NotStarted' | 'Started' | 'Done';
-  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>('NotStarted');
+  type Status = 'NeedsRefresh' | 'Loading' | 'Done';
+  const [status, setStatus] = useState<Status>('NeedsRefresh');
   const [rows, setRows] = useState<ResourceRowGroup>([]);
   const [internalSelectedURI, setInternalSelectedURI] = useState<string | undefined>(resourceURI);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
@@ -43,24 +43,22 @@ const ResourcePicker = ({
     setInternalSelectedURI(resourceURI);
   }, [resourceURI]);
 
-  // Request initial data on first mount
   useEffect(() => {
-    if (loadingStatus === 'NotStarted') {
+    if (status === 'NeedsRefresh') {
       const loadInitialData = async () => {
         try {
-          setLoadingStatus('Started');
+          setStatus('Loading');
           const resources = await resourcePickerData.fetchInitialRows(internalSelectedURI || '');
           setRows(resources);
-          setLoadingStatus('Done');
         } catch (error) {
-          setLoadingStatus('Done');
           setErrorMessage(messageFromError(error));
         }
+        setStatus('Done');
       };
 
       loadInitialData();
     }
-  }, [resourcePickerData, internalSelectedURI, loadingStatus]);
+  }, [resourcePickerData, internalSelectedURI, status]);
 
   // Map the selected item into an array of rows
   const selectedResourceRows = useMemo(() => {
@@ -109,19 +107,19 @@ const ResourcePicker = ({
   const handleSearch = useCallback(
     async (searchWord: string) => {
       if (!searchWord) {
-        setLoadingStatus('NotStarted');
+        setStatus('NeedsRefresh');
         return;
       }
       try {
-        setLoadingStatus('Started');
+        setStatus('Loading');
         const searchResults = await resourcePickerData.search(searchWord, selectableEntryTypes);
         setRows(searchResults);
       } catch (err) {
         setErrorMessage(messageFromError(err));
       }
-      setLoadingStatus('Done');
+      setStatus('Done');
     },
-    [resourcePickerData, setRows, setErrorMessage, setLoadingStatus, selectableEntryTypes]
+    [resourcePickerData, setRows, setErrorMessage, setStatus, selectableEntryTypes]
   );
 
   return (
@@ -143,19 +141,19 @@ const ResourcePicker = ({
       <div className={styles.tableScroller}>
         <table className={styles.table}>
           <tbody>
-            {loadingStatus === 'Started' && (
+            {status === 'Loading' && (
               <tr className={cx(styles.row)}>
                 <td className={styles.cell}>
                   <LoadingPlaceholder text={'Loading...'} />
                 </td>
               </tr>
             )}
-            {loadingStatus === 'Done' && rows.length === 0 && (
+            {status === 'Done' && rows.length === 0 && (
               <tr className={cx(styles.row)}>
                 <td className={styles.cell}>No resources found</td>
               </tr>
             )}
-            {loadingStatus === 'Done' &&
+            {status === 'Done' &&
               rows.map((row) => (
                 <NestedRow
                   key={row.uri}
