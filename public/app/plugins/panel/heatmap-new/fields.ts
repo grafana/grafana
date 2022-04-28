@@ -13,11 +13,13 @@ import {
   ArrayVector,
   incrRoundUp,
   incrRoundDn,
+  PanelData,
 } from '@grafana/data';
 import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
-import { getHeatmapFields } from './utils';
+import { quantizeScheme } from './palettes';
+import { findDataFramesInPanelData, findExemplarFrameInPanelData, getDataMapping, getHeatmapFields } from './utils';
 
 export const enum BucketLayout {
   le = 'le',
@@ -79,6 +81,34 @@ export function calculatUsingExistingHeatmap(frame: DataFrame, reference: Heatma
   }
 
   return clone;
+}
+
+export function findAndPrepareHeatmapData(
+  data: PanelData,
+  options: PanelOptions,
+  theme: GrafanaTheme2
+): [HeatmapData, Array<number[] | null>, HeatmapData | undefined, Array<number[] | null>, string[]] {
+  let exemplars: HeatmapData | undefined = undefined;
+  let exemplarPalette: string[] = [];
+  const infoFrame = findDataFramesInPanelData(data);
+  const info = prepareHeatmapData(infoFrame!, options, theme);
+  const infoMapping = getDataMapping(info, infoFrame?.[0]!);
+  const exemplarsFrame: DataFrame | undefined = findExemplarFrameInPanelData(data);
+  let exemplarMapping: Array<number[] | null> = [null];
+  if (exemplarsFrame && info) {
+    exemplars = calculatUsingExistingHeatmap(exemplarsFrame, info);
+    // Use the mapping/geometry from the data heatmap
+    exemplarMapping = getDataMapping(exemplars, exemplarsFrame);
+    const countMax = Math.max(...info.heatmap?.fields?.[2]?.values.toArray()!);
+    exemplarPalette = quantizeScheme(
+      {
+        ...options.color,
+        steps: countMax,
+      },
+      theme
+    );
+  }
+  return [info, infoMapping, exemplars, exemplarMapping, exemplarPalette];
 }
 
 export function prepareHeatmapData(

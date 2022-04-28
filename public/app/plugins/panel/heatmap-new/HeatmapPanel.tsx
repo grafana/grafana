@@ -7,7 +7,7 @@ import { Portal, UPlotChart, useStyles2, useTheme2, VizLayout, LegendDisplayMode
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 
 import { HeatmapHoverView } from './HeatmapHoverView';
-import { HeatmapData, prepareHeatmapData, calculatUsingExistingHeatmap } from './fields';
+import { HeatmapData, prepareHeatmapData, calculatUsingExistingHeatmap, findAndPrepareHeatmapData } from './fields';
 import { ExemplarTab } from './hovertabs/ExemplarTab';
 import { HeatmapTab } from './hovertabs/HeatmapTab';
 import { PanelOptions } from './models.gen';
@@ -43,33 +43,12 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
 
-  const [info, infoMapping, exemplars, exemplarMapping, exemplarPalette] = useMemo(() => {
-    let exemplars: HeatmapData | undefined = undefined;
-    let exemplarPalette: string[] = [];
-    let exemplarOffset = 0;
-    const infoFrame = findDataFramesInPanelData(data);
-    const info = prepareHeatmapData(infoFrame!, options, theme);
-    const infoMapping = getDataMapping(info, infoFrame?.[0]!);
-    const exemplarsFrame: DataFrame | undefined = findExemplarFrameInPanelData(data);
-    let exemplarMapping: Array<number[] | null> = [null];
-    if (exemplarsFrame && info) {
-      exemplars = calculatUsingExistingHeatmap(exemplarsFrame, info);
-      // Use the mapping/geometry from the data heatmap
-      exemplarMapping = getDataMapping(exemplars, exemplarsFrame);
-      const countMax = Math.max(...info.heatmap?.fields?.[2]?.values.toArray()!);
-      console.log('countMax', countMax);
-      exemplarPalette = quantizeScheme(
-        {
-          ...options.color,
-          steps: countMax,
-        },
-        theme
-      );
-    }
-    return [info, infoMapping, exemplars, exemplarMapping, exemplarPalette, exemplarOffset];
-  }, [data, options, theme]);
+  const [info, infoMapping, exemplars, exemplarMapping, exemplarPalette] = useMemo(
+    () => findAndPrepareHeatmapData(data, options, theme),
+    [data, options, theme]
+  );
 
-  const facets = useMemo(() => [null, info.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
+  const facets = useMemo(() => [null, info?.heatmap?.fields.map((f) => f.values.toArray())], [info.heatmap]);
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
   const [hover, setHover] = useState<HeatmapHoverEvent | undefined>(undefined);
