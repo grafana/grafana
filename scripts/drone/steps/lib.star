@@ -1187,7 +1187,6 @@ def restore_cache_step():
             'cache_key': "test123",
             'mount': [
                 'yarncache',
-                'node_modules',
             ],
         },
     }
@@ -1205,7 +1204,6 @@ def rebuild_cache_step():
             'rebuild': 'true',
             'mount': [
                 'yarncache',
-                'node_modules',
             ],
         },
         'depends_on': [
