@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
@@ -152,7 +153,7 @@ func (gr *ReduceCommand) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gr *ReduceCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (gr *ReduceCommand) Execute(_ context.Context, vars mathexp.Vars) (mathexp.Results, error) {
 	newRes := mathexp.Results{}
 	for _, val := range vars[gr.VarToReduce].Values {
 		switch v := val.(type) {
@@ -163,7 +164,13 @@ func (gr *ReduceCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathex
 			}
 			newRes.Values = append(newRes.Values, num)
 		case mathexp.Number: // if incoming vars is just a number, any reduce op is just a noop, add it as it is
-			newRes.Values = append(newRes.Values, v)
+			copyV := mathexp.NewNumber(gr.refID, v.GetLabels())
+			copyV.SetValue(v.GetFloat64Value())
+			copyV.AddNotice(data.Notice{
+				Severity: data.NoticeSeverityWarning,
+				Text:     fmt.Sprintf("Query or expression %s produced result of type 'single number'. Reduce operation is not needed.", gr.VarToReduce),
+			})
+			newRes.Values = append(newRes.Values, copyV)
 		default:
 			return newRes, fmt.Errorf("can only reduce type series, got type %v", val.Type())
 		}
