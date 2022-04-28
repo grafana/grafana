@@ -195,12 +195,7 @@ func TestSendEmailAsync(t *testing.T) {
 		code := match[len("code="):]
 
 		// verify code
-		bus.AddHandler(func(ctx context.Context, query *models.GetUserByLoginQuery) error {
-			query.Result = &user
-			return nil
-		})
 		query := models.ValidateResetPasswordCodeQuery{Code: code}
-
 		getUserByLogin := func(ctx context.Context, login string) (*models.User, error) {
 			query := models.GetUserByLoginQuery{LoginOrEmail: login}
 			query.Result = &user
