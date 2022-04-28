@@ -50,19 +50,6 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 		return response.Error(http.StatusNotFound, "Plugin not found", err)
 	}
 
-	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
-		return response.Error(http.StatusBadRequest, "Plugin functionality not implemented", err) // or 404
-	}
-
-	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
-		return response.Error(http.StatusBadGateway, "Plugin unavailable", err)
-	}
-
-	var failedQuery *backendplugin.ErrFailedQuery
-	if errors.As(err, &failedQuery) {
-		return response.Error(http.StatusBadGateway, "Data source query failed", err)
-	}
-
 	return response.Error(http.StatusInternalServerError, "Query data error", err)
 }
 
