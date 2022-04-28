@@ -60,13 +60,3 @@ type GetApiKeyByIdQuery struct {
 	ApiKeyId int64
 	Result   *ApiKey
 }
-
-// ------------------------
-// DTO & Projections
-
-type ApiKeyDTO struct {
-	Id         int64      `json:"id"`
-	Name       string     `json:"name"`
-	Role       RoleType   `json:"role"`
-	Expiration *time.Time `json:"expiration,omitempty"`
-}

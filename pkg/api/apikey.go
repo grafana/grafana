@@ -21,14 +21,14 @@ func (hs *HTTPServer) GetAPIKeys(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to list api keys", err)
 	}
 
-	result := make([]*models.ApiKeyDTO, len(query.Result))
+	result := make([]*dtos.ApiKeyDTO, len(query.Result))
 	for i, t := range query.Result {
 		var expiration *time.Time = nil
 		if t.Expires != nil {
 			v := time.Unix(*t.Expires, 0)
 			expiration = &v
 		}
-		result[i] = &models.ApiKeyDTO{
+		result[i] = &dtos.ApiKeyDTO{
 			Id:         t.Id,
 			Name:       t.Name,
 			Role:       t.Role,
