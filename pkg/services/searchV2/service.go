@@ -3,12 +3,14 @@ package searchV2
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -25,17 +27,20 @@ type StandardSearchService struct {
 	cfg  *setting.Cfg
 	sql  *sqlstore.SQLStore
 	auth FutureAuthService // eventually injected from elsewhere
+	ac   accesscontrol.AccessControl
 
 	logger         log.Logger
 	dashboardIndex *dashboardIndex
 }
 
-func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService) SearchService {
+func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl) SearchService {
 	return &StandardSearchService{
 		cfg: cfg,
 		sql: sql,
+		ac:  ac,
 		auth: &simpleSQLAuthService{
 			sql: sql,
+			ac:  ac,
 		},
 		dashboardIndex: newDashboardIndex(newSQLDashboardLoader(sql), entityEventStore),
 		logger:         log.New("searchV2"),
@@ -53,6 +58,53 @@ func (s *StandardSearchService) Run(ctx context.Context) error {
 	return s.dashboardIndex.run(ctx)
 }
 
+func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backend.User, orgId int64) (*models.SignedInUser, error) {
+	// TODO: get user & user's permissions from the request context
+
+	getSignedInUserQuery := &models.GetSignedInUserQuery{
+		Login: backendUser.Login,
+		Email: backendUser.Email,
+		OrgId: orgId,
+	}
+
+	err := s.sql.GetSignedInUser(ctx, getSignedInUserQuery)
+	if err != nil {
+		s.logger.Error("Error while retrieving user", "error", err, "email", backendUser.Email)
+		return nil, errors.New("auth error")
+	}
+
+	if getSignedInUserQuery.Result == nil {
+		s.logger.Error("No user found", "email", backendUser.Email)
+		return nil, errors.New("auth error")
+	}
+
+	user := getSignedInUserQuery.Result
+
+	if s.ac.IsDisabled() {
+		return user, nil
+	}
+
+	if user.Permissions == nil {
+		user.Permissions = make(map[int64]map[string][]string)
+	}
+
+	if _, ok := user.Permissions[orgId]; ok {
+		// permissions as part of the `s.sql.GetSignedInUser` query - return early
+		return user, nil
+	}
+
+	// TODO: ensure this is cached
+	permissions, err := s.ac.GetUserPermissions(ctx, user,
+		accesscontrol.Options{ReloadCache: false})
+	if err != nil {
+		s.logger.Error("failed to retrieve user permissions", "error", err, "email", backendUser.Email)
+		return nil, errors.New("auth error")
+	}
+
+	user.Permissions[orgId] = accesscontrol.GroupScopesByAction(permissions)
+	return user, nil
+}
+
 func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, _ DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
@@ -62,27 +114,13 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	// TODO - get user from context?
-	getSignedInUserQuery := &models.GetSignedInUserQuery{
-		Login: user.Login,
-		Email: user.Email,
-		OrgId: orgId,
-	}
-
-	err = s.sql.GetSignedInUser(ctx, getSignedInUserQuery)
+	signedInUser, err := s.getUser(ctx, user, orgId)
 	if err != nil {
-		s.logger.Error("Error while retrieving user", "error", err)
-		rsp.Error = fmt.Errorf("auth error")
+		rsp.Error = err
 		return rsp
 	}
 
-	if getSignedInUserQuery.Result == nil {
-		s.logger.Error("No user found", "email", user.Email)
-		rsp.Error = fmt.Errorf("auth error")
-		return rsp
-	}
-
-	dashboards, err = s.applyAuthFilter(getSignedInUserQuery.Result, dashboards)
+	dashboards, err = s.applyAuthFilter(signedInUser, dashboards)
 	if err != nil {
 		rsp.Error = err
 		return rsp
