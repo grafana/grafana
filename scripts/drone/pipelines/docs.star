@@ -69,6 +69,7 @@ def trigger_docs():
                 '*.md',
                 'docs/**',
                 'packages/**',
+                'latest.json',
             ],
         },
     }

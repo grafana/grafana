@@ -57,6 +57,7 @@ trigger:
     exclude:
     - '*.md'
     - docs/**
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -144,6 +145,7 @@ trigger:
     exclude:
     - '*.md'
     - docs/**
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -380,6 +382,7 @@ trigger:
     exclude:
     - '*.md'
     - docs/**
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -463,6 +466,7 @@ trigger:
     exclude:
     - '*.md'
     - docs/**
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -558,6 +562,7 @@ trigger:
     - '*.md'
     - docs/**
     - packages/**
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -4609,6 +4614,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 616a95611b439ac35d5c059cca803728b8ae21b230240fe6a459fbcd31f8d567
+hmac: 6be0c058bd66d0282afe37bd5af923f345ca71ec0fd874514ae08f759e23adfd
 
 ...
