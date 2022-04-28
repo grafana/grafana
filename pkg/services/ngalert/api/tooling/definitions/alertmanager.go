@@ -239,7 +239,6 @@ type AlertManagerNotReady struct{}
 type MultiStatus struct{}
 
 // swagger:parameters RoutePostTestReceivers RoutePostTestGrafanaReceivers
-// swagger:parameters RoutePostTestReceivers
 type TestReceiversConfigParams struct {
 	// in:body
 	Body TestReceiversConfigBodyParams
@@ -281,14 +280,12 @@ type TestReceiverConfigResult struct {
 }
 
 // swagger:parameters RouteCreateSilence RouteCreateGrafanaSilence
-// swagger:parameters RouteCreateSilence
 type CreateSilenceParams struct {
 	// in:body
 	Silence PostableSilence
 }
 
 // swagger:parameters RouteGetSilence RouteDeleteSilence RouteGetGrafanaSilence RouteDeleteGrafanaSilence
-// swagger:parameters RouteGetSilence RouteDeleteSilence
 type GetDeleteSilenceParams struct {
 	// in:path
 	SilenceId string
@@ -450,7 +447,7 @@ type BodyAlertingConfig struct {
 // testing routes
 // swagger:parameters RouteTestReceiverConfig RouteTestRuleConfig
 type DatasourceIDReference struct {
-	// DatasoureID should be the numeric datasource identifier
+	// DatasourceID should be the numeric datasource identifier
 	// in:path
 	DatasourceID int
 }
