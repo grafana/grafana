@@ -66,6 +66,7 @@ def trigger_docs():
         ],
         'paths': {
             'include': [
+                '*.md',
                 'docs/**',
                 'packages/**',
             ],
