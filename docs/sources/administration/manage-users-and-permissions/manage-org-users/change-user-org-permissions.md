@@ -1,6 +1,6 @@
 +++
 title = "Change a user's organization permissions"
-aliases = ["docs/sources/administration/manage-users-and-permissions/manage-org-users/change-user-org-permissions.md"]
+aliases = ["docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/change-user-org-permissions.md"]
 weight = 30
 +++
 

@@ -5,7 +5,7 @@ import {
   setTimeGrain as setMetricsTimeGrain,
 } from '../components/MetricsQueryEditor/setQueryValue';
 import TimegrainConverter from '../time_grain_converter';
-import { AzureMonitorQuery, AzureQueryType, DeprecatedAzureQueryType } from '../types';
+import { AzureMonitorQuery, AzureQueryType } from '../types';
 
 const OLD_DEFAULT_DROPDOWN_VALUE = 'select';
 
@@ -20,7 +20,6 @@ export default function migrateQuery(query: AzureMonitorQuery): AzureMonitorQuer
   workingQuery = migrateTimeGrains(workingQuery);
   workingQuery = migrateLogAnalyticsToFromTimes(workingQuery);
   workingQuery = migrateToDefaultNamespace(workingQuery);
-  workingQuery = migrateApplicationInsightsDimensions(workingQuery);
   workingQuery = migrateMetricsDimensionFilters(workingQuery);
   workingQuery = migrateResourceUri(workingQuery);
 
@@ -38,33 +37,6 @@ function migrateTimeGrains(query: AzureMonitorQuery): AzureMonitorQuery {
     workingQuery = setMetricsTimeGrain(workingQuery, newTimeGrain);
 
     delete workingQuery.azureMonitor?.timeGrainUnit;
-  }
-
-  if (workingQuery.appInsights?.timeGrainUnit && workingQuery.appInsights.timeGrain !== 'auto') {
-    const appInsights = {
-      ...workingQuery.appInsights,
-    };
-
-    if (workingQuery.appInsights.timeGrainCount) {
-      appInsights.timeGrain = TimegrainConverter.createISO8601Duration(
-        workingQuery.appInsights.timeGrainCount,
-        workingQuery.appInsights.timeGrainUnit
-      );
-    } else {
-      appInsights.timeGrainCount = workingQuery.appInsights.timeGrain;
-
-      if (workingQuery.appInsights.timeGrain) {
-        appInsights.timeGrain = TimegrainConverter.createISO8601Duration(
-          workingQuery.appInsights.timeGrain,
-          workingQuery.appInsights.timeGrainUnit
-        );
-      }
-    }
-
-    workingQuery = {
-      ...workingQuery,
-      appInsights: appInsights,
-    };
   }
 
   return workingQuery;
@@ -100,22 +72,6 @@ function migrateToDefaultNamespace(query: AzureMonitorQuery): AzureMonitorQuery 
       azureMonitor: {
         ...query.azureMonitor,
         metricNamespace: query.azureMonitor.metricDefinition,
-      },
-    };
-  }
-
-  return query;
-}
-
-function migrateApplicationInsightsDimensions(query: AzureMonitorQuery): AzureMonitorQuery {
-  const dimension = query?.appInsights?.dimension as unknown;
-
-  if (dimension && typeof dimension === 'string') {
-    return {
-      ...query,
-      appInsights: {
-        ...query.appInsights,
-        dimension: [dimension],
       },
     };
   }
@@ -165,18 +121,6 @@ function migrateResourceUri(query: AzureMonitorQuery): AzureMonitorQuery {
 // they should also do all the other migrations...
 export function datasourceMigrations(query: AzureMonitorQuery): AzureMonitorQuery {
   let workingQuery = query;
-
-  if (workingQuery.queryType === DeprecatedAzureQueryType.ApplicationInsights && workingQuery.appInsights?.rawQuery) {
-    workingQuery = {
-      ...workingQuery,
-      queryType: DeprecatedAzureQueryType.InsightsAnalytics,
-      appInsights: undefined,
-      insightsAnalytics: {
-        query: workingQuery.appInsights.rawQuery,
-        resultFormat: 'time_series',
-      },
-    };
-  }
 
   if (!workingQuery.queryType) {
     workingQuery = {

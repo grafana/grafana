@@ -69,6 +69,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
   nestedRowCheckbox: css({
     zIndex: 0,
   }),
+
+  selectionFooter: css({
+    position: 'sticky',
+    bottom: 0,
+    background: theme.colors.background.primary,
+    paddingTop: theme.spacing(2),
+  }),
+
+  loadingWrapper: css({
+    textAlign: 'center',
+    paddingTop: theme.spacing(2),
+    paddingBottom: theme.spacing(2),
+    color: theme.colors.text.secondary,
+  }),
 });
 
 export default getStyles;

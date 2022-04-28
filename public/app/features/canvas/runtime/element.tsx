@@ -42,12 +42,6 @@ export class ElementState implements LayerElement {
       horizontal: HorizontalConstraint.Left,
     };
     options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0 };
-    this.validatePlacement();
-    this.sizeStyle = {
-      ...options.placement,
-      position: 'absolute',
-    };
-
     const scene = this.getScene();
     if (!options.name) {
       const newName = scene?.getNextElementName();
@@ -61,7 +55,6 @@ export class ElementState implements LayerElement {
     while (trav) {
       if (trav.isRoot()) {
         return trav.scene;
-        break;
       }
       trav = trav.parent;
     }
@@ -73,48 +66,108 @@ export class ElementState implements LayerElement {
     return this.options.name;
   }
 
-  validatePlacement() {
-    const { constraint, placement } = this.options;
+  /** Use the configured options to update CSS style properties directly on the wrapper div **/
+  applyLayoutStylesToDiv() {
+    const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
-    const updatedPlacement = placement ?? ({} as Placement);
+    const placement = this.options.placement ?? ({} as Placement);
+
+    const style: React.CSSProperties = {
+      position: 'absolute',
+    };
+
+    const translate = ['0px', '0px'];
 
     switch (vertical) {
       case VerticalConstraint.Top:
-        updatedPlacement.top = updatedPlacement.top ?? 0;
-        updatedPlacement.height = updatedPlacement.height ?? 100;
-        delete updatedPlacement.bottom;
+        placement.top = placement.top ?? 0;
+        placement.height = placement.height ?? 100;
+        style.top = `${placement.top}px`;
+        style.height = `${placement.height}px`;
+        delete placement.bottom;
         break;
       case VerticalConstraint.Bottom:
-        updatedPlacement.bottom = updatedPlacement.bottom ?? 0;
-        updatedPlacement.height = updatedPlacement.height ?? 100;
-        delete updatedPlacement.top;
+        placement.bottom = placement.bottom ?? 0;
+        placement.height = placement.height ?? 100;
+        style.bottom = `${placement.bottom}px`;
+        style.height = `${placement.height}px`;
+        delete placement.top;
         break;
       case VerticalConstraint.TopBottom:
-        updatedPlacement.top = updatedPlacement.top ?? 0;
-        updatedPlacement.bottom = updatedPlacement.bottom ?? 0;
-        delete updatedPlacement.height;
+        placement.top = placement.top ?? 0;
+        placement.bottom = placement.bottom ?? 0;
+        style.top = `${placement.top}px`;
+        style.bottom = `${placement.bottom}px`;
+        delete placement.height;
+        break;
+      case VerticalConstraint.Center:
+        placement.top = placement.top ?? 0;
+        placement.height = placement.height ?? 100;
+        translate[1] = '-50%';
+        style.top = `calc(50% - ${placement.top}px)`;
+        style.height = `${placement.height}px`;
+        delete placement.bottom;
+        break;
+      case VerticalConstraint.Scale:
+        placement.top = placement.top ?? 0;
+        placement.bottom = placement.bottom ?? 0;
+        style.top = `${placement.top}%`;
+        style.bottom = `${placement.bottom}%`;
+        delete placement.height;
         break;
     }
 
     switch (horizontal) {
       case HorizontalConstraint.Left:
-        updatedPlacement.left = updatedPlacement.left ?? 0;
-        updatedPlacement.width = updatedPlacement.width ?? 100;
-        delete updatedPlacement.right;
+        placement.left = placement.left ?? 0;
+        placement.width = placement.width ?? 100;
+        style.left = `${placement.left}px`;
+        style.width = `${placement.width}px`;
+        delete placement.right;
         break;
       case HorizontalConstraint.Right:
-        updatedPlacement.right = updatedPlacement.right ?? 0;
-        updatedPlacement.width = updatedPlacement.width ?? 100;
-        delete updatedPlacement.left;
+        placement.right = placement.right ?? 0;
+        placement.width = placement.width ?? 100;
+        style.right = `${placement.right}px`;
+        style.width = `${placement.width}px`;
+        delete placement.left;
         break;
       case HorizontalConstraint.LeftRight:
-        updatedPlacement.left = updatedPlacement.left ?? 0;
-        updatedPlacement.right = updatedPlacement.right ?? 0;
-        delete updatedPlacement.width;
+        placement.left = placement.left ?? 0;
+        placement.right = placement.right ?? 0;
+        style.left = `${placement.left}px`;
+        style.right = `${placement.right}px`;
+        delete placement.width;
+        break;
+      case HorizontalConstraint.Center:
+        placement.left = placement.left ?? 0;
+        placement.width = placement.width ?? 100;
+        translate[0] = '-50%';
+        style.left = `calc(50% - ${placement.left}px)`;
+        style.width = `${placement.width}px`;
+        delete placement.right;
+        break;
+      case HorizontalConstraint.Scale:
+        placement.left = placement.left ?? 0;
+        placement.right = placement.right ?? 0;
+        style.left = `${placement.left}%`;
+        style.right = `${placement.right}%`;
+        delete placement.width;
         break;
     }
 
-    this.options.placement = updatedPlacement;
+    style.transform = `translate(${translate[0]}, ${translate[1]})`;
+    this.options.placement = placement;
+    this.sizeStyle = style;
+    if (this.div) {
+      for (const key in this.sizeStyle) {
+        this.div.style[key as any] = (this.sizeStyle as any)[key];
+      }
+
+      for (const key in this.dataStyle) {
+        this.div.style[key as any] = (this.dataStyle as any)[key];
+      }
+    }
   }
 
   setPlacementFromConstraint() {
@@ -151,6 +204,17 @@ export class ElementState implements LayerElement {
         placement.top = relativeTop;
         placement.bottom = relativeBottom;
         break;
+      case VerticalConstraint.Center:
+        const elementCenter = elementContainer ? relativeTop + height / 2 : 0;
+        const parentCenter = parentContainer ? parentContainer.height / 2 : 0;
+        const distanceFromCenter = parentCenter - elementCenter;
+        placement.top = distanceFromCenter;
+        placement.height = height;
+        break;
+      case VerticalConstraint.Scale:
+        placement.top = (relativeTop / (parentContainer?.height ?? height)) * 100;
+        placement.bottom = (relativeBottom / (parentContainer?.height ?? height)) * 100;
+        break;
     }
 
     switch (horizontal) {
@@ -166,13 +230,22 @@ export class ElementState implements LayerElement {
         placement.left = relativeLeft;
         placement.right = relativeRight;
         break;
+      case HorizontalConstraint.Center:
+        const elementCenter = elementContainer ? relativeLeft + width / 2 : 0;
+        const parentCenter = parentContainer ? parentContainer.width / 2 : 0;
+        const distanceFromCenter = parentCenter - elementCenter;
+        placement.left = distanceFromCenter;
+        placement.width = width;
+        break;
+      case HorizontalConstraint.Scale:
+        placement.left = (relativeLeft / (parentContainer?.width ?? width)) * 100;
+        placement.right = (relativeRight / (parentContainer?.width ?? width)) * 100;
+        break;
     }
 
     this.options.placement = placement;
-    this.sizeStyle = {
-      ...this.options.placement,
-      position: 'absolute',
-    };
+
+    this.applyLayoutStylesToDiv();
     this.revId++;
   }
 
@@ -273,45 +346,11 @@ export class ElementState implements LayerElement {
 
   initElement = (target: HTMLDivElement) => {
     this.div = target;
+    this.applyLayoutStylesToDiv();
   };
 
   applyDrag = (event: OnDrag) => {
-    const { options } = this;
-    const { placement, constraint } = options;
-    const { vertical, horizontal } = constraint ?? {};
-
-    const deltaX = event.delta[0];
-    const deltaY = event.delta[1];
-
-    const style = event.target.style;
-
-    const isConstrainedTop = vertical === VerticalConstraint.Top || vertical === VerticalConstraint.TopBottom;
-    const isConstrainedBottom = vertical === VerticalConstraint.Bottom || vertical === VerticalConstraint.TopBottom;
-    const isConstrainedLeft = horizontal === HorizontalConstraint.Left || horizontal === HorizontalConstraint.LeftRight;
-    const isConstrainedRight =
-      horizontal === HorizontalConstraint.Right || horizontal === HorizontalConstraint.LeftRight;
-
-    if (isConstrainedTop) {
-      placement!.top! += deltaY;
-      style.top = `${placement!.top}px`;
-    }
-
-    if (isConstrainedBottom) {
-      placement!.bottom! -= deltaY;
-      style.bottom = `${placement!.bottom}px`;
-    }
-
-    if (isConstrainedLeft) {
-      placement!.left! += deltaX;
-      style.left = `${placement!.left}px`;
-    }
-
-    if (isConstrainedRight) {
-      placement!.right! -= deltaX;
-      style.right = `${placement!.right}px`;
-    }
-
-    // TODO: Center + Scale
+    event.target.style.transform = event.transform;
   };
 
   // kinda like:
@@ -380,14 +419,12 @@ export class ElementState implements LayerElement {
         style.height = `${placement!.height}px`;
       }
     }
-
-    // TODO: Center + Scale
   };
 
   render() {
     const { item } = this;
     return (
-      <div key={`${this.UID}`} style={{ ...this.sizeStyle, ...this.dataStyle }} ref={this.initElement}>
+      <div key={this.UID} ref={this.initElement}>
         <item.display key={`${this.UID}/${this.revId}`} config={this.options.config} data={this.data} />
       </div>
     );

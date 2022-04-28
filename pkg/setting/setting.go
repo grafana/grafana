@@ -439,6 +439,8 @@ type Cfg struct {
 
 	// Query history
 	QueryHistoryEnabled bool
+
+	DashboardPreviews DashboardPreviewsSettings
 }
 
 type CommandLineArgs struct {
@@ -1000,6 +1002,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	cfg.readDataSourcesSettings()
+
+	cfg.DashboardPreviews = readDashboardPreviewsSettings(iniFile)
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
