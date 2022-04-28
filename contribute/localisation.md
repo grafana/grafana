@@ -84,6 +84,10 @@ You can include variables, just like regular JSX. Prefer using "simple" variable
 ```jsx
 import { Trans } from '@lingui/macro';
 
+// Bad - translators will see: Hello {0}
+<Trans id="page.greeting">Hello {user.name}!</Trans>;
+
+// Good - translators will see: Hello {userName}
 const userName = user.name;
 <Trans id="page.greeting">Hello {userName}!</Trans>;
 ```
