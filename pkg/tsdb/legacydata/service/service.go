@@ -52,7 +52,6 @@ func (h *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 	// Attach Auth information
 	if oAuthIsOAuthPassThruEnabledFunc(h.oAuthTokenService, ds) {
 		if token := h.oAuthTokenService.GetCurrentOAuthToken(ctx, query.User); token != nil {
-			delete(query.Headers, "Authorization")
 			query.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
 		}
 	}
