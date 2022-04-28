@@ -26,27 +26,16 @@ func NewTemplateService(config AMConfigStore, prov ProvisioningStore, xact Trans
 }
 
 func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) (map[string]string, error) {
-	q := models.GetLatestAlertmanagerConfigurationQuery{
-		OrgID: orgID,
-	}
-	err := t.config.GetLatestAlertmanagerConfiguration(ctx, &q)
-	if err != nil {
-		return nil, err
-	}
-	if q.Result == nil {
-		return nil, fmt.Errorf("no alertmanager configuration present in this org")
-	}
-
-	cfg, err := DeserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
+	revision, err := t.getLastConfiguration(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	if cfg.TemplateFiles == nil {
+	if revision.cfg.TemplateFiles == nil {
 		return map[string]string{}, nil
 	}
 
-	return cfg.TemplateFiles, nil
+	return revision.cfg.TemplateFiles, nil
 }
 
 func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl definitions.MessageTemplate, p models.Provenance) error {
@@ -55,30 +44,21 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
-	q := models.GetLatestAlertmanagerConfigurationQuery{
-		OrgID: orgID,
-	}
-	err = t.config.GetLatestAlertmanagerConfiguration(ctx, &q)
+	revision, err := t.getLastConfiguration(ctx, orgID)
 	if err != nil {
 		return err
 	}
 
-	concurrencyToken := q.Result.ConfigurationHash
-	cfg, err := DeserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
-	if err != nil {
-		return err
-	}
+	revision.cfg.TemplateFiles[tmpl.Name] = tmpl.Template
 
-	cfg.TemplateFiles[tmpl.Name] = tmpl.Template
-
-	serialized, err := SerializeAlertmanagerConfig(*cfg)
+	serialized, err := SerializeAlertmanagerConfig(*revision.cfg)
 	if err != nil {
 		return err
 	}
 	cmd := models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(serialized),
-		ConfigurationVersion:      q.Result.ConfigurationVersion,
-		FetchedConfigurationHash:  concurrencyToken,
+		ConfigurationVersion:      revision.version,
+		FetchedConfigurationHash:  revision.concurrencyToken,
 		Default:                   false,
 		OrgID:                     orgID,
 	}
@@ -98,4 +78,77 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 	}
 
 	return nil
+}
+
+func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, name string) error {
+	revision, err := t.getLastConfiguration(ctx, orgID)
+	if err != nil {
+		return err
+	}
+
+	delete(revision.cfg.TemplateFiles, name)
+
+	serialized, err := SerializeAlertmanagerConfig(*revision.cfg)
+	if err != nil {
+		return err
+	}
+
+	cmd := models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: string(serialized),
+		ConfigurationVersion:      revision.version,
+		FetchedConfigurationHash:  revision.concurrencyToken,
+		Default:                   false,
+		OrgID:                     orgID,
+	}
+	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
+		err = t.config.UpdateAlertmanagerConfiguration(ctx, &cmd)
+		if err != nil {
+			return err
+		}
+		tgt := definitions.MessageTemplate{
+			Name: name,
+		}
+		err = t.prov.DeleteProvenance(ctx, &tgt, orgID)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (t *TemplateService) getLastConfiguration(ctx context.Context, orgID int64) (*cfgRevision, error) {
+	q := models.GetLatestAlertmanagerConfigurationQuery{
+		OrgID: orgID,
+	}
+	err := t.config.GetLatestAlertmanagerConfiguration(ctx, &q)
+	if err != nil {
+		return nil, err
+	}
+
+	if q.Result == nil {
+		return nil, fmt.Errorf("no alertmanager configuration present in this org")
+	}
+
+	concurrencyToken := q.Result.ConfigurationHash
+	cfg, err := DeserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
+	if err != nil {
+		return nil, err
+	}
+
+	return &cfgRevision{
+		cfg:              cfg,
+		concurrencyToken: concurrencyToken,
+		version:          q.Result.ConfigurationVersion,
+	}, nil
+}
+
+type cfgRevision struct {
+	cfg              *definitions.PostableUserConfig
+	concurrencyToken string
+	version          string
 }
