@@ -60,12 +60,16 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 		return response.Error(500, "Failed to get preferences", err)
 	}
 
-	query := models.GetDashboardQuery{Id: preference.HomeDashboardID}
-	err = hs.SQLStore.GetDashboard(ctx, &query)
-	if err != nil {
-		return response.Error(500, "Failed to get preferences", err)
+	var dashboardUID string
+
+	// when homedashboardID is 0, that means it is the default home dashboard, no UID would be returned in the response
+	if preference.HomeDashboardID != 0 {
+		query := models.GetDashboardQuery{Id: preference.HomeDashboardID, OrgId: orgID}
+		err = hs.SQLStore.GetDashboard(ctx, &query)
+		if err == nil {
+			dashboardUID = query.Result.Uid
+		}
 	}
-	dashboardUID := query.Result.Uid
 
 	dto := dtos.Prefs{
 		Theme:            preference.Theme,
@@ -99,7 +103,7 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 
 	dashboardID := dtoCmd.HomeDashboardID
 	if dtoCmd.HomeDashboardUID != nil {
-		query := models.GetDashboardQuery{Uid: *dtoCmd.HomeDashboardUID}
+		query := models.GetDashboardQuery{Uid: *dtoCmd.HomeDashboardUID, OrgId: orgID}
 		err := hs.SQLStore.GetDashboard(ctx, &query)
 		if err != nil {
 			return response.Error(404, "Dashboard not found", err)
@@ -142,7 +146,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
 	dashboardID := dtoCmd.HomeDashboardID
 	if dtoCmd.HomeDashboardUID != nil {
-		query := models.GetDashboardQuery{Uid: *dtoCmd.HomeDashboardUID}
+		query := models.GetDashboardQuery{Uid: *dtoCmd.HomeDashboardUID, OrgId: orgID}
 		err := hs.SQLStore.GetDashboard(ctx, &query)
 		if err != nil {
 			return response.Error(404, "Dashboard not found", err)
