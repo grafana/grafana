@@ -3,18 +3,19 @@ import { get as lodashGet } from 'lodash';
 import React, { SyntheticEvent, useRef, useState, useMemo } from 'react';
 import Draggable from 'react-draggable';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
+import { useObservable } from 'react-use';
 
 import { GrafanaTheme, Dimensions2D, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
-import { IconButton, stylesFactory, usePanelContext, useTheme } from '@grafana/ui';
+import { IconButton, stylesFactory, useTheme } from '@grafana/ui';
 import store from 'app/core/store';
 import { GroupState } from 'app/features/canvas/runtime/group';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
-import { InstanceState } from './CanvasPanel';
+import { InstanceState, activePanelSubject } from './CanvasPanel';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
 
@@ -25,7 +26,8 @@ type Props = {
 const OFFSET = 8;
 
 export const InlineEdit = ({ onClose }: Props) => {
-  const { instanceState } = usePanelContext();
+  const activePanel = useObservable(activePanelSubject);
+  const instanceState = activePanel?.panel.context?.instanceState;
   const theme = useTheme();
   const btnInlineEdit = document.querySelector('[data-btninlineedit]')!.getBoundingClientRect();
   const ref = useRef<HTMLDivElement>(null);
@@ -86,7 +88,6 @@ export const InlineEdit = ({ onClose }: Props) => {
   const saveToStore = (x: number, y: number, width: number, height: number) => {
     store.setObject(inlineEditKey, { x: x, y: y, w: width, h: height });
   };
-
   return (
     <Draggable handle="strong" onStop={onDragStop} position={{ x: placement.x, y: savedPlacement.y }}>
       <Resizable height={measurements.height} width={measurements.width} onResize={onResizeStop}>

@@ -53,6 +53,7 @@ export class Scene {
   div?: HTMLDivElement;
   currentLayer?: GroupState;
   isEditingEnabled?: boolean;
+  skipNextSelectionBroadcast = false;
 
   constructor(cfg: CanvasGroupOptions, enableEditing: boolean, public onSave: (cfg: CanvasGroupOptions) => void) {
     this.root = this.load(cfg, enableEditing);
@@ -151,7 +152,8 @@ export class Scene {
     });
   }
 
-  clearCurrentSelection() {
+  clearCurrentSelection(skipNextSelectionBroadcast = false) {
+    this.skipNextSelectionBroadcast = skipNextSelectionBroadcast;
     let event: MouseEvent = new MouseEvent('click');
     this.selecto?.clickTarget(event, this.div);
   }
@@ -207,6 +209,11 @@ export class Scene {
 
   private updateSelection = (selection: SelectionParams) => {
     this.moveable!.target = selection.targets;
+
+    if (this.skipNextSelectionBroadcast) {
+      this.skipNextSelectionBroadcast = false;
+      return;
+    }
 
     if (selection.group) {
       this.selection.next([selection.group]);
