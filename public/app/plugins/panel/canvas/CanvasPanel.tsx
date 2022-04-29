@@ -31,6 +31,8 @@ export interface SelectionAction {
 
 let canvasInstances: CanvasPanel[] = [];
 let activeCanvasPanel: CanvasPanel | undefined = undefined;
+let isInlineEditOpen = false;
+
 export const activePanelSubject = new ReplaySubject<SelectionAction>(1);
 
 export class CanvasPanel extends Component<Props, State> {
@@ -110,6 +112,7 @@ export class CanvasPanel extends Component<Props, State> {
 
   componentWillUnmount() {
     this.subs.unsubscribe();
+    isInlineEditOpen = false;
   }
 
   // NOTE, all changes to the scene flow through this function
@@ -164,14 +167,29 @@ export class CanvasPanel extends Component<Props, State> {
     return changed;
   }
 
-  inlineEditButtonClick = (open: boolean) => {
+  inlineEditButtonClick = () => {
+    if (isInlineEditOpen) {
+      this.setActivePanel();
+      return;
+    }
+
+    this.setActivePanel();
+    this.setState({ openInlineEdit: true });
+    isInlineEditOpen = true;
+  };
+
+  inlineEditButtonClose = () => {
+    this.setState({ openInlineEdit: false });
+    isInlineEditOpen = false;
+  };
+
+  setActivePanel = () => {
     activeCanvasPanel = this;
     activePanelSubject.next({ panel: this });
-    this.setState({ openInlineEdit: open });
   };
 
   renderInlineEdit = () => {
-    return <InlineEdit onClose={() => this.inlineEditButtonClick(false)} />;
+    return <InlineEdit onClose={() => this.inlineEditButtonClose()} />;
   };
 
   render() {
@@ -186,7 +204,7 @@ export class CanvasPanel extends Component<Props, State> {
                 variant="secondary"
                 icon="edit"
                 data-btninlineedit={this.props.id}
-                onClick={() => this.inlineEditButtonClick(true)}
+                onClick={this.inlineEditButtonClick}
               />
             </div>
             {this.state.openInlineEdit && this.renderInlineEdit()}
