@@ -158,16 +158,25 @@ func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dashb
 func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.Reader, orgId int64, q DashboardQuery) *backend.DataResponse {
 	response := &backend.DataResponse{}
 
+	doExplain := false
+	perm := newPermissionFilter("ryan", "read").SetField("_id")
+
 	var req bluge.SearchRequest
 	if q.Query == "*" { // Match everything
-		req = bluge.NewAllMatches(bluge.NewMatchAllQuery())
+		req = bluge.NewAllMatches(bluge.NewBooleanQuery().
+			AddShould(bluge.NewMatchAllQuery()).
+			AddMust(perm))
 	} else {
 		q := bluge.NewBooleanQuery().
-			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField("name").SetBoost(6)).
-			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField("description").SetBoost(3))
+			AddMust(bluge.NewBooleanQuery().
+				AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField("name").SetBoost(6)).
+				AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField("description").SetBoost(3))).
+			AddMust(perm)
 
 		tn := bluge.NewTopNSearch(100, q)
 		tn.SortBy([]string{"-_score", "name"})
+		tn.ExplainScores() // while we are debugging
+		doExplain = true
 		req = tn
 
 		s.logger.Info("RUN QUERY", "q", q)
@@ -203,6 +212,7 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 	fDescr := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fURL := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fTags := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
+	fExplain := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
 
 	fHitNumber.Name = "Hit"
 	fScore.Name = "Score"
@@ -219,8 +229,12 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 		},
 	}
 	fTags.Name = "Tags"
+	fExplain.Name = "Explain"
 
 	frame := data.NewFrame("Query results", fHitNumber, fScore, fKind, fUID, fPath, fType, fName, fDescr, fURL, fTags)
+	if doExplain {
+		frame.Fields = append(frame.Fields, fExplain)
+	}
 
 	// iterate through the document matches
 	match, err := documentMatchIterator.Next()
@@ -291,6 +305,16 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 			fTags.Append(&jsb)
 		} else {
 			fTags.Append(nil)
+		}
+
+		if doExplain {
+			if match.Explanation != nil {
+				js, _ := json.Marshal(&match.Explanation)
+				jsb := json.RawMessage(js)
+				fExplain.Append(&jsb)
+			} else {
+				fExplain.Append(nil)
+			}
 		}
 
 		// load the next document match
