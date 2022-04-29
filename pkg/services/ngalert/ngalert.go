@@ -2,6 +2,7 @@ package ngalert
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 
 	"github.com/benbjohnson/clock"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -81,8 +83,9 @@ type AlertNG struct {
 	folderService       dashboards.FolderService
 
 	// Alerting notification services
-	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
-	accesscontrol        accesscontrol.AccessControl
+	MultiOrgAlertmanager   *notifier.MultiOrgAlertmanager
+	NotificationDispatcher *sender.Dispatcher
+	accesscontrol          accesscontrol.AccessControl
 }
 
 func (ng *AlertNG) init() error {
@@ -106,24 +109,7 @@ func (ng *AlertNG) init() error {
 
 	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
 	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(context.Background()); err != nil {
-		return err
-	}
-
-	schedCfg := schedule.SchedulerCfg{
-		C:                       clock.New(),
-		BaseInterval:            ng.Cfg.UnifiedAlerting.BaseInterval,
-		Logger:                  ng.Log,
-		MaxAttempts:             ng.Cfg.UnifiedAlerting.MaxAttempts,
-		Evaluator:               eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.SecretsService),
-		InstanceStore:           store,
-		RuleStore:               store,
-		AdminConfigStore:        store,
-		OrgStore:                store,
-		MultiOrgNotifier:        ng.MultiOrgAlertmanager,
-		Metrics:                 ng.Metrics.GetSchedulerMetrics(),
-		AdminConfigPollInterval: ng.Cfg.UnifiedAlerting.AdminConfigPollInterval,
-		DisabledOrgs:            ng.Cfg.UnifiedAlerting.DisabledOrgs,
-		MinRuleInterval:         ng.Cfg.UnifiedAlerting.MinInterval,
+		return fmt.Errorf("failed to initialize alerting because notifier manager fail to warm up: %w", err)
 	}
 
 	appUrl, err := url.Parse(ng.Cfg.AppURL)
@@ -131,6 +117,30 @@ func (ng *AlertNG) init() error {
 		ng.Log.Error("Failed to parse application URL. Continue without it.", "error", err)
 		appUrl = nil
 	}
+
+	clk := clock.New()
+
+	dispatcher := sender.NewDispatcher(ng.MultiOrgAlertmanager, store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs, ng.Cfg.UnifiedAlerting.AdminConfigPollInterval)
+
+	if err := dispatcher.SyncAndApplyConfigFromDatabase(); err != nil {
+		return fmt.Errorf("failed to initialize alerting because notification dispatcher fails to warm up: %w", err)
+	}
+
+	schedCfg := schedule.SchedulerCfg{
+		C:               clk,
+		BaseInterval:    ng.Cfg.UnifiedAlerting.BaseInterval,
+		Logger:          ng.Log,
+		MaxAttempts:     ng.Cfg.UnifiedAlerting.MaxAttempts,
+		Evaluator:       eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.SecretsService),
+		InstanceStore:   store,
+		RuleStore:       store,
+		OrgStore:        store,
+		Metrics:         ng.Metrics.GetSchedulerMetrics(),
+		DisabledOrgs:    ng.Cfg.UnifiedAlerting.DisabledOrgs,
+		MinRuleInterval: ng.Cfg.UnifiedAlerting.MinInterval,
+		Notifier:        dispatcher,
+	}
+
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.SQLStore)
 	scheduler := schedule.NewScheduler(schedCfg, ng.ExpressionService, appUrl, stateManager)
 
@@ -176,14 +186,18 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 
 	children, subCtx := errgroup.WithContext(ctx)
 
+	children.Go(func() error {
+		return ng.MultiOrgAlertmanager.Run(subCtx)
+	})
+	children.Go(func() error {
+		return ng.NotificationDispatcher.Run(subCtx)
+	})
+
 	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {
 		children.Go(func() error {
 			return ng.schedule.Run(subCtx)
 		})
 	}
-	children.Go(func() error {
-		return ng.MultiOrgAlertmanager.Run(subCtx)
-	})
 	return children.Wait()
 }
 

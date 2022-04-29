@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
@@ -28,14 +27,6 @@ type ScheduleService interface {
 	// Run the scheduler until the context is canceled or the scheduler returns
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
-
-	// AlertmanagersFor returns all the discovered Alertmanager URLs for the
-	// organization.
-	AlertmanagersFor(orgID int64) []*url.URL
-
-	// DroppedAlertmanagersFor returns all the dropped Alertmanager URLs for the
-	// organization.
-	DroppedAlertmanagersFor(orgID int64) []*url.URL
 	// UpdateAlertRule notifies scheduler that a rule has been changed
 	UpdateAlertRule(key models.AlertRuleKey)
 	// DeleteAlertRule notifies scheduler that a rule has been changed
@@ -96,26 +87,24 @@ type schedule struct {
 
 // SchedulerCfg is the scheduler configuration.
 type SchedulerCfg struct {
-	C                       clock.Clock
-	BaseInterval            time.Duration
-	Logger                  log.Logger
-	EvalAppliedFunc         func(models.AlertRuleKey, time.Time)
-	MaxAttempts             int64
-	StopAppliedFunc         func(models.AlertRuleKey)
-	Evaluator               eval.Evaluator
-	RuleStore               store.RuleStore
-	OrgStore                store.OrgStore
-	InstanceStore           store.InstanceStore
-	AdminConfigStore        store.AdminConfigurationStore
-	MultiOrgNotifier        *notifier.MultiOrgAlertmanager
-	Metrics                 *metrics.Scheduler
-	AdminConfigPollInterval time.Duration
-	DisabledOrgs            map[int64]struct{}
-	MinRuleInterval         time.Duration
+	C               clock.Clock
+	BaseInterval    time.Duration
+	Logger          log.Logger
+	EvalAppliedFunc func(models.AlertRuleKey, time.Time)
+	MaxAttempts     int64
+	StopAppliedFunc func(models.AlertRuleKey)
+	Evaluator       eval.Evaluator
+	RuleStore       store.RuleStore
+	OrgStore        store.OrgStore
+	InstanceStore   store.InstanceStore
+	Metrics         *metrics.Scheduler
+	DisabledOrgs    map[int64]struct{}
+	MinRuleInterval time.Duration
+	Notifier        AlertNotifier
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url.URL, stateManager *state.Manager, notifier AlertNotifier) *schedule {
+func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url.URL, stateManager *state.Manager) *schedule {
 	ticker := alerting.NewTicker(cfg.C, cfg.BaseInterval, cfg.Metrics.Ticker)
 
 	sch := schedule{
@@ -137,7 +126,7 @@ func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url
 		stateManager:      stateManager,
 		disabledOrgs:      cfg.DisabledOrgs,
 		minRuleInterval:   cfg.MinRuleInterval,
-		notifier:          notifier,
+		notifier:          cfg.Notifier,
 	}
 	return &sch
 }
@@ -349,7 +338,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 		sch.saveAlertStates(ctx, processedStates)
 		toNotify := make([]*state.State, 0, len(processedStates))
 		sent := sch.clock.Now()
-		for _, alertState := range toNotify {
+		for _, alertState := range processedStates {
 			if !alertState.NeedsSending(sch.stateManager.ResendDelay) {
 				continue
 			}
