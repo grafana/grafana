@@ -6806,6 +6806,39 @@
         }
       }
     },
+    "/provisioning/templates": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get all message templates.",
+        "operationId": "RouteGetTemplates",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/MessageTemplate"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/provisioning/templates/{ID}": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get a message template.",
+        "operationId": "RouteGetTemplate",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/MessageTemplate"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          }
+        }
+      }
+    },
     "/recording-rules": {
       "get": {
         "tags": ["recording_rules", "enterprise"],
@@ -9524,7 +9557,7 @@
         }
       }
     },
-    "/v1/rule/test/{DatasourceID}": {
+    "/v1/rule/test/{DatasourceUID}": {
       "post": {
         "description": "Test a rule against external data source ruler",
         "consumes": ["application/json"],
@@ -9533,10 +9566,9 @@
         "operationId": "RouteTestRuleConfig",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           },
@@ -12584,6 +12616,9 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "OrgID"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "rule_group": {
           "type": "string",
@@ -17229,7 +17264,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": ["alerts", "labels", "receiver"],
       "properties": {
@@ -17247,7 +17281,9 @@
         "receiver": {
           "$ref": "#/definitions/receiver"
         }
-      }
+      },
+      "x-go-name": "AlertGroup",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "alertGroups": {
       "description": "AlertGroups alert groups",
@@ -17357,7 +17393,6 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": ["labels", "annotations", "endsAt", "fingerprint", "receivers", "startsAt", "status", "updatedAt"],
       "properties": {
@@ -17407,7 +17442,9 @@
           "format": "date-time",
           "x-go-name": "UpdatedAt"
         }
-      }
+      },
+      "x-go-name": "GettableAlert",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "gettableAlerts": {
       "description": "GettableAlerts gettable alerts",
@@ -17463,11 +17500,12 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
-      }
+      },
+      "x-go-name": "GettableSilences",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "labelSet": {
       "description": "LabelSet label set",
@@ -17587,7 +17625,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt"],
       "properties": {
@@ -17621,7 +17658,9 @@
           "format": "date-time",
           "x-go-name": "StartsAt"
         }
-      }
+      },
+      "x-go-name": "PostableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "receiver": {
       "description": "Receiver receiver",

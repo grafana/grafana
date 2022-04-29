@@ -444,8 +444,6 @@ type BodyAlertingConfig struct {
 // swagger:parameters RouteGetRulesConfig RoutePostNameRulesConfig RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig
 // prom routes
 // swagger:parameters RouteGetRuleStatuses RouteGetAlertStatuses
-// testing routes
-// swagger:parameters RouteTestReceiverConfig RouteTestRuleConfig
 type DatasourceIDReference struct {
 	// DatasourceID should be the numeric datasource identifier
 	// in:path
@@ -454,6 +452,8 @@ type DatasourceIDReference struct {
 
 // alertmanager routes
 // swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig RoutePostTestReceivers
+// testing routes
+// swagger:parameters RouteTestRuleConfig
 type DatasourceUIDReference struct {
 	// DatasoureUID should be the datasource UID identifier
 	// in:path
