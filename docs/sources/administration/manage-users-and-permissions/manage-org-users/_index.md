@@ -1,6 +1,6 @@
 +++
 title = "Manage users in an organization"
-aliases = ["docs/grafana/latest/manage-users/org-admin/index.md", "docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/_index.md"]
+aliases = ["/docs/grafana/latest/manage-users/org-admin/", "/docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/"]
 weight = 400
 +++
 

@@ -62,7 +62,9 @@ trigger = {
     ],
     'paths': {
         'exclude': [
+            '*.md',
             'docs/**',
+            'latest.json',
         ],
     },
 }

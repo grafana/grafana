@@ -1,6 +1,6 @@
 +++
 title = "Manage users and permissions"
-aliases = ["docs/grafana/latest/administration/manage-users-and-permissions/_index.md"]
+aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/"]
 weight = 200
 +++
 

@@ -55,7 +55,9 @@ trigger:
   - pull_request
   paths:
     exclude:
+    - '*.md'
     - docs/**
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -141,7 +143,9 @@ trigger:
   - pull_request
   paths:
     exclude:
+    - '*.md'
     - docs/**
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -376,7 +380,9 @@ trigger:
   - pull_request
   paths:
     exclude:
+    - '*.md'
     - docs/**
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -458,7 +464,9 @@ trigger:
   - pull_request
   paths:
     exclude:
+    - '*.md'
     - docs/**
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -551,8 +559,10 @@ trigger:
   - pull_request
   paths:
     include:
+    - '*.md'
     - docs/**
     - packages/**
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -4604,6 +4614,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 045df48997fde9ae05050441a3635a97a8be4db7b8b0c748c367cee0fc3d2373
+hmac: 6be0c058bd66d0282afe37bd5af923f345ca71ec0fd874514ae08f759e23adfd
 
 ...
