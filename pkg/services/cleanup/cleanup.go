@@ -208,8 +208,8 @@ func (srv *CleanUpService) deleteStaleQueryHistory(ctx context.Context) {
 		srv.log.Debug("Enforced row limit for query_history", "rows affected", rowsCount)
 	}
 
-	// Enforce 100k limit for query_history_star table
-	queryHistoryStarLimit := 100000
+	// Enforce 150k limit for query_history_star table
+	queryHistoryStarLimit := 150000
 	rowsCount, err = srv.QueryHistoryService.EnforceRowLimitInQueryHistory(ctx, queryHistoryStarLimit, true)
 	if err != nil {
 		srv.log.Error("Problem with enforcing row limit for query_history_star", "error", err.Error())
