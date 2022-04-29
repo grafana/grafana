@@ -157,15 +157,16 @@ export class GroupState extends ElementState {
 
   /*
     Next steps:
+      - JSON structure (same options as element to see if they get set) -> take element and change to group state (same runtime behavior)
       - Make group fit around nested elements boundaries (init) -> pair with Ryan on this initially
-      - Work on addressing moving group / resizing behavior (in regards to nested elements with constraints as well)
+      - Work on addressing moving group / resizing behavior (in regards to nested elements with constraints as well) (group to root / parent isn't working)
       - Work on addressing group constraint in relation to parent
       - Clean up?
   */
 
   render() {
     return (
-      <div key={`${this.UID}/${this.revId}`} ref={this.initElement} style={{ ...this.sizeStyle, ...this.dataStyle }}>
+      <div key={this.UID} ref={this.initElement}>
         {this.elements.map((v) => v.render())}
       </div>
     );

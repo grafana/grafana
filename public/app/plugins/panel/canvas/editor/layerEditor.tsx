@@ -57,6 +57,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
         }
         const c = setOptionImmutably(options, path, value);
         scene.currentLayer?.onChange(c);
+        scene.currentLayer?.updateData(scene.context);
       },
     }),
 

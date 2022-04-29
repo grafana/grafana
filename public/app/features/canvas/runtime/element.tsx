@@ -14,6 +14,7 @@ import { DimensionContext } from 'app/features/dimensions';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
 import { GroupState } from './group';
+import { RootElement } from './root';
 import { Scene } from './scene';
 
 let counter = 0;
@@ -68,6 +69,11 @@ export class ElementState implements LayerElement {
 
   /** Use the configured options to update CSS style properties directly on the wrapper div **/
   applyLayoutStylesToDiv() {
+    if (this.isRoot()) {
+      // Root supersedes layout engine and is always 100% width + height of panel
+      return;
+    }
+
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
     const placement = this.options.placement ?? ({} as Placement);
@@ -305,6 +311,11 @@ export class ElementState implements LayerElement {
     }
 
     this.dataStyle = css;
+    this.applyLayoutStylesToDiv();
+  }
+
+  isRoot(): this is RootElement {
+    return false;
   }
 
   /** Recursively visit all nodes */
