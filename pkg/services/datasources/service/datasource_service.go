@@ -214,7 +214,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSo
 		}
 	}
 
-	if len(cmd.SecureJsonData) > 0 {
+	if len(cmd.SecureJsonData) != 0 {
 		secret, err := json.Marshal(cmd.SecureJsonData)
 		if err != nil {
 			return err

@@ -353,13 +353,14 @@ func (hs *HTTPServer) fillWithSecureJSONData(ctx context.Context, cmd *models.Up
 		return models.ErrDatasourceIsReadOnly
 	}
 
-	for k, v := range ds.SecureJsonData {
+	decrypted, err := hs.DataSourcesService.DecryptedValues(ctx, ds)
+	if err != nil {
+		return err
+	}
+
+	for k, v := range decrypted {
 		if _, ok := cmd.SecureJsonData[k]; !ok {
-			decrypted, err := hs.SecretsService.Decrypt(ctx, v)
-			if err != nil {
-				return err
-			}
-			cmd.SecureJsonData[k] = string(decrypted)
+			cmd.SecureJsonData[k] = string(v)
 		}
 	}
 
