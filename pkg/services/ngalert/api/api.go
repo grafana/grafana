@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -29,7 +30,7 @@ import (
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
-type Scheduler interface {
+type ExternalAlertmanagerProvider interface {
 	AlertmanagersFor(orgID int64) []*url.URL
 	DroppedAlertmanagersFor(orgID int64) []*url.URL
 }
@@ -60,26 +61,27 @@ type AlertingStore interface {
 
 // API handlers.
 type API struct {
-	Cfg                  *setting.Cfg
-	DatasourceCache      datasources.CacheService
-	RouteRegister        routing.RouteRegister
-	ExpressionService    *expr.Service
-	QuotaService         *quota.QuotaService
-	Schedule             schedule.ScheduleService
-	TransactionManager   provisioning.TransactionManager
-	ProvenanceStore      provisioning.ProvisioningStore
-	RuleStore            store.RuleStore
-	InstanceStore        store.InstanceStore
-	AlertingStore        AlertingStore
-	AdminConfigStore     store.AdminConfigurationStore
-	DataProxy            *datasourceproxy.DataSourceProxyService
-	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
-	StateManager         *state.Manager
-	SecretsService       secrets.Service
-	AccessControl        accesscontrol.AccessControl
-	Policies             *provisioning.NotificationPolicyService
-	ContactPointService  *provisioning.ContactPointService
-	Templates            *provisioning.TemplateService
+	Cfg                    *setting.Cfg
+	DatasourceCache        datasources.CacheService
+	RouteRegister          routing.RouteRegister
+	ExpressionService      *expr.Service
+	QuotaService           *quota.QuotaService
+	Schedule               schedule.ScheduleService
+	TransactionManager     provisioning.TransactionManager
+	ProvenanceStore        provisioning.ProvisioningStore
+	RuleStore              store.RuleStore
+	InstanceStore          store.InstanceStore
+	AlertingStore          AlertingStore
+	AdminConfigStore       store.AdminConfigurationStore
+	DataProxy              *datasourceproxy.DataSourceProxyService
+	MultiOrgAlertmanager   *notifier.MultiOrgAlertmanager
+	StateManager           *state.Manager
+	SecretsService         secrets.Service
+	AccessControl          accesscontrol.AccessControl
+	Policies               *provisioning.NotificationPolicyService
+	ContactPointService    *provisioning.ContactPointService
+	Templates              *provisioning.TemplateService
+	NotificationDispatcher *sender.Dispatcher
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -130,7 +132,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		&AdminSrv{
 			store:     api.AdminConfigStore,
 			log:       logger,
-			scheduler: api.Schedule,
+			scheduler: api.NotificationDispatcher,
 		},
 	), m)
 
