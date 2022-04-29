@@ -596,7 +596,7 @@
      "type": "string",
      "x-go-name": "Name"
     },
-    "provanance": {
+    "provenance": {
      "type": "string",
      "x-go-name": "Provenance"
     },
@@ -881,6 +881,9 @@
     "name": {
      "type": "string",
      "x-go-name": "Name"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
     },
     "secureFields": {
      "additionalProperties": {
@@ -3100,6 +3103,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3121,17 +3125,14 @@
     "labels",
     "receiver"
    ],
-   "type": "object",
-   "x-go-name": "AlertGroup",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array",
-   "x-go-name": "AlertGroups",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -3320,6 +3321,7 @@
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3371,17 +3373,14 @@
     "status",
     "updatedAt"
    ],
-   "type": "object",
-   "x-go-name": "GettableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array",
-   "x-go-name": "GettableSilences",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "labelSet": {
    "additionalProperties": {
@@ -3510,6 +3509,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3549,9 +3549,7 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object",
-   "x-go-name": "PostableSilence",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "receiver": {
    "properties": {
@@ -4128,7 +4126,7 @@
     ]
    }
   },
-  "/api/alertmanager/{DatasourceID}/api/v2/alerts": {
+  "/api/alertmanager/{DatasourceUID}/api/v2/alerts": {
    "get": {
     "description": "get alertmanager alerts",
     "operationId": "RouteGetAMAlerts",
@@ -4175,12 +4173,11 @@
       "x-go-name": "Receivers"
      },
      {
-      "description": "DatasourceID should be the numeric datasource id",
-      "format": "int64",
+      "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasourceID",
+      "name": "DatasourceUID",
       "required": true,
-      "type": "integer"
+      "type": "string"
      }
     ],
     "responses": {
@@ -4216,12 +4213,11 @@
       }
      },
      {
-      "description": "DatasourceID should be the numeric datasource id",
-      "format": "int64",
+      "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasourceID",
+      "name": "DatasourceUID",
       "required": true,
-      "type": "integer"
+      "type": "string"
      }
     ],
     "responses": {
@@ -4243,7 +4239,7 @@
     ]
    }
   },
-  "/api/alertmanager/{DatasourceID}/api/v2/alerts/groups": {
+  "/api/alertmanager/{DatasourceUID}/api/v2/alerts/groups": {
    "get": {
     "description": "get alertmanager alerts",
     "operationId": "RouteGetAMAlertGroups",
@@ -4290,12 +4286,11 @@
       "x-go-name": "Receivers"
      },
      {
-      "description": "DatasourceID should be the numeric datasource id",
-      "format": "int64",
+      "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasourceID",
+      "name": "DatasourceUID",
       "required": true,
-      "type": "integer"
+      "type": "string"
      }
     ],
     "responses": {
@@ -4317,7 +4312,7 @@
     ]
    }
   },
-  "/api/alertmanager/{DatasourceID}/api/v2/silence/{SilenceId}": {
+  "/api/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId}": {
    "delete": {
     "description": "delete silence",
     "operationId": "RouteDeleteSilence",
@@ -4329,12 +4324,11 @@
       "type": "string"
      },
      {
-      "description": "DatasourceID should be the numeric datasource id",
-      "format": "int64",
+      "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasourceID",
+      "name": "DatasourceUID",
       "required": true,
-      "type": "integer"
+      "type": "string"
      }
     ],
     "responses": {
@@ -4366,12 +4360,11 @@
       "type": "string"
      },
      {
-      "description": "DatasourceID should be the numeric datasource id",
-      "format": "int64",
+      "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasourceID",
+      "name": "DatasourceUID",
       "required": true,
-      "type": "integer"
+      "type": "string"
      }
     ],
     "responses": {
@@ -4393,7 +4386,7 @@
     ]
    }
   },
-  "/api/alertmanager/{DatasourceID}/api/v2/silences": {
+  "/api/alertmanager/{DatasourceUID}/api/v2/silences": {
    "get": {
     "description": "get silences",
     "operationId": "RouteGetSilences",
@@ -4408,12 +4401,11 @@
       "x-go-name": "Filter"
      },
      {
-      "description": "DatasourceID should be the numeric datasource id",
-      "format": "int64",
+      "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasourceID",
+      "name": "DatasourceUID",
       "required": true,
-      "type": "integer"
+      "type": "string"
      }
     ],
     "responses": {
@@ -4446,12 +4438,11 @@
       }
      },
      {
-      "description": "DatasourceID should be the numeric datasource id",
-      "format": "int64",
+      "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasourceID",
+      "name": "DatasourceUID",
       "required": true,
-      "type": "integer"
+      "type": "string"
      }
     ],
     "responses": {
@@ -4473,18 +4464,17 @@
     ]
    }
   },
-  "/api/alertmanager/{DatasourceID}/api/v2/status": {
+  "/api/alertmanager/{DatasourceUID}/api/v2/status": {
    "get": {
     "description": "get alertmanager status and configuration",
     "operationId": "RouteGetAMStatus",
     "parameters": [
      {
-      "description": "DatasourceID should be the numeric datasource id",
-      "format": "int64",
+      "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasourceID",
+      "name": "DatasourceUID",
       "required": true,
-      "type": "integer"
+      "type": "string"
      }
     ],
     "responses": {
@@ -4506,18 +4496,17 @@
     ]
    }
   },
-  "/api/alertmanager/{DatasourceID}/config/api/v1/alerts": {
+  "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts": {
    "delete": {
     "description": "deletes the Alerting config for a tenant",
     "operationId": "RouteDeleteAlertingConfig",
     "parameters": [
      {
-      "description": "DatasourceID should be the numeric datasource id",
-      "format": "int64",
+      "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasourceID",
+      "name": "DatasourceUID",
       "required": true,
-      "type": "integer"
+      "type": "string"
      }
     ],
     "responses": {
@@ -4543,12 +4532,11 @@
     "operationId": "RouteGetAlertingConfig",
     "parameters": [
      {
-      "description": "DatasourceID should be the numeric datasource id",
-      "format": "int64",
+      "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasourceID",
+      "name": "DatasourceUID",
       "required": true,
-      "type": "integer"
+      "type": "string"
      }
     ],
     "responses": {
@@ -4581,12 +4569,11 @@
       }
      },
      {
-      "description": "DatasourceID should be the numeric datasource id",
-      "format": "int64",
+      "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasourceID",
+      "name": "DatasourceUID",
       "required": true,
-      "type": "integer"
+      "type": "string"
      }
     ],
     "responses": {
@@ -4608,7 +4595,7 @@
     ]
    }
   },
-  "/api/alertmanager/{DatasourceID}/config/api/v1/receivers/test": {
+  "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test": {
    "post": {
     "operationId": "RoutePostTestReceivers",
     "parameters": [
@@ -4620,12 +4607,11 @@
       }
      },
      {
-      "description": "DatasourceID should be the numeric datasource id",
-      "format": "int64",
+      "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasourceID",
+      "name": "DatasourceUID",
       "required": true,
-      "type": "integer"
+      "type": "string"
      }
     ],
     "responses": {
@@ -4751,7 +4737,7 @@
     "operationId": "RouteGetAlertStatuses",
     "parameters": [
      {
-      "description": "DatasourceID should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
       "name": "DatasourceID",
@@ -4778,7 +4764,7 @@
     "operationId": "RouteGetRuleStatuses",
     "parameters": [
      {
-      "description": "DatasourceID should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
       "name": "DatasourceID",
@@ -5182,7 +5168,7 @@
     "operationId": "RouteGetRulesConfig",
     "parameters": [
      {
-      "description": "DatasourceID should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
       "name": "DatasourceID",
@@ -5223,7 +5209,7 @@
     "operationId": "RouteDeleteNamespaceRulesConfig",
     "parameters": [
      {
-      "description": "DatasourceID should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
       "name": "DatasourceID",
@@ -5254,7 +5240,7 @@
     "operationId": "RouteGetNamespaceRulesConfig",
     "parameters": [
      {
-      "description": "DatasourceID should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
       "name": "DatasourceID",
@@ -5292,7 +5278,7 @@
     "operationId": "RoutePostNameRulesConfig",
     "parameters": [
      {
-      "description": "DatasourceID should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
       "name": "DatasourceID",
@@ -5332,7 +5318,7 @@
     "operationId": "RouteDeleteRuleGroupConfig",
     "parameters": [
      {
-      "description": "DatasourceID should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
       "name": "DatasourceID",
@@ -5369,7 +5355,7 @@
     "operationId": "RouteGetRulegGroupConfig",
     "parameters": [
      {
-      "description": "DatasourceID should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
       "name": "DatasourceID",
@@ -5587,7 +5573,7 @@
     "operationId": "RouteTestRuleConfig",
     "parameters": [
      {
-      "description": "DatasourceID should be the numeric datasource id",
+      "description": "DatasourceID should be the numeric datasource identifier",
       "format": "int64",
       "in": "path",
       "name": "DatasourceID",
