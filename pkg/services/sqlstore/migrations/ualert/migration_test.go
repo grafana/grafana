@@ -98,6 +98,7 @@ func TestAddDashAlertMigration(t *testing.T) {
 
 // TestDashAlertMigration tests the execution of the main DashAlertMigration.
 func TestDashAlertMigration(t *testing.T) {
+	t.Skip("Test is flaky")
 	// Run initial migration to have a working DB.
 	x := setupTestDB(t)
 
