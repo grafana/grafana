@@ -86,7 +86,7 @@ func TestAdjustFrame(t *testing.T) {
 		require.Equal(t, "1641092765000000006_948c1a7d_A", idField.At(3))
 	})
 
-	t.Run("logs-frame id and string-time fields should be created", func(t *testing.T) {
+	t.Run("naming inside metric fields should be correct", func(t *testing.T) {
 		field1 := data.NewField("", nil, make([]time.Time, 0))
 		field2 := data.NewField("", nil, make([]float64, 0))
 		field2.Labels = data.Labels{"app": "Application", "tag2": "tag2"}

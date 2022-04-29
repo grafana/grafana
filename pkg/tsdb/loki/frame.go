@@ -89,11 +89,11 @@ func adjustLogsFrame(frame *data.Frame, query *lokiQuery) error {
 	lineField := fields[2]
 
 	if (timeField.Type() != data.FieldTypeTime) || (lineField.Type() != data.FieldTypeString) || (labelsField.Type() != data.FieldTypeString) {
-		return fmt.Errorf("invalid fields in metric frame")
+		return fmt.Errorf("invalid fields in logs frame")
 	}
 
 	if (timeField.Len() != lineField.Len()) || (timeField.Len() != labelsField.Len()) {
-		return fmt.Errorf("invalid fields in metric frame")
+		return fmt.Errorf("invalid fields in logs frame")
 	}
 
 	if frame.Meta == nil {
