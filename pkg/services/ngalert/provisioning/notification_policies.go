@@ -59,10 +59,15 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 }
 
 func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance) error {
+	err := tree.Validate()
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
+	}
+
 	q := models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
 	}
-	err := nps.amStore.GetLatestAlertmanagerConfiguration(ctx, &q)
+	err = nps.amStore.GetLatestAlertmanagerConfiguration(ctx, &q)
 	if err != nil {
 		return err
 	}

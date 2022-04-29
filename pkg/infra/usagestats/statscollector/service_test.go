@@ -8,6 +8,7 @@ import (
 	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/registry"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 
@@ -76,6 +77,34 @@ func TestTotalStatsUpdate(t *testing.T) {
 			assert.Equal(t, tc.ExpectedUpdate, s.updateTotalStats(context.Background()))
 		})
 	}
+}
+
+var _ registry.ProvidesUsageStats = (*dummyUsageStatProvider)(nil)
+
+type dummyUsageStatProvider struct {
+	stats map[string]interface{}
+}
+
+func (d dummyUsageStatProvider) GetUsageStats(ctx context.Context) map[string]interface{} {
+	return d.stats
+}
+
+func TestUsageStatsProviders(t *testing.T) {
+	provider1 := &dummyUsageStatProvider{stats: map[string]interface{}{"my_stat_1": "val1", "my_stat_2": "val2"}}
+	provider2 := &dummyUsageStatProvider{stats: map[string]interface{}{"my_stat_x": "valx", "my_stat_z": "valz"}}
+
+	store := mockstore.NewSQLStoreMock()
+	mockSystemStats(store)
+	s := createService(t, setting.NewCfg(), store)
+	s.RegisterProviders([]registry.ProvidesUsageStats{provider1, provider2})
+
+	m, err := s.collect(context.Background())
+	require.NoError(t, err, "Expected no error")
+
+	assert.Equal(t, "val1", m["my_stat_1"])
+	assert.Equal(t, "val2", m["my_stat_2"])
+	assert.Equal(t, "valx", m["my_stat_x"])
+	assert.Equal(t, "valz", m["my_stat_z"])
 }
 
 func TestFeatureUsageStats(t *testing.T) {

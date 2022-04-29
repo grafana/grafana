@@ -16,6 +16,7 @@ interface NestedEntryProps {
   isSelectable: boolean;
   isOpen: boolean;
   isDisabled: boolean;
+  scrollIntoView?: boolean;
   onToggleCollapse: (row: ResourceRow) => void;
   onSelectedChange: (row: ResourceRow, selected: boolean) => void;
 }
@@ -26,6 +27,7 @@ export const NestedEntry: React.FC<NestedEntryProps> = ({
   isDisabled,
   isOpen,
   isSelectable,
+  scrollIntoView,
   level,
   onToggleCollapse,
   onSelectedChange,
@@ -33,10 +35,6 @@ export const NestedEntry: React.FC<NestedEntryProps> = ({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const hasChildren = !!entry.children;
-  // Subscriptions, resource groups, resources, and variables are all selectable, so
-  // the top-level variable group is the only thing that cannot be selected.
-  // const isSelectable = entry.type !== ResourceRowType.VariableGroup;
-  // const isSelectable = selectableEntryTypes?.some((e) => e === entry.type);
 
   const handleToggleCollapse = useCallback(() => {
     onToggleCollapse(entry);
@@ -50,12 +48,12 @@ export const NestedEntry: React.FC<NestedEntryProps> = ({
     [entry, onSelectedChange]
   );
 
-  const checkboxId = `checkbox_${entry.id}`;
+  const checkboxId = `${scrollIntoView ? 'table' : 'summary'}_checkbox_${entry.uri}`;
 
   // Scroll to the selected element if it's not in the view
   // Only do it once, when the component is mounted
   useEffect(() => {
-    if (isSelected) {
+    if (isSelected && scrollIntoView) {
       document.getElementById(checkboxId)?.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
@@ -65,9 +63,6 @@ export const NestedEntry: React.FC<NestedEntryProps> = ({
 
   return (
     <div className={styles.nestedEntry} style={{ marginLeft: level * (3 * theme.spacing.gridSize) }}>
-      {/* When groups are selectable, I *think* we will want to show a 2-wide space instead
-              of the collapse button for leaf rows that have no children to get them to align */}
-
       {hasChildren ? (
         <IconButton
           className={styles.collapseButton}

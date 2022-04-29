@@ -1,6 +1,6 @@
 +++
 title = "Manage dashboard permissions"
-aliases = ["/docs/grafana/latest/permissions/dashboard_folder_permissions/", "docs/grafana/latest/administration/manage-users-and-permissions/manage-dashboard-permissions/_index.md"]
+aliases = ["/docs/grafana/latest/permissions/dashboard_folder_permissions/", "/docs/grafana/latest/administration/manage-users-and-permissions/manage-dashboard-permissions/"]
 weight = 500
 +++
 
@@ -140,4 +140,4 @@ Dashboard permissions settings:
 
 Result: You receive an error message that cannot override a higher permission with a lower permission in the same dashboard. User1 has administrator permissions.
 
-> Refer to [Fine-grained access Control]({{< relref "../../../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how to use fine-grained permissions to restrict access to dashboards, folders, administrative functions, and other resources.
+> Refer to [Role-based access Control]({{< relref "../../../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how to use RBAC permissions to restrict access to dashboards, folders, administrative functions, and other resources.
