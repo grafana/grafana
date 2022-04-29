@@ -68,47 +68,51 @@ func (ss *SQLStore) DeleteDashboardSnapshot(ctx context.Context, cmd *models.Del
 	})
 }
 
-func (ss *SQLStore) GetDashboardSnapshot(query *models.GetDashboardSnapshotQuery) error {
-	snapshot := models.DashboardSnapshot{Key: query.Key, DeleteKey: query.DeleteKey}
-	has, err := x.Get(&snapshot)
+func (ss *SQLStore) GetDashboardSnapshot(ctx context.Context, query *models.GetDashboardSnapshotQuery) error {
+	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
+		snapshot := models.DashboardSnapshot{Key: query.Key, DeleteKey: query.DeleteKey}
+		has, err := dbSess.Get(&snapshot)
 
-	if err != nil {
-		return err
-	} else if !has {
-		return models.ErrDashboardSnapshotNotFound
-	}
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrDashboardSnapshotNotFound
+		}
 
-	query.Result = &snapshot
-	return nil
+		query.Result = &snapshot
+		return nil
+	})
 }
 
 // SearchDashboardSnapshots returns a list of all snapshots for admins
 // for other roles, it returns snapshots created by the user
-func (ss *SQLStore) SearchDashboardSnapshots(query *models.GetDashboardSnapshotsQuery) error {
-	var snapshots = make(models.DashboardSnapshotsList, 0)
+func (ss *SQLStore) SearchDashboardSnapshots(ctx context.Context, query *models.GetDashboardSnapshotsQuery) error {
+	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
+		var snapshots = make(models.DashboardSnapshotsList, 0)
 
-	sess := x.NewSession()
-	if query.Limit > 0 {
-		sess.Limit(query.Limit)
-	}
-	sess.Table("dashboard_snapshot")
+		sess := ss.NewSession(ctx)
+		if query.Limit > 0 {
+			sess.Limit(query.Limit)
+		}
+		sess.Table("dashboard_snapshot")
 
-	if query.Name != "" {
-		sess.Where("name LIKE ?", query.Name)
-	}
+		if query.Name != "" {
+			sess.Where("name LIKE ?", query.Name)
+		}
 
-	// admins can see all snapshots, everyone else can only see their own snapshots
-	switch {
-	case query.SignedInUser.OrgRole == models.ROLE_ADMIN:
-		sess.Where("org_id = ?", query.OrgId)
-	case !query.SignedInUser.IsAnonymous:
-		sess.Where("org_id = ? AND user_id = ?", query.OrgId, query.SignedInUser.UserId)
-	default:
+		// admins can see all snapshots, everyone else can only see their own snapshots
+		switch {
+		case query.SignedInUser.OrgRole == models.ROLE_ADMIN:
+			sess.Where("org_id = ?", query.OrgId)
+		case !query.SignedInUser.IsAnonymous:
+			sess.Where("org_id = ? AND user_id = ?", query.OrgId, query.SignedInUser.UserId)
+		default:
+			query.Result = snapshots
+			return nil
+		}
+
+		err := sess.Find(&snapshots)
 		query.Result = snapshots
-		return nil
-	}
-
-	err := sess.Find(&snapshots)
-	query.Result = snapshots
-	return err
+		return err
+	})
 }

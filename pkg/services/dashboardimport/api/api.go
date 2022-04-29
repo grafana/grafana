@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -36,7 +35,7 @@ func New(dashboardImportService dashboardimport.Service, quotaService QuotaServi
 }
 
 func (api *ImportDashboardAPI) RegisterAPIEndpoints(routeRegister routing.RouteRegister) {
-	authorize := acmiddleware.Middleware(api.ac)
+	authorize := accesscontrol.Middleware(api.ac)
 	routeRegister.Group("/api/dashboards", func(route routing.RouteRegister) {
 		route.Post(
 			"/import",

@@ -7,8 +7,10 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { GroupingToMatrixTransformerOptions, groupingToMatrixTransformer } from './groupingToMatrix';
+
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+
+import { GroupingToMatrixTransformerOptions, groupingToMatrixTransformer } from './groupingToMatrix';
 
 describe('Grouping to Matrix', () => {
   beforeAll(() => {

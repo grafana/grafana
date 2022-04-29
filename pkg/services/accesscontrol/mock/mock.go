@@ -65,6 +65,10 @@ func New() *Mock {
 	return mock
 }
 
+func (m Mock) GetUsageStats(ctx context.Context) map[string]interface{} {
+	return make(map[string]interface{})
+}
+
 func (m Mock) WithPermissions(permissions []*accesscontrol.Permission) *Mock {
 	m.permissions = permissions
 	return &m

@@ -1,4 +1,5 @@
 import React from 'react';
+
 import {
   FieldConfigEditorBuilder,
   FieldOverrideEditorProps,
@@ -6,8 +7,9 @@ import {
   identityOverrideProcessor,
   SelectableValue,
 } from '@grafana/data';
-import { graphFieldOptions, Select, HorizontalGroup, RadioButtonGroup } from '../../index';
 import { AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
+
+import { graphFieldOptions, Select, HorizontalGroup, RadioButtonGroup } from '../../index';
 
 /**
  * @alpha
@@ -143,7 +145,6 @@ const ScaleDistributionEditor: React.FC<FieldOverrideEditorProps<ScaleDistributi
         <Select
           menuShouldPortal
           allowCustomValue={false}
-          autoFocus
           options={LOG_DISTRIBUTION_OPTIONS}
           value={value.log || 2}
           prefix={'base'}

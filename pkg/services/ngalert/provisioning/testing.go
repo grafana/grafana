@@ -92,14 +92,14 @@ type fakeProvisioningStore struct {
 	records map[int64]map[string]models.Provenance
 }
 
-func newFakeProvisioningStore() *fakeProvisioningStore {
+func NewFakeProvisioningStore() *fakeProvisioningStore {
 	return &fakeProvisioningStore{
 		records: map[int64]map[string]models.Provenance{},
 	}
 }
 
-func (f *fakeProvisioningStore) GetProvenance(ctx context.Context, o models.Provisionable) (models.Provenance, error) {
-	if val, ok := f.records[o.ResourceOrgID()]; ok {
+func (f *fakeProvisioningStore) GetProvenance(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error) {
+	if val, ok := f.records[org]; ok {
 		if prov, ok := val[o.ResourceID()+o.ResourceType()]; ok {
 			return prov, nil
 		}
@@ -119,18 +119,17 @@ func (f *fakeProvisioningStore) GetProvenances(ctx context.Context, orgID int64,
 	return results, nil
 }
 
-func (f *fakeProvisioningStore) SetProvenance(ctx context.Context, o models.Provisionable, p models.Provenance) error {
-	orgID := o.ResourceOrgID()
-	if _, ok := f.records[orgID]; !ok {
-		f.records[orgID] = map[string]models.Provenance{}
+func (f *fakeProvisioningStore) SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error {
+	if _, ok := f.records[org]; !ok {
+		f.records[org] = map[string]models.Provenance{}
 	}
-	_ = f.DeleteProvenance(ctx, o) // delete old entries first
-	f.records[orgID][o.ResourceID()+o.ResourceType()] = p
+	_ = f.DeleteProvenance(ctx, o, org) // delete old entries first
+	f.records[org][o.ResourceID()+o.ResourceType()] = p
 	return nil
 }
 
-func (f *fakeProvisioningStore) DeleteProvenance(ctx context.Context, o models.Provisionable) error {
-	if val, ok := f.records[o.ResourceOrgID()]; ok {
+func (f *fakeProvisioningStore) DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error {
+	if val, ok := f.records[org]; ok {
 		delete(val, o.ResourceID()+o.ResourceType())
 	}
 	return nil

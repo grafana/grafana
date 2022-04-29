@@ -1,8 +1,9 @@
-import React from 'react';
 import { cloneDeep, defaults } from 'lodash';
+import LRU from 'lru-cache';
+import React from 'react';
 import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
-import LRU from 'lru-cache';
+
 import {
   AnnotationEvent,
   CoreApp,
@@ -31,13 +32,18 @@ import {
   BackendDataSourceResponse,
   toDataQueryResponse,
 } from '@grafana/runtime';
-
+import { Badge, BadgeColor, Tooltip } from '@grafana/ui';
 import { safeStringifyValue } from 'app/core/utils/explore';
+import { fetchDataSourceBuildInfo } from 'app/features/alerting/unified/api/buildInfo';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { PromApplication, PromBuildInfo } from 'app/types/unified-alerting-dto';
+
 import { addLabelToQuery } from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
+import { renderLegendFormat } from './legend';
+import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
 import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
 import {
@@ -54,11 +60,6 @@ import {
   PromVectorData,
 } from './types';
 import { PrometheusVariableSupport } from './variables';
-import PrometheusMetricFindQuery from './metric_find_query';
-import { renderLegendFormat } from './legend';
-import { fetchDataSourceBuildInfo } from 'app/features/alerting/unified/api/buildInfo';
-import { PromApplication, PromBuildInfo } from 'app/types/unified-alerting-dto';
-import { Badge, BadgeColor, Tooltip } from '@grafana/ui';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];

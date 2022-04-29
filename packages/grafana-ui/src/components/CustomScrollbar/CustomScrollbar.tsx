@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
 import classNames from 'classnames';
 import { isNil } from 'lodash';
 import React, { FC, RefCallback, useCallback, useEffect, useRef } from 'react';
 import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
 import { useStyles2 } from '../../themes';
 
 export type ScrollbarPosition = positionValues;

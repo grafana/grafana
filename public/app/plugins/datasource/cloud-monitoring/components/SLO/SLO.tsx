@@ -1,6 +1,7 @@
+import React, { useEffect, useState } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import React, { useEffect, useState } from 'react';
 
 import { QueryEditorRow } from '..';
 import { SELECT_WIDTH } from '../../constants';

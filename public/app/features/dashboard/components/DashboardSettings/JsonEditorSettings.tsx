@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
 import { css } from '@emotion/css';
+import React, { useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, CodeEditor, HorizontalGroup, useStyles2 } from '@grafana/ui';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { DashboardModel } from '../../state/DashboardModel';
-import { GrafanaTheme2 } from '@grafana/data';
 
 interface Props {
   dashboard: DashboardModel;

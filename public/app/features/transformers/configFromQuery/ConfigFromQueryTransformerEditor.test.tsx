@@ -1,7 +1,9 @@
-import React from 'react';
-import { toDataFrame, FieldType } from '@grafana/data';
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
+
+import { toDataFrame, FieldType } from '@grafana/data';
 import { selectOptionInTest } from '@grafana/ui';
+
 import { Props, ConfigFromQueryTransformerEditor } from './ConfigFromQueryTransformerEditor';
 
 beforeEach(() => {

@@ -1,6 +1,7 @@
-import { AccessControlAction } from 'app/types';
-import { isGrafanaRulesSource } from './datasource';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
+
+import { isGrafanaRulesSource } from './datasource';
 
 type RulesSourceType = 'grafana' | 'external';
 
@@ -107,9 +108,11 @@ export function evaluateAccess(actions: AccessControlAction[], fallBackUserRoles
 export function getRulesAccess() {
   return {
     canCreateGrafanaRules:
-      contextSrv.hasEditPermissionInFolders &&
+      contextSrv.hasAccess(AccessControlAction.FoldersRead, contextSrv.isEditor) &&
       contextSrv.hasAccess(rulesPermissions.create.grafana, contextSrv.isEditor),
-    canCreateCloudRules: contextSrv.hasAccess(rulesPermissions.create.external, contextSrv.isEditor),
+    canCreateCloudRules:
+      contextSrv.hasAccess(AccessControlAction.DataSourcesRead, contextSrv.isEditor) &&
+      contextSrv.hasAccess(rulesPermissions.create.external, contextSrv.isEditor),
     canEditRules: (rulesSourceName: string) =>
       contextSrv.hasAccess(getRulesPermissions(rulesSourceName).update, contextSrv.isEditor),
   };

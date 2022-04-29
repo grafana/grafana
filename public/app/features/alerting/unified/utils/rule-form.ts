@@ -23,8 +23,10 @@ import {
   PostableRuleGrafanaRuleDTO,
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
+
 import { EvalFunction } from '../../state/alertDef';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
+
 import { getRulesAccess } from './access-control';
 import { Annotation } from './constants';
 import { isGrafanaRulesSource } from './datasource';
@@ -45,6 +47,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     ],
     dataSourceName: null,
     type: canCreateGrafanaRules ? RuleFormType.grafana : canCreateCloudRules ? RuleFormType.cloudAlerting : undefined, // viewers can't create prom alerts
+    group: '',
 
     // grafana
     folder: null,
@@ -56,7 +59,6 @@ export const getDefaultFormValues = (): RuleFormValues => {
     evaluateFor: '5m',
 
     // cortex / loki
-    group: '',
     namespace: '',
     expression: '',
     forTime: 1,
@@ -118,6 +120,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         ...defaultFormValues,
         name: ga.title,
         type: RuleFormType.grafana,
+        group: group.name,
         evaluateFor: rule.for || '0',
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
         noDataState: ga.no_data_state,

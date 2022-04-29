@@ -50,7 +50,7 @@ func NewDiscordConfig(config *NotificationChannelConfig) (*DiscordConfig, error)
 	}, nil
 }
 
-func DiscrodFactory(fc FactoryConfig) (NotificationChannel, error) {
+func DiscordFactory(fc FactoryConfig) (NotificationChannel, error) {
 	cfg, err := NewDiscordConfig(fc.Config)
 	if err != nil {
 		return nil, receiverInitError{
@@ -95,10 +95,20 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	if d.Content != "" {
 		bodyJSON.Set("content", tmpl(d.Content))
+		if tmplErr != nil {
+			d.log.Warn("failed to template Discord notification content", "err", tmplErr.Error())
+			// Reset tmplErr for templating other fields.
+			tmplErr = nil
+		}
 	}
 
 	if d.AvatarURL != "" {
 		bodyJSON.Set("avatar_url", tmpl(d.AvatarURL))
+		if tmplErr != nil {
+			d.log.Warn("failed to template Discord Avatar URL", "err", tmplErr.Error(), "fallback", d.AvatarURL)
+			bodyJSON.Set("avatar_url", d.AvatarURL)
+			tmplErr = nil
+		}
 	}
 
 	footer := map[string]interface{}{
@@ -119,10 +129,15 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	bodyJSON.Set("embeds", []interface{}{embed})
 
-	u := tmpl(d.WebhookURL)
 	if tmplErr != nil {
 		d.log.Warn("failed to template Discord message", "err", tmplErr.Error())
-		return false, tmplErr
+		tmplErr = nil
+	}
+
+	u := tmpl(d.WebhookURL)
+	if tmplErr != nil {
+		d.log.Warn("failed to template Discord URL", "err", tmplErr.Error(), "fallback", d.WebhookURL)
+		u = d.WebhookURL
 	}
 
 	body, err := json.Marshal(bodyJSON)

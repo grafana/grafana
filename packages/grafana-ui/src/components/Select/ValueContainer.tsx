@@ -1,7 +1,10 @@
-import React, { ReactNode } from 'react';
 import { cx } from '@emotion/css';
+import React, { ReactNode } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
+
 import { withTheme2 } from '../../themes/ThemeContext';
+
 import { getSelectStyles } from './getSelectStyles';
 
 class UnthemedValueContainer extends React.Component<any & { theme: GrafanaTheme }> {

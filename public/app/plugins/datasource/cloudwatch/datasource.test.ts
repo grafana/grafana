@@ -1,7 +1,8 @@
-import { ArrayVector, DataFrame, dataFrameToJSON, dateTime, Field, MutableDataFrame } from '@grafana/data';
-import { setDataSourceSrv } from '@grafana/runtime';
 import { lastValueFrom, of } from 'rxjs';
 import { toArray } from 'rxjs/operators';
+
+import { ArrayVector, DataFrame, dataFrameToJSON, dateTime, Field, MutableDataFrame } from '@grafana/data';
+import { setDataSourceSrv } from '@grafana/runtime';
 
 import {
   labelsVariable,

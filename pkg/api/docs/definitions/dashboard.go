@@ -101,7 +101,7 @@ import (
 // 422: unprocessableEntityError
 // 500: internalServerError
 
-// swagger:parameters getDashboardByUID deleteDashboardByUID
+// swagger:parameters getDashboardByUID deleteDashboardByUID getDashboardPermissionsWithUid postDashboardPermissionsWithUid
 type UID struct {
 	// in:path
 	// required:true

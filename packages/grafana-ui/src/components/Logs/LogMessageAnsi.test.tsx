@@ -1,6 +1,8 @@
-import { createTheme } from '@grafana/data';
 import { shallow } from 'enzyme';
 import React from 'react';
+
+import { createTheme } from '@grafana/data';
+
 import { UnThemedLogMessageAnsi as LogMessageAnsi } from './LogMessageAnsi';
 
 describe('<LogMessageAnsi />', () => {

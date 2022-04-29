@@ -1,5 +1,6 @@
-import React, { useCallback } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { useCallback } from 'react';
+
 import {
   DataTransformerID,
   ReducerID,
@@ -8,13 +9,13 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { Select, StatsPicker, stylesFactory } from '@grafana/ui';
-
 import {
   GroupByFieldOptions,
   GroupByOperationID,
   GroupByTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/groupBy';
+import { Select, StatsPicker, stylesFactory } from '@grafana/ui';
+
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface FieldProps {
