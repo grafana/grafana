@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/blugelabs/bluge"
+	"github.com/blugelabs/bluge/search"
+	"github.com/blugelabs/bluge/search/aggregations"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
@@ -105,7 +108,12 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 	return user, nil
 }
 
-func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, _ DashboardQuery) *backend.DataResponse {
+func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, q DashboardQuery) *backend.DataResponse {
+	reader := s.dashboardIndex.reader[orgId]
+	if reader != nil && q.Query != "" { // frontend initalizes with empty string
+		return s.doBlugeQuery(ctx, reader, orgId, q)
+	}
+
 	rsp := &backend.DataResponse{}
 
 	dashboards, err := s.dashboardIndex.getDashboards(ctx, orgId)
@@ -145,6 +153,173 @@ func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dashb
 		}
 	}
 	return res, nil
+}
+
+func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.Reader, orgId int64, q DashboardQuery) *backend.DataResponse {
+	response := &backend.DataResponse{}
+
+	var req bluge.SearchRequest
+	if q.Query == "*" { // Match everything
+		req = bluge.NewAllMatches(bluge.NewMatchAllQuery())
+	} else {
+		q := bluge.NewBooleanQuery().
+			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField("name").SetBoost(6)).
+			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField("description").SetBoost(3))
+
+		tn := bluge.NewTopNSearch(100, q)
+		tn.SortBy([]string{"-_score", "name"})
+		req = tn
+
+		s.logger.Info("RUN QUERY", "q", q)
+	}
+
+	termAggs := []string{"type", "_kind", "schemaVersion"}
+	for _, t := range termAggs {
+		req.AddAggregation(t, aggregations.NewTermsAggregation(search.Field(t), 50))
+	}
+
+	// execute this search on the reader
+	documentMatchIterator, err := reader.Search(context.Background(), req)
+	if err != nil {
+		s.logger.Error("error executing search: %v", err)
+		response.Error = err
+		return response
+	}
+
+	dvfieldNames := []string{"type"}
+	sctx := search.NewSearchContext(0, 0)
+
+	// numericFields := map[string]bool{"schemaVersion": true, "panelCount": true}
+
+	count := 0
+
+	fHitNumber := data.NewFieldFromFieldType(data.FieldTypeInt32, 0)
+	fScore := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
+	fKind := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	fId := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	fType := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	fName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	fDescr := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	fURL := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+
+	fHitNumber.Name = "Hit"
+	fScore.Name = "Score"
+	fKind.Name = "Kind"
+	fId.Name = "ID"
+	fType.Name = "Type"
+	fName.Name = "Name"
+	fDescr.Name = "Description"
+	fURL.Name = "URL"
+	fURL.Config = &data.FieldConfig{
+		Links: []data.DataLink{
+			{Title: "link", URL: "${__value.text}"},
+		},
+	}
+
+	frame := data.NewFrame("Query results", fHitNumber, fScore, fKind, fId, fType, fName, fDescr, fURL)
+
+	// iterate through the document matches
+	match, err := documentMatchIterator.Next()
+	for err == nil && match != nil {
+		err = match.LoadDocumentValues(sctx, dvfieldNames)
+		if err != nil {
+			continue
+		}
+
+		id := ""
+		kind := ""
+		ptype := ""
+		name := ""
+		descr := ""
+		url := ""
+
+		err = match.VisitStoredFields(func(field string, value []byte) bool {
+			// if numericFields[field] {
+			// 	num, err2 := bluge.DecodeNumericFloat64(value)
+			// 	if err2 != nil {
+			// 		vals[field] = num
+			// 	}
+			// } else {
+			// 	vals[field] = string(value)
+			// }
+
+			switch field {
+			case "_id":
+				id = string(value)
+			case "_kind":
+				kind = string(value)
+			case "type":
+				ptype = string(value)
+			case "name":
+				name = string(value)
+			case "description":
+				descr = string(value)
+			case "url":
+				url = string(value)
+			}
+			return true
+		})
+		if err != nil {
+			s.logger.Error("error loading stored fields: %v", err)
+			response.Error = err
+			return response
+		}
+
+		fHitNumber.Append(int32(match.HitNumber))
+		fScore.Append(match.Score)
+		fKind.Append(kind)
+		fId.Append(id)
+		fType.Append(ptype)
+		fName.Append(name)
+		fDescr.Append(descr)
+		fURL.Append(url)
+
+		// load the next document match
+		match, err = documentMatchIterator.Next()
+	}
+
+	// Must call after iterating :)
+	aggs := documentMatchIterator.Aggregations()
+	fmt.Printf("COUNT: %v (%d)\n", aggs.Count(), count)
+	fmt.Printf("max_score: %v\n", aggs.Metric("max_score"))
+	fmt.Printf("TIME: %v\n", aggs.Duration())
+	fmt.Printf("NAME: %v\n", aggs.Name())
+
+	response.Frames = append(response.Frames, frame)
+
+	for _, k := range termAggs {
+		bbb := aggs.Buckets(k)
+		if bbb != nil {
+			size := len(bbb)
+
+			fName := data.NewFieldFromFieldType(data.FieldTypeString, size)
+			fName.Name = k
+
+			fCount := data.NewFieldFromFieldType(data.FieldTypeUint64, size)
+			fCount.Name = "Count"
+
+			for i, v := range bbb {
+				fName.Set(i, v.Name())
+				fCount.Set(i, v.Count())
+
+				if k == "schemaVersion" { // numeric
+					// TODO, numeric column?
+					sv, err := bluge.DecodeNumericFloat64([]byte(v.Name()))
+					if err == nil {
+						fName.Set(i, fmt.Sprintf("%d", int64(sv)))
+					} else {
+						fName.Set(i, v.Name())
+					}
+				} else {
+					fName.Set(i, v.Name())
+				}
+			}
+
+			response.Frames = append(response.Frames, data.NewFrame("Facet: "+k, fName, fCount))
+		}
+	}
+
+	return response
 }
 
 type simpleCounter struct {

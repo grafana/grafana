@@ -34,7 +34,8 @@ type eventStore interface {
 type dashboardIndex struct {
 	mu         sync.RWMutex
 	loader     dashboardLoader
-	dashboards map[int64][]dashboard // orgId -> []dashboards
+	dashboards map[int64][]dashboard   // orgId -> []dashboards
+	reader     map[int64]*bluge.Reader // orgId -> bluge index
 	eventStore eventStore
 	logger     log.Logger
 }
@@ -55,11 +56,12 @@ func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboar
 		loader:     dashLoader,
 		eventStore: evStore,
 		dashboards: map[int64][]dashboard{},
+		reader:     map[int64]*bluge.Reader{},
 		logger:     log.New("dashboardIndex"),
 	}
 }
 
-func (i *dashboardIndex) runBlugeSearch(ctx context.Context) error {
+func (i *dashboardIndex) initBlugeIndex(ctx context.Context, orgID int64) error {
 	config := bluge.InMemoryOnlyConfig()
 
 	// open an index writer using the configuration
@@ -77,9 +79,9 @@ func (i *dashboardIndex) runBlugeSearch(ctx context.Context) error {
 	start := time.Now()
 
 	// Avoid cache here.
-	dashboards, err := i.loader.LoadDashboards(ctx, 1, "")
+	dashboards, err := i.loader.LoadDashboards(ctx, orgID, "")
 	if err != nil {
-		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
+		return fmt.Errorf("can't build dashboard search index for org ID: %d // %w", orgID, err)
 	}
 
 	i.logger.Info("Loading dashboards for bluge index", "elapsed", time.Since(start), "numDashboards", len(dashboards))
@@ -88,18 +90,25 @@ func (i *dashboardIndex) runBlugeSearch(ctx context.Context) error {
 	batch := bluge.NewBatch()
 
 	for _, dashboard := range dashboards {
-		for _, panel := range dashboard.info.Panels {
-			uid := dashboard.uid + "#" + strconv.FormatInt(panel.ID, 10)
-			doc := bluge.NewDocument(uid).
-				AddField(bluge.NewTextField("name", panel.Title).StoreValue().SearchTermPositions()).
-				AddField(bluge.NewTextField("description", panel.Description).StoreValue().SearchTermPositions()).
-				AddField(bluge.NewKeywordField("type", panel.Type).Aggregatable().StoreValue()).
-				AddField(bluge.NewKeywordField("_kind", "panel").Aggregatable().StoreValue()) // likely want independent index for this
-			batch.Insert(doc)
+		url := fmt.Sprintf("/d/%s/%s", dashboard.uid, dashboard.slug)
+		if dashboard.isFolder {
+			url = fmt.Sprintf("/dashboards/f/%s/%s", dashboard.uid, dashboard.slug)
+		} else {
+			for _, panel := range dashboard.info.Panels {
+				uid := dashboard.uid + "#" + strconv.FormatInt(panel.ID, 10)
+				doc := bluge.NewDocument(uid).
+					AddField(bluge.NewKeywordField("url", fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)).StoreValue()).
+					AddField(bluge.NewTextField("name", panel.Title).StoreValue().SearchTermPositions()).
+					AddField(bluge.NewTextField("description", panel.Description).StoreValue().SearchTermPositions()).
+					AddField(bluge.NewKeywordField("type", panel.Type).Aggregatable().StoreValue()).
+					AddField(bluge.NewKeywordField("_kind", "panel").Aggregatable().StoreValue()) // likely want independent index for this
+				batch.Insert(doc)
+			}
 		}
 
 		// Then document
 		doc := bluge.NewDocument(dashboard.uid).
+			AddField(bluge.NewKeywordField("url", url).StoreValue()).
 			AddField(bluge.NewTextField("name", dashboard.info.Title).StoreValue().SearchTermPositions()).
 			AddField(bluge.NewTextField("description", dashboard.info.Description).StoreValue().SearchTermPositions()).
 			AddField(bluge.NewNumericField("schemaVersion", float64(dashboard.info.SchemaVersion)).StoreValue()).
@@ -120,6 +129,13 @@ func (i *dashboardIndex) runBlugeSearch(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	reader, err := writer.Reader()
+	if err != nil {
+		return err
+	}
+	i.reader[orgID] = reader // TODO? mutext lock
+
 	i.logger.Info("Inserting batch into bluge writer", "elapsed", time.Since(label))
 	i.logger.Info("Finish building bluge index", "totalElapsed", time.Since(start))
 	return nil
@@ -150,7 +166,7 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 	i.logger.Info("Indexing for main org finished", "mainOrgIndexElapsed", time.Since(started), "numDashboards", len(dashboards))
 
 	go func() {
-		_ = i.runBlugeSearch(ctx)
+		_ = i.initBlugeIndex(ctx, 1)
 	}()
 
 	for {
