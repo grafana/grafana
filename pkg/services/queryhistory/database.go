@@ -339,7 +339,7 @@ func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan i
 					ON query_history_star.query_uid = query_history.uid
 					WHERE query_history_star.query_uid IS NULL
 					AND query_history.created_at <= ?
-					ORDER BY query_history.created_at 
+					ORDER BY query_history.id ASC
 					LIMIT 10000
 				) AS q
 			)`
@@ -362,4 +362,69 @@ func (s QueryHistoryService) deleteStaleQueries(ctx context.Context, olderThan i
 	}
 
 	return int(rowsCount), nil
+}
+
+func (s QueryHistoryService) enforceQueryHistoryRowLimit(ctx context.Context, limit int, starredQueries bool) (int, error) {
+	var deletedRowsCount int64
+
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+		var rowsCount int64
+		var err error
+		if starredQueries {
+			rowsCount, err = session.Table("query_history_star").Count(QueryHistoryStar{})
+		} else {
+			rowsCount, err = session.Table("query_history").Count(QueryHistory{})
+		}
+
+		if err != nil {
+			return err
+		}
+
+		countRowsToDelete := rowsCount - int64(limit)
+		if countRowsToDelete > 0 {
+			var sql string
+			if starredQueries {
+				sql = `DELETE FROM query_history_star 
+					WHERE id IN (
+						SELECT id FROM query_history_star
+						ORDER BY id ASC 
+						LIMIT ?
+					)`
+			} else {
+				sql = `DELETE 
+					FROM query_history 
+					WHERE uid IN (
+						SELECT uid FROM (
+							SELECT uid FROM query_history
+							LEFT JOIN query_history_star
+							ON query_history_star.query_uid = query_history.uid
+							WHERE query_history_star.query_uid IS NULL
+							ORDER BY query_history.id ASC
+							LIMIT ?
+						) AS q
+					)`
+			}
+
+			sqlLimit := countRowsToDelete
+			if sqlLimit > 10000 {
+				sqlLimit = 10000
+			}
+
+			res, err := session.Exec(sql, strconv.FormatInt(sqlLimit, 10))
+			if err != nil {
+				return err
+			}
+
+			deletedRowsCount, err = res.RowsAffected()
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	return int(deletedRowsCount), nil
 }
