@@ -10,7 +10,7 @@ import { CustomVariableModel, initialVariableModelState } from '../../../../feat
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../types';
 
-import { MetricsQueryEditor, normalizeQuery, Props } from './MetricsQueryEditor';
+import { MetricsQueryEditor, Props } from './MetricsQueryEditor';
 
 const setup = () => {
   const instanceSettings = {
@@ -112,28 +112,6 @@ describe('QueryEditor', () => {
       matchExact: true,
       metricQueryType: MetricQueryType.Search,
       metricEditorMode: MetricEditorMode.Builder,
-    });
-  });
-
-  describe('should use correct default values', () => {
-    it('should normalize query with default values', () => {
-      expect(normalizeQuery({ refId: '42' } as any)).toEqual({
-        namespace: '',
-        metricName: '',
-        expression: '',
-        sqlExpression: '',
-        dimensions: {},
-        region: 'default',
-        id: '',
-        alias: '',
-        statistic: 'Average',
-        matchExact: true,
-        period: '',
-        queryMode: 'Metrics',
-        refId: '42',
-        metricQueryType: MetricQueryType.Search,
-        metricEditorMode: MetricEditorMode.Builder,
-      });
     });
   });
 
