@@ -705,7 +705,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			}
 			sch.stateManager.Put(states)
 			states = sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
-			expectedToBeSent := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
+			expectedToBeSent := sender.FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 			require.NotEmptyf(t, expectedToBeSent.PostableAlerts, "State manger was expected to return at least one state that can be expired")
 
 			go func() {

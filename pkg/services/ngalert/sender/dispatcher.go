@@ -160,13 +160,13 @@ func (d *Dispatcher) SyncAndApplyConfigFromDatabase() error {
 }
 
 func (d *Dispatcher) Notify(key models.AlertRuleKey, states []*state.State) error {
-	firingAlerts := schedule.FromAlertStateToPostableAlerts(states, d.appURL)
+	firingAlerts := FromAlertStateToPostableAlerts(states, d.appURL)
 	d.notify(key, firingAlerts)
 	return nil
 }
 
 func (d *Dispatcher) Expire(key models.AlertRuleKey, states []*state.State) error {
-	expiredAlerts := schedule.FromAlertsStateToStoppedAlert(states, d.appURL, d.clock)
+	expiredAlerts := FromAlertsStateToStoppedAlert(states, d.appURL, d.clock)
 	d.notify(key, expiredAlerts)
 	return nil
 }
