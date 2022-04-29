@@ -84,22 +84,42 @@ func (i *dashboardIndex) initBlugeIndex(ctx context.Context, orgID int64) error 
 		return fmt.Errorf("can't build dashboard search index for org ID: %d // %w", orgID, err)
 	}
 
+	folderIdLookup := make(map[int64]string, 50)
+	folderIdLookup[0] = "general" // automatic
+	for _, dashboard := range dashboards {
+		if dashboard.isFolder && dashboard.uid != "" {
+			folderIdLookup[dashboard.id] = dashboard.uid
+		}
+	}
+
 	i.logger.Info("Loading dashboards for bluge index", "elapsed", time.Since(start), "numDashboards", len(dashboards))
 	label := time.Now()
 
 	batch := bluge.NewBatch()
 
 	for _, dashboard := range dashboards {
+		path := dashboard.uid
 		url := fmt.Sprintf("/d/%s/%s", dashboard.uid, dashboard.slug)
 		if dashboard.isFolder {
-			url = fmt.Sprintf("/dashboards/f/%s/%s", dashboard.uid, dashboard.slug)
+			if dashboard.id == 0 {
+				path = folderIdLookup[0]
+				url = "/dashboards"
+			} else {
+				url = fmt.Sprintf("/dashboards/f/%s/%s", dashboard.uid, dashboard.slug)
+			}
 		} else {
+			folderUID, ok := folderIdLookup[dashboard.folderID]
+			if ok {
+				path = fmt.Sprintf("%s/%s", folderUID, dashboard.uid)
+			}
+
 			for _, panel := range dashboard.info.Panels {
 				uid := dashboard.uid + "#" + strconv.FormatInt(panel.ID, 10)
 				doc := bluge.NewDocument(uid).
 					AddField(bluge.NewKeywordField("url", fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)).StoreValue()).
 					AddField(bluge.NewTextField("name", panel.Title).StoreValue().SearchTermPositions()).
 					AddField(bluge.NewTextField("description", panel.Description).StoreValue().SearchTermPositions()).
+					AddField(bluge.NewKeywordField("path", fmt.Sprintf("%s#%d", path, panel.ID)).StoreValue()). // eventually special tokenizer
 					AddField(bluge.NewKeywordField("type", panel.Type).Aggregatable().StoreValue()).
 					AddField(bluge.NewKeywordField("_kind", "panel").Aggregatable().StoreValue()) // likely want independent index for this
 				batch.Insert(doc)
@@ -109,10 +129,17 @@ func (i *dashboardIndex) initBlugeIndex(ctx context.Context, orgID int64) error 
 		// Then document
 		doc := bluge.NewDocument(dashboard.uid).
 			AddField(bluge.NewKeywordField("url", url).StoreValue()).
+			AddField(bluge.NewKeywordField("path", path).StoreValue()).
 			AddField(bluge.NewTextField("name", dashboard.info.Title).StoreValue().SearchTermPositions()).
 			AddField(bluge.NewTextField("description", dashboard.info.Description).StoreValue().SearchTermPositions()).
 			AddField(bluge.NewNumericField("schemaVersion", float64(dashboard.info.SchemaVersion)).StoreValue()).
 			AddField(bluge.NewNumericField("panelCount", float64(len(dashboard.info.Panels))).Aggregatable().StoreValue())
+
+		for _, tag := range dashboard.info.Tags {
+			doc.AddField(bluge.NewKeywordField("tags", tag).
+				StoreValue().
+				SearchTermPositions())
+		}
 
 		if dashboard.isFolder {
 			doc.AddField(bluge.NewKeywordField("_kind", "folder").Aggregatable().StoreValue()) // likely want independent index for this

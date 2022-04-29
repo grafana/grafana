@@ -196,16 +196,19 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 	fHitNumber := data.NewFieldFromFieldType(data.FieldTypeInt32, 0)
 	fScore := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
 	fKind := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fId := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	fUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	fPath := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fType := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fDescr := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fURL := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	fTags := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
 
 	fHitNumber.Name = "Hit"
 	fScore.Name = "Score"
 	fKind.Name = "Kind"
-	fId.Name = "ID"
+	fUID.Name = "UID"
+	fPath.Name = "Path"
 	fType.Name = "Type"
 	fName.Name = "Name"
 	fDescr.Name = "Description"
@@ -215,8 +218,9 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 			{Title: "link", URL: "${__value.text}"},
 		},
 	}
+	fTags.Name = "Tags"
 
-	frame := data.NewFrame("Query results", fHitNumber, fScore, fKind, fId, fType, fName, fDescr, fURL)
+	frame := data.NewFrame("Query results", fHitNumber, fScore, fKind, fUID, fPath, fType, fName, fDescr, fURL, fTags)
 
 	// iterate through the document matches
 	match, err := documentMatchIterator.Next()
@@ -226,12 +230,14 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 			continue
 		}
 
-		id := ""
+		uid := ""
 		kind := ""
 		ptype := ""
 		name := ""
 		descr := ""
 		url := ""
+		path := ""
+		var tags []string
 
 		err = match.VisitStoredFields(func(field string, value []byte) bool {
 			// if numericFields[field] {
@@ -245,7 +251,7 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 
 			switch field {
 			case "_id":
-				id = string(value)
+				uid = string(value)
 			case "_kind":
 				kind = string(value)
 			case "type":
@@ -256,6 +262,10 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 				descr = string(value)
 			case "url":
 				url = string(value)
+			case "path":
+				path = string(value)
+			case "tags":
+				tags = append(tags, string(value))
 			}
 			return true
 		})
@@ -268,11 +278,20 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 		fHitNumber.Append(int32(match.HitNumber))
 		fScore.Append(match.Score)
 		fKind.Append(kind)
-		fId.Append(id)
+		fUID.Append(uid)
+		fPath.Append(path)
 		fType.Append(ptype)
 		fName.Append(name)
 		fDescr.Append(descr)
 		fURL.Append(url)
+
+		if len(tags) > 0 {
+			js, _ := json.Marshal(tags)
+			jsb := json.RawMessage(js)
+			fTags.Append(&jsb)
+		} else {
+			fTags.Append(nil)
+		}
 
 		// load the next document match
 		match, err = documentMatchIterator.Next()
