@@ -18,7 +18,6 @@ export enum DataSourceType {
 
 export interface AlertManagerDataSource {
   name: string;
-  displayName: string;
   imgUrl: string;
   meta?: DataSourceInstanceSettings['meta'];
 }
@@ -45,17 +44,18 @@ export function getAlertManagerDataSources() {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+const grafanaAlertManagerDataSource: AlertManagerDataSource = {
+  name: GRAFANA_RULES_SOURCE_NAME,
+  imgUrl: 'public/img/grafana_icon.svg',
+};
+
 // Used only as a fallback for Alert Group plugin
 export function getAllAlertManagerDataSources(): AlertManagerDataSource[] {
   return [
-    {
-      name: GRAFANA_RULES_SOURCE_NAME,
-      displayName: 'Grafana',
-      imgUrl: 'public/img/grafana_icon.svg',
-    },
+    grafanaAlertManagerDataSource,
     ...getAlertManagerDataSources().map<AlertManagerDataSource>((ds) => ({
       name: ds.name,
-      displayName: ds.name.slice(0, 37),
+      displayName: ds.name,
       imgUrl: ds.meta.info.logos.small,
       meta: ds.meta,
     })),
@@ -72,17 +72,13 @@ export function getAlertManagerDataSourcesByPermission(
   };
 
   if (contextSrv.hasPermission(permissions[permission].grafana)) {
-    availableDataSources.push({
-      name: GRAFANA_RULES_SOURCE_NAME,
-      displayName: 'Grafana',
-      imgUrl: 'public/img/grafana_icon.svg',
-    });
+    availableDataSources.push(grafanaAlertManagerDataSource);
   }
 
   if (contextSrv.hasPermission(permissions[permission].external)) {
     const cloudSources = getAlertManagerDataSources().map<AlertManagerDataSource>((ds) => ({
       name: ds.name,
-      displayName: ds.name.slice(0, 37),
+      displayName: ds.name,
       imgUrl: ds.meta.info.logos.small,
       meta: ds.meta,
     }));
