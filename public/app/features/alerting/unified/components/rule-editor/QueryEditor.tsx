@@ -111,33 +111,6 @@ export class QueryEditor extends PureComponent<Props, State> {
     );
   };
 
-  renderAddQueryRow(styles: ReturnType<typeof getStyles>) {
-    return (
-      <HorizontalGroup spacing="md" align="flex-start">
-        <Button
-          type="button"
-          icon="plus"
-          onClick={this.onNewAlertingQuery}
-          variant="secondary"
-          aria-label={selectors.components.QueryTab.addQuery}
-        >
-          Query
-        </Button>
-        {config.expressionsEnabled && (
-          <Button
-            type="button"
-            icon="plus"
-            onClick={this.onNewExpressionQuery}
-            variant="secondary"
-            className={styles.expressionButton}
-          >
-            <span>Expression&nbsp;</span>
-          </Button>
-        )}
-      </HorizontalGroup>
-    );
-  }
-
   isRunning() {
     const data = Object.values(this.state.panelDataByRefId).find((d) => Boolean(d));
     return data?.state === LoadingState.Loading;
@@ -145,24 +118,19 @@ export class QueryEditor extends PureComponent<Props, State> {
 
   renderRunQueryButton() {
     const isRunning = this.isRunning();
-    const styles = getStyles(config.theme2);
 
     if (isRunning) {
       return (
-        <div className={styles.runWrapper}>
-          <Button icon="fa fa-spinner" type="button" variant="destructive" onClick={this.onCancelQueries}>
-            Cancel
-          </Button>
-        </div>
+        <Button icon="fa fa-spinner" type="button" variant="destructive" onClick={this.onCancelQueries}>
+          Cancel
+        </Button>
       );
     }
 
     return (
-      <div className={styles.runWrapper}>
-        <Button icon="sync" type="button" onClick={this.onRunQueries}>
-          Run queries
-        </Button>
-      </div>
+      <Button icon="sync" type="button" onClick={this.onRunQueries}>
+        Run queries
+      </Button>
     );
   }
 
@@ -180,8 +148,23 @@ export class QueryEditor extends PureComponent<Props, State> {
           onDuplicateQuery={this.onDuplicateQuery}
           onRunQueries={this.onRunQueries}
         />
-        {this.renderAddQueryRow(styles)}
-        {this.renderRunQueryButton()}
+        <HorizontalGroup spacing="sm" align="flex-start">
+          <Button
+            type="button"
+            icon="plus"
+            onClick={this.onNewAlertingQuery}
+            variant="secondary"
+            aria-label={selectors.components.QueryTab.addQuery}
+          >
+            Add query
+          </Button>
+          {config.expressionsEnabled && (
+            <Button type="button" icon="plus" onClick={this.onNewExpressionQuery} variant="secondary">
+              Add expression
+            </Button>
+          )}
+          {this.renderRunQueryButton()}
+        </HorizontalGroup>
       </div>
     );
   }
@@ -226,9 +209,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     editorWrapper: css`
       border: 1px solid ${theme.colors.border.medium};
       border-radius: ${theme.shape.borderRadius()};
-    `,
-    expressionButton: css`
-      margin-right: ${theme.spacing(0.5)};
     `,
   };
 });
