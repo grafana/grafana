@@ -1,9 +1,10 @@
+import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import * as api from '../../../../features/manage-dashboards/state/actions';
-import { getFolderAsOption, getFoldersAsOptions } from './api';
 import { DashboardSearchHit } from '../../../../features/search/types';
 import { PermissionLevelString } from '../../../../types';
+
 import { ALL_FOLDER, GENERAL_FOLDER } from './ReadonlyFolderPicker';
-import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
+import { getFolderAsOption, getFoldersAsOptions } from './api';
 
 function getTestContext(
   searchHits: DashboardSearchHit[] = [],

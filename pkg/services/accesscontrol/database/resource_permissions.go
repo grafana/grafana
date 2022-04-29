@@ -32,7 +32,7 @@ type flatResourcePermission struct {
 }
 
 func (p *flatResourcePermission) IsManaged() bool {
-	return strings.HasPrefix(p.RoleName, "managed:") && !p.IsInherited()
+	return strings.HasPrefix(p.RoleName, accesscontrol.ManagedRolePrefix) && !p.IsInherited()
 }
 
 func (p *flatResourcePermission) IsInherited() bool {

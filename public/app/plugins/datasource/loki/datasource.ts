@@ -1,8 +1,8 @@
 // Libraries
 import { cloneDeep, isEmpty, map as lodashMap } from 'lodash';
+import Prism from 'prismjs';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import Prism from 'prismjs';
 
 // Types
 import {
@@ -36,14 +36,25 @@ import {
   toUtc,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchError, getBackendSrv, config, DataSourceWithBackend } from '@grafana/runtime';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { addLabelToQuery } from './add_label_to_query';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
+import { queryLogsVolume } from 'app/core/logs_model';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
-import { lokiResultsToTableModel, lokiStreamsToDataFrames, processRangeQueryResponse } from './result_transformer';
-import { transformBackendResult } from './backendResultTransformer';
-import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
+import { serializeParams } from '../../../core/utils/fetch';
+import { renderLegendFormat } from '../prometheus/legend';
+
+import { addLabelToQuery } from './add_label_to_query';
+import { transformBackendResult } from './backendResultTransformer';
+import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
+import LanguageProvider from './language_provider';
+import { LiveStreams, LokiLiveTarget } from './live_streams';
+import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
+import { lokiResultsToTableModel, lokiStreamsToDataFrames, processRangeQueryResponse } from './result_transformer';
+import { sortDataFrameByTime } from './sortDataFrame';
+import { doLokiChannelStream } from './streaming';
+import syntax from './syntax';
 import {
   LokiOptions,
   LokiQuery,
@@ -53,16 +64,6 @@ import {
   LokiResultType,
   LokiStreamResponse,
 } from './types';
-import { LiveStreams, LokiLiveTarget } from './live_streams';
-import LanguageProvider from './language_provider';
-import { serializeParams } from '../../../core/utils/fetch';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import syntax from './syntax';
-import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
-import { queryLogsVolume } from 'app/core/logs_model';
-import { doLokiChannelStream } from './streaming';
-import { renderLegendFormat } from '../prometheus/legend';
-import { sortDataFrameByTime } from './sortDataFrame';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -438,8 +439,13 @@ export class LokiDatasource
   }
 
   async metadataRequest(url: string, params?: Record<string, string | number>) {
-    const res = await lastValueFrom(this._request(url, params, { hideFromInspector: true }));
-    return res.data.data || res.data.values || [];
+    // url must not start with a `/`, otherwise the AJAX-request
+    // going from the browser will contain `//`, which can cause problems.
+    if (url.startsWith('/')) {
+      throw new Error(`invalid metadata request url: ${url}`);
+    }
+    const res = await this.getResource(url, params);
+    return res.data || [];
   }
 
   async metricFindQuery(query: string) {
@@ -473,7 +479,7 @@ export class LokiDatasource
   }
 
   async labelNamesQuery() {
-    const url = `${LOKI_ENDPOINT}/label`;
+    const url = 'labels';
     const params = this.getTimeRangeParams();
     const result = await this.metadataRequest(url, params);
     return result.map((value: string) => ({ text: value }));
@@ -481,7 +487,7 @@ export class LokiDatasource
 
   async labelValuesQuery(label: string) {
     const params = this.getTimeRangeParams();
-    const url = `${LOKI_ENDPOINT}/label/${label}/values`;
+    const url = `label/${label}/values`;
     const result = await this.metadataRequest(url, params);
     return result.map((value: string) => ({ text: value }));
   }
@@ -492,7 +498,7 @@ export class LokiDatasource
       ...timeParams,
       'match[]': expr,
     };
-    const url = `${LOKI_ENDPOINT}/series`;
+    const url = 'series';
     const streams = new Set();
     const result = await this.metadataRequest(url, params);
     result.forEach((stream: { [key: string]: string }) => {
@@ -557,17 +563,46 @@ export class LokiDatasource
     const limit = (options && options.limit) || 10;
     const { query, range } = this.prepareLogRowContextQueryTarget(row, limit, direction);
 
-    const sortResults = (result: DataQueryResponse): DataQueryResponse => {
+    const processDataFrame = (frame: DataFrame): DataFrame => {
+      // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
+      const cache = new FieldCache(frame);
+      const timestampField = cache.getFirstFieldOfType(FieldType.time);
+      const lineField = cache.getFirstFieldOfType(FieldType.string);
+      const idField = cache.getFieldByName('id');
+
+      if (timestampField === undefined || lineField === undefined || idField === undefined) {
+        // this should never really happen, but i want to keep typescript happy
+        return { ...frame, fields: [] };
+      }
+
+      return {
+        ...frame,
+        fields: [
+          {
+            ...timestampField,
+            name: 'ts',
+          },
+          {
+            ...lineField,
+            name: 'line',
+          },
+          {
+            ...idField,
+            name: 'id',
+          },
+        ],
+      };
+    };
+
+    const processResults = (result: DataQueryResponse): DataQueryResponse => {
+      const frames: DataFrame[] = result.data;
+      const processedFrames = frames
+        .map((frame) => sortDataFrameByTime(frame, 'DESCENDING'))
+        .map((frame) => processDataFrame(frame)); // rename fields if needed
+
       return {
         ...result,
-        data: result.data.map((frame: DataFrame) => {
-          const timestampFieldIndex = frame.fields.findIndex((field) => field.type === FieldType.time);
-          if (timestampFieldIndex === -1) {
-            return frame;
-          }
-
-          return sortDataFrameByTime(frame, 'DESCENDING');
-        }),
+        data: processedFrames,
       };
     };
 
@@ -584,7 +619,7 @@ export class LokiDatasource
           };
           throw error;
         }),
-        switchMap((res) => of(sortResults(res)))
+        switchMap((res) => of(processResults(res)))
       )
     );
   };

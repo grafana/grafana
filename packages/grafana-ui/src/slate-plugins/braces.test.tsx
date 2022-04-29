@@ -1,7 +1,9 @@
+import { shallow } from 'enzyme';
 import React from 'react';
 import Plain from 'slate-plain-serializer';
+
 import { Editor } from '@grafana/slate-react';
-import { shallow } from 'enzyme';
+
 import { BracesPlugin } from './braces';
 
 declare global {

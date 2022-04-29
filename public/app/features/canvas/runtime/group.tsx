@@ -1,14 +1,17 @@
-import React from 'react';
-import { CanvasGroupOptions, canvasElementRegistry } from 'app/features/canvas';
-import { DimensionContext } from 'app/features/dimensions';
-import { notFoundItem } from 'app/features/canvas/elements/notFound';
-import { ElementState } from './element';
-import { CanvasElementItem } from '../element';
-import { LayerActionID } from 'app/plugins/panel/canvas/types';
 import { cloneDeep } from 'lodash';
-import { Scene } from './scene';
-import { RootElement } from './root';
+import React from 'react';
+
+import { CanvasGroupOptions, canvasElementRegistry } from 'app/features/canvas';
+import { notFoundItem } from 'app/features/canvas/elements/notFound';
+import { DimensionContext } from 'app/features/dimensions';
+import { LayerActionID } from 'app/plugins/panel/canvas/types';
+
+import { CanvasElementItem } from '../element';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
+
+import { ElementState } from './element';
+import { RootElement } from './root';
+import { Scene } from './scene';
 
 export const groupItemDummy: CanvasElementItem = {
   id: 'group',
@@ -74,7 +77,7 @@ export class GroupState extends ElementState {
   reinitializeMoveable() {
     // Need to first clear current selection and then re-init moveable with slight delay
     this.scene.clearCurrentSelection();
-    setTimeout(() => this.scene.initMoveable(true), 100);
+    setTimeout(() => this.scene.initMoveable(true, this.scene.isEditingEnabled), 100);
   }
 
   // ??? or should this be on the element directly?

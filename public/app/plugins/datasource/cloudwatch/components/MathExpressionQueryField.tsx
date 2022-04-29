@@ -1,10 +1,12 @@
-import React, { useCallback, useRef } from 'react';
-import { CodeEditor, Monaco } from '@grafana/ui';
-import language from '../metric-math/definition';
-import { registerLanguage } from '../monarch/register';
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
-import { TRIGGER_SUGGEST } from '../monarch/commands';
+import React, { useCallback, useRef } from 'react';
+
+import { CodeEditor, Monaco } from '@grafana/ui';
+
 import { CloudWatchDatasource } from '../datasource';
+import language from '../metric-math/definition';
+import { TRIGGER_SUGGEST } from '../monarch/commands';
+import { registerLanguage } from '../monarch/register';
 
 export interface Props {
   onChange: (query: string) => void;

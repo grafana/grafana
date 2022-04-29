@@ -1,10 +1,12 @@
 import { MutableRefObject, RefObject } from 'react';
+import uPlot from 'uplot';
+
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
-import uPlot from 'uplot';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
+
 import { BucketLayout, HeatmapData } from './fields';
 
 interface PathbuilderOpts {

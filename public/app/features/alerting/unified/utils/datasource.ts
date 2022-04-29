@@ -3,6 +3,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { RulesSource } from 'app/types/unified-alerting';
+
 import { getAllDataSources } from './config';
 
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
@@ -109,4 +110,15 @@ export function getDatasourceAPIId(dataSourceName: string) {
     throw new Error(`Datasource "${dataSourceName}" not found`);
   }
   return String(ds.id);
+}
+
+export function getDatasourceAPIUid(dataSourceName: string) {
+  if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
+    return GRAFANA_RULES_SOURCE_NAME;
+  }
+  const ds = getDataSourceByName(dataSourceName);
+  if (!ds) {
+    throw new Error(`Datasource "${dataSourceName}" not found`);
+  }
+  return ds.uid;
 }

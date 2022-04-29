@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
+import React, { FC } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { HorizontalGroup, InlineField, InlineLabel, PopoverContent, Select } from '@grafana/ui';
-import React, { FC } from 'react';
 
 import { INNER_LABEL_WIDTH, LABEL_WIDTH } from '../constants';
 

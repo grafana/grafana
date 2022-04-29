@@ -1,6 +1,7 @@
+import { REPEAT_DIR_HORIZONTAL } from '../../../core/constants';
+
 import { PanelModel } from './PanelModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
-import { REPEAT_DIR_HORIZONTAL } from '../../../core/constants';
 
 describe('isOnTheSameGridRow', () => {
   describe('when source panel is next to a panel', () => {

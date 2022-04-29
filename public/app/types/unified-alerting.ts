@@ -1,6 +1,7 @@
 /* Prometheus internal models */
 
 import { AlertState, DataSourceInstanceSettings } from '@grafana/data';
+
 import {
   PromAlertingRuleState,
   PromRuleType,
@@ -96,11 +97,11 @@ export interface CombinedRuleNamespace {
   groups: CombinedRuleGroup[];
 }
 
-export interface RuleWithLocation {
+export interface RuleWithLocation<T = RulerRuleDTO> {
   ruleSourceName: string;
   namespace: string;
   group: RulerRuleGroupDTO;
-  rule: RulerRuleDTO;
+  rule: T;
 }
 
 export interface PromRuleWithLocation {

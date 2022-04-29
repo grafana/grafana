@@ -1,6 +1,8 @@
+import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
-
 import { Plugin } from 'slate';
+
+import { QueryEditorProps, QueryHint, isDataFrame, toLegacyResponseData, TimeRange, CoreApp } from '@grafana/data';
 import {
   SlatePrism,
   TypeaheadInput,
@@ -10,18 +12,15 @@ import {
   SuggestionsState,
   Icon,
 } from '@grafana/ui';
-
-import { LanguageMap, languages as prismLanguages } from 'prismjs';
-
-// dom also includes Element polyfills
-import { PromQuery, PromOptions } from '../types';
-import { roundMsToMin } from '../language_utils';
+import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { QueryEditorProps, QueryHint, isDataFrame, toLegacyResponseData, TimeRange, CoreApp } from '@grafana/data';
+
 import { PrometheusDatasource } from '../datasource';
+import { roundMsToMin } from '../language_utils';
+import { PromQuery, PromOptions } from '../types';
+
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
-import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';

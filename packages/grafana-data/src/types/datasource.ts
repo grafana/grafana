@@ -1,17 +1,20 @@
-import { Observable } from 'rxjs';
 import { ComponentType } from 'react';
-import { GrafanaPlugin, PluginMeta } from './plugin';
-import { PanelData } from './panel';
-import { LogRowModel } from './logs';
+import { Observable } from 'rxjs';
+
+import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
+
+import { ScopedVars } from './ScopedVars';
 import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotations';
+import { CoreApp } from './app';
 import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
-import { RawTimeRange, TimeRange } from './time';
-import { ScopedVars } from './ScopedVars';
-import { CoreApp } from './app';
-import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
-import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
+import { LogRowModel } from './logs';
+import { PanelData } from './panel';
+import { GrafanaPlugin, PluginMeta } from './plugin';
 import { DataQuery } from './query';
+import { RawTimeRange, TimeRange } from './time';
+import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
+
 import { DataSourceRef, WithAccessControlMetadata } from '.';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
@@ -413,6 +416,7 @@ export type ExploreQueryFieldProps<
 
 export interface QueryEditorHelpProps<TQuery extends DataQuery = DataQuery> {
   datasource: DataSourceApi<TQuery>;
+  query: TQuery;
   onClickExample: (query: TQuery) => void;
   exploreId?: any;
 }

@@ -1,16 +1,18 @@
 import React from 'react';
+
 import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
+
+import { ShareEmbed } from './ShareEmbed';
+import { ShareExport } from './ShareExport';
+import { ShareLibraryPanel } from './ShareLibraryPanel';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
-import { ShareExport } from './ShareExport';
-import { ShareEmbed } from './ShareEmbed';
-import SharePublic from './SharePublic';
-import { ShareModalTabModel } from './types';
-import { contextSrv } from 'app/core/core';
+import { SharePublic } from './SharePublic';
 import { config } from 'app/core/config';
-import { ShareLibraryPanel } from './ShareLibraryPanel';
+import { ShareModalTabModel } from './types';
 
 const customDashboardTabs: ShareModalTabModel[] = [];
 const customPanelTabs: ShareModalTabModel[] = [];

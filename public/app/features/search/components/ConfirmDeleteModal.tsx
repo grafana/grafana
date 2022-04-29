@@ -1,10 +1,12 @@
-import React, { FC } from 'react';
 import { css } from '@emotion/css';
+import React, { FC } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
 import { ConfirmModal, stylesFactory, useTheme } from '@grafana/ui';
+import { deleteFoldersAndDashboards } from 'app/features/manage-dashboards/state/actions';
+
 import { DashboardSection, OnDeleteItems } from '../types';
 import { getCheckedUids } from '../utils';
-import { deleteFoldersAndDashboards } from 'app/features/manage-dashboards/state/actions';
 
 interface Props {
   onDeleteItems: OnDeleteItems;

@@ -1,19 +1,18 @@
-import React, { useCallback, useMemo } from 'react';
 import { css } from '@emotion/css';
-import pluralize from 'pluralize';
 import { useId } from '@react-aria/utils';
+import pluralize from 'pluralize';
+import React, { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { InlineField, Select, useStyles2, VerticalGroup } from '@grafana/ui';
 import { DataQuery, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
-
+import { InlineField, Select, useStyles2, VerticalGroup } from '@grafana/ui';
 import config from 'app/core/config';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PanelModel } from 'app/features/dashboard/state';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { PanelModel } from 'app/features/dashboard/state';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
-import { DashboardQueryRow } from './DashboardQueryRow';
 
+import { DashboardQueryRow } from './DashboardQueryRow';
 import { DashboardQuery, ResultInfo, SHARED_DASHBOARD_QUERY } from './types';
 
 function getQueryDisplayText(query: DataQuery): string {

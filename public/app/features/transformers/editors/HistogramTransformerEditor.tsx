@@ -1,6 +1,6 @@
 import React, { FormEvent, useCallback } from 'react';
-import { DataTransformerID, standardTransformers, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
 
+import { DataTransformerID, standardTransformers, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
 import {
   HistogramTransformerOptions,
   histogramFieldInfo,
