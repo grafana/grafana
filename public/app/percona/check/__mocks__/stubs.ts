@@ -170,12 +170,14 @@ export const allChecksStub: CheckDetails[] = [
     description: 'Test number 1',
     interval: 'STANDARD',
     readMoreUrl: 'https://example.com',
+    category: '',
   },
   {
     name: 'test2',
     summary: 'Test 2',
     description: 'Test number 2',
     interval: 'RARE',
+    category: '',
   },
   {
     name: 'test3',
@@ -184,16 +186,19 @@ export const allChecksStub: CheckDetails[] = [
     interval: 'STANDARD',
     disabled: true,
     readMoreUrl: 'https://example.com',
+    category: '',
   },
   {
     name: 'test4',
     summary: 'Test 4',
     interval: 'FREQUENT',
+    category: '',
   },
   {
     name: 'test5',
     summary: 'Test 5',
     disabled: true,
     interval: 'STANDARD',
+    category: '',
   },
 ];

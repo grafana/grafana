@@ -34,6 +34,30 @@ export interface PaginatedPayload {
   };
 }
 
+export interface ApiParamBody {
+  [key: string]: {
+    intValues?: number[];
+    longValues?: number[];
+    stringValues?: string[];
+  };
+}
+
+export interface ApiParams {
+  filter_params: {
+    [key: string]: {
+      int_values: {
+        values: number[];
+      };
+      long_values: {
+        values: number[];
+      };
+      string_values: {
+        values: string[];
+      };
+    };
+  };
+}
+
 export interface PaginatedFomattedResponse<T = any> {
   data: T;
   totals: {

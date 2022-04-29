@@ -9,13 +9,11 @@ import { CheckService } from 'app/percona/check/Check.service';
 import { getStyles } from './ChangeCheckIntervalModal.styles';
 import { ChangeCheckIntervalModalProps, ChangeCheckIntervalFormValues } from './types';
 import { checkIntervalOptions } from './ChangeCheckIntervalModal.constants';
-import { ChecksReloadContext } from '../AllChecks.context';
 
 const { Form } = withTypes<ChangeCheckIntervalFormValues>();
 
-export const ChangeCheckIntervalModal: FC<ChangeCheckIntervalModalProps> = ({ check, isVisible, setVisible }) => {
+export const ChangeCheckIntervalModal: FC<ChangeCheckIntervalModalProps> = ({ check, onClose, onIntervalChanged }) => {
   const styles = useStyles(getStyles);
-  const checksReloadContext = React.useContext(ChecksReloadContext);
   const { summary, name, interval } = check;
 
   const changeInterval = async ({ interval }: ChangeCheckIntervalFormValues) => {
@@ -28,9 +26,8 @@ export const ChangeCheckIntervalModal: FC<ChangeCheckIntervalModalProps> = ({ ch
           },
         ],
       });
-      setVisible(false);
-      await checksReloadContext.fetchChecks();
       appEvents.emit(AppEvents.alertSuccess, [Messages.getSuccess(summary)]);
+      onIntervalChanged({ ...check, interval: interval! });
     } catch (e) {
       logger.error(e);
     }
@@ -41,12 +38,7 @@ export const ChangeCheckIntervalModal: FC<ChangeCheckIntervalModalProps> = ({ ch
   };
 
   return (
-    <Modal
-      data-testid="change-check-interval-modal"
-      title={Messages.title}
-      isVisible={isVisible}
-      onClose={() => setVisible(false)}
-    >
+    <Modal data-testid="change-check-interval-modal" title={Messages.title} isVisible onClose={onClose}>
       <div className={styles.content}>
         <h4 className={styles.title}>{Messages.getDescription(summary)}</h4>
         <Form
@@ -70,7 +62,7 @@ export const ChangeCheckIntervalModal: FC<ChangeCheckIntervalModalProps> = ({ ch
                 <Button
                   variant="secondary"
                   size="md"
-                  onClick={() => setVisible(false)}
+                  onClick={onClose}
                   data-testid="change-check-interval-modal-cancel"
                 >
                   {Messages.cancel}

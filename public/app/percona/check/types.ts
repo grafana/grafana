@@ -65,6 +65,7 @@ export interface CheckDetails {
   name: string;
   summary: string;
   interval: keyof typeof Interval;
+  category: string;
   description?: string;
   disabled?: boolean;
   readMoreUrl?: string;
