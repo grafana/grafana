@@ -173,16 +173,16 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 				AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField("description").SetBoost(3))).
 			AddMust(perm)
 
-		tn := bluge.NewTopNSearch(100, q)
-		tn.SortBy([]string{"-_score", "name"})
-		tn.ExplainScores() // while we are debugging
+		req = bluge.NewTopNSearch(100, q).
+			WithStandardAggregations().
+			ExplainScores().
+			SortBy([]string{"-_score", "name"})
 		doExplain = true
-		req = tn
 
 		s.logger.Info("RUN QUERY", "q", q)
 	}
 
-	termAggs := []string{"type", "_kind", "schemaVersion"}
+	termAggs := []string{"type", "_kind", "tags", "schemaVersion"}
 	for _, t := range termAggs {
 		req.AddAggregation(t, aggregations.NewTermsAggregation(search.Field(t), 50))
 	}

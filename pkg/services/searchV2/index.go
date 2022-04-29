@@ -138,6 +138,7 @@ func (i *dashboardIndex) initBlugeIndex(ctx context.Context, orgID int64) error 
 		for _, tag := range dashboard.info.Tags {
 			doc.AddField(bluge.NewKeywordField("tags", tag).
 				StoreValue().
+				Aggregatable().
 				SearchTermPositions())
 		}
 
