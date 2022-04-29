@@ -18,16 +18,16 @@ import (
 )
 
 type Dispatcher struct {
-	adminConfigMtx   sync.RWMutex
+	AdminConfigMtx   sync.RWMutex
 	logger           log.Logger
 	clock            clock.Clock
 	adminConfigStore store.AdminConfigurationStore
 
 	// Senders help us send alerts to external Alertmanagers.
-	senders          map[int64]*Sender
-	sendersCfgHash   map[int64]string
-	multiOrgNotifier *notifier.MultiOrgAlertmanager
-	sendAlertsTo     map[int64]models.AlertmanagersChoice
+	Senders          map[int64]*Sender
+	SendersCfgHash   map[int64]string
+	MultiOrgNotifier *notifier.MultiOrgAlertmanager
+	SendAlertsTo     map[int64]models.AlertmanagersChoice
 
 	appURL                  *url.URL
 	disabledOrgs            map[int64]struct{}
@@ -36,15 +36,15 @@ type Dispatcher struct {
 
 func NewDispatcher(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore, clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration) *Dispatcher {
 	d := &Dispatcher{
-		adminConfigMtx:   sync.RWMutex{},
+		AdminConfigMtx:   sync.RWMutex{},
 		logger:           log.New("ngalert-notifications-dispatcher"),
 		clock:            clk,
 		adminConfigStore: store,
 
-		senders:          map[int64]*Sender{},
-		sendersCfgHash:   map[int64]string{},
-		multiOrgNotifier: multiOrgNotifier,
-		sendAlertsTo:     map[int64]models.AlertmanagersChoice{},
+		Senders:          map[int64]*Sender{},
+		SendersCfgHash:   map[int64]string{},
+		MultiOrgNotifier: multiOrgNotifier,
+		SendAlertsTo:     map[int64]models.AlertmanagersChoice{},
 
 		appURL:                  appURL,
 		disabledOrgs:            disabledOrgs,
@@ -62,12 +62,12 @@ func (d *Dispatcher) adminConfigSync(ctx context.Context) error {
 			}
 		case <-ctx.Done():
 			// Stop sending alerts to all external Alertmanager(s).
-			d.adminConfigMtx.Lock()
-			for orgID, s := range d.senders {
-				delete(d.senders, orgID) // delete before we stop to make sure we don't accept any more alerts.
+			d.AdminConfigMtx.Lock()
+			for orgID, s := range d.Senders {
+				delete(d.Senders, orgID) // delete before we stop to make sure we don't accept any more alerts.
 				s.Stop()
 			}
-			d.adminConfigMtx.Unlock()
+			d.AdminConfigMtx.Unlock()
 
 			return nil
 		}
@@ -86,7 +86,7 @@ func (d *Dispatcher) SyncAndApplyConfigFromDatabase() error {
 	d.logger.Debug("found admin configurations", "count", len(cfgs))
 
 	orgsFound := make(map[int64]struct{}, len(cfgs))
-	d.adminConfigMtx.Lock()
+	d.AdminConfigMtx.Lock()
 	for _, cfg := range cfgs {
 		_, isDisabledOrg := d.disabledOrgs[cfg.OrgID]
 		if isDisabledOrg {
@@ -95,11 +95,11 @@ func (d *Dispatcher) SyncAndApplyConfigFromDatabase() error {
 		}
 
 		// Update the Alertmanagers choice for the organization.
-		d.sendAlertsTo[cfg.OrgID] = cfg.SendAlertsTo
+		d.SendAlertsTo[cfg.OrgID] = cfg.SendAlertsTo
 
 		orgsFound[cfg.OrgID] = struct{}{} // keep track of the which senders we need to keep.
 
-		existing, ok := d.senders[cfg.OrgID]
+		existing, ok := d.Senders[cfg.OrgID]
 
 		// We have no running sender and no Alertmanager(s) configured, no-op.
 		if !ok && len(cfg.Alertmanagers) == 0 {
@@ -121,7 +121,7 @@ func (d *Dispatcher) SyncAndApplyConfigFromDatabase() error {
 
 		// We have a running sender, check if we need to apply a new config.
 		if ok {
-			if d.sendersCfgHash[cfg.OrgID] == cfg.AsSHA256() {
+			if d.SendersCfgHash[cfg.OrgID] == cfg.AsSHA256() {
 				d.logger.Debug("sender configuration is the same as the one running, no-op", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
 				continue
 			}
@@ -132,7 +132,7 @@ func (d *Dispatcher) SyncAndApplyConfigFromDatabase() error {
 				d.logger.Error("failed to apply configuration", "err", err, "org", cfg.OrgID)
 				continue
 			}
-			d.sendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
+			d.SendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
 			continue
 		}
 
@@ -144,7 +144,7 @@ func (d *Dispatcher) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		d.senders[cfg.OrgID] = s
+		d.Senders[cfg.OrgID] = s
 		s.Run()
 
 		err = s.ApplyConfig(cfg)
@@ -153,19 +153,19 @@ func (d *Dispatcher) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		d.sendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
+		d.SendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
 	}
 
 	sendersToStop := map[int64]*Sender{}
 
-	for orgID, s := range d.senders {
+	for orgID, s := range d.Senders {
 		if _, exists := orgsFound[orgID]; !exists {
 			sendersToStop[orgID] = s
-			delete(d.senders, orgID)
-			delete(d.sendersCfgHash, orgID)
+			delete(d.Senders, orgID)
+			delete(d.SendersCfgHash, orgID)
 		}
 	}
-	d.adminConfigMtx.Unlock()
+	d.AdminConfigMtx.Unlock()
 
 	// We can now stop these senders w/o having to hold a lock.
 	for orgID, s := range sendersToStop {
@@ -196,11 +196,11 @@ func (d *Dispatcher) notify(key models.AlertRuleKey, alerts definitions.Postable
 	// Send alerts to local notifier if they need to be handled internally
 	// or if no external AMs have been discovered yet.
 	var localNotifierExist, externalNotifierExist bool
-	if d.sendAlertsTo[key.OrgID] == models.ExternalAlertmanagers && len(d.AlertmanagersFor(key.OrgID)) > 0 {
+	if d.SendAlertsTo[key.OrgID] == models.ExternalAlertmanagers && len(d.AlertmanagersFor(key.OrgID)) > 0 {
 		logger.Debug("no alerts to put in the notifier")
 	} else {
 		logger.Debug("sending alerts to local notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
-		n, err := d.multiOrgNotifier.AlertmanagerFor(key.OrgID)
+		n, err := d.MultiOrgNotifier.AlertmanagerFor(key.OrgID)
 		if err == nil {
 			localNotifierExist = true
 			if err := n.PutAlerts(alerts); err != nil {
@@ -217,10 +217,10 @@ func (d *Dispatcher) notify(key models.AlertRuleKey, alerts definitions.Postable
 
 	// Send alerts to external Alertmanager(s) if we have a sender for this organization
 	// and alerts are not being handled just internally.
-	d.adminConfigMtx.RLock()
-	defer d.adminConfigMtx.RUnlock()
-	s, ok := d.senders[key.OrgID]
-	if ok && d.sendAlertsTo[key.OrgID] != models.InternalAlertmanager {
+	d.AdminConfigMtx.RLock()
+	defer d.AdminConfigMtx.RUnlock()
+	s, ok := d.Senders[key.OrgID]
+	if ok && d.SendAlertsTo[key.OrgID] != models.InternalAlertmanager {
 		logger.Debug("sending alerts to external notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
 		s.SendAlerts(alerts)
 		externalNotifierExist = true
@@ -233,9 +233,9 @@ func (d *Dispatcher) notify(key models.AlertRuleKey, alerts definitions.Postable
 
 // AlertmanagersFor returns all the discovered Alertmanager(s) for a particular organization.
 func (d *Dispatcher) AlertmanagersFor(orgID int64) []*url.URL {
-	d.adminConfigMtx.RLock()
-	defer d.adminConfigMtx.RUnlock()
-	s, ok := d.senders[orgID]
+	d.AdminConfigMtx.RLock()
+	defer d.AdminConfigMtx.RUnlock()
+	s, ok := d.Senders[orgID]
 	if !ok {
 		return []*url.URL{}
 	}
@@ -244,9 +244,9 @@ func (d *Dispatcher) AlertmanagersFor(orgID int64) []*url.URL {
 
 // DroppedAlertmanagersFor returns all the dropped Alertmanager(s) for a particular organization.
 func (d *Dispatcher) DroppedAlertmanagersFor(orgID int64) []*url.URL {
-	d.adminConfigMtx.RLock()
-	defer d.adminConfigMtx.RUnlock()
-	s, ok := d.senders[orgID]
+	d.AdminConfigMtx.RLock()
+	defer d.AdminConfigMtx.RUnlock()
+	s, ok := d.Senders[orgID]
 	if !ok {
 		return []*url.URL{}
 	}
