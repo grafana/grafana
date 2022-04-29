@@ -7,9 +7,7 @@ import { ElasticsearchQuery } from '../../types';
 import { QueryEditor } from '.';
 
 const noop = () => void 0;
-const datasourceMock = {
-  esVersion: '8.0.0',
-} as ElasticDatasource;
+const datasourceMock = {} as ElasticDatasource;
 
 describe('QueryEditor', () => {
   describe('Alias Field', () => {
