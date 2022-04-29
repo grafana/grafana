@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
@@ -130,12 +129,9 @@ func (hs *HTTPServer) GetPlaylistDashboards(c *models.ReqContext) response.Respo
 }
 
 func (hs *HTTPServer) DeletePlaylist(c *models.ReqContext) response.Response {
-	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
-	}
+	uid := web.Params(c.Req)[":uid"]
 
-	cmd := models.DeletePlaylistCommand{Id: id, OrgId: c.OrgId}
+	cmd := models.DeletePlaylistCommand{Uid: uid, OrgId: c.OrgId}
 	if err := hs.SQLStore.DeletePlaylist(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to delete playlist", err)
 	}
@@ -163,11 +159,7 @@ func (hs *HTTPServer) UpdatePlaylist(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgId = c.OrgId
-	var err error
-	cmd.Id, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
-	}
+	cmd.Uid = web.Params(c.Req)[":uid"]
 
 	if err := hs.SQLStore.UpdatePlaylist(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to save playlist", err)
