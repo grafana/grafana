@@ -1,8 +1,10 @@
 import { logger } from '@percona/platform-core';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
+import { Router } from 'react-router-dom';
 
+import { locationService } from '@grafana/runtime';
 import { CheckService } from 'app/percona/check/Check.service';
 import { Interval } from 'app/percona/check/types';
 import { configureStore } from 'app/store/configureStore';
@@ -20,6 +22,7 @@ jest.mock('@percona/platform-core', () => {
     },
   };
 });
+jest.mock('app/percona/check/Check.service');
 
 describe('AllChecksTab::', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -34,11 +37,13 @@ describe('AllChecksTab::', () => {
           },
         } as StoreState)}
       >
-        <AllChecksTab />
+        <Router history={locationService.getHistory()}>
+          <AllChecksTab />
+        </Router>
       </Provider>
     );
 
-    await screen.findByTestId('db-checks-all-checks-wrapper');
+    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
 
     expect(spy).toBeCalledTimes(1);
   });
@@ -53,57 +58,18 @@ describe('AllChecksTab::', () => {
           },
         } as StoreState)}
       >
-        <AllChecksTab />
+        <Router history={locationService.getHistory()}>
+          <AllChecksTab />
+        </Router>
       </Provider>
     );
 
-    await screen.findByTestId('db-checks-all-checks-spinner');
-    expect(screen.getByTestId('db-checks-all-checks-spinner')).toBeInTheDocument();
-  });
-
-  it('should log an error if the API call fails', async () => {
-    jest.spyOn(CheckService, 'getAllChecks').mockImplementation(() => {
-      throw Error('test');
-    });
-    const loggerSpy = jest.spyOn(logger, 'error').mockImplementationOnce(() => null);
-
-    render(
-      <Provider
-        store={configureStore({
-          percona: {
-            user: { isAuthorized: true, isPlatformUser: false },
-            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
-          },
-        } as StoreState)}
-      >
-        <AllChecksTab />
-      </Provider>
-    );
-
-    await screen.findByTestId('db-checks-all-checks-wrapper');
-    expect(loggerSpy).toBeCalledTimes(1);
+    expect(screen.queryByTestId('table-loading')).toBeInTheDocument();
+    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
+    expect(screen.queryByTestId('spinner-wrapper')).not.toBeInTheDocument();
   });
 
   it('should render a table', async () => {
-    jest.spyOn(CheckService, 'getAllChecks').mockImplementation(() =>
-      Promise.resolve([
-        {
-          summary: 'Test',
-          name: 'test enabled',
-          description: 'test enabled description',
-          interval: 'STANDARD',
-          disabled: false,
-        },
-        {
-          summary: 'Test disabled',
-          name: 'test disabled',
-          description: 'test disabled description',
-          interval: 'RARE',
-          disabled: true,
-        },
-      ])
-    );
-
     render(
       <Provider
         store={configureStore({
@@ -113,27 +79,57 @@ describe('AllChecksTab::', () => {
           },
         } as StoreState)}
       >
-        <AllChecksTab />
+        <Router history={locationService.getHistory()}>
+          <AllChecksTab />
+        </Router>
       </Provider>
     );
 
-    await screen.findByTestId('db-checks-all-checks-wrapper');
-    const cells = screen.getAllByRole('cell');
+    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
+    const tbody = screen.getByTestId('table-tbody');
 
-    expect(screen.getAllByTestId('db-checks-all-checks-table')).toHaveLength(1);
-    expect(screen.getAllByTestId('db-checks-all-checks-thead')).toHaveLength(1);
-    expect(screen.getAllByTestId('db-checks-all-checks-tbody')).toHaveLength(1);
-    expect(cells).toHaveLength(10);
-    expect(cells[0]).toHaveTextContent('Test');
-    expect(cells[1]).toHaveTextContent('test enabled description');
-    expect(cells[2]).toHaveTextContent(Messages.enabled);
-    expect(cells[3]).toHaveTextContent(Interval.STANDARD);
-    expect(cells[4]).toHaveTextContent(Messages.disable);
-    expect(cells[5]).toHaveTextContent('Test disabled');
-    expect(cells[6]).toHaveTextContent('test disabled description');
-    expect(cells[7]).toHaveTextContent(Messages.disabled);
-    expect(cells[8]).toHaveTextContent(Interval.RARE);
-    expect(cells[9]).toHaveTextContent(Messages.enable);
+    expect(tbody.querySelectorAll('tr > td')).toHaveLength(2 * 6);
+    expect(tbody.querySelectorAll('tr > td')[0]).toHaveTextContent('Test');
+    expect(tbody.querySelectorAll('tr > td')[1]).toHaveTextContent('test enabled description');
+    expect(tbody.querySelectorAll('tr > td')[2]).toHaveTextContent('performance');
+    expect(tbody.querySelectorAll('tr > td')[3]).toHaveTextContent(Messages.enabled);
+    expect(tbody.querySelectorAll('tr > td')[4]).toHaveTextContent(Interval.STANDARD);
+    expect(tbody.querySelectorAll('tr > td')[5]).toHaveTextContent(Messages.disable);
+    expect(tbody.querySelectorAll('tr > td')[6]).toHaveTextContent('Test disabled');
+    expect(tbody.querySelectorAll('tr > td')[7]).toHaveTextContent('test disabled description');
+    expect(tbody.querySelectorAll('tr > td')[8]).toHaveTextContent('security');
+    expect(tbody.querySelectorAll('tr > td')[9]).toHaveTextContent(Messages.disabled);
+    expect(tbody.querySelectorAll('tr > td')[10]).toHaveTextContent(Interval.RARE);
+    expect(tbody.querySelectorAll('tr > td')[11]).toHaveTextContent(Messages.enable);
+  });
+
+  it('should call an API to change the check status when the action button gets clicked', async () => {
+    const spy = jest.spyOn(CheckService, 'changeCheck');
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true, isPlatformUser: false },
+            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+          },
+        } as StoreState)}
+      >
+        <Router history={locationService.getHistory()}>
+          <AllChecksTab />
+        </Router>
+      </Provider>
+    );
+
+    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
+
+    const button = screen.getAllByTestId('check-table-loader-button')[0];
+    fireEvent.click(button);
+
+    await waitFor(() => expect(button).toHaveTextContent('Enable'));
+
+    expect(spy).toBeCalledTimes(1);
+    expect(spy).toBeCalledWith({ params: [{ name: 'test enabled', disable: true }] });
+    spy.mockClear();
   });
 
   it('should log an error if the run checks API call fails', async () => {
@@ -151,11 +147,13 @@ describe('AllChecksTab::', () => {
           },
         } as StoreState)}
       >
-        <AllChecksTab />
+        <Router history={locationService.getHistory()}>
+          <AllChecksTab />
+        </Router>
       </Provider>
     );
 
-    await screen.findByTestId('db-check-panel-actions');
+    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
 
     const runChecksButton = screen.getByRole('button', { name: Messages.runDbChecks });
 
@@ -181,11 +179,13 @@ describe('AllChecksTab::', () => {
           },
         } as StoreState)}
       >
-        <AllChecksTab />
+        <Router history={locationService.getHistory()}>
+          <AllChecksTab />
+        </Router>
       </Provider>
     );
 
-    await screen.findByTestId('db-check-panel-actions');
+    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
 
     const runChecksButton = screen.getByRole('button', { name: Messages.runDbChecks });
 

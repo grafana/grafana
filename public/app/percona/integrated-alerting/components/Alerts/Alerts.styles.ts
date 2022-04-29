@@ -37,7 +37,7 @@ export const getStyles = ({ colors, v1: { colors: v1Colors, spacing } }: Grafana
     `,
     actionsWrapper: css`
       display: flex;
-      justify-content: center;
+      justify-content: flex-end;
     `,
   };
 };

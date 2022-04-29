@@ -1,8 +1,8 @@
 import { AxiosError, AxiosInstance } from 'axios';
 
-import { ApiErrorCode } from '../core';
+import { ApiErrorCode, ApiParams } from '../core';
 
-import { apiErrorParser, ApiRequest, AxiosInstanceEx, translateApiError } from './api';
+import { apiErrorParser, ApiRequest, AxiosInstanceEx, translateApiError, getApiFilterParams } from './api';
 
 declare module './api' {
   export interface AxiosInstanceEx extends AxiosInstance {
@@ -140,5 +140,33 @@ describe('apiErrorParser', () => {
         },
       } as AxiosError)
     ).toHaveLength(2);
+  });
+});
+
+describe('getApiFilterParams', () => {
+  it('should return no filter params if no params passed', () => {
+    expect(getApiFilterParams([])).toEqual<ApiParams>({ filter_params: {} });
+  });
+
+  it('should return int values', () => {
+    expect(getApiFilterParams([{ category: { intValues: [10, 0] } }])).toEqual<ApiParams>({
+      filter_params: {
+        category: { int_values: { values: [10, 0] }, long_values: { values: [] }, string_values: { values: [] } },
+      },
+    });
+  });
+
+  it('should return mixed values', () => {
+    expect(
+      getApiFilterParams([{ category: { intValues: [10, 0], longValues: [1], stringValues: ['', 'foo'] } }])
+    ).toEqual<ApiParams>({
+      filter_params: {
+        category: {
+          int_values: { values: [10, 0] },
+          long_values: { values: [1] },
+          string_values: { values: ['', 'foo'] },
+        },
+      },
+    });
   });
 });

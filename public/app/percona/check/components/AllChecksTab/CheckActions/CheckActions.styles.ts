@@ -1,8 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme } from '@grafana/data';
-
-export const getStyles = (theme: GrafanaTheme) => ({
+export const getStyles = () => ({
   actionsWrapper: css`
     align-items: center;
     justify-content: center;

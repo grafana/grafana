@@ -170,7 +170,16 @@ export const DBCluster: FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kubernetes]);
 
-  useEffect(() => setLoading((prevLoading) => prevLoading || kubernetesLoading), [kubernetesLoading]);
+  useEffect(
+    () =>
+      setLoading((prevLoading) => {
+        if (!kubernetesLoading && !kubernetes.length) {
+          return false;
+        }
+        return prevLoading || kubernetesLoading;
+      }),
+    [kubernetes.length, kubernetesLoading]
+  );
 
   const showMonitoringWarning = useMemo(
     () => settingsLoading || !settings?.publicAddress,

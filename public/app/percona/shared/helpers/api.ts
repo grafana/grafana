@@ -3,7 +3,7 @@ import axios, { CancelToken, AxiosInstance, AxiosError } from 'axios';
 import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
 
-import { ApiError, ApiErrorCode, ApiVerboseError } from '../core';
+import { ApiError, ApiErrorCode, ApiParamBody, ApiParams, ApiVerboseError } from '../core';
 
 export class ApiRequest {
   axiosInstance: AxiosInstance;
@@ -104,4 +104,20 @@ export const apiErrorParser = (e: AxiosError): ApiVerboseError[] => {
   }
 
   return result;
+};
+
+export const getApiFilterParams = (params: ApiParamBody[]): ApiParams => {
+  const resultParams: ApiParams = { filter_params: {} };
+
+  params.forEach((param) => {
+    for (const [key, { intValues = [], longValues = [], stringValues = [] }] of Object.entries(param)) {
+      resultParams.filter_params[key] = {
+        int_values: { values: intValues },
+        long_values: { values: longValues },
+        string_values: { values: stringValues },
+      };
+    }
+  });
+
+  return resultParams;
 };
