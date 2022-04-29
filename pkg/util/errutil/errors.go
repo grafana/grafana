@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// ErrorBase represents the static information about a specific error.
+// Base represents the static information about a specific error.
 // The Reason is used to determine the status code that should be
 // returned for the error, and the MessageID is passed to the caller
 // to serve as the base for user facing error messages.
@@ -14,28 +14,28 @@ import (
 //   login.failed-authentication
 //   dashboards.validation-error
 //   dashboards.uid-already-exists
-type ErrorBase struct {
+type Base struct {
 	Reason    StatusReason
 	MessageID string
 }
 
-// Base help with the initialization of ErrorBase.
-func Base(reason StatusReason, msgID string) ErrorBase {
-	return ErrorBase{
+// Base help with the initialization of Base.
+func NewBase(reason StatusReason, msgID string) Base {
+	return Base{
 		Reason:    reason,
 		MessageID: msgID,
 	}
 }
 
 // Errorf creates a new Error with the Reason and MessageID from
-// ErrorBase, and Message and Underlying will be populated using
+// Base, and Message and Underlying will be populated using
 // the rules of fmt.Errorf.
-func (e ErrorBase) Errorf(format string, args ...interface{}) Error {
+func (e Base) Errorf(format string, args ...interface{}) Error {
 	err := fmt.Errorf(format, args...)
 
 	return Error{
 		Reason:     e.Reason,
-		Message:    err.Error(),
+		LogMessage: err.Error(),
 		MessageID:  e.MessageID,
 		Underlying: errors.Unwrap(err),
 	}
@@ -49,15 +49,26 @@ func (e ErrorBase) Errorf(format string, args ...interface{}) Error {
 // Error implements Unwrap and Is to natively support Go 1.13 style
 // errors as described in https://go.dev/blog/go1.13-errors .
 type Error struct {
-	Reason     StatusReason
-	Message    string
-	MessageID  string
-	Underlying error
+	Reason        StatusReason
+	MessageID     string
+	LogMessage    string
+	Underlying    error
+	PublicPayload map[string]interface{}
+}
+
+// MarshalJSON returns an error, we do not want raw Error:s being
+// marshaled into JSON.
+//
+// Use Public to convert the Error into a PublicError which can be
+// marshaled. This is not done automatically, as that conversion is
+// lossy.
+func (e Error) MarshalJSON() ([]byte, error) {
+	return nil, fmt.Errorf("errutil.Error cannot be directly marshaled into JSON")
 }
 
 // Error implements error.
 func (e Error) Error() string {
-	return e.Message
+	return e.LogMessage
 }
 
 // Unwrap is used by errors.As to iterate over the sequence of
@@ -75,6 +86,23 @@ func (e Error) Is(other error) bool {
 	}
 
 	return o.Reason == e.Reason && o.MessageID == e.MessageID && o.Error() == e.Error()
+}
+
+// PublicError is derived from Error and only contains information
+// available to the end user.
+type PublicError struct {
+	StatusCode CoreStatus             `json:"statusCode"`
+	MessageID  string                 `json:"messageId"`
+	Extra      map[string]interface{} `json:"extra,omitempty"`
+}
+
+// Public returns only the
+func (e Error) Public() PublicError {
+	return PublicError{
+		StatusCode: e.Reason.Status(),
+		MessageID:  e.MessageID,
+		Extra:      e.PublicPayload,
+	}
 }
 
 // Wrap is a simple wrapper around fmt.Errorf that wraps errors.
