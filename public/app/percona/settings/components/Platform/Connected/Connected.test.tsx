@@ -1,8 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
+import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
+
+import { PlatformService } from '../Platform.service';
 
 import { Connected } from './Connected';
 import { Messages } from './Connected.messages';
@@ -19,5 +22,40 @@ describe('Connected::', () => {
 
     expect(wrapper).toBeInTheDocument();
     expect(wrapper.textContent?.includes(Messages.connected)).toBeTruthy();
+  });
+
+  it('should disconnect when confirming in modal', async () => {
+    jest.useFakeTimers();
+    const disconnectSpy = jest.spyOn(PlatformService, 'disconnect').mockResolvedValueOnce();
+    const locationSpy = jest.fn();
+    const location = {
+      ...window.location,
+      assign: locationSpy,
+    };
+
+    Object.defineProperty(window, 'location', {
+      writable: true,
+      value: location,
+    });
+
+    render(
+      <Provider store={configureStore()}>
+        <Connected />
+      </Provider>
+    );
+
+    fireEvent.click(screen.getByTestId('disconnect-button'));
+    await waitFor(() => screen.getByText('Disconnect PMM from Percona Platform'));
+
+    const confirmButton = screen
+      .getAllByRole('button')
+      .find((button) => button.getAttribute('aria-label') === 'Confirm Modal Danger Button');
+
+    fireEvent.click(confirmButton!);
+    await new Promise((resolve) => setImmediate(resolve));
+    jest.advanceTimersByTime(3000);
+
+    expect(disconnectSpy).toHaveBeenCalled();
+    expect(locationSpy).toHaveBeenCalledWith(`${config.appSubUrl}/logout`);
   });
 });
