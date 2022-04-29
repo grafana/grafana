@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
-import { Alert, InlineField, InlineLabel, Input, QueryField, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineLabel, Input, QueryField, useStyles2 } from '@grafana/ui';
 
 import { ElasticDatasource } from '../../datasource';
 import { useNextId } from '../../hooks/useNextId';
@@ -17,19 +17,17 @@ import { changeAliasPattern, changeQuery } from './state';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
 
-export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: ElasticQueryEditorProps) => {
-  return (
-    <ElasticsearchProvider
-      datasource={datasource}
-      onChange={onChange}
-      onRunQuery={onRunQuery}
-      query={query}
-      range={range || getDefaultTimeRange()}
-    >
-      <QueryEditorForm value={query} />
-    </ElasticsearchProvider>
-  );
-};
+export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: ElasticQueryEditorProps) => (
+  <ElasticsearchProvider
+    datasource={datasource}
+    onChange={onChange}
+    onRunQuery={onRunQuery}
+    query={query}
+    range={range || getDefaultTimeRange()}
+  >
+    <QueryEditorForm value={query} />
+  </ElasticsearchProvider>
+);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   root: css`

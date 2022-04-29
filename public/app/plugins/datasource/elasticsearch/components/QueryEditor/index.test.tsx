@@ -7,7 +7,6 @@ import { ElasticsearchQuery } from '../../types';
 import { QueryEditor } from '.';
 
 const noop = () => void 0;
-const datasourceMock = {} as ElasticDatasource;
 
 describe('QueryEditor', () => {
   describe('Alias Field', () => {
@@ -28,7 +27,7 @@ describe('QueryEditor', () => {
 
       const onChange = jest.fn<void, [ElasticsearchQuery]>();
 
-      render(<QueryEditor query={query} datasource={datasourceMock} onChange={onChange} onRunQuery={noop} />);
+      render(<QueryEditor query={query} datasource={{} as ElasticDatasource} onChange={onChange} onRunQuery={noop} />);
 
       let aliasField = screen.getByLabelText('Alias') as HTMLInputElement;
 
@@ -62,7 +61,7 @@ describe('QueryEditor', () => {
         bucketAggs: [{ id: '2', type: 'terms' }],
       };
 
-      render(<QueryEditor query={query} datasource={datasourceMock} onChange={noop} onRunQuery={noop} />);
+      render(<QueryEditor query={query} datasource={{} as ElasticDatasource} onChange={noop} onRunQuery={noop} />);
 
       expect(screen.getByLabelText('Alias')).toBeDisabled();
     });
@@ -80,7 +79,7 @@ describe('QueryEditor', () => {
         bucketAggs: [{ id: '2', type: 'date_histogram' }],
       };
 
-      render(<QueryEditor query={query} datasource={datasourceMock} onChange={noop} onRunQuery={noop} />);
+      render(<QueryEditor query={query} datasource={{} as ElasticDatasource} onChange={noop} onRunQuery={noop} />);
 
       expect(screen.getByLabelText('Alias')).toBeEnabled();
     });
@@ -100,7 +99,7 @@ describe('QueryEditor', () => {
       bucketAggs: [{ id: '2', type: 'date_histogram' }],
     };
 
-    render(<QueryEditor query={query} datasource={datasourceMock} onChange={noop} onRunQuery={noop} />);
+    render(<QueryEditor query={query} datasource={{} as ElasticDatasource} onChange={noop} onRunQuery={noop} />);
 
     expect(screen.queryByLabelText('Group By')).not.toBeInTheDocument();
   });
@@ -118,7 +117,7 @@ describe('QueryEditor', () => {
       bucketAggs: [{ id: '2', type: 'date_histogram' }],
     };
 
-    render(<QueryEditor query={query} datasource={datasourceMock} onChange={noop} onRunQuery={noop} />);
+    render(<QueryEditor query={query} datasource={{} as ElasticDatasource} onChange={noop} onRunQuery={noop} />);
 
     expect(screen.getByText('Group By')).toBeInTheDocument();
   });
