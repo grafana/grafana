@@ -1,4 +1,4 @@
-import { valid } from 'semver';
+import { valid, gte } from 'semver';
 
 import {
   isMetricAggregationWithField,
@@ -120,26 +120,9 @@ export const coerceESVersion = (version: string | number): string => {
 };
 
 export const isDeprecatedVersion = (version: string): boolean => {
-  const versionArray = version.split('.').map((v) => Number(v));
-  // 8+ versions are supported
-  if (versionArray[0] >= 8) {
+  if (gte(version, '7.10.0')) {
     return false;
   }
 
-  if (versionArray[0] === 7) {
-    // 7.10+ versions are supported
-    if (versionArray[1] >= 10) {
-      return false;
-    }
-    // < 7.10 versions are not supported
-    return true;
-  }
-
-  // <7 versions are not supported
-  if (versionArray[0] < 7) {
-    return true;
-  }
-
-  // In this case, user has weird versioning and we want to default to true
   return true;
 };
