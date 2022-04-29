@@ -3,7 +3,7 @@ import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { AsyncSelect, InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { AsyncSelect, fuzzyMatch, InlineField, InlineFieldRow, Input } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
@@ -52,7 +52,9 @@ export function SearchForm({ datasource, query, onChange }: Props) {
           value: service,
         }));
 
-        const filteredOptions = serviceOptions.filter((item) => (item.value ? item.value?.indexOf(query) > -1 : false));
+        const filteredOptions = serviceOptions.filter((item) =>
+          item.value ? fuzzyMatch(item.value, query).found : false
+        );
         return filteredOptions;
       } catch (error) {
         dispatch(notifyApp(createErrorNotification('Error', error)));

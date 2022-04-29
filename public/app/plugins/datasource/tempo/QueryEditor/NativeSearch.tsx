@@ -17,6 +17,7 @@ import {
   AsyncSelect,
   Alert,
   useStyles2,
+  fuzzyMatch,
 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -70,7 +71,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     try {
       setIsLoading((prevValue) => ({ ...prevValue, [name]: false }));
       const options = await lp.getOptions(name);
-      const filteredOptions = options.filter((item) => (item.value ? item.value?.indexOf(query) > -1 : false));
+      const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
       return filteredOptions;
     } catch (error) {
       if (error?.status === 404) {
