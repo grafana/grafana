@@ -61,7 +61,7 @@ jobs:
           const script = require('./.github/workflows/scripts/json-file-to-job-output.js');
           await script({ core, filePath });
 
-    - name: Check if "breaking change" label exists
+    - name: Check if "breaking change (bot-assigned)" label exists
       id: does-label-exist
       uses: actions/github-script@v6
       env:
@@ -74,7 +74,7 @@ jobs:
             repo: context.repo.repo,
           });
           const labels = data.map(({ name }) => name);
-          const doesExist = labels.includes('breaking change');
+          const doesExist = labels.includes('breaking change (bot-assigned)');
 
           return doesExist ? 1 : 0;
 
@@ -117,7 +117,7 @@ jobs:
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_LEVITATE_WEBHOOK_URL }}
 
-    - name: Add "breaking change" label
+    - name: Add "breaking change (bot-assigned)" label
       if: ${{ steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 }}
       uses: actions/github-script@v6
       env:
@@ -129,10 +129,10 @@ jobs:
             issue_number: process.env.PR_NUMBER,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            labels: ['breaking change']
+            labels: ['breaking change (bot-assigned) (']
           })
 
-    - name: Remove "breaking change" label
+    - name: Remove "breaking change (bot-assigned)" label
       if: ${{ steps.levitate-run.outputs.exit_code == 0 && steps.does-label-exist.outputs.result == 1 }}
       uses: actions/github-script@v6
       env:
@@ -144,7 +144,7 @@ jobs:
             issue_number: process.env.PR_NUMBER,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            name: 'breaking change'
+            name: 'breaking change (bot-assigned)'
           })
 
     # This is very weird, the actual request goes through (comes back with a 201), but does not assign the team.
