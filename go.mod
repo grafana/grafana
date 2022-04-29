@@ -15,7 +15,7 @@ replace github.com/russellhaering/goxmldsig@v1.1.0 => github.com/russellhaering/
 
 require (
 	cloud.google.com/go/storage v1.21.0
-	cuelang.org/go v0.4.1
+	cuelang.org/go v0.4.3
 	github.com/Azure/azure-sdk-for-go v59.3.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.22
 	github.com/BurntSushi/toml v0.3.1
@@ -103,7 +103,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.6.3
 	golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29
 	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f
-	golang.org/x/net v0.0.0-20220421235706-1d1ef9303861 // indirect
+	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
 	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65
@@ -155,7 +155,7 @@ require (
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
-	github.com/emicklei/proto v1.6.15 // indirect
+	github.com/emicklei/proto v1.10.0 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
 	github.com/go-kit/log v0.1.0
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
@@ -172,7 +172,7 @@ require (
 	github.com/gogo/status v1.1.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.4.1 // indirect
 	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
-	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
+	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
@@ -213,7 +213,7 @@ require (
 	github.com/prometheus/exporter-toolkit v0.7.0 // indirect
 	github.com/prometheus/node_exporter v1.0.0-rc.0.0.20200428091818-01054558c289 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/protocolbuffers/txtpbfmt v0.0.0-20201118171849-f6a6b3f636fc // indirect
+	github.com/protocolbuffers/txtpbfmt v0.0.0-20220428173112-74888fd59c2b // indirect
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
 	github.com/rs/cors v1.8.2 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
@@ -234,7 +234,7 @@ require (
 	go.uber.org/goleak v1.1.12 // indirect
 	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
@@ -248,7 +248,7 @@ require (
 	github.com/armon/go-radix v1.0.0
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
-	github.com/grafana/thema v0.0.0-20220413232647-fc54c169b508
+	github.com/grafana/thema v0.0.0-20220427204245-a557e8970249
 	gocloud.dev v0.25.0
 )
 
@@ -281,6 +281,7 @@ require (
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/klauspost/compress v1.15.1 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
+	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.8 // indirect
 	github.com/segmentio/asm v1.1.1 // indirect
