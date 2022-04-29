@@ -10,12 +10,20 @@ interface VariableTextFieldProps {
   value: string;
   label: string;
   tooltip?: PopoverContent;
+  interactive?: boolean;
 }
 
-export const VariableTextField: FC<VariableTextFieldProps> = ({ label, onBlur, placeholder, value, tooltip }) => {
+export const VariableTextField: FC<VariableTextFieldProps> = ({
+  interactive,
+  label,
+  onBlur,
+  placeholder,
+  value,
+  tooltip,
+}) => {
   const [localValue, setLocalValue] = useState(value);
   return (
-    <InlineField label={label} labelWidth={LABEL_WIDTH} tooltip={tooltip} grow>
+    <InlineField interactive={interactive} label={label} labelWidth={LABEL_WIDTH} tooltip={tooltip} grow>
       <Input
         aria-label={label}
         placeholder={placeholder}

@@ -166,6 +166,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             placeholder="attribute name"
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, attributeName: value })}
             label="Attribute Name"
+            interactive={true}
             tooltip={
               <>
                 {'Attribute or tag to query on. Tags should be formatted "Tags.<name>". '}
