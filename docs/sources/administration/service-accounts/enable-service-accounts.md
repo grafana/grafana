@@ -10,7 +10,7 @@ keywords:
 
 # Enable service accounts in Grafana
 
-Service accounts are available behind the `service-accounts` feature toggle available in Grafana 9.0+.
+Service accounts are available behind the `serviceAccounts` feature toggle available in Grafana 8.5+.
 
 You can enable service accounts by:
 
