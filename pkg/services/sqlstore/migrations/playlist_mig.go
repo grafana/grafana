@@ -56,7 +56,8 @@ func addPlaylistMigrations(mg *Migrator) {
 		Mysql("UPDATE playlist SET uid=lpad(id,9,'0') WHERE uid IS NULL;"))
 
 	mg.AddMigration("Add index for uid in playlist", NewAddIndexMigration(playlistV2, &Index{
-		Cols: []string{"uid"}, Type: IndexType,
+		// reviewer question: should this be []string{"org_id", "uid"} instead?
+		Cols: []string{"uid"}, Type: UniqueIndex,
 	}))
 
 	// TODO(?): drop ID column, index
