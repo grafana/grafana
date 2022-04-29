@@ -153,6 +153,7 @@ export interface GrafanaConfig {
   alertingMinInterval: number;
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
+  queryHistoryEnabled: boolean;
   helpEnabled: boolean;
   profileEnabled: boolean;
   ldapEnabled: boolean;

@@ -138,10 +138,7 @@ describe('AzureLogAnalyticsDatasource', () => {
 
     it('should include template variables as global parameters', async () => {
       const result = await ctx.ds.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
-      expect(result.globalParameters.map((f: { name: string }) => f.name)).toEqual([
-        `$${singleVariable.name}`,
-        '$__timeFilter',
-      ]);
+      expect(result.globalParameters.map((f: { name: string }) => f.name)).toEqual([`$${singleVariable.name}`]);
     });
   });
 

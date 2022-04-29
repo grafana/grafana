@@ -8,9 +8,10 @@ import React, { ReactElement, useEffect, useRef } from 'react';
 import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
-import { NavBarItemMenuItem } from '../NavBarItemMenuItem';
 import { useNavBarItemMenuContext } from '../context';
 import { getNavModelItemKey } from '../utils';
+
+import { NavBarItemMenuItem } from './NavBarItemMenuItem';
 
 export interface NavBarItemMenuProps extends SpectrumMenuProps<NavModelItem> {
   onNavigate: (item: NavModelItem) => void;
