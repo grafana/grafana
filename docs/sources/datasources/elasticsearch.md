@@ -20,7 +20,7 @@ Supported Elasticsearch versions:
 - v7.10+
 - v8.0+ (experimental)
 
-> **Note:** Deprecated versions will be removed in the next major release.
+> **Note:** Deprecated versions (v2.0+, v5.0+, v6.0+, and v7.0-v7.9+) will be removed in the next major release.
 
 ## Adding the data source
 
