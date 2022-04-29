@@ -1364,6 +1364,18 @@
    },
    "type": "array"
   },
+  "MessageTemplate": {
+   "properties": {
+    "Name": {
+     "type": "string"
+    },
+    "Template": {
+     "type": "string"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "MonthRange": {
    "properties": {
     "Begin": {
@@ -2874,7 +2886,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2907,9 +2918,9 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object",
-   "x-go-package": "net/url"
+   "x-go-package": "github.com/prometheus/common/config"
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -3559,7 +3570,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3570,7 +3580,9 @@
    "required": [
     "name"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "Receiver",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "silence": {
    "description": "Silence silence",
@@ -4829,7 +4841,10 @@
     ],
     "responses": {
      "202": {
-      "$ref": "#/responses/Accepted"
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
      },
      "400": {
       "description": "ValidationError",
@@ -4859,7 +4874,10 @@
     ],
     "responses": {
      "202": {
-      "$ref": "#/responses/Accepted"
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
      },
      "400": {
       "description": "ValidationError",
@@ -4880,9 +4898,21 @@
      "application/json"
     ],
     "operationId": "RouteDeleteContactpoints",
+    "parameters": [
+     {
+      "description": "ContactPointUID should be the contact point UID identifier",
+      "in": "path",
+      "name": "ID",
+      "required": true,
+      "type": "string"
+     }
+    ],
     "responses": {
      "202": {
-      "$ref": "#/responses/Accepted"
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
      },
      "400": {
       "description": "ValidationError",
@@ -4935,7 +4965,10 @@
     ],
     "responses": {
      "202": {
-      "$ref": "#/responses/Accepted"
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
      },
      "400": {
       "description": "ValidationError",
@@ -4955,7 +4988,7 @@
     "operationId": "RouteGetTemplates",
     "responses": {
      "200": {
-      "$ref": "#/responses/MessageTemplate"
+      "$ref": "#/responses/MessageTemplateResponse"
      },
      "400": {
       "description": "ValidationError",
@@ -4973,12 +5006,21 @@
   "/api/provisioning/templates/{ID}": {
    "get": {
     "operationId": "RouteGetTemplate",
+    "parameters": [
+     {
+      "description": "Template ID",
+      "in": "path",
+      "name": "ID",
+      "required": true,
+      "type": "string"
+     }
+    ],
     "responses": {
      "200": {
-      "$ref": "#/responses/MessageTemplate"
+      "$ref": "#/responses/MessageTemplateResponse"
      },
      "404": {
-      "$ref": "#/responses/NotFound"
+      "$ref": "#/responses/NotFoundResponse"
      }
     },
     "summary": "Get a message template.",
@@ -5613,6 +5655,20 @@
  "produces": [
   "application/json"
  ],
+ "responses": {
+  "MessageTemplateResponse": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/MessageTemplate"
+    },
+    "type": "array"
+   }
+  },
+  "NotFoundResponse": {
+   "description": ""
+  }
+ },
  "schemes": [
   "http",
   "https"

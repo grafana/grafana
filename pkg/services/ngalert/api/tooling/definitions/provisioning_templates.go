@@ -5,7 +5,7 @@ package definitions
 // Get all message templates.
 //
 //     Responses:
-//       200: []MessageTemplate
+//       200: MessageTemplateResponse
 //       400: ValidationError
 
 // swagger:route GET /api/provisioning/templates/{ID} provisioning RouteGetTemplate
@@ -13,12 +13,26 @@ package definitions
 // Get a message template.
 //
 //     Responses:
-//       200: MessageTemplate
-//       404: NotFound
+//       200: MessageTemplateResponse
+//       404: NotFoundResponse
+
+// swagger:parameters RouteGetTemplate
+type RouteGetTemplateParam struct {
+	// Template ID
+	// in:path
+	ID string
+}
 
 type MessageTemplate struct {
 	Name     string
 	Template string
 }
 
-type NotFound struct{}
+//swagger:response MessageTemplateResponse
+type MessageTemplateResponse struct {
+	// in:body
+	Body []MessageTemplate `json:"body"`
+}
+
+//swagger:response NotFoundResponse
+type NotFoundResponse struct{}
