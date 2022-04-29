@@ -11,6 +11,15 @@ export const getSettingsStyles = ({ v1: { spacing }, breakpoints }: GrafanaTheme
         margin-right: auto !important;
         width: 45% !important;
       }
+      @media (min-width: 2000px) {
+        width: 30% !important;
+      }
+      @media (min-width: 3000px) {
+        width: 20% !important;
+      }
+      @media (min-width: 5000px) {
+        width: 12% !important;
+      }
     `,
     wrapper: css`
       ${mq} {
