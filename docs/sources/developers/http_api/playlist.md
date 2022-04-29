@@ -51,7 +51,7 @@ Content-Type: application/json
 
 ## Get one playlist
 
-`GET /api/playlists/:id`
+`GET /api/playlists/:uid`
 
 **Example Request**:
 
@@ -74,7 +74,7 @@ Content-Type: application/json
   "items": [
     {
       "id": 1,
-      "playlistId": 1,
+      "playlistUid": 1,
       "type": "dashboard_by_id",
       "value": "3",
       "order": 1,
@@ -82,7 +82,7 @@ Content-Type: application/json
     },
     {
       "id": 2,
-      "playlistId": 1,
+      "playlistUid": 1,
       "type": "dashboard_by_tag",
       "value": "myTag",
       "order": 2,
@@ -94,7 +94,7 @@ Content-Type: application/json
 
 ## Get Playlist items
 
-`GET /api/playlists/:id/items`
+`GET /api/playlists/:uid/items`
 
 **Example Request**:
 
@@ -112,7 +112,7 @@ Content-Type: application/json
 [
   {
     "id": 1,
-    "playlistId": 1,
+    "playlistUid": 1,
     "type": "dashboard_by_id",
     "value": "3",
     "order": 1,
@@ -120,7 +120,7 @@ Content-Type: application/json
   },
   {
     "id": 2,
-    "playlistId": 1,
+    "playlistUid": 1,
     "type": "dashboard_by_tag",
     "value": "myTag",
     "order": 2,
@@ -131,7 +131,7 @@ Content-Type: application/json
 
 ## Get Playlist dashboards
 
-`GET /api/playlists/:id/dashboards`
+`GET /api/playlists/:uid/dashboards`
 
 **Example Request**:
 
@@ -206,7 +206,7 @@ Content-Type: application/json
 
 ## Update a playlist
 
-`PUT /api/playlists/:id`
+`PUT /api/playlists/:uid`
 
 **Example Request**:
 
@@ -220,14 +220,14 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "interval": "5m",
     "items": [
       {
-        "playlistId": 1,
+        "playlistUid": 1,
         "type": "dashboard_by_id",
         "value": "3",
         "order": 1,
         "title":"my third dashboard"
       },
       {
-        "playlistId": 1,
+        "playlistUid": 1,
         "type": "dashboard_by_tag",
         "value": "myTag",
         "order": 2,
@@ -250,7 +250,7 @@ Content-Type: application/json
   "items": [
     {
       "id": 1,
-      "playlistId": 1,
+      "playlistUid": 1,
       "type": "dashboard_by_id",
       "value": "3",
       "order": 1,
@@ -258,7 +258,7 @@ Content-Type: application/json
     },
     {
       "id": 2,
-      "playlistId": 1,
+      "playlistUid": 1,
       "type": "dashboard_by_tag",
       "value": "myTag",
       "order": 2,
@@ -270,7 +270,7 @@ Content-Type: application/json
 
 ## Delete a playlist
 
-`DELETE /api/playlists/:id`
+`DELETE /api/playlists/:uid`
 
 **Example Request**:
 
