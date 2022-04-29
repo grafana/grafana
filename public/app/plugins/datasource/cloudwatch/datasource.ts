@@ -659,7 +659,7 @@ export class CloudWatchDatasource
     return this.awsRequest(DS_QUERY_ENDPOINT, requestParams, headers).pipe(
       map((response) => resultsToDataFrames({ data: response })),
       catchError((err: FetchError) => {
-        if (err.status === 400) {
+        if (err.status === 400 || err.status === 207) {
           throw err;
         }
 

@@ -125,7 +125,7 @@ export function toDataQueryResponse(
   }
 
   // When it is not an OK response, make sure the error gets added
-  if ((res as FetchResponse).status && (res as FetchResponse).status !== 200) {
+  if ((res as FetchResponse).status && (res as FetchResponse).status >= 400) {
     if (rsp.state !== LoadingState.Error) {
       rsp.state = LoadingState.Error;
     }

@@ -202,7 +202,7 @@ func toJsonStreamingResponse(qdr *backend.QueryDataResponse) response.Response {
 	statusCode := http.StatusOK
 	for _, res := range qdr.Responses {
 		if res.Error != nil {
-			statusCode = http.StatusBadRequest
+			statusCode = http.StatusMultiStatus
 		}
 	}
 
