@@ -85,12 +85,13 @@ Returns a list of queries in the query history that matches the search criteria.
 
 Query parameters:
 
-- **datasourceUid** - Filter the query history for selected data sources. You must specify at least one data source UID. To perform an "AND" filtering with multiple data sources, specify the data source parameter using the following format: `datasourceUid=uid1&datasourceUid=uid2`.
+- **datasourceUid** - Filter the query history for the selected data source. To perform an "AND" filtering with multiple data sources, specify the data source parameter using the following format: `datasourceUid=uid1&datasourceUid=uid2`.
 - **searchString** – Filter the query history based on the content.
 - **sort** - Specify the sorting order. Sorting can be `time-asc` or `time-desc`. The default is `time-desc`.
 - **onlyStarred** - Search for queries that are starred. Defaults to `false`.
 - **page** - Search supports pagination. Specify which page number to return. Use the limit parameter to specify the number of queries per page.
 - **limit** - Limits the number of returned query history items per page. The default is 100 queries per page.
+- **from/to** - Specifies time range for the query history search. The time can be either epoch timestamps in milliseconds or relative using Grafana time units. For example, now-5m.
 
 **Example request for query history search**:
 
