@@ -101,6 +101,7 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
       if (config.featureToggles.azureMonitorResourcePickerForMetrics) {
         return (
           <NewMetricsQueryEditor
+            data={data}
             query={query}
             datasource={datasource}
             onChange={onChange}
