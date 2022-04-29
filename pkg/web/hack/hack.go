@@ -33,8 +33,9 @@ func Wrap(h web.Handler) http.HandlerFunc {
 		}
 	case HandlerReqCtxRes:
 		return func(w http.ResponseWriter, r *http.Request) {
-			handle(contexthandler.FromContext(r.Context()))
-			panic("what do do with this response.Response?")
+			ctx := contexthandler.FromContext(r.Context())
+			res := handle(ctx)
+			res.WriteTo(ctx)
 		}
 	case HandlerCtx:
 		return func(w http.ResponseWriter, r *http.Request) {
