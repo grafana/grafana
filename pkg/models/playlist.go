@@ -6,19 +6,20 @@ import (
 
 // Typed errors
 var (
-	ErrPlaylistNotFound = errors.New("Playlist not found")
+	ErrPlaylistNotFound                = errors.New("Playlist not found")
+	ErrPlaylistFailedGenerateUniqueUid = errors.New("failed to generate unique playlist UID")
 )
 
 // Playlist model
 type Playlist struct {
-	Id       int64  `json:"id"`
+	Uid      string `json:"uid"`
 	Name     string `json:"name"`
 	Interval string `json:"interval"`
 	OrgId    int64  `json:"-"`
 }
 
 type PlaylistDTO struct {
-	Id       int64             `json:"id"`
+	Uid      string            `json:"uid"`
 	Name     string            `json:"name"`
 	Interval string            `json:"interval"`
 	OrgId    int64             `json:"-"`
@@ -26,21 +27,21 @@ type PlaylistDTO struct {
 }
 
 type PlaylistItemDTO struct {
-	Id         int64  `json:"id"`
-	PlaylistId int64  `json:"playlistid"`
-	Type       string `json:"type"`
-	Title      string `json:"title"`
-	Value      string `json:"value"`
-	Order      int    `json:"order"`
+	Id          int64  `json:"id"`
+	PlaylistUid string `json:"playlistuid"`
+	Type        string `json:"type"`
+	Title       string `json:"title"`
+	Value       string `json:"value"`
+	Order       int    `json:"order"`
 }
 
 type PlaylistItem struct {
-	Id         int64
-	PlaylistId int64
-	Type       string
-	Value      string
-	Order      int
-	Title      string
+	Id          int64
+	PlaylistUid string
+	Type        string
+	Value       string
+	Order       int
+	Title       string
 }
 
 type Playlists []*Playlist
@@ -51,7 +52,7 @@ type Playlists []*Playlist
 
 type UpdatePlaylistCommand struct {
 	OrgId    int64             `json:"-"`
-	Id       int64             `json:"id"`
+	Uid      string            `json:"uid"`
 	Name     string            `json:"name" binding:"Required"`
 	Interval string            `json:"interval"`
 	Items    []PlaylistItemDTO `json:"items"`
@@ -69,7 +70,7 @@ type CreatePlaylistCommand struct {
 }
 
 type DeletePlaylistCommand struct {
-	Id    int64
+	Uid   string
 	OrgId int64
 }
 
@@ -85,12 +86,12 @@ type GetPlaylistsQuery struct {
 	Result Playlists
 }
 
-type GetPlaylistByIdQuery struct {
-	Id     int64
+type GetPlaylistByUidQuery struct {
+	Uid    string
 	Result *Playlist
 }
 
-type GetPlaylistItemsByIdQuery struct {
-	PlaylistId int64
-	Result     *[]PlaylistItem
+type GetPlaylistItemsByUidQuery struct {
+	PlaylistUid string
+	Result      *[]PlaylistItem
 }
