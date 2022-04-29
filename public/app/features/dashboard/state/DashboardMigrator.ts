@@ -45,7 +45,7 @@ import {
   migrateMultipleStatsAnnotationQuery,
   migrateMultipleStatsMetricsQuery,
 } from 'app/plugins/datasource/cloudwatch/migrations';
-import { CloudWatchAnnotationQuery, CloudWatchMetricsQuery } from 'app/plugins/datasource/cloudwatch/types';
+import { CloudWatchMetricsQuery, LegacyAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
 import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
 import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
 
@@ -1170,7 +1170,9 @@ function isCloudWatchQuery(target: DataQuery): target is CloudWatchMetricsQuery 
   );
 }
 
-function isLegacyCloudWatchAnnotationQuery(target: AnnotationQuery<DataQuery>): target is CloudWatchAnnotationQuery {
+function isLegacyCloudWatchAnnotationQuery(
+  target: AnnotationQuery<DataQuery>
+): target is AnnotationQuery<LegacyAnnotationQuery> {
   return (
     target.hasOwnProperty('dimensions') &&
     target.hasOwnProperty('namespace') &&

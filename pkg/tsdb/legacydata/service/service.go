@@ -40,6 +40,11 @@ func (h *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 		return legacydata.DataResponse{}, err
 	}
 
+	decryptedValues, err := h.dataSourcesService.DecryptedValues(ctx, ds)
+	if err != nil {
+		return legacydata.DataResponse{}, err
+	}
+
 	instanceSettings := &backend.DataSourceInstanceSettings{
 		ID:                      ds.Id,
 		Name:                    ds.Name,
@@ -49,7 +54,7 @@ func (h *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 		BasicAuthEnabled:        ds.BasicAuth,
 		BasicAuthUser:           ds.BasicAuthUser,
 		JSONData:                jsonDataBytes,
-		DecryptedSecureJSONData: h.dataSourcesService.DecryptedValues(ds),
+		DecryptedSecureJSONData: decryptedValues,
 		Updated:                 ds.Updated,
 		UID:                     ds.Uid,
 	}

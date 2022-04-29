@@ -1,16 +1,16 @@
-import { css } from '@emotion/css';
+import { cx } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Icon, Input, LoadingPlaceholder, Tooltip, useStyles2, Collapse, Label } from '@grafana/ui';
 
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
 import messageFromError from '../../utils/messageFromError';
 import { Space } from '../Space';
 
-import NestedResourceTable from './NestedResourceTable';
+import NestedRow from './NestedRow';
+import getStyles from './styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
-import { addResources, findRow, parseResourceURI } from './utils';
+import { findRow } from './utils';
 
 interface ResourcePickerProps {
   resourcePickerData: ResourcePickerData;
@@ -32,7 +32,7 @@ const ResourcePicker = ({
 
   type LoadingStatus = 'NotStarted' | 'Started' | 'Done';
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>('NotStarted');
-  const [azureRows, setAzureRows] = useState<ResourceRowGroup>([]);
+  const [rows, setRows] = useState<ResourceRowGroup>([]);
   const [internalSelectedURI, setInternalSelectedURI] = useState<string | undefined>(resourceURI);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(resourceURI?.includes('$'));
@@ -47,32 +47,8 @@ const ResourcePicker = ({
       const loadInitialData = async () => {
         try {
           setLoadingStatus('Started');
-          let resources = await resourcePickerData.getSubscriptions();
-          if (!internalSelectedURI) {
-            setAzureRows(resources);
-            setLoadingStatus('Done');
-            return;
-          }
-
-          const parsedURI = parseResourceURI(internalSelectedURI ?? '');
-          if (parsedURI) {
-            const resourceGroupURI = `/subscriptions/${parsedURI.subscriptionID}/resourceGroups/${parsedURI.resourceGroup}`;
-
-            // if a resource group was previously selected, but the resource groups under the parent subscription have not been loaded yet
-            if (parsedURI.resourceGroup && !findRow(resources, resourceGroupURI)) {
-              const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId(
-                parsedURI.subscriptionID
-              );
-              resources = addResources(resources, `/subscriptions/${parsedURI.subscriptionID}`, resourceGroups);
-            }
-
-            // if a resource was previously selected, but the resources under the parent resource group have not been loaded yet
-            if (parsedURI.resource && !findRow(azureRows, parsedURI.resource ?? '')) {
-              const resourcesForResourceGroup = await resourcePickerData.getResourcesForResourceGroup(resourceGroupURI);
-              resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
-            }
-          }
-          setAzureRows(resources);
+          const resources = await resourcePickerData.fetchInitialRows(internalSelectedURI || '');
+          setRows(resources);
           setLoadingStatus('Done');
         } catch (error) {
           setLoadingStatus('Done');
@@ -82,11 +58,11 @@ const ResourcePicker = ({
 
       loadInitialData();
     }
-  }, [resourcePickerData, internalSelectedURI, azureRows, loadingStatus]);
+  }, [resourcePickerData, internalSelectedURI, rows, loadingStatus]);
 
   // Map the selected item into an array of rows
   const selectedResourceRows = useMemo(() => {
-    const found = internalSelectedURI && findRow(azureRows, internalSelectedURI);
+    const found = internalSelectedURI && findRow(rows, internalSelectedURI);
 
     return found
       ? [
@@ -96,34 +72,28 @@ const ResourcePicker = ({
           },
         ]
       : [];
-  }, [internalSelectedURI, azureRows]);
+  }, [internalSelectedURI, rows]);
 
   // Request resources for a expanded resource group
   const requestNestedRows = useCallback(
-    async (resourceGroupOrSubscription: ResourceRow) => {
+    async (parentRow: ResourceRow) => {
       // clear error message (also when loading cached resources)
       setErrorMessage(undefined);
 
       // If we already have children, we don't need to re-fetch them.
-      if (resourceGroupOrSubscription.children?.length) {
+      if (parentRow.children?.length) {
         return;
       }
 
       try {
-        const rows =
-          resourceGroupOrSubscription.type === ResourceRowType.Subscription
-            ? await resourcePickerData.getResourceGroupsBySubscriptionId(resourceGroupOrSubscription.id)
-            : await resourcePickerData.getResourcesForResourceGroup(resourceGroupOrSubscription.id);
-
-        const newRows = addResources(azureRows, resourceGroupOrSubscription.uri, rows);
-
-        setAzureRows(newRows);
+        const nestedRows = await resourcePickerData.fetchAndAppendNestedRow(rows, parentRow);
+        setRows(nestedRows);
       } catch (error) {
         setErrorMessage(messageFromError(error));
         throw error;
       }
     },
-    [resourcePickerData, azureRows]
+    [resourcePickerData, rows]
   );
 
   const handleSelectionChanged = useCallback((row: ResourceRow, isSelected: boolean) => {
@@ -142,29 +112,61 @@ const ResourcePicker = ({
         </div>
       ) : (
         <>
-          <NestedResourceTable
-            rows={azureRows}
-            requestNestedRows={requestNestedRows}
-            onRowSelectedChange={handleSelectionChanged}
-            selectedRows={selectedResourceRows}
-            selectableEntryTypes={selectableEntryTypes}
-          />
+          <table className={styles.table}>
+            <thead>
+              <tr className={cx(styles.row, styles.header)}>
+                <td className={styles.cell}>Scope</td>
+                <td className={styles.cell}>Type</td>
+                <td className={styles.cell}>Location</td>
+              </tr>
+            </thead>
+          </table>
+
+          <div className={styles.tableScroller}>
+            <table className={styles.table}>
+              <tbody>
+                {rows.map((row) => (
+                  <NestedRow
+                    key={row.uri}
+                    row={row}
+                    selectedRows={selectedResourceRows}
+                    level={0}
+                    requestNestedRows={requestNestedRows}
+                    onRowSelectedChange={handleSelectionChanged}
+                    selectableEntryTypes={selectableEntryTypes}
+                    scrollIntoView={true}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <div className={styles.selectionFooter}>
             {selectedResourceRows.length > 0 && (
               <>
                 <h5>Selection</h5>
-                <NestedResourceTable
-                  rows={selectedResourceRows}
-                  requestNestedRows={requestNestedRows}
-                  onRowSelectedChange={handleSelectionChanged}
-                  selectedRows={selectedResourceRows}
-                  noHeader={true}
-                  selectableEntryTypes={selectableEntryTypes}
-                />
+
+                <div className={styles.tableScroller}>
+                  <table className={styles.table}>
+                    <tbody>
+                      {selectedResourceRows.map((row) => (
+                        <NestedRow
+                          key={row.uri}
+                          row={row}
+                          selectedRows={selectedResourceRows}
+                          level={0}
+                          requestNestedRows={requestNestedRows}
+                          onRowSelectedChange={handleSelectionChanged}
+                          selectableEntryTypes={selectableEntryTypes}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
                 <Space v={2} />
               </>
             )}
+
             <Collapse
               collapsible
               label="Advanced"
@@ -229,18 +231,3 @@ const ResourcePicker = ({
 };
 
 export default ResourcePicker;
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  selectionFooter: css({
-    position: 'sticky',
-    bottom: 0,
-    background: theme.colors.background.primary,
-    paddingTop: theme.spacing(2),
-  }),
-  loadingWrapper: css({
-    textAlign: 'center',
-    paddingTop: theme.spacing(2),
-    paddingBottom: theme.spacing(2),
-    color: theme.colors.text.secondary,
-  }),
-});

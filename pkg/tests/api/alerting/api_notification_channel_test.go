@@ -2226,7 +2226,7 @@ var expNonEmailNotifications = map[string][]string{
 		  "sections": [
 			{
 			  "text": "**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = TeamsAlert\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_TeamsAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTeamsAlert\n",
-			  "title": "Details"
+			  "title": ""
 			}
 		  ],
 		  "summary": "[FIRING:1] TeamsAlert ",

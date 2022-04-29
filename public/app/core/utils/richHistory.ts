@@ -5,12 +5,6 @@ import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
-import {
-  filterQueriesByDataSource,
-  filterQueriesBySearchFilter,
-  filterQueriesByTime,
-  sortQueries,
-} from 'app/core/history/richHistoryLocalStorageUtils';
 import { dispatch } from 'app/store/store';
 import { RichHistoryQuery } from 'app/types/explore';
 
@@ -21,9 +15,9 @@ import {
 } from '../history/RichHistoryStorage';
 import { getRichHistoryStorage } from '../history/richHistoryStorageProvider';
 
-import { RichHistorySettings, SortOrder } from './richHistoryTypes';
+import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from './richHistoryTypes';
 
-export { SortOrder };
+export { RichHistorySearchFilters, RichHistorySettings, SortOrder };
 
 /*
  * Add queries to rich history. Save only queries within the retention period, or that are starred.
@@ -80,8 +74,8 @@ export async function addToRichHistory(
   return {};
 }
 
-export async function getRichHistory(): Promise<RichHistoryQuery[]> {
-  return await getRichHistoryStorage().getRichHistory();
+export async function getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryQuery[]> {
+  return await getRichHistoryStorage().getRichHistory(filters);
 }
 
 export async function updateRichHistorySettings(settings: RichHistorySettings): Promise<void> {
@@ -122,22 +116,6 @@ export async function deleteQueryInRichHistory(id: string) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     return undefined;
   }
-}
-
-export function filterAndSortQueries(
-  queries: RichHistoryQuery[],
-  sortOrder: SortOrder,
-  listOfDatasourceFilters: string[],
-  searchFilter: string,
-  timeFilter?: [number, number]
-) {
-  const filteredQueriesByDs = filterQueriesByDataSource(queries, listOfDatasourceFilters);
-  const filteredQueriesByDsAndSearchFilter = filterQueriesBySearchFilter(filteredQueriesByDs, searchFilter);
-  const filteredQueriesToBeSorted = timeFilter
-    ? filterQueriesByTime(filteredQueriesByDsAndSearchFilter, timeFilter)
-    : filteredQueriesByDsAndSearchFilter;
-
-  return sortQueries(filteredQueriesToBeSorted, sortOrder);
 }
 
 export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
@@ -229,31 +207,19 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
   return mappedQueriesToHeadings;
 }
 
-/* Create datasource list with images. If specific datasource retrieved from Rich history is not part of
- * exploreDatasources add generic datasource image and add property isRemoved = true.
+/*
+ * Create a list of all available data sources
  */
-export function createDatasourcesList(queriesDatasources: string[]) {
-  const datasources: Array<{ label: string; value: string; imgUrl: string; isRemoved: boolean }> = [];
-
-  queriesDatasources.forEach((dsName) => {
-    const dsSettings = getDataSourceSrv().getInstanceSettings(dsName);
-    if (dsSettings) {
-      datasources.push({
-        label: dsSettings.name,
-        value: dsSettings.name,
+export function createDatasourcesList() {
+  return getDataSourceSrv()
+    .getList()
+    .map((dsSettings) => {
+      return {
+        name: dsSettings.name,
+        uid: dsSettings.uid,
         imgUrl: dsSettings.meta.info.logos.small,
-        isRemoved: false,
-      });
-    } else {
-      datasources.push({
-        label: dsName,
-        value: dsName,
-        imgUrl: 'public/img/icn-datasource.svg',
-        isRemoved: true,
-      });
-    }
-  });
-  return datasources;
+      };
+    });
 }
 
 export function notEmptyQuery(query: DataQuery) {

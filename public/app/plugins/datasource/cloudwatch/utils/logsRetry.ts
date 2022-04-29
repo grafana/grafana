@@ -10,9 +10,9 @@ type Result = { frames: DataFrameJSON[]; error?: string };
 /**
  * A retry strategy specifically for cloud watch logs query. Cloud watch logs queries need first starting the query
  * and the polling for the results. The start query can fail because of the concurrent queries rate limit,
- * and so we hove to retry the start query call if there is already lot of queries running.
+ * and so we have to retry the start query call if there is already lot of queries running.
  *
- * As we send multiple queries in single request some can fail and some can succeed and we have to also handle those
+ * As we send multiple queries in a single request some can fail and some can succeed and we have to also handle those
  * cases by only retrying the failed queries. We retry the failed queries until we hit the time limit or all queries
  * succeed and only then we pass the data forward. This means we wait longer but makes the code a bit simpler as we
  * can treat starting the query and polling as steps in a pipeline.
