@@ -17,6 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
+// Dispatcher is a service that handles alert notifications. It accepts an alert that is represented by models.AlertRuleKey and state.State,
+// then converts it to a format that is recognizable by Alertmanager and routes the resulting alert to either an external AlertManager or notifier.MultiOrgAlertmanager or both.
+// In order to maintain the internal state, the service should be Run after creation. This method starts synchronization that is run regularly.
 type Dispatcher struct {
 	AdminConfigMtx   sync.RWMutex
 	logger           log.Logger
