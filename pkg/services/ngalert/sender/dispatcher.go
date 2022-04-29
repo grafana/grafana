@@ -13,24 +13,44 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
 type Dispatcher struct {
-	senders map[int64]*Sender
+	adminConfigMtx   sync.RWMutex
+	logger           log.Logger
+	clock            clock.Clock
+	adminConfigStore store.AdminConfigurationStore
+
 	// Senders help us send alerts to external Alertmanagers.
-	adminConfigMtx          sync.RWMutex
-	multiOrgNotifier        *notifier.MultiOrgAlertmanager
-	sendAlertsTo            map[int64]models.AlertmanagersChoice
-	logger                  log.Logger
+	senders          map[int64]*Sender
+	sendersCfgHash   map[int64]string
+	multiOrgNotifier *notifier.MultiOrgAlertmanager
+	sendAlertsTo     map[int64]models.AlertmanagersChoice
+
 	appURL                  *url.URL
-	clock                   clock.Clock
 	disabledOrgs            map[int64]struct{}
-	adminConfigStore        store.AdminConfigurationStore
-	sendersCfgHash          map[int64]string
 	adminConfigPollInterval time.Duration
+}
+
+func NewDispatcher(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore, clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration) *Dispatcher {
+	d := &Dispatcher{
+		adminConfigMtx:   sync.RWMutex{},
+		logger:           log.New("ngalert-notifications-dispatcher"),
+		clock:            clk,
+		adminConfigStore: store,
+
+		senders:          map[int64]*Sender{},
+		sendersCfgHash:   map[int64]string{},
+		multiOrgNotifier: multiOrgNotifier,
+		sendAlertsTo:     map[int64]models.AlertmanagersChoice{},
+
+		appURL:                  appURL,
+		disabledOrgs:            disabledOrgs,
+		adminConfigPollInterval: configPollInterval,
+	}
+	return d
 }
 
 func (d *Dispatcher) adminConfigSync(ctx context.Context) error {
@@ -234,7 +254,8 @@ func (d *Dispatcher) DroppedAlertmanagersFor(orgID int64) []*url.URL {
 	return s.DroppedAlertmanagers()
 }
 
-func (d *Dispatcher) Run(ctx context.Context) {
+// Run starts regular updates of the configuration
+func (d *Dispatcher) Run(ctx context.Context) error {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -244,4 +265,5 @@ func (d *Dispatcher) Run(ctx context.Context) {
 		}
 	}()
 	wg.Wait()
+	return nil
 }
