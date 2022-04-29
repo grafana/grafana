@@ -343,8 +343,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 			if !alertState.NeedsSending(sch.stateManager.ResendDelay) {
 				continue
 			}
-			toNotify = append(toNotify, alertState)
 			alertState.LastSentAt = sent
+			toNotify = append(toNotify, alertState)
 		}
 		sch.stateManager.Put(toNotify)
 		err = sch.notifier.Notify(key, toNotify)
