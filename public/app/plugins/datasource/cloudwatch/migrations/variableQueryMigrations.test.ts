@@ -78,6 +78,7 @@ describe('variableQueryMigrations', () => {
         region: 'us-east-1',
         metricName: '',
         dimensionKey: '',
+        dimensionFilters: '{"InstanceId":"$instanceid"}',
         ec2Filters: '{"environment":["$environment"]}',
         instanceID: '',
         attributeName: 'rds:db',
@@ -88,6 +89,7 @@ describe('variableQueryMigrations', () => {
       const query = migrateVariableQuery(oldQuery);
       expect(query.region).toBe('us-east-1');
       expect(query.attributeName).toBe('rds:db');
+      expect(query.dimensionFilters).toStrictEqual({ InstanceId: '$instanceid' });
       expect(query.ec2Filters).toStrictEqual({ environment: ['$environment'] });
       expect(query.resourceType).toBe('elasticloadbalancing:loadbalancer');
       expect(query.tags).toStrictEqual({ 'elasticbeanstalk:environment-name': ['myApp-dev', 'myApp-prod'] });
