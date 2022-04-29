@@ -35,6 +35,7 @@ import {
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
 import store from 'app/core/store';
+import { ExploreId } from 'app/types/explore';
 
 import { ExploreGraph } from './ExploreGraph';
 import { LogsMetaRow } from './LogsMetaRow';
@@ -62,6 +63,7 @@ interface Props extends Themeable2 {
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
+  exploreId: ExploreId;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -271,6 +273,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       logsQueries,
       clearCache,
       addResultsToCache,
+      exploreId,
     } = this.props;
 
     const {
@@ -324,7 +327,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 onChange={this.onChangeTime}
                 className={styles.horizontalInlineSwitch}
                 transparent
-                id="show-time"
+                id={`show-time_${exploreId}`}
               />
             </InlineField>
             <InlineField label="Unique labels" className={styles.horizontalInlineLabel} transparent>
@@ -333,7 +336,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 onChange={this.onChangeLabels}
                 className={styles.horizontalInlineSwitch}
                 transparent
-                id="unique-labels"
+                id={`unique-labels_${exploreId}`}
               />
             </InlineField>
             <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
@@ -342,7 +345,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 onChange={this.onChangewrapLogMessage}
                 className={styles.horizontalInlineSwitch}
                 transparent
-                id="wrap-lines"
+                id={`wrap-lines_${exploreId}`}
               />
             </InlineField>
             <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
@@ -351,7 +354,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 onChange={this.onChangePrettifyLogMessage}
                 className={styles.horizontalInlineSwitch}
                 transparent
-                id="prettify"
+                id={`prettify_${exploreId}`}
               />
             </InlineField>
             <InlineField label="Dedup" className={styles.horizontalInlineLabel} transparent>

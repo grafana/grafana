@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
+import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { AsyncSelect, InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { AsyncSelect, fuzzyMatch, InlineField, InlineFieldRow, Input } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
@@ -37,7 +38,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
   });
 
   const loadServices = useCallback(
-    async (url: string, loaderOfType: string): Promise<Array<SelectableValue<string>>> => {
+    async (url: string, loaderOfType: string, query = ''): Promise<Array<SelectableValue<string>>> => {
       setIsLoading((prevValue) => ({ ...prevValue, [loaderOfType]: true }));
 
       try {
@@ -50,7 +51,11 @@ export function SearchForm({ datasource, query, onChange }: Props) {
           label: service,
           value: service,
         }));
-        return serviceOptions;
+
+        const filteredOptions = serviceOptions.filter((item) =>
+          item.value ? fuzzyMatch(item.value, query).found : false
+        );
+        return filteredOptions;
       } catch (error) {
         dispatch(notifyApp(createErrorNotification('Error', error)));
         return [];
@@ -60,6 +65,17 @@ export function SearchForm({ datasource, query, onChange }: Props) {
     },
     [datasource]
   );
+
+  const getServiceOptions = (userQuery: string) => {
+    return loadServices('/api/services', 'services', userQuery);
+  };
+
+  const getOperationOptions = (userQuery: string) => {
+    return loadServices(`/api/services/${encodeURIComponent(query.service!)}/operations`, 'operations', userQuery);
+  };
+
+  const serviceSearch = debounce(getServiceOptions, 500, { leading: true, trailing: true });
+  const operationSearch = debounce(getOperationOptions, 500, { leading: true, trailing: true });
 
   useEffect(() => {
     const getServices = async () => {
@@ -90,7 +106,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             inputId="service"
             menuShouldPortal
             cacheOptions={false}
-            loadOptions={() => loadServices('/api/services', 'services')}
+            loadOptions={serviceSearch}
             onOpenMenu={() => loadServices('/api/services', 'services')}
             isLoading={isLoading.services}
             value={serviceOptions?.find((v) => v?.value === query.service) || undefined}
@@ -114,9 +130,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             inputId="operation"
             menuShouldPortal
             cacheOptions={false}
-            loadOptions={() =>
-              loadServices(`/api/services/${encodeURIComponent(query.service!)}/operations`, 'operations')
-            }
+            loadOptions={operationSearch}
             onOpenMenu={() =>
               loadServices(`/api/services/${encodeURIComponent(query.service!)}/operations`, 'operations')
             }

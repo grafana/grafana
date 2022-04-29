@@ -14,40 +14,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/deprecated"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestProvideService(t *testing.T) {
-	t.Run("it should skip insight analytics and app insights with Grafana 9", func(t *testing.T) {
-		currentV := setting.BuildVersion
-		t.Cleanup(func() {
-			setting.BuildVersion = currentV
-		})
-		versions := []struct {
-			version               string
-			shouldIncludeInsights bool
-		}{
-			{"8.5.0", true},
-			{"9.0.0-beta1", false},
-			{"9.0.0", false},
-		}
-		for _, v := range versions {
-			setting.BuildVersion = v.version
-			s := ProvideService(setting.NewCfg(), httpclient.NewProvider(), nil)
-			if v.shouldIncludeInsights {
-				assert.NotNil(t, s.executors[deprecated.InsightsAnalytics])
-				assert.NotNil(t, s.executors[deprecated.AppInsights])
-			} else {
-				assert.Nil(t, s.executors[deprecated.InsightsAnalytics])
-				assert.Nil(t, s.executors[deprecated.AppInsights])
-			}
-		}
-	})
-}
 
 func TestNewInstanceSettings(t *testing.T) {
 	tests := []struct {

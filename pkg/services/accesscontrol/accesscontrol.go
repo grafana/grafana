@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 )
 
 type Options struct {
@@ -13,6 +14,8 @@ type Options struct {
 }
 
 type AccessControl interface {
+	registry.ProvidesUsageStats
+
 	// Evaluate evaluates access to the given resources.
 	Evaluate(ctx context.Context, user *models.SignedInUser, evaluator Evaluator) (bool, error)
 

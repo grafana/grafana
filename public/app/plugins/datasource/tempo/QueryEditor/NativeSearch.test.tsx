@@ -99,4 +99,26 @@ describe('NativeSearch', () => {
 
     expect(handleOnChange).toHaveBeenCalledWith(fakeOptionChoice);
   });
+
+  it('should filter the span dropdown when user types a search value', async () => {
+    render(
+      <NativeSearch datasource={{} as TempoDatasource} query={mockQuery} onChange={() => {}} onRunQuery={() => {}} />
+    );
+
+    const asyncServiceSelect = await screen.findByRole('combobox', { name: 'select-span-name' });
+
+    expect(asyncServiceSelect).toBeInTheDocument();
+    await user.click(asyncServiceSelect);
+    jest.advanceTimersByTime(1000);
+
+    await user.type(asyncServiceSelect, 'd');
+    jest.advanceTimersByTime(1000);
+    var option = await screen.findByText('driver');
+    expect(option).toBeDefined();
+
+    await user.type(asyncServiceSelect, 'a');
+    jest.advanceTimersByTime(1000);
+    option = await screen.findByText('No options found');
+    expect(option).toBeDefined();
+  });
 });

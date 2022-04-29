@@ -134,11 +134,11 @@ func newTankSimInfo() simulationInfo {
 	df.Fields = append(df.Fields, data.NewField("pumpOn", nil, []bool{tc.PumpOn}))
 
 	return simulationInfo{
-		Type:        "tank",
-		Name:        "Tank",
-		Description: "Fill and drain a water tank",
-		SetupFields: df,
-		OnlyForward: false,
+		Type:         "tank",
+		Name:         "Tank",
+		Description:  "Fill and drain a water tank",
+		ConfigFields: df,
+		OnlyForward:  false,
 		create: func(cfg simulationState) (Simulation, error) {
 			s := &tankSim{
 				key:   cfg.Key,

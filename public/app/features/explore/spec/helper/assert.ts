@@ -4,10 +4,10 @@ import { ExploreId } from '../../../../types';
 
 import { withinExplore } from './setup';
 
-export const assertQueryHistoryExists = (query: string, exploreId: ExploreId = ExploreId.left) => {
+export const assertQueryHistoryExists = async (query: string, exploreId: ExploreId = ExploreId.left) => {
   const selector = withinExplore(exploreId);
 
-  expect(selector.getByText('1 queries')).toBeInTheDocument();
+  expect(await selector.findByText('1 queries')).toBeInTheDocument();
   const queryItem = selector.getByLabelText('Query text');
   expect(queryItem).toHaveTextContent(query);
 };
