@@ -126,7 +126,7 @@ export class CloudWatchDatasource
     this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
     this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this, this.templateSrv);
     this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this, this.templateSrv);
-    this.variables = new CloudWatchVariableSupport(this, this.templateSrv);
+    this.variables = new CloudWatchVariableSupport(this);
     this.annotations = CloudWatchAnnotationSupport;
   }
 
