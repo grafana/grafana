@@ -79,42 +79,6 @@ describe('QueryEditor', () => {
     });
   });
 
-  it('normalizes query on mount', async () => {
-    const { act } = renderer;
-    const props = setup();
-    // This does not actually even conform to the prop type but this happens on initialisation somehow
-    props.query = {
-      queryMode: 'Metrics',
-      apiMode: 'Metrics',
-      refId: '',
-      expression: '',
-      matchExact: true,
-      metricQueryType: MetricQueryType.Search,
-      metricEditorMode: MetricEditorMode.Builder,
-    } as any;
-    await act(async () => {
-      renderer.create(<MetricsQueryEditor {...props} />);
-    });
-    expect((props.onChange as jest.Mock).mock.calls[0][0]).toEqual({
-      namespace: '',
-      metricName: '',
-      expression: '',
-      sqlExpression: '',
-      dimensions: {},
-      region: 'default',
-      id: '',
-      alias: '',
-      statistic: 'Average',
-      period: '',
-      queryMode: 'Metrics',
-      apiMode: 'Metrics',
-      refId: '',
-      matchExact: true,
-      metricQueryType: MetricQueryType.Search,
-      metricEditorMode: MetricEditorMode.Builder,
-    });
-  });
-
   describe('should handle editor modes correctly', () => {
     it('when metric query type is metric search and editor mode is builder', async () => {
       await act(async () => {

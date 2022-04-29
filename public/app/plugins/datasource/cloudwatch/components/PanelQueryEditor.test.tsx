@@ -29,7 +29,7 @@ describe('PanelQueryEditor should render right editor', () => {
       const query = {
         ...migratedFields,
         dimensions: {
-          InstanceId: 'i-007f3b35421ce94ae',
+          InstanceId: 'i-123',
         },
         expression: '',
         highResolution: false,
@@ -55,7 +55,7 @@ describe('PanelQueryEditor should render right editor', () => {
         alias: '',
         apiMode: 'Logs',
         dimensions: {
-          InstanceId: 'i-007f3b35421ce94ae',
+          InstanceId: 'i-123',
         },
         expression: '',
         id: '',
@@ -72,7 +72,7 @@ describe('PanelQueryEditor should render right editor', () => {
       await act(async () => {
         render(<PanelQueryEditor {...props} query={query} />);
       });
-      expect(screen.getByText('Log groups')).toBeInTheDocument();
+      expect(screen.getByText('Choose Log Groups')).toBeInTheDocument();
     });
   });
 
@@ -83,7 +83,7 @@ describe('PanelQueryEditor should render right editor', () => {
         alias: '',
         apiMode: 'Logs',
         dimensions: {
-          InstanceId: 'i-007f3b35421ce94ae',
+          InstanceId: 'i-123',
         },
         expression: '',
         id: '',
