@@ -10,8 +10,8 @@
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "img/icn-singlestat-panel.svg",
-      "large": "img/icn-singlestat-panel.svg"
+      "small": "img/traces-panel.svg",
+      "large": "img/traces-panel.svg"
     }
   }
 }
