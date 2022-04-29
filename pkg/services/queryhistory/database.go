@@ -2,7 +2,6 @@ package queryhistory
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -47,8 +46,8 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *models.Sig
 	var dtos []QueryHistoryDTO
 	var allQueries []interface{}
 
-	if len(query.DatasourceUIDs) == 0 {
-		return QueryHistorySearchResult{}, errors.New("no selected data source for query history search")
+	if query.To <= 0 {
+		query.To = time.Now().Unix()
 	}
 
 	if query.Page <= 0 {

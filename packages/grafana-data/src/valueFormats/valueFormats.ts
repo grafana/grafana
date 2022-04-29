@@ -56,6 +56,10 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
     decimals = getDecimalsForValue(value);
   }
 
+  if (value === 0) {
+    return value.toFixed(decimals);
+  }
+
   const factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
   const formatted = String(Math.round(value * factor) / factor);
 

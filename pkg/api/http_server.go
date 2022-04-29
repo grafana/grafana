@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
@@ -151,6 +150,7 @@ type HTTPServer struct {
 	PluginSettings               *pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
 	preferenceService            pref.Service
+	entityEventsService          store.EntityEventsService
 }
 
 type ServerOptions struct {
@@ -182,7 +182,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
 	dashboardsnapshotsService *dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings *pluginSettings.Service,
-	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
+	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service, entityEventsService store.EntityEventsService,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -257,6 +257,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		permissionServices:           permissionsServices,
 		AvatarCacheServer:            avatarCacheServer,
 		preferenceService:            preferenceService,
+		entityEventsService:          entityEventsService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -511,7 +512,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.SQLStore))
-	m.Use(acmiddleware.LoadPermissionsMiddleware(hs.AccessControl))
+	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.AccessControl))
 
 	// needs to be after context handler
 	if hs.Cfg.EnforceDomain {

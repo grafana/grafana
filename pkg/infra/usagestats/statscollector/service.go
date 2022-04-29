@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -34,6 +35,7 @@ type Service struct {
 	startTime                time.Time
 	concurrentUserStatsCache memoConcurrentUserStats
 	promFlavorCache          memoPrometheusFlavor
+	usageStatProviders       []registry.ProvidesUsageStats
 }
 
 func ProvideService(
@@ -63,6 +65,12 @@ func ProvideService(
 	usagestats.RegisterMetricsFunc(s.collect)
 
 	return s
+}
+
+// RegisterProviders is called only once - during Grafana start up
+func (s *Service) RegisterProviders(usageStatProviders []registry.ProvidesUsageStats) {
+	s.log.Info("registering usage stat providers", "usageStatsProvidersLen", len(usageStatProviders))
+	s.usageStatProviders = usageStatProviders
 }
 
 func (s *Service) Run(ctx context.Context) error {
@@ -278,6 +286,13 @@ func (s *Service) collect(ctx context.Context) (map[string]interface{}, error) {
 	featureUsageStats := s.features.GetUsageStats(ctx)
 	for k, v := range featureUsageStats {
 		m[k] = v
+	}
+
+	for _, usageStatProvider := range s.usageStatProviders {
+		stats := usageStatProvider.GetUsageStats(ctx)
+		for k, v := range stats {
+			m[k] = v
+		}
 	}
 
 	return m, nil

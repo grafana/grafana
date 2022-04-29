@@ -72,7 +72,6 @@ ver_mode = 'main'
 
 def get_steps(edition):
     services = integration_test_services(edition)
-    include_enterprise2 = edition == 'enterprise'
     init_steps = [
         identify_runner_step(),
         download_grabpl_step(),
@@ -105,22 +104,9 @@ def get_steps(edition):
         mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
     ]
 
-    if include_enterprise2:
-        edition2 = 'enterprise2'
-        build_steps.append(benchmark_ldap_step())
-        services.append(ldap_service())
-        test_steps.extend([
-            lint_backend_step(edition=edition2),
-            test_backend_step(edition=edition2),
-            test_backend_integration_step(edition=edition2),
-        ])
-        build_steps.extend([
-            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-amd64']),
-        ])
-
     # Insert remaining steps
     build_steps.extend([
-        package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2),
+        package_step(edition=edition, ver_mode=ver_mode),
         grafana_server_step(edition=edition),
         e2e_tests_step('dashboards-suite', edition=edition),
         e2e_tests_step('smoke-tests-suite', edition=edition),
@@ -138,30 +124,14 @@ def get_steps(edition):
         publish_images_step(edition=edition, ver_mode=ver_mode, mode='', docker_repo='grafana-oss', trigger=trigger_oss)
     ])
 
-    if include_enterprise2:
-      integration_test_steps.extend([redis_integration_tests_step(edition=edition2, ver_mode=ver_mode), memcached_integration_tests_step(edition=edition2, ver_mode=ver_mode)])
-
     build_steps.extend([
         release_canary_npm_packages_step(edition, trigger=trigger_oss),
         upload_packages_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss),
         upload_cdn_step(edition=edition, ver_mode=ver_mode, trigger=trigger_oss)
     ])
 
-    if include_enterprise2:
-        edition2 = 'enterprise2'
-        build_steps.extend([
-            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-amd64']),
-            upload_packages_step(edition=edition2, ver_mode=ver_mode),
-            upload_cdn_step(edition=edition2, ver_mode=ver_mode)
-        ])
-
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
-    if edition == 'enterprise':
-        store_steps = []
-    else:
-        store_steps = [
-            store_packages_step(edition=edition, ver_mode=ver_mode),
-        ]
+    store_steps = [store_packages_step(edition=edition, ver_mode=ver_mode),]
 
     return init_steps, test_steps, build_steps, integration_test_steps, windows_steps, store_steps
 
@@ -220,10 +190,6 @@ def main_pipelines(edition):
         },
     }
     init_steps, test_steps, build_steps, integration_test_steps, windows_steps, store_steps = get_steps(edition=edition)
-
-    if edition == 'enterprise':
-        services.append(ldap_service())
-        integration_test_steps.append(benchmark_ldap_step())
 
     pipelines = [docs_pipelines(edition, ver_mode, trigger), pipeline(
         name='main-test', edition=edition, trigger=trigger, services=[],

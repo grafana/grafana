@@ -5,13 +5,14 @@ import { EditorField, EditorRow, Space } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../datasource';
-import { isMetricsQuery } from '../guards';
+import { isCloudWatchMetricsQuery } from '../guards';
 import {
   CloudWatchJsonData,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
   MetricEditorMode,
   MetricQueryType,
+  MetricStat,
 } from '../types';
 
 import QueryHeader from './QueryHeader';
@@ -87,7 +88,7 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
           onRunQuery={onRunQuery}
           datasource={datasource}
           onChange={(newQuery) => {
-            if (isMetricsQuery(newQuery) && newQuery.metricEditorMode !== query.metricEditorMode) {
+            if (isCloudWatchMetricsQuery(newQuery) && newQuery.metricEditorMode !== query.metricEditorMode) {
               this.setState({ sqlCodeEditorIsDirty: false });
             }
             this.onChange(newQuery);
@@ -99,7 +100,12 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
         {query.metricQueryType === MetricQueryType.Search && (
           <>
             {query.metricEditorMode === MetricEditorMode.Builder && (
-              <MetricStatEditor {...{ ...this.props, query }}></MetricStatEditor>
+              <MetricStatEditor
+                {...this.props}
+                refId={query.refId}
+                metricStat={query}
+                onChange={(metricStat: MetricStat) => this.props.onChange({ ...query, ...metricStat })}
+              ></MetricStatEditor>
             )}
             {query.metricEditorMode === MetricEditorMode.Code && (
               <MathExpressionQueryField

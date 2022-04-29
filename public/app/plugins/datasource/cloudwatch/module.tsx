@@ -1,6 +1,5 @@
 import { DataSourcePlugin } from '@grafana/data';
 
-import { CloudWatchAnnotationsQueryCtrl } from './annotations_query_ctrl';
 import { ConfigEditor } from './components/ConfigEditor';
 import LogsCheatSheet from './components/LogsCheatSheet';
 import { CloudWatchLogsQueryEditor } from './components/LogsQueryEditor';
@@ -17,5 +16,4 @@ export const plugin = new DataSourcePlugin<CloudWatchDatasource, CloudWatchQuery
   .setQueryEditor(PanelQueryEditor)
   .setMetadataInspector(MetaInspector)
   .setExploreMetricsQueryField(PanelQueryEditor)
-  .setExploreLogsQueryField(CloudWatchLogsQueryEditor)
-  .setAnnotationQueryCtrl(CloudWatchAnnotationsQueryCtrl);
+  .setExploreLogsQueryField(CloudWatchLogsQueryEditor);
