@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
 
@@ -115,7 +116,25 @@ func TestReduceExecute(t *testing.T) {
 		execute, err := cmd.Execute(context.Background(), vars)
 		require.NoError(t, err)
 
-		require.Equal(t, numbers, execute.Values)
+		require.Len(t, execute.Values, len(numbers))
+		for i, value := range execute.Values {
+			expected := numbers[i]
+			require.Equal(t, expected.Type(), value.Type())
+			require.Equal(t, expected.GetLabels(), value.GetLabels())
+
+			expectedValue := expected.Value().(*mathexp.Number).GetFloat64Value()
+			actualValue := value.Value().(*mathexp.Number).GetFloat64Value()
+			require.Equal(t, expectedValue, actualValue)
+		}
+
+		t.Run("should add warn notices to every frame", func(t *testing.T) {
+			frames := execute.Values.AsDataFrames("test")
+			for _, frame := range frames {
+				require.Len(t, frame.Meta.Notices, 1)
+				notice := frame.Meta.Notices[0]
+				require.Equal(t, data.NoticeSeverityWarning, notice.Severity)
+			}
+		})
 	})
 }
 
