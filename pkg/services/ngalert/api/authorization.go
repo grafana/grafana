@@ -88,7 +88,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
 
 	// Lotex Prometheus-compatible Paths
-	case http.MethodGet + "/api/prometheus/{DatasourceID}/api/v1/rules":
+	case http.MethodGet + "/api/prometheus/{DatasourceUID}/api/v1/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
 
 	// Lotex Rules testing
@@ -140,7 +140,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
 	// Prometheus-compatible Paths
-	case http.MethodGet + "/api/prometheus/{DatasourceID}/api/v1/alerts":
+	case http.MethodGet + "/api/prometheus/{DatasourceUID}/api/v1/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
 
 	// Notification Policies, Contact Points and Templates

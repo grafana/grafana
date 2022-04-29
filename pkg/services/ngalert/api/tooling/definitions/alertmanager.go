@@ -427,14 +427,12 @@ type AlertsParams struct {
 }
 
 // swagger:parameters RoutePostAMAlerts RoutePostGrafanaAMAlerts
-// swagger:parameters RoutePostAMAlerts
 type PostableAlerts struct {
 	// in:body
 	PostableAlerts []amv2.PostableAlert `yaml:"" json:""`
 }
 
 // swagger:parameters RoutePostAlertingConfig RoutePostGrafanaAlertingConfig
-// swagger:parameters RoutePostAlertingConfig
 type BodyAlertingConfig struct {
 	// in:body
 	Body PostableUserConfig
@@ -442,8 +440,6 @@ type BodyAlertingConfig struct {
 
 // ruler routes
 // swagger:parameters RouteGetRulesConfig RoutePostNameRulesConfig RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig
-// prom routes
-// swagger:parameters RouteGetRuleStatuses RouteGetAlertStatuses
 // testing routes
 // swagger:parameters RouteTestReceiverConfig RouteTestRuleConfig
 type DatasourceIDReference struct {
@@ -454,6 +450,8 @@ type DatasourceIDReference struct {
 
 // alertmanager routes
 // swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig RoutePostTestReceivers
+// prom routes
+// swagger:parameters RouteGetRuleStatuses RouteGetAlertStatuses
 type DatasourceUIDReference struct {
 	// DatasoureUID should be the datasource UID identifier
 	// in:path
