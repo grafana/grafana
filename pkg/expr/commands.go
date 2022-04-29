@@ -168,7 +168,7 @@ func (gr *ReduceCommand) Execute(_ context.Context, vars mathexp.Vars) (mathexp.
 			copyV.SetValue(v.GetFloat64Value())
 			copyV.AddNotice(data.Notice{
 				Severity: data.NoticeSeverityWarning,
-				Text:     fmt.Sprintf("Query or expression %s produced result of type 'single number'. Reduce operation is not needed.", gr.VarToReduce),
+				Text:     fmt.Sprintf("Reduce operation is not needed. Input query or expression %s is already reduced data.", gr.VarToReduce),
 			})
 			newRes.Values = append(newRes.Values, copyV)
 		default:
