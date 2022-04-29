@@ -16,7 +16,7 @@ For more information about creating service accounts via the API, refer to [Crea
 ## Before you begin
 
 - Ensure you have added the feature toggle for service accounts `serviceAccounts`. For more information about adding the feature toggle, refer to [Enable service accounts]({{< relref "./enable-service-accounts.md#">}}).
-- Ensure you have permission to create and edit service accounts. By default, organization administrator role is required to create and edit service accounts. For more information about user permissions, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#">}}).
+- Ensure you have permission to create and edit service accounts. By default, the organization administrator role is required to create and edit service accounts. For more information about user permissions, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#">}}).
 
 ## To create a service account
 
