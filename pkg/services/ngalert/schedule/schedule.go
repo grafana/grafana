@@ -37,6 +37,7 @@ type ScheduleService interface {
 	overrideCfg(cfg SchedulerCfg)
 }
 
+//go:generate mockery --name AlertNotifier --structname FakeAlertNotifier --inpackage --filename alertnotifier_mock.go --with-expecter
 type AlertNotifier interface {
 	Notify(key models.AlertRuleKey, states []*state.State) error
 	Expire(key models.AlertRuleKey, states []*state.State) error

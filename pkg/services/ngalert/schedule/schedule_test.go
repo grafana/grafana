@@ -101,10 +101,9 @@ func TestWarmStateCache(t *testing.T) {
 		BaseInterval: time.Second,
 		Logger:       log.New("ngalert cache warming test"),
 
-		RuleStore:               dbstore,
-		InstanceStore:           dbstore,
-		Metrics:                 testMetrics.GetSchedulerMetrics(),
-		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
+		RuleStore:     dbstore,
+		InstanceStore: dbstore,
+		Metrics:       testMetrics.GetSchedulerMetrics(),
 	}
 	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, ng.SQLStore)
 	st.Warm(ctx)
@@ -140,6 +139,8 @@ func TestAlertingTicker(t *testing.T) {
 	mockedClock := clock.NewMock()
 	baseInterval := time.Second
 
+	notifier := &schedule.FakeAlertNotifier{}
+
 	schedCfg := schedule.SchedulerCfg{
 		C:            mockedClock,
 		BaseInterval: baseInterval,
@@ -149,14 +150,15 @@ func TestAlertingTicker(t *testing.T) {
 		StopAppliedFunc: func(alertDefKey models.AlertRuleKey) {
 			stopAppliedCh <- alertDefKey
 		},
-		RuleStore:               dbstore,
-		InstanceStore:           dbstore,
-		Logger:                  log.New("ngalert schedule test"),
-		Metrics:                 testMetrics.GetSchedulerMetrics(),
-		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
+		RuleStore:     dbstore,
+		InstanceStore: dbstore,
+		Logger:        log.New("ngalert schedule test"),
+		Metrics:       testMetrics.GetSchedulerMetrics(),
+		// AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 		DisabledOrgs: map[int64]struct{}{
 			disabledOrgID: {},
 		},
+		Notifier: notifier,
 	}
 	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, ng.SQLStore)
 	appUrl := &url.URL{
