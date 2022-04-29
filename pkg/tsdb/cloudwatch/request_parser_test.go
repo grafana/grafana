@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -32,7 +33,7 @@ func TestRequestParser(t *testing.T) {
 				"period": "600",
 				"hide": false
 			  }`)
-			migratedQueries, err := migrateLegacyQuery([]backend.DataQuery{*oldQuery}, startTime, endTime)
+			migratedQueries, err := migrateLegacyQuery([]backend.DataQuery{*oldQuery}, false, startTime, endTime)
 			require.NoError(t, err)
 			assert.Equal(t, 1, len(migratedQueries))
 
@@ -321,4 +322,183 @@ func getBaseJsonQuery() *simplejson.Json {
 		"statistic":  "Average",
 		"period":     "900",
 	})
+}
+
+func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_creates_new_label(t *testing.T) {
+	testCases := map[string]struct {
+		inputAlias    string
+		expectedLabel string
+	}{
+		"one known alias pattern: metric":             {inputAlias: "{{metric}}", expectedLabel: "${PROP('MetricName')}"},
+		"one known alias pattern: namespace":          {inputAlias: "{{namespace}}", expectedLabel: "${PROP('Namespace')}"},
+		"one known alias pattern: period":             {inputAlias: "{{period}}", expectedLabel: "${PROP('Period')}"},
+		"one known alias pattern: region":             {inputAlias: "{{region}}", expectedLabel: "${PROP('Region')}"},
+		"one known alias pattern: stat":               {inputAlias: "{{stat}}", expectedLabel: "${PROP('Stat')}"},
+		"one known alias pattern: label":              {inputAlias: "{{label}}", expectedLabel: "${LABEL}"},
+		"one unknown alias pattern becomes dimension": {inputAlias: "{{any_other_word}}", expectedLabel: "${PROP('Dim.any_other_word')}"},
+		"one known alias pattern with spaces":         {inputAlias: "{{ metric   }}", expectedLabel: "${PROP('MetricName')}"},
+		"multiple alias patterns":                     {inputAlias: "some {{combination }}{{ label}} and {{metric}}", expectedLabel: "some ${PROP('Dim.combination')}${LABEL} and ${PROP('MetricName')}"},
+	}
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			queryJson, err := simplejson.NewJson([]byte(fmt.Sprintf(`{
+						"region": "us-east-1",
+						"namespace": "ec2",
+						"metricName": "CPUUtilization",
+						"alias": "%s",
+						"dimensions": {
+						  "InstanceId": ["test"]
+						},
+						"statistic": "Average",
+						"period": "600",
+						"hide": false
+				  }`, tc.inputAlias)))
+			require.NoError(t, err)
+
+			migratedQueryJson := migrateAliasToDynamicLabel(queryJson)
+
+			assert.Equal(t, simplejson.NewFromAny(
+				map[string]interface{}{
+					"alias":      tc.inputAlias,
+					"dimensions": map[string]interface{}{"InstanceId": []interface{}{"test"}},
+					"hide":       false,
+					"label":      tc.expectedLabel,
+					"metricName": "CPUUtilization",
+					"namespace":  "ec2",
+					"period":     "600",
+					"region":     "us-east-1",
+					"statistic":  "Average"}), migratedQueryJson)
+		})
+	}
+}
+
+func Test_migrateLegacyQuery_successfully_migrates_alias_to_dynamic_label_for_multiple_queries(t *testing.T) {
+	migratedQueries, err := migrateLegacyQuery(
+		[]backend.DataQuery{
+			{
+				RefID:     "A",
+				QueryType: "timeSeriesQuery",
+				JSON: []byte(`{
+					"region": "us-east-1",
+					"namespace": "ec2",
+					"metricName": "CPUUtilization",
+					"alias": "{{period}} {{any_other_word}}",
+					"dimensions": {
+					  "InstanceId": ["test"]
+					},
+					"statistic": "Average",
+					"period": "600",
+					"hide": false
+				  }`),
+			},
+			{
+				RefID:     "B",
+				QueryType: "timeSeriesQuery",
+				JSON: []byte(`{
+					"region": "us-east-1",
+					"namespace": "ec2",
+					"metricName": "CPUUtilization",
+					"alias": "{{  label }}",
+					"dimensions": {
+					  "InstanceId": ["test"]
+					},
+					"statistic": "Average",
+					"period": "600",
+					"hide": false
+				  }`),
+			},
+		}, true, time.Now(), time.Now())
+	require.NoError(t, err)
+	require.Equal(t, 2, len(migratedQueries))
+
+	assert.JSONEq(t,
+		`{
+					   "alias": "{{period}} {{any_other_word}}",
+					   "label":"${PROP('Period')} ${PROP('Dim.any_other_word')}",
+					   "dimensions":{
+						  "InstanceId":[
+							 "test"
+						  ]
+					   },
+					   "hide":false,
+					   "metricName":"CPUUtilization",
+					   "namespace":"ec2",
+					   "period":"600",
+					   "region":"us-east-1",
+					   "statistic":"Average"
+					}`,
+		string(migratedQueries[0].JSON))
+
+	assert.JSONEq(t,
+		`{
+					   "alias": "{{  label }}",
+					   "label":"${LABEL}",
+					   "dimensions":{
+						  "InstanceId":[
+							 "test"
+						  ]
+					   },
+					   "hide":false,
+					   "metricName":"CPUUtilization",
+					   "namespace":"ec2",
+					   "period":"600",
+					   "region":"us-east-1",
+					   "statistic":"Average"
+					}`,
+		string(migratedQueries[1].JSON))
+}
+
+func Test_migrateLegacyQuery_does_not_migrate_alias_to_label(t *testing.T) {
+	testCases := map[string]struct {
+		extraJson     string
+		featureToggle bool
+	}{
+		"when label already exists":       {extraJson: `"label":"some label already here",`, featureToggle: true},
+		"when feature toggle is disabled": {featureToggle: false},
+		// TODO: any other test cases?
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			migratedQueries, err := migrateLegacyQuery(
+				[]backend.DataQuery{
+					{
+						RefID:     "A",
+						QueryType: "timeSeriesQuery",
+						JSON: []byte(fmt.Sprintf(`{
+					"region": "us-east-1",
+					"namespace": "ec2",
+					"metricName": "CPUUtilization",
+					"alias": "{{period}} {{any_other_word}}",
+					%s
+					"dimensions": {
+					  "InstanceId": ["test"]
+					},
+					"statistic": "Average",
+					"period": "600",
+					"hide": false
+				  }`, tc.extraJson))},
+				}, tc.featureToggle, time.Now(), time.Now())
+			require.NoError(t, err)
+			require.Equal(t, 1, len(migratedQueries))
+
+			assert.JSONEq(t,
+				fmt.Sprintf(`{
+					   "alias":"{{period}} {{any_other_word}}",
+					   %s
+					   "dimensions":{
+						  "InstanceId":[
+							 "test"
+						  ]
+					   },
+					   "hide":false,
+					   "metricName":"CPUUtilization",
+					   "namespace":"ec2",
+					   "period":"600",
+					   "region":"us-east-1",
+					   "statistic":"Average"
+					}`, tc.extraJson), // TODO: do not use test input in expected code. thinking about splitting this into two tests rather than combining in a table test.
+				string(migratedQueries[0].JSON))
+		})
+	}
 }
