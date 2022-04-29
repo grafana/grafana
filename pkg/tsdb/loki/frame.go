@@ -1,6 +1,7 @@
 package loki
 
 import (
+	"encoding/json"
 	"fmt"
 	"hash/fnv"
 	"sort"
@@ -88,7 +89,7 @@ func adjustLogsFrame(frame *data.Frame, query *lokiQuery) error {
 	timeField := fields[1]
 	lineField := fields[2]
 
-	if (timeField.Type() != data.FieldTypeTime) || (lineField.Type() != data.FieldTypeString) || (labelsField.Type() != data.FieldTypeString) {
+	if (timeField.Type() != data.FieldTypeTime) || (lineField.Type() != data.FieldTypeString) || (labelsField.Type() != data.FieldTypeJSON) {
 		return fmt.Errorf("invalid fields in logs frame")
 	}
 
@@ -127,8 +128,9 @@ func makeStringTimeField(timeField *data.Field) *data.Field {
 	return data.NewField("tsNs", timeField.Labels.Copy(), stringTimestamps)
 }
 
-func calculateCheckSum(time string, line string, labels string) (string, error) {
-	input := []byte(line + "_" + labels)
+func calculateCheckSum(time string, line string, labels []byte) (string, error) {
+	input := []byte(line + "_")
+	input = append(input, labels...)
 	hash := fnv.New32()
 	_, err := hash.Write(input)
 	if err != nil {
@@ -147,7 +149,7 @@ func makeIdField(stringTimeField *data.Field, lineField *data.Field, labelsField
 	for i := 0; i < length; i++ {
 		time := stringTimeField.At(i).(string)
 		line := lineField.At(i).(string)
-		labels := labelsField.At(i).(string)
+		labels := labelsField.At(i).(json.RawMessage)
 
 		sum, err := calculateCheckSum(time, line, labels)
 		if err != nil {

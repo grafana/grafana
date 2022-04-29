@@ -1,6 +1,7 @@
 package loki
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -39,11 +40,11 @@ func TestFormatName(t *testing.T) {
 func TestAdjustFrame(t *testing.T) {
 	t.Run("logs-frame metadata should be set correctly", func(t *testing.T) {
 		frame := data.NewFrame("",
-			data.NewField("labels", nil, []string{
-				`{"level":"info"}`,
-				`{"level":"error"}`,
-				`{"level":"error"}`,
-				`{"level":"info"}`,
+			data.NewField("labels", nil, []json.RawMessage{
+				json.RawMessage(`{"level":"info"}`),
+				json.RawMessage(`{"level":"error"}`),
+				json.RawMessage(`{"level":"error"}`),
+				json.RawMessage(`{"level":"info"}`),
 			}),
 			data.NewField("time", nil, []time.Time{
 				time.Date(2022, 1, 2, 3, 4, 5, 6, time.UTC),
