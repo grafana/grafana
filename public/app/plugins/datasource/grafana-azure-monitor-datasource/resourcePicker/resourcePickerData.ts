@@ -93,15 +93,21 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
       if (!parsedUri || !(parsedUri.resource || parsedUri.resourceGroup || parsedUri.subscriptionID)) {
         throw new Error('unable to fetch resource details');
       }
+      let id = parsedUri.subscriptionID;
+      let type = ResourceRowType.Subscription;
+      if (parsedUri.resource) {
+        id = parsedUri.resource;
+        type = ResourceRowType.Resource;
+      } else if (parsedUri.resourceGroup) {
+        id = parsedUri.resourceGroup;
+        type = ResourceRowType.ResourceGroup;
+      }
       return {
         name: item.name,
-        id: parsedUri.resource || parsedUri.resourceGroup || parsedUri.subscriptionID,
+        id,
         uri: item.id,
         resourceGroupName: item.resourceGroup,
-        type:
-          (parsedUri.resource && ResourceRowType.Resource) ||
-          (parsedUri.resourceGroup && ResourceRowType.ResourceGroup) ||
-          ResourceRowType.Subscription,
+        type,
         typeLabel: resourceTypeDisplayNames[item.type] || item.type,
         location: locationDisplayNames[item.location] || item.location,
       };
