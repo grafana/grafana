@@ -2,12 +2,13 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
-import { InlineField, InlineLabel, Input, QueryField, useStyles2 } from '@grafana/ui';
+import { Alert, InlineField, InlineLabel, Input, QueryField, useStyles2 } from '@grafana/ui';
 
 import { ElasticDatasource } from '../../datasource';
 import { useNextId } from '../../hooks/useNextId';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../../types';
+import { isDeprecatedVersion } from '../../utils';
 
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
@@ -26,6 +27,11 @@ export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: 
     range={range || getDefaultTimeRange()}
   >
     <QueryEditorForm value={query} />
+    {isDeprecatedVersion(datasource.esVersion) && (
+      <Alert title="Deprecation Notice" severity="warning">
+        {`Support for Elasticsearch with version < 7.10 is deprecated and will be removed in a future release.`}
+      </Alert>
+    )}
   </ElasticsearchProvider>
 );
 
