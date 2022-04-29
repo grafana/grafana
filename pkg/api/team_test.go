@@ -377,6 +377,13 @@ func TestTeamAPIEndpoint_GetTeamPreferences_RBAC(t *testing.T) {
 	sc.db = sqlstore.InitTestDB(t)
 	_, err := sc.db.CreateTeam("team1", "", 1)
 
+	sqlstore := mockstore.NewSQLStoreMock()
+	sqlstore.ExpectedDashboard = &models.Dashboard{
+		Uid: "home",
+		Id:  1,
+	}
+	sc.hs.SQLStore = sqlstore
+
 	prefService := preftest.NewPreferenceServiceFake()
 	prefService.ExpectedPreference = &pref.Preference{}
 	sc.hs.preferenceService = prefService
