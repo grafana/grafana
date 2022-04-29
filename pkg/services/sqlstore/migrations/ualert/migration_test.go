@@ -47,6 +47,7 @@ func TestAddDashAlertMigration(t *testing.T) {
 				UnifiedAlerting: setting.UnifiedAlertingSettings{
 					Enabled: boolPointer(false),
 				},
+				ForceMigration: true,
 			},
 			isMigrationRun: true,
 			expected:       []string{fmt.Sprintf(ualert.ClearMigrationEntryTitle, ualert.MigTitle), ualert.RmMigTitle},
