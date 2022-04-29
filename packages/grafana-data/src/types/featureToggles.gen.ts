@@ -58,4 +58,5 @@ export interface FeatureToggles {
   persistNotifications?: boolean;
   commandPalette?: boolean;
   savedItems?: boolean;
+  cloudWatchDynamicLabels?: boolean;
 }
