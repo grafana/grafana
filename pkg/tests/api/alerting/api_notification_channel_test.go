@@ -938,7 +938,7 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 	nc.server.Handler = nc
 	go func() {
 		err := nc.server.Serve(listener)
-		require.Equal(t, http.ErrServerClosed, err.Error())
+		require.EqualError(t, nc.server.ListenAndServe(), http.ErrServerClosed.Error())
 	}()
 
 	return nc
