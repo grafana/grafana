@@ -192,10 +192,6 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSo
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 	var err error
-	secret, err := json.Marshal(cmd.SecureJsonData)
-	if err != nil {
-		return err
-	}
 
 	query := &models.GetDataSourceQuery{
 		Id:    cmd.Id,
@@ -218,7 +214,18 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSo
 		}
 	}
 
-	return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
+	if len(cmd.SecureJsonData) > 0 {
+		secret, err := json.Marshal(cmd.SecureJsonData)
+		if err != nil {
+			return err
+		}
+		err = s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Service) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
