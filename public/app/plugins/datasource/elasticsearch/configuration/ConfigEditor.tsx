@@ -37,7 +37,7 @@ export const ConfigEditor = (props: Props) => {
         </Alert>
       )}
       {deprecatedVersion && (
-        <Alert title="Deprecation Notice" severity="warning">
+        <Alert title="Deprecation notice" severity="warning">
           {`Support for Elasticsearch with version < 7.10 is deprecated and will be removed in a future release.`}
         </Alert>
       )}

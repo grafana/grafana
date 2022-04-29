@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { getDefaultTimeRange, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { Alert, InlineField, InlineLabel, Input, QueryField, useStyles2 } from '@grafana/ui';
@@ -18,22 +18,28 @@ import { changeAliasPattern, changeQuery } from './state';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
 
-export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: ElasticQueryEditorProps) => (
-  <ElasticsearchProvider
-    datasource={datasource}
-    onChange={onChange}
-    onRunQuery={onRunQuery}
-    query={query}
-    range={range || getDefaultTimeRange()}
-  >
-    <QueryEditorForm value={query} />
-    {isDeprecatedVersion(datasource.esVersion) && (
-      <Alert title="Deprecation Notice" severity="warning">
-        {`Support for Elasticsearch with version < 7.10 is deprecated and will be removed in a future release.`}
-      </Alert>
-    )}
-  </ElasticsearchProvider>
-);
+export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: ElasticQueryEditorProps) => {
+  const [showDeprecation, setShowDeprecation] = useState(isDeprecatedVersion(datasource.esVersion));
+
+  return (
+    <ElasticsearchProvider
+      datasource={datasource}
+      onChange={onChange}
+      onRunQuery={onRunQuery}
+      query={query}
+      range={range || getDefaultTimeRange()}
+    >
+      <QueryEditorForm value={query} />
+      {showDeprecation && (
+        <Alert
+          title="Deprecation notice"
+          severity="warning"
+          onRemove={() => setShowDeprecation(false)}
+        >{`Support for Elasticsearch with version < 7.10 is deprecated and will be removed in a future release.`}</Alert>
+      )}
+    </ElasticsearchProvider>
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   root: css`
