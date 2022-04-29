@@ -18,7 +18,7 @@ You can create a service account token using the Grafana UI or via the API. For 
 
 ## To add a token to a service account
 
-1. Sign in to Grafana and hover your cursor over **Configuration** (the gear icon) in the sidebar.
+1. Sign in to Grafana, then hover your cursor over **Configuration** (the gear icon) in the sidebar.
 1. Click **Service accounts**.
 1. Click the service account to which you want to add a token.
 1. Click **Add token**.
