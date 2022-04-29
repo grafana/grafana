@@ -189,7 +189,7 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 			},
 		})
 	} else {
-		gcn.log.Warn("Alerting Rule URL is not absolute, not adding 'open in grafana' button to prevent google from displaying empty alerts. This is most likely due to using a non-absolute root_url", "ruleURL", ruleURL)
+		gcn.log.Warn("Grafana External URL setting is missing or invalid. Skipping 'open in grafana' button to prevent google from displaying empty alerts.", "ruleURL", ruleURL)
 	}
 
 	// add text paragraph widget for the build version and timestamp
