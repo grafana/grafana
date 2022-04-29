@@ -360,7 +360,7 @@ func (hs *HTTPServer) fillWithSecureJSONData(ctx context.Context, cmd *models.Up
 
 	for k, v := range decrypted {
 		if _, ok := cmd.SecureJsonData[k]; !ok {
-			cmd.SecureJsonData[k] = string(v)
+			cmd.SecureJsonData[k] = v
 		}
 	}
 
