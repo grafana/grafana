@@ -80,7 +80,7 @@ func TestUserDataAccess(t *testing.T) {
 		}()
 
 		orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
-		err := CreateOrg(context.Background(), orgCmd)
+		err := ss.CreateOrg(context.Background(), orgCmd)
 		require.Nil(t, err)
 
 		cmd := models.CreateUserCommand{

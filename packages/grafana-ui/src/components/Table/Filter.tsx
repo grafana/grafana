@@ -32,6 +32,7 @@ export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
     <span
       className={cx(tableStyles.headerFilter, filterEnabled ? styles.filterIconEnabled : styles.filterIconDisabled)}
       ref={ref}
+      role="filterIcon"
       onClick={onShowPopover}
     >
       <Icon name="filter" />

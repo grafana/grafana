@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { intersectionBy, debounce, unionBy } from 'lodash';
+import { debounce, intersectionBy, unionBy } from 'lodash';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
 import { Editor, Node, Plugin } from 'slate';
@@ -19,6 +19,8 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 import { ExploreId } from 'app/types';
+// Utils & Services
+// dom also includes Element polyfills
 
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchLanguageProvider } from '../language_provider';
@@ -339,7 +341,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
               additionalPlugins={this.plugins}
-              query={query.expression ?? ''}
+              query={(query as CloudWatchLogsQuery).expression ?? ''}
               onChange={this.onChangeQuery}
               onClick={this.onQueryFieldClick}
               onRunQuery={this.props.onRunQuery}

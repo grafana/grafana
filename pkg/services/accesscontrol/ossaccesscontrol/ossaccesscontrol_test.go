@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
@@ -134,19 +133,13 @@ func TestUsageMetrics(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			usagestatsmock := &usagestats.UsageStatsMock{T: t}
-
-			_, errInitAc := ProvideService(
+			s, errInitAc := ProvideService(
 				featuremgmt.WithFeatures("accesscontrol", tt.enabled),
-				usagestatsmock,
 				database.ProvideService(sqlstore.InitTestDB(t)),
 				routing.NewRouteRegister(),
 			)
 			require.NoError(t, errInitAc)
-			report, err := usagestatsmock.GetUsageReport(context.Background())
-			assert.Nil(t, err)
-
-			assert.Equal(t, tt.expectedValue, report.Metrics["stats.oss.accesscontrol.enabled.count"])
+			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
 		})
 	}
 }

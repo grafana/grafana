@@ -2,8 +2,7 @@ import { isEqual } from 'lodash';
 import React, { useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorFieldGroup, EditorList } from '@grafana/experimental';
-import { Field } from '@grafana/ui';
+import { EditorFieldGroup, EditorList, EditorField } from '@grafana/experimental';
 
 import { QueryBuilderLabelFilter } from '../shared/types';
 
@@ -41,7 +40,7 @@ export function LabelFilters({ labelsFilters, onChange, onGetLabelNames, onGetLa
 
   return (
     <EditorFieldGroup>
-      <Field label="Labels" error={error} invalid={!!error}>
+      <EditorField label="Labels" error={error} invalid={!!error}>
         <EditorList
           items={items}
           onChange={onLabelsChange}
@@ -56,7 +55,7 @@ export function LabelFilters({ labelsFilters, onChange, onGetLabelNames, onGetLa
             />
           )}
         />
-      </Field>
+      </EditorField>
     </EditorFieldGroup>
   );
 }

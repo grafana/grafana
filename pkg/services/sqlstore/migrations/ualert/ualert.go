@@ -69,10 +69,8 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
 		}
 		mg.AddMigration(migTitle, &migration{
-			seenChannelUIDs:           make(map[string]struct{}),
-			migratedChannelsPerOrg:    make(map[int64]map[*notificationChannel]struct{}),
-			portedChannelGroupsPerOrg: make(map[int64]map[string]string),
-			silences:                  make(map[int64][]*pb.MeshSilence),
+			seenChannelUIDs: make(map[string]struct{}),
+			silences:        make(map[int64][]*pb.MeshSilence),
 		})
 	case !mg.Cfg.UnifiedAlerting.IsEnabled() && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
@@ -213,11 +211,8 @@ type migration struct {
 	sess *xorm.Session
 	mg   *migrator.Migrator
 
-	seenChannelUIDs           map[string]struct{}
-	migratedChannelsPerOrg    map[int64]map[*notificationChannel]struct{}
-	silences                  map[int64][]*pb.MeshSilence
-	portedChannelGroupsPerOrg map[int64]map[string]string // Org -> Channel group key -> receiver name.
-	lastReceiverID            int                         // For the auto generated receivers.
+	seenChannelUIDs map[string]struct{}
+	silences        map[int64][]*pb.MeshSilence
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
@@ -247,20 +242,11 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
-	// allChannels: channelUID -> channelConfig
-	allChannelsPerOrg, defaultChannelsPerOrg, err := m.getNotificationChannelMap()
-	if err != nil {
-		return err
-	}
-
-	amConfigPerOrg := make(amConfigsPerOrg, len(allChannelsPerOrg))
-	err = m.addDefaultChannels(amConfigPerOrg, allChannelsPerOrg, defaultChannelsPerOrg)
-	if err != nil {
-		return err
-	}
-
 	// cache for folders created for dashboards that have custom permissions
 	folderCache := make(map[string]*dashboard)
+
+	// Store of newly created rules to later create routes
+	rulesPerOrg := make(map[int64]map[string]dashAlert)
 
 	for _, da := range dashAlerts {
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
@@ -358,11 +344,15 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
-		if _, ok := amConfigPerOrg[rule.OrgID]; !ok {
-			m.mg.Logger.Info("no configuration found", "org", rule.OrgID)
+		if _, ok := rulesPerOrg[rule.OrgID]; !ok {
+			rulesPerOrg[rule.OrgID] = make(map[string]dashAlert)
+		}
+		if _, ok := rulesPerOrg[rule.OrgID][rule.UID]; !ok {
+			rulesPerOrg[rule.OrgID][rule.UID] = da
 		} else {
-			if err := m.updateReceiverAndRoute(allChannelsPerOrg, defaultChannelsPerOrg, da, rule, amConfigPerOrg[rule.OrgID]); err != nil {
-				return err
+			return MigrationError{
+				Err:     fmt.Errorf("duplicate generated rule UID"),
+				AlertId: da.Id,
 			}
 		}
 
@@ -392,36 +382,19 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 	}
 
-	for orgID, amConfig := range amConfigPerOrg {
-		// Create a separate receiver for all the unmigrated channels.
-		err = m.addUnmigratedChannels(orgID, amConfig, allChannelsPerOrg[orgID], defaultChannelsPerOrg[orgID])
-		if err != nil {
-			return err
-		}
-
-		// No channels, hence don't require Alertmanager config - skip it.
-		if len(allChannelsPerOrg[orgID]) == 0 {
-			m.mg.Logger.Info("alert migration: no notification channel found, skipping Alertmanager config")
-			continue
-		}
-
-		// Encrypt the secure settings before we continue.
-		if err := amConfig.EncryptSecureSettings(); err != nil {
-			return err
-		}
-
-		// Validate the alertmanager configuration produced, this gives a chance to catch bad configuration at migration time.
-		// Validation between legacy and unified alerting can be different (e.g. due to bug fixes) so this would fail the migration in that case.
-		if err := m.validateAlertmanagerConfig(orgID, amConfig); err != nil {
-			return err
-		}
-
-		if err := m.writeAlertmanagerConfig(orgID, amConfig); err != nil {
-			return err
-		}
-
+	for orgID := range rulesPerOrg {
 		if err := m.writeSilencesFile(orgID); err != nil {
 			m.mg.Logger.Error("alert migration error: failed to write silence file", "err", err)
+		}
+	}
+
+	amConfigPerOrg, err := m.setupAlertmanagerConfigs(rulesPerOrg)
+	if err != nil {
+		return err
+	}
+	for orgID, amConfig := range amConfigPerOrg {
+		if err := m.writeAlertmanagerConfig(orgID, amConfig); err != nil {
+			return err
 		}
 	}
 

@@ -1,4 +1,4 @@
-import { DeprecatedAzureMonitorQuery } from '../components/deprecated/types';
+import { DataQuery } from '@grafana/data';
 
 import { GrafanaTemplateVariableQuery } from './templateVariables';
 
@@ -9,18 +9,12 @@ export enum AzureQueryType {
   GrafanaTemplateVariableFn = 'Grafana Template Variable Function',
 }
 
-// DeprecatedAzureQueryType won't be available after Grafana 9
-export enum DeprecatedAzureQueryType {
-  ApplicationInsights = 'Application Insights',
-  InsightsAnalytics = 'Insights Analytics',
-}
-
 /**
  * Represents the query as it moves through the frontend query editor and datasource files.
  * It can represent new queries that are still being edited, so all properties are optional
  */
-export interface AzureMonitorQuery extends DeprecatedAzureMonitorQuery {
-  queryType?: AzureQueryType | DeprecatedAzureQueryType;
+export interface AzureMonitorQuery extends DataQuery {
+  queryType?: AzureQueryType;
 
   subscription?: string;
 

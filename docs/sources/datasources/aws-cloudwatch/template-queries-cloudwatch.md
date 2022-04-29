@@ -13,51 +13,36 @@ For an introduction to templating and template variables, refer to the [Templati
 
 ## Query variable
 
-The CloudWatch data source provides the following queries that you can specify in the `Query` field in the Variable edit view. They allow you to fill a variable's options list with things like `region`, `namespaces`, `metric names` and `dimension keys/values`.
-
-In place of `region` you can specify `default` to use the default region configured in the data source for the query,
-e.g. `metrics(AWS/DynamoDB, default)` or `dimension_values(default, ..., ..., ...)`.
+The CloudWatch data source provides the following queries that you can specify in the `Query Type` field in the Variable edit view. They enable you to fill a variable's options list with values such as `region`, `namespaces`, `metric names` and `dimension keys/values`.
 
 Read more about the available dimensions in the [CloudWatch Metrics and Dimensions Reference](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CW_Support_For_AWS.html).
 
-| Name                                                                    | Description                                                                                                                                                                        |
-| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `regions()`                                                             | Returns a list of all AWS regions                                                                                                                                                  |
-| `namespaces()`                                                          | Returns a list of namespaces CloudWatch support.                                                                                                                                   |
-| `metrics(namespace, [region])`                                          | Returns a list of metrics in the namespace. (specify region or use "default" for custom metrics)                                                                                   |
-| `dimension_keys(namespace)`                                             | Returns a list of dimension keys in the namespace.                                                                                                                                 |
-| `dimension_values(region, namespace, metric, dimension_key, [filters])` | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, `dimension_key` or you can use dimension `filters` to get more specific result as well. |
-| `ebs_volume_ids(region, instance_id)`                                   | Returns a list of volume ids matching the specified `region`, `instance_id`.                                                                                                       |
-| `ec2_instance_attribute(region, attribute_name, filters)`               | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.                                                                                         |
-| `resource_arns(region, resource_type, tags)`                            | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.                                                                                                |
-| `statistics()`                                                          | Returns a list of all the standard statistics                                                                                                                                      |
+| Name                      | Description                                                                                                                                                                   |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Regions`                 | Returns a list of all AWS regions                                                                                                                                             |
+| `Namespaces`              | Returns a list of all the namespaces CloudWatch supports.                                                                                                                     |
+| `Metrics`                 | Returns a list of metrics in the namespace. (specify region or use "default" for custom metrics)                                                                              |
+| `Dimension Keys`          | Returns a list of dimension keys in the namespace.                                                                                                                            |
+| `Dimension Values`        | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, and `dimension_key`. You can use dimension `filters` to get more specific results. |
+| `EBS Volume IDs`          | Returns a list of volume ids matching the specified `region` and `instance_id`.                                                                                               |
+| `EC2 Instance Attributes` | Returns a list of attributes matching the specified `region`, `attribute_name`, and `filters`.                                                                                |
+| `Resource ARNs`           | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.                                                                                           |
+| `Statistics`              | Returns a list of all the standard statistics.                                                                                                                                |
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
-## Example of templated queries
+### Using variables in queries
 
-Here is an example of the dimension queries which will return list of resources for individual AWS Services:
-
-| Query                                                                                                                         | Service          |
-| ----------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| `dimension_values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)`                                                           | ELB              |
-| `dimension_values(us-east-1,AWS/ElastiCache,CPUUtilization,CacheClusterId)`                                                   | ElastiCache      |
-| `dimension_values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)`                                                   | RedShift         |
-| `dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)`                                                     | RDS              |
-| `dimension_values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)`                                                               | S3               |
-| `dimension_values(us-east-1,CWAgent,disk_used_percent,device,{"InstanceId":"$instance_id"})`                                  | CloudWatch Agent |
-| `resource_arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})` | ELB              |
-| `resource_arns(eu-west-1,elasticloadbalancing:loadbalancer,{"Component":["$service"],"Environment":["$environment"]})`        | ELB              |
-| `resource_arns(eu-west-1,ec2:instance,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})`                      | EC2              |
+Variables can be used in the variable form. Refer to the [variable syntax documentation]({{< relref "../../variables/syntax.md" >}}).
 
 ## Using JSON format template variables
 
 Some queries accept filters in JSON format and Grafana supports the conversion of template variables to JSON.
 
-If `env = 'production', 'staging'`, following query will return ARNs of EC2 instances which `Environment` tag is `production` or `staging`.
+For example, if `env = 'production', 'staging'`, a `Resource ARNs` query with the following filter returns ARNs of EC2 instances where the `Environment` tag is equal to `production` or `staging`.
 
 ```javascript
-resource_arns(us-east-1, ec2:instance, {"Environment":${env:json}})
+{"Environment":${env:json}}
 ```
 
 ## ec2_instance_attribute examples
@@ -72,12 +57,6 @@ Filters syntax:
 
 ```javascript
 { "filter_name1": [ "filter_value1" ], "filter_name2": [ "filter_value2" ] }
-```
-
-Example `ec2_instance_attribute()` query
-
-```javascript
-ec2_instance_attribute(us - east - 1, InstanceId, { 'tag:Environment': ['production'] });
 ```
 
 ### Selecting attributes
@@ -113,10 +92,4 @@ Only 1 attribute per instance can be returned. Any flat attribute can be selecte
 - `VirtualizationType`
 - `VpcId`
 
-Tags can be selected by prepending the tag name with `Tags.`
-
-Example `ec2_instance_attribute()` query
-
-```javascript
-ec2_instance_attribute(us - east - 1, Tags.Name, { 'tag:Team': ['sysops'] });
-```
+You can select tags by prepending the tag name with `Tags.`. For example, the tag `Name` is selected with `Tags.Name`.

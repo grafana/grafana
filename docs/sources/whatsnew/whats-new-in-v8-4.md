@@ -105,15 +105,15 @@ The grafana server serves a [SwaggerUI](https://swagger.io/tools/swagger-ui/) ed
 
 ## Security improvements
 
-### Fine-grained access control works for teams
+### Role-based access control works for teams
 
-Occasionally, Viewer, Editor, and Admin roles don’t fit what a certain user needs to do in Grafana. Now you can assign fine-grained roles directly to users so they can create reports, use Explore mode, create data sources, and perform other specific actions in Grafana. Fine-grained access control is currently in beta.
+Occasionally, Viewer, Editor, and Admin roles don’t fit what a certain user needs to do in Grafana. Now you can assign role-based roles directly to users so they can create reports, use Explore mode, create data sources, and perform other specific actions in Grafana. Role-based access control is currently in beta.
 
 In Grafana 8.4, you can assign roles to teams, which apply to all members of that team. This is a convenient way to grant certain permissions to a group of users all at once. It also makes permissions easier to manage when you synchronize groups from an SSO provider, like Google Oauth or Okta, to teams in Grafana.
 
 In 8.4 you can also control access to Team and API key functionality itself, like viewing or editing API keys and adding members to certain teams.
 
-Enable fine-grained access control by adding the term `accesscontrol` to the list of feature toggles in your [Grafana configuration](https://grafana.com/docs/grafana/next/administration/configuration/#feature_toggles?mdm=email), or by sending a request to support if you use Grafana Cloud. Learn more about fine-grained access control in the [fine-grained access control section of the docs](https://grafana.com/docs/grafana/next/enterprise/access-control/).
+Enable role-based access control by adding the term `accesscontrol` to the list of feature toggles in your [Grafana configuration](https://grafana.com/docs/grafana/next/administration/configuration/#feature_toggles?mdm=email), or by sending a request to support if you use Grafana Cloud. Learn more about role-based access control in the [role-based access control section of the docs](https://grafana.com/docs/grafana/next/enterprise/access-control/).
 
 {{< figure src="/static/img/docs/enterprise/8-4-fine-grain-access-control.png" max-width="1200px" caption="Assign SAML users role" >}}
 

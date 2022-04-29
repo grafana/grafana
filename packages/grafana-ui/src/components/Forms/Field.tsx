@@ -97,11 +97,12 @@ export const Field: React.FC<FieldProps> = ({
       label
     );
 
+  const childProps = deleteUndefinedProps({ invalid, disabled, loading });
   return (
     <div className={cx(styles.field, horizontal && styles.fieldHorizontal, className)} {...otherProps}>
       {labelElement}
       <div>
-        {React.cloneElement(children, { invalid, disabled, loading })}
+        {React.cloneElement(children, childProps)}
         {invalid && error && !horizontal && (
           <div
             className={cx(styles.fieldValidationWrapper, {
@@ -125,3 +126,13 @@ export const Field: React.FC<FieldProps> = ({
     </div>
   );
 };
+
+function deleteUndefinedProps<T extends Object>(obj: T): Partial<T> {
+  for (const key in obj) {
+    if (obj[key] === undefined) {
+      delete obj[key];
+    }
+  }
+
+  return obj;
+}

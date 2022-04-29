@@ -9,7 +9,7 @@ aliases = ["/docs/grafana/latest/http_api/annotations/"]
 
 This is the API documentation for the new Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.
 
-> If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, access to endpoints will be controlled by Fine-grained access control permissions.
+> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, access to endpoints will be controlled by role-based access control permissions.
 > Refer to specific endpoints to understand what permissions are required.
 
 ## Find Annotations

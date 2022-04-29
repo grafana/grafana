@@ -1371,6 +1371,14 @@ Configures the Profile section.
 
 Enable or disable the Profile section. Default is `enabled`.
 
+## [query_history]
+
+Configures Query history in Explore.
+
+### enabled
+
+Enable or disable the Query history. Default is `disabled`.
+
 ## [metrics]
 
 For detailed instructions, refer to [Internal Grafana metrics]({{< relref "view-server/internal-metrics.md" >}}).

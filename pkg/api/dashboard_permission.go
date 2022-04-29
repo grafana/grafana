@@ -86,7 +86,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, 0, dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgId, dashID, dashUID)
 	if rsp != nil {
 		return rsp
 	}
