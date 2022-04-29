@@ -13,12 +13,12 @@ visualize logs or metrics stored in Elasticsearch. You can also annotate your gr
 
 Supported Elasticsearch versions:
 
-- v2.0.0+ (deprecated)
-- v5.0.0+ (deprecated)
-- v6.0.0+ (deprecated)
-- v7.0.0-v7.9.0 (deprecated)
+- v2.0+ (deprecated)
+- v5.0+ (deprecated)
+- v6.0+ (deprecated)
+- v7.0-v7.9+ (deprecated)
 - v7.10+
-- v8.0.0+ (experimental)
+- v8.0+ (experimental)
 
 > **Note:** Deprecated versions will be removed in the next major release.
 
