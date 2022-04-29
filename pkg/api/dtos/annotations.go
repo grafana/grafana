@@ -4,7 +4,7 @@ import "github.com/grafana/grafana/pkg/components/simplejson"
 
 type PostAnnotationsCmd struct {
 	DashboardId  int64            `json:"dashboardId"`
-	DashboardUID string           `json:"DashboardUID,omitempty"`
+	DashboardUID string           `json:"dashboardUID,omitempty"`
 	PanelId      int64            `json:"panelId"`
 	Time         int64            `json:"time"`
 	TimeEnd      int64            `json:"timeEnd,omitempty"` // Optional
@@ -33,7 +33,7 @@ type MassDeleteAnnotationsCmd struct {
 	DashboardId  int64  `json:"dashboardId"`
 	PanelId      int64  `json:"panelId"`
 	AnnotationId int64  `json:"annotationId"`
-	DashboardUID string `json:"DashboardUID, omitempty"`
+	DashboardUID string `json:"dashboardUID,omitempty"`
 }
 
 type PostGraphiteAnnotationsCmd struct {

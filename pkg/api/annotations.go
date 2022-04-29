@@ -44,6 +44,13 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 		if item.Email != "" {
 			item.AvatarUrl = dtos.GetGravatarUrl(item.Email)
 		}
+		if item.DashboardId != 0 {
+			query := models.GetDashboardQuery{Id: item.DashboardId, OrgId: c.OrgId}
+			err := hs.SQLStore.GetDashboard(c.Req.Context(), &query)
+			if err == nil && query.Result != nil {
+				item.DashboardUID = &query.Result.Uid
+			}
+		}
 	}
 
 	return response.JSON(http.StatusOK, items)
