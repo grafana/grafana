@@ -31,8 +31,7 @@ const ResourcePicker = ({
 }: ResourcePickerProps) => {
   const styles = useStyles2(getStyles);
 
-  type Status = 'NeedsRefresh' | 'Loading' | 'Done';
-  const [status, setStatus] = useState<Status>('NeedsRefresh');
+  const [isLoading, setIsLoading] = useState(false);
   const [rows, setRows] = useState<ResourceRowGroup>([]);
   const [selectedRows, setSelectedRows] = useState<ResourceRowGroup>([]);
   const [internalSelectedURI, setInternalSelectedURI] = useState<string | undefined>(resourceURI);
@@ -44,22 +43,23 @@ const ResourcePicker = ({
     setInternalSelectedURI(resourceURI);
   }, [resourceURI]);
 
-  useEffect(() => {
-    if (status === 'NeedsRefresh') {
-      const loadInitialData = async () => {
-        try {
-          setStatus('Loading');
-          const resources = await resourcePickerData.fetchInitialRows(internalSelectedURI || '');
-          setRows(resources);
-        } catch (error) {
-          setErrorMessage(messageFromError(error));
-        }
-        setStatus('Done');
-      };
-
-      loadInitialData();
+  const loadInitialData = useCallback(async () => {
+    if (!isLoading) {
+      try {
+        setIsLoading(true);
+        const resources = await resourcePickerData.fetchInitialRows(internalSelectedURI || '');
+        setRows(resources);
+      } catch (error) {
+        setErrorMessage(messageFromError(error));
+      }
+      setIsLoading(false);
     }
-  }, [resourcePickerData, internalSelectedURI, status]);
+  }, [internalSelectedURI, isLoading, resourcePickerData]);
+
+  useEffect(() => {
+    loadInitialData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // set selected row data whenever row or selection changes
   useEffect(() => {
@@ -111,21 +111,20 @@ const ResourcePicker = ({
   const handleSearch = useCallback(
     async (searchWord: string) => {
       if (!searchWord) {
-        // triggers the useeffect above to reload the initial resources
-        setStatus('NeedsRefresh');
+        loadInitialData();
         return;
       }
       try {
-        setStatus('Loading');
+        setIsLoading(true);
         const searchType = selectableEntryTypes.length > 1 ? 'logs' : 'metrics';
         const searchResults = await resourcePickerData.search(searchWord, searchType);
         setRows(searchResults);
       } catch (err) {
         setErrorMessage(messageFromError(err));
       }
-      setStatus('Done');
+      setIsLoading(false);
     },
-    [resourcePickerData, setRows, setErrorMessage, setStatus, selectableEntryTypes]
+    [loadInitialData, selectableEntryTypes.length, resourcePickerData]
   );
 
   return (
@@ -147,19 +146,19 @@ const ResourcePicker = ({
       <div className={styles.tableScroller}>
         <table className={styles.table}>
           <tbody>
-            {status === 'Loading' && (
+            {isLoading && (
               <tr className={cx(styles.row)}>
                 <td className={styles.cell}>
                   <LoadingPlaceholder text={'Loading...'} />
                 </td>
               </tr>
             )}
-            {status === 'Done' && rows.length === 0 && (
+            {!isLoading && rows.length === 0 && (
               <tr className={cx(styles.row)}>
                 <td className={styles.cell}>No resources found</td>
               </tr>
             )}
-            {status === 'Done' &&
+            {!isLoading &&
               rows.map((row) => (
                 <NestedRow
                   key={row.uri}
