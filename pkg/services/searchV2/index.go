@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
+
+	"github.com/blugelabs/bluge"
 )
 
 type dashboardLoader interface {
@@ -57,6 +59,72 @@ func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboar
 	}
 }
 
+func (i *dashboardIndex) runBlugeSearch(ctx context.Context) error {
+	config := bluge.InMemoryOnlyConfig()
+
+	// open an index writer using the configuration
+	writer, err := bluge.OpenWriter(config)
+	if err != nil {
+		return fmt.Errorf("error opening writer: %v", err)
+	}
+	defer func() {
+		err = writer.Close()
+		if err != nil {
+			i.logger.Error("Error closing bluge writer", "error", err)
+		}
+	}()
+
+	start := time.Now()
+
+	// Avoid cache here.
+	dashboards, err := i.loader.LoadDashboards(ctx, 1, "")
+	if err != nil {
+		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
+	}
+
+	i.logger.Info("Loading dashboards for bluge index", "elapsed", time.Since(start), "numDashboards", len(dashboards))
+	label := time.Now()
+
+	batch := bluge.NewBatch()
+
+	for _, dashboard := range dashboards {
+		for _, panel := range dashboard.info.Panels {
+			uid := dashboard.uid + "#" + strconv.FormatInt(panel.ID, 10)
+			doc := bluge.NewDocument(uid).
+				AddField(bluge.NewTextField("name", panel.Title).StoreValue().SearchTermPositions()).
+				AddField(bluge.NewTextField("description", panel.Description).StoreValue().SearchTermPositions()).
+				AddField(bluge.NewKeywordField("type", panel.Type).Aggregatable().StoreValue()).
+				AddField(bluge.NewKeywordField("_kind", "panel").Aggregatable().StoreValue()) // likely want independent index for this
+			batch.Insert(doc)
+		}
+
+		// Then document
+		doc := bluge.NewDocument(dashboard.uid).
+			AddField(bluge.NewTextField("name", dashboard.info.Title).StoreValue().SearchTermPositions()).
+			AddField(bluge.NewTextField("description", dashboard.info.Description).StoreValue().SearchTermPositions()).
+			AddField(bluge.NewNumericField("schemaVersion", float64(dashboard.info.SchemaVersion)).StoreValue()).
+			AddField(bluge.NewNumericField("panelCount", float64(len(dashboard.info.Panels))).Aggregatable().StoreValue())
+
+		if dashboard.isFolder {
+			doc.AddField(bluge.NewKeywordField("_kind", "folder").Aggregatable().StoreValue()) // likely want independent index for this
+		} else {
+			doc.AddField(bluge.NewKeywordField("_kind", "dashboard").Aggregatable().StoreValue()) // likely want independent index for this
+		}
+		batch.Insert(doc)
+	}
+
+	i.logger.Info("Inserting documents into bluge batch", "elapsed", time.Since(label))
+	label = time.Now()
+
+	err = writer.Batch(batch)
+	if err != nil {
+		return err
+	}
+	i.logger.Info("Inserting batch into bluge writer", "elapsed", time.Since(label))
+	i.logger.Info("Finish building bluge index", "totalElapsed", time.Since(start))
+	return nil
+}
+
 func (i *dashboardIndex) run(ctx context.Context) error {
 	fullReIndexTicker := time.NewTicker(5 * time.Minute)
 	defer fullReIndexTicker.Stop()
@@ -80,6 +148,10 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
 	}
 	i.logger.Info("Indexing for main org finished", "mainOrgIndexElapsed", time.Since(started), "numDashboards", len(dashboards))
+
+	go func() {
+		_ = i.runBlugeSearch(ctx)
+	}()
 
 	for {
 		select {
