@@ -461,6 +461,7 @@ var (
 )
 
 // createAlertNotification creates a legacy alert notification channel for inserting into the test database.
+//nolint
 func createAlertNotification(t *testing.T, orgId int64, uid string, channelType string, settings string, defaultChannel bool) *models.AlertNotification {
 	t.Helper()
 	settingsJson := simplejson.New()
@@ -487,6 +488,7 @@ func createAlertNotification(t *testing.T, orgId int64, uid string, channelType 
 }
 
 // createAlert creates a legacy alert rule for inserting into the test database.
+//nolint
 func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, name string, notifierUids []string) *models.Alert {
 	t.Helper()
 
@@ -643,6 +645,7 @@ func boolPointer(b bool) *bool {
 }
 
 // createAlertNameMatchers creates a temporary alert_name Matchers that will be replaced during runtime with the generated rule_uid.
+//nolint
 func createAlertNameMatchers(alertName string) ualert.Matchers {
 	matcher, _ := labels.NewMatcher(labels.MatchEqual, "alert_name", alertName)
 	return ualert.Matchers(labels.Matchers{matcher})
