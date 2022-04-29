@@ -180,13 +180,21 @@ func (d *Dispatcher) SyncAndApplyConfigFromDatabase() error {
 }
 
 func (d *Dispatcher) Notify(key models.AlertRuleKey, states []*state.State) error {
-	firingAlerts := FromAlertStateToPostableAlerts(states, d.appURL)
+	if len(states) == 0 {
+		d.logger.Debug("no alerts to notify about")
+		return nil
+	}
+	firingAlerts := stateToPostableAlerts(states, d.appURL)
 	d.notify(key, firingAlerts)
 	return nil
 }
 
 func (d *Dispatcher) Expire(key models.AlertRuleKey, states []*state.State) error {
-	expiredAlerts := FromAlertsStateToStoppedAlert(states, d.appURL, d.clock)
+	if len(states) == 0 {
+		d.logger.Debug("no alerts to expire")
+		return nil
+	}
+	expiredAlerts := stateToExpiredPostableAlerts(states, d.appURL, d.clock)
 	d.notify(key, expiredAlerts)
 	return nil
 }

@@ -108,7 +108,7 @@ func errorAlert(labels, annotations data.Labels, alertState *state.State, urlStr
 	}
 }
 
-func FromAlertStateToPostableAlerts(firingStates []*state.State, appURL *url.URL) apimodels.PostableAlerts {
+func stateToPostableAlerts(firingStates []*state.State, appURL *url.URL) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 	for _, alertState := range firingStates {
 		alert := stateToPostableAlert(alertState, appURL)
@@ -117,12 +117,12 @@ func FromAlertStateToPostableAlerts(firingStates []*state.State, appURL *url.URL
 	return alerts
 }
 
-// FromAlertsStateToStoppedAlert converts firingStates that have evaluation state either eval.Alerting or eval.NoData or eval.Error to models.PostableAlert that are accepted by notifiers.
+// stateToExpiredPostableAlerts converts states to models.PostableAlert that are accepted by notifiers.
 // Returns a list of alert instances that have expiration time.Now
-func FromAlertsStateToStoppedAlert(firingStates []*state.State, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
-	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
+func stateToExpiredPostableAlerts(states []*state.State, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
+	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(states))}
 	ts := clock.Now()
-	for _, alertState := range firingStates {
+	for _, alertState := range states {
 		postableAlert := stateToPostableAlert(alertState, appURL)
 		postableAlert.EndsAt = strfmt.DateTime(ts)
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *postableAlert)
