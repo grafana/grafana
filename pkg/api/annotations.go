@@ -63,6 +63,15 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	// overwrite dashboardId when dashboardUID is not empty
+	if cmd.DashboardUID != "" {
+		query := models.GetDashboardQuery{OrgId: c.OrgId, Uid: cmd.DashboardUID}
+		err := hs.SQLStore.GetDashboard(c.Req.Context(), &query)
+		if err == nil {
+			cmd.DashboardId = query.Result.Id
+		}
+	}
+
 	if canSave, err := hs.canCreateAnnotation(c, cmd.DashboardId); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
 	}
@@ -262,6 +271,14 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 	err := web.Bind(c.Req, &cmd)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	if cmd.DashboardUID != "" {
+		query := models.GetDashboardQuery{OrgId: c.OrgId, Uid: cmd.DashboardUID}
+		err := hs.SQLStore.GetDashboard(c.Req.Context(), &query)
+		if err == nil {
+			cmd.DashboardId = query.Result.Id
+		}
 	}
 
 	if (cmd.DashboardId != 0 && cmd.PanelId == 0) || (cmd.PanelId != 0 && cmd.DashboardId == 0) {
