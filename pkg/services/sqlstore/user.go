@@ -626,8 +626,8 @@ func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQu
 			acFilter, err := ac.Filter(
 				query.SignedInUser,
 				"u.id",
-				"users:id:",
-				ac.ActionOrgUsersRead,
+				"global.users:id:",
+				ac.ActionUsersRead,
 			)
 			if err != nil {
 				return err
