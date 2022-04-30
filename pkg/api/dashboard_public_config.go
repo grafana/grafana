@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -13,6 +14,7 @@ func (hs *HTTPServer) ShareDashboard(c *models.ReqContext) response.Response {
 	dsc := models.DashboardSharingConfig{}
 
 	if err := web.Bind(c.Req, &dsc); err != nil {
+		fmt.Println(err)
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
