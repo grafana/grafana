@@ -1,7 +1,10 @@
-import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
+
 import config from 'app/core/config';
+
 import { DashboardModel, PanelModel } from '../../state';
+
 import { ShareModal } from './ShareModal';
 
 jest.mock('app/core/core', () => {
@@ -49,7 +52,7 @@ describe('SharePublic', () => {
     render(<ShareModal panel={mockPanel} dashboard={mockDashboard} onDismiss={() => {}} />);
 
     expect(screen.getByRole('tablist')).toHaveTextContent('Link');
-    expect(screen.getByRole('tablist')).not.toHaveTextContent('Share Publicly');
+    expect(screen.getByRole('tablist')).not.toHaveTextContent('Share Public Dashboard');
   });
 
   it('renders share panel when public dashboards feature is enabled', async () => {
@@ -65,9 +68,9 @@ describe('SharePublic', () => {
 
     await waitFor(() => screen.getByText('Link'));
     expect(screen.getByRole('tablist')).toHaveTextContent('Link');
-    expect(screen.getByRole('tablist')).toHaveTextContent('Share Publicly');
+    expect(screen.getByRole('tablist')).toHaveTextContent('Share Public Dashboard');
 
-    fireEvent.click(screen.getByText('Share Publicly'));
+    fireEvent.click(screen.getByText('Share Public Dashboard'));
 
     await waitFor(() => screen.getByText('Sharing for your dashboard'));
   });
