@@ -25,7 +25,7 @@ func (hs *HTTPServer) ShareDashboard(c *models.ReqContext) response.Response {
 	sharingConfig, err := hs.dashboardService.SaveDashboardSharingConfig(c.Req.Context(), &dto)
 
 	if err != nil {
-		return response.Error(500, "yer a potato", err)
+		return response.Error(500, "error updating public dashboard config", err)
 	}
 
 	return response.JSON(http.StatusOK, sharingConfig)

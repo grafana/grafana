@@ -1,23 +1,21 @@
 import React, { useState } from 'react';
+
 import { Button, Field, Switch } from '@grafana/ui';
-//import { AppEvents, SelectableValue } from '@grafana/data';
-//import { appEvents } from 'app/core/core';
-import { ShareModalTabProps } from './types';
+
 import { savePublicConfig, SharingConfiguration } from './SharePublicUtils';
+import { ShareModalTabProps } from './types';
 
 interface Props extends ShareModalTabProps {}
 
 // TODO:
 // loading existing dashboard sharing state
-// put existing dashboard state into react component state
 
-// export class SharePublic extends PureComponent<Props, State> {
-const SharePublic = (props: Props) => {
-  const [isPublic, setIsPublic] = useState(false);
+export const SharePublicDashboard = (props: Props) => {
+  const [isPublic, setIsPublic] = useState(props.dashboard.meta.isPublic ?? false);
 
   const onSavePublicConfig = () => {
     savePublicConfig({
-      isPublic,
+      isPublic: isPublic,
       dashboardUid: props.dashboard.uid,
     } as SharingConfiguration);
   };
@@ -32,5 +30,3 @@ const SharePublic = (props: Props) => {
     </>
   );
 };
-
-export default SharePublic;
