@@ -195,6 +195,8 @@ export function prepConfig(opts: PrepConfigOpts) {
     theme: theme,
   });
 
+  const shouldUseLogScale = heatmapType === DataFrameType.HeatmapCellsSparse;
+
   builder.addScale({
     scaleKey: 'y',
     isTime: false,
@@ -202,23 +204,25 @@ export function prepConfig(opts: PrepConfigOpts) {
     orientation: ScaleOrientation.Vertical,
     direction: ScaleDirection.Up,
     // should be tweakable manually
-    distribution: heatmapType === DataFrameType.HeatmapCellsSparse ? ScaleDistribution.Log : ScaleDistribution.Linear,
-    log: 10,
-    range: (u, dataMin, dataMax) => {
-      let bucketSize = dataRef.current?.yBucketSize;
+    distribution: shouldUseLogScale ? ScaleDistribution.Log : ScaleDistribution.Linear,
+    log: 2,
+    range: shouldUseLogScale
+      ? null
+      : (u, dataMin, dataMax) => {
+          let bucketSize = dataRef.current?.yBucketSize;
 
-      if (bucketSize) {
-        if (dataRef.current?.yLayout === BucketLayout.le) {
-          dataMin -= bucketSize!;
-        } else {
-          dataMax += bucketSize!;
-        }
-      } else {
-        // how to expand scale range if inferred non-regular or log buckets?
-      }
+          if (bucketSize) {
+            if (dataRef.current?.yLayout === BucketLayout.le) {
+              dataMin -= bucketSize!;
+            } else {
+              dataMax += bucketSize!;
+            }
+          } else {
+            // how to expand scale range if inferred non-regular or log buckets?
+          }
 
-      return [dataMin, dataMax];
-    },
+          return [dataMin, dataMax];
+        },
   });
 
   const hasLabeledY = dataRef.current?.yAxisValues != null;
