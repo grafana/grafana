@@ -118,7 +118,7 @@ func (i *dashboardIndex) initBlugeIndex(ctx context.Context, orgID int64) error 
 				doc := bluge.NewDocument(uid).
 					AddField(bluge.NewKeywordField("url", fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)).StoreValue()).
 					AddField(bluge.NewTextField("name", panel.Title).StoreValue().SearchTermPositions()).
-					AddField(bluge.NewTextField("description", panel.Description).StoreValue().SearchTermPositions()).
+					AddField(bluge.NewTextField("description", panel.Description).SearchTermPositions()).
 					AddField(bluge.NewKeywordField("path", fmt.Sprintf("%s#%d", path, panel.ID)).StoreValue()). // eventually special tokenizer
 					AddField(bluge.NewKeywordField("type", panel.Type).Aggregatable().StoreValue()).
 					AddField(bluge.NewKeywordField("_kind", "panel").Aggregatable().StoreValue()) // likely want independent index for this
@@ -129,10 +129,9 @@ func (i *dashboardIndex) initBlugeIndex(ctx context.Context, orgID int64) error 
 		// Then document
 		doc := bluge.NewDocument(dashboard.uid).
 			AddField(bluge.NewKeywordField("url", url).StoreValue()).
-			AddField(bluge.NewKeywordField("path", path).StoreValue()).
+			AddField(bluge.NewKeywordField("path", path).Sortable().StoreValue()).
 			AddField(bluge.NewTextField("name", dashboard.info.Title).StoreValue().SearchTermPositions()).
-			AddField(bluge.NewTextField("description", dashboard.info.Description).StoreValue().SearchTermPositions()).
-			AddField(bluge.NewNumericField("schemaVersion", float64(dashboard.info.SchemaVersion)).StoreValue()).
+			AddField(bluge.NewTextField("description", dashboard.info.Description).SearchTermPositions()).
 			AddField(bluge.NewNumericField("panelCount", float64(len(dashboard.info.Panels))).Aggregatable().StoreValue())
 
 		for _, tag := range dashboard.info.Tags {
@@ -140,6 +139,21 @@ func (i *dashboardIndex) initBlugeIndex(ctx context.Context, orgID int64) error 
 				StoreValue().
 				Aggregatable().
 				SearchTermPositions())
+		}
+
+		for _, ds := range dashboard.info.Datasource {
+			if ds.UID != "" {
+				doc.AddField(bluge.NewKeywordField("ds_uid", ds.UID).
+					StoreValue().
+					Aggregatable().
+					SearchTermPositions())
+			}
+			if ds.Type != "" {
+				doc.AddField(bluge.NewKeywordField("ds_type", ds.Type).
+					StoreValue().
+					Aggregatable().
+					SearchTermPositions())
+			}
 		}
 
 		if dashboard.isFolder {

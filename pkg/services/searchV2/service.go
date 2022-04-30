@@ -162,18 +162,36 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 	perm := newPermissionFilter("ryan", "read").SetField("_id")
 
 	var req bluge.SearchRequest
-	if q.Query == "*" { // Match everything
-		req = bluge.NewAllMatches(bluge.NewBooleanQuery().
+	if q.Query == "*" { // Match folders and dashboards
+		bq := bluge.NewBooleanQuery().
 			AddShould(bluge.NewMatchAllQuery()).
-			AddMust(perm))
-	} else {
-		q := bluge.NewBooleanQuery().
 			AddMust(bluge.NewBooleanQuery().
-				AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField("name").SetBoost(6)).
-				AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField("description").SetBoost(3))).
+				AddShould(bluge.NewTermQuery("folder").SetField("_kind")).
+				AddShould(bluge.NewTermQuery("dashboard").SetField("_kind"))).
 			AddMust(perm)
 
-		req = bluge.NewTopNSearch(100, q).
+		if q.Query == "?" {
+			req = bluge.NewAllMatches(bq) // no sorting!
+		} else {
+			req = bluge.NewTopNSearch(50000, bq).
+				SortBy([]string{"path", "name"})
+		}
+	} else {
+		bq := bluge.NewBooleanQuery().
+			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField("name").SetBoost(6)).
+			AddShould(bluge.NewMatchPhraseQuery(q.Query).SetField("description").SetBoost(3)).
+			AddShould(bluge.NewPrefixQuery(q.Query).SetField("name").SetBoost(1))
+
+		if len(q.Query) > 4 {
+			bq.AddShould(bluge.NewFuzzyQuery(q.Query).SetField("name")).SetBoost(1.5)
+		}
+
+		// Wrap with permissions
+		bq = bluge.NewBooleanQuery().
+			AddMust(bq).
+			AddMust(perm)
+
+		req = bluge.NewTopNSearch(100, bq).
 			WithStandardAggregations().
 			ExplainScores().
 			SortBy([]string{"-_score", "name"})
@@ -182,7 +200,7 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 		s.logger.Info("RUN QUERY", "q", q)
 	}
 
-	termAggs := []string{"type", "_kind", "tags", "schemaVersion"}
+	termAggs := []string{"type", "_kind", "tags", "ds_uid", "ds_type"}
 	for _, t := range termAggs {
 		req.AddAggregation(t, aggregations.NewTermsAggregation(search.Field(t), 50))
 	}
@@ -209,7 +227,6 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 	fPath := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fType := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fDescr := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fURL := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fTags := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
 	fExplain := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
@@ -221,7 +238,6 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 	fPath.Name = "Path"
 	fType.Name = "Type"
 	fName.Name = "Name"
-	fDescr.Name = "Description"
 	fURL.Name = "URL"
 	fURL.Config = &data.FieldConfig{
 		Links: []data.DataLink{
@@ -231,7 +247,7 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 	fTags.Name = "Tags"
 	fExplain.Name = "Explain"
 
-	frame := data.NewFrame("Query results", fHitNumber, fScore, fKind, fUID, fPath, fType, fName, fDescr, fURL, fTags)
+	frame := data.NewFrame("Query results", fHitNumber, fScore, fKind, fUID, fPath, fType, fName, fURL, fTags)
 	if doExplain {
 		frame.Fields = append(frame.Fields, fExplain)
 	}
@@ -248,7 +264,6 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 		kind := ""
 		ptype := ""
 		name := ""
-		descr := ""
 		url := ""
 		path := ""
 		var tags []string
@@ -272,8 +287,6 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 				ptype = string(value)
 			case "name":
 				name = string(value)
-			case "description":
-				descr = string(value)
 			case "url":
 				url = string(value)
 			case "path":
@@ -296,7 +309,6 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 		fPath.Append(path)
 		fType.Append(ptype)
 		fName.Append(name)
-		fDescr.Append(descr)
 		fURL.Append(url)
 
 		if len(tags) > 0 {
@@ -344,18 +356,6 @@ func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.
 			for i, v := range bbb {
 				fName.Set(i, v.Name())
 				fCount.Set(i, v.Count())
-
-				if k == "schemaVersion" { // numeric
-					// TODO, numeric column?
-					sv, err := bluge.DecodeNumericFloat64([]byte(v.Name()))
-					if err == nil {
-						fName.Set(i, fmt.Sprintf("%d", int64(sv)))
-					} else {
-						fName.Set(i, v.Name())
-					}
-				} else {
-					fName.Set(i, v.Name())
-				}
 			}
 
 			response.Frames = append(response.Frames, data.NewFrame("Facet: "+k, fName, fCount))
