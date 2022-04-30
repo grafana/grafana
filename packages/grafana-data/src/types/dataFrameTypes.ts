@@ -12,7 +12,7 @@ export enum DataFrameType {
   /**
    * First field is X, the rest are bucket values
    */
-  HeatmapBuckets = 'heatmap-buckets',
+  HeatmapRowsDense = 'heatmap-rows-dense',
 
   /**
    * Explicit fields for:
@@ -20,7 +20,15 @@ export enum DataFrameType {
    *
    * All values in the grid exist and have regular spacing
    */
-  HeatmapScanlines = 'heatmap-scanlines',
+  HeatmapCellsDense = 'heatmap-cells-dense',
+
+  /**
+   * Explicit fields for:
+   *  xMin, yMin, count, ...
+   *
+   * Sparse in x and/or y
+   */
+  HeatmapCellsSparse = 'heatmap-cells-sparse',
 
   /** Directory listing */
   DirectoryListing = 'directory-listing',

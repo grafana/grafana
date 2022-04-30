@@ -10,7 +10,7 @@ import {
   calculateBucketSize,
   isHeatmapDataEqual,
 } from '../heatmap_data_converter';
-import { HeatmapData } from '../types';
+import { HeatmapDataDense } from '../types';
 
 describe('isHeatmapDataEqual', () => {
   const ctx: any = {};
@@ -272,7 +272,7 @@ describe('Histogram converter', () => {
     beforeEach(() => {});
 
     it('should build proper heatmap data', () => {
-      const expectedHeatmap: HeatmapData = {
+      const expectedHeatmap: HeatmapDataDense = {
         '1422774000000': {
           x: 1422774000000,
           buckets: {
@@ -346,7 +346,7 @@ describe('Histogram converter', () => {
 });
 
 describe('convertToCards', () => {
-  let buckets: HeatmapData = {};
+  let buckets: HeatmapDataDense = {};
 
   beforeEach(() => {
     buckets = {

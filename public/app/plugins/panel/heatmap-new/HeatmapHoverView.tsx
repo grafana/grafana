@@ -4,11 +4,11 @@ import { Field, FieldType, formattedValueToString, getFieldDisplayName, LinkMode
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
-import { BucketLayout, HeatmapData } from './fields';
+import { BucketLayout, HeatmapDataDense } from './fields';
 import { HeatmapHoverEvent } from './utils';
 
 type Props = {
-  data: HeatmapData;
+  data: HeatmapDataDense;
   hover: HeatmapHoverEvent;
   showHistogram?: boolean;
 };

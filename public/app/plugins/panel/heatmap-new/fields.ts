@@ -8,7 +8,7 @@ import {
   getValueFormat,
   GrafanaTheme2,
 } from '@grafana/data';
-import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { calculateHeatmapFromData, rowsToCellsDense } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { HeatmapSourceMode, PanelOptions } from './models.gen';
 
@@ -17,7 +17,7 @@ export const enum BucketLayout {
   ge = 'ge',
 }
 
-export interface HeatmapData {
+export interface HeatmapDataDense {
   // List of heatmap frames
   heatmap?: DataFrame;
 
@@ -39,11 +39,22 @@ export interface HeatmapData {
   warning?: string;
 }
 
+export interface HeatmapDataSparse {
+  // List of heatmap frames
+  heatmap?: DataFrame;
+
+  // Print a heatmap cell value
+  display?: (v: number) => string;
+
+  // Errors
+  warning?: string;
+}
+
 export function prepareHeatmapData(
   frames: DataFrame[] | undefined,
   options: PanelOptions,
   theme: GrafanaTheme2
-): HeatmapData {
+): HeatmapDataDense | HeatmapDataSparse {
   if (!frames?.length) {
     return {};
   }
@@ -51,37 +62,42 @@ export function prepareHeatmapData(
   const { source } = options;
   if (source === HeatmapSourceMode.Calculate) {
     // TODO, check for error etc
-    return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), theme);
+    return getHeatmapDense(calculateHeatmapFromData(frames, options.heatmap ?? {}), theme);
+  }
+
+  let sparseCellsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapCellsSparse);
+  if (sparseCellsHeatmap) {
+    return getHeatmapSparse(sparseCellsHeatmap, theme);
   }
 
   // Find a well defined heatmap
-  let scanlinesHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanlines);
-  if (scanlinesHeatmap) {
-    return getHeatmapData(scanlinesHeatmap, theme);
+  let denseCellsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapCellsDense);
+  if (denseCellsHeatmap) {
+    return getHeatmapDense(denseCellsHeatmap, theme);
   }
 
-  let bucketsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapBuckets);
-  if (bucketsHeatmap) {
+  let denseRowsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapRowsDense);
+  if (denseRowsHeatmap) {
     return {
       yAxisValues: frames[0].fields.flatMap((field) =>
         field.type === FieldType.number ? getFieldDisplayName(field) : []
       ),
-      ...getHeatmapData(bucketsToScanlines(bucketsHeatmap), theme),
+      ...getHeatmapDense(rowsToCellsDense(denseRowsHeatmap), theme),
     };
   }
 
   if (source === HeatmapSourceMode.Data) {
-    return getHeatmapData(bucketsToScanlines(frames[0]), theme);
+    return getHeatmapDense(rowsToCellsDense(frames[0]), theme);
   }
 
   // TODO, check for error etc
-  return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), theme);
+  return getHeatmapDense(calculateHeatmapFromData(frames, options.heatmap ?? {}), theme);
 }
 
-const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => {
-  if (frame.meta?.type !== DataFrameType.HeatmapScanlines) {
+const getHeatmapDense = (frame: DataFrame, theme: GrafanaTheme2): HeatmapDataDense => {
+  if (frame.meta?.type !== DataFrameType.HeatmapCellsDense) {
     return {
-      warning: 'Expected heatmap scanlines format',
+      warning: 'Expected heatmap-cells-dense format',
       heatmap: frame,
     };
   }
@@ -96,7 +112,7 @@ const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => 
   }
 
   // infer bucket sizes from data (for now)
-  // the 'heatmap-scanlines' dense frame format looks like:
+  // the 'heatmap-cells-dense' dense frame format looks like:
   // x:      1,1,1,1,2,2,2,2
   // y:      3,4,5,6,3,4,5,6
   // count:  0,0,0,7,0,3,0,1
@@ -125,6 +141,23 @@ const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => 
     xLayout: frame.fields[0].name === 'xMax' ? BucketLayout.le : BucketLayout.ge,
     yLayout: frame.fields[1].name === 'yMax' ? BucketLayout.le : BucketLayout.ge,
 
+    display: (v) => formattedValueToString(disp(v)),
+  };
+};
+
+// assumes it's prepared
+const getHeatmapSparse = (frame: DataFrame, theme: GrafanaTheme2): HeatmapDataDense => {
+  if (frame.meta?.type !== DataFrameType.HeatmapCellsSparse) {
+    return {
+      warning: 'Expected heatmap sparse format',
+      heatmap: frame,
+    };
+  }
+
+  // The "count" field
+  const disp = frame.fields[3].display ?? getValueFormat('short');
+  return {
+    heatmap: frame,
     display: (v) => formattedValueToString(disp(v)),
   };
 };

@@ -50,7 +50,7 @@ export function sortAscStrInf(aName?: string | null, bName?: string | null) {
 
 /** Given existing buckets, create a values style frame */
 // Assumes frames have already been sorted ASC and de-accumulated.
-export function bucketsToScanlines(frame: DataFrame): DataFrame {
+export function rowsToCellsDense(frame: DataFrame): DataFrame {
   // TODO: handle null-filling w/ fields[0].config.interval?
   const xField = frame.fields[0];
   const xValues = xField.values.toArray();
@@ -87,7 +87,7 @@ export function bucketsToScanlines(frame: DataFrame): DataFrame {
   return {
     length: xs.length,
     meta: {
-      type: DataFrameType.HeatmapScanlines,
+      type: DataFrameType.HeatmapCellsDense,
     },
     fields: [
       {
@@ -203,7 +203,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
     length: heat2d.x.length,
     name: getFieldDisplayName(yField),
     meta: {
-      type: DataFrameType.HeatmapScanlines,
+      type: DataFrameType.HeatmapCellsDense,
     },
     fields: [
       {
