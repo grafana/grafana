@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
 import { css } from '@emotion/css';
+import React, { useState } from 'react';
+
 import { Modal } from '@grafana/ui';
-import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
+
 import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
-import { useDashboardSave } from './useDashboardSave';
+import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
 import { SaveDashboardModalProps } from './types';
+import { useDashboardSave } from './useDashboardSave';
 
 export const SaveDashboardAsModal: React.FC<
   SaveDashboardModalProps & {

@@ -1,8 +1,7 @@
-import { parser } from 'lezer-promql';
 import { SyntaxNode } from '@lezer/common';
-import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
-import { PromVisualQuery, PromVisualQueryBinary } from './types';
-import { binaryScalarDefs } from './binaryScalarOperations';
+import { parser } from 'lezer-promql';
+
+import { binaryScalarOperatorToOperatorName } from './binaryScalarOperations';
 import {
   ErrorName,
   getAllByType,
@@ -12,6 +11,8 @@ import {
   makeError,
   replaceVariables,
 } from './shared/parsingUtils';
+import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
+import { PromVisualQuery, PromVisualQueryBinary } from './types';
 
 /**
  * Parses a PromQL query into a visual query model.
@@ -277,14 +278,6 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
   }
 }
 
-const operatorToOpName = binaryScalarDefs.reduce((acc, def) => {
-  acc[def.sign] = {
-    id: def.id,
-    comparison: def.comparison,
-  };
-  return acc;
-}, {} as Record<string, { id: string; comparison?: boolean }>);
-
 /**
  * Right now binary expressions can be represented in 2 way in visual query. As additional operation in case it is
  * just operation with scalar or it creates a binaryQuery when it's 2 queries.
@@ -300,7 +293,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
 
   const right = node.lastChild!;
 
-  const opDef = operatorToOpName[op];
+  const opDef = binaryScalarOperatorToOperatorName[op];
 
   const leftNumber = left.getChild('NumberLiteral');
   const rightNumber = right.getChild('NumberLiteral');

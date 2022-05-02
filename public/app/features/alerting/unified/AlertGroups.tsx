@@ -1,23 +1,22 @@
+import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertGroup } from './components/alert-groups/AlertGroup';
 import { AlertGroupFilter } from './components/alert-groups/AlertGroupFilter';
-import { fetchAlertGroupsAction } from './state/actions';
-
-import { initialAsyncRequestState } from './utils/redux';
-import { getFiltersFromUrlParams } from './utils/misc';
-import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
-
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
-import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { useGroupedAlerts } from './hooks/useGroupedAlerts';
 import { useFilteredAmGroups } from './hooks/useFilteredAmGroups';
-import { css } from '@emotion/css';
+import { useGroupedAlerts } from './hooks/useGroupedAlerts';
+import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
+import { fetchAlertGroupsAction } from './state/actions';
+import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
+import { getFiltersFromUrlParams } from './utils/misc';
+import { initialAsyncRequestState } from './utils/redux';
 
 const AlertGroups = () => {
   const [alertManagerSourceName] = useAlertManagerSourceName();

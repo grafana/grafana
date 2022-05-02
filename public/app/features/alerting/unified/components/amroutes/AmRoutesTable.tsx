@@ -1,16 +1,19 @@
+import { intersectionWith, isEqual } from 'lodash';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, HorizontalGroup, IconButton } from '@grafana/ui';
+
+import { Button, ConfirmModal, HorizontalGroup, IconButton } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+
 import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
+import { getNotificationsPermissions } from '../../utils/access-control';
+import { matcherFieldToMatcher, parseMatchers } from '../../utils/alertmanager';
 import { prepareItems } from '../../utils/dynamicTable';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { EmptyArea } from '../EmptyArea';
+import { Matchers } from '../silences/Matchers';
+
 import { AmRoutesExpandedForm } from './AmRoutesExpandedForm';
 import { AmRoutesExpandedRead } from './AmRoutesExpandedRead';
-import { Matchers } from '../silences/Matchers';
-import { matcherFieldToMatcher, parseMatchers } from '../../utils/alertmanager';
-import { intersectionWith, isEqual } from 'lodash';
-import { EmptyArea } from '../EmptyArea';
-import { contextSrv } from 'app/core/services/context_srv';
-import { getNotificationsPermissions } from '../../utils/access-control';
 
 export interface AmRoutesTableProps {
   isAddMode: boolean;
@@ -75,6 +78,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   alertManagerSourceName,
 }) => {
   const [editMode, setEditMode] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [expandedId, setExpandedId] = useState<string | number>();
   const permissions = getNotificationsPermissions(alertManagerSourceName);
   const canEditRoutes = contextSrv.hasPermission(permissions.update);
@@ -90,7 +94,13 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
       id: 'matchingCriteria',
       label: 'Matching labels',
       // eslint-disable-next-line react/display-name
-      renderCell: (item) => <Matchers matchers={item.data.object_matchers.map(matcherFieldToMatcher)} />,
+      renderCell: (item) => {
+        return item.data.object_matchers.length ? (
+          <Matchers matchers={item.data.object_matchers.map(matcherFieldToMatcher)} />
+        ) : (
+          <span>Matches all alert instances</span>
+        );
+      },
       size: 10,
     },
     {
@@ -129,27 +139,40 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
               };
 
               return (
-                <HorizontalGroup>
-                  <Button
-                    aria-label="Edit route"
-                    icon="pen"
-                    onClick={expandWithCustomContent}
-                    size="sm"
-                    type="button"
-                    variant="secondary"
-                  >
-                    Edit
-                  </Button>
-                  <IconButton
-                    aria-label="Delete route"
-                    name="trash-alt"
-                    onClick={() => {
+                <>
+                  <HorizontalGroup>
+                    <Button
+                      aria-label="Edit route"
+                      icon="pen"
+                      onClick={expandWithCustomContent}
+                      size="sm"
+                      type="button"
+                      variant="secondary"
+                    >
+                      Edit
+                    </Button>
+                    <IconButton
+                      aria-label="Delete route"
+                      name="trash-alt"
+                      onClick={() => {
+                        setShowDeleteModal(true);
+                      }}
+                      type="button"
+                    />
+                  </HorizontalGroup>
+                  <ConfirmModal
+                    isOpen={showDeleteModal}
+                    title="Delete notification policy"
+                    body="Deleting this notification policy will permanently remove it. Are you sure you want to delete this policy?"
+                    confirmText="Yes, delete"
+                    icon="exclamation-triangle"
+                    onConfirm={() => {
                       const newRoutes = deleteRoute(routes, item.data);
                       onChange(newRoutes);
                     }}
-                    type="button"
+                    onDismiss={() => setShowDeleteModal(false)}
                   />
-                </HorizontalGroup>
+                </>
               );
             },
             size: '100px',

@@ -1,8 +1,9 @@
-import { getCategories } from './categories';
+import { TimeZone } from '../types';
 import { DecimalCount } from '../types/displayValue';
+
+import { getCategories } from './categories';
 import { toDateTimeValueFormatter } from './dateTimeFormatters';
 import { getOffsetFromSIPrefix, SIPrefix, currency } from './symbolFormatters';
-import { TimeZone } from '../types';
 
 export interface FormattedValue {
   text: string;
@@ -53,6 +54,10 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
 
   if (decimals === null || decimals === undefined) {
     decimals = getDecimalsForValue(value);
+  }
+
+  if (value === 0) {
+    return value.toFixed(decimals);
   }
 
   const factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;

@@ -1,4 +1,5 @@
 import { PanelModel, FieldConfigSource } from '@grafana/data';
+
 import { heatmapChangedHandler } from './migrations';
 
 describe('Heatmap Migrations', () => {

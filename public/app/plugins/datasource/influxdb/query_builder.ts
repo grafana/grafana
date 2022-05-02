@@ -1,4 +1,5 @@
 import { reduce } from 'lodash';
+
 import kbn from 'app/core/utils/kbn';
 
 function renderTagCondition(tag: { operator: any; value: string; condition: any; key: string }, index: number) {

@@ -1,9 +1,18 @@
 import React from 'react';
-import { setupExplore, waitForExplore } from './helper/setup';
-import { makeLogsQueryResponse } from './helper/query';
+
 import { DataQueryRequest, serializeStateToUrlParam } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
+
+import { makeLogsQueryResponse } from './helper/query';
+import { setupExplore, waitForExplore } from './helper/setup';
+
+const fetch = jest.fn();
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({ fetch }),
+}));
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return {

@@ -1,6 +1,8 @@
 import React from 'react';
-import { HttpSettingsBaseProps } from './types';
+
 import { Switch } from '../Forms/Legacy/Switch/Switch';
+
+import { HttpSettingsBaseProps } from './types';
 
 export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({
   dataSourceConfig,

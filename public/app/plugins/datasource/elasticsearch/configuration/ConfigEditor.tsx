@@ -1,11 +1,14 @@
 import React, { useEffect } from 'react';
-import { Alert, DataSourceHttpSettings } from '@grafana/ui';
+
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { Alert, DataSourceHttpSettings } from '@grafana/ui';
+import { config } from 'app/core/config';
+
 import { ElasticsearchOptions } from '../types';
+
+import { DataLinks } from './DataLinks';
 import { ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';
-import { DataLinks } from './DataLinks';
-import { config } from 'app/core/config';
 import { coerceOptions, isValidOptions } from './utils';
 
 export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions>;

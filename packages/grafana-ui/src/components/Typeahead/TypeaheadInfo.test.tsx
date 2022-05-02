@@ -1,7 +1,9 @@
-import React from 'react';
 import { mount } from 'enzyme';
-import { TypeaheadInfo } from './TypeaheadInfo';
+import React from 'react';
+
 import { CompletionItem } from '../../types';
+
+import { TypeaheadInfo } from './TypeaheadInfo';
 
 describe('TypeaheadInfo component', () => {
   it('should show documentation as rendered markdown if passed as a markdown', () => {

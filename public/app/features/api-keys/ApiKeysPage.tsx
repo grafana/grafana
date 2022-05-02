@@ -1,26 +1,31 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+
 // Utils
-import { ApiKey, NewApiKey, StoreState } from 'app/types';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { getApiKeys, getApiKeysCount, getIncludeExpired, getIncludeExpiredDisabled } from './state/selectors';
-import { addApiKey, deleteApiKey, loadApiKeys, toggleIncludeExpired } from './state/actions';
-import Page from 'app/core/components/Page/Page';
-import { ApiKeysAddedModal } from './ApiKeysAddedModal';
-import config from 'app/core/config';
+import { rangeUtil } from '@grafana/data';
+import { InlineField, InlineSwitch, VerticalGroup } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { InlineField, InlineSwitch, VerticalGroup } from '@grafana/ui';
-import { rangeUtil } from '@grafana/data';
+import Page from 'app/core/components/Page/Page';
+import config from 'app/core/config';
+import { contextSrv } from 'app/core/core';
+import { getNavModel } from 'app/core/selectors/navModel';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { setSearchQuery } from './state/reducers';
-import { ApiKeysForm } from './ApiKeysForm';
-import { ApiKeysActionBar } from './ApiKeysActionBar';
-import { ApiKeysTable } from './ApiKeysTable';
-import { ApiKeysController } from './ApiKeysController';
+import { AccessControlAction, ApiKey, NewApiKey, StoreState } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { ApiKeysActionBar } from './ApiKeysActionBar';
+import { ApiKeysAddedModal } from './ApiKeysAddedModal';
+import { ApiKeysController } from './ApiKeysController';
+import { ApiKeysForm } from './ApiKeysForm';
+import { ApiKeysTable } from './ApiKeysTable';
+import { addApiKey, deleteApiKey, loadApiKeys, toggleIncludeExpired } from './state/actions';
+import { setSearchQuery } from './state/reducers';
+import { getApiKeys, getApiKeysCount, getIncludeExpired, getIncludeExpiredDisabled } from './state/selectors';
+
 function mapStateToProps(state: StoreState) {
+  const canCreate = contextSrv.hasAccess(AccessControlAction.ActionAPIKeysCreate, true);
+
   return {
     navModel: getNavModel(state.navIndex, 'apikeys'),
     apiKeys: getApiKeys(state.apiKeys),
@@ -30,6 +35,7 @@ function mapStateToProps(state: StoreState) {
     timeZone: getTimeZone(state.user),
     includeExpired: getIncludeExpired(state.apiKeys),
     includeExpiredDisabled: getIncludeExpiredDisabled(state.apiKeys),
+    canCreate: canCreate,
   };
 }
 
@@ -120,6 +126,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       timeZone,
       includeExpired,
       includeExpiredDisabled,
+      canCreate,
     } = this.props;
 
     if (!hasFetched) {
@@ -146,17 +153,23 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                       onClick={toggleIsAdding}
                       buttonTitle="New API key"
                       proTip="Remember, you can provide view-only API access to other applications."
+                      buttonDisabled={!canCreate}
                     />
                   ) : null}
                   {showTable ? (
                     <ApiKeysActionBar
                       searchQuery={searchQuery}
-                      disabled={isAdding}
+                      disabled={isAdding || !canCreate}
                       onAddClick={toggleIsAdding}
                       onSearchChange={this.onSearchQueryChange}
                     />
                   ) : null}
-                  <ApiKeysForm show={isAdding} onClose={toggleIsAdding} onKeyAdded={this.onAddApiKey} />
+                  <ApiKeysForm
+                    show={isAdding}
+                    onClose={toggleIsAdding}
+                    onKeyAdded={this.onAddApiKey}
+                    disabled={!canCreate}
+                  />
                   {showTable ? (
                     <VerticalGroup>
                       <InlineField disabled={includeExpiredDisabled} label="Include expired keys">

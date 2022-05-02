@@ -10,7 +10,7 @@ import (
 type fullAccessControl interface {
 	accesscontrol.AccessControl
 	GetUserBuiltInRoles(user *models.SignedInUser) []string
-	RegisterFixedRoles() error
+	RegisterFixedRoles(context.Context) error
 }
 
 type Calls struct {
@@ -63,6 +63,10 @@ func New() *Mock {
 	}
 
 	return mock
+}
+
+func (m Mock) GetUsageStats(ctx context.Context) map[string]interface{} {
+	return make(map[string]interface{})
 }
 
 func (m Mock) WithPermissions(permissions []*accesscontrol.Permission) *Mock {
@@ -165,7 +169,7 @@ func (m *Mock) GetUserBuiltInRoles(user *models.SignedInUser) []string {
 
 // RegisterFixedRoles registers all roles declared to AccessControl
 // This mock returns no error unless an override is provided.
-func (m *Mock) RegisterFixedRoles() error {
+func (m *Mock) RegisterFixedRoles(ctx context.Context) error {
 	m.Calls.RegisterFixedRoles = append(m.Calls.RegisterFixedRoles, []struct{}{})
 	// Use override if provided
 	if m.RegisterFixedRolesFunc != nil {

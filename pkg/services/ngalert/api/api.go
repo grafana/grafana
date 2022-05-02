@@ -67,6 +67,7 @@ type API struct {
 	QuotaService         *quota.QuotaService
 	Schedule             schedule.ScheduleService
 	TransactionManager   provisioning.TransactionManager
+	ProvenanceStore      provisioning.ProvisioningStore
 	RuleStore            store.RuleStore
 	InstanceStore        store.InstanceStore
 	AlertingStore        AlertingStore
@@ -77,6 +78,8 @@ type API struct {
 	SecretsService       secrets.Service
 	AccessControl        accesscontrol.AccessControl
 	Policies             *provisioning.NotificationPolicyService
+	ContactPointService  *provisioning.ContactPointService
+	Templates            *provisioning.TemplateService
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -90,13 +93,13 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		&AlertmanagerSrv{store: api.AlertingStore, mam: api.MultiOrgAlertmanager, secrets: api.SecretsService, log: logger, ac: api.AccessControl},
+		&AlertmanagerSrv{crypto: api.MultiOrgAlertmanager.Crypto, log: logger, ac: api.AccessControl, mam: api.MultiOrgAlertmanager},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore},
+		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, ac: api.AccessControl},
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
@@ -107,6 +110,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			QuotaService:    api.QuotaService,
 			scheduleService: api.Schedule,
 			store:           api.RuleStore,
+			provenanceStore: api.ProvenanceStore,
 			xactManager:     api.TransactionManager,
 			log:             logger,
 			cfg:             &api.Cfg.UnifiedAlerting,
@@ -132,8 +136,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 
 	if api.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertProvisioning) {
 		api.RegisterProvisioningApiEndpoints(NewForkedProvisioningApi(&ProvisioningSrv{
-			log:      logger,
-			policies: api.Policies,
+			log:                 logger,
+			policies:            api.Policies,
+			contactPointService: api.ContactPointService,
+			templates:           api.Templates,
 		}), m)
 	}
 }
