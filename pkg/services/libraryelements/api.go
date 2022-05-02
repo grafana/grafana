@@ -30,6 +30,13 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext) response.Res
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	if cmd.FolderUID != nil {
+		folder, err := l.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, *cmd.FolderUID)
+		if err == nil && folder != nil {
+			cmd.FolderID = folder.Id
+		}
+	}
+
 	element, err := l.createLibraryElement(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to create library element")
@@ -86,6 +93,13 @@ func (l *LibraryElementService) patchHandler(c *models.ReqContext) response.Resp
 	cmd := PatchLibraryElementCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	if cmd.FolderUID != nil {
+		folder, err := l.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, *cmd.FolderUID)
+		if err == nil && folder != nil {
+			cmd.FolderID = folder.Id
+		}
 	}
 
 	element, err := l.patchLibraryElement(c.Req.Context(), c.SignedInUser, cmd, web.Params(c.Req)[":uid"])
