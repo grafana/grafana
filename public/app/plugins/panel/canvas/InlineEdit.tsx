@@ -4,7 +4,7 @@ import Draggable from 'react-draggable';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
 
 import { Dimensions2D, GrafanaTheme } from '@grafana/data';
-import { IconButton, stylesFactory, useTheme } from '@grafana/ui';
+import { IconButton, Portal, stylesFactory, useTheme } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { InlineEditOptions } from './InlineEditOptions';
@@ -13,7 +13,7 @@ type Props = {
   onClose?: () => void;
 };
 
-const OFFSET = 8;
+const OFFSET_X = 70;
 
 export const InlineEdit = ({ onClose }: Props) => {
   const theme = useTheme();
@@ -23,8 +23,8 @@ export const InlineEdit = ({ onClose }: Props) => {
   const inlineEditKey = 'inlineEditPanel';
 
   const defaultMeasurements = { width: 350, height: 400 };
-  const defaultX = btnInlineEdit.x - btnInlineEdit.width + OFFSET;
-  const defaultY = -OFFSET - defaultMeasurements.height;
+  const defaultX = btnInlineEdit.x + OFFSET_X;
+  const defaultY = btnInlineEdit.y - defaultMeasurements.height;
 
   const savedPlacement = store.getObject(inlineEditKey, {
     x: defaultX,
@@ -50,26 +50,28 @@ export const InlineEdit = ({ onClose }: Props) => {
     store.setObject(inlineEditKey, { x: x, y: y, w: width, h: height });
   };
   return (
-    <Draggable handle="strong" onStop={onDragStop} position={{ x: placement.x, y: savedPlacement.y }}>
-      <Resizable height={measurements.height} width={measurements.width} onResize={onResizeStop}>
-        <div
-          className={cx('box', 'no-cursor', `${styles.inlineEditorContainer}`)}
-          style={{ height: `${measurements.height}px`, width: `${measurements.width}px` }}
-          ref={ref}
-        >
-          <strong className={cx('cursor', `${styles.inlineEditorHeader}`)}>
-            <div className={styles.placeholder} />
-            <div>Canvas Inline Editor</div>
-            <IconButton name="times" size="xl" className={styles.inlineEditorClose} onClick={onClose} />
-          </strong>
-          <div className={styles.inlineEditorContentWrapper}>
-            <div className={styles.inlineEditorContent}>
-              <InlineEditOptions />
+    <Portal>
+      <Draggable handle="strong" onStop={onDragStop} position={{ x: placement.x, y: savedPlacement.y }}>
+        <Resizable height={measurements.height} width={measurements.width} onResize={onResizeStop}>
+          <div
+            className={cx('box', 'no-cursor', `${styles.inlineEditorContainer}`)}
+            style={{ height: `${measurements.height}px`, width: `${measurements.width}px` }}
+            ref={ref}
+          >
+            <strong className={cx('cursor', `${styles.inlineEditorHeader}`)}>
+              <div className={styles.placeholder} />
+              <div>Canvas Inline Editor</div>
+              <IconButton name="times" size="xl" className={styles.inlineEditorClose} onClick={onClose} />
+            </strong>
+            <div className={styles.inlineEditorContentWrapper}>
+              <div className={styles.inlineEditorContent}>
+                <InlineEditOptions />
+              </div>
             </div>
           </div>
-        </div>
-      </Resizable>
-    </Draggable>
+        </Resizable>
+      </Draggable>
+    </Portal>
   );
 };
 
