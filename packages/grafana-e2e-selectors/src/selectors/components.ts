@@ -337,4 +337,8 @@ export const Components = {
     orgsTable: 'data-testid-user-orgs-table',
     sessionsTable: 'data-testid-user-sessions-table',
   },
+  FileUpload: {
+    inputField: 'data-testid-file-upload-input-field',
+    fileNameSpan: 'data-testid-file-upload-file-name',
+  },
 };
