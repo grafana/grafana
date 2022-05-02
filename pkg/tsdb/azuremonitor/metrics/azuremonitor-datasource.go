@@ -129,7 +129,11 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 			dimSB.WriteString(fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
 		} else {
 			for i, filter := range azJSONModel.DimensionFilters {
-				dimSB.WriteString(filter.String())
+				if filter.Operator != "eq" && filter.Filter == "*" {
+					dimSB.WriteString(fmt.Sprintf("%s eq '*'", filter.Dimension))
+				} else {
+					dimSB.WriteString(filter.String())
+				}
 				if i != len(azJSONModel.DimensionFilters)-1 {
 					dimSB.WriteString(" and ")
 				}

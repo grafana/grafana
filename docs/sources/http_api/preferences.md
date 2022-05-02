@@ -35,7 +35,19 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"theme":"","homeDashboardId":0,"timezone":""}
+{
+    "theme": "",
+    "homeDashboardId": 217,
+    "homeDashboardUID": "jcIIG-07z",
+    "timezone": "utc",
+    "weekStart": "",
+    "navbar": {
+        "savedItems": null
+    },
+    "queryHistory": {
+        "homeTab": ""
+    }
+}
 ```
 
 ## Update Current User Prefs
@@ -52,7 +64,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
   "theme": "",
-  "homeDashboardId":0,
+  "homeDashboardUID":"home",
   "timezone":"utc"
 }
 ```
@@ -113,7 +125,18 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"theme":"","homeDashboardId":0,"timezone":""}
+{
+    "theme": "",
+    "homeDashboardId": 0,
+    "timezone": "",
+    "weekStart": "",
+    "navbar": {
+        "savedItems": null
+    },
+    "queryHistory": {
+        "homeTab": ""
+    }
+}
 ```
 
 ## Update Current Org Prefs
@@ -130,7 +153,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
   "theme": "",
-  "homeDashboardId":0,
+  "homeDashboardUID":"home",
   "timezone":"utc"
 }
 ```

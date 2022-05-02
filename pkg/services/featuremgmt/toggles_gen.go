@@ -131,10 +131,6 @@ const (
 	// Lock database during migrations
 	FlagMigrationLocking = "migrationLocking"
 
-	// FlagSaveDashboardDrawer
-	// Use a drawer to show save dashboard dialog
-	FlagSaveDashboardDrawer = "saveDashboardDrawer"
-
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
@@ -174,4 +170,8 @@ const (
 	// FlagSavedItems
 	// Enable Saved Items in the navbar.
 	FlagSavedItems = "savedItems"
+
+	// FlagCloudWatchDynamicLabels
+	// Use dynamic labels instead of alias patterns in CloudWatch datasource
+	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
 )

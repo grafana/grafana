@@ -1,3 +1,5 @@
+import { omit } from 'lodash';
+
 import { AnnotationQuery, DataQuery } from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
 
@@ -8,6 +10,7 @@ import {
   MetricQueryType,
   VariableQuery,
   VariableQueryType,
+  OldVariableQuery,
 } from './types';
 
 // Migrates a metric query that use more than one statistic into multiple queries
@@ -70,10 +73,38 @@ export function migrateCloudWatchQuery(query: CloudWatchMetricsQuery) {
   }
 }
 
-export function migrateVariableQuery(rawQuery: string | VariableQuery): VariableQuery {
-  if (typeof rawQuery !== 'string') {
+function isVariableQuery(rawQuery: string | VariableQuery | OldVariableQuery): rawQuery is VariableQuery {
+  return typeof rawQuery !== 'string' && typeof rawQuery.ec2Filters !== 'string' && typeof rawQuery.tags !== 'string';
+}
+
+export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVariableQuery): VariableQuery {
+  if (isVariableQuery(rawQuery)) {
     return rawQuery;
   }
+
+  // rawQuery is OldVariableQuery
+  if (typeof rawQuery !== 'string') {
+    const newQuery: VariableQuery = omit(rawQuery, ['ec2Filters', 'tags']);
+    newQuery.ec2Filters = {};
+    newQuery.tags = {};
+
+    if (rawQuery.ec2Filters !== '') {
+      try {
+        newQuery.ec2Filters = JSON.parse(rawQuery.ec2Filters);
+      } catch {
+        throw new Error(`unable to migrate poorly formed filters: ${rawQuery.ec2Filters}`);
+      }
+    }
+    if (rawQuery.tags !== '') {
+      try {
+        newQuery.tags = JSON.parse(rawQuery.tags);
+      } catch {
+        throw new Error(`unable to migrate poorly formed filters: ${rawQuery.tags}`);
+      }
+    }
+    return newQuery;
+  }
+
   const newQuery: VariableQuery = {
     refId: 'CloudWatchVariableQueryEditor-VariableQuery',
     queryType: VariableQueryType.Regions,
@@ -82,12 +113,13 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     metricName: '',
     dimensionKey: '',
     dimensionFilters: {},
-    ec2Filters: '',
+    ec2Filters: {},
     instanceID: '',
     attributeName: '',
     resourceType: '',
-    tags: '',
+    tags: {},
   };
+
   if (rawQuery === '') {
     return newQuery;
   }
@@ -147,7 +179,13 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.queryType = VariableQueryType.EC2InstanceAttributes;
     newQuery.region = ec2InstanceAttributeQuery[1];
     newQuery.attributeName = ec2InstanceAttributeQuery[2];
-    newQuery.ec2Filters = ec2InstanceAttributeQuery[3] || '';
+    if (ec2InstanceAttributeQuery[3]) {
+      try {
+        newQuery.ec2Filters = JSON.parse(ec2InstanceAttributeQuery[3]);
+      } catch {
+        throw new Error(`unable to migrate poorly formed filters: ${ec2InstanceAttributeQuery[3]}`);
+      }
+    }
     return newQuery;
   }
 
@@ -156,7 +194,13 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.queryType = VariableQueryType.ResourceArns;
     newQuery.region = resourceARNsQuery[1];
     newQuery.resourceType = resourceARNsQuery[2];
-    newQuery.tags = resourceARNsQuery[3] || '';
+    if (resourceARNsQuery[3]) {
+      try {
+        newQuery.tags = JSON.parse(resourceARNsQuery[3]);
+      } catch {
+        throw new Error(`unable to migrate poorly formed filters: ${resourceARNsQuery[3]}`);
+      }
+    }
     return newQuery;
   }
 

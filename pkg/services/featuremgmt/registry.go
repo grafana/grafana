@@ -67,10 +67,9 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:            "panelTitleSearch",
-			Description:     "Search for dashboards using panel title",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true, // only supported in dev mode right now
+			Name:        "panelTitleSearch",
+			Description: "Search for dashboards using panel title",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:         "tempoSearch",
@@ -176,11 +175,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:        "saveDashboardDrawer",
-			Description: "Use a drawer to show save dashboard dialog",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
 			State:       FeatureStateAlpha,
@@ -236,6 +230,11 @@ var (
 			Name:        "savedItems",
 			Description: "Enable Saved Items in the navbar.",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "cloudWatchDynamicLabels",
+			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
+			State:       FeatureStateStable,
 		},
 	}
 )

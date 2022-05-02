@@ -45,7 +45,7 @@ func lokiResponseToDataFrames(value *loghttp.QueryResponse, query *lokiQuery) (d
 func lokiMatrixToDataFrames(matrix loghttp.Matrix, query *lokiQuery, stats []data.QueryStat) data.Frames {
 	frames := data.Frames{}
 
-	for _, v := range matrix {
+	for i, v := range matrix {
 		tags := make(map[string]string, len(v.Metric))
 		timeVector := make([]time.Time, 0, len(v.Values))
 		values := make([]float64, 0, len(v.Values))
@@ -59,13 +59,18 @@ func lokiMatrixToDataFrames(matrix loghttp.Matrix, query *lokiQuery, stats []dat
 			values = append(values, float64(k.Value))
 		}
 
-		timeField := data.NewField("time", nil, timeVector)
-		valueField := data.NewField("value", tags, values)
+		timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, timeVector)
+		valueField := data.NewField(data.TimeSeriesValueFieldName, tags, values)
 
 		frame := data.NewFrame("", timeField, valueField)
 		frame.SetMeta(&data.FrameMeta{
-			Stats: stats,
+			Type: data.FrameTypeTimeSeriesMany,
 		})
+
+		// only add the stats to the first dataframe
+		if i == 0 {
+			frame.Meta.Stats = stats
+		}
 
 		frames = append(frames, frame)
 	}
@@ -76,7 +81,7 @@ func lokiMatrixToDataFrames(matrix loghttp.Matrix, query *lokiQuery, stats []dat
 func lokiVectorToDataFrames(vector loghttp.Vector, query *lokiQuery, stats []data.QueryStat) data.Frames {
 	frames := data.Frames{}
 
-	for _, v := range vector {
+	for i, v := range vector {
 		tags := make(map[string]string, len(v.Metric))
 		timeVector := []time.Time{v.Timestamp.Time().UTC()}
 		values := []float64{float64(v.Value)}
@@ -84,13 +89,18 @@ func lokiVectorToDataFrames(vector loghttp.Vector, query *lokiQuery, stats []dat
 		for k, v := range v.Metric {
 			tags[string(k)] = string(v)
 		}
-		timeField := data.NewField("time", nil, timeVector)
-		valueField := data.NewField("value", tags, values)
+		timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, timeVector)
+		valueField := data.NewField(data.TimeSeriesValueFieldName, tags, values)
 
 		frame := data.NewFrame("", timeField, valueField)
 		frame.SetMeta(&data.FrameMeta{
-			Stats: stats,
+			Type: data.FrameTypeTimeSeriesMany,
 		})
+
+		// only add the stats to the first dataframe
+		if i == 0 {
+			frame.Meta.Stats = stats
+		}
 
 		frames = append(frames, frame)
 	}
@@ -139,8 +149,8 @@ func lokiStreamsToDataFrames(streams loghttp.Streams, query *lokiQuery, stats []
 		}
 	}
 
-	timeField := data.NewField("ts", nil, timeVector)
-	valueField := data.NewField("line", nil, values)
+	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, timeVector)
+	valueField := data.NewField("Line", nil, values)
 	labelsField := data.NewField("labels", nil, labelsVector)
 	labelsField.Config = &data.FieldConfig{
 		// we should have a native json-field-type

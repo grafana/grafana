@@ -73,6 +73,10 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			silences:        make(map[int64][]*pb.MeshSilence),
 		})
 	case !mg.Cfg.UnifiedAlerting.IsEnabled() && migrationRun:
+		// Safeguard to prevent data loss when migrating from UA to LA
+		if !mg.Cfg.ForceMigration {
+			panic("New alert rules created while using unified alerting will be deleted, set force_migration=true in your grafana.ini and try again if this is okay.")
+		}
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
 		mg.AddMigration(fmt.Sprintf(clearMigrationEntryTitle, migTitle), &clearMigrationEntry{

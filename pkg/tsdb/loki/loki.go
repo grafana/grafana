@@ -98,11 +98,12 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	if req.Method != "GET" {
 		return fmt.Errorf("invalid resource method: %s", req.Method)
 	}
-	if (!strings.HasPrefix(url, "/loki/api/v1/labels?")) &&
-		(!strings.HasPrefix(url, "/loki/api/v1/label/")) && // the `/label/$label_name/values` form
-		(!strings.HasPrefix(url, "/loki/api/v1/series?")) {
+	if (!strings.HasPrefix(url, "labels?")) &&
+		(!strings.HasPrefix(url, "label/")) && // the `/label/$label_name/values` form
+		(!strings.HasPrefix(url, "series?")) {
 		return fmt.Errorf("invalid resource URL: %s", url)
 	}
+	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
 
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
@@ -110,7 +111,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	}
 
 	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, s.plog)
-	bytes, err := api.RawQuery(ctx, url)
+	bytes, err := api.RawQuery(ctx, lokiURL)
 
 	if err != nil {
 		return err

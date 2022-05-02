@@ -6,6 +6,7 @@ import { selectOptionInTest } from '@grafana/ui';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';
+import createMockPanelData from '../../__mocks__/panelData';
 import createMockQuery from '../../__mocks__/query';
 import {
   createMockResourceGroupsBySubscription,
@@ -43,12 +44,14 @@ describe('MetricsQueryEditor', () => {
   afterEach(() => {
     window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
   });
+  const mockPanelData = createMockPanelData();
 
   it('should render', async () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
 
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         query={createMockQuery()}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
@@ -68,6 +71,7 @@ describe('MetricsQueryEditor', () => {
 
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         query={query}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
@@ -116,6 +120,7 @@ describe('MetricsQueryEditor', () => {
 
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         query={query}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
@@ -184,6 +189,7 @@ describe('MetricsQueryEditor', () => {
 
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         query={createMockQuery()}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
@@ -214,6 +220,7 @@ describe('MetricsQueryEditor', () => {
 
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         query={createMockQuery()}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
