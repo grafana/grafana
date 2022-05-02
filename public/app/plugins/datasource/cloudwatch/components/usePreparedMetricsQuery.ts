@@ -1,5 +1,4 @@
 import deepEqual from 'fast-deep-equal';
-import { defaults } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
 import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../types';
@@ -21,16 +20,11 @@ export const DEFAULT_QUERY: Omit<CloudWatchMetricsQuery, 'refId'> = {
 };
 
 const prepareQuery = (query: CloudWatchMetricsQuery) => {
-  // Note: _.defaults does not apply default values deeply.
-  const withDefaults = defaults({}, query, DEFAULT_QUERY);
+  const withDefaults = { ...DEFAULT_QUERY, ...query };
 
   // If we didn't make any changes to the object, then return the original object to keep the
   // identity the same, and not trigger any other useEffects or anything.
-  if (deepEqual(withDefaults, query)) {
-    return query;
-  } else {
-    return withDefaults;
-  }
+  return deepEqual(withDefaults, query) ? query : withDefaults;
 };
 
 /**
