@@ -448,6 +448,46 @@ func Test_migrateLegacyQuery_successfully_migrates_alias_to_dynamic_label_for_mu
 		string(migratedQueries[1].JSON))
 }
 
+func Test_migrateLegacyQuery_migrates_alias_to_label_when_label_does_not_already_exist_and_feature_toggle_enabled(t *testing.T) {
+	migratedQueries, err := migrateLegacyQuery(
+		[]backend.DataQuery{
+			{
+				RefID:     "A",
+				QueryType: "timeSeriesQuery",
+				JSON: []byte(`{
+					"region": "us-east-1",
+					"namespace": "ec2",
+					"metricName": "CPUUtilization",
+					"alias": "{{period}} {{any_other_word}}",
+					"dimensions": {
+					  "InstanceId": ["test"]
+					},
+					"statistic": "Average",
+					"period": "600",
+					"hide": false
+				  }`)},
+		}, true, time.Now(), time.Now())
+	require.NoError(t, err)
+	require.Equal(t, 1, len(migratedQueries))
+
+	assert.JSONEq(t, `{
+		"alias":"{{period}} {{any_other_word}}",
+		"label":"${PROP('Period')} ${PROP('Dim.any_other_word')}",
+		"dimensions":{
+		  "InstanceId":[
+			 "test"
+		  ]
+		},
+		"hide":false,
+		"metricName":"CPUUtilization",
+		"namespace":"ec2",
+		"period":"600",
+		"region":"us-east-1",
+		"statistic":"Average"
+		}`,
+		string(migratedQueries[0].JSON))
+}
+
 func Test_migrateLegacyQuery_does_not_migrate_alias_to_label(t *testing.T) {
 	testCases := map[string]struct {
 		labelJson                         string
@@ -501,44 +541,4 @@ func Test_migrateLegacyQuery_does_not_migrate_alias_to_label(t *testing.T) {
 				string(migratedQueries[0].JSON))
 		})
 	}
-}
-
-func Test_migrateLegacyQuery_migrates_alias_to_label_when_label_does_not_already_exist_and_feature_toggle_enabled(t *testing.T) {
-	migratedQueries, err := migrateLegacyQuery(
-		[]backend.DataQuery{
-			{
-				RefID:     "A",
-				QueryType: "timeSeriesQuery",
-				JSON: []byte(`{
-					"region": "us-east-1",
-					"namespace": "ec2",
-					"metricName": "CPUUtilization",
-					"alias": "{{period}} {{any_other_word}}",
-					"dimensions": {
-					  "InstanceId": ["test"]
-					},
-					"statistic": "Average",
-					"period": "600",
-					"hide": false
-				  }`)},
-		}, true, time.Now(), time.Now())
-	require.NoError(t, err)
-	require.Equal(t, 1, len(migratedQueries))
-
-	assert.JSONEq(t, `{
-		"alias":"{{period}} {{any_other_word}}",
-		"label":"${PROP('Period')} ${PROP('Dim.any_other_word')}",
-		"dimensions":{
-		  "InstanceId":[
-			 "test"
-		  ]
-		},
-		"hide":false,
-		"metricName":"CPUUtilization",
-		"namespace":"ec2",
-		"period":"600",
-		"region":"us-east-1",
-		"statistic":"Average"
-		}`,
-		string(migratedQueries[0].JSON))
 }
