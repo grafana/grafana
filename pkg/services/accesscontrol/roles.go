@@ -289,6 +289,7 @@ func BuildMacroRoleDefinitions() map[string]*RoleDTO {
 			Description: "Admin role",
 			Group:       "Basic",
 			Permissions: []Permission{},
+			Hidden:      true,
 		},
 		string(models.ROLE_EDITOR): {
 			Name:        "grafana:builtins:editor",
@@ -299,6 +300,7 @@ func BuildMacroRoleDefinitions() map[string]*RoleDTO {
 			Description: "Editor role",
 			Group:       "Basic",
 			Permissions: []Permission{},
+			Hidden:      true,
 		},
 		string(models.ROLE_VIEWER): {
 			Name:        "grafana:builtins:viewer",
@@ -309,6 +311,7 @@ func BuildMacroRoleDefinitions() map[string]*RoleDTO {
 			Description: "Viewer role",
 			Group:       "Basic",
 			Permissions: []Permission{},
+			Hidden:      true,
 		},
 		RoleGrafanaAdmin: {
 			Name:        "grafana:builtins:grafana_admin",
@@ -319,6 +322,7 @@ func BuildMacroRoleDefinitions() map[string]*RoleDTO {
 			Description: "Grafana Admin role",
 			Group:       "Basic",
 			Permissions: []Permission{},
+			Hidden:      true,
 		},
 	}
 }
