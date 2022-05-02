@@ -9,6 +9,7 @@ import { useDimensionKeys, useMetrics, useNamespaces, useRegions } from '../../h
 import { migrateVariableQuery } from '../../migrations';
 import { CloudWatchJsonData, CloudWatchQuery, VariableQuery, VariableQueryType } from '../../types';
 
+import { MultiFilter } from './MultiFilter';
 import { VariableQueryField } from './VariableQueryField';
 import { VariableTextField } from './VariableTextField';
 
@@ -165,14 +166,44 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             placeholder="attribute name"
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, attributeName: value })}
             label="Attribute Name"
+            interactive={true}
+            tooltip={
+              <>
+                {'Attribute or tag to query on. Tags should be formatted "Tags.<name>". '}
+                <a
+                  href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/#selecting-attributes"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  See the documentation for more details
+                </a>
+              </>
+            }
           />
-          <VariableTextField
-            value={parsedQuery.ec2Filters}
-            tooltip='A JSON object representing dimensions/tags and the values to filter on. Ex. { "filter_name": [ "filter_value" ], "tag:name": [ "*" ] }'
-            placeholder='{"key":["value"]}'
-            onBlur={(value: string) => onQueryChange({ ...parsedQuery, ec2Filters: value })}
+          <InlineField
             label="Filters"
-          />
+            labelWidth={20}
+            tooltip={
+              <>
+                <a
+                  href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/#selecting-attributes"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Pre-defined ec2:DescribeInstances filters/tags
+                </a>
+                {' and the values to filter on. Tags should be formatted tag:<name>.'}
+              </>
+            }
+          >
+            <MultiFilter
+              filters={parsedQuery.ec2Filters}
+              onChange={(filters) => {
+                onChange({ ...parsedQuery, ec2Filters: filters });
+              }}
+              keyPlaceholder="filter/tag"
+            />
+          </InlineField>
         </>
       )}
       {parsedQuery.queryType === VariableQueryType.ResourceArns && (
@@ -183,12 +214,15 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, resourceType: value })}
             label="Resource Type"
           />
-          <VariableTextField
-            value={parsedQuery.tags}
-            placeholder='{"tag":["value"]}'
-            onBlur={(value: string) => onQueryChange({ ...parsedQuery, tags: value })}
-            label="Tags"
-          />
+          <InlineField label="Tags" labelWidth={20} tooltip="Tags to filter the returned values on.">
+            <MultiFilter
+              filters={parsedQuery.tags}
+              onChange={(filters) => {
+                onChange({ ...parsedQuery, tags: filters });
+              }}
+              keyPlaceholder="tag"
+            />
+          </InlineField>
         </>
       )}
     </>

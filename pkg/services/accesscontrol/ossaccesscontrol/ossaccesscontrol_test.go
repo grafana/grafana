@@ -20,12 +20,12 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 	t.Helper()
 
 	ac := &OSSAccessControlService{
-		features:      featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol),
-		log:           log.New("accesscontrol"),
-		registrations: accesscontrol.RegistrationList{},
-		scopeResolver: accesscontrol.NewScopeResolver(),
-		provider:      database.ProvideService(sqlstore.InitTestDB(t)),
-		roles:         accesscontrol.BuildMacroRoleDefinitions(),
+		features:       featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol),
+		log:            log.New("accesscontrol"),
+		registrations:  accesscontrol.RegistrationList{},
+		scopeResolvers: accesscontrol.NewScopeResolvers(),
+		provider:       database.ProvideService(sqlstore.InitTestDB(t)),
+		roles:          accesscontrol.BuildMacroRoleDefinitions(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac
@@ -439,12 +439,12 @@ func TestOSSAccessControlService_Evaluate(t *testing.T) {
 		},
 		Grants: []string{"Viewer"},
 	}
-	userLoginScopeSolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+	userLoginScopeSolver := accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
 		if initialScope == "users:login:testUser" {
-			return "users:id:2", nil
+			return []string{"users:id:2"}, nil
 		}
-		return initialScope, nil
-	}
+		return []string{initialScope}, nil
+	})
 
 	tests := []struct {
 		name       string
@@ -475,7 +475,7 @@ func TestOSSAccessControlService_Evaluate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup
 			ac := setupTestEnv(t)
-			ac.RegisterAttributeScopeResolver("users:login:", userLoginScopeSolver)
+			ac.RegisterScopeAttributeResolver("users:login:", userLoginScopeSolver)
 
 			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}
 			err := ac.DeclareFixedRoles(registration)
