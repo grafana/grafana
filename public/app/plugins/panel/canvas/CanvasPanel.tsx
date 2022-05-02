@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import React, { Component } from 'react';
 import { ReplaySubject, Subscription } from 'rxjs';
 
-import { PanelProps, GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, PanelProps } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime/src';
-import { PanelContext, PanelContextRoot, Button, stylesFactory } from '@grafana/ui';
+import { Button, PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
 import { CanvasGroupOptions } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
@@ -113,7 +113,7 @@ export class CanvasPanel extends Component<Props, State> {
   componentWillUnmount() {
     this.subs.unsubscribe();
     isInlineEditOpen = false;
-    canvasInstances = [];
+    canvasInstances = canvasInstances.filter((ci) => ci.props.id !== activeCanvasPanel?.props.id);
   }
 
   // NOTE, all changes to the scene flow through this function

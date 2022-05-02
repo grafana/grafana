@@ -1,13 +1,16 @@
 import { css, cx } from '@emotion/css';
+import { Global } from '@emotion/react';
 import React, { SyntheticEvent, useRef, useState } from 'react';
 import Draggable from 'react-draggable';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
 
 import { Dimensions2D, GrafanaTheme } from '@grafana/data';
+import { config } from '@grafana/runtime/src';
 import { IconButton, Portal, stylesFactory, useTheme } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { InlineEditOptions } from './InlineEditOptions';
+import { getGlobalStyles } from './globalStyles';
 
 type Props = {
   onClose?: () => void;
@@ -21,6 +24,8 @@ export const InlineEdit = ({ onClose }: Props) => {
   const ref = useRef<HTMLDivElement>(null);
   const styles = getStyles(theme);
   const inlineEditKey = 'inlineEditPanel';
+
+  const globalCSS = getGlobalStyles(config.theme2);
 
   const defaultMeasurements = { width: 350, height: 400 };
   const defaultX = btnInlineEdit.x + OFFSET_X;
@@ -51,6 +56,7 @@ export const InlineEdit = ({ onClose }: Props) => {
   };
   return (
     <Portal>
+      <Global styles={globalCSS} />
       <Draggable handle="strong" onStop={onDragStop} position={{ x: placement.x, y: savedPlacement.y }}>
         <Resizable height={measurements.height} width={measurements.width} onResize={onResizeStop}>
           <div
