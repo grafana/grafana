@@ -401,20 +401,21 @@ func (hs *HTTPServer) GetAnnotationTags(c *models.ReqContext) response.Response 
 	return response.JSON(http.StatusOK, annotations.GetAnnotationTagsResponse{Result: result})
 }
 
-// AnnotationTypeScopeResolver provides an AttributeScopeResolver able to
+// AnnotationTypeScopeResolver provides an ScopeAttributeResolver able to
 // resolve annotation types. Scope "annotations:id:<id>" will be translated to "annotations:type:<type>,
 // where <type> is the type of annotation with id <id>.
-func AnnotationTypeScopeResolver() (string, accesscontrol.AttributeScopeResolveFunc) {
-	annotationTypeResolver := func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+func AnnotationTypeScopeResolver() (string, accesscontrol.ScopeAttributeResolver) {
+	prefix := accesscontrol.ScopeAnnotationsProvider.GetResourceScope("")
+	return prefix, accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
 		scopeParts := strings.Split(initialScope, ":")
 		if scopeParts[0] != accesscontrol.ScopeAnnotationsRoot || len(scopeParts) != 3 {
-			return "", accesscontrol.ErrInvalidScope
+			return nil, accesscontrol.ErrInvalidScope
 		}
 
 		annotationIdStr := scopeParts[2]
 		annotationId, err := strconv.Atoi(annotationIdStr)
 		if err != nil {
-			return "", accesscontrol.ErrInvalidScope
+			return nil, accesscontrol.ErrInvalidScope
 		}
 
 		// tempUser is used to resolve annotation type.
@@ -431,16 +432,15 @@ func AnnotationTypeScopeResolver() (string, accesscontrol.AttributeScopeResolveF
 
 		annotation, resp := findAnnotationByID(ctx, annotations.GetRepository(), int64(annotationId), tempUser)
 		if resp != nil {
-			return "", errors.New("could not resolve annotation type")
+			return nil, errors.New("could not resolve annotation type")
 		}
 
 		if annotation.GetType() == annotations.Organization {
-			return accesscontrol.ScopeAnnotationsTypeOrganization, nil
+			return []string{accesscontrol.ScopeAnnotationsTypeOrganization}, nil
 		} else {
-			return accesscontrol.ScopeAnnotationsTypeDashboard, nil
+			return []string{accesscontrol.ScopeAnnotationsTypeDashboard}, nil
 		}
-	}
-	return accesscontrol.ScopeAnnotationsProvider.GetResourceScope(""), annotationTypeResolver
+	})
 }
 
 func (hs *HTTPServer) canCreateAnnotation(c *models.ReqContext, dashboardId int64) (bool, error) {

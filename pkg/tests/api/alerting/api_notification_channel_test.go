@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"regexp"
 	"strings"
@@ -922,13 +923,13 @@ type mockNotificationChannel struct {
 }
 
 func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNotificationChannel {
-	lastDigit := grafanaListedAddr[len(grafanaListedAddr)-1] - 48
-	lastDigit = (lastDigit + 1) % 10
-	newAddr := fmt.Sprintf("%s%01d", grafanaListedAddr[:len(grafanaListedAddr)-1], lastDigit)
+	// Spin up a separate webserver to receive notifications emitted by Grafana.
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
 
 	nc := &mockNotificationChannel{
 		server: &http.Server{
-			Addr: newAddr,
+			Addr: listener.Addr().String(),
 		},
 		receivedNotifications: make(map[string][]string),
 		t:                     t,
@@ -936,7 +937,7 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 
 	nc.server.Handler = nc
 	go func() {
-		require.Equal(t, http.ErrServerClosed, nc.server.ListenAndServe())
+		require.EqualError(t, nc.server.Serve(listener), http.ErrServerClosed.Error())
 	}()
 
 	return nc

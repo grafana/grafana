@@ -30,12 +30,21 @@ datasources:
     jsonData:
       graphiteVersion: "0.9"
 
+  - name: gdev-alertmanager
+    type: alertmanager
+    uid: gdev-alertmanager
+    access: proxy
+    url: http://localhost:9093
+    jsonData:
+      implementation: prometheus
+
   - name: gdev-prometheus
     type: prometheus
     access: proxy
     url: http://localhost:9090
     jsonData:
-      manageAlerts: false
+      manageAlerts: true
+      alertmanagerUid: gdev-alertmanager
 
   - name: gdev-slow-prometheus
     type: prometheus
