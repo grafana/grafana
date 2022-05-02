@@ -127,6 +127,20 @@ export const loadRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
   };
 };
 
+export const loadMoreRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const currentFilters = getState().explore![exploreId]?.richHistorySearchFilters;
+    const currentRichHistory = getState().explore![exploreId]?.richHistory;
+    if (currentFilters && currentRichHistory) {
+      const nextFilters = { ...currentFilters, page: (currentFilters?.page || 1) + 1 };
+      const moreRichHistory = await getRichHistory(nextFilters);
+      const richHistory = [...currentRichHistory, ...moreRichHistory];
+      dispatch(richHistorySearchFiltersUpdatedAction({ filters: nextFilters, exploreId }));
+      dispatch(richHistoryUpdatedAction({ richHistory, exploreId }));
+    }
+  };
+};
+
 export const clearRichHistoryResults = (exploreId: ExploreId): ThunkResult<void> => {
   return async (dispatch) => {
     dispatch(richHistorySearchFiltersUpdatedAction({ filters: undefined, exploreId }));

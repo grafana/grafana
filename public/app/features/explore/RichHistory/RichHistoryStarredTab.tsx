@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { stylesFactory, useTheme, Select, MultiSelect, FilterInput } from '@grafana/ui';
+import { stylesFactory, useTheme, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
 import {
   createDatasourcesList,
   SortOrder,
@@ -19,6 +19,7 @@ export interface Props {
   activeDatasourceInstance: string;
   updateFilters: (filtersToUpdate: Partial<RichHistorySearchFilters>) => void;
   clearRichHistoryResults: () => void;
+  loadMoreRichHistory: () => void;
   richHistorySearchFilters?: RichHistorySearchFilters;
   richHistorySettings: RichHistorySettings;
   exploreId: ExploreId;
@@ -72,6 +73,7 @@ export function RichHistoryStarredTab(props: Props) {
   const {
     updateFilters,
     clearRichHistoryResults,
+    loadMoreRichHistory,
     activeDatasourceInstance,
     richHistorySettings,
     queries,
@@ -156,6 +158,11 @@ export function RichHistoryStarredTab(props: Props) {
             />
           );
         })}
+        {queries.length && (
+          <div>
+            <Button onClick={loadMoreRichHistory}>Load more</Button>
+          </div>
+        )}
         <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
       </div>
     </div>

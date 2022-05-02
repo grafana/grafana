@@ -84,7 +84,7 @@ function buildQueryParams(filters: RichHistorySearchFilters): string {
   params = params + `&to=${relativeFrom}`;
   params = params + `&from=${relativeTo}`;
   params = params + `&limit=100`;
-  params = params + `&page=1`;
+  params = params + `&page=${filters.page || 1}`;
   if (filters.starred) {
     params = params + `&onlyStarred=${filters.starred}`;
   }
