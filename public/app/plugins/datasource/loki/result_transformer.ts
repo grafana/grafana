@@ -1,6 +1,6 @@
 import { capitalize, groupBy, isEmpty } from 'lodash';
-import { v5 as uuidv5 } from 'uuid';
 import { of } from 'rxjs';
+import { v5 as uuidv5 } from 'uuid';
 
 import {
   FieldType,
@@ -19,9 +19,11 @@ import {
   ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-
 import { getTemplateSrv, getDataSourceSrv } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
+
+import { renderLegendFormat } from '../prometheus/legend';
+
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import {
   LokiRangeQueryRequest,
@@ -38,14 +40,13 @@ import {
   LokiStreamResponse,
   LokiStats,
 } from './types';
-import { renderLegendFormat } from '../prometheus/legend';
 
 const UUID_NAMESPACE = '6ec946da-0f49-47a8-983a-1d76d17e7c92';
 
 /**
  * Transforms LokiStreamResult structure into a dataFrame. Used when doing standard queries
  */
-export function lokiStreamsToRawDataFrame(streams: LokiStreamResult[], reverse?: boolean, refId?: string): DataFrame {
+export function lokiStreamsToRawDataFrame(streams: LokiStreamResult[], refId?: string): DataFrame {
   const labels = new ArrayVector<{}>([]);
   const times = new ArrayVector<string>([]);
   const timesNs = new ArrayVector<string>([]);
@@ -72,11 +73,11 @@ export function lokiStreamsToRawDataFrame(streams: LokiStreamResult[], reverse?:
     }
   }
 
-  return constructDataFrame(times, timesNs, lines, uids, labels, reverse, refId);
+  return constructDataFrame(times, timesNs, lines, uids, labels, refId);
 }
 
 /**
- * Constructs dataFrame with supplied fields and other data. Also makes sure it is properly reversed if needed.
+ * Constructs dataFrame with supplied fields and other data.
  */
 function constructDataFrame(
   times: ArrayVector<string>,
@@ -84,7 +85,6 @@ function constructDataFrame(
   lines: ArrayVector<string>,
   uids: ArrayVector<string>,
   labels: ArrayVector<{}>,
-  reverse?: boolean,
   refId?: string
 ) {
   const dataFrame = {
@@ -98,12 +98,6 @@ function constructDataFrame(
     ],
     length: times.length,
   };
-
-  if (reverse) {
-    const mutableDataFrame = new MutableDataFrame(dataFrame);
-    mutableDataFrame.reverse();
-    return mutableDataFrame;
-  }
 
   return dataFrame;
 }
@@ -226,8 +220,7 @@ export function lokiResultsToTableModel(
   lokiResults: Array<LokiMatrixResult | LokiVectorResult>,
   resultCount: number,
   refId: string,
-  meta: QueryResultMeta,
-  valueWithRefId?: boolean
+  meta: QueryResultMeta
 ): TableModel {
   if (!lokiResults || lokiResults.length === 0) {
     return new TableModel();
@@ -246,7 +239,7 @@ export function lokiResultsToTableModel(
   table.columns = [
     { text: 'Time', type: FieldType.time },
     ...sortedLabels.map((label) => ({ text: label, filterable: true, type: FieldType.string })),
-    { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: FieldType.number },
+    { text: `Value #${refId}`, type: FieldType.number },
   ];
 
   // Populate rows, set value to empty string when label not present.
@@ -331,10 +324,9 @@ function lokiStatsToMetaStat(stats: LokiStats | undefined): QueryResultMetaStat[
 
 export function lokiStreamsToDataFrames(
   response: LokiStreamResponse,
-  target: { refId: string; expr?: string },
+  target: LokiQuery,
   limit: number,
-  config: LokiOptions,
-  reverse = false
+  config: LokiOptions
 ): DataFrame[] {
   const data = limit > 0 ? response.data.result : [];
   const stats: QueryResultMetaStat[] = lokiStatsToMetaStat(response.data.stats);
@@ -351,7 +343,7 @@ export function lokiStreamsToDataFrames(
     preferredVisualisationType: 'logs',
   };
 
-  const dataFrame = lokiStreamsToRawDataFrame(data, reverse, target.refId);
+  const dataFrame = lokiStreamsToRawDataFrame(data, target.refId);
   enhanceDataFrame(dataFrame, config);
 
   if (meta.custom && dataFrame.fields.some((f) => f.labels && Object.keys(f.labels).some((l) => l === '__error__'))) {
@@ -453,7 +445,6 @@ function rangeQueryResponseToTimeSeries(
   response: LokiResponse,
   query: LokiRangeQueryRequest,
   target: LokiQuery,
-  responseListLength: number,
   scopedVars: ScopedVars
 ): TimeSeries[] {
   /** Show results of Loki metric queries only in graph */
@@ -461,16 +452,10 @@ function rangeQueryResponseToTimeSeries(
     preferredVisualisationType: 'graph',
   };
   const transformerOptions: TransformerOptions = {
-    format: target.format,
     legendFormat: target.legendFormat ?? '',
-    start: query.start!,
-    end: query.end!,
-    step: query.step!,
     query: query.query,
-    responseListLength,
     refId: target.refId,
     meta,
-    valueWithRefId: target.valueWithRefId,
     scopedVars,
   };
 
@@ -490,10 +475,9 @@ export function rangeQueryResponseToDataFrames(
   response: LokiResponse,
   query: LokiRangeQueryRequest,
   target: LokiQuery,
-  responseListLength: number,
   scopedVars: ScopedVars
 ): DataFrame[] {
-  const series = rangeQueryResponseToTimeSeries(response, query, target, responseListLength, scopedVars);
+  const series = rangeQueryResponseToTimeSeries(response, query, target, scopedVars);
   const frames = series.map((s) => toDataFrame(s));
 
   const { step } = query;
@@ -517,7 +501,6 @@ export function processRangeQueryResponse(
   response: LokiResponse,
   target: LokiQuery,
   query: LokiRangeQueryRequest,
-  responseListLength: number,
   limit: number,
   config: LokiOptions,
   scopedVars: ScopedVars
@@ -532,16 +515,7 @@ export function processRangeQueryResponse(
     case LokiResultType.Vector:
     case LokiResultType.Matrix:
       return of({
-        data: rangeQueryResponseToDataFrames(
-          response,
-          query,
-          {
-            ...target,
-            format: 'time_series',
-          },
-          responseListLength,
-          scopedVars
-        ),
+        data: rangeQueryResponseToDataFrames(response, query, target, scopedVars),
         key: target.refId,
       });
     default:

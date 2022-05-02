@@ -1,4 +1,5 @@
 import React from 'react';
+
 import {
   DataFrame,
   DisplayValue,
@@ -7,12 +8,14 @@ import {
   getFieldSeriesColor,
   reduceField,
 } from '@grafana/data';
-import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
-import { VizLegendItem } from '../VizLegend/types';
 import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
+
+import { useTheme2 } from '../../themes';
 import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
 import { VizLegend } from '../VizLegend/VizLegend';
-import { useTheme2 } from '../../themes';
+import { VizLegendItem } from '../VizLegend/types';
+
+import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 

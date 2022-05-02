@@ -1,6 +1,8 @@
-import { dispatch } from 'app/store/store';
-import gfunc from '../gfunc';
 import { TemplateSrvStub } from 'test/specs/helpers';
+
+import { dispatch } from 'app/store/store';
+
+import gfunc from '../gfunc';
 import { actions } from '../state/actions';
 import {
   getAltSegmentsSelectables,
@@ -8,8 +10,8 @@ import {
   getTagsAsSegmentsSelectables,
   getTagValuesSelectables,
 } from '../state/providers';
-import { GraphiteSegment } from '../types';
 import { createStore } from '../state/store';
+import { GraphiteSegment } from '../types';
 
 jest.mock('app/angular/promiseToDigest', () => ({
   promiseToDigest: (scope: any) => {

@@ -1,5 +1,7 @@
 import { createSlice, Draft, PayloadAction } from '@reduxjs/toolkit';
+
 import { DataSourceInstanceSettings, LoadingState } from '@grafana/data';
+
 import { LibraryElementDTO } from '../../library-panels/types';
 
 export enum DashboardSource {

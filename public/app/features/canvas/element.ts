@@ -1,8 +1,11 @@
 import { ComponentType } from 'react';
+
 import { RegistryItem } from '@grafana/data';
-import { Anchor, BackgroundConfig, LineConfig, Placement } from './types';
-import { DimensionContext } from '../dimensions/context';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
+
+import { DimensionContext } from '../dimensions/context';
+
+import { BackgroundConfig, Constraint, LineConfig, Placement } from './types';
 
 /**
  * This gets saved in panel json
@@ -19,7 +22,7 @@ export interface CanvasElementOptions<TConfig = any> {
   config?: TConfig;
 
   // Standard options available for all elements
-  anchor?: Anchor; // defaults top, left, width and height
+  constraint?: Constraint; // defaults vertical - top, horizontal - left
   placement?: Placement;
   background?: BackgroundConfig;
   border?: LineConfig;
@@ -28,10 +31,6 @@ export interface CanvasElementOptions<TConfig = any> {
 export interface CanvasElementProps<TConfig = any, TData = any> {
   // Saved config
   config: TConfig;
-
-  // Calculated position info
-  width: number;
-  height: number;
 
   // Raw data
   data?: TData;
@@ -53,6 +52,6 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
 
   getNewOptions: (options?: CanvasElementOptions) => Omit<CanvasElementOptions<TConfig>, 'type' | 'name'>;
 
-  /** Build the configuraiton UI */
+  /** Build the configuration UI */
   registerOptionsUI?: PanelOptionsSupplier<CanvasElementOptions<TConfig>>;
 }

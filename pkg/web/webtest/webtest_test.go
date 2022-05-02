@@ -99,7 +99,7 @@ func TestServerClient(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
 
-		var user *models.SignedInUser
+		var user models.SignedInUser
 		err = json.Unmarshal(bytes, &user)
 		require.NoError(t, err)
 		require.NotNil(t, user)
@@ -121,7 +121,7 @@ func TestServerClient(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
 
-		var user *models.SignedInUser
+		var user models.SignedInUser
 		err = json.Unmarshal(bytes, &user)
 		require.NoError(t, err)
 		require.NotNil(t, user)

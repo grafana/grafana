@@ -1,14 +1,16 @@
 import { cloneDeep } from 'lodash';
-import { DataSourceVariableModel } from '../types';
+
 import { dispatch } from '../../../store/store';
-import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
-import { dataSourceVariableReducer, initialDataSourceVariableModelState } from './reducer';
+import { ALL_VARIABLE_TEXT } from '../constants';
+import { optionPickerFactory } from '../pickers';
+import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
+import { DataSourceVariableModel } from '../types';
+import { containsVariable, isAllVariable, toKeyedVariableIdentifier } from '../utils';
+
 import { DataSourceVariableEditor } from './DataSourceVariableEditor';
 import { updateDataSourceVariableOptions } from './actions';
-import { containsVariable, isAllVariable, toKeyedVariableIdentifier } from '../utils';
-import { optionPickerFactory } from '../pickers';
-import { ALL_VARIABLE_TEXT } from '../constants';
+import { dataSourceVariableReducer, initialDataSourceVariableModelState } from './reducer';
 
 export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVariableModel> => {
   return {

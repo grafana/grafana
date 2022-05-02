@@ -1,8 +1,10 @@
 // @ts-ignore
 import configureMockStore from 'redux-mock-store';
-import { PlaylistSrv } from './PlaylistSrv';
-import { setStore } from 'app/store/store';
+
 import { locationService } from '@grafana/runtime';
+import { setStore } from 'app/store/store';
+
+import { PlaylistSrv } from './PlaylistSrv';
 
 const getMock = jest.fn();
 

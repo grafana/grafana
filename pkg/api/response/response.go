@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	jsoniter "github.com/json-iterator/go"
@@ -73,7 +74,15 @@ func (r *NormalResponse) ErrMessage() string {
 
 func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 	if r.err != nil {
-		ctx.Logger.Error(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr())
+		v := map[string]interface{}{}
+		traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
+		if err := json.Unmarshal(r.body.Bytes(), &v); err == nil {
+			v["traceID"] = traceID
+			if b, err := json.Marshal(v); err == nil {
+				r.body = bytes.NewBuffer(b)
+			}
+		}
+		ctx.Logger.Error(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr(), "traceID", traceID)
 	}
 
 	header := ctx.Resp.Header()
@@ -171,7 +180,7 @@ func JSONStreaming(status int, body interface{}) StreamingResponse {
 func Success(message string) *NormalResponse {
 	resp := make(map[string]interface{})
 	resp["message"] = message
-	return JSON(200, resp)
+	return JSON(http.StatusOK, resp)
 }
 
 // Error creates an error response.

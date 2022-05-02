@@ -70,13 +70,13 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 }
 
 func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
-	recipient := web.Params(c.Req)[":Recipient"]
+	datasourceID := web.Params(c.Req)[":DatasourceID"]
 	if body.Type() != apimodels.LoTexRulerBackend {
 		return ErrResp(http.StatusBadRequest, errors.New("unexpected payload"), "")
 	}
 
 	var path string
-	if datasourceID, err := strconv.ParseInt(recipient, 10, 64); err == nil {
+	if datasourceID, err := strconv.ParseInt(datasourceID, 10, 64); err == nil {
 		ds, err := srv.DatasourceCache.GetDatasource(context.Background(), datasourceID, c.SignedInUser, c.SkipCache)
 		if err != nil {
 			return ErrResp(http.StatusInternalServerError, err, "failed to get datasource")
@@ -88,7 +88,7 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodel
 		case "prometheus":
 			path = "api/v1/query"
 		default:
-			return ErrResp(http.StatusBadRequest, fmt.Errorf("unexpected recipient type %s", ds.Type), "")
+			return ErrResp(http.StatusBadRequest, fmt.Errorf("unexpected datasource type %s", ds.Type), "")
 		}
 	}
 

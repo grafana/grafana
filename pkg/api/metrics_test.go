@@ -2,12 +2,14 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"testing"
 
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 
@@ -17,8 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	datasources "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -192,13 +197,17 @@ type dashboardFakePluginClient struct {
 func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 	sc := setupHTTPServerWithMockDb(t, false, false)
 
+	secretsStore := kvstore.SetupTestService(t)
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	ds := datasources.ProvideService(nil, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewPermissionsServicesMock())
+
 	setInitCtxSignedInViewer(sc.initCtx)
 	sc.hs.queryDataService = query.ProvideService(
 		nil,
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
-		fakes.NewFakeSecretsService(),
+		ds,
 		&dashboardFakePluginClient{},
 		&fakeOAuthTokenService{},
 	)
@@ -241,15 +250,14 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 			strings.NewReader(queryDatasourceInput),
 			t,
 		)
+
 		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(
-			t,
-			fmt.Sprintf(
-				"{\"error\":\"%[1]s\",\"message\":\"%[1]s\"}",
-				models.ErrDashboardOrPanelIdentifierNotSet,
-			),
-			response.Body.String(),
-		)
+
+		var res map[string]interface{}
+		err := json.Unmarshal(response.Body.Bytes(), &res)
+		assert.NoError(t, err)
+		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["error"])
+		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["message"])
 	})
 
 	t.Run("Cannot query without a valid orgid", func(t *testing.T) {
@@ -261,14 +269,10 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 			t,
 		)
 		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(
-			t,
-			fmt.Sprintf(
-				"{\"error\":\"%[1]s\",\"message\":\"%[1]s\"}",
-				models.ErrDashboardOrPanelIdentifierNotSet,
-			),
-			response.Body.String(),
-		)
+		var res map[string]interface{}
+		assert.NoError(t, json.Unmarshal(response.Body.Bytes(), &res))
+		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["error"])
+		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["message"])
 	})
 
 	t.Run("Cannot query without a valid dashboard or panel ID", func(t *testing.T) {
@@ -280,14 +284,11 @@ func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
 			t,
 		)
 		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(
-			t,
-			fmt.Sprintf(
-				"{\"error\":\"%[1]s\",\"message\":\"%[1]s\"}",
-				models.ErrDashboardOrPanelIdentifierNotSet,
-			),
-			response.Body.String(),
-		)
+
+		var res map[string]interface{}
+		assert.NoError(t, json.Unmarshal(response.Body.Bytes(), &res))
+		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["error"])
+		assert.Equal(t, models.ErrDashboardOrPanelIdentifierNotSet.Error(), res["message"])
 	})
 
 	t.Run("Cannot query when ValidatedQueries is disabled", func(t *testing.T) {

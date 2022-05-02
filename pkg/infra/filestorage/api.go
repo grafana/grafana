@@ -51,17 +51,13 @@ type Paging struct {
 }
 
 type UpsertFileCommand struct {
-	Path       string
-	MimeType   string
-	Contents   *[]byte
-	Properties map[string]string
-}
+	Path     string
+	MimeType string
 
-type PathFilters struct {
-	allowedPrefixes    []string
-	disallowedPrefixes []string
-	allowedPaths       []string
-	disallowedPaths    []string
+	// Contents of an existing file won't be modified if cmd.Contents is nil
+	Contents []byte
+	// Properties of an existing file won't be modified if cmd.Properties is nil
+	Properties map[string]string
 }
 
 func toLower(list []string) []string {
@@ -75,63 +71,6 @@ func toLower(list []string) []string {
 	return lower
 }
 
-func allowAllPathFilters() *PathFilters {
-	return NewPathFilters(nil, nil, nil, nil)
-}
-
-//nolint:deadcode,unused
-func denyAllPathFilters() *PathFilters {
-	return NewPathFilters([]string{}, []string{}, nil, nil)
-}
-
-func NewPathFilters(allowedPrefixes []string, allowedPaths []string, disallowedPrefixes []string, disallowedPaths []string) *PathFilters {
-	return &PathFilters{
-		allowedPrefixes:    toLower(allowedPrefixes),
-		allowedPaths:       toLower(allowedPaths),
-		disallowedPaths:    toLower(disallowedPaths),
-		disallowedPrefixes: toLower(disallowedPrefixes),
-	}
-}
-
-func (f *PathFilters) isDenyAll() bool {
-	return f.allowedPaths != nil && f.allowedPrefixes != nil && (len(f.allowedPaths)+len(f.allowedPrefixes) == 0)
-}
-
-func (f *PathFilters) IsAllowed(path string) bool {
-	if f == nil {
-		return true
-	}
-
-	path = strings.ToLower(path)
-	for i := range f.disallowedPaths {
-		if f.disallowedPaths[i] == path {
-			return false
-		}
-	}
-
-	for i := range f.disallowedPrefixes {
-		if strings.HasPrefix(path, f.disallowedPrefixes[i]) {
-			return false
-		}
-	}
-
-	if f.allowedPrefixes == nil && f.allowedPaths == nil {
-		return true
-	}
-
-	for i := range f.allowedPaths {
-		if f.allowedPaths[i] == path {
-			return true
-		}
-	}
-	for i := range f.allowedPrefixes {
-		if strings.HasPrefix(path, f.allowedPrefixes[i]) {
-			return true
-		}
-	}
-	return false
-}
-
 type ListResponse struct {
 	Files    []*File
 	HasMore  bool
@@ -143,7 +82,7 @@ type ListOptions struct {
 	WithFiles    bool
 	WithFolders  bool
 	WithContents bool
-	*PathFilters
+	Filter       PathFilter
 }
 
 type FileStorage interface {

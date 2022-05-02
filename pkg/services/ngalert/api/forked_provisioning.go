@@ -26,3 +26,27 @@ func (f *ForkedProvisioningApi) forkRouteGetPolicyTree(ctx *models.ReqContext) r
 func (f *ForkedProvisioningApi) forkRoutePostPolicyTree(ctx *models.ReqContext, route apimodels.Route) response.Response {
 	return f.svc.RoutePostPolicyTree(ctx, route)
 }
+
+func (f *ForkedProvisioningApi) forkRouteGetContactpoints(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteGetContactPoints(ctx)
+}
+
+func (f *ForkedProvisioningApi) forkRoutePostContactpoints(ctx *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
+	return f.svc.RoutePostContactPoint(ctx, cp)
+}
+
+func (f *ForkedProvisioningApi) forkRoutePutContactpoints(ctx *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
+	return f.svc.RoutePutContactPoint(ctx, cp)
+}
+
+func (f *ForkedProvisioningApi) forkRouteDeleteContactpoints(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteDeleteContactPoint(ctx)
+}
+
+func (f *ForkedProvisioningApi) forkRouteGetTemplates(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteGetTemplates(ctx)
+}
+
+func (f *ForkedProvisioningApi) forkRouteGetTemplate(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteGetTemplate(ctx)
+}

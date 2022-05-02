@@ -1,11 +1,21 @@
+import { render, act } from '@testing-library/react';
 import React from 'react';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { configureStore } from 'app/store/configureStore';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
-import { render, act } from '@testing-library/react';
-import { PanelAlertTabContent } from './PanelAlertTabContent';
+import { byTestId } from 'testing-library-selector';
+
+import { DataSourceApi } from '@grafana/data';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
+import { PromOptions } from 'app/plugins/datasource/prometheus/types';
+import { configureStore } from 'app/store/configureStore';
+
+import { PanelAlertTabContent } from './PanelAlertTabContent';
+import { fetchRules } from './api/prometheus';
+import { fetchRulerRules } from './api/ruler';
 import {
   mockDataSource,
   MockDataSourceSrv,
@@ -14,17 +24,9 @@ import {
   mockPromRuleNamespace,
   mockRulerGrafanaRule,
 } from './mocks';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getAllDataSources } from './utils/config';
-import { fetchRules } from './api/prometheus';
-import { fetchRulerRules } from './api/ruler';
 import { Annotation } from './utils/constants';
-import { byTestId } from 'testing-library-selector';
-import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
-import { DataSourceApi } from '@grafana/data';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PromOptions } from 'app/plugins/datasource/prometheus/types';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');

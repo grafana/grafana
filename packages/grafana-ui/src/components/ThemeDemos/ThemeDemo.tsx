@@ -1,19 +1,21 @@
-import React, { FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { useTheme2 } from '../../themes/ThemeContext';
-import { Icon } from '../Icon/Icon';
-import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
+import React, { FC, useState } from 'react';
+
 import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
+
+import { useTheme2 } from '../../themes/ThemeContext';
+import { allButtonVariants, Button } from '../Button';
+import { Card } from '../Card/Card';
 import { CollapsableSection } from '../Collapse/CollapsableSection';
 import { Field } from '../Forms/Field';
-import { Input } from '../Input/Input';
-import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
-import { Switch } from '../Switch/Switch';
-import { allButtonVariants, Button } from '../Button';
 import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
-import { Card } from '../Card/Card';
+import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
+import { Icon } from '../Icon/Icon';
+import { Input } from '../Input/Input';
+import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { Select } from '../Select/Select';
+import { Switch } from '../Switch/Switch';
 
 interface DemoBoxProps {
   bg?: string;

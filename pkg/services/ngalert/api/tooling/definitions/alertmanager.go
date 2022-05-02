@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/pkg/errors"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -18,6 +17,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -30,7 +30,7 @@ import (
 //       201: Ack
 //       400: ValidationError
 
-// swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
+// swagger:route POST /api/alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
 //
 // sets an Alerting config
 //
@@ -46,7 +46,7 @@ import (
 //       200: GettableUserConfig
 //       400: ValidationError
 
-// swagger:route GET /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RouteGetAlertingConfig
+// swagger:route GET /api/alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RouteGetAlertingConfig
 //
 // gets an Alerting config
 //
@@ -62,7 +62,7 @@ import (
 //       200: Ack
 //       400: ValidationError
 
-// swagger:route DELETE /api/alertmanager/{Recipient}/config/api/v1/alerts alertmanager RouteDeleteAlertingConfig
+// swagger:route DELETE /api/alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RouteDeleteAlertingConfig
 //
 // deletes the Alerting config for a tenant
 //
@@ -78,7 +78,7 @@ import (
 //       200: GettableStatus
 //       400: ValidationError
 
-// swagger:route GET /api/alertmanager/{Recipient}/api/v2/status alertmanager RouteGetAMStatus
+// swagger:route GET /api/alertmanager/{DatasourceUID}/api/v2/status alertmanager RouteGetAMStatus
 //
 // get alertmanager status and configuration
 //
@@ -94,7 +94,7 @@ import (
 //       200: gettableAlerts
 //       400: ValidationError
 
-// swagger:route GET /api/alertmanager/{Recipient}/api/v2/alerts alertmanager RouteGetAMAlerts
+// swagger:route GET /api/alertmanager/{DatasourceUID}/api/v2/alerts alertmanager RouteGetAMAlerts
 //
 // get alertmanager alerts
 //
@@ -110,7 +110,7 @@ import (
 //       200: Ack
 //       400: ValidationError
 
-// swagger:route POST /api/alertmanager/{Recipient}/api/v2/alerts alertmanager RoutePostAMAlerts
+// swagger:route POST /api/alertmanager/{DatasourceUID}/api/v2/alerts alertmanager RoutePostAMAlerts
 //
 // create alertmanager alerts
 //
@@ -126,7 +126,7 @@ import (
 //       200: alertGroups
 //       400: ValidationError
 
-// swagger:route GET /api/alertmanager/{Recipient}/api/v2/alerts/groups alertmanager RouteGetAMAlertGroups
+// swagger:route GET /api/alertmanager/{DatasourceUID}/api/v2/alerts/groups alertmanager RouteGetAMAlertGroups
 //
 // get alertmanager alerts
 //
@@ -148,7 +148,7 @@ import (
 //       408: Failure
 //       409: AlertManagerNotReady
 
-// swagger:route POST /api/alertmanager/{Recipient}/config/api/v1/receivers/test alertmanager RoutePostTestReceivers
+// swagger:route POST /api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test alertmanager RoutePostTestReceivers
 //
 // Test Grafana managed receivers without saving them.
 //
@@ -170,7 +170,7 @@ import (
 //       200: gettableSilences
 //       400: ValidationError
 
-// swagger:route GET /api/alertmanager/{Recipient}/api/v2/silences alertmanager RouteGetSilences
+// swagger:route GET /api/alertmanager/{DatasourceUID}/api/v2/silences alertmanager RouteGetSilences
 //
 // get silences
 //
@@ -186,7 +186,7 @@ import (
 //       201: gettableSilence
 //       400: ValidationError
 
-// swagger:route POST /api/alertmanager/{Recipient}/api/v2/silences alertmanager RouteCreateSilence
+// swagger:route POST /api/alertmanager/{DatasourceUID}/api/v2/silences alertmanager RouteCreateSilence
 //
 // create silence
 //
@@ -202,7 +202,7 @@ import (
 //       200: gettableSilence
 //       400: ValidationError
 
-// swagger:route GET /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId} alertmanager RouteGetSilence
+// swagger:route GET /api/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId} alertmanager RouteGetSilence
 //
 // get silence
 //
@@ -218,7 +218,7 @@ import (
 //       200: Ack
 //       400: ValidationError
 
-// swagger:route DELETE /api/alertmanager/{Recipient}/api/v2/silence/{SilenceId} alertmanager RouteDeleteSilence
+// swagger:route DELETE /api/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId} alertmanager RouteDeleteSilence
 //
 // delete silence
 //
@@ -427,29 +427,37 @@ type AlertsParams struct {
 }
 
 // swagger:parameters RoutePostAMAlerts RoutePostGrafanaAMAlerts
+// swagger:parameters RoutePostAMAlerts
 type PostableAlerts struct {
 	// in:body
 	PostableAlerts []amv2.PostableAlert `yaml:"" json:""`
 }
 
 // swagger:parameters RoutePostAlertingConfig RoutePostGrafanaAlertingConfig
+// swagger:parameters RoutePostAlertingConfig
 type BodyAlertingConfig struct {
 	// in:body
 	Body PostableUserConfig
 }
 
-// alertmanager routes
-// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig RoutePostTestReceivers
 // ruler routes
 // swagger:parameters RouteGetRulesConfig RoutePostNameRulesConfig RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig
 // prom routes
 // swagger:parameters RouteGetRuleStatuses RouteGetAlertStatuses
 // testing routes
 // swagger:parameters RouteTestReceiverConfig RouteTestRuleConfig
-type DatasourceReference struct {
-	// Recipient should be the numeric datasource id
+type DatasourceIDReference struct {
+	// DatasourceID should be the numeric datasource identifier
 	// in:path
-	Recipient int
+	DatasourceID int
+}
+
+// alertmanager routes
+// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig RoutePostTestReceivers
+type DatasourceUIDReference struct {
+	// DatasoureUID should be the datasource UID identifier
+	// in:path
+	DatasourceUID string
 }
 
 // swagger:model
@@ -712,6 +720,8 @@ type Route struct {
 	GroupWait      *model.Duration `yaml:"group_wait,omitempty" json:"group_wait,omitempty"`
 	GroupInterval  *model.Duration `yaml:"group_interval,omitempty" json:"group_interval,omitempty"`
 	RepeatInterval *model.Duration `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty"`
+
+	Provenance models.Provenance `yaml:"provenance,omitempty" json:"provenance,omitempty"`
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface for Route. This is a copy of alertmanager's upstream except it removes validation on the label key.
@@ -721,35 +731,7 @@ func (r *Route) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	for _, l := range r.GroupByStr {
-		if l == "..." {
-			r.GroupByAll = true
-		} else {
-			r.GroupBy = append(r.GroupBy, model.LabelName(l))
-		}
-	}
-
-	if len(r.GroupBy) > 0 && r.GroupByAll {
-		return fmt.Errorf("cannot have wildcard group_by (`...`) and other other labels at the same time")
-	}
-
-	groupBy := map[model.LabelName]struct{}{}
-
-	for _, ln := range r.GroupBy {
-		if _, ok := groupBy[ln]; ok {
-			return fmt.Errorf("duplicated label %q in group_by", ln)
-		}
-		groupBy[ln] = struct{}{}
-	}
-
-	if r.GroupInterval != nil && time.Duration(*r.GroupInterval) == time.Duration(0) {
-		return fmt.Errorf("group_interval cannot be zero")
-	}
-	if r.RepeatInterval != nil && time.Duration(*r.RepeatInterval) == time.Duration(0) {
-		return fmt.Errorf("repeat_interval cannot be zero")
-	}
-
-	return nil
+	return r.validateChild()
 }
 
 // Return an alertmanager route from a Grafana route. The ObjectMatchers are converted to Matchers.
@@ -834,25 +816,9 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("no routes provided")
 	}
 
-	// Route is a recursive structure that includes validation in the yaml unmarshaler.
-	// Therefore, we'll redirect json -> yaml to utilize these.
-	b, err := yaml.Marshal(c.Route)
+	err := c.Route.Validate()
 	if err != nil {
-		return errors.Wrap(err, "marshaling route to yaml for validation")
-	}
-	err = yaml.Unmarshal(b, c.Route)
-	if err != nil {
-		return errors.Wrap(err, "unmarshaling route for validations")
-	}
-
-	if len(c.Route.Receiver) == 0 {
-		return fmt.Errorf("root route must specify a default receiver")
-	}
-	if len(c.Route.Match) > 0 || len(c.Route.MatchRE) > 0 {
-		return fmt.Errorf("root route must not have any matchers")
-	}
-	if len(c.Route.MuteTimeIntervals) > 0 {
-		return fmt.Errorf("root route must not have any mute time intervals")
+		return err
 	}
 
 	for _, r := range c.InhibitRules {
@@ -997,12 +963,13 @@ func AllReceivers(route *config.Route) (res []string) {
 }
 
 type GettableGrafanaReceiver struct {
-	UID                   string           `json:"uid"`
-	Name                  string           `json:"name"`
-	Type                  string           `json:"type"`
-	DisableResolveMessage bool             `json:"disableResolveMessage"`
-	Settings              *simplejson.Json `json:"settings"`
-	SecureFields          map[string]bool  `json:"secureFields"`
+	UID                   string            `json:"uid"`
+	Name                  string            `json:"name"`
+	Type                  string            `json:"type"`
+	DisableResolveMessage bool              `json:"disableResolveMessage"`
+	Settings              *simplejson.Json  `json:"settings"`
+	SecureFields          map[string]bool   `json:"secureFields"`
+	Provenance            models.Provenance `json:"provenance,omitempty"`
 }
 
 type PostableGrafanaReceiver struct {

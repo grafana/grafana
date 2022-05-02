@@ -135,6 +135,10 @@ Options are `production` and `development`. Default is `production`. _Do not_ ch
 Set the name of the grafana-server instance. Used in logging, internal metrics, and clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use system calls to get the machine name.
 
+### force_migration
+
+Force migration will run migrations that might cause data loss. Default is `false`.
+
 <hr />
 
 ## [paths]
@@ -508,6 +512,10 @@ If you want to track Grafana usage via Azure Application Insights, then specify 
     	Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
 
 <hr />
+
+### enable_feedback_links
+
+If set to false will remove all feedback links from the UI. Defaults to true.
 
 ## [security]
 
@@ -1366,6 +1374,14 @@ Configures the Profile section.
 ### enabled
 
 Enable or disable the Profile section. Default is `enabled`.
+
+## [query_history]
+
+Configures Query history in Explore.
+
+### enabled
+
+Enable or disable the Query history. Default is `disabled`.
 
 ## [metrics]
 

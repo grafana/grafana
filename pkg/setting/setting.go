@@ -386,6 +386,8 @@ type Cfg struct {
 
 	Env string
 
+	ForceMigration bool
+
 	// Analytics
 	CheckForGrafanaUpdates              bool
 	CheckForPluginUpdates               bool
@@ -393,6 +395,7 @@ type Cfg struct {
 	ReportingEnabled                    bool
 	ApplicationInsightsConnectionString string
 	ApplicationInsightsEndpointUrl      string
+	FeedbackLinksEnabled                bool
 
 	// LDAP
 	LDAPEnabled     bool
@@ -438,6 +441,8 @@ type Cfg struct {
 
 	// Query history
 	QueryHistoryEnabled bool
+
+	DashboardPreviews DashboardPreviewsSettings
 }
 
 type CommandLineArgs struct {
@@ -883,6 +888,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
+	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
 	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
 	cfg.PluginsPath = makeAbsolute(plugins, HomePath)
@@ -938,13 +944,17 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
 	RudderstackSdkUrl = analytics.Key("rudderstack_sdk_url").String()
 	RudderstackConfigUrl = analytics.Key("rudderstack_config_url").String()
+
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
+
 	if len(cfg.ReportingDistributor) >= 100 {
 		cfg.ReportingDistributor = cfg.ReportingDistributor[:100]
 	}
+
 	cfg.ApplicationInsightsConnectionString = analytics.Key("application_insights_connection_string").String()
 	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
+	cfg.FeedbackLinksEnabled = analytics.Key("feedback_links_enabled").MustBool(true)
 
 	if err := readAlertingSettings(iniFile); err != nil {
 		return err
@@ -995,6 +1005,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	cfg.readDataSourcesSettings()
+
+	cfg.DashboardPreviews = readDashboardPreviewsSettings(iniFile)
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")

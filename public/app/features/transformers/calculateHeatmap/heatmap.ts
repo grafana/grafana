@@ -1,3 +1,5 @@
+import { map } from 'rxjs';
+
 import {
   ArrayVector,
   DataFrame,
@@ -10,7 +12,7 @@ import {
   getFieldDisplayName,
   Field,
 } from '@grafana/data';
-import { map } from 'rxjs';
+
 import { HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
 import { niceLinearIncrs, niceTimeIncrs } from './utils';
 
@@ -220,7 +222,9 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
         name: 'count',
         type: FieldType.number,
         values: new ArrayVector(heat2d.count),
-        config: {},
+        config: {
+          unit: 'short', // always integer
+        },
       },
     ],
   };

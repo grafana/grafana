@@ -1,3 +1,5 @@
+import { lastValueFrom } from 'rxjs';
+
 import { urlUtil } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import {
@@ -15,16 +17,16 @@ import {
   TestReceiversResult,
   ExternalAlertmanagerConfig,
 } from 'app/plugins/datasource/alertmanager/types';
-import { lastValueFrom } from 'rxjs';
-import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+
 import { isFetchError } from '../utils/alertmanager';
+import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 // "grafana" for grafana-managed, otherwise a datasource name
 export async function fetchAlertManagerConfig(alertManagerSourceName: string): Promise<AlertManagerCortexConfig> {
   try {
     const result = await lastValueFrom(
       getBackendSrv().fetch<AlertManagerCortexConfig>({
-        url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/alerts`,
+        url: `/api/alertmanager/${getDatasourceAPIUid(alertManagerSourceName)}/config/api/v1/alerts`,
         showErrorAlert: false,
         showSuccessAlert: false,
       })
@@ -55,7 +57,7 @@ export async function updateAlertManagerConfig(
   await lastValueFrom(
     getBackendSrv().fetch({
       method: 'POST',
-      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/alerts`,
+      url: `/api/alertmanager/${getDatasourceAPIUid(alertManagerSourceName)}/config/api/v1/alerts`,
       data: config,
       showErrorAlert: false,
       showSuccessAlert: false,
@@ -67,7 +69,7 @@ export async function deleteAlertManagerConfig(alertManagerSourceName: string): 
   await lastValueFrom(
     getBackendSrv().fetch({
       method: 'DELETE',
-      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/alerts`,
+      url: `/api/alertmanager/${getDatasourceAPIUid(alertManagerSourceName)}/config/api/v1/alerts`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
@@ -77,7 +79,7 @@ export async function deleteAlertManagerConfig(alertManagerSourceName: string): 
 export async function fetchSilences(alertManagerSourceName: string): Promise<Silence[]> {
   const result = await lastValueFrom(
     getBackendSrv().fetch<Silence[]>({
-      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/api/v2/silences`,
+      url: `/api/alertmanager/${getDatasourceAPIUid(alertManagerSourceName)}/api/v2/silences`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
@@ -92,7 +94,7 @@ export async function createOrUpdateSilence(
 ): Promise<Silence> {
   const result = await lastValueFrom(
     getBackendSrv().fetch<Silence>({
-      url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences`,
+      url: `/api/alertmanager/${getDatasourceAPIUid(alertmanagerSourceName)}/api/v2/silences`,
       data: payload,
       showErrorAlert: false,
       showSuccessAlert: false,
@@ -104,7 +106,7 @@ export async function createOrUpdateSilence(
 
 export async function expireSilence(alertmanagerSourceName: string, silenceID: string): Promise<void> {
   await getBackendSrv().delete(
-    `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silence/${encodeURIComponent(silenceID)}`
+    `/api/alertmanager/${getDatasourceAPIUid(alertmanagerSourceName)}/api/v2/silence/${encodeURIComponent(silenceID)}`
   );
 }
 
@@ -129,7 +131,7 @@ export async function fetchAlerts(
   const result = await lastValueFrom(
     getBackendSrv().fetch<AlertmanagerAlert[]>({
       url:
-        `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/alerts` +
+        `/api/alertmanager/${getDatasourceAPIUid(alertmanagerSourceName)}/api/v2/alerts` +
         (filters ? '?' + filters : ''),
       showErrorAlert: false,
       showSuccessAlert: false,
@@ -142,7 +144,7 @@ export async function fetchAlerts(
 export async function fetchAlertGroups(alertmanagerSourceName: string): Promise<AlertmanagerGroup[]> {
   const result = await lastValueFrom(
     getBackendSrv().fetch<AlertmanagerGroup[]>({
-      url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/alerts/groups`,
+      url: `/api/alertmanager/${getDatasourceAPIUid(alertmanagerSourceName)}/api/v2/alerts/groups`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
@@ -154,7 +156,7 @@ export async function fetchAlertGroups(alertmanagerSourceName: string): Promise<
 export async function fetchStatus(alertManagerSourceName: string): Promise<AlertmanagerStatus> {
   const result = await lastValueFrom(
     getBackendSrv().fetch<AlertmanagerStatus>({
-      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/api/v2/status`,
+      url: `/api/alertmanager/${getDatasourceAPIUid(alertManagerSourceName)}/api/v2/status`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
@@ -177,7 +179,7 @@ export async function testReceivers(
       getBackendSrv().fetch<TestReceiversResult>({
         method: 'POST',
         data,
-        url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/receivers/test`,
+        url: `/api/alertmanager/${getDatasourceAPIUid(alertManagerSourceName)}/config/api/v1/receivers/test`,
         showErrorAlert: false,
         showSuccessAlert: false,
       })

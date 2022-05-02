@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -36,16 +36,16 @@ func IsDataSource(uid string) bool {
 
 // Service is service representation for expression handling.
 type Service struct {
-	cfg            *setting.Cfg
-	dataService    backend.QueryDataHandler
-	secretsService secrets.Service
+	cfg               *setting.Cfg
+	dataService       backend.QueryDataHandler
+	dataSourceService datasources.DataSourceService
 }
 
-func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, secretsService secrets.Service) *Service {
+func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, dataSourceService datasources.DataSourceService) *Service {
 	return &Service{
-		cfg:            cfg,
-		dataService:    pluginClient,
-		secretsService: secretsService,
+		cfg:               cfg,
+		dataService:       pluginClient,
+		dataSourceService: dataSourceService,
 	}
 }
 
