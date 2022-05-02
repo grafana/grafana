@@ -202,6 +202,11 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSo
 		return err
 	}
 
+	err = s.fillWithSecureJSONData(ctx, cmd, query.Result)
+	if err != nil {
+		return err
+	}
+
 	err = s.SQLStore.UpdateDataSource(ctx, cmd)
 	if err != nil {
 		return err
@@ -214,18 +219,12 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSo
 		}
 	}
 
-	if len(cmd.SecureJsonData) != 0 {
-		secret, err := json.Marshal(cmd.SecureJsonData)
-		if err != nil {
-			return err
-		}
-		err = s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
-		if err != nil {
-			return err
-		}
+	secret, err := json.Marshal(cmd.SecureJsonData)
+	if err != nil {
+		return err
 	}
 
-	return nil
+	return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
 }
 
 func (s *Service) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
@@ -565,4 +564,19 @@ func awsServiceNamespace(dsType string) string {
 	default:
 		panic(fmt.Sprintf("Unsupported datasource %q", dsType))
 	}
+}
+
+func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *models.UpdateDataSourceCommand, ds *models.DataSource) error {
+	decrypted, err := s.DecryptedValues(ctx, ds)
+	if err != nil {
+		return err
+	}
+
+	for k, v := range decrypted {
+		if _, ok := cmd.SecureJsonData[k]; !ok {
+			cmd.SecureJsonData[k] = v
+		}
+	}
+
+	return nil
 }

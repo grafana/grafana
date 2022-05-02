@@ -302,11 +302,6 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 		return response.Error(403, "Cannot update read-only data source", nil)
 	}
 
-	err = hs.fillWithSecureJSONData(c.Req.Context(), &cmd)
-	if err != nil {
-		return response.Error(500, "Failed to update datasource", err)
-	}
-
 	err = hs.DataSourcesService.UpdateDataSource(c.Req.Context(), &cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceUpdatingOldVersion) {
@@ -337,34 +332,6 @@ func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext) response.Response {
 		"name":       cmd.Name,
 		"datasource": datasourceDTO,
 	})
-}
-
-func (hs *HTTPServer) fillWithSecureJSONData(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
-	if len(cmd.SecureJsonData) == 0 {
-		return nil
-	}
-
-	ds, err := hs.getRawDataSourceById(ctx, cmd.Id, cmd.OrgId)
-	if err != nil {
-		return err
-	}
-
-	if ds.ReadOnly {
-		return models.ErrDatasourceIsReadOnly
-	}
-
-	decrypted, err := hs.DataSourcesService.DecryptedValues(ctx, ds)
-	if err != nil {
-		return err
-	}
-
-	for k, v := range decrypted {
-		if _, ok := cmd.SecureJsonData[k]; !ok {
-			cmd.SecureJsonData[k] = v
-		}
-	}
-
-	return nil
 }
 
 func (hs *HTTPServer) getRawDataSourceById(ctx context.Context, id int64, orgID int64) (*models.DataSource, error) {
