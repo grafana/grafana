@@ -11,6 +11,10 @@ export interface Dimensions {
   [key: string]: string | string[];
 }
 
+export interface MultiFilters {
+  [key: string]: string[];
+}
+
 export type CloudWatchQueryMode = 'Metrics' | 'Logs' | 'Annotations';
 
 export enum MetricQueryType {
@@ -372,7 +376,7 @@ export enum VariableQueryType {
   Statistics = 'statistics',
 }
 
-export interface VariableQuery extends DataQuery {
+export interface OldVariableQuery extends DataQuery {
   queryType: VariableQueryType;
   namespace: string;
   region: string;
@@ -384,6 +388,20 @@ export interface VariableQuery extends DataQuery {
   attributeName: string;
   resourceType: string;
   tags: string;
+}
+
+export interface VariableQuery extends DataQuery {
+  queryType: VariableQueryType;
+  namespace: string;
+  region: string;
+  metricName: string;
+  dimensionKey: string;
+  dimensionFilters?: Dimensions;
+  ec2Filters?: MultiFilters;
+  instanceID: string;
+  attributeName: string;
+  resourceType: string;
+  tags?: MultiFilters;
 }
 
 export interface LegacyAnnotationQuery extends MetricStat, DataQuery {

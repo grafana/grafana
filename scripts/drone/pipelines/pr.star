@@ -86,8 +86,7 @@ def pr_test_frontend():
     )
 
 
-def pr_test_backend(edition):
-    include_enterprise2 = edition == 'enterprise'
+def pr_test_backend():
     init_steps = [
         identify_runner_step(),
         download_grabpl_step(),
@@ -98,17 +97,10 @@ def pr_test_backend(edition):
         lint_drone_step(),
         codespell_step(),
         shellcheck_step(),
-        lint_backend_step(edition=edition),
-        test_backend_step(edition=edition),
-        test_backend_integration_step(edition=edition),
+        lint_backend_step(edition="oss"),
+        test_backend_step(edition="oss"),
+        test_backend_integration_step(edition="oss"),
     ]
-    if include_enterprise2:
-        edition2 = 'enterprise2'
-        test_steps.extend([
-            lint_backend_step(edition=edition2),
-            test_backend_step(edition=edition2),
-            test_backend_integration_step(edition=edition2),
-        ])
     return pipeline(
         name='pr-test-backend', edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps,
     )
@@ -118,7 +110,6 @@ def pr_pipelines(edition):
     services = integration_test_services(edition)
     volumes = integration_test_services_volumes()
     variants = ['linux-amd64', 'linux-amd64-musl', 'darwin-amd64', 'windows-amd64', 'armv6', ]
-    include_enterprise2 = edition == 'enterprise'
     init_steps = [
         identify_runner_step(),
         download_grabpl_step(),
@@ -139,17 +130,9 @@ def pr_pipelines(edition):
         mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
     ]
 
-    if include_enterprise2:
-        edition2 = 'enterprise2'
-        build_steps.append(benchmark_ldap_step())
-        services.append(ldap_service())
-        build_steps.extend([
-            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-amd64']),
-        ])
-
     # Insert remaining build_steps
     build_steps.extend([
-        package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=variants),
+        package_step(edition=edition, ver_mode=ver_mode, variants=variants),
         grafana_server_step(edition=edition),
         e2e_tests_step('dashboards-suite', edition=edition),
         e2e_tests_step('smoke-tests-suite', edition=edition),
@@ -162,19 +145,9 @@ def pr_pipelines(edition):
         build_docker_images_step(edition=edition, ver_mode=ver_mode, archs=['amd64', ]),
     ])
 
-    if include_enterprise2:
-        integration_test_steps.extend([
-            redis_integration_tests_step(edition=edition2, ver_mode=ver_mode),
-            memcached_integration_tests_step(edition=edition, ver_mode=ver_mode),
-        ])
-        build_steps.extend([
-            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2,
-                         variants=['linux-amd64']),
-        ])
-
     return [
         pr_test_frontend(),
-        pr_test_backend(edition),
+        pr_test_backend(),
         pipeline(
             name='pr-build-e2e', edition=edition, trigger=trigger, services=[], steps=init_steps + build_steps,
         ), pipeline(
