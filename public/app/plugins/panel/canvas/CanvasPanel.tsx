@@ -113,6 +113,7 @@ export class CanvasPanel extends Component<Props, State> {
   componentWillUnmount() {
     this.subs.unsubscribe();
     isInlineEditOpen = false;
+    canvasInstances = [];
   }
 
   // NOTE, all changes to the scene flow through this function
@@ -169,6 +170,7 @@ export class CanvasPanel extends Component<Props, State> {
 
   inlineEditButtonClick = () => {
     if (isInlineEditOpen) {
+      this.forceUpdate();
       this.setActivePanel();
       return;
     }
