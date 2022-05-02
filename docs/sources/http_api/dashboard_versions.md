@@ -9,6 +9,8 @@ aliases = ["/docs/grafana/latest/http_api/dashboardversions/"]
 
 ## Get all dashboard versions
 
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new dashboard versions API](#get-all-dashboard-verions-by-dashboard-uid).
+
 Query parameters:
 
 - **limit** - Maximum number of results to return
@@ -236,6 +238,8 @@ Status Codes:
 - **404** - Dashboard version not found
 
 ## Restore dashboard
+
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new dashboard versions API](#restore-dashboard-by-dashboard-uid).
 
 `POST /api/dashboards/id/:dashboardId/restore`
 
