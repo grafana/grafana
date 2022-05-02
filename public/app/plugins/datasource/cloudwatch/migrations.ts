@@ -149,7 +149,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.queryType = VariableQueryType.ResourceArns;
     newQuery.region = resourceARNsQuery[1];
     newQuery.resourceType = resourceARNsQuery[2];
-    newQuery.tags = JSON.parse(resourceARNsQuery[3]) || '';
+    newQuery.tags = resourceARNsQuery[3] || '';
     return newQuery;
   }
 
