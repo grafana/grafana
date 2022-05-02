@@ -128,8 +128,6 @@ func migrateAliasToDynamicLabel(queryJson *simplejson.Json) {
 	}
 
 	queryJson.Set("label", fullAliasField)
-
-	return
 }
 
 func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time, endTime time.Time) (*cloudWatchQuery, error) {
