@@ -349,15 +349,11 @@ func (s *GettableStatus) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
+func NewGettableStatus(cfg *PostableApiAlertingConfig, clusterStatus *amv2.ClusterStatus) *GettableStatus {
 	// In Grafana, the only field we support is Config.
-	cs := amv2.ClusterStatusStatusDisabled
 	na := "N/A"
 	return &GettableStatus{
-		Cluster: &amv2.ClusterStatus{
-			Status: &cs,
-			Peers:  []*amv2.PeerStatus{},
-		},
+		Cluster: clusterStatus,
 		VersionInfo: &amv2.VersionInfo{
 			Branch:    &na,
 			BuildDate: &na,
