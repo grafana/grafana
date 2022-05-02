@@ -63,19 +63,16 @@ func migrateLegacyQuery(queries []backend.DataQuery, dynamicLabelsEnabled bool, 
 			return nil, err
 		}
 
-		migratedWithStatistic, err := migrateStatisticsToStatistic(queryJson)
-		if err != nil {
+		if err := migrateStatisticsToStatistic(queryJson); err != nil {
 			return nil, err
 		}
 
-		migratedQueryJson := migratedWithStatistic
-
-		_, labelExists := migratedQueryJson.CheckGet("label")
-		if !labelExists && dynamicLabelsEnabled && migratedWithStatistic != nil {
-			migrateAliasToDynamicLabel(migratedWithStatistic)
+		_, labelExists := queryJson.CheckGet("label")
+		if !labelExists && dynamicLabelsEnabled && queryJson != nil {
+			migrateAliasToDynamicLabel(queryJson)
 		}
 
-		query.JSON, err = migratedQueryJson.MarshalJSON()
+		query.JSON, err = queryJson.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
@@ -89,19 +86,19 @@ func migrateLegacyQuery(queries []backend.DataQuery, dynamicLabelsEnabled bool, 
 // migrateStatisticsToStatistic migrates queries that has a `statistics` field to use the `statistic` field instead.
 // In case the query used more than one stat, the first stat in the slice will be used in the statistic field
 // Read more here https://github.com/grafana/grafana/issues/30629
-func migrateStatisticsToStatistic(queryJson *simplejson.Json) (*simplejson.Json, error) {
+func migrateStatisticsToStatistic(queryJson *simplejson.Json) error {
 	_, err := queryJson.Get("statistic").String()
 	// If there's not a statistic property in the json, we know it's the legacy format and then it has to be migrated
 	if err != nil {
 		stats, err := queryJson.Get("statistics").StringArray()
 		if err != nil {
-			return nil, fmt.Errorf("query must have either statistic or statistics field")
+			return fmt.Errorf("query must have either statistic or statistics field")
 		}
 		queryJson.Del("statistics")
 		queryJson.Set("statistic", stats[0])
 	}
 
-	return queryJson, nil
+	return nil
 }
 
 var aliasPatterns = map[string]string{
