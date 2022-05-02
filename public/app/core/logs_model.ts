@@ -207,13 +207,12 @@ export function dataFrameToLogsModel(
     // Create histogram metrics from logs using the interval as bucket size for the line count
     if (intervalMs && logsModel.rows.length > 0) {
       const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
-      const { histogramRange, bucketSize, visibleRangeMs, requestedRangeMs } = getSeriesProperties(
+      const { visibleRange, bucketSize, visibleRangeMs, requestedRangeMs } = getSeriesProperties(
         sortedRows,
         intervalMs,
         absoluteRange
       );
-      logsModel.histogramRange = histogramRange;
-      logsModel.logsRange = { from: sortedRows[0].timeEpochMs, to: sortedRows[sortedRows.length - 1].timeEpochMs };
+      logsModel.visibleRange = visibleRange;
       logsModel.series = makeDataFramesForLogs(sortedRows, bucketSize);
 
       if (logsModel.meta) {
@@ -250,7 +249,7 @@ export function getSeriesProperties(
   pxPerBar = 20,
   minimumBucketSize = 1000
 ) {
-  let histogramRange = absoluteRange;
+  let visibleRange = absoluteRange;
   let resolutionIntervalMs = intervalMs;
   let bucketSize = Math.max(resolutionIntervalMs * pxPerBar, minimumBucketSize);
   let visibleRangeMs;
@@ -266,18 +265,18 @@ export function getSeriesProperties(
       // Adjust interval bucket size for potentially shorter visible range
       const clampingFactor = visibleRangeMs / requestedRangeMs;
       resolutionIntervalMs *= clampingFactor;
-      // Minimum bucket size of 1s for nicer graphing
+      // Minimum bucketsize of 1s for nicer graphing
       bucketSize = Math.max(Math.ceil(resolutionIntervalMs * pxPerBar), minimumBucketSize);
-      // makeSeriesForLogs() aligns datapoints with time buckets, so we do the same here to not cut off data
+      // makeSeriesForLogs() aligns dataspoints with time buckets, so we do the same here to not cut off data
       const adjustedEarliest = Math.floor(earliestTsLogs / bucketSize) * bucketSize;
-      histogramRange = { from: adjustedEarliest, to: absoluteRange.to };
+      visibleRange = { from: adjustedEarliest, to: absoluteRange.to };
     } else {
       // We use visibleRangeMs to calculate range coverage of received logs. However, some data sources are rounding up range in requests. This means that received logs
       // can (in edge cases) be outside of the requested range and visibleRangeMs < 0. In that case, we want to change visibleRangeMs to be 1 so we can calculate coverage.
       visibleRangeMs = 1;
     }
   }
-  return { bucketSize, histogramRange, visibleRangeMs, requestedRangeMs };
+  return { bucketSize, visibleRange, visibleRangeMs, requestedRangeMs };
 }
 
 function separateLogsAndMetrics(dataFrames: DataFrame[]) {

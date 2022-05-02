@@ -1078,7 +1078,7 @@ describe('getSeriesProperties()', () => {
     const range = { from: 10, to: 20 };
     const result = getSeriesProperties(rows, 1, range, 2, 1);
     expect(result.bucketSize).toBe(2);
-    expect(result.histogramRange).toMatchObject(range);
+    expect(result.visibleRange).toMatchObject(range);
   });
 
   it('clamps the range and adjusts the bucketSize if the logs row times do not completely cover the given range', () => {
@@ -1088,10 +1088,10 @@ describe('getSeriesProperties()', () => {
     ] as any;
     const range = { from: 0, to: 30 };
     const result = getSeriesProperties(rows, 3, range, 2, 1);
-    // Bucket size 6 gets shortened to 4 because of new visible range is 20ms vs original range being 30ms
+    // Bucketsize 6 gets shortened to 4 because of new visible range is 20ms vs original range being 30ms
     expect(result.bucketSize).toBe(4);
     // From time is also aligned to bucketSize (divisible by 4)
-    expect(result.histogramRange).toMatchObject({ from: 8, to: 30 });
+    expect(result.visibleRange).toMatchObject({ from: 8, to: 30 });
   });
 });
 
