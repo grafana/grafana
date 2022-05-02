@@ -2,12 +2,13 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import createMockResourcePickerData from '../../__mocks__/resourcePickerData';
+import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';
 import {
   createMockResourceGroupsBySubscription,
   createMockSubscriptions,
   mockResourcesByResourceGroup,
 } from '../../__mocks__/resourcePickerRows';
+import ResourcePickerData from '../../resourcePicker/resourcePickerData';
 
 import { ResourceRowType } from './types';
 
@@ -20,14 +21,24 @@ const singleResourceSelectionURI =
   '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/db-server';
 
 const noop: any = () => {};
+function createMockResourcePickerData() {
+  const mockDatasource = new ResourcePickerData(createMockInstanceSetttings());
+
+  mockDatasource.getSubscriptions = jest.fn().mockResolvedValue(createMockSubscriptions());
+  mockDatasource.getResourceGroupsBySubscriptionId = jest
+    .fn()
+    .mockResolvedValue(createMockResourceGroupsBySubscription());
+  mockDatasource.getResourcesForResourceGroup = jest.fn().mockResolvedValue(mockResourcesByResourceGroup());
+  mockDatasource.getResourceURIFromWorkspace = jest.fn().mockReturnValue('');
+  mockDatasource.getResourceURIDisplayProperties = jest.fn().mockResolvedValue({});
+
+  return mockDatasource;
+}
+
 const defaultProps = {
   templateVariables: [],
   resourceURI: noResourceURI,
-  resourcePickerData: createMockResourcePickerData({
-    getSubscriptions: jest.fn().mockResolvedValue(createMockSubscriptions()),
-    getResourceGroupsBySubscriptionId: jest.fn().mockResolvedValue(createMockResourceGroupsBySubscription()),
-    getResourcesForResourceGroup: jest.fn().mockResolvedValue(mockResourcesByResourceGroup()),
-  }),
+  resourcePickerData: createMockResourcePickerData(),
   onCancel: noop,
   onApply: noop,
   selectableEntryTypes: [

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -17,17 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
-
-func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalResponse {
-	if errors.Is(err, models.ErrDataSourceAccessDenied) {
-		return response.Error(http.StatusForbidden, "Access denied to data source", err)
-	}
-	var badQuery *query.ErrBadQuery
-	if errors.As(err, &badQuery) {
-		return response.Error(http.StatusBadRequest, util.Capitalize(badQuery.Message), err)
-	}
-	return response.Error(http.StatusInternalServerError, "Query data error", err)
-}
 
 // QueryMetricsV2 returns query metrics.
 // POST /api/ds/query   DataSource query w/ expressions

@@ -2,6 +2,7 @@
 title = "Enable alerting high availability"
 description = "Enable alerting high availability"
 keywords = ["grafana", "alerting", "tutorials", "ha", "high availability"]
+aliases = ["/docs/grafana/latest/alerting/unified-alerting/high-availability/"]
 weight = 450
 +++
 
