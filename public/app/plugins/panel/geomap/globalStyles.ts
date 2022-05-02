@@ -48,8 +48,6 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
   return css`
     .ol-scale-line {
       background: ${theme.colors.border.weak}; // rgba(0,60,136,0.3);
-      position: absolute;
-      left: 45%;
     }
     .ol-scale-line-inner {
       border: 1px solid ${theme.colors.text.primary}; // #eee;
