@@ -6668,6 +6668,14 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          },
+          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -6675,14 +6683,6 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -6716,16 +6716,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           }
@@ -10354,6 +10354,10 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
+        },
         "data": {
           "$ref": "#/definitions/Json"
         },
@@ -10642,6 +10646,10 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "DashboardId"
+        },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
         },
         "panelId": {
           "type": "integer",
@@ -11053,6 +11061,10 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "DashboardId"
+        },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
         },
         "data": {
           "$ref": "#/definitions/Json"

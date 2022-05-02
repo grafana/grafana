@@ -230,9 +230,6 @@ exports[`no enzyme tests`] = {
     "public/app/features/explore/SecondaryActions.test.tsx:1177396128": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/explore/TimeSyncButton.test.tsx:853739820": [
-      [0, 17, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/folders/FolderSettingsPage.test.tsx:1109052730": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],

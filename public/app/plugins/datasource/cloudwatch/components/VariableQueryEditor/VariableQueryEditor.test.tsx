@@ -1,4 +1,5 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { select } from 'react-select-event';
 
@@ -13,11 +14,9 @@ const defaultQuery = {
   region: '',
   metricName: '',
   dimensionKey: '',
-  ec2Filters: '',
   instanceID: '',
   attributeName: '',
   resourceType: '',
-  tags: '',
   refId: '',
 };
 
@@ -40,7 +39,7 @@ ds.datasource.getMetrics = jest.fn().mockResolvedValue([
 ]);
 ds.datasource.getDimensionKeys = jest
   .fn()
-  .mockImplementation((namespace: string, region: string, dimensionFilters?: Dimensions) => {
+  .mockImplementation((_namespace: string, region: string, dimensionFilters?: Dimensions) => {
     if (!!dimensionFilters) {
       return Promise.resolve([
         { label: 's4', value: 's4' },
@@ -61,6 +60,7 @@ ds.datasource.getDimensionValues = jest.fn().mockResolvedValue([
   { label: 'bar', value: 'bar' },
 ]);
 ds.datasource.getVariables = jest.fn().mockReturnValue([]);
+ds.datasource.getEc2InstanceAttribute = jest.fn().mockReturnValue([]);
 
 const onChange = jest.fn();
 const defaultProps: Props = {
@@ -165,6 +165,40 @@ describe('VariableEditor', () => {
         metricName: 'i3',
         dimensionKey: 's4',
         dimensionFilters: { v4: 'bar' },
+      });
+    });
+    it('should parse multiFilters correctly', async () => {
+      const props = defaultProps;
+      props.query = {
+        ...defaultQuery,
+        queryType: VariableQueryType.EC2InstanceAttributes,
+        region: 'a1',
+        attributeName: 'Tags.blah',
+        ec2Filters: { s4: ['foo', 'bar'] },
+      };
+      render(<VariableQueryEditor {...props} />);
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('Tags.blah')).toBeInTheDocument();
+      });
+
+      const filterItem = screen.getByTestId('cloudwatch-multifilter-item');
+      expect(filterItem).toBeInTheDocument();
+      expect(within(filterItem).getByDisplayValue('foo, bar')).toBeInTheDocument();
+
+      // set filter value
+      const valueElement = screen.getByTestId('cloudwatch-multifilter-item-value');
+      expect(valueElement).toBeInTheDocument();
+      await userEvent.type(valueElement!, ',baz');
+      fireEvent.blur(valueElement!);
+
+      expect(screen.getByDisplayValue('foo, bar, baz')).toBeInTheDocument();
+      expect(onChange).toHaveBeenCalledWith({
+        ...defaultQuery,
+        queryType: VariableQueryType.EC2InstanceAttributes,
+        region: 'a1',
+        attributeName: 'Tags.blah',
+        ec2Filters: { s4: ['foo', 'bar', 'baz'] },
       });
     });
   });
