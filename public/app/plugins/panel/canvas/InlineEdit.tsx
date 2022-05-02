@@ -6,7 +6,7 @@ import { Resizable, ResizeCallbackData } from 'react-resizable';
 
 import { Dimensions2D, GrafanaTheme } from '@grafana/data';
 import { config } from '@grafana/runtime/src';
-import { IconButton, Portal, stylesFactory, useTheme } from '@grafana/ui';
+import { IconButton, Portal, useStyles } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { InlineEditOptions } from './InlineEditOptions';
@@ -19,10 +19,9 @@ type Props = {
 const OFFSET_X = 70;
 
 export const InlineEdit = ({ onClose }: Props) => {
-  const theme = useTheme();
   const btnInlineEdit = document.querySelector('[data-btninlineedit]')!.getBoundingClientRect();
   const ref = useRef<HTMLDivElement>(null);
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
   const inlineEditKey = 'inlineEditPanel';
 
   const globalCSS = getGlobalStyles(config.theme2);
@@ -81,7 +80,7 @@ export const InlineEdit = ({ onClose }: Props) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme) => ({
   inlineEditorContainer: css`
     display: flex;
     flex-direction: column;
@@ -115,4 +114,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   inlineEditorContentWrapper: css`
     overflow: scroll;
   `,
-}));
+});

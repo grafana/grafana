@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import React, { Component } from 'react';
 import { ReplaySubject, Subscription } from 'rxjs';
 
-import { GrafanaTheme, PanelProps } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime/src';
-import { Button, PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
+import { GrafanaTheme2, PanelProps } from '@grafana/data';
+import { locationService } from '@grafana/runtime/src';
+import { Button, PanelContext, PanelContextRoot, useStyles2 } from '@grafana/ui';
 import { CanvasGroupOptions } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
@@ -42,7 +42,7 @@ export class CanvasPanel extends Component<Props, State> {
   readonly scene: Scene;
   private subs = new Subscription();
   needsReload = false;
-  styles = getStyles(config.theme);
+  styles = useStyles2(getStyles);
   isEditing = locationService.getSearchObject().editPanel !== undefined;
 
   constructor(props: Props) {
@@ -217,11 +217,11 @@ export class CanvasPanel extends Component<Props, State> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   inlineEditButton: css`
     position: absolute;
     bottom: 8px;
     left: 8px;
     z-index: 999;
   `,
-}));
+});
