@@ -1,78 +1,6 @@
 import { omit } from 'lodash';
 
-import { AnnotationQuery, DataQuery } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { getNextRefIdChar } from 'app/core/utils/query';
-
-import {
-  CloudWatchMetricsQuery,
-  LegacyAnnotationQuery,
-  MetricEditorMode,
-  MetricQueryType,
-  VariableQuery,
-  VariableQueryType,
-  OldVariableQuery,
-} from './types';
-
-// Migrates a metric query that use more than one statistic into multiple queries
-// E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
-export function migrateMultipleStatsMetricsQuery(
-  query: CloudWatchMetricsQuery,
-  panelQueries: DataQuery[]
-): DataQuery[] {
-  const newQueries = [];
-  if (query?.statistics && query?.statistics.length) {
-    query.statistic = query.statistics[0];
-    for (const stat of query.statistics.splice(1)) {
-      newQueries.push({ ...query, statistic: stat });
-    }
-  }
-  for (const newTarget of newQueries) {
-    newTarget.refId = getNextRefIdChar(panelQueries);
-    delete newTarget.statistics;
-    panelQueries.push(newTarget);
-  }
-  delete query.statistics;
-
-  return newQueries;
-}
-
-// Migrates an annotation query that use more than one statistic into multiple queries
-// E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
-export function migrateMultipleStatsAnnotationQuery(
-  annotationQuery: AnnotationQuery<LegacyAnnotationQuery>
-): Array<AnnotationQuery<DataQuery>> {
-  const newAnnotations: Array<AnnotationQuery<LegacyAnnotationQuery>> = [];
-
-  if (annotationQuery && 'statistics' in annotationQuery && annotationQuery?.statistics?.length) {
-    for (const stat of annotationQuery.statistics.splice(1)) {
-      const { statistics, name, ...newAnnotation } = annotationQuery;
-      newAnnotations.push({ ...newAnnotation, statistic: stat, name: `${name} - ${stat}` });
-    }
-    annotationQuery.statistic = annotationQuery.statistics[0];
-    // Only change the name of the original if new annotations have been created
-    if (newAnnotations.length !== 0) {
-      annotationQuery.name = `${annotationQuery.name} - ${annotationQuery.statistic}`;
-    }
-    delete annotationQuery.statistics;
-  }
-
-  return newAnnotations;
-}
-
-export function migrateCloudWatchQuery(query: CloudWatchMetricsQuery) {
-  if (!query.hasOwnProperty('metricQueryType')) {
-    query.metricQueryType = MetricQueryType.Search;
-  }
-
-  if (!query.hasOwnProperty('metricEditorMode')) {
-    if (query.metricQueryType === MetricQueryType.Query) {
-      query.metricEditorMode = MetricEditorMode.Code;
-    } else {
-      query.metricEditorMode = query.expression ? MetricEditorMode.Code : MetricEditorMode.Builder;
-    }
-  }
-}
+import { VariableQuery, VariableQueryType, OldVariableQuery } from '../types';
 
 function isVariableQuery(rawQuery: string | VariableQuery | OldVariableQuery): rawQuery is VariableQuery {
   return typeof rawQuery !== 'string' && typeof rawQuery.ec2Filters !== 'string' && typeof rawQuery.tags !== 'string';
@@ -211,35 +139,4 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVaria
     return newQuery;
   }
   throw new Error('unable to parse old variable query');
-}
-
-export function migrateMetricQuery(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
-  //add metric query migrations here
-  const migratedQuery = migrateAliasPatterns(query);
-  return migratedQuery;
-}
-
-const aliasPatterns: Record<string, string> = {
-  metric: `PROP('MetricName')`,
-  namespace: `PROP('Namespace')`,
-  period: `PROP('Period')`,
-  region: `PROP('Region')`,
-  stat: `PROP('Stat')`,
-  label: `LABEL`,
-};
-
-export function migrateAliasPatterns(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
-  if (config.featureToggles.cloudWatchDynamicLabels && !query.hasOwnProperty('label')) {
-    const regex = /{{\s*(.+?)\s*}}/g;
-    query.label =
-      query.alias?.replace(regex, (_, value) => {
-        if (aliasPatterns.hasOwnProperty(value)) {
-          return `\${${aliasPatterns[value]}}`;
-        }
-
-        return `\${PROP('Dim.${value}')}`;
-      }) ?? '';
-  }
-
-  return query;
 }

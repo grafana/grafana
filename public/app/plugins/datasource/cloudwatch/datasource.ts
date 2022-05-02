@@ -36,7 +36,7 @@ import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetrics
 import { CloudWatchLanguageProvider } from './language_provider';
 import memoizedDebounce from './memoizedDebounce';
 import { MetricMathCompletionItemProvider } from './metric-math/completion/CompletionItemProvider';
-import { migrateMetricQuery } from './migrations';
+import { migrateMetricQuery } from './migrations/metricQueryMigrations';
 import {
   CloudWatchAnnotationQuery,
   CloudWatchJsonData,
