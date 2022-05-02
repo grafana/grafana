@@ -1,3 +1,5 @@
+import React from 'react';
+
 import {
   EventBusSrv,
   EventBus,
@@ -7,7 +9,7 @@ import {
   SplitOpen,
   CoreApp,
 } from '@grafana/data';
-import React from 'react';
+
 import { SeriesVisibilityChangeMode } from '.';
 
 /** @alpha */

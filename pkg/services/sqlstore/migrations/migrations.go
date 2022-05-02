@@ -87,6 +87,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			addCommentMigrations(mg)
 		}
 	}
+
+	addEntityEventsTableMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

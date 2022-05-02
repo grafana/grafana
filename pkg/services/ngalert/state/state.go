@@ -2,6 +2,8 @@ package state
 
 import (
 	"errors"
+	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -51,8 +53,7 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float
 }
 
 func (a *State) resultNormal(_ *ngModels.AlertRule, result eval.Result) {
-	a.Error = result.Error // should be nil since state is not error
-
+	a.Error = nil // should be nil since state is not error
 	if a.State != eval.Normal {
 		a.EndsAt = result.EvaluatedAt
 		a.StartsAt = result.EvaluatedAt
@@ -88,9 +89,10 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 	a.Error = result.Error
 
 	execErrState := eval.Error
-	if alertRule.ExecErrState == ngModels.AlertingErrState {
+	switch alertRule.ExecErrState {
+	case ngModels.AlertingErrState:
 		execErrState = eval.Alerting
-	} else if alertRule.ExecErrState == ngModels.ErrorErrState {
+	case ngModels.ErrorErrState:
 		// If the evaluation failed because a query returned an error then
 		// update the state with the Datasource UID as a label and the error
 		// message as an annotation so other code can use this metadata to
@@ -107,6 +109,11 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 			a.Annotations["Error"] = queryError.Error()
 		}
 		execErrState = eval.Error
+	case ngModels.OkErrState:
+		a.resultNormal(alertRule, result)
+		return
+	default:
+		a.Error = fmt.Errorf("cannot map error to a state because option [%s] is not supported. evaluation error: %w", alertRule.ExecErrState, a.Error)
 	}
 
 	switch a.State {
@@ -217,7 +224,11 @@ func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
 
 	for refID, value := range lastResult.Values {
 		if strings.Contains(refID, lastResult.Condition) {
-			r[refID] = *value
+			if value != nil {
+				r[refID] = *value
+				continue
+			}
+			r[refID] = math.NaN()
 		}
 	}
 

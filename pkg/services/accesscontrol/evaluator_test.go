@@ -25,11 +25,11 @@ func TestPermission_Evaluate(t *testing.T) {
 			},
 		},
 		{
-			desc:      "should evaluate to true when allEvaluator required scopes matches",
+			desc:      "should evaluate to true when at least one scope matches",
 			expected:  true,
 			evaluator: EvalPermission("reports:read", "reports:1", "reports:2"),
 			permissions: map[string][]string{
-				"reports:read": {"reports:1", "reports:2"},
+				"reports:read": {"reports:2"},
 			},
 		},
 		{
@@ -41,11 +41,11 @@ func TestPermission_Evaluate(t *testing.T) {
 			},
 		},
 		{
-			desc:      "should evaluate to false when only one of required scopes exists",
+			desc:      "should evaluate to false when no scopes matches",
 			expected:  false,
 			evaluator: EvalPermission("reports:read", "reports:1", "reports:2"),
 			permissions: map[string][]string{
-				"reports:read": {"reports:1"},
+				"reports:read": {"reports:9", "reports:10"},
 			},
 		},
 	}

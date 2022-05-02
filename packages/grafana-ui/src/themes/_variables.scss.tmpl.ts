@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 
 import { GrafanaTheme2 } from '@grafana/data';
+
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
 export const commonThemeVarsTemplate = (theme: GrafanaTheme2) =>

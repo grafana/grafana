@@ -9,17 +9,19 @@ import {
   Subscription,
   throwError,
 } from 'rxjs';
-import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
+import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
-import { BackendSrv as BackendService, BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
-import { AppEvents, DataQueryErrorType } from '@grafana/data';
 
+import { AppEvents, DataQueryErrorType } from '@grafana/data';
+import { BackendSrv as BackendService, BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { FolderDTO } from 'app/types';
-import { ContextSrv, contextSrv } from './context_srv';
+import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
+import { DashboardDTO, FolderDTO } from 'app/types';
+
+import { ShowModalReactEvent } from '../../types/events';
 import {
   isContentTypeApplicationJson,
   parseInitFromOptions,
@@ -27,11 +29,11 @@ import {
   parseUrlFromOptions,
 } from '../utils/fetch';
 import { isDataQuery, isLocalUrl } from '../utils/query';
+
 import { FetchQueue } from './FetchQueue';
-import { ResponseQueue } from './ResponseQueue';
 import { FetchQueueWorker } from './FetchQueueWorker';
-import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
-import { ShowModalReactEvent } from '../../types/events';
+import { ResponseQueue } from './ResponseQueue';
+import { ContextSrv, contextSrv } from './context_srv';
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
@@ -310,6 +312,7 @@ export class BackendSrv implements BackendService {
     this.dependencies.appEvents.emit(err.status < 500 ? AppEvents.alertWarning : AppEvents.alertError, [
       message,
       description,
+      err.data.traceID,
     ]);
   }
 
@@ -423,7 +426,7 @@ export class BackendSrv implements BackendService {
   }
 
   getDashboardByUid(uid: string) {
-    return this.get(`/api/dashboards/uid/${uid}`);
+    return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
   }
 
   getFolderByUid(uid: string) {

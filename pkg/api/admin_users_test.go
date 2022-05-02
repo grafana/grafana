@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -269,7 +268,6 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{
-			Bus:              bus.GetBus(),
 			AuthTokenService: auth.NewFakeUserAuthTokenService(),
 			SQLStore:         sqlStore,
 		}
@@ -297,7 +295,6 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
-			Bus:              bus.GetBus(),
 			AuthTokenService: fakeAuthTokenService,
 			SQLStore:         sqlStore,
 		}
@@ -326,7 +323,6 @@ func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, route
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
-			Bus:              bus.GetBus(),
 			AuthTokenService: fakeAuthTokenService,
 			SQLStore:         sqlStore,
 		}
@@ -355,7 +351,6 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 		authInfoService := &logintest.AuthInfoServiceFake{}
 
 		hs := HTTPServer{
-			Bus:              bus.GetBus(),
 			SQLStore:         mockstore.NewSQLStoreMock(),
 			AuthTokenService: fakeAuthTokenService,
 			authInfoService:  authInfoService,
@@ -405,7 +400,6 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.AdminCreateUserForm, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{
-			Bus: bus.GetBus(),
 			Login: loginservice.LoginServiceMock{
 				ExpectedUserForm:    cmd,
 				NoExistingOrgId:     nonExistingOrgID,

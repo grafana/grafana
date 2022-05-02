@@ -111,7 +111,7 @@ func TestMiddlewareContext(t *testing.T) {
 				NavTree:  []*dtos.NavLink{},
 			}
 			t.Log("Calling HTML", "data", data)
-			c.HTML(200, "index-template", data)
+			c.HTML(http.StatusOK, "index-template", data)
 			t.Log("Returned HTML with code 200")
 		}
 		sc.fakeReq("GET", "/").exec()
@@ -616,7 +616,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 				t.Log("Returning JSON OK")
 				resp := make(map[string]interface{})
 				resp["message"] = "OK"
-				c.JSON(200, resp)
+				c.JSON(http.StatusOK, resp)
 			}
 		}
 

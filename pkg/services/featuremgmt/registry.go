@@ -24,7 +24,7 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:        "service-accounts",
+			Name:        "serviceAccounts",
 			Description: "support service accounts",
 			State:       FeatureStateBeta,
 		},
@@ -39,14 +39,10 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "dashboardPreviewsScheduler",
-			Description: "Schedule automatic updates to dashboard previews",
-			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "dashboardPreviewsAdmin",
-			Description: "Manage the dashboard previews crawler process from the UI",
-			State:       FeatureStateAlpha,
+			Name:            "dashboardPreviewsAdmin",
+			Description:     "Manage the dashboard previews crawler process from the UI",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
 		},
 		{
 			Name:        "live-config",
@@ -195,6 +191,12 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:            "export",
+			Description:     "Export grafana instance (to git, etc)",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:            "storageLocalUpload",
 			Description:     "allow uploads to local storage",
 			State:           FeatureStateAlpha,
@@ -212,6 +214,33 @@ var (
 			Description:  "Experimental Explore to Dashboard workflow",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
+		},
+		{
+			Name:         "tracing",
+			Description:  "Adds trace ID to error notifications",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "persistNotifications",
+			Description:  "PoC Notifications page",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "commandPalette",
+			Description: "Enable command palette",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "savedItems",
+			Description: "Enable Saved Items in the navbar.",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "cloudWatchDynamicLabels",
+			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
+			State:       FeatureStateStable,
 		},
 	}
 )

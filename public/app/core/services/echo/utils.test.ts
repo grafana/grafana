@@ -1,4 +1,5 @@
 import { CurrentUserDTO, OrgRole } from '@grafana/data';
+
 import { getUserIdentifier } from './utils';
 
 const baseUser: CurrentUserDTO = {

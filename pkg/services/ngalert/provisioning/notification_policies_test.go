@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -45,12 +46,12 @@ func TestNotificationPolicyService(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
 		newRoute := createTestRoutingTree()
 
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceApi)
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		updated, err := sut.GetPolicyTree(context.Background(), 1)
 		require.NoError(t, err)
-		require.Equal(t, models.ProvenanceApi, updated.Provenance)
+		require.Equal(t, models.ProvenanceAPI, updated.Provenance)
 	})
 
 	t.Run("service respects concurrency token when updating", func(t *testing.T) {
@@ -63,19 +64,31 @@ func TestNotificationPolicyService(t *testing.T) {
 		require.NoError(t, err)
 		expectedConcurrencyToken := q.Result.ConfigurationHash
 
-		err = sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceApi)
+		err = sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		fake := sut.GetAMConfigStore().(*fakeAMConfigStore)
 		intercepted := fake.lastSaveCommand
 		require.Equal(t, expectedConcurrencyToken, intercepted.FetchedConfigurationHash)
 	})
+
+	t.Run("updating invalid route returns ValidationError", func(t *testing.T) {
+		sut := createNotificationPolicyServiceSut()
+		invalid := createTestRoutingTree()
+		repeat := model.Duration(0)
+		invalid.RepeatInterval = &repeat
+
+		err := sut.UpdatePolicyTree(context.Background(), 1, invalid, models.ProvenanceNone)
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrValidation)
+	})
 }
 
 func createNotificationPolicyServiceSut() *NotificationPolicyService {
 	return &NotificationPolicyService{
 		amStore:         newFakeAMConfigStore(),
-		provenanceStore: newFakeProvisioningStore(),
+		provenanceStore: NewFakeProvisioningStore(),
 		xact:            newNopTransactionManager(),
 		log:             log.NewNopLogger(),
 	}

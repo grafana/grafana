@@ -122,7 +122,7 @@ func (f *ForkedRulerApi) forkRouteGetNamespaceGrafanaRulesConfig(ctx *models.Req
 }
 
 func (f *ForkedRulerApi) forkRouteGetGrafanaRuleGroupConfig(ctx *models.ReqContext) response.Response {
-	return f.GrafanaRuler.RouteGetRulegGroupConfig(ctx)
+	return f.GrafanaRuler.RouteGetRulesGroupConfig(ctx)
 }
 
 func (f *ForkedRulerApi) forkRouteGetGrafanaRulesConfig(ctx *models.ReqContext) response.Response {

@@ -337,7 +337,7 @@ func TestAnnotations(t *testing.T) {
 	})
 }
 
-func TestAnnotationListingWithFGAC(t *testing.T) {
+func TestAnnotationListingWithRBAC(t *testing.T) {
 	sql := sqlstore.InitTestDB(t)
 	sql.Cfg.IsFeatureToggleEnabled = func(key string) bool {
 		return key == featuremgmt.FlagAccesscontrol

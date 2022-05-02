@@ -99,7 +99,7 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"))
+	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService)
 	if err != nil {
 		return err
 	}
@@ -139,6 +139,8 @@ func (ng *AlertNG) init() error {
 
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(store, store, store, ng.Log)
+	contactPointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
+	templateService := provisioning.NewTemplateService(store, store, store, ng.Log)
 
 	api := api.API{
 		Cfg:                  ng.Cfg,
@@ -154,10 +156,13 @@ func (ng *AlertNG) init() error {
 		RuleStore:            store,
 		AlertingStore:        store,
 		AdminConfigStore:     store,
+		ProvenanceStore:      store,
 		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
 		StateManager:         ng.stateManager,
 		AccessControl:        ng.accesscontrol,
 		Policies:             policyService,
+		ContactPointService:  contactPointService,
+		Templates:            templateService,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 

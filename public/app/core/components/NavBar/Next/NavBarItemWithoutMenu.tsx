@@ -1,7 +1,9 @@
-import React, { ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Link, useTheme2 } from '@grafana/ui';
+
 import { NavFeatureHighlight } from '../NavFeatureHighlight';
 
 export interface NavBarItemWithoutMenuProps {
@@ -71,7 +73,6 @@ export function getNavBarItemWithoutMenuStyles(theme: GrafanaTheme2, isActive?: 
       position: 'relative',
       color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
       display: 'grid',
-      placeItems: 'center',
 
       '&:hover': {
         backgroundColor: theme.colors.action.hover,

@@ -1,9 +1,12 @@
 import React from 'react';
+
 import { TextArea, InlineFormLabel, Input, Select, HorizontalGroup } from '@grafana/ui';
+
 import { InfluxQuery } from '../types';
+
+import { RESULT_FORMATS, DEFAULT_RESULT_FORMAT } from './constants';
 import { useShadowedState } from './useShadowedState';
 import { useUniqueId } from './useUniqueId';
-import { RESULT_FORMATS, DEFAULT_RESULT_FORMAT } from './constants';
 
 type Props = {
   query: InfluxQuery;

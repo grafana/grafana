@@ -1,6 +1,7 @@
-import { Icon } from '@grafana/ui';
 import { cx, css } from '@emotion/css';
 import React, { ComponentProps, ButtonHTMLAttributes } from 'react';
+
+import { Icon } from '@grafana/ui';
 
 const SROnly = css`
   clip: rect(0 0 0 0);

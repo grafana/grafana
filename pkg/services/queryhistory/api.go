@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -19,6 +20,8 @@ func (s *QueryHistoryService) registerAPIEndpoints() {
 		entities.Post("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.starHandler))
 		entities.Delete("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.unstarHandler))
 		entities.Patch("/:uid", middleware.ReqSignedIn, routing.Wrap(s.patchCommentHandler))
+		// Remove migrate endpoint in Grafana v10 as breaking change
+		entities.Post("/migrate", middleware.ReqSignedIn, routing.Wrap(s.migrateHandler))
 	})
 }
 
@@ -37,6 +40,8 @@ func (s *QueryHistoryService) createHandler(c *models.ReqContext) response.Respo
 }
 
 func (s *QueryHistoryService) searchHandler(c *models.ReqContext) response.Response {
+	timeRange := legacydata.NewDataTimeRange(c.Query("from"), c.Query("to"))
+
 	query := SearchInQueryHistoryQuery{
 		DatasourceUIDs: c.QueryStrings("datasourceUid"),
 		SearchString:   c.Query("searchString"),
@@ -44,6 +49,8 @@ func (s *QueryHistoryService) searchHandler(c *models.ReqContext) response.Respo
 		Sort:           c.Query("sort"),
 		Page:           c.QueryInt("page"),
 		Limit:          c.QueryInt("limit"),
+		From:           timeRange.GetFromAsSecondsEpoch(),
+		To:             timeRange.GetToAsSecondsEpoch(),
 	}
 
 	result, err := s.SearchInQueryHistory(c.Req.Context(), c.SignedInUser, query)
@@ -116,4 +123,18 @@ func (s *QueryHistoryService) unstarHandler(c *models.ReqContext) response.Respo
 	}
 
 	return response.JSON(http.StatusOK, QueryHistoryResponse{Result: query})
+}
+
+func (s *QueryHistoryService) migrateHandler(c *models.ReqContext) response.Response {
+	cmd := MigrateQueriesToQueryHistoryCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	totalCount, starredCount, err := s.MigrateQueriesToQueryHistory(c.Req.Context(), c.SignedInUser, cmd)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to migrate query history", err)
+	}
+
+	return response.JSON(http.StatusOK, QueryHistoryMigrationResponse{Message: "Query history successfully migrated", TotalCount: totalCount, StarredCount: starredCount})
 }
