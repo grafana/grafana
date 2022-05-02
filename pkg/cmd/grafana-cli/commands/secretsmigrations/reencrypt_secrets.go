@@ -104,8 +104,13 @@ func (s b64Secret) reencrypt(secretsSrv *manager.SecretsService, sess *xorm.Sess
 		}
 
 		encoded := base64.StdEncoding.EncodeToString(encrypted)
-		updateSQL := fmt.Sprintf("UPDATE %s SET %s = ? WHERE id = ?", s.tableName, s.columnName)
-		_, err = sess.Exec(updateSQL, encoded, row.Id)
+		if s.hasUpdatedColumn {
+			updateSQL := fmt.Sprintf("UPDATE %s SET %s = ?, updated = ? WHERE id = ?", s.tableName, s.columnName)
+			_, err = sess.Exec(updateSQL, encoded, nowInUTC(), row.Id)
+		} else {
+			updateSQL := fmt.Sprintf("UPDATE %s SET %s = ? WHERE id = ?", s.tableName, s.columnName)
+			_, err = sess.Exec(updateSQL, encoded, row.Id)
+		}
 
 		if err != nil {
 			anyFailure = true
@@ -256,9 +261,10 @@ func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
 		reencrypt(*manager.SecretsService, *xorm.Session)
 	}{
 		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted"},
-		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}},
-		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token"}},
-		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type"}},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token"}},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type"}},
+		b64Secret{simpleSecret: simpleSecret{tableName: "secrets", columnName: "value"}, hasUpdatedColumn: true},
 		jsonSecret{tableName: "data_source"},
 		jsonSecret{tableName: "plugin_setting"},
 		alertingSecret{},
