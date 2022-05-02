@@ -14,6 +14,9 @@ import {
   getFieldSeriesColor,
   getFieldDisplayName,
   getDisplayProcessor,
+  FieldColorModeId,
+  GrafanaTheme2,
+  DataFrameFieldIndex,
 } from '@grafana/data';
 import {
   AxisPlacement,
@@ -279,6 +282,22 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         }
       }
     }
+    let dynamicSeriesColor:
+      | ((dataFrameFieldIndex: DataFrameFieldIndex | undefined, theme: GrafanaTheme2) => string | undefined)
+      | undefined = undefined;
+
+    if (colorMode.id === FieldColorModeId.Thresholds) {
+      dynamicSeriesColor = (dataFrameFieldIndex, theme) => {
+        if (dataFrameFieldIndex === undefined) {
+          return undefined;
+        }
+        const field = builder.getAllFrames()?.[dataFrameFieldIndex.frameIndex]?.fields[dataFrameFieldIndex.fieldIndex];
+        if (!field) {
+          return undefined;
+        }
+        return getFieldSeriesColor(field, theme).color;
+      };
+    }
 
     builder.addSeries({
       pathBuilder,
@@ -289,6 +308,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       colorMode,
       fillOpacity,
       theme,
+      dynamicSeriesColor,
       drawStyle: customConfig.drawStyle!,
       lineColor: customConfig.lineColor ?? seriesColor,
       lineWidth: customConfig.lineWidth,

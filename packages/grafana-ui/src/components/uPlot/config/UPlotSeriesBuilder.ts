@@ -168,8 +168,8 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       dataFrameFieldIndex,
     } = this.props;
 
-    if (colorMode?.id === FieldColorModeId.Thresholds && dynamicSeriesColor) {
-      return dynamicSeriesColor(dataFrameFieldIndex, theme) || FALLBACK_COLOR;
+    if (dynamicSeriesColor) {
+      return () => dynamicSeriesColor(dataFrameFieldIndex, theme) || lineColor || FALLBACK_COLOR;
     }
 
     if (gradientMode === GraphGradientMode.Scheme && colorMode?.id !== FieldColorModeId.Fixed) {
