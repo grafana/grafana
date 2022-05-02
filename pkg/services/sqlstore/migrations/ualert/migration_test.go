@@ -118,7 +118,6 @@ func TestAddDashAlertMigration(t *testing.T) {
 
 // TestDashAlertMigration tests the execution of the main DashAlertMigration.
 func TestDashAlertMigration(t *testing.T) {
-	t.Skip("Test is flaky")
 	// Run initial migration to have a working DB.
 	x := setupTestDB(t)
 
@@ -444,7 +443,12 @@ func TestDashAlertMigration(t *testing.T) {
 
 				// Order of nested routes is not guaranteed.
 				cOpt = []cmp.Option{
-					cmpopts.SortSlices(func(a, b *ualert.Route) bool { return a.Receiver < b.Receiver }),
+					cmpopts.SortSlices(func(a, b *ualert.Route) bool {
+						if a.Receiver != b.Receiver {
+							return a.Receiver < b.Receiver
+						}
+						return a.Matchers[0].Value < b.Matchers[0].Value
+					}),
 					cmpopts.IgnoreUnexported(ualert.Route{}, labels.Matcher{}),
 				}
 				if !cmp.Equal(tt.expected[orgId].AlertmanagerConfig.Route, amConfig.AlertmanagerConfig.Route, cOpt...) {
