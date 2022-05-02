@@ -261,10 +261,10 @@ func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
 		reencrypt(*manager.SecretsService, *xorm.Session)
 	}{
 		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted"},
-		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}, false},
-		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token"}, false},
-		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type"}, false},
-		b64Secret{simpleSecret{tableName: "secrets", columnName: "value"}, true},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token"}},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type"}},
+		b64Secret{simpleSecret: simpleSecret{tableName: "secrets", columnName: "value"}, hasUpdatedColumn: true},
 		jsonSecret{tableName: "data_source"},
 		jsonSecret{tableName: "plugin_setting"},
 		alertingSecret{},
