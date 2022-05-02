@@ -40,9 +40,24 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to get annotations", err)
 	}
 
+	// since there are several annotations per dashboard, we can cache dashboard uid
+	dashboardCache := make(map[int64]*string)
 	for _, item := range items {
 		if item.Email != "" {
 			item.AvatarUrl = dtos.GetGravatarUrl(item.Email)
+		}
+
+		if item.DashboardId != 0 {
+			if val, ok := dashboardCache[item.DashboardId]; ok {
+				item.DashboardUID = val
+			} else {
+				query := models.GetDashboardQuery{Id: item.DashboardId, OrgId: c.OrgId}
+				err := hs.SQLStore.GetDashboard(c.Req.Context(), &query)
+				if err == nil && query.Result != nil {
+					item.DashboardUID = &query.Result.Uid
+					dashboardCache[item.DashboardId] = &query.Result.Uid
+				}
+			}
 		}
 	}
 
@@ -61,6 +76,15 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 	cmd := dtos.PostAnnotationsCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	// overwrite dashboardId when dashboardUID is not empty
+	if cmd.DashboardUID != "" {
+		query := models.GetDashboardQuery{OrgId: c.OrgId, Uid: cmd.DashboardUID}
+		err := hs.SQLStore.GetDashboard(c.Req.Context(), &query)
+		if err == nil {
+			cmd.DashboardId = query.Result.Id
+		}
 	}
 
 	if canSave, err := hs.canCreateAnnotation(c, cmd.DashboardId); err != nil || !canSave {
@@ -262,6 +286,14 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 	err := web.Bind(c.Req, &cmd)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	if cmd.DashboardUID != "" {
+		query := models.GetDashboardQuery{OrgId: c.OrgId, Uid: cmd.DashboardUID}
+		err := hs.SQLStore.GetDashboard(c.Req.Context(), &query)
+		if err == nil {
+			cmd.DashboardId = query.Result.Id
+		}
 	}
 
 	if (cmd.DashboardId != 0 && cmd.PanelId == 0) || (cmd.PanelId != 0 && cmd.DashboardId == 0) {
