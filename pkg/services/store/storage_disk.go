@@ -57,7 +57,7 @@ func newDiskStorage(prefix string, name string, cfg *StorageLocalDiskConfig) *ro
 		} else {
 			s.store = filestorage.NewCdkBlobStorage(grafanaStorageLogger,
 				bucket, "",
-				filestorage.NewPathFilters(cfg.Roots, nil, nil, nil))
+				filestorage.NewPathFilter(cfg.Roots, nil, nil, nil))
 
 			meta.Ready = true // exists!
 		}
@@ -82,7 +82,7 @@ func (s *rootStorageDisk) Write(ctx context.Context, cmd *WriteValueRequest) (*W
 	}
 	err := s.store.Upsert(ctx, &filestorage.UpsertFileCommand{
 		Path:     path,
-		Contents: &byteAray,
+		Contents: byteAray,
 	})
 	if err != nil {
 		return nil, err

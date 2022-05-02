@@ -1,11 +1,13 @@
+import { debounce } from 'lodash';
 import React, { useCallback, useMemo } from 'react';
+
 import { Segment, SegmentAsync } from '@grafana/ui';
+
 import { actions } from '../state/actions';
-import { GraphiteTag, GraphiteTagOperator } from '../types';
+import { useDispatch } from '../state/context';
 import { getTagOperatorsSelectables, getTagsSelectables, getTagValuesSelectables } from '../state/providers';
 import { GraphiteQueryEditorState } from '../state/store';
-import { debounce } from 'lodash';
-import { useDispatch } from '../state/context';
+import { GraphiteTag, GraphiteTagOperator } from '../types';
 
 type Props = {
   tag: GraphiteTag;

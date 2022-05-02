@@ -6,17 +6,10 @@ import (
 
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
-
-func (ss *SQLStore) addAPIKeysQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetAPIKeys)
-	bus.AddHandler("sql", ss.GetApiKeyById)
-	bus.AddHandler("sql", ss.GetApiKeyByName)
-	bus.AddHandler("sql", ss.DeleteApiKey)
-	bus.AddHandler("sql", ss.AddAPIKey)
-}
 
 // GetAPIKeys queries the database based
 // on input on GetApiKeysQuery
@@ -35,6 +28,14 @@ func (ss *SQLStore) GetAPIKeys(ctx context.Context, query *models.GetApiKeysQuer
 		}
 
 		sess = sess.Where("service_account_id IS NULL")
+
+		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+			filter, err := accesscontrol.Filter(query.User, "id", "apikeys:id:", accesscontrol.ActionAPIKeyRead)
+			if err != nil {
+				return err
+			}
+			sess.And(filter.Where, filter.Args...)
+		}
 
 		query.Result = make([]*models.ApiKey, 0)
 		return sess.Find(&query.Result)

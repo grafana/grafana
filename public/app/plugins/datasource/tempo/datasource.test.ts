@@ -1,4 +1,6 @@
 import { lastValueFrom, Observable, of } from 'rxjs';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
+
 import {
   DataFrame,
   dataFrameToJSON,
@@ -9,9 +11,8 @@ import {
   MutableDataFrame,
   PluginType,
 } from '@grafana/data';
-
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+
 import { DEFAULT_LIMIT, TempoJsonData, TempoDatasource, TempoQuery } from './datasource';
 import mockJson from './mockJsonResponse.json';
 
@@ -77,9 +78,9 @@ describe('Tempo data source', () => {
     ).toMatchObject([
       { name: 'id', values: ['4322526419282105830'] },
       { name: 'title', values: ['service'] },
-      { name: 'subTitle', values: ['store.validateQueryTimeRange'] },
-      { name: 'mainStat', values: ['14.98ms (100%)'] },
-      { name: 'secondaryStat', values: ['14.98ms (100%)'] },
+      { name: 'subtitle', values: ['store.validateQueryTimeRange'] },
+      { name: 'mainstat', values: ['14.98ms (100%)'] },
+      { name: 'secondarystat', values: ['14.98ms (100%)'] },
       { name: 'color', values: [1.000007560204647] },
     ]);
 

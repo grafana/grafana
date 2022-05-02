@@ -1,9 +1,11 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
-import { TableCellProps, TableFieldOptions } from './types';
-import { CellActions } from './CellActions';
+import React from 'react';
+
 import { getCellLinks } from '../../utils';
+
+import { CellActions } from './CellActions';
+import { TableCellProps, TableFieldOptions } from './types';
 
 export function JSONViewCell(props: TableCellProps): JSX.Element {
   const { cell, tableStyles, cellProps, field, row } = props;
@@ -29,7 +31,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
   return (
     <div {...cellProps} className={inspectEnabled ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer}>
       <div className={cx(tableStyles.cellText, txt)}>
-        {!link && <div className={tableStyles.cellText}>{value}</div>}
+        {!link && <div className={tableStyles.cellText}>{displayValue}</div>}
         {link && (
           <a
             href={link.href}

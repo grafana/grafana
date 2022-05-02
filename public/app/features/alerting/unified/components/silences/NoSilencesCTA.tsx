@@ -1,7 +1,10 @@
+import React, { FC } from 'react';
+
 import { CallToActionCard } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { contextSrv } from 'app/core/services/context_srv';
-import React, { FC } from 'react';
+
+import { getInstancesPermissions } from '../../utils/access-control';
 import { makeAMLink } from '../../utils/misc';
 
 type Props = {
@@ -9,7 +12,9 @@ type Props = {
 };
 
 export const NoSilencesSplash: FC<Props> = ({ alertManagerSourceName }) => {
-  if (contextSrv.isEditor) {
+  const permissions = getInstancesPermissions(alertManagerSourceName);
+
+  if (contextSrv.hasAccess(permissions.create, contextSrv.isEditor)) {
     return (
       <EmptyListCTA
         title="You haven't created any silences yet"

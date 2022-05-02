@@ -1,24 +1,24 @@
-// Services & Utils
+import { locationUtil, setWeekStart } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
+import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
-// Actions
-import { notifyApp } from 'app/core/actions';
-import { dashboardInitCompleted, dashboardInitFailed, dashboardInitFetching, dashboardInitServices } from './reducers';
-// Types
-import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
-import { DashboardModel } from './DashboardModel';
-import { locationUtil, setWeekStart } from '@grafana/data';
-import { initVariablesTransaction } from '../../variables/state/actions';
-import { emitDashboardViewEvent } from './analyticsProcessor';
+import store from 'app/core/store';
+import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { config, locationService } from '@grafana/runtime';
-import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
-import { getIfExistsLastKey } from '../../variables/state/selectors';
 import { toStateKey } from 'app/features/variables/utils';
+import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
+
+import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { initVariablesTransaction } from '../../variables/state/actions';
+import { getIfExistsLastKey } from '../../variables/state/selectors';
+
+import { DashboardModel } from './DashboardModel';
+import { emitDashboardViewEvent } from './analyticsProcessor';
+import { dashboardInitCompleted, dashboardInitFailed, dashboardInitFetching, dashboardInitServices } from './reducers';
 
 export interface InitDashboardArgs {
   urlUid?: string;
@@ -34,6 +34,13 @@ async function fetchDashboard(
   dispatch: ThunkDispatch,
   getState: () => StoreState
 ): Promise<DashboardDTO | null> {
+  // When creating new or adding panels to a dashboard from explore we load it from local storage
+  const model = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
+  if (model) {
+    removeDashboardToFetchFromLocalStorage();
+    return model;
+  }
+
   try {
     switch (args.routeName) {
       case DashboardRoutes.Home: {
@@ -200,7 +207,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   };
 }
 
-function getNewDashboardModelData(urlFolderId?: string | null): any {
+export function getNewDashboardModelData(urlFolderId?: string | null): any {
   const data = {
     meta: {
       canStar: false,
@@ -225,4 +232,14 @@ function getNewDashboardModelData(urlFolderId?: string | null): any {
   }
 
   return data;
+}
+
+const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
+
+export function setDashboardToFetchFromLocalStorage(model: DashboardDTO) {
+  store.setObject(DASHBOARD_FROM_LS_KEY, model);
+}
+
+export function removeDashboardToFetchFromLocalStorage() {
+  store.delete(DASHBOARD_FROM_LS_KEY);
 }

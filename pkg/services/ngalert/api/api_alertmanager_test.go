@@ -2,22 +2,32 @@ package api
 
 import (
 	"context"
+	"encoding/json"
+	"math/rand"
 	"net/http"
 	"testing"
 	"time"
 
+	"github.com/go-openapi/strfmt"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -151,7 +161,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 }
 
 func TestAlertmanagerConfig(t *testing.T) {
-	sut := createSut(t)
+	sut := createSut(t, nil)
 
 	t.Run("assert 404 Not Found when applying config to nonexistent org", func(t *testing.T) {
 		rc := models.ReqContext{
@@ -187,7 +197,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 	})
 
 	t.Run("assert 202 when alertmanager to configure is not ready", func(t *testing.T) {
-		sut := createSut(t)
+		sut := createSut(t, nil)
 		rc := models.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
@@ -202,18 +212,268 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 		require.Equal(t, 202, response.Status())
 	})
+
+	t.Run("when objects are not provisioned", func(t *testing.T) {
+		t.Run("route from GET config has no provenance", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+
+			response := sut.RouteGetAlertingConfig(rc)
+
+			body := asGettableUserConfig(t, response)
+			require.Equal(t, ngmodels.ProvenanceNone, body.AlertmanagerConfig.Route.Provenance)
+		})
+		t.Run("contact point from GET config has no provenance", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+
+			response := sut.RouteGetAlertingConfig(rc)
+
+			body := asGettableUserConfig(t, response)
+			require.Equal(t, ngmodels.ProvenanceNone, body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
+		})
+	})
+
+	t.Run("when objects are provisioned", func(t *testing.T) {
+		t.Run("route from GET config has expected provenance", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+			setRouteProvenance(t, 1, sut.mam.ProvStore)
+
+			response := sut.RouteGetAlertingConfig(rc)
+
+			body := asGettableUserConfig(t, response)
+			require.Equal(t, ngmodels.ProvenanceAPI, body.AlertmanagerConfig.Route.Provenance)
+		})
+		t.Run("contact point from GET config has expected provenance", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+			request := createAmConfigRequest(t)
+
+			_ = sut.RoutePostAlertingConfig(rc, request)
+
+			response := sut.RouteGetAlertingConfig(rc)
+			body := asGettableUserConfig(t, response)
+
+			cpUID := body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].UID
+			require.NotEmpty(t, cpUID)
+
+			setContactPointProvenance(t, 1, cpUID, sut.mam.ProvStore)
+
+			response = sut.RouteGetAlertingConfig(rc)
+			body = asGettableUserConfig(t, response)
+
+			require.Equal(t, ngmodels.ProvenanceAPI, body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
+		})
+	})
 }
 
-func createSut(t *testing.T) AlertmanagerSrv {
+func TestSilenceCreate(t *testing.T) {
+	makeSilence := func(comment string, createdBy string,
+		startsAt, endsAt strfmt.DateTime, matchers amv2.Matchers) amv2.Silence {
+		return amv2.Silence{
+			Comment:   &comment,
+			CreatedBy: &createdBy,
+			StartsAt:  &startsAt,
+			EndsAt:    &endsAt,
+			Matchers:  matchers,
+		}
+	}
+
+	now := time.Now()
+	dt := func(t time.Time) strfmt.DateTime { return strfmt.DateTime(t) }
+	tru := true
+	testString := "testName"
+	matchers := amv2.Matchers{&amv2.Matcher{Name: &testString, IsEqual: &tru, IsRegex: &tru, Value: &testString}}
+
+	cases := []struct {
+		name    string
+		silence amv2.Silence
+		status  int
+	}{
+		{"Valid Silence",
+			makeSilence("", "tests", dt(now), dt(now.Add(1*time.Second)), matchers),
+			http.StatusAccepted,
+		},
+		{"No Comment Silence",
+			func() amv2.Silence {
+				s := makeSilence("", "tests", dt(now), dt(now.Add(1*time.Second)), matchers)
+				s.Comment = nil
+				return s
+			}(),
+			http.StatusBadRequest,
+		},
+	}
+
+	for _, cas := range cases {
+		t.Run(cas.name, func(t *testing.T) {
+			rc := models.ReqContext{
+				Context: &web.Context{
+					Req: &http.Request{},
+				},
+				SignedInUser: &models.SignedInUser{
+					OrgRole: models.ROLE_EDITOR,
+					OrgId:   1,
+				},
+			}
+
+			srv := createSut(t, nil)
+
+			resp := srv.RouteCreateSilence(&rc, amv2.PostableSilence{
+				ID:      "",
+				Silence: cas.silence,
+			})
+			require.Equal(t, cas.status, resp.Status())
+		})
+	}
+}
+
+func TestRouteCreateSilence(t *testing.T) {
+	tesCases := []struct {
+		name           string
+		silence        func() apimodels.PostableSilence
+		accessControl  func() accesscontrol.AccessControl
+		role           models.RoleType
+		expectedStatus int
+	}{
+		{
+			name:    "new silence, role-based access control is enabled, not authorized",
+			silence: silenceGen(withEmptyID),
+			accessControl: func() accesscontrol.AccessControl {
+				return acMock.New()
+			},
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name:    "new silence, role-based access control is enabled, authorized",
+			silence: silenceGen(withEmptyID),
+			accessControl: func() accesscontrol.AccessControl {
+				return acMock.New().WithPermissions([]*accesscontrol.Permission{
+					{Action: accesscontrol.ActionAlertingInstanceCreate},
+				})
+			},
+			expectedStatus: http.StatusAccepted,
+		},
+		{
+			name:    "new silence, role-based access control is disabled, Viewer",
+			silence: silenceGen(withEmptyID),
+			accessControl: func() accesscontrol.AccessControl {
+				return acMock.New().WithDisabled()
+			},
+			role:           models.ROLE_VIEWER,
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name:    "new silence, role-based access control is disabled, Editor",
+			silence: silenceGen(withEmptyID),
+			accessControl: func() accesscontrol.AccessControl {
+				return acMock.New().WithDisabled()
+			},
+			role:           models.ROLE_EDITOR,
+			expectedStatus: http.StatusAccepted,
+		},
+		{
+			name:    "new silence, role-based access control is disabled, Admin",
+			silence: silenceGen(withEmptyID),
+			accessControl: func() accesscontrol.AccessControl {
+				return acMock.New().WithDisabled()
+			},
+			role:           models.ROLE_ADMIN,
+			expectedStatus: http.StatusAccepted,
+		},
+		{
+			name:    "update silence, role-based access control is enabled, not authorized",
+			silence: silenceGen(),
+			accessControl: func() accesscontrol.AccessControl {
+				return acMock.New()
+			},
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name:    "update silence, role-based access control is enabled, authorized",
+			silence: silenceGen(),
+			accessControl: func() accesscontrol.AccessControl {
+				return acMock.New().WithPermissions([]*accesscontrol.Permission{
+					{Action: accesscontrol.ActionAlertingInstanceUpdate},
+				})
+			},
+			expectedStatus: http.StatusAccepted,
+		},
+		{
+			name:    "update silence, role-based access control is disabled, Viewer",
+			silence: silenceGen(),
+			accessControl: func() accesscontrol.AccessControl {
+				return acMock.New().WithDisabled()
+			},
+			role:           models.ROLE_VIEWER,
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name:    "update silence, role-based access control is disabled, Editor",
+			silence: silenceGen(),
+			accessControl: func() accesscontrol.AccessControl {
+				return acMock.New().WithDisabled()
+			},
+			role:           models.ROLE_EDITOR,
+			expectedStatus: http.StatusAccepted,
+		},
+		{
+			name:    "update silence, role-based access control is disabled, Admin",
+			silence: silenceGen(),
+			accessControl: func() accesscontrol.AccessControl {
+				return acMock.New().WithDisabled()
+			},
+			role:           models.ROLE_ADMIN,
+			expectedStatus: http.StatusAccepted,
+		},
+	}
+
+	for _, tesCase := range tesCases {
+		t.Run(tesCase.name, func(t *testing.T) {
+			ac := tesCase.accessControl()
+			sut := createSut(t, ac)
+
+			rc := models.ReqContext{
+				Context: &web.Context{
+					Req: &http.Request{},
+				},
+				SignedInUser: &models.SignedInUser{
+					OrgRole: tesCase.role,
+					OrgId:   1,
+				},
+			}
+
+			silence := tesCase.silence()
+
+			if silence.ID != "" {
+				alertmanagerFor, err := sut.mam.AlertmanagerFor(1)
+				require.NoError(t, err)
+				silence.ID = ""
+				newID, err := alertmanagerFor.CreateSilence(&silence)
+				require.NoError(t, err)
+				silence.ID = newID
+			}
+
+			response := sut.RouteCreateSilence(&rc, silence)
+			require.Equal(t, tesCase.expectedStatus, response.Status())
+		})
+	}
+}
+
+func createSut(t *testing.T, accessControl accesscontrol.AccessControl) AlertmanagerSrv {
 	t.Helper()
 
 	mam := createMultiOrgAlertmanager(t)
-	store := newFakeAlertingStore(t)
-	store.Setup(1)
-	store.Setup(2)
-	store.Setup(3)
-	secrets := fakes.NewFakeSecretsService()
-	return AlertmanagerSrv{mam: mam, store: store, secrets: secrets}
+	if accessControl == nil {
+		accessControl = acMock.New().WithDisabled()
+	}
+	log := log.NewNopLogger()
+	return AlertmanagerSrv{
+		mam:    mam,
+		crypto: mam.Crypto,
+		ac:     accessControl,
+		log:    log,
+	}
 }
 
 func createAmConfigRequest(t *testing.T) apimodels.PostableUserConfig {
@@ -236,6 +496,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	}
 	configStore := notifier.NewFakeConfigStore(t, configs)
 	orgStore := notifier.NewFakeOrgStore(t, []int64{1, 2, 3})
+	provStore := provisioning.NewFakeProvisioningStore()
 	tmpDir := t.TempDir()
 	kvStore := notifier.NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -249,9 +510,12 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
 			DisabledOrgs:                   map[int64]struct{}{5: {}},
 		}, // do not poll in tests.
+		IsFeatureToggleEnabled: func(key string) bool {
+			return key == featuremgmt.FlagAlertProvisioning
+		},
 	}
 
-	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"))
+	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
 	require.NoError(t, err)
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)
@@ -277,3 +541,74 @@ var brokenConfig = `
 		}]
 	}
 }`
+
+func silenceGen(mutatorFuncs ...func(*apimodels.PostableSilence)) func() apimodels.PostableSilence {
+	return func() apimodels.PostableSilence {
+		testString := util.GenerateShortUID()
+		isEqual := rand.Int()%2 == 0
+		isRegex := rand.Int()%2 == 0
+		value := util.GenerateShortUID()
+		if isRegex {
+			value = ".*" + util.GenerateShortUID()
+		}
+
+		matchers := amv2.Matchers{&amv2.Matcher{Name: &testString, IsEqual: &isEqual, IsRegex: &isRegex, Value: &value}}
+		comment := util.GenerateShortUID()
+		starts := strfmt.DateTime(timeNow().Add(-time.Duration(rand.Int63n(9)+1) * time.Second))
+		ends := strfmt.DateTime(timeNow().Add(time.Duration(rand.Int63n(9)+1) * time.Second))
+		createdBy := "User-" + util.GenerateShortUID()
+		s := apimodels.PostableSilence{
+			ID: util.GenerateShortUID(),
+			Silence: amv2.Silence{
+				Comment:   &comment,
+				CreatedBy: &createdBy,
+				EndsAt:    &ends,
+				Matchers:  matchers,
+				StartsAt:  &starts,
+			},
+		}
+
+		for _, mutator := range mutatorFuncs {
+			mutator(&s)
+		}
+
+		return s
+	}
+}
+
+func withEmptyID(silence *apimodels.PostableSilence) {
+	silence.ID = ""
+}
+
+func createRequestCtxInOrg(org int64) *models.ReqContext {
+	return &models.ReqContext{
+		Context: &web.Context{
+			Req: &http.Request{},
+		},
+		SignedInUser: &models.SignedInUser{
+			OrgId: org,
+		},
+	}
+}
+
+// setRouteProvenance marks an org's routing tree as provisioned.
+func setRouteProvenance(t *testing.T, orgID int64, ps provisioning.ProvisioningStore) {
+	t.Helper()
+	err := ps.SetProvenance(context.Background(), &apimodels.Route{}, orgID, ngmodels.ProvenanceAPI)
+	require.NoError(t, err)
+}
+
+// setContactPointProvenance marks a contact point as provisioned.
+func setContactPointProvenance(t *testing.T, orgID int64, UID string, ps provisioning.ProvisioningStore) {
+	t.Helper()
+	err := ps.SetProvenance(context.Background(), &apimodels.EmbeddedContactPoint{UID: UID}, orgID, ngmodels.ProvenanceAPI)
+	require.NoError(t, err)
+}
+
+func asGettableUserConfig(t *testing.T, r response.Response) *apimodels.GettableUserConfig {
+	t.Helper()
+	body := &apimodels.GettableUserConfig{}
+	err := json.Unmarshal(r.Body(), body)
+	require.NoError(t, err)
+	return body
+}

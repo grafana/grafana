@@ -1,7 +1,9 @@
-import React, { ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Link, useTheme2 } from '@grafana/ui';
+
 import { NavFeatureHighlight } from '../NavFeatureHighlight';
 
 export interface NavBarItemWithoutMenuProps {
@@ -32,10 +34,10 @@ export function NavBarItemWithoutMenu({
 
   const content = highlightText ? (
     <NavFeatureHighlight>
-      <span className={styles.icon}>{children}</span>
+      <div className={styles.icon}>{children}</div>
     </NavFeatureHighlight>
   ) : (
-    <span className={styles.icon}>{children}</span>
+    <div className={styles.icon}>{children}</div>
   );
 
   const elStyle = cx(styles.element, elClassName);
@@ -71,17 +73,10 @@ export function getNavBarItemWithoutMenuStyles(theme: GrafanaTheme2, isActive?: 
       position: 'relative',
       color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
       display: 'grid',
-      placeItems: 'center',
 
       '&:hover': {
         backgroundColor: theme.colors.action.hover,
         color: theme.colors.text.primary,
-
-        // TODO don't use a hardcoded class here, use isVisible in NavBarDropdown
-        '.navbar-dropdown': {
-          opacity: 1,
-          visibility: 'visible',
-        },
       },
     }),
     element: css({
@@ -90,7 +85,7 @@ export function getNavBarItemWithoutMenuStyles(theme: GrafanaTheme2, isActive?: 
       color: 'inherit',
       display: 'block',
       padding: 0,
-      textAlign: 'center',
+      overflowWrap: 'anywhere',
 
       '&::before': {
         display: isActive ? 'block' : 'none',

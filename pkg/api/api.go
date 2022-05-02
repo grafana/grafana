@@ -4,17 +4,17 @@ package api
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var plog = log.New("api")
@@ -32,8 +32,8 @@ func (hs *HTTPServer) registerRoutes() {
 	reqCanAccessTeams := middleware.AdminOrEditorAndFeatureEnabled(hs.Cfg.EditorsCanAdmin)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
-	authorize := acmiddleware.Middleware(hs.AccessControl)
-	authorizeInOrg := acmiddleware.AuthorizeInOrgMiddleware(hs.AccessControl, hs.SQLStore)
+	authorize := ac.Middleware(hs.AccessControl)
+	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.SQLStore)
 	quota := middleware.Quota(hs.QuotaService)
 
 	r := hs.RouteRegister
@@ -52,7 +52,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/.well-known/change-password", redirectToChangePassword)
 	r.Get("/profile/switch-org/:id", reqSignedInNoAnonymous, hs.ChangeActiveOrgAndRedirectToHome)
 	r.Get("/org/", authorize(reqOrgAdmin, orgPreferencesAccessEvaluator), hs.Index)
-	r.Get("/org/new", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseGlobalOrg, orgsCreateAccessEvaluator), hs.Index)
+	r.Get("/org/new", authorizeInOrg(reqGrafanaAdmin, ac.UseGlobalOrg, orgsCreateAccessEvaluator), hs.Index)
 	r.Get("/datasources/", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
 	r.Get("/datasources/new", authorize(reqOrgAdmin, datasources.NewPageAccess), hs.Index)
 	r.Get("/datasources/edit/*", authorize(reqOrgAdmin, datasources.EditPageAccess), hs.Index)
@@ -62,9 +62,9 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/org/teams", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsRead)), hs.Index)
 	r.Get("/org/teams/edit/*", authorize(reqCanAccessTeams, teamsEditAccessEvaluator), hs.Index)
 	r.Get("/org/teams/new", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsCreate)), hs.Index)
-	r.Get("/org/serviceaccounts", middleware.ReqOrgAdmin, hs.Index)
-	r.Get("/org/serviceaccounts/:serviceAccountId", middleware.ReqOrgAdmin, hs.Index)
-	r.Get("/org/apikeys/", reqOrgAdmin, hs.Index)
+	r.Get("/org/serviceaccounts", authorize(reqOrgAdmin, ac.EvalPermission(serviceaccounts.ActionRead)), hs.Index)
+	r.Get("/org/serviceaccounts/:serviceAccountId", authorize(reqOrgAdmin, ac.EvalPermission(serviceaccounts.ActionRead)), hs.Index)
+	r.Get("/org/apikeys/", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionAPIKeyRead)), hs.Index)
 	r.Get("/dashboard/import/", reqSignedIn, hs.Index)
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin", reqGrafanaAdmin, hs.Index)
@@ -72,8 +72,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/users", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), hs.Index)
 	r.Get("/admin/users/create", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersCreate)), hs.Index)
 	r.Get("/admin/users/edit/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead)), hs.Index)
-	r.Get("/admin/orgs", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseGlobalOrg, orgsAccessEvaluator), hs.Index)
-	r.Get("/admin/orgs/edit/:id", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseGlobalOrg, orgsAccessEvaluator), hs.Index)
+	r.Get("/admin/orgs", authorizeInOrg(reqGrafanaAdmin, ac.UseGlobalOrg, orgsAccessEvaluator), hs.Index)
+	r.Get("/admin/orgs/edit/:id", authorizeInOrg(reqGrafanaAdmin, ac.UseGlobalOrg, orgsAccessEvaluator), hs.Index)
 	r.Get("/admin/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), hs.Index)
 	r.Get("/admin/ldap", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
 	r.Get("/styleguide", reqSignedIn, hs.Index)
@@ -217,8 +217,10 @@ func (hs *HTTPServer) registerRoutes() {
 				orgRoute.Get("/list/*", routing.Wrap(hs.StorageService.List))
 				orgRoute.Get("/read/*", routing.Wrap(hs.StorageService.Read))
 
-				orgRoute.Delete("/delete/*", reqSignedIn, routing.Wrap(hs.StorageService.Delete))
-				orgRoute.Post("/upload", reqSignedIn, routing.Wrap(hs.StorageService.Upload))
+				if hs.Features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
+					orgRoute.Delete("/delete/*", reqSignedIn, routing.Wrap(hs.StorageService.Delete))
+					orgRoute.Post("/upload", reqSignedIn, routing.Wrap(hs.StorageService.Upload))
+				}
 			})
 		}
 
@@ -250,36 +252,36 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		// create new org
-		apiRoute.Post("/orgs", authorizeInOrg(reqSignedIn, acmiddleware.UseGlobalOrg, ac.EvalPermission(ActionOrgsCreate)), quota("org"), routing.Wrap(hs.CreateOrg))
+		apiRoute.Post("/orgs", authorizeInOrg(reqSignedIn, ac.UseGlobalOrg, ac.EvalPermission(ActionOrgsCreate)), quota("org"), routing.Wrap(hs.CreateOrg))
 
 		// search all orgs
-		apiRoute.Get("/orgs", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseGlobalOrg, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(hs.SearchOrgs))
+		apiRoute.Get("/orgs", authorizeInOrg(reqGrafanaAdmin, ac.UseGlobalOrg, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(hs.SearchOrgs))
 
 		// orgs (admin routes)
 		apiRoute.Group("/orgs/:orgId", func(orgsRoute routing.RouteRegister) {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userId"))
-			orgsRoute.Get("/", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(hs.GetOrgByID))
-			orgsRoute.Put("/", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsWrite)), routing.Wrap(hs.UpdateOrg))
-			orgsRoute.Put("/address", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsWrite)), routing.Wrap(hs.UpdateOrgAddress))
-			orgsRoute.Delete("/", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsDelete)), routing.Wrap(hs.DeleteOrgByID))
-			orgsRoute.Get("/users", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersRead, ac.ScopeUsersAll)), routing.Wrap(hs.GetOrgUsers))
-			orgsRoute.Post("/users", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersAdd, ac.ScopeUsersAll)), routing.Wrap(hs.AddOrgUser))
-			orgsRoute.Patch("/users/:userId", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersRoleUpdate, userIDScope)), routing.Wrap(hs.UpdateOrgUser))
-			orgsRoute.Delete("/users/:userId", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersRemove, userIDScope)), routing.Wrap(hs.RemoveOrgUser))
-			orgsRoute.Get("/quotas", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsQuotasRead)), routing.Wrap(hs.GetOrgQuotas))
-			orgsRoute.Put("/quotas/:target", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsQuotasWrite)), routing.Wrap(hs.UpdateOrgQuota))
+			orgsRoute.Get("/", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(hs.GetOrgByID))
+			orgsRoute.Put("/", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsWrite)), routing.Wrap(hs.UpdateOrg))
+			orgsRoute.Put("/address", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsWrite)), routing.Wrap(hs.UpdateOrgAddress))
+			orgsRoute.Delete("/", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsDelete)), routing.Wrap(hs.DeleteOrgByID))
+			orgsRoute.Get("/users", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersRead, ac.ScopeUsersAll)), routing.Wrap(hs.GetOrgUsers))
+			orgsRoute.Post("/users", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersAdd, ac.ScopeUsersAll)), routing.Wrap(hs.AddOrgUser))
+			orgsRoute.Patch("/users/:userId", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersRoleUpdate, userIDScope)), routing.Wrap(hs.UpdateOrgUser))
+			orgsRoute.Delete("/users/:userId", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersRemove, userIDScope)), routing.Wrap(hs.RemoveOrgUser))
+			orgsRoute.Get("/quotas", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsQuotasRead)), routing.Wrap(hs.GetOrgQuotas))
+			orgsRoute.Put("/quotas/:target", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsQuotasWrite)), routing.Wrap(hs.UpdateOrgQuota))
 		})
 
 		// orgs (admin routes)
-		apiRoute.Get("/orgs/name/:name/", authorizeInOrg(reqGrafanaAdmin, acmiddleware.UseGlobalOrg, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(hs.GetOrgByName))
+		apiRoute.Get("/orgs/name/:name/", authorizeInOrg(reqGrafanaAdmin, ac.UseGlobalOrg, ac.EvalPermission(ActionOrgsRead)), routing.Wrap(hs.GetOrgByName))
 
 		// auth api keys
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
 			apikeyIDScope := ac.Scope("apikeys", "id", ac.Parameter(":id"))
-			keysRoute.Get("/", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionAPIKeyRead, ac.ScopeAPIKeysAll)), routing.Wrap(hs.GetAPIKeys))
+			keysRoute.Get("/", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionAPIKeyRead)), routing.Wrap(hs.GetAPIKeys))
 			keysRoute.Post("/", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionAPIKeyCreate)), quota("api_key"), routing.Wrap(hs.AddAPIKey))
 			keysRoute.Delete("/:id", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionAPIKeyDelete, apikeyIDScope)), routing.Wrap(hs.DeleteAPIKey))
-		}, reqOrgAdmin)
+		})
 
 		// Preferences
 		apiRoute.Group("/preferences", func(prefRoute routing.RouteRegister) {
@@ -322,7 +324,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
 		apiRoute.Any("/datasources/proxy/:id/*", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
+		apiRoute.Any("/datasources/proxy/uid/:uid/*", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 		apiRoute.Any("/datasources/proxy/:id", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
+		apiRoute.Any("/datasources/proxy/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 		apiRoute.Any("/datasources/:id/resources", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
 		apiRoute.Any("/datasources/:id/resources/*", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
 		apiRoute.Any("/datasources/:id/health", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealth))
@@ -351,6 +355,12 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
 			dashboardRoute.Get("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))
 			dashboardRoute.Delete("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsDelete)), routing.Wrap(hs.DeleteDashboardByUID))
+			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
+				dashUidRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
+					dashboardPermissionRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsPermissionsRead)), routing.Wrap(hs.GetDashboardPermissionList))
+					dashboardPermissionRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsPermissionsWrite)), routing.Wrap(hs.UpdateDashboardPermissions))
+				})
+			})
 
 			if hs.ThumbService != nil {
 				dashboardRoute.Get("/uid/:uid/img/:kind/:theme", hs.ThumbService.GetImage)
@@ -368,6 +378,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
 			dashboardRoute.Get("/tags", hs.GetDashboardTags)
 
+			// Deprecated: use /uid/:uid API instead.
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
 				dashIdRoute.Get("/versions", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersions))
 				dashIdRoute.Get("/versions/:id", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersion))
@@ -418,7 +429,14 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/states-for-dashboard", routing.Wrap(hs.GetAlertStatesForDashboard))
 		})
 
-		apiRoute.Get("/alert-notifiers", reqEditorRole, routing.Wrap(
+		var notifiersAuthHandler web.Handler
+		if hs.Cfg.UnifiedAlerting.IsEnabled() {
+			notifiersAuthHandler = reqSignedIn
+		} else {
+			notifiersAuthHandler = reqEditorRole
+		}
+
+		apiRoute.Get("/alert-notifiers", notifiersAuthHandler, routing.Wrap(
 			hs.GetAlertNotifiers(hs.Cfg.UnifiedAlerting.IsEnabled())),
 		)
 
@@ -439,7 +457,7 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Get("/lookup", routing.Wrap(hs.GetAlertNotificationLookup))
 		})
 
-		apiRoute.Get("/annotations", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsRead, ac.ScopeAnnotationsAll)), routing.Wrap(hs.GetAnnotations))
+		apiRoute.Get("/annotations", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsRead)), routing.Wrap(hs.GetAnnotations))
 		apiRoute.Post("/annotations/mass-delete", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionAnnotationsDelete)), routing.Wrap(hs.MassDeleteAnnotations))
 
 		apiRoute.Group("/annotations", func(annotationsRoute routing.RouteRegister) {
@@ -448,7 +466,7 @@ func (hs *HTTPServer) registerRoutes() {
 			annotationsRoute.Put("/:annotationId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsWrite, ac.ScopeAnnotationsID)), routing.Wrap(hs.UpdateAnnotation))
 			annotationsRoute.Patch("/:annotationId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsWrite, ac.ScopeAnnotationsID)), routing.Wrap(hs.PatchAnnotation))
 			annotationsRoute.Post("/graphite", authorize(reqEditorRole, ac.EvalPermission(ac.ActionAnnotationsCreate, ac.ScopeAnnotationsTypeOrganization)), routing.Wrap(hs.PostGraphiteAnnotation))
-			annotationsRoute.Get("/tags", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsTagsRead, ac.ScopeAnnotationsTagsAll)), routing.Wrap(hs.GetAnnotationTags))
+			annotationsRoute.Get("/tags", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsRead)), routing.Wrap(hs.GetAnnotationTags))
 		})
 
 		apiRoute.Post("/frontend-metrics", routing.Wrap(hs.PostFrontendMetrics))
@@ -506,6 +524,11 @@ func (hs *HTTPServer) registerRoutes() {
 			adminRoute.Get("/crawler/status", reqGrafanaAdmin, routing.Wrap(hs.ThumbService.CrawlerStatus))
 		}
 
+		if hs.Features.IsEnabled(featuremgmt.FlagExport) {
+			adminRoute.Get("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleGetStatus))
+			adminRoute.Post("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleRequestExport))
+		}
+
 		adminRoute.Post("/provisioning/dashboards/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersDashboards)), routing.Wrap(hs.AdminProvisioningReloadDashboards))
 		adminRoute.Post("/provisioning/plugins/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersPlugins)), routing.Wrap(hs.AdminProvisioningReloadPlugins))
 		adminRoute.Post("/provisioning/datasources/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersDatasources)), routing.Wrap(hs.AdminProvisioningReloadDatasources))
@@ -542,8 +565,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Any("/api/gnet/*", reqSignedIn, hs.ProxyGnetRequest)
 
 	// Gravatar service.
-	avatarCacheServer := avatar.NewCacheServer(hs.Cfg)
-	r.Get("/avatar/:hash", avatarCacheServer.Handler)
+	r.Get("/avatar/:hash", hs.AvatarCacheServer.Handler)
 
 	// Snapshots
 	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, hs.CreateDashboardSnapshot)

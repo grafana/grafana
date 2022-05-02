@@ -1,3 +1,5 @@
+import { lastValueFrom } from 'rxjs';
+
 import {
   ArrayVector,
   DataFrame,
@@ -9,11 +11,12 @@ import {
   Vector,
 } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
-import { lastValueFrom } from 'rxjs';
-import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+
 import { QueryFilters } from './types';
+
 import { QueryResult } from '.';
 
 // The raw restuls from query server
@@ -154,23 +157,40 @@ export function filterFrame(frame: DataFrame, filter?: QueryFilters): DataFrame 
   const view = new DataFrameView<QueryResult>(frame);
   const keep: number[] = [];
 
+  const ds = filter.datasource ? view.fields.datasource : undefined;
+  const tags = filter.tags?.length ? view.fields.tags : undefined;
+
   let ok = true;
   for (let i = 0; i < view.length; i++) {
     ok = true;
-    const row = view.get(i);
-    if (filter.tags) {
-      const tags = row.tags;
-      if (!tags) {
+
+    if (tags) {
+      const v = tags.values.get(i);
+      if (!v) {
         ok = false;
-        continue;
-      }
-      for (const t of filter.tags) {
-        if (!tags.includes(t)) {
-          ok = false;
-          break;
+      } else {
+        for (const t of filter.tags!) {
+          if (!v.includes(t)) {
+            ok = false;
+            break;
+          }
         }
       }
     }
+
+    if (ok && ds && filter.datasource) {
+      ok = false;
+      const v = ds.values.get(i);
+      if (v) {
+        for (const d of v) {
+          if (d.uid === filter.datasource) {
+            ok = true;
+            break;
+          }
+        }
+      }
+    }
+
     if (ok) {
       keep.push(i);
     }

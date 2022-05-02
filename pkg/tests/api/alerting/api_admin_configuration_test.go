@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -35,8 +34,6 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	})
 
 	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)
-	// override bus to get the GetSignedInUserQuery handler
-	s.Bus = bus.GetBus()
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, s, models.CreateUserCommand{
@@ -69,7 +66,10 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := getRequest(t, alertsURL, http.StatusNotFound) // nolint
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"message": "no admin configuration available"}`, string(b))
+		var res map[string]interface{}
+		err = json.Unmarshal(b, &res)
+		require.NoError(t, err)
+		require.Equal(t, "no admin configuration available", res["message"])
 	}
 
 	// An invalid alertmanager choice should return an error.

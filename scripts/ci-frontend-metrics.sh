@@ -8,6 +8,8 @@ CONTROLLERS="$(grep -r -oP 'class .*Ctrl' public/app/ | wc -l)"
 STORIES_COUNT="$(find ./packages/grafana-ui/src/components -name "*.story.tsx" | wc -l)"
 MDX_COUNT="$(find ./packages/grafana-ui/src/components -name "*.mdx" | wc -l)"
 LEGACY_FORMS="$(grep -r -oP 'LegacyForms;' public/app | wc -l)"
+
+# This is also included in the betterer stats, but we maintain it to keep metric history
 ENZYME_TEST_COUNT="$(grep -l -R --include="*.test.*" "from 'enzyme'" public packages | wc -l)"
 
 STRICT_LINT_RESULTS="$(yarn run eslint --rule '@typescript-eslint/no-explicit-any: ["error"]' --format unix --ext .ts,.tsx ./public || true)"
@@ -38,7 +40,15 @@ echo -e "High vulnerabilities: $HIGH_VULNERABILITIES"
 echo -e "Critical vulnerabilities: $CRITICAL_VULNERABILITIES"
 echo -e "Number of enzyme tests: $ENZYME_TEST_COUNT"
 
+BETTERER_STATS=""
+while read -r name value
+do
+  BETTERER_STATS+=$'\n  '
+  BETTERER_STATS+="\"grafana.ci-code.betterer.${name}\": \"${value}\","
+done <<< "$(yarn betterer:stats)"
+
 echo "Metrics: {
+  $BETTERER_STATS
   \"grafana.ci-code.strictErrors\": \"${ERROR_COUNT}\",
   \"grafana.ci-code.accessibilityErrors\": \"${ACCESSIBILITY_ERRORS}\",
   \"grafana.ci-code.directives\": \"${DIRECTIVES}\",

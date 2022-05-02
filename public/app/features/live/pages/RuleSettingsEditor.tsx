@@ -1,5 +1,7 @@
 import React from 'react';
+
 import { CodeEditor, Select } from '@grafana/ui';
+
 import { RuleType, RuleSetting, PipeLineEntitiesInfo } from './types';
 
 interface Props {

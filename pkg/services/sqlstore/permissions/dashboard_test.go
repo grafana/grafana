@@ -29,7 +29,7 @@ func TestNewAccessControlDashboardPermissionFilter(t *testing.T) {
 			expectedFolderActions: []string{
 				dashboards.ActionFoldersRead,
 				accesscontrol.ActionAlertingRuleRead,
-				accesscontrol.ActionAlertingRuleUpdate,
+				accesscontrol.ActionAlertingRuleCreate,
 			},
 		},
 		{
@@ -39,7 +39,7 @@ func TestNewAccessControlDashboardPermissionFilter(t *testing.T) {
 			expectedFolderActions: []string{
 				dashboards.ActionFoldersRead,
 				accesscontrol.ActionAlertingRuleRead,
-				accesscontrol.ActionAlertingRuleUpdate,
+				accesscontrol.ActionAlertingRuleCreate,
 			},
 		},
 		{

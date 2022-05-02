@@ -52,7 +52,10 @@
   {
     "Messages": [
       { "Code": "", "Value": null },
-      { "Code": "MaxMetricsExceeded", "Value": null }
+      { "Code": "MaxMetricsExceeded", "Value": null },
+      { "Code": "MaxQueryTimeRangeExceeded", "Value": null },
+      { "Code": "MaxQueryResultsExceeded", "Value": null },
+      { "Code": "MaxMatchingResultsExceeded", "Value": null }
     ],
     "MetricDataResults": [
       {

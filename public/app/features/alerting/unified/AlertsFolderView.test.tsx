@@ -1,12 +1,14 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { configureStore } from 'app/store/configureStore';
-import { FolderState } from 'app/types';
-import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { byTestId } from 'testing-library-selector';
+
+import { configureStore } from 'app/store/configureStore';
+import { FolderState } from 'app/types';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
+
 import { AlertsFolderView } from './AlertsFolderView';
 import { mockCombinedRule } from './mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -116,7 +118,7 @@ describe('AlertsFolderView tests', () => {
     expect(ui.ruleList.row.queryAll()).toHaveLength(0);
   });
 
-  it('Should filter alert rules by the name, case insensitive', () => {
+  it('Should filter alert rules by the name, case insensitive', async () => {
     // Arrange
     const store = configureStore();
     const folder = mockFolder();
@@ -143,14 +145,14 @@ describe('AlertsFolderView tests', () => {
       </Provider>
     );
 
-    userEvent.type(ui.filter.name.get(), 'cpu');
+    await userEvent.type(ui.filter.name.get(), 'cpu');
 
     // Assert
     expect(ui.ruleList.row.queryAll()).toHaveLength(1);
     expect(ui.ruleList.row.get()).toHaveTextContent('CPU Alert');
   });
 
-  it('Should filter alert rule by labels', () => {
+  it('Should filter alert rule by labels', async () => {
     // Arrange
     const store = configureStore();
     const folder = mockFolder();
@@ -180,7 +182,7 @@ describe('AlertsFolderView tests', () => {
       </Provider>
     );
 
-    userEvent.type(ui.filter.label.get(), 'severity=critical');
+    await userEvent.type(ui.filter.label.get(), 'severity=critical');
 
     // Assert
     expect(ui.ruleList.row.queryAll()).toHaveLength(1);

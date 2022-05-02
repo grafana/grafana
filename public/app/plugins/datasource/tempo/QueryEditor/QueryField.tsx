@@ -1,4 +1,7 @@
 import { css } from '@emotion/css';
+import React from 'react';
+import useAsync from 'react-use/lib/useAsync';
+
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
@@ -12,15 +15,15 @@ import {
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
-import React from 'react';
+
 import { LokiQueryField } from '../../loki/components/LokiQueryField';
+import { LokiDatasource } from '../../loki/datasource';
 import { LokiQuery } from '../../loki/types';
 import { TempoDatasource, TempoQuery, TempoQueryType } from '../datasource';
-import { LokiDatasource } from '../../loki/datasource';
-import useAsync from 'react-use/lib/useAsync';
+
 import NativeSearch from './NativeSearch';
-import { getDS } from './utils';
 import { ServiceGraphSection } from './ServiceGraphSection';
+import { getDS } from './utils';
 
 interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {}
 
@@ -113,7 +116,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
           </InlineField>
         </InlineFieldRow>
         {query.queryType === 'nativeSearch' && (
-          <p style={{ maxWidth: '65ch' }}>
+          <div style={{ maxWidth: '65ch' }}>
             <Badge icon="rocket" text="Beta" color="blue" />
             {config.featureToggles.tempoBackendSearch ? (
               <>&nbsp;Tempo search is currently in beta.</>
@@ -124,7 +127,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
                 future!
               </>
             )}
-          </p>
+          </div>
         )}
         {query.queryType === 'search' && (
           <SearchSection
@@ -201,7 +204,6 @@ function SearchSection({ logsDatasourceUid, onChange, onRunQuery, query }: Searc
     return (
       <>
         <InlineLabel>Tempo uses {ds.name} to find traces.</InlineLabel>
-
         <LokiQueryField
           datasource={ds}
           onChange={onChange}

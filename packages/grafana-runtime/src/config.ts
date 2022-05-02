@@ -1,4 +1,5 @@
 import { merge } from 'lodash';
+
 import {
   BootData,
   BuildInfo,
@@ -36,6 +37,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   externalUserMngLinkName = '';
   externalUserMngInfo = '';
   allowOrgCreate = false;
+  feedbackLinksEnabled = true;
   disableLoginForm = false;
   defaultDatasource = ''; // UID
   alertingEnabled = false;
@@ -45,6 +47,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
+  queryHistoryEnabled = false;
   helpEnabled = false;
   profileEnabled = false;
   ldapEnabled = false;
@@ -119,7 +122,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
     this.theme2 = createTheme({ colors: { mode } });
     this.theme = this.theme2.v1;
     this.bootData = options.bootData;
-    this.buildInfo = options.buildInfo;
 
     const defaults = {
       datasources: {},
@@ -131,7 +133,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
       appUrl: '',
       appSubUrl: '',
       buildInfo: {
-        version: 'v1.0',
+        version: '1.0',
         commit: '1',
         env: 'production',
       },
@@ -141,6 +143,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
     };
 
     merge(this, defaults, options);
+
+    this.buildInfo = options.buildInfo || defaults.buildInfo;
 
     if (this.dateFormats) {
       systemDateFormats.update(this.dateFormats);

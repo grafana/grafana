@@ -10,7 +10,7 @@ Alerts allow you to learn about problems in your systems moments after they occu
 Grafana 8.0 introduced new and improved alerting that centralizes alerting information in a single, searchable view. It allows you to:
 
 - Create and manage Grafana alerts
-- Create and manage Cortex and Loki managed alerts
+- Create and manage Grafana Mimir and Loki managed alerts
 - View alerting information from Prometheus and Alertmanager compatible data sources
 
 Grafana alerting is enabled by default for new OSS installations. For older installations, it is still an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature.

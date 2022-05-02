@@ -1,11 +1,13 @@
+import { isArray, isString } from 'lodash';
 import MiniSearch from 'minisearch';
+
 import { ArrayVector, DataFrame, DataSourceRef, Field, FieldType, getDisplayProcessor, Vector } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { GrafanaSearcher, QueryFilters, QueryResponse } from './types';
 import { filterFrame, getRawIndexData, RawIndexData, rawIndexSupplier } from './backend';
+import { GrafanaSearcher, QueryFilters, QueryResponse } from './types';
+
 import { LocationInfo } from '.';
-import { isArray, isString } from 'lodash';
 
 export type SearchResultKind = keyof RawIndexData;
 
@@ -243,7 +245,22 @@ function shouldKeep(filter: QueryFilters, doc: InputDoc, index: number): boolean
       }
     }
   }
-  return true;
+
+  let keep = true;
+  // Any is OK
+  if (filter.datasource) {
+    keep = false;
+    const dss = doc.datasource?.get(index);
+    if (dss) {
+      for (const ds of dss) {
+        if (ds.uid === filter.datasource) {
+          keep = true;
+          break;
+        }
+      }
+    }
+  }
+  return keep;
 }
 
 function getInputDoc(kind: SearchResultKind, frame: DataFrame): InputDoc {

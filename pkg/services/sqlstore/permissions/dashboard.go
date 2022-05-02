@@ -91,7 +91,7 @@ func NewAccessControlDashboardPermissionFilter(user *models.SignedInUser, permis
 	if queryType == searchstore.TypeAlertFolder {
 		folderActions = append(folderActions, accesscontrol.ActionAlertingRuleRead)
 		if needEdit {
-			folderActions = append(folderActions, accesscontrol.ActionAlertingRuleUpdate)
+			folderActions = append(folderActions, accesscontrol.ActionAlertingRuleCreate)
 		}
 	} else {
 		dashboardActions = append(dashboardActions, accesscontrol.ActionDashboardsRead)

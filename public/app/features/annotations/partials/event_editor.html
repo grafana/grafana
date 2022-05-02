@@ -27,7 +27,7 @@
 
 			<div class="gf-form-button-row">
 				<button type="submit" class="btn btn-primary" ng-click="ctrl.save()">Save</button>
-				<button ng-if="ctrl.event.id" type="submit" class="btn btn-danger" ng-click="ctrl.delete()">Delete</button>
+				<button ng-if="ctrl.event.id && ctrl.canDelete()" type="submit" class="btn btn-danger" ng-click="ctrl.delete()">Delete</button>
 				<a class="btn-text" ng-click="ctrl.close();">Cancel</a>
 			</div>
 		</div>

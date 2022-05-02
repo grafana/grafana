@@ -1,10 +1,12 @@
-import { commonOptionsBuilder, sharedSingleStatPanelChangedHandler } from '@grafana/ui';
 import { PanelPlugin, VizOrientation } from '@grafana/data';
-import { BarGaugePanel } from './BarGaugePanel';
-import { BarGaugeOptions, displayModes } from './types';
+import { commonOptionsBuilder, sharedSingleStatPanelChangedHandler } from '@grafana/ui';
+
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/types';
+
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
+import { BarGaugePanel } from './BarGaugePanel';
 import { BarGaugeSuggestionsSupplier } from './suggestions';
+import { BarGaugeOptions, displayModes } from './types';
 
 export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
   .useFieldConfig()

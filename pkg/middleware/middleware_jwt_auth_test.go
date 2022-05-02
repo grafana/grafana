@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
@@ -46,14 +45,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 				"foo-username": myUsername,
 			}, nil
 		}
-		bus.AddHandler("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{
-				UserId: id,
-				OrgId:  orgID,
-				Login:  query.Login,
-			}
-			return nil
-		})
+		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: id, OrgId: orgID, Login: myUsername}
 
 		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
 		assert.Equal(t, verifiedToken, token)
@@ -74,14 +66,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 				"foo-email": myEmail,
 			}, nil
 		}
-		bus.AddHandler("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{
-				UserId: id,
-				OrgId:  orgID,
-				Email:  query.Email,
-			}
-			return nil
-		})
+		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: id, OrgId: orgID, Email: myEmail}
 
 		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
 		assert.Equal(t, verifiedToken, token)
@@ -103,9 +88,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 				"foo-email": myEmail,
 			}, nil
 		}
-		bus.AddHandler("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			return models.ErrUserNotFound
-		})
+		sc.mockSQLStore.ExpectedError = models.ErrUserNotFound
 
 		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
 		assert.Equal(t, verifiedToken, token)
@@ -124,22 +107,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 				"foo-email": myEmail,
 			}, nil
 		}
-		bus.AddHandler("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{
-				UserId: id,
-				OrgId:  orgID,
-				Email:  query.Email,
-			}
-			return nil
-		})
-		bus.AddHandler("upsert-user", func(ctx context.Context, command *models.UpsertUserCommand) error {
-			command.Result = &models.User{
-				Id:    id,
-				Name:  command.ExternalUser.Name,
-				Email: command.ExternalUser.Email,
-			}
-			return nil
-		})
+		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: id, OrgId: orgID, Email: myEmail}
 
 		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
 		assert.Equal(t, verifiedToken, token)

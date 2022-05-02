@@ -17,17 +17,21 @@ import (
 // alert notifications to Microsoft teams.
 type TeamsNotifier struct {
 	*Base
-	URL     string
-	Message string
-	tmpl    *template.Template
-	log     log.Logger
-	ns      notifications.WebhookSender
+	URL          string
+	Message      string
+	Title        string
+	SectionTitle string
+	tmpl         *template.Template
+	log          log.Logger
+	ns           notifications.WebhookSender
 }
 
 type TeamsConfig struct {
 	*NotificationChannelConfig
-	URL     string
-	Message string
+	URL          string
+	Message      string
+	Title        string
+	SectionTitle string
 }
 
 func TeamsFactory(fc FactoryConfig) (NotificationChannel, error) {
@@ -50,6 +54,8 @@ func NewTeamsConfig(config *NotificationChannelConfig) (*TeamsConfig, error) {
 		NotificationChannelConfig: config,
 		URL:                       URL,
 		Message:                   config.Settings.Get("message").MustString(`{{ template "teams.default.message" .}}`),
+		Title:                     config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
+		SectionTitle:              config.Settings.Get("sectiontitle").MustString(""),
 	}, nil
 }
 
@@ -63,11 +69,13 @@ func NewTeamsNotifier(config *TeamsConfig, ns notifications.WebhookSender, t *te
 			DisableResolveMessage: config.DisableResolveMessage,
 			Settings:              config.Settings,
 		}),
-		URL:     config.URL,
-		Message: config.Message,
-		log:     log.New("alerting.notifier.teams"),
-		ns:      ns,
-		tmpl:    t,
+		URL:          config.URL,
+		Message:      config.Message,
+		Title:        config.Title,
+		SectionTitle: config.SectionTitle,
+		log:          log.New("alerting.notifier.teams"),
+		ns:           ns,
+		tmpl:         t,
 	}
 }
 
@@ -78,7 +86,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	ruleURL := joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list", tn.log)
 
-	title := tmpl(DefaultMessageTitleEmbed)
+	title := tmpl(tn.Title)
 	body := map[string]interface{}{
 		"@type":    "MessageCard",
 		"@context": "http://schema.org/extensions",
@@ -89,7 +97,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		"themeColor": getAlertStatusColor(types.Alerts(as...).Status()),
 		"sections": []map[string]interface{}{
 			{
-				"title": "Details",
+				"title": tmpl(tn.SectionTitle),
 				"text":  tmpl(tn.Message),
 			},
 		},
@@ -108,9 +116,15 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		},
 	}
 
-	u := tmpl(tn.URL)
 	if tmplErr != nil {
 		tn.log.Warn("failed to template Teams message", "err", tmplErr.Error())
+		tmplErr = nil
+	}
+
+	u := tmpl(tn.URL)
+	if tmplErr != nil {
+		tn.log.Warn("failed to template Teams URL", "err", tmplErr.Error(), "fallback", tn.URL)
+		u = tn.URL
 	}
 
 	b, err := json.Marshal(&body)

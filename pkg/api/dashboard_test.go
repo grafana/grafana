@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
@@ -29,6 +28,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/live"
+	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -44,11 +45,13 @@ func TestGetHomeDashboard(t *testing.T) {
 	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
+	prefService := preftest.NewPreferenceServiceFake()
 
 	hs := &HTTPServer{
-		Cfg: cfg, Bus: bus.New(),
-		pluginStore: &fakePluginStore{},
-		SQLStore:    mockstore.NewSQLStoreMock(),
+		Cfg:               cfg,
+		pluginStore:       &fakePluginStore{},
+		SQLStore:          mockstore.NewSQLStoreMock(),
+		preferenceService: prefService,
 	}
 
 	tests := []struct {
@@ -71,6 +74,8 @@ func TestGetHomeDashboard(t *testing.T) {
 			hs.Cfg.DefaultHomeDashboardPath = tc.defaultSetting
 			bytes, err := simplejson.NewJson(homeDashJSON)
 			require.NoError(t, err, "must be able to encode file as JSON")
+
+			prefService.ExpectedPreference = &pref.Preference{}
 
 			dash.Dashboard = bytes
 
@@ -96,7 +101,7 @@ func newTestLive(t *testing.T, store *sqlstore.SQLStore) *live.GrafanaLive {
 		nil,
 		&usagestats.UsageStatsMock{T: t},
 		nil,
-		features, nil)
+		features, accesscontrolmock.New())
 	require.NoError(t, err)
 	return gLive
 }
@@ -118,10 +123,11 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		mockSQLStore.ExpectedDashboard = fakeDash
 
 		hs := &HTTPServer{
-			Cfg:         setting.NewCfg(),
-			pluginStore: &fakePluginStore{},
-			SQLStore:    mockSQLStore,
-			Features:    featuremgmt.WithFeatures(),
+			Cfg:           setting.NewCfg(),
+			pluginStore:   &fakePluginStore{},
+			SQLStore:      mockSQLStore,
+			AccessControl: accesscontrolmock.New(),
+			Features:      featuremgmt.WithFeatures(),
 		}
 		hs.SQLStore = mockSQLStore
 
@@ -224,6 +230,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
 			SQLStore:              mockSQLStore,
+			AccessControl:         accesscontrolmock.New(),
 			dashboardService: service.ProvideDashboardService(
 				cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
 			),
@@ -890,6 +897,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				LibraryElementService:        &mockLibraryElementService{},
 				dashboardProvisioningService: mockDashboardProvisioningService{},
 				SQLStore:                     mockSQLStore,
+				AccessControl:                accesscontrolmock.New(),
 			}
 			hs.callGetDashboard(sc)
 
@@ -927,6 +935,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		LibraryElementService: &libraryElementsService,
 		SQLStore:              sc.sqlStore,
 		ProvisioningService:   provisioningService,
+		AccessControl:         accesscontrolmock.New(),
 		dashboardProvisioningService: service.ProvideDashboardService(
 			cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
 		),
@@ -953,31 +962,17 @@ func (hs *HTTPServer) callGetDashboard(sc *scenarioContext) {
 }
 
 func (hs *HTTPServer) callGetDashboardVersion(sc *scenarioContext) {
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardVersionQuery) error {
-		query.Result = &models.DashboardVersion{}
-		return nil
-	})
-
 	sc.handlerFunc = hs.GetDashboardVersion
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
 func (hs *HTTPServer) callGetDashboardVersions(sc *scenarioContext) {
-	bus.AddHandler("test", func(ctx context.Context, query *models.GetDashboardVersionsQuery) error {
-		query.Result = []*models.DashboardVersionDTO{}
-		return nil
-	})
-
 	sc.handlerFunc = hs.GetDashboardVersions
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
 func (hs *HTTPServer) callDeleteDashboardByUID(t *testing.T,
 	sc *scenarioContext, mockDashboard *dashboards.FakeDashboardService) {
-	bus.AddHandler("test", func(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
-		return nil
-	})
-
 	hs.dashboardService = mockDashboard
 	sc.handlerFunc = hs.DeleteDashboardByUID
 	sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
@@ -999,11 +994,8 @@ func callPostDashboardShouldReturnSuccess(sc *scenarioContext) {
 
 func postDashboardScenario(t *testing.T, desc string, url string, routePattern string, cmd models.SaveDashboardCommand, dashboardService dashboards.DashboardService, folderService dashboards.FolderService, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
 		cfg := setting.NewCfg()
 		hs := HTTPServer{
-			Bus:                 bus.GetBus(),
 			Cfg:                 cfg,
 			ProvisioningService: provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                newTestLive(t, sqlstore.InitTestDB(t)),
@@ -1036,12 +1028,9 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 
 func postDiffScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.CalculateDiffOptions, role models.RoleType, fn scenarioFunc, sqlmock sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
 		cfg := setting.NewCfg()
 		hs := HTTPServer{
 			Cfg:                   cfg,
-			Bus:                   bus.GetBus(),
 			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                  newTestLive(t, sqlstore.InitTestDB(t)),
 			QuotaService:          &quota.QuotaService{Cfg: cfg},
@@ -1072,13 +1061,10 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 
 func restoreDashboardVersionScenario(t *testing.T, desc string, url string, routePattern string, mock *dashboards.FakeDashboardService, cmd dtos.RestoreDashboardVersionCommand, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
 		cfg := setting.NewCfg()
 		mockSQLStore := mockstore.NewSQLStoreMock()
 		hs := HTTPServer{
 			Cfg:                   cfg,
-			Bus:                   bus.GetBus(),
 			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                  newTestLive(t, sqlstore.InitTestDB(t)),
 			QuotaService:          &quota.QuotaService{Cfg: cfg},
@@ -1111,8 +1097,8 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 }
 
 func (sc *scenarioContext) ToJSON() *simplejson.Json {
-	var result *simplejson.Json
-	err := json.NewDecoder(sc.resp.Body).Decode(&result)
+	result := simplejson.New()
+	err := json.NewDecoder(sc.resp.Body).Decode(result)
 	require.NoError(sc.t, err)
 	return result
 }
