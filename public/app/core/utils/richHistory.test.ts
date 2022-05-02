@@ -13,6 +13,7 @@ import {
   createQueryHeading,
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
+  migrateQueryHistoryFromLocalStorage,
   SortOrder,
 } from './richHistory';
 
@@ -21,6 +22,20 @@ const richHistoryStorageMock: RichHistoryStorage = {} as RichHistoryStorage;
 jest.mock('../history/richHistoryStorageProvider', () => {
   return {
     getRichHistoryStorage: () => richHistoryStorageMock,
+  };
+});
+
+const richHistoryLocalStorageMock = { getRichHistory: jest.fn() };
+jest.mock('../history/RichHistoryLocalStorage', () => {
+  return function () {
+    return richHistoryLocalStorageMock;
+  };
+});
+
+const richHistoryRemoteStorageMock = { migrate: jest.fn() };
+jest.mock('../history/RichHistoryRemoteStorage', () => {
+  return function () {
+    return richHistoryRemoteStorageMock;
   };
 });
 
@@ -161,6 +176,14 @@ describe('richHistory', () => {
       const deletedHistoryId = await deleteQueryInRichHistory('1');
       expect(deletedHistoryId).toEqual('1');
     });
+  });
+
+  it('migration', async () => {
+    const history = [{ id: 'test' }, { id: 'test2' }];
+
+    richHistoryLocalStorageMock.getRichHistory.mockReturnValue(history);
+    await migrateQueryHistoryFromLocalStorage();
+    expect(richHistoryRemoteStorageMock.migrate).toBeCalledWith(history);
   });
 
   describe('mapNumbertoTimeInSlider', () => {

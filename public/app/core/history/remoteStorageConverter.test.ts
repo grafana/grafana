@@ -3,7 +3,7 @@ import { backendSrv } from '../services/backend_srv';
 
 import { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
 import { DataSourceSrvMock } from './RichHistoryStorage';
-import { fromDTO } from './remoteStorageConverter';
+import { fromDTO, toDTO } from './remoteStorageConverter';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -33,5 +33,8 @@ const validDTO: RichHistoryRemoteStorageDTO = {
 describe('RemoteStorage converter', () => {
   it('converts DTO to RichHistoryQuery', () => {
     expect(fromDTO(validDTO)).toMatchObject(validRichHistory);
+  });
+  it('convert RichHistoryQuery to DTO', () => {
+    expect(toDTO(validRichHistory)).toMatchObject(validDTO);
   });
 });
