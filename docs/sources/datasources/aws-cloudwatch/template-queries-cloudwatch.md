@@ -13,7 +13,7 @@ For an introduction to templating and template variables, refer to the [Templati
 
 ## Query variable
 
-The CloudWatch data source provides the following queries that you can specify in the `Query Type` field in the Variable edit view. They enable you to fill a variable's options list with values such as `regions`, `namespaces`, `metric names` and `dimension keys/values`.
+You can use the following CloudWatch data source queries to specify the `Query Type` field in the Variable edit view. Use them to fill a variables options list with values like `regions`, `namespaces`, `metric names`, and `dimension keys/values`.
 
 Read more about the available dimensions in the [CloudWatch Metrics and Dimensions Reference](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CW_Support_For_AWS.html).
 
@@ -39,7 +39,7 @@ Variables can be used in the variable form. Refer to the [variable syntax docume
 
 ### Filters
 
-The `ec2_instance_attribute` query takes in `filters`, each as a filter name and a comma-separated list of values.
+The `ec2_instance_attribute` query takes in `filters` as a filter name and a comma-separated list of values.
 You can specify [pre-defined filters of ec2:DescribeInstances](http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html).
 
 ### Selecting attributes
