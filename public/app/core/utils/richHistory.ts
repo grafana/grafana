@@ -8,6 +8,8 @@ import { createErrorNotification, createWarningNotification } from 'app/core/cop
 import { dispatch } from 'app/store/store';
 import { RichHistoryQuery } from 'app/types/explore';
 
+import RichHistoryLocalStorage from '../history/RichHistoryLocalStorage';
+import RichHistoryRemoteStorage from '../history/RichHistoryRemoteStorage';
 import {
   RichHistoryServiceError,
   RichHistoryStorageWarning,
@@ -115,6 +117,27 @@ export async function deleteQueryInRichHistory(id: string) {
   } catch (error) {
     dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     return undefined;
+  }
+}
+
+export async function migrateQueryHistoryFromLocalStorage(): Promise<boolean> {
+  const richHistoryLocalStorage = new RichHistoryLocalStorage();
+  const richHistoryRemoteStorage = new RichHistoryRemoteStorage();
+
+  try {
+    const richHistory: RichHistoryQuery[] = await richHistoryLocalStorage.getRichHistory({
+      datasourceFilters: [],
+      from: 0,
+      search: '',
+      sortOrder: SortOrder.Descending,
+      starred: false,
+      to: 14,
+    });
+    await richHistoryRemoteStorage.migrate(richHistory);
+    return true;
+  } catch (error) {
+    dispatch(notifyApp(createWarningNotification(`Query history migration failed. ${error.message}`)));
+    return false;
   }
 }
 
