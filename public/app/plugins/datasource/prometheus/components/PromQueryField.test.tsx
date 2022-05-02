@@ -1,7 +1,6 @@
 import { getByTestId, render, screen } from '@testing-library/react';
 // @ts-ignore
 import userEvent from '@testing-library/user-event';
-import RCCascader from 'rc-cascader';
 import React from 'react';
 
 import { PanelData, LoadingState, DataFrame, CoreApp } from '@grafana/data';
