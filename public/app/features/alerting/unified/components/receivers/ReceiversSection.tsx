@@ -33,7 +33,7 @@ export const ReceiversSection: FC<Props> = ({
         </div>
         {showButton && (
           <Link to={addButtonTo}>
-            <Button type="submit" icon="plus">
+            <Button type="button" icon="plus">
               {addButtonLabel}
             </Button>
           </Link>
