@@ -1,5 +1,6 @@
 import { cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { Alert, Button, Icon, Input, LoadingPlaceholder, Tooltip, useStyles2, Collapse, Label } from '@grafana/ui';
 
@@ -37,6 +38,7 @@ const ResourcePicker = ({
   const [internalSelectedURI, setInternalSelectedURI] = useState<string | undefined>(resourceURI);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(resourceURI?.includes('$'));
+  const [shouldShowLimitFlag, setShouldShowLimitFlag] = useState(false);
 
   // Sync the resourceURI prop to internal state
   useEffect(() => {
@@ -56,10 +58,9 @@ const ResourcePicker = ({
     }
   }, [internalSelectedURI, isLoading, resourcePickerData]);
 
-  useEffect(() => {
+  useEffectOnce(() => {
     loadInitialData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  });
 
   // set selected row data whenever row or selection changes
   useEffect(() => {
@@ -110,15 +111,23 @@ const ResourcePicker = ({
 
   const handleSearch = useCallback(
     async (searchWord: string) => {
+      // clear errors and warnings
+      setErrorMessage(undefined);
+      setShouldShowLimitFlag(false);
+
       if (!searchWord) {
         loadInitialData();
         return;
       }
+
       try {
         setIsLoading(true);
         const searchType = selectableEntryTypes.length > 1 ? 'logs' : 'metrics';
         const searchResults = await resourcePickerData.search(searchWord, searchType);
         setRows(searchResults);
+        if (searchResults.length >= resourcePickerData.resultLimit) {
+          setShouldShowLimitFlag(true);
+        }
       } catch (err) {
         setErrorMessage(messageFromError(err));
       }
@@ -130,8 +139,11 @@ const ResourcePicker = ({
   return (
     <div>
       <Search searchFn={handleSearch} />
-
-      <Space v={2} />
+      {shouldShowLimitFlag ? (
+        <p className={styles.resultLimit}>Showing first {resourcePickerData.resultLimit} results</p>
+      ) : (
+        <Space v={2} />
+      )}
 
       <table className={styles.table}>
         <thead>

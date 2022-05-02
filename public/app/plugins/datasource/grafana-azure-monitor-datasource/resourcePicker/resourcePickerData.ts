@@ -24,10 +24,10 @@ import {
 import { routeNames } from '../utils/common';
 
 const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01';
-
 export default class ResourcePickerData extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   private resourcePath: string;
   private supportedMetricNamespaces: string[];
+  resultLimit = 200;
 
   constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
@@ -76,7 +76,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         | where id contains "${searchPhrase}"
         | where type in (${this.supportedMetricNamespaces.map((ns) => `"${ns.toLowerCase()}"`).join(',')})
         | order by tolower(name) asc
-        | limit 200
+        | limit ${this.resultLimit}
       `,
       logs: `
         resources
@@ -84,7 +84,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         | where id contains "${searchPhrase}"
         | where type in (${logsSupportedResourceTypesKusto})
         | order by tolower(name) asc
-        | limit 200
+        | limit ${this.resultLimit}
       `,
     };
     const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(searchQuery[searchType]);
