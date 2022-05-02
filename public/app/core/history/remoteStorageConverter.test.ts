@@ -13,7 +13,7 @@ jest.mock('@grafana/runtime', () => ({
 
 const validRichHistory: RichHistoryQuery = {
   comment: 'comment',
-  createdAt: 1,
+  createdAt: 1000,
   datasourceName: 'name-of-dev-test',
   datasourceUid: 'dev-test',
   id: 'ID',

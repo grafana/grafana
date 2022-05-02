@@ -23,7 +23,7 @@ describe('RichHistoryRemoteStorage', () => {
   it('returns list of query history items', async () => {
     const expectedViewModel: RichHistoryQuery<any> = {
       id: '123',
-      createdAt: 200,
+      createdAt: 200 * 1000,
       datasourceUid: 'uid',
       datasourceName: 'name-of-uid',
       starred: true,
@@ -33,7 +33,7 @@ describe('RichHistoryRemoteStorage', () => {
     const returnedDTOs: RichHistoryRemoteStorageDTO[] = [
       {
         uid: expectedViewModel.id,
-        createdAt: expectedViewModel.createdAt,
+        createdAt: expectedViewModel.createdAt / 1000,
         datasourceUid: expectedViewModel.datasourceUid,
         starred: expectedViewModel.starred,
         comment: expectedViewModel.comment,
@@ -47,7 +47,7 @@ describe('RichHistoryRemoteStorage', () => {
     });
     const search = 'foo';
     const datasourceFilters = ['name-of-uid1', 'name-of-uid2'];
-    const sortOrder = SortOrder.Ascending;
+    const sortOrder = SortOrder.Descending;
     const starred = true;
     const from = 100;
     const to = 200;
@@ -57,7 +57,7 @@ describe('RichHistoryRemoteStorage', () => {
     const items = await storage.getRichHistory({ search, datasourceFilters, sortOrder, starred, to, from });
 
     expect(getMock).toBeCalledWith(
-      `/api/query-history?datasourceUid=uid1&datasourceUid=uid2&searchString=${search}&sort=${sortOrder}&limit=${expectedLimit}&page=${expectedPage}&onlyStarred=${starred}`
+      `/api/query-history?datasourceUid=uid1&datasourceUid=uid2&searchString=${search}&sort=time-desc&to=now-${from}d&from=now-${to}d&limit=${expectedLimit}&page=${expectedPage}&onlyStarred=${starred}`
     );
     expect(items).toMatchObject([expectedViewModel]);
   });

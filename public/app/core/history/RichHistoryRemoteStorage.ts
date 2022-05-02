@@ -2,7 +2,7 @@ import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { DataQuery } from '../../../../packages/grafana-data';
-import { RichHistorySearchFilters, RichHistorySettings } from '../utils/richHistoryTypes';
+import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryStorage, { RichHistoryStorageWarningDetails } from './RichHistoryStorage';
 import { fromDTO } from './remoteStorageConverter';
@@ -76,8 +76,13 @@ function buildQueryParams(filters: RichHistorySearchFilters): string {
     params = params + `&searchString=${filters.search}`;
   }
   if (filters.sortOrder) {
-    params = params + `&sort=${filters.sortOrder}`;
+    params = params + `&sort=${filters.sortOrder === SortOrder.Ascending ? 'time-asc' : 'time-desc'}`;
   }
+  const relativeFrom = filters.from === 0 ? 'now' : `now-${filters.from}d`;
+  const relativeTo = filters.to === 0 ? 'now' : `now-${filters.to}d`;
+  // TODO: Unify: remote storage from/to params are swapped comparing to frontend and local storage filters
+  params = params + `&to=${relativeFrom}`;
+  params = params + `&from=${relativeTo}`;
   params = params + `&limit=100`;
   params = params + `&page=1`;
   if (filters.starred) {
