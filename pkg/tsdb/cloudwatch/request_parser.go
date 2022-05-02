@@ -71,8 +71,8 @@ func migrateLegacyQuery(queries []backend.DataQuery, dynamicLabelsEnabled bool, 
 		migratedQueryJson := migratedWithStatistic
 
 		_, labelExists := migratedQueryJson.CheckGet("label")
-		if !labelExists && dynamicLabelsEnabled {
-			migratedQueryJson = migrateAliasToDynamicLabel(migratedWithStatistic)
+		if !labelExists && dynamicLabelsEnabled && migratedWithStatistic != nil {
+			migrateAliasToDynamicLabel(migratedWithStatistic)
 		}
 
 		query.JSON, err = migratedQueryJson.MarshalJSON()
@@ -115,26 +115,24 @@ var aliasPatterns = map[string]string{
 
 var legacyAliasRegexp = regexp.MustCompile(`{{\s*(.+?)\s*}}`)
 
-func migrateAliasToDynamicLabel(queryJson *simplejson.Json) *simplejson.Json {
+func migrateAliasToDynamicLabel(queryJson *simplejson.Json) {
 	fullAliasField := queryJson.Get("alias").MustString()
-	if fullAliasField == "" {
-		return queryJson
-	}
-
-	matches := legacyAliasRegexp.FindAllStringSubmatch(fullAliasField, -1)
-	for _, m := range matches {
-		aliasPattern := m[0]
-		alias := m[1]
-		if dynamicLabel, ok := aliasPatterns[alias]; ok {
-			fullAliasField = strings.ReplaceAll(fullAliasField, aliasPattern, dynamicLabel)
-		} else {
-			fullAliasField = strings.ReplaceAll(fullAliasField, aliasPattern, fmt.Sprintf(`${PROP('Dim.%s')}`, alias))
+	if fullAliasField != "" {
+		matches := legacyAliasRegexp.FindAllStringSubmatch(fullAliasField, -1)
+		for _, m := range matches {
+			aliasPattern := m[0]
+			alias := m[1]
+			if dynamicLabel, ok := aliasPatterns[alias]; ok {
+				fullAliasField = strings.ReplaceAll(fullAliasField, aliasPattern, dynamicLabel)
+			} else {
+				fullAliasField = strings.ReplaceAll(fullAliasField, aliasPattern, fmt.Sprintf(`${PROP('Dim.%s')}`, alias))
+			}
 		}
 	}
 
 	queryJson.Set("label", fullAliasField)
 
-	return queryJson
+	return
 }
 
 func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time, endTime time.Time) (*cloudWatchQuery, error) {

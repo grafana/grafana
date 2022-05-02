@@ -338,6 +338,7 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 		"one unknown alias pattern becomes dimension": {inputAlias: "{{any_other_word}}", expectedLabel: "${PROP('Dim.any_other_word')}"},
 		"one known alias pattern with spaces":         {inputAlias: "{{ metric   }}", expectedLabel: "${PROP('MetricName')}"},
 		"multiple alias patterns":                     {inputAlias: "some {{combination }}{{ label}} and {{metric}}", expectedLabel: "some ${PROP('Dim.combination')}${LABEL} and ${PROP('MetricName')}"},
+		"empty alias still migrates to empty label":   {inputAlias: "", expectedLabel: ""},
 	}
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
@@ -355,7 +356,7 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 				  }`, tc.inputAlias)))
 			require.NoError(t, err)
 
-			migratedQueryJson := migrateAliasToDynamicLabel(queryJson)
+			migrateAliasToDynamicLabel(queryJson)
 
 			assert.Equal(t, simplejson.NewFromAny(
 				map[string]interface{}{
@@ -367,9 +368,49 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 					"namespace":  "ec2",
 					"period":     "600",
 					"region":     "us-east-1",
-					"statistic":  "Average"}), migratedQueryJson)
+					"statistic":  "Average"}), queryJson)
 		})
 	}
+}
+
+func Test_migrateLegacyQuery_migrates_alias_to_label_when_label_does_not_already_exist_and_feature_toggle_enabled(t *testing.T) {
+	migratedQueries, err := migrateLegacyQuery(
+		[]backend.DataQuery{
+			{
+				RefID:     "A",
+				QueryType: "timeSeriesQuery",
+				JSON: []byte(`{
+					"region": "us-east-1",
+					"namespace": "ec2",
+					"metricName": "CPUUtilization",
+					"alias": "{{period}} {{any_other_word}}",
+					"dimensions": {
+					  "InstanceId": ["test"]
+					},
+					"statistic": "Average",
+					"period": "600",
+					"hide": false
+				  }`)},
+		}, true, time.Now(), time.Now())
+	require.NoError(t, err)
+	require.Equal(t, 1, len(migratedQueries))
+
+	assert.JSONEq(t, `{
+		"alias":"{{period}} {{any_other_word}}",
+		"label":"${PROP('Period')} ${PROP('Dim.any_other_word')}",
+		"dimensions":{
+		  "InstanceId":[
+			 "test"
+		  ]
+		},
+		"hide":false,
+		"metricName":"CPUUtilization",
+		"namespace":"ec2",
+		"period":"600",
+		"region":"us-east-1",
+		"statistic":"Average"
+		}`,
+		string(migratedQueries[0].JSON))
 }
 
 func Test_migrateLegacyQuery_successfully_migrates_alias_to_dynamic_label_for_multiple_queries(t *testing.T) {
@@ -446,46 +487,6 @@ func Test_migrateLegacyQuery_successfully_migrates_alias_to_dynamic_label_for_mu
 					   "statistic":"Average"
 					}`,
 		string(migratedQueries[1].JSON))
-}
-
-func Test_migrateLegacyQuery_migrates_alias_to_label_when_label_does_not_already_exist_and_feature_toggle_enabled(t *testing.T) {
-	migratedQueries, err := migrateLegacyQuery(
-		[]backend.DataQuery{
-			{
-				RefID:     "A",
-				QueryType: "timeSeriesQuery",
-				JSON: []byte(`{
-					"region": "us-east-1",
-					"namespace": "ec2",
-					"metricName": "CPUUtilization",
-					"alias": "{{period}} {{any_other_word}}",
-					"dimensions": {
-					  "InstanceId": ["test"]
-					},
-					"statistic": "Average",
-					"period": "600",
-					"hide": false
-				  }`)},
-		}, true, time.Now(), time.Now())
-	require.NoError(t, err)
-	require.Equal(t, 1, len(migratedQueries))
-
-	assert.JSONEq(t, `{
-		"alias":"{{period}} {{any_other_word}}",
-		"label":"${PROP('Period')} ${PROP('Dim.any_other_word')}",
-		"dimensions":{
-		  "InstanceId":[
-			 "test"
-		  ]
-		},
-		"hide":false,
-		"metricName":"CPUUtilization",
-		"namespace":"ec2",
-		"period":"600",
-		"region":"us-east-1",
-		"statistic":"Average"
-		}`,
-		string(migratedQueries[0].JSON))
 }
 
 func Test_migrateLegacyQuery_does_not_migrate_alias_to_label(t *testing.T) {
