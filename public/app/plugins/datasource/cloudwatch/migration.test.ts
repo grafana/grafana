@@ -223,6 +223,15 @@ describe('migration', () => {
           expect(query.dimensionFilters).toBe('{"InstanceId":"$instance_id"}');
         });
       });
+      describe('when resource_arns query is used', () => {
+        it('should parse the query', () => {
+          const query = migrateVariableQuery('resource_arns(us-east-1,rds:db,{"environment":["$environment"]})');
+          expect(query.queryType).toBe(VariableQueryType.ResourceArns);
+          expect(query.region).toBe('us-east-1');
+          expect(query.resourceType).toBe('rds:db');
+          expect(query.tags).toBe('{"environment":["$environment"]}');
+        });
+      });
     });
   });
 });
