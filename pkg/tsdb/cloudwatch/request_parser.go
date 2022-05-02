@@ -116,13 +116,13 @@ func migrateAliasToDynamicLabel(queryJson *simplejson.Json) {
 	fullAliasField := queryJson.Get("alias").MustString()
 	if fullAliasField != "" {
 		matches := legacyAliasRegexp.FindAllStringSubmatch(fullAliasField, -1)
-		for _, m := range matches {
-			aliasPattern := m[0]
-			alias := m[1]
-			if dynamicLabel, ok := aliasPatterns[alias]; ok {
-				fullAliasField = strings.ReplaceAll(fullAliasField, aliasPattern, dynamicLabel)
+		for _, groups := range matches {
+			fullMatch := groups[0]
+			subgroup := groups[1]
+			if dynamicLabel, ok := aliasPatterns[subgroup]; ok {
+				fullAliasField = strings.ReplaceAll(fullAliasField, fullMatch, dynamicLabel)
 			} else {
-				fullAliasField = strings.ReplaceAll(fullAliasField, aliasPattern, fmt.Sprintf(`${PROP('Dim.%s')}`, alias))
+				fullAliasField = strings.ReplaceAll(fullAliasField, fullMatch, fmt.Sprintf(`${PROP('Dim.%s')}`, subgroup))
 			}
 		}
 	}
