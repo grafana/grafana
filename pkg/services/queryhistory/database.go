@@ -386,9 +386,11 @@ func (s QueryHistoryService) enforceQueryHistoryRowLimit(ctx context.Context, li
 			if starredQueries {
 				sql = `DELETE FROM query_history_star 
 					WHERE id IN (
-						SELECT id FROM query_history_star
-						ORDER BY id ASC 
-						LIMIT ?
+						SELECT id FROM (
+							SELECT id FROM query_history_star
+							ORDER BY id ASC 
+							LIMIT ?
+						) AS q
 					)`
 			} else {
 				sql = `DELETE 
