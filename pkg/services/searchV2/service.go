@@ -109,12 +109,23 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 }
 
 func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, q DashboardQuery) *backend.DataResponse {
-	reader := s.dashboardIndex.reader[orgId]
-	if reader != nil && q.Query != "" { // frontend initalizes with empty string
-		return s.doBlugeQuery(ctx, reader, orgId, q)
+	rsp := &backend.DataResponse{}
+	signedInUser, err := s.getUser(ctx, user, orgId)
+	if err != nil {
+		rsp.Error = err
+		return rsp
 	}
 
-	rsp := &backend.DataResponse{}
+	filter, err := s.auth.GetDashboardReadFilter(signedInUser)
+	if err != nil {
+		rsp.Error = err
+		return rsp
+	}
+
+	reader := s.dashboardIndex.reader[orgId]
+	if reader != nil && q.Query != "" { // frontend initalizes with empty string
+		return s.doBlugeQuery(ctx, reader, filter, q)
+	}
 
 	dashboards, err := s.dashboardIndex.getDashboards(ctx, orgId)
 	if err != nil {
@@ -122,29 +133,14 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 		return rsp
 	}
 
-	signedInUser, err := s.getUser(ctx, user, orgId)
-	if err != nil {
-		rsp.Error = err
-		return rsp
-	}
-
-	dashboards, err = s.applyAuthFilter(signedInUser, dashboards)
-	if err != nil {
-		rsp.Error = err
-		return rsp
-	}
+	dashboards = s.applyAuthFilter(filter, dashboards)
 
 	rsp.Frames = metaToFrame(dashboards)
 
 	return rsp
 }
 
-func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dashboards []dashboard) ([]dashboard, error) {
-	filter, err := s.auth.GetDashboardReadFilter(user)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *StandardSearchService) applyAuthFilter(filter ResourceFilter, dashboards []dashboard) []dashboard {
 	// create a list of all viewable dashboards for this user.
 	res := make([]dashboard, 0, len(dashboards))
 	for _, dash := range dashboards {
@@ -152,14 +148,14 @@ func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dashb
 			res = append(res, dash)
 		}
 	}
-	return res, nil
+	return res
 }
 
-func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.Reader, orgId int64, q DashboardQuery) *backend.DataResponse {
+func (s *StandardSearchService) doBlugeQuery(ctx context.Context, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery) *backend.DataResponse {
 	response := &backend.DataResponse{}
 
 	doExplain := false
-	perm := newPermissionFilter("ryan", "read").SetField("_id")
+	perm := newPermissionFilter(filter, s.logger)
 
 	var req bluge.SearchRequest
 	if q.Query == "*" { // Match folders and dashboards

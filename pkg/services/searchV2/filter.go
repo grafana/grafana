@@ -1,79 +1,133 @@
 package searchV2
 
 import (
-	"fmt"
+	"regexp"
 
 	"github.com/blugelabs/bluge"
 	"github.com/blugelabs/bluge/search"
 	"github.com/blugelabs/bluge/search/searcher"
 	"github.com/blugelabs/bluge/search/similarity"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 type PermissionFilter struct {
-	field string
-	who   string
-	what  string
+	log    log.Logger
+	filter ResourceFilter
+}
+
+const (
+	documentFieldKind = "_kind"
+	documentFieldId   = "_id"
+)
+
+type entityKind string
+
+const (
+	entityKindPanel     entityKind = "panel"
+	entityKindDashboard entityKind = "dashboard"
+	entityKindFolder    entityKind = "folder"
+)
+
+func (r entityKind) IsValid() bool {
+	return r == entityKindPanel || r == entityKindDashboard || r == entityKindFolder
+}
+
+func (r entityKind) supportsAuthzCheck() bool {
+	return r == entityKindPanel || r == entityKindDashboard || r == entityKindFolder
 }
 
 var (
+	permissionFilterFields                 = []string{documentFieldId, documentFieldKind}
+	panelIdFieldRegex                      = regexp.MustCompile(`^(.*)#([0-9]{1,4})$`)
+	panelIdFieldDashboardUidSubmatchIndex  = 1
+	panelIdFieldPanelIdSubmatchIndex       = 2
+	panelIdFieldRegexExpectedSubmatchCount = 3 // submatches[0] - whole string
+
 	_ bluge.Query = (*PermissionFilter)(nil)
 )
 
-// who and what are part of the query request
-// TODO: this shoudl take whatever structure we can easily check
-func newPermissionFilter(who string, what string) *PermissionFilter {
+func newPermissionFilter(resourceFilter ResourceFilter, log log.Logger) *PermissionFilter {
 	return &PermissionFilter{
-		who:  who,
-		what: what,
+		filter: resourceFilter,
+		log:    log,
 	}
 }
 
-// Location returns the location being queried
-func (q *PermissionFilter) Who() string {
-	return q.who
+func (q *PermissionFilter) logAccessDecision(decision bool, kind interface{}, id string, reason string, ctx ...interface{}) {
+	ctx = append(ctx, "kind", kind, "id", id, "reason", reason)
+	if decision {
+		q.log.Info("allowing access", ctx...)
+	} else {
+		q.log.Info("denying access", ctx...)
+	}
 }
 
-func (q *PermissionFilter) SetField(f string) *PermissionFilter {
-	q.field = f
-	return q
-}
+func (q *PermissionFilter) canAccess(kind entityKind, id string) bool {
+	if !kind.supportsAuthzCheck() {
+		q.logAccessDecision(false, kind, id, "entityDoesNotSupportAuthz")
+		return false
+	}
 
-func (q *PermissionFilter) Field() string {
-	return q.field
+	// TODO add `kind` to the `ResourceFilter` interface so that we can move the switch out of here
+	//
+	switch kind {
+	case entityKindFolder:
+		if id == "" {
+			q.logAccessDecision(true, kind, id, "generalFolder")
+			return true
+		}
+		fallthrough
+	case entityKindDashboard:
+		decision := q.filter(id)
+		q.logAccessDecision(decision, kind, id, "resourceFilter")
+		return decision
+	case entityKindPanel:
+		matches := panelIdFieldRegex.FindStringSubmatch(id)
+
+		submatchCount := len(matches)
+		if submatchCount != panelIdFieldRegexExpectedSubmatchCount {
+			q.logAccessDecision(false, kind, id, "invalidPanelIdFieldRegexSubmatchCount", "submatchCount", submatchCount, "expectedSubmatchCount", panelIdFieldRegexExpectedSubmatchCount)
+			return false
+		}
+
+		dashboardUid := matches[panelIdFieldDashboardUidSubmatchIndex]
+		decision := q.filter(dashboardUid)
+
+		q.logAccessDecision(decision, kind, id, "resourceFilter", "dashboardUid", dashboardUid, "panelId", matches[panelIdFieldPanelIdSubmatchIndex])
+		return decision
+	default:
+		q.logAccessDecision(false, kind, id, "reason", "unknownKind")
+		return false
+	}
 }
 
 func (q *PermissionFilter) Searcher(i search.Reader, options search.SearcherOptions) (search.Searcher, error) {
-	field := q.field
-	if q.field == "" {
-		field = options.DefaultSearchField
-	}
-
-	fmt.Printf("open reader: %s\n", field)
-	dvReader, err := i.DocumentValueReader([]string{field})
+	dvReader, err := i.DocumentValueReader(permissionFilterFields)
 	if err != nil {
 		return nil, err
 	}
 
 	s, err := searcher.NewMatchAllSearcher(i, 1, similarity.ConstantScorer(1), options)
 	return searcher.NewFilteringSearcher(s, func(d *search.DocumentMatch) bool {
-		var rule string
+		var kind, id string
 		err := dvReader.VisitDocumentValues(d.Number, func(field string, term []byte) {
-			rule = string(term)
+			if field == documentFieldKind {
+				kind = string(term)
+			} else if field == documentFieldId {
+				id = string(term)
+			}
 		})
 		if err != nil {
+			q.logAccessDecision(false, kind, id, "errorWhenVisitingDocumentValues")
 			return false
 		}
-		fmt.Printf("TODO check permissions: [%d] %s|%s // %s\n", d.Number, q.who, q.what, rule)
-		return true
-	}), err
-}
 
-func (q *PermissionFilter) Validate() error {
-	if q.field == "" {
-		return fmt.Errorf("missing field")
-	}
-	if q.who == "" {
-		return fmt.Errorf("missing who")
-	}
-	return nil
+		e := entityKind(kind)
+		if !e.IsValid() {
+			q.logAccessDecision(false, kind, id, "invalidEntityKind")
+			return false
+		}
+
+		return q.canAccess(e, id)
+	}), err
 }
