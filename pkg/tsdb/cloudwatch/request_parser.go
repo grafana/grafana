@@ -122,7 +122,6 @@ func migrateAliasToDynamicLabel(queryJson *simplejson.Json) *simplejson.Json {
 	}
 
 	matches := legacyAliasRegexp.FindAllStringSubmatch(fullAliasField, -1)
-	// TODO: dynamic labels doc limited to 5, LABEL can only be used once
 	for _, m := range matches {
 		aliasPattern := m[0]
 		alias := m[1]
