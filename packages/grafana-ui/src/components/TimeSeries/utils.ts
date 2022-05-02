@@ -54,6 +54,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
+  builder.setAllFrames(allFrames);
+
   builder.setPrepData((frames) => preparePlotData2(frames[0], builder.getStackingGroups()));
 
   // X is the first field in the aligned frame

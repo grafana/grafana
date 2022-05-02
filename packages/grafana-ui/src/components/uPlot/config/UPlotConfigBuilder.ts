@@ -3,9 +3,11 @@ import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding, Series } from
 
 import {
   DataFrame,
+  DataFrameFieldIndex,
   DefaultTimeZone,
   EventBus,
   Field,
+  getFieldSeriesColor,
   getTimeZoneInfo,
   GrafanaTheme2,
   TimeRange,
@@ -52,6 +54,7 @@ export class UPlotConfigBuilder {
   private sync = false;
   private mode: uPlot.Mode = 1;
   private frames: DataFrame[] | undefined = undefined;
+  private allFrames: DataFrame[] | undefined = undefined;
   // to prevent more than one threshold per scale
   private thresholds: Record<string, UPlotThresholdOptions> = {};
   // Custom handler for closest datapoint and series lookup
@@ -62,6 +65,10 @@ export class UPlotConfigBuilder {
 
   constructor(timeZone: TimeZone = DefaultTimeZone) {
     this.tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
+  }
+
+  setAllFrames(allFrames: DataFrame[]) {
+    this.allFrames = allFrames;
   }
 
   // Exposed to let the container know the primary scale keys
@@ -127,11 +134,22 @@ export class UPlotConfigBuilder {
   }
 
   addSeries(props: SeriesProps) {
-    this.series.push(new UPlotSeriesBuilder(props));
+    this.series.push(new UPlotSeriesBuilder({ ...props, dynamicSeriesColor: this.dynamicSeriesColor.bind(this) }));
   }
 
   getSeries() {
     return this.series;
+  }
+
+  dynamicSeriesColor(dataFrameFieldIndex: DataFrameFieldIndex | undefined, theme: GrafanaTheme2) {
+    if (dataFrameFieldIndex === undefined) {
+      return undefined;
+    }
+    const field = this.allFrames?.[dataFrameFieldIndex.frameIndex]?.fields[dataFrameFieldIndex.fieldIndex];
+    if (!field) {
+      return undefined;
+    }
+    return getFieldSeriesColor(field, theme).color;
   }
 
   /** Add or update the scale with the scale key */

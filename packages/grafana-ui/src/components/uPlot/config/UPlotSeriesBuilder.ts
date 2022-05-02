@@ -29,6 +29,10 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   scaleKey: string;
   pxAlign?: boolean;
   gradientMode?: GraphGradientMode;
+  dynamicSeriesColor?: (
+    dataFrameFieldIndex: DataFrameFieldIndex | undefined,
+    theme: GrafanaTheme2
+  ) => string | undefined;
 
   facets?: uPlot.Series.Facet[];
 
@@ -150,7 +154,23 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   }
 
   private getLineColor(): Series.Stroke {
-    const { lineColor, gradientMode, colorMode, thresholds, theme, hardMin, hardMax, softMin, softMax } = this.props;
+    const {
+      lineColor,
+      gradientMode,
+      colorMode,
+      thresholds,
+      theme,
+      hardMin,
+      hardMax,
+      softMin,
+      softMax,
+      dynamicSeriesColor,
+      dataFrameFieldIndex,
+    } = this.props;
+
+    if (colorMode?.id === FieldColorModeId.Thresholds && dynamicSeriesColor) {
+      return dynamicSeriesColor(dataFrameFieldIndex, theme) || FALLBACK_COLOR;
+    }
 
     if (gradientMode === GraphGradientMode.Scheme && colorMode?.id !== FieldColorModeId.Fixed) {
       return getScaleGradientFn(1, theme, colorMode, thresholds, hardMin, hardMax, softMin, softMax);
