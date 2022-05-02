@@ -249,6 +249,20 @@ class UnthemedLogs extends PureComponent<Props, State> {
     return filterLogLevels(logRows, new Set(hiddenLogLevels));
   });
 
+  createNavigationTimeRange = memoizeOne((logRows: LogRowModel[]): { from: number; to: number } | undefined => {
+    if (!logRows || logRows.length === 0) {
+      return undefined;
+    }
+    const firstTimeStamp = logRows[0].timeEpochMs;
+    const lastTimeStamp = logRows[logRows.length - 1].timeEpochMs;
+
+    if (firstTimeStamp > lastTimeStamp) {
+      return { from: lastTimeStamp, to: firstTimeStamp };
+    }
+
+    return { from: firstTimeStamp, to: lastTimeStamp };
+  });
+
   scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
 
   render() {
@@ -295,8 +309,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     const filteredLogs = this.filterRows(logRows, hiddenLogLevels);
     const { dedupedRows, dedupCount } = this.dedupRows(filteredLogs, dedupStrategy);
+    const navigationTimeRange = this.createNavigationTimeRange(logRows);
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
+
     return (
       <>
         {logsSeries && logsSeries.length ? (
@@ -430,7 +446,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           </div>
           <LogsNavigation
             logsSortOrder={logsSortOrder}
-            visibleRange={visibleRange ?? absoluteRange}
+            visibleRange={navigationTimeRange ?? absoluteRange}
             absoluteRange={absoluteRange}
             timeZone={timeZone}
             onChangeTime={onChangeTime}
