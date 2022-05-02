@@ -3,11 +3,16 @@ package response
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"reflect"
 
+	jsoniter "github.com/json-iterator/go"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	jsoniter "github.com/json-iterator/go"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // Response is an HTTP response interface.
@@ -200,6 +205,29 @@ func Error(status int, message string, err error) *NormalResponse {
 	if err != nil {
 		resp.errMessage = message
 		resp.err = err
+	}
+
+	return resp
+}
+
+// Err creates an error response based on an errutil.Error error.
+func Err(log log.Logger, err error) *NormalResponse {
+	grafanaErr := &errutil.Error{}
+	if !errors.As(err, grafanaErr) {
+		log.Error(
+			"unexpected error type",
+			"err", err,
+			"type", reflect.TypeOf(err),
+		)
+		return Error(http.StatusInternalServerError, "", err)
+	}
+
+	grafanaErr.Log(log)
+
+	resp := JSON(grafanaErr.Reason.Status().HTTPStatus(), grafanaErr.Public())
+	if grafanaErr.Underlying != nil {
+		resp.errMessage = grafanaErr.MessageID
+		resp.err = grafanaErr.Underlying
 	}
 
 	return resp
