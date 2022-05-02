@@ -163,7 +163,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  onChangewrapLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  onChangeWrapLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { target } = event;
     if (target) {
       const wrapLogMessage = target.checked;
@@ -249,14 +249,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
     return filterLogLevels(logRows, new Set(hiddenLogLevels));
   });
 
-  createNavigationTimeRange = memoizeOne((logRows: LogRowModel[]): { from: number; to: number } | undefined => {
+  createNavigationRange = memoizeOne((logRows: LogRowModel[]): { from: number; to: number } | undefined => {
     if (!logRows || logRows.length === 0) {
       return undefined;
     }
     const firstTimeStamp = logRows[0].timeEpochMs;
     const lastTimeStamp = logRows[logRows.length - 1].timeEpochMs;
 
-    if (firstTimeStamp > lastTimeStamp) {
+    if (lastTimeStamp < firstTimeStamp) {
       return { from: lastTimeStamp, to: firstTimeStamp };
     }
 
@@ -309,7 +309,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     const filteredLogs = this.filterRows(logRows, hiddenLogLevels);
     const { dedupedRows, dedupCount } = this.dedupRows(filteredLogs, dedupStrategy);
-    const navigationTimeRange = this.createNavigationTimeRange(logRows);
+    const navigationRange = this.createNavigationRange(logRows);
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
@@ -358,7 +358,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
               <InlineSwitch
                 value={wrapLogMessage}
-                onChange={this.onChangewrapLogMessage}
+                onChange={this.onChangeWrapLogMessage}
                 className={styles.horizontalInlineSwitch}
                 transparent
                 id={`wrap-lines_${exploreId}`}
@@ -446,7 +446,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           </div>
           <LogsNavigation
             logsSortOrder={logsSortOrder}
-            visibleRange={navigationTimeRange ?? absoluteRange}
+            visibleRange={navigationRange ?? absoluteRange}
             absoluteRange={absoluteRange}
             timeZone={timeZone}
             onChangeTime={onChangeTime}
