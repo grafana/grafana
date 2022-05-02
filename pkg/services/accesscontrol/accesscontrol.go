@@ -32,9 +32,9 @@ type AccessControl interface {
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(...RoleRegistration) error
 
-	// RegisterAttributeScopeResolver allows the caller to register a scope resolver for a
+	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
-	RegisterAttributeScopeResolver(scopePrefix string, resolver AttributeScopeResolveFunc)
+	RegisterScopeAttributeResolver(scopePrefix string, resolver ScopeAttributeResolver)
 }
 
 type PermissionsProvider interface {

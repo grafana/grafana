@@ -33,11 +33,11 @@ func ProvideService(features featuremgmt.FeatureToggles,
 
 func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
 	s := &OSSAccessControlService{
-		features:      features,
-		provider:      provider,
-		log:           log.New("accesscontrol"),
-		scopeResolver: accesscontrol.NewScopeResolver(),
-		roles:         accesscontrol.BuildMacroRoleDefinitions(),
+		features:       features,
+		provider:       provider,
+		log:            log.New("accesscontrol"),
+		scopeResolvers: accesscontrol.NewScopeResolvers(),
+		roles:          accesscontrol.BuildMacroRoleDefinitions(),
 	}
 
 	return s
@@ -45,12 +45,12 @@ func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider acces
 
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
-	log           log.Logger
-	features      featuremgmt.FeatureToggles
-	scopeResolver accesscontrol.ScopeResolver
-	provider      accesscontrol.PermissionsProvider
-	registrations accesscontrol.RegistrationList
-	roles         map[string]*accesscontrol.RoleDTO
+	log            log.Logger
+	features       featuremgmt.FeatureToggles
+	scopeResolvers accesscontrol.ScopeResolvers
+	provider       accesscontrol.PermissionsProvider
+	registrations  accesscontrol.RegistrationList
+	roles          map[string]*accesscontrol.RoleDTO
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
@@ -92,7 +92,7 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 		user.Permissions[user.OrgId] = accesscontrol.GroupScopesByAction(permissions)
 	}
 
-	attributeMutator := ac.scopeResolver.GetResolveAttributeScopeMutator(user.OrgId)
+	attributeMutator := ac.scopeResolvers.GetScopeAttributeMutator(user.OrgId)
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, attributeMutator)
 	if err != nil {
 		return false, err
@@ -124,7 +124,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 
 	permissions = append(permissions, dbPermissions...)
 	resolved := make([]*accesscontrol.Permission, 0, len(permissions))
-	keywordMutator := ac.scopeResolver.GetResolveKeywordScopeMutator(user)
+	keywordMutator := ac.scopeResolvers.GetScopeKeywordMutator(user)
 	for _, p := range permissions {
 		// if the permission has a keyword in its scope it will be resolved
 		p.Scope, err = keywordMutator(ctx, p.Scope)
@@ -217,8 +217,8 @@ func (ac *OSSAccessControlService) DeclareFixedRoles(registrations ...accesscont
 	return nil
 }
 
-// RegisterAttributeScopeResolver allows the caller to register scope resolvers for a
+// RegisterScopeAttributeResolver allows the caller to register scope resolvers for a
 // specific scope prefix (ex: datasources:name:)
-func (ac *OSSAccessControlService) RegisterAttributeScopeResolver(scopePrefix string, resolver accesscontrol.AttributeScopeResolveFunc) {
-	ac.scopeResolver.AddAttributeResolver(scopePrefix, resolver)
+func (ac *OSSAccessControlService) RegisterScopeAttributeResolver(scopePrefix string, resolver accesscontrol.ScopeAttributeResolver) {
+	ac.scopeResolvers.AddScopeAttributeResolver(scopePrefix, resolver)
 }

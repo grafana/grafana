@@ -722,7 +722,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			setUpRBACGuardian(t)
 			sc.acmock.
-				RegisterAttributeScopeResolver(AnnotationTypeScopeResolver())
+				RegisterScopeAttributeResolver(AnnotationTypeScopeResolver())
 			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgId)
 
 			r := callAPI(sc.server, tt.args.method, tt.args.url, tt.args.body, t)
@@ -780,13 +780,14 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			resolved, err := resolver(context.Background(), 1, tc.given)
+			resolved, err := resolver.Resolve(context.Background(), 1, tc.given)
 			if tc.wantErr != nil {
 				require.Error(t, err)
 				require.Equal(t, tc.wantErr, err)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, tc.want, resolved)
+				require.Len(t, resolved, 1)
+				require.Equal(t, tc.want, resolved[0])
 			}
 		})
 	}
