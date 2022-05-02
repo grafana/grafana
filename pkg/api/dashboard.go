@@ -525,6 +525,15 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 		if err != nil {
 			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
 		}
+	} else {
+		q := models.GetDashboardQuery{
+			OrgId: c.SignedInUser.OrgId,
+			Uid:   dashUID,
+		}
+		if err := hs.SQLStore.GetDashboard(c.Req.Context(), &q); err != nil {
+			return response.Error(http.StatusBadRequest, "failed to get dashboard by UID", err)
+		}
+		dashID = q.Result.Id
 	}
 	guardian := guardian.New(c.Req.Context(), dashID, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
