@@ -46,7 +46,9 @@ export interface CloudWatchMetricsQuery extends MetricStat, DataQuery {
 
   //common props
   id: string;
+
   alias?: string;
+  label?: string;
 
   // Math expression query
   expression?: string;
