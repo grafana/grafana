@@ -28,6 +28,11 @@ const (
 	// parameters or payload for the request.
 	// HTTP status code 400.
 	StatusBadRequest CoreStatus = "Bad request"
+	// StatusValidationFailed means that the server was able to parse
+	// the payload for the request but it failed one or more validation
+	// checks.
+	// HTTP status code 400.
+	StatusValidationFailed CoreStatus = "Validation failed"
 	// StatusInternal means that the server acknowledges that there's
 	// an error, but that there is nothing the client can do to fix it.
 	// HTTP status code 500.
@@ -43,16 +48,19 @@ const (
 	StatusNotImplemented CoreStatus = "Not implemented"
 )
 
+// StatusReason allows for wrapping of CoreStatus.
 type StatusReason interface {
 	Status() CoreStatus
 }
 
 type CoreStatus string
 
+// Status implements the StatusReason interface.
 func (s CoreStatus) Status() CoreStatus {
 	return s
 }
 
+// HTTPStatus converts the CoreStatus to an HTTP status code.
 func (s CoreStatus) HTTPStatus() int {
 	switch s {
 	case StatusUnauthorized:
@@ -65,7 +73,7 @@ func (s CoreStatus) HTTPStatus() int {
 		return http.StatusGatewayTimeout
 	case StatusTooManyRequests:
 		return http.StatusTooManyRequests
-	case StatusBadRequest:
+	case StatusBadRequest, StatusValidationFailed:
 		return http.StatusBadRequest
 	case StatusNotImplemented:
 		return http.StatusNotImplemented
@@ -76,10 +84,37 @@ func (s CoreStatus) HTTPStatus() int {
 	}
 }
 
+// LogLevel returns the default LogLevel for the CoreStatus.
+func (s CoreStatus) LogLevel() LogLevel {
+	switch s {
+	case StatusUnauthorized:
+		return LevelDebug
+	case StatusForbidden:
+		return LevelDebug
+	case StatusNotFound:
+		return LevelNever
+	case StatusTimeout:
+		return LevelInfo
+	case StatusTooManyRequests:
+		return LevelDebug
+	case StatusBadRequest:
+		return LevelDebug
+	case StatusValidationFailed:
+		return LevelInfo
+	case StatusNotImplemented:
+		return LevelError
+	case StatusUnknown, StatusInternal:
+		return LevelError
+	default:
+		return LevelUnknown
+	}
+}
+
 // ProxyStatus implies that an error originated from the data source
 // proxy.
 type ProxyStatus CoreStatus
 
+// Status implements the StatusReason interface.
 func (s ProxyStatus) Status() CoreStatus {
 	return CoreStatus(s)
 }
@@ -87,6 +122,7 @@ func (s ProxyStatus) Status() CoreStatus {
 // PluginStatus implies that an error originated from a plugin.
 type PluginStatus CoreStatus
 
+// Status implements the StatusReason interface.
 func (s PluginStatus) Status() CoreStatus {
 	return CoreStatus(s)
 }

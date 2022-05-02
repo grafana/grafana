@@ -30,7 +30,7 @@ func Example() {
 
 	// Output:
 	// 400 shorturl.invalid-path
-	// path mustn't contain '..': 'abc/../def'
+	// [shorturl.invalid-path] path mustn't contain '..': 'abc/../def'
 }
 
 // CreateShortURL runs a few validations and returns

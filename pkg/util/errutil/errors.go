@@ -5,6 +5,39 @@ import (
 	"fmt"
 )
 
+type LogLevel string
+
+const (
+	LevelUnknown LogLevel = ""
+	LevelNever   LogLevel = "never"
+	LevelDebug   LogLevel = "debug"
+	LevelInfo    LogLevel = "info"
+	LevelWarn    LogLevel = "warn"
+	LevelError   LogLevel = "error"
+)
+
+type LogInterface interface {
+	Debug(msg string, ctx ...interface{})
+	Info(msg string, ctx ...interface{})
+	Warn(msg string, ctx ...interface{})
+	Error(msg string, ctx ...interface{})
+}
+
+func (l LogLevel) LogFunc(logger LogInterface) func(msg string, ctx ...interface{}) {
+	switch l {
+	case LevelDebug:
+		return logger.Debug
+	case LevelInfo:
+		return logger.Info
+	case LevelWarn:
+		return logger.Warn
+	case LevelError:
+		return logger.Error
+	default:
+		return func(_ string, _ ...interface{}) {}
+	}
+}
+
 // Base represents the static information about a specific error.
 // The Reason is used to determine the status code that should be
 // returned for the error, and the MessageID is passed to the caller
@@ -17,27 +50,47 @@ import (
 type Base struct {
 	Reason    StatusReason
 	MessageID string
+	LogLevel  LogLevel
 }
 
-// Base help with the initialization of Base.
-func NewBase(reason StatusReason, msgID string) Base {
-	return Base{
+// NewBase initializes a Base that is used to construct Error:s.
+func NewBase(reason StatusReason, msgID string, opts ...func(Base) Base) Base {
+	b := Base{
 		Reason:    reason,
 		MessageID: msgID,
+		LogLevel:  reason.Status().LogLevel(),
+	}
+
+	for _, opt := range opts {
+		b = opt(b)
+	}
+
+	return b
+}
+
+// WithLogLevel sets a custom log level for all errors instantiated from
+// this Base.
+//
+// Used as a functional option in NewBase.
+func WithLogLevel(lvl LogLevel) func(Base) Base {
+	return func(b Base) Base {
+		b.LogLevel = lvl
+		return b
 	}
 }
 
 // Errorf creates a new Error with the Reason and MessageID from
 // Base, and Message and Underlying will be populated using
 // the rules of fmt.Errorf.
-func (e Base) Errorf(format string, args ...interface{}) Error {
+func (b Base) Errorf(format string, args ...interface{}) Error {
 	err := fmt.Errorf(format, args...)
 
 	return Error{
-		Reason:     e.Reason,
+		Reason:     b.Reason,
 		LogMessage: err.Error(),
-		MessageID:  e.MessageID,
+		MessageID:  b.MessageID,
 		Underlying: errors.Unwrap(err),
+		LogLevel:   b.LogLevel,
 	}
 }
 
@@ -54,6 +107,7 @@ type Error struct {
 	LogMessage    string
 	Underlying    error
 	PublicPayload map[string]interface{}
+	LogLevel      LogLevel
 }
 
 // MarshalJSON returns an error, we do not want raw Error:s being
@@ -66,9 +120,24 @@ func (e Error) MarshalJSON() ([]byte, error) {
 	return nil, fmt.Errorf("errutil.Error cannot be directly marshaled into JSON")
 }
 
-// Error implements error.
+// Error implements the error interface.
 func (e Error) Error() string {
-	return e.LogMessage
+	return fmt.Sprintf("[%s] %s", e.MessageID, e.LogMessage)
+}
+
+// Log writes the error to a logger based on Error.LogLevel.
+//
+// If the logger is nil, this method is a no-op.
+func (e Error) Log(logger LogInterface) {
+	if logger == nil {
+		return
+	}
+
+	e.LogLevel.LogFunc(logger)(
+		e.MessageID,
+		"err", e.LogMessage,
+		"reason", e.Reason,
+	)
 }
 
 // Unwrap is used by errors.As to iterate over the sequence of
@@ -91,15 +160,17 @@ func (e Error) Is(other error) bool {
 // PublicError is derived from Error and only contains information
 // available to the end user.
 type PublicError struct {
-	StatusCode CoreStatus             `json:"statusCode"`
+	StatusCode int                    `json:"statusCode"`
 	MessageID  string                 `json:"messageId"`
+	Message    string                 `json:"message,omitempty"`
 	Extra      map[string]interface{} `json:"extra,omitempty"`
 }
 
-// Public returns only the
+// Public returns a subset of the error with non-sensitive information
+// that may be relayed to the caller.
 func (e Error) Public() PublicError {
 	return PublicError{
-		StatusCode: e.Reason.Status(),
+		StatusCode: e.Reason.Status().HTTPStatus(),
 		MessageID:  e.MessageID,
 		Extra:      e.PublicPayload,
 	}

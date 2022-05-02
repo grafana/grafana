@@ -6,7 +6,8 @@ import (
 	"text/template"
 )
 
-// Template is an alternative to Base for certain advanced use-cases.
+// Template is an extended Base for when using templating to construct
+// error messages.
 type Template struct {
 	Base     Base
 	template *template.Template
@@ -20,19 +21,17 @@ type TemplateData struct {
 	Error   error
 }
 
-// NewTemplate creates a base error based on an text/template template.
+// Template provides templating for converting Base to Error.
 // This is useful where the public payload is populated with fields that
 // should be present in the internal error representation.
-//
-// Use NewBase instead if that does not match your use-case.
-func NewTemplate(reason StatusReason, msgID string, t string) (Template, error) {
-	tmpl, err := template.New(msgID).Parse(t)
+func (b Base) Template(t string) (Template, error) {
+	tmpl, err := template.New(b.MessageID).Parse(t)
 	if err != nil {
 		return Template{}, err
 	}
 
 	return Template{
-		Base:     NewBase(reason, msgID),
+		Base:     b,
 		template: tmpl,
 	}, nil
 }
@@ -41,8 +40,8 @@ func NewTemplate(reason StatusReason, msgID string, t string) (Template, error) 
 //
 // Only useful for global or package level initialization of error
 // Template:s.
-func MustTemplate(reason StatusReason, msgID string, t string) Template {
-	res, err := NewTemplate(reason, msgID, t)
+func (b Base) MustTemplate(t string) Template {
+	res, err := b.Template(t)
 	if err != nil {
 		panic(err)
 	}
@@ -69,6 +68,7 @@ func (t Template) Build(data TemplateData) error {
 	return Error{
 		Reason:        t.Base.Reason,
 		MessageID:     t.Base.MessageID,
+		LogLevel:      t.Base.LogLevel,
 		LogMessage:    buf.String(),
 		Underlying:    data.Error,
 		PublicPayload: data.Public,
