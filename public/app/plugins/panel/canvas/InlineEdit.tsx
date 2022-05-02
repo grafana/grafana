@@ -1,23 +1,13 @@
-import { cx, css } from '@emotion/css';
-import { get as lodashGet } from 'lodash';
-import React, { SyntheticEvent, useRef, useState, useMemo } from 'react';
+import { css, cx } from '@emotion/css';
+import React, { SyntheticEvent, useRef, useState } from 'react';
 import Draggable from 'react-draggable';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
-import { useObservable } from 'react-use';
 
-import { GrafanaTheme, Dimensions2D, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
-import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
-import { NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
+import { Dimensions2D, GrafanaTheme } from '@grafana/data';
 import { IconButton, stylesFactory, useTheme } from '@grafana/ui';
 import store from 'app/core/store';
-import { GroupState } from 'app/features/canvas/runtime/group';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
-import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
-import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
-import { InstanceState, activePanelSubject } from './CanvasPanel';
-import { getElementEditor } from './editor/elementEditor';
-import { getLayerEditor } from './editor/layerEditor';
+import { InlineEditOptions } from './InlineEditOptions';
 
 type Props = {
   onClose?: () => void;
@@ -26,8 +16,6 @@ type Props = {
 const OFFSET = 8;
 
 export const InlineEdit = ({ onClose }: Props) => {
-  const activePanel = useObservable(activePanelSubject);
-  const instanceState = activePanel?.panel.context?.instanceState;
   const theme = useTheme();
   const btnInlineEdit = document.querySelector('[data-btninlineedit]')!.getBoundingClientRect();
   const ref = useRef<HTMLDivElement>(null);
@@ -46,33 +34,6 @@ export const InlineEdit = ({ onClose }: Props) => {
   });
   const [measurements, setMeasurements] = useState<Dimensions2D>({ width: savedPlacement.w, height: savedPlacement.h });
   const [placement, setPlacement] = useState({ x: savedPlacement.x, y: savedPlacement.y });
-
-  const pane = useMemo(() => {
-    const state: InstanceState = instanceState;
-    if (!state) {
-      return new OptionsPaneCategoryDescriptor({ id: 'root', title: 'root' });
-    }
-
-    const supplier = (builder: PanelOptionsEditorBuilder<any>, context: StandardEditorContext<any>) => {
-      builder.addNestedOptions(getLayerEditor(instanceState));
-
-      const selection = state.selected;
-      if (selection?.length === 1) {
-        const element = selection[0];
-        if (!(element instanceof GroupState)) {
-          builder.addNestedOptions(
-            getElementEditor({
-              category: [`Selected element (${element.options.name})`],
-              element,
-              scene: state.scene,
-            })
-          );
-        }
-      }
-    };
-
-    return getOptionsPaneCategoryDescriptor({}, supplier);
-  }, [instanceState]);
 
   const onDragStop = (event: any, dragElement: any) => {
     setPlacement({ x: dragElement.x, y: dragElement.y });
@@ -101,21 +62,9 @@ export const InlineEdit = ({ onClose }: Props) => {
             <div>Canvas Inline Editor</div>
             <IconButton name="times" size="xl" className={styles.inlineEditorClose} onClick={onClose} />
           </strong>
-          <div style={{ overflow: 'scroll' }} className={styles.inlineEditorContentWrapper}>
+          <div className={styles.inlineEditorContentWrapper}>
             <div className={styles.inlineEditorContent}>
-              <div>
-                <div>{pane.items.map((v) => v.render())}</div>
-                <div>
-                  {pane.categories.map((c) => {
-                    return (
-                      <div key={c.props.id}>
-                        <h5>{c.props.title}</h5>
-                        <div>{c.items.map((s) => s.render())}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <InlineEditOptions />
             </div>
           </div>
         </div>
@@ -159,39 +108,3 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     overflow: scroll;
   `,
 }));
-
-// 🤮🤮🤮🤮 this oddly does not actually do anything, but structure is required.  I'll try to clean it up...
-function getOptionsPaneCategoryDescriptor<T = any>(
-  props: any,
-  supplier: PanelOptionsSupplier<T>
-): OptionsPaneCategoryDescriptor {
-  const context: StandardEditorContext<unknown, unknown> = {
-    data: props.input,
-    options: props.options,
-  };
-
-  const root = new OptionsPaneCategoryDescriptor({ id: 'root', title: 'root' });
-  const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneCategoryDescriptor => {
-    if (categoryNames?.length) {
-      const key = categoryNames[0];
-      let sub = root.categories.find((v) => v.props.id === key);
-      if (!sub) {
-        sub = new OptionsPaneCategoryDescriptor({ id: key, title: key });
-        root.categories.push(sub);
-      }
-      return sub;
-    }
-    return root;
-  };
-
-  const access: NestedValueAccess = {
-    getValue: (path: string) => lodashGet(props.options, path),
-    onChange: (path: string, value: any) => {
-      props.onChange(setOptionImmutably(props.options as any, path, value));
-    },
-  };
-
-  // Use the panel options loader
-  fillOptionsPaneItems(supplier, access, getOptionsPaneCategory, context);
-  return root;
-}
