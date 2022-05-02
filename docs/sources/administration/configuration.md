@@ -137,7 +137,7 @@ environment variable `HOSTNAME`, if that is empty or does not exist Grafana will
 
 ### force_migration
 
-Force migration will run migrations that might cause dataloss. Default is `false`.
+Force migration will run migrations that might cause data loss. Default is `false`.
 
 <hr />
 
