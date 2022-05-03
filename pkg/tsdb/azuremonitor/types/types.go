@@ -167,7 +167,6 @@ func (a AzureMonitorDimensionFilter) ConstructFiltersString() string {
 		} else {
 			return strings.Join(filterStrings, " and ")
 		}
-
 	}
 }
 
