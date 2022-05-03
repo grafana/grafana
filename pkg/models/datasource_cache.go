@@ -374,13 +374,16 @@ func BlockRedirectRoundtripper(next http.RoundTripper) http.RoundTripper {
 		}
 
 		if resp.StatusCode >= 300 && resp.StatusCode < 400 {
-			redirectLocation, err := resp.Location()
-			if err != nil {
-				return nil, err
+			redirectLocation, locationErr := resp.Location()
+			if locationErr == http.ErrNoLocation {
+				return resp, err
+			}
+			if locationErr != nil {
+				return nil, locationErr
 			}
 
-			if err = RequestValidator.Validate(redirectLocation.String(), nil); err != nil {
-				return nil, err
+			if validationErr := RequestValidator.Validate(redirectLocation.String(), nil); validationErr != nil {
+				return nil, validationErr
 			}
 		}
 		return resp, err
