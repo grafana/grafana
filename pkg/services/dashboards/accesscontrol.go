@@ -21,11 +21,20 @@ const (
 
 	ScopeDashboardsRoot   = "dashboards"
 	ScopeDashboardsPrefix = "dashboards:uid:"
+
+	ActionDashboardsCreate           = "dashboards:create"
+	ActionDashboardsRead             = "dashboards:read"
+	ActionDashboardsWrite            = "dashboards:write"
+	ActionDashboardsDelete           = "dashboards:delete"
+	ActionDashboardsPermissionsRead  = "dashboards.permissions:read"
+	ActionDashboardsPermissionsWrite = "dashboards.permissions:write"
 )
 
 var (
-	ScopeFoldersAll      = ac.GetResourceAllScope(ScopeFoldersRoot)
-	ScopeFoldersProvider = ac.NewScopeProvider(ScopeFoldersRoot)
+	ScopeFoldersProvider    = ac.NewScopeProvider(ScopeFoldersRoot)
+	ScopeFoldersAll         = ScopeFoldersProvider.GetResourceAllScope()
+	ScopeDashboardsProvider = ac.NewScopeProvider(ScopeDashboardsRoot)
+	ScopeDashboardsAll      = ScopeDashboardsProvider.GetResourceAllScope()
 )
 
 // NewFolderNameScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "folders:name:" into an uid based scope.
