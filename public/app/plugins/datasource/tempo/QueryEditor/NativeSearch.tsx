@@ -5,6 +5,7 @@ import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { Node } from 'slate';
 
 import { GrafanaTheme2, isValidGoDuration, SelectableValue } from '@grafana/data';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import {
   InlineFieldRow,
   InlineField,
@@ -152,6 +153,8 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     }
   };
 
+  const templateSrv: TemplateSrv = getTemplateSrv();
+
   return (
     <>
       <div className={styles.container}>
@@ -235,7 +238,8 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               value={query.minDuration || ''}
               placeholder={durationPlaceholder}
               onBlur={() => {
-                if (query.minDuration && !isValidGoDuration(query.minDuration)) {
+                const templatedMinDuration = templateSrv.replace(query.minDuration ?? '');
+                if (query.minDuration && !isValidGoDuration(templatedMinDuration)) {
                   setInputErrors({ ...inputErrors, minDuration: true });
                 } else {
                   setInputErrors({ ...inputErrors, minDuration: false });
@@ -258,7 +262,8 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               value={query.maxDuration || ''}
               placeholder={durationPlaceholder}
               onBlur={() => {
-                if (query.maxDuration && !isValidGoDuration(query.maxDuration)) {
+                const templatedMaxDuration = templateSrv.replace(query.maxDuration ?? '');
+                if (query.maxDuration && !isValidGoDuration(templatedMaxDuration)) {
                   setInputErrors({ ...inputErrors, maxDuration: true });
                 } else {
                   setInputErrors({ ...inputErrors, maxDuration: false });
