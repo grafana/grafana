@@ -882,6 +882,9 @@
      "type": "string",
      "x-go-name": "Name"
     },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
     "secureFields": {
      "additionalProperties": {
       "type": "boolean"
@@ -973,6 +976,9 @@
      "format": "int64",
      "type": "integer",
      "x-go-name": "OrgID"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
     },
     "rule_group": {
      "type": "string",
@@ -3137,12 +3143,11 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
-   "type": "array",
-   "x-go-name": "AlertGroups",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "alertStatus": {
    "description": "AlertStatus alert status",
@@ -3262,7 +3267,6 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3321,7 +3325,9 @@
     "status",
     "updatedAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "GettableAlert",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableAlerts": {
    "description": "GettableAlerts gettable alerts",
@@ -3520,7 +3526,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3560,7 +3565,9 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "PostableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
    "properties": {
@@ -4991,36 +4998,6 @@
     "tags": [
      "provisioning"
     ]
-   },
-   "post": {
-    "consumes": [
-     "application/json"
-    ],
-    "operationId": "RoutePostTemplate",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/MessageTemplate"
-      }
-     }
-    ],
-    "responses": {
-     "202": {
-      "$ref": "#/responses/Accepted"
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Create a template.",
-    "tags": [
-     "provisioning"
-    ]
    }
   },
   "/api/provisioning/templates/{ID}": {
@@ -5086,9 +5063,6 @@
       "schema": {
        "$ref": "#/definitions/ValidationError"
       }
-     },
-     "404": {
-      "$ref": "#/responses/NotFound"
      }
     },
     "summary": "Updates an existing template.",

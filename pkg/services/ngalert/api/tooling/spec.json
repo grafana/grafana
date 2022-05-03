@@ -1319,36 +1319,6 @@
             }
           }
         }
-      },
-      "post": {
-        "consumes": [
-          "application/json"
-        ],
-        "tags": [
-          "provisioning"
-        ],
-        "summary": "Create a template.",
-        "operationId": "RoutePostTemplate",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/MessageTemplate"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "$ref": "#/responses/Accepted"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
       }
     },
     "/api/provisioning/templates/{ID}": {
@@ -1397,9 +1367,6 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
-          },
-          "404": {
-            "$ref": "#/responses/NotFound"
           }
         }
       },
@@ -2932,6 +2899,9 @@
           "type": "string",
           "x-go-name": "Name"
         },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
         "secureFields": {
           "type": "object",
           "additionalProperties": {
@@ -3023,6 +2993,9 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "OrgID"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "rule_group": {
           "type": "string",
@@ -5188,12 +5161,11 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
       },
-      "x-go-name": "AlertGroups",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/alertGroups"
     },
     "alertStatus": {
@@ -5314,7 +5286,6 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -5374,6 +5345,8 @@
           "x-go-name": "UpdatedAt"
         }
       },
+      "x-go-name": "GettableAlert",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
@@ -5576,7 +5549,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -5617,6 +5589,8 @@
           "x-go-name": "StartsAt"
         }
       },
+      "x-go-name": "PostableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {

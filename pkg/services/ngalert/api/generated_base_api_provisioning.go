@@ -28,7 +28,6 @@ type ProvisioningApiForkingService interface {
 	RouteGetTemplates(*models.ReqContext) response.Response
 	RoutePostContactpoints(*models.ReqContext) response.Response
 	RoutePostPolicyTree(*models.ReqContext) response.Response
-	RoutePostTemplate(*models.ReqContext) response.Response
 	RoutePutContactpoints(*models.ReqContext) response.Response
 	RoutePutTemplate(*models.ReqContext) response.Response
 }
@@ -71,14 +70,6 @@ func (f *ForkedProvisioningApi) RoutePostPolicyTree(ctx *models.ReqContext) resp
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return f.forkRoutePostPolicyTree(ctx, conf)
-}
-
-func (f *ForkedProvisioningApi) RoutePostTemplate(ctx *models.ReqContext) response.Response {
-	conf := apimodels.MessageTemplate{}
-	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	return f.forkRoutePostTemplate(ctx, conf)
 }
 
 func (f *ForkedProvisioningApi) RoutePutContactpoints(ctx *models.ReqContext) response.Response {
@@ -176,16 +167,6 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 				http.MethodPost,
 				"/api/provisioning/policies",
 				srv.RoutePostPolicyTree,
-				m,
-			),
-		)
-		group.Post(
-			toMacaronPath("/api/provisioning/templates"),
-			api.authorize(http.MethodPost, "/api/provisioning/templates"),
-			metrics.Instrument(
-				http.MethodPost,
-				"/api/provisioning/templates",
-				srv.RoutePostTemplate,
 				m,
 			),
 		)

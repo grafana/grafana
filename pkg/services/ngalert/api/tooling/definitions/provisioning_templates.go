@@ -18,17 +18,6 @@ import "fmt"
 //       200: MessageTemplate
 //       404: NotFound
 
-// swagger:route POST /api/provisioning/templates provisioning RoutePostTemplate
-//
-// Create a template.
-//
-//     Consumes:
-//     - application/json
-//
-//     Responses:
-//       202: Accepted
-//       400: ValidationError
-
 // swagger:route PUT /api/provisioning/templates/{ID} provisioning RoutePutTemplate
 //
 // Updates an existing template.
@@ -39,7 +28,6 @@ import "fmt"
 //     Responses:
 //       202: Accepted
 //       400: ValidationError
-//       404: NotFound
 
 // swagger:route DELETE /api/provisioning/templates/{ID} provisioning RouteDeleteTemplate
 //
