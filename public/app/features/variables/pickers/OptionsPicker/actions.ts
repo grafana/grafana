@@ -166,7 +166,7 @@ export function mapToCurrent(picker: OptionsPickerState): VariableOption | undef
       continue;
     }
 
-    texts.push(option.text.toString());
+    texts.push(option.text?.toString());
     values.push(option.value.toString());
   }
 
