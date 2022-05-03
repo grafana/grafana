@@ -135,6 +135,10 @@ Options are `production` and `development`. Default is `production`. _Do not_ ch
 Set the name of the grafana-server instance. Used in logging, internal metrics, and clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use system calls to get the machine name.
 
+### force_migration
+
+Force migration will run migrations that might cause data loss. Default is `false`.
+
 <hr />
 
 ## [paths]
@@ -1370,6 +1374,14 @@ Configures the Profile section.
 ### enabled
 
 Enable or disable the Profile section. Default is `enabled`.
+
+## [query_history]
+
+Configures Query history in Explore.
+
+### enabled
+
+Enable or disable the Query history. Default is `disabled`.
 
 ## [metrics]
 

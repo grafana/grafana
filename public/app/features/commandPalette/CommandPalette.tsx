@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { FocusScope } from '@react-aria/focus';
 import {
   KBarAnimator,
   KBarPortal,
@@ -33,8 +34,7 @@ import getGlobalActions from './actions/global.static.actions';
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
   const [actions, setActions] = useState<Action[]>([]);
-  const { notHidden, query, showing } = useKBar((state) => ({
-    notHidden: state.visualState !== VisualState.hidden,
+  const { query, showing } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
   }));
   const isNotLogin = locationService.getLocation().pathname !== '/login';
@@ -43,12 +43,6 @@ export const CommandPalette = () => {
     return {
       navBarTree: state.navBarTree,
     };
-  });
-
-  keybindingSrv.bind('esc', () => {
-    if (notHidden) {
-      query.setVisualState(VisualState.animatingOut);
-    }
   });
 
   useEffect(() => {
@@ -65,7 +59,18 @@ export const CommandPalette = () => {
   useEffect(() => {
     if (showing) {
       reportInteraction('commandPalette_opened');
+
+      keybindingSrv.bindGlobal('esc', () => {
+        query.setVisualState(VisualState.animatingOut);
+      });
     }
+
+    return () => {
+      keybindingSrv.bindGlobal('esc', () => {
+        keybindingSrv.globalEsc();
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showing]);
 
   useRegisterActions(actions, [actions]);
@@ -74,8 +79,10 @@ export const CommandPalette = () => {
     <KBarPortal>
       <KBarPositioner className={styles.positioner}>
         <KBarAnimator className={styles.animator}>
-          <KBarSearch className={styles.search} />
-          <RenderResults />
+          <FocusScope contain>
+            <KBarSearch className={styles.search} />
+            <RenderResults />
+          </FocusScope>
         </KBarAnimator>
       </KBarPositioner>
     </KBarPortal>

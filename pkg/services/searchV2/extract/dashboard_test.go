@@ -44,7 +44,8 @@ func TestReadDashboard(t *testing.T) {
 		}
 		require.NoError(t, err)
 
-		dash := ReadDashboard(f, ds)
+		dash, err := ReadDashboard(f, ds)
+		require.NoError(t, err)
 		out, err := json.MarshalIndent(dash, "", "  ")
 		require.NoError(t, err)
 

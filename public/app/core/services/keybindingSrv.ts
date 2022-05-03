@@ -6,7 +6,7 @@ import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
-import { SaveDashboardProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardProxy';
+import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { DashboardModel } from 'app/features/dashboard/state';
 
@@ -49,7 +49,7 @@ export class KeybindingSrv {
     this.bind('t r', () => toggleTheme(true));
   }
 
-  private globalEsc() {
+  globalEsc() {
     const anyDoc = document as any;
     const activeElement = anyDoc.activeElement;
 
@@ -204,7 +204,7 @@ export class KeybindingSrv {
       if (dashboard.meta.canSave) {
         appEvents.publish(
           new ShowModalReactEvent({
-            component: SaveDashboardProxy,
+            component: SaveDashboardDrawer,
             props: {
               dashboard,
             },

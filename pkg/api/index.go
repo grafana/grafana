@@ -172,7 +172,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	navTree := []*dtos.NavLink{}
 
-	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
+	if hs.Features.IsEnabled(featuremgmt.FlagSavedItems) {
 		savedItemsLinks, err := hs.buildSavedItemsNavLinks(c, prefs)
 		if err != nil {
 			return nil, err

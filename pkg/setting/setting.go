@@ -386,6 +386,8 @@ type Cfg struct {
 
 	Env string
 
+	ForceMigration bool
+
 	// Analytics
 	CheckForGrafanaUpdates              bool
 	CheckForPluginUpdates               bool
@@ -886,6 +888,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
+	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
 	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
 	cfg.PluginsPath = makeAbsolute(plugins, HomePath)

@@ -79,11 +79,11 @@ You can use any of the following built-in template options to embed custom templ
 | `default.message`       | Provides a formatted summary of firing and resolved alerts.   |
 | `teams.default.message` | Similar to `default.messsage`, formatted for Microsoft Teams. |
 
-### Custom template examples
+### Example of a custom template
 
-Here are a few examples of how to use custom templates.
+Here's an example of how to use a custom template. You can also use the default template included in the setup.
 
-Template to render a single alert:
+Step 1: Configure a template to render a single alert.
 
 ```
 {{ define "myalert" }}
@@ -110,7 +110,7 @@ Template to render a single alert:
 {{ end }}
 ```
 
-Template to render entire notification message:
+Step 2: Configure a template to render entire notification message.
 
 ```
 {{ define "mymessage" }}
@@ -123,6 +123,13 @@ Template to render entire notification message:
     {{ range .Alerts.Resolved }} {{ template "myalert" .}} {{ end }}
   {{ end }}
 {{ end }}
+```
+
+Step 3: Add `mymessage` in the notification message field.
+
+```
+Alert summary:
+{{ template "mymessage" . }}
 ```
 
 ### HTML in message templates

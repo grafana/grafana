@@ -32,8 +32,8 @@ func ProvideFolderService(
 	searchService *search.SearchService, features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
 	ac accesscontrol.AccessControl, sqlStore sqlstore.Store,
 ) *FolderServiceImpl {
-	ac.RegisterAttributeScopeResolver(dashboards.NewNameScopeResolver(dashboardStore))
-	ac.RegisterAttributeScopeResolver(dashboards.NewIDScopeResolver(dashboardStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore))
 
 	return &FolderServiceImpl{
 		cfg:              cfg,
