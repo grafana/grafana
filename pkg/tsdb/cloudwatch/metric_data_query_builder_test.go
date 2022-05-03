@@ -71,6 +71,31 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			assert.Equal(t, int64(300), *mdq.Period)
 			assert.Equal(t, `SUM([a,b])`, *mdq.Expression)
 		})
+
+		t.Run("should populate label when dynamic labels feature toggle is enabled", func(t *testing.T) {
+			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchDynamicLabels))
+			query := getBaseQuery()
+			label := "some label"
+			query.Label = &label
+
+			mdq, err := executor.buildMetricDataQuery(query)
+
+			assert.NoError(t, err)
+			require.NotNil(t, mdq.Label)
+			assert.Equal(t, "some label", *mdq.Label)
+		})
+
+		t.Run("should not populate label when dynamic labels feature toggle is disabled", func(t *testing.T) {
+			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+			query := getBaseQuery()
+			label := "some label"
+			query.Label = &label
+
+			mdq, err := executor.buildMetricDataQuery(query)
+
+			assert.NoError(t, err)
+			assert.Nil(t, mdq.Label)
+		})
 	})
 
 	t.Run("Query should be matched exact", func(t *testing.T) {

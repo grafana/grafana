@@ -231,12 +231,22 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 		Dimensions:       dimensions,
 		Period:           period,
 		Alias:            alias,
+		Label:            checkForLabel(model),
 		MatchExact:       matchExact,
 		UsedExpression:   "",
 		MetricQueryType:  metricQueryType,
 		MetricEditorMode: metricEditorModeValue,
 		SqlExpression:    sqlExpression,
 	}, nil
+}
+
+func checkForLabel(model *simplejson.Json) *string {
+	label, err := model.Get("label").String()
+	if err != nil {
+		return nil
+	}
+
+	return &label
 }
 
 func getRetainedPeriods(timeSince time.Duration) []int {

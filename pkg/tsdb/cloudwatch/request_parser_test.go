@@ -311,6 +311,43 @@ func TestRequestParser(t *testing.T) {
 		assert.Equal(t, "$$", res.RefId)
 		assert.Regexp(t, validMetricDataID, res.Id)
 	})
+
+	t.Run("parseRequestQuery leaves label nil when label is absent from query", func(t *testing.T) {
+		query := getBaseJsonQuery()
+		query.Set("alias", "some alias")
+
+		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+
+		assert.NoError(t, err)
+		assert.Equal(t, "some alias", res.Alias)
+		assert.Nil(t, res.Label)
+	})
+
+	t.Run("parseRequestQuery populates label when label is present in json query", func(t *testing.T) {
+		query := getBaseJsonQuery()
+		query.Set("alias", "some alias")
+		query.Set("label", "some label")
+
+		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+
+		assert.NoError(t, err)
+		assert.Equal(t, "some alias", res.Alias)
+		require.NotNil(t, res.Label)
+		assert.Equal(t, "some label", *res.Label)
+	})
+
+	t.Run("parseRequestQuery populates label with pointer to empty string when it is empty string in query", func(t *testing.T) {
+		query := getBaseJsonQuery()
+		query.Set("alias", "some alias")
+		query.Set("label", "")
+
+		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+
+		assert.NoError(t, err)
+		assert.Equal(t, "some alias", res.Alias)
+		require.NotNil(t, res.Label)
+		assert.Equal(t, "", *res.Label)
+	})
 }
 
 func getBaseJsonQuery() *simplejson.Json {
