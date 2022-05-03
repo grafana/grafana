@@ -35,7 +35,7 @@ HTTP/1.1 200
 Content-Type: application/json
 [
   {
-    "id": 1,
+    "uid": "1",
     "name": "my playlist",
     "interval": "5m"
   }
@@ -60,14 +60,14 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 {
-  "id" : 1,
+  "uid" : "1",
   "name": "my playlist",
   "interval": "5m",
   "orgId": "my org",
   "items": [
     {
       "id": 1,
-      "playlistUid": 1,
+      "playlistUid": "1",
       "type": "dashboard_by_id",
       "value": "3",
       "order": 1,
@@ -75,7 +75,7 @@ Content-Type: application/json
     },
     {
       "id": 2,
-      "playlistUid": 1,
+      "playlistUid": "1",
       "type": "dashboard_by_tag",
       "value": "myTag",
       "order": 2,
@@ -105,7 +105,7 @@ Content-Type: application/json
 [
   {
     "id": 1,
-    "playlistUid": 1,
+    "playlistUid": "1",
     "type": "dashboard_by_id",
     "value": "3",
     "order": 1,
@@ -113,7 +113,7 @@ Content-Type: application/json
   },
   {
     "id": 2,
-    "playlistUid": 1,
+    "playlistUid": "1",
     "type": "dashboard_by_tag",
     "value": "myTag",
     "order": 2,
@@ -191,7 +191,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
   {
-    "id": 1,
+    "uid": "1",
     "name": "my playlist",
     "interval": "5m"
   }
@@ -213,14 +213,14 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "interval": "5m",
     "items": [
       {
-        "playlistUid": 1,
+        "playlistUid": "1",
         "type": "dashboard_by_id",
         "value": "3",
         "order": 1,
         "title":"my third dashboard"
       },
       {
-        "playlistUid": 1,
+        "playlistUid": "1",
         "type": "dashboard_by_tag",
         "value": "myTag",
         "order": 2,
@@ -236,14 +236,14 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 {
-  "id" : 1,
+  "uid" : "1",
   "name": "my playlist",
   "interval": "5m",
   "orgId": "my org",
   "items": [
     {
       "id": 1,
-      "playlistUid": 1,
+      "playlistUid": "1",
       "type": "dashboard_by_id",
       "value": "3",
       "order": 1,
@@ -251,7 +251,7 @@ Content-Type: application/json
     },
     {
       "id": 2,
-      "playlistUid": 1,
+      "playlistUid": "1",
       "type": "dashboard_by_tag",
       "value": "myTag",
       "order": 2,
