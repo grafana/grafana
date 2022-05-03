@@ -17,8 +17,9 @@ import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValue
 
 import { LokiDatasource } from '../datasource';
 import LokiLanguageProvider from '../language_provider';
-import { escapeLabelValueInSelector, isRegexSelector, shouldRefreshLabels } from '../language_utils';
+import { escapeLabelValueInSelector, shouldRefreshLabels } from '../language_utils';
 import { LokiQuery, LokiOptions } from '../types';
+
 import { LokiLabelBrowser } from './LokiLabelBrowser';
 
 const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
@@ -52,7 +53,7 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
         suggestionModified = '"';
       }
 
-      suggestionModified += escapeLabelValueInSelector(suggestion, isRegexSelector(typeaheadText));
+      suggestionModified += escapeLabelValueInSelector(suggestion, typeaheadText);
 
       if (DOMUtil.getNextCharacter() !== '"') {
         suggestionModified += '"';

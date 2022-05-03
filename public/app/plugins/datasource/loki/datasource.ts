@@ -49,6 +49,7 @@ import { addLabelToQuery } from './add_label_to_query';
 import { transformBackendResult } from './backendResultTransformer';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import LanguageProvider from './language_provider';
+import { escapeLabelValueInSelector } from './language_utils';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
 import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
 import { lokiResultsToTableModel, lokiStreamsToDataFrames, processRangeQueryResponse } from './result_transformer';
@@ -64,7 +65,6 @@ import {
   LokiResultType,
   LokiStreamResponse,
 } from './types';
-import { escapeLabelValueInSelector, isRegexSelector } from './language_utils';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -840,7 +840,7 @@ export class LokiDatasource
     // Override to make sure that we use label as actual label and not parsed label
     notParsedLabelOverride?: boolean
   ) {
-    let escapedValue = escapeLabelValueInSelector(value.toString(), isRegexSelector(operator));
+    let escapedValue = escapeLabelValueInSelector(value.toString(), operator);
 
     if (queryHasPipeParser(queryExpr) && !isMetricsQuery(queryExpr) && !notParsedLabelOverride) {
       // If query has parser, we treat all labels as parsed and use | key="value" syntax

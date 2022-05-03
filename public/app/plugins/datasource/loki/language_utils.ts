@@ -39,12 +39,14 @@ export function escapeLabelValueInRegexSelector(labelValue: string): string {
   return escapeLabelValueInExactSelector(escapeLokiRegexp(labelValue));
 }
 
-export function escapeLabelValueInSelector(labelValue: string, isRegex: boolean): string {
-  return isRegex ? escapeLabelValueInRegexSelector(labelValue) : escapeLabelValueInExactSelector(labelValue);
+export function escapeLabelValueInSelector(labelValue: string, selector?: string): string {
+  return isRegexSelector(selector)
+    ? escapeLabelValueInRegexSelector(labelValue)
+    : escapeLabelValueInExactSelector(labelValue);
 }
 
-export function isRegexSelector(selector: string) {
-  if (selector.includes('=~') || selector.includes('!~')) {
+export function isRegexSelector(selector?: string) {
+  if (selector && (selector.includes('=~') || selector.includes('!~'))) {
     return true;
   }
   return false;
