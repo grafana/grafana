@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -499,4 +500,55 @@ func TestAPIEndpoint_Metrics_ParseDashboardQueryParams(t *testing.T) {
 			assert.Equal(t, test.expectedError, err)
 		})
 	}
+}
+
+// `/ds/query` endpoint test
+func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
+	sc := setupHTTPServerWithMockDb(t, true, false)
+	setInitCtxSignedInViewer(sc.initCtx)
+
+	sc.hs.queryDataService = query.ProvideService(
+		nil,
+		nil,
+		nil,
+		&fakePluginRequestValidator{},
+		&fakeDatasources.FakeDataSourceService{},
+		&fakePluginClient{
+			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+				resp := backend.Responses{
+					"A": backend.DataResponse{
+						Error: fmt.Errorf("query failed"),
+					},
+				}
+				return &backend.QueryDataResponse{Responses: resp}, nil
+			},
+		},
+		&fakeOAuthTokenService{},
+	)
+
+	t.Run("Status code is 400 when data source response has an error and feature toggle is disabled", func(t *testing.T) {
+		sc.hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, false)
+
+		resp := callAPI(
+			sc.server,
+			http.MethodPost,
+			"/api/ds/query",
+			strings.NewReader(queryDatasourceInput),
+			t,
+		)
+		assert.Equal(t, http.StatusBadRequest, resp.Code)
+	})
+
+	t.Run("Status code is 207 when data source response has an error and feature toggle is enabled", func(t *testing.T) {
+		sc.hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, true)
+
+		resp := callAPI(
+			sc.server,
+			http.MethodPost,
+			"/api/ds/query",
+			strings.NewReader(queryDatasourceInput),
+			t,
+		)
+		assert.Equal(t, http.StatusMultiStatus, resp.Code)
+	})
 }
