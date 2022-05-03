@@ -52,9 +52,9 @@ Grafana alerting system can retrieve rules from all available Prometheus, Loki, 
 
 To disable Grafana alerts and enable legacy dashboard alerts:
 
-1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the [Grafana alerting]({{< relref "../../administration/configuration.md#unified_alerting" >}}) section.
+1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the [Grafana alerting]({{< relref "../administration/configuration.md#unified_alerting" >}}) section.
 1. Set the `enabled` property to `false`.
-1. For [legacy dashboard alerting]({{< relref "../../administration/configuration.md#alerting" >}}), set the `enabled` flag to `true`.
+1. For [legacy dashboard alerting]({{< relref "../administration/configuration.md#alerting" >}}), set the `enabled` flag to `true`.
 1. Restart Grafana for the configuration changes to take effect.
 
 > **Note:** Switching from one flavor of alerting to another can result in data loss. This is applicable to the fresh installation as well as upgraded setups.
