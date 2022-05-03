@@ -5,39 +5,6 @@ import (
 	"fmt"
 )
 
-type LogLevel string
-
-const (
-	LevelUnknown LogLevel = ""
-	LevelNever   LogLevel = "never"
-	LevelDebug   LogLevel = "debug"
-	LevelInfo    LogLevel = "info"
-	LevelWarn    LogLevel = "warn"
-	LevelError   LogLevel = "error"
-)
-
-type LogInterface interface {
-	Debug(msg string, ctx ...interface{})
-	Info(msg string, ctx ...interface{})
-	Warn(msg string, ctx ...interface{})
-	Error(msg string, ctx ...interface{})
-}
-
-func (l LogLevel) LogFunc(logger LogInterface) func(msg string, ctx ...interface{}) {
-	switch l {
-	case LevelDebug:
-		return logger.Debug
-	case LevelInfo:
-		return logger.Info
-	case LevelWarn:
-		return logger.Warn
-	case LevelError:
-		return logger.Error
-	default:
-		return func(_ string, _ ...interface{}) {}
-	}
-}
-
 // Base represents the static information about a specific error.
 // The Reason is used to determine the status code that should be
 // returned for the error, and the MessageID is passed to the caller
@@ -149,6 +116,11 @@ func (e Error) Unwrap() error {
 // Is is used by errors.Is to allow for custom definitions of equality
 // between two errors.
 func (e Error) Is(other error) bool {
+	// The linter complains that it wants to use errors.As because it
+	// handles unwrapping, we don't want to do that here since we want
+	// to validate the equality between the two objects.
+	// errors.Is handles the unwrapping, should you want it.
+	//nolint:errorlint
 	o, ok := other.(Error)
 	if !ok {
 		return false
