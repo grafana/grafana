@@ -189,7 +189,9 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodPost + "/api/provisioning/policies",
 		http.MethodPost + "/api/provisioning/contact-points",
 		http.MethodPut + "/api/provisioning/contact-points",
-		http.MethodDelete + "/api/provisioning/contact-points/{ID}":
+		http.MethodDelete + "/api/provisioning/contact-points/{ID}",
+		http.MethodPut + "/api/provisioning/templates/{ID}",
+		http.MethodDelete + "/api/provisioning/templates/{ID}":
 		return middleware.ReqEditorRole
 	}
 
