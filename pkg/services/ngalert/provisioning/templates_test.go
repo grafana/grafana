@@ -134,6 +134,9 @@ func TestTemplateService(t *testing.T) {
 					setupGetConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: configWithTemplates,
 					})
+				sut.config.(*MockAMConfigStore).EXPECT().
+					UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
+					Return(nil)
 				sut.prov.(*MockProvisioningStore).EXPECT().
 					SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(fmt.Errorf("failed to save provenance"))
@@ -142,21 +145,36 @@ func TestTemplateService(t *testing.T) {
 
 				require.ErrorContains(t, err, "failed to save provenance")
 			})
+
+			t.Run("when AM config fails to save", func(t *testing.T) {
+				sut := createTemplateServiceSut()
+				tmpl := createMessageTemplate()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					setupGetConfig(models.AlertConfiguration{
+						AlertmanagerConfiguration: configWithTemplates,
+					})
+				sut.config.(*MockAMConfigStore).EXPECT().
+					UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
+					Return(fmt.Errorf("failed to save config"))
+				sut.prov.(*MockProvisioningStore).EXPECT().
+					SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return(nil)
+
+				err := sut.SetTemplate(context.Background(), 1, tmpl, models.ProvenanceAPI)
+
+				require.ErrorContains(t, err, "failed to save config")
+			})
 		})
 	})
 }
 
 func createTemplateServiceSut() *TemplateService {
-	svc := &TemplateService{
+	return &TemplateService{
 		config: &MockAMConfigStore{},
 		prov:   &MockProvisioningStore{},
 		xact:   newNopTransactionManager(),
 		log:    log.NewNopLogger(),
 	}
-	svc.config.(*MockAMConfigStore).EXPECT().
-		UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
-		Return(nil)
-	return svc
 }
 
 func createMessageTemplate() definitions.MessageTemplate {
