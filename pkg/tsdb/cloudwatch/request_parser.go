@@ -68,7 +68,7 @@ func migrateLegacyQuery(queries []backend.DataQuery, dynamicLabelsEnabled bool, 
 		}
 
 		_, labelExists := queryJson.CheckGet("label")
-		if !labelExists && dynamicLabelsEnabled && queryJson != nil {
+		if !labelExists && dynamicLabelsEnabled {
 			migrateAliasToDynamicLabel(queryJson)
 		}
 
