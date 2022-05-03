@@ -63,7 +63,7 @@ describe('Slider', () => {
     expect(sliderInput).toHaveValue('50');
   });
 
-  it('sets value back to default after blur if input value is outside of range', async () => {
+  it('sets value to the closest available one after blur if input value is outside of range', async () => {
     render(<Slider {...sliderProps} value={10} min={10} max={100} />);
 
     const slider = screen.getByRole('slider');
