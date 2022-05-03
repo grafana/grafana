@@ -345,23 +345,25 @@ func TestUserDataAccess(t *testing.T) {
 				Login: fmt.Sprint("loginuser", i),
 			}
 		})
-		test := accessControlTestCase
-			{
-				expectedCode: http.StatusOK,
-				desc:         "UsersLookupGet should return 200 for user with correct permissions",
-				url:          "/api/org/users/lookup",
-				method:       http.MethodGet,
-				permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionsUserRead}},
-			},
-
-		sc := setupHTTPServer(t, true, true)
-		setInitCtxSignedInViewer(sc.initCtx)
-		setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgId)
-		query := models.SearchUsersQuery{SignedInUser: sc.initCtx.SignedInUser}
+		test := accessControlTestCase{
+			expectedCode: http.StatusOK,
+			url:          "/api/users",
+			method:       http.MethodGet,
+			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionUsersRead, Scope: "users:id:1"}},
+		}
+		testUser := models.SignedInUser{
+			UserId:  1,
+			OrgId:   3,
+			OrgName: "TestOrg",
+			OrgRole: models.ROLE_VIEWER,
+			Login:   "testUser",
+			Name:    "Test User",
+			Email:   "testuser@example.org",
+		}
+		query := models.SearchUsersQuery{SignedInUser: testUser}
 		err := ss.SearchUsers(context.Background(), &query)
-		require.Nil(t, err)
-
-		require.Len(t, query.Result.Users, 2)
+		assert.Nil(t, err)
+		assert.Len(t, query.Result.Users, 2)
 	})
 
 	ss = InitTestDB(t)
