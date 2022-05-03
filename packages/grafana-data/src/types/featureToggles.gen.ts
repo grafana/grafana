@@ -47,7 +47,6 @@ export interface FeatureToggles {
   dashboardComments?: boolean;
   annotationComments?: boolean;
   migrationLocking?: boolean;
-  saveDashboardDrawer?: boolean;
   storage?: boolean;
   alertProvisioning?: boolean;
   export?: boolean;
@@ -58,4 +57,6 @@ export interface FeatureToggles {
   persistNotifications?: boolean;
   commandPalette?: boolean;
   savedItems?: boolean;
+  cloudWatchDynamicLabels?: boolean;
+  datasourceQueryMultiStatus?: boolean;
 }

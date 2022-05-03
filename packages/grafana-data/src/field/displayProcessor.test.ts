@@ -6,11 +6,11 @@ import { MappingType, ValueMapping } from '../types/valueMapping';
 
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 
-function getDisplayProcessorFromConfig(config: FieldConfig) {
+function getDisplayProcessorFromConfig(config: FieldConfig, fieldType: FieldType = FieldType.number) {
   return getDisplayProcessor({
     field: {
       config,
-      type: FieldType.number,
+      type: fieldType,
     },
     theme: createTheme(),
   });
@@ -456,31 +456,31 @@ describe('Date display options', () => {
   });
 
   describe('number formatting for string values', () => {
-    it('should preserve string unchanged if unit is strings', () => {
-      const processor = getDisplayProcessor({
-        field: {
-          type: FieldType.string,
-          config: { unit: 'string' },
-        },
-        theme: createTheme(),
-      });
+    it('should preserve string unchanged if unit is string', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 'string' }, FieldType.string);
       expect(processor('22.1122334455').text).toEqual('22.1122334455');
     });
 
-    it('should format string as number if no unit', () => {
-      const processor = getDisplayProcessor({
-        field: {
-          type: FieldType.string,
-          config: { decimals: 2 },
-        },
-        theme: createTheme(),
-      });
-      expect(processor('22.1122334455').text).toEqual('22.11');
+    it('should preserve string unchanged if no unit is specified', () => {
+      const processor = getDisplayProcessorFromConfig({}, FieldType.string);
+      expect(processor('22.1122334455').text).toEqual('22.1122334455');
 
       // Support empty/missing strings
       expect(processor(undefined).text).toEqual('');
       expect(processor(null).text).toEqual('');
       expect(processor('').text).toEqual('');
+    });
+
+    it('should format string as number if unit is `none`', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 'none' }, FieldType.string);
+      expect(processor('0x10').text).toEqual('16');
+    });
+
+    it('should not parse a 64 bit number when the data type is string', () => {
+      const value = '2882377905688543293';
+      const instance = getDisplayProcessorFromConfig({}, FieldType.string);
+      const disp = instance(value);
+      expect(disp.text).toEqual(value);
     });
   });
 });
