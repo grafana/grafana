@@ -126,6 +126,7 @@ export interface MetricQuery extends BaseQuery {
   view?: string;
   query: string;
   preprocessor?: PreprocessorType;
+  graphPeriod?: string;
 }
 
 export interface SLOQuery extends BaseQuery {
