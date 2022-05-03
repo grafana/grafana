@@ -31,9 +31,13 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext) response.Res
 	}
 
 	if cmd.FolderUID != nil {
-		folder, err := l.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, *cmd.FolderUID)
-		if err == nil && folder != nil {
-			cmd.FolderID = folder.Id
+		if *cmd.FolderUID == "" {
+			cmd.FolderID = 0
+		} else {
+			folder, err := l.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, *cmd.FolderUID)
+			if err == nil && folder != nil {
+				cmd.FolderID = folder.Id
+			}
 		}
 	}
 
@@ -96,9 +100,13 @@ func (l *LibraryElementService) patchHandler(c *models.ReqContext) response.Resp
 	}
 
 	if cmd.FolderUID != nil {
-		folder, err := l.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, *cmd.FolderUID)
-		if err == nil && folder != nil {
-			cmd.FolderID = folder.Id
+		if *cmd.FolderUID == "" {
+			cmd.FolderID = 0
+		} else {
+			folder, err := l.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, *cmd.FolderUID)
+			if err == nil && folder != nil {
+				cmd.FolderID = folder.Id
+			}
 		}
 	}
 
