@@ -4035,7 +4035,7 @@ __metadata:
     tinycolor2: 1.4.2
     tslib: 2.3.1
     typescript: 4.4.4
-    uplot: 1.6.19
+    uplot: 1.6.20
     xss: 1.0.11
   languageName: unknown
   linkType: soft
@@ -4488,7 +4488,7 @@ __metadata:
     ts-loader: 8.0.11
     tslib: 2.3.1
     typescript: 4.4.4
-    uplot: 1.6.19
+    uplot: 1.6.20
     uuid: 8.3.2
     webpack: 5.72.0
     webpack-filter-warnings-plugin: 1.2.1
@@ -20842,7 +20842,7 @@ __metadata:
     ts-node: 10.7.0
     tslib: 2.3.1
     typescript: 4.4.4
-    uplot: 1.6.19
+    uplot: 1.6.20
     uuid: 8.3.2
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
@@ -36377,10 +36377,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@npm:1.6.19":
-  version: 1.6.19
-  resolution: "uplot@npm:1.6.19"
-  checksum: 181cb158e920bc452940292f356eca4a75c31ebabbe9cd40b77e00a3ba90ac76e62e97fde9c06b45c4cd61e34734da0dbefb32c2689bf0d0c24b5d42aa38763a
+"uplot@npm:1.6.20":
+  version: 1.6.20
+  resolution: "uplot@npm:1.6.20"
+  checksum: 17ddacefbba2b0db0e919ad5ed85f43ebe40afbfced442bc821adbf6d84dc4f969ebf5754f913b316acf17f24ca18c3ca971181a530ea1fc91f45763f25cddaf
   languageName: node
   linkType: hard
 
