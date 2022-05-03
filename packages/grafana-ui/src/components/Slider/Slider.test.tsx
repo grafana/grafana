@@ -69,16 +69,22 @@ describe('Slider', () => {
     const slider = screen.getByRole('slider');
     const sliderInput = screen.getByRole('textbox');
 
+    // Check what happens above the maximum value
     await user.clear(sliderInput);
     await user.type(sliderInput, '200');
-
     expect(sliderInput).toHaveValue('200');
     expect(slider).toHaveAttribute('aria-valuenow', '100');
-
-    // click outside the input field to blur
-    await user.click(document.body);
-
+    await user.click(document.body); // click outside the input field to blur
     expect(sliderInput).toHaveValue('100');
     expect(slider).toHaveAttribute('aria-valuenow', '100');
+
+    // Check what happens below the minimum value
+    await user.clear(sliderInput);
+    await user.type(sliderInput, '1');
+    expect(sliderInput).toHaveValue('1');
+    expect(slider).toHaveAttribute('aria-valuenow', '10');
+    await user.click(document.body); // click outside the input field to blur
+    expect(sliderInput).toHaveValue('10');
+    expect(slider).toHaveAttribute('aria-valuenow', '10');
   });
 });
