@@ -239,7 +239,7 @@ Status Codes:
 
 ## Restore dashboard
 
-> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new dashboard versions API](#restore-dashboard-by-dashboard-uid).
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new restore dashboard API](#restore-dashboard-by-dashboard-uid).
 
 `POST /api/dashboards/id/:dashboardId/restore`
 
