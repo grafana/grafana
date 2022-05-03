@@ -1,7 +1,7 @@
 +++
 title = "Alerting fundamentals"
 aliases = ["/docs/grafana/latest/alerting/metrics/"]
-weight = 120
+weight = 121
 +++
 
 # Alerting fundamentals
