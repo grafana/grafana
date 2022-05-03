@@ -29,15 +29,17 @@ export const QueryHeader: React.FC<QueryTypeFieldProps> = ({ query, onQueryChang
   );
 
   return (
-    <EditorHeader>
-      <InlineSelect
-        label="Service"
-        value={query.queryType}
-        placeholder="Service..."
-        allowCustomValue
-        options={queryTypes}
-        onChange={handleChange}
-      />
-    </EditorHeader>
+    <span data-testid="azure-monitor-experimental-header">
+      <EditorHeader>
+        <InlineSelect
+          label="Service"
+          value={query.queryType}
+          placeholder="Service..."
+          allowCustomValue
+          options={queryTypes}
+          onChange={handleChange}
+        />
+      </EditorHeader>
+    </span>
   );
 };
