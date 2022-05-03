@@ -1,10 +1,9 @@
----
-title: 'RBAC role definitions'
-menuTitle: 'RBAC role definitions'
-description: 'This topic includes a table that lists permission associated with Grafana fixed and basic roles.'
-aliases: ['/docs/grafana/latest/enterprise/access-control/fine-grained-access-control-references/']
-weight: 70
----
++++
+title = "Fine-grained access control references"
+description = "Refer to fine-grained access control references"
+keywords = ["grafana", "fine-grained-access-control", "roles", "fixed-roles", "built-in-role-assignments", "permissions", "enterprise"]
+weight = 130
++++
 
 # Fine-grained access control references
 
