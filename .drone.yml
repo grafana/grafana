@@ -1302,7 +1302,8 @@ volumes:
     medium: memory
 ---
 depends_on:
-- main-test
+- main-test-frontend
+- main-test-backend
 - main-build-e2e-publish
 - main-integration-tests
 kind: pipeline
@@ -1391,7 +1392,8 @@ trigger:
 type: docker
 ---
 depends_on:
-- main-test
+- main-test-frontend
+- main-test-backend
 - main-build-e2e-publish
 - main-integration-tests
 - main-windows
@@ -1445,7 +1447,8 @@ volumes:
   name: docker
 ---
 depends_on:
-- main-test
+- main-test-frontend
+- main-test-backend
 - main-build-e2e-publish
 - main-integration-tests
 - main-windows
@@ -4650,6 +4653,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: b88e56d9b6e4166f6756bbd728befa854bd62fe2c1ad1c76cf427dbb0b88aead
+hmac: 650895e4350d8423d0a77aa728ed07696ee301ad440b9982e336a05bb364cdf8
 
 ...
