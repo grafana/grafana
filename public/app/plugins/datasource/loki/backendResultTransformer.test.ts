@@ -15,13 +15,13 @@ const inputFrame: DataFrame = {
       name: 'time',
       type: FieldType.time,
       config: {},
-      values: new ArrayVector([1645030244810, 1645030247027, 1645030246277, 1645030245539, 1645030244091]),
+      values: new ArrayVector([1645030244810, 1645030247027]),
     },
     {
       name: 'value',
       type: FieldType.string,
       config: {},
-      values: new ArrayVector(['line1', 'line2', 'line3', 'line4', 'line5']),
+      values: new ArrayVector(['line1', 'line2']),
     },
     {
       name: 'labels',
@@ -31,31 +31,19 @@ const inputFrame: DataFrame = {
           json: true,
         },
       },
-      values: new ArrayVector([
-        `[["level", "info"],["code", "41🌙"]]`,
-        `[["level", "error"],["code", "41🌙"]]`,
-        `[["level", "error"],["code", "43🌙"]]`,
-        `[["level", "error"],["code", "41🌙"]]`,
-        `[["level", "info"],["code", "41🌙"]]`,
-      ]),
+      values: new ArrayVector([`[["level", "info"],["code", "41🌙"]]`, `[["level", "error"],["code", "41🌙"]]`]),
     },
     {
       name: 'tsNs',
-      type: FieldType.time,
+      type: FieldType.string,
       config: {},
-      values: new ArrayVector([
-        '1645030244810757120',
-        '1645030247027735040',
-        '1645030246277587968',
-        '1645030245539423744',
-        '1645030244091700992',
-      ]),
+      values: new ArrayVector(['1645030244810757120', '1645030247027735040']),
     },
     {
       name: 'id',
       type: FieldType.string,
       config: {},
-      values: new ArrayVector(['id1', 'id2', 'id3', 'id4', 'id5']),
+      values: new ArrayVector(['id1', 'id2']),
     },
   ],
   length: 5,
@@ -74,14 +62,7 @@ describe('loki backendResultTransformer', () => {
         lokiQueryStatKey: 'Summary: total bytes processed',
       },
     };
-    expectedFrame.fields[2].type = FieldType.other;
-    expectedFrame.fields[2].values = new ArrayVector([
-      { level: 'info', code: '41🌙' },
-      { level: 'error', code: '41🌙' },
-      { level: 'error', code: '43🌙' },
-      { level: 'error', code: '41🌙' },
-      { level: 'info', code: '41🌙' },
-    ]);
+    expectedFrame.fields[3].type = FieldType.time;
 
     const expected: DataQueryResponse = { data: [expectedFrame] };
 
