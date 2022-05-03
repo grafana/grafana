@@ -278,7 +278,7 @@ func (m *RegistrationList) Range(f func(registration RoleRegistration) bool) {
 	}
 }
 
-func BuildMacroRoleDefinitions() map[string]*RoleDTO {
+func BuildBasicRoleDefinitions() map[string]*RoleDTO {
 	return map[string]*RoleDTO{
 		string(models.ROLE_ADMIN): {
 			Name:        BasicRolePrefix + "admin",
