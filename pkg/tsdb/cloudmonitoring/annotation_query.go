@@ -48,25 +48,16 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 }
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) transformAnnotationToFrame(annotations []*annotationEvent, result *backend.DataResponse) {
-	frames := data.Frames{}
+	frame := data.NewFrame(timeSeriesQuery.RefID,
+		data.NewField("time", nil, []time.Time{}),
+		data.NewField("title", nil, []string{}),
+		data.NewField("tags", nil, []string{}),
+		data.NewField("text", nil, []string{}),
+	)
 	for _, a := range annotations {
-		frame := &data.Frame{
-			RefID: timeSeriesQuery.getRefID(),
-			Fields: []*data.Field{
-				data.NewField("time", nil, a.Time),
-				data.NewField("title", nil, a.Title),
-				data.NewField("tags", nil, a.Tags),
-				data.NewField("text", nil, a.Text),
-			},
-			Meta: &data.FrameMeta{
-				Custom: map[string]interface{}{
-					"rowCount": len(annotations),
-				},
-			},
-		}
-		frames = append(frames, frame)
+		frame.AppendRow(a.Time, a.Title, a.Tags, a.Text)
 	}
-	result.Frames = frames
+	result.Frames = append(result.Frames, frame)
 	slog.Info("anno", "len", len(annotations))
 }
 

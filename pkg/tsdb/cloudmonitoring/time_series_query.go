@@ -302,13 +302,12 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseToAnnotations(queryRe
 				if d.ValueType == "STRING" {
 					value = point.Values[n].StringValue
 				}
-				annotation := &annotationEvent{
-					Time:  point.TimeInterval.EndTime.UTC(),
+				annotations = append(annotations, &annotationEvent{
+					Time:  point.TimeInterval.EndTime,
 					Title: formatAnnotationText(title, value, d.MetricKind, metricLabels, resourceLabels),
 					Tags:  "",
 					Text:  formatAnnotationText(text, value, d.MetricKind, metricLabels, resourceLabels),
-				}
-				annotations = append(annotations, annotation)
+				})
 			}
 		}
 	}
