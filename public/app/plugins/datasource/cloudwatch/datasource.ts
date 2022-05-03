@@ -267,26 +267,35 @@ export class CloudWatchDatasource
     throw new Error('invalid metric editor mode');
   }
 
+  replaceMetricQueryVars(
+    query: CloudWatchMetricsQuery,
+    options: DataQueryRequest<CloudWatchQuery>
+  ): CloudWatchMetricsQuery {
+    query.region = this.templateSrv.replace(this.getActualRegion(query.region), options.scopedVars);
+    query.namespace = this.replace(query.namespace, options.scopedVars, true, 'namespace');
+    query.metricName = this.replace(query.metricName, options.scopedVars, true, 'metric name');
+    query.dimensions = this.convertDimensionFormat(query.dimensions ?? {}, options.scopedVars);
+    query.statistic = this.templateSrv.replace(query.statistic, options.scopedVars);
+    query.period = String(this.getPeriod(query, options)); // use string format for period in graph query, and alerting
+    query.id = this.templateSrv.replace(query.id, options.scopedVars);
+    query.expression = this.templateSrv.replace(query.expression, options.scopedVars);
+    query.sqlExpression = this.templateSrv.replace(query.sqlExpression, options.scopedVars, 'raw');
+
+    return query;
+  }
+
   handleMetricQueries = (
     metricQueries: CloudWatchMetricsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
     const validMetricsQueries = metricQueries.filter(this.filterQuery).map((q: CloudWatchMetricsQuery): MetricQuery => {
-      const query = migrateMetricQuery(q);
-      query.region = this.templateSrv.replace(this.getActualRegion(query.region), options.scopedVars);
-      query.namespace = this.replace(query.namespace, options.scopedVars, true, 'namespace');
-      query.metricName = this.replace(query.metricName, options.scopedVars, true, 'metric name');
-      query.dimensions = this.convertDimensionFormat(query.dimensions ?? {}, options.scopedVars);
-      query.statistic = this.templateSrv.replace(query.statistic, options.scopedVars);
-      query.period = String(this.getPeriod(query, options)); // use string format for period in graph query, and alerting
-      query.id = this.templateSrv.replace(query.id, options.scopedVars);
-      query.expression = this.templateSrv.replace(query.expression, options.scopedVars);
-      query.sqlExpression = this.templateSrv.replace(query.sqlExpression, options.scopedVars, 'raw');
+      const migratedQuery = migrateMetricQuery(q);
+      const migratedAndIterpolatedQuery = this.replaceMetricQueryVars(migratedQuery, options);
 
       return {
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
-        ...query,
+        ...migratedAndIterpolatedQuery,
         type: 'timeSeriesQuery',
         datasource: this.getRef(),
       };
