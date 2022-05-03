@@ -162,7 +162,7 @@ These options are available in the [configuration]({{< relref "../administration
 
 ```ini
 [reporting]
-# Whether the reporting feature is enabled (true if unset)
+# Enable/disable the reporting feature. If disabled, no reports will be generated and the UI will be hidden.
 enabled = true
 # Set timeout for each panel rendering request
 rendering_timeout = 10s
