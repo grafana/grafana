@@ -134,7 +134,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			name: "has dimensionFilter*s* property with not equals operator",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
-				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "ne", Filter: "test"}},
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "ne", Filter: "*", Filters: []string{"test"}}},
 				"top":              "30",
 			},
 			queryInterval:           duration,
@@ -162,6 +162,28 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			queryInterval:           duration,
 			expectedInterval:        "PT1M",
 			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27+and+tier+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+		},
+		{
+			name: "correctly constructs target when multiple filter values are provided for the 'eq' operator",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain":        "PT1M",
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: "*", Filters: []string{"test", "test2"}}},
+				"top":              "30",
+			},
+			queryInterval:           duration,
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "%24filter=blob+eq+%27test%27+or+blob+eq+%27test2%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+		},
+		{
+			name: "correctly constructs target when multiple filter values are provided for ne 'eq' operator",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain":        "PT1M",
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "ne", Filter: "*", Filters: []string{"test", "test2"}}},
+				"top":              "30",
+			},
+			queryInterval:           duration,
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "%24filter=blob+ne+%27test%27+and+blob+ne+%27test2%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
 		},
 	}
 
