@@ -2,6 +2,7 @@ package extract
 
 import (
 	"io"
+	"strconv"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -38,8 +39,17 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardInfo, e
 			dash.Description = iter.ReadString()
 
 		case "schemaVersion":
-			dash.SchemaVersion = iter.ReadInt64()
-
+			switch iter.WhatIsNext() {
+			case jsoniter.NumberValue:
+				dash.SchemaVersion = iter.ReadInt64()
+			case jsoniter.StringValue:
+				val := iter.ReadString()
+				if v, err := strconv.ParseInt(val, 10, 64); err == nil {
+					dash.SchemaVersion = v
+				}
+			default:
+				iter.Skip()
+			}
 		case "timezone":
 			dash.TimeZone = iter.ReadString()
 
@@ -176,8 +186,17 @@ func readPanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) PanelInfo {
 			targets.addDatasource(iter)
 
 		case "targets":
-			for iter.ReadArray() {
-				targets.addTarget(iter)
+			switch iter.WhatIsNext() {
+			case jsoniter.ArrayValue:
+				for iter.ReadArray() {
+					targets.addTarget(iter)
+				}
+			case jsoniter.ObjectValue:
+				for f := iter.ReadObject(); f != ""; f = iter.ReadObject() {
+					targets.addTarget(iter)
+				}
+			default:
+				iter.Skip()
 			}
 
 		case "transformations":

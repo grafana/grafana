@@ -1,20 +1,14 @@
 import { AnnotationQuery, DataQuery } from '@grafana/data';
 
+import { CloudWatchMetricsQuery, LegacyAnnotationQuery, MetricEditorMode, MetricQueryType } from '../types';
+
 import {
   migrateCloudWatchQuery,
   migrateMultipleStatsAnnotationQuery,
   migrateMultipleStatsMetricsQuery,
-  migrateVariableQuery,
-} from './migrations';
-import {
-  CloudWatchMetricsQuery,
-  LegacyAnnotationQuery,
-  MetricEditorMode,
-  MetricQueryType,
-  VariableQueryType,
-} from './types';
+} from './dashboardMigrations';
 
-describe('migration', () => {
+describe('dashboardMigrations', () => {
   describe('migrateMultipleStatsMetricsQuery', () => {
     const queryToMigrate = {
       statistics: ['Average', 'Sum', 'Maximum'],
@@ -180,62 +174,6 @@ describe('migration', () => {
           expect(query.metricEditorMode).toBe(MetricEditorMode.Code);
         });
       });
-    });
-  });
-  describe('migrateVariableQuery', () => {
-    describe('when metrics query is used', () => {
-      describe('and region param is left out', () => {
-        it('should leave an empty region', () => {
-          const query = migrateVariableQuery('metrics(testNamespace)');
-          expect(query.queryType).toBe(VariableQueryType.Metrics);
-          expect(query.namespace).toBe('testNamespace');
-          expect(query.region).toBe('');
-        });
-      });
-
-      describe('and region param is defined by user', () => {
-        it('should use the user defined region', () => {
-          const query = migrateVariableQuery('metrics(testNamespace2, custom-region)');
-          expect(query.queryType).toBe(VariableQueryType.Metrics);
-          expect(query.namespace).toBe('testNamespace2');
-          expect(query.region).toBe('custom-region');
-        });
-      });
-    });
-    describe('when dimension_values query is used', () => {
-      describe('and filter param is left out', () => {
-        it('should leave an empty filter', () => {
-          const query = migrateVariableQuery('dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)');
-          expect(query.queryType).toBe(VariableQueryType.DimensionValues);
-          expect(query.region).toBe('us-east-1');
-          expect(query.namespace).toBe('AWS/RDS');
-          expect(query.metricName).toBe('CPUUtilization');
-          expect(query.dimensionKey).toBe('DBInstanceIdentifier');
-          expect(query.dimensionFilters).toStrictEqual({});
-        });
-      });
-      describe('and filter param is defined by user', () => {
-        it('should use the user defined filter', () => {
-          const query = migrateVariableQuery(
-            'dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier,{"InstanceId":"$instance_id"})'
-          );
-          expect(query.queryType).toBe(VariableQueryType.DimensionValues);
-          expect(query.region).toBe('us-east-1');
-          expect(query.namespace).toBe('AWS/RDS');
-          expect(query.metricName).toBe('CPUUtilization');
-          expect(query.dimensionKey).toBe('DBInstanceIdentifier');
-          expect(query.dimensionFilters).toStrictEqual({ InstanceId: '$instance_id' });
-        });
-      });
-    });
-  });
-  describe('when resource_arns query is used', () => {
-    it('should parse the query', () => {
-      const query = migrateVariableQuery('resource_arns(us-east-1,rds:db,{"environment":["$environment"]})');
-      expect(query.queryType).toBe(VariableQueryType.ResourceArns);
-      expect(query.region).toBe('us-east-1');
-      expect(query.resourceType).toBe('rds:db');
-      expect(query.tags).toBe('{"environment":["$environment"]}');
     });
   });
 });

@@ -84,7 +84,12 @@ function migrateMetricsDimensionFilters(query: AzureMonitorQuery): AzureMonitorQ
 
   const oldDimension = workingQuery.azureMonitor?.dimension;
   if (oldDimension && oldDimension !== 'None') {
-    workingQuery = appendDimensionFilter(workingQuery, oldDimension, 'eq', workingQuery.azureMonitor?.dimensionFilter);
+    workingQuery = appendDimensionFilter(
+      workingQuery,
+      oldDimension,
+      'eq',
+      workingQuery.azureMonitor?.dimensionFilter || ''
+    );
   }
 
   return workingQuery;

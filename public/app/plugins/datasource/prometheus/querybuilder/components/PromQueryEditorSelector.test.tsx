@@ -60,19 +60,6 @@ describe('PromQueryEditorSelector', () => {
     expectCodeEditor();
   });
 
-  it('shows code if new query', async () => {
-    render(
-      <PromQueryEditorSelector
-        {...defaultProps}
-        query={{
-          refId: 'A',
-          expr: '',
-        }}
-      />
-    );
-    expectCodeEditor();
-  });
-
   it('shows code editor when code mode is set', async () => {
     renderWithMode(QueryEditorMode.Code);
     expectCodeEditor();
