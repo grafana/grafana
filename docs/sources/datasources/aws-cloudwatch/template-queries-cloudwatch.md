@@ -13,7 +13,7 @@ For an introduction to templating and template variables, refer to the [Templati
 
 ## Query variable
 
-The CloudWatch data source provides the following queries that you can specify in the `Query Type` field in the Variable edit view. They enable you to fill a variable's options list with values such as `region`, `namespaces`, `metric names` and `dimension keys/values`.
+You can use the following CloudWatch data source queries to specify the `Query Type` field in the Variable edit view. Use them to fill a variables options list with values like `regions`, `namespaces`, `metric names`, and `dimension keys/values`.
 
 Read more about the available dimensions in the [CloudWatch Metrics and Dimensions Reference](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CW_Support_For_AWS.html).
 
@@ -35,29 +35,12 @@ For details about the metrics CloudWatch provides, please refer to the [CloudWat
 
 Variables can be used in the variable form. Refer to the [variable syntax documentation]({{< relref "../../variables/syntax.md" >}}).
 
-## Using JSON format template variables
-
-Some queries accept filters in JSON format and Grafana supports the conversion of template variables to JSON.
-
-For example, if `env = 'production', 'staging'`, a `Resource ARNs` query with the following filter returns ARNs of EC2 instances where the `Environment` tag is equal to `production` or `staging`.
-
-```javascript
-{"Environment":${env:json}}
-```
-
 ## ec2_instance_attribute examples
 
-### JSON filters
+### Filters
 
-The `ec2_instance_attribute` query takes `filters` in JSON format.
+The `ec2_instance_attribute` query takes in `filters` as a filter name and a comma-separated list of values.
 You can specify [pre-defined filters of ec2:DescribeInstances](http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html).
-Note that the actual filtering takes place on Amazon's servers, not in Grafana.
-
-Filters syntax:
-
-```javascript
-{ "filter_name1": [ "filter_value1" ], "filter_name2": [ "filter_value2" ] }
-```
 
 ### Selecting attributes
 
