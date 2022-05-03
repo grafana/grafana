@@ -15,7 +15,6 @@ import {
   QueryResultMetaNotice,
 } from '@grafana/data';
 
-import { config } from '../config';
 import { FetchError, FetchResponse } from '../services';
 
 import { toDataQueryError } from './toDataQueryError';
