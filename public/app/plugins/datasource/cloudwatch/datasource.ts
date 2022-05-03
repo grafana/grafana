@@ -17,9 +17,7 @@ import {
   LogRowModel,
   rangeUtil,
   ScopedVars,
-  TableData,
   TimeRange,
-  toLegacyResponseData,
 } from '@grafana/data';
 import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
@@ -31,12 +29,15 @@ import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { store } from 'app/store/store';
 import { AppNotificationTimeout } from 'app/types';
 
+import { CloudWatchAnnotationSupport } from './annotationSupport';
 import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
+import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
 import { CloudWatchLanguageProvider } from './language_provider';
 import memoizedDebounce from './memoizedDebounce';
 import { MetricMathCompletionItemProvider } from './metric-math/completion/CompletionItemProvider';
 import {
+  CloudWatchAnnotationQuery,
   CloudWatchJsonData,
   CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
@@ -48,12 +49,12 @@ import {
   GetLogEventsRequest,
   GetLogGroupFieldsRequest,
   GetLogGroupFieldsResponse,
-  isCloudWatchLogsQuery,
   LogAction,
   MetricEditorMode,
   MetricQuery,
   MetricQueryType,
   MetricRequest,
+  MultiFilters,
   StartQueryRequest,
   TSDBResponse,
 } from './types';
@@ -125,14 +126,15 @@ export class CloudWatchDatasource
     this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
     this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this, this.templateSrv);
     this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this, this.templateSrv);
-    this.variables = new CloudWatchVariableSupport(this, this.templateSrv);
+    this.variables = new CloudWatchVariableSupport(this);
+    this.annotations = CloudWatchAnnotationSupport;
   }
 
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
     options = cloneDeep(options);
 
-    let queries = options.targets.filter((item) => item.id !== '' || item.hide !== true);
-    const { logQueries, metricsQueries } = this.getTargetsByQueryMode(queries);
+    let queries = options.targets.filter((item) => item.hide !== true);
+    const { logQueries, metricsQueries, annotationQueries } = this.getTargetsByQueryMode(queries);
 
     const dataQueryResponses: Array<Observable<DataQueryResponse>> = [];
     if (logQueries.length > 0) {
@@ -143,6 +145,9 @@ export class CloudWatchDatasource
       dataQueryResponses.push(this.handleMetricQueries(metricsQueries, options));
     }
 
+    if (annotationQueries.length > 0) {
+      dataQueryResponses.push(this.handleAnnotationQuery(annotationQueries, options));
+    }
     // No valid targets, return the empty result to save a round trip.
     if (isEmpty(dataQueryResponses)) {
       return of({
@@ -237,9 +242,13 @@ export class CloudWatchDatasource
   };
 
   filterQuery(query: CloudWatchQuery): boolean {
-    if (query.queryMode === 'Logs') {
+    if (isCloudWatchLogsQuery(query)) {
       return !!query.logGroupNames?.length;
+    } else if (isCloudWatchAnnotationQuery(query)) {
+      // annotation query validity already checked in annotationSupport
+      return true;
     }
+
     const { region, metricQueryType, metricEditorMode, expression, metricName, namespace, sqlExpression, statistic } =
       query;
     if (!region) {
@@ -296,6 +305,34 @@ export class CloudWatchDatasource
 
     return this.performTimeSeriesQuery(request, options.range);
   };
+
+  handleAnnotationQuery(
+    queries: CloudWatchAnnotationQuery[],
+    options: DataQueryRequest<CloudWatchQuery>
+  ): Observable<DataQueryResponse> {
+    return this.awsRequest(DS_QUERY_ENDPOINT, {
+      from: options.range.from.valueOf().toString(),
+      to: options.range.to.valueOf().toString(),
+      queries: queries.map((query) => ({
+        ...query,
+        statistic: this.templateSrv.replace(query.statistic),
+        region: this.templateSrv.replace(this.getActualRegion(query.region)),
+        namespace: this.templateSrv.replace(query.namespace),
+        metricName: this.templateSrv.replace(query.metricName),
+        dimensions: this.convertDimensionFormat(query.dimensions ?? {}, {}),
+        period: query.period ? parseInt(query.period, 10) : 300,
+        actionPrefix: query.actionPrefix ?? '',
+        alarmNamePrefix: query.alarmNamePrefix ?? '',
+        type: 'annotationQuery',
+        datasource: this.getRef(),
+      })),
+    }).pipe(
+      map((r) => {
+        const frames = toDataQueryResponse({ data: r }).data as DataFrame[];
+        return { data: frames };
+      })
+    );
+  }
 
   /**
    * Checks progress and polls data of a started logs query with some retry logic.
@@ -720,7 +757,7 @@ export class CloudWatchDatasource
     return this.doMetricResourceRequest('ec2-instance-attribute', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       attributeName: this.templateSrv.replace(attributeName),
-      filters: JSON.stringify(filters),
+      filters: JSON.stringify(this.convertMultiFilterFormat(filters, 'filter key')),
     });
   }
 
@@ -728,54 +765,8 @@ export class CloudWatchDatasource
     return this.doMetricResourceRequest('resource-arns', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       resourceType: this.templateSrv.replace(resourceType),
-      tags: JSON.stringify(tags),
+      tags: JSON.stringify(this.convertMultiFilterFormat(tags, 'tag name')),
     });
-  }
-
-  annotationQuery(options: any) {
-    const annotation = options.annotation;
-    const statistic = this.templateSrv.replace(annotation.statistic);
-    const defaultPeriod = annotation.prefixMatching ? '' : '300';
-    let period = annotation.period || defaultPeriod;
-    period = parseInt(period, 10);
-    const parameters = {
-      prefixMatching: annotation.prefixMatching,
-      region: this.templateSrv.replace(this.getActualRegion(annotation.region)),
-      namespace: this.templateSrv.replace(annotation.namespace),
-      metricName: this.templateSrv.replace(annotation.metricName),
-      dimensions: this.convertDimensionFormat(annotation.dimensions, {}),
-      statistic: statistic,
-      period: period,
-      actionPrefix: annotation.actionPrefix || '',
-      alarmNamePrefix: annotation.alarmNamePrefix || '',
-    };
-
-    return lastValueFrom(
-      this.awsRequest(DS_QUERY_ENDPOINT, {
-        from: options.range.from.valueOf().toString(),
-        to: options.range.to.valueOf().toString(),
-        queries: [
-          {
-            refId: 'annotationQuery',
-            datasource: this.getRef(),
-            type: 'annotationQuery',
-            ...parameters,
-          },
-        ],
-      }).pipe(
-        map((r) => {
-          const frames = toDataQueryResponse({ data: r }).data as DataFrame[];
-          const table = toLegacyResponseData(frames[0]) as TableData;
-          return table.rows.map((v) => ({
-            annotation: annotation,
-            time: Date.parse(v[0]),
-            title: v[1],
-            tags: [v[2]],
-            text: v[3],
-          }));
-        })
-      )
-    );
   }
 
   targetContainsTemplate(target: any) {
@@ -836,18 +827,40 @@ export class CloudWatchDatasource
         return { ...result, [key]: null };
       }
 
-      const valueVar = this.templateSrv
-        .getVariables()
-        .find(({ name }) => name === this.templateSrv.getVariableName(value));
-      if (valueVar) {
-        if ((valueVar as unknown as VariableWithMultiSupport).multi) {
-          const values = this.templateSrv.replace(value, scopedVars, 'pipe').split('|');
-          return { ...result, [key]: values };
-        }
-        return { ...result, [key]: [this.templateSrv.replace(value, scopedVars)] };
-      }
+      const newValues = this.getVariableValue(value, scopedVars);
+      return { ...result, [key]: newValues };
+    }, {});
+  }
 
-      return { ...result, [key]: [value] };
+  // get the value for a given template variable
+  getVariableValue(value: string, scopedVars: ScopedVars): string[] {
+    const variableName = this.templateSrv.getVariableName(value);
+    const valueVar = this.templateSrv.getVariables().find(({ name }) => {
+      return name === variableName;
+    });
+    if (variableName && valueVar) {
+      if ((valueVar as unknown as VariableWithMultiSupport).multi) {
+        // rebuild the variable name to handle old migrated queries
+        const values = this.templateSrv.replace('$' + variableName, scopedVars, 'pipe').split('|');
+        return values;
+      }
+      return [this.templateSrv.replace(value, scopedVars)];
+    }
+    return [value];
+  }
+
+  convertMultiFilterFormat(multiFilters: MultiFilters, fieldName?: string) {
+    return Object.entries(multiFilters).reduce((result, [key, values]) => {
+      key = this.replace(key, {}, true, fieldName);
+      if (!values) {
+        return { ...result, [key]: null };
+      }
+      const initialVal: string[] = [];
+      const newValues = values.reduce((result, value) => {
+        const vals = this.getVariableValue(value, {});
+        return [...result, ...vals];
+      }, initialVal);
+      return { ...result, [key]: newValues };
     }, {});
   }
 
@@ -883,19 +896,22 @@ export class CloudWatchDatasource
   getTargetsByQueryMode = (targets: CloudWatchQuery[]) => {
     const logQueries: CloudWatchLogsQuery[] = [];
     const metricsQueries: CloudWatchMetricsQuery[] = [];
+    const annotationQueries: CloudWatchAnnotationQuery[] = [];
 
     targets.forEach((query) => {
-      const mode = query.queryMode ?? 'Metrics';
-      if (mode === 'Logs') {
-        logQueries.push(query as CloudWatchLogsQuery);
+      if (isCloudWatchAnnotationQuery(query)) {
+        annotationQueries.push(query);
+      } else if (isCloudWatchLogsQuery(query)) {
+        logQueries.push(query);
       } else {
-        metricsQueries.push(query as CloudWatchMetricsQuery);
+        metricsQueries.push(query);
       }
     });
 
     return {
       logQueries,
       metricsQueries,
+      annotationQueries,
     };
   };
 
@@ -907,9 +923,7 @@ export class CloudWatchDatasource
     return queries.map((query) => ({
       ...query,
       region: this.getActualRegion(this.replace(query.region, scopedVars)),
-      expression: this.replace(query.expression, scopedVars),
-
-      ...(!isCloudWatchLogsQuery(query) && this.interpolateMetricsQueryVariables(query, scopedVars)),
+      ...(isCloudWatchMetricsQuery(query) && this.interpolateMetricsQueryVariables(query, scopedVars)),
     }));
   }
 

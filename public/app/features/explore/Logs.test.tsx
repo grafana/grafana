@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 import { LoadingState, LogLevel, LogRowModel, MutableDataFrame, toUtc } from '@grafana/data';
+import { ExploreId } from 'app/types';
 
 import { Logs } from './Logs';
 
@@ -15,6 +16,7 @@ describe('Logs', () => {
 
     return render(
       <Logs
+        exploreId={ExploreId.left}
         logRows={rows}
         timeZone={'utc'}
         width={50}

@@ -3,6 +3,8 @@ import React, { FC } from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { DeleteButton, Icon, IconName, Tooltip, useTheme2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
 
 import { ApiKey } from '../../types';
 
@@ -10,11 +12,9 @@ interface Props {
   apiKeys: ApiKey[];
   timeZone: TimeZone;
   onDelete: (apiKey: ApiKey) => void;
-  canRead: boolean;
-  canDelete: boolean;
 }
 
-export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete, canRead, canDelete }) => {
+export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete }) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
@@ -28,7 +28,7 @@ export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete, canRead, 
           <th style={{ width: '34px' }} />
         </tr>
       </thead>
-      {canRead && apiKeys.length > 0 ? (
+      {apiKeys.length > 0 ? (
         <tbody>
           {apiKeys.map((key) => {
             const isExpired = Boolean(key.expiration && Date.now() > new Date(key.expiration).getTime());
@@ -51,7 +51,7 @@ export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete, canRead, 
                     aria-label="Delete API key"
                     size="sm"
                     onConfirm={() => onDelete(key)}
-                    disabled={!canDelete}
+                    disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.ActionAPIKeysDelete, key)}
                   />
                 </td>
               </tr>

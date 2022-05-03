@@ -136,6 +136,7 @@ func TestProvisioning(t *testing.T) {
 			require.Equal(t, 202, resp.StatusCode)
 		})
 	})
+
 	t.Run("when provisioning contactpoints", func(t *testing.T) {
 		url := fmt.Sprintf("http://%s/api/provisioning/contact-points", grafanaListedAddr)
 		body := `
@@ -226,6 +227,50 @@ func TestProvisioning(t *testing.T) {
 			require.NoError(t, resp.Body.Close())
 
 			require.Equal(t, 202, resp.StatusCode)
+		})
+	})
+
+	t.Run("when provisioning templates", func(t *testing.T) {
+		url := fmt.Sprintf("http://%s/api/provisioning/templates", grafanaListedAddr)
+
+		t.Run("un-authenticated GET should 401", func(t *testing.T) {
+			req := createTestRequest("GET", url, "", "")
+
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
+			require.Equal(t, 401, resp.StatusCode)
+		})
+
+		t.Run("viewer GET should succeed", func(t *testing.T) {
+			req := createTestRequest("GET", url, "viewer", "")
+
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
+			require.Equal(t, 200, resp.StatusCode)
+		})
+
+		t.Run("editor GET should succeed", func(t *testing.T) {
+			req := createTestRequest("GET", url, "editor", "")
+
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
+			require.Equal(t, 200, resp.StatusCode)
+		})
+
+		t.Run("admin GET should succeed", func(t *testing.T) {
+			req := createTestRequest("GET", url, "admin", "")
+
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
+			require.Equal(t, 200, resp.StatusCode)
 		})
 	})
 }

@@ -1,17 +1,18 @@
-import { DataQuery } from '@grafana/data';
+import { AnnotationQuery, DataQuery } from '@grafana/data';
 
 import {
+  migrateCloudWatchQuery,
   migrateMultipleStatsAnnotationQuery,
   migrateMultipleStatsMetricsQuery,
-  migrateCloudWatchQuery,
   migrateVariableQuery,
 } from './migrations';
 import {
-  CloudWatchAnnotationQuery,
   CloudWatchMetricsQuery,
-  MetricQueryType,
+  LegacyAnnotationQuery,
   MetricEditorMode,
+  MetricQueryType,
   VariableQueryType,
+  OldVariableQuery,
 } from './types';
 
 describe('migration', () => {
@@ -77,13 +78,15 @@ describe('migration', () => {
   });
 
   describe('migrateMultipleStatsAnnotationQuery', () => {
-    const annotationToMigrate = {
+    const annotationToMigrate: AnnotationQuery<LegacyAnnotationQuery> = {
       statistics: ['p23.23', 'SampleCount'],
       name: 'Test annotation',
+      enable: false,
+      iconColor: '',
     };
 
-    const newAnnotations = migrateMultipleStatsAnnotationQuery(annotationToMigrate as CloudWatchAnnotationQuery);
-    const newCloudWatchAnnotations = newAnnotations as CloudWatchAnnotationQuery[];
+    const newAnnotations = migrateMultipleStatsAnnotationQuery(annotationToMigrate);
+    const newCloudWatchAnnotations = newAnnotations;
 
     it('should create one new annotation for each stat', () => {
       expect(newAnnotations.length).toBe(1);
@@ -107,11 +110,13 @@ describe('migration', () => {
     });
 
     describe('migrateMultipleStatsAnnotationQuery with only with stat', () => {
-      const annotationToMigrate = {
+      const annotationToMigrate: AnnotationQuery<LegacyAnnotationQuery> = {
         statistics: ['p23.23'],
         name: 'Test annotation',
-      } as CloudWatchAnnotationQuery;
-      const newAnnotations = migrateMultipleStatsAnnotationQuery(annotationToMigrate as CloudWatchAnnotationQuery);
+        enable: false,
+        iconColor: '',
+      };
+      const newAnnotations = migrateMultipleStatsAnnotationQuery(annotationToMigrate);
 
       it('should not create new annotations', () => {
         expect(newAnnotations.length).toBe(0);
@@ -227,11 +232,45 @@ describe('migration', () => {
   });
   describe('when resource_arns query is used', () => {
     it('should parse the query', () => {
-      const query = migrateVariableQuery('resource_arns(us-east-1,rds:db,{"environment":["$environment"]})');
+      const query = migrateVariableQuery(
+        'resource_arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})'
+      );
       expect(query.queryType).toBe(VariableQueryType.ResourceArns);
+      expect(query.region).toBe('eu-west-1');
+      expect(query.resourceType).toBe('elasticloadbalancing:loadbalancer');
+      expect(query.tags).toStrictEqual({ 'elasticbeanstalk:environment-name': ['myApp-dev', 'myApp-prod'] });
+    });
+  });
+  describe('when ec2_instance_attribute query is used', () => {
+    it('should parse the query', () => {
+      const query = migrateVariableQuery('ec2_instance_attribute(us-east-1,rds:db,{"environment":["$environment"]})');
+      expect(query.queryType).toBe(VariableQueryType.EC2InstanceAttributes);
       expect(query.region).toBe('us-east-1');
-      expect(query.resourceType).toBe('rds:db');
-      expect(query.tags).toBe('{"environment":["$environment"]}');
+      expect(query.attributeName).toBe('rds:db');
+      expect(query.ec2Filters).toStrictEqual({ environment: ['$environment'] });
+    });
+  });
+  describe('when OldVariableQuery is used', () => {
+    it('should parse the query', () => {
+      const oldQuery: OldVariableQuery = {
+        queryType: VariableQueryType.EC2InstanceAttributes,
+        namespace: '',
+        region: 'us-east-1',
+        metricName: '',
+        dimensionKey: '',
+        ec2Filters: '{"environment":["$environment"]}',
+        instanceID: '',
+        attributeName: 'rds:db',
+        resourceType: 'elasticloadbalancing:loadbalancer',
+        tags: '{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]}',
+        refId: '',
+      };
+      const query = migrateVariableQuery(oldQuery);
+      expect(query.region).toBe('us-east-1');
+      expect(query.attributeName).toBe('rds:db');
+      expect(query.ec2Filters).toStrictEqual({ environment: ['$environment'] });
+      expect(query.resourceType).toBe('elasticloadbalancing:loadbalancer');
+      expect(query.tags).toStrictEqual({ 'elasticbeanstalk:environment-name': ['myApp-dev', 'myApp-prod'] });
     });
   });
 });

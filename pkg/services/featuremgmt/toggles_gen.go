@@ -131,10 +131,6 @@ const (
 	// Lock database during migrations
 	FlagMigrationLocking = "migrationLocking"
 
-	// FlagSaveDashboardDrawer
-	// Use a drawer to show save dashboard dialog
-	FlagSaveDashboardDrawer = "saveDashboardDrawer"
-
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
@@ -159,6 +155,10 @@ const (
 	// Experimental Explore to Dashboard workflow
 	FlagExplore2Dashboard = "explore2Dashboard"
 
+	// FlagTracing
+	// Adds trace ID to error notifications
+	FlagTracing = "tracing"
+
 	// FlagPersistNotifications
 	// PoC Notifications page
 	FlagPersistNotifications = "persistNotifications"
@@ -166,4 +166,12 @@ const (
 	// FlagCommandPalette
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"
+
+	// FlagSavedItems
+	// Enable Saved Items in the navbar.
+	FlagSavedItems = "savedItems"
+
+	// FlagCloudWatchDynamicLabels
+	// Use dynamic labels instead of alias patterns in CloudWatch datasource
+	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
 )

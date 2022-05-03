@@ -47,13 +47,15 @@ export interface FeatureToggles {
   dashboardComments?: boolean;
   annotationComments?: boolean;
   migrationLocking?: boolean;
-  saveDashboardDrawer?: boolean;
   storage?: boolean;
   alertProvisioning?: boolean;
   export?: boolean;
   storageLocalUpload?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
   explore2Dashboard?: boolean;
+  tracing?: boolean;
   persistNotifications?: boolean;
   commandPalette?: boolean;
+  savedItems?: boolean;
+  cloudWatchDynamicLabels?: boolean;
 }
