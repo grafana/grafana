@@ -25,7 +25,7 @@ Grafana managed alerts query the following backend data sources that have alerti
 
 ### Metrics from the alerting engine
 
-The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../../administration/view-server/internal-metrics.md" >}}). See also, [View alert rules and their current state]({{< relref "../alerting-rules/rule-list.md" >}}).
+The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../administration/view-server/internal-metrics.md" >}}). See also, [View alert rules and their current state]({{< relref "../alerting-rules/rule-list.md" >}}).
 
 | Metric Name                                       | Type      | Description                                                                              |
 | ------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------- |
