@@ -45,15 +45,12 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
   const [overrideGrouping, setOverrideGrouping] = useState(routes.groupBy.length > 0);
-  const [overrideTimings, setOverrideTimings] = useState(
-    !!routes.groupWaitValue || !!routes.groupIntervalValue || !!routes.repeatIntervalValue
-  );
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
   const muteTimingOptions = useMuteTimingOptions();
 
   return (
     <Form defaultValues={routes} onSubmit={onSave}>
-      {({ control, register, errors, setValue }) => (
+      {({ control, register, errors, setValue, watch }) => (
         <>
           {/* @ts-ignore-check: react-hook-form made me do this */}
           <input type="hidden" {...register('id')} />
@@ -196,13 +193,9 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
             </Field>
           )}
           <Field label="Override general timings">
-            <Switch
-              id="override-timings-toggle"
-              value={overrideTimings}
-              onChange={() => setOverrideTimings((overrideTimings) => !overrideTimings)}
-            />
+            <Switch id="override-timings-toggle" {...register('overrideTimings')} />
           </Field>
-          {overrideTimings && (
+          {watch().overrideTimings && (
             <>
               <Field
                 label="Group wait"

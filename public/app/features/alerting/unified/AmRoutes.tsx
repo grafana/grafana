@@ -49,7 +49,7 @@ const AmRoutes: FC = () => {
   } = (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
   const config = result?.alertmanager_config;
-  const [rootRoute, id2ExistingRoute] = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
+  const [rootRoute, id2ExistingRoute] = useMemo(() => amRouteToFormAmRoute(config?.route, true), [config?.route]);
 
   const receivers = stringsToSelectableValues(
     (config?.receivers ?? []).map((receiver: Receiver) => receiver.name)
