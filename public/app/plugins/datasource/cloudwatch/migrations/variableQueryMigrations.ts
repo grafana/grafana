@@ -18,7 +18,7 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVaria
     newQuery.ec2Filters = {};
     newQuery.tags = {};
 
-    if (rawQuery.ec2Filters !== '') {
+    if (rawQuery.dimensionFilters !== '') {
       try {
         newQuery.dimensionFilters = JSON.parse(rawQuery.dimensionFilters);
       } catch {
