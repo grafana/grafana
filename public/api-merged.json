@@ -507,14 +507,6 @@
         "operationId": "addUserRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -522,6 +514,14 @@
             "schema": {
               "$ref": "#/definitions/AddUserRoleCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -548,14 +548,6 @@
         "operationId": "removeUserRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "type": "string",
             "x-go-name": "RoleUID",
             "name": "roleUID",
@@ -568,6 +560,14 @@
             "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
             "name": "global",
             "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -2217,7 +2217,7 @@
         }
       }
     },
-    "/alertmanager/{DatasourceUID}/api/v2/alerts": {
+    "/alertmanager/{Recipient}/api/v2/alerts": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": ["alertmanager"],
@@ -2265,9 +2265,10 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
+            "type": "integer",
+            "format": "int64",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -2303,9 +2304,10 @@
             }
           },
           {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
+            "type": "integer",
+            "format": "int64",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -2326,7 +2328,7 @@
         }
       }
     },
-    "/alertmanager/{DatasourceUID}/api/v2/alerts/groups": {
+    "/alertmanager/{Recipient}/api/v2/alerts/groups": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": ["alertmanager"],
@@ -2374,9 +2376,10 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
+            "type": "integer",
+            "format": "int64",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -2397,7 +2400,7 @@
         }
       }
     },
-    "/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId}": {
+    "/alertmanager/{Recipient}/api/v2/silence/{SilenceId}": {
       "get": {
         "description": "get silence",
         "tags": ["alertmanager"],
@@ -2410,9 +2413,10 @@
             "required": true
           },
           {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
+            "type": "integer",
+            "format": "int64",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -2444,9 +2448,10 @@
             "required": true
           },
           {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
+            "type": "integer",
+            "format": "int64",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -2467,7 +2472,7 @@
         }
       }
     },
-    "/alertmanager/{DatasourceUID}/api/v2/silences": {
+    "/alertmanager/{Recipient}/api/v2/silences": {
       "get": {
         "description": "get silences",
         "tags": ["alertmanager"],
@@ -2483,9 +2488,10 @@
             "in": "query"
           },
           {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
+            "type": "integer",
+            "format": "int64",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -2518,9 +2524,10 @@
             }
           },
           {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
+            "type": "integer",
+            "format": "int64",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -2541,16 +2548,17 @@
         }
       }
     },
-    "/alertmanager/{DatasourceUID}/api/v2/status": {
+    "/alertmanager/{Recipient}/api/v2/status": {
       "get": {
         "description": "get alertmanager status and configuration",
         "tags": ["alertmanager"],
         "operationId": "RouteGetAMStatus",
         "parameters": [
           {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
+            "type": "integer",
+            "format": "int64",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -2571,16 +2579,17 @@
         }
       }
     },
-    "/alertmanager/{DatasourceUID}/config/api/v1/alerts": {
+    "/alertmanager/{Recipient}/config/api/v1/alerts": {
       "get": {
         "description": "gets an Alerting config",
         "tags": ["alertmanager"],
         "operationId": "RouteGetAlertingConfig",
         "parameters": [
           {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
+            "type": "integer",
+            "format": "int64",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -2613,9 +2622,10 @@
             }
           },
           {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
+            "type": "integer",
+            "format": "int64",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -2641,9 +2651,10 @@
         "operationId": "RouteDeleteAlertingConfig",
         "parameters": [
           {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
+            "type": "integer",
+            "format": "int64",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -2664,7 +2675,7 @@
         }
       }
     },
-    "/alertmanager/{DatasourceUID}/config/api/v1/receivers/test": {
+    "/alertmanager/{Recipient}/config/api/v1/receivers/test": {
       "post": {
         "tags": ["alertmanager"],
         "summary": "Test Grafana managed receivers without saving them.",
@@ -2678,9 +2689,10 @@
             }
           },
           {
-            "type": "string",
-            "description": "DatasoureUID should be the datasource UID identifier",
-            "name": "DatasourceUID",
+            "type": "integer",
+            "format": "int64",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -3552,11 +3564,9 @@
     },
     "/dashboards/id/{DashboardID}/permissions": {
       "get": {
-        "description": "Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsWithUid) instead",
         "tags": ["dashboard_permissions"],
         "summary": "Gets all existing permissions for the given dashboard.",
         "operationId": "getDashboardPermissions",
-        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -3585,11 +3595,10 @@
         }
       },
       "post": {
-        "description": "Please refer to [updated API](#/dashboard_permissions/postDashboardPermissionsWithUid) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
+        "description": "This operation will remove existing permissions if they’re not included in the request.",
         "tags": ["dashboard_permissions"],
         "summary": "Updates permissions for a dashboard.",
         "operationId": "postDashboardPermissions",
-        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -3902,82 +3911,6 @@
         }
       }
     },
-    "/dashboards/uid/{uid}/permissions": {
-      "get": {
-        "tags": ["dashboard_permissions"],
-        "summary": "Gets all existing permissions for the given dashboard.",
-        "operationId": "getDashboardPermissionsWithUid",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "UID",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getDashboardPermissionsResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "This operation will remove existing permissions if they’re not included in the request.",
-        "tags": ["dashboard_permissions"],
-        "summary": "Updates permissions for a dashboard.",
-        "operationId": "postDashboardPermissionsWithUid",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "UID",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdateDashboardAclCommand"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/datasources": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scope: `datasources:*`.",
@@ -4114,137 +4047,6 @@
         "responses": {
           "200": {
             "$ref": "#/responses/deleteDatasourceByNameResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route}": {
-      "get": {
-        "description": "Proxies all calls to the actual data source.",
-        "tags": ["datasources"],
-        "summary": "Data source proxy GET calls.",
-        "operationId": "datasourceProxyGETByUIDcalls",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "DatasourceProxyRoute",
-            "name": "datasource_proxy_route",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined",
-        "tags": ["datasources"],
-        "summary": "Data source proxy POST calls.",
-        "operationId": "datasourceProxyPOSTByUIDcalls",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "DatasourceProxyRoute",
-            "name": "datasource_proxy_route",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": ""
-          },
-          "202": {
-            "description": ""
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "description": "Proxies all calls to the actual data source.",
-        "tags": ["datasources"],
-        "summary": "Data source proxy DELETE calls.",
-        "operationId": "datasourceProxyDELETEByUIDcalls",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "DatasourceProxyRoute",
-            "name": "datasource_proxy_route",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": ""
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -6620,7 +6422,7 @@
         }
       }
     },
-    "/prometheus/{DatasourceID}/api/v1/alerts": {
+    "/prometheus/{Recipient}/api/v1/alerts": {
       "get": {
         "description": "gets the current alerts",
         "tags": ["prometheus"],
@@ -6629,8 +6431,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -6645,7 +6447,7 @@
         }
       }
     },
-    "/prometheus/{DatasourceID}/api/v1/rules": {
+    "/prometheus/{Recipient}/api/v1/rules": {
       "get": {
         "description": "gets the evaluation statuses of all rules",
         "tags": ["prometheus"],
@@ -6654,8 +6456,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -7590,7 +7392,7 @@
         }
       }
     },
-    "/ruler/{DatasourceID}/api/v1/rules": {
+    "/ruler/{Recipient}/api/v1/rules": {
       "get": {
         "description": "List rule groups",
         "produces": ["application/json"],
@@ -7600,8 +7402,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           },
@@ -7627,7 +7429,7 @@
         }
       }
     },
-    "/ruler/{DatasourceID}/api/v1/rules/{Namespace}": {
+    "/ruler/{Recipient}/api/v1/rules/{Namespace}": {
       "get": {
         "description": "Get rule groups by namespace",
         "produces": ["application/json"],
@@ -7637,8 +7439,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           },
@@ -7667,8 +7469,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           },
@@ -7703,8 +7505,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           },
@@ -7725,7 +7527,7 @@
         }
       }
     },
-    "/ruler/{DatasourceID}/api/v1/rules/{Namespace}/{Groupname}": {
+    "/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}": {
       "get": {
         "description": "Get rule group",
         "produces": ["application/json"],
@@ -7735,8 +7537,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           },
@@ -7770,8 +7572,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           },
@@ -8262,6 +8064,14 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          },
+          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -8269,14 +8079,6 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -8310,16 +8112,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           }
@@ -9560,7 +9362,7 @@
         }
       }
     },
-    "/v1/rule/test/{DatasourceID}": {
+    "/v1/rule/test/{Recipient}": {
       "post": {
         "description": "Test a rule against external data source ruler",
         "consumes": ["application/json"],
@@ -9571,8 +9373,8 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource identifier",
-            "name": "DatasourceID",
+            "description": "Recipient should be the numeric datasource id",
+            "name": "Recipient",
             "in": "path",
             "required": true
           },
@@ -9653,10 +9455,7 @@
           "x-go-name": "Name"
         },
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         },
         "secondsToLive": {
           "type": "integer",
@@ -9766,10 +9565,7 @@
           "x-go-name": "Name"
         },
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         },
         "sendEmail": {
           "type": "boolean",
@@ -9786,10 +9582,7 @@
           "x-go-name": "LoginOrEmail"
         },
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -10537,9 +10330,6 @@
     "ApiKeyDTO": {
       "type": "object",
       "properties": {
-        "accessControl": {
-          "$ref": "#/definitions/Metadata"
-        },
         "expiration": {
           "type": "string",
           "format": "date-time",
@@ -10555,13 +10345,10 @@
           "x-go-name": "Name"
         },
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "ApiRuleNode": {
       "type": "object",
@@ -11157,10 +10944,7 @@
           "x-go-name": "PermissionName"
         },
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         },
         "slug": {
           "type": "string",
@@ -11227,10 +11011,7 @@
           "$ref": "#/definitions/PermissionType"
         },
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         },
         "teamId": {
           "type": "integer",
@@ -12041,11 +11822,10 @@
           "x-go-name": "DisableResolveMessage"
         },
         "name": {
-          "description": "Name is used as grouping key in the UI. Contact points with the\nsame name will be grouped in the UI.",
           "type": "string",
           "x-go-name": "Name"
         },
-        "provenance": {
+        "provanance": {
           "type": "string",
           "x-go-name": "Provenance"
         },
@@ -12057,7 +11837,6 @@
           "x-go-name": "Type"
         },
         "uid": {
-          "description": "UID is the unique identifier of the contact point. This will be\nautomatically set be the Grafana.",
           "type": "string",
           "x-go-name": "UID"
         }
@@ -12536,9 +12315,6 @@
         "name": {
           "type": "string",
           "x-go-name": "Name"
-        },
-        "provenance": {
-          "$ref": "#/definitions/Provenance"
         },
         "secureFields": {
           "type": "object",
@@ -13148,10 +12924,6 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
-        "dashboardUID": {
-          "type": "string",
-          "x-go-name": "DashboardUID"
-        },
         "data": {
           "$ref": "#/definitions/Json"
         },
@@ -13486,10 +13258,6 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
-        "dashboardUID": {
-          "type": "string",
-          "x-go-name": "DashboardUID"
-        },
         "panelId": {
           "type": "integer",
           "format": "int64",
@@ -13638,7 +13406,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "x-go-name": "ID"
+          "x-go-name": "Id"
         },
         "target": {
           "type": "string",
@@ -13653,7 +13421,7 @@
           "x-go-name": "Url"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "NavbarPreference": {
       "type": "object",
@@ -13666,7 +13434,7 @@
           "x-go-name": "SavedItems"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "NewApiKeyResult": {
       "type": "object",
@@ -14153,15 +13921,8 @@
           "default": 0,
           "x-go-name": "HomeDashboardID"
         },
-        "homeDashboardUID": {
-          "type": "string",
-          "x-go-name": "HomeDashboardUID"
-        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
-        },
-        "queryHistory": {
-          "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
           "type": "string",
@@ -14261,10 +14022,6 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "DashboardId"
-        },
-        "dashboardUID": {
-          "type": "string",
-          "x-go-name": "DashboardUID"
         },
         "data": {
           "$ref": "#/definitions/Json"
@@ -14626,15 +14383,8 @@
           "format": "int64",
           "x-go-name": "HomeDashboardID"
         },
-        "homeDashboardUID": {
-          "type": "string",
-          "x-go-name": "HomeDashboardUID"
-        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
-        },
-        "queryHistory": {
-          "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
           "type": "string",
@@ -14668,10 +14418,6 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/extensions/recordedqueries/api"
-    },
-    "Provenance": {
-      "type": "string",
-      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
     },
     "PushoverConfig": {
       "type": "object",
@@ -14736,16 +14482,6 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/backend"
-    },
-    "QueryHistoryPreference": {
-      "type": "object",
-      "properties": {
-        "homeTab": {
-          "type": "string",
-          "x-go-name": "HomeTab"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
     },
     "Receiver": {
       "type": "object",
@@ -15029,6 +14765,10 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/accesscontrol"
     },
+    "RoleType": {
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
+    },
     "Route": {
       "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
       "type": "object",
@@ -15073,9 +14813,6 @@
         },
         "object_matchers": {
           "$ref": "#/definitions/ObjectMatchers"
-        },
-        "provenance": {
-          "$ref": "#/definitions/Provenance"
         },
         "receiver": {
           "type": "string",
@@ -16009,10 +15746,7 @@
           "x-go-name": "OrgId"
         },
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         },
         "status": {
           "$ref": "#/definitions/TempUserStatus"
@@ -16694,10 +16428,7 @@
       "type": "object",
       "properties": {
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -16712,15 +16443,8 @@
           "default": 0,
           "x-go-name": "HomeDashboardID"
         },
-        "homeDashboardUID": {
-          "type": "string",
-          "x-go-name": "HomeDashboardUID"
-        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
-        },
-        "queryHistory": {
-          "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
           "type": "string",
@@ -16890,10 +16614,7 @@
           "x-go-name": "OrgId"
         },
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -17420,7 +17141,6 @@
       "$ref": "#/definitions/Duration"
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": ["labels", "annotations", "endsAt", "fingerprint", "receivers", "startsAt", "status", "updatedAt"],
       "properties": {
@@ -17470,7 +17190,9 @@
           "format": "date-time",
           "x-go-name": "UpdatedAt"
         }
-      }
+      },
+      "x-go-name": "GettableAlert",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "gettableAlerts": {
       "description": "GettableAlerts gettable alerts",
@@ -17650,7 +17372,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt"],
       "properties": {
@@ -17684,7 +17405,9 @@
           "format": "date-time",
           "x-go-name": "StartsAt"
         }
-      }
+      },
+      "x-go-name": "PostableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "receiver": {
       "type": "object",

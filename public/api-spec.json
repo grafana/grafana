@@ -507,14 +507,6 @@
         "operationId": "addUserRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -522,6 +514,14 @@
             "schema": {
               "$ref": "#/definitions/AddUserRoleCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -548,14 +548,6 @@
         "operationId": "removeUserRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "type": "string",
             "x-go-name": "RoleUID",
             "name": "roleUID",
@@ -568,6 +560,14 @@
             "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
             "name": "global",
             "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -2614,11 +2614,9 @@
     },
     "/dashboards/id/{DashboardID}/permissions": {
       "get": {
-        "description": "Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsWithUid) instead",
         "tags": ["dashboard_permissions"],
         "summary": "Gets all existing permissions for the given dashboard.",
         "operationId": "getDashboardPermissions",
-        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2647,11 +2645,10 @@
         }
       },
       "post": {
-        "description": "Please refer to [updated API](#/dashboard_permissions/postDashboardPermissionsWithUid) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
+        "description": "This operation will remove existing permissions if they’re not included in the request.",
         "tags": ["dashboard_permissions"],
         "summary": "Updates permissions for a dashboard.",
         "operationId": "postDashboardPermissions",
-        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -2964,82 +2961,6 @@
         }
       }
     },
-    "/dashboards/uid/{uid}/permissions": {
-      "get": {
-        "tags": ["dashboard_permissions"],
-        "summary": "Gets all existing permissions for the given dashboard.",
-        "operationId": "getDashboardPermissionsWithUid",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "UID",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getDashboardPermissionsResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "This operation will remove existing permissions if they’re not included in the request.",
-        "tags": ["dashboard_permissions"],
-        "summary": "Updates permissions for a dashboard.",
-        "operationId": "postDashboardPermissionsWithUid",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "UID",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          },
-          {
-            "name": "Body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdateDashboardAclCommand"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/datasources": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scope: `datasources:*`.",
@@ -3176,137 +3097,6 @@
         "responses": {
           "200": {
             "$ref": "#/responses/deleteDatasourceByNameResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/datasources/proxy/uid/{datasource_uid}/{datasource_proxy_route}": {
-      "get": {
-        "description": "Proxies all calls to the actual data source.",
-        "tags": ["datasources"],
-        "summary": "Data source proxy GET calls.",
-        "operationId": "datasourceProxyGETByUIDcalls",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "DatasourceProxyRoute",
-            "name": "datasource_proxy_route",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined",
-        "tags": ["datasources"],
-        "summary": "Data source proxy POST calls.",
-        "operationId": "datasourceProxyPOSTByUIDcalls",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "DatasourceProxyRoute",
-            "name": "datasource_proxy_route",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": ""
-          },
-          "202": {
-            "description": ""
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "description": "Proxies all calls to the actual data source.",
-        "tags": ["datasources"],
-        "summary": "Data source proxy DELETE calls.",
-        "operationId": "datasourceProxyDELETEByUIDcalls",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "DatasourceUID",
-            "name": "datasource_uid",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "x-go-name": "DatasourceProxyRoute",
-            "name": "datasource_proxy_route",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": ""
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -6671,6 +6461,14 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          },
+          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -6678,14 +6476,6 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -6719,16 +6509,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           }
@@ -7879,10 +7669,7 @@
           "x-go-name": "Name"
         },
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         },
         "secondsToLive": {
           "type": "integer",
@@ -7992,10 +7779,7 @@
           "x-go-name": "Name"
         },
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         },
         "sendEmail": {
           "type": "boolean",
@@ -8012,10 +7796,7 @@
           "x-go-name": "LoginOrEmail"
         },
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -8629,9 +8410,6 @@
     "ApiKeyDTO": {
       "type": "object",
       "properties": {
-        "accessControl": {
-          "$ref": "#/definitions/Metadata"
-        },
         "expiration": {
           "type": "string",
           "format": "date-time",
@@ -8647,13 +8425,10 @@
           "x-go-name": "Name"
         },
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "BrandingOptionsDTO": {
       "type": "object",
@@ -9144,10 +8919,7 @@
           "x-go-name": "PermissionName"
         },
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         },
         "slug": {
           "type": "string",
@@ -9214,10 +8986,7 @@
           "$ref": "#/definitions/PermissionType"
         },
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         },
         "teamId": {
           "type": "integer",
@@ -10360,10 +10129,6 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
-        "dashboardUID": {
-          "type": "string",
-          "x-go-name": "DashboardUID"
-        },
         "data": {
           "$ref": "#/definitions/Json"
         },
@@ -10653,10 +10418,6 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
-        "dashboardUID": {
-          "type": "string",
-          "x-go-name": "DashboardUID"
-        },
         "panelId": {
           "type": "integer",
           "format": "int64",
@@ -10721,7 +10482,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "x-go-name": "ID"
+          "x-go-name": "Id"
         },
         "target": {
           "type": "string",
@@ -10736,7 +10497,7 @@
           "x-go-name": "Url"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "NavbarPreference": {
       "type": "object",
@@ -10749,7 +10510,7 @@
           "x-go-name": "SavedItems"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "NewApiKeyResult": {
       "type": "object",
@@ -10978,15 +10739,8 @@
           "default": 0,
           "x-go-name": "HomeDashboardID"
         },
-        "homeDashboardUID": {
-          "type": "string",
-          "x-go-name": "HomeDashboardUID"
-        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
-        },
-        "queryHistory": {
-          "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
           "type": "string",
@@ -11068,10 +10822,6 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
-        "dashboardUID": {
-          "type": "string",
-          "x-go-name": "DashboardUID"
-        },
         "data": {
           "$ref": "#/definitions/Json"
         },
@@ -11135,15 +10885,8 @@
           "format": "int64",
           "x-go-name": "HomeDashboardID"
         },
-        "homeDashboardUID": {
-          "type": "string",
-          "x-go-name": "HomeDashboardUID"
-        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
-        },
-        "queryHistory": {
-          "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
           "type": "string",
@@ -11188,16 +10931,6 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana-plugin-sdk-go/backend"
-    },
-    "QueryHistoryPreference": {
-      "type": "object",
-      "properties": {
-        "homeTab": {
-          "type": "string",
-          "x-go-name": "HomeTab"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
     },
     "RecordingRuleJSON": {
       "description": "RecordingRuleJSON is the external representation of a recording rule",
@@ -11376,6 +11109,10 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/accesscontrol"
+    },
+    "RoleType": {
+      "type": "string",
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "SaveDashboardCommand": {
       "type": "object",
@@ -11828,10 +11565,7 @@
           "x-go-name": "OrgId"
         },
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         },
         "status": {
           "$ref": "#/definitions/TempUserStatus"
@@ -12303,10 +12037,7 @@
       "type": "object",
       "properties": {
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
@@ -12321,15 +12052,8 @@
           "default": 0,
           "x-go-name": "HomeDashboardID"
         },
-        "homeDashboardUID": {
-          "type": "string",
-          "x-go-name": "HomeDashboardUID"
-        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
-        },
-        "queryHistory": {
-          "$ref": "#/definitions/QueryHistoryPreference"
         },
         "theme": {
           "type": "string",
@@ -12499,10 +12223,7 @@
           "x-go-name": "OrgId"
         },
         "role": {
-          "type": "string",
-          "enum": ["Viewer", "Editor", "Admin"],
-          "x-go-enum-desc": "Viewer ROLE_VIEWER\nEditor ROLE_EDITOR\nAdmin ROLE_ADMIN",
-          "x-go-name": "Role"
+          "$ref": "#/definitions/RoleType"
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
