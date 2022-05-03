@@ -240,6 +240,7 @@ export type TypedArray =
   | Uint8ClampedArray
   | Float32Array
   | Float64Array;
+
 export type AlignedData = [
   xValues: number[] | TypedArray,
   ...yValues: Array<Array<number | null | undefined> | TypedArray>
