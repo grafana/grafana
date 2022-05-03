@@ -1,7 +1,6 @@
 import { render, screen, act } from '@testing-library/react';
 import React from 'react';
 import selectEvent from 'react-select-event';
-import renderer from 'react-test-renderer';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
