@@ -6285,18 +6285,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@microsoft/tsdoc-config@npm:~0.15.2":
-  version: 0.15.2
-  resolution: "@microsoft/tsdoc-config@npm:0.15.2"
-  dependencies:
-    "@microsoft/tsdoc": 0.13.2
-    ajv: ~6.12.6
-    jju: ~1.4.0
-    resolve: ~1.19.0
-  checksum: 85eb7808d4e4541199437f39e6aed235aaece0a6d0fd05c0b923067d494d20baca483fc6871880d09630f6d4e62b8bb99af0fde503eb2b2ded1b7ae5f74dfaf3
-  languageName: node
-  linkType: hard
-
 "@microsoft/tsdoc-config@npm:~0.16.1":
   version: 0.16.1
   resolution: "@microsoft/tsdoc-config@npm:0.16.1"
@@ -6313,13 +6301,6 @@ __metadata:
   version: 0.12.19
   resolution: "@microsoft/tsdoc@npm:0.12.19"
   checksum: b19f996a3b1b3145592badec6c408518ef88d5835a6958bae7bc5a741194ece13c5a9e7f5b815319b3873a089f1b03dcea7fd2987aa55771f0fc6f9acff08718
-  languageName: node
-  linkType: hard
-
-"@microsoft/tsdoc@npm:0.13.2":
-  version: 0.13.2
-  resolution: "@microsoft/tsdoc@npm:0.13.2"
-  checksum: 70948c5647495ef99752ff500e0f612c1fcf3476ea663ace19937e4d2f86fd78f0ad92ea5876d67e06b421f347d571b3d9e49c444935dc267768d5afd15581f8
   languageName: node
   linkType: hard
 
