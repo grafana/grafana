@@ -18,13 +18,16 @@ func RedirectLimitMiddleware(reqValidator models.PluginRequestValidator) sdkhttp
 				return nil, err
 			}
 			if res.StatusCode >= 300 && res.StatusCode < 400 {
-				location, err := res.Location()
-				if err != nil {
-					return nil, err
+				location, locationErr := res.Location()
+				if locationErr == http.ErrNoLocation {
+					return res, err
+				}
+				if locationErr != nil {
+					return nil, locationErr
 				}
 
-				if err := reqValidator.Validate(location.String(), nil); err != nil {
-					return nil, err
+				if validationErr := reqValidator.Validate(location.String(), nil); validationErr != nil {
+					return nil, validationErr
 				}
 			}
 			return res, err
