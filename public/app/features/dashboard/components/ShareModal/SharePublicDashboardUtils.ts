@@ -17,9 +17,9 @@ interface ApiSharingResp {
 
 export const savePublicConfig = memoizeOne(async function (conf: SharingConfiguration) {
   try {
-    const resp: ApiSharingResp = await getBackendSrv().post(`/api/dashboards/uid/${conf.dashboardUid}/public`, {
-      isPublic: conf.isPublic,
-    });
+    const payload = { isPublic: conf.isPublic };
+    const url = `/api/dashboards/uid/${conf.dashboardUid}/public_dashboard_config`;
+    const resp: ApiSharingResp = await getBackendSrv().post(url, payload);
     dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
     return resp.isPublic;
   } catch (err) {
