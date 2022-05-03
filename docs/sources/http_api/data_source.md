@@ -696,7 +696,7 @@ In addition, specific properties of each data source should be added in a reques
 | Code | Description                                                                                                                                                            |
 | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 200  | All data source queries returned a successful response.                                                                                                                |
-| 400  | Bad request. Invalid json, missing content-type, missing or invalid fields, etc. Or one or more data source queries were unsuccessful. Refer to body for more details. |
+| 400  | Bad request due to invalid JSON, missing content type, missing or invalid fields, etc. Or one or more data source queries were unsuccessful. Refer to the body for more details. |
 | 403  | Access denied.                                                                                                                                                         |
 | 404  | Either the data source or plugin required to fulfil the request could not be found.                                                                                    |
 | 500  | Unexpected error. Refer to body and/or server logs for more details.                                                                                                   |
