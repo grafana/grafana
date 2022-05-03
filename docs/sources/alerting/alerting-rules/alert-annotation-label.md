@@ -3,6 +3,8 @@ title = "Annotations and labels for alerting rules"
 description = "Annotations and labels for alerting"
 keywords = ["grafana", "alerting", "guide", "rules", "create"]
 weight = 401
+aliases = ["/docs/grafana/latest/alerting/unified-alerting/alerting-rules/alert-annotation-label/"]
+weight = 130
 +++
 
 # Annotations and labels for alerting rules

@@ -1,6 +1,7 @@
 +++
 title = "Template functions"
 keywords = ["grafana", "alerting", "guide", "contact point", "templating"]
+aliases = ["/docs/grafana/latest/alerting/unified-alerting/message-templating/template-functions/"]
 +++
 
 # Template Functions

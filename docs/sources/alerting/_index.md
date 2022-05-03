@@ -1,7 +1,7 @@
 +++
 title = "Alerts"
 weight = 455
-
+aliases = ["/docs/grafana/latest/alerting/"]
 +++
 
 # Grafana alerts
