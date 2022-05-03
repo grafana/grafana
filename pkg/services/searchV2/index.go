@@ -61,128 +61,6 @@ func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboar
 	}
 }
 
-func (i *dashboardIndex) initBlugeIndex(ctx context.Context, orgID int64) error {
-	config := bluge.InMemoryOnlyConfig()
-
-	// open an index writer using the configuration
-	writer, err := bluge.OpenWriter(config)
-	if err != nil {
-		return fmt.Errorf("error opening writer: %v", err)
-	}
-	defer func() {
-		err = writer.Close()
-		if err != nil {
-			i.logger.Error("Error closing bluge writer", "error", err)
-		}
-	}()
-
-	start := time.Now()
-
-	// Avoid cache here.
-	dashboards, err := i.loader.LoadDashboards(ctx, orgID, "")
-	if err != nil {
-		return fmt.Errorf("can't build dashboard search index for org ID: %d // %w", orgID, err)
-	}
-
-	folderIdLookup := make(map[int64]string, 50)
-	folderIdLookup[0] = "general" // automatic
-	for _, dashboard := range dashboards {
-		if dashboard.isFolder && dashboard.uid != "" {
-			folderIdLookup[dashboard.id] = dashboard.uid
-		}
-	}
-
-	i.logger.Info("Loading dashboards for bluge index", "elapsed", time.Since(start), "numDashboards", len(dashboards))
-	label := time.Now()
-
-	batch := bluge.NewBatch()
-
-	for _, dashboard := range dashboards {
-		path := dashboard.uid
-		url := fmt.Sprintf("/d/%s/%s", dashboard.uid, dashboard.slug)
-		if dashboard.isFolder {
-			if dashboard.id == 0 {
-				path = folderIdLookup[0]
-				url = "/dashboards"
-			} else {
-				url = fmt.Sprintf("/dashboards/f/%s/%s", dashboard.uid, dashboard.slug)
-			}
-		} else {
-			folderUID, ok := folderIdLookup[dashboard.folderID]
-			if ok {
-				path = fmt.Sprintf("%s/%s", folderUID, dashboard.uid)
-			}
-
-			for _, panel := range dashboard.info.Panels {
-				uid := dashboard.uid + "#" + strconv.FormatInt(panel.ID, 10)
-				doc := bluge.NewDocument(uid).
-					AddField(bluge.NewKeywordField("url", fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)).StoreValue()).
-					AddField(bluge.NewTextField("name", panel.Title).StoreValue().SearchTermPositions()).
-					AddField(bluge.NewTextField("description", panel.Description).SearchTermPositions()).
-					AddField(bluge.NewKeywordField("path", fmt.Sprintf("%s#%d", path, panel.ID)).StoreValue()). // eventually special tokenizer
-					AddField(bluge.NewKeywordField("type", panel.Type).Aggregatable().StoreValue()).
-					AddField(bluge.NewKeywordField("_kind", "panel").Aggregatable().StoreValue()) // likely want independent index for this
-				batch.Insert(doc)
-			}
-		}
-
-		// Then document
-		doc := bluge.NewDocument(dashboard.uid).
-			AddField(bluge.NewKeywordField("url", url).StoreValue()).
-			AddField(bluge.NewKeywordField("path", path).Sortable().StoreValue()).
-			AddField(bluge.NewTextField("name", dashboard.info.Title).StoreValue().SearchTermPositions()).
-			AddField(bluge.NewTextField("description", dashboard.info.Description).SearchTermPositions()).
-			AddField(bluge.NewNumericField("panelCount", float64(len(dashboard.info.Panels))).Aggregatable().StoreValue())
-
-		for _, tag := range dashboard.info.Tags {
-			doc.AddField(bluge.NewKeywordField("tags", tag).
-				StoreValue().
-				Aggregatable().
-				SearchTermPositions())
-		}
-
-		for _, ds := range dashboard.info.Datasource {
-			if ds.UID != "" {
-				doc.AddField(bluge.NewKeywordField("ds_uid", ds.UID).
-					StoreValue().
-					Aggregatable().
-					SearchTermPositions())
-			}
-			if ds.Type != "" {
-				doc.AddField(bluge.NewKeywordField("ds_type", ds.Type).
-					StoreValue().
-					Aggregatable().
-					SearchTermPositions())
-			}
-		}
-
-		if dashboard.isFolder {
-			doc.AddField(bluge.NewKeywordField("_kind", "folder").Aggregatable().StoreValue()) // likely want independent index for this
-		} else {
-			doc.AddField(bluge.NewKeywordField("_kind", "dashboard").Aggregatable().StoreValue()) // likely want independent index for this
-		}
-		batch.Insert(doc)
-	}
-
-	i.logger.Info("Inserting documents into bluge batch", "elapsed", time.Since(label))
-	label = time.Now()
-
-	err = writer.Batch(batch)
-	if err != nil {
-		return err
-	}
-
-	reader, err := writer.Reader()
-	if err != nil {
-		return err
-	}
-	i.reader[orgID] = reader // TODO? mutext lock
-
-	i.logger.Info("Inserting batch into bluge writer", "elapsed", time.Since(label))
-	i.logger.Info("Finish building bluge index", "totalElapsed", time.Since(start))
-	return nil
-}
-
 func (i *dashboardIndex) run(ctx context.Context) error {
 	fullReIndexTicker := time.NewTicker(5 * time.Minute)
 	defer fullReIndexTicker.Stop()
@@ -207,8 +85,15 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 	}
 	i.logger.Info("Indexing for main org finished", "mainOrgIndexElapsed", time.Since(started), "numDashboards", len(dashboards))
 
+	// build bluge index
 	go func() {
-		_ = i.initBlugeIndex(ctx, 1)
+		orgID := int64(1)
+		reader, err := initBlugeIndex(ctx, i, orgID)
+		if err != nil {
+			i.logger.Error("error building index", "error", err)
+		} else if reader != nil {
+			i.reader[orgID] = reader // TODO? mutext lock
+		}
 	}()
 
 	for {
