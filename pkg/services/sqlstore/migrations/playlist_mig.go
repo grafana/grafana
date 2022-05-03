@@ -56,11 +56,8 @@ func addPlaylistMigrations(mg *Migrator) {
 		Mysql("UPDATE playlist SET uid=lpad(id,9,'0') WHERE uid IS NULL;"))
 
 	mg.AddMigration("Add index for uid in playlist", NewAddIndexMigration(playlistV2, &Index{
-		// reviewer question: should this be []string{"org_id", "uid"} instead?
-		Cols: []string{"uid"}, Type: UniqueIndex,
+		Cols: []string{"org_id", "uid"}, Type: UniqueIndex,
 	}))
-
-	// TODO(?): drop ID column, index
 
 	mg.AddMigration("Add playlistUID column to playlistItems", NewAddColumnMigration(playlistItemV2, &Column{
 		Name: "playlist_uid", Type: DB_NVarchar, Length: 80, Nullable: false,
@@ -71,6 +68,4 @@ func addPlaylistMigrations(mg *Migrator) {
 		SQLite("UPDATE playlist_item SET playlist_uid=printf('%09d',playlist_id) WHERE playlist_uid IS NULL;").
 		Postgres("UPDATE playlist_item SET playlist_uid=lpad('' || playlist_id::text,9,'0') WHERE playlist_uid IS NULL;").
 		Mysql("UPDATE playlist_item SET playlist_uid=lpad(playlist_id,9,'0') WHERE playlist_uid IS NULL;"))
-
-	// TODO(?): drop playlist_id column
 }
