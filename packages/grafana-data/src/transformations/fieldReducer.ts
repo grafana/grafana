@@ -25,6 +25,7 @@ export enum ReducerID {
   allIsZero = 'allIsZero',
   allIsNull = 'allIsNull',
   allValues = 'allValues',
+  allUniqueValues = 'allUniqueValues',
 }
 
 // Internal function
@@ -236,6 +237,15 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Returns an array with all values',
     standard: false,
     reduce: (field: Field) => ({ allValues: field.values.toArray() }),
+  },
+  {
+    id: ReducerID.allUniqueValues,
+    name: 'All unique values',
+    description: 'Returns an array with all unique values',
+    standard: false,
+    reduce: (field: Field) => ({
+      allUniqueValues: field.values.toArray().filter((n, i) => field.values.toArray().indexOf(n) === i),
+    }),
   },
 ]);
 
