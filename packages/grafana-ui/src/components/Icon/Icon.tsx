@@ -1,10 +1,13 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '../../themes/stylesFactory';
-import { useTheme } from '../../themes/ThemeContext';
-import { IconName, IconType, IconSize } from '../../types/icon';
+import React from 'react';
 import SVG from 'react-inlinesvg';
+
+import { GrafanaTheme } from '@grafana/data';
+
+import { useTheme } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes/stylesFactory';
+import { IconName, IconType, IconSize } from '../../types/icon';
+
 import { cacheInitialized, initIconCache, iconRoot } from './iconBundle';
 import { getIconSubDir, getSvgSize } from './utils';
 

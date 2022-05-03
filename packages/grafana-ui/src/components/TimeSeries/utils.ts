@@ -1,4 +1,6 @@
 import { isNumber } from 'lodash';
+import uPlot from 'uplot';
+
 import {
   DashboardCursorSync,
   DataFrame,
@@ -13,8 +15,6 @@ import {
   getFieldDisplayName,
   getDisplayProcessor,
 } from '@grafana/data';
-
-import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
 import {
   AxisPlacement,
   GraphDrawStyle,
@@ -25,9 +25,10 @@ import {
   ScaleOrientation,
   StackingMode,
 } from '@grafana/schema';
-import { getStackingGroups, preparePlotData2 } from '../uPlot/utils';
-import uPlot from 'uplot';
+
 import { buildScaleKey } from '../GraphNG/utils';
+import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
+import { getStackingGroups, preparePlotData2 } from '../uPlot/utils';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 

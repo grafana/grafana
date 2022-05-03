@@ -1,12 +1,14 @@
-import React, { FC, ChangeEvent, FormEvent } from 'react';
 import { css } from '@emotion/css';
-import { HorizontalGroup, RadioButtonGroup, stylesFactory, useTheme, Checkbox, InlineSwitch } from '@grafana/ui';
+import React, { FC, ChangeEvent, FormEvent } from 'react';
+
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { HorizontalGroup, RadioButtonGroup, stylesFactory, useTheme, Checkbox, InlineSwitch } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SearchSrv } from 'app/core/services/search_srv';
+
 import { DashboardQuery, SearchLayout } from '../types';
-import { config } from '@grafana/runtime';
 
 export const layoutOptions = [
   { value: SearchLayout.Folders, icon: 'folder', ariaLabel: 'View by folders' },

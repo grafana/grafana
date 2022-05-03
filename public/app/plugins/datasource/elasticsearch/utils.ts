@@ -1,10 +1,11 @@
+import { valid, gte } from 'semver';
+
 import {
   isMetricAggregationWithField,
   MetricAggregation,
   MetricAggregationWithInlineScript,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
-import { valid } from 'semver';
 
 export const describeMetric = (metric: MetricAggregation) => {
   if (!isMetricAggregationWithField(metric)) {
@@ -116,4 +117,12 @@ export const coerceESVersion = (version: string | number): string => {
     default:
       return '5.0.0';
   }
+};
+
+export const isDeprecatedVersion = (version: string): boolean => {
+  if (gte(version, '7.10.0')) {
+    return false;
+  }
+
+  return true;
 };

@@ -26,6 +26,7 @@ type ApiKey struct {
 
 // ---------------------
 // COMMANDS
+// swagger:model
 type AddApiKeyCommand struct {
 	Name          string   `json:"name" binding:"Required"`
 	Role          RoleType `json:"role" binding:"Required"`
@@ -46,6 +47,7 @@ type DeleteApiKeyCommand struct {
 type GetApiKeysQuery struct {
 	OrgId          int64
 	IncludeExpired bool
+	User           *SignedInUser
 	Result         []*ApiKey
 }
 
@@ -58,14 +60,4 @@ type GetApiKeyByNameQuery struct {
 type GetApiKeyByIdQuery struct {
 	ApiKeyId int64
 	Result   *ApiKey
-}
-
-// ------------------------
-// DTO & Projections
-
-type ApiKeyDTO struct {
-	Id         int64      `json:"id"`
-	Name       string     `json:"name"`
-	Role       RoleType   `json:"role"`
-	Expiration *time.Time `json:"expiration,omitempty"`
 }

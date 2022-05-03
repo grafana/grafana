@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { UserPicker } from 'app/core/components/Select/UserPicker';
-import { TeamPicker } from 'app/core/components/Select/TeamPicker';
+
 import { Alert, Button, Form, HorizontalGroup, Input, Select } from '@grafana/ui';
-import { OrgRole } from 'app/types/acl';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { TeamPicker } from 'app/core/components/Select/TeamPicker';
+import { UserPicker } from 'app/core/components/Select/UserPicker';
+import { OrgRole } from 'app/types/acl';
+
 import { Assignments, PermissionTarget, SetPermission } from './types';
 
 export interface Props {

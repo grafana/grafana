@@ -60,10 +60,13 @@ func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
 	p.ProxyDatasourceRequestWithID(c, id)
 }
 
-func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *models.ReqContext) {
+func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *models.ReqContext, dsUID string) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
-	dsUID := web.Params(c.Req)[":uid"]
+	if dsUID == "" { // if datasource UID is not provided, fetch it from the uid path parameter
+		dsUID = web.Params(c.Req)[":uid"]
+	}
+
 	if !util.IsValidShortUID(dsUID) {
 		c.JsonApiErr(http.StatusBadRequest, "UID is invalid", nil)
 		return
@@ -115,7 +118,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *models.ReqContext, ds
 
 	proxyPath := getProxyPath(c)
 	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
-		p.OAuthTokenService, p.DataSourcesService, p.tracer, p.secretsService)
+		p.OAuthTokenService, p.DataSourcesService, p.tracer)
 	if err != nil {
 		if errors.Is(err, datasource.URLValidationError{}) {
 			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.Url), err)

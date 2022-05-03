@@ -6,31 +6,36 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-
-	"github.com/grafana/grafana/pkg/infra/usagestats"
-
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
-	cfg        *setting.Cfg
-	sqlstore   sqlstore.Store
-	plugins    plugins.Store
-	social     social.Service
-	usageStats usagestats.Service
-	features   *featuremgmt.FeatureManager
+	cfg                *setting.Cfg
+	sqlstore           sqlstore.Store
+	plugins            plugins.Store
+	social             social.Service
+	usageStats         usagestats.Service
+	features           *featuremgmt.FeatureManager
+	datasources        datasources.DataSourceService
+	httpClientProvider httpclient.Provider
 
 	log log.Logger
 
 	startTime                time.Time
 	concurrentUserStatsCache memoConcurrentUserStats
+	promFlavorCache          memoPrometheusFlavor
+	usageStatProviders       []registry.ProvidesUsageStats
 }
 
 func ProvideService(
@@ -40,14 +45,18 @@ func ProvideService(
 	social social.Service,
 	plugins plugins.Store,
 	features *featuremgmt.FeatureManager,
+	datasourceService datasources.DataSourceService,
+	httpClientProvider httpclient.Provider,
 ) *Service {
 	s := &Service{
-		cfg:        cfg,
-		sqlstore:   store,
-		plugins:    plugins,
-		social:     social,
-		usageStats: usagestats,
-		features:   features,
+		cfg:                cfg,
+		sqlstore:           store,
+		plugins:            plugins,
+		social:             social,
+		usageStats:         usagestats,
+		features:           features,
+		datasources:        datasourceService,
+		httpClientProvider: httpClientProvider,
 
 		startTime: time.Now(),
 		log:       log.New("infra.usagestats.collector"),
@@ -56,6 +65,12 @@ func ProvideService(
 	usagestats.RegisterMetricsFunc(s.collect)
 
 	return s
+}
+
+// RegisterProviders is called only once - during Grafana start up
+func (s *Service) RegisterProviders(usageStatProviders []registry.ProvidesUsageStats) {
+	s.log.Info("registering usage stat providers", "usageStatsProvidersLen", len(usageStatProviders))
+	s.usageStatProviders = usageStatProviders
 }
 
 func (s *Service) Run(ctx context.Context) error {
@@ -189,6 +204,15 @@ func (s *Service) collect(ctx context.Context) (map[string]interface{}, error) {
 		return nil, err
 	}
 
+	variants, err := s.detectPrometheusVariants(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for variant, count := range variants {
+		m["stats.ds.prometheus.flavor."+variant+".count"] = count
+	}
+
 	// send access counters for each data source
 	// but ignore any custom data sources
 	// as sending that name could be sensitive information
@@ -262,6 +286,13 @@ func (s *Service) collect(ctx context.Context) (map[string]interface{}, error) {
 	featureUsageStats := s.features.GetUsageStats(ctx)
 	for k, v := range featureUsageStats {
 		m[k] = v
+	}
+
+	for _, usageStatProvider := range s.usageStatProviders {
+		stats := usageStatProvider.GetUsageStats(ctx)
+		for k, v := range stats {
+			m[k] = v
+		}
 	}
 
 	return m, nil

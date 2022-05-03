@@ -14,6 +14,7 @@ var (
 	ErrOrgUserAlreadyAdded = errors.New("user is already added to organization")
 )
 
+// swagger:enum RoleType
 type RoleType string
 
 const (

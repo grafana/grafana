@@ -1,11 +1,13 @@
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { css } from '@emotion/css';
-import { Field, FilterInput, Select, useStyles2 } from '@grafana/ui';
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
+
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Field, FilterInput, Select, useStyles2 } from '@grafana/ui';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { FileElement, GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 
 import { MediaType, ResourceFolderName } from '../types';
-import { FileElement, GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+
 import { ResourceCards } from './ResourceCards';
 
 const getFolders = (mediaType: MediaType) => {

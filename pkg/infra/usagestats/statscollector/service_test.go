@@ -3,10 +3,14 @@ package statscollector
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/registry"
+
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -71,6 +77,34 @@ func TestTotalStatsUpdate(t *testing.T) {
 			assert.Equal(t, tc.ExpectedUpdate, s.updateTotalStats(context.Background()))
 		})
 	}
+}
+
+var _ registry.ProvidesUsageStats = (*dummyUsageStatProvider)(nil)
+
+type dummyUsageStatProvider struct {
+	stats map[string]interface{}
+}
+
+func (d dummyUsageStatProvider) GetUsageStats(ctx context.Context) map[string]interface{} {
+	return d.stats
+}
+
+func TestUsageStatsProviders(t *testing.T) {
+	provider1 := &dummyUsageStatProvider{stats: map[string]interface{}{"my_stat_1": "val1", "my_stat_2": "val2"}}
+	provider2 := &dummyUsageStatProvider{stats: map[string]interface{}{"my_stat_x": "valx", "my_stat_z": "valz"}}
+
+	store := mockstore.NewSQLStoreMock()
+	mockSystemStats(store)
+	s := createService(t, setting.NewCfg(), store)
+	s.RegisterProviders([]registry.ProvidesUsageStats{provider1, provider2})
+
+	m, err := s.collect(context.Background())
+	require.NoError(t, err, "Expected no error")
+
+	assert.Equal(t, "val1", m["my_stat_1"])
+	assert.Equal(t, "val2", m["my_stat_2"])
+	assert.Equal(t, "valx", m["my_stat_x"])
+	assert.Equal(t, "valz", m["my_stat_z"])
 }
 
 func TestFeatureUsageStats(t *testing.T) {
@@ -348,8 +382,14 @@ func (pr fakePluginStore) Plugins(_ context.Context, pluginTypes ...plugins.Type
 	return result
 }
 
-func createService(t testing.TB, cfg *setting.Cfg, store sqlstore.Store) *Service {
+func createService(t testing.TB, cfg *setting.Cfg, store sqlstore.Store, opts ...func(*serviceOptions)) *Service {
 	t.Helper()
+
+	o := &serviceOptions{datasources: mockDatasourceService{}}
+
+	for _, opt := range opts {
+		opt(o)
+	}
 
 	return ProvideService(
 		&usagestats.UsageStatsMock{},
@@ -358,5 +398,32 @@ func createService(t testing.TB, cfg *setting.Cfg, store sqlstore.Store) *Servic
 		&mockSocial{},
 		&fakePluginStore{},
 		featuremgmt.WithFeatures("feature1", "feature2"),
+		o.datasources,
+		httpclient.NewProvider(),
 	)
+}
+
+type serviceOptions struct {
+	datasources datasources.DataSourceService
+}
+
+func withDatasources(ds datasources.DataSourceService) func(*serviceOptions) {
+	return func(options *serviceOptions) {
+		options.datasources = ds
+	}
+}
+
+type mockDatasourceService struct {
+	datasources.DataSourceService
+
+	datasources []*models.DataSource
+}
+
+func (s mockDatasourceService) GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
+	query.Result = s.datasources
+	return nil
+}
+
+func (s mockDatasourceService) GetHTTPTransport(ctx context.Context, ds *models.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
+	return provider.GetTransport()
 }

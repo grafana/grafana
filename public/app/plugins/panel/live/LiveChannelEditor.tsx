@@ -1,6 +1,6 @@
-import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { Select, Alert, Label, stylesFactory } from '@grafana/ui';
+import React, { PureComponent } from 'react';
+
 import {
   LiveChannelScope,
   LiveChannelAddress,
@@ -8,9 +8,10 @@ import {
   StandardEditorProps,
   GrafanaTheme,
 } from '@grafana/data';
+import { Select, Alert, Label, stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 import { LivePanelOptions } from './types';
-import { config } from 'app/core/config';
 
 type Props = StandardEditorProps<LiveChannelAddress, any, LivePanelOptions>;
 

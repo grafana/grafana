@@ -1,9 +1,11 @@
 import React from 'react';
+
 import { PanelPlugin } from '@grafana/data';
-import { AlertGroupPanelOptions } from './types';
-import { AlertGroupsPanel } from './AlertGroupsPanel';
 import { AlertManagerPicker } from 'app/features/alerting/unified/components/AlertManagerPicker';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+
+import { AlertGroupsPanel } from './AlertGroupsPanel';
+import { AlertGroupPanelOptions } from './types';
 
 export const plugin = new PanelPlugin<AlertGroupPanelOptions>(AlertGroupsPanel).setPanelOptions((builder) => {
   return builder
