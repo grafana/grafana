@@ -176,12 +176,16 @@ export class ElementState implements LayerElement {
     }
   }
 
-  setPlacementFromConstraint() {
+  setPlacementFromConstraint(elementContainer?: DOMRect, parentContainer?: DOMRect) {
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
 
-    const elementContainer = this.div && this.div.getBoundingClientRect();
-    const parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
+    if (!elementContainer) {
+      elementContainer = this.div && this.div.getBoundingClientRect();
+    }
+    if (!parentContainer) {
+      parentContainer = this.div && this.div.parentElement?.getBoundingClientRect();
+    }
 
     const relativeTop =
       elementContainer && parentContainer ? Math.abs(Math.round(elementContainer.top - parentContainer.top)) : 0;

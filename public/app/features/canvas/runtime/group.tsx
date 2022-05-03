@@ -82,7 +82,7 @@ export class GroupState extends ElementState {
 
   // ??? or should this be on the element directly?
   // are actions scoped to layers?
-  doAction = (action: LayerActionID, element: ElementState, updateName = true) => {
+  doAction = (action: LayerActionID, element: ElementState, updateName = true, shiftItemsOnDuplicate = true) => {
     switch (action) {
       case LayerActionID.Delete:
         this.elements = this.elements.filter((e) => e !== element);
@@ -97,47 +97,49 @@ export class GroupState extends ElementState {
         }
         const opts = cloneDeep(element.options);
 
-        const { constraint, placement: oldPlacement } = element.options;
-        const { vertical, horizontal } = constraint ?? {};
-        const placement = oldPlacement ?? ({} as Placement);
+        if (shiftItemsOnDuplicate) {
+          const { constraint, placement: oldPlacement } = element.options;
+          const { vertical, horizontal } = constraint ?? {};
+          const placement = oldPlacement ?? ({} as Placement);
 
-        switch (vertical) {
-          case VerticalConstraint.Top:
-          case VerticalConstraint.TopBottom:
-            if (placement.top == null) {
-              placement.top = 25;
-            } else {
-              placement.top += 10;
-            }
-            break;
-          case VerticalConstraint.Bottom:
-            if (placement.bottom == null) {
-              placement.bottom = 100;
-            } else {
-              placement.bottom -= 10;
-            }
-            break;
+          switch (vertical) {
+            case VerticalConstraint.Top:
+            case VerticalConstraint.TopBottom:
+              if (placement.top == null) {
+                placement.top = 25;
+              } else {
+                placement.top += 10;
+              }
+              break;
+            case VerticalConstraint.Bottom:
+              if (placement.bottom == null) {
+                placement.bottom = 100;
+              } else {
+                placement.bottom -= 10;
+              }
+              break;
+          }
+
+          switch (horizontal) {
+            case HorizontalConstraint.Left:
+            case HorizontalConstraint.LeftRight:
+              if (placement.left == null) {
+                placement.left = 50;
+              } else {
+                placement.left += 10;
+              }
+              break;
+            case HorizontalConstraint.Right:
+              if (placement.right == null) {
+                placement.right = 50;
+              } else {
+                placement.right -= 10;
+              }
+              break;
+          }
+
+          opts.placement = placement;
         }
-
-        switch (horizontal) {
-          case HorizontalConstraint.Left:
-          case HorizontalConstraint.LeftRight:
-            if (placement.left == null) {
-              placement.left = 50;
-            } else {
-              placement.left += 10;
-            }
-            break;
-          case HorizontalConstraint.Right:
-            if (placement.right == null) {
-              placement.right = 50;
-            } else {
-              placement.right -= 10;
-            }
-            break;
-        }
-
-        opts.placement = placement;
 
         const copy = new ElementState(element.item, opts, this);
         copy.updateData(this.scene.context);
@@ -154,15 +156,6 @@ export class GroupState extends ElementState {
         return;
     }
   };
-
-  /*
-    Next steps:
-      - JSON structure (same options as element to see if they get set) -> take element and change to group state (same runtime behavior)
-      - Make group fit around nested elements boundaries (init) -> pair with Ryan on this initially
-      - Work on addressing moving group / resizing behavior (in regards to nested elements with constraints as well) (group to root / parent isn't working)
-      - Work on addressing group constraint in relation to parent
-      - Clean up?
-  */
 
   render() {
     return (
