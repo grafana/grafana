@@ -126,17 +126,37 @@ func TestTemplateService(t *testing.T) {
 
 				require.ErrorContains(t, err, "no alertmanager configuration")
 			})
+
+			t.Run("when provenance fails to save", func(t *testing.T) {
+				sut := createTemplateServiceSut()
+				tmpl := createMessageTemplate()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					setupGetConfig(models.AlertConfiguration{
+						AlertmanagerConfiguration: configWithTemplates,
+					})
+				sut.prov.(*MockProvisioningStore).EXPECT().
+					SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return(fmt.Errorf("failed to save provenance"))
+
+				err := sut.SetTemplate(context.Background(), 1, tmpl, models.ProvenanceAPI)
+
+				require.ErrorContains(t, err, "failed to save provenance")
+			})
 		})
 	})
 }
 
 func createTemplateServiceSut() *TemplateService {
-	return &TemplateService{
+	svc := &TemplateService{
 		config: &MockAMConfigStore{},
-		prov:   NewFakeProvisioningStore(),
+		prov:   &MockProvisioningStore{},
 		xact:   newNopTransactionManager(),
 		log:    log.NewNopLogger(),
 	}
+	svc.config.(*MockAMConfigStore).EXPECT().
+		UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
+		Return(nil)
+	return svc
 }
 
 func createMessageTemplate() definitions.MessageTemplate {
