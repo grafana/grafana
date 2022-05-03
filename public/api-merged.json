@@ -6806,6 +6806,39 @@
         }
       }
     },
+    "/provisioning/templates": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get all message templates.",
+        "operationId": "RouteGetTemplates",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/MessageTemplate"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/provisioning/templates/{ID}": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get a message template.",
+        "operationId": "RouteGetTemplate",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/MessageTemplate"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
+          }
+        }
+      }
+    },
     "/recording-rules": {
       "get": {
         "tags": ["recording_rules", "enterprise"],
@@ -8226,6 +8259,14 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          },
+          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -8233,14 +8274,6 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -8274,16 +8307,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           }
@@ -13109,6 +13142,10 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
+        },
         "data": {
           "$ref": "#/definitions/Json"
         },
@@ -13442,6 +13479,10 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "DashboardId"
+        },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
         },
         "panelId": {
           "type": "integer",
@@ -14214,6 +14255,10 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "DashboardId"
+        },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
         },
         "data": {
           "$ref": "#/definitions/Json"
@@ -17636,7 +17681,6 @@
       }
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": ["name"],
       "properties": {
@@ -17645,7 +17689,9 @@
           "type": "string",
           "x-go-name": "Name"
         }
-      }
+      },
+      "x-go-name": "Receiver",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "silence": {
       "description": "Silence silence",

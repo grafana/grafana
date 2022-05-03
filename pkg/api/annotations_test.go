@@ -50,7 +50,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			role := models.ROLE_VIEWER
 			t.Run("Should not be allowed to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role,
-					cmd, func(sc *scenarioContext) {
+					cmd, store, func(sc *scenarioContext) {
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 403, sc.resp.Code)
 					})
@@ -83,7 +83,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			role := models.ROLE_EDITOR
 			t.Run("Should be able to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role,
-					cmd, func(sc *scenarioContext) {
+					cmd, store, func(sc *scenarioContext) {
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
 					})
@@ -119,6 +119,14 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			PanelId:     1,
 		}
 
+		dashboardUIDCmd := dtos.PostAnnotationsCmd{
+			Time:         1000,
+			Text:         "annotation text",
+			Tags:         []string{"tag1", "tag2"},
+			DashboardUID: "home",
+			PanelId:      1,
+		}
+
 		updateCmd := dtos.UpdateAnnotationsCmd{
 			Time: 1000,
 			Text: "annotation text",
@@ -138,10 +146,15 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			PanelId:     1,
 		}
 
+		deleteWithDashboardUIDCmd := dtos.MassDeleteAnnotationsCmd{
+			DashboardUID: "home",
+			PanelId:      1,
+		}
+
 		t.Run("When user is an Org Viewer", func(t *testing.T) {
 			role := models.ROLE_VIEWER
 			t.Run("Should not be allowed to save an annotation", func(t *testing.T) {
-				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
+				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, func(sc *scenarioContext) {
 					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 403, sc.resp.Code)
@@ -174,7 +187,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		t.Run("When user is an Org Editor", func(t *testing.T) {
 			role := models.ROLE_EDITOR
 			t.Run("Should be able to save an annotation", func(t *testing.T) {
-				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
+				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, func(sc *scenarioContext) {
 					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
@@ -206,8 +219,21 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 
 		t.Run("When user is an Admin", func(t *testing.T) {
 			role := models.ROLE_ADMIN
+
+			mock := mockstore.NewSQLStoreMock()
+			mock.ExpectedDashboard = &models.Dashboard{
+				Id:  1,
+				Uid: "home",
+			}
+
 			t.Run("Should be able to do anything", func(t *testing.T) {
-				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
+				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, func(sc *scenarioContext) {
+					setUpACL()
+					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+					assert.Equal(t, 200, sc.resp.Code)
+				})
+
+				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, dashboardUIDCmd, mock, func(sc *scenarioContext) {
 					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
@@ -226,7 +252,14 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 				})
 
 				deleteAnnotationsScenario(t, "When calling POST on", "/api/annotations/mass-delete",
-					"/api/annotations/mass-delete", role, deleteCmd, func(sc *scenarioContext) {
+					"/api/annotations/mass-delete", role, deleteCmd, store, func(sc *scenarioContext) {
+						setUpACL()
+						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+						assert.Equal(t, 200, sc.resp.Code)
+					})
+
+				deleteAnnotationsScenario(t, "When calling POST with dashboardUID on", "/api/annotations/mass-delete",
+					"/api/annotations/mass-delete", role, deleteWithDashboardUIDCmd, mock, func(sc *scenarioContext) {
 						setUpACL()
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
@@ -290,11 +323,9 @@ func (repo *fakeAnnotationsRepo) LoadItems() {
 var fakeAnnoRepo *fakeAnnotationsRepo
 
 func postAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
-	cmd dtos.PostAnnotationsCmd, fn scenarioFunc) {
+	cmd dtos.PostAnnotationsCmd, store sqlstore.Store, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
-		store := sqlstore.InitTestDB(t)
-		store.Cfg = hs.Cfg
 		hs.SQLStore = store
 
 		sc := setupScenarioContext(t, url)
@@ -376,11 +407,9 @@ func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern
 }
 
 func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
-	cmd dtos.MassDeleteAnnotationsCmd, fn scenarioFunc) {
+	cmd dtos.MassDeleteAnnotationsCmd, store sqlstore.Store, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
-		store := sqlstore.InitTestDB(t)
-		store.Cfg = hs.Cfg
 		hs.SQLStore = store
 
 		sc := setupScenarioContext(t, url)

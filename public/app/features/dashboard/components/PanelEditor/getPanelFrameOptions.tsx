@@ -57,7 +57,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           return (
             <Switch
               value={panel.transparent}
-              id="Transparent background"
+              id="transparent-background"
               onChange={(e) => onPanelConfigChange('transparent', e.currentTarget.checked)}
             />
           );
