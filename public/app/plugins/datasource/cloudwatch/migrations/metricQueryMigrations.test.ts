@@ -74,6 +74,7 @@ describe('metricQueryMigrations', () => {
           const testQuery = { ...baseQuery, alias, label };
           const result = migrateAliasPatterns(testQuery);
           expect(result.label).toBe(label);
+          expect(result.alias).toBe(alias);
         });
       });
     });
