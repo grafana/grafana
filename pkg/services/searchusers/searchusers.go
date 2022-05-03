@@ -62,6 +62,7 @@ func (s *OSSService) SearchUser(c *models.ReqContext) (*models.SearchUsersQuery,
 	}
 
 	query := &models.SearchUsersQuery{
+		// added SignedInUser to the query, as to only list the users that the user has permission to read
 		SignedInUser: c.SignedInUser,
 		Query:        searchQuery,
 		Filters:      filters,

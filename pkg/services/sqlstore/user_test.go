@@ -336,6 +336,34 @@ func TestUserDataAccess(t *testing.T) {
 		require.Len(t, permQuery.Result, 0)
 	})
 
+	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
+		ss = InitTestDB(t)
+		createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
+			return &models.CreateUserCommand{
+				Email: fmt.Sprint("user", i, "@test.com"),
+				Name:  fmt.Sprint("user", i),
+				Login: fmt.Sprint("loginuser", i),
+			}
+		})
+		test := accessControlTestCase
+			{
+				expectedCode: http.StatusOK,
+				desc:         "UsersLookupGet should return 200 for user with correct permissions",
+				url:          "/api/org/users/lookup",
+				method:       http.MethodGet,
+				permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionsUserRead}},
+			},
+
+		sc := setupHTTPServer(t, true, true)
+		setInitCtxSignedInViewer(sc.initCtx)
+		setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgId)
+		query := models.SearchUsersQuery{SignedInUser: sc.initCtx.SignedInUser}
+		err := ss.SearchUsers(context.Background(), &query)
+		require.Nil(t, err)
+
+		require.Len(t, query.Result.Users, 2)
+	})
+
 	ss = InitTestDB(t)
 
 	t.Run("Testing DB - enable all users", func(t *testing.T) {
