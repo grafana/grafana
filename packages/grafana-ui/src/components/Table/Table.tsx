@@ -251,7 +251,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     [gotoPage]
   );
 
-  const itemCount = enablePagination ? page.length : data.length;
+  const itemCount = enablePagination ? page.length : rows.length;
   let paginationEl = null;
   if (enablePagination) {
     const itemsRangeStart = state.pageIndex * state.pageSize + 1;

@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { EditorField, EditorFieldGroup } from '@grafana/experimental';
-import { Select, Switch } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, EditorSwitch } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
 
 import { STATISTICS } from '../../cloudwatch-sql/language';
 import { CloudWatchDatasource } from '../../datasource';
@@ -87,7 +87,7 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
         </EditorField>
 
         <EditorField label="With schema">
-          <Switch
+          <EditorSwitch
             id={`${query.refId}-cloudwatch-sql-withSchema`}
             value={withSchemaEnabled}
             onChange={(ev) =>
@@ -97,12 +97,11 @@ const SQLBuilderSelectRow: React.FC<SQLBuilderSelectRowProps> = ({ datasource, q
         </EditorField>
 
         {withSchemaEnabled && (
-          <EditorField label="Schema labels">
+          <EditorField label="Schema labels" disabled={!namespace}>
             <Select
               id={`${query.refId}-cloudwatch-sql-schema-label-keys`}
               width="auto"
               isMulti={true}
-              disabled={!namespace}
               value={schemaLabels ? schemaLabels.map(toOption) : null}
               options={dimensionKeys}
               allowCustomValue

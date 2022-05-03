@@ -1,13 +1,16 @@
+import { omit } from 'lodash';
+
 import { AnnotationQuery, DataQuery } from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
 
 import {
-  MetricEditorMode,
-  CloudWatchAnnotationQuery,
   CloudWatchMetricsQuery,
+  LegacyAnnotationQuery,
+  MetricEditorMode,
   MetricQueryType,
   VariableQuery,
   VariableQueryType,
+  OldVariableQuery,
 } from './types';
 
 // Migrates a metric query that use more than one statistic into multiple queries
@@ -36,9 +39,9 @@ export function migrateMultipleStatsMetricsQuery(
 // Migrates an annotation query that use more than one statistic into multiple queries
 // E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
 export function migrateMultipleStatsAnnotationQuery(
-  annotationQuery: CloudWatchAnnotationQuery
+  annotationQuery: AnnotationQuery<LegacyAnnotationQuery>
 ): Array<AnnotationQuery<DataQuery>> {
-  const newAnnotations: CloudWatchAnnotationQuery[] = [];
+  const newAnnotations: Array<AnnotationQuery<LegacyAnnotationQuery>> = [];
 
   if (annotationQuery && 'statistics' in annotationQuery && annotationQuery?.statistics?.length) {
     for (const stat of annotationQuery.statistics.splice(1)) {
@@ -53,7 +56,7 @@ export function migrateMultipleStatsAnnotationQuery(
     delete annotationQuery.statistics;
   }
 
-  return newAnnotations as Array<AnnotationQuery<DataQuery>>;
+  return newAnnotations;
 }
 
 export function migrateCloudWatchQuery(query: CloudWatchMetricsQuery) {
@@ -70,10 +73,38 @@ export function migrateCloudWatchQuery(query: CloudWatchMetricsQuery) {
   }
 }
 
-export function migrateVariableQuery(rawQuery: string | VariableQuery): VariableQuery {
-  if (typeof rawQuery !== 'string') {
+function isVariableQuery(rawQuery: string | VariableQuery | OldVariableQuery): rawQuery is VariableQuery {
+  return typeof rawQuery !== 'string' && typeof rawQuery.ec2Filters !== 'string' && typeof rawQuery.tags !== 'string';
+}
+
+export function migrateVariableQuery(rawQuery: string | VariableQuery | OldVariableQuery): VariableQuery {
+  if (isVariableQuery(rawQuery)) {
     return rawQuery;
   }
+
+  // rawQuery is OldVariableQuery
+  if (typeof rawQuery !== 'string') {
+    const newQuery: VariableQuery = omit(rawQuery, ['ec2Filters', 'tags']);
+    newQuery.ec2Filters = {};
+    newQuery.tags = {};
+
+    if (rawQuery.ec2Filters !== '') {
+      try {
+        newQuery.ec2Filters = JSON.parse(rawQuery.ec2Filters);
+      } catch {
+        throw new Error(`unable to migrate poorly formed filters: ${rawQuery.ec2Filters}`);
+      }
+    }
+    if (rawQuery.tags !== '') {
+      try {
+        newQuery.tags = JSON.parse(rawQuery.tags);
+      } catch {
+        throw new Error(`unable to migrate poorly formed filters: ${rawQuery.tags}`);
+      }
+    }
+    return newQuery;
+  }
+
   const newQuery: VariableQuery = {
     refId: 'CloudWatchVariableQueryEditor-VariableQuery',
     queryType: VariableQueryType.Regions,
@@ -82,12 +113,13 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     metricName: '',
     dimensionKey: '',
     dimensionFilters: {},
-    ec2Filters: '',
+    ec2Filters: {},
     instanceID: '',
     attributeName: '',
     resourceType: '',
-    tags: '',
+    tags: {},
   };
+
   if (rawQuery === '') {
     return newQuery;
   }
@@ -147,7 +179,13 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.queryType = VariableQueryType.EC2InstanceAttributes;
     newQuery.region = ec2InstanceAttributeQuery[1];
     newQuery.attributeName = ec2InstanceAttributeQuery[2];
-    newQuery.ec2Filters = ec2InstanceAttributeQuery[3] || '';
+    if (ec2InstanceAttributeQuery[3]) {
+      try {
+        newQuery.ec2Filters = JSON.parse(ec2InstanceAttributeQuery[3]);
+      } catch {
+        throw new Error(`unable to migrate poorly formed filters: ${ec2InstanceAttributeQuery[3]}`);
+      }
+    }
     return newQuery;
   }
 
@@ -156,7 +194,13 @@ export function migrateVariableQuery(rawQuery: string | VariableQuery): Variable
     newQuery.queryType = VariableQueryType.ResourceArns;
     newQuery.region = resourceARNsQuery[1];
     newQuery.resourceType = resourceARNsQuery[2];
-    newQuery.tags = resourceARNsQuery[3] || '';
+    if (resourceARNsQuery[3]) {
+      try {
+        newQuery.tags = JSON.parse(resourceARNsQuery[3]);
+      } catch {
+        throw new Error(`unable to migrate poorly formed filters: ${resourceARNsQuery[3]}`);
+      }
+    }
     return newQuery;
   }
 

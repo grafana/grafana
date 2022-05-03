@@ -10,7 +10,7 @@ weight = 800
 
 Reporting allows you to automatically generate PDFs from any of your dashboards and have Grafana email them to interested parties on a schedule. This is available in Grafana Cloud Pro and Advanced and in Grafana Enterprise.
 
-> If you have [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some actions you would need to have relevant permissions.
+> If you have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some actions you would need to have relevant permissions.
 > Refer to specific guides to understand what permissions are required.
 
 {{< figure src="/static/img/docs/enterprise/reports_list_8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
@@ -24,11 +24,11 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 ## Access control
 
-When [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) is enabled, you need to have the relevant [Permissions]({{< relref "../enterprise/access-control/permissions.md" >}}) to create and manage reports.
+When [RBAC]({{< relref "../enterprise/access-control/_index.md" >}}) is enabled, you need to have the relevant [Permissions]({{< relref "../enterprise/access-control/rbac-fixed-basic-role-definitions" >}}) to create and manage reports.
 
 ## Create or update a report
 
-Only organization admins can create reports by default. You can customize who can create reports with [fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}).
+Only organization admins can create reports by default. You can customize who can create reports with [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}).
 
 1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports.
 1. Enter report information. All fields are required unless otherwise indicated.

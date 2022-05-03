@@ -60,8 +60,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
 
   useEffect(() => {
     // close the menu when changing submenus
-    // or when the state of the overlay changes (i.e hovering outside)
-    if (menuIdOpen !== item.id || !state.isOpen) {
+    if (menuIdOpen !== item.id) {
       state.close();
       setMenuHasFocus(false);
     } else {

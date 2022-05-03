@@ -52,6 +52,21 @@ func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimod
 	return 0, fmt.Errorf("unexpected backend type (%v)", datasourceID)
 }
 
+func backendTypeByUID(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
+	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+	if ds, err := cache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache); err == nil {
+		switch ds.Type {
+		case "loki", "prometheus":
+			return apimodels.LoTexRulerBackend, nil
+		case "alertmanager":
+			return apimodels.AlertmanagerBackend, nil
+		default:
+			return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
+		}
+	}
+	return 0, fmt.Errorf("unexpected backend type (%v)", datasourceUID)
+}
+
 // macaron unsafely asserts the http.ResponseWriter is an http.CloseNotifier, which will panic.
 // Here we impl it, which will ensure this no longer happens, but neither will we take
 // advantage cancelling upstream requests when the downstream has closed.
@@ -98,12 +113,21 @@ func (p *AlertingProxy) withReq(
 	newCtx, resp := replacedResponseWriter(ctx)
 	newCtx.Req = req
 
-	datasourceID, err := strconv.ParseInt(web.Params(ctx.Req)[":DatasourceID"], 10, 64)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "DatasourceID is invalid")
-	}
+	datasourceID := web.Params(ctx.Req)[":DatasourceID"]
+	if datasourceID != "" {
+		recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":DatasourceID"], 10, 64)
+		if err != nil {
+			return ErrResp(http.StatusBadRequest, err, "DatasourceID is invalid")
+		}
 
-	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, datasourceID)
+		p.DataProxy.ProxyDatasourceRequestWithID(newCtx, recipient)
+	} else {
+		datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+		if datasourceUID == "" {
+			return ErrResp(http.StatusBadRequest, err, "DatasourceUID is empty")
+		}
+		p.DataProxy.ProxyDatasourceRequestWithUID(newCtx, datasourceUID)
+	}
 
 	status := resp.Status()
 	if status >= 400 {

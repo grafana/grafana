@@ -3,6 +3,7 @@ package state
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -223,7 +224,11 @@ func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
 
 	for refID, value := range lastResult.Values {
 		if strings.Contains(refID, lastResult.Condition) {
-			r[refID] = *value
+			if value != nil {
+				r[refID] = *value
+				continue
+			}
+			r[refID] = math.NaN()
 		}
 	}
 

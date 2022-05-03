@@ -172,7 +172,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	navTree := []*dtos.NavLink{}
 
-	if hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
+	if hs.Features.IsEnabled(featuremgmt.FlagSavedItems) {
 		savedItemsLinks, err := hs.buildSavedItemsNavLinks(c, prefs)
 		if err != nil {
 			return nil, err
@@ -733,7 +733,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		LoadingLogo:             "public/img/grafana_icon.svg",
 	}
 
-	if hs.Features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+	if !hs.AccessControl.IsDisabled() {
 		userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
 		if err != nil {
 			return nil, err

@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { useTheme2 } from '@grafana/ui';
 // Types
 import { ExploreItemState, StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
@@ -11,6 +12,8 @@ import { ExploreDrawer } from '../ExploreDrawer';
 import {
   deleteRichHistory,
   initRichHistory,
+  loadRichHistory,
+  clearRichHistoryResults,
   updateHistorySettings,
   updateHistorySearchFilters,
 } from '../state/history';
@@ -39,6 +42,8 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
 
 const mapDispatchToProps = {
   initRichHistory,
+  loadRichHistory,
+  clearRichHistoryResults,
   updateHistorySettings,
   updateHistorySearchFilters,
   deleteRichHistory,
@@ -54,7 +59,8 @@ interface OwnProps {
 export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export function RichHistoryContainer(props: Props) {
-  const [height, setHeight] = useState(400);
+  const theme = useTheme2();
+  const [height, setHeight] = useState(theme.components.horizontalDrawer.defaultHeight);
 
   const {
     richHistory,
@@ -64,6 +70,8 @@ export function RichHistoryContainer(props: Props) {
     exploreId,
     deleteRichHistory,
     initRichHistory,
+    loadRichHistory,
+    clearRichHistoryResults,
     richHistorySettings,
     updateHistorySettings,
     richHistorySearchFilters,
@@ -72,10 +80,10 @@ export function RichHistoryContainer(props: Props) {
   } = props;
 
   useEffect(() => {
-    initRichHistory(exploreId);
-  }, [initRichHistory, exploreId]);
+    initRichHistory();
+  }, [initRichHistory]);
 
-  if (!richHistorySettings || !richHistorySearchFilters) {
+  if (!richHistorySettings) {
     return <span>Loading...</span>;
   }
 
@@ -98,6 +106,8 @@ export function RichHistoryContainer(props: Props) {
         richHistorySearchFilters={richHistorySearchFilters}
         updateHistorySettings={updateHistorySettings}
         updateHistorySearchFilters={updateHistorySearchFilters}
+        loadRichHistory={loadRichHistory}
+        clearRichHistoryResults={clearRichHistoryResults}
       />
     </ExploreDrawer>
   );

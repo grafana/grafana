@@ -40,7 +40,7 @@ import { getVariablesByKey } from '../../../variables/state/selectors';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 import { DashboardModel, PanelModel } from '../../state';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
-import { SaveDashboardProxy } from '../SaveDashboard/SaveDashboardProxy';
+import { SaveDashboardDrawer } from '../SaveDashboard/SaveDashboardDrawer';
 
 import { OptionsPane } from './OptionsPane';
 import { PanelEditorTableView } from './PanelEditorTableView';
@@ -141,7 +141,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   onSaveDashboard = () => {
     appEvents.publish(
       new ShowModalReactEvent({
-        component: SaveDashboardProxy,
+        component: SaveDashboardDrawer,
         props: { dashboard: this.props.dashboard },
       })
     );
