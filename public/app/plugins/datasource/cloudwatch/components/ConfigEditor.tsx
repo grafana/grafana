@@ -1,5 +1,6 @@
+import { unionBy } from 'lodash';
 import React, { FC, useEffect, useState } from 'react';
-import { useDebounce } from 'react-use';
+import { useAsync, useDebounce } from 'react-use';
 
 import { ConnectionConfig } from '@grafana/aws-sdk';
 import {
@@ -7,8 +8,9 @@ import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginJsonDataOption,
+  SelectableValue,
 } from '@grafana/data';
-import { Input, InlineField } from '@grafana/ui';
+import { Input, InlineField, MultiSelect } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -16,6 +18,7 @@ import { store } from 'app/store/store';
 
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
+import { toOption } from '../utils/utils';
 
 import { XrayLinkConfig } from './XrayLinkConfig';
 
@@ -23,10 +26,25 @@ export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, Cloud
 
 export const ConfigEditor: FC<Props> = (props: Props) => {
   const { options } = props;
+  const { defaultLogGroups, defaultRegion, logsTimeout } = options.jsonData;
 
   const datasource = useDatasource(options.name);
   useAuthenticationWarning(options.jsonData);
-  const logsTimeoutError = useTimoutValidation(props.options.jsonData.logsTimeout);
+  const logsTimeoutError = useTimoutValidation(logsTimeout);
+  const [logGroups, setLogGroups] = useState<SelectableValue[]>([]);
+  const [loadingLogGroups, setLoadingLogGroups] = useState(false);
+
+  const loadLogGroups =
+    datasource &&
+    defaultRegion &&
+    (() => datasource!.describeLogGroups({ region: defaultRegion }).then((lg) => lg.map(toOption)));
+  useAsync(async () => {
+    if (loadLogGroups) {
+      setLoadingLogGroups(true);
+      setLogGroups(await loadLogGroups().finally(() => setLoadingLogGroups(false)));
+      return;
+    }
+  }, [datasource, defaultRegion]);
 
   return (
     <>
@@ -52,7 +70,7 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
         <InlineField
           label="Timeout"
           labelWidth={28}
-          tooltip='Custom timout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as "15m" "30s" "2000ms" etc.'
+          tooltip='Custom timeout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as "15m" "30s" "2000ms" etc.'
           invalid={Boolean(logsTimeoutError)}
         >
           <Input
@@ -61,6 +79,28 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
             value={options.jsonData.logsTimeout || ''}
             onChange={onUpdateDatasourceJsonDataOption(props, 'logsTimeout')}
             title={'The timeout must be a valid duration string, such as "15m" "30s" "2000ms" etc.'}
+          />
+        </InlineField>
+        <InlineField
+          label="Default Log Groups"
+          labelWidth={28}
+          tooltip="Optional. Default log groups for new CloudWatch Logs queries."
+        >
+          <MultiSelect
+            value={defaultLogGroups}
+            width={60}
+            onChange={(groups) => {
+              updateDatasourcePluginJsonDataOption(
+                props,
+                'defaultLogGroups',
+                groups.map(({ value }) => {
+                  return value;
+                })
+              );
+            }}
+            options={unionBy(logGroups, defaultLogGroups?.map(toOption), 'value')}
+            isLoading={loadingLogGroups}
+            allowCustomValue
           />
         </InlineField>
       </div>
