@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
@@ -12,6 +13,7 @@ import (
 // Sets sharing configuration for dashboard
 func (hs *HTTPServer) ShareDashboard(c *models.ReqContext) response.Response {
 	dsc := models.DashboardSharingConfig{}
+	fmt.Println("test1")
 
 	if err := web.Bind(c.Req, &dsc); err != nil {
 		fmt.Println(err)
@@ -26,8 +28,12 @@ func (hs *HTTPServer) ShareDashboard(c *models.ReqContext) response.Response {
 
 	sharingConfig, err := hs.dashboardService.SaveDashboardSharingConfig(c.Req.Context(), &dto)
 
+	if errors.Is(err, models.ErrDataSourceNotFound) {
+		return response.Error(http.StatusNotFound, "dashboard not found", err)
+	}
+
 	if err != nil {
-		return response.Error(500, "error updating public dashboard config", err)
+		return response.Error(http.StatusInternalServerError, "error updating public dashboard config", err)
 	}
 
 	return response.JSON(http.StatusOK, sharingConfig)
