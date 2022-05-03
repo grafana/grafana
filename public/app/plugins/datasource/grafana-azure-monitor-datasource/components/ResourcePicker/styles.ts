@@ -83,6 +83,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingBottom: theme.spacing(2),
     color: theme.colors.text.secondary,
   }),
+
+  resultLimit: css({
+    margin: '4px 0',
+    fontStyle: 'italic',
+  }),
 });
 
 export default getStyles;
