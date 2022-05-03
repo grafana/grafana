@@ -247,6 +247,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
         <CloudInfoBox dataSource={dataSource} />
 
         <BasicSettings
+          uid={dataSource.uid}
           dataSourceName={dataSource.name}
           isDefault={dataSource.isDefault}
           onDefaultChange={(state) => setIsDefault(state)}
