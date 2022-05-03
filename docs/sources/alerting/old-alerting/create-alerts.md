@@ -4,6 +4,7 @@ description = "Configure alert rules"
 keywords = ["grafana", "alerting", "guide", "rules"]
 weight = 200
 aliases = ["/docs/grafana/latest/alerting/create-alerts/"]
+draft = true
 +++
 
 # Create alerts

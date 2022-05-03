@@ -4,6 +4,7 @@ description = "Alerting notifications guide"
 keywords = ["Grafana", "alerting", "guide", "notifications"]
 weight = 100
 aliases = ["/docs/grafana/latest/alerting/notifications/"]
+draft = true
 +++
 
 # Alert notifications

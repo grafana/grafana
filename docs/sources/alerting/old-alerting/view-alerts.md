@@ -4,6 +4,7 @@ description = "View existing alert rules"
 keywords = ["grafana", "alerting", "guide", "rules", "view"]
 weight = 400
 aliases = ["/docs/grafana/latest/alerting/view-alerts/"]
+draft = true
 +++
 
 # View existing alert rules
