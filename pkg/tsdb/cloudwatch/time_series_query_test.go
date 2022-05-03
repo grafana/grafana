@@ -148,6 +148,7 @@ type queryParameters struct {
 	Dimensions       queryDimensions  `json:"dimensions"`
 	Expression       string           `json:"expression"`
 	Alias            string           `json:"alias"`
+	Label            *string          `json:"label"`
 	Statistic        string           `json:"statistic"`
 	Period           string           `json:"period"`
 	MatchExact       bool             `json:"matchExact"`
@@ -270,36 +271,6 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 		require.Len(t, cwClient.calls.getMetricDataWithContext[0].MetricDataQueries, 1)
 
 		assert.Nil(t, cwClient.calls.getMetricDataWithContext[0].MetricDataQueries[0].Label)
-	})
-
-	// TODO: I think we need to investigate how we set label as an empty string vs. as nil
-	t.Run("passes empty string? as GetMetricData label when dynamic labels feature toggle is enabled", func(t *testing.T) {
-		cwClient = fakeCWClient{}
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchDynamicLabels))
-		query := newTestQuery(t, queryParameters{
-			Label: aws.String(""),
-		})
-
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
-			Queries: []backend.DataQuery{
-				{
-					RefID: "A",
-					TimeRange: backend.TimeRange{
-						From: time.Now().Add(time.Hour * -2),
-						To:   time.Now().Add(time.Hour * -1),
-					},
-					JSON: query,
-				},
-			},
-		})
-
-		assert.NoError(t, err)
-		require.Len(t, cwClient.calls.getMetricDataWithContext, 1)
-		require.Len(t, cwClient.calls.getMetricDataWithContext[0].MetricDataQueries, 1)
-		require.NotNil(t, cwClient.calls.getMetricDataWithContext[0].MetricDataQueries[0].Label)
-
-		assert.Equal(t, "", *cwClient.calls.getMetricDataWithContext[0].MetricDataQueries[0].Label)
 	})
 }
 
