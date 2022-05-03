@@ -53,9 +53,10 @@ describe('metricQueryMigrations', () => {
         ];
         test.each(cases)('given old alias %p, it should be migrated to label: %p', ({ alias, label }) => {
           config.featureToggles.cloudWatchDynamicLabels = true;
-          const testQuery = { ...baseQuery, alias: `${alias}` };
+          const testQuery = { ...baseQuery, alias };
           const result = migrateAliasPatterns(testQuery);
           expect(result.label).toBe(label);
+          expect(result.alias).toBe(alias);
         });
       });
 
