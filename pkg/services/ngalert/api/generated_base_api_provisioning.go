@@ -81,7 +81,7 @@ func (f *ForkedProvisioningApi) RoutePutContactpoints(ctx *models.ReqContext) re
 }
 
 func (f *ForkedProvisioningApi) RoutePutTemplate(ctx *models.ReqContext) response.Response {
-	conf := apimodels.MessageTemplate{}
+	conf := apimodels.MessageTemplateContent{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}

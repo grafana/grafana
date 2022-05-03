@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -32,6 +33,8 @@ type ContactPointService interface {
 
 type TemplateService interface {
 	GetTemplates(ctx context.Context, orgID int64) (map[string]string, error)
+	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.MessageTemplate, p alerting_models.Provenance) error
+	DeleteTemplate(ctx context.Context, orgID int64, name string) error
 }
 
 type NotificationPolicyService interface {
@@ -125,10 +128,27 @@ func (srv *ProvisioningSrv) RouteGetTemplate(c *models.ReqContext) response.Resp
 	return response.Empty(http.StatusNotFound)
 }
 
-func (srv *ProvisioningSrv) RoutePutTemplate(c *models.ReqContext, body apimodels.MessageTemplate) response.Response {
-	return response.Error(http.StatusInternalServerError, "not implemented", nil)
+func (srv *ProvisioningSrv) RoutePutTemplate(c *models.ReqContext, body apimodels.MessageTemplateContent) response.Response {
+	name := web.Params(c.Req)[":ID"]
+	tmpl := apimodels.MessageTemplate{
+		Name:     name,
+		Template: body.Template,
+	}
+	err := srv.templates.SetTemplate(c.Req.Context(), c.OrgId, tmpl, alerting_models.ProvenanceAPI)
+	if err != nil {
+		if errors.Is(err, provisioning.ErrValidation) {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusAccepted, tmpl)
 }
 
 func (srv *ProvisioningSrv) RouteDeleteTemplate(c *models.ReqContext) response.Response {
-	return response.Error(http.StatusInternalServerError, "not implemented", nil)
+	name := web.Params(c.Req)[":ID"]
+	err := srv.templates.DeleteTemplate(c.Req.Context(), c.OrgId, name)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusNoContent, nil)
 }

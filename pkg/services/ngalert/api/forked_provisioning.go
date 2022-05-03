@@ -51,7 +51,7 @@ func (f *ForkedProvisioningApi) forkRouteGetTemplate(ctx *models.ReqContext) res
 	return f.svc.RouteGetTemplate(ctx)
 }
 
-func (f *ForkedProvisioningApi) forkRoutePutTemplate(ctx *models.ReqContext, body apimodels.MessageTemplate) response.Response {
+func (f *ForkedProvisioningApi) forkRoutePutTemplate(ctx *models.ReqContext, body apimodels.MessageTemplateContent) response.Response {
 	return f.svc.RoutePutTemplate(ctx, body)
 }
 

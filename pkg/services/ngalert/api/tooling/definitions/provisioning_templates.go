@@ -35,18 +35,20 @@ import "fmt"
 //
 //     Responses:
 //       204: Accepted
-//       400: ValidationError
-//       404: NotFound
 
 type MessageTemplate struct {
 	Name     string
 	Template string
 }
 
-// swagger:parameters RoutePostTemplate RoutePutTemplate
+type MessageTemplateContent struct {
+	Template string
+}
+
+// swagger:parameters RoutePutTemplate
 type MessageTemplatePayload struct {
 	// in:body
-	Body MessageTemplate
+	Body MessageTemplateContent
 }
 
 func (t MessageTemplate) ResourceType() string {
