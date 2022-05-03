@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { SyntheticEvent, useRef, useState } from 'react';
 import Draggable from 'react-draggable';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
@@ -7,7 +7,7 @@ import { Dimensions2D, GrafanaTheme2 } from '@grafana/data';
 import { IconButton, Portal, useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
 
-import { InlineEditOptions } from './InlineEditOptions';
+import { InlineEditBody } from './InlineEditBody';
 
 type Props = {
   onClose?: () => void;
@@ -58,18 +58,18 @@ export const InlineEdit = ({ onClose }: Props) => {
         <Draggable handle="strong" onStop={onDragStop} position={{ x: placement.x, y: placement.y }}>
           <Resizable height={measurements.height} width={measurements.width} onResize={onResizeStop}>
             <div
-              className={cx('box', 'no-cursor', `${styles.inlineEditorContainer}`)}
+              className={styles.inlineEditorContainer}
               style={{ height: `${measurements.height}px`, width: `${measurements.width}px` }}
               ref={ref}
             >
-              <strong className={cx('cursor', `${styles.inlineEditorHeader}`)}>
+              <strong className={styles.inlineEditorHeader}>
                 <div className={styles.placeholder} />
                 <div>Canvas Inline Editor</div>
                 <IconButton name="times" size="xl" className={styles.inlineEditorClose} onClick={onClose} />
               </strong>
               <div className={styles.inlineEditorContentWrapper}>
                 <div className={styles.inlineEditorContent}>
-                  <InlineEditOptions />
+                  <InlineEditBody />
                 </div>
               </div>
             </div>
@@ -97,8 +97,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     align-items: center;
     justify-content: center;
-    background: ${theme.v1.colors.pageHeaderBg};
-    border: 1px solid ${theme.v1.colors.pageHeaderBorder};
+    background: ${theme.colors.background.canvas};
+    border: 1px solid ${theme.colors.border.weak};
     height: 40px;
     cursor: move;
   `,
