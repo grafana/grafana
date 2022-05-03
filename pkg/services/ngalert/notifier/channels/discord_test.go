@@ -74,7 +74,7 @@ func TestDiscordNotifier(t *testing.T) {
 			},
 			expMsg: map[string]interface{}{
 				"avatar_url": "https://grafana.com/assets/img/fav32.png",
-				"content":    "I'm a custom template ",
+				"content":    ExpansionErrorMessage,
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
@@ -106,7 +106,7 @@ func TestDiscordNotifier(t *testing.T) {
 			},
 			expMsg: map[string]interface{}{
 				"avatar_url": "https://grafana.com/assets/img/fav32.png",
-				"content":    "",
+				"content":    ExpansionErrorMessage,
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{

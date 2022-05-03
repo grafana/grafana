@@ -224,17 +224,16 @@ Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matc
 
 	for _, c := range cases {
 		t.Run(c.templateString, func(t *testing.T) {
+			tmplErr = nil
 			act := expand(c.templateString)
 			if c.expectedError != "" {
 				require.Error(t, tmplErr)
 				require.EqualError(t, tmplErr, c.expectedError)
-				return
 			} else {
 				require.NoError(t, tmplErr)
 			}
 
 			require.Equal(t, c.expected, act)
-			tmplErr = nil
 		})
 	}
 }
