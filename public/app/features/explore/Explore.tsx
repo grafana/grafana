@@ -353,6 +353,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     return (
       <CustomScrollbar
+        testId={selectors.pages.Explore.General.scrollView}
         autoHeightMin={'100%'}
         scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
       >
