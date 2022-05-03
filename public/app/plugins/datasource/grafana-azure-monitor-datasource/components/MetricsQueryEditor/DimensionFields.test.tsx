@@ -15,7 +15,6 @@ const variableOptionGroup = {
   label: 'Template variables',
   options: [],
 };
-const user = userEvent.setup();
 
 describe('Azure Monitor QueryEditor', () => {
   const mockPanelData = createMockPanelData();
@@ -41,7 +40,7 @@ describe('Azure Monitor QueryEditor', () => {
       />
     );
     const addDimension = await screen.findByText('Add new dimension');
-    await user.click(addDimension);
+    await userEvent.click(addDimension);
     mockQuery = appendDimensionFilter(mockQuery);
     expect(onQueryChange).toHaveBeenCalledWith({
       ...mockQuery,
@@ -96,7 +95,7 @@ describe('Azure Monitor QueryEditor', () => {
       />
     );
     const addDimension = await screen.findByText('Add new dimension');
-    await user.click(addDimension);
+    await userEvent.click(addDimension);
     mockQuery = appendDimensionFilter(mockQuery);
     render(
       <DimensionFields
@@ -111,7 +110,7 @@ describe('Azure Monitor QueryEditor', () => {
       />
     );
     const dimensionSelect = await screen.findByText('Field');
-    await user.click(dimensionSelect);
+    await userEvent.click(dimensionSelect);
     const options = await screen.findAllByLabelText('Select option');
     expect(options).toHaveLength(1);
     expect(options[0]).toHaveTextContent('Test Dimension 2');
@@ -151,7 +150,7 @@ describe('Azure Monitor QueryEditor', () => {
       />
     );
     const labelSelect = await screen.findByText('Select value');
-    await user.click(labelSelect);
+    await userEvent.click(labelSelect);
     const options = await screen.findAllByLabelText('Select option');
     expect(options).toHaveLength(1);
     expect(options[0]).toHaveTextContent('testlabel');
@@ -192,7 +191,7 @@ describe('Azure Monitor QueryEditor', () => {
     );
     await screen.findByText('testlabel');
     const labelClear = await screen.findByLabelText('select-clear-value');
-    await user.click(labelClear);
+    await userEvent.click(labelClear);
     mockQuery = setDimensionFilterValue(mockQuery, 0, 'filter', '');
     expect(onQueryChange).toHaveBeenCalledWith({
       ...mockQuery,
@@ -227,7 +226,7 @@ describe('Azure Monitor QueryEditor', () => {
       />
     );
     const labelSelect = await screen.findByText('Select value');
-    await user.click(labelSelect);
+    await userEvent.click(labelSelect);
     const options = await screen.findAllByLabelText('Select option');
     expect(options).toHaveLength(2);
     expect(options[0]).toHaveTextContent('testlabel');
