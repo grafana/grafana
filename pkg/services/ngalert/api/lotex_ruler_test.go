@@ -25,6 +25,11 @@ func TestLotexRuler_ValidateAndGetPrefix(t *testing.T) {
 		err             error
 	}{
 		{
+			name:        "with an empty datasource UID",
+			namedParams: map[string]string{":DatasourceUID": ""},
+			err:         errors.New("datasource UID is invalid"),
+		},
+		{
 			name:            "with an error while trying to fetch the datasource",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
 			datasourceCache: fakeCacheService{err: models.ErrDataSourceNotFound},
