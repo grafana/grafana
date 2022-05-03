@@ -122,6 +122,8 @@ export function MarkersLegend(props: MarkersLegendProps) {
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   infoWrap: css`
+    display: flex;
+    flex-direction: column;
     background: ${theme.colors.background.secondary};
     border-radius: 1px;
     padding: ${theme.spacing(1)};
@@ -133,13 +135,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   `,
   layerBody: css`
     padding-left: 10px;
-    margin-top: 4px;
   `,
   legend: css`
     line-height: 18px;
     display: flex;
     flex-direction: column;
     font-size: ${theme.typography.bodySmall.fontSize};
+    padding: 5px 10px 0;
 
     i {
       width: 18px;
@@ -155,10 +157,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   fixedColorContainer: css`
     min-width: 80px;
     font-size: ${theme.typography.bodySmall.fontSize};
+    padding-top: 5px;
   `,
   legendSymbol: css`
-    height: 12px;
-    width: 12px;
+    height: 15px;
+    width: 15px;
     margin: auto;
   `,
   colorScaleWrapper: css`
