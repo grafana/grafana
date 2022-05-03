@@ -131,7 +131,7 @@ func TestSensuGoNotifier(t *testing.T) {
 		},
 		{
 			name:     "Templating error",
-			settings: `{"url": "http://sensu-api.local:8080", "apikey": "<apikey>", "entity": "entity-{{ .DoesNotExist }}"}`,
+			settings: `{"url": "http://sensu-api.local:8080", "apikey": "<apikey>", "message": "{{ .DoesNotExist }}"}`,
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -154,7 +154,7 @@ func TestSensuGoNotifier(t *testing.T) {
 							"ruleURL": "http://localhost/alerting/list",
 						},
 					},
-					"output":   "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+					"output":   ExpansionErrorMessage,
 					"issued":   timeNow().Unix(),
 					"interval": 86400,
 					"status":   2,

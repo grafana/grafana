@@ -77,11 +77,12 @@ func NewGoogleChatNotifier(config *GoogleChatConfig, ns notifications.WebhookSen
 func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	gcn.log.Debug("Executing Google Chat notification")
 
-	expand, _ := TmplText(ctx, gcn.tmpl, as, gcn.log)
+	var tmplErr error
+	tmpl, _ := TmplText(ctx, gcn.tmpl, as, gcn.log, &tmplErr)
 
 	widgets := []widget{}
 
-	if msg, _ := expand(gcn.content); msg != "" {
+	if msg := tmpl(gcn.content); msg != "" {
 		// Add a text paragraph widget for the message if there is a message.
 		// Google Chat API doesn't accept an empty text property.
 		widgets = append(widgets, textParagraphWidget{
@@ -89,6 +90,11 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 				Text: msg,
 			},
 		})
+	}
+
+	if tmplErr != nil {
+		gcn.log.Warn("failed to template Google Chat message", "err", tmplErr.Error())
+		tmplErr = nil
 	}
 
 	ruleURL := joinUrlPath(gcn.tmpl.ExternalURL.String(), "/alerting/list", gcn.log)
@@ -116,14 +122,13 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	})
 
 	// Nest the required structs.
-	title, _ := expand(DefaultMessageTitleEmbed)
 	res := &outerStruct{
-		PreviewText:  title,
-		FallbackText: title,
+		PreviewText:  tmpl(DefaultMessageTitleEmbed),
+		FallbackText: tmpl(DefaultMessageTitleEmbed),
 		Cards: []card{
 			{
 				Header: header{
-					Title: title,
+					Title: tmpl(DefaultMessageTitleEmbed),
 				},
 				Sections: []section{
 					{
@@ -134,9 +139,14 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		},
 	}
 
-	u, err := expand(gcn.URL)
-	if err != nil {
-		gcn.log.Warn("failed to template GoogleChat URL", "err", err.Error(), "fallback", gcn.URL)
+	if tmplErr != nil {
+		gcn.log.Warn("failed to template GoogleChat message", "err", tmplErr.Error())
+		tmplErr = nil
+	}
+
+	u := tmpl(gcn.URL)
+	if tmplErr != nil {
+		gcn.log.Warn("failed to template GoogleChat URL", "err", tmplErr.Error(), "fallback", gcn.URL)
 		u = gcn.URL
 	}
 

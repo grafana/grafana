@@ -77,8 +77,9 @@ func TestDefaultTemplateString(t *testing.T) {
 	require.NoError(t, err)
 	tmpl.ExternalURL = externalURL
 
+	var tmplErr error
 	l := log.New("default-template-test")
-	expand, _ := TmplText(context.Background(), tmpl, alerts, l)
+	expand, _ := TmplText(context.Background(), tmpl, alerts, l, &tmplErr)
 
 	cases := []struct {
 		templateString string
@@ -223,16 +224,17 @@ Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matc
 
 	for _, c := range cases {
 		t.Run(c.templateString, func(t *testing.T) {
-			act, err := expand(c.templateString)
+			act := expand(c.templateString)
 			if c.expectedError != "" {
-				require.Error(t, err)
-				require.EqualError(t, err, c.expectedError)
+				require.Error(t, tmplErr)
+				require.EqualError(t, tmplErr, c.expectedError)
 				return
 			} else {
-				require.NoError(t, err)
+				require.NoError(t, tmplErr)
 			}
 
 			require.Equal(t, c.expected, act)
+			tmplErr = nil
 		})
 	}
 }

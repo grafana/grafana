@@ -173,29 +173,6 @@ func TestOpsgenieNotifier(t *testing.T) {
 			settings:     `{}`,
 			expInitError: `could not find api key property in settings`,
 		},
-		{
-			name:     "when templating error on APIUrl, should default to fallback APIUrl",
-			settings: `{"apiKey": "abcdefgh0123456789", "apiUrl": "{{ .DoesNotExist }}"}`,
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
-					},
-				},
-			},
-			expMsg: `{
-				"alias": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
-				"description": "[FIRING:1]  (val1)\nhttp://localhost/alerting/list\n\n**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
-				"details": {
-					"url": "http://localhost/alerting/list"
-				},
-				"message": "[FIRING:1]  (val1)",
-				"source": "Grafana",
-				"tags": ["alertname:alert1", "lbl1:val1"]
-			}`,
-			expApiUrl: OpsgenieAlertURL,
-		},
 	}
 
 	for _, c := range cases {

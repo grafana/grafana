@@ -6,12 +6,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/prometheus/alertmanager/template"
 )
 
 type WeComConfig struct {
@@ -75,16 +75,19 @@ type WeComNotifier struct {
 func (w *WeComNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	w.log.Info("executing WeCom notification", "notification", w.Name)
 
-	expand, _ := TmplText(ctx, w.tmpl, as, w.log)
+	var tmplErr error
+	tmpl, _ := TmplText(ctx, w.tmpl, as, w.log, &tmplErr)
 
 	bodyMsg := map[string]interface{}{
 		"msgtype": "markdown",
 	}
+	content := fmt.Sprintf("# %s\n%s\n",
+		tmpl(DefaultMessageTitleEmbed),
+		tmpl(w.Message),
+	)
 
-	title, _ := expand(DefaultMessageTitleEmbed)
-	message, _ := expand(w.Message)
 	bodyMsg["markdown"] = map[string]interface{}{
-		"content": fmt.Sprintf("# %s\n%s\n", title, message),
+		"content": content,
 	}
 
 	body, err := json.Marshal(bodyMsg)

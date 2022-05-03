@@ -7,12 +7,11 @@ import (
 	"fmt"
 	"mime/multipart"
 
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
 )
 
 var (
@@ -138,19 +137,17 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 }
 
 func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*types.Alert) (map[string]string, error) {
-	expand, _ := TmplText(ctx, tn.tmpl, as, tn.log)
+	var tmplErr error
+	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
 
 	msg := map[string]string{}
-
-	chatId, err := expand(tn.ChatID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to template Telegram ChatId: %v", err)
-	}
-	msg["chat_id"] = chatId
-
+	msg["chat_id"] = tmpl(tn.ChatID)
 	msg["parse_mode"] = "html"
 
-	message, _ := expand(tn.Message)
+	message := tmpl(tn.Message)
+	if tmplErr != nil {
+		tn.log.Warn("failed to template Telegram message", "err", tmplErr.Error())
+	}
 
 	msg["text"] = message
 

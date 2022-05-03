@@ -2,7 +2,6 @@ package channels
 
 import (
 	"context"
-	"errors"
 	"net/url"
 	"testing"
 
@@ -106,14 +105,6 @@ func TestTelegramNotifier(t *testing.T) {
 				"text":       ExpansionErrorMessage,
 			},
 			expMsgError: nil,
-		},
-		{
-			name: "Templating error on ChatId should fail and return error",
-			settings: `{
-				"bottoken": "abcdefgh0123456789",
-				"chatid": "{{ .Status "
-			}`,
-			expMsgError: errors.New("failed to template Telegram ChatId: template: :1: unclosed action"),
 		},
 	}
 

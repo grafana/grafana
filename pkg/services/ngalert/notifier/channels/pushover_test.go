@@ -113,8 +113,7 @@ func TestPushoverNotifier(t *testing.T) {
 				"apiToken": "<apiToken>"
 			}`,
 			expInitError: `user key not found`,
-		},
-		{
+		}, {
 			name: "Missing api key",
 			settings: `{
 				"userKey": "<userKey>"
@@ -122,12 +121,32 @@ func TestPushoverNotifier(t *testing.T) {
 			expInitError: `API token not found`,
 		},
 		{
-			name: "Templating error on user key",
+			name: "Templating error",
 			settings: `{
+				"userKey": "<userKey>",
 				"apiToken": "<apiToken>",
-				"userKey": "{{ .Status "
+				"message": "{{ .DoesNotExist }}"
 			}`,
-			expMsgError: errors.New(`failed to template Pushover UserKey: template: :1: unclosed action`),
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"__alert_rule_uid__": "rule uid", "alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: map[string]string{
+				"user":      "<userKey>",
+				"token":     "<apiToken>",
+				"priority":  "0",
+				"sound":     "",
+				"title":     "[FIRING:1]  (val1)",
+				"url":       "http://localhost/alerting/list",
+				"url_title": "Show alert rule",
+				"message":   ExpansionErrorMessage,
+				"html":      "1",
+			},
+			expMsgError: nil,
 		},
 	}
 

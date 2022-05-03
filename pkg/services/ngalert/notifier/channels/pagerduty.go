@@ -7,14 +7,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const (
@@ -152,23 +151,18 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		eventType = pagerDutyEventResolve
 	}
 
-	expand, _ := TmplText(ctx, pn.tmpl, as, pn.log)
+	var tmplErr error
+	tmpl, data := TmplText(ctx, pn.tmpl, as, pn.log, &tmplErr)
 
 	details := make(map[string]string, len(pn.CustomDetails))
 	for k, v := range pn.CustomDetails {
-		detail, err := expand(v)
+		detail, err := pn.tmpl.ExecuteTextString(v, data)
 		if err != nil {
 			return nil, "", fmt.Errorf("%q: failed to template %q: %w", k, v, err)
 		}
 		details[k] = detail
 	}
 
-	title, _ := expand(DefaultMessageTitleEmbed)
-	component, _ := expand(pn.Component)
-	summary, _ := expand(pn.Summary)
-	severity, _ := expand(pn.Severity)
-	class, _ := expand(pn.Class)
-	group, _ := expand(pn.Group)
 	msg := &pagerDutyMessage{
 		Client:      "Grafana",
 		ClientURL:   pn.tmpl.ExternalURL.String(),
@@ -179,14 +173,14 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 			HRef: pn.tmpl.ExternalURL.String(),
 			Text: "External URL",
 		}},
-		Description: title, // TODO: this can be configurable template.
+		Description: tmpl(DefaultMessageTitleEmbed), // TODO: this can be configurable template.
 		Payload: pagerDutyPayload{
-			Component:     component,
-			Summary:       summary,
-			Severity:      severity,
+			Component:     tmpl(pn.Component),
+			Summary:       tmpl(pn.Summary),
+			Severity:      tmpl(pn.Severity),
 			CustomDetails: details,
-			Class:         class,
-			Group:         group,
+			Class:         tmpl(pn.Class),
+			Group:         tmpl(pn.Group),
 		},
 	}
 
@@ -198,6 +192,10 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	if hostname, err := os.Hostname(); err == nil {
 		// TODO: should this be configured like in Prometheus AM?
 		msg.Payload.Source = hostname
+	}
+
+	if tmplErr != nil {
+		pn.log.Warn("failed to template PagerDuty message", "err", tmplErr.Error())
 	}
 
 	return msg, eventType, nil

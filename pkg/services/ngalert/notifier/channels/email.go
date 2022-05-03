@@ -82,10 +82,10 @@ func NewEmailNotifier(config *EmailConfig, ns notifications.EmailSender, t *temp
 
 // Notify sends the alert notification.
 func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	expand, data := TmplText(ctx, en.tmpl, as, en.log)
+	var tmplErr error
+	tmpl, data := TmplText(ctx, en.tmpl, as, en.log, &tmplErr)
 
-	title, _ := expand(DefaultMessageTitleEmbed)
-	message, _ := expand(en.Message)
+	title := tmpl(DefaultMessageTitleEmbed)
 
 	alertPageURL := en.tmpl.ExternalURL.String()
 	ruleURL := en.tmpl.ExternalURL.String()
@@ -105,7 +105,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 			Subject: title,
 			Data: map[string]interface{}{
 				"Title":             title,
-				"Message":           message,
+				"Message":           tmpl(en.Message),
 				"Status":            data.Status,
 				"Alerts":            data.Alerts,
 				"GroupLabels":       data.GroupLabels,
@@ -119,6 +119,10 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 			SingleEmail: en.SingleEmail,
 			Template:    "ng_alert_notification",
 		},
+	}
+
+	if tmplErr != nil {
+		en.log.Warn("failed to template email message", "err", tmplErr.Error())
 	}
 
 	if err := en.ns.SendEmailCommandHandlerSync(ctx, cmd); err != nil {

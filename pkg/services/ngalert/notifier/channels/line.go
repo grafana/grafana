@@ -7,12 +7,11 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
 )
 
 var (
@@ -79,11 +78,18 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 
 	ruleURL := path.Join(ln.tmpl.ExternalURL.String(), "/alerting/list")
 
-	expand, _ := TmplText(ctx, ln.tmpl, as, ln.log)
+	var tmplErr error
+	tmpl, _ := TmplText(ctx, ln.tmpl, as, ln.log, &tmplErr)
 
-	title, _ := expand(DefaultMessageTitleEmbed)
-	message, _ := expand(`{{ template "default.message" . }}`)
-	body := fmt.Sprintf("%s\n%s\n\n%s", title, ruleURL, message)
+	body := fmt.Sprintf(
+		"%s\n%s\n\n%s",
+		tmpl(DefaultMessageTitleEmbed),
+		ruleURL,
+		tmpl(`{{ template "default.message" . }}`),
+	)
+	if tmplErr != nil {
+		ln.log.Warn("failed to template Line message", "err", tmplErr.Error())
+	}
 
 	form := url.Values{}
 	form.Add("message", body)

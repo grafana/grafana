@@ -8,13 +8,12 @@ import (
 	"path"
 	"strings"
 
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/common/model"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
 )
 
 var (
@@ -104,7 +103,8 @@ func NewThreemaNotifier(config *ThreemaConfig, ns notifications.WebhookSender, t
 func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	tn.log.Debug("Sending threema alert notification", "from", tn.GatewayID, "to", tn.RecipientID)
 
-	expand, _ := TmplText(ctx, tn.tmpl, as, tn.log)
+	var tmplErr error
+	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
 
 	// Set up basic API request data
 	data := url.Values{}
@@ -120,10 +120,17 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	// Build message
-	title, _ := expand(DefaultMessageTitleEmbed)
-	m, _ := expand(`{{ template "default.message" . }}`)
-	message := fmt.Sprintf("%s%s\n\n*Message:*\n%s\n*URL:* %s\n", stateEmoji, title, m, path.Join(tn.tmpl.ExternalURL.String(), "/alerting/list"))
+	message := fmt.Sprintf("%s%s\n\n*Message:*\n%s\n*URL:* %s\n",
+		stateEmoji,
+		tmpl(DefaultMessageTitleEmbed),
+		tmpl(`{{ template "default.message" . }}`),
+		path.Join(tn.tmpl.ExternalURL.String(), "/alerting/list"),
+	)
 	data.Set("text", message)
+
+	if tmplErr != nil {
+		tn.log.Warn("failed to template Threema message", "err", tmplErr.Error())
+	}
 
 	cmd := &models.SendWebhookSync{
 		Url:        ThreemaGwBaseURL,

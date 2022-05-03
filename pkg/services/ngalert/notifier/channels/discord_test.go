@@ -101,41 +101,12 @@ func TestDiscordNotifier(t *testing.T) {
 			expInitError: `could not find webhook url property in settings`,
 		},
 		{
-			name: "Invalid webhook url template returns error",
-			settings: `{
-				"url": "{{ .NotAField }}"
-			}`,
-			expMsgError: errors.New("template: :1:3: executing \"\" at <.NotAField>: can't evaluate field NotAField in type *channels.ExtendedData"),
-		},
-		{
-			name: "Invalid content template includes error message but does not error",
+			name: "Invalid template returns error",
 			settings: `{
 				"url": "http://localhost",
 				"message": "{{ template \"invalid.template\" }}"
 			}`,
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
-					},
-				},
-			},
-			expMsg: map[string]interface{}{
-				"content": ExpansionErrorMessage,
-				"embeds": []interface{}{map[string]interface{}{
-					"color": 1.4037554e+07,
-					"footer": map[string]interface{}{
-						"icon_url": "https://grafana.com/assets/img/fav32.png",
-						"text":     "Grafana v" + setting.BuildVersion,
-					},
-					"title": "[FIRING:1]  (val1)",
-					"url":   "http://localhost/alerting/list",
-					"type":  "rich",
-				}},
-				"username": "Grafana",
-			},
-			expMsgError: nil,
+			expMsgError: errors.New("template: :1:12: executing \"\" at <{{template \"invalid.template\"}}>: template \"invalid.template\" not defined"),
 		},
 		{
 			name: "Default config with one alert, use default discord username",

@@ -102,18 +102,21 @@ func NewSensuGoNotifier(config *SensuGoConfig, ns notifications.WebhookSender, t
 func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	sn.log.Debug("Sending Sensu Go result")
 
-	expand, _ := TmplText(ctx, sn.tmpl, as, sn.log)
+	var tmplErr error
+	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
 
 	// Sensu Go alerts require an entity and a check. We set it to the user-specified
 	// value (optional), else we fallback and use the grafana rule anme  and ruleID.
-	entity, err := expand(sn.Entity)
-	if entity == "" || err != nil {
+	entity := tmpl(sn.Entity)
+	if entity == "" || tmplErr != nil {
 		entity = "default"
+		tmplErr = nil
 	}
 
-	check, err := expand(sn.Check)
-	if check == "" || err != nil {
+	check := tmpl(sn.Check)
+	if check == "" || tmplErr != nil {
 		check = "default"
+		tmplErr = nil
 	}
 
 	alerts := types.Alerts(as...)
@@ -123,18 +126,17 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		status = 2
 	}
 
-	namespace, err := expand(sn.Namespace)
-	if namespace == "" || err != nil {
+	namespace := tmpl(sn.Namespace)
+	if namespace == "" || tmplErr != nil {
 		namespace = "default"
+		tmplErr = nil
 	}
 
 	var handlers []string
 	if sn.Handler != "" {
-		h, _ := expand(sn.Handler)
-		handlers = []string{h}
+		handlers = []string{tmpl(sn.Handler)}
 	}
 
-	message, _ := expand(sn.Message)
 	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
 	bodyMsgType := map[string]interface{}{
 		"entity": map[string]interface{}{
@@ -150,13 +152,17 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 					"ruleURL": ruleURL,
 				},
 			},
-			"output":   message,
+			"output":   tmpl(sn.Message),
 			"issued":   timeNow().Unix(),
 			"interval": 86400,
 			"status":   status,
 			"handlers": handlers,
 		},
 		"ruleUrl": ruleURL,
+	}
+
+	if tmplErr != nil {
+		sn.log.Warn("failed to template sensugo message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsgType)

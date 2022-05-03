@@ -90,18 +90,14 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	kn.log.Debug("Notifying Kafka", "alert_state", state)
 
-	expand, _ := TmplText(ctx, kn.tmpl, as, kn.log)
+	var tmplErr error
+	tmpl, _ := TmplText(ctx, kn.tmpl, as, kn.log, &tmplErr)
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("alert_state", state)
-
-	title, _ := expand(DefaultMessageTitleEmbed)
-	bodyJSON.Set("description", title)
-
+	bodyJSON.Set("description", tmpl(DefaultMessageTitleEmbed))
 	bodyJSON.Set("client", "Grafana")
-
-	details, _ := expand(`{{ template "default.message" . }}`)
-	bodyJSON.Set("details", details)
+	bodyJSON.Set("details", tmpl(`{{ template "default.message" . }}`))
 
 	ruleURL := joinUrlPath(kn.tmpl.ExternalURL.String(), "/alerting/list", kn.log)
 	bodyJSON.Set("client_url", ruleURL)
@@ -123,12 +119,11 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return false, err
 	}
 
-	topic, err := expand(kn.Topic)
-	if err != nil {
-		kn.log.Error("failed to template Kafka Topic, cannot send alert", "err", err.Error())
-		return false, err
+	topicURL := strings.TrimRight(kn.Endpoint, "/") + "/topics/" + tmpl(kn.Topic)
+
+	if tmplErr != nil {
+		kn.log.Warn("failed to template Kafka message", "err", tmplErr.Error())
 	}
-	topicURL := strings.TrimRight(kn.Endpoint, "/") + "/topics/" + topic
 
 	cmd := &models.SendWebhookSync{
 		Url:        topicURL,

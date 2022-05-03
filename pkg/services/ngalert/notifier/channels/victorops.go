@@ -90,10 +90,11 @@ type VictoropsNotifier struct {
 func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	vn.log.Debug("Executing victorops notification", "notification", vn.Name)
 
-	expand, _ := TmplText(ctx, vn.tmpl, as, vn.log)
+	var tmplErr error
+	tmpl, _ := TmplText(ctx, vn.tmpl, as, vn.log, &tmplErr)
 
-	messageType, err := expand(vn.MessageType)
-	if messageType == "" || err != nil {
+	messageType := strings.ToUpper(tmpl(vn.MessageType))
+	if messageType == "" || tmplErr != nil {
 		messageType = victoropsAlertStateCritical
 	}
 	alerts := types.Alerts(as...)
@@ -107,25 +108,24 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	}
 
 	bodyJSON := simplejson.New()
-	bodyJSON.Set("message_type", strings.ToUpper(messageType))
+	bodyJSON.Set("message_type", messageType)
 	bodyJSON.Set("entity_id", groupKey.Hash())
-
-	title, _ := expand(DefaultMessageTitleEmbed)
-	bodyJSON.Set("entity_display_name", title)
-
+	bodyJSON.Set("entity_display_name", tmpl(DefaultMessageTitleEmbed))
 	bodyJSON.Set("timestamp", time.Now().Unix())
-
-	message, _ := expand(`{{ template "default.message" . }}`)
-	bodyJSON.Set("state_message", message)
-
+	bodyJSON.Set("state_message", tmpl(`{{ template "default.message" . }}`))
 	bodyJSON.Set("monitoring_tool", "Grafana v"+setting.BuildVersion)
 
 	ruleURL := joinUrlPath(vn.tmpl.ExternalURL.String(), "/alerting/list", vn.log)
 	bodyJSON.Set("alert_url", ruleURL)
 
-	u, err := expand(vn.URL)
-	if err != nil {
-		vn.log.Info("failed to template VictorOps URL", "err", err.Error(), "fallback", vn.URL)
+	if tmplErr != nil {
+		vn.log.Warn("failed to template VictorOps message", "err", tmplErr.Error())
+		tmplErr = nil
+	}
+
+	u := tmpl(vn.URL)
+	if tmplErr != nil {
+		vn.log.Info("failed to template VictorOps URL", "err", tmplErr.Error(), "fallback", vn.URL)
 		u = vn.URL
 	}
 

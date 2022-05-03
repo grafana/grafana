@@ -137,18 +137,18 @@ func ExtendData(data *template.Data, logger log.Logger) *ExtendedData {
 }
 
 // TmplText returns the extended template data, as well as a function that expands strings containing templating syntax.
-// If the function encounters an error during template expansion it will return a non-empty message along with the error.
-func TmplText(ctx context.Context, tmpl *template.Template, alerts []*types.Alert, l log.Logger) (func(string) (string, error), *ExtendedData) {
+// If the function encounters an error during template expansion it will return a non-empty message.
+func TmplText(ctx context.Context, tmpl *template.Template, alerts []*types.Alert, l log.Logger, tmplErr *error) (func(string) string, *ExtendedData) {
 	promTmplData := notify.GetTemplateData(ctx, tmpl, alerts, l)
 	data := ExtendData(promTmplData, l)
 
-	return func(name string) (string, error) {
+	return func(name string) (s string) {
 		s, err := tmpl.ExecuteTextString(name, data)
 		if err != nil {
-			l.Warn("failed to template message", "receiver", data.Receiver, "err", err.Error())
-			return ExpansionErrorMessage, err
+			*tmplErr = err
+			return ExpansionErrorMessage
 		}
-		return s, nil
+		return s
 	}, data
 }
 

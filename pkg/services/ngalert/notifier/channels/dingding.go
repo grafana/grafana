@@ -92,13 +92,14 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	// Refer: https://open-doc.dingtalk.com/docs/doc.htm?treeId=385&articleId=104972&docType=1#s9
 	messageURL := "dingtalk://dingtalkclient/page/link?" + q.Encode()
 
-	expand, _ := TmplText(ctx, dd.tmpl, as, dd.log)
+	var tmplErr error
+	tmpl, _ := TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
 
-	message, _ := expand(dd.Message)
-	title, _ := expand(DefaultMessageTitleEmbed)
+	message := tmpl(dd.Message)
+	title := tmpl(DefaultMessageTitleEmbed)
 
 	var bodyMsg map[string]interface{}
-	if msgType, _ := expand(dd.MsgType); msgType == "actionCard" {
+	if tmpl(dd.MsgType) == "actionCard" {
 		bodyMsg = map[string]interface{}{
 			"msgtype": "actionCard",
 			"actionCard": map[string]string{
@@ -121,9 +122,14 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		}
 	}
 
-	u, err := expand(dd.URL)
-	if err != nil {
-		dd.log.Warn("failed to template DingDing URL", "err", err.Error(), "fallback", dd.URL)
+	if tmplErr != nil {
+		dd.log.Warn("failed to template DingDing message", "err", tmplErr.Error())
+		tmplErr = nil
+	}
+
+	u := tmpl(dd.URL)
+	if tmplErr != nil {
+		dd.log.Warn("failed to template DingDing URL", "err", tmplErr.Error(), "fallback", dd.URL)
 		u = dd.URL
 	}
 
