@@ -167,7 +167,9 @@ const ResourcePicker = ({
             )}
             {!isLoading && rows.length === 0 && (
               <tr className={cx(styles.row)}>
-                <td className={styles.cell}>No resources found</td>
+                <td className={styles.cell} aria-live="polite">
+                  No resources found
+                </td>
               </tr>
             )}
             {!isLoading &&
