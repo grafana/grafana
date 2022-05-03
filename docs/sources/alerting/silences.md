@@ -3,6 +3,7 @@ title = "Silences"
 description = "Silences alert notifications"
 keywords = ["grafana", "alerting", "silence", "mute"]
 weight = 400
+aliases = ["/docs/grafana/latest/alerting/unified-alerting/silences/"]
 +++
 
 # Silences

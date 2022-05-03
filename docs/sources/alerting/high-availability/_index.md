@@ -1,5 +1,5 @@
 +++
-title = " About alerting high availability"
+title = " Alerting high availability"
 description = "High availability"
 keywords = ["grafana", "alerting", "tutorials", "ha", "high availability"]
 aliases = ["/docs/grafana/latest/alerting/unified-alerting/high-availability/"]

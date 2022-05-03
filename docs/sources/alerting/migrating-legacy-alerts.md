@@ -1,7 +1,8 @@
 +++
 title = "Migrating legacy alerts"
 description = "Enable Grafana alerts"
-weight = 113
+weight = 114
+aliases = ["/docs/grafana/latest/alerting/unified-alerting/opt-in/"]
 +++
 
 # Migrating legacy alerts to Grafana alerting

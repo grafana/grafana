@@ -1181,7 +1181,7 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 
 ## [unified_alerting]
 
-For more information about the Grafana alerts, refer to [About Grafana alerting]({{< relref "../alerting/about-grafana-alerting.md" >}}).
+For more information about the Grafana alerts, refer to [About Grafana alerting]({{< relref "../alerting/_index.md" >}}).
 
 ### enabled
 
