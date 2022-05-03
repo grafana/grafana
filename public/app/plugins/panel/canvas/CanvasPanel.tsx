@@ -62,6 +62,7 @@ export class CanvasPanel extends Component<Props, State> {
       this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt) => {
         // Remove current selection when entering edit mode for any panel in dashboard
         this.scene.clearCurrentSelection();
+        this.inlineEditButtonClose();
       })
     );
 
