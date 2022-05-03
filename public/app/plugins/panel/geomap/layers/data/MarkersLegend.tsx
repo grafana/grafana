@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { stylesFactory, useTheme2, VizLegendItem } from '@grafana/ui';
+import { useStyles2, VizLegendItem } from '@grafana/ui';
 import { DataFrame, formattedValueToString, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { config } from 'app/core/config';
@@ -23,8 +23,7 @@ export interface MarkersLegendProps {
 
 export function MarkersLegend(props: MarkersLegendProps) {
   const { layerName, styleConfig, layer } = props;
-  const theme = useTheme2();
-  const style = getStyles(theme);
+  const style = useStyles2(getStyles);
 
   const hoverEvent = useObservable(((layer as any)?.__state as MapLayerState)?.mouseEvents ?? of(undefined));
 
@@ -120,7 +119,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
   );
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   infoWrap: css`
     display: flex;
     flex-direction: column;
@@ -169,4 +168,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.bodySmall.fontSize};
     padding-top: 10px;
   `,
-}));
+});
