@@ -87,15 +87,15 @@ export const amRouteToFormAmRoute = (
 
   const [groupWaitValue, groupWaitValueType] = intervalToValueAndType(
     route.group_wait,
-    isRoot ? ['30', 's'] : defaultValueAndType
+    isRoot ? ['', 's'] : defaultValueAndType
   );
   const [groupIntervalValue, groupIntervalValueType] = intervalToValueAndType(
     route.group_interval,
-    isRoot ? ['5', 'm'] : defaultValueAndType
+    isRoot ? ['', 'm'] : defaultValueAndType
   );
   const [repeatIntervalValue, repeatIntervalValueType] = intervalToValueAndType(
     route.repeat_interval,
-    isRoot ? ['4', 'h'] : defaultValueAndType
+    isRoot ? ['', 'h'] : defaultValueAndType
   );
 
   const id = String(Math.random());
