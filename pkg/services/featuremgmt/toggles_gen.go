@@ -162,4 +162,8 @@ const (
 	// FlagPersistNotifications
 	// PoC Notifications page
 	FlagPersistNotifications = "persistNotifications"
+
+	// FlagDatasourceQueryMultiStatus
+	// Introduce HTTP 207 Multi Status for api/ds/query
+	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
 )
