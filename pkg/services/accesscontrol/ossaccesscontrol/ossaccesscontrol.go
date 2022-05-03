@@ -37,7 +37,7 @@ func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider acces
 		provider:       provider,
 		log:            log.New("accesscontrol"),
 		scopeResolvers: accesscontrol.NewScopeResolvers(),
-		roles:          accesscontrol.BuildMacroRoleDefinitions(),
+		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 	}
 
 	return s
@@ -141,9 +141,9 @@ func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user
 	permissions := make([]*accesscontrol.Permission, 0)
 
 	for _, builtin := range ac.GetUserBuiltInRoles(user) {
-		if macroRole, ok := ac.roles[builtin]; ok {
-			for i := range macroRole.Permissions {
-				permissions = append(permissions, &macroRole.Permissions[i])
+		if basicRole, ok := ac.roles[builtin]; ok {
+			for i := range basicRole.Permissions {
+				permissions = append(permissions, &basicRole.Permissions[i])
 			}
 		}
 	}
@@ -184,8 +184,8 @@ func (ac *OSSAccessControlService) RegisterFixedRoles(ctx context.Context) error
 // RegisterFixedRole saves a fixed role and assigns it to built-in roles
 func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) {
 	for br := range accesscontrol.BuiltInRolesWithParents(builtInRoles) {
-		if macroRole, ok := ac.roles[br]; ok {
-			macroRole.Permissions = append(macroRole.Permissions, role.Permissions...)
+		if basicRole, ok := ac.roles[br]; ok {
+			basicRole.Permissions = append(basicRole.Permissions, role.Permissions...)
 		} else {
 			ac.log.Error("Unknown builtin role", "builtInRole", br)
 		}

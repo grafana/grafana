@@ -45,7 +45,10 @@ type TExtractUiFindFromStateReturn = {
   uiFind: string | undefined;
 };
 
-const getStyles = stylesFactory(() => {
+const getStyles = stylesFactory((props: TVirtualizedTraceViewOwnProps) => {
+  const { topOfViewRefType } = props;
+  const position = topOfViewRefType === TopOfViewRefType.Explore ? 'fixed' : 'absolute';
+
   return {
     rowsWrapper: css`
       width: 100%;
@@ -60,7 +63,7 @@ const getStyles = stylesFactory(() => {
       align-items: center;
       width: 40px;
       height: 40px;
-      position: fixed;
+      position: ${position};
       bottom: 30px;
       right: 30px;
       z-index: 1;
@@ -73,6 +76,11 @@ type RowState = {
   span: TraceSpan;
   spanIndex: number;
 };
+
+export enum TopOfViewRefType {
+  Explore = 'Explore',
+  Panel = 'Panel',
+}
 
 type TVirtualizedTraceViewOwnProps = {
   currentViewRangeTime: [number, number];
@@ -104,7 +112,8 @@ type TVirtualizedTraceViewOwnProps = {
   focusedSpanId?: string;
   focusedSpanIdForSearch: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
-  topOfExploreViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRefType?: TopOfViewRefType;
 };
 
 type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
@@ -425,7 +434,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       };
     }
 
-    const styles = getStyles();
+    const styles = getStyles(this.props);
     return (
       <div className={styles.row} key={key} style={style} {...attrs}>
         <SpanBarRow
@@ -481,13 +490,14 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       createSpanLink,
       focusedSpanId,
       createFocusSpanLink,
+      topOfViewRefType,
     } = this.props;
     const detailState = detailStates.get(spanID);
     if (!trace || !detailState) {
       return null;
     }
     const color = getColorByKey(serviceName, theme);
-    const styles = getStyles();
+    const styles = getStyles(this.props);
     return (
       <div className={styles.row} key={key} style={{ ...style, zIndex: 1 }} {...attrs}>
         <SpanDetailRow
@@ -513,18 +523,19 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           createSpanLink={createSpanLink}
           focusedSpanId={focusedSpanId}
           createFocusSpanLink={createFocusSpanLink}
+          topOfViewRefType={topOfViewRefType}
         />
       </div>
     );
   }
 
   scrollToTop = () => {
-    const { topOfExploreViewRef } = this.props;
-    topOfExploreViewRef?.current?.scrollIntoView({ behavior: 'smooth' });
+    const { topOfViewRef } = this.props;
+    topOfViewRef?.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   render() {
-    const styles = getStyles();
+    const styles = getStyles(this.props);
     const { scrollElement } = this.props;
     return (
       <>
@@ -541,7 +552,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           windowScroller={false}
           scrollElement={scrollElement}
         />
-
         <ToolbarButton
           className={styles.scrollToTopButton}
           onClick={this.scrollToTop}
