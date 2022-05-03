@@ -9,7 +9,6 @@ import { RuleFormValues } from '../../types/rule-form';
 import { positiveDurationValidationPattern, durationValidationPattern } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 
-import { ConditionField } from './ConditionField';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { GrafanaConditionEvalWarning } from './GrafanaConditionEvalWarning';
 import { PreviewRule } from './PreviewRule';
@@ -46,7 +45,7 @@ const evaluateEveryValidationOptions: RegisterOptions = {
   },
 };
 
-export const GrafanaConditionsStep: FC = () => {
+export const GrafanaEvaluationBehavior: FC = () => {
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
   const {
@@ -58,8 +57,8 @@ export const GrafanaConditionsStep: FC = () => {
   const evaluateForId = 'eval-for-input';
 
   return (
-    <RuleEditorSection stepNo={3} title="Define alert conditions">
-      <ConditionField />
+    // TODO remove "and alert condition" for recording rules
+    <RuleEditorSection stepNo={2} title="Alert evaluation behavior">
       <Field
         label="Evaluate"
         description="Evaluation interval applies to every rule within a group. It can overwrite the interval of an existing alert rule."

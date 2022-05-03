@@ -34,6 +34,7 @@ const QueryEditor: React.FC<AzureMonitorQueryEditorProps> = ({
   datasource,
   onChange,
   onRunQuery: baseOnRunQuery,
+  data,
 }) => {
   const [errorMessage, setError] = useLastError();
   const onRunQuery = useMemo(() => debounce(baseOnRunQuery, 500), [baseOnRunQuery]);
@@ -59,6 +60,7 @@ const QueryEditor: React.FC<AzureMonitorQueryEditorProps> = ({
       <QueryTypeField query={query} onQueryChange={onQueryChange} />
 
       <EditorForQueryType
+        data={data}
         subscriptionId={subscriptionId}
         query={query}
         datasource={datasource}
@@ -86,6 +88,7 @@ interface EditorForQueryTypeProps extends Omit<AzureMonitorQueryEditorProps, 'on
 }
 
 const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
+  data,
   subscriptionId,
   query,
   datasource,
@@ -98,6 +101,7 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
       if (config.featureToggles.azureMonitorResourcePickerForMetrics) {
         return (
           <NewMetricsQueryEditor
+            data={data}
             query={query}
             datasource={datasource}
             onChange={onChange}
@@ -108,6 +112,7 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
       }
       return (
         <MetricsQueryEditor
+          data={data}
           subscriptionId={subscriptionId}
           query={query}
           datasource={datasource}

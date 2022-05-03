@@ -40,17 +40,17 @@ import kbn from 'app/core/utils/kbn';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
-import {
-  migrateCloudWatchQuery,
-  migrateMultipleStatsAnnotationQuery,
-  migrateMultipleStatsMetricsQuery,
-} from 'app/plugins/datasource/cloudwatch/migrations';
 import { CloudWatchMetricsQuery, LegacyAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
 import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
 import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
 
 import { labelsToFieldsTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
+import {
+  migrateCloudWatchQuery,
+  migrateMultipleStatsAnnotationQuery,
+  migrateMultipleStatsMetricsQuery,
+} from '../../../plugins/datasource/cloudwatch/migrations/dashboardMigrations';
 import { VariableHide } from '../../variables/types';
 
 import { DashboardModel } from './DashboardModel';

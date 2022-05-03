@@ -1,6 +1,7 @@
 package loki
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -39,11 +40,11 @@ func TestFormatName(t *testing.T) {
 func TestAdjustFrame(t *testing.T) {
 	t.Run("logs-frame metadata should be set correctly", func(t *testing.T) {
 		frame := data.NewFrame("",
-			data.NewField("labels", nil, []string{
-				`{"level":"info"}`,
-				`{"level":"error"}`,
-				`{"level":"error"}`,
-				`{"level":"info"}`,
+			data.NewField("labels", nil, []json.RawMessage{
+				json.RawMessage(`{"level":"info"}`),
+				json.RawMessage(`{"level":"error"}`),
+				json.RawMessage(`{"level":"error"}`),
+				json.RawMessage(`{"level":"info"}`),
 			}),
 			data.NewField("time", nil, []time.Time{
 				time.Date(2022, 1, 2, 3, 4, 5, 6, time.UTC),
@@ -86,7 +87,7 @@ func TestAdjustFrame(t *testing.T) {
 		require.Equal(t, "1641092765000000006_948c1a7d_A", idField.At(3))
 	})
 
-	t.Run("logs-frame id and string-time fields should be created", func(t *testing.T) {
+	t.Run("naming inside metric fields should be correct", func(t *testing.T) {
 		field1 := data.NewField("", nil, make([]time.Time, 0))
 		field2 := data.NewField("", nil, make([]float64, 0))
 		field2.Labels = data.Labels{"app": "Application", "tag2": "tag2"}

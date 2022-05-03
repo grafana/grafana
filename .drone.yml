@@ -656,7 +656,68 @@ volumes:
 ---
 depends_on: []
 kind: pipeline
-name: main-test
+name: main-test-frontend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.41/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.4
+  name: gen-version
+- commands:
+  - yarn install --immutable
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.4
+  name: yarn-install
+- commands:
+  - yarn run prettier:check
+  - yarn run lint
+  - yarn run i18n:compile
+  - yarn run typecheck
+  depends_on:
+  - yarn-install
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.5.4
+  name: lint-frontend
+- commands:
+  - yarn run ci:test-frontend
+  depends_on:
+  - yarn-install
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.5.4
+  name: test-frontend
+trigger:
+  branch: main
+  event:
+  - push
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+depends_on: []
+kind: pipeline
+name: main-test-backend
 node:
   type: no-parallel
 platform:
@@ -684,12 +745,6 @@ steps:
   - make gen-go
   image: grafana/build-container:1.5.4
   name: wire-install
-- commands:
-  - yarn install --immutable
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.4
-  name: yarn-install
 - commands:
   - ./bin/grabpl verify-drone
   depends_on:
@@ -723,17 +778,6 @@ steps:
   image: grafana/build-container:1.5.4
   name: lint-backend
 - commands:
-  - yarn run prettier:check
-  - yarn run lint
-  - yarn run i18n:compile
-  - yarn run typecheck
-  depends_on:
-  - yarn-install
-  environment:
-    TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.4
-  name: lint-frontend
-- commands:
   - ./bin/grabpl test-backend --edition oss
   depends_on:
   - wire-install
@@ -745,14 +789,6 @@ steps:
   - wire-install
   image: grafana/build-container:1.5.4
   name: test-backend-integration
-- commands:
-  - yarn run ci:test-frontend
-  depends_on:
-  - yarn-install
-  environment:
-    TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.4
-  name: test-frontend
 trigger:
   branch: main
   event:
@@ -1266,7 +1302,8 @@ volumes:
     medium: memory
 ---
 depends_on:
-- main-test
+- main-test-frontend
+- main-test-backend
 - main-build-e2e-publish
 - main-integration-tests
 kind: pipeline
@@ -1355,7 +1392,8 @@ trigger:
 type: docker
 ---
 depends_on:
-- main-test
+- main-test-frontend
+- main-test-backend
 - main-build-e2e-publish
 - main-integration-tests
 - main-windows
@@ -1409,7 +1447,8 @@ volumes:
   name: docker
 ---
 depends_on:
-- main-test
+- main-test-frontend
+- main-test-backend
 - main-build-e2e-publish
 - main-integration-tests
 - main-windows
@@ -4614,6 +4653,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 6be0c058bd66d0282afe37bd5af923f345ca71ec0fd874514ae08f759e23adfd
+hmac: 650895e4350d8423d0a77aa728ed07696ee301ad440b9982e336a05bb364cdf8
 
 ...
