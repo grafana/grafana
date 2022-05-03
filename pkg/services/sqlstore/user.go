@@ -621,7 +621,7 @@ func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQu
 			whereParams = append(whereParams, query.OrgId)
 		}
 
-		// user only sees the users in which it has user read access too
+		// user only sees the users for which it has read permissions
 		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) && query.SignedInUser != nil {
 			acFilter, err := ac.Filter(
 				query.SignedInUser,
