@@ -35,8 +35,11 @@ export const InlineEdit = ({ onClose }: Props) => {
   const [placement, setPlacement] = useState({ x: savedPlacement.x, y: savedPlacement.y });
 
   const onDragStop = (event: any, dragElement: any) => {
-    setPlacement({ x: dragElement.x, y: dragElement.y });
-    saveToStore(dragElement.x, dragElement.y, measurements.width, measurements.height);
+    let x = dragElement.x < 0 ? 0 : dragElement.x;
+    let y = dragElement.y < 0 ? 0 : dragElement.y;
+
+    setPlacement({ x: x, y: y });
+    saveToStore(x, y, measurements.width, measurements.height);
   };
 
   const onResizeStop = (event: SyntheticEvent<Element, Event>, data: ResizeCallbackData) => {
