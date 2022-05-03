@@ -6,33 +6,31 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
-	// SELECT uid FROM star JOIN dashboard ON star.dashboard_id = dashboard.id
-	// WHERE star.user_id = 1
-	type row struct {
-		Uid string
+	query := models.GetUserStarsQuery{
+		UserId: c.SignedInUser.UserId,
 	}
-	rows := make([]*row, 0, 1000)
 
-	err := hs.SQLStore.WithDbSession(c.Req.Context(), func(sess *sqlstore.DBSession) error {
-		sess.Table("star").
-			Join("INNER", "dashboard", "star.dashboard_id = dashboard.id").
-			Where("user_id = ?", c.UserId)
-		sess.Cols("uid")
-		return sess.Find(&rows)
-	})
+	err := hs.SQLStore.GetUserStars(c.Req.Context(), &query)
 	if err != nil {
-		return response.Error(500, "error finding stars", err)
+		return response.Error(500, "Failed to get user stars", err)
 	}
 
-	// Add all UIDs to star response
+	iuserstars := query.Result
 	uids := []string{}
-	for _, row := range rows {
-		uids = append(uids, row.Uid)
+	for dashboardId := range iuserstars {
+		query := &models.GetDashboardQuery{
+			Id:    dashboardId,
+			OrgId: c.OrgId,
+		}
+		err := hs.SQLStore.GetDashboard(c.Req.Context(), query)
+		if err != nil {
+			return response.Error(500, "Failed to get dashboard", err)
+		}
+		uids = append(uids, query.Result.Uid)
 	}
 	return response.JSON(200, uids)
 }
