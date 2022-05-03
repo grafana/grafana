@@ -6,7 +6,7 @@ import { Input } from '@grafana/ui';
 export interface Props {
   onChange: (alias: any) => void;
   value: string;
-  id: string;
+  id?: string;
 }
 
 export const Alias: FunctionComponent<Props> = ({ value = '', onChange, id }) => {
