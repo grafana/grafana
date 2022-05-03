@@ -71,15 +71,6 @@ const setup = () => {
 };
 
 describe('QueryEditor', () => {
-  it('should render component', async () => {
-    const { act } = renderer;
-    await act(async () => {
-      const props = setup();
-      const tree = renderer.create(<MetricsQueryEditor {...props} />).toJSON();
-      expect(tree).toMatchSnapshot();
-    });
-  });
-
   describe('should handle editor modes correctly', () => {
     it('when metric query type is metric search and editor mode is builder', async () => {
       await act(async () => {
