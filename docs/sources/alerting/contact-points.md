@@ -9,7 +9,7 @@ weight = 430
 
 Use contact points to define how your contacts are notified when an alert fires. A contact point can have one or more contact point types, for example, email, slack, webhook, and so on. When an alert fires, a notification is sent to all contact point types listed for a contact point. Optionally, use [message templates]({{< relref "./message-templating/_index.md" >}}) to customize notification messages for the contact point types.
 
-You can configure Grafana managed contact points as well as contact points for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./fundamentals/alertmanager.md" >}}).
+You can configure Grafana managed contact points as well as contact points for an [external Alertmanager data source]({{< relref "../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "./fundamentals/alertmanager.md" >}}).
 
 ## Add a contact point
 
@@ -60,7 +60,7 @@ To edit global configuration options for an external Alertmanager, like SMTP ser
 1. Add global configuration settings.
 1. Click **Save global config** to save your changes.
 
-> **Note** This option is available only for external Alertmanagers. You can configure some global options for Grafana contact types, like email settings, via [Grafana configuration]({{< relref "../../administration/configuration.md" >}}).
+> **Note** This option is available only for external Alertmanagers. You can configure some global options for Grafana contact types, like email settings, via [Grafana configuration]({{< relref "../administration/configuration.md" >}}).
 
 ## List of notifiers supported by Grafana
 

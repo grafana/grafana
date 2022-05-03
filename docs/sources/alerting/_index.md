@@ -14,7 +14,7 @@ Grafana alerting centralizes alerting information in a single, searchable view t
 - Create and manage Grafana Mimir and Loki managed alerts
 - View alerting information from Prometheus and Alertmanager compatible data sources
 
-Grafana alerting is enabled by default for new installations or  existing installs which do not have any alerts configured. For older installations, it is still an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature.
+Grafana alerting is enabled by default for new installations or  existing installs which do not have any alerts configured. For older installations, it is still an [opt-in]({{< relref "./opt-in.md" >}}) feature.
 
 | Release                  | Cloud         | Enterprise    | OSS                              |
 | ------------------------ | ------------- | ------------- | -------------------------------- |
@@ -27,4 +27,4 @@ Grafana alerting has four key components:
 - Notification policy - Set of matching and grouping criteria used to determine where and how frequently to send notifications.
 - Silences - Date and matching criteria used to silence notifications.
 
-To learn more, see [What's New with Grafana alerting]({{< relref "../alerting/unified-alerting/difference-old-new.md" >}}).
+To learn more, see [What's New with Grafana alerting]({{< relref "./difference-old-new.md" >}}).
