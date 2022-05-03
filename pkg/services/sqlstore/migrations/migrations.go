@@ -90,11 +90,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 
 	addEntityEventsTableMigration(mg)
 
-	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagPublicDashboards) {
-			addPublicDashboardMigration(mg)
-		}
-	}
+	addPublicDashboardMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
