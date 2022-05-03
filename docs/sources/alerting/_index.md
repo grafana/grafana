@@ -14,9 +14,9 @@ Grafana alerts allow you to learn about problems in your systems moments after t
 
 For new installations or existing installs without alerting configured, Grafana alerting is enabled by default.
 
-| Release                  | Cloud         | Enterprise    | OSS                              |
-| ------------------------ | ------------- | ------------- | -------------------------------- |
-| Grafana 9.0  | On by default | On by default | On by default                    |
+| Release     | Cloud         | Enterprise    | OSS           |
+| ----------- | ------------- | ------------- | ------------- |
+| Grafana 9.0 | On by default | On by default | On by default |
 
 - For existing OSS installations with legacy dashboard alerting, you can [opt-in]({{< relref "./opt-in.md" >}}) to Grafana alerting.
 - For Grafana Cloud instances using legacy cloud alerting, contact customer support to migrate to Grafana alerting.
@@ -34,4 +34,3 @@ Before you begin, we recommend that you familiarize yourself with some of the [f
 - [Add or edit an alert contact point]({{< relref "./contact-points.md" >}})
 - [Add or edit notification policies]({{< relref "./notifications/_index.md" >}})
 - [Add or edit silences]({{< relref "./silences.md" >}})
-  
