@@ -82,4 +82,5 @@ export interface AzureMetricDimension {
   dimension: string;
   operator: string;
   filter?: string;
+  filters?: string[];
 }

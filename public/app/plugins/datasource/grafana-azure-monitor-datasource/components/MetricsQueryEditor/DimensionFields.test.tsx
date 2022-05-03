@@ -45,7 +45,10 @@ describe('Azure Monitor QueryEditor', () => {
     mockQuery = appendDimensionFilter(mockQuery);
     expect(onQueryChange).toHaveBeenCalledWith({
       ...mockQuery,
-      azureMonitor: { ...mockQuery.azureMonitor, dimensionFilters: [{ dimension: '', operator: 'eq', filter: '*' }] },
+      azureMonitor: {
+        ...mockQuery.azureMonitor,
+        dimensionFilters: [{ dimension: '', operator: 'eq', filter: '*', filters: [] }],
+      },
     });
     render(
       <DimensionFields
@@ -65,7 +68,7 @@ describe('Azure Monitor QueryEditor', () => {
       ...mockQuery,
       azureMonitor: {
         ...mockQuery.azureMonitor,
-        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '*' }],
+        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '*', filters: [] }],
       },
     });
     expect(screen.queryByText('Test Dimension 1')).toBeInTheDocument();
@@ -150,7 +153,7 @@ describe('Azure Monitor QueryEditor', () => {
         dimensionOptions={dimensionOptions}
       />
     );
-    const labelSelect = await screen.findByText('Select value');
+    const labelSelect = await screen.findByText('Select or add value(s)');
     await user.click(labelSelect);
     const options = await screen.findAllByLabelText('Select option');
     expect(options).toHaveLength(1);
@@ -161,7 +164,7 @@ describe('Azure Monitor QueryEditor', () => {
     let mockQuery = createMockQuery();
     mockQuery.azureMonitor = {
       ...mockQuery.azureMonitor,
-      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: 'testlabel' }],
+      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '*', filters: ['testlabel'] }],
     };
 
     mockPanelData.series = [
@@ -191,14 +194,14 @@ describe('Azure Monitor QueryEditor', () => {
       />
     );
     await screen.findByText('testlabel');
-    const labelClear = await screen.findByLabelText('select-clear-value');
+    const labelClear = await screen.findByLabelText('Remove testlabel');
     await user.click(labelClear);
-    mockQuery = setDimensionFilterValue(mockQuery, 0, 'filter', '');
+    mockQuery = setDimensionFilterValue(mockQuery, 0, 'filters', []);
     expect(onQueryChange).toHaveBeenCalledWith({
       ...mockQuery,
       azureMonitor: {
         ...mockQuery.azureMonitor,
-        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '' }],
+        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '*', filters: [] }],
       },
     });
     mockPanelData.series = [
@@ -226,7 +229,7 @@ describe('Azure Monitor QueryEditor', () => {
         dimensionOptions={dimensionOptions}
       />
     );
-    const labelSelect = await screen.findByText('Select value');
+    const labelSelect = await screen.findByText('Select or add value(s)');
     await user.click(labelSelect);
     const options = await screen.findAllByLabelText('Select option');
     expect(options).toHaveLength(2);
