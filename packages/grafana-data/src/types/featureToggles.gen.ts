@@ -55,4 +55,5 @@ export interface FeatureToggles {
   explore2Dashboard?: boolean;
   tracing?: boolean;
   persistNotifications?: boolean;
+  datasourceQueryMultiStatus?: boolean;
 }
