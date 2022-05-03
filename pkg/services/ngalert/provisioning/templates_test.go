@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	mock "github.com/stretchr/testify/mock"
@@ -74,6 +75,59 @@ func TestTemplateService(t *testing.T) {
 			require.ErrorContains(t, err, "no alertmanager configuration")
 		})
 	})
+
+	t.Run("setting templates", func(t *testing.T) {
+		t.Run("rejects templates that fail validation", func(t *testing.T) {
+			sut := createTemplateServiceSut()
+			tmpl := definitions.MessageTemplate{
+				Name:     "",
+				Template: "",
+			}
+
+			err := sut.SetTemplate(context.Background(), 1, tmpl, models.ProvenanceAPI)
+
+			require.ErrorIs(t, err, ErrValidation)
+		})
+
+		t.Run("propagates errors", func(t *testing.T) {
+			t.Run("when unable to read config", func(t *testing.T) {
+				sut := createTemplateServiceSut()
+				tmpl := createMessageTemplate()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
+					Return(fmt.Errorf("failed"))
+
+				err := sut.SetTemplate(context.Background(), 1, tmpl, models.ProvenanceAPI)
+
+				require.Error(t, err)
+			})
+
+			t.Run("when config is invalid", func(t *testing.T) {
+				sut := createTemplateServiceSut()
+				tmpl := createMessageTemplate()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					setupGetConfig(models.AlertConfiguration{
+						AlertmanagerConfiguration: brokenConfig,
+					})
+
+				err := sut.SetTemplate(context.Background(), 1, tmpl, models.ProvenanceAPI)
+
+				require.ErrorContains(t, err, "failed to deserialize")
+			})
+
+			t.Run("when no AM config in current org", func(t *testing.T) {
+				sut := createTemplateServiceSut()
+				tmpl := createMessageTemplate()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
+					Return(nil)
+
+				err := sut.SetTemplate(context.Background(), 1, tmpl, models.ProvenanceAPI)
+
+				require.ErrorContains(t, err, "no alertmanager configuration")
+			})
+		})
+	})
 }
 
 func createTemplateServiceSut() *TemplateService {
@@ -82,6 +136,13 @@ func createTemplateServiceSut() *TemplateService {
 		prov:   NewFakeProvisioningStore(),
 		xact:   newNopTransactionManager(),
 		log:    log.NewNopLogger(),
+	}
+}
+
+func createMessageTemplate() definitions.MessageTemplate {
+	return definitions.MessageTemplate{
+		Name:     "test",
+		Template: "asdf",
 	}
 }
 
