@@ -46,7 +46,7 @@
   "types": "src/index.ts",
   "dependencies": {
     "@babel/core": "7.17.8",
-    "@babel/preset-env": "7.16.11",
+    "@babel/preset-env": "7.17.10",
     "@cypress/webpack-preprocessor": "5.11.1",
     "@grafana/e2e-selectors": "9.0.0-pre",
     "@grafana/tsconfig": "^1.2.0-rc1",
