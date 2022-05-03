@@ -7,7 +7,7 @@ aliases = ["/docs/grafana/latest/http_api/alerting/"]
 
 # Alerting API
 
-> **Note:** This topic is relevant for the [legacy dashboard alerts]({{< relref "../alerting/old-alerting/_index.md" >}}) only.
+> **Note:** This topic is relevant for the [legacy dashboard alerts](https://grafana.com/docs/grafana/latest/alerting/old-alerting/) only.
 
 You can find Grafana 8 alerts API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json). Also, refer to [Grafana 8 alerts documentation]({{< relref "../alerting/unified-alerting/_index.md" >}}) for details on how to create and manage new alerts.
 

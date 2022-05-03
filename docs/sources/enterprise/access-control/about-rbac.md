@@ -61,7 +61,7 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 - [Dashboards and folders]({{< relref "../../dashboards/_index.md" >}})
 - [Data sources]({{< relref "../../datasources/_index.md" >}})
 - [Explore]({{< relref "../../explore/_index.md" >}})
-- [Folders]({{< relref "../../dashboards/dashboard_folders.md" >}})
+- [Folders]({{< relref "../../dashboards/dashboard-folders.md" >}})
 - [LDAP]({{< relref "../../auth/ldap/_index.md" >}})
 - [Licenses]({{< relref "../license/_index.md" >}})
 - [Organizations]({{< relref "../../administration/manage-organizations/_index.md" >}})
