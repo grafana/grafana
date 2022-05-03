@@ -1,5 +1,5 @@
 +++
-title = "Alerts"
+title = "Grafana alerts"
 weight = 110
 +++
 
