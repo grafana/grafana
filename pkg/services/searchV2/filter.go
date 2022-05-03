@@ -56,7 +56,7 @@ func newPermissionFilter(resourceFilter ResourceFilter, log log.Logger) *Permiss
 func (q *PermissionFilter) logAccessDecision(decision bool, kind interface{}, id string, reason string, ctx ...interface{}) {
 	ctx = append(ctx, "kind", kind, "id", id, "reason", reason)
 	if decision {
-		q.log.Info("allowing access", ctx...)
+		q.log.Debug("allowing access", ctx...)
 	} else {
 		q.log.Info("denying access", ctx...)
 	}
