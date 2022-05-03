@@ -89,6 +89,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	}
 
 	addEntityEventsTableMigration(mg)
+
+	addPublicDashboardMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
