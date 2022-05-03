@@ -75,7 +75,7 @@ func (a *AccessControlDashboardGuardian) CanEdit() (bool, error) {
 	}
 
 	return a.evaluate(accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScope(a.dashboard.Uid)),
+		accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(a.dashboard.Uid)),
 		accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(a.parentFolderUID)),
 	))
 }
