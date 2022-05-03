@@ -4692,15 +4692,15 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "DatasourceID",
-            "name": "datasource_id",
+            "x-go-name": "PermissionID",
+            "name": "permissionId",
             "in": "path",
             "required": true
           },
           {
             "type": "string",
-            "x-go-name": "PermissionID",
-            "name": "permissionId",
+            "x-go-name": "DatasourceID",
+            "name": "datasource_id",
             "in": "path",
             "required": true
           }
@@ -4743,6 +4743,9 @@
         ],
         "responses": {
           "200": {
+            "$ref": "#/responses/queryDataResponse"
+          },
+          "207": {
             "$ref": "#/responses/queryDataResponse"
           },
           "400": {
@@ -8259,14 +8262,6 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
-          },
-          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -8274,6 +8269,14 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -8307,16 +8310,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           }
@@ -10534,6 +10537,9 @@
     "ApiKeyDTO": {
       "type": "object",
       "properties": {
+        "accessControl": {
+          "$ref": "#/definitions/Metadata"
+        },
         "expiration": {
           "type": "string",
           "format": "date-time",
@@ -10555,7 +10561,7 @@
           "x-go-name": "Role"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "ApiRuleNode": {
       "type": "object",
@@ -13632,7 +13638,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "x-go-name": "Id"
+          "x-go-name": "ID"
         },
         "target": {
           "type": "string",
@@ -13647,7 +13653,7 @@
           "x-go-name": "Url"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
     },
     "NavbarPreference": {
       "type": "object",
@@ -14739,7 +14745,7 @@
           "x-go-name": "HomeTab"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
     },
     "Receiver": {
       "type": "object",
