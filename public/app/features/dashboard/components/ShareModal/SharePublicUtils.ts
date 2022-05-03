@@ -1,8 +1,9 @@
 import memoizeOne from 'memoize-one';
+
 import { getBackendSrv } from '@grafana/runtime';
-import { dispatch } from 'app/store/store';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
+import { dispatch } from 'app/store/store';
 
 export interface SharingConfiguration {
   dashboardUid: string;
@@ -16,9 +17,12 @@ interface ApiSharingResp {
 
 export const savePublicConfig = memoizeOne(async function (conf: SharingConfiguration) {
   try {
-    const resp: ApiSharingResp = await getBackendSrv().post(`/api/dashboards/uid/${conf.dashboardUid}/sharing`, {
-      isPublic: conf.isPublic,
-    });
+    const resp: ApiSharingResp = await getBackendSrv().post(
+      `/api/dashboards/uid/${conf.dashboardUid}/public_dashboard_config`,
+      {
+        isPublic: conf.isPublic,
+      }
+    );
     dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
     return resp.isPublic;
   } catch (err) {
