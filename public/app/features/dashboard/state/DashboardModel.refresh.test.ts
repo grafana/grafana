@@ -1,9 +1,10 @@
-import { DashboardModel } from './DashboardModel';
+import { afterEach, beforeEach } from '../../../../test/lib/common';
 import { appEvents } from '../../../core/core';
 import { VariablesChanged } from '../../variables/types';
-import { PanelModel } from './PanelModel';
 import { getTimeSrv, setTimeSrv } from '../services/TimeSrv';
-import { afterEach, beforeEach } from '../../../../test/lib/common';
+
+import { DashboardModel } from './DashboardModel';
+import { PanelModel } from './PanelModel';
 
 function getTestContext({
   usePanelInEdit,

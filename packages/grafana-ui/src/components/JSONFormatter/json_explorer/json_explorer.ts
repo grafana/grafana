@@ -1,9 +1,9 @@
 // Based on work https://github.com/mohsen1/json-formatter-js
 // License MIT, Copyright (c) 2015 Mohsen Azimi
 
-import { isObject, getObjectName, getType, getValuePreview, cssClass, createElement } from './helpers';
-
 import { isNumber } from 'lodash';
+
+import { isObject, getObjectName, getType, getValuePreview, cssClass, createElement } from './helpers';
 
 const DATE_STRING_REGEX =
   /(^\d{1,4}[\.|\\/|-]\d{1,2}[\.|\\/|-]\d{1,4})(\s*(?:0?[1-9]:[0-5]|1(?=[012])\d:[0-5])\d\s*[ap]m)?$/;

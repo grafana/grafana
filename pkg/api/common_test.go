@@ -17,11 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -34,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/searchusers"
@@ -381,6 +380,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		SQLStore:           store,
 		searchUsersService: searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
 		dashboardService:   dashboardservice.ProvideDashboardService(cfg, dashboardsStore, nil, features, accesscontrolmock.NewPermissionsServicesMock()),
+		preferenceService:  preftest.NewPreferenceServiceFake(),
 	}
 
 	// Defining the accesscontrol service has to be done before registering routes
@@ -394,8 +394,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		require.NoError(t, err)
 		hs.teamPermissionsService = teamPermissionService
 	} else {
-		ac, errInitAc := ossaccesscontrol.ProvideService(hs.Features, &usagestats.UsageStatsMock{T: t},
-			database.ProvideService(db), routing.NewRouteRegister())
+		ac, errInitAc := ossaccesscontrol.ProvideService(hs.Features, database.ProvideService(db), routing.NewRouteRegister())
 		require.NoError(t, errInitAc)
 		hs.AccessControl = ac
 		// Perform role registration
@@ -419,7 +418,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		c.Map(initCtx)
 	})
 
-	m.Use(acmiddleware.LoadPermissionsMiddleware(hs.AccessControl))
+	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.AccessControl))
 
 	// Register all routes
 	hs.registerRoutes()

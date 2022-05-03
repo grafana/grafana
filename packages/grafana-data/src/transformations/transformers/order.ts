@@ -1,8 +1,10 @@
-import { DataTransformerID } from './ids';
-import { DataTransformerInfo } from '../../types/transformations';
-import { DataFrame, Field } from '../../types';
-import { getFieldDisplayName } from '../../field/fieldState';
 import { map } from 'rxjs/operators';
+
+import { getFieldDisplayName } from '../../field/fieldState';
+import { DataFrame, Field } from '../../types';
+import { DataTransformerInfo } from '../../types/transformations';
+
+import { DataTransformerID } from './ids';
 
 export interface OrderFieldsTransformerOptions {
   indexByName: Record<string, number>;

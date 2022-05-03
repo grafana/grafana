@@ -1,3 +1,26 @@
+import { EMPTY, interval, Observable, of } from 'rxjs';
+import { thunkTester } from 'test/core/thunk/thunkTester';
+
+import {
+  ArrayVector,
+  DataFrame,
+  DataQuery,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceJsonData,
+  DataSourceWithLogsVolumeSupport,
+  LoadingState,
+  MutableDataFrame,
+  PanelData,
+  RawTimeRange,
+} from '@grafana/data';
+import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
+
+import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { configureStore } from '../../../store/configureStore';
+import { setTimeSrv } from '../../dashboard/services/TimeSrv';
+
+import { createDefaultInitialState } from './helpers';
 import {
   addQueryRowAction,
   addResultsToCache,
@@ -12,28 +35,9 @@ import {
   scanStopAction,
   storeLogsVolumeDataProviderAction,
 } from './query';
-import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
-import { EMPTY, interval, Observable, of } from 'rxjs';
-import {
-  ArrayVector,
-  DataFrame,
-  DataQuery,
-  DataQueryResponse,
-  DataSourceApi,
-  DataSourceJsonData,
-  DataSourceWithLogsVolumeSupport,
-  LoadingState,
-  MutableDataFrame,
-  PanelData,
-  RawTimeRange,
-} from '@grafana/data';
-import { thunkTester } from 'test/core/thunk/thunkTester';
 import { makeExplorePaneState } from './utils';
-import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { configureStore } from '../../../store/configureStore';
-import { setTimeSrv } from '../../dashboard/services/TimeSrv';
+
 import Mock = jest.Mock;
-import { createDefaultInitialState } from './helpers';
 
 const { testRange, defaultInitialState } = createDefaultInitialState();
 

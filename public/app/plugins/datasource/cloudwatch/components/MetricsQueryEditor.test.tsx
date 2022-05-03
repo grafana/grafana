@@ -1,13 +1,16 @@
-import React from 'react';
-import renderer from 'react-test-renderer';
 import { render, screen, act } from '@testing-library/react';
+import React from 'react';
 import selectEvent from 'react-select-event';
+import renderer from 'react-test-renderer';
+
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { MetricsQueryEditor, normalizeQuery, Props } from './MetricsQueryEditor';
-import { CloudWatchDatasource } from '../datasource';
+
 import { CustomVariableModel, initialVariableModelState } from '../../../../features/variables/types';
+import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../types';
+
+import { MetricsQueryEditor, Props } from './MetricsQueryEditor';
 
 const setup = () => {
   const instanceSettings = {
@@ -73,64 +76,6 @@ describe('QueryEditor', () => {
       const props = setup();
       const tree = renderer.create(<MetricsQueryEditor {...props} />).toJSON();
       expect(tree).toMatchSnapshot();
-    });
-  });
-
-  it('normalizes query on mount', async () => {
-    const { act } = renderer;
-    const props = setup();
-    // This does not actually even conform to the prop type but this happens on initialisation somehow
-    props.query = {
-      queryMode: 'Metrics',
-      apiMode: 'Metrics',
-      refId: '',
-      expression: '',
-      matchExact: true,
-      metricQueryType: MetricQueryType.Search,
-      metricEditorMode: MetricEditorMode.Builder,
-    } as any;
-    await act(async () => {
-      renderer.create(<MetricsQueryEditor {...props} />);
-    });
-    expect((props.onChange as jest.Mock).mock.calls[0][0]).toEqual({
-      namespace: '',
-      metricName: '',
-      expression: '',
-      sqlExpression: '',
-      dimensions: {},
-      region: 'default',
-      id: '',
-      alias: '',
-      statistic: 'Average',
-      period: '',
-      queryMode: 'Metrics',
-      apiMode: 'Metrics',
-      refId: '',
-      matchExact: true,
-      metricQueryType: MetricQueryType.Search,
-      metricEditorMode: MetricEditorMode.Builder,
-    });
-  });
-
-  describe('should use correct default values', () => {
-    it('should normalize query with default values', () => {
-      expect(normalizeQuery({ refId: '42' } as any)).toEqual({
-        namespace: '',
-        metricName: '',
-        expression: '',
-        sqlExpression: '',
-        dimensions: {},
-        region: 'default',
-        id: '',
-        alias: '',
-        statistic: 'Average',
-        matchExact: true,
-        period: '',
-        queryMode: 'Metrics',
-        refId: '42',
-        metricQueryType: MetricQueryType.Search,
-        metricEditorMode: MetricEditorMode.Builder,
-      });
     });
   });
 

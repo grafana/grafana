@@ -1,3 +1,6 @@
+import { descending, deviation } from 'd3';
+import { partition, groupBy } from 'lodash';
+
 import {
   ArrayDataFrame,
   ArrayVector,
@@ -20,8 +23,8 @@ import {
   DataFrameType,
 } from '@grafana/data';
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
-import { partition, groupBy } from 'lodash';
-import { descending, deviation } from 'd3';
+
+import { renderLegendFormat } from './legend';
 import {
   ExemplarTraceIdDestination,
   isExemplarData,
@@ -34,7 +37,6 @@ import {
   PromValue,
   TransformOptions,
 } from './types';
-import { renderLegendFormat } from './legend';
 
 const POSITIVE_INFINITY_SAMPLE_VALUE = '+Inf';
 const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';

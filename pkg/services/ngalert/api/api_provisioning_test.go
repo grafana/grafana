@@ -36,7 +36,20 @@ func TestProvisioningApi(t *testing.T) {
 		require.Equal(t, 202, response.Status())
 	})
 
-	// TODO: we have not lifted out validation yet. Test that we are returning errors properly once validation has been lifted.
+	t.Run("when new policy tree is invalid", func(t *testing.T) {
+		t.Run("POST policies returns 400", func(t *testing.T) {
+			sut := createProvisioningSrvSut()
+			sut.policies = &fakeRejectingNotificationPolicyService{}
+			rc := createTestRequestCtx()
+			tree := apimodels.Route{}
+
+			response := sut.RoutePostPolicyTree(&rc, tree)
+
+			require.Equal(t, 400, response.Status())
+			expBody := `{"error":"invalid object specification: invalid policy tree","message":"invalid object specification: invalid policy tree"}`
+			require.Equal(t, expBody, string(response.Body()))
+		})
+	})
 
 	t.Run("when org has no AM config", func(t *testing.T) {
 		t.Run("GET policies returns 404", func(t *testing.T) {
@@ -120,14 +133,13 @@ func newFakeNotificationPolicyService() *fakeNotificationPolicyService {
 	}
 }
 
-func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (provisioning.EmbeddedRoutingTree, error) {
+func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (apimodels.Route, error) {
 	if orgID != 1 {
-		return provisioning.EmbeddedRoutingTree{}, store.ErrNoAlertmanagerConfiguration
+		return apimodels.Route{}, store.ErrNoAlertmanagerConfiguration
 	}
-	return provisioning.EmbeddedRoutingTree{
-		Route:      f.tree,
-		Provenance: f.prov,
-	}, nil
+	result := f.tree
+	result.Provenance = f.prov
+	return result, nil
 }
 
 func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p domain.Provenance) error {
@@ -141,10 +153,20 @@ func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, or
 
 type fakeFailingNotificationPolicyService struct{}
 
-func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (provisioning.EmbeddedRoutingTree, error) {
-	return provisioning.EmbeddedRoutingTree{}, fmt.Errorf("something went wrong")
+func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (apimodels.Route, error) {
+	return apimodels.Route{}, fmt.Errorf("something went wrong")
 }
 
 func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p domain.Provenance) error {
 	return fmt.Errorf("something went wrong")
+}
+
+type fakeRejectingNotificationPolicyService struct{}
+
+func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (apimodels.Route, error) {
+	return apimodels.Route{}, nil
+}
+
+func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree apimodels.Route, p domain.Provenance) error {
+	return fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
 }

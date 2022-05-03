@@ -1,8 +1,10 @@
 import React, { useRef, useState, useLayoutEffect } from 'react';
-import { selectors } from '@grafana/e2e-selectors';
 import { useClickAway } from 'react-use';
-import { Portal } from '../Portal/Portal';
+
+import { selectors } from '@grafana/e2e-selectors';
+
 import { Menu } from '../Menu/Menu';
+import { Portal } from '../Portal/Portal';
 
 export interface ContextMenuProps {
   /** Starting horizontal position for the menu */

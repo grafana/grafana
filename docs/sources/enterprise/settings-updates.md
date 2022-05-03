@@ -85,7 +85,7 @@ settings updates. If there are updates, it reloads the Grafana services affected
 The background job synchronizes settings between instances in high availability set-ups. So, after you perform some changes through the
 HTTP API, then the other instances are synchronized through the database and the background job.
 
-## Control access with fine-grained access control
+## Control access with role-based access control
 
-If you have [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, you can control who can read or update settings.
+If you have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, you can control who can read or update settings.
 Refer to the [Admin API]({{< relref "../http_api/admin.md#update-settings" >}}) for more information.

@@ -1,6 +1,6 @@
-import { DataQuery } from './query';
-import { InterpolateFunction } from './panel';
 import { ExplorePanelsState } from './explore';
+import { InterpolateFunction } from './panel';
+import { DataQuery } from './query';
 
 /**
  * Callback info for DataLink click events

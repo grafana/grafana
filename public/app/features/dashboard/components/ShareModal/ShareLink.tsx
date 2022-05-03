@@ -1,11 +1,13 @@
 import React, { PureComponent } from 'react';
+
+import { AppEvents, SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, RadioButtonGroup, Switch } from '@grafana/ui';
-import { AppEvents, SelectableValue } from '@grafana/data';
-import { buildImageUrl, buildShareUrl } from './utils';
-import { appEvents } from 'app/core/core';
 import config from 'app/core/config';
+import { appEvents } from 'app/core/core';
+
 import { ShareModalTabProps } from './types';
+import { buildImageUrl, buildShareUrl } from './utils';
 
 const themeOptions: Array<SelectableValue<string>> = [
   { label: 'Current', value: 'current' },

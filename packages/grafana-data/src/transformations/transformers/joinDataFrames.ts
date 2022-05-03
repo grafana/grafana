@@ -1,8 +1,8 @@
+import { getTimeField, sortDataFrame } from '../../dataframe';
 import { DataFrame, Field, FieldMatcher, FieldType, Vector } from '../../types';
 import { ArrayVector } from '../../vector';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
-import { getTimeField, sortDataFrame } from '../../dataframe';
 
 export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
   const { timeField } = getTimeField(data[0]);
@@ -49,13 +49,6 @@ export interface JoinOptions {
   keep?: FieldMatcher;
 
   /**
-   * When the result is a single frame, this will to a quick check to see if the values are sorted,
-   * and sort if necessary.  If the first/last values are in order the whole vector is assumed to be
-   * sorted
-   */
-  enforceSort?: boolean;
-
-  /**
    * @internal -- used when we need to keep a reference to the original frame/field index
    */
   keepOriginIndices?: boolean;
@@ -63,6 +56,21 @@ export interface JoinOptions {
 
 function getJoinMatcher(options: JoinOptions): FieldMatcher {
   return options.joinBy ?? pickBestJoinField(options.frames);
+}
+
+/**
+ * @internal
+ */
+export function maybeSortFrame(frame: DataFrame, fieldIdx: number) {
+  if (fieldIdx >= 0) {
+    let sortByField = frame.fields[fieldIdx];
+
+    if (sortByField.type !== FieldType.string && !isLikelyAscendingVector(sortByField.values)) {
+      frame = sortDataFrame(frame, fieldIdx);
+    }
+  }
+
+  return frame;
 }
 
 /**
@@ -109,12 +117,8 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
       }
     }
 
-    if (options.enforceSort) {
-      if (joinIndex >= 0) {
-        if (!isLikelyAscendingVector(frameCopy.fields[joinIndex].values)) {
-          frameCopy = sortDataFrame(frameCopy, joinIndex);
-        }
-      }
+    if (joinIndex >= 0) {
+      frameCopy = maybeSortFrame(frameCopy, joinIndex);
     }
 
     if (options.keep) {

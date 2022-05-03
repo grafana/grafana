@@ -1,8 +1,7 @@
 import uPlot, { Axis, AlignedData, Scale } from 'uplot';
-import { intersects, pointWithin, Quadtree, Rect } from './quadtree';
-import { distribute, SPACE_BETWEEN } from './distribute';
+
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
-import { measureText, PlotTooltipInterpolator } from '@grafana/ui';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import {
   StackingMode,
   VisibilityMode,
@@ -11,9 +10,13 @@ import {
   VizTextDisplayOptions,
   VizLegendOptions,
 } from '@grafana/schema';
-import { preparePlotData2, StackingGroup } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
-import { alpha } from '@grafana/data/src/themes/colorManipulator';
+import { measureText, PlotTooltipInterpolator } from '@grafana/ui';
 import { formatTime } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
+
+import { preparePlotData2, StackingGroup } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
+
+import { distribute, SPACE_BETWEEN } from './distribute';
+import { intersects, pointWithin, Quadtree, Rect } from './quadtree';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;

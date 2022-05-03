@@ -1,3 +1,10 @@
+import { PanelModel } from 'app/features/dashboard/state';
+
+import { variableAdapters } from '../adapters';
+import { createCustomVariableAdapter } from '../custom/adapter';
+import { createDataSourceVariableAdapter } from '../datasource/adapter';
+import { createQueryVariableAdapter } from '../query/adapter';
+
 import {
   flattenPanels,
   getAffectedPanelIdsForVariable,
@@ -5,11 +12,6 @@ import {
   getDependenciesForVariable,
   getPropsWithVariable,
 } from './utils';
-import { variableAdapters } from '../adapters';
-import { createDataSourceVariableAdapter } from '../datasource/adapter';
-import { createCustomVariableAdapter } from '../custom/adapter';
-import { createQueryVariableAdapter } from '../query/adapter';
-import { PanelModel } from 'app/features/dashboard/state';
 
 describe('getPropsWithVariable', () => {
   it('when called it should return the correct graph', () => {
