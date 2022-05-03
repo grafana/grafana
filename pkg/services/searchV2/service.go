@@ -120,7 +120,7 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 	}
 
 	reader := s.dashboardIndex.reader[orgId]
-	if reader != nil && q.Query != "" { // frontend initalizes with empty string
+	if reader != nil && q.Query != "" { // frontend initializes with empty string
 		return doBlugeQuery(ctx, s, reader, filter, q)
 	}
 
