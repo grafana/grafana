@@ -4,6 +4,7 @@ description = "What's New with Grafana alerts"
 keywords = ["grafana", "alerting", "guide"]
 aliases = ["/docs/grafana/latest/alerting/unified-alerting/difference-old-new/"]
 weight = 108
+draft = true
 +++
 
 # What's new in Grafana alerting
