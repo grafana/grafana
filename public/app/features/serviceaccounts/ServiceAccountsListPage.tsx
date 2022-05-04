@@ -1,10 +1,18 @@
+import { css, cx } from '@emotion/css';
+import pluralize from 'pluralize';
 import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { css, cx } from '@emotion/css';
 
+import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import Page from 'app/core/components/Page/Page';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { contextSrv } from 'app/core/core';
+import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState, ServiceAccountDTO, AccessControlAction } from 'app/types';
+
+import ServiceAccountListItem from './ServiceAccountsListItem';
 import {
   changeFilter,
   changeQuery,
@@ -14,13 +22,6 @@ import {
   updateServiceAccount,
   setServiceAccountToRemove,
 } from './state/actions';
-import { getNavModel } from 'app/core/selectors/navModel';
-import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { contextSrv } from 'app/core/core';
-import pluralize from 'pluralize';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import ServiceAccountListItem from './ServiceAccountsListItem';
 
 interface OwnProps {}
 

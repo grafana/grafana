@@ -18,4 +18,24 @@ func addSecretsMigration(mg *migrator.Migrator) {
 	}
 
 	mg.AddMigration("create data_keys table", migrator.NewAddTableMigration(dataKeysV1))
+
+	secretsV1 := migrator.Table{
+		Name: "secrets",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "type", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "value", Type: migrator.DB_Text, Nullable: true},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"org_id"}},
+			{Cols: []string{"org_id", "namespace"}},
+			{Cols: []string{"org_id", "namespace", "type"}, Type: migrator.UniqueIndex},
+		},
+	}
+
+	mg.AddMigration("create secrets table", migrator.NewAddTableMigration(secretsV1))
 }

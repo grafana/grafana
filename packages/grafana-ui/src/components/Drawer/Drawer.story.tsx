@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
 import { Story } from '@storybook/react';
+import React, { useState } from 'react';
+
 import { Button, Drawer, Tab, TabsBar } from '@grafana/ui';
+
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import mdx from './Drawer.mdx';
+
 import { Props } from './Drawer';
+import mdx from './Drawer.mdx';
 
 export default {
   title: 'Overlays/Drawer',

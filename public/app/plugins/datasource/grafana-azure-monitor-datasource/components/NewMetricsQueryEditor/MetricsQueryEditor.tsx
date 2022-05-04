@@ -1,20 +1,25 @@
 import React from 'react';
+
+import { PanelData } from '@grafana/data/src/types';
 import { InlineFieldRow } from '@grafana/ui';
+
+import type Datasource from '../../datasource';
+import type { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
 import AggregationField from '../MetricsQueryEditor/AggregationField';
+import DimensionFields from '../MetricsQueryEditor/DimensionFields';
+import LegendFormatField from '../MetricsQueryEditor/LegendFormatField';
 import MetricNameField from '../MetricsQueryEditor/MetricNameField';
 import MetricNamespaceField from '../MetricsQueryEditor/MetricNamespaceField';
 import TimeGrainField from '../MetricsQueryEditor/TimeGrainField';
-import DimensionFields from '../MetricsQueryEditor/DimensionFields';
 import TopField from '../MetricsQueryEditor/TopField';
-import LegendFormatField from '../MetricsQueryEditor/LegendFormatField';
+import { setResource } from '../MetricsQueryEditor/setQueryValue';
 import ResourceField from '../ResourceField';
 import { ResourceRowType } from '../ResourcePicker/types';
-import type Datasource from '../../datasource';
-import type { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
+
 import { useMetricNames, useMetricNamespaces, useMetricMetadata } from './dataHooks';
-import { setResource } from '../MetricsQueryEditor/setQueryValue';
 
 interface MetricsQueryEditorProps {
+  data: PanelData | undefined;
   query: AzureMonitorQuery;
   datasource: Datasource;
   onChange: (newQuery: AzureMonitorQuery) => void;
@@ -23,6 +28,7 @@ interface MetricsQueryEditorProps {
 }
 
 const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
+  data,
   query,
   datasource,
   variableOptionGroup,
@@ -85,6 +91,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
         />
       </InlineFieldRow>
       <DimensionFields
+        data={data}
         query={query}
         datasource={datasource}
         variableOptionGroup={variableOptionGroup}

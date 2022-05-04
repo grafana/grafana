@@ -1,15 +1,16 @@
 import { rangeUtil } from '@grafana/data';
 
-import { KeyedVariableIdentifier } from '../state/types';
 import { ThunkResult } from '../../../types';
-import { createIntervalOptions } from './reducer';
-import { validateVariableSelectionState } from '../state/actions';
-import { getVariable } from '../state/selectors';
-import { IntervalVariableModel } from '../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
+import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { getVariable } from '../state/selectors';
+import { KeyedVariableIdentifier } from '../state/types';
+import { IntervalVariableModel } from '../types';
 import { toVariablePayload } from '../utils';
+
+import { createIntervalOptions } from './reducer';
 
 export const updateIntervalVariableOptions =
   (identifier: KeyedVariableIdentifier): ThunkResult<void> =>

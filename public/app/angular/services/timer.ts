@@ -1,6 +1,7 @@
-import { without, each } from 'lodash';
-import coreModule from 'app/angular/core_module';
 import { ITimeoutService } from 'angular';
+import { without, each } from 'lodash';
+
+import coreModule from 'app/angular/core_module';
 
 // This service really just tracks a list of $timeout promises to give us a
 // method for canceling them all when we need to

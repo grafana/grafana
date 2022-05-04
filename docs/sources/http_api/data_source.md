@@ -7,7 +7,7 @@ aliases = ["/docs/grafana/latest/http_api/datasource/"]
 
 # Data source API
 
-> If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
+> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
 > Refer to specific resources to understand what permissions are required.
 
 ## Get all data sources
@@ -690,6 +690,16 @@ In addition, specific properties of each data source should be added in a reques
   }
 }
 ```
+
+#### Status codes
+
+| Code | Description                                                                                                                                                                      |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 200  | All data source queries returned a successful response.                                                                                                                          |
+| 400  | Bad request due to invalid JSON, missing content type, missing or invalid fields, etc. Or one or more data source queries were unsuccessful. Refer to the body for more details. |
+| 403  | Access denied.                                                                                                                                                                   |
+| 404  | Either the data source or plugin required to fulfil the request could not be found.                                                                                              |
+| 500  | Unexpected error. Refer to the body and/or server logs for more details.                                                                                                         |
 
 ## Deprecated resources
 

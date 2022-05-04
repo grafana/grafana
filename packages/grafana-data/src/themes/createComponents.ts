@@ -39,6 +39,12 @@ export interface ThemeComponents {
   sidemenu: {
     width: number;
   };
+  menuTabs: {
+    height: number;
+  };
+  horizontalDrawer: {
+    defaultHeight: number;
+  };
 }
 
 export function createComponents(colors: ThemeColors, shadows: ThemeShadows): ThemeComponents {
@@ -81,6 +87,12 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     },
     sidemenu: {
       width: 48,
+    },
+    menuTabs: {
+      height: 41,
+    },
+    horizontalDrawer: {
+      defaultHeight: 400,
     },
   };
 }

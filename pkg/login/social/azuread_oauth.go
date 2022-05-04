@@ -124,6 +124,10 @@ func extractEmail(claims azureClaims) string {
 
 func extractRole(claims azureClaims, autoAssignRole string, strictMode bool) models.RoleType {
 	if len(claims.Roles) == 0 {
+		if strictMode {
+			return models.RoleType("")
+		}
+
 		return models.RoleType(autoAssignRole)
 	}
 

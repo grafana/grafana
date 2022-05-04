@@ -1,4 +1,5 @@
 import { Field, FieldType } from '../types';
+
 import { FunctionalVector } from './FunctionalVector';
 
 /**

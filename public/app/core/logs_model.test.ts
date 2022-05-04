@@ -1,3 +1,5 @@
+import { Observable } from 'rxjs';
+
 import {
   ArrayVector,
   DataFrame,
@@ -14,6 +16,9 @@ import {
   MutableDataFrame,
   toDataFrame,
 } from '@grafana/data';
+
+import { MockObservableDataSourceApi } from '../../test/mocks/datasource_srv';
+
 import {
   COMMON_LABELS,
   dataFrameToLogsModel,
@@ -24,8 +29,6 @@ import {
   logSeriesToLogsModel,
   queryLogsVolume,
 } from './logs_model';
-import { Observable } from 'rxjs';
-import { MockObservableDataSourceApi } from '../../test/mocks/datasource_srv';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {

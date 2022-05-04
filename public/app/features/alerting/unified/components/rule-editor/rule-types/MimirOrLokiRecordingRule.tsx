@@ -1,7 +1,9 @@
 import React, { FC } from 'react';
-import { RuleType, SharedProps } from './RuleType';
-import { DisabledTooltip } from './DisabledTooltip';
+
 import { RuleFormType } from '../../../types/rule-form';
+
+import { DisabledTooltip } from './DisabledTooltip';
+import { RuleType, SharedProps } from './RuleType';
 
 const RecordingRuleType: FC<SharedProps> = ({ selected = false, disabled = false, onClick }) => {
   return (

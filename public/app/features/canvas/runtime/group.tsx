@@ -1,13 +1,17 @@
-import React from 'react';
-import { CanvasGroupOptions, canvasElementRegistry } from 'app/features/canvas';
-import { DimensionContext } from 'app/features/dimensions';
-import { notFoundItem } from 'app/features/canvas/elements/notFound';
-import { ElementState } from './element';
-import { CanvasElementItem } from '../element';
-import { LayerActionID } from 'app/plugins/panel/canvas/types';
 import { cloneDeep } from 'lodash';
-import { Scene } from './scene';
+import React from 'react';
+
+import { CanvasGroupOptions, canvasElementRegistry } from 'app/features/canvas';
+import { notFoundItem } from 'app/features/canvas/elements/notFound';
+import { DimensionContext } from 'app/features/dimensions';
+import { LayerActionID } from 'app/plugins/panel/canvas/types';
+
+import { CanvasElementItem } from '../element';
+import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
+
+import { ElementState } from './element';
 import { RootElement } from './root';
+import { Scene } from './scene';
 
 export const groupItemDummy: CanvasElementItem = {
   id: 'group',
@@ -53,27 +57,6 @@ export class GroupState extends ElementState {
     return false;
   }
 
-  // The parent size, need to set our own size based on offsets
-  updateSize(width: number, height: number) {
-    super.updateSize(width, height);
-    if (!this.parent) {
-      this.width = width;
-      this.height = height;
-      this.sizeStyle.width = width;
-      this.sizeStyle.height = height;
-    }
-
-    // Update children with calculated size
-    for (const elem of this.elements) {
-      elem.updateSize(this.width, this.height);
-    }
-
-    // The group forced to full width (for now)
-    this.sizeStyle.width = width;
-    this.sizeStyle.height = height;
-    this.sizeStyle.position = 'absolute';
-  }
-
   updateData(ctx: DimensionContext) {
     super.updateData(ctx);
     for (const elem of this.elements) {
@@ -94,12 +77,12 @@ export class GroupState extends ElementState {
   reinitializeMoveable() {
     // Need to first clear current selection and then re-init moveable with slight delay
     this.scene.clearCurrentSelection();
-    setTimeout(() => this.scene.initMoveable(true), 100);
+    setTimeout(() => this.scene.initMoveable(true, this.scene.isEditingEnabled), 100);
   }
 
   // ??? or should this be on the element directly?
   // are actions scoped to layers?
-  doAction = (action: LayerActionID, element: ElementState, updateName = true) => {
+  doAction = (action: LayerActionID, element: ElementState, updateName = true, shiftItemsOnDuplicate = true) => {
     switch (action) {
       case LayerActionID.Delete:
         this.elements = this.elements.filter((e) => e !== element);
@@ -113,21 +96,52 @@ export class GroupState extends ElementState {
           return;
         }
         const opts = cloneDeep(element.options);
-        if (element.anchor.top) {
-          opts.placement!.top! += 10;
-        }
-        if (element.anchor.left) {
-          opts.placement!.left! += 10;
-        }
-        if (element.anchor.bottom) {
-          opts.placement!.bottom! += 10;
-        }
-        if (element.anchor.right) {
-          opts.placement!.right! += 10;
+
+        if (shiftItemsOnDuplicate) {
+          const { constraint, placement: oldPlacement } = element.options;
+          const { vertical, horizontal } = constraint ?? {};
+          const placement = oldPlacement ?? ({} as Placement);
+
+          switch (vertical) {
+            case VerticalConstraint.Top:
+            case VerticalConstraint.TopBottom:
+              if (placement.top == null) {
+                placement.top = 25;
+              } else {
+                placement.top += 10;
+              }
+              break;
+            case VerticalConstraint.Bottom:
+              if (placement.bottom == null) {
+                placement.bottom = 100;
+              } else {
+                placement.bottom -= 10;
+              }
+              break;
+          }
+
+          switch (horizontal) {
+            case HorizontalConstraint.Left:
+            case HorizontalConstraint.LeftRight:
+              if (placement.left == null) {
+                placement.left = 50;
+              } else {
+                placement.left += 10;
+              }
+              break;
+            case HorizontalConstraint.Right:
+              if (placement.right == null) {
+                placement.right = 50;
+              } else {
+                placement.right -= 10;
+              }
+              break;
+          }
+
+          opts.placement = placement;
         }
 
         const copy = new ElementState(element.item, opts, this);
-        copy.updateSize(element.width, element.height);
         copy.updateData(this.scene.context);
         if (updateName) {
           copy.options.name = this.scene.getNextElementName();
@@ -145,7 +159,7 @@ export class GroupState extends ElementState {
 
   render() {
     return (
-      <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }}>
+      <div key={this.UID} ref={this.initElement} style={{ overflow: 'hidden' }}>
         {this.elements.map((v) => v.render())}
       </div>
     );

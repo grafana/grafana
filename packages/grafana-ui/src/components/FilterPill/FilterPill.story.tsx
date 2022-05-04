@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
 import { Story } from '@storybook/react';
-import { FilterPill, FilterPillProps } from './FilterPill';
+import React, { useState } from 'react';
+
 import { withCenteredStory } from '@grafana/ui/src/utils/storybook/withCenteredStory';
-import mdx from './FilterPill.mdx';
+
 import { getAvailableIcons } from '../../types';
 import { HorizontalGroup } from '../Layout/Layout';
+
+import { FilterPill, FilterPillProps } from './FilterPill';
+import mdx from './FilterPill.mdx';
 
 export default {
   title: 'General/FilterPill',

@@ -30,8 +30,8 @@ func (ss *SQLStore) NewSession(ctx context.Context) *DBSession {
 	return sess
 }
 
-func newSession(ctx context.Context) *DBSession {
-	sess := &DBSession{Session: x.NewSession()}
+func (ss *SQLStore) newSession(ctx context.Context) *DBSession {
+	sess := &DBSession{Session: ss.engine.NewSession()}
 	sess.Session = sess.Session.Context(ctx)
 
 	return sess

@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import copy from 'copy-to-clipboard';
+import * as React from 'react';
+
 import { Button, IconName, stylesFactory, Tooltip } from '@grafana/ui';
 
 const getStyles = stylesFactory(() => {

@@ -1,5 +1,6 @@
+import { of } from 'rxjs';
 import { BackendSrv, BackendSrvRequest } from 'src/services';
-import { DataSourceWithBackend, standardStreamOptionsProvider, toStreamingDataResponse } from './DataSourceWithBackend';
+
 import {
   DataSourceJsonData,
   DataQuery,
@@ -9,7 +10,8 @@ import {
   MutableDataFrame,
   DataSourceRef,
 } from '@grafana/data';
-import { of } from 'rxjs';
+
+import { DataSourceWithBackend, standardStreamOptionsProvider, toStreamingDataResponse } from './DataSourceWithBackend';
 
 class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> {
   constructor(instanceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
