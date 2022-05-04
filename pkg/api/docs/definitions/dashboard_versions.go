@@ -9,6 +9,10 @@ import (
 //
 // Gets all existing versions for the dashboard.
 //
+// Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) instead
+//
+// Deprecated: true
+//
 // Responses:
 // 200: dashboardVersionsResponse
 // 401: unauthorisedError
@@ -41,6 +45,10 @@ import (
 // swagger:route POST /dashboards/id/{DashboardID}/restore dashboard_versions restoreDashboardVersion
 //
 // Restore a dashboard to a given dashboard version.
+//
+// Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID) instead
+//
+// Deprecated: true
 //
 // Responses:
 // 200: postDashboardResponse

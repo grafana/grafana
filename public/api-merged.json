@@ -3643,9 +3643,11 @@
     },
     "/dashboards/id/{DashboardID}/restore": {
       "post": {
+        "description": "Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID) instead",
         "tags": ["dashboard_versions"],
         "summary": "Restore a dashboard to a given dashboard version.",
         "operationId": "restoreDashboardVersion",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -3684,9 +3686,11 @@
     },
     "/dashboards/id/{DashboardID}/versions": {
       "get": {
+        "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) instead",
         "tags": ["dashboard_versions"],
         "summary": "Gets all existing versions for the dashboard.",
         "operationId": "getDashboardVersions",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -13728,7 +13732,7 @@
           "x-go-name": "SavedItems"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "NewApiKeyResult": {
       "type": "object",
@@ -14795,7 +14799,7 @@
           "x-go-name": "HomeTab"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
     },
     "Receiver": {
       "type": "object",
