@@ -447,7 +447,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 				assertRulesDeleted(t, rulesInFolder, ruleStore, scheduler)
 			})
-			t.Run("souldn't be able to delte provisioned rules", func(t *testing.T) {
+			t.Run("shouldn't be able to delete provisioned rules", func(t *testing.T) {
 				ruleStore := store.NewFakeRuleStore(t)
 				orgID := rand.Int63()
 				folder := randFolder()
