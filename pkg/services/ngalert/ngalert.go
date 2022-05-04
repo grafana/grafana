@@ -175,6 +175,7 @@ func (ng *AlertNG) init() error {
 		Policies:             policyService,
 		ContactPointService:  contactPointService,
 		Templates:            templateService,
+		AlertDispatcher:      dispatcher,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 

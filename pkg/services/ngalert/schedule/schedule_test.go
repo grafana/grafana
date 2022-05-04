@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -140,6 +141,7 @@ func TestAlertingTicker(t *testing.T) {
 	baseInterval := time.Second
 
 	notifier := &schedule.FakeAlertSender{}
+	notifier.EXPECT().Expire(mock.Anything, mock.Anything).Return(nil)
 
 	schedCfg := schedule.SchedulerCfg{
 		C:            mockedClock,
