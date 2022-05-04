@@ -25,7 +25,7 @@ import {
   switchToQueryHistoryTab,
 } from './helper/interactions';
 import { makeLogsQueryResponse } from './helper/query';
-import { setupExplore, tearDown, waitForExplore } from './helper/setup';
+import { setupExplore, setupLocalStorageRichHistory, tearDown, waitForExplore } from './helper/setup';
 
 const fetchMock = jest.fn();
 const postMock = jest.fn();
@@ -165,6 +165,7 @@ describe('Explore: Query History', () => {
     it('does not migrate if query history is not enabled', async () => {
       config.queryHistoryEnabled = false;
       const { datasources } = setupExplore();
+      setupLocalStorageRichHistory('loki');
       (datasources.loki.query as jest.Mock).mockReturnValueOnce(makeLogsQueryResponse());
       getMock.mockReturnValue({ result: { queryHistory: [] } });
       await waitForExplore();
@@ -176,17 +177,22 @@ describe('Explore: Query History', () => {
     it('migrates query history from local storage', async () => {
       config.queryHistoryEnabled = true;
       const { datasources } = setupExplore();
+      setupLocalStorageRichHistory('loki');
       (datasources.loki.query as jest.Mock).mockReturnValueOnce(makeLogsQueryResponse());
       getMock.mockReturnValue({ result: { queryHistory: [] } });
       await waitForExplore();
 
       await openQueryHistory();
-      expect(postMock).toBeCalledWith('/api/query-history/migrate', { queries: [] });
+      expect(postMock).toBeCalledWith('/api/query-history/migrate', {
+        queries: [expect.objectContaining({ datasourceUid: 'loki' })],
+      });
       postMock.mockReset();
 
       await closeQueryHistory();
       await openQueryHistory();
-      expect(postMock).not.toBeCalledWith('/api/query-history/migrate', { queries: [] });
+      expect(postMock).not.toBeCalledWith('/api/query-history/migrate', {
+        queries: [expect.objectContaining({ datasourceUid: 'loki' })],
+      });
     });
   });
 });

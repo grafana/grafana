@@ -11,6 +11,7 @@ import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
 import { configureStore } from 'app/store/configureStore';
 
+import { RICH_HISTORY_KEY, RichHistoryLocalStorageDTO } from '../../../../core/history/RichHistoryLocalStorage';
 import { LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../../../plugins/datasource/loki/types';
 import { ExploreId } from '../../../../types';
@@ -155,4 +156,19 @@ export const tearDown = () => {
 export const withinExplore = (exploreId: ExploreId) => {
   const container = screen.getAllByTestId('data-testid Explore');
   return within(container[exploreId === ExploreId.left ? 0 : 1]);
+};
+
+export const setupLocalStorageRichHistory = (dsName: string) => {
+  window.localStorage.setItem(
+    RICH_HISTORY_KEY,
+    JSON.stringify([
+      {
+        ts: Date.now(),
+        datasourceName: dsName,
+        starred: true,
+        comment: '',
+        queries: [{ refId: 'A' }],
+      } as RichHistoryLocalStorageDTO,
+    ])
+  );
 };
