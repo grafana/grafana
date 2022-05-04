@@ -39,7 +39,6 @@ export const Service: React.FC<Props> = ({ refId, query, templateVariableOptions
   return (
     <QueryEditorRow label="Service" htmlFor={`${refId}-slo-service`}>
       <Select
-        menuShouldPortal
         inputId={`${refId}-slo-service`}
         width={SELECT_WIDTH}
         allowCustomValue

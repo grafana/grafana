@@ -55,13 +55,13 @@ Grafana Enterprise includes the ability for you to assign discrete fixed roles t
 
 Assign fixed roles when the basic roles do not meet your permission requirements. For example, you might want a user with the basic viewer role to also edit dashboards. Or, you might want anyone with the editor role to also add and manage users. Fixed roles provide users more granular access to create, view, and update the following Grafana resources:
 
-- [Alerting]({{< relref "../../alerting/unified-alerting/_index.md">}})
+- [Alerting]({{< relref "../../alerting/_index.md">}})
 - [Annotations]({{< relref "../../dashboards/annotations.md" >}})
 - [API keys]({{< relref "../../administration/api-keys/_index.md" >}})
 - [Dashboards and folders]({{< relref "../../dashboards/_index.md" >}})
 - [Data sources]({{< relref "../../datasources/_index.md" >}})
 - [Explore]({{< relref "../../explore/_index.md" >}})
-- [Folders]({{< relref "../../dashboards/dashboard_folders.md" >}})
+- [Folders]({{< relref "../../dashboards/dashboard-folders.md" >}})
 - [LDAP]({{< relref "../../auth/ldap/_index.md" >}})
 - [Licenses]({{< relref "../license/_index.md" >}})
 - [Organizations]({{< relref "../../administration/manage-organizations/_index.md" >}})

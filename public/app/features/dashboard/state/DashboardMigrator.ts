@@ -784,9 +784,10 @@ export class DashboardMigrator {
     for (j = 0; j < this.dashboard.panels.length; j++) {
       for (k = 0; k < panelUpgrades.length; k++) {
         this.dashboard.panels[j] = panelUpgrades[k].call(this, this.dashboard.panels[j]);
-        if (this.dashboard.panels[j].panels) {
-          for (n = 0; n < this.dashboard.panels[j].panels.length; n++) {
-            this.dashboard.panels[j].panels[n] = panelUpgrades[k].call(this, this.dashboard.panels[j].panels[n]);
+        const rowPanels = this.dashboard.panels[j].panels;
+        if (rowPanels) {
+          for (n = 0; n < rowPanels.length; n++) {
+            rowPanels[n] = panelUpgrades[k].call(this, rowPanels[n]);
           }
         }
       }
@@ -895,7 +896,7 @@ export class DashboardMigrator {
         delete panel.span;
 
         if (rowPanelModel && rowPanel.collapsed) {
-          rowPanelModel.panels.push(panel);
+          rowPanelModel.panels?.push(panel);
         } else {
           this.dashboard.panels.push(new PanelModel(panel));
         }

@@ -131,7 +131,6 @@ const FilterItem: React.FC<FilterItemProps> = (props) => {
         options={dimensionKeys}
         allowCustomValue
         onChange={({ value }) => value && onChange(setOperatorExpressionProperty(filter, value))}
-        menuShouldPortal
       />
 
       <Select
@@ -139,7 +138,6 @@ const FilterItem: React.FC<FilterItemProps> = (props) => {
         value={filter.operator?.name && toOption(filter.operator.name)}
         options={OPERATORS}
         onChange={({ value }) => value && onChange(setOperatorExpressionName(filter, value))}
-        menuShouldPortal
       />
 
       <Select
@@ -152,7 +150,6 @@ const FilterItem: React.FC<FilterItemProps> = (props) => {
         allowCustomValue
         onOpenMenu={loadOptions}
         onChange={({ value }) => value && onChange(setOperatorExpressionValue(filter, value))}
-        menuShouldPortal
       />
 
       <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />
