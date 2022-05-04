@@ -10,7 +10,8 @@ This guide assumes that you're already familiar with how to [Build a data source
 
 With Explore, users can make ad-hoc queries without the use of a dashboard. This is useful when users want to troubleshoot or to learn more about the data.
 
-Your data source already supports Explore by default, and will use the existing query editor for the data source.
+Your data source supports Explore by default and uses the existing query editor for the data source.
+
 
 ## Add an Explore-specific query editor
 
@@ -33,7 +34,7 @@ If you want to offer extended Explore functionality for your data source, you ca
    };
    ```
 
-1. Modify your base query editor in `QueryEditor.tsx` to render the Explore-specific one when using Explore. For example:
+1. Modify your base query editor in `QueryEditor.tsx` to render the Explore-specific query editor. For example:
 
    ```ts
    // [...]
