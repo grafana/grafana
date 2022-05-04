@@ -461,7 +461,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 
 		// merged changes contains all changes that are allowed by FGAC and
 		// have not a provenace from a provisoning tool yet.
-		mergedChanges = mergeChanges(provisioningChanges, authorizedChanges)
+		mergedChanges = intersectChanges(provisioningChanges, authorizedChanges)
 
 		logger.Debug("updating database with the authorized changes", "add", len(mergedChanges.New), "update", len(mergedChanges.New), "delete", len(mergedChanges.Delete))
 
@@ -606,9 +606,9 @@ func (c *changes) isEmpty() bool {
 	return len(c.Update)+len(c.New)+len(c.Delete) == 0
 }
 
-// mergeChanges will return a new change set that contains all changes
-// that are in set a and set b.
-func mergeChanges(a, b *changes) *changes {
+// intersectChanges will return a new change set that contains all changes
+// that are in  both sets a and b.
+func intersectChanges(a, b *changes) *changes {
 	m := &changes{}
 outerNew:
 	for _, x := range a.New {
