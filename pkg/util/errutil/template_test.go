@@ -37,6 +37,7 @@ func ExampleTemplate_public() {
 		)
 
 	// Construct an error based on the template.
+	//nolint:errorlint
 	err := tmpl.Build(errutil.TemplateData{
 		Public: map[string]interface{}{
 			"user": "grot the bot",
