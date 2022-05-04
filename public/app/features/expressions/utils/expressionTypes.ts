@@ -1,6 +1,7 @@
 import { ReducerID } from '@grafana/data';
-import { ClassicCondition, ExpressionQuery, ExpressionQueryType } from '../types';
+
 import { EvalFunction } from '../../alerting/state/alertDef';
+import { ClassicCondition, ExpressionQuery, ExpressionQueryType } from '../types';
 
 export const getDefaults = (query: ExpressionQuery) => {
   switch (query.type) {

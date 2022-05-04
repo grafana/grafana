@@ -1,4 +1,5 @@
 import React, { ChangeEvent } from 'react';
+
 import {
   DataTransformerID,
   SelectableValue,
@@ -6,11 +7,11 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { Input, Select } from '@grafana/ui';
 import {
   ConcatenateFrameNameMode,
   ConcatenateTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/concat';
+import { Input, Select } from '@grafana/ui';
 
 interface ConcatenateTransformerEditorProps extends TransformerUIProps<ConcatenateTransformerOptions> {}
 

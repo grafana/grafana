@@ -1,6 +1,6 @@
 import { lastValueFrom, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { BackendSrvRequest, FetchResponse, getBackendSrv } from '@grafana/runtime';
+
 import {
   DataQueryRequest,
   DataQueryResponse,
@@ -10,13 +10,15 @@ import {
   FieldType,
   MutableDataFrame,
 } from '@grafana/data';
+import { BackendSrvRequest, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 
 import { serializeParams } from '../../../core/utils/fetch';
+
 import { apiPrefix } from './constants';
 import { ZipkinQuery, ZipkinSpan } from './types';
 import { createGraphFrames } from './utils/graphTransform';
 import { transformResponse } from './utils/transforms';
-import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 
 export interface ZipkinJsonData extends DataSourceJsonData {
   nodeGraph?: NodeGraphOptions;

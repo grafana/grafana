@@ -11,7 +11,7 @@ The Organization HTTP API is divided in two resources, `/api/org` (current organ
 and `/api/orgs` (admin organizations). One big difference between these are that
 the admin of all organizations API only works with basic authentication, see [Admin Organizations API](#admin-organizations-api) for more information.
 
-> If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
+> If you are running Grafana Enterprise and have [Role-based access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
 > Refer to specific resources to understand what permissions are required.
 
 ## Current Organization API

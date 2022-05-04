@@ -1,7 +1,9 @@
-import { Task, TaskRunner } from './task';
-import { useSpinner } from '../utils/useSpinner';
 import fs = require('fs');
 import path = require('path');
+
+import { useSpinner } from '../utils/useSpinner';
+
+import { Task, TaskRunner } from './task';
 
 interface UpdatePluginTask {}
 

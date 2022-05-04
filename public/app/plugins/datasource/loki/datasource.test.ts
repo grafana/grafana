@@ -1,5 +1,8 @@
 import { lastValueFrom, of, throwError } from 'rxjs';
 import { take } from 'rxjs/operators';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
+import { getQueryOptions } from 'test/helpers/getQueryOptions';
+
 import {
   AbstractLabelOperator,
   AnnotationQueryRequest,
@@ -13,16 +16,16 @@ import {
   toUtc,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
-import { isMetricsQuery, LokiDatasource, RangeQueryOptions } from './datasource';
-import { LokiQuery, LokiResponse, LokiResultType } from './types';
-import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { CustomVariableModel } from '../../../features/variables/types';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
+import { CustomVariableModel } from '../../../features/variables/types';
+
+import { isMetricsQuery, LokiDatasource, RangeQueryOptions } from './datasource';
 import { makeMockLokiDatasource } from './mocks';
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
+import { LokiQuery, LokiResponse, LokiResultType } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   // @ts-ignore
@@ -450,7 +453,7 @@ describe('LokiDatasource', () => {
         ]);
         await lastValueFrom(ds.query(options as any));
         expect(ds.runRangeQuery).toBeCalledWith(
-          { expr: 'rate({bar="baz",job="foo",k1=~"v.*",k2=~"v\\\\\'.*"} |= "bar" [5m])' },
+          { expr: 'rate({bar="baz",job="foo",k1=~"v\\\\.\\\\*",k2=~"v\'\\\\.\\\\*"} |= "bar" [5m])' },
           expect.anything()
         );
       });
@@ -764,6 +767,16 @@ describe('LokiDatasource', () => {
           expect(result.expr).toEqual('{bar="baz",job="grafana"}');
         });
 
+        it('then the correctly escaped label should be added for logs query', () => {
+          const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+          const action = { key: 'job', value: '\\test', type: 'ADD_FILTER' };
+          const ds = createLokiDSForTests();
+          const result = ds.modifyQuery(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('{bar="baz",job="\\\\test"}');
+        });
+
         it('then the correct label should be added for metrics query', () => {
           const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"}[5m])' };
           const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER' };
@@ -806,6 +819,16 @@ describe('LokiDatasource', () => {
 
           expect(result.refId).toEqual('A');
           expect(result.expr).toEqual('{bar="baz",job!="grafana"}');
+        });
+
+        it('then the correctly escaped label should be added for logs query', () => {
+          const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+          const action = { key: 'job', value: '"test', type: 'ADD_FILTER_OUT' };
+          const ds = createLokiDSForTests();
+          const result = ds.modifyQuery(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('{bar="baz",job!="\\"test"}');
         });
 
         it('then the correct label should be added for metrics query', () => {
@@ -943,9 +966,9 @@ describe('LokiDatasource', () => {
         dataFrame: new MutableDataFrame({
           fields: [
             {
-              name: 'tsNs',
-              type: FieldType.string,
-              values: ['0'],
+              name: 'ts',
+              type: FieldType.time,
+              values: [0],
             },
           ],
         }),
@@ -957,8 +980,8 @@ describe('LokiDatasource', () => {
       jest.spyOn(ds.languageProvider, 'getLabelKeys').mockImplementation(() => ['bar']);
       const contextQuery = ds.prepareLogRowContextQueryTarget(row, 10, 'BACKWARD');
 
-      expect(contextQuery.expr).toContain('baz');
-      expect(contextQuery.expr).not.toContain('uniqueParsedLabel');
+      expect(contextQuery.query.expr).toContain('baz');
+      expect(contextQuery.query.expr).not.toContain('uniqueParsedLabel');
     });
   });
 
@@ -997,7 +1020,7 @@ describe('LokiDatasource', () => {
   describe('importing queries', () => {
     it('keeps all labels when no labels are loaded', async () => {
       const ds = createLokiDSForTests();
-      fetchMock.mockImplementation(() => of(createFetchResponse({ data: [] })));
+      ds.getResource = () => Promise.resolve({ data: [] });
       const queries = await ds.importFromAbstractQueries([
         {
           refId: 'A',
@@ -1012,7 +1035,9 @@ describe('LokiDatasource', () => {
 
     it('filters out non existing labels', async () => {
       const ds = createLokiDSForTests();
-      fetchMock.mockImplementation(() => of(createFetchResponse({ data: ['foo'] })));
+      ds.getResource = () => {
+        return Promise.resolve({ data: ['foo'] });
+      };
       const queries = await ds.importFromAbstractQueries([
         {
           refId: 'A',

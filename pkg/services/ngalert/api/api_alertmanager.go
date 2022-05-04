@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -50,6 +51,12 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *models.ReqContext) response.Respo
 }
 
 func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
+	err := postableSilence.Validate(strfmt.Default)
+	if err != nil {
+		srv.log.Error("silence failed validation", "err", err)
+		return ErrResp(http.StatusBadRequest, err, "silence failed validation")
+	}
+
 	am, errResp := srv.AlertmanagerFor(c.OrgId)
 	if errResp != nil {
 		return errResp

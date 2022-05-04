@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
-import { Team } from 'app/types';
+
 import { LoadingPlaceholder } from '@grafana/ui';
+import { Team } from 'app/types';
 
 export interface Props {
   teams: Team[];

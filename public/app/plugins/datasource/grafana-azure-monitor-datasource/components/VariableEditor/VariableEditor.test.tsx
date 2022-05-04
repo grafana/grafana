@@ -1,11 +1,14 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import VariableEditor from './VariableEditor';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+import { select } from 'react-select-event';
+
+import * as ui from '@grafana/ui';
+
 import createMockDatasource from '../../__mocks__/datasource';
 import { AzureMonitorQuery, AzureQueryType } from '../../types';
-import { select } from 'react-select-event';
-import * as ui from '@grafana/ui';
+
+import VariableEditor from './VariableEditor';
 
 // Have to mock CodeEditor because it doesnt seem to work in tests???
 jest.mock('@grafana/ui', () => ({
@@ -137,7 +140,7 @@ describe('VariableEditor:', () => {
       };
       render(<VariableEditor {...props} />);
       await waitFor(() => screen.queryByText('Grafana template variable function'));
-      userEvent.type(screen.getByDisplayValue('Su'), 'bscriptions()');
+      await userEvent.type(screen.getByDisplayValue('Su'), 'bscriptions()');
       expect(screen.getByDisplayValue('Subscriptions()')).toBeInTheDocument();
       screen.getByDisplayValue('Subscriptions()').blur();
       await waitFor(() => screen.queryByText('None'));

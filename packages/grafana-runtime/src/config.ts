@@ -1,4 +1,5 @@
 import { merge } from 'lodash';
+
 import {
   BootData,
   BuildInfo,
@@ -46,6 +47,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
+  queryHistoryEnabled = false;
   helpEnabled = false;
   profileEnabled = false;
   ldapEnabled = false;

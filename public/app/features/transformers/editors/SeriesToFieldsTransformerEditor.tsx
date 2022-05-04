@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+
 import {
   DataTransformerID,
   SelectableValue,
@@ -6,9 +7,9 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
+import { SeriesToColumnsOptions } from '@grafana/data/src/transformations/transformers/seriesToColumns';
 import { Select } from '@grafana/ui';
 
-import { SeriesToColumnsOptions } from '@grafana/data/src/transformations/transformers/seriesToColumns';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const SeriesToFieldsTransformerEditor: React.FC<TransformerUIProps<SeriesToColumnsOptions>> = ({

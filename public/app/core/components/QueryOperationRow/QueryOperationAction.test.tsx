@@ -1,6 +1,7 @@
-import React from 'react';
-import { QueryOperationAction } from './QueryOperationAction';
 import { shallow } from 'enzyme';
+import React from 'react';
+
+import { QueryOperationAction } from './QueryOperationAction';
 
 describe('QueryOperationAction', () => {
   it('renders', () => {

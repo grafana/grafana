@@ -1,10 +1,13 @@
-import React, { FC } from 'react';
-import { Well } from './Well';
-import { GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
+import React, { FC } from 'react';
+
+import { GrafanaTheme } from '@grafana/data';
 import { Tooltip, useStyles } from '@grafana/ui';
-import { DetailsField } from './DetailsField';
+
 import { Annotation, annotationLabels } from '../utils/constants';
+
+import { DetailsField } from './DetailsField';
+import { Well } from './Well';
 
 const wellableAnnotationKeys = ['message', 'description'];
 

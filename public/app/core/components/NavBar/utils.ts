@@ -1,13 +1,18 @@
 import { Location } from 'history';
+
 import { NavModelItem, NavSection } from '@grafana/data';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
+
 import { ShowModalReactEvent } from '../../../types/events';
 import appEvents from '../../app_events';
 import { getFooterLinks } from '../Footer/Footer';
 import { HelpModal } from '../help/HelpModal';
 
 export const SEARCH_ITEM_ID = 'search';
+export const NAV_MENU_PORTAL_CONTAINER_ID = 'navbar-menu-portal-container';
+
+export const getNavMenuPortalContainer = () => document.getElementById(NAV_MENU_PORTAL_CONTAINER_ID) ?? document.body;
 
 export const getForcedLoginUrl = (url: string) => {
   const queryParams = new URLSearchParams(url.split('?')[1]);

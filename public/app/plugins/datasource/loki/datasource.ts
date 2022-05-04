@@ -1,8 +1,8 @@
 // Libraries
 import { cloneDeep, isEmpty, map as lodashMap } from 'lodash';
+import Prism from 'prismjs';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import Prism from 'prismjs';
 
 // Types
 import {
@@ -33,38 +33,38 @@ import {
   ScopedVars,
   TimeRange,
   rangeUtil,
+  toUtc,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchError, getBackendSrv, config, DataSourceWithBackend } from '@grafana/runtime';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { addLabelToQuery } from './add_label_to_query';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
+import { queryLogsVolume } from 'app/core/logs_model';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
-import {
-  lokiResultsToTableModel,
-  lokiStreamsToDataFrames,
-  lokiStreamsToRawDataFrame,
-  processRangeQueryResponse,
-} from './result_transformer';
-import { transformBackendResult } from './backendResultTransformer';
-import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
+import { serializeParams } from '../../../core/utils/fetch';
+import { renderLegendFormat } from '../prometheus/legend';
+
+import { addLabelToQuery } from './add_label_to_query';
+import { transformBackendResult } from './backendResultTransformer';
+import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
+import LanguageProvider from './language_provider';
+import { escapeLabelValueInSelector } from './language_utils';
+import { LiveStreams, LokiLiveTarget } from './live_streams';
+import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
+import { lokiResultsToTableModel, lokiStreamsToDataFrames, processRangeQueryResponse } from './result_transformer';
+import { sortDataFrameByTime } from './sortDataFrame';
+import { doLokiChannelStream } from './streaming';
+import syntax from './syntax';
 import {
   LokiOptions,
   LokiQuery,
+  LokiQueryDirection,
   LokiQueryType,
   LokiRangeQueryRequest,
   LokiResultType,
   LokiStreamResponse,
 } from './types';
-import { LiveStreams, LokiLiveTarget } from './live_streams';
-import LanguageProvider from './language_provider';
-import { serializeParams } from '../../../core/utils/fetch';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import syntax from './syntax';
-import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
-import { queryLogsVolume } from 'app/core/logs_model';
-import { doLokiChannelStream } from './streaming';
-import { renderLegendFormat } from '../prometheus/legend';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -75,7 +75,6 @@ const RANGE_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query_range`;
 const INSTANT_QUERY_ENDPOINT = `${LOKI_ENDPOINT}/query`;
 
 const DEFAULT_QUERY_PARAMS: Partial<LokiRangeQueryRequest> = {
-  direction: 'BACKWARD',
   limit: DEFAULT_MAX_LINES,
   query: '',
 };
@@ -252,6 +251,7 @@ export class LokiDatasource
       query: target.expr,
       time: `${timeNs + (1e9 - (timeNs % 1e9))}`,
       limit: Math.min(queryLimit || Infinity, this.maxLines),
+      direction: target.direction === LokiQueryDirection.Forward ? 'FORWARD' : 'BACKWARD',
     };
 
     /** Used only for results of metrics instant queries */
@@ -311,6 +311,7 @@ export class LokiDatasource
       ...range,
       query,
       limit,
+      direction: target.direction === LokiQueryDirection.Forward ? 'FORWARD' : 'BACKWARD',
     };
   }
 
@@ -439,8 +440,13 @@ export class LokiDatasource
   }
 
   async metadataRequest(url: string, params?: Record<string, string | number>) {
-    const res = await lastValueFrom(this._request(url, params, { hideFromInspector: true }));
-    return res.data.data || res.data.values || [];
+    // url must not start with a `/`, otherwise the AJAX-request
+    // going from the browser will contain `//`, which can cause problems.
+    if (url.startsWith('/')) {
+      throw new Error(`invalid metadata request url: ${url}`);
+    }
+    const res = await this.getResource(url, params);
+    return res.data || [];
   }
 
   async metricFindQuery(query: string) {
@@ -474,7 +480,7 @@ export class LokiDatasource
   }
 
   async labelNamesQuery() {
-    const url = `${LOKI_ENDPOINT}/label`;
+    const url = 'labels';
     const params = this.getTimeRangeParams();
     const result = await this.metadataRequest(url, params);
     return result.map((value: string) => ({ text: value }));
@@ -482,7 +488,7 @@ export class LokiDatasource
 
   async labelValuesQuery(label: string) {
     const params = this.getTimeRangeParams();
-    const url = `${LOKI_ENDPOINT}/label/${label}/values`;
+    const url = `label/${label}/values`;
     const result = await this.metadataRequest(url, params);
     return result.map((value: string) => ({ text: value }));
   }
@@ -493,7 +499,7 @@ export class LokiDatasource
       ...timeParams,
       'match[]': expr,
     };
-    const url = `${LOKI_ENDPOINT}/series`;
+    const url = 'series';
     const streams = new Set();
     const result = await this.metadataRequest(url, params);
     result.forEach((stream: { [key: string]: string }) => {
@@ -554,15 +560,58 @@ export class LokiDatasource
   }
 
   getLogRowContext = (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
-    const target = this.prepareLogRowContextQueryTarget(
-      row,
-      (options && options.limit) || 10,
-      (options && options.direction) || 'BACKWARD'
-    );
+    const direction = (options && options.direction) || 'BACKWARD';
+    const limit = (options && options.limit) || 10;
+    const { query, range } = this.prepareLogRowContextQueryTarget(row, limit, direction);
 
-    const reverse = options && options.direction === 'FORWARD';
+    const processDataFrame = (frame: DataFrame): DataFrame => {
+      // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
+      const cache = new FieldCache(frame);
+      const timestampField = cache.getFirstFieldOfType(FieldType.time);
+      const lineField = cache.getFirstFieldOfType(FieldType.string);
+      const idField = cache.getFieldByName('id');
+
+      if (timestampField === undefined || lineField === undefined || idField === undefined) {
+        // this should never really happen, but i want to keep typescript happy
+        return { ...frame, fields: [] };
+      }
+
+      return {
+        ...frame,
+        fields: [
+          {
+            ...timestampField,
+            name: 'ts',
+          },
+          {
+            ...lineField,
+            name: 'line',
+          },
+          {
+            ...idField,
+            name: 'id',
+          },
+        ],
+      };
+    };
+
+    const processResults = (result: DataQueryResponse): DataQueryResponse => {
+      const frames: DataFrame[] = result.data;
+      const processedFrames = frames
+        .map((frame) => sortDataFrameByTime(frame, 'DESCENDING'))
+        .map((frame) => processDataFrame(frame)); // rename fields if needed
+
+      return {
+        ...result,
+        data: processedFrames,
+      };
+    };
+
+    // this can only be called from explore currently
+    const app = CoreApp.Explore;
+
     return lastValueFrom(
-      this._request(RANGE_QUERY_ENDPOINT, target).pipe(
+      this.query(makeRequest(query, range, app, `log-row-context-query-${direction}`)).pipe(
         catchError((err) => {
           const error: DataQueryError = {
             message: 'Error during context query. Please check JS console logs.',
@@ -571,18 +620,18 @@ export class LokiDatasource
           };
           throw error;
         }),
-        switchMap((res) =>
-          of({
-            data: res.data ? [lokiStreamsToRawDataFrame(res.data.data.result, reverse)] : [],
-          })
-        )
+        switchMap((res) => of(processResults(res)))
       )
     );
   };
 
-  prepareLogRowContextQueryTarget = (row: LogRowModel, limit: number, direction: 'BACKWARD' | 'FORWARD') => {
+  prepareLogRowContextQueryTarget = (
+    row: LogRowModel,
+    limit: number,
+    direction: 'BACKWARD' | 'FORWARD'
+  ): { query: LokiQuery; range: TimeRange } => {
     const labels = this.languageProvider.getLabelKeys();
-    const query = Object.keys(row.labels)
+    const expr = Object.keys(row.labels)
       .map((label: string) => {
         if (labels.includes(label)) {
           // escape backslashes in label as users can't escape them by themselves
@@ -595,36 +644,49 @@ export class LokiDatasource
       .join(',');
 
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
-    const commonTargetOptions = {
-      limit,
-      query: `{${query}}`,
-      expr: `{${query}}`,
-      direction,
+
+    const queryDirection = direction === 'FORWARD' ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
+
+    const query: LokiQuery = {
+      expr: `{${expr}}`,
+      queryType: LokiQueryType.Range,
+      refId: '',
+      maxLines: limit,
+      direction: queryDirection,
     };
 
     const fieldCache = new FieldCache(row.dataFrame);
-    const nsField = fieldCache.getFieldByName('tsNs')!;
-    const nsTimestamp = nsField.values.get(row.rowIndex);
-
-    if (direction === 'BACKWARD') {
-      return {
-        ...commonTargetOptions,
-        // convert to ns, we loose some precision here but it is not that important at the far points of the context
-        start: row.timeEpochMs - contextTimeBuffer + '000000',
-        end: nsTimestamp,
-        direction,
-      };
-    } else {
-      return {
-        ...commonTargetOptions,
-        // start param in Loki API is inclusive so we'll have to filter out the row that this request is based from
-        // and any other that were logged in the same ns but before the row. Right now these rows will be lost
-        // because the are before but came it he response that should return only rows after.
-        start: nsTimestamp,
-        // convert to ns, we loose some precision here but it is not that important at the far points of the context
-        end: row.timeEpochMs + contextTimeBuffer + '000000',
-      };
+    const tsField = fieldCache.getFirstFieldOfType(FieldType.time);
+    if (tsField === undefined) {
+      throw new Error('loki: dataframe missing time-field, should never happen');
     }
+    const tsValue = tsField.values.get(row.rowIndex);
+    const timestamp = toUtc(tsValue);
+
+    const range =
+      queryDirection === LokiQueryDirection.Forward
+        ? {
+            // start param in Loki API is inclusive so we'll have to filter out the row that this request is based from
+            // and any other that were logged in the same ns but before the row. Right now these rows will be lost
+            // because the are before but came it he response that should return only rows after.
+            from: timestamp,
+            // convert to ns, we loose some precision here but it is not that important at the far points of the context
+            to: toUtc(row.timeEpochMs + contextTimeBuffer),
+          }
+        : {
+            // convert to ns, we loose some precision here but it is not that important at the far points of the context
+            from: toUtc(row.timeEpochMs - contextTimeBuffer),
+            to: timestamp,
+          };
+
+    return {
+      query,
+      range: {
+        from: range.from,
+        to: range.to,
+        raw: range,
+      },
+    };
   };
 
   testDatasource() {
@@ -764,10 +826,6 @@ export class LokiDatasource
     expr = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
       const { key, operator } = filter;
       let { value } = filter;
-      if (operator === '=~' || operator === '!~') {
-        value = lokiRegularEscape(value);
-      }
-
       return this.addLabelToQuery(acc, key, value, operator, true);
     }, expr);
 
@@ -782,11 +840,13 @@ export class LokiDatasource
     // Override to make sure that we use label as actual label and not parsed label
     notParsedLabelOverride?: boolean
   ) {
+    let escapedValue = escapeLabelValueInSelector(value.toString(), operator);
+
     if (queryHasPipeParser(queryExpr) && !isMetricsQuery(queryExpr) && !notParsedLabelOverride) {
       // If query has parser, we treat all labels as parsed and use | key="value" syntax
-      return addParsedLabelToQuery(queryExpr, key, value, operator);
+      return addParsedLabelToQuery(queryExpr, key, escapedValue, operator);
     } else {
-      return addLabelToQuery(queryExpr, key, value, operator, true);
+      return addLabelToQuery(queryExpr, key, escapedValue, operator, true);
     }
   }
 
