@@ -1,8 +1,11 @@
 ---
-title: 'RBAC role definitions'
-menuTitle: 'RBAC role definitions'
-description: 'This topic includes a table that lists permission associated with Grafana fixed and basic roles.'
-aliases: ['/docs/grafana/latest/enterprise/access-control/fine-grained-access-control-references/']
+aliases:
+- /docs/grafana/latest/enterprise/access-control/fine-grained-access-control-references/
+- /docs/grafana/latest/enterprise/access-control/rbac-fixed-basic-role-definitions/
+description: This topic includes a table that lists permission associated with Grafana
+  fixed and basic roles.
+menuTitle: RBAC role definitions
+title: RBAC role definitions
 weight: 70
 ---
 

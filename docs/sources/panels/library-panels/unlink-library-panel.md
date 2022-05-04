@@ -1,7 +1,7 @@
 +++
+aliases = ["/docs/grafana/latest/panels/library-panels/unlink-library-panel/", "/docs/sources/panels/library-panels/unlink-library-panel/"]
 title = "Unlink a Grafana library panel"
 weight = 50
-aliases = ["/docs/sources/panels/library-panels/unlink-library-panel/"]
 +++
 
 # Unlink a Grafana library panel

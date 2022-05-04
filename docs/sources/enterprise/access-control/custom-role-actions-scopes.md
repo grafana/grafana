@@ -1,8 +1,10 @@
 ---
-title: 'Grafana RBAC permissions, actions, and scopes'
-menuTitle: 'RBAC permissions, actions, and scopes'
-description: 'Learn about Grafana RBAC permissions, actions, and scopes.'
-aliases: ['/docs/grafana/latest/enterprise/access-control/permissions/']
+aliases:
+- /docs/grafana/latest/enterprise/access-control/custom-role-actions-scopes/
+- /docs/grafana/latest/enterprise/access-control/permissions/
+description: Learn about Grafana RBAC permissions, actions, and scopes.
+menuTitle: RBAC permissions, actions, and scopes
+title: Grafana RBAC permissions, actions, and scopes
 weight: 80
 ---
 

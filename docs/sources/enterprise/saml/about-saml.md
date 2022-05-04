@@ -1,9 +1,16 @@
 ---
-title: 'About SAML authentication in Grafana'
-menuTitle: 'About SAML authentication'
-description: 'SAML authentication'
-keywords: ['grafana', 'saml', 'documentation', 'saml-auth', 'enterprise']
-aliases: ['/docs/grafana/latest/auth/saml/']
+aliases:
+- /docs/grafana/latest/auth/saml/
+- /docs/grafana/latest/enterprise/saml/about-saml/
+description: SAML authentication
+keywords:
+- grafana
+- saml
+- documentation
+- saml-auth
+- enterprise
+menuTitle: About SAML authentication
+title: About SAML authentication in Grafana
 weight: 20
 ---
 

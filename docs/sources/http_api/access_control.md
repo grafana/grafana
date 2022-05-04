@@ -1,8 +1,8 @@
 +++
-title = "RBAC HTTP API"
+aliases = ["/docs/grafana/latest/http_api/access_control/", "/docs/grafana/latest/http_api/accesscontrol/"]
 description = ""
 keywords = ["grafana", "http", "documentation", "api", "role-based-access-control", "acl", "enterprise"]
-aliases = ["/docs/grafana/latest/http_api/accesscontrol/"]
+title = "RBAC HTTP API"
 +++
 
 # RBAC API

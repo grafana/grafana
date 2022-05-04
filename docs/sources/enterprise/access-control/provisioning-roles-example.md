@@ -1,8 +1,9 @@
 ---
-title: 'Example role configuration file using Grafana provisioning'
-menuTitle: 'Provisioning roles example'
-description: 'View an example YAML provisioning file that configures Grafana role assignments.'
-aliases: []
+aliases:
+- /docs/grafana/latest/enterprise/access-control/provisioning-roles-example/
+description: View an example YAML provisioning file that configures Grafana role assignments.
+menuTitle: Provisioning roles example
+title: Example role configuration file using Grafana provisioning
 weight: 60
 ---
 

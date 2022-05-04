@@ -1,12 +1,12 @@
 ---
-title: 'Manage RBAC roles'
-menuTitle: 'Manage RBAC roles'
-description: 'Learn how to view permissions associated with roles, create custom roles, and update and delete roles in Grafana.'
 aliases:
-  [
-    '/docs/grafana/latest/enterprise/access-control/manage-role-assignments/',
-    '/docs/grafana/latest/enterprise/access-control/provisioning/',
-  ]
+- /docs/grafana/latest/enterprise/access-control/manage-rbac-roles/
+- /docs/grafana/latest/enterprise/access-control/manage-role-assignments/
+- /docs/grafana/latest/enterprise/access-control/provisioning/
+description: Learn how to view permissions associated with roles, create custom roles,
+  and update and delete roles in Grafana.
+menuTitle: Manage RBAC roles
+title: Manage RBAC roles
 weight: 50
 ---
 
