@@ -8,14 +8,16 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Input, useStyles2, Spinner, Button, Switch } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 import { SearchCard } from '../components/SearchCard';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { getGrafanaSearcher, QueryFilters } from '../service';
 import { getTermCounts } from '../service/backend';
 import { toDashboardSectionItem } from '../service/searcher';
+import { SearchLayout } from '../types';
 
+import { ActionRow } from './components/ActionRow';
 import { Table } from './table/Table';
 
 const node: NavModelItem = {
@@ -27,7 +29,9 @@ const node: NavModelItem = {
 
 export default function SearchPage() {
   const styles = useStyles2(getStyles);
-  const { query, onQueryChange, onTagFilterChange, onDatasourceChange } = useSearchQuery({});
+  const { query, onQueryChange, onTagFilterChange, onDatasourceChange, onSortChange, onLayoutChange } = useSearchQuery(
+    {}
+  );
   const [gridView, setGridView] = useState(false); // grid vs list view
 
   const results = useAsync(() => {
@@ -78,8 +82,6 @@ export default function SearchPage() {
         {results.loading && <Spinner />}
         {results.value?.body && (
           <div>
-            <TagFilter isClearable tags={query.tag} tagOptions={getTagOptions} onChange={onTagChange} />
-            <br />
             {query.datasource && (
               <Button
                 icon="times"
@@ -91,9 +93,16 @@ export default function SearchPage() {
               </Button>
             )}
             <Switch value={gridView} onChange={() => setGridView(!gridView)} /> List vs Grid view
+            <ActionRow
+              onLayoutChange={onLayoutChange}
+              onSortChange={onSortChange}
+              onTagFilterChange={onTagFilterChange}
+              getTagOptions={getTagOptions}
+              query={query}
+            />
             <AutoSizer style={{ width: '100%', height: '700px' }}>
               {({ width, height }) => {
-                if (gridView) {
+                if (query.layout === SearchLayout.Grid && config.featureToggles.dashboardPreviews) {
                   const items = toDashboardSectionItem(results.value!.body);
 
                   const numColumns = Math.ceil(width / 320);
