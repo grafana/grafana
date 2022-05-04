@@ -29,7 +29,6 @@ export const Aggregation: FC<Props> = (props) => {
       htmlFor={`${props.refId}-group-by-function`}
     >
       <Select
-        menuShouldPortal
         width={16}
         onChange={({ value }) => props.onChange(value!)}
         value={selected}

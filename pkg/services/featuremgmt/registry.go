@@ -67,10 +67,9 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:            "panelTitleSearch",
-			Description:     "Search for dashboards using panel title",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true, // only supported in dev mode right now
+			Name:        "panelTitleSearch",
+			Description: "Search for dashboards using panel title",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:         "tempoSearch",
@@ -236,6 +235,18 @@ var (
 			Name:        "cloudWatchDynamicLabels",
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,
+		},
+		{
+			Name:        "datasourceQueryMultiStatus",
+			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:            "azureMonitorExperimentalUI",
+			Description:     "Use grafana-experimental UI in Azure Monitor",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+			FrontendOnly:    true,
 		},
 	}
 )

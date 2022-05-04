@@ -57,7 +57,6 @@ export class TeamMemberRow extends PureComponent<Props> {
           <div className="gf-form">
             {signedInUserIsTeamAdmin && (
               <Select
-                menuShouldPortal
                 isSearchable={false}
                 options={teamsPermissionLevels}
                 onChange={(item) => this.onPermissionChange(item, member)}
