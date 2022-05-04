@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 import React from 'react';
 
-import { CanvasGroupOptions, canvasElementRegistry } from 'app/features/canvas';
+import { CanvasFrameOptions, canvasElementRegistry } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
@@ -13,10 +13,10 @@ import { ElementState } from './element';
 import { RootElement } from './root';
 import { Scene } from './scene';
 
-export const groupItemDummy: CanvasElementItem = {
-  id: 'group',
-  name: 'Group',
-  description: 'Group',
+export const frameItemDummy: CanvasElementItem = {
+  id: 'frame',
+  name: 'Frame',
+  description: 'Frame',
 
   getNewOptions: () => ({
     config: {},
@@ -24,16 +24,16 @@ export const groupItemDummy: CanvasElementItem = {
 
   // eslint-disable-next-line react/display-name
   display: () => {
-    return <div>GROUP!</div>;
+    return <div>FRAME!</div>;
   },
 };
 
-export class GroupState extends ElementState {
+export class FrameState extends ElementState {
   elements: ElementState[] = [];
   scene: Scene;
 
-  constructor(public options: CanvasGroupOptions, scene: Scene, public parent?: GroupState) {
-    super(groupItemDummy, options, parent);
+  constructor(public options: CanvasFrameOptions, scene: Scene, public parent?: FrameState) {
+    super(frameItemDummy, options, parent);
 
     this.scene = scene;
 
@@ -44,8 +44,8 @@ export class GroupState extends ElementState {
     }
 
     for (const c of elements) {
-      if (c.type === 'group') {
-        this.elements.push(new GroupState(c as CanvasGroupOptions, scene, this));
+      if (c.type === 'frame') {
+        this.elements.push(new FrameState(c as CanvasFrameOptions, scene, this));
       } else {
         const item = canvasElementRegistry.getIfExists(c.type) ?? notFoundItem;
         this.elements.push(new ElementState(item, c, this));
@@ -91,8 +91,8 @@ export class GroupState extends ElementState {
         this.reinitializeMoveable();
         break;
       case LayerActionID.Duplicate:
-        if (element.item.id === 'group') {
-          console.log('Can not duplicate groups (yet)', action, element);
+        if (element.item.id === 'frame') {
+          console.log('Can not duplicate frames (yet)', action, element);
           return;
         }
         const opts = cloneDeep(element.options);

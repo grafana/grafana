@@ -9,7 +9,7 @@ import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList'
 import { CanvasElementOptions, canvasElementRegistry } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { ElementState } from 'app/features/canvas/runtime/element';
-import { GroupState } from 'app/features/canvas/runtime/group';
+import { FrameState } from 'app/features/canvas/runtime/frame';
 import { SelectionParams } from 'app/features/canvas/runtime/scene';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -53,11 +53,11 @@ export class LayerElementListEditor extends PureComponent<Props> {
     if (settings?.scene) {
       try {
         let selection: SelectionParams = { targets: [] };
-        if (item instanceof GroupState) {
+        if (item instanceof FrameState) {
           const targetElements: HTMLDivElement[] = [];
           targetElements.push(item?.div!);
           selection.targets = targetElements;
-          selection.group = item;
+          selection.frame = item;
           settings.scene.select(selection);
         } else if (item instanceof ElementState) {
           const targetElement = [item?.div!];
@@ -115,7 +115,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
     }
   };
 
-  private decoupleGroup = () => {
+  private decoupleFrame = () => {
     const settings = this.props.item.settings;
 
     if (!settings?.layer) {
@@ -124,7 +124,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
     const { layer } = settings;
 
-    this.deleteGroup();
+    this.deleteFrame();
     layer.elements.forEach((element: ElementState) => {
       const elementContainer = element.div?.getBoundingClientRect();
       element.setPlacementFromConstraint(elementContainer, layer.parent?.div?.getBoundingClientRect());
@@ -132,22 +132,22 @@ export class LayerElementListEditor extends PureComponent<Props> {
     });
   };
 
-  private onDecoupleGroup = () => {
+  private onDecoupleFrame = () => {
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: 'Decouple group',
-        text: `Are you sure you want to decouple this group?`,
-        text2: 'This will remove the group and push nested elements in the next level up.',
+        title: 'Decouple frame',
+        text: `Are you sure you want to decouple this frame?`,
+        text2: 'This will remove the frame and push nested elements in the next level up.',
         confirmText: 'Yes',
         yesText: 'Decouple',
         onConfirm: async () => {
-          this.decoupleGroup();
+          this.decoupleFrame();
         },
       })
     );
   };
 
-  private deleteGroup = () => {
+  private deleteFrame = () => {
     const settings = this.props.item.settings;
 
     if (!settings?.layer) {
@@ -164,26 +164,26 @@ export class LayerElementListEditor extends PureComponent<Props> {
     this.goUpLayer();
   };
 
-  private onGroupSelection = () => {
+  private onFrameSelection = () => {
     const scene = this.getScene();
     if (scene) {
-      scene.groupSelection();
+      scene.frameSelection();
     } else {
       console.warn('no scene!');
     }
   };
 
-  private onDeleteGroup = () => {
+  private onDeleteFrame = () => {
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: 'Delete group',
-        text: `Are you sure you want to delete this group?`,
-        text2: 'This will delete the group and all nested elements.',
+        title: 'Delete frame',
+        text: `Are you sure you want to delete this frame?`,
+        text2: 'This will delete the frame and all nested elements.',
         icon: 'trash-alt',
         confirmText: 'Delete',
         yesText: 'Delete',
         onConfirm: async () => {
-          this.deleteGroup();
+          this.deleteFrame();
         },
       })
     );
@@ -215,8 +215,8 @@ export class LayerElementListEditor extends PureComponent<Props> {
       element.onChange({ ...element.options, name });
     };
 
-    const isGroup = (element: ElementState) => {
-      return element instanceof GroupState;
+    const isFrame = (element: ElementState) => {
+      return element instanceof FrameState;
     };
 
     const verifyLayerNameUniqueness = (nameToVerify: string) => {
@@ -231,16 +231,16 @@ export class LayerElementListEditor extends PureComponent<Props> {
         {!layer.isRoot() && (
           <>
             <Button icon="angle-up" size="sm" variant="secondary" onClick={this.goUpLayer}>
-              Go Up Level
+              Go up level
             </Button>
             <Button size="sm" variant="secondary" onClick={() => this.onSelect(layer)}>
-              Select Group
+              Select frame
             </Button>
-            <Button size="sm" variant="secondary" onClick={() => this.onDecoupleGroup()}>
-              Decouple Group
+            <Button size="sm" variant="secondary" onClick={() => this.onDecoupleFrame()}>
+              Decouple frame
             </Button>
-            <Button size="sm" variant="secondary" onClick={() => this.onDeleteGroup()}>
-              Delete Group
+            <Button size="sm" variant="secondary" onClick={() => this.onDeleteFrame()}>
+              Delete frame
             </Button>
           </>
         )}
@@ -252,7 +252,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
           getLayerInfo={getLayerInfo}
           onNameChange={onNameChange}
           verifyLayerNameUniqueness={verifyLayerNameUniqueness}
-          isGroup={isGroup}
+          isFrame={isFrame}
           layers={layer.elements}
           selection={selection}
         />
@@ -266,12 +266,12 @@ export class LayerElementListEditor extends PureComponent<Props> {
           />
           {selection.length > 0 && (
             <Button size="sm" variant="secondary" onClick={this.onClearSelection}>
-              Clear Selection
+              Clear selection
             </Button>
           )}
           {selection.length > 1 && (
-            <Button size="sm" variant="secondary" onClick={this.onGroupSelection}>
-              Group items
+            <Button size="sm" variant="secondary" onClick={this.onFrameSelection}>
+              Frame selection
             </Button>
           )}
         </HorizontalGroup>
