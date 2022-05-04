@@ -87,7 +87,6 @@ export default class PermissionsListItem extends PureComponent<Props> {
             disabled={item.inherited}
             value={currentPermissionLevel}
             width={25}
-            menuShouldPortal
           />
         </td>
         <td>

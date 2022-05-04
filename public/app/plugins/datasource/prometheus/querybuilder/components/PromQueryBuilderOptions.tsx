@@ -89,7 +89,6 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
           <EditorField label="Resolution">
             <Select
               aria-label="Select resolution"
-              menuShouldPortal
               isSearchable={false}
               options={INTERVAL_FACTOR_OPTIONS}
               onChange={onIntervalFactorChange}
