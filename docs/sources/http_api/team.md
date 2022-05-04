@@ -134,6 +134,8 @@ Status Codes:
 
 The Team `name` needs to be unique. `name` is required and `email`,`orgId` is optional.
 
+Optionally, users can supply also an `id`; in that case, the new team is created with the provided identifierr instead of the autoincremented one assigned by the database backend.
+
 `POST /api/teams`
 
 #### Required permissions
@@ -174,6 +176,31 @@ Status Codes:
 - **401** - Unauthorized
 - **403** - Permission denied
 - **409** - Team name is taken
+
+**Example Request with provided team identifier**:
+
+```http
+POST /api/teams HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+
+{
+  "id": 42,
+  "name": "MyTestTeam",
+  "email": "email@test.com",
+  "orgId": 2
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{"message":"Team created","teamId":42}
+```
 
 ## Update Team
 
