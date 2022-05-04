@@ -182,4 +182,8 @@ const (
 	// FlagAzureMonitorExperimentalUI
 	// Use grafana-experimental UI in Azure Monitor
 	FlagAzureMonitorExperimentalUI = "azureMonitorExperimentalUI"
+
+	// FlagPrometheusStreamingJSONParser
+	// Enable streaming JSON parser for Prometheus datasource
+	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
 )
