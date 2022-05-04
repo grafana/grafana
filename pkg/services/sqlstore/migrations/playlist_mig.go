@@ -51,9 +51,9 @@ func addPlaylistMigrations(mg *Migrator) {
 
 	// copy the (string representation of) existing IDs into the new uid column.
 	mg.AddMigration("Update uid column values in playlist", NewRawSQLMigration("").
-		SQLite("UPDATE playlist SET uid=printf('%09d',id) WHERE uid IS NULL;").
-		Postgres("UPDATE playlist SET uid=lpad('' || id::text,9,'0') WHERE uid IS NULL;").
-		Mysql("UPDATE playlist SET uid=lpad(id,9,'0') WHERE uid IS NULL;"))
+		SQLite("UPDATE playlist SET uid=printf('%d',id) WHERE uid IS NULL;").
+		Postgres("UPDATE playlist SET uid=id::text WHERE uid IS NULL;").
+		Mysql("UPDATE playlist SET uid=id WHERE uid IS NULL;"))
 
 	mg.AddMigration("Add index for uid in playlist", NewAddIndexMigration(playlistV2, &Index{
 		Cols: []string{"org_id", "uid"}, Type: UniqueIndex,
@@ -65,7 +65,7 @@ func addPlaylistMigrations(mg *Migrator) {
 
 	// copy the string representation of existing IDs into the new uid column.
 	mg.AddMigration("Update uid column values in playlist_item", NewRawSQLMigration("").
-		SQLite("UPDATE playlist_item SET playlist_uid=printf('%09d',playlist_id) WHERE playlist_uid IS NULL;").
-		Postgres("UPDATE playlist_item SET playlist_uid=lpad('' || playlist_id::text,9,'0') WHERE playlist_uid IS NULL;").
-		Mysql("UPDATE playlist_item SET playlist_uid=lpad(playlist_id,9,'0') WHERE playlist_uid IS NULL;"))
+		SQLite("UPDATE playlist_item SET playlist_uid=printf('%d',playlist_id) WHERE playlist_uid IS NULL;").
+		Postgres("UPDATE playlist_item SET playlist_uid=playlist_id::text WHERE playlist_uid IS NULL;").
+		Mysql("UPDATE playlist_item SET playlist_uid=playlist_id WHERE playlist_uid IS NULL;"))
 }

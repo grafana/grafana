@@ -66,7 +66,7 @@ func (hs *HTTPServer) populateDashboardsByTag(ctx context.Context, orgID int64, 
 }
 
 func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, signedInUser *models.SignedInUser, playlistUID string) (dtos.PlaylistDashboardsSlice, error) {
-	playlistItems, _ := hs.LoadPlaylistItems(ctx, playlistUID)
+	playlistItems, _ := hs.LoadPlaylistItems(ctx, playlistUID, orgID)
 
 	dashboardByIDs := make([]int64, 0)
 	dashboardByTag := make([]string, 0)
