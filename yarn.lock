@@ -10804,6 +10804,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/react-resizable@npm:^1.7.4":
+  version: 1.7.4
+  resolution: "@types/react-resizable@npm:1.7.4"
+  dependencies:
+    "@types/react": "*"
+  checksum: d665bb2ddf830b9f841be21204cee119602b3d983537a94ccbad40deb7cd602e04742e3e013009bbb27c2d0fe72441b29ed48bc75f7e482cfb25eaf45f281dc9
+  languageName: node
+  linkType: hard
+
 "@types/react-router-dom@npm:5.3.3":
   version: 5.3.3
   resolution: "@types/react-router-dom@npm:5.3.3"
@@ -20953,6 +20962,7 @@ __metadata:
     "@types/react-highlight-words": 0.16.4
     "@types/react-loadable": 5.5.6
     "@types/react-redux": 7.1.23
+    "@types/react-resizable": ^1.7.4
     "@types/react-router-dom": 5.3.3
     "@types/react-table": ^7
     "@types/react-test-renderer": 17.0.1

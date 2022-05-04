@@ -97,6 +97,15 @@ describe('Stats Calculators', () => {
     expect(stats.delta).toEqual(300);
   });
 
+  it('should calculate unique values', () => {
+    const stats = reduceField({
+      field: createField('x', [1, 2, 2, 3, 1]),
+      reducers: [ReducerID.uniqueValues],
+    });
+
+    expect(stats.uniqueValues).toEqual([1, 2, 3]);
+  });
+
   it('consistently check allIsNull/allIsZero', () => {
     const empty = createField('x');
     const allNull = createField('x', [null, null, null, null]);
