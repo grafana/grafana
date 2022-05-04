@@ -232,22 +232,20 @@ func (m *SQLStoreMock) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserH
 }
 
 func (m *SQLStoreMock) CreateTeam(name string, email string, orgID int64) (models.Team, error) {
-	t := models.Team{
+	return models.Team{
 		Name:  name,
 		Email: email,
 		OrgId: orgID,
-	}
-	return t, nil
+	}, nil
 }
 
 func (m *SQLStoreMock) CreateTeamWithID(name string, email string, orgID int64, ID int64) (models.Team, error) {
-	t := models.Team{
+	return models.Team{
 		Id: ID,
 		Name:  name,
 		Email: email,
 		OrgId: orgID,
-	}
-	return t, nil
+	}, nil
 }
 
 func (m *SQLStoreMock) UpdateTeam(ctx context.Context, cmd *models.UpdateTeamCommand) error {
