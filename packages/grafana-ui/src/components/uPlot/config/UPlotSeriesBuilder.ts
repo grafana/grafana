@@ -198,16 +198,11 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     const mode = gradientMode ?? GraphGradientMode.None;
     const opacityPercent = (fillOpacity ?? 0) / 100;
 
-    if (mode === GraphGradientMode.None && dynamicSeriesColor) {
+    if (mode === GraphGradientMode.None && dynamicSeriesColor && opacityPercent > 0) {
       return (u: uPlot, seriesIdx: number) => {
         // @ts-ignore
         let lineColor = u.series[seriesIdx]._stroke; // cache
-
-        if (opacityPercent > 0) {
-          return colorManipulator.alpha(lineColor ?? '', opacityPercent);
-        }
-
-        return lineColor;
+        return colorManipulator.alpha(lineColor ?? '', opacityPercent);
       };
     }
 
