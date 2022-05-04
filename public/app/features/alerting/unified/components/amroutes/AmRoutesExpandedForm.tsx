@@ -214,7 +214,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           {...field}
                           className={formStyles.smallInput}
                           invalid={invalid}
-                          placeholder="Time"
                           aria-label="Group wait value"
                         />
                       )}
@@ -255,7 +254,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           {...field}
                           className={formStyles.smallInput}
                           invalid={invalid}
-                          placeholder="Time"
                           aria-label="Group interval value"
                         />
                       )}
@@ -296,7 +294,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           {...field}
                           className={formStyles.smallInput}
                           invalid={invalid}
-                          placeholder="Time"
                           aria-label="Repeat interval value"
                         />
                       )}
