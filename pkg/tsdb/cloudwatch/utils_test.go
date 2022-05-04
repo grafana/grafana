@@ -65,15 +65,11 @@ type fakeCWClient struct {
 	Metrics        []*cloudwatch.Metric
 	MetricsPerPage int
 
-	calls timeSeriesQueryCalls
-}
-
-type timeSeriesQueryCalls struct {
-	getMetricDataWithContext []*cloudwatch.GetMetricDataInput
+	callsGetMetricDataWithContext []*cloudwatch.GetMetricDataInput
 }
 
 func (c *fakeCWClient) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
-	c.calls.getMetricDataWithContext = append(c.calls.getMetricDataWithContext, input)
+	c.callsGetMetricDataWithContext = append(c.callsGetMetricDataWithContext, input)
 
 	return &c.GetMetricDataOutput, nil
 }

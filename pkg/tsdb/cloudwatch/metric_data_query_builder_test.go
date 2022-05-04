@@ -85,17 +85,32 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			assert.Equal(t, "some label", *mdq.Label)
 		})
 
-		t.Run("should not set label when dynamic labels feature toggle is disabled", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
-			query := getBaseQuery()
-			label := "some label"
-			query.Label = &label
+		testCases := map[string]struct {
+			feature *featuremgmt.FeatureManager
+			label   string
+		}{
+			"should not set label when dynamic labels feature toggle is disabled": {
+				feature: featuremgmt.WithFeatures(),
+				label:   "some label",
+			},
+			"should not set label for empty string query label": {
+				feature: featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchDynamicLabels),
+				label:   "",
+			},
+		}
 
-			mdq, err := executor.buildMetricDataQuery(query)
+		for name, tc := range testCases {
+			t.Run(name, func(t *testing.T) {
+				executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, tc.feature)
+				query := getBaseQuery()
+				query.Label = &tc.label
 
-			assert.NoError(t, err)
-			assert.Nil(t, mdq.Label)
-		})
+				mdq, err := executor.buildMetricDataQuery(query)
+
+				assert.NoError(t, err)
+				assert.Nil(t, mdq.Label)
+			})
+		}
 	})
 
 	t.Run("Query should be matched exact", func(t *testing.T) {

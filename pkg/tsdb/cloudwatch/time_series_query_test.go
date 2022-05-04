@@ -238,26 +238,27 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		require.Len(t, cwClient.calls.getMetricDataWithContext, 1)
-		require.Len(t, cwClient.calls.getMetricDataWithContext[0].MetricDataQueries, 1)
-		require.NotNil(t, cwClient.calls.getMetricDataWithContext[0].MetricDataQueries[0].Label)
+		require.Len(t, cwClient.callsGetMetricDataWithContext, 1)
+		require.Len(t, cwClient.callsGetMetricDataWithContext[0].MetricDataQueries, 1)
+		require.NotNil(t, cwClient.callsGetMetricDataWithContext[0].MetricDataQueries[0].Label)
 
-		assert.Equal(t, "${PROP('Period')} some words ${PROP('Dim.InstanceId')}", *cwClient.calls.getMetricDataWithContext[0].MetricDataQueries[0].Label)
+		assert.Equal(t, "${PROP('Period')} some words ${PROP('Dim.InstanceId')}", *cwClient.callsGetMetricDataWithContext[0].MetricDataQueries[0].Label)
 	})
 
 	testCases := map[string]struct {
 		feature    *featuremgmt.FeatureManager
 		parameters queryParameters
 	}{
-		"should not pass GetMetricData label when query label is empty, dynamic labels enabled": {
+		"should not pass GetMetricData label when query label is empty, dynamic labels is enabled": {
 			feature: featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchDynamicLabels),
 		},
-		"should not pass GetMetricData label when query label is empty string, dynamic labels enabled": {
+		"should not pass GetMetricData label when query label is empty string, dynamic labels is enabled": {
 			feature:    featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchDynamicLabels),
 			parameters: queryParameters{Label: aws.String("")},
 		},
-		"should not pass GetMetricData label dynamic labels disabled": {
-			feature: featuremgmt.WithFeatures(),
+		"should not pass GetMetricData label when dynamic labels is disabled": {
+			feature:    featuremgmt.WithFeatures(),
+			parameters: queryParameters{Label: aws.String("${PROP('Period')} some words ${PROP('Dim.InstanceId')}")},
 		},
 	}
 
@@ -281,10 +282,10 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 			})
 
 			assert.NoError(t, err)
-			require.Len(t, cwClient.calls.getMetricDataWithContext, 1)
-			require.Len(t, cwClient.calls.getMetricDataWithContext[0].MetricDataQueries, 1)
+			require.Len(t, cwClient.callsGetMetricDataWithContext, 1)
+			require.Len(t, cwClient.callsGetMetricDataWithContext[0].MetricDataQueries, 1)
 
-			assert.Nil(t, cwClient.calls.getMetricDataWithContext[0].MetricDataQueries[0].Label)
+			assert.Nil(t, cwClient.callsGetMetricDataWithContext[0].MetricDataQueries[0].Label)
 		})
 	}
 }
