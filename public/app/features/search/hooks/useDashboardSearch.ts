@@ -1,13 +1,8 @@
 import { KeyboardEvent, useReducer } from 'react';
 import { useDebounce } from 'react-use';
 
-import { locationUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
-
-import { MOVE_SELECTION_DOWN, MOVE_SELECTION_UP } from '../reducers/actionTypes';
 import { dashboardsSearchState, DashboardsSearchState, searchReducer } from '../reducers/dashboardSearch';
-import { DashboardQuery, DashboardSearchItemType, DashboardSection } from '../types';
-import { findSelected } from '../utils';
+import { DashboardQuery } from '../types';
 
 import { reportDashboardListViewed } from './useManageDashboards';
 import { useSearch } from './useSearch';
@@ -19,7 +14,6 @@ export const useDashboardSearch = (query: DashboardQuery, onCloseSearch: () => v
   const {
     state: { results, loading },
     onToggleSection,
-    dispatch,
   } = useSearch<DashboardsSearchState>(query, reducer, { queryParsing: true });
 
   useDebounce(
@@ -49,23 +43,6 @@ export const useDashboardSearch = (query: DashboardQuery, onCloseSearch: () => v
       case 'Escape':
         onCloseSearch();
         break;
-      case 'ArrowUp':
-        dispatch({ type: MOVE_SELECTION_UP });
-        break;
-      case 'ArrowDown':
-        dispatch({ type: MOVE_SELECTION_DOWN });
-        break;
-      case 'Enter':
-        const selectedItem = findSelected(results);
-        if (selectedItem) {
-          if (selectedItem.type === DashboardSearchItemType.DashFolder) {
-            onToggleSection(selectedItem as DashboardSection);
-          } else {
-            locationService.push(locationUtil.stripBaseFromUrl(selectedItem.url));
-            // Delay closing to prevent current page flicker
-            setTimeout(onCloseSearch, 0);
-          }
-        }
     }
   };
 

@@ -25,7 +25,6 @@ describe('useManageDashboards', () => {
     const state: ManageDashboardsState = {
       results,
       loading: false,
-      selectedIndex: 0,
       initialLoading: false,
       allChecked: false,
     };

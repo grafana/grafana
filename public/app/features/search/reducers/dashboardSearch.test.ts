@@ -1,6 +1,6 @@
 import { searchResults, sections } from '../testData';
 
-import { FETCH_ITEMS, FETCH_RESULTS, TOGGLE_SECTION, MOVE_SELECTION_DOWN, MOVE_SELECTION_UP } from './actionTypes';
+import { FETCH_ITEMS, FETCH_RESULTS, TOGGLE_SECTION } from './actionTypes';
 import { searchReducer as reducer, dashboardsSearchState } from './dashboardSearch';
 
 const defaultState = { selectedIndex: 0, loading: false, results: sections as any[], initialLoading: false };
@@ -47,48 +47,5 @@ describe('Dashboard Search reducer', () => {
       },
     });
     expect(newState.results[2].items).toEqual(items);
-  });
-
-  it('should handle MOVE_SELECTION_DOWN', () => {
-    const newState = reducer(defaultState, {
-      type: MOVE_SELECTION_DOWN,
-    });
-
-    expect(newState.selectedIndex).toEqual(1);
-    expect(newState.results[0].items[0].selected).toBeTruthy();
-
-    const newState2 = reducer(newState, {
-      type: MOVE_SELECTION_DOWN,
-    });
-
-    expect(newState2.selectedIndex).toEqual(2);
-    expect(newState2.results[1].selected).toBeTruthy();
-
-    // Shouldn't go over the visible results length - 1 (9)
-    const newState3 = reducer(
-      { ...defaultState, selectedIndex: 9 },
-      {
-        type: MOVE_SELECTION_DOWN,
-      }
-    );
-    expect(newState3.selectedIndex).toEqual(9);
-  });
-
-  it('should handle MOVE_SELECTION_UP', () => {
-    // shouldn't move beyond 0
-    const newState = reducer(defaultState, {
-      type: MOVE_SELECTION_UP,
-    });
-
-    expect(newState.selectedIndex).toEqual(0);
-
-    const newState2 = reducer(
-      { ...defaultState, selectedIndex: 3 },
-      {
-        type: MOVE_SELECTION_UP,
-      }
-    );
-    expect(newState2.selectedIndex).toEqual(2);
-    expect(newState2.results[1].selected).toBeTruthy();
   });
 });
