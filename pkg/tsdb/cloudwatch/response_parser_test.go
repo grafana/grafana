@@ -459,7 +459,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		assert.Equal(t, "", frame.Fields[1].Config.DisplayName)
 	})
 
-	t.Run("buildDataFrames should use response label as frame name", func(t *testing.T) {
+	t.Run("buildDataFrames should use response label as frame name when dynamic label is enabled", func(t *testing.T) {
 		response := &queryRowResponse{
 			Labels: []string{"some response label"},
 			Metrics: map[string]*cloudwatch.MetricDataResult{
