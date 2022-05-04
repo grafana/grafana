@@ -2,7 +2,6 @@ package sqlstore
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -21,10 +20,7 @@ func TestIntegrationPlaylistDataAccess(t *testing.T) {
 		cmd := models.CreatePlaylistCommand{Name: "NYC office", Interval: "10m", OrgId: 1, Items: items}
 		err := ss.CreatePlaylist(context.Background(), &cmd)
 		require.NoError(t, err)
-
 		uid := cmd.Result.Uid
-		id := cmd.Result.Id
-		fmt.Printf("uid: %s, id: %d\n", uid, id)
 
 		t.Run("Can update playlist", func(t *testing.T) {
 			items := []models.PlaylistItemDTO{
@@ -41,7 +37,7 @@ func TestIntegrationPlaylistDataAccess(t *testing.T) {
 			err = ss.DeletePlaylist(context.Background(), &deleteQuery)
 			require.NoError(t, err)
 
-			getQuery := models.GetPlaylistByUidQuery{Uid: uid}
+			getQuery := models.GetPlaylistByUidQuery{Uid: uid, OrgId: 1}
 			err = ss.GetPlaylist(context.Background(), &getQuery)
 			require.NoError(t, err)
 			require.Equal(t, uid, getQuery.Result.Uid, "playlist should've been removed")

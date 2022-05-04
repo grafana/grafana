@@ -11,7 +11,7 @@ import (
 
 func (hs *HTTPServer) ValidateOrgPlaylist(c *models.ReqContext) {
 	uid := web.Params(c.Req)[":uid"]
-	query := models.GetPlaylistByUidQuery{Uid: uid}
+	query := models.GetPlaylistByUidQuery{Uid: uid, OrgId: c.OrgId}
 	err := hs.SQLStore.GetPlaylist(c.Req.Context(), &query)
 
 	if err != nil {
@@ -60,7 +60,7 @@ func (hs *HTTPServer) GetPlaylist(c *models.ReqContext) response.Response {
 		return response.Error(500, "Playlist not found", err)
 	}
 
-	playlistDTOs, _ := hs.LoadPlaylistItemDTOs(c.Req.Context(), uid)
+	playlistDTOs, _ := hs.LoadPlaylistItemDTOs(c.Req.Context(), uid, c.OrgId)
 
 	dto := &models.PlaylistDTO{
 		Uid:      cmd.Result.Uid,
@@ -73,8 +73,8 @@ func (hs *HTTPServer) GetPlaylist(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, dto)
 }
 
-func (hs *HTTPServer) LoadPlaylistItemDTOs(ctx context.Context, uid string) ([]models.PlaylistItemDTO, error) {
-	playlistitems, err := hs.LoadPlaylistItems(ctx, uid)
+func (hs *HTTPServer) LoadPlaylistItemDTOs(ctx context.Context, uid string, orgId int64) ([]models.PlaylistItemDTO, error) {
+	playlistitems, err := hs.LoadPlaylistItems(ctx, uid, orgId)
 
 	if err != nil {
 		return nil, err
@@ -96,8 +96,8 @@ func (hs *HTTPServer) LoadPlaylistItemDTOs(ctx context.Context, uid string) ([]m
 	return playlistDTOs, nil
 }
 
-func (hs *HTTPServer) LoadPlaylistItems(ctx context.Context, uid string) ([]models.PlaylistItem, error) {
-	itemQuery := models.GetPlaylistItemsByUidQuery{PlaylistUid: uid}
+func (hs *HTTPServer) LoadPlaylistItems(ctx context.Context, uid string, orgId int64) ([]models.PlaylistItem, error) {
+	itemQuery := models.GetPlaylistItemsByUidQuery{PlaylistUid: uid, OrgId: orgId}
 	if err := hs.SQLStore.GetPlaylistItem(ctx, &itemQuery); err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (hs *HTTPServer) LoadPlaylistItems(ctx context.Context, uid string) ([]mode
 func (hs *HTTPServer) GetPlaylistItems(c *models.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 
-	playlistDTOs, err := hs.LoadPlaylistItemDTOs(c.Req.Context(), uid)
+	playlistDTOs, err := hs.LoadPlaylistItemDTOs(c.Req.Context(), uid, c.OrgId)
 
 	if err != nil {
 		return response.Error(500, "Could not load playlist items", err)
@@ -165,7 +165,7 @@ func (hs *HTTPServer) UpdatePlaylist(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to save playlist", err)
 	}
 
-	playlistDTOs, err := hs.LoadPlaylistItemDTOs(c.Req.Context(), cmd.Uid)
+	playlistDTOs, err := hs.LoadPlaylistItemDTOs(c.Req.Context(), cmd.Uid, c.OrgId)
 	if err != nil {
 		return response.Error(500, "Failed to save playlist", err)
 	}
