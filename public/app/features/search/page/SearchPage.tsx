@@ -1,17 +1,20 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { FixedSizeGrid } from 'react-window';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Input, useStyles2, Spinner, Button } from '@grafana/ui';
+import { Input, useStyles2, Spinner, Button, Switch } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 
+import { SearchCard } from '../components/SearchCard';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { getGrafanaSearcher, QueryFilters } from '../service';
 import { getTermCounts } from '../service/backend';
+import { toDashboardSectionItem } from '../service/searcher';
 
 import { Table } from './table/Table';
 
@@ -25,6 +28,7 @@ const node: NavModelItem = {
 export default function SearchPage() {
   const styles = useStyles2(getStyles);
   const { query, onQueryChange, onTagFilterChange, onDatasourceChange } = useSearchQuery({});
+  const [gridView, setGridView] = useState(false); // grid vs list view
 
   const results = useAsync(() => {
     const { query: searchQuery, tag: tags, datasource } = query;
@@ -57,6 +61,13 @@ export default function SearchPage() {
     onTagFilterChange(tags);
   };
 
+  // HACK for grid view
+  const itemProps = {
+    editable: false,
+    onToggleChecked: () => {},
+    onTagSelected: () => {},
+  };
+
   return (
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
@@ -77,13 +88,48 @@ export default function SearchPage() {
                 Datasource: {query.datasource}
               </Button>
             )}
-            <AutoSizer style={{ width: '100%', height: '2000px' }}>
-              {({ width }) => {
+            <Switch value={gridView} onChange={() => setGridView(!gridView)} /> List vs Grid view
+            <AutoSizer style={{ width: '100%', height: '700px' }}>
+              {({ width, height }) => {
+                if (gridView) {
+                  const items = toDashboardSectionItem(results.value!.body);
+
+                  const numColumns = Math.ceil(width / 320);
+                  const cellWidth = width / numColumns;
+                  const cellHeight = (cellWidth - 64) * 0.75 + 56 + 8;
+                  const numRows = Math.ceil(items.length / numColumns);
+                  return (
+                    <FixedSizeGrid
+                      columnCount={numColumns}
+                      columnWidth={cellWidth}
+                      rowCount={numRows}
+                      rowHeight={cellHeight}
+                      className={styles.wrapper}
+                      innerElementType="ul"
+                      height={height}
+                      width={width}
+                    >
+                      {({ columnIndex, rowIndex, style }) => {
+                        const index = rowIndex * numColumns + columnIndex;
+                        const item = items[index];
+                        // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
+                        // And without this wrapper there is no room for that margin
+                        return item ? (
+                          <li style={style} className={styles.virtualizedGridItemWrapper}>
+                            <SearchCard key={item.uid} {...itemProps} item={item} />
+                          </li>
+                        ) : null;
+                      }}
+                    </FixedSizeGrid>
+                  );
+                }
+
                 return (
                   <>
                     <Table
                       data={results.value!.body}
                       width={width}
+                      height={height}
                       tags={query.tag}
                       onTagFilterChange={onTagChange}
                       onDatasourceChange={onDatasourceChange}
@@ -114,5 +160,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
       text-decoration: line-through;
     }
     margin-bottom: 20px;
+  `,
+
+  virtualizedGridItemWrapper: css`
+    padding: 4px;
+  `,
+  wrapper: css`
+    display: flex;
+    flex-direction: column;
+
+    > ul {
+      list-style: none;
+    }
   `,
 });

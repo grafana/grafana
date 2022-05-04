@@ -15,6 +15,7 @@ import { generateColumns } from './columns';
 type Props = {
   data: DataFrame;
   width: number;
+  height: number;
   tags: string[];
   onTagFilterChange: (tags: string[]) => void;
   onDatasourceChange: (datasource?: string) => void;
@@ -39,7 +40,7 @@ export interface FieldAccess {
   datasource: DataSourceRef[];
 }
 
-export const Table = ({ data, width, tags, onTagFilterChange, onDatasourceChange }: Props) => {
+export const Table = ({ data, width, height, tags, onTagFilterChange, onDatasourceChange }: Props) => {
   const styles = useStyles2(getStyles);
   const tableStyles = useStyles2(getTableStyles);
 
@@ -122,7 +123,7 @@ export const Table = ({ data, width, tags, onTagFilterChange, onDatasourceChange
       <div {...getTableBodyProps()}>
         {rows.length > 0 ? (
           <FixedSizeList
-            height={500}
+            height={height}
             itemCount={rows.length}
             itemSize={tableStyles.rowHeight}
             width={'100%'}
