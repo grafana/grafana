@@ -8,7 +8,7 @@ import { ElasticDatasource } from '../../datasource';
 import { useNextId } from '../../hooks/useNextId';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../../types';
-import { isDeprecatedVersion } from '../../utils';
+import { isSupportedVersion } from '../../utils';
 
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
@@ -19,7 +19,7 @@ import { changeAliasPattern, changeQuery } from './state';
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
 
 export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: ElasticQueryEditorProps) => {
-  if (isDeprecatedVersion(datasource.esVersion)) {
+  if (!isSupportedVersion(datasource.esVersion)) {
     return (
       <Alert
         title={`Support for Elasticsearch versions after their end-of-life (currently versions < 7.10) was removed`}
