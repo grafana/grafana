@@ -6,9 +6,10 @@ import { Input } from '@grafana/ui';
 export interface Props {
   onChange: (alias: any) => void;
   value: string;
+  id?: string;
 }
 
-export const Alias: FunctionComponent<Props> = ({ value = '', onChange }) => {
+export const Alias: FunctionComponent<Props> = ({ value = '', onChange, id }) => {
   const [alias, setAlias] = useState(value);
 
   const propagateOnChange = debounce(onChange, 1500);
@@ -18,5 +19,5 @@ export const Alias: FunctionComponent<Props> = ({ value = '', onChange }) => {
     propagateOnChange(e.target.value);
   };
 
-  return <Input type="text" value={alias} onChange={onChange} aria-label="Optional alias" />;
+  return <Input id={id} type="text" value={alias} onChange={onChange} aria-label="Optional alias" />;
 };

@@ -1,8 +1,8 @@
 import deepEqual from 'fast-deep-equal';
 import { useEffect, useMemo } from 'react';
 
-import { migrateMetricQuery } from '../migrations/metricQueryMigrations';
-import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../types';
+import { migrateMetricQuery } from '../../migrations/metricQueryMigrations';
+import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../../types';
 
 export const DEFAULT_QUERY: Omit<CloudWatchMetricsQuery, 'refId'> = {
   queryMode: 'Metrics',

@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react-hooks';
 
-import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../types';
+import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../../types';
 
 import usePreparedMetricsQuery, { DEFAULT_QUERY } from './usePreparedMetricsQuery';
 
