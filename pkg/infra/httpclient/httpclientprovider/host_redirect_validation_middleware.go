@@ -30,7 +30,7 @@ func RedirectLimitMiddleware(reqValidator models.PluginRequestValidator) sdkhttp
 					return nil, validationErr
 				}
 			}
-			return res, err
+			return res, nil
 		})
 	})
 }
