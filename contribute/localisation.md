@@ -38,6 +38,20 @@ const ErrorMessage = ({ id, message }) => <Trans id={`errors.${id}`}>There was a
 
 Grafana uses the [LinguiJS](https://github.com/lingui/js-lingui) framework for managing translating phrases in the Grafana frontend. We use Lingui to mark up phrases for extraction, to automate extracting phrases into message catalogs for use in translation management systems, and then to load the translated phrases into the frontend for the user's selected locale.
 
+### Phrase ID naming convention
+
+We set explicit IDs for phrases to make it easier to identify phrases out of context, and to track where they're used. IDs follow a naming scheme that includes _where_ the phrase is used. The exception is the rare case of single reoccuring words like "Cancel", but default to using a feature/phrase specific phrase.
+
+Message IDs are made of _up to_ three segments in the format `feature.area.phrase`. For example:
+
+- `dashboard.header.refresh-label`
+- `explore.toolbar.share-tooltip`
+
+For components used all over the site, use just two segments:
+
+- `footer.update`
+- `navigation.home`
+
 ### Top-level provider
 
 In [AppWrapper.tsx](/public/app/AppWrapper.tsx) the app is wrapped with `I18nProvider` from `public/app/core/localisation.tsx` where the Lingui instance is created with the user's preferred locale. This sets the appropriate context and allows any component from `@lingui/macro` to use the translations for the user's preferred locale.
