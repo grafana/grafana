@@ -17,14 +17,14 @@ import React, { Component, ReactNode } from 'react';
 import { Subject, Subscription } from 'rxjs';
 
 import {
-  PanelData,
-  MapLayerOptions,
-  PanelProps,
-  GrafanaTheme,
+  DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
-  DataFrame,
   FrameGeometrySourceMode,
+  GrafanaTheme,
+  MapLayerOptions,
+  PanelData,
+  PanelProps,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
@@ -645,13 +645,14 @@ export class GeomapPanel extends Component<Props, State> {
 
   render() {
     const { ttip, ttipOpen, topRight, legends } = this.state;
+    const showScale = this.props.options.controls.showScale;
 
     return (
       <>
         <Global styles={this.globalCSS} />
         <div className={this.style.wrap} onMouseLeave={this.clearTooltip}>
           <div className={this.style.map} ref={this.initMapRef}></div>
-          <GeomapOverlay bottomLeft={legends} topRight={topRight} />
+          <GeomapOverlay bottomLeft={legends} topRight={topRight} blStyle={{ bottom: showScale ? '35px' : '8px' }} />
         </div>
         <GeomapTooltip ttip={ttip} isOpen={ttipOpen} onClose={this.tooltipPopupClosed} />
       </>
