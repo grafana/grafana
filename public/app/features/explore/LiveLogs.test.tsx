@@ -17,6 +17,29 @@ const setup = (rows: LogRowModel[]) =>
     />
   );
 
+const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
+  const uid = overrides.uid || '1';
+  const entry = `log message ${uid}`;
+  return {
+    uid,
+    entryFieldIndex: 0,
+    rowIndex: 0,
+    dataFrame: new MutableDataFrame(),
+    logLevel: LogLevel.debug,
+    entry,
+    hasAnsi: false,
+    hasUnescapedContent: false,
+    labels: {},
+    raw: entry,
+    timeFromNow: '',
+    timeEpochMs: 1,
+    timeEpochNs: '1000000',
+    timeLocal: '',
+    timeUtc: '',
+    ...overrides,
+  };
+};
+
 describe('LiveLogs', () => {
   it('renders logs', () => {
     setup([makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })]);
@@ -64,7 +87,7 @@ describe('LiveLogs', () => {
     setup([
       makeLog({ uid: '1' }),
       makeLog({ hasAnsi: true, raw: 'log message \u001B[31m2\u001B[0m', uid: '2' }),
-      makeLog({ hasAnsi: true, raw: 'log message \u001B[31m3\u001B[0m', uid: '3' }),
+      makeLog({ hasAnsi: true, raw: 'log message \u001B[33m3\u001B[0m', uid: '3' }),
     ]);
 
     expect(screen.getByRole('cell', { name: 'log message 1' })).toBeInTheDocument();
@@ -74,29 +97,6 @@ describe('LiveLogs', () => {
     const logList = screen.getAllByTestId('ansiLogLine');
     expect(logList).toHaveLength(2);
     expect(logList[0]).toHaveAttribute('style', 'color: rgb(204, 0, 0);');
-    expect(logList[1]).toHaveAttribute('style', 'color: rgb(204, 0, 0);');
+    expect(logList[1]).toHaveAttribute('style', 'color: rgb(204, 102, 0);');
   });
 });
-
-const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
-  const uid = overrides.uid || '1';
-  const entry = `log message ${uid}`;
-  return {
-    uid,
-    entryFieldIndex: 0,
-    rowIndex: 0,
-    dataFrame: new MutableDataFrame(),
-    logLevel: LogLevel.debug,
-    entry,
-    hasAnsi: false,
-    hasUnescapedContent: false,
-    labels: {},
-    raw: entry,
-    timeFromNow: '',
-    timeEpochMs: 1,
-    timeEpochNs: '1000000',
-    timeLocal: '',
-    timeUtc: '',
-    ...overrides,
-  };
-};
