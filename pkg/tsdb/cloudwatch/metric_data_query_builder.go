@@ -17,7 +17,7 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(query *cloudWatchQuery) (*clou
 		ReturnData: aws.Bool(query.ReturnData),
 	}
 
-	if e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels) {
+	if e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels) && query.Label != nil && len(*query.Label) > 0 {
 		mdq.Label = query.Label
 	}
 

@@ -72,7 +72,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			assert.Equal(t, `SUM([a,b])`, *mdq.Expression)
 		})
 
-		t.Run("should populate label when dynamic labels feature toggle is enabled", func(t *testing.T) {
+		t.Run("should set label when dynamic labels feature toggle is enabled", func(t *testing.T) {
 			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchDynamicLabels))
 			query := getBaseQuery()
 			label := "some label"
@@ -85,7 +85,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			assert.Equal(t, "some label", *mdq.Label)
 		})
 
-		t.Run("should not populate label when dynamic labels feature toggle is disabled", func(t *testing.T) {
+		t.Run("should not set label when dynamic labels feature toggle is disabled", func(t *testing.T) {
 			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 			query := getBaseQuery()
 			label := "some label"
