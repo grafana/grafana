@@ -17,9 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
-// AlertDispatcher is a service that handles alert notifications. It accepts an alert that is represented by models.AlertRuleKey and state.State,
-// then converts it to a format that is recognizable by Alertmanager and routes the resulting alert to either an external AlertManager or notifier.MultiOrgAlertmanager or both.
-// In order to maintain the internal state, the service should be Run after creation. This method starts synchronization that is run regularly.
+// AlertDispatcher handles alerts generated during alert rule evaluation. It
+// converts alerts represented by {models.AlertRuleKey, state.State}
+// into the standard Prometheus Alertmanager format, and then sends
+// the resulting alert to all configured Alertmanagers.
+//
+// After creating a Dispatcher, you must call Run to keep the Dispatcher's
+// state synchronized with the alerting configuration.
 type AlertDispatcher struct {
 	AdminConfigMtx   sync.RWMutex
 	logger           log.Logger
