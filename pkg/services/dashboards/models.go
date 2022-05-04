@@ -15,8 +15,8 @@ type SaveDashboardDTO struct {
 	Dashboard *models.Dashboard
 }
 
-type SaveDashboardSharingConfigDTO struct {
-	Uid                    string
-	OrgId                  int64
-	DashboardSharingConfig models.DashboardSharingConfig
+type SavePublicDashboardConfigDTO struct {
+	Uid                   string
+	OrgId                 int64
+	PublicDashboardConfig models.PublicDashboardConfig
 }

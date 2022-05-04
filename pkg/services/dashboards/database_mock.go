@@ -233,21 +233,21 @@ func (_m *FakeDashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*m
 	return r0, r1
 }
 
-// SaveDashboardSharingConfig provides a mock function with given fields: cmd
-func (_m *FakeDashboardStore) SaveDashboardSharingConfig(cmd models.SaveDashboardSharingConfigCommand) (*models.DashboardSharingConfig, error) {
+// SavePublicDashboardConfig provides a mock function with given fields: cmd
+func (_m *FakeDashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboardConfig, error) {
 	ret := _m.Called(cmd)
 
-	var r0 *models.DashboardSharingConfig
-	if rf, ok := ret.Get(0).(func(models.SaveDashboardSharingConfigCommand) *models.DashboardSharingConfig); ok {
+	var r0 *models.PublicDashboardConfig
+	if rf, ok := ret.Get(0).(func(models.SavePublicDashboardConfigCommand) *models.PublicDashboardConfig); ok {
 		r0 = rf(cmd)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.DashboardSharingConfig)
+			r0 = ret.Get(0).(*models.PublicDashboardConfig)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(models.SaveDashboardSharingConfigCommand) error); ok {
+	if rf, ok := ret.Get(1).(func(models.SavePublicDashboardConfigCommand) error); ok {
 		r1 = rf(cmd)
 	} else {
 		r1 = ret.Error(1)

@@ -72,6 +72,6 @@ describe('SharePublic', () => {
 
     fireEvent.click(screen.getByText('Share Public Dashboard'));
 
-    await waitFor(() => screen.getByText('Sharing for your dashboard'));
+    await waitFor(() => screen.getByText('Enabled'));
   });
 });

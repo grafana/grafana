@@ -184,9 +184,9 @@ func (d *DashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models
 	return cmd.Result, err
 }
 
-func (d *DashboardStore) SaveDashboardSharingConfig(cmd models.SaveDashboardSharingConfigCommand) (*models.DashboardSharingConfig, error) {
+func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboardConfig, error) {
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		affectedRowCount, err := sess.Table("dashboard").Where("org_id = ? AND uid = ?", cmd.OrgId, cmd.Uid).Update(map[string]interface{}{"is_public": cmd.DashboardSharingConfig.IsPublic})
+		affectedRowCount, err := sess.Table("dashboard").Where("org_id = ? AND uid = ?", cmd.OrgId, cmd.Uid).Update(map[string]interface{}{"is_public": cmd.PublicDashboardConfig.IsPublic})
 		if err != nil {
 			return err
 		}
@@ -202,7 +202,7 @@ func (d *DashboardStore) SaveDashboardSharingConfig(cmd models.SaveDashboardShar
 		return nil, err
 	}
 
-	return &cmd.DashboardSharingConfig, nil
+	return &cmd.PublicDashboardConfig, nil
 }
 
 func (d *DashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int64, items []*models.DashboardAcl) error {
