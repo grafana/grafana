@@ -68,7 +68,6 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             options={indexPatternTypes}
             onChange={intervalHandler(value, onChange)}
             width={24}
-            menuShouldPortal
           />
         </InlineField>
 
@@ -103,7 +102,6 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             }}
             value={currentVersion || customOption}
             width={24}
-            menuShouldPortal
           />
         </InlineField>
 
