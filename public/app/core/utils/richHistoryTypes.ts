@@ -1,5 +1,3 @@
-import { SelectableValue } from '@grafana/data';
-
 export enum SortOrder {
   Descending = 'Descending',
   Ascending = 'Ascending',
@@ -11,13 +9,14 @@ export interface RichHistorySettings {
   retentionPeriod: number;
   starredTabAsFirstTab: boolean;
   activeDatasourceOnly: boolean;
-  lastUsedDatasourceFilters: SelectableValue[];
+  lastUsedDatasourceFilters: string[];
 }
 
 export type RichHistorySearchFilters = {
   search: string;
   sortOrder: SortOrder;
-  datasourceFilters: SelectableValue[];
+  datasourceFilters: string[];
   from: number;
   to: number;
+  starred: boolean;
 };

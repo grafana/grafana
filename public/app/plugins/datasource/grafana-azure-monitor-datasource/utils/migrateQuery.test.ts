@@ -52,7 +52,6 @@ const azureMonitorQueryV8 = {
 };
 
 const modernMetricsQuery: AzureMonitorQuery = {
-  appInsights: { dimension: [], metricName: 'select', timeGrain: 'auto' },
   azureLogAnalytics: {
     query:
       '//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc',
@@ -75,7 +74,6 @@ const modernMetricsQuery: AzureMonitorQuery = {
     top: '10',
   },
   azureResourceGraph: { resultFormat: 'table' },
-  insightsAnalytics: { query: '', resultFormat: 'time_series' },
   queryType: AzureQueryType.AzureMonitor,
   refId: 'A',
   subscription: '44693801-6ee6-49de-9b2d-9106972f9572',

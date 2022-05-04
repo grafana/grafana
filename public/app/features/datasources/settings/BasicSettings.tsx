@@ -1,9 +1,7 @@
 import React, { FC } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { InlineFormLabel, LegacyForms } from '@grafana/ui';
-
-const { Input, Switch } = LegacyForms;
+import { InlineField, InlineSwitch, Input } from '@grafana/ui';
 
 export interface Props {
   dataSourceName: string;
@@ -16,33 +14,34 @@ const BasicSettings: FC<Props> = ({ dataSourceName, isDefault, onDefaultChange, 
   return (
     <div className="gf-form-group" aria-label="Datasource settings page basic settings">
       <div className="gf-form-inline">
-        <div className="gf-form max-width-30" style={{ marginRight: '3px' }}>
-          <InlineFormLabel
-            tooltip={
-              'The name is used when you select the data source in panels. The default data source is ' +
-              'preselected in new panels.'
-            }
+        <div className="gf-form max-width-30">
+          <InlineField
+            label="Name"
+            tooltip="The name is used when you select the data source in panels. The default data source is
+              'preselected in new panels."
+            grow
           >
-            Name
-          </InlineFormLabel>
-          <Input
-            className="gf-form-input max-width-23"
-            type="text"
-            value={dataSourceName}
-            placeholder="Name"
-            onChange={(event) => onNameChange(event.target.value)}
-            required
-            aria-label={selectors.pages.DataSource.name}
-          />
+            <Input
+              id="basic-settings-name"
+              type="text"
+              value={dataSourceName}
+              placeholder="Name"
+              onChange={(event) => onNameChange(event.currentTarget.value)}
+              required
+              aria-label={selectors.pages.DataSource.name}
+            />
+          </InlineField>
         </div>
-        <Switch
-          label="Default"
-          checked={isDefault}
-          onChange={(event) => {
-            // @ts-ignore
-            onDefaultChange(event.target.checked);
-          }}
-        />
+
+        <InlineField label="Default" labelWidth={8}>
+          <InlineSwitch
+            id="basic-settings-default"
+            value={isDefault}
+            onChange={(event: React.FormEvent<HTMLInputElement>) => {
+              onDefaultChange(event.currentTarget.checked);
+            }}
+          />
+        </InlineField>
       </div>
     </div>
   );

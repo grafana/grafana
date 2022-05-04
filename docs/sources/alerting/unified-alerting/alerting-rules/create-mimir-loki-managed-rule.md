@@ -2,6 +2,7 @@
 title = "Create Grafana Mimir or Loki managed alert rule"
 description = "Create Grafana Mimir or Loki managed alerting rule"
 keywords = ["grafana", "alerting", "guide", "rules", "create"]
+aliases = ["/docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/"]
 weight = 400
 +++
 

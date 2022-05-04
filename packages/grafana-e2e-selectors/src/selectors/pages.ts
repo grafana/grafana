@@ -183,7 +183,7 @@ export const Pages = {
       container: 'data-testid Explore',
       graph: 'Explore Graph',
       table: 'Explore Table',
-      scrollBar: () => '.scrollbar-view',
+      scrollView: 'data-testid explorer scroll view',
     },
   },
   SoloPanel: {

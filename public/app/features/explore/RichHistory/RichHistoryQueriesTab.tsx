@@ -1,32 +1,30 @@
 import { css } from '@emotion/css';
-import { uniqBy } from 'lodash';
-import React, { useState, useEffect } from 'react';
-import { useDebounce } from 'react-use';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { stylesFactory, useTheme, RangeSlider, MultiSelect, Select, FilterInput } from '@grafana/ui';
+import { FilterInput, MultiSelect, RangeSlider, Select, stylesFactory, useTheme } from '@grafana/ui';
 import {
-  SortOrder,
+  createDatasourcesList,
   mapNumbertoTimeInSlider,
   mapQueriesToHeadings,
-  createDatasourcesList,
-  filterAndSortQueries,
+  SortOrder,
+  RichHistorySearchFilters,
+  RichHistorySettings,
 } from 'app/core/utils/richHistory';
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
+import { ExploreId, RichHistoryQuery } from 'app/types/explore';
 
 import { sortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
 
 export interface Props {
   queries: RichHistoryQuery[];
-  sortOrder: SortOrder;
-  activeDatasourceOnly: boolean;
-  datasourceFilters: SelectableValue[];
-  retentionPeriod: number;
+  activeDatasourceInstance?: string;
+  updateFilters: (filtersToUpdate?: Partial<RichHistorySearchFilters>) => void;
+  clearRichHistoryResults: () => void;
+  richHistorySettings: RichHistorySettings;
+  richHistorySearchFilters?: RichHistorySearchFilters;
   exploreId: ExploreId;
   height: number;
-  onChangeSortOrder: (sortOrder: SortOrder) => void;
-  onSelectDatasourceFilters: (value: SelectableValue[]) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
@@ -120,107 +118,106 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
 
 export function RichHistoryQueriesTab(props: Props) {
   const {
-    datasourceFilters,
-    onSelectDatasourceFilters,
     queries,
-    onChangeSortOrder,
-    sortOrder,
-    activeDatasourceOnly,
-    retentionPeriod,
+    richHistorySearchFilters,
+    updateFilters,
+    clearRichHistoryResults,
+    richHistorySettings,
     exploreId,
     height,
+    activeDatasourceInstance,
   } = props;
-
-  const [timeFilter, setTimeFilter] = useState<[number, number]>([0, retentionPeriod]);
-  const [data, setData] = useState<[RichHistoryQuery[], ReturnType<typeof createDatasourcesList>]>([[], []]);
-  const [searchInput, setSearchInput] = useState('');
-  const [debouncedSearchInput, setDebouncedSearchInput] = useState('');
 
   const theme = useTheme();
   const styles = getStyles(theme, height);
 
-  useDebounce(
-    () => {
-      setDebouncedSearchInput(searchInput);
-    },
-    300,
-    [searchInput]
-  );
+  const listOfDatasources = createDatasourcesList();
 
   useEffect(() => {
-    const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map((d) => d.datasourceName);
-    const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
+    const datasourceFilters =
+      richHistorySettings.activeDatasourceOnly && activeDatasourceInstance
+        ? [activeDatasourceInstance]
+        : richHistorySettings.lastUsedDatasourceFilters;
+    const filters: RichHistorySearchFilters = {
+      search: '',
+      sortOrder: SortOrder.Descending,
+      datasourceFilters,
+      from: 0,
+      to: richHistorySettings.retentionPeriod,
+      starred: false,
+    };
+    updateFilters(filters);
 
-    setData([
-      filterAndSortQueries(
-        queries,
-        sortOrder,
-        datasourceFilters.map((d) => d.value),
-        debouncedSearchInput,
-        timeFilter
-      ),
-      listOfDatasources,
-    ]);
-  }, [timeFilter, queries, sortOrder, datasourceFilters, debouncedSearchInput]);
+    return () => {
+      clearRichHistoryResults();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const [filteredQueries, listOfDatasources] = data;
+  if (!richHistorySearchFilters) {
+    return <span>Loading...</span>;
+  }
 
   /* mappedQueriesToHeadings is an object where query headings (stringified dates/data sources)
    * are keys and arrays with queries that belong to that headings are values.
    */
-  const mappedQueriesToHeadings = mapQueriesToHeadings(filteredQueries, sortOrder);
+  const mappedQueriesToHeadings = mapQueriesToHeadings(queries, richHistorySearchFilters.sortOrder);
 
   return (
     <div className={styles.container}>
       <div className={styles.containerSlider}>
         <div className={styles.slider}>
           <div className="label-slider">Filter history</div>
-          <div className="label-slider">{mapNumbertoTimeInSlider(timeFilter[0])}</div>
+          <div className="label-slider">{mapNumbertoTimeInSlider(richHistorySearchFilters.from)}</div>
           <div className="slider">
             <RangeSlider
               tooltipAlwaysVisible={false}
               min={0}
-              max={retentionPeriod}
-              value={timeFilter}
+              max={richHistorySettings.retentionPeriod}
+              value={[richHistorySearchFilters.from, richHistorySearchFilters.to]}
               orientation="vertical"
               formatTooltipResult={mapNumbertoTimeInSlider}
               reverse={true}
-              onAfterChange={setTimeFilter as () => number[]}
+              onAfterChange={(value) => {
+                updateFilters({ from: value![0], to: value![1] });
+              }}
             />
           </div>
-          <div className="label-slider">{mapNumbertoTimeInSlider(timeFilter[1])}</div>
+          <div className="label-slider">{mapNumbertoTimeInSlider(richHistorySearchFilters.to)}</div>
         </div>
       </div>
 
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
-          {!activeDatasourceOnly && (
+          {!richHistorySettings.activeDatasourceOnly && (
             <MultiSelect
               className={styles.multiselect}
               menuShouldPortal
-              options={listOfDatasources}
-              value={datasourceFilters}
+              options={listOfDatasources.map((ds) => {
+                return { value: ds.name, label: ds.name };
+              })}
+              value={richHistorySearchFilters.datasourceFilters}
               placeholder="Filter queries for data sources(s)"
               aria-label="Filter queries for data sources(s)"
-              onChange={onSelectDatasourceFilters}
+              onChange={(options: SelectableValue[]) => {
+                updateFilters({ datasourceFilters: options.map((option) => option.value) });
+              }}
             />
           )}
           <div className={styles.filterInput}>
             <FilterInput
               placeholder="Search queries"
-              value={searchInput}
-              onChange={(value: string) => {
-                setSearchInput(value);
-              }}
+              value={richHistorySearchFilters.search}
+              onChange={(search: string) => updateFilters({ search })}
             />
           </div>
           <div aria-label="Sort queries" className={styles.sort}>
             <Select
               menuShouldPortal
-              value={sortOrderOptions.filter((order) => order.value === sortOrder)}
+              value={sortOrderOptions.filter((order) => order.value === richHistorySearchFilters.sortOrder)}
               options={sortOrderOptions}
               placeholder="Sort queries by"
-              onChange={(e) => onChangeSortOrder(e.value as SortOrder)}
+              onChange={(e: SelectableValue<SortOrder>) => updateFilters({ sortOrder: e.value })}
             />
           </div>
         </div>
@@ -231,14 +228,14 @@ export function RichHistoryQueriesTab(props: Props) {
                 {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
               </div>
               {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
-                const idx = listOfDatasources.findIndex((d) => d.label === q.datasourceName);
+                const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
                 return (
                   <RichHistoryCard
                     query={q}
                     key={q.id}
                     exploreId={exploreId}
-                    dsImg={listOfDatasources[idx].imgUrl}
-                    isRemoved={listOfDatasources[idx].isRemoved}
+                    dsImg={idx === -1 ? 'public/img/icn-datasource.svg' : listOfDatasources[idx].imgUrl}
+                    isRemoved={idx === -1}
                   />
                 );
               })}

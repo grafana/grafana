@@ -127,6 +127,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
         <LogsCrossFadeTransition visible={!isLive}>
           <Collapse label="Logs" loading={loading} isOpen className={styleOverridesForStickyNavigation}>
             <Logs
+              exploreId={exploreId}
               logRows={logRows}
               logsMeta={logsMeta}
               logsSeries={logsSeries}
