@@ -37,10 +37,13 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
     throw new Error('not supported yet');
   }
 
-  async getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryQuery[]> {
+  async getRichHistory(filters: RichHistorySearchFilters) {
     const params = buildQueryParams(filters);
     const queryHistory = await getBackendSrv().get(`/api/query-history?${params}`);
-    return (queryHistory.result.queryHistory || []).map(fromDTO);
+    const richHistory = (queryHistory.result.queryHistory || []).map(fromDTO);
+    const total = queryHistory.result.totalCount || 0;
+
+    return { richHistory, total };
   }
 
   async getSettings(): Promise<RichHistorySettings> {

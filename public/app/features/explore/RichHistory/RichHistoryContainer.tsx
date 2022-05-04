@@ -31,9 +31,10 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
   const richHistorySettings = explore.richHistorySettings;
   const { datasourceInstance } = item;
   const firstTab = richHistorySettings?.starredTabAsFirstTab ? Tabs.Starred : Tabs.RichHistory;
-  const { richHistory } = item;
+  const { richHistory, richHistoryTotal } = item;
   return {
     richHistory,
+    richHistoryTotal,
     firstTab,
     activeDatasourceInstance: datasourceInstance!.name,
     richHistorySettings,
@@ -66,6 +67,7 @@ export function RichHistoryContainer(props: Props) {
 
   const {
     richHistory,
+    richHistoryTotal,
     width,
     firstTab,
     activeDatasourceInstance,
@@ -99,6 +101,7 @@ export function RichHistoryContainer(props: Props) {
     >
       <RichHistory
         richHistory={richHistory}
+        richHistoryTotal={richHistoryTotal}
         firstTab={firstTab}
         activeDatasourceInstance={activeDatasourceInstance}
         exploreId={exploreId}

@@ -9,6 +9,7 @@ import { dispatch } from 'app/store/store';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import {
+  RichHistoryResults,
   RichHistoryServiceError,
   RichHistoryStorageWarning,
   RichHistoryStorageWarningDetails,
@@ -74,7 +75,7 @@ export async function addToRichHistory(
   return {};
 }
 
-export async function getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryQuery[]> {
+export async function getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryResults> {
   return await getRichHistoryStorage().getRichHistory(filters);
 }
 

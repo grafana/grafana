@@ -16,6 +16,7 @@ import RichHistoryCard from './RichHistoryCard';
 
 export interface Props {
   queries: RichHistoryQuery[];
+  totalQueries: number;
   activeDatasourceInstance: string;
   updateFilters: (filtersToUpdate: Partial<RichHistorySearchFilters>) => void;
   clearRichHistoryResults: () => void;
@@ -77,6 +78,7 @@ export function RichHistoryStarredTab(props: Props) {
     activeDatasourceInstance,
     richHistorySettings,
     queries,
+    totalQueries,
     richHistorySearchFilters,
     exploreId,
   } = props;
@@ -158,11 +160,11 @@ export function RichHistoryStarredTab(props: Props) {
             />
           );
         })}
-        {queries.length && (
+        {queries.length && queries.length !== totalQueries ? (
           <div>
-            <Button onClick={loadMoreRichHistory}>Load more</Button>
+            Showing {queries.length} of {totalQueries}. <Button onClick={loadMoreRichHistory}>Load more</Button>
           </div>
-        )}
+        ) : null}
         <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
       </div>
     </div>
