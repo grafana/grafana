@@ -86,7 +86,7 @@
     "@babel/plugin-transform-react-constant-elements": "7.17.6",
     "@babel/plugin-transform-runtime": "7.17.0",
     "@babel/plugin-transform-typescript": "7.16.8",
-    "@babel/preset-env": "7.16.11",
+    "@babel/preset-env": "7.17.10",
     "@babel/preset-react": "7.16.7",
     "@babel/preset-typescript": "7.16.7",
     "@betterer/betterer": "5.3.0",
