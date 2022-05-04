@@ -239,12 +239,12 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     reduce: (field: Field) => ({ allValues: field.values.toArray() }),
   },
   {
-    id: ReducerID.allUniqueValues,
+    id: ReducerID.uniqueValues,
     name: 'All unique values',
     description: 'Returns an array with all unique values',
     standard: false,
     reduce: (field: Field) => ({
-      allUniqueValues: [...new Set(field.values.toArray())],
+      uniqueValues: [...new Set(field.values.toArray())],
     }),
   },
 ]);
