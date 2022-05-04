@@ -220,45 +220,45 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		assert.Equal(t, "Ok", bodyStr)
 	})
 
-	t.Run("Should not include SigV4 middleware if not configured in JsonData", func(t *testing.T) {
-		clearDSProxyCache(t)
-
-		origEnabled := setting.SigV4AuthEnabled
-		setting.SigV4AuthEnabled = true
-		t.Cleanup(func() { setting.SigV4AuthEnabled = origEnabled })
-
-		ds := DataSource{
-			Name: "empty",
-		}
-
-		tr, err := ds.GetHttpTransport()
-		require.NoError(t, err)
-
-		_, ok := tr.next.(*http.Transport)
-		require.True(t, ok)
-	})
-
-	t.Run("Should not include SigV4 middleware if not configured in app config", func(t *testing.T) {
-		clearDSProxyCache(t)
-
-		origEnabled := setting.SigV4AuthEnabled
-		setting.SigV4AuthEnabled = false
-		t.Cleanup(func() { setting.SigV4AuthEnabled = origEnabled })
-
-		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
-		require.NoError(t, err)
-
-		ds := DataSource{
-			JsonData: json,
-			Name:     "empty",
-		}
-
-		tr, err := ds.GetHttpTransport()
-		require.NoError(t, err)
-
-		_, ok := tr.next.(*http.Transport)
-		require.True(t, ok)
-	})
+	//t.Run("Should not include SigV4 middleware if not configured in JsonData", func(t *testing.T) {
+	//	clearDSProxyCache(t)
+	//
+	//	origEnabled := setting.SigV4AuthEnabled
+	//	setting.SigV4AuthEnabled = true
+	//	t.Cleanup(func() { setting.SigV4AuthEnabled = origEnabled })
+	//
+	//	ds := DataSource{
+	//		Name: "empty",
+	//	}
+	//
+	//	tr, err := ds.GetHttpTransport()
+	//	require.NoError(t, err)
+	//
+	//	_, ok := tr.next.(*http.Transport)
+	//	require.True(t, ok)
+	//})
+	//
+	//t.Run("Should not include SigV4 middleware if not configured in app config", func(t *testing.T) {
+	//	clearDSProxyCache(t)
+	//
+	//	origEnabled := setting.SigV4AuthEnabled
+	//	setting.SigV4AuthEnabled = false
+	//	t.Cleanup(func() { setting.SigV4AuthEnabled = origEnabled })
+	//
+	//	json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
+	//	require.NoError(t, err)
+	//
+	//	ds := DataSource{
+	//		JsonData: json,
+	//		Name:     "empty",
+	//	}
+	//
+	//	tr, err := ds.GetHttpTransport()
+	//	require.NoError(t, err)
+	//
+	//	_, ok := tr.next.(*http.Transport)
+	//	require.True(t, ok)
+	//})
 
 	t.Run("Datasource name not set", func(t *testing.T) {
 		clearDSProxyCache(t)
