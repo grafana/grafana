@@ -13,7 +13,7 @@ import { DimensionContext } from 'app/features/dimensions';
 
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
-import { GroupState } from './group';
+import { FrameState } from './frame';
 import { RootElement } from './root';
 import { Scene } from './scene';
 
@@ -32,7 +32,7 @@ export class ElementState implements LayerElement {
   // Calculated
   data?: any; // depends on the type
 
-  constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: GroupState) {
+  constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: FrameState) {
     const fallbackName = `Element ${Date.now()}`;
     if (!options) {
       this.options = { type: item.id, name: fallbackName };

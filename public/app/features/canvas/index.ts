@@ -1,4 +1,4 @@
 export * from './types';
 export * from './element';
-export { CanvasGroupOptions } from './group';
+export { CanvasFrameOptions } from './frame';
 export * from './registry';
