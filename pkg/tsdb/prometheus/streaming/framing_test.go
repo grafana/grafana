@@ -100,7 +100,6 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 			},
 		},
 	}, nil
-
 }
 
 func runQuery(response []byte, q *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
