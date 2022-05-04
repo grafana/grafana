@@ -166,16 +166,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 // we extracted this part of the functionality to make it easy to unit-test it
 func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery) (data.Frames, error) {
-	response, err := api.DataQuery(ctx, *query)
+	frames, err := api.DataQuery(ctx, *query)
 	if err != nil {
 		return data.Frames{}, err
 	}
-
-	if response.Error != nil {
-		return data.Frames{}, err
-	}
-
-	frames := response.Frames
 
 	for _, frame := range frames {
 		if err = adjustFrame(frame, query); err != nil {
