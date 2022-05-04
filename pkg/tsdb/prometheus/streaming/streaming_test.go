@@ -23,8 +23,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var now = time.Now()
-
 func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 	t.Run("exemplars response should be sampled and parsed normally", func(t *testing.T) {
 		t.Skip()

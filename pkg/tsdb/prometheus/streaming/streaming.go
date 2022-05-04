@@ -145,9 +145,14 @@ func (s *Streaming) runQuery(ctx context.Context, client *client.Client, q *quer
 		}
 	}
 
+	if res == nil {
+		return nil, fmt.Errorf("no response received for query %s", q.Expr)
+	}
+
+	defer res.Body.Close()
+
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
 	r := converter.ReadPrometheusStyleResult(iter)
-
 	if r == nil {
 		return nil, fmt.Errorf("received empty response from prometheus")
 	}
