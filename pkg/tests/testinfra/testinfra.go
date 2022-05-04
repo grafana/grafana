@@ -288,6 +288,12 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = unifiedAlertingSection.NewKey("disabled_orgs", disableOrgStr)
 			require.NoError(t, err)
 		}
+		if o.DisableRBAC {
+			rbacSection, err := cfg.NewSection("rbac")
+			require.NoError(t, err)
+			_, err = rbacSection.NewKey("enabled", "false")
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -316,4 +322,5 @@ type GrafanaOpts struct {
 	DisableLegacyAlerting                 bool
 	EnableUnifiedAlerting                 bool
 	UnifiedAlertingDisabledOrgs           []int64
+	DisableRBAC                           bool
 }

@@ -116,6 +116,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   reporting = {
     enabled: true,
   };
+  rbac = {
+    enabled: true,
+  };
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';

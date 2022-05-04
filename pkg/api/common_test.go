@@ -361,8 +361,14 @@ func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessCont
 func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore, store sqlstore.Store) accessControlScenarioContext {
 	t.Helper()
 
-	features := featuremgmt.WithFeatures("accesscontrol", enableAccessControl)
-	cfg.IsFeatureToggleEnabled = features.IsEnabled
+	if enableAccessControl {
+		cfg.RBACEnabled = true
+		db.Cfg.RBACEnabled = true
+	} else {
+		cfg.RBACEnabled = false
+		db.Cfg.RBACEnabled = false
+	}
+	features := featuremgmt.WithFeatures()
 
 	var acmock *accesscontrolmock.Mock
 
@@ -394,7 +400,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		require.NoError(t, err)
 		hs.teamPermissionsService = teamPermissionService
 	} else {
-		ac, errInitAc := ossaccesscontrol.ProvideService(hs.Features, database.ProvideService(db), routing.NewRouteRegister())
+		ac, errInitAc := ossaccesscontrol.ProvideService(hs.Cfg, database.ProvideService(db), routing.NewRouteRegister())
 		require.NoError(t, errInitAc)
 		hs.AccessControl = ac
 		// Perform role registration

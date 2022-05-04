@@ -77,7 +77,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addQueryHistoryMigrations(mg)
 
 	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+		if mg.Cfg.RBACEnabled {
 			accesscontrol.AddTeamMembershipMigrations(mg)
 			accesscontrol.AddDashboardPermissionsMigrator(mg)
 		}

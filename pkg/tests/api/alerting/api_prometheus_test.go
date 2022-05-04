@@ -35,16 +35,16 @@ func TestPrometheusRules(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	// Create the namespace under default organisation (orgID = 1) where we'll save our alerts to.
-	_, err = createFolder(t, store, 0, "default")
-	require.NoError(t, err)
-
 	// Create a user to make authenticated requests
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
 	})
+
+	// Create the namespace we'll save our alerts to.
+	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
+	require.NoError(t, err)
 
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)
@@ -330,16 +330,17 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	// Create the namespace under default organisation (orgID = 1) where we'll save our alerts to.
-	dashboardUID, err := createFolder(t, store, 0, "default")
-	require.NoError(t, err)
-
 	// Create a user to make authenticated requests
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
 	})
+
+	// Create the namespace we'll save our alerts to.
+	dashboardUID := "default"
+	err = createFolder(t, dashboardUID, grafanaListedAddr, "grafana", "password")
+	require.NoError(t, err)
 
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)
@@ -622,9 +623,11 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
+		DisableRBAC:           true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	store.Cfg.RBACEnabled = false
 	dashboardsStore := dashboardsstore.ProvideDashboardStore(store)
 
 	// Create a user to make authenticated requests
@@ -634,12 +637,12 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 		Login:          "grafana",
 	})
 
-	// Create a namespace under default organisation (orgID = 1) where we'll save some alerts.
-	_, err = createFolder(t, store, 0, "folder1")
+	// Create the namespace we'll save our alerts to.
+	err = createFolder(t, "folder1", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 
-	// Create another namespace under default organisation (orgID = 1) where we'll save some alerts.
-	_, err = createFolder(t, store, 0, "folder2")
+	// Create the namespace we'll save our alerts to.
+	err = createFolder(t, "folder2", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 
 	// Create rule under folder1
@@ -717,6 +720,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 
 	// remove permissions from folder2
+	// TODO this too
 	require.NoError(t, dashboardsStore.UpdateDashboardACL(context.Background(), 2, nil))
 
 	// make sure that folder2 is not included in the response

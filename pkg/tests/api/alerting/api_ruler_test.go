@@ -32,9 +32,11 @@ func TestAlertRulePermissions(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
+		DisableRBAC:           true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	store.Cfg.RBACEnabled = false
 	dashboardsStore := dashboardsstore.ProvideDashboardStore(store)
 
 	// Create a user to make authenticated requests
@@ -45,10 +47,10 @@ func TestAlertRulePermissions(t *testing.T) {
 	})
 
 	// Create the namespace we'll save our alerts to.
-	_, err = createFolder(t, store, 0, "folder1")
+	err = createFolder(t, "folder1", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 
-	_, err = createFolder(t, store, 0, "folder2")
+	err = createFolder(t, "folder2", grafanaListedAddr, "grafana", "password")
 	// Create the namespace we'll save our alerts to.
 	require.NoError(t, err)
 
@@ -180,6 +182,7 @@ func TestAlertRulePermissions(t *testing.T) {
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 
 		// remove permissions from folder2
+		// TODO what's the RBAC alternative for this?
 		require.NoError(t, dashboardsStore.UpdateDashboardACL(context.Background(), 2, nil))
 
 		// make sure that folder2 is not included in the response
@@ -343,18 +346,19 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	// Create the namespace we'll save our alerts to.
-	_, err = createFolder(t, store, 0, "folder1")
-	require.NoError(t, err)
-	_, err = createFolder(t, store, 0, "folder2")
-	require.NoError(t, err)
-
 	// Create user
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_ADMIN),
 		Password:       "admin",
 		Login:          "admin",
 	})
+
+	// Create the namespace we'll save our alerts to.
+	err = createFolder(t, "folder1", grafanaListedAddr, "admin", "admin")
+	require.NoError(t, err)
+	// Create the namespace we'll save our alerts to.
+	err = createFolder(t, "folder2", grafanaListedAddr, "admin", "admin")
+	require.NoError(t, err)
 
 	rules := newTestingRuleConfig(t)
 
@@ -479,16 +483,17 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
-	// Create the namespace under default organisation (orgID = 1) where we'll save our alerts to.
-	dashboardUID, err := createFolder(t, store, 0, "default")
-	require.NoError(t, err)
-
 	// Create a user to make authenticated requests
 	createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
 	})
+
+	dashboardUID := "default"
+	// Create the namespace under default organisation (orgID = 1) where we'll save our alerts to.
+	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
+	require.NoError(t, err)
 
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)

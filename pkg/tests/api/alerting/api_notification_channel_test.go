@@ -775,7 +775,7 @@ func TestNotificationChannels(t *testing.T) {
 
 	{
 		// Create the namespace we'll save our alerts to.
-		_, err := createFolder(t, env.SQLStore, 0, "default")
+		err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 		require.NoError(t, err)
 
 		// Post the alertmanager config.
