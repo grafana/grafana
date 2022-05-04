@@ -26,6 +26,7 @@ export type TableColumn = Column & {
 };
 
 export interface FieldAccess {
+  uid: string; // the item UID
   kind: string; // panel, dashboard, folder
   name: string;
   description: string;
@@ -39,6 +40,8 @@ export interface FieldAccess {
   panelCount: number;
   datasource: DataSourceRef[];
 }
+
+const skipHREF = new Set(['column-checkbox', 'column-datasource']);
 
 export const Table = ({ data, width, height, tags, onTagFilterChange, onDatasourceChange }: Props) => {
   const styles = useStyles2(getStyles);
@@ -81,15 +84,22 @@ export const Table = ({ data, width, height, tags, onTagFilterChange, onDatasour
       return (
         <div {...row.getRowProps({ style })} className={styles.rowContainer}>
           {row.cells.map((cell: Cell, index: number) => {
+            const body = (
+              <TableCell
+                key={index}
+                tableStyles={tableStyles}
+                cell={cell}
+                columnIndex={index}
+                columnCount={row.cells.length}
+              />
+            );
+            if (skipHREF.has(cell.column.id)) {
+              return body;
+            }
+
             return (
               <a href={url} key={index} className={styles.cellWrapper}>
-                <TableCell
-                  key={index}
-                  tableStyles={tableStyles}
-                  cell={cell}
-                  columnIndex={index}
-                  columnCount={row.cells.length}
-                />
+                {body}
               </a>
             );
           })}

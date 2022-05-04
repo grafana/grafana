@@ -1,6 +1,6 @@
 import { DataFrame, DataFrameView } from '@grafana/data';
 
-import { DashboardSearchItemType, DashboardSection, DashboardSectionItem } from '../types';
+import { DashboardSearchItemType, DashboardSectionItem } from '../types';
 
 import { MiniSearcher } from './minisearcher';
 import { GrafanaSearcher } from './types';

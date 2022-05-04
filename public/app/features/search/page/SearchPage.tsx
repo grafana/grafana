@@ -63,8 +63,10 @@ export default function SearchPage() {
 
   // HACK for grid view
   const itemProps = {
-    editable: false,
-    onToggleChecked: () => {},
+    editable: true,
+    onToggleChecked: (v: any) => {
+      console.log('CHECKED?', v);
+    },
     onTagSelected: () => {},
   };
 
