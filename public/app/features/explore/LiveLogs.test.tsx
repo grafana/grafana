@@ -66,6 +66,9 @@ describe('LiveLogs', () => {
     expect(screen.getByRole('cell', { name: 'log message 1' })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: 'log message 2' })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: 'log message 3' })).toBeInTheDocument();
+    expect(screen.queryByRole('cell', { name: 'log message 4' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('cell', { name: 'log message 5' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('cell', { name: 'log message 6' })).not.toBeInTheDocument();
 
     rerender(
       <LiveLogsWithTheme
