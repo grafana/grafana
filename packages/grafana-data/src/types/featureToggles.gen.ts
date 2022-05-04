@@ -59,4 +59,5 @@ export interface FeatureToggles {
   savedItems?: boolean;
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
+  azureMonitorExperimentalUI?: boolean;
 }
