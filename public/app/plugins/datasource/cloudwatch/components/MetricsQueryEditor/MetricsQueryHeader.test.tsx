@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
 
-import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
-import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../types';
+import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
+import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../../types';
 
 import MetricsQueryHeader from './MetricsQueryHeader';
 

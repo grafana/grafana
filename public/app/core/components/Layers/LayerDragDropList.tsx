@@ -16,7 +16,7 @@ type LayerDragDropListProps<T extends LayerElement> = {
   onSelect: (element: T) => any;
   onDelete: (element: T) => any;
   onDuplicate?: (element: T) => any;
-  isGroup?: (element: T) => boolean;
+  isFrame?: (element: T) => boolean;
   selection?: string[]; // list of unique ids (names)
   excludeBaseLayer?: boolean;
   onNameChange: (element: T, newName: string) => any;
@@ -30,7 +30,7 @@ export const LayerDragDropList = <T extends LayerElement>({
   onSelect,
   onDelete,
   onDuplicate,
-  isGroup,
+  isFrame,
   selection,
   excludeBaseLayer,
   onNameChange,
@@ -74,7 +74,7 @@ export const LayerDragDropList = <T extends LayerElement>({
                         />
                         <div className={style.textWrapper}>&nbsp; {getLayerInfo(element)}</div>
 
-                        {!isGroup!(element) && (
+                        {!isFrame!(element) && (
                           <>
                             {onDuplicate ? (
                               <IconButton

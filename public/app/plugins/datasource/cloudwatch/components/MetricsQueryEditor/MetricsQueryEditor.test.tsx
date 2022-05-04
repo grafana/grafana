@@ -1,14 +1,14 @@
 import { render, screen, act } from '@testing-library/react';
 import React from 'react';
 import selectEvent from 'react-select-event';
-import renderer from 'react-test-renderer';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
-import { CustomVariableModel, initialVariableModelState } from '../../../../features/variables/types';
-import { CloudWatchDatasource } from '../datasource';
-import { CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../types';
+import { CustomVariableModel, initialVariableModelState } from '../../../../../features/variables/types';
+import { CloudWatchDatasource } from '../../datasource';
+import { CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../../types';
 
 import { MetricsQueryEditor, Props } from './MetricsQueryEditor';
 
@@ -70,15 +70,6 @@ const setup = () => {
 };
 
 describe('QueryEditor', () => {
-  it('should render component', async () => {
-    const { act } = renderer;
-    await act(async () => {
-      const props = setup();
-      const tree = renderer.create(<MetricsQueryEditor {...props} />).toJSON();
-      expect(tree).toMatchSnapshot();
-    });
-  });
-
   describe('should handle editor modes correctly', () => {
     it('when metric query type is metric search and editor mode is builder', async () => {
       await act(async () => {
@@ -163,6 +154,50 @@ describe('QueryEditor', () => {
       expect(screen.queryByText('*')).toBeNull();
       selectEvent.openMenu(screen.getByLabelText('Dimensions filter value'));
       expect(await screen.findByText('*')).toBeInTheDocument();
+    });
+  });
+
+  describe('when dynamic labels feature toggle is enabled', () => {
+    it('shoud render label field', async () => {
+      await act(async () => {
+        const props = setup();
+        const originalValue = config.featureToggles.cloudWatchDynamicLabels;
+        config.featureToggles.cloudWatchDynamicLabels = true;
+
+        render(
+          <MetricsQueryEditor
+            {...props}
+            query={{ ...props.query, refId: 'A', alias: 'Period: {{period}} InstanceId: {{InstanceId}}' }}
+          />
+        );
+
+        expect(screen.getByText('Label')).toBeInTheDocument();
+        expect(screen.queryByText('Alias')).toBeNull();
+        expect(screen.getByLabelText('Label - optional')).toHaveValue(
+          "Period: ${PROP('Period')} InstanceId: ${PROP('Dim.InstanceId')}"
+        );
+
+        config.featureToggles.cloudWatchDynamicLabels = originalValue;
+      });
+    });
+  });
+
+  describe('when dynamic labels feature toggle is disabled', () => {
+    it('shoud render alias field', async () => {
+      await act(async () => {
+        const props = setup();
+        const originalValue = config.featureToggles.cloudWatchDynamicLabels;
+        config.featureToggles.cloudWatchDynamicLabels = false;
+
+        const expected = 'Period: {{period}} InstanceId: {{InstanceId}}';
+        render(<MetricsQueryEditor {...props} query={{ ...props.query, refId: 'A', alias: expected }} />);
+
+        expect(await screen.getByText('Alias')).toBeInTheDocument();
+        expect(screen.queryByText('Label')).toBeNull();
+        expect(screen.getByLabelText('Alias - optional')).toHaveValue(expected);
+
+        config.featureToggles.cloudWatchDynamicLabels = originalValue;
+      });
     });
   });
 });

@@ -2,10 +2,12 @@ import React, { ChangeEvent, useState } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
 import { EditorField, EditorRow, Space } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Input } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../datasource';
-import { isCloudWatchMetricsQuery } from '../guards';
+import { MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor, SQLCodeEditor } from '../';
+import { CloudWatchDatasource } from '../../datasource';
+import { isCloudWatchMetricsQuery } from '../../guards';
 import {
   CloudWatchJsonData,
   CloudWatchMetricsQuery,
@@ -13,12 +15,11 @@ import {
   MetricEditorMode,
   MetricQueryType,
   MetricStat,
-} from '../types';
+} from '../../types';
+import QueryHeader from '../QueryHeader';
 
-import QueryHeader from './QueryHeader';
+import { Alias } from './Alias';
 import usePreparedMetricsQuery from './usePreparedMetricsQuery';
-
-import { Alias, MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor, SQLCodeEditor } from './';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   query: CloudWatchMetricsQuery;
@@ -130,17 +131,37 @@ export const MetricsQueryEditor = (props: Props) => {
           />
         </EditorField>
 
-        <EditorField
-          label="Alias"
-          width={26}
-          optional
-          tooltip="Change time series legend name using this field. See documentation for replacement variable formats."
-        >
-          <Alias
-            value={preparedQuery.alias ?? ''}
-            onChange={(value: string) => onChange({ ...preparedQuery, alias: value })}
-          />
-        </EditorField>
+        {config.featureToggles.cloudWatchDynamicLabels ? (
+          <EditorField
+            label="Label"
+            width={26}
+            optional
+            tooltip="Change time series legend name using Dynamic labels. See documentation for details."
+          >
+            <Input
+              id={`${query.refId}-cloudwatch-metric-query-editor-label`}
+              placeholder="auto"
+              onBlur={onRunQuery}
+              value={preparedQuery.label ?? ''}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                onChange({ ...preparedQuery, label: event.target.value })
+              }
+            />
+          </EditorField>
+        ) : (
+          <EditorField
+            label="Alias"
+            width={26}
+            optional
+            tooltip="Change time series legend name using this field. See documentation for replacement variable formats."
+          >
+            <Alias
+              id={`${query.refId}-cloudwatch-metric-query-editor-alias`}
+              value={preparedQuery.alias ?? ''}
+              onChange={(value: string) => onChange({ ...preparedQuery, alias: value })}
+            />
+          </EditorField>
+        )}
       </EditorRow>
     </>
   );

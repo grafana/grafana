@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 import React from 'react';
 
-import { CanvasGroupOptions, canvasElementRegistry } from 'app/features/canvas';
+import { CanvasFrameOptions, canvasElementRegistry } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
@@ -13,10 +13,10 @@ import { ElementState } from './element';
 import { RootElement } from './root';
 import { Scene } from './scene';
 
-export const groupItemDummy: CanvasElementItem = {
-  id: 'group',
-  name: 'Group',
-  description: 'Group',
+export const frameItemDummy: CanvasElementItem = {
+  id: 'frame',
+  name: 'Frame',
+  description: 'Frame',
 
   getNewOptions: () => ({
     config: {},
@@ -24,16 +24,16 @@ export const groupItemDummy: CanvasElementItem = {
 
   // eslint-disable-next-line react/display-name
   display: () => {
-    return <div>GROUP!</div>;
+    return <div>FRAME!</div>;
   },
 };
 
-export class GroupState extends ElementState {
+export class FrameState extends ElementState {
   elements: ElementState[] = [];
   scene: Scene;
 
-  constructor(public options: CanvasGroupOptions, scene: Scene, public parent?: GroupState) {
-    super(groupItemDummy, options, parent);
+  constructor(public options: CanvasFrameOptions, scene: Scene, public parent?: FrameState) {
+    super(frameItemDummy, options, parent);
 
     this.scene = scene;
 
@@ -44,8 +44,8 @@ export class GroupState extends ElementState {
     }
 
     for (const c of elements) {
-      if (c.type === 'group') {
-        this.elements.push(new GroupState(c as CanvasGroupOptions, scene, this));
+      if (c.type === 'frame') {
+        this.elements.push(new FrameState(c as CanvasFrameOptions, scene, this));
       } else {
         const item = canvasElementRegistry.getIfExists(c.type) ?? notFoundItem;
         this.elements.push(new ElementState(item, c, this));
@@ -82,7 +82,7 @@ export class GroupState extends ElementState {
 
   // ??? or should this be on the element directly?
   // are actions scoped to layers?
-  doAction = (action: LayerActionID, element: ElementState, updateName = true) => {
+  doAction = (action: LayerActionID, element: ElementState, updateName = true, shiftItemsOnDuplicate = true) => {
     switch (action) {
       case LayerActionID.Delete:
         this.elements = this.elements.filter((e) => e !== element);
@@ -91,53 +91,55 @@ export class GroupState extends ElementState {
         this.reinitializeMoveable();
         break;
       case LayerActionID.Duplicate:
-        if (element.item.id === 'group') {
-          console.log('Can not duplicate groups (yet)', action, element);
+        if (element.item.id === 'frame') {
+          console.log('Can not duplicate frames (yet)', action, element);
           return;
         }
         const opts = cloneDeep(element.options);
 
-        const { constraint, placement: oldPlacement } = element.options;
-        const { vertical, horizontal } = constraint ?? {};
-        const placement = oldPlacement ?? ({} as Placement);
+        if (shiftItemsOnDuplicate) {
+          const { constraint, placement: oldPlacement } = element.options;
+          const { vertical, horizontal } = constraint ?? {};
+          const placement = oldPlacement ?? ({} as Placement);
 
-        switch (vertical) {
-          case VerticalConstraint.Top:
-          case VerticalConstraint.TopBottom:
-            if (placement.top == null) {
-              placement.top = 25;
-            } else {
-              placement.top += 10;
-            }
-            break;
-          case VerticalConstraint.Bottom:
-            if (placement.bottom == null) {
-              placement.bottom = 100;
-            } else {
-              placement.bottom -= 10;
-            }
-            break;
+          switch (vertical) {
+            case VerticalConstraint.Top:
+            case VerticalConstraint.TopBottom:
+              if (placement.top == null) {
+                placement.top = 25;
+              } else {
+                placement.top += 10;
+              }
+              break;
+            case VerticalConstraint.Bottom:
+              if (placement.bottom == null) {
+                placement.bottom = 100;
+              } else {
+                placement.bottom -= 10;
+              }
+              break;
+          }
+
+          switch (horizontal) {
+            case HorizontalConstraint.Left:
+            case HorizontalConstraint.LeftRight:
+              if (placement.left == null) {
+                placement.left = 50;
+              } else {
+                placement.left += 10;
+              }
+              break;
+            case HorizontalConstraint.Right:
+              if (placement.right == null) {
+                placement.right = 50;
+              } else {
+                placement.right -= 10;
+              }
+              break;
+          }
+
+          opts.placement = placement;
         }
-
-        switch (horizontal) {
-          case HorizontalConstraint.Left:
-          case HorizontalConstraint.LeftRight:
-            if (placement.left == null) {
-              placement.left = 50;
-            } else {
-              placement.left += 10;
-            }
-            break;
-          case HorizontalConstraint.Right:
-            if (placement.right == null) {
-              placement.right = 50;
-            } else {
-              placement.right -= 10;
-            }
-            break;
-        }
-
-        opts.placement = placement;
 
         const copy = new ElementState(element.item, opts, this);
         copy.updateData(this.scene.context);
@@ -157,7 +159,7 @@ export class GroupState extends ElementState {
 
   render() {
     return (
-      <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }}>
+      <div key={this.UID} ref={this.initElement} style={{ overflow: 'hidden' }}>
         {this.elements.map((v) => v.render())}
       </div>
     );
