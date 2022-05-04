@@ -88,12 +88,12 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Respons
 			return nil
 		}
 
-		deletableRulesFGAC, err := srv.accessableRulesFGAC(q.Result, hasAccess, logger)
+		deletableRulesFGAC, err := srv.accessibleRulesFGAC(q.Result, hasAccess, logger)
 		if err != nil {
 			return err
 		}
 
-		deletableRulesProvisioning, err := srv.accessableRulesProvisioning(q.Result, provenances, logger)
+		deletableRulesProvisioning, err := srv.accessibleRulesProvisioning(q.Result, provenances, logger)
 		if err != nil {
 			return err
 		}
@@ -126,9 +126,9 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Respons
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rules deleted"})
 }
 
-// accessableRulesFGAC will return the rules that are accessable for the user
+// accessibleRulesFGAC will return the rules that are accessible for the user
 // while checking against FGAC. If none is accessible, an error will be returned.
-func (srv RulerSrv) accessableRulesFGAC(rules []*ngmodels.AlertRule, hasAccess func(evaluator accesscontrol.Evaluator) bool, logger *log.ConcreteLogger) (map[string]struct{}, error) {
+func (srv RulerSrv) accessibleRulesFGAC(rules []*ngmodels.AlertRule, hasAccess func(evaluator accesscontrol.Evaluator) bool, logger *log.ConcreteLogger) (map[string]struct{}, error) {
 	canDelete, cannotDelete := make(map[string]struct{}, 0), make([]string, 0)
 	for _, rule := range rules {
 		if authorizeDatasourceAccessForRule(rule, hasAccess) {
@@ -149,10 +149,10 @@ func (srv RulerSrv) accessableRulesFGAC(rules []*ngmodels.AlertRule, hasAccess f
 	return canDelete, nil
 }
 
-// accessableRulesProvisioning will return the rules that are accessable for
+// accessibleRulesProvisioning will return the rules that are accessible for
 // the user while checking against the provenance. If none is accessible, an
 // error will be returned.
-func (srv RulerSrv) accessableRulesProvisioning(rules []*ngmodels.AlertRule, provenances map[string]ngmodels.Provenance, logger *log.ConcreteLogger) (map[string]struct{}, error) {
+func (srv RulerSrv) accessibleRulesProvisioning(rules []*ngmodels.AlertRule, provenances map[string]ngmodels.Provenance, logger *log.ConcreteLogger) (map[string]struct{}, error) {
 	canDelete, cannotDelete := make(map[string]struct{}, 0), make([]string, 0)
 	for _, rule := range rules {
 		if provenance, exists := provenances[rule.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
