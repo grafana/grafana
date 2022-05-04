@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // swagger:route GET /api/provisioning/templates provisioning RouteGetTemplates
@@ -41,8 +43,9 @@ import (
 //       204: Accepted
 
 type MessageTemplate struct {
-	Name     string
-	Template string
+	Name       string
+	Template   string
+	Provenance models.Provenance `json:"provenance,omitempty"`
 }
 
 type MessageTemplateContent struct {

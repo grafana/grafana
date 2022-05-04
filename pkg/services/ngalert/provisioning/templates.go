@@ -38,7 +38,7 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) (map[st
 	return revision.cfg.TemplateFiles, nil
 }
 
-func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl definitions.MessageTemplate, p models.Provenance) (definitions.MessageTemplate, error) {
+func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl definitions.MessageTemplate) (definitions.MessageTemplate, error) {
 	err := tmpl.Validate()
 	if err != nil {
 		return definitions.MessageTemplate{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
@@ -70,7 +70,7 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 		if err != nil {
 			return err
 		}
-		err = t.prov.SetProvenance(ctx, &tmpl, orgID, p)
+		err = t.prov.SetProvenance(ctx, &tmpl, orgID, tmpl.Provenance)
 		if err != nil {
 			return err
 		}

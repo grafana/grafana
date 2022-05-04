@@ -84,7 +84,7 @@ func TestTemplateService(t *testing.T) {
 				Template: "",
 			}
 
-			_, err := sut.SetTemplate(context.Background(), 1, tmpl, models.ProvenanceAPI)
+			_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
 			require.ErrorIs(t, err, ErrValidation)
 		})
@@ -97,7 +97,7 @@ func TestTemplateService(t *testing.T) {
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(fmt.Errorf("failed"))
 
-				_, err := sut.SetTemplate(context.Background(), 1, tmpl, models.ProvenanceAPI)
+				_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
 				require.Error(t, err)
 			})
@@ -110,7 +110,7 @@ func TestTemplateService(t *testing.T) {
 						AlertmanagerConfiguration: brokenConfig,
 					})
 
-				_, err := sut.SetTemplate(context.Background(), 1, tmpl, models.ProvenanceAPI)
+				_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
 				require.ErrorContains(t, err, "failed to deserialize")
 			})
@@ -122,7 +122,7 @@ func TestTemplateService(t *testing.T) {
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
 					Return(nil)
 
-				_, err := sut.SetTemplate(context.Background(), 1, tmpl, models.ProvenanceAPI)
+				_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
 				require.ErrorContains(t, err, "no alertmanager configuration")
 			})
@@ -139,7 +139,7 @@ func TestTemplateService(t *testing.T) {
 					SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(fmt.Errorf("failed to save provenance"))
 
-				_, err := sut.SetTemplate(context.Background(), 1, tmpl, models.ProvenanceAPI)
+				_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
 				require.ErrorContains(t, err, "failed to save provenance")
 			})
@@ -156,7 +156,7 @@ func TestTemplateService(t *testing.T) {
 					Return(fmt.Errorf("failed to save config"))
 				sut.prov.(*MockProvisioningStore).EXPECT().saveSucceeds()
 
-				_, err := sut.SetTemplate(context.Background(), 1, tmpl, models.ProvenanceAPI)
+				_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
 				require.ErrorContains(t, err, "failed to save config")
 			})
@@ -172,7 +172,7 @@ func TestTemplateService(t *testing.T) {
 			sut.config.(*MockAMConfigStore).EXPECT().saveSucceeds()
 			sut.prov.(*MockProvisioningStore).EXPECT().saveSucceeds()
 
-			_, err := sut.SetTemplate(context.Background(), 1, tmpl, models.ProvenanceAPI)
+			_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
 			require.NoError(t, err)
 		})
@@ -187,7 +187,7 @@ func TestTemplateService(t *testing.T) {
 			sut.config.(*MockAMConfigStore).EXPECT().saveSucceeds()
 			sut.prov.(*MockProvisioningStore).EXPECT().saveSucceeds()
 
-			_, err := sut.SetTemplate(context.Background(), 1, tmpl, models.ProvenanceAPI)
+			_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
 			require.NoError(t, err)
 		})
@@ -205,7 +205,7 @@ func TestTemplateService(t *testing.T) {
 			sut.config.(*MockAMConfigStore).EXPECT().saveSucceeds()
 			sut.prov.(*MockProvisioningStore).EXPECT().saveSucceeds()
 
-			result, _ := sut.SetTemplate(context.Background(), 1, tmpl, models.ProvenanceAPI)
+			result, _ := sut.SetTemplate(context.Background(), 1, tmpl)
 
 			exp := "{{ define \"name\" }}\n  content\n{{ end }}"
 			require.Equal(t, exp, result.Template)
@@ -224,7 +224,7 @@ func TestTemplateService(t *testing.T) {
 			sut.config.(*MockAMConfigStore).EXPECT().saveSucceeds()
 			sut.prov.(*MockProvisioningStore).EXPECT().saveSucceeds()
 
-			result, _ := sut.SetTemplate(context.Background(), 1, tmpl, models.ProvenanceAPI)
+			result, _ := sut.SetTemplate(context.Background(), 1, tmpl)
 
 			require.Equal(t, tmpl.Template, result.Template)
 		})

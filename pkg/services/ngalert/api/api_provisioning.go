@@ -32,7 +32,7 @@ type ContactPointService interface {
 
 type TemplateService interface {
 	GetTemplates(ctx context.Context, orgID int64) (map[string]string, error)
-	SetTemplate(ctx context.Context, orgID int64, tmpl apimodels.MessageTemplate, p alerting_models.Provenance) (apimodels.MessageTemplate, error)
+	SetTemplate(ctx context.Context, orgID int64, tmpl apimodels.MessageTemplate) (apimodels.MessageTemplate, error)
 	DeleteTemplate(ctx context.Context, orgID int64, name string) error
 }
 
@@ -129,10 +129,11 @@ func (srv *ProvisioningSrv) RouteGetTemplate(c *models.ReqContext) response.Resp
 func (srv *ProvisioningSrv) RoutePutTemplate(c *models.ReqContext, body apimodels.MessageTemplateContent) response.Response {
 	name := web.Params(c.Req)[":ID"]
 	tmpl := apimodels.MessageTemplate{
-		Name:     name,
-		Template: body.Template,
+		Name:       name,
+		Template:   body.Template,
+		Provenance: alerting_models.ProvenanceAPI,
 	}
-	modified, err := srv.templates.SetTemplate(c.Req.Context(), c.OrgId, tmpl, alerting_models.ProvenanceAPI)
+	modified, err := srv.templates.SetTemplate(c.Req.Context(), c.OrgId, tmpl)
 	if err != nil {
 		if errors.Is(err, provisioning.ErrValidation) {
 			return ErrResp(http.StatusBadRequest, err, "")
