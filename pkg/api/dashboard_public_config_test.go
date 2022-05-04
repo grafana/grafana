@@ -41,7 +41,7 @@ func TestApiBehindFeatureFlag(t *testing.T) {
 			response := callAPI(
 				sc.server,
 				http.MethodPost,
-				fmt.Sprintf("/api/dashboards/uid/1/public_dashboard_config"),
+				fmt.Sprintf("/api/dashboards/uid/1/public-config"),
 				strings.NewReader(`{ "isPublic": true }`),
 				t,
 			)
@@ -94,7 +94,7 @@ func TestApiPersistsValue(t *testing.T) {
 			response := callAPI(
 				sc.server,
 				http.MethodPost,
-				fmt.Sprintf("/api/dashboards/uid/1/public_dashboard_config"),
+				fmt.Sprintf("/api/dashboards/uid/1/public-config"),
 				strings.NewReader(`{ "isPublic": true }`),
 				t,
 			)
