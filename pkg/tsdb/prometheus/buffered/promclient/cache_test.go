@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/promclient"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered/promclient"
 
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 

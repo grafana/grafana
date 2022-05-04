@@ -1,4 +1,4 @@
-package prometheus
+package buffered
 
 import (
 	"bytes"
@@ -131,6 +131,6 @@ func runQuery(response []byte, query PrometheusQuery) (*backend.QueryDataRespons
 		return nil, err
 	}
 
-	s := Service{tracer: tracer}
+	s := Buffered{tracer: tracer}
 	return s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
 }
