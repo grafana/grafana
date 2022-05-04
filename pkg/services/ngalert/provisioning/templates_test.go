@@ -229,6 +229,118 @@ func TestTemplateService(t *testing.T) {
 			require.Equal(t, tmpl.Template, result.Template)
 		})
 	})
+
+	t.Run("deleting templates", func(t *testing.T) {
+		t.Run("propagates errors", func(t *testing.T) {
+			t.Run("when unable to read config", func(t *testing.T) {
+				sut := createTemplateServiceSut()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
+					Return(fmt.Errorf("failed"))
+
+				err := sut.DeleteTemplate(context.Background(), 1, "template")
+
+				require.Error(t, err)
+			})
+
+			t.Run("when config is invalid", func(t *testing.T) {
+				sut := createTemplateServiceSut()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					getsConfig(models.AlertConfiguration{
+						AlertmanagerConfiguration: brokenConfig,
+					})
+
+				err := sut.DeleteTemplate(context.Background(), 1, "template")
+
+				require.ErrorContains(t, err, "failed to deserialize")
+			})
+
+			t.Run("when no AM config in current org", func(t *testing.T) {
+				sut := createTemplateServiceSut()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
+					Return(nil)
+
+				err := sut.DeleteTemplate(context.Background(), 1, "template")
+
+				require.ErrorContains(t, err, "no alertmanager configuration")
+			})
+
+			t.Run("when provenance fails to save", func(t *testing.T) {
+				sut := createTemplateServiceSut()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					getsConfig(models.AlertConfiguration{
+						AlertmanagerConfiguration: configWithTemplates,
+					})
+				sut.config.(*MockAMConfigStore).EXPECT().saveSucceeds()
+				sut.prov.(*MockProvisioningStore).EXPECT().
+					DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).
+					Return(fmt.Errorf("failed to save provenance"))
+
+				err := sut.DeleteTemplate(context.Background(), 1, "template")
+
+				require.ErrorContains(t, err, "failed to save provenance")
+			})
+
+			t.Run("when AM config fails to save", func(t *testing.T) {
+				sut := createTemplateServiceSut()
+				sut.config.(*MockAMConfigStore).EXPECT().
+					getsConfig(models.AlertConfiguration{
+						AlertmanagerConfiguration: configWithTemplates,
+					})
+				sut.config.(*MockAMConfigStore).EXPECT().
+					UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
+					Return(fmt.Errorf("failed to save config"))
+				sut.prov.(*MockProvisioningStore).EXPECT().saveSucceeds()
+
+				err := sut.DeleteTemplate(context.Background(), 1, "template")
+
+				require.ErrorContains(t, err, "failed to save config")
+			})
+		})
+
+		t.Run("deletes template from config file on success", func(t *testing.T) {
+			sut := createTemplateServiceSut()
+			sut.config.(*MockAMConfigStore).EXPECT().
+				getsConfig(models.AlertConfiguration{
+					AlertmanagerConfiguration: configWithTemplates,
+				})
+			sut.config.(*MockAMConfigStore).EXPECT().saveSucceeds()
+			sut.prov.(*MockProvisioningStore).EXPECT().saveSucceeds()
+
+			err := sut.DeleteTemplate(context.Background(), 1, "a")
+
+			require.NoError(t, err)
+		})
+
+		t.Run("does not error when deleting templates that do not exist", func(t *testing.T) {
+			sut := createTemplateServiceSut()
+			sut.config.(*MockAMConfigStore).EXPECT().
+				getsConfig(models.AlertConfiguration{
+					AlertmanagerConfiguration: configWithTemplates,
+				})
+			sut.config.(*MockAMConfigStore).EXPECT().saveSucceeds()
+			sut.prov.(*MockProvisioningStore).EXPECT().saveSucceeds()
+
+			err := sut.DeleteTemplate(context.Background(), 1, "does not exist")
+
+			require.NoError(t, err)
+		})
+
+		t.Run("succeeds when deleting from config file with no template section", func(t *testing.T) {
+			sut := createTemplateServiceSut()
+			sut.config.(*MockAMConfigStore).EXPECT().
+				getsConfig(models.AlertConfiguration{
+					AlertmanagerConfiguration: defaultConfig,
+				})
+			sut.config.(*MockAMConfigStore).EXPECT().saveSucceeds()
+			sut.prov.(*MockProvisioningStore).EXPECT().saveSucceeds()
+
+			err := sut.DeleteTemplate(context.Background(), 1, "a")
+
+			require.NoError(t, err)
+		})
+	})
 }
 
 func createTemplateServiceSut() *TemplateService {
@@ -257,14 +369,13 @@ func (m *MockAMConfigStore_Expecter) getsConfig(ac models.AlertConfiguration) *M
 }
 
 func (m *MockAMConfigStore_Expecter) saveSucceeds() *MockAMConfigStore_Expecter {
-	m.UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
-		Return(nil)
+	m.UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil)
 	return m
 }
 
 func (m *MockProvisioningStore_Expecter) saveSucceeds() *MockProvisioningStore_Expecter {
-	m.SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(nil)
+	m.SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	m.DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	return m
 }
 
