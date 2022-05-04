@@ -35,7 +35,7 @@ func TestApiBehindFeatureFlag(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			sc := setupHTTPServerWithMockDb(t, false, false, test.featureFlags)
 			sc.hs.dashboardService = &dashboards.FakeDashboardService{
-				SaveDashboardSharingConfigResult: &models.DashboardSharingConfig{IsPublic: false},
+				SavePublicDashboardConfigResult: &models.PublicDashboardConfig{IsPublic: false},
 			}
 			setInitCtxSignedInViewer(sc.initCtx)
 			response := callAPI(
@@ -86,8 +86,8 @@ func TestApiPersistsValue(t *testing.T) {
 			sc := setupHTTPServerWithMockDb(t, false, false, []string{featuremgmt.FlagPublicDashboards})
 
 			sc.hs.dashboardService = &dashboards.FakeDashboardService{
-				SaveDashboardSharingConfigResult: &models.DashboardSharingConfig{IsPublic: test.isPublicResult},
-				SaveDashboardError:               test.saveDashboardError,
+				SavePublicDashboardConfigResult: &models.PublicDashboardConfig{IsPublic: test.isPublicResult},
+				SaveDashboardError:              test.saveDashboardError,
 			}
 
 			setInitCtxSignedInViewer(sc.initCtx)

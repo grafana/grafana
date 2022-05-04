@@ -205,7 +205,7 @@ type Dashboard struct {
 	Data  *simplejson.Json
 }
 
-type DashboardSharingConfig struct {
+type PublicDashboardConfig struct {
 	IsPublic bool `json:"isPublic"`
 }
 
@@ -416,10 +416,10 @@ type DeleteOrphanedProvisionedDashboardsCommand struct {
 	ReaderNames []string
 }
 
-type SaveDashboardSharingConfigCommand struct {
-	Uid                    string
-	OrgId                  int64
-	DashboardSharingConfig DashboardSharingConfig
+type SavePublicDashboardConfigCommand struct {
+	Uid                   string
+	OrgId                 int64
+	PublicDashboardConfig PublicDashboardConfig
 }
 
 //
