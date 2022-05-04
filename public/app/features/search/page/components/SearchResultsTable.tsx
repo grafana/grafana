@@ -9,12 +9,16 @@ import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
 
 import { LocationInfo } from '../../service';
+import { SearchLayout } from '../../types';
 
 import { generateColumns } from './columns';
 
 type Props = {
   data: DataFrame;
   width: number;
+  height: number;
+  showCheckbox: boolean;
+  layout: SearchLayout;
   tags: string[];
   onTagFilterChange: (tags: string[]) => void;
   onDatasourceChange: (datasource?: string) => void;
@@ -25,6 +29,7 @@ export type TableColumn = Column & {
 };
 
 export interface FieldAccess {
+  uid: string; // the item UID
   kind: string; // panel, dashboard, folder
   name: string;
   description: string;
@@ -39,7 +44,18 @@ export interface FieldAccess {
   datasource: DataSourceRef[];
 }
 
-export const Table = ({ data, width, tags, onTagFilterChange, onDatasourceChange }: Props) => {
+const skipHREF = new Set(['column-checkbox', 'column-datasource']);
+
+export const SearchResultsTable = ({
+  data,
+  width,
+  height,
+  tags,
+  showCheckbox,
+  layout,
+  onTagFilterChange,
+  onDatasourceChange,
+}: Props) => {
   const styles = useStyles2(getStyles);
   const tableStyles = useStyles2(getTableStyles);
 
@@ -56,9 +72,18 @@ export const Table = ({ data, width, tags, onTagFilterChange, onDatasourceChange
   // React-table column definitions
   const access = useMemo(() => new DataFrameView<FieldAccess>(data), [data]);
   const memoizedColumns = useMemo(() => {
-    const isDashboardList = data.meta?.type === DataFrameType.DirectoryListing;
-    return generateColumns(access, isDashboardList, width, styles, tags, onTagFilterChange, onDatasourceChange);
-  }, [data.meta?.type, access, width, styles, tags, onTagFilterChange, onDatasourceChange]);
+    const isDashboardList = data.meta?.type === DataFrameType.DirectoryListing || layout === SearchLayout.Folders;
+    return generateColumns(
+      access,
+      isDashboardList,
+      width,
+      showCheckbox,
+      styles,
+      tags,
+      onTagFilterChange,
+      onDatasourceChange
+    );
+  }, [data.meta?.type, layout, access, width, styles, tags, showCheckbox, onTagFilterChange, onDatasourceChange]);
 
   const options: TableOptions<{}> = useMemo(
     () => ({
@@ -80,15 +105,22 @@ export const Table = ({ data, width, tags, onTagFilterChange, onDatasourceChange
       return (
         <div {...row.getRowProps({ style })} className={styles.rowContainer}>
           {row.cells.map((cell: Cell, index: number) => {
+            const body = (
+              <TableCell
+                key={index}
+                tableStyles={tableStyles}
+                cell={cell}
+                columnIndex={index}
+                columnCount={row.cells.length}
+              />
+            );
+            if (skipHREF.has(cell.column.id)) {
+              return body;
+            }
+
             return (
               <a href={url} key={index} className={styles.cellWrapper}>
-                <TableCell
-                  key={index}
-                  tableStyles={tableStyles}
-                  cell={cell}
-                  columnIndex={index}
-                  columnCount={row.cells.length}
-                />
+                {body}
               </a>
             );
           })}
@@ -122,7 +154,7 @@ export const Table = ({ data, width, tags, onTagFilterChange, onDatasourceChange
       <div {...getTableBodyProps()}>
         {rows.length > 0 ? (
           <FixedSizeList
-            height={500}
+            height={height}
             itemCount={rows.length}
             itemSize={tableStyles.rowHeight}
             width={'100%'}

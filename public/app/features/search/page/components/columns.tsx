@@ -8,42 +8,56 @@ import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
 
 import { LocationInfo } from '../../service';
 
-import { FieldAccess, TableColumn } from './Table';
+import { FieldAccess, TableColumn } from './SearchResultsTable';
 
 export const generateColumns = (
   data: DataFrameView<FieldAccess>,
   isDashboardList: boolean,
   availableWidth: number,
+  showCheckbox: boolean,
   styles: { [key: string]: string },
   tags: string[],
   onTagFilterChange: (tags: string[]) => void,
   onDatasourceChange: (datasource?: string) => void
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
-  const urlField = data.fields.url!;
+  const uidField = data.fields.uid!;
   const access = data.fields;
 
   availableWidth -= 8; // ???
   let width = 50;
 
   // TODO: Add optional checkbox support
-  if (false) {
-    // checkbox column
+  if (showCheckbox) {
     columns.push({
       id: `column-checkbox`,
       Header: () => (
         <div className={styles.checkboxHeader}>
-          <Checkbox onChange={() => {}} />
+          <Checkbox
+            onChange={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              console.log('SELECT ALL!!!', e);
+            }}
+          />
         </div>
       ),
-      Cell: () => (
-        <div className={styles.checkbox}>
-          <Checkbox onChange={() => {}} />
-        </div>
-      ),
-      accessor: 'check',
-      field: urlField,
       width: 30,
+      Cell: (p) => {
+        const uid = uidField.values.get(p.row.index);
+        return (
+          <div {...p.cellProps} className={p.cellStyle}>
+            <div className={styles.checkbox}>
+              <Checkbox
+                onChange={(e) => {
+                  console.log('SELECTED!!!', uid);
+                }}
+              />
+            </div>
+          </div>
+        );
+      },
+      field: uidField,
     });
     availableWidth -= width;
   }
