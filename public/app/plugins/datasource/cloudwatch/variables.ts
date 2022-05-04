@@ -1,11 +1,12 @@
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+
 import { CustomVariableSupport, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 
-import { CloudWatchDatasource } from './datasource';
-import { VariableQuery, VariableQueryType } from './types';
-import { migrateVariableQuery } from './migrations';
 import { VariableQueryEditor } from './components/VariableQueryEditor/VariableQueryEditor';
+import { CloudWatchDatasource } from './datasource';
+import { migrateVariableQuery } from './migrations/variableQueryMigrations';
+import { VariableQuery, VariableQueryType } from './types';
 
 export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchDatasource, VariableQuery> {
   private readonly datasource: CloudWatchDatasource;
@@ -91,11 +92,13 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     if (!dimensionKey || !metricName) {
       return [];
     }
-    var filterJson = {};
-    if (dimensionFilters) {
-      filterJson = JSON.parse(dimensionFilters);
-    }
-    const keys = await this.datasource.getDimensionValues(region, namespace, metricName, dimensionKey, filterJson);
+    const keys = await this.datasource.getDimensionValues(
+      region,
+      namespace,
+      metricName,
+      dimensionKey,
+      dimensionFilters ?? {}
+    );
     return keys.map((s: { label: string; value: string }) => ({
       text: s.label,
       value: s.value,
@@ -119,11 +122,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     if (!attributeName) {
       return [];
     }
-    var filterJson = {};
-    if (ec2Filters) {
-      filterJson = JSON.parse(ec2Filters);
-    }
-    const values = await this.datasource.getEc2InstanceAttribute(region, attributeName, filterJson);
+    const values = await this.datasource.getEc2InstanceAttribute(region, attributeName, ec2Filters ?? {});
     return values.map((s: { label: string; value: string }) => ({
       text: s.label,
       value: s.value,
@@ -135,11 +134,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     if (!resourceType) {
       return [];
     }
-    var tagJson = {};
-    if (tags) {
-      tagJson = JSON.parse(tags);
-    }
-    const keys = await this.datasource.getResourceARNs(region, resourceType, tagJson);
+    const keys = await this.datasource.getResourceARNs(region, resourceType, tags ?? {});
     return keys.map((s: { label: string; value: string }) => ({
       text: s.label,
       value: s.value,

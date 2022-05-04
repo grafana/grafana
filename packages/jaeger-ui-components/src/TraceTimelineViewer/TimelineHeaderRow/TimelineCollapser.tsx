@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { IconButton, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import React from 'react';
+
+import { IconButton, useStyles2 } from '@grafana/ui';
 
 const getStyles = () => {
   return {

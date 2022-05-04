@@ -1,8 +1,9 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
-import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
-import { Icon, Button, MultiSelect, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
+import React, { useCallback, useMemo, useState } from 'react';
+
+import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
+import { Icon, Button, MultiSelect, useStyles2 } from '@grafana/ui';
+import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
 export interface Props {
   onChange: (plugins: PanelPluginMeta[]) => void;

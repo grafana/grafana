@@ -12,26 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { css, keyframes } from '@emotion/css';
+import cx from 'classnames';
 import * as React from 'react';
-
 import IoAlert from 'react-icons/lib/io/alert';
 import IoArrowRightA from 'react-icons/lib/io/arrow-right-a';
 import MdFileUpload from 'react-icons/lib/md/file-upload';
-import { css, keyframes } from '@emotion/css';
-import cx from 'classnames';
-import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
 
-import ReferencesButton from './ReferencesButton';
-import TimelineRow from './TimelineRow';
-import { formatDuration, ViewedBoundsFunctionType } from './utils';
-import SpanTreeOffset from './SpanTreeOffset';
-import SpanBar from './SpanBar';
-import Ticks from './Ticks';
-
+import { autoColor } from '../Theme';
 import { SpanLinkFunc, TNil } from '../types';
 import { TraceSpan } from '../types/trace';
-import { autoColor } from '../Theme';
+
+import ReferencesButton from './ReferencesButton';
+import SpanBar from './SpanBar';
+import SpanTreeOffset from './SpanTreeOffset';
+import Ticks from './Ticks';
+import TimelineRow from './TimelineRow';
+import { formatDuration, ViewedBoundsFunctionType } from './utils';
 
 const spanBarClassName = 'spanBar';
 const spanBarLabelClassName = 'spanBarLabel';

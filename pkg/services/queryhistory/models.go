@@ -41,6 +41,8 @@ type SearchInQueryHistoryQuery struct {
 	Sort           string   `json:"sort"`
 	Page           int      `json:"page"`
 	Limit          int      `json:"limit"`
+	From           int64    `json:"from"`
+	To             int64    `json:"to"`
 }
 
 type PatchQueryCommentInQueryHistoryCommand struct {

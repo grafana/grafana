@@ -186,8 +186,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 								},
 								"datasource": "${DS_GDEV-TESTDATA}",
 								"libraryPanel": map[string]interface{}{
-									"uid":  sc.initialResult.Result.UID,
-									"name": sc.initialResult.Result.Name,
+									"uid": sc.initialResult.Result.UID,
 								},
 								"title": "Inside row",
 								"type":  "text",
@@ -204,8 +203,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"libraryPanel": map[string]interface{}{
-							"uid":  outsidePanel.UID,
-							"name": outsidePanel.Name,
+							"uid": outsidePanel.UID,
 						},
 						"title": "Outside row",
 						"type":  "text",
@@ -401,8 +399,7 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 							"y": 0,
 						},
 						"libraryPanel": map[string]interface{}{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
+							"uid": sc.initialResult.Result.UID,
 						},
 					},
 				},
@@ -438,10 +435,9 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 							"y": 0,
 						},
 						"libraryPanel": map[string]interface{}{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
+							"uid": sc.initialResult.Result.UID,
 						},
-						"type": fmt.Sprintf("Name: \"%s\", UID: \"%s\"", sc.initialResult.Result.Name, sc.initialResult.Result.UID),
+						"type": fmt.Sprintf("Library panel with UID: \"%s\"", sc.initialResult.Result.UID),
 					},
 				},
 			}
@@ -476,8 +472,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"libraryPanel": map[string]interface{}{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
+							"uid": sc.initialResult.Result.UID,
 						},
 						"title": "Text - Library Panel",
 						"type":  "text",
@@ -515,8 +510,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 							"y": 0,
 						},
 						"libraryPanel": map[string]interface{}{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
+							"uid": sc.initialResult.Result.UID,
 						},
 					},
 				},
@@ -586,8 +580,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 								},
 								"datasource": "${DS_GDEV-TESTDATA}",
 								"libraryPanel": map[string]interface{}{
-									"uid":  sc.initialResult.Result.UID,
-									"name": sc.initialResult.Result.Name,
+									"uid": sc.initialResult.Result.UID,
 								},
 								"title": "Inside row",
 								"type":  "text",
@@ -604,8 +597,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"libraryPanel": map[string]interface{}{
-							"uid":  outsidePanel.UID,
-							"name": outsidePanel.Name,
+							"uid": outsidePanel.UID,
 						},
 						"title": "Outside row",
 						"type":  "text",
@@ -663,8 +655,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 									"y": 13,
 								},
 								"libraryPanel": map[string]interface{}{
-									"uid":  sc.initialResult.Result.UID,
-									"name": sc.initialResult.Result.Name,
+									"uid": sc.initialResult.Result.UID,
 								},
 							},
 						},
@@ -678,8 +669,7 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 							"y": 19,
 						},
 						"libraryPanel": map[string]interface{}{
-							"uid":  outsidePanel.UID,
-							"name": outsidePanel.Name,
+							"uid": outsidePanel.UID,
 						},
 					},
 				},
@@ -729,46 +719,6 @@ func TestCleanLibraryPanelsForDashboard(t *testing.T) {
 			err := sc.service.CleanLibraryPanelsForDashboard(dashInDB)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
 		})
-
-	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with a library panel without name, it should fail",
-		func(t *testing.T, sc scenarioContext) {
-			dashJSON := map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id": int64(1),
-						"gridPos": map[string]interface{}{
-							"h": 6,
-							"w": 6,
-							"x": 0,
-							"y": 0,
-						},
-					},
-					map[string]interface{}{
-						"id": int64(2),
-						"gridPos": map[string]interface{}{
-							"h": 6,
-							"w": 6,
-							"x": 6,
-							"y": 0,
-						},
-						"datasource": "${DS_GDEV-TESTDATA}",
-						"libraryPanel": map[string]interface{}{
-							"uid": sc.initialResult.Result.UID,
-						},
-						"title": "Text - Library Panel",
-						"type":  "text",
-					},
-				},
-			}
-			dash := models.Dashboard{
-				Title: "Testing CleanLibraryPanelsForDashboard",
-				Data:  simplejson.NewFromAny(dashJSON),
-			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
-
-			err := sc.service.CleanLibraryPanelsForDashboard(dashInDB)
-			require.EqualError(t, err, errLibraryPanelHeaderNameMissing.Error())
-		})
 }
 
 func TestConnectLibraryPanelsForDashboard(t *testing.T) {
@@ -795,8 +745,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"libraryPanel": map[string]interface{}{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
+							"uid": sc.initialResult.Result.UID,
 						},
 						"title": "Text - Library Panel",
 						"type":  "text",
@@ -877,8 +826,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 								},
 								"datasource": "${DS_GDEV-TESTDATA}",
 								"libraryPanel": map[string]interface{}{
-									"uid":  sc.initialResult.Result.UID,
-									"name": sc.initialResult.Result.Name,
+									"uid": sc.initialResult.Result.UID,
 								},
 								"title": "Inside row",
 								"type":  "text",
@@ -895,8 +843,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"libraryPanel": map[string]interface{}{
-							"uid":  outsidePanel.UID,
-							"name": outsidePanel.Name,
+							"uid": outsidePanel.UID,
 						},
 						"title": "Outside row",
 						"type":  "text",
@@ -997,8 +944,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 						},
 						"datasource": "${DS_GDEV-TESTDATA}",
 						"libraryPanel": map[string]interface{}{
-							"uid":  unused.UID,
-							"name": unused.Name,
+							"uid": unused.UID,
 						},
 						"title":       "Unused Libray Panel",
 						"description": "Unused description",
@@ -1034,8 +980,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 					},
 					"datasource": "${DS_GDEV-TESTDATA}",
 					"libraryPanel": map[string]interface{}{
-						"uid":  sc.initialResult.Result.UID,
-						"name": sc.initialResult.Result.Name,
+						"uid": sc.initialResult.Result.UID,
 					},
 					"title": "Text - Library Panel",
 					"type":  "text",

@@ -1,8 +1,12 @@
 import React, { PureComponent } from 'react';
-import { QueryEditorProps, ExploreMode } from '@grafana/data';
-import { CloudWatchJsonData, CloudWatchQuery } from '../types';
+
+import { QueryEditorProps } from '@grafana/data';
+
 import { CloudWatchDatasource } from '../datasource';
-import { MetricsQueryEditor } from './MetricsQueryEditor';
+import { isCloudWatchMetricsQuery } from '../guards';
+import { CloudWatchJsonData, CloudWatchQuery } from '../types';
+
+import { MetricsQueryEditor } from '././MetricsQueryEditor/MetricsQueryEditor';
 import LogsQueryEditor from './LogsQueryEditor';
 
 export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
@@ -10,14 +14,13 @@ export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, Clou
 export class PanelQueryEditor extends PureComponent<Props> {
   render() {
     const { query } = this.props;
-    const apiMode = query.queryMode ?? 'Metrics';
 
     return (
       <>
-        {apiMode === ExploreMode.Logs ? (
-          <LogsQueryEditor {...this.props} allowCustomValue />
+        {isCloudWatchMetricsQuery(query) ? (
+          <MetricsQueryEditor {...this.props} query={query} />
         ) : (
-          <MetricsQueryEditor {...this.props} />
+          <LogsQueryEditor {...this.props} allowCustomValue />
         )}
       </>
     );

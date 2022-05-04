@@ -1,11 +1,12 @@
+import { css } from '@emotion/css';
 import React from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Field, FieldSet, Select, Switch } from '@grafana/ui';
-import { css } from '@emotion/css';
-
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
-import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery } from '../types';
 import { getAnnotationTags } from 'app/features/annotations/api';
+
+import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery } from '../types';
 
 const matchTooltipContent = 'Enabling this returns annotations that match any of the tags specified below';
 
