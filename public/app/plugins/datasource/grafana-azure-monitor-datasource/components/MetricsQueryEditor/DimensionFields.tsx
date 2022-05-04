@@ -173,7 +173,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
             {filter.operator === 'eq' || filter.operator === 'ne' ? (
               <MultiSelect
                 menuShouldPortal
-                placeholder="Select or add value(s)"
+                placeholder="Select value(s)"
                 value={filter.filters}
                 options={getValidMultiSelectOptions(filter.filters, filter.dimension)}
                 onChange={(v) => onMultiSelectFilterChange(index, v)}
