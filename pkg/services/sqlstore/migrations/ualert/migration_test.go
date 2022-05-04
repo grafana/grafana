@@ -29,6 +29,7 @@ func TestAddDashAlertMigration(t *testing.T) {
 		name           string
 		config         *setting.Cfg
 		isMigrationRun bool
+		shouldPanic    bool
 		expected       []string // set of migration titles
 	}{
 		{
@@ -47,6 +48,18 @@ func TestAddDashAlertMigration(t *testing.T) {
 				UnifiedAlerting: setting.UnifiedAlertingSettings{
 					Enabled: boolPointer(false),
 				},
+				ForceMigration: true,
+			},
+			isMigrationRun: true,
+			expected:       []string{fmt.Sprintf(ualert.ClearMigrationEntryTitle, ualert.MigTitle), ualert.RmMigTitle},
+		},
+		{
+			name: "when unified alerting disabled, migration is already run and force migration is disabled, then the migration should panic",
+			config: &setting.Cfg{
+				UnifiedAlerting: setting.UnifiedAlertingSettings{
+					Enabled: boolPointer(false),
+				},
+				ForceMigration: false,
 			},
 			isMigrationRun: true,
 			expected:       []string{fmt.Sprintf(ualert.ClearMigrationEntryTitle, ualert.MigTitle), ualert.RmMigTitle},
@@ -75,6 +88,12 @@ func TestAddDashAlertMigration(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				// if the code should panic, make sure it has
+				if r := recover(); r == nil && tt.shouldPanic {
+					t.Errorf("The code did not panic")
+				}
+			}()
 			if tt.isMigrationRun {
 				log := migrator.MigrationLog{
 					MigrationID: ualert.MigTitle,
@@ -90,6 +109,7 @@ func TestAddDashAlertMigration(t *testing.T) {
 			}
 
 			mg := migrator.NewMigrator(x, tt.config)
+
 			ualert.AddDashAlertMigration(mg)
 			require.Equal(t, tt.expected, mg.GetMigrationIDs(false))
 		})

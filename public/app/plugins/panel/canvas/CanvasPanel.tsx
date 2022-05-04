@@ -3,7 +3,7 @@ import { Subscription } from 'rxjs';
 
 import { PanelProps } from '@grafana/data';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
-import { CanvasGroupOptions } from 'app/features/canvas';
+import { CanvasFrameOptions } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
@@ -85,7 +85,7 @@ export class CanvasPanel extends Component<Props, State> {
 
   // NOTE, all changes to the scene flow through this function
   // even the editor gets current state from the same scene instance!
-  onUpdateScene = (root: CanvasGroupOptions) => {
+  onUpdateScene = (root: CanvasFrameOptions) => {
     const { onOptionsChange, options } = this.props;
     onOptionsChange({
       ...options,

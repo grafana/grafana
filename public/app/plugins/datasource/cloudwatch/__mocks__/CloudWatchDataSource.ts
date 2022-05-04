@@ -49,7 +49,9 @@ export function setupMockedDataSource({
     } as any
   );
   datasource.getVariables = () => ['test'];
-  datasource.getRegions = () => Promise.resolve([]);
+
+  datasource.getNamespaces = jest.fn().mockResolvedValue([]);
+  datasource.getRegions = jest.fn().mockResolvedValue([]);
   const fetchMock = jest.fn().mockReturnValue(of({ data }));
   setBackendSrv({ fetch: fetchMock } as any);
 
