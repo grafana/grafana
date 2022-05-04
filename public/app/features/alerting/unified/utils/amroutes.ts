@@ -77,9 +77,13 @@ export const emptyRoute: FormAmRoute = {
 };
 
 //returns route, and a record mapping id to existing route route
+interface AmRouteToFormAmRouteOptions {
+  isRoot: boolean;
+}
+
 export const amRouteToFormAmRoute = (
   route: Route | undefined,
-  isRoot: boolean
+  { isRoot }: AmRouteToFormAmRouteOptions
 ): [FormAmRoute, Record<string, Route>] => {
   if (!route || Object.keys(route).length === 0) {
     return [emptyRoute, {}];
@@ -104,7 +108,7 @@ export const amRouteToFormAmRoute = (
   };
   const formRoutes: FormAmRoute[] = [];
   route.routes?.forEach((subRoute) => {
-    const [subFormRoute, subId2Route] = amRouteToFormAmRoute(subRoute, false);
+    const [subFormRoute, subId2Route] = amRouteToFormAmRoute(subRoute, { isRoot: false });
     formRoutes.push(subFormRoute);
     Object.assign(id2route, subId2Route);
   });
