@@ -22,7 +22,8 @@ import { SearchResultsTable } from './components/SearchResultsTable';
 
 const node: NavModelItem = {
   id: 'search',
-  text: 'Search',
+  text: 'Search playground',
+  subTitle: 'The body below will eventually live inside existing UI layouts',
   icon: 'dashboard',
   url: 'search',
 };
@@ -75,9 +76,15 @@ export default function SearchPage() {
   return (
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
-        <Input value={query.query} onChange={onSearchQueryChange} autoFocus spellCheck={false} />
+        <Input
+          value={query.query}
+          onChange={onSearchQueryChange}
+          autoFocus
+          spellCheck={false}
+          placeholder="Search for dashboards and panels"
+        />
         <InlineFieldRow>
-          <InlineField label="Manage">
+          <InlineField label="Show the manage options">
             <InlineSwitch value={showManage} onChange={() => setShowManage(!showManage)} />
           </InlineField>
         </InlineFieldRow>
@@ -86,7 +93,14 @@ export default function SearchPage() {
         {results.value?.body && (
           <div>
             <ActionRow
-              onLayoutChange={onLayoutChange}
+              onLayoutChange={(v) => {
+                if (v === SearchLayout.Folders) {
+                  if (query.query) {
+                    onQueryChange(''); // parent will clear the sort
+                  }
+                }
+                onLayoutChange(v);
+              }}
               onSortChange={onSortChange}
               onTagFilterChange={onTagFilterChange}
               getTagOptions={getTagOptions}

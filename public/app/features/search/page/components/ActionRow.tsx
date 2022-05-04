@@ -30,6 +30,16 @@ interface Props {
   hideLayout?: boolean;
 }
 
+function getValidQueryLayout(q: DashboardQuery): SearchLayout {
+  // Folders is not valid when a query exists
+  if (q.layout === SearchLayout.Folders) {
+    if (q.query || q.sort) {
+      return SearchLayout.List;
+    }
+  }
+  return q.layout;
+}
+
 export const ActionRow: FC<Props> = ({
   onLayoutChange,
   onSortChange,
@@ -47,7 +57,9 @@ export const ActionRow: FC<Props> = ({
     <div className={styles.actionRow}>
       <div className={styles.rowContainer}>
         <HorizontalGroup spacing="md" width="auto">
-          {!hideLayout && <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={query.layout} />}
+          {!hideLayout && (
+            <RadioButtonGroup options={layoutOptions} onChange={onLayoutChange} value={getValidQueryLayout(query)} />
+          )}
           <SortPicker onChange={onSortChange} value={query.sort?.value} />
         </HorizontalGroup>
       </div>
