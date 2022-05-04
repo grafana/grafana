@@ -241,7 +241,7 @@ func (m *SQLStoreMock) CreateTeam(name string, email string, orgID int64) (model
 
 func (m *SQLStoreMock) CreateTeamWithID(name string, email string, orgID int64, ID int64) (models.Team, error) {
 	return models.Team{
-		Id: ID,
+		Id:    ID,
 		Name:  name,
 		Email: email,
 		OrgId: orgID,

@@ -86,7 +86,7 @@ func (ss *SQLStore) CreateTeam(name, email string, orgID int64) (models.Team, er
 
 func (ss *SQLStore) CreateTeamWithID(name, email string, orgID int64, ID int64) (models.Team, error) {
 	team := models.Team{
-		Id: ID,
+		Id:      ID,
 		Name:    name,
 		Email:   email,
 		OrgId:   orgID,
