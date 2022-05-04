@@ -572,7 +572,7 @@ func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink 
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	var children []*dtos.NavLink
 
-	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(ac.ActionDashboardsCreate)) {
+	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 		children = append(children, &dtos.NavLink{Text: "Dashboard", Icon: "apps", Url: hs.Cfg.AppSubURL + "/dashboard/new", Id: "create-dashboard"})
 	}
 
@@ -583,7 +583,7 @@ func (hs *HTTPServer) buildCreateNavLinks(c *models.ReqContext) []*dtos.NavLink 
 		})
 	}
 
-	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(ac.ActionDashboardsCreate)) {
+	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 		children = append(children, &dtos.NavLink{
 			Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "import",
 			Url: hs.Cfg.AppSubURL + "/dashboard/import",
@@ -651,7 +651,7 @@ func (hs *HTTPServer) editorInAnyFolder(c *models.ReqContext) bool {
 
 func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewData, error) {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	hasEditPerm := hasAccess(hs.editorInAnyFolder, ac.EvalAny(ac.EvalPermission(ac.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
+	hasEditPerm := hasAccess(hs.editorInAnyFolder, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
 
 	settings, err := hs.getFrontendSettingsMap(c)
 	if err != nil {
