@@ -18,7 +18,7 @@ import { getTermCounts } from '../service/backend';
 import { DashboardSearchItemType, DashboardSectionItem, SearchLayout } from '../types';
 
 import { ActionRow } from './components/ActionRow';
-import { Table } from './table/Table';
+import { SearchResultsTable } from './components/SearchResultsTable';
 
 const node: NavModelItem = {
   id: 'search',
@@ -48,6 +48,7 @@ export default function SearchPage() {
     return <div className={styles.unsupported}>Unsupported</div>;
   }
 
+  // This gets the possible tags from within the query results
   const getTagOptions = (): Promise<TermCount[]> => {
     const tags = results.value?.body.fields.find((f) => f.name === 'tags');
 
@@ -160,9 +161,10 @@ export default function SearchPage() {
 
                 return (
                   <>
-                    <Table
+                    <SearchResultsTable
                       data={results.value!.body}
                       showCheckbox={showManage}
+                      layout={query.layout}
                       width={width}
                       height={height}
                       tags={query.tag}
