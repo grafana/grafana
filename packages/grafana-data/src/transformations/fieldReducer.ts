@@ -244,7 +244,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Returns an array with all unique values',
     standard: false,
     reduce: (field: Field) => ({
-      allUniqueValues: field.values.toArray().filter((n, i) => field.values.toArray().indexOf(n) === i),
+      allUniqueValues: [...new Set(field.values.toArray())],
     }),
   },
 ]);
