@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeGrid } from 'react-window';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { DataFrameView, GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Input, useStyles2, Spinner, InlineSwitch, InlineFieldRow, InlineField } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
@@ -13,10 +13,9 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { PreviewsSystemRequirements } from '../components/PreviewsSystemRequirements';
 import { SearchCard } from '../components/SearchCard';
 import { useSearchQuery } from '../hooks/useSearchQuery';
-import { getGrafanaSearcher, QueryFilters } from '../service';
+import { getGrafanaSearcher, QueryFilters, QueryResult } from '../service';
 import { getTermCounts } from '../service/backend';
-import { toDashboardSectionItem } from '../service/searcher';
-import { SearchLayout } from '../types';
+import { DashboardSearchItemType, DashboardSectionItem, SearchLayout } from '../types';
 
 import { ActionRow } from './components/ActionRow';
 import { Table } from './table/Table';
@@ -66,13 +65,8 @@ export default function SearchPage() {
     onTagFilterChange(tags);
   };
 
-  // HACK for grid view
-  const itemProps = {
-    editable: showManage,
-    onToggleChecked: (v: any) => {
-      console.log('CHECKED?', v);
-    },
-    onTagSelected: () => {},
+  const onTagSelected = (tag: string) => {
+    onTagFilterChange([...new Set(query.tag as string[]).add(tag)]);
   };
 
   const showPreviews = query.layout === SearchLayout.Grid && config.featureToggles.dashboardPreviews;
@@ -108,12 +102,22 @@ export default function SearchPage() {
             <AutoSizer style={{ width: '100%', height: '700px' }}>
               {({ width, height }) => {
                 if (showPreviews) {
-                  const items = toDashboardSectionItem(results.value!.body);
+                  const df = results.value?.body!;
+                  const view = new DataFrameView<QueryResult>(df);
+
+                  // HACK for grid view
+                  const itemProps = {
+                    editable: showManage,
+                    onToggleChecked: (v: any) => {
+                      console.log('CHECKED?', v);
+                    },
+                    onTagSelected,
+                  };
 
                   const numColumns = Math.ceil(width / 320);
                   const cellWidth = width / numColumns;
                   const cellHeight = (cellWidth - 64) * 0.75 + 56 + 8;
-                  const numRows = Math.ceil(items.length / numColumns);
+                  const numRows = Math.ceil(df.length / numColumns);
                   return (
                     <FixedSizeGrid
                       columnCount={numColumns}
@@ -127,12 +131,26 @@ export default function SearchPage() {
                     >
                       {({ columnIndex, rowIndex, style }) => {
                         const index = rowIndex * numColumns + columnIndex;
-                        const item = items[index];
+                        const item = view.get(index);
+                        const facade: DashboardSectionItem = {
+                          uid: item.uid,
+                          title: item.name,
+                          url: item.url,
+                          uri: item.url,
+                          type:
+                            item.kind === 'folder'
+                              ? DashboardSearchItemType.DashFolder
+                              : DashboardSearchItemType.DashDB,
+                          id: 666, // do not use me!
+                          isStarred: false,
+                          tags: item.tags ?? [],
+                        };
+
                         // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
                         // And without this wrapper there is no room for that margin
                         return item ? (
                           <li style={style} className={styles.virtualizedGridItemWrapper}>
-                            <SearchCard key={item.uid} {...itemProps} item={item} />
+                            <SearchCard key={item.uid} {...itemProps} item={facade} />
                           </li>
                         ) : null;
                       }}
