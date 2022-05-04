@@ -33,7 +33,6 @@ export function AlignmentPeriod<TQuery extends MetricQuery | SLOQuery>({
 
   return (
     <Select
-      menuShouldPortal
       width={selectWidth}
       onChange={({ value }) => onChange({ ...query, alignmentPeriod: value! })}
       value={[...options, ...templateVariableOptions].find((s) => s.value === query.alignmentPeriod)}

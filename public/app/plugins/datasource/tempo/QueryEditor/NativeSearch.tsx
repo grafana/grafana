@@ -162,7 +162,6 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           <InlineField label="Service Name" labelWidth={14} grow>
             <AsyncSelect
               inputId="service"
-              menuShouldPortal
               cacheOptions={false}
               loadOptions={serviceNameSearch}
               onOpenMenu={fetchOptionsOfType('service.name')}
@@ -189,7 +188,6 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           <InlineField label="Span Name" labelWidth={14} grow>
             <AsyncSelect
               inputId="spanName"
-              menuShouldPortal
               cacheOptions={false}
               loadOptions={spanNameSearch}
               onOpenMenu={fetchOptionsOfType('name')}

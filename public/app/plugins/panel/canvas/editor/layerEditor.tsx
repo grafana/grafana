@@ -2,7 +2,7 @@ import { get as lodashGet } from 'lodash';
 
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { ElementState } from 'app/features/canvas/runtime/element';
-import { GroupState } from 'app/features/canvas/runtime/group';
+import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
@@ -14,7 +14,7 @@ import { optionBuilder } from './options';
 
 export interface LayerEditorProps {
   scene: Scene;
-  layer: GroupState;
+  layer: FrameState;
   selected: ElementState[];
 }
 
@@ -22,12 +22,12 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
   const { selected, scene } = opts;
 
   if (!scene.currentLayer) {
-    scene.currentLayer = scene.root as GroupState;
+    scene.currentLayer = scene.root as FrameState;
   }
 
   if (selected) {
     for (const element of selected) {
-      if (element instanceof GroupState) {
+      if (element instanceof FrameState) {
         scene.currentLayer = element;
         break;
       }
