@@ -198,6 +198,7 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	expression := model.Get("expression").MustString("")
 	sqlExpression := model.Get("sqlExpression").MustString("")
 	alias := model.Get("alias").MustString()
+	label := model.Get("label").MustString()
 	returnData := !model.Get("hide").MustBool(false)
 	queryType := model.Get("type").MustString()
 	if queryType == "" {
@@ -231,22 +232,13 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 		Dimensions:       dimensions,
 		Period:           period,
 		Alias:            alias,
-		Label:            checkForLabel(model),
+		Label:            label,
 		MatchExact:       matchExact,
 		UsedExpression:   "",
 		MetricQueryType:  metricQueryType,
 		MetricEditorMode: metricEditorModeValue,
 		SqlExpression:    sqlExpression,
 	}, nil
-}
-
-func checkForLabel(model *simplejson.Json) *string {
-	label, err := model.Get("label").String()
-	if err != nil {
-		return nil
-	}
-
-	return &label
 }
 
 func getRetainedPeriods(timeSince time.Duration) []int {

@@ -75,8 +75,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		t.Run("should set label when dynamic labels feature toggle is enabled", func(t *testing.T) {
 			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchDynamicLabels))
 			query := getBaseQuery()
-			label := "some label"
-			query.Label = &label
+			query.Label = "some label"
 
 			mdq, err := executor.buildMetricDataQuery(query)
 
@@ -103,7 +102,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			t.Run(name, func(t *testing.T) {
 				executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, tc.feature)
 				query := getBaseQuery()
-				query.Label = &tc.label
+				query.Label = tc.label
 
 				mdq, err := executor.buildMetricDataQuery(query)
 
