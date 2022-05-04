@@ -47,7 +47,9 @@ func ReadPrometheusStyleResult(iter *jsoniter.Iterator) *backend.DataResponse {
 	}
 
 	if status == "error" {
-		rsp.Error = fmt.Errorf("%s: %s", errorType, err)
+		return &backend.DataResponse{
+			Error: fmt.Errorf("%s: %s", errorType, err),
+		}
 	}
 
 	if len(warnings) > 0 {
