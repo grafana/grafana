@@ -21,4 +21,7 @@ export enum DataFrameType {
    * All values in the grid exist and have regular spacing
    */
   HeatmapScanlines = 'heatmap-scanlines',
+
+  /** Directory listing */
+  DirectoryListing = 'directory-listing',
 }

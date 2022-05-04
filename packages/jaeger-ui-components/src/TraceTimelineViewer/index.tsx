@@ -12,21 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, { RefObject } from 'react';
 import { css } from '@emotion/css';
+import React, { RefObject } from 'react';
+
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
-import TimelineHeaderRow from './TimelineHeaderRow';
-import VirtualizedTraceView from './VirtualizedTraceView';
-import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { Accessors } from '../ScrollManager';
-import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
-import { SpanLinkFunc, TNil } from '../types';
-import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
-import TTraceTimeline from '../types/TTraceTimeline';
 import { autoColor } from '../Theme';
+import { merge as mergeShortcuts } from '../keyboard-shortcuts';
+import { SpanLinkFunc, TNil } from '../types';
+import TTraceTimeline from '../types/TTraceTimeline';
+import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 import ExternalLinkContext from '../url/externalLinkContext';
+
+import TimelineHeaderRow from './TimelineHeaderRow';
+import VirtualizedTraceView, { TopOfViewRefType } from './VirtualizedTraceView';
+import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
 
 type TExtractUiFindFromStateReturn = {
   uiFind: string | undefined;
@@ -105,8 +107,10 @@ type TProps = TExtractUiFindFromStateReturn & {
   createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
   focusedSpanId?: string;
+  focusedSpanIdForSearch: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
-  topOfExploreViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRefType?: TopOfViewRefType;
 };
 
 type State = {
@@ -162,7 +166,8 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
       createLinkToExternalSpan,
       traceTimeline,
       theme,
-      topOfExploreViewRef,
+      topOfViewRef,
+      focusedSpanIdForSearch,
       ...rest
     } = this.props;
     const { trace } = rest;
@@ -193,7 +198,8 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
             {...traceTimeline}
             setSpanNameColumnWidth={setSpanNameColumnWidth}
             currentViewRangeTime={viewRange.time.current}
-            topOfExploreViewRef={topOfExploreViewRef}
+            topOfViewRef={topOfViewRef}
+            focusedSpanIdForSearch={focusedSpanIdForSearch}
           />
         </div>
       </ExternalLinkContext.Provider>

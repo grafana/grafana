@@ -1,12 +1,14 @@
 import React, { useCallback } from 'react';
 import { connect } from 'react-redux';
-import { Form, Button, Input, Field } from '@grafana/ui';
+import { useHistory } from 'react-router-dom';
+
 import { NavModel } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { StoreState } from '../../types';
-import { getNavModel } from '../../core/selectors/navModel';
+import { Form, Button, Input, Field } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import { useHistory } from 'react-router-dom';
+
+import { getNavModel } from '../../core/selectors/navModel';
+import { StoreState } from '../../types';
 
 interface ServiceAccountCreatePageProps {
   navModel: NavModel;
@@ -31,7 +33,7 @@ const ServiceAccountCreatePage: React.FC<ServiceAccountCreatePageProps> = ({ nav
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <h1>Add new service account</h1>
+        <h1>Create service account</h1>
         <Form onSubmit={onSubmit} validateOn="onBlur">
           {({ register, errors }) => {
             return (
@@ -44,7 +46,7 @@ const ServiceAccountCreatePage: React.FC<ServiceAccountCreatePageProps> = ({ nav
                 >
                   <Input id="display-name-input" {...register('name', { required: true })} />
                 </Field>
-                <Button type="submit">Create Service account</Button>
+                <Button type="submit">Create</Button>
               </>
             );
           }}

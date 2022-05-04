@@ -48,7 +48,7 @@ func TestTeamsNotifier(t *testing.T) {
 				"themeColor": "#D63232",
 				"sections": []map[string]interface{}{
 					{
-						"title": "Details",
+						"title": "",
 						"text":  "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 					},
 				},
@@ -66,6 +66,8 @@ func TestTeamsNotifier(t *testing.T) {
 			name: "Custom config with multiple alerts",
 			settings: `{
 				"url": "http://localhost",
+				"title": "{{ .CommonLabels.alertname }}",
+				"sectiontitle": "Details",
 				"message": "{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved"
 			}`,
 			alerts: []*types.Alert{
@@ -84,13 +86,99 @@ func TestTeamsNotifier(t *testing.T) {
 			expMsg: map[string]interface{}{
 				"@type":      "MessageCard",
 				"@context":   "http://schema.org/extensions",
-				"summary":    "[FIRING:2]  ",
-				"title":      "[FIRING:2]  ",
+				"summary":    "alert1",
+				"title":      "alert1",
 				"themeColor": "#D63232",
 				"sections": []map[string]interface{}{
 					{
 						"title": "Details",
 						"text":  "2 alerts are firing, 0 are resolved",
+					},
+				},
+				"potentialAction": []map[string]interface{}{
+					{
+						"@context": "http://schema.org",
+						"@type":    "OpenUri",
+						"name":     "View Rule",
+						"targets":  []map[string]interface{}{{"os": "default", "uri": "http://localhost/alerting/list"}},
+					},
+				},
+			},
+			expMsgError: nil,
+		}, {
+			name: "Missing field in template",
+			settings: `{
+				"url": "http://localhost",
+				"title": "{{ .CommonLabels.alertname }}",
+				"sectiontitle": "Details",
+				"message": "I'm a custom template {{ .NotAField }} bad template"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"@type":      "MessageCard",
+				"@context":   "http://schema.org/extensions",
+				"summary":    "alert1",
+				"title":      "alert1",
+				"themeColor": "#D63232",
+				"sections": []map[string]interface{}{
+					{
+						"title": "Details",
+						"text":  "I'm a custom template ",
+					},
+				},
+				"potentialAction": []map[string]interface{}{
+					{
+						"@context": "http://schema.org",
+						"@type":    "OpenUri",
+						"name":     "View Rule",
+						"targets":  []map[string]interface{}{{"os": "default", "uri": "http://localhost/alerting/list"}},
+					},
+				},
+			},
+			expMsgError: nil,
+		}, {
+			name: "Invalid template",
+			settings: `{
+				"url": "http://localhost",
+				"title": "{{ .CommonLabels.alertname }}",
+				"sectiontitle": "Details",
+				"message": "I'm a custom template {{ {.NotAField }} bad template"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"@type":      "MessageCard",
+				"@context":   "http://schema.org/extensions",
+				"summary":    "alert1",
+				"title":      "alert1",
+				"themeColor": "#D63232",
+				"sections": []map[string]interface{}{
+					{
+						"title": "Details",
+						"text":  "",
 					},
 				},
 				"potentialAction": []map[string]interface{}{
@@ -142,6 +230,8 @@ func TestTeamsNotifier(t *testing.T) {
 			}
 			require.True(t, ok)
 			require.NoError(t, err)
+
+			require.NotEmpty(t, webhookSender.Webhook.Url)
 
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)

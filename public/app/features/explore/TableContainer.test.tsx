@@ -1,8 +1,10 @@
-import React from 'react';
 import { screen, render, within } from '@testing-library/react';
-import { TableContainer } from './TableContainer';
+import React from 'react';
+
 import { DataFrame, toDataFrame, FieldType, InternalTimeZones } from '@grafana/data';
 import { ExploreId } from 'app/types/explore';
+
+import { TableContainer } from './TableContainer';
 
 function getTable(): HTMLElement {
   return screen.getAllByRole('table')[0];

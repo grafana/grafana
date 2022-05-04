@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -17,17 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
-
-func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalResponse {
-	if errors.Is(err, models.ErrDataSourceAccessDenied) {
-		return response.Error(http.StatusForbidden, "Access denied to data source", err)
-	}
-	var badQuery *query.ErrBadQuery
-	if errors.As(err, &badQuery) {
-		return response.Error(http.StatusBadRequest, util.Capitalize(badQuery.Message), err)
-	}
-	return response.Error(http.StatusInternalServerError, "Query data error", err)
-}
 
 // QueryMetricsV2 returns query metrics.
 // POST /api/ds/query   DataSource query w/ expressions
@@ -41,7 +31,26 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}
-	return toJsonStreamingResponse(resp)
+	return hs.toJsonStreamingResponse(resp)
+}
+
+func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalResponse {
+	if errors.Is(err, models.ErrDataSourceAccessDenied) {
+		return response.Error(http.StatusForbidden, "Access denied to data source", err)
+	}
+	if errors.Is(err, models.ErrDataSourceNotFound) {
+		return response.Error(http.StatusNotFound, "Data source not found", err)
+	}
+	var badQuery *query.ErrBadQuery
+	if errors.As(err, &badQuery) {
+		return response.Error(http.StatusBadRequest, util.Capitalize(badQuery.Message), err)
+	}
+
+	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
+		return response.Error(http.StatusNotFound, "Plugin not found", err)
+	}
+
+	return response.Error(http.StatusInternalServerError, "Query data error", err)
 }
 
 func parseDashboardQueryParams(params map[string]string) (models.GetDashboardQuery, int64, error) {
@@ -101,8 +110,8 @@ func checkDashboardAndPanel(ctx context.Context, ss sqlstore.Store, query models
 	return models.ErrDashboardPanelNotFound
 }
 
-// QueryMetricsV2 returns query metrics.
-// POST /api/ds/query   DataSource query w/ expressions
+// QueryMetricsFromDashboard returns query metrics.
+// POST /dashboards/org/:orgId/uid/:dashboardUid/panels/:panelId/query   DataSource query w/ expressions
 func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.Response {
 	// check feature flag
 	if !hs.Features.IsEnabled(featuremgmt.FlagValidatedQueries) {
@@ -138,13 +147,14 @@ func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.R
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}
-	return toJsonStreamingResponse(resp)
+	return hs.toJsonStreamingResponse(resp)
 }
 
 // QueryMetrics returns query metrics
 // POST /api/tsdb/query
 //nolint: staticcheck // legacydata.DataResponse deprecated
 //nolint: staticcheck // legacydata.DataQueryResult deprecated
+// Deprecated: use QueryMetricsV2 instead.
 func (hs *HTTPServer) QueryMetrics(c *models.ReqContext) response.Response {
 	reqDto := dtos.MetricRequest{}
 	if err := web.Bind(c.Req, &reqDto); err != nil {
@@ -188,11 +198,16 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext) response.Response {
 	return response.JSON(statusCode, &legacyResp)
 }
 
-func toJsonStreamingResponse(qdr *backend.QueryDataResponse) response.Response {
+func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) response.Response {
+	statusWhenError := http.StatusBadRequest
+	if hs.Features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
+		statusWhenError = http.StatusMultiStatus
+	}
+
 	statusCode := http.StatusOK
 	for _, res := range qdr.Responses {
 		if res.Error != nil {
-			statusCode = http.StatusBadRequest
+			statusCode = statusWhenError
 		}
 	}
 

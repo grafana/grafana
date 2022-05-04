@@ -1,10 +1,13 @@
-import React, { useState, useCallback } from 'react';
 import { Meta, Story } from '@storybook/react';
-import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
+import React, { useState, useCallback } from 'react';
+
 import { InlineField, Switch, InlineSwitch } from '@grafana/ui';
-import mdx from './Switch.mdx';
-import { InlineFieldRow } from '../Forms/InlineFieldRow';
+
+import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Field } from '../Forms/Field';
+import { InlineFieldRow } from '../Forms/InlineFieldRow';
+
+import mdx from './Switch.mdx';
 
 export default {
   title: 'Forms/Switch',

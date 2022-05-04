@@ -1,5 +1,6 @@
-import React, { useMemo, useCallback } from 'react';
 import { toLower, isEmpty, isString } from 'lodash';
+import React, { useMemo, useCallback } from 'react';
+
 import {
   SelectableValue,
   getTimeZoneInfo,
@@ -9,10 +10,12 @@ import {
   TimeZone,
   InternalTimeZones,
 } from '@grafana/data';
+
 import { Select } from '../Select/Select';
-import { CompactTimeZoneOption, WideTimeZoneOption, SelectableZone } from './TimeZonePicker/TimeZoneOption';
+
 import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
 import { formatUtcOffset } from './TimeZonePicker/TimeZoneOffset';
+import { CompactTimeZoneOption, WideTimeZoneOption, SelectableZone } from './TimeZonePicker/TimeZoneOption';
 
 export interface Props {
   onChange: (timeZone?: TimeZone) => void;
@@ -57,6 +60,7 @@ export const TimeZonePicker: React.FC<Props> = (props) => {
       value={selected}
       placeholder="Type to search (country, city, abbreviation)"
       autoFocus={autoFocus}
+      menuShouldPortal={false}
       openMenuOnFocus={true}
       width={width}
       filterOption={filterBySearchIndex}

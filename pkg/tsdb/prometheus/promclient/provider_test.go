@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/promclient"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -138,9 +139,11 @@ func setup(jsonData ...string) *testContext {
 	var jd map[string]interface{}
 	_ = json.Unmarshal(rawData, &jd)
 
+	cfg := &setting.Cfg{}
 	settings := backend.DataSourceInstanceSettings{URL: "test-url", JSONData: rawData}
+	features := featuremgmt.WithFeatures()
 	hp := &fakeHttpClientProvider{}
-	p := promclient.NewProvider(settings, jd, hp, nil)
+	p := promclient.NewProvider(settings, jd, hp, cfg, features, nil)
 
 	return &testContext{
 		httpProvider:       hp,

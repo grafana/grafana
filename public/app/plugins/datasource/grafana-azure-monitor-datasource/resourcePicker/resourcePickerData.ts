@@ -7,8 +7,10 @@ import {
   logsSupportedResourceTypesKusto,
   resourceTypeDisplayNames,
 } from '../azureMetadata';
-import { ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
-import { parseResourceURI } from '../components/ResourcePicker/utils';
+import SupportedNamespaces from '../azure_monitor/supported_namespaces';
+import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
+import { addResources, parseResourceURI } from '../components/ResourcePicker/utils';
+import { getAzureCloud } from '../credentials';
 import {
   AzureDataSourceJsonData,
   AzureGraphResponse,
@@ -22,15 +24,97 @@ import {
 import { routeNames } from '../utils/common';
 
 const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01';
-
 export default class ResourcePickerData extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   private resourcePath: string;
+  private supportedMetricNamespaces: string[];
+  resultLimit = 200;
 
   constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
     this.resourcePath = `${routeNames.resourceGraph}`;
+    const cloud = getAzureCloud(instanceSettings);
+    this.supportedMetricNamespaces = new SupportedNamespaces(cloud).get();
   }
 
+  async fetchInitialRows(currentSelection?: string): Promise<ResourceRowGroup> {
+    const subscriptions = await this.getSubscriptions();
+    if (!currentSelection) {
+      return subscriptions;
+    }
+
+    let resources = subscriptions;
+    const parsedURI = parseResourceURI(currentSelection);
+    if (parsedURI) {
+      const resourceGroupURI = `/subscriptions/${parsedURI.subscriptionID}/resourceGroups/${parsedURI.resourceGroup}`;
+
+      if (parsedURI.resourceGroup) {
+        const resourceGroups = await this.getResourceGroupsBySubscriptionId(parsedURI.subscriptionID);
+        resources = addResources(resources, `/subscriptions/${parsedURI.subscriptionID}`, resourceGroups);
+      }
+
+      if (parsedURI.resource) {
+        const resourcesForResourceGroup = await this.getResourcesForResourceGroup(resourceGroupURI);
+        resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
+      }
+    }
+    return resources;
+  }
+
+  async fetchAndAppendNestedRow(rows: ResourceRowGroup, parentRow: ResourceRow): Promise<ResourceRowGroup> {
+    const nestedRows =
+      parentRow.type === ResourceRowType.Subscription
+        ? await this.getResourceGroupsBySubscriptionId(parentRow.id)
+        : await this.getResourcesForResourceGroup(parentRow.id);
+
+    return addResources(rows, parentRow.uri, nestedRows);
+  }
+
+  search = async (searchPhrase: string, searchType: 'logs' | 'metrics'): Promise<ResourceRowGroup> => {
+    const searchQuery = {
+      metrics: `
+        resources
+        | where id contains "${searchPhrase}"
+        | where type in (${this.supportedMetricNamespaces.map((ns) => `"${ns.toLowerCase()}"`).join(',')})
+        | order by tolower(name) asc
+        | limit ${this.resultLimit}
+      `,
+      logs: `
+        resources
+        | union resourcecontainers 
+        | where id contains "${searchPhrase}"
+        | where type in (${logsSupportedResourceTypesKusto})
+        | order by tolower(name) asc
+        | limit ${this.resultLimit}
+      `,
+    };
+    const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(searchQuery[searchType]);
+    return response.map((item) => {
+      const parsedUri = parseResourceURI(item.id);
+      if (!parsedUri || !(parsedUri.resource || parsedUri.resourceGroup || parsedUri.subscriptionID)) {
+        throw new Error('unable to fetch resource details');
+      }
+      let id = parsedUri.subscriptionID;
+      let type = ResourceRowType.Subscription;
+      if (parsedUri.resource) {
+        id = parsedUri.resource;
+        type = ResourceRowType.Resource;
+      } else if (parsedUri.resourceGroup) {
+        id = parsedUri.resourceGroup;
+        type = ResourceRowType.ResourceGroup;
+      }
+      return {
+        name: item.name,
+        id,
+        uri: item.id,
+        resourceGroupName: item.resourceGroup,
+        type,
+        typeLabel: resourceTypeDisplayNames[item.type] || item.type,
+        location: locationDisplayNames[item.location] || item.location,
+      };
+    });
+  };
+
+  // private
   async getSubscriptions(): Promise<ResourceRowGroup> {
     const query = `
     resources
@@ -57,7 +141,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
       }
       const resourceResponse = await this.makeResourceGraphRequest<RawAzureSubscriptionItem[]>(query, 1, options);
       if (!resourceResponse.data.length) {
-        throw new Error('unable to fetch subscriptions');
+        throw new Error('No subscriptions were found');
       }
       resources = resources.concat(resourceResponse.data);
       $skipToken = resourceResponse.$skipToken;
@@ -100,9 +184,6 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         };
       }
       const resourceResponse = await this.makeResourceGraphRequest<RawAzureResourceGroupItem[]>(query, 1, options);
-      if (!resourceResponse.data.length) {
-        throw new Error('unable to fetch resource groups');
-      }
       resourceGroups = resourceGroups.concat(resourceResponse.data);
       $skipToken = resourceResponse.$skipToken;
       allFetched = !$skipToken;
@@ -150,7 +231,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
 
   // used to make the select resource button that launches the resource picker show a nicer file path to users
   async getResourceURIDisplayProperties(resourceURI: string): Promise<AzureResourceSummaryItem> {
-    const { subscriptionID, resourceGroup } = parseResourceURI(resourceURI) ?? {};
+    const { subscriptionID, resourceGroup, resource } = parseResourceURI(resourceURI) ?? {};
 
     if (!subscriptionID) {
       throw new Error('Invalid resource URI passed');
@@ -189,7 +270,15 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
       throw new Error('unable to fetch resource details');
     }
 
-    return response[0];
+    const { subscriptionName, resourceGroupName, resourceName } = response[0];
+    // if the name is undefined it could be because the id is undefined or because we are using a template variable.
+    // Either way we can use it as a fallback. We don't really want to interpolate these variables because we want
+    // to show the user when they are using template variables `$sub/$rg/$resource`
+    return {
+      subscriptionName: subscriptionName || subscriptionID,
+      resourceGroupName: resourceGroupName || resourceGroup,
+      resourceName: resourceName || resource,
+    };
   }
 
   async getResourceURIFromWorkspace(workspace: string) {

@@ -76,7 +76,7 @@ func (st *Manager) Warm(ctx context.Context) {
 		ruleCmd := ngModels.ListAlertRulesQuery{
 			OrgID: orgId,
 		}
-		if err := st.ruleStore.GetOrgAlertRules(ctx, &ruleCmd); err != nil {
+		if err := st.ruleStore.ListAlertRules(ctx, &ruleCmd); err != nil {
 			st.log.Error("unable to fetch previous state", "msg", err.Error())
 		}
 
@@ -171,6 +171,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		EvaluationTime:  result.EvaluatedAt,
 		EvaluationState: result.State,
 		Values:          NewEvaluationValues(result.Values),
+		Condition:       alertRule.Condition,
 	})
 	currentState.LastEvaluationString = result.EvaluationString
 	currentState.TrimResults(alertRule)

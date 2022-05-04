@@ -1,11 +1,13 @@
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
+
 import { NavModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
-import Page from '../Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
+
+import Page from '../Page/Page';
 
 interface ConnectedProps {
   navModel: NavModel;

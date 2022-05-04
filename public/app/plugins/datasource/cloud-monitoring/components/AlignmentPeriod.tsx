@@ -1,6 +1,7 @@
+import React, { useMemo } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import React, { useMemo } from 'react';
 
 import { ALIGNMENT_PERIODS } from '../constants';
 import { MetricQuery, SLOQuery } from '../types';
@@ -32,7 +33,6 @@ export function AlignmentPeriod<TQuery extends MetricQuery | SLOQuery>({
 
   return (
     <Select
-      menuShouldPortal
       width={selectWidth}
       onChange={({ value }) => onChange({ ...query, alignmentPeriod: value! })}
       value={[...options, ...templateVariableOptions].find((s) => s.value === query.alignmentPeriod)}

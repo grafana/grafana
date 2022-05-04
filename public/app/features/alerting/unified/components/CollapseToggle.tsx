@@ -1,5 +1,6 @@
-import React, { FC, HTMLAttributes } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FC, HTMLAttributes } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconSize, useStyles2, Button } from '@grafana/ui';
 
@@ -26,6 +27,7 @@ export const CollapseToggle: FC<Props> = ({
 
   return (
     <Button
+      type="button"
       fill="text"
       aria-expanded={!isCollapsed}
       aria-controls={idControlled}
@@ -33,7 +35,9 @@ export const CollapseToggle: FC<Props> = ({
       icon={isCollapsed ? 'angle-right' : 'angle-down'}
       onClick={() => onToggle(!isCollapsed)}
       {...restOfProps}
-    />
+    >
+      {text}
+    </Button>
   );
 };
 

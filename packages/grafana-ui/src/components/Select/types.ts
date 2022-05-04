@@ -1,6 +1,7 @@
-import { SelectableValue } from '@grafana/data';
 import React from 'react';
 import { ActionMeta as SelectActionMeta, GroupBase, OptionsOrGroups } from 'react-select';
+
+import { SelectableValue } from '@grafana/data';
 
 export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 export type ActionMeta = SelectActionMeta<{}>;
@@ -47,8 +48,7 @@ export interface SelectCommonProps<T> {
   menuPlacement?: 'auto' | 'bottom' | 'top';
   menuPosition?: 'fixed' | 'absolute';
   /**
-   * Setting to true will portal the menu to `document.body`.
-   * This property will soon default to true and portalling will be the default behavior.
+   * Setting to false will prevent the menu from portalling to the body.
    */
   menuShouldPortal?: boolean;
   /** The message to display when no options could be found */
@@ -61,6 +61,7 @@ export interface SelectCommonProps<T> {
   onInputChange?: (value: string, actionMeta: InputActionMeta) => void;
   onKeyDown?: (event: React.KeyboardEvent) => void;
   onOpenMenu?: () => void;
+  onFocus?: () => void;
   openMenuOnFocus?: boolean;
   options?: Array<SelectableValue<T>>;
   placeholder?: string;

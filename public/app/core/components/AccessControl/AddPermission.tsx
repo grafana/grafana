@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { UserPicker } from 'app/core/components/Select/UserPicker';
-import { TeamPicker } from 'app/core/components/Select/TeamPicker';
+
 import { Alert, Button, Form, HorizontalGroup, Input, Select } from '@grafana/ui';
-import { OrgRole } from 'app/types/acl';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { TeamPicker } from 'app/core/components/Select/TeamPicker';
+import { UserPicker } from 'app/core/components/Select/UserPicker';
+import { OrgRole } from 'app/types/acl';
+
 import { Assignments, PermissionTarget, SetPermission } from './types';
 
 export interface Props {
@@ -83,7 +85,6 @@ export const AddPermission = ({
               options={targetOptions}
               onChange={(v) => setPermissionTarget(v.value!)}
               disabled={targetOptions.length === 0}
-              menuShouldPortal
             />
 
             {target === PermissionTarget.User && canListUsers && (
@@ -98,7 +99,6 @@ export const AddPermission = ({
             {target === PermissionTarget.BuiltInRole && (
               <Select
                 aria-label={'Built-in role picker'}
-                menuShouldPortal
                 options={Object.values(OrgRole).map((r) => ({ value: r, label: r }))}
                 onChange={(r) => setBuiltinRole(r.value || '')}
                 width={40}
@@ -108,7 +108,6 @@ export const AddPermission = ({
             <Select
               aria-label="Permission Level"
               width={25}
-              menuShouldPortal
               value={permissions.find((p) => p === permission)}
               options={permissions.map((p) => ({ label: p, value: p }))}
               onChange={(v) => setPermission(v.value || '')}

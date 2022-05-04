@@ -1,16 +1,14 @@
-// Libraries
 import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
-// Utils
 import { formattedValueToString, DisplayValue, FieldConfig, FieldType } from '@grafana/data';
-import { calculateFontSize } from '../../utils/measureText';
-
-// Types
-import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
-import { getTextColorForBackground } from '../../utils';
 import { GraphDrawStyle, GraphFieldConfig } from '@grafana/schema';
+
+import { getTextColorForBackground } from '../../utils';
+import { calculateFontSize } from '../../utils/measureText';
 import { Sparkline } from '../Sparkline/Sparkline';
+
+import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
@@ -38,8 +36,8 @@ export abstract class BigValueLayout {
     this.justifyCenter = shouldJustifyCenter(props.justifyMode, this.textValues.title);
     this.valueToAlignTo = this.textValues.valueToAlignTo;
     this.titleToAlignTo = this.textValues.titleToAlignTo;
-    this.titleFontSize = 14;
-    this.valueFontSize = 14;
+    this.titleFontSize = 0;
+    this.valueFontSize = 0;
     this.chartHeight = 0;
     this.chartWidth = 0;
     this.maxTextWidth = width - this.panelPadding * 2;
@@ -335,8 +333,9 @@ export class StackedWithChartLayout extends BigValueLayout {
         LINE_HEIGHT,
         MAX_TITLE_SIZE
       );
+
+      titleHeight = this.titleFontSize * LINE_HEIGHT;
     }
-    titleHeight = this.titleFontSize * LINE_HEIGHT;
 
     if (this.valueToAlignTo.length) {
       this.valueFontSize = calculateFontSize(
@@ -399,8 +398,10 @@ export class StackedWithNoChartLayout extends BigValueLayout {
       );
     }
 
-    // make title fontsize it's a bit smaller than valueFontSize
-    this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
+    if (this.titleToAlignTo?.length) {
+      // make title fontsize it's a bit smaller than valueFontSize
+      this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
+    }
   }
 
   getValueAndTitleContainerStyles() {
@@ -422,7 +423,7 @@ export function buildLayout(props: Props): BigValueLayout {
   const useWideLayout = width / height > 2.5;
 
   if (useWideLayout) {
-    if (height > 50 && !!sparkline) {
+    if (height > 50 && !!sparkline && sparkline.y.values.length > 1) {
       return new WideWithChartLayout(props);
     } else {
       return new WideNoChartLayout(props);
@@ -430,7 +431,7 @@ export function buildLayout(props: Props): BigValueLayout {
   }
 
   // stacked layouts
-  if (height > 100 && !!sparkline) {
+  if (height > 100 && sparkline && sparkline.y.values.length > 1) {
     return new StackedWithChartLayout(props);
   } else {
     return new StackedWithNoChartLayout(props);

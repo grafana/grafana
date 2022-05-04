@@ -1,4 +1,5 @@
 import { CoreApp } from '@grafana/data';
+
 import { QueryEditorMode } from './shared/types';
 import { changeEditorMode, getQueryWithDefaults } from './state';
 
@@ -24,7 +25,7 @@ describe('getQueryWithDefaults(', () => {
     });
   });
 
-  it('Changing editor mode with blank query should change default', () => {
+  it('changing editor mode with blank query should change default', () => {
     changeEditorMode({ refId: 'A', expr: '' }, QueryEditorMode.Code, (query) => {
       expect(query.editorMode).toBe(QueryEditorMode.Code);
     });

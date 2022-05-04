@@ -6,19 +6,9 @@ import {
   DataSourceRef,
   ScopedVars,
 } from '@grafana/data';
-import {
-  GrafanaAlertStateDecision,
-  GrafanaRuleDefinition,
-  PromAlertingRuleState,
-  PromRuleType,
-  RulerAlertingRuleDTO,
-  RulerGrafanaRuleDTO,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
-} from 'app/types/unified-alerting-dto';
-import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace, CombinedRule } from 'app/types/unified-alerting';
+import { config, DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -29,6 +19,18 @@ import {
   Silence,
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction, FolderDTO } from 'app/types';
+import { Alert, AlertingRule, CombinedRule, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
+import {
+  GrafanaAlertStateDecision,
+  GrafanaRuleDefinition,
+  PromAlertingRuleState,
+  PromRuleType,
+  RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
+  RulerRuleGroupDTO,
+  RulerRulesConfigDTO,
+} from 'app/types/unified-alerting-dto';
 
 let nextDataSourceId = 1;
 
@@ -449,3 +451,28 @@ export const mockCombinedRule = (partial?: Partial<CombinedRule>): CombinedRule 
   rulerRule: mockRulerAlertingRule(),
   ...partial,
 });
+
+export const mockFolder = (partial?: Partial<FolderDTO>): FolderDTO => {
+  return {
+    id: 1,
+    uid: 'gdev-1',
+    title: 'Gdev',
+    version: 1,
+    url: '',
+    canAdmin: true,
+    canDelete: true,
+    canEdit: true,
+    canSave: true,
+    ...partial,
+  };
+};
+
+export const enableRBAC = () => {
+  jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
+};
+
+export const grantUserPermissions = (permissions: AccessControlAction[]) => {
+  jest
+    .spyOn(contextSrv, 'hasPermission')
+    .mockImplementation((action) => permissions.includes(action as AccessControlAction));
+};

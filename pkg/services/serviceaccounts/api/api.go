@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
@@ -53,7 +52,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 		return
 	}
 
-	auth := acmiddleware.Middleware(api.accesscontrol)
+	auth := accesscontrol.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
@@ -93,7 +92,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 	serviceAccount, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgId, cmd.Name)
 	switch {
 	case errors.Is(err, &database.ErrSAInvalidName{}):
-		return response.Error(http.StatusBadRequest, "Invalid service account name", err)
+		return response.Error(http.StatusBadRequest, "Failed due to %s", err)
 	case err != nil:
 		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
 	}
@@ -179,7 +178,7 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
-	cmd := &serviceaccounts.UpdateServiceAccountForm{}
+	var cmd serviceaccounts.UpdateServiceAccountForm
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
@@ -187,8 +186,11 @@ func (api *ServiceAccountsAPI) updateServiceAccount(c *models.ReqContext) respon
 	if cmd.Role != nil && !cmd.Role.IsValid() {
 		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
 	}
+	if cmd.Role != nil && !c.OrgRole.Includes(*cmd.Role) {
+		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
+	}
 
-	resp, err := api.store.UpdateServiceAccount(c.Req.Context(), c.OrgId, scopeID, cmd)
+	resp, err := api.store.UpdateServiceAccount(c.Req.Context(), c.OrgId, scopeID, &cmd)
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):

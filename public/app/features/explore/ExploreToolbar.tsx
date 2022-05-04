@@ -1,29 +1,42 @@
-import React, { PureComponent, RefObject } from 'react';
+import React, { lazy, PureComponent, RefObject, Suspense } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { ExploreId } from 'app/types/explore';
-import { PageToolbar, SetInterval, ToolbarButton, ToolbarButtonRow } from '@grafana/ui';
+
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
-import { DataSourcePicker } from '@grafana/runtime';
-import { StoreState } from 'app/types/store';
+import { config, DataSourcePicker } from '@grafana/runtime';
+import {
+  defaultIntervals,
+  PageToolbar,
+  RefreshPicker,
+  SetInterval,
+  ToolbarButton,
+  ToolbarButtonRow,
+} from '@grafana/ui';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
-import { changeDatasource } from './state/datasource';
-import { splitClose, splitOpen } from './state/main';
-import { syncTimes, changeRefreshInterval } from './state/time';
-import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
+import { ExploreId } from 'app/types/explore';
+import { StoreState } from 'app/types/store';
+
+import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
+import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
+import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
+
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
-import { RunButton } from './RunButton';
-import { LiveTailControls } from './useLiveTailControls';
+import { changeDatasource } from './state/datasource';
+import { splitClose, splitOpen } from './state/main';
 import { cancelQueries, runQueries } from './state/query';
 import { isSplit } from './state/selectors';
-import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
-import { AddToDashboard } from './AddToDashboard';
+import { syncTimes, changeRefreshInterval } from './state/time';
+import { LiveTailControls } from './useLiveTailControls';
+
+const AddToDashboard = lazy(() =>
+  import('./AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))
+);
 
 interface OwnProps {
   exploreId: ExploreId;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
-  topOfExploreViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRef: RefObject<HTMLDivElement>;
 }
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
@@ -52,6 +65,35 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
     syncTimes(exploreId);
   };
 
+  renderRefreshPicker = (showSmallTimePicker: boolean) => {
+    const { loading, refreshInterval, isLive } = this.props;
+
+    let refreshPickerText: string | undefined = loading ? 'Cancel' : 'Run query';
+    let refreshPickerTooltip = undefined;
+    let refreshPickerWidth = '108px';
+    if (showSmallTimePicker) {
+      refreshPickerTooltip = refreshPickerText;
+      refreshPickerText = undefined;
+      refreshPickerWidth = '35px';
+    }
+
+    return (
+      <RefreshPicker
+        onIntervalChanged={this.onChangeRefreshInterval}
+        value={refreshInterval}
+        isLoading={loading}
+        text={refreshPickerText}
+        tooltip={refreshPickerTooltip}
+        intervals={getTimeSrv().getValidIntervals(defaultIntervals)}
+        isLive={isLive}
+        onRefresh={() => this.onRunQuery(loading)}
+        noIntervalPicker={isLive}
+        primary={true}
+        width={refreshPickerWidth}
+      />
+    );
+  };
+
   render() {
     const {
       datasourceMissing,
@@ -72,15 +114,16 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       containerWidth,
       onChangeTimeZone,
       onChangeFiscalYearStartMonth,
-      topOfExploreViewRef,
+      topOfViewRef,
     } = this.props;
 
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const showSmallTimePicker = splitted || containerWidth < 1210;
 
     return (
-      <div ref={topOfExploreViewRef}>
+      <div ref={topOfViewRef}>
         <PageToolbar
+          aria-label="Explore toolbar"
           title={exploreId === ExploreId.left ? 'Explore' : undefined}
           pageIcon={exploreId === ExploreId.left ? 'compass' : undefined}
           leftItems={[
@@ -115,6 +158,12 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
               </ToolbarButton>
             )}
 
+            {config.featureToggles.explore2Dashboard && (
+              <Suspense fallback={null}>
+                <AddToDashboard exploreId={exploreId} />
+              </Suspense>
+            )}
+
             {!isLive && (
               <ExploreTimeControls
                 exploreId={exploreId}
@@ -131,17 +180,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
               />
             )}
 
-            <AddToDashboard exploreId={exploreId} />
-
-            <RunButton
-              refreshInterval={refreshInterval}
-              onChangeRefreshInterval={this.onChangeRefreshInterval}
-              isSmall={splitted || showSmallTimePicker}
-              isLive={isLive}
-              loading={loading || (isLive && !isPaused)}
-              onRun={this.onRunQuery}
-              showDropdown={!isLive}
-            />
+            {this.renderRefreshPicker(showSmallTimePicker)}
 
             {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
 

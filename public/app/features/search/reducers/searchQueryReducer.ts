@@ -1,4 +1,5 @@
 import { DashboardQuery, SearchQueryParams, SearchAction, SearchLayout } from '../types';
+
 import {
   ADD_TAG,
   CLEAR_FILTERS,
@@ -7,6 +8,7 @@ import {
   REMOVE_STARRED,
   REMOVE_TAG,
   SET_TAGS,
+  DATASOURCE_CHANGE,
   TOGGLE_SORT,
   TOGGLE_STARRED,
 } from './actionTypes';
@@ -43,6 +45,8 @@ export const queryReducer = (state: DashboardQuery, action: SearchAction) => {
       const tag = action.payload;
       return tag && !state.tag.includes(tag) ? { ...state, tag: [...state.tag, tag] } : state;
     }
+    case DATASOURCE_CHANGE:
+      return { ...state, datasource: action.payload };
     case TOGGLE_STARRED:
       return { ...state, starred: action.payload };
     case REMOVE_STARRED:

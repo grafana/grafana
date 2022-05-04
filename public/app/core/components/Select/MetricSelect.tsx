@@ -1,8 +1,8 @@
-import React, { useMemo, useCallback, FC } from 'react';
 import { flatten } from 'lodash';
+import React, { useMemo, useCallback, FC } from 'react';
 
-import { LegacyForms } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
+import { LegacyForms } from '@grafana/ui';
 import { Variable } from 'app/types/templates';
 const { Select } = LegacyForms;
 
@@ -24,7 +24,6 @@ export const MetricSelect: FC<Props> = (props) => {
 
   return (
     <Select
-      menuShouldPortal
       className={className}
       isMulti={false}
       isClearable={false}

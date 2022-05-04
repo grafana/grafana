@@ -1,8 +1,10 @@
-import { MapLayerRegistryItem, Registry, MapLayerOptions, GrafanaTheme2 } from '@grafana/data';
 import Map from 'ol/Map';
-import { carto } from './basemaps/carto';
+
+import { MapLayerRegistryItem, Registry, MapLayerOptions, GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
+
 import { basemapLayers } from './basemaps';
+import { carto } from './basemaps/carto';
 import { dataLayers } from './data';
 
 export const DEFAULT_BASEMAP_CONFIG: MapLayerOptions = {
@@ -22,7 +24,7 @@ export const defaultBaseLayer: MapLayerRegistryItem = {
     if (serverLayerType) {
       const layer = geomapLayerRegistry.getIfExists(serverLayerType);
       if (!layer) {
-        throw new Error('Invalid basemap configuraiton on server');
+        throw new Error('Invalid basemap configuration on server');
       }
       return layer.create(map, config.geomapDefaultBaseLayerConfig!, theme);
     }

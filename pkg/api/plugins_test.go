@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -218,8 +217,6 @@ func callGetPluginAsset(sc *scenarioContext) {
 func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string, pluginStore plugins.Store,
 	logger log.Logger, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
 		hs := HTTPServer{
 			Cfg:         setting.NewCfg(),
 			pluginStore: pluginStore,
@@ -252,9 +249,11 @@ type fakePluginClient struct {
 	plugins.Client
 
 	req *backend.CallResourceRequest
+
+	backend.QueryDataHandlerFunc
 }
 
-func (c *fakePluginClient) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (c *fakePluginClient) CallResource(_ context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	c.req = req
 	bytes, err := json.Marshal(map[string]interface{}{
 		"message": "hello",
@@ -268,4 +267,12 @@ func (c *fakePluginClient) CallResource(ctx context.Context, req *backend.CallRe
 		Headers: make(map[string][]string),
 		Body:    bytes,
 	})
+}
+
+func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if c.QueryDataHandlerFunc != nil {
+		return c.QueryDataHandlerFunc.QueryData(ctx, req)
+	}
+
+	return backend.NewQueryDataResponse(), nil
 }

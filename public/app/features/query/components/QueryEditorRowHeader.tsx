@@ -1,9 +1,10 @@
-import React, { ReactNode, useState } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { ReactNode, useState } from 'react';
+
 import { DataQuery, DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Icon, Input, FieldValidationMessage, useStyles } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props<TQuery extends DataQuery = DataQuery> {
   query: TQuery;

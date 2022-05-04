@@ -1,6 +1,6 @@
 +++
 title = "Add or remove a user from an organization"
-aliases = ["docs/sources/administration/manage-users-and-permissions/manage-server-users/add-user-to-org.md"]
+aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/add-user-to-org/"]
 weight = 30
 +++
 
@@ -12,7 +12,7 @@ You are required to specify an Admin role for each organization. The first user 
 
 ## Before you begin
 
-- Add an organization
+- [Create an organization]({{< relref "../../manage-organizations/_index.md">}})
 - [Add a user]({{< relref "./add-user.md">}}) to Grafana
 - Ensure you have Grafana server administrator privileges
 

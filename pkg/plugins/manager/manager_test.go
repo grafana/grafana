@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -281,7 +282,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		err := pm.loadPlugins(context.Background(), plugins.Core, "test/path")
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, pc.startCount)
+		assert.Equal(t, 0, pc.startCount)
 		assert.Equal(t, 0, pc.stopCount)
 		assert.False(t, pc.exited)
 		assert.False(t, pc.decommissioned)
@@ -336,6 +337,31 @@ func TestPluginManager_Installer(t *testing.T) {
 			err := pm.Remove(context.Background(), p.ID)
 			require.Equal(t, plugins.ErrUninstallCorePlugin, err)
 		})
+	})
+}
+
+func TestPluginManager_registeredPlugins(t *testing.T) {
+	t.Run("Decommissioned plugins are included in registeredPlugins", func(t *testing.T) {
+		pm := New(&plugins.Cfg{}, []PluginSource{}, &fakeLoader{}, &fakeFsManager{})
+
+		decommissionedPlugin, _ := createPlugin(t, testPluginID, plugins.External, true, func(p *plugins.Plugin) {
+			p.Backend = true
+
+			err := p.Decommission()
+			require.NoError(t, err)
+		})
+
+		require.True(t, decommissionedPlugin.IsDecommissioned())
+
+		pm.store = map[string]*plugins.Plugin{
+			testPluginID: decommissionedPlugin,
+			"test-app":   {},
+		}
+
+		rps := pm.registeredPlugins()
+		require.Equal(t, 2, len(rps))
+		require.NotNil(t, rps[testPluginID])
+		require.NotNil(t, rps["test-app"])
 	})
 }
 
@@ -474,6 +500,20 @@ func TestPluginManager_lifecycle_managed(t *testing.T) {
 			})
 		})
 	})
+
+	newScenario(t, true, func(t *testing.T, ctx *managerScenarioCtx) {
+		t.Run("Backend core plugin is registered but not started", func(t *testing.T) {
+			ctx.plugin.Class = plugins.Core
+			err := ctx.manager.registerAndStart(context.Background(), ctx.plugin)
+			require.NoError(t, err)
+			require.NotNil(t, ctx.plugin)
+			require.Equal(t, testPluginID, ctx.plugin.ID)
+			require.Equal(t, 0, ctx.pluginClient.startCount)
+			testPlugin, exists := ctx.manager.Plugin(context.Background(), testPluginID)
+			assert.True(t, exists)
+			require.NotNil(t, testPlugin)
+		})
+	})
 }
 
 func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
@@ -581,9 +621,11 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	cfg.AWSAllowedAuthProviders = []string{"keys", "credentials"}
 	cfg.AWSAssumeRoleEnabled = true
 
-	cfg.Azure.ManagedIdentityEnabled = true
-	cfg.Azure.Cloud = "AzureCloud"
-	cfg.Azure.ManagedIdentityClientId = "client-id"
+	cfg.Azure = &azsettings.AzureSettings{
+		ManagedIdentityEnabled:  true,
+		Cloud:                   "AzureCloud",
+		ManagedIdentityClientId: "client-id",
+	}
 
 	loader := &fakeLoader{}
 	manager := New(cfg, nil, loader, &fakeFsManager{})

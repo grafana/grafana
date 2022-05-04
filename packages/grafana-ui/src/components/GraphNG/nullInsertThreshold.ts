@@ -15,7 +15,7 @@ export function applyNullInsertThreshold(
   refFieldPseudoMax: number | null = null,
   insertMode: InsertMode = INSERT_MODES.threshold
 ): DataFrame {
-  if (frame.length < 2) {
+  if (frame.length === 0) {
     return frame;
   }
 

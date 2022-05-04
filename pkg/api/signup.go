@@ -18,7 +18,7 @@ import (
 
 // GET /api/user/signup/options
 func GetSignUpOptions(c *models.ReqContext) response.Response {
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"verifyEmailEnabled": setting.VerifyEmailEnabled,
 		"autoAssignOrg":      setting.AutoAssignOrg,
 	})
@@ -64,7 +64,7 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 
 	metrics.MApiUserSignUpStarted.Inc()
 
-	return response.JSON(200, util.DynMap{"status": "SignUpCreated"})
+	return response.JSON(http.StatusOK, util.DynMap{"status": "SignUpCreated"})
 }
 
 func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
@@ -135,7 +135,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 
 	metrics.MApiUserSignUpCompleted.Inc()
 
-	return response.JSON(200, apiResponse)
+	return response.JSON(http.StatusOK, apiResponse)
 }
 
 func (hs *HTTPServer) verifyUserSignUpEmail(ctx context.Context, email string, code string) (bool, response.Response) {

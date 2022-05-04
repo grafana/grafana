@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 )
 
 type Options struct {
@@ -13,6 +14,8 @@ type Options struct {
 }
 
 type AccessControl interface {
+	registry.ProvidesUsageStats
+
 	// Evaluate evaluates access to the given resources.
 	Evaluate(ctx context.Context, user *models.SignedInUser, evaluator Evaluator) (bool, error)
 
@@ -29,9 +32,9 @@ type AccessControl interface {
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(...RoleRegistration) error
 
-	// RegisterAttributeScopeResolver allows the caller to register a scope resolver for a
+	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
-	RegisterAttributeScopeResolver(scopePrefix string, resolver AttributeScopeResolveFunc)
+	RegisterScopeAttributeResolver(scopePrefix string, resolver ScopeAttributeResolver)
 }
 
 type PermissionsProvider interface {

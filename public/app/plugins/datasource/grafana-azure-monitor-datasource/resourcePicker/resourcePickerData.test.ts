@@ -4,8 +4,9 @@ import {
   createMockARGSubscriptionResponse,
 } from '../__mocks__/argResourcePickerResponse';
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
-import ResourcePickerData from './resourcePickerData';
 import { AzureGraphResponse } from '../types';
+
+import ResourcePickerData from './resourcePickerData';
 
 const createResourcePickerData = (responses: AzureGraphResponse[]) => {
   const instanceSettings = createMockInstanceSetttings();
@@ -92,7 +93,7 @@ describe('AzureMonitor resourcePickerData', () => {
         await resourcePickerData.getSubscriptions();
         throw Error('expected getSubscriptions to fail but it succeeded');
       } catch (err) {
-        expect(err.message).toEqual('unable to fetch subscriptions');
+        expect(err.message).toEqual('No subscriptions were found');
       }
     });
   });
@@ -163,17 +164,6 @@ describe('AzureMonitor resourcePickerData', () => {
       });
     });
 
-    it('throws an error if it does not receive data', async () => {
-      const mockResponse = { data: [] };
-      const { resourcePickerData } = createResourcePickerData([mockResponse]);
-      try {
-        await resourcePickerData.getResourceGroupsBySubscriptionId('123');
-        throw Error('expected getSubscriptions to fail but it succeeded');
-      } catch (err) {
-        expect(err.message).toEqual('unable to fetch resource groups');
-      }
-    });
-
     it('throws an error if it recieves data with a malformed uri', async () => {
       const mockResponse = {
         data: [
@@ -241,6 +231,91 @@ describe('AzureMonitor resourcePickerData', () => {
       try {
         await resourcePickerData.getResourcesForResourceGroup('dev');
         throw Error('expected getResourcesForResourceGroup to fail but it succeeded');
+      } catch (err) {
+        expect(err.message).toEqual('unable to fetch resource details');
+      }
+    });
+  });
+
+  describe('search', () => {
+    it('makes requests for metrics searches', async () => {
+      const mockResponse = {
+        data: [
+          {
+            id: '/subscriptions/subId/resourceGroups/rgName/providers/Microsoft.Compute/virtualMachines/vmname',
+            name: 'vmName',
+            type: 'microsoft.compute/virtualmachines',
+            resourceGroup: 'rgName',
+            subscriptionId: 'subId',
+            location: 'northeurope',
+          },
+        ],
+      };
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const formattedResults = await resourcePickerData.search('vmname', 'metrics');
+      expect(postResource).toBeCalledTimes(1);
+      const firstCall = postResource.mock.calls[0];
+      const [_, postBody] = firstCall;
+      expect(postBody.query).not.toContain('union resourcecontainers');
+      expect(postBody.query).toContain('where id contains "vmname"');
+
+      expect(formattedResults[0]).toEqual({
+        id: 'vmname',
+        name: 'vmName',
+        type: 'Resource',
+        location: 'North Europe',
+        resourceGroupName: 'rgName',
+        typeLabel: 'Virtual machine',
+        uri: '/subscriptions/subId/resourceGroups/rgName/providers/Microsoft.Compute/virtualMachines/vmname',
+      });
+    });
+    it('makes requests for logs searches', async () => {
+      const mockResponse = {
+        data: [
+          {
+            id: '/subscriptions/subId/resourceGroups/rgName',
+            name: 'rgName',
+            type: 'microsoft.resources/subscriptions/resourcegroups',
+            resourceGroup: 'rgName',
+            subscriptionId: 'subId',
+            location: 'northeurope',
+          },
+        ],
+      };
+      const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
+      const formattedResults = await resourcePickerData.search('rgName', 'logs');
+      expect(postResource).toBeCalledTimes(1);
+      const firstCall = postResource.mock.calls[0];
+      const [_, postBody] = firstCall;
+      expect(postBody.query).toContain('union resourcecontainers');
+
+      expect(formattedResults[0]).toEqual({
+        id: 'rgName',
+        name: 'rgName',
+        type: 'ResourceGroup',
+        location: 'North Europe',
+        resourceGroupName: 'rgName',
+        typeLabel: 'Resource Group',
+        uri: '/subscriptions/subId/resourceGroups/rgName',
+      });
+    });
+    it('throws an error if it receives data it can not parse', async () => {
+      const mockResponse = {
+        data: [
+          {
+            id: '/a-differently-formatted/uri/than/the/type/we/planned/to/parse',
+            name: 'web-server',
+            type: 'Microsoft.Compute/virtualMachines',
+            resourceGroup: 'dev',
+            subscriptionId: 'def-456',
+            location: 'northeurope',
+          },
+        ],
+      };
+      const { resourcePickerData } = createResourcePickerData([mockResponse]);
+      try {
+        await resourcePickerData.search('dev', 'logs');
+        throw Error('expected search test to fail but it succeeded');
       } catch (err) {
         expect(err.message).toEqual('unable to fetch resource details');
       }

@@ -12,7 +12,7 @@ Grafana includes built-in support for Prometheus Alertmanager. It is presently i
 
 ## Alertmanager implementations
 
-[Prometheus](https://prometheus.io/) and [Cortex](https://cortexmetrics.io/) (default) implementations of Alertmanager are supported. You can specify implementation in the data source settings page. In case of Prometheus contact points and notification policies are read-only in the Grafana alerting UI, as it does not support updating configuration via HTTP API.
+[Prometheus](https://prometheus.io/) and [Grafana Mimir](https://grafana.com/docs/mimir/latest/) (default) implementations of Alertmanager are supported. You can specify implementation in the data source settings page. In case of Prometheus contact points and notification policies are read-only in the Grafana alerting UI, as it does not support updating configuration via HTTP API.
 
 ## Provision the Alertmanager data source
 
@@ -29,7 +29,6 @@ datasources:
     url: http://localhost:9093
     access: proxy
     jsonData:
-      implementation: 'prometheus' # alternatively 'cortex'
     # optionally
     basicAuth: true
     basicAuthUser: my_user

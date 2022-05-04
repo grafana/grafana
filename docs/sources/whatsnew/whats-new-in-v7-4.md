@@ -54,7 +54,7 @@ The following transformations were added in Grafana 7.4.
 
 The _Sort by_ transformation allows you to sort data before sending it to the visualization.
 
-For more information, refer to [Sort by]({{< relref "../panels/reference-transformation-functions.md#sort-by" >}}).
+For more information, refer to [Sort by]({{< relref "../panels/transform-data/transformation-functions.md#sort-by" >}}).
 
 #### Filter data by value transform
 
@@ -62,7 +62,7 @@ The new _Filter data by value_ transformation allows you to filter your data dir
 
 This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
 
-For more information, refer to [Filter data by value]({{< relref "../panels/reference-transformation-functions.md#filter-data-by-value" >}}).
+For more information, refer to [Filter data by value]({{< relref "../panels/transform-data/transformation-functions.md#filter-data-by-value" >}}).
 
 ### New override option
 
@@ -107,7 +107,7 @@ You can now provide detailed information to alert notification recipients by inj
 
 {{< figure src="/static/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
 
-For more information, refer to the [alert notification docs]({{< relref "../alerting/old-alerting/notifications.md#notification-templating" >}}).
+For more information, refer to the [alert notification docs](https://grafana.com/docs/grafana/latest/alerting/old-alerting/add-notification-template/).
 
 ### Content security policy support
 
@@ -202,7 +202,7 @@ For more information, refer to [Export logs of usage insights]({{< relref "../en
 
 ### New audit log events
 
-New log out events are logged based on when a token expires or is revoked, as well as [SAML Single Logout]({{< relref "../enterprise/saml.md#single-logout" >}}). A `tokenId` field was added to all audit logs to help understand which session was logged out of.
+New log out events are logged based on when a token expires or is revoked, as well as [SAML Single Logout]({{< relref "../enterprise/saml/configure-saml.md#single-logout" >}}). A `tokenId` field was added to all audit logs to help understand which session was logged out of.
 
 Also, a counter for audit log writing actions with status (success / failure) and logger (loki / file / console) labels was added.
 

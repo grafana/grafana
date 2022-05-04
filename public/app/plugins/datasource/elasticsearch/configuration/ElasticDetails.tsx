@@ -1,8 +1,11 @@
 import React from 'react';
-import { FieldSet, InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
-import { ElasticsearchOptions, Interval } from '../types';
-import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { gte, lt, valid } from 'semver';
+
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { FieldSet, InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
+
+import { ElasticsearchOptions, Interval } from '../types';
+
 import { isTruthy } from './utils';
 
 const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
@@ -65,7 +68,6 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             options={indexPatternTypes}
             onChange={intervalHandler(value, onChange)}
             width={24}
-            menuShouldPortal
           />
         </InlineField>
 
@@ -100,7 +102,6 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             }}
             value={currentVersion || customOption}
             width={24}
-            menuShouldPortal
           />
         </InlineField>
 

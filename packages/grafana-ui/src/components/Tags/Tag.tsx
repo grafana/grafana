@@ -1,9 +1,11 @@
-import React, { forwardRef, HTMLAttributes } from 'react';
 import { cx, css } from '@emotion/css';
+import React, { forwardRef, HTMLAttributes } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
+
 import { useTheme } from '../../themes';
-import { getTagColor, getTagColorsFromName } from '../../utils';
 import { IconName } from '../../types/icon';
+import { getTagColor, getTagColorsFromName } from '../../utils';
 import { Icon } from '../Icon/Icon';
 
 /**

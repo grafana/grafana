@@ -3,15 +3,19 @@ package azuremonitor
 import (
 	"testing"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCredentials_getAuthType(t *testing.T) {
-	cfg := &setting.Cfg{}
+	cfg := &setting.Cfg{
+		Azure: &azsettings.AzureSettings{},
+	}
 
 	t.Run("when managed identities enabled", func(t *testing.T) {
 		cfg.Azure.ManagedIdentityEnabled = true
@@ -76,8 +80,8 @@ func TestCredentials_getAuthType(t *testing.T) {
 
 func TestCredentials_getAzureCloud(t *testing.T) {
 	cfg := &setting.Cfg{
-		Azure: setting.AzureSettings{
-			Cloud: setting.AzureChina,
+		Azure: &azsettings.AzureSettings{
+			Cloud: azsettings.AzureChina,
 		},
 	}
 
@@ -91,12 +95,12 @@ func TestCredentials_getAzureCloud(t *testing.T) {
 			cloud, err := getAzureCloud(cfg, jsonData)
 			require.NoError(t, err)
 
-			assert.Equal(t, setting.AzureChina, cloud)
+			assert.Equal(t, azsettings.AzureChina, cloud)
 		})
 
 		t.Run("should be public if not set in server configuration", func(t *testing.T) {
 			cfg := &setting.Cfg{
-				Azure: setting.AzureSettings{
+				Azure: &azsettings.AzureSettings{
 					Cloud: "",
 				},
 			}
@@ -104,7 +108,7 @@ func TestCredentials_getAzureCloud(t *testing.T) {
 			cloud, err := getAzureCloud(cfg, jsonData)
 			require.NoError(t, err)
 
-			assert.Equal(t, setting.AzurePublic, cloud)
+			assert.Equal(t, azsettings.AzurePublic, cloud)
 		})
 	})
 
@@ -118,7 +122,7 @@ func TestCredentials_getAzureCloud(t *testing.T) {
 			cloud, err := getAzureCloud(cfg, jsonData)
 			require.NoError(t, err)
 
-			assert.Equal(t, setting.AzureGermany, cloud)
+			assert.Equal(t, azsettings.AzureGermany, cloud)
 		})
 
 		t.Run("should be from server configuration if not set in datasource", func(t *testing.T) {
@@ -130,15 +134,15 @@ func TestCredentials_getAzureCloud(t *testing.T) {
 			cloud, err := getAzureCloud(cfg, jsonData)
 			require.NoError(t, err)
 
-			assert.Equal(t, setting.AzureChina, cloud)
+			assert.Equal(t, azsettings.AzureChina, cloud)
 		})
 	})
 }
 
 func TestCredentials_getAzureCredentials(t *testing.T) {
 	cfg := &setting.Cfg{
-		Azure: setting.AzureSettings{
-			Cloud: setting.AzureChina,
+		Azure: &azsettings.AzureSettings{
+			Cloud: azsettings.AzureChina,
 		},
 	}
 
@@ -175,8 +179,8 @@ func TestCredentials_getAzureCredentials(t *testing.T) {
 
 		t.Run("should return client secret credentials", func(t *testing.T) {
 			cfg := &setting.Cfg{
-				Azure: setting.AzureSettings{
-					Cloud: setting.AzureChina,
+				Azure: &azsettings.AzureSettings{
+					Cloud: azsettings.AzureChina,
 				},
 			}
 
@@ -185,7 +189,7 @@ func TestCredentials_getAzureCredentials(t *testing.T) {
 			require.IsType(t, &azcredentials.AzureClientSecretCredentials{}, credentials)
 			clientSecretCredentials := credentials.(*azcredentials.AzureClientSecretCredentials)
 
-			assert.Equal(t, setting.AzureGermany, clientSecretCredentials.AzureCloud)
+			assert.Equal(t, azsettings.AzureGermany, clientSecretCredentials.AzureCloud)
 			assert.Equal(t, "9b9d90ee-a5cc-49c2-b97e-0d1b0f086b5c", clientSecretCredentials.TenantId)
 			assert.Equal(t, "849ccbb0-92eb-4226-b228-ef391abd8fe6", clientSecretCredentials.ClientId)
 			assert.Equal(t, "59e3498f-eb12-4943-b8f0-a5aa42640058", clientSecretCredentials.ClientSecret)
