@@ -249,9 +249,11 @@ type fakePluginClient struct {
 	plugins.Client
 
 	req *backend.CallResourceRequest
+
+	backend.QueryDataHandlerFunc
 }
 
-func (c *fakePluginClient) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (c *fakePluginClient) CallResource(_ context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	c.req = req
 	bytes, err := json.Marshal(map[string]interface{}{
 		"message": "hello",
@@ -265,4 +267,12 @@ func (c *fakePluginClient) CallResource(ctx context.Context, req *backend.CallRe
 		Headers: make(map[string][]string),
 		Body:    bytes,
 	})
+}
+
+func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if c.QueryDataHandlerFunc != nil {
+		return c.QueryDataHandlerFunc.QueryData(ctx, req)
+	}
+
+	return backend.NewQueryDataResponse(), nil
 }

@@ -156,6 +156,7 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Get("/orgs", routing.Wrap(hs.GetSignedInUserOrgList))
 			userRoute.Get("/teams", routing.Wrap(hs.GetSignedInUserTeamList))
 
+			userRoute.Get("/stars", routing.Wrap(hs.GetStars))
 			userRoute.Post("/stars/dashboard/:id", routing.Wrap(hs.StarDashboard))
 			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(hs.UnstarDashboard))
 
