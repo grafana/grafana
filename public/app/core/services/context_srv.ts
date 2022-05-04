@@ -109,7 +109,7 @@ export class ContextSrv {
   }
 
   accessControlEnabled(): boolean {
-    return Boolean(config.featureToggles['accesscontrol']);
+    return config.rbac.enabled;
   }
 
   accessControlBuiltinRefactorEnabled(): boolean {
@@ -117,7 +117,7 @@ export class ContextSrv {
   }
 
   licensedAccessControlEnabled(): boolean {
-    return featureEnabled('accesscontrol') && Boolean(config.featureToggles['accesscontrol']);
+    return featureEnabled('rbac') && config.rbac.enabled;
   }
 
   // Checks whether user has required permission
@@ -174,7 +174,7 @@ export class ContextSrv {
   }
 
   hasAccessInMetadata(action: string, object: WithAccessControlMetadata, fallBack: boolean) {
-    if (!config.featureToggles['accesscontrol']) {
+    if (!config.rbac.enabled) {
       return fallBack;
     }
     return this.hasPermissionInMetadata(action, object);
