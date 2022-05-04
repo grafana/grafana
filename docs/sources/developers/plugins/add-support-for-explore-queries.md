@@ -15,7 +15,7 @@ Your data source supports Explore by default and uses the existing query editor 
 
 ## Add an Explore-specific query editor
 
-If you want to extend Explore functionality for your data source, you can define an Explore-specific query editor.
+To extend Explore functionality for your data source, you can define an Explore-specific query editor.
 
 1. Create a file `ExploreQueryEditor.tsx` in the `src` directory of your plugin, with the following content:
 
