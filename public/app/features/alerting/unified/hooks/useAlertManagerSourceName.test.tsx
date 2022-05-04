@@ -12,19 +12,16 @@ import { useAlertManagerSourceName } from './useAlertManagerSourceName';
 
 const grafanaAm: AlertManagerDataSource = {
   name: GRAFANA_RULES_SOURCE_NAME,
-  displayName: '',
   imgUrl: '',
 };
 
 const externalAmProm: AlertManagerDataSource = {
   name: 'PrometheusAm',
-  displayName: '',
   imgUrl: '',
 };
 
 const externalAmMimir: AlertManagerDataSource = {
   name: 'MimirAm',
-  displayName: '',
   imgUrl: '',
 };
 
