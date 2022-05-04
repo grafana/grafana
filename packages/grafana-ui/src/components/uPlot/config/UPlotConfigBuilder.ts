@@ -52,7 +52,6 @@ export class UPlotConfigBuilder {
   private sync = false;
   private mode: uPlot.Mode = 1;
   private frames: DataFrame[] | undefined = undefined;
-  private allFrames: DataFrame[] | undefined = undefined;
   // to prevent more than one threshold per scale
   private thresholds: Record<string, UPlotThresholdOptions> = {};
   // Custom handler for closest datapoint and series lookup
@@ -63,14 +62,6 @@ export class UPlotConfigBuilder {
 
   constructor(timeZone: TimeZone = DefaultTimeZone) {
     this.tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
-  }
-
-  setAllFrames(allFrames: DataFrame[]) {
-    this.allFrames = allFrames;
-  }
-
-  getAllFrames() {
-    return this.allFrames;
   }
 
   // Exposed to let the container know the primary scale keys

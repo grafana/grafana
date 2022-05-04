@@ -29,10 +29,7 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   scaleKey: string;
   pxAlign?: boolean;
   gradientMode?: GraphGradientMode;
-  dynamicSeriesColor?: (
-    dataFrameFieldIndex: DataFrameFieldIndex | undefined,
-    theme: GrafanaTheme2
-  ) => string | undefined;
+  dynamicSeriesColor?: (seriesIdx: number) => string | undefined;
 
   facets?: uPlot.Series.Facet[];
 
@@ -165,11 +162,10 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       softMin,
       softMax,
       dynamicSeriesColor,
-      dataFrameFieldIndex,
     } = this.props;
 
-    if (dynamicSeriesColor) {
-      return () => dynamicSeriesColor(dataFrameFieldIndex, theme) || lineColor || FALLBACK_COLOR;
+    if (gradientMode === GraphGradientMode.None && dynamicSeriesColor) {
+      return (plot: uPlot, seriesIdx: number) => dynamicSeriesColor(seriesIdx) ?? lineColor ?? FALLBACK_COLOR;
     }
 
     if (gradientMode === GraphGradientMode.Scheme && colorMode?.id !== FieldColorModeId.Fixed) {
@@ -192,6 +188,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       hardMax,
       softMin,
       softMax,
+      dynamicSeriesColor,
     } = this.props;
 
     if (fillColor) {
@@ -200,6 +197,19 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     const mode = gradientMode ?? GraphGradientMode.None;
     const opacityPercent = (fillOpacity ?? 0) / 100;
+
+    if (mode === GraphGradientMode.None && dynamicSeriesColor) {
+      return (u: uPlot, seriesIdx: number) => {
+        // @ts-ignore
+        let lineColor = u.series[seriesIdx]._stroke; // cache
+
+        if (opacityPercent > 0) {
+          return colorManipulator.alpha(lineColor ?? '', opacityPercent);
+        }
+
+        return lineColor;
+      };
+    }
 
     switch (mode) {
       case GraphGradientMode.Opacity:

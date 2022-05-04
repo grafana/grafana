@@ -15,8 +15,6 @@ import {
   getFieldDisplayName,
   getDisplayProcessor,
   FieldColorModeId,
-  GrafanaTheme2,
-  DataFrameFieldIndex,
 } from '@grafana/data';
 import {
   AxisPlacement,
@@ -57,9 +55,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
-  builder.setAllFrames(allFrames);
+  let alignedFrame: DataFrame;
 
-  builder.setPrepData((frames) => preparePlotData2(frames[0], builder.getStackingGroups()));
+  builder.setPrepData((frames) => {
+    // cache alignedFrame
+    alignedFrame = frames[0];
+
+    return preparePlotData2(frames[0], builder.getStackingGroups());
+  });
 
   // X is the first field in the aligned frame
   const xField = frame.fields[0];
@@ -282,21 +285,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         }
       }
     }
-    let dynamicSeriesColor:
-      | ((dataFrameFieldIndex: DataFrameFieldIndex | undefined, theme: GrafanaTheme2) => string | undefined)
-      | undefined = undefined;
+
+    let dynamicSeriesColor: ((seriesIdx: number) => string | undefined) | undefined = undefined;
 
     if (colorMode.id === FieldColorModeId.Thresholds) {
-      dynamicSeriesColor = (dataFrameFieldIndex, theme) => {
-        if (dataFrameFieldIndex === undefined) {
-          return undefined;
-        }
-        const field = builder.getAllFrames()?.[dataFrameFieldIndex.frameIndex]?.fields[dataFrameFieldIndex.fieldIndex];
-        if (!field) {
-          return undefined;
-        }
-        return getFieldSeriesColor(field, theme).color;
-      };
+      dynamicSeriesColor = (seriesIdx) => getFieldSeriesColor(alignedFrame.fields[seriesIdx], theme).color;
     }
 
     builder.addSeries({

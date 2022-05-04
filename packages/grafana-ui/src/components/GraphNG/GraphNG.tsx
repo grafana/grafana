@@ -237,7 +237,6 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
         }
 
         newState.alignedData = newState.config!.prepData!([newState.alignedFrame]) as AlignedData;
-        newState.config?.setAllFrames(this.props.frames);
 
         this.setState(newState);
       }
