@@ -100,6 +100,12 @@ func adjustLogsFrame(frame *data.Frame, query *lokiQuery) error {
 		return fmt.Errorf("invalid fields in logs frame")
 	}
 
+	// this returns an error when the length of fields do not match
+	_, err := frame.RowLen()
+	if err != nil {
+		return err
+	}
+
 	labelsField.Name = "labels"
 	stringTimeField.Name = "tsNs"
 
