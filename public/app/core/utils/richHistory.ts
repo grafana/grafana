@@ -2,7 +2,7 @@ import { omit } from 'lodash';
 
 import { DataQuery, DataSourceApi, dateTimeFormat, ExploreUrlState, urlUtil } from '@grafana/data';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, logError } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
@@ -77,6 +77,11 @@ export async function addToRichHistory(
 }
 
 export async function getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryQuery[]> {
+  try {
+    throw new Error('test');
+  } catch (error) {
+    logError(error);
+  }
   return await getRichHistoryStorage().getRichHistory(filters);
 }
 

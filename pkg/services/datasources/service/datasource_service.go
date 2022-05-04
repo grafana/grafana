@@ -192,16 +192,17 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSo
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 	var err error
-	secret, err := json.Marshal(cmd.SecureJsonData)
-	if err != nil {
-		return err
-	}
 
 	query := &models.GetDataSourceQuery{
 		Id:    cmd.Id,
 		OrgId: cmd.OrgId,
 	}
 	err = s.SQLStore.GetDataSource(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	err = s.fillWithSecureJSONData(ctx, cmd, query.Result)
 	if err != nil {
 		return err
 	}
@@ -216,6 +217,11 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSo
 		if err != nil {
 			return err
 		}
+	}
+
+	secret, err := json.Marshal(cmd.SecureJsonData)
+	if err != nil {
+		return err
 	}
 
 	return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
@@ -558,4 +564,23 @@ func awsServiceNamespace(dsType string) string {
 	default:
 		panic(fmt.Sprintf("Unsupported datasource %q", dsType))
 	}
+}
+
+func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *models.UpdateDataSourceCommand, ds *models.DataSource) error {
+	decrypted, err := s.DecryptedValues(ctx, ds)
+	if err != nil {
+		return err
+	}
+
+	if cmd.SecureJsonData == nil {
+		cmd.SecureJsonData = make(map[string]string)
+	}
+
+	for k, v := range decrypted {
+		if _, ok := cmd.SecureJsonData[k]; !ok {
+			cmd.SecureJsonData[k] = v
+		}
+	}
+
+	return nil
 }

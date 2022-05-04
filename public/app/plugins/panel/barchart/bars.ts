@@ -472,7 +472,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
       // map per-bar colors
       for (let i = 1; i < u.data.length; i++) {
-        let colors = u.data[i].map((value, valueIdx) => {
+        let colors = (u.data[i] as Array<number | null>).map((value, valueIdx) => {
           if (value != null) {
             return getColor!(i, valueIdx, value);
           }

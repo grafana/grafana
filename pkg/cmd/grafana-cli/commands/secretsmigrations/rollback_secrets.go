@@ -112,8 +112,15 @@ func (s b64Secret) rollback(
 		}
 
 		encoded := base64.StdEncoding.EncodeToString(encrypted)
-		updateSQL := fmt.Sprintf("UPDATE %s SET %s = ? WHERE id = ?", s.tableName, s.columnName)
-		if _, err := sess.Exec(updateSQL, encoded, row.Id); err != nil {
+		if s.hasUpdatedColumn {
+			updateSQL := fmt.Sprintf("UPDATE %s SET %s = ?, updated = ? WHERE id = ?", s.tableName, s.columnName)
+			_, err = sess.Exec(updateSQL, encoded, nowInUTC(), row.Id)
+		} else {
+			updateSQL := fmt.Sprintf("UPDATE %s SET %s = ? WHERE id = ?", s.tableName, s.columnName)
+			_, err = sess.Exec(updateSQL, encoded, row.Id)
+		}
+
+		if err != nil {
 			anyFailure = true
 			logger.Warn("Could not update secret while rolling it back", "table", s.tableName, "id", row.Id, "error", err)
 			continue
@@ -272,9 +279,10 @@ func RollBackSecrets(_ utils.CommandLine, runner runner.Runner) error {
 		rollback(*manager.SecretsService, encryption.Internal, *xorm.Session, string) bool
 	}{
 		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted"},
-		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}},
-		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token"}},
-		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type"}},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token"}},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type"}},
+		b64Secret{simpleSecret: simpleSecret{tableName: "secrets", columnName: "value"}, hasUpdatedColumn: true},
 		jsonSecret{tableName: "data_source"},
 		jsonSecret{tableName: "plugin_setting"},
 		alertingSecret{},

@@ -55,6 +55,7 @@ Content-Type: application/json
         "id": 1124,
         "alertId": 0,
         "dashboardId": 468,
+        "dashboardUID": "uGlb_lG7z",
         "panelId": 2,
         "userId": 1,
         "userName": "",
@@ -74,6 +75,7 @@ Content-Type: application/json
         "id": 1123,
         "alertId": 0,
         "dashboardId": 468,
+        "dashboardUID": "jcIIG-07z",
         "panelId": 2,
         "userId": 1,
         "userName": "",
@@ -119,7 +121,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "dashboardId":468,
+  "dashboardUID":"jcIIG-07z",
   "panelId":1,
   "time":1507037197339,
   "timeEnd":1507180805056,

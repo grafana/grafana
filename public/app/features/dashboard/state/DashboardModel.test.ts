@@ -370,7 +370,7 @@ describe('DashboardModel', () => {
 
     it('should remove panels and put them inside collapsed row', () => {
       expect(dashboard.panels.length).toBe(3);
-      expect(dashboard.panels[1].panels.length).toBe(2);
+      expect(dashboard.panels[1].panels?.length).toBe(2);
     });
 
     describe('and when removing row and its panels', () => {

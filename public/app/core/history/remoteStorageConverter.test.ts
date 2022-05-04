@@ -1,14 +1,23 @@
+import { DatasourceSrv } from '../../features/plugins/datasource_srv';
 import { RichHistoryQuery } from '../../types';
 import { backendSrv } from '../services/backend_srv';
 
 import { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
-import { DataSourceSrvMock } from './RichHistoryStorage';
 import { fromDTO, toDTO } from './remoteStorageConverter';
+
+const dsMock = new DatasourceSrv();
+dsMock.init(
+  {
+    // @ts-ignore
+    'name-of-dev-test': { uid: 'dev-test', name: 'name-of-dev-test' },
+  },
+  ''
+);
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
-  getDataSourceSrv: () => DataSourceSrvMock,
+  getDataSourceSrv: () => dsMock,
 }));
 
 const validRichHistory: RichHistoryQuery = {

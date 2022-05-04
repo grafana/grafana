@@ -8,7 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 
-import { AlertTypeStep } from './AlertTypeStep';
+import { AlertType } from './AlertType';
 
 const ui = {
   ruleTypePicker: {
@@ -28,7 +28,7 @@ function renderAlertTypeStep() {
 
   render(
     <Provider store={store}>
-      <AlertTypeStep editingExistingRule={false} />
+      <AlertType editingExistingRule={false} />
     </Provider>,
     { wrapper: FormProviderWrapper }
   );
