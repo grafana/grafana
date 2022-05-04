@@ -507,14 +507,6 @@
         "operationId": "addUserRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -522,6 +514,14 @@
             "schema": {
               "$ref": "#/definitions/AddUserRoleCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -548,14 +548,6 @@
         "operationId": "removeUserRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "type": "string",
             "x-go-name": "RoleUID",
             "name": "roleUID",
@@ -568,6 +560,14 @@
             "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
             "name": "global",
             "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -11055,6 +11055,11 @@
           "type": "string",
           "x-go-name": "Email"
         },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ID"
+        },
         "name": {
           "type": "string",
           "x-go-name": "Name"
@@ -13638,7 +13643,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "x-go-name": "ID"
+          "x-go-name": "Id"
         },
         "target": {
           "type": "string",
@@ -13653,7 +13658,7 @@
           "x-go-name": "Url"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "NavbarPreference": {
       "type": "object",
@@ -13666,7 +13671,7 @@
           "x-go-name": "SavedItems"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "NewApiKeyResult": {
       "type": "object",
@@ -14745,7 +14750,7 @@
           "x-go-name": "HomeTab"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "Receiver": {
       "type": "object",
