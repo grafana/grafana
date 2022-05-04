@@ -156,6 +156,7 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 				if !dynamicLabelEnabled {
 					frameName = formatAlias(query, query.Statistic, labels, label)
 				}
+				backend.Logger.Info("frameName1", frameName)
 				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: frameName, Links: createDataLinks(deepLink)})
 
 				emptyFrame := data.Frame{
@@ -173,6 +174,7 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 		}
 
 		labels := getLabels(label, query)
+		backend.Logger.Info("labels", label)
 		timestamps := []*time.Time{}
 		points := []*float64{}
 		for j, t := range metric.Timestamps {
@@ -188,6 +190,7 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 		if !dynamicLabelEnabled {
 			frameName = formatAlias(query, query.Statistic, labels, label)
 		}
+		backend.Logger.Info("frameName2", frameName)
 		valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: frameName, Links: createDataLinks(deepLink)})
 
 		frame := data.Frame{
