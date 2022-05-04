@@ -143,7 +143,6 @@ const ScaleDistributionEditor: React.FC<FieldOverrideEditorProps<ScaleDistributi
       />
       {value.type === ScaleDistribution.Log && (
         <Select
-          menuShouldPortal
           allowCustomValue={false}
           options={LOG_DISTRIBUTION_OPTIONS}
           value={value.log || 2}

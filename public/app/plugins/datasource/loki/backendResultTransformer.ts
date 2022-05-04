@@ -1,12 +1,4 @@
-import {
-  DataQueryResponse,
-  DataFrame,
-  isDataFrame,
-  FieldType,
-  QueryResultMeta,
-  ArrayVector,
-  Labels,
-} from '@grafana/data';
+import { DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta } from '@grafana/data';
 
 import { makeTableFrames } from './makeTableFrames';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
@@ -27,12 +19,6 @@ function setFrameMeta(frame: DataFrame, meta: QueryResultMeta): DataFrame {
   };
 }
 
-function decodeLabelsInJson(text: string): Labels {
-  const array: Array<[string, string]> = JSON.parse(text);
-  // NOTE: maybe we should go with maps, those have guaranteed ordering
-  return Object.fromEntries(array);
-}
-
 function processStreamFrame(frame: DataFrame, query: LokiQuery | undefined): DataFrame {
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'logs',
@@ -46,19 +32,6 @@ function processStreamFrame(frame: DataFrame, query: LokiQuery | undefined): Dat
 
   const newFields = newFrame.fields.map((field) => {
     switch (field.name) {
-      case 'labels': {
-        // the labels, when coming from the server, are json-encoded.
-        // here we decode them if needed.
-        return field.config.custom.json
-          ? {
-              name: field.name,
-              type: FieldType.other,
-              config: field.config,
-              // we are parsing the labels the same way as streaming-dataframes do
-              values: new ArrayVector(field.values.toArray().map((text) => decodeLabelsInJson(text))),
-            }
-          : field;
-      }
       case 'tsNs': {
         // we need to switch the field-type to be `time`
         return {

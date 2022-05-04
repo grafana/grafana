@@ -130,7 +130,6 @@ export class InspectJSONTab extends PureComponent<Props, State> {
               options={jsonOptions}
               value={selected}
               onChange={this.onSelectChanged}
-              menuShouldPortal
             />
           </Field>
           {this.hasPanelJSON && isPanelJSON && canEdit && (

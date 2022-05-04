@@ -74,6 +74,9 @@ function getPanelType(queries: DataQuery[], queryResponse: ExplorePanelData) {
     if (queryResponse.nodeGraphFrames.some(hasQueryRefId)) {
       return 'nodeGraph';
     }
+    if (queryResponse.traceFrames.some(hasQueryRefId)) {
+      return 'traces';
+    }
   }
 
   // falling back to table

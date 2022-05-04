@@ -75,7 +75,6 @@ function SelectInputParamEditor({
   return (
     <Select
       id={getOperationParamId(operationIndex, index)}
-      menuShouldPortal
       value={valueOption}
       options={selectOptions}
       placeholder={paramDef.placeholder}
