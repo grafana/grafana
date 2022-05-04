@@ -1,15 +1,15 @@
 ---
 aliases:
-- /docs/grafana/latest/auth/saml/
-- /docs/grafana/latest/enterprise/saml/troubleshoot-saml/
+  - /docs/grafana/latest/auth/saml/
+  - /docs/grafana/latest/enterprise/saml/troubleshoot-saml/
 description: This contains information on how to troubleshoot SAML authentication
   in Grafana
 keywords:
-- grafana
-- saml
-- documentation
-- saml-auth
-- enterprise
+  - grafana
+  - saml
+  - documentation
+  - saml-auth
+  - enterprise
 menuTitle: Troubleshoot SAML Authentication
 title: Troubleshoot SAML Authentication in Grafana
 weight: 50

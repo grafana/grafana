@@ -1,6 +1,6 @@
 ---
 aliases:
-- /docs/grafana/latest/shared/visualizations/change-axis-link/
+  - /docs/grafana/latest/shared/visualizations/change-axis-link/
 title: Stack series link
 ---
 

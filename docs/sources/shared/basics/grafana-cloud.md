@@ -1,6 +1,6 @@
 ---
 aliases:
-- /docs/grafana/latest/shared/basics/grafana-cloud/
+  - /docs/grafana/latest/shared/basics/grafana-cloud/
 title: Grafana Cloud
 ---
 

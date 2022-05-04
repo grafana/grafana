@@ -1,14 +1,14 @@
 ---
 aliases:
-- /docs/grafana/latest/auth/saml/
-- /docs/grafana/latest/enterprise/saml/
+  - /docs/grafana/latest/auth/saml/
+  - /docs/grafana/latest/enterprise/saml/
 description: Grafana SAML authentication
 keywords:
-- grafana
-- saml
-- documentation
-- saml-auth
-- enterprise
+  - grafana
+  - saml
+  - documentation
+  - saml-auth
+  - enterprise
 title: SAML authentication
 weight: 10
 ---

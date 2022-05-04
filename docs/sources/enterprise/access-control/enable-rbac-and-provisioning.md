@@ -1,6 +1,6 @@
 ---
 aliases:
-- /docs/grafana/latest/enterprise/access-control/enable-rbac-and-provisioning/
+  - /docs/grafana/latest/enterprise/access-control/enable-rbac-and-provisioning/
 description: Learn how to enable RBAC and provisioning in Grafana.
 menuTitle: Enable RBAC and provisioning
 title: Enable RBAC and provisioning in Grafana

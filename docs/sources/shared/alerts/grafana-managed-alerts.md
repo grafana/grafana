@@ -1,6 +1,6 @@
 ---
 aliases:
-- /docs/grafana/latest/shared/alerts/grafana-managed-alerts/
+  - /docs/grafana/latest/shared/alerts/grafana-managed-alerts/
 title: Grafana managed alerts
 ---
 

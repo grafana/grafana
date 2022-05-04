@@ -1,14 +1,14 @@
 ---
 aliases:
-- /docs/grafana/latest/auth/saml/
-- /docs/grafana/latest/enterprise/saml/enable-saml/
+  - /docs/grafana/latest/auth/saml/
+  - /docs/grafana/latest/enterprise/saml/enable-saml/
 description: This contains information to enable SAML authentication in Grafana
 keywords:
-- grafana
-- saml
-- documentation
-- saml-auth
-- enterprise
+  - grafana
+  - saml
+  - documentation
+  - saml-auth
+  - enterprise
 menuTitle: Enable SAML authentication
 title: Enable SAML authentication in Grafana
 weight: 30

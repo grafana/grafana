@@ -1,6 +1,6 @@
 ---
 aliases:
-- /docs/grafana/latest/shared/preferences/navigate-to-the-dashboard-list/
+  - /docs/grafana/latest/shared/preferences/navigate-to-the-dashboard-list/
 title: Navigate to the dashboard list
 ---
 

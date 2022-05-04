@@ -1,5 +1,5 @@
 ---
 aliases:
-- /docs/grafana/latest/shared/
+  - /docs/grafana/latest/shared/
 headless: true
 ---

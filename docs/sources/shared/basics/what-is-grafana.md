@@ -1,6 +1,6 @@
 ---
 aliases:
-- /docs/grafana/latest/shared/basics/what-is-grafana/
+  - /docs/grafana/latest/shared/basics/what-is-grafana/
 title: Grafana Open Source
 ---
 

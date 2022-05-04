@@ -1,6 +1,6 @@
 ---
 aliases:
-- /docs/grafana/latest/shared/preferences/select-home-dashboard-list/
+  - /docs/grafana/latest/shared/preferences/select-home-dashboard-list/
 title: Select home dashboard list
 ---
 

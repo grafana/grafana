@@ -1,6 +1,6 @@
 ---
 aliases:
-- /docs/grafana/latest/shared/view-server-user-list-search/
+  - /docs/grafana/latest/shared/view-server-user-list-search/
 title: View user list
 ---
 

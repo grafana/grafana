@@ -1,15 +1,15 @@
 ---
 aliases:
-- /docs/grafana/latest/auth/saml/
-- /docs/grafana/latest/enterprise/saml/configure-saml/
+  - /docs/grafana/latest/auth/saml/
+  - /docs/grafana/latest/enterprise/saml/configure-saml/
 description: This contains information on how to configure SAML authentication in
   Grafana
 keywords:
-- grafana
-- saml
-- documentation
-- saml-configuration
-- enterprise
+  - grafana
+  - saml
+  - documentation
+  - saml-configuration
+  - enterprise
 menuTitle: Configure SAML
 title: Configure SAML authentication in Grafana
 weight: 40

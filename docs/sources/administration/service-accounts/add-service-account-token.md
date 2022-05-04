@@ -1,6 +1,6 @@
 ---
 aliases:
-- /docs/grafana/latest/administration/service-accounts/add-service-account-token/
+  - /docs/grafana/latest/administration/service-accounts/add-service-account-token/
 description: This topic shows you how to add a token to a service account
 menuTitle: Add a token to a service account
 title: Add a token to a service account in Grafana

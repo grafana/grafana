@@ -1,6 +1,6 @@
 ---
 aliases:
-- /docs/grafana/latest/shared/alerts/first-step/
+  - /docs/grafana/latest/shared/alerts/first-step/
 title: TBD...
 ---
 

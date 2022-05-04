@@ -1,13 +1,13 @@
 ---
 aliases:
-- /docs/grafana/latest/administration/manage-organizations/
-- /docs/grafana/latest/manage-users/server-admin/
-- /docs/grafana/latest/manage-users/server-admin/server-admin-manage-orgs/
+  - /docs/grafana/latest/administration/manage-organizations/
+  - /docs/grafana/latest/manage-users/server-admin/
+  - /docs/grafana/latest/manage-users/server-admin/server-admin-manage-orgs/
 description: Describes how to use organizations to isolate dashboard to users and
   teams.
 keywords:
-- organizations
-- dashboards
+  - organizations
+  - dashboards
 menuTitle: Manage organizations
 title: Manage organizations
 weight: 300

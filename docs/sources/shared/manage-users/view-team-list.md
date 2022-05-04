@@ -1,6 +1,6 @@
 ---
 aliases:
-- /docs/grafana/latest/shared/manage-users/view-team-list/
+  - /docs/grafana/latest/shared/manage-users/view-team-list/
 title: View team list
 ---
 

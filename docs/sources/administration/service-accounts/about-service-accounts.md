@@ -1,6 +1,6 @@
 ---
 aliases:
-- /docs/grafana/latest/administration/service-accounts/about-service-accounts/
+  - /docs/grafana/latest/administration/service-accounts/about-service-accounts/
 description: This page contains detailed information about service accounts in Grafana
 menuTitle: About service accounts
 title: About service accounts
