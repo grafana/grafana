@@ -83,9 +83,9 @@ type AlertNG struct {
 	folderService       dashboards.FolderService
 
 	// Alerting notification services
-	MultiOrgAlertmanager   *notifier.MultiOrgAlertmanager
-	NotificationDispatcher *sender.Dispatcher
-	accesscontrol          accesscontrol.AccessControl
+	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
+	AlertDispatcher      *sender.AlertDispatcher
+	accesscontrol        accesscontrol.AccessControl
 }
 
 func (ng *AlertNG) init() error {
@@ -120,11 +120,13 @@ func (ng *AlertNG) init() error {
 
 	clk := clock.New()
 
-	dispatcher := sender.NewDispatcher(ng.MultiOrgAlertmanager, store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs, ng.Cfg.UnifiedAlerting.AdminConfigPollInterval)
+	dispatcher := sender.NewAlertDispatcher(ng.MultiOrgAlertmanager, store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs, ng.Cfg.UnifiedAlerting.AdminConfigPollInterval)
 
 	if err := dispatcher.SyncAndApplyConfigFromDatabase(); err != nil {
 		return fmt.Errorf("failed to initialize alerting because notification dispatcher fails to warm up: %w", err)
 	}
+
+	ng.AlertDispatcher = dispatcher
 
 	schedCfg := schedule.SchedulerCfg{
 		C:               clk,
@@ -138,7 +140,7 @@ func (ng *AlertNG) init() error {
 		Metrics:         ng.Metrics.GetSchedulerMetrics(),
 		DisabledOrgs:    ng.Cfg.UnifiedAlerting.DisabledOrgs,
 		MinRuleInterval: ng.Cfg.UnifiedAlerting.MinInterval,
-		Notifier:        dispatcher,
+		AlertSender:     dispatcher,
 	}
 
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.SQLStore)
@@ -190,7 +192,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		return ng.MultiOrgAlertmanager.Run(subCtx)
 	})
 	children.Go(func() error {
-		return ng.NotificationDispatcher.Run(subCtx)
+		return ng.AlertDispatcher.Run(subCtx)
 	})
 
 	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {

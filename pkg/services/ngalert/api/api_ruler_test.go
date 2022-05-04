@@ -305,7 +305,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 					break
 				}
 			}
-			require.Truef(t, found, "Key %v was not expected to be submitted to scheduler", key)
+			require.Truef(t, found, "Key %v was not expected to be submitted to alertmanagerProvider", key)
 		}
 	}
 

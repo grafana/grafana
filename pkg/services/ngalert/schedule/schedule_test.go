@@ -139,7 +139,7 @@ func TestAlertingTicker(t *testing.T) {
 	mockedClock := clock.NewMock()
 	baseInterval := time.Second
 
-	notifier := &schedule.FakeAlertNotifier{}
+	notifier := &schedule.FakeAlertSender{}
 
 	schedCfg := schedule.SchedulerCfg{
 		C:            mockedClock,
@@ -158,7 +158,7 @@ func TestAlertingTicker(t *testing.T) {
 		DisabledOrgs: map[int64]struct{}{
 			disabledOrgID: {},
 		},
-		Notifier: notifier,
+		AlertSender: notifier,
 	}
 	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, ng.SQLStore)
 	appUrl := &url.URL{

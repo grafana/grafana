@@ -17,10 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
-// Dispatcher is a service that handles alert notifications. It accepts an alert that is represented by models.AlertRuleKey and state.State,
+// AlertDispatcher is a service that handles alert notifications. It accepts an alert that is represented by models.AlertRuleKey and state.State,
 // then converts it to a format that is recognizable by Alertmanager and routes the resulting alert to either an external AlertManager or notifier.MultiOrgAlertmanager or both.
 // In order to maintain the internal state, the service should be Run after creation. This method starts synchronization that is run regularly.
-type Dispatcher struct {
+type AlertDispatcher struct {
 	AdminConfigMtx   sync.RWMutex
 	logger           log.Logger
 	clock            clock.Clock
@@ -37,8 +37,8 @@ type Dispatcher struct {
 	adminConfigPollInterval time.Duration
 }
 
-func NewDispatcher(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore, clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration) *Dispatcher {
-	d := &Dispatcher{
+func NewAlertDispatcher(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore, clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration) *AlertDispatcher {
+	d := &AlertDispatcher{
 		AdminConfigMtx:   sync.RWMutex{},
 		logger:           log.New("ngalert-notifications-dispatcher"),
 		clock:            clk,
@@ -56,7 +56,7 @@ func NewDispatcher(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.
 	return d
 }
 
-func (d *Dispatcher) adminConfigSync(ctx context.Context) error {
+func (d *AlertDispatcher) adminConfigSync(ctx context.Context) error {
 	for {
 		select {
 		case <-time.After(d.adminConfigPollInterval):
@@ -79,7 +79,7 @@ func (d *Dispatcher) adminConfigSync(ctx context.Context) error {
 
 // SyncAndApplyConfigFromDatabase looks for the admin configuration in the database
 // and adjusts the sender(s) and alert handling mechanism accordingly.
-func (d *Dispatcher) SyncAndApplyConfigFromDatabase() error {
+func (d *AlertDispatcher) SyncAndApplyConfigFromDatabase() error {
 	d.logger.Debug("start of admin configuration sync")
 	cfgs, err := d.adminConfigStore.GetAdminConfigurations()
 	if err != nil {
@@ -182,7 +182,7 @@ func (d *Dispatcher) SyncAndApplyConfigFromDatabase() error {
 	return nil
 }
 
-func (d *Dispatcher) Notify(key models.AlertRuleKey, states []*state.State) error {
+func (d *AlertDispatcher) Notify(key models.AlertRuleKey, states []*state.State) error {
 	if len(states) == 0 {
 		d.logger.Debug("no alerts to notify about")
 		return nil
@@ -192,7 +192,7 @@ func (d *Dispatcher) Notify(key models.AlertRuleKey, states []*state.State) erro
 	return nil
 }
 
-func (d *Dispatcher) Expire(key models.AlertRuleKey, states []*state.State) error {
+func (d *AlertDispatcher) Expire(key models.AlertRuleKey, states []*state.State) error {
 	if len(states) == 0 {
 		d.logger.Debug("no alerts to expire")
 		return nil
@@ -202,7 +202,7 @@ func (d *Dispatcher) Expire(key models.AlertRuleKey, states []*state.State) erro
 	return nil
 }
 
-func (d *Dispatcher) notify(key models.AlertRuleKey, alerts definitions.PostableAlerts) {
+func (d *AlertDispatcher) notify(key models.AlertRuleKey, alerts definitions.PostableAlerts) {
 	logger := d.logger.New("rule_uid", key.UID, "org", key.OrgID)
 	// Send alerts to local notifier if they need to be handled internally
 	// or if no external AMs have been discovered yet.
@@ -243,7 +243,7 @@ func (d *Dispatcher) notify(key models.AlertRuleKey, alerts definitions.Postable
 }
 
 // AlertmanagersFor returns all the discovered Alertmanager(s) for a particular organization.
-func (d *Dispatcher) AlertmanagersFor(orgID int64) []*url.URL {
+func (d *AlertDispatcher) AlertmanagersFor(orgID int64) []*url.URL {
 	d.AdminConfigMtx.RLock()
 	defer d.AdminConfigMtx.RUnlock()
 	s, ok := d.Senders[orgID]
@@ -254,7 +254,7 @@ func (d *Dispatcher) AlertmanagersFor(orgID int64) []*url.URL {
 }
 
 // DroppedAlertmanagersFor returns all the dropped Alertmanager(s) for a particular organization.
-func (d *Dispatcher) DroppedAlertmanagersFor(orgID int64) []*url.URL {
+func (d *AlertDispatcher) DroppedAlertmanagersFor(orgID int64) []*url.URL {
 	d.AdminConfigMtx.RLock()
 	defer d.AdminConfigMtx.RUnlock()
 	s, ok := d.Senders[orgID]
@@ -266,7 +266,7 @@ func (d *Dispatcher) DroppedAlertmanagersFor(orgID int64) []*url.URL {
 }
 
 // Run starts regular updates of the configuration
-func (d *Dispatcher) Run(ctx context.Context) error {
+func (d *AlertDispatcher) Run(ctx context.Context) error {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {

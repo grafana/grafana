@@ -61,27 +61,27 @@ type AlertingStore interface {
 
 // API handlers.
 type API struct {
-	Cfg                    *setting.Cfg
-	DatasourceCache        datasources.CacheService
-	RouteRegister          routing.RouteRegister
-	ExpressionService      *expr.Service
-	QuotaService           *quota.QuotaService
-	Schedule               schedule.ScheduleService
-	TransactionManager     provisioning.TransactionManager
-	ProvenanceStore        provisioning.ProvisioningStore
-	RuleStore              store.RuleStore
-	InstanceStore          store.InstanceStore
-	AlertingStore          AlertingStore
-	AdminConfigStore       store.AdminConfigurationStore
-	DataProxy              *datasourceproxy.DataSourceProxyService
-	MultiOrgAlertmanager   *notifier.MultiOrgAlertmanager
-	StateManager           *state.Manager
-	SecretsService         secrets.Service
-	AccessControl          accesscontrol.AccessControl
-	Policies               *provisioning.NotificationPolicyService
-	ContactPointService    *provisioning.ContactPointService
-	Templates              *provisioning.TemplateService
-	NotificationDispatcher *sender.Dispatcher
+	Cfg                  *setting.Cfg
+	DatasourceCache      datasources.CacheService
+	RouteRegister        routing.RouteRegister
+	ExpressionService    *expr.Service
+	QuotaService         *quota.QuotaService
+	Schedule             schedule.ScheduleService
+	TransactionManager   provisioning.TransactionManager
+	ProvenanceStore      provisioning.ProvisioningStore
+	RuleStore            store.RuleStore
+	InstanceStore        store.InstanceStore
+	AlertingStore        AlertingStore
+	AdminConfigStore     store.AdminConfigurationStore
+	DataProxy            *datasourceproxy.DataSourceProxyService
+	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
+	StateManager         *state.Manager
+	SecretsService       secrets.Service
+	AccessControl        accesscontrol.AccessControl
+	Policies             *provisioning.NotificationPolicyService
+	ContactPointService  *provisioning.ContactPointService
+	Templates            *provisioning.TemplateService
+	AlertDispatcher      *sender.AlertDispatcher
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -130,9 +130,9 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewForkedConfiguration(
 		&AdminSrv{
-			store:     api.AdminConfigStore,
-			log:       logger,
-			scheduler: api.NotificationDispatcher,
+			store:                api.AdminConfigStore,
+			log:                  logger,
+			alertmanagerProvider: api.AlertDispatcher,
 		},
 	), m)
 

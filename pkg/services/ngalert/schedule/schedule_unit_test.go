@@ -337,7 +337,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
-	) (*schedule, *store.FakeRuleStore, *store.FakeInstanceStore, *store.FakeAdminConfigStore, prometheus.Gatherer, *sender.Dispatcher) {
+	) (*schedule, *store.FakeRuleStore, *store.FakeInstanceStore, *store.FakeAdminConfigStore, prometheus.Gatherer, *sender.AlertDispatcher) {
 		ruleStore := store.NewFakeRuleStore(t)
 		instanceStore := &store.FakeInstanceStore{}
 		adminConfigStore := store.NewFakeAdminConfigStore(t)
@@ -1010,7 +1010,7 @@ func setupSchedulerWithFakeStores(t *testing.T) *schedule {
 	return sch
 }
 
-func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, acs store.AdminConfigurationStore, registry *prometheus.Registry) (*schedule, *clock.Mock, *sender.Dispatcher) {
+func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, acs store.AdminConfigurationStore, registry *prometheus.Registry) (*schedule, *clock.Mock, *sender.AlertDispatcher) {
 	t.Helper()
 
 	fakeAnnoRepo := store.NewFakeAnnotationsRepo()
@@ -1031,7 +1031,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		Host:   "localhost",
 	}
 
-	dispatcher := sender.NewDispatcher(moa, acs, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute) // do not poll in unit tests.
+	dispatcher := sender.NewAlertDispatcher(moa, acs, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute) // do not poll in unit tests.
 
 	schedCfg := SchedulerCfg{
 		C:             mockedClock,
@@ -1042,7 +1042,7 @@ func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, ac
 		InstanceStore: is,
 		Logger:        logger,
 		Metrics:       m.GetSchedulerMetrics(),
-		Notifier:      dispatcher,
+		AlertSender:   dispatcher,
 	}
 	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, mockstore.NewSQLStoreMock())
 	return NewScheduler(schedCfg, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil), appUrl, st), mockedClock, dispatcher

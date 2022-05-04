@@ -37,8 +37,8 @@ type ScheduleService interface {
 	overrideCfg(cfg SchedulerCfg)
 }
 
-//go:generate mockery --name AlertNotifier --structname FakeAlertNotifier --inpackage --filename alertnotifier_mock.go --with-expecter
-type AlertNotifier interface {
+//go:generate mockery --name AlertSender --structname FakeAlertSender --inpackage --filename alertsender_mock.go --with-expecter
+type AlertSender interface {
 	Notify(key models.AlertRuleKey, states []*state.State) error
 	Expire(key models.AlertRuleKey, states []*state.State) error
 }
@@ -83,7 +83,7 @@ type schedule struct {
 
 	disabledOrgs    map[int64]struct{}
 	minRuleInterval time.Duration
-	notifier        AlertNotifier
+	notifier        AlertSender
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -101,7 +101,7 @@ type SchedulerCfg struct {
 	Metrics         *metrics.Scheduler
 	DisabledOrgs    map[int64]struct{}
 	MinRuleInterval time.Duration
-	Notifier        AlertNotifier
+	AlertSender     AlertSender
 }
 
 // NewScheduler returns a new schedule.
@@ -127,7 +127,7 @@ func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url
 		stateManager:      stateManager,
 		disabledOrgs:      cfg.DisabledOrgs,
 		minRuleInterval:   cfg.MinRuleInterval,
-		notifier:          cfg.Notifier,
+		notifier:          cfg.AlertSender,
 	}
 	return &sch
 }
