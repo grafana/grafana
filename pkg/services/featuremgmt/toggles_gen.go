@@ -71,10 +71,6 @@ const (
 	// Loki datasource works as backend datasource
 	FlagLokiBackendMode = "lokiBackendMode"
 
-	// FlagAccesscontrol
-	// Support robust access control
-	FlagAccesscontrol = "accesscontrol"
-
 	// FlagAccesscontrolBuiltins
 	// Simplify access control builtin roles
 	FlagAccesscontrolBuiltins = "accesscontrol-builtins"
