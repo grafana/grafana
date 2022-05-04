@@ -19,12 +19,14 @@ const searchSrv = new SearchSrv();
 
 interface Props {
   onLayoutChange: (layout: SearchLayout) => void;
+  setShowPreviews: (newValue: boolean) => void;
   onSortChange: (value: SelectableValue) => void;
   onStarredFilterChange?: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: (tags: string[]) => void;
   query: DashboardQuery;
   showStarredFilter?: boolean;
   hideLayout?: boolean;
+  showPreviews?: boolean;
 }
 
 export const ActionRow: FC<Props> = ({

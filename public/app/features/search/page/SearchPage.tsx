@@ -6,7 +6,7 @@ import { FixedSizeGrid } from 'react-window';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Input, useStyles2, Spinner, Button, Switch } from '@grafana/ui';
+import { Input, useStyles2, Spinner, Button, InlineSwitch, InlineFieldRow, InlineField } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
@@ -32,7 +32,7 @@ export default function SearchPage() {
   const { query, onQueryChange, onTagFilterChange, onDatasourceChange, onSortChange, onLayoutChange } = useSearchQuery(
     {}
   );
-  const [gridView, setGridView] = useState(false); // grid vs list view
+  const [showManage, setShowManage] = useState(false); // grid vs list view
 
   const results = useAsync(() => {
     const { query: searchQuery, tag: tags, datasource } = query;
@@ -67,7 +67,7 @@ export default function SearchPage() {
 
   // HACK for grid view
   const itemProps = {
-    editable: true,
+    editable: showManage,
     onToggleChecked: (v: any) => {
       console.log('CHECKED?', v);
     },
@@ -78,6 +78,11 @@ export default function SearchPage() {
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
         <Input value={query.query} onChange={onSearchQueryChange} autoFocus spellCheck={false} />
+        <InlineFieldRow>
+          <InlineField label="Manage">
+            <InlineSwitch value={showManage} onChange={() => setShowManage(!showManage)} />
+          </InlineField>
+        </InlineFieldRow>
         <br />
         {results.loading && <Spinner />}
         {results.value?.body && (
@@ -92,7 +97,6 @@ export default function SearchPage() {
                 Datasource: {query.datasource}
               </Button>
             )}
-            <Switch value={gridView} onChange={() => setGridView(!gridView)} /> List vs Grid view
             <ActionRow
               onLayoutChange={onLayoutChange}
               onSortChange={onSortChange}
@@ -139,6 +143,7 @@ export default function SearchPage() {
                   <>
                     <Table
                       data={results.value!.body}
+                      showCheckbox={showManage}
                       width={width}
                       height={height}
                       tags={query.tag}

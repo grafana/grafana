@@ -16,6 +16,7 @@ type Props = {
   data: DataFrame;
   width: number;
   height: number;
+  showCheckbox: boolean;
   tags: string[];
   onTagFilterChange: (tags: string[]) => void;
   onDatasourceChange: (datasource?: string) => void;
@@ -43,7 +44,7 @@ export interface FieldAccess {
 
 const skipHREF = new Set(['column-checkbox', 'column-datasource']);
 
-export const Table = ({ data, width, height, tags, onTagFilterChange, onDatasourceChange }: Props) => {
+export const Table = ({ data, width, height, tags, showCheckbox, onTagFilterChange, onDatasourceChange }: Props) => {
   const styles = useStyles2(getStyles);
   const tableStyles = useStyles2(getTableStyles);
 
@@ -61,8 +62,17 @@ export const Table = ({ data, width, height, tags, onTagFilterChange, onDatasour
   const access = useMemo(() => new DataFrameView<FieldAccess>(data), [data]);
   const memoizedColumns = useMemo(() => {
     const isDashboardList = data.meta?.type === DataFrameType.DirectoryListing;
-    return generateColumns(access, isDashboardList, width, styles, tags, onTagFilterChange, onDatasourceChange);
-  }, [data.meta?.type, access, width, styles, tags, onTagFilterChange, onDatasourceChange]);
+    return generateColumns(
+      access,
+      isDashboardList,
+      width,
+      showCheckbox,
+      styles,
+      tags,
+      onTagFilterChange,
+      onDatasourceChange
+    );
+  }, [data.meta?.type, access, width, styles, tags, showCheckbox, onTagFilterChange, onDatasourceChange]);
 
   const options: TableOptions<{}> = useMemo(
     () => ({

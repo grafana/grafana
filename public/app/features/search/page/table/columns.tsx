@@ -14,6 +14,7 @@ export const generateColumns = (
   data: DataFrameView<FieldAccess>,
   isDashboardList: boolean,
   availableWidth: number,
+  showCheckbox: boolean,
   styles: { [key: string]: string },
   tags: string[],
   onTagFilterChange: (tags: string[]) => void,
@@ -27,7 +28,7 @@ export const generateColumns = (
   let width = 50;
 
   // TODO: Add optional checkbox support
-  if (true) {
+  if (showCheckbox) {
     columns.push({
       id: `column-checkbox`,
       Header: () => (
