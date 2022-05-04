@@ -24,7 +24,7 @@ func BenchmarkJson(b *testing.B) {
 	tracer, err := tracing.InitializeTracerForTest()
 	require.NoError(b, err)
 
-	s := Buffered{tracer: tracer}
+	s := Buffered{tracer: tracer, log: &fakeLogger{}}
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
