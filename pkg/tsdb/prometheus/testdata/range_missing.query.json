@@ -1,8 +1,0 @@
-{
-  "RefId": "A",
-  "RangeQuery": true,
-  "Start": 1641889530,
-  "End": 1641889538,
-  "Step": 1,
-  "Expr": "test1"
-}
