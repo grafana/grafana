@@ -163,11 +163,11 @@ func (srv RulerSrv) accessibleRulesProvisioning(rules []*ngmodels.AlertRule, pro
 	}
 
 	if len(canDelete) == 0 {
-		return nil, fmt.Errorf("%w to delete rules because user is not authorized to access data sources used by the rules", ErrAuthorization)
+		return nil, fmt.Errorf("all rules have been provisioned and cannot be deleted through this api")
 	}
 
 	if len(cannotDelete) > 0 {
-		logger.Info("user cannot delete one or many alert rules because it does not have access to data sources. Those rules will be skipped", "expected", len(rules), "authorized", len(canDelete), "unauthorized", cannotDelete)
+		logger.Info("user cannot delete one or many alert rules because it does has a provenance set. Those rules will be skipped", "expected", len(rules), "provenance_none", len(canDelete), "provenance_set", cannotDelete)
 	}
 
 	return canDelete, nil
