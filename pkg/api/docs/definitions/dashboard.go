@@ -102,6 +102,7 @@ import (
 // 500: internalServerError
 
 // swagger:parameters getDashboardByUID deleteDashboardByUID getDashboardPermissionsWithUid postDashboardPermissionsWithUid
+// swagger:parameters getDashboardVersionsByUID restoreDashboardVersionByUID
 type UID struct {
 	// in:path
 	// required:true
