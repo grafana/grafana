@@ -12,7 +12,6 @@ With Explore, users can make ad-hoc queries without the use of a dashboard. This
 
 Your data source supports Explore by default and uses the existing query editor for the data source.
 
-
 ## Add an Explore-specific query editor
 
 To extend Explore functionality for your data source, you can define an Explore-specific query editor.
