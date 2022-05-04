@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import React, { FC, FormEvent } from 'react';
 
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { HorizontalGroup, RadioButtonGroup, stylesFactory, useTheme, Checkbox } from '@grafana/ui';
+import { HorizontalGroup, RadioButtonGroup, useStyles2, Checkbox, Button } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 
@@ -24,6 +24,7 @@ interface Props {
   onStarredFilterChange?: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: (tags: string[]) => void;
   getTagOptions: () => Promise<TermCount[]>;
+  onDatasourceChange: (ds?: string) => void;
   query: DashboardQuery;
   showStarredFilter?: boolean;
   hideLayout?: boolean;
@@ -35,12 +36,12 @@ export const ActionRow: FC<Props> = ({
   onStarredFilterChange = () => {},
   onTagFilterChange,
   getTagOptions,
+  onDatasourceChange,
   query,
   showStarredFilter,
   hideLayout,
 }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.actionRow}>
@@ -56,6 +57,11 @@ export const ActionRow: FC<Props> = ({
             <Checkbox label="Filter by starred" onChange={onStarredFilterChange} value={query.starred} />
           </div>
         )}
+        {query.datasource && (
+          <Button icon="times" variant="secondary" onClick={() => onDatasourceChange(undefined)}>
+            Datasource: {query.datasource}
+          </Button>
+        )}
         <TagFilter isClearable tags={query.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
       </HorizontalGroup>
     </div>
@@ -64,21 +70,21 @@ export const ActionRow: FC<Props> = ({
 
 ActionRow.displayName = 'ActionRow';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     actionRow: css`
       display: none;
 
-      @media only screen and (min-width: ${theme.breakpoints.md}) {
+      @media only screen and (min-width: ${theme.v1.breakpoints.md}) {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: ${theme.spacing.lg} 0;
+        padding: ${theme.v1.spacing.lg} 0;
         width: 100%;
       }
     `,
     rowContainer: css`
-      margin-right: ${theme.spacing.md};
+      margin-right: ${theme.v1.spacing.md};
     `,
     checkboxWrapper: css`
       label {
@@ -86,4 +92,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
   };
-});
+};

@@ -6,10 +6,11 @@ import { FixedSizeGrid } from 'react-window';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Input, useStyles2, Spinner, Button, InlineSwitch, InlineFieldRow, InlineField } from '@grafana/ui';
+import { Input, useStyles2, Spinner, InlineSwitch, InlineFieldRow, InlineField } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
+import { PreviewsSystemRequirements } from '../components/PreviewsSystemRequirements';
 import { SearchCard } from '../components/SearchCard';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { getGrafanaSearcher, QueryFilters } from '../service';
@@ -74,6 +75,8 @@ export default function SearchPage() {
     onTagSelected: () => {},
   };
 
+  const showPreviews = query.layout === SearchLayout.Grid && config.featureToggles.dashboardPreviews;
+
   return (
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
@@ -87,26 +90,24 @@ export default function SearchPage() {
         {results.loading && <Spinner />}
         {results.value?.body && (
           <div>
-            {query.datasource && (
-              <Button
-                icon="times"
-                variant="secondary"
-                onClick={() => onDatasourceChange(undefined)}
-                className={styles.clearClick}
-              >
-                Datasource: {query.datasource}
-              </Button>
-            )}
             <ActionRow
               onLayoutChange={onLayoutChange}
               onSortChange={onSortChange}
               onTagFilterChange={onTagFilterChange}
               getTagOptions={getTagOptions}
+              onDatasourceChange={onDatasourceChange}
               query={query}
             />
+
+            <PreviewsSystemRequirements
+              bottomSpacing={3}
+              showPreviews={showPreviews}
+              onRemove={() => onLayoutChange(SearchLayout.List)}
+            />
+
             <AutoSizer style={{ width: '100%', height: '700px' }}>
               {({ width, height }) => {
-                if (query.layout === SearchLayout.Grid && config.featureToggles.dashboardPreviews) {
+                if (showPreviews) {
                   const items = toDashboardSectionItem(results.value!.body);
 
                   const numColumns = Math.ceil(width / 320);
@@ -169,13 +170,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: center;
     height: 100%;
     font-size: 18px;
-  `,
-
-  clearClick: css`
-    &:hover {
-      text-decoration: line-through;
-    }
-    margin-bottom: 20px;
   `,
 
   virtualizedGridItemWrapper: css`
