@@ -12,16 +12,14 @@ interface Props {
 }
 
 const NoAlertManagersAvailable = () => (
-  <Alert title="No alert managers available" severity="warning">
-    There are no alert managers available. Probably there are no external alert managers configured and you do not have
-    access to built-in Grafana Alert Manager
+  <Alert title="No Alertmanager found" severity="warning">
+    We could not find any external Alertmanagers and you may not have access to the built-in Grafana Alertmanager.
   </Alert>
 );
 
 const OtherAlertManagersAvailable = () => (
-  <Alert title="The selected alert manager is not available" severity="warning">
-    The selected alert manager no longer exists or you do not have permission to see it. Please select a different alert
-    manager
+  <Alert title="Selected Alertmanager not found. Select a different Alertmanager." severity="warning">
+    Selected Alertmanager no longer exists or you may not have permission to access it.
   </Alert>
 );
 
