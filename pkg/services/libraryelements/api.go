@@ -46,6 +46,15 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext) response.Res
 		return toLibraryElementError(err, "Failed to create library element")
 	}
 
+	if element.FolderID != 0 {
+		folder, err := l.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, element.FolderID, c.OrgId)
+		if err == nil {
+			element.FolderUID = folder.Uid
+			element.Meta.FolderUID = folder.Uid
+			element.Meta.FolderName = folder.Title
+		}
+	}
+
 	return response.JSON(http.StatusOK, LibraryElementResponse{Result: element})
 }
 
@@ -113,6 +122,15 @@ func (l *LibraryElementService) patchHandler(c *models.ReqContext) response.Resp
 	element, err := l.patchLibraryElement(c.Req.Context(), c.SignedInUser, cmd, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to update library element")
+	}
+
+	if element.FolderID != 0 {
+		folder, err := l.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, element.FolderID, c.OrgId)
+		if err == nil {
+			element.FolderUID = folder.Uid
+			element.Meta.FolderUID = folder.Uid
+			element.Meta.FolderName = folder.Title
+		}
 	}
 
 	return response.JSON(http.StatusOK, LibraryElementResponse{Result: element})

@@ -165,6 +165,9 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 		},
 	}
 
+	if cmd.FolderUID != nil {
+		dto.FolderUID = *cmd.FolderUID
+	}
 	return dto, err
 }
 
@@ -532,7 +535,6 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 				},
 			},
 		}
-
 		return nil
 	})
 
