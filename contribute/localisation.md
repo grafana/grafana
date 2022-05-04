@@ -36,7 +36,12 @@ const ErrorMessage = ({ id, message }) => <Trans id={`errors.${id}`}>There was a
 
 ## How translations work in Grafana
 
-Grafana uses the [LinguiJS](https://github.com/lingui/js-lingui) framework for managing translating phrases in the Grafana frontend. We use Lingui to mark up phrases for extraction, to automate extracting phrases into message catalogs for use in translation management systems, and then to load the translated phrases into the frontend for the user's selected locale.
+Grafana uses the [LinguiJS](https://github.com/lingui/js-lingui) framework for managing translating phrases in the Grafana frontend. It:
+
+- Marks up phrases within our code for extraction
+- Extracts phrases into messages catalogues for translating in external systems
+- "Compiles" the catalogues to a format that can be used in the website
+- Manages the user's locale and putting the translated phrases in the UI
 
 ### Phrase ID naming convention
 
