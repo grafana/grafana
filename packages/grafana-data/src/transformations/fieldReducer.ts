@@ -25,7 +25,7 @@ export enum ReducerID {
   allIsZero = 'allIsZero',
   allIsNull = 'allIsNull',
   allValues = 'allValues',
-  allUniqueValues = 'allUniqueValues',
+  uniqueValues = 'uniqueValues',
 }
 
 // Internal function
