@@ -374,8 +374,7 @@ func TestCreateTeam(t *testing.T) {
 		})
 
 		t.Run("creating a team with a sequential ID that is taken, it should succeed", func(t *testing.T) {
-			team, err := sqlStore.CreateTeam("team3", "", testOrgID)
-			fmt.Printf("<<<< %+v, %v", team, err)
+			_, err := sqlStore.CreateTeam("team3", "", testOrgID)
 			require.NoError(t, err)
 		})
 	})
