@@ -129,7 +129,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Respons
 // accessibleRulesFGAC will return the rules that are accessible for the user
 // while checking against FGAC. If none is accessible, an error will be returned.
 func (srv RulerSrv) accessibleRulesFGAC(rules []*ngmodels.AlertRule, hasAccess func(evaluator accesscontrol.Evaluator) bool, logger *log.ConcreteLogger) (map[string]struct{}, error) {
-	canDelete, cannotDelete := make(map[string]struct{}, 0), make([]string, 0)
+	canDelete, cannotDelete := make(map[string]struct{}), make([]string, 0)
 	for _, rule := range rules {
 		if authorizeDatasourceAccessForRule(rule, hasAccess) {
 			canDelete[rule.UID] = struct{}{}
@@ -153,7 +153,7 @@ func (srv RulerSrv) accessibleRulesFGAC(rules []*ngmodels.AlertRule, hasAccess f
 // the user while checking against the provenance. If none is accessible, an
 // error will be returned.
 func (srv RulerSrv) accessibleRulesProvisioning(rules []*ngmodels.AlertRule, provenances map[string]ngmodels.Provenance, logger *log.ConcreteLogger) (map[string]struct{}, error) {
-	canDelete, cannotDelete := make(map[string]struct{}, 0), make([]string, 0)
+	canDelete, cannotDelete := make(map[string]struct{}), make([]string, 0)
 	for _, rule := range rules {
 		if provenance, exists := provenances[rule.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
 			canDelete[rule.UID] = struct{}{}
