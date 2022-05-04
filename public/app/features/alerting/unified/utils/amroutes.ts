@@ -77,30 +77,14 @@ export const emptyRoute: FormAmRoute = {
 };
 
 //returns route, and a record mapping id to existing route route
-interface AmRouteToFormAmRouteOptions {
-  isRoot: boolean;
-}
-
-export const amRouteToFormAmRoute = (
-  route: Route | undefined,
-  { isRoot }: AmRouteToFormAmRouteOptions
-): [FormAmRoute, Record<string, Route>] => {
+export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Record<string, Route>] => {
   if (!route || Object.keys(route).length === 0) {
     return [emptyRoute, {}];
   }
 
-  const [groupWaitValue, groupWaitValueType] = intervalToValueAndType(
-    route.group_wait,
-    isRoot ? ['', 's'] : defaultValueAndType
-  );
-  const [groupIntervalValue, groupIntervalValueType] = intervalToValueAndType(
-    route.group_interval,
-    isRoot ? ['', 'm'] : defaultValueAndType
-  );
-  const [repeatIntervalValue, repeatIntervalValueType] = intervalToValueAndType(
-    route.repeat_interval,
-    isRoot ? ['', 'h'] : defaultValueAndType
-  );
+  const [groupWaitValue, groupWaitValueType] = intervalToValueAndType(route.group_wait, ['', 's']);
+  const [groupIntervalValue, groupIntervalValueType] = intervalToValueAndType(route.group_interval, ['', 'm']);
+  const [repeatIntervalValue, repeatIntervalValueType] = intervalToValueAndType(route.repeat_interval, ['', 'h']);
 
   const id = String(Math.random());
   const id2route = {
@@ -108,7 +92,7 @@ export const amRouteToFormAmRoute = (
   };
   const formRoutes: FormAmRoute[] = [];
   route.routes?.forEach((subRoute) => {
-    const [subFormRoute, subId2Route] = amRouteToFormAmRoute(subRoute, { isRoot: false });
+    const [subFormRoute, subId2Route] = amRouteToFormAmRoute(subRoute);
     formRoutes.push(subFormRoute);
     Object.assign(id2route, subId2Route);
   });
