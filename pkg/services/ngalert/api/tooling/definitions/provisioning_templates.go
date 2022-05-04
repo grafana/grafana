@@ -1,6 +1,10 @@
 package definitions
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+	"strings"
+)
 
 // swagger:route GET /api/provisioning/templates provisioning RouteGetTemplates
 //
@@ -51,21 +55,36 @@ type MessageTemplatePayload struct {
 	Body MessageTemplateContent
 }
 
-func (t MessageTemplate) ResourceType() string {
+func (t *MessageTemplate) ResourceType() string {
 	return "template"
 }
 
-func (t MessageTemplate) ResourceID() string {
+func (t *MessageTemplate) ResourceID() string {
 	return t.Name
 }
 
-func (t MessageTemplate) Validate() error {
+func (t *MessageTemplate) Validate() error {
 	if t.Name == "" {
 		return fmt.Errorf("template must have a name")
 	}
 	if t.Template == "" {
 		return fmt.Errorf("template must have content")
 	}
+
+	content := strings.TrimSpace(t.Template)
+	found, err := regexp.MatchString(`\{\{\s*define`, content)
+	if err != nil {
+		return fmt.Errorf("failed to match regex: %w", err)
+	}
+	if !found {
+		lines := strings.Split(content, "\n")
+		for i, s := range lines {
+			lines[i] = "  " + s
+		}
+		content = strings.Join(lines, "\n")
+		content = fmt.Sprintf("{{ define \"%s\" }}\n%s\n{{ end }}", t.Name, content)
+	}
+	t.Template = content
 
 	return nil
 }

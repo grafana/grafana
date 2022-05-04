@@ -33,7 +33,7 @@ type ContactPointService interface {
 
 type TemplateService interface {
 	GetTemplates(ctx context.Context, orgID int64) (map[string]string, error)
-	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.MessageTemplate, p alerting_models.Provenance) error
+	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.MessageTemplate, p alerting_models.Provenance) (definitions.MessageTemplate, error)
 	DeleteTemplate(ctx context.Context, orgID int64, name string) error
 }
 
@@ -134,14 +134,14 @@ func (srv *ProvisioningSrv) RoutePutTemplate(c *models.ReqContext, body apimodel
 		Name:     name,
 		Template: body.Template,
 	}
-	err := srv.templates.SetTemplate(c.Req.Context(), c.OrgId, tmpl, alerting_models.ProvenanceAPI)
+	modified, err := srv.templates.SetTemplate(c.Req.Context(), c.OrgId, tmpl, alerting_models.ProvenanceAPI)
 	if err != nil {
 		if errors.Is(err, provisioning.ErrValidation) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusAccepted, tmpl)
+	return response.JSON(http.StatusAccepted, modified)
 }
 
 func (srv *ProvisioningSrv) RouteDeleteTemplate(c *models.ReqContext) response.Response {

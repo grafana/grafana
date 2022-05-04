@@ -38,15 +38,15 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) (map[st
 	return revision.cfg.TemplateFiles, nil
 }
 
-func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl definitions.MessageTemplate, p models.Provenance) error {
+func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl definitions.MessageTemplate, p models.Provenance) (definitions.MessageTemplate, error) {
 	err := tmpl.Validate()
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
+		return definitions.MessageTemplate{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
 	revision, err := t.getLastConfiguration(ctx, orgID)
 	if err != nil {
-		return err
+		return definitions.MessageTemplate{}, err
 	}
 
 	if revision.cfg.TemplateFiles == nil {
@@ -56,7 +56,7 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 
 	serialized, err := SerializeAlertmanagerConfig(*revision.cfg)
 	if err != nil {
-		return err
+		return definitions.MessageTemplate{}, err
 	}
 	cmd := models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(serialized),
@@ -70,17 +70,17 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 		if err != nil {
 			return err
 		}
-		err = t.prov.SetProvenance(ctx, tmpl, orgID, p)
+		err = t.prov.SetProvenance(ctx, &tmpl, orgID, p)
 		if err != nil {
 			return err
 		}
 		return nil
 	})
 	if err != nil {
-		return err
+		return definitions.MessageTemplate{}, err
 	}
 
-	return nil
+	return tmpl, nil
 }
 
 func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, name string) error {
