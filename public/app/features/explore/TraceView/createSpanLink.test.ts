@@ -10,10 +10,13 @@ import { TemplateSrv } from '../../templating/template_srv';
 import { createSpanLinkFactory } from './createSpanLink';
 
 describe('createSpanLinkFactory', () => {
-  it('returns undefined if there is no data source uid', () => {
+  it('returns no links if there is no data source uid', () => {
     const splitOpenFn = jest.fn();
     const createLink = createSpanLinkFactory({ splitOpenFn: splitOpenFn });
-    expect(createLink).not.toBeDefined();
+    const links = createLink!(createTraceSpan());
+    expect(links?.logLinks).toBeUndefined();
+    expect(links?.metricLinks).toBeUndefined();
+    expect(links?.traceLinks).toHaveLength(0);
   });
 
   describe('should return loki link', () => {
