@@ -156,7 +156,7 @@ describe('Azure Monitor QueryEditor', () => {
         dimensionOptions={dimensionOptions}
       />
     );
-    const labelSelect = await screen.findByText('Select or add value(s)');
+    const labelSelect = await screen.findByText('Select value(s)');
     await user.click(labelSelect);
     const options = await screen.findAllByLabelText('Select option');
     expect(options).toHaveLength(1);
