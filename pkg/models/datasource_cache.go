@@ -386,6 +386,6 @@ func BlockRedirectRoundtripper(next http.RoundTripper) http.RoundTripper {
 				return nil, validationErr
 			}
 		}
-		return resp, err
+		return resp, nil
 	})
 }
