@@ -54,7 +54,7 @@ func (hs *HTTPServer) SearchPlaylists(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) GetPlaylist(c *models.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
-	cmd := models.GetPlaylistByUidQuery{Uid: uid}
+	cmd := models.GetPlaylistByUidQuery{Uid: uid, OrgId: c.OrgId}
 
 	if err := hs.SQLStore.GetPlaylist(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Playlist not found", err)
