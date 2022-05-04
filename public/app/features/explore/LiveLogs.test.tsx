@@ -1,34 +1,37 @@
-import { mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { LogLevel, LogRowModel, MutableDataFrame } from '@grafana/data';
 
 import { LiveLogsWithTheme } from './LiveLogs';
 
+const setup = (rows: LogRowModel[]) =>
+  render(
+    <LiveLogsWithTheme
+      logRows={rows}
+      timeZone={'utc'}
+      stopLive={() => {}}
+      onPause={() => {}}
+      onResume={() => {}}
+      isPaused={true}
+    />
+  );
+
 describe('LiveLogs', () => {
   it('renders logs', () => {
-    const rows: LogRowModel[] = [makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })];
-    const wrapper = mount(
-      <LiveLogsWithTheme
-        logRows={rows}
-        timeZone={'utc'}
-        stopLive={() => {}}
-        onPause={() => {}}
-        onResume={() => {}}
-        isPaused={true}
-      />
-    );
+    setup([makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })]);
 
-    expect(wrapper.contains('log message 1')).toBeTruthy();
-    expect(wrapper.contains('log message 2')).toBeTruthy();
-    expect(wrapper.contains('log message 3')).toBeTruthy();
+    expect(screen.getByRole('cell', { name: 'log message 1' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'log message 2' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'log message 3' })).toBeInTheDocument();
   });
 
   it('renders new logs only when not paused', () => {
-    const rows: LogRowModel[] = [makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })];
-    const wrapper = mount(
+    const { rerender } = setup([makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })]);
+
+    rerender(
       <LiveLogsWithTheme
-        logRows={rows}
+        logRows={[makeLog({ uid: '4' }), makeLog({ uid: '5' }), makeLog({ uid: '6' })]}
         timeZone={'utc'}
         stopLive={() => {}}
         onPause={() => {}}
@@ -37,50 +40,41 @@ describe('LiveLogs', () => {
       />
     );
 
-    wrapper.setProps({
-      ...wrapper.props(),
-      logRows: [makeLog({ uid: '4' }), makeLog({ uid: '5' }), makeLog({ uid: '6' })],
-    });
+    expect(screen.getByRole('cell', { name: 'log message 1' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'log message 2' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'log message 3' })).toBeInTheDocument();
 
-    expect(wrapper.contains('log message 1')).toBeTruthy();
-    expect(wrapper.contains('log message 2')).toBeTruthy();
-    expect(wrapper.contains('log message 3')).toBeTruthy();
+    rerender(
+      <LiveLogsWithTheme
+        logRows={[makeLog({ uid: '4' }), makeLog({ uid: '5' }), makeLog({ uid: '6' })]}
+        timeZone={'utc'}
+        stopLive={() => {}}
+        onPause={() => {}}
+        onResume={() => {}}
+        isPaused={false}
+      />
+    );
 
-    (wrapper.find('LiveLogs').instance() as any).scrollContainerRef.current.scrollTo = () => {};
-
-    wrapper.setProps({
-      ...wrapper.props(),
-      isPaused: false,
-    });
-
-    expect(wrapper.contains('log message 4')).toBeTruthy();
-    expect(wrapper.contains('log message 5')).toBeTruthy();
-    expect(wrapper.contains('log message 6')).toBeTruthy();
+    expect(screen.getByRole('cell', { name: 'log message 4' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'log message 5' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'log message 6' })).toBeInTheDocument();
   });
 
   it('renders ansi logs', () => {
-    const rows: LogRowModel[] = [
+    setup([
       makeLog({ uid: '1' }),
       makeLog({ hasAnsi: true, raw: 'log message \u001B[31m2\u001B[0m', uid: '2' }),
       makeLog({ hasAnsi: true, raw: 'log message \u001B[31m3\u001B[0m', uid: '3' }),
-    ];
-    const wrapper = mount(
-      <LiveLogsWithTheme
-        logRows={rows}
-        timeZone={'utc'}
-        stopLive={() => {}}
-        onPause={() => {}}
-        onResume={() => {}}
-        isPaused={true}
-      />
-    );
+    ]);
 
-    expect(wrapper.contains('log message 1')).toBeTruthy();
-    expect(wrapper.contains('log message 2')).not.toBeTruthy();
-    expect(wrapper.contains('log message 3')).not.toBeTruthy();
-    expect(wrapper.find('LogMessageAnsi')).toHaveLength(2);
-    expect(wrapper.find('LogMessageAnsi').first().prop('value')).toBe('log message \u001B[31m2\u001B[0m');
-    expect(wrapper.find('LogMessageAnsi').last().prop('value')).toBe('log message \u001B[31m3\u001B[0m');
+    expect(screen.getByRole('cell', { name: 'log message 1' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'log message 2' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'log message 3' })).toBeInTheDocument();
+
+    const logList = screen.getAllByTestId('ansiLogLine');
+    expect(logList).toHaveLength(2);
+    expect(logList[0]).toHaveAttribute('style', 'color: rgb(204, 0, 0);');
+    expect(logList[1]).toHaveAttribute('style', 'color: rgb(204, 0, 0);');
   });
 });
 

@@ -136,7 +136,8 @@ class LiveLogs extends PureComponent<Props, State> {
                 // This is triggered on every update so on every new row. It keeps the view scrolled at the bottom by
                 // default.
                 if (this.liveEndDiv && !isPaused) {
-                  this.scrollContainerRef.current?.scrollTo(0, this.scrollContainerRef.current.scrollHeight);
+                  // scrollTo needs to be optional as it is not implemented in JSDOM
+                  this.scrollContainerRef.current?.scrollTo?.(0, this.scrollContainerRef.current.scrollHeight);
                 }
               }}
             />
