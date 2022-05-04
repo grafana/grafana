@@ -207,6 +207,10 @@ func (db *PostgresDialect) IsUniqueConstraintViolation(err error) bool {
 	return db.isThisError(err, "23505")
 }
 
+func (db *PostgresDialect) IsPrimaryKeyConstrainViolation(err error) bool {
+	return db.IsUniqueConstraintViolation(err)
+}
+
 func (db *PostgresDialect) IsDeadlock(err error) bool {
 	return db.isThisError(err, "40P01")
 }

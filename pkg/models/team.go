@@ -30,6 +30,7 @@ type Team struct {
 // COMMANDS
 
 type CreateTeamCommand struct {
+	ID int64 `json:"id"`
 	Name  string `json:"name" binding:"Required"`
 	Email string `json:"email"`
 	OrgId int64  `json:"-"`

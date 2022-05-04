@@ -349,6 +349,38 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 	})
 }
 
+func TestCreateTeam(t *testing.T) {
+	sqlStore := InitTestDB(t)
+
+	testOrgID := int64(1)
+	teamID := int64(1)
+	teamName := "team1"
+
+	t.Run("creating a team with a user defined ID it should succeeds", func(t *testing.T) {
+		team1, err := sqlStore.CreateTeamWithID(teamName, "", testOrgID, teamID)
+		require.NoError(t, err)
+		assert.Equal(t, team1.Id, teamID)
+
+		q := models.GetTeamByIdQuery{OrgId: testOrgID, Id: teamID}
+		err = sqlStore.GetTeamById(context.TODO(), &q)
+		require.NoError(t, err)
+		assert.Equal(t, q.Result.Id, teamID)
+		assert.Equal(t, q.Result.Name, teamName)
+
+		t.Run("creating a team with a reserved ID should fail", func(t *testing.T) {
+			_, err := sqlStore.CreateTeamWithID("team2", "", testOrgID, teamID)
+			require.Error(t, err)
+			assert.True(t, sqlStore.Dialect.IsPrimaryKeyConstrainViolation(err))
+		})
+
+		t.Run("creating a team with a sequential ID that is taken, it should succeed", func(t *testing.T) {
+			team, err := sqlStore.CreateTeam("team3", "", testOrgID)
+			fmt.Printf("<<<< %+v, %v", team, err)
+			require.NoError(t, err)
+		})
+	})
+}
+
 func TestSQLStore_SearchTeams(t *testing.T) {
 	type searchTeamsTestCase struct {
 		desc             string

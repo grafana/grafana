@@ -81,8 +81,24 @@ func (ss *SQLStore) CreateTeam(name, email string, orgID int64) (models.Team, er
 		Created: time.Now(),
 		Updated: time.Now(),
 	}
+	return ss.createTeam(team, true)
+}
+
+func (ss *SQLStore) CreateTeamWithID(name, email string, orgID int64, ID int64) (models.Team, error) {
+	team := models.Team{
+		Id: ID,
+		Name:    name,
+		Email:   email,
+		OrgId:   orgID,
+		Created: time.Now(),
+		Updated: time.Now(),
+	}
+	return ss.createTeam(team, false)
+}
+
+func (ss *SQLStore) createTeam(team models.Team, retryOnPrimaryKeyFailure bool) (models.Team, error) {
 	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
-		if isNameTaken, err := isTeamNameTaken(orgID, name, 0, sess); err != nil {
+		if isNameTaken, err := isTeamNameTaken(team.OrgId, team.Name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
 			return models.ErrTeamNameTaken
@@ -91,6 +107,16 @@ func (ss *SQLStore) CreateTeam(name, email string, orgID int64) (models.Team, er
 		_, err := sess.Insert(&team)
 		return err
 	})
+	// In PostgreSQL the sequence is not updated on explicit INSERTs with a provided value for an autoincremented column
+	// However, after the failure, the sequence is set to the current value; therefore, a subsequent INSERT succeeds.
+	// https://gist.github.com/zserge/694b0a1dfb76a7366d5000cda93ee2e5
+	if err != nil && ss.Dialect.IsPrimaryKeyConstrainViolation(err) && retryOnPrimaryKeyFailure {
+		// the new INSERT should occur in a new session since the above transaction is aborted because of the failure
+		err = ss.WithDbSession(context.Background(), func(sess *DBSession) error {
+			_, err = sess.Insert(&team)
+			return err
+		})
+	}
 	return team, err
 }
 

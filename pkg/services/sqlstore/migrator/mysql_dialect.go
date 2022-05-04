@@ -191,6 +191,10 @@ func (db *MySQLDialect) IsUniqueConstraintViolation(err error) bool {
 	return db.isThisError(err, mysqlerr.ER_DUP_ENTRY)
 }
 
+func (db *MySQLDialect) IsPrimaryKeyConstrainViolation(err error) bool {
+	return db.IsUniqueConstraintViolation(err)
+}
+
 func (db *MySQLDialect) ErrorMessage(err error) string {
 	var driverErr *mysql.MySQLError
 	if errors.As(err, &driverErr) {

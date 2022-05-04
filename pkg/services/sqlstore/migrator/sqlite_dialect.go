@@ -146,6 +146,10 @@ func (db *SQLite3) IsUniqueConstraintViolation(err error) bool {
 	return db.isThisError(err, int(sqlite3.ErrConstraintUnique))
 }
 
+func (db *SQLite3) IsPrimaryKeyConstrainViolation(err error) bool {
+	return db.isThisError(err, int(sqlite3.ErrConstraintPrimaryKey))
+}
+
 func (db *SQLite3) IsDeadlock(err error) bool {
 	return false // No deadlock
 }

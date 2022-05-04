@@ -58,6 +58,7 @@ type Dialect interface {
 	NoOpSQL() string
 
 	IsUniqueConstraintViolation(err error) bool
+	IsPrimaryKeyConstrainViolation(err error) bool
 	ErrorMessage(err error) string
 	IsDeadlock(err error) bool
 	Lock(LockCfg) error

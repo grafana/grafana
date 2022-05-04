@@ -48,6 +48,7 @@ type Store interface {
 	UpdateUserPermissions(userID int64, isAdmin bool) error
 	SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error
 	CreateTeam(name, email string, orgID int64) (models.Team, error)
+	CreateTeamWithID(name, email string, orgID int64, ID int64) (models.Team, error)
 	UpdateTeam(ctx context.Context, cmd *models.UpdateTeamCommand) error
 	DeleteTeam(ctx context.Context, cmd *models.DeleteTeamCommand) error
 	SearchTeams(ctx context.Context, query *models.SearchTeamsQuery) error
