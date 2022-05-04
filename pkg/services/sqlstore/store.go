@@ -19,6 +19,7 @@ type Store interface {
 	HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error
 	SearchDashboardSnapshots(ctx context.Context, query *models.GetDashboardSnapshotsQuery) error
 	GetOrgByName(name string) (*models.Org, error)
+	CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error
 	CreateOrgWithMember(name string, userID int64) (models.Org, error)
 	UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error
 	UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) error

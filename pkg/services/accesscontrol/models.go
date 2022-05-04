@@ -272,8 +272,8 @@ const (
 	GlobalOrgID        = 0
 	FixedRolePrefix    = "fixed:"
 	ManagedRolePrefix  = "managed:"
-	BasicRolePrefix    = "grafana:builtins:"
-	BasicRoleUIDPrefix = "grafana_builtins_"
+	BasicRolePrefix    = "basic:"
+	BasicRoleUIDPrefix = "basic_"
 	RoleGrafanaAdmin   = "Grafana Admin"
 
 	GeneralFolderUID = "general"

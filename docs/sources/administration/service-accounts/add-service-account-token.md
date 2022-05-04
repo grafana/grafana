@@ -7,20 +7,18 @@ weight: 60
 
 # Add a token to a service account in Grafana
 
-A service account token is a randomly generated string that external system use to authenticate into Grafana, and include specific permissions to interact with the Grafana HTTP APIs.
-For more information about service accounts, refer to [About service accounts in Grafana]({{< relref "./about-service-accounts.md">}}).
+A service account token is a generated random string that acts as an alternative to a password when authenticating with Grafana’s HTTP API. For more information about service accounts, refer to [About service accounts in Grafana]({{< relref "./about-service-accounts.md">}}).
 
-You can create a service account token using the Grafana UI or via the API. For more information about creating a service account token via the API, refer to [HTTP API Create service account token]({{< relref "../../http_api/serviceaccount.md#create-service-account-tokens">}}).
+You can create a service account token using the Grafana UI or via the API. For more information about creating a service account token via the API, refer to [Create service account tokens using the HTTP API]({{< relref "../../http_api/serviceaccount.md#create-service-account-tokens">}}).
 
 ## Before you begin
 
 - Ensure you have added the `serviceAccounts` feature toggle to Grafana. For more information about adding the feature toggle, refer to [Enable service accounts]({{< relref "./enable-service-accounts.md#">}}).
-- Ensure you have permission to create and edit service accounts. For more information about user roles, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#">}}).
-- [Create a service account in Grafana]({{< relref "./create-service-account.md#">}}).
+- Ensure you have permission to create and edit service accounts. By default, the organization administrator role is required to create and edit service accounts. For more information about user permissions, refer to [About users and permissions]({{< relref "../manage-users-and-permissions/about-users-and-permissions.md#">}}).
 
-**To add a token to a service account:**
+## To add a token to a service account
 
-1. Sign in to Grafana and hover your cursor over the organization icon in the sidebar.
+1. Sign in to Grafana, then hover your cursor over **Configuration** (the gear icon) in the sidebar.
 1. Click **Service accounts**.
 1. Click the service account to which you want to add a token.
 1. Click **Add token**.

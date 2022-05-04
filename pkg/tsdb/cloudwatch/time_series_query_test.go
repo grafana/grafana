@@ -13,13 +13,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestTimeSeriesQuery(t *testing.T) {
-	executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+	executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 	now := time.Now()
 
 	origNewCWClient := NewCWClient
@@ -54,7 +55,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -219,7 +220,7 @@ func Test_QueryData_response_data_frame_names(t *testing.T) {
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		return datasourceInfo{}, nil
 	})
-	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 	t.Run("where user defines search expression and alias is defined, then frame name prioritizes period and stat from expression over input", func(t *testing.T) {
 		query := newTestQuery(t, queryParameters{

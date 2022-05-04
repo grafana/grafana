@@ -1,35 +1,36 @@
 +++
 title = "Alerts"
-weight = 110
+weight = 455
+aliases = ["/docs/grafana/latest/alerting/"]
 +++
 
 # Grafana alerts
 
-Alerts allow you to learn about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
-
-Grafana 8.0 introduced new and improved alerting that centralizes alerting information in a single, searchable view. It allows you to:
+Grafana alerts allow you to learn about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services. It centralizes alerting information in a single, searchable view that allows you to:
 
 - Create and manage Grafana alerts
 - Create and manage Grafana Mimir and Loki managed alerts
 - View alerting information from Prometheus and Alertmanager compatible data sources
 
-Grafana alerting is enabled by default for new OSS installations. For older installations, it is still an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature.
+For new installations or existing installs without alerting configured, Grafana alerting is enabled by default.
 
-| Release                  | Cloud         | Enterprise    | OSS                              |
-| ------------------------ | ------------- | ------------- | -------------------------------- |
-| Grafana 8.2              | On by default | Opt-in        | Opt-in                           |
-| Grafana 8.3              | On by default | Opt-in        | On by default for new installs\* |
-| Grafana 9.0 (unreleased) | On by default | On by default | On by default                    |
+| Release     | Cloud         | Enterprise    | OSS           |
+| ----------- | ------------- | ------------- | ------------- |
+| Grafana 9.0 | On by default | On by default | On by default |
 
-> **Note:** New installs include existing installs which do not have any alerts configured.
+- For existing OSS installations with legacy dashboard alerting, you can [opt-in]({{< relref "./opt-in.md" >}}) to Grafana alerting.
+- For Grafana Cloud instances using legacy cloud alerting, contact customer support to migrate to Grafana alerting.
 
-Grafana alerting has four key components:
+Before you begin, we recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "./fundamentals/_index.md" >}}) of Grafana alerting. Refer to [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to learn more about controlling access to alerts using fine-grained permissions.
 
-- Alerting rule - Evaluation criteria that determine whether an alert will fire. It consists of one or more queries and expressions, a condition, the frequency of evaluation, and optionally, the duration over which the condition is met.
-- Contact point - Channel for sending notifications when the conditions of an alerting rule are met.
-- Notification policy - Set of matching and grouping criteria used to determine where and how frequently to send notifications.
-- Silences - Date and matching criteria used to silence notifications.
-
-To learn more, see [What's New with Grafana alerting]({{< relref "../alerting/unified-alerting/difference-old-new.md" >}}).
-
-For information on how to create and manage Grafana alerts and notifications, refer to [Overview of Grafana alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}) and [Create and manage Grafana alerting rules]({{< relref "./unified-alerting/alerting-rules/_index.md" >}}).
+- [What's new in Grafana alerting]({{< relref "./difference-old-new.md" >}})
+- [Enable Grafana alerting in OSS]({{< relref "./opt-in.md" >}})
+- [Migrating legacy alerts]({{< relref "./migrating-legacy-alerts.md" >}})
+- [Create Grafana managed alerting rules]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
+- [Create Grafana Mimir or Loki managed alerting rules]({{< relref "alerting-rules/create-mimir-loki-managed-rule.md" >}})
+- [View existing alerting rules and manage their current state]({{< relref "alerting-rules/rule-list.md" >}})
+- [View the state and health of alerting rules]({{< relref "./fundamentals/state-and-health.md" >}})
+- [View alert groupings]({{< relref "./alert-groups.md" >}})
+- [Add or edit an alert contact point]({{< relref "./contact-points.md" >}})
+- [Add or edit notification policies]({{< relref "./notifications/_index.md" >}})
+- [Add or edit silences]({{< relref "./silences.md" >}})
