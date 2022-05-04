@@ -100,10 +100,10 @@ describe('Stats Calculators', () => {
   it('should calculate unique values', () => {
     const stats = reduceField({
       field: createField('x', [1, 2, 2, 3, 1]),
-      reducers: [ReducerID.allUniqueValues],
+      reducers: [ReducerID.uniqueValues],
     });
 
-    expect(stats.allUniqueValues).toEqual([1, 2, 3]);
+    expect(stats.uniqueValues).toEqual([1, 2, 3]);
   });
 
   it('consistently check allIsNull/allIsZero', () => {
