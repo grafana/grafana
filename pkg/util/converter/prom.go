@@ -331,7 +331,7 @@ func readScalar(iter *jsoniter.Iterator) *backend.DataResponse {
 		timeField.Append(t)
 		valueField.Append(v)
 	}
-  
+
 	frame := data.NewFrame("", timeField, valueField)
 	frame.Meta = &data.FrameMeta{
 		Type: data.FrameTypeTimeSeriesMany,
