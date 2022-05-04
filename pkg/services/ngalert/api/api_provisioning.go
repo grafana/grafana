@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -33,7 +32,7 @@ type ContactPointService interface {
 
 type TemplateService interface {
 	GetTemplates(ctx context.Context, orgID int64) (map[string]string, error)
-	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.MessageTemplate, p alerting_models.Provenance) (definitions.MessageTemplate, error)
+	SetTemplate(ctx context.Context, orgID int64, tmpl apimodels.MessageTemplate, p alerting_models.Provenance) (apimodels.MessageTemplate, error)
 	DeleteTemplate(ctx context.Context, orgID int64, name string) error
 }
 
@@ -55,7 +54,6 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Re
 }
 
 func (srv *ProvisioningSrv) RoutePostPolicyTree(c *models.ReqContext, tree apimodels.Route) response.Response {
-	// TODO: lift validation out of definitions.Rotue.UnmarshalJSON and friends into a dedicated validator.
 	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgId, tree, alerting_models.ProvenanceAPI)
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
