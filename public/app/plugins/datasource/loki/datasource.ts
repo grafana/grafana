@@ -34,6 +34,7 @@ import {
   TimeRange,
   rangeUtil,
   toUtc,
+  QueryHint,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchError, getBackendSrv, config, DataSourceWithBackend } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
@@ -50,6 +51,7 @@ import { transformBackendResult } from './backendResultTransformer';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import LanguageProvider from './language_provider';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
+import { getQueryHints } from './query_hints';
 import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
 import { lokiResultsToTableModel, lokiStreamsToDataFrames, processRangeQueryResponse } from './result_transformer';
 import { sortDataFrameByTime } from './sortDataFrame';
@@ -78,7 +80,12 @@ const DEFAULT_QUERY_PARAMS: Partial<LokiRangeQueryRequest> = {
   query: '',
 };
 
-function makeRequest(query: LokiQuery, range: TimeRange, app: CoreApp, requestId: string): DataQueryRequest<LokiQuery> {
+export function makeRequest(
+  query: LokiQuery,
+  range: TimeRange,
+  app: CoreApp,
+  requestId: string
+): DataQueryRequest<LokiQuery> {
   const intervalInfo = rangeUtil.calculateInterval(range, 1);
   return {
     targets: [query],
@@ -544,6 +551,14 @@ export class LokiDatasource
         expression = this.addLabelToQuery(expression, action.key, action.value, '!=');
         break;
       }
+      case 'ADD_LOGFMT_PARSER': {
+        expression = this.addParserToQuery(expression, 'logfmt');
+        break;
+      }
+      case 'ADD_JSON_PARSER': {
+        expression = this.addParserToQuery(expression, 'json');
+        break;
+      }
       default:
         break;
     }
@@ -851,6 +866,49 @@ export class LokiDatasource
     }
   }
 
+  // TODO: This is currently not working, we should probably use parser here
+  addParserToQuery(query: string, parser: string): string {
+    const selectorRegexp = /(\$)?{([^{]*)}/g;
+    const parts = [];
+    let lastIndex = 0;
+    let suffix = '';
+
+    let match = selectorRegexp.exec(query);
+    /* 
+    There are 2 possible false positive scenarios: 
+    
+    1. We match Grafana's variables with ${ syntax - such as${__rate_s}. To filter these out we could use negative lookbehind,
+    but Safari browser currently doesn't support it. Therefore we need to hack this by creating 2 matching groups. 
+    (\$) is for the Grafana's variables and if we match it, we know this is not a stream selector and we don't want to add label.
+
+    2. Log queries can include {{.label}} syntax when line_format is used. We need to filter these out by checking
+    if match starts with "{."
+  */
+    while (match) {
+      const prefix = query.slice(lastIndex, match.index);
+      lastIndex = match.index + match[2].length + 2;
+      suffix = query.slice(match.index + match[0].length);
+
+      // Filtering our false positives
+      if (match[0].startsWith('{.') || match[1]) {
+        parts.push(prefix);
+        parts.push(match[0]);
+      } else {
+        // If we didn't match first group, we are inside selector and we want to add labels
+        const selector = match[0];
+        console.log(match);
+        console.log(match);
+        const selectorWithLabel = `${selector} | ${parser}`;
+        parts.push(prefix, selectorWithLabel);
+      }
+
+      match = selectorRegexp.exec(query);
+    }
+    parts.push(suffix);
+    console.log(parts);
+    return parts.join('');
+  }
+
   // Used when running queries through backend
   filterQuery(query: LokiQuery): boolean {
     if (query.hide || query.expr === '') {
@@ -877,6 +935,25 @@ export class LokiDatasource
 
   getVariables(): string[] {
     return this.templateSrv.getVariables().map((v) => `$${v.name}`);
+  }
+
+  async getLogSamples(expr: string): Promise<DataFrame[]> {
+    if (expr === '{}') {
+      return [];
+    }
+    const query: LokiQuery = {
+      expr,
+      queryType: LokiQueryType.Range,
+      refId: 'log-samples',
+      maxLines: 10,
+    };
+
+    const request = makeRequest(query, this.timeSrv.timeRange(), CoreApp.Explore, 'log-samples');
+    return await lastValueFrom(this.query(request).pipe(switchMap((res) => of(res.data))));
+  }
+
+  getQueryHints(query: LokiQuery, result: any[]): QueryHint[] {
+    return getQueryHints(query.expr, result, this);
   }
 }
 

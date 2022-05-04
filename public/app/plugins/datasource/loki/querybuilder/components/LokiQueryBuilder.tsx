@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { DataSourceApi, SelectableValue } from '@grafana/data';
+import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
 import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
@@ -11,6 +11,7 @@ import { LokiDatasource } from '../../datasource';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
+import { LokiQueryBuilderHints } from './LokiQueryBuilderHints';
 import { NestedQueryList } from './NestedQueryList';
 
 export interface Props {
@@ -19,9 +20,10 @@ export interface Props {
   onChange: (update: LokiVisualQuery) => void;
   onRunQuery: () => void;
   nested?: boolean;
+  data?: PanelData;
 }
 
-export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, onChange, onRunQuery }) => {
+export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, onChange, onRunQuery, data }) => {
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
@@ -95,6 +97,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, nested, 
           onRunQuery={onRunQuery}
           datasource={datasource as DataSourceApi}
         />
+        <LokiQueryBuilderHints datasource={datasource} query={query} onChange={onChange} data={data} />
       </OperationsEditorRow>
       {query.binaryQueries && query.binaryQueries.length > 0 && (
         <NestedQueryList query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
