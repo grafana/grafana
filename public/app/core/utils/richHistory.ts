@@ -125,7 +125,13 @@ export async function deleteQueryInRichHistory(id: string) {
   }
 }
 
-export async function migrateQueryHistoryFromLocalStorage(): Promise<boolean> {
+export enum LocalStorageMigrationStatus {
+  Successful = 'successful',
+  Failed = 'failed',
+  NotNeeded = 'not-needed',
+}
+
+export async function migrateQueryHistoryFromLocalStorage(): Promise<LocalStorageMigrationStatus> {
   const richHistoryLocalStorage = new RichHistoryLocalStorage();
   const richHistoryRemoteStorage = new RichHistoryRemoteStorage();
 
@@ -138,11 +144,14 @@ export async function migrateQueryHistoryFromLocalStorage(): Promise<boolean> {
       starred: false,
       to: 14,
     });
+    if (richHistory.length === 0) {
+      return LocalStorageMigrationStatus.NotNeeded;
+    }
     await richHistoryRemoteStorage.migrate(richHistory);
-    return true;
+    return LocalStorageMigrationStatus.Successful;
   } catch (error) {
     dispatch(notifyApp(createWarningNotification(`Query history migration failed. ${error.message}`)));
-    return false;
+    return LocalStorageMigrationStatus.Failed;
   }
 }
 

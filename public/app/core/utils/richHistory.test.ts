@@ -178,12 +178,23 @@ describe('richHistory', () => {
     });
   });
 
-  it('migration', async () => {
-    const history = [{ id: 'test' }, { id: 'test2' }];
+  describe('migration', () => {
+    beforeEach(() => {
+      richHistoryRemoteStorageMock.migrate.mockReset();
+    });
 
-    richHistoryLocalStorageMock.getRichHistory.mockReturnValue(history);
-    await migrateQueryHistoryFromLocalStorage();
-    expect(richHistoryRemoteStorageMock.migrate).toBeCalledWith(history);
+    it('migrates history', async () => {
+      const history = [{ id: 'test' }, { id: 'test2' }];
+
+      richHistoryLocalStorageMock.getRichHistory.mockReturnValue(history);
+      await migrateQueryHistoryFromLocalStorage();
+      expect(richHistoryRemoteStorageMock.migrate).toBeCalledWith(history);
+    });
+    it('does not migrate if there are no entries', async () => {
+      richHistoryLocalStorageMock.getRichHistory.mockReturnValue([]);
+      await migrateQueryHistoryFromLocalStorage();
+      expect(richHistoryRemoteStorageMock.migrate).not.toBeCalled();
+    });
   });
 
   describe('mapNumbertoTimeInSlider', () => {

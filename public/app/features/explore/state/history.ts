@@ -10,6 +10,7 @@ import {
   deleteQueryInRichHistory,
   getRichHistory,
   getRichHistorySettings,
+  LocalStorageMigrationStatus,
   migrateQueryHistoryFromLocalStorage,
   updateCommentInRichHistory,
   updateRichHistorySettings,
@@ -152,8 +153,8 @@ export const initRichHistory = (): ThunkResult<void> => {
     // the migration attempt happens only once per session, and the user is informed about the failure
     // in a way that can help with potential investigation.
     if (config.queryHistoryEnabled && !queriesMigrated && !migrationFailedDuringThisSession) {
-      const migrationSuccessful = await migrateQueryHistoryFromLocalStorage();
-      if (!migrationSuccessful) {
+      const migrationStatus = await migrateQueryHistoryFromLocalStorage();
+      if (migrationStatus === LocalStorageMigrationStatus.Failed) {
         dispatch(richHistoryMigrationFailedAction());
       } else {
         store.set(RICH_HISTORY_SETTING_KEYS.migrated, true);
