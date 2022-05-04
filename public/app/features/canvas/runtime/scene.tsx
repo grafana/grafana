@@ -140,18 +140,18 @@ export class Scene {
         currentSelectedElements[0].parent
       );
 
-      const framePlacement = this.generateGroupContainer(currentSelectedElements);
+      const groupPlacement = this.generateGroupContainer(currentSelectedElements);
 
-      newLayer.options.placement = framePlacement;
+      newLayer.options.placement = groupPlacement;
 
       currentSelectedElements.forEach((element: ElementState) => {
         const elementContainer = element.div?.getBoundingClientRect();
-        element.setPlacementFromConstraint(elementContainer, framePlacement as DOMRect);
+        element.setPlacementFromConstraint(elementContainer, groupPlacement as DOMRect);
         currentLayer.doAction(LayerActionID.Delete, element);
         newLayer.doAction(LayerActionID.Duplicate, element, false, false);
       });
 
-      newLayer.setPlacementFromConstraint(framePlacement as DOMRect, currentLayer.div?.getBoundingClientRect());
+      newLayer.setPlacementFromConstraint(groupPlacement as DOMRect, currentLayer.div?.getBoundingClientRect());
 
       currentLayer.elements.push(newLayer);
 

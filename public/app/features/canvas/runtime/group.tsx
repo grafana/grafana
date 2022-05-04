@@ -159,7 +159,7 @@ export class GroupState extends ElementState {
 
   render() {
     return (
-      <div key={this.UID} ref={this.initElement}>
+      <div key={this.UID} ref={this.initElement} style={{ overflow: 'hidden' }}>
         {this.elements.map((v) => v.render())}
       </div>
     );
