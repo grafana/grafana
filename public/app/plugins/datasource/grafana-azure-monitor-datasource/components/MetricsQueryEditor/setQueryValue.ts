@@ -218,6 +218,9 @@ export function setDimensionFilterValue<Key extends keyof AzureMetricDimension>(
   const newFilters = [...existingFilters];
   const newFilter = newFilters[index];
   newFilter[fieldName] = value;
+  if (fieldName === 'dimension' || fieldName === 'operator') {
+    newFilter.filters = [];
+  }
   return setDimensionFilters(query, newFilters);
 }
 
