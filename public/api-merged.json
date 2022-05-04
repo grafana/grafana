@@ -2217,7 +2217,7 @@
         }
       }
     },
-    "/alertmanager/{DatasourceID}/api/v2/alerts": {
+    "/alertmanager/{DatasourceUID}/api/v2/alerts": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": ["alertmanager"],
@@ -2265,10 +2265,9 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -2304,10 +2303,9 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -2328,7 +2326,7 @@
         }
       }
     },
-    "/alertmanager/{DatasourceID}/api/v2/alerts/groups": {
+    "/alertmanager/{DatasourceUID}/api/v2/alerts/groups": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": ["alertmanager"],
@@ -2376,10 +2374,9 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -2400,7 +2397,7 @@
         }
       }
     },
-    "/alertmanager/{DatasourceID}/api/v2/silence/{SilenceId}": {
+    "/alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId}": {
       "get": {
         "description": "get silence",
         "tags": ["alertmanager"],
@@ -2413,10 +2410,9 @@
             "required": true
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -2448,10 +2444,9 @@
             "required": true
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -2472,7 +2467,7 @@
         }
       }
     },
-    "/alertmanager/{DatasourceID}/api/v2/silences": {
+    "/alertmanager/{DatasourceUID}/api/v2/silences": {
       "get": {
         "description": "get silences",
         "tags": ["alertmanager"],
@@ -2488,10 +2483,9 @@
             "in": "query"
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -2524,10 +2518,9 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -2548,17 +2541,16 @@
         }
       }
     },
-    "/alertmanager/{DatasourceID}/api/v2/status": {
+    "/alertmanager/{DatasourceUID}/api/v2/status": {
       "get": {
         "description": "get alertmanager status and configuration",
         "tags": ["alertmanager"],
         "operationId": "RouteGetAMStatus",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -2579,17 +2571,16 @@
         }
       }
     },
-    "/alertmanager/{DatasourceID}/config/api/v1/alerts": {
+    "/alertmanager/{DatasourceUID}/config/api/v1/alerts": {
       "get": {
         "description": "gets an Alerting config",
         "tags": ["alertmanager"],
         "operationId": "RouteGetAlertingConfig",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -2622,10 +2613,9 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -2651,10 +2641,9 @@
         "operationId": "RouteDeleteAlertingConfig",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -2675,7 +2664,7 @@
         }
       }
     },
-    "/alertmanager/{DatasourceID}/config/api/v1/receivers/test": {
+    "/alertmanager/{DatasourceUID}/config/api/v1/receivers/test": {
       "post": {
         "tags": ["alertmanager"],
         "summary": "Test Grafana managed receivers without saving them.",
@@ -2689,10 +2678,9 @@
             }
           },
           {
-            "type": "integer",
-            "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
-            "name": "DatasourceID",
+            "type": "string",
+            "description": "DatasoureUID should be the datasource UID identifier",
+            "name": "DatasourceUID",
             "in": "path",
             "required": true
           }
@@ -4861,6 +4849,9 @@
           "200": {
             "$ref": "#/responses/queryDataResponse"
           },
+          "207": {
+            "$ref": "#/responses/queryDataResponse"
+          },
           "400": {
             "$ref": "#/responses/badRequestError"
           },
@@ -6742,7 +6733,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
+            "description": "DatasourceID should be the numeric datasource identifier",
             "name": "DatasourceID",
             "in": "path",
             "required": true
@@ -6767,7 +6758,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
+            "description": "DatasourceID should be the numeric datasource identifier",
             "name": "DatasourceID",
             "in": "path",
             "required": true
@@ -6918,6 +6909,39 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          }
+        }
+      }
+    },
+    "/provisioning/templates": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get all message templates.",
+        "operationId": "RouteGetTemplates",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/MessageTemplate"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/provisioning/templates/{ID}": {
+      "get": {
+        "tags": ["provisioning"],
+        "summary": "Get a message template.",
+        "operationId": "RouteGetTemplate",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/MessageTemplate"
+          },
+          "404": {
+            "$ref": "#/responses/NotFound"
           }
         }
       }
@@ -7680,7 +7704,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
+            "description": "DatasourceID should be the numeric datasource identifier",
             "name": "DatasourceID",
             "in": "path",
             "required": true
@@ -7717,7 +7741,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
+            "description": "DatasourceID should be the numeric datasource identifier",
             "name": "DatasourceID",
             "in": "path",
             "required": true
@@ -7747,7 +7771,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
+            "description": "DatasourceID should be the numeric datasource identifier",
             "name": "DatasourceID",
             "in": "path",
             "required": true
@@ -7783,7 +7807,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
+            "description": "DatasourceID should be the numeric datasource identifier",
             "name": "DatasourceID",
             "in": "path",
             "required": true
@@ -7815,7 +7839,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
+            "description": "DatasourceID should be the numeric datasource identifier",
             "name": "DatasourceID",
             "in": "path",
             "required": true
@@ -7850,7 +7874,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
+            "description": "DatasourceID should be the numeric datasource identifier",
             "name": "DatasourceID",
             "in": "path",
             "required": true
@@ -9651,7 +9675,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "description": "DatasourceID should be the numeric datasource id",
+            "description": "DatasourceID should be the numeric datasource identifier",
             "name": "DatasourceID",
             "in": "path",
             "required": true
@@ -10617,6 +10641,9 @@
     "ApiKeyDTO": {
       "type": "object",
       "properties": {
+        "accessControl": {
+          "$ref": "#/definitions/Metadata"
+        },
         "expiration": {
           "type": "string",
           "format": "date-time",
@@ -10638,7 +10665,7 @@
           "x-go-name": "Role"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "ApiRuleNode": {
       "type": "object",
@@ -12122,7 +12149,7 @@
           "type": "string",
           "x-go-name": "Name"
         },
-        "provanance": {
+        "provenance": {
           "type": "string",
           "x-go-name": "Provenance"
         },
@@ -12613,6 +12640,9 @@
         "name": {
           "type": "string",
           "x-go-name": "Name"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "secureFields": {
           "type": "object",
@@ -13222,6 +13252,10 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
+        },
         "data": {
           "$ref": "#/definitions/Json"
         },
@@ -13556,6 +13590,10 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
+        },
         "panelId": {
           "type": "integer",
           "format": "int64",
@@ -13732,7 +13770,7 @@
           "x-go-name": "SavedItems"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
     },
     "NewApiKeyResult": {
       "type": "object",
@@ -14219,6 +14257,10 @@
           "default": 0,
           "x-go-name": "HomeDashboardID"
         },
+        "homeDashboardUID": {
+          "type": "string",
+          "x-go-name": "HomeDashboardUID"
+        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
@@ -14323,6 +14365,10 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "DashboardId"
+        },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
         },
         "data": {
           "$ref": "#/definitions/Json"
@@ -14683,6 +14729,10 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "HomeDashboardID"
+        },
+        "homeDashboardUID": {
+          "type": "string",
+          "x-go-name": "HomeDashboardUID"
         },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
@@ -16429,8 +16479,9 @@
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -16463,7 +16514,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "github.com/prometheus/common/config"
+      "x-go-package": "net/url"
     },
     "UpdateAlertNotificationCommand": {
       "type": "object",
@@ -16775,6 +16826,10 @@
           "format": "int64",
           "default": 0,
           "x-go-name": "HomeDashboardID"
+        },
+        "homeDashboardUID": {
+          "type": "string",
+          "x-go-name": "HomeDashboardUID"
         },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
@@ -17352,6 +17407,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": ["alerts", "labels", "receiver"],
       "properties": {
@@ -17369,17 +17425,14 @@
         "receiver": {
           "$ref": "#/definitions/receiver"
         }
-      },
-      "x-go-name": "AlertGroup",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
-      },
-      "x-go-name": "AlertGroups",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "alertStatus": {
       "description": "AlertStatus alert status",
@@ -17542,6 +17595,7 @@
       }
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt", "id", "status", "updatedAt"],
       "properties": {
@@ -17584,17 +17638,14 @@
           "format": "date-time",
           "x-go-name": "UpdatedAt"
         }
-      },
-      "x-go-name": "GettableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
-      },
-      "x-go-name": "GettableSilences",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "labelSet": {
       "description": "LabelSet label set",
@@ -17714,6 +17765,7 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": ["comment", "createdBy", "endsAt", "matchers", "startsAt"],
       "properties": {
@@ -17747,12 +17799,9 @@
           "format": "date-time",
           "x-go-name": "StartsAt"
         }
-      },
-      "x-go-name": "PostableSilence",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+      }
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": ["name"],
       "properties": {
@@ -17761,7 +17810,9 @@
           "type": "string",
           "x-go-name": "Name"
         }
-      }
+      },
+      "x-go-name": "Receiver",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "silence": {
       "description": "Silence silence",

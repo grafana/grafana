@@ -49,6 +49,7 @@ import { addLabelToQuery } from './add_label_to_query';
 import { transformBackendResult } from './backendResultTransformer';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import LanguageProvider from './language_provider';
+import { escapeLabelValueInSelector } from './language_utils';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
 import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
 import { lokiResultsToTableModel, lokiStreamsToDataFrames, processRangeQueryResponse } from './result_transformer';
@@ -439,13 +440,13 @@ export class LokiDatasource
   }
 
   async metadataRequest(url: string, params?: Record<string, string | number>) {
-    if (config.featureToggles.lokiBackendMode) {
-      const res = await this.getResource(url, params);
-      return res.data || [];
-    } else {
-      const res = await lastValueFrom(this._request(url, params, { hideFromInspector: true }));
-      return res.data.data || [];
+    // url must not start with a `/`, otherwise the AJAX-request
+    // going from the browser will contain `//`, which can cause problems.
+    if (url.startsWith('/')) {
+      throw new Error(`invalid metadata request url: ${url}`);
     }
+    const res = await this.getResource(url, params);
+    return res.data || [];
   }
 
   async metricFindQuery(query: string) {
@@ -479,7 +480,7 @@ export class LokiDatasource
   }
 
   async labelNamesQuery() {
-    const url = `${LOKI_ENDPOINT}/labels`;
+    const url = 'labels';
     const params = this.getTimeRangeParams();
     const result = await this.metadataRequest(url, params);
     return result.map((value: string) => ({ text: value }));
@@ -487,7 +488,7 @@ export class LokiDatasource
 
   async labelValuesQuery(label: string) {
     const params = this.getTimeRangeParams();
-    const url = `${LOKI_ENDPOINT}/label/${label}/values`;
+    const url = `label/${label}/values`;
     const result = await this.metadataRequest(url, params);
     return result.map((value: string) => ({ text: value }));
   }
@@ -498,7 +499,7 @@ export class LokiDatasource
       ...timeParams,
       'match[]': expr,
     };
-    const url = `${LOKI_ENDPOINT}/series`;
+    const url = 'series';
     const streams = new Set();
     const result = await this.metadataRequest(url, params);
     result.forEach((stream: { [key: string]: string }) => {
@@ -825,10 +826,6 @@ export class LokiDatasource
     expr = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
       const { key, operator } = filter;
       let { value } = filter;
-      if (operator === '=~' || operator === '!~') {
-        value = lokiRegularEscape(value);
-      }
-
       return this.addLabelToQuery(acc, key, value, operator, true);
     }, expr);
 
@@ -843,11 +840,13 @@ export class LokiDatasource
     // Override to make sure that we use label as actual label and not parsed label
     notParsedLabelOverride?: boolean
   ) {
+    let escapedValue = escapeLabelValueInSelector(value.toString(), operator);
+
     if (queryHasPipeParser(queryExpr) && !isMetricsQuery(queryExpr) && !notParsedLabelOverride) {
       // If query has parser, we treat all labels as parsed and use | key="value" syntax
-      return addParsedLabelToQuery(queryExpr, key, value, operator);
+      return addParsedLabelToQuery(queryExpr, key, escapedValue, operator);
     } else {
-      return addLabelToQuery(queryExpr, key, value, operator, true);
+      return addLabelToQuery(queryExpr, key, escapedValue, operator, true);
     }
   }
 

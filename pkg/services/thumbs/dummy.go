@@ -11,6 +11,10 @@ import (
 // When the feature flag is not enabled we just implement a dummy service
 type dummyService struct{}
 
+func (ds *dummyService) GetUsageStats(ctx context.Context) map[string]interface{} {
+	return make(map[string]interface{})
+}
+
 func (ds *dummyService) GetImage(c *models.ReqContext) {
 	c.JSON(400, map[string]string{"error": "invalid size"})
 }

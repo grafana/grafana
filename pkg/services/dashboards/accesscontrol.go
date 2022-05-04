@@ -21,56 +21,63 @@ const (
 
 	ScopeDashboardsRoot   = "dashboards"
 	ScopeDashboardsPrefix = "dashboards:uid:"
+
+	ActionDashboardsCreate           = "dashboards:create"
+	ActionDashboardsRead             = "dashboards:read"
+	ActionDashboardsWrite            = "dashboards:write"
+	ActionDashboardsDelete           = "dashboards:delete"
+	ActionDashboardsPermissionsRead  = "dashboards.permissions:read"
+	ActionDashboardsPermissionsWrite = "dashboards.permissions:write"
 )
 
 var (
-	ScopeFoldersAll      = ac.GetResourceAllScope(ScopeFoldersRoot)
-	ScopeFoldersProvider = ac.NewScopeProvider(ScopeFoldersRoot)
+	ScopeFoldersProvider    = ac.NewScopeProvider(ScopeFoldersRoot)
+	ScopeFoldersAll         = ScopeFoldersProvider.GetResourceAllScope()
+	ScopeDashboardsProvider = ac.NewScopeProvider(ScopeDashboardsRoot)
+	ScopeDashboardsAll      = ScopeDashboardsProvider.GetResourceAllScope()
 )
 
-// NewNameScopeResolver provides an AttributeScopeResolver that is able to convert a scope prefixed with "folders:name:" into an uid based scope.
-func NewNameScopeResolver(db Store) (string, ac.AttributeScopeResolveFunc) {
+// NewFolderNameScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "folders:name:" into an uid based scope.
+func NewFolderNameScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeFoldersProvider.GetResourceScopeName("")
-	resolver := func(ctx context.Context, orgID int64, scope string) (string, error) {
+	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		if !strings.HasPrefix(scope, prefix) {
-			return "", ac.ErrInvalidScope
+			return nil, ac.ErrInvalidScope
 		}
 		nsName := scope[len(prefix):]
 		if len(nsName) == 0 {
-			return "", ac.ErrInvalidScope
+			return nil, ac.ErrInvalidScope
 		}
 		folder, err := db.GetFolderByTitle(ctx, orgID, nsName)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		return ScopeFoldersProvider.GetResourceScopeUID(folder.Uid), nil
-	}
-	return prefix, resolver
+		return []string{ScopeFoldersProvider.GetResourceScopeUID(folder.Uid)}, nil
+	})
 }
 
-// NewIDScopeResolver provides an AttributeScopeResolver that is able to convert a scope prefixed with "folders:id:" into an uid based scope.
-func NewIDScopeResolver(db Store) (string, ac.AttributeScopeResolveFunc) {
+// NewFolderIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "folders:id:" into an uid based scope.
+func NewFolderIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeFoldersProvider.GetResourceScope("")
-	resolver := func(ctx context.Context, orgID int64, scope string) (string, error) {
+	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		if !strings.HasPrefix(scope, prefix) {
-			return "", ac.ErrInvalidScope
+			return nil, ac.ErrInvalidScope
 		}
 
 		id, err := strconv.ParseInt(scope[len(prefix):], 10, 64)
 		if err != nil {
-			return "", ac.ErrInvalidScope
+			return nil, ac.ErrInvalidScope
 		}
 
 		if id == 0 {
-			return ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID), nil
+			return []string{ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)}, nil
 		}
 
 		folder, err := db.GetFolderByID(ctx, orgID, id)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		return ScopeFoldersProvider.GetResourceScopeUID(folder.Uid), nil
-	}
-	return prefix, resolver
+		return []string{ScopeFoldersProvider.GetResourceScopeUID(folder.Uid)}, nil
+	})
 }

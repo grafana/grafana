@@ -83,13 +83,7 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded, disabled }) 
             </div>
             <div className="gf-form">
               <InlineField label="Role">
-                <Select
-                  inputId="role-select"
-                  value={role}
-                  onChange={onRoleChange}
-                  options={ROLE_OPTIONS}
-                  menuShouldPortal
-                />
+                <Select inputId="role-select" value={role} onChange={onRoleChange} options={ROLE_OPTIONS} />
               </InlineField>
             </div>
             <div className="gf-form max-width-21">

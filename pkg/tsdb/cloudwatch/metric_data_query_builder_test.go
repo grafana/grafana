@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -10,7 +11,7 @@ import (
 func TestMetricDataQueryBuilder(t *testing.T) {
 	t.Run("buildMetricDataQuery", func(t *testing.T) {
 		t.Run("should use metric stat", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 			query := getBaseQuery()
 			query.MetricEditorMode = MetricEditorModeBuilder
 			query.MetricQueryType = MetricQueryTypeSearch
@@ -22,7 +23,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should use custom built expression", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 			query := getBaseQuery()
 			query.MetricEditorMode = MetricEditorModeBuilder
 			query.MetricQueryType = MetricQueryTypeSearch
@@ -34,7 +35,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should use sql expression", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 			query := getBaseQuery()
 			query.MetricEditorMode = MetricEditorModeRaw
 			query.MetricQueryType = MetricQueryTypeQuery
@@ -46,7 +47,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should use user defined math expression", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 			query := getBaseQuery()
 			query.MetricEditorMode = MetricEditorModeRaw
 			query.MetricQueryType = MetricQueryTypeSearch
@@ -58,7 +59,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should set period in user defined expression", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{})
+			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 			query := getBaseQuery()
 			query.MetricEditorMode = MetricEditorModeRaw
 			query.MetricQueryType = MetricQueryTypeSearch

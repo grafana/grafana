@@ -23,6 +23,8 @@ export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'descript
   /** Error message to display */
   error?: string | null;
   htmlFor?: string;
+  /** Make tooltip interactive */
+  interactive?: boolean;
 }
 
 export const InlineField: FC<Props> = ({
@@ -38,6 +40,7 @@ export const InlineField: FC<Props> = ({
   grow,
   error,
   transparent,
+  interactive,
   ...htmlProps
 }) => {
   const theme = useTheme2();
@@ -46,7 +49,13 @@ export const InlineField: FC<Props> = ({
 
   const labelElement =
     typeof label === 'string' ? (
-      <InlineLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId} transparent={transparent}>
+      <InlineLabel
+        interactive={interactive}
+        width={labelWidth}
+        tooltip={tooltip}
+        htmlFor={inputId}
+        transparent={transparent}
+      >
         {label}
       </InlineLabel>
     ) : (
