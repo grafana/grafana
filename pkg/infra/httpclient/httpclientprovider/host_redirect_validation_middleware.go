@@ -1,6 +1,7 @@
 package httpclientprovider
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -19,7 +20,7 @@ func RedirectLimitMiddleware(reqValidator models.PluginRequestValidator) sdkhttp
 			}
 			if res.StatusCode >= 300 && res.StatusCode < 400 {
 				location, locationErr := res.Location()
-				if locationErr == http.ErrNoLocation {
+				if errors.Is(locationErr, http.ErrNoLocation) {
 					return res, nil
 				}
 				if locationErr != nil {
