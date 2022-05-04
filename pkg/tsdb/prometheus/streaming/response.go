@@ -39,7 +39,7 @@ func metricNameFromLabels(f *data.Frame) string {
 	switch numLabels {
 	case 0:
 		if hasName {
-			return string(metricName)
+			return metricName
 		}
 		return "{}"
 	default:

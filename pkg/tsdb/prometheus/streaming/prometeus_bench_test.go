@@ -22,6 +22,7 @@ import (
 // - go tool pprof -http=localhost:6061 memprofile.out
 func BenchmarkJson(b *testing.B) {
 	body, q := createJsonTestData(1642000000, 1, 300, 400)
+	require.Equal(b, "A", string(body))
 	res := http.Response{
 		StatusCode: 200,
 		Body:       ioutil.NopCloser(bytes.NewReader(body)),
@@ -70,7 +71,7 @@ func createJsonTestData(start int64, step int64, timestampCount int, seriesCount
 	for i := 0; i < seriesCount; i++ {
 		allSeries = append(allSeries, makeJsonTestSeries(start, step, timestampCount, r, i))
 	}
-	bytes := []byte(fmt.Sprintf(`{"data":{"resultType":"matrix","result":[%v]},"status":"success"}`, strings.Join(allSeries, ",")))
+	bytes := []byte(fmt.Sprintf(`{"status":"success","data":{"resultType":"matrix","result":[%v]}}`, strings.Join(allSeries, ",")))
 
 	qm := query.Model{
 		RangeQuery: true,

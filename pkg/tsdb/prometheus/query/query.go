@@ -171,19 +171,6 @@ func interpolateVariables(model *Model, interval time.Duration, timeRange time.D
 	return expr
 }
 
-func deviation(values []float64) float64 {
-	var sum, mean, sd float64
-	valuesLen := float64(len(values))
-	for _, value := range values {
-		sum += value
-	}
-	mean = sum / valuesLen
-	for j := 0; j < len(values); j++ {
-		sd += math.Pow(values[j]-mean, 2)
-	}
-	return math.Sqrt(sd / (valuesLen - 1))
-}
-
 func isVariableInterval(interval string) bool {
 	if interval == varInterval || interval == varIntervalMs || interval == varRateInterval {
 		return true
