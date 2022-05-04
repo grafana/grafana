@@ -15,13 +15,14 @@ import (
 //   dashboards.validation-error
 //   dashboards.uid-already-exists
 type Base struct {
-	Reason    StatusReason
-	MessageID string
-	LogLevel  LogLevel
+	Reason        StatusReason
+	MessageID     string
+	PublicMessage string
+	LogLevel      LogLevel
 }
 
 // NewBase initializes a Base that is used to construct Error:s.
-func NewBase(reason StatusReason, msgID string, opts ...func(Base) Base) Base {
+func NewBase(reason StatusReason, msgID string, opts ...BaseOpt) Base {
 	b := Base{
 		Reason:    reason,
 		MessageID: msgID,
@@ -35,13 +36,26 @@ func NewBase(reason StatusReason, msgID string, opts ...func(Base) Base) Base {
 	return b
 }
 
+type BaseOpt func(Base) Base
+
 // WithLogLevel sets a custom log level for all errors instantiated from
 // this Base.
 //
-// Used as a functional option in NewBase.
-func WithLogLevel(lvl LogLevel) func(Base) Base {
+// Used as a functional option to NewBase.
+func WithLogLevel(lvl LogLevel) BaseOpt {
 	return func(b Base) Base {
 		b.LogLevel = lvl
+		return b
+	}
+}
+
+// WithPublicMessage sets the default public message that will be used
+// for errors based on this Base.
+//
+// Used as a functional option to NewBase.
+func WithPublicMessage(message string) BaseOpt {
+	return func(b Base) Base {
+		b.PublicMessage = message
 		return b
 	}
 }
@@ -53,11 +67,12 @@ func (b Base) Errorf(format string, args ...interface{}) Error {
 	err := fmt.Errorf(format, args...)
 
 	return Error{
-		Reason:     b.Reason,
-		LogMessage: err.Error(),
-		MessageID:  b.MessageID,
-		Underlying: errors.Unwrap(err),
-		LogLevel:   b.LogLevel,
+		Reason:        b.Reason,
+		LogMessage:    err.Error(),
+		PublicMessage: b.PublicMessage,
+		MessageID:     b.MessageID,
+		Underlying:    errors.Unwrap(err),
+		LogLevel:      b.LogLevel,
 	}
 }
 
@@ -73,6 +88,7 @@ type Error struct {
 	MessageID     string
 	LogMessage    string
 	Underlying    error
+	PublicMessage string
 	PublicPayload map[string]interface{}
 	LogLevel      LogLevel
 }
@@ -141,9 +157,20 @@ type PublicError struct {
 // Public returns a subset of the error with non-sensitive information
 // that may be relayed to the caller.
 func (e Error) Public() PublicError {
+	message := e.PublicMessage
+	if message == "" {
+		if e.Reason == StatusUnknown {
+			// The unknown status is equal to the empty string.
+			message = string(StatusInternal)
+		} else {
+			message = string(e.Reason.Status())
+		}
+	}
+
 	return PublicError{
 		StatusCode: e.Reason.Status().HTTPStatus(),
 		MessageID:  e.MessageID,
+		Message:    message,
 		Extra:      e.PublicPayload,
 	}
 }
