@@ -453,7 +453,7 @@ describe('LokiDatasource', () => {
         ]);
         await lastValueFrom(ds.query(options as any));
         expect(ds.runRangeQuery).toBeCalledWith(
-          { expr: 'rate({bar="baz",job="foo",k1=~"v.*",k2=~"v\\\\\'.*"} |= "bar" [5m])' },
+          { expr: 'rate({bar="baz",job="foo",k1=~"v\\\\.\\\\*",k2=~"v\'\\\\.\\\\*"} |= "bar" [5m])' },
           expect.anything()
         );
       });
@@ -767,6 +767,16 @@ describe('LokiDatasource', () => {
           expect(result.expr).toEqual('{bar="baz",job="grafana"}');
         });
 
+        it('then the correctly escaped label should be added for logs query', () => {
+          const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+          const action = { key: 'job', value: '\\test', type: 'ADD_FILTER' };
+          const ds = createLokiDSForTests();
+          const result = ds.modifyQuery(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('{bar="baz",job="\\\\test"}');
+        });
+
         it('then the correct label should be added for metrics query', () => {
           const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"}[5m])' };
           const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER' };
@@ -809,6 +819,16 @@ describe('LokiDatasource', () => {
 
           expect(result.refId).toEqual('A');
           expect(result.expr).toEqual('{bar="baz",job!="grafana"}');
+        });
+
+        it('then the correctly escaped label should be added for logs query', () => {
+          const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+          const action = { key: 'job', value: '"test', type: 'ADD_FILTER_OUT' };
+          const ds = createLokiDSForTests();
+          const result = ds.modifyQuery(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('{bar="baz",job!="\\"test"}');
         });
 
         it('then the correct label should be added for metrics query', () => {
