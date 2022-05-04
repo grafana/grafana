@@ -168,7 +168,10 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
             />
           </Field>
           {overrideGrouping && (
-            <Field label="Group by" description="Group alerts when you receive a notification based on labels.">
+            <Field
+              label="Group by"
+              description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the parent policy."
+            >
               <InputControl
                 render={({ field: { onChange, ref, ...field } }) => (
                   <MultiSelect
@@ -199,7 +202,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
             <>
               <Field
                 label="Group wait"
-                description="The waiting time until the initial notification is sent for a new group created by an incoming alert."
+                description="The waiting time until the initial notification is sent for a new group created by an incoming alert. If empty it will be inherited from the parent policy."
                 invalid={!!errors.groupWaitValue}
                 error={errors.groupWaitValue?.message}
               >
@@ -240,7 +243,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
               </Field>
               <Field
                 label="Group interval"
-                description="The waiting time to send a batch of new alerts for that group after the first notification was sent."
+                description="The waiting time to send a batch of new alerts for that group after the first notification was sent. If empty it will be inherited from the parent policy."
                 invalid={!!errors.groupIntervalValue}
                 error={errors.groupIntervalValue?.message}
               >
