@@ -126,7 +126,9 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
     this.deleteGroup();
     layer.elements.forEach((element: ElementState) => {
-      layer.parent?.doAction(LayerActionID.Duplicate, element, false);
+      const elementContainer = element.div?.getBoundingClientRect();
+      element.setPlacementFromConstraint(elementContainer, layer.parent?.div?.getBoundingClientRect());
+      layer.parent?.doAction(LayerActionID.Duplicate, element, false, false);
     });
   };
 
