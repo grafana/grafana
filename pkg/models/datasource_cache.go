@@ -376,7 +376,7 @@ func BlockRedirectRoundtripper(next http.RoundTripper) http.RoundTripper {
 		if resp.StatusCode >= 300 && resp.StatusCode < 400 {
 			redirectLocation, locationErr := resp.Location()
 			if locationErr == http.ErrNoLocation {
-				return resp, err
+				return resp, nil
 			}
 			if locationErr != nil {
 				return nil, locationErr
