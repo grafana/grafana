@@ -1,17 +1,16 @@
 import React, { FC } from 'react';
 
+import { DataSourceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { InlineField, InlineFieldRow, InlineSwitch, Input, LinkButton } from '@grafana/ui';
+import { InlineField, InlineSwitch, Input, LinkButton } from '@grafana/ui';
 
 export interface Props {
-  dataSourceName: string;
-  uid: string;
-  isDefault: boolean;
+  dataSource: DataSourceSettings;
   onNameChange: (name: string) => void;
   onDefaultChange: (value: boolean) => void;
 }
 
-const BasicSettings: FC<Props> = ({ dataSourceName, uid, isDefault, onDefaultChange, onNameChange }) => {
+const BasicSettings: FC<Props> = ({ dataSource, onDefaultChange, onNameChange }) => {
   return (
     <div className="gf-form-group" aria-label="Datasource settings page basic settings">
       <div className="gf-form-inline">
@@ -26,7 +25,7 @@ const BasicSettings: FC<Props> = ({ dataSourceName, uid, isDefault, onDefaultCha
             <Input
               id="basic-settings-name"
               type="text"
-              value={dataSourceName}
+              value={dataSource.name}
               placeholder="Name"
               onChange={(event) => onNameChange(event.currentTarget.value)}
               required
@@ -38,36 +37,39 @@ const BasicSettings: FC<Props> = ({ dataSourceName, uid, isDefault, onDefaultCha
         <InlineField label="Default" labelWidth={8}>
           <InlineSwitch
             id="basic-settings-default"
-            value={isDefault}
+            value={dataSource.isDefault}
             onChange={(event: React.FormEvent<HTMLInputElement>) => {
               onDefaultChange(event.currentTarget.checked);
             }}
           />
         </InlineField>
       </div>
-      <InlineFieldRow>
-        <InlineField
-          label="Identifer (uid)"
-          labelWidth={15}
-          tooltip="This is the logical id Grafana will use to refer to this data source in dashboard and query models"
-          grow
-          disabled
-        >
-          <Input
-            id="settings-uid"
-            type="text"
-            value={uid}
-            width={20}
-            placeholder="uid"
-            onChange={(event) => onNameChange(event.currentTarget.value)}
-            suffix={
-              <LinkButton fill="text" size="sm">
-                Change
-              </LinkButton>
-            }
-          />
-        </InlineField>
-      </InlineFieldRow>
+      <div className="gf-form-inline">
+        <div className="gf-form max-width-30">
+          <InlineField
+            label="Identifer (uid)"
+            labelWidth={15}
+            tooltip="This is the logical id Grafana will use to refer to this data source in dashboard and query models"
+            grow
+            disabled
+          >
+            <Input
+              id="settings-uid"
+              type="text"
+              value={dataSource.uid}
+              placeholder="uid"
+              onChange={(event) => onNameChange(event.currentTarget.value)}
+              suffix={
+                !dataSource.readOnly && (
+                  <LinkButton fill="text" size="sm">
+                    Change
+                  </LinkButton>
+                )
+              }
+            />
+          </InlineField>
+        </div>
+      </div>
     </div>
   );
 };
