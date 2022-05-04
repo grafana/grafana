@@ -392,7 +392,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 			svc := createService(ac, ruleStore, scheduler)
 
-			svc.provenanceStore.SetProvenance(context.Background(), rulesInFolder[0], orgID, models.ProvenanceAPI)
+			err := svc.provenanceStore.SetProvenance(context.Background(), rulesInFolder[0], orgID, models.ProvenanceAPI)
+			require.NoError(t, err)
 
 			request := createRequestContext(orgID, models2.ROLE_EDITOR, map[string]string{
 				":Namespace": folder.Title,
@@ -461,7 +462,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				ac := acMock.New().WithPermissions(createPermissionsForRules(rulesInFolder))
 				svc := createService(ac, ruleStore, scheduler)
 
-				svc.provenanceStore.SetProvenance(context.Background(), rulesInFolder[0], orgID, models.ProvenanceAPI)
+				err := svc.provenanceStore.SetProvenance(context.Background(), rulesInFolder[0], orgID, models.ProvenanceAPI)
+				require.NoError(t, err)
 
 				request := createRequestContext(orgID, "None", map[string]string{
 					":Namespace": folder.Title,
