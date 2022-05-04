@@ -221,7 +221,9 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery) (data.Frames,
 	frames := response.Frames
 
 	for _, frame := range frames {
-		err = adjustFrame(frame, query)
+		if err = adjustFrame(frame, query); err != nil {
+			return data.Frames{}, err
+		}
 		if err != nil {
 			return data.Frames{}, err
 		}
