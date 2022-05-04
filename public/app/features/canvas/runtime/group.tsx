@@ -82,7 +82,7 @@ export class GroupState extends ElementState {
 
   // ??? or should this be on the element directly?
   // are actions scoped to layers?
-  doAction = (action: LayerActionID, element: ElementState, updateName = true) => {
+  doAction = (action: LayerActionID, element: ElementState, updateName = true, shiftItemsOnDuplicate = true) => {
     switch (action) {
       case LayerActionID.Delete:
         this.elements = this.elements.filter((e) => e !== element);
@@ -97,47 +97,49 @@ export class GroupState extends ElementState {
         }
         const opts = cloneDeep(element.options);
 
-        const { constraint, placement: oldPlacement } = element.options;
-        const { vertical, horizontal } = constraint ?? {};
-        const placement = oldPlacement ?? ({} as Placement);
+        if (shiftItemsOnDuplicate) {
+          const { constraint, placement: oldPlacement } = element.options;
+          const { vertical, horizontal } = constraint ?? {};
+          const placement = oldPlacement ?? ({} as Placement);
 
-        switch (vertical) {
-          case VerticalConstraint.Top:
-          case VerticalConstraint.TopBottom:
-            if (placement.top == null) {
-              placement.top = 25;
-            } else {
-              placement.top += 10;
-            }
-            break;
-          case VerticalConstraint.Bottom:
-            if (placement.bottom == null) {
-              placement.bottom = 100;
-            } else {
-              placement.bottom -= 10;
-            }
-            break;
+          switch (vertical) {
+            case VerticalConstraint.Top:
+            case VerticalConstraint.TopBottom:
+              if (placement.top == null) {
+                placement.top = 25;
+              } else {
+                placement.top += 10;
+              }
+              break;
+            case VerticalConstraint.Bottom:
+              if (placement.bottom == null) {
+                placement.bottom = 100;
+              } else {
+                placement.bottom -= 10;
+              }
+              break;
+          }
+
+          switch (horizontal) {
+            case HorizontalConstraint.Left:
+            case HorizontalConstraint.LeftRight:
+              if (placement.left == null) {
+                placement.left = 50;
+              } else {
+                placement.left += 10;
+              }
+              break;
+            case HorizontalConstraint.Right:
+              if (placement.right == null) {
+                placement.right = 50;
+              } else {
+                placement.right -= 10;
+              }
+              break;
+          }
+
+          opts.placement = placement;
         }
-
-        switch (horizontal) {
-          case HorizontalConstraint.Left:
-          case HorizontalConstraint.LeftRight:
-            if (placement.left == null) {
-              placement.left = 50;
-            } else {
-              placement.left += 10;
-            }
-            break;
-          case HorizontalConstraint.Right:
-            if (placement.right == null) {
-              placement.right = 50;
-            } else {
-              placement.right -= 10;
-            }
-            break;
-        }
-
-        opts.placement = placement;
 
         const copy = new ElementState(element.item, opts, this);
         copy.updateData(this.scene.context);
@@ -157,7 +159,7 @@ export class GroupState extends ElementState {
 
   render() {
     return (
-      <div key={`${this.UID}/${this.revId}`} style={{ ...this.sizeStyle, ...this.dataStyle }}>
+      <div key={this.UID} ref={this.initElement} style={{ overflow: 'hidden' }}>
         {this.elements.map((v) => v.render())}
       </div>
     );

@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { CanvasGroupOptions, CanvasElementOptions } from 'app/features/canvas';
 
 import { GroupState } from './group';
@@ -31,5 +33,17 @@ export class RootElement extends GroupState {
       ...rest, // everything except placement & constraint
       elements: this.elements.map((v) => v.getSaveModel()),
     };
+  }
+
+  setRootRef = (target: HTMLDivElement) => {
+    this.div = target;
+  };
+
+  render() {
+    return (
+      <div key={this.UID} ref={this.setRootRef} style={{ ...this.sizeStyle, ...this.dataStyle }}>
+        {this.elements.map((v) => v.render())}
+      </div>
+    );
   }
 }

@@ -34,6 +34,7 @@ import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse'
 export const ExpressionDatasourceRef = Object.freeze({
   type: '__expr__',
   uid: '__expr__',
+  name: 'Expression',
 });
 
 /**

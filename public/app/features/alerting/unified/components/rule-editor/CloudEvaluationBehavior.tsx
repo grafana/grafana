@@ -11,7 +11,7 @@ import { timeOptions } from '../../utils/time';
 import { PreviewRule } from './PreviewRule';
 import { RuleEditorSection } from './RuleEditorSection';
 
-export const CloudConditionsStep: FC = () => {
+export const CloudEvaluationBehavior: FC = () => {
   const styles = useStyles(getStyles);
   const {
     register,
@@ -28,7 +28,7 @@ export const CloudConditionsStep: FC = () => {
   }
 
   return (
-    <RuleEditorSection stepNo={3} title="Define alert conditions">
+    <RuleEditorSection stepNo={2} title="Alert evaluation behavior">
       <Field label="For" description="Expression has to be true for this long for the alert to be fired.">
         <div className={styles.flexRow}>
           <Field invalid={!!errors.forTime?.message} error={errors.forTime?.message} className={styles.inlineField}>

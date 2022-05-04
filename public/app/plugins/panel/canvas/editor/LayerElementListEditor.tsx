@@ -55,10 +55,7 @@ export class LayerElementListEditor extends PureComponent<Props> {
         let selection: SelectionParams = { targets: [] };
         if (item instanceof GroupState) {
           const targetElements: HTMLDivElement[] = [];
-          item.elements.forEach((element: ElementState) => {
-            targetElements.push(element.div!);
-          });
-
+          targetElements.push(item?.div!);
           selection.targets = targetElements;
           selection.group = item;
           settings.scene.select(selection);
@@ -129,7 +126,9 @@ export class LayerElementListEditor extends PureComponent<Props> {
 
     this.deleteGroup();
     layer.elements.forEach((element: ElementState) => {
-      layer.parent?.doAction(LayerActionID.Duplicate, element, false);
+      const elementContainer = element.div?.getBoundingClientRect();
+      element.setPlacementFromConstraint(elementContainer, layer.parent?.div?.getBoundingClientRect());
+      layer.parent?.doAction(LayerActionID.Duplicate, element, false, false);
     });
   };
 
