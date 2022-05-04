@@ -91,10 +91,12 @@ type GetPlaylistsQuery struct {
 
 type GetPlaylistByUidQuery struct {
 	Uid    string
+	OrgId  int64
 	Result *Playlist
 }
 
 type GetPlaylistItemsByUidQuery struct {
 	PlaylistUid string
+	OrgId       int64
 	Result      *[]PlaylistItem
 }
