@@ -346,7 +346,6 @@ func TestPluginManager_registeredPlugins(t *testing.T) {
 
 		decommissionedPlugin, _ := createPlugin(t, testPluginID, plugins.External, true, func(p *plugins.Plugin) {
 			p.Backend = true
-
 			err := p.Decommission()
 			require.NoError(t, err)
 		})
@@ -634,7 +633,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 		manager: manager,
 	}
 
-	ctx.plugin, ctx.pluginClient = createPlugin(t, testPluginID, plugins.Core, managed, func(p *plugins.Plugin) {
+	ctx.plugin, ctx.pluginClient = createPlugin(t, testPluginID, plugins.External, managed, func(p *plugins.Plugin) {
 		p.Backend = true
 	})
 
