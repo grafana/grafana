@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -68,6 +69,20 @@ func ScopePrefix(scope string) string {
 		parts = append(parts[:maxPrefixParts], "")
 	}
 	return strings.Join(parts, ":")
+}
+
+// ScopeIDAttribute tries to parse the id part of a scope
+func ScopeIDAttribute(scope string) (int64, error) {
+	id, err := strconv.ParseInt(scope[strings.LastIndex(scope, ":")+1:], 10, 64)
+	if err != nil {
+		return 0, ErrInvalidScope
+	}
+	return id, nil
+}
+
+// ScopeUIDAttribute tries to parse the uid part of a scope
+func ScopeUIDAttribute(scope string) (string, error) {
+	return scope[strings.LastIndex(scope, ":")+1:], nil
 }
 
 // ScopeProvider provides methods that construct scopes
