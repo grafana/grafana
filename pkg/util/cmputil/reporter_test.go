@@ -34,8 +34,6 @@ func testStructDiff(left, right testStruct) DiffReport {
 	ops := make([]cmp.Option, 0, 4)
 	ops = append(ops, cmp.Reporter(&reporter))
 	cmp.Equal(left, right, ops...)
-	// TODO DO NOT COMMIT
-	println(reporter.Diffs.String())
 	return reporter.Diffs
 }
 
