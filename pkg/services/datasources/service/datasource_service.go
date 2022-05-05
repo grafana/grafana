@@ -68,8 +68,8 @@ func ProvideService(
 		ac:                 ac,
 	}
 
-	ac.RegisterAttributeScopeResolver(NewNameScopeResolver(store))
-	ac.RegisterAttributeScopeResolver(NewIDScopeResolver(store))
+	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
+	ac.RegisterScopeAttributeResolver(NewIDScopeResolver(store))
 
 	return s
 }
@@ -82,55 +82,55 @@ type DataSourceRetriever interface {
 
 const secretType = "datasource"
 
-// NewNameScopeResolver provides an AttributeScopeResolver able to
+// NewNameScopeResolver provides an ScopeAttributeResolver able to
 // translate a scope prefixed with "datasources:name:" into an uid based scope.
-func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
+func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAttributeResolver) {
 	prefix := datasources.ScopeProvider.GetResourceScopeName("")
-	return prefix, func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+	return prefix, accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
 		if !strings.HasPrefix(initialScope, prefix) {
-			return "", accesscontrol.ErrInvalidScope
+			return nil, accesscontrol.ErrInvalidScope
 		}
 
 		dsName := initialScope[len(prefix):]
 		if dsName == "" {
-			return "", accesscontrol.ErrInvalidScope
+			return nil, accesscontrol.ErrInvalidScope
 		}
 
 		query := models.GetDataSourceQuery{Name: dsName, OrgId: orgID}
 		if err := db.GetDataSource(ctx, &query); err != nil {
-			return "", err
+			return nil, err
 		}
 
-		return datasources.ScopeProvider.GetResourceScopeUID(query.Result.Uid), nil
-	}
+		return []string{datasources.ScopeProvider.GetResourceScopeUID(query.Result.Uid)}, nil
+	})
 }
 
-// NewIDScopeResolver provides an AttributeScopeResolver able to
+// NewIDScopeResolver provides an ScopeAttributeResolver able to
 // translate a scope prefixed with "datasources:id:" into an uid based scope.
-func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.AttributeScopeResolveFunc) {
+func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAttributeResolver) {
 	prefix := datasources.ScopeProvider.GetResourceScope("")
-	return prefix, func(ctx context.Context, orgID int64, initialScope string) (string, error) {
+	return prefix, accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
 		if !strings.HasPrefix(initialScope, prefix) {
-			return "", accesscontrol.ErrInvalidScope
+			return nil, accesscontrol.ErrInvalidScope
 		}
 
 		id := initialScope[len(prefix):]
 		if id == "" {
-			return "", accesscontrol.ErrInvalidScope
+			return nil, accesscontrol.ErrInvalidScope
 		}
 
 		dsID, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
-			return "", accesscontrol.ErrInvalidScope
+			return nil, accesscontrol.ErrInvalidScope
 		}
 
 		query := models.GetDataSourceQuery{Id: dsID, OrgId: orgID}
 		if err := db.GetDataSource(ctx, &query); err != nil {
-			return "", err
+			return nil, err
 		}
 
-		return datasources.ScopeProvider.GetResourceScopeUID(query.Result.Uid), nil
-	}
+		return []string{datasources.ScopeProvider.GetResourceScopeUID(query.Result.Uid)}, nil
+	})
 }
 
 func (s *Service) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
@@ -192,16 +192,17 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSo
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 	var err error
-	secret, err := json.Marshal(cmd.SecureJsonData)
-	if err != nil {
-		return err
-	}
 
 	query := &models.GetDataSourceQuery{
 		Id:    cmd.Id,
 		OrgId: cmd.OrgId,
 	}
 	err = s.SQLStore.GetDataSource(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	err = s.fillWithSecureJSONData(ctx, cmd, query.Result)
 	if err != nil {
 		return err
 	}
@@ -216,6 +217,11 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSo
 		if err != nil {
 			return err
 		}
+	}
+
+	secret, err := json.Marshal(cmd.SecureJsonData)
+	if err != nil {
+		return err
 	}
 
 	return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
@@ -558,4 +564,23 @@ func awsServiceNamespace(dsType string) string {
 	default:
 		panic(fmt.Sprintf("Unsupported datasource %q", dsType))
 	}
+}
+
+func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *models.UpdateDataSourceCommand, ds *models.DataSource) error {
+	decrypted, err := s.DecryptedValues(ctx, ds)
+	if err != nil {
+		return err
+	}
+
+	if cmd.SecureJsonData == nil {
+		cmd.SecureJsonData = make(map[string]string)
+	}
+
+	for k, v := range decrypted {
+		if _, ok := cmd.SecureJsonData[k]; !ok {
+			cmd.SecureJsonData[k] = v
+		}
+	}
+
+	return nil
 }

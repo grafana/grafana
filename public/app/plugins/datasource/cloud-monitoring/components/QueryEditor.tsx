@@ -80,7 +80,6 @@ export class QueryEditor extends PureComponent<Props> {
           htmlFor={`${query.refId}-query-type`}
         >
           <Select
-            menuShouldPortal
             width={SELECT_WIDTH}
             value={queryType}
             options={QUERY_TYPES}

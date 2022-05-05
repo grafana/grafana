@@ -67,10 +67,9 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:            "panelTitleSearch",
-			Description:     "Search for dashboards using panel title",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true, // only supported in dev mode right now
+			Name:        "panelTitleSearch",
+			Description: "Search for dashboards using panel title",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:         "tempoSearch",
@@ -176,11 +175,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:        "saveDashboardDrawer",
-			Description: "Use a drawer to show save dashboard dialog",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
 			State:       FeatureStateAlpha,
@@ -243,7 +237,19 @@ var (
 			State:       FeatureStateStable,
 		},
 		{
-			Name:            "coremodelValidation",
+			Name:        "datasourceQueryMultiStatus",
+			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:            "azureMonitorExperimentalUI",
+			Description:     "Use grafana-experimental UI in Azure Monitor",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+			FrontendOnly:    true,
+		},
+		{
+    	Name:            "coremodelValidation",
 			Description:     "Validate objects (e.g. dashboards) against coremodel schemas",
 			State:           FeatureStateAlpha,
 			RequiresRestart: true,
