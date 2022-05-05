@@ -87,13 +87,6 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, oau
 
 	addOauthHeader(req, oauthToken)
 
-	// NOTE:
-	// 1. we are missing "dynamic" http params, like OAuth data.
-	// this never worked before (and it is not needed for alerting scenarios),
-	// so it is not a regression.
-	// twe need to have that when we migrate to backend-queries.
-	//
-
 	if query.VolumeQuery {
 		req.Header.Set("X-Query-Tags", "Source=logvolhist")
 	}
