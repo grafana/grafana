@@ -16,7 +16,7 @@ export const palette = {
   darkBorder2: '#64646B',
 
   // Dashboard bg / layer 0 (light theme)
-  gray90: '#F4F5F5',
+  gray90: '#FFFFFF',
   // Card bg / layer 1
   gray100: '#F4F5F5',
   // divider line
