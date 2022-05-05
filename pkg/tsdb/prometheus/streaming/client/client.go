@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/query"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
 type doer interface {
@@ -27,7 +27,7 @@ func NewClient(d doer, method, baseUrl string) *Client {
 	return &Client{doer: d, method: method, baseUrl: baseUrl}
 }
 
-func (c *Client) QueryRange(ctx context.Context, q *query.Query) (*http.Response, error) {
+func (c *Client) QueryRange(ctx context.Context, q *models.Query) (*http.Response, error) {
 	u, err := url.ParseRequestURI(c.baseUrl)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (c *Client) QueryRange(ctx context.Context, q *query.Query) (*http.Response
 	return c.fetch(ctx, u, qs)
 }
 
-func (c *Client) QueryInstant(ctx context.Context, q *query.Query) (*http.Response, error) {
+func (c *Client) QueryInstant(ctx context.Context, q *models.Query) (*http.Response, error) {
 	u, err := url.ParseRequestURI(c.baseUrl)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (c *Client) QueryInstant(ctx context.Context, q *query.Query) (*http.Respon
 	return c.fetch(ctx, u, qs)
 }
 
-func (c *Client) QueryExemplars(ctx context.Context, q *query.Query) (*http.Response, error) {
+func (c *Client) QueryExemplars(ctx context.Context, q *models.Query) (*http.Response, error) {
 	u, err := url.ParseRequestURI(c.baseUrl)
 	if err != nil {
 		return nil, err
