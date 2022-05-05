@@ -4,7 +4,7 @@
   "id": "jaeger",
   "category": "tracing",
 
-  "metrics": false,
+  "metrics": true,
   "alerting": false,
   "annotations": false,
   "logs": false,

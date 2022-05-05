@@ -1,19 +1,25 @@
-import { appendTransformer } from './transformers/append';
-import { reduceTransformer } from './transformers/reduce';
 import { calculateFieldTransformer } from './transformers/calculateField';
+import { concatenateTransformer } from './transformers/concat';
+import { convertFieldTypeTransformer } from './transformers/convertFieldType';
+import { ensureColumnsTransformer } from './transformers/ensureColumns';
 import { filterFieldsTransformer, filterFramesTransformer } from './transformers/filter';
 import { filterFieldsByNameTransformer } from './transformers/filterByName';
-import { noopTransformer } from './transformers/noop';
 import { filterFramesByRefIdTransformer } from './transformers/filterByRefId';
+import { filterByValueTransformer } from './transformers/filterByValue';
+import { groupByTransformer } from './transformers/groupBy';
+import { groupingToMatrixTransformer } from './transformers/groupingToMatrix';
+import { histogramTransformer } from './transformers/histogram';
+import { labelsToFieldsTransformer } from './transformers/labelsToFields';
+import { mergeTransformer } from './transformers/merge';
+import { noopTransformer } from './transformers/noop';
 import { orderFieldsTransformer } from './transformers/order';
 import { organizeFieldsTransformer } from './transformers/organize';
+import { reduceTransformer } from './transformers/reduce';
+import { renameFieldsTransformer } from './transformers/rename';
+import { renameByRegexTransformer } from './transformers/renameByRegex';
 import { seriesToColumnsTransformer } from './transformers/seriesToColumns';
 import { seriesToRowsTransformer } from './transformers/seriesToRows';
-import { renameFieldsTransformer } from './transformers/rename';
-import { labelsToFieldsTransformer } from './transformers/labelsToFields';
-import { ensureColumnsTransformer } from './transformers/ensureColumns';
-import { groupByTransformer } from './transformers/groupBy';
-import { mergeTransformer } from './transformers/merge';
+import { sortByTransformer } from './transformers/sortBy';
 
 export const standardTransformers = {
   noopTransformer,
@@ -21,10 +27,11 @@ export const standardTransformers = {
   filterFieldsByNameTransformer,
   filterFramesTransformer,
   filterFramesByRefIdTransformer,
+  filterByValueTransformer,
   orderFieldsTransformer,
   organizeFieldsTransformer,
-  appendTransformer,
   reduceTransformer,
+  concatenateTransformer,
   calculateFieldTransformer,
   seriesToColumnsTransformer,
   seriesToRowsTransformer,
@@ -32,5 +39,10 @@ export const standardTransformers = {
   labelsToFieldsTransformer,
   ensureColumnsTransformer,
   groupByTransformer,
+  sortByTransformer,
   mergeTransformer,
+  renameByRegexTransformer,
+  histogramTransformer,
+  convertFieldTypeTransformer,
+  groupingToMatrixTransformer,
 };

@@ -3,68 +3,155 @@ package influxdb
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type ResponseParser struct{}
 
 var (
-	legendFormat *regexp.Regexp
+	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$([\@\w-]+?)*`)
 )
 
-func init() {
-	legendFormat = regexp.MustCompile(`\[\[(\w+)(\.\w+)*\]\]*|\$\s*(\w+?)*`)
-}
+func (rp *ResponseParser) Parse(buf io.ReadCloser, queries []Query) *backend.QueryDataResponse {
+	resp := backend.NewQueryDataResponse()
 
-func (rp *ResponseParser) Parse(response *Response, query *Query) *tsdb.QueryResult {
-	queryRes := tsdb.NewQueryResult()
+	response, jsonErr := parseJSON(buf)
+	if jsonErr != nil {
+		resp.Responses["A"] = backend.DataResponse{Error: jsonErr}
+		return resp
+	}
 
-	for _, result := range response.Results {
-		queryRes.Series = append(queryRes.Series, rp.transformRows(result.Series, queryRes, query)...)
-		if result.Err != nil {
-			queryRes.Error = result.Err
+	if response.Error != "" {
+		resp.Responses["A"] = backend.DataResponse{Error: fmt.Errorf(response.Error)}
+		return resp
+	}
+
+	for i, result := range response.Results {
+		if result.Error != "" {
+			resp.Responses[queries[i].RefID] = backend.DataResponse{Error: fmt.Errorf(result.Error)}
+		} else {
+			resp.Responses[queries[i].RefID] = backend.DataResponse{Frames: transformRows(result.Series, queries[i])}
 		}
 	}
 
-	return queryRes
+	return resp
 }
 
-func (rp *ResponseParser) transformRows(rows []Row, queryResult *tsdb.QueryResult, query *Query) tsdb.TimeSeriesSlice {
-	var result tsdb.TimeSeriesSlice
-	for _, row := range rows {
-		for columnIndex, column := range row.Columns {
-			if column == "time" {
-				continue
-			}
+func parseJSON(buf io.ReadCloser) (Response, error) {
+	var response Response
+	dec := json.NewDecoder(buf)
+	dec.UseNumber()
 
-			var points tsdb.TimeSeriesPoints
+	err := dec.Decode(&response)
+	return response, err
+}
+
+func transformRows(rows []Row, query Query) data.Frames {
+	frames := data.Frames{}
+	for _, row := range rows {
+		var hasTimeCol = false
+
+		for _, column := range row.Columns {
+			if strings.ToLower(column) == "time" {
+				hasTimeCol = true
+			}
+		}
+
+		if !hasTimeCol {
+			var values []string
+
 			for _, valuePair := range row.Values {
-				point, err := rp.parseTimepoint(valuePair, columnIndex)
-				if err == nil {
-					points = append(points, point)
+				if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
+					if len(valuePair) >= 2 {
+						values = append(values, valuePair[1].(string))
+					}
+				} else {
+					if len(valuePair) >= 1 {
+						values = append(values, valuePair[0].(string))
+					}
 				}
 			}
-			result = append(result, &tsdb.TimeSeries{
-				Name:   rp.formatSeriesName(row, column, query),
-				Points: points,
-				Tags:   row.Tags,
-			})
+
+			field := data.NewField("value", nil, values)
+			frames = append(frames, data.NewFrame(row.Name, field))
+		} else {
+			for colIndex, column := range row.Columns {
+				if column == "time" {
+					continue
+				}
+
+				var timeArray []time.Time
+				var floatArray []*float64
+				var stringArray []string
+				var boolArray []bool
+				valType := typeof(row.Values, colIndex)
+				name := formatFrameName(row, column, query)
+
+				for _, valuePair := range row.Values {
+					timestamp, timestampErr := parseTimestamp(valuePair[0])
+					// we only add this row if the timestamp is valid
+					if timestampErr == nil {
+						timeArray = append(timeArray, timestamp)
+						if valType == "string" {
+							value := valuePair[colIndex].(string)
+							stringArray = append(stringArray, value)
+						} else if valType == "json.Number" {
+							value := parseNumber(valuePair[colIndex])
+							floatArray = append(floatArray, value)
+						} else if valType == "bool" {
+							value := valuePair[colIndex].(bool)
+							boolArray = append(boolArray, value)
+						} else if valType == "null" {
+							floatArray = append(floatArray, nil)
+						}
+					}
+				}
+
+				timeField := data.NewField("time", nil, timeArray)
+				if valType == "string" {
+					valueField := data.NewField("value", row.Tags, stringArray)
+					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+				} else if valType == "json.Number" {
+					valueField := data.NewField("value", row.Tags, floatArray)
+					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+				} else if valType == "bool" {
+					valueField := data.NewField("value", row.Tags, boolArray)
+					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+				} else if valType == "null" {
+					valueField := data.NewField("value", row.Tags, floatArray)
+					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
+				}
+			}
 		}
 	}
 
-	return result
+	return frames
 }
 
-func (rp *ResponseParser) formatSeriesName(row Row, column string, query *Query) string {
-	if query.Alias == "" {
-		return rp.buildSeriesNameFromQuery(row, column)
+func newDataFrame(name string, queryString string, timeField *data.Field, valueField *data.Field) *data.Frame {
+	frame := data.NewFrame(name, timeField, valueField)
+	frame.Meta = &data.FrameMeta{
+		ExecutedQueryString: queryString,
 	}
 
+	return frame
+}
+
+func formatFrameName(row Row, column string, query Query) string {
+	if query.Alias == "" {
+		return buildFrameNameFromQuery(row, column)
+	}
 	nameSegment := strings.Split(row.Name, ".")
 
 	result := legendFormat.ReplaceAllFunc([]byte(query.Alias), func(in []byte) []byte {
@@ -81,7 +168,7 @@ func (rp *ResponseParser) formatSeriesName(row Row, column string, query *Query)
 		}
 
 		pos, err := strconv.Atoi(aliasFormat)
-		if err == nil && len(nameSegment) >= pos {
+		if err == nil && len(nameSegment) > pos {
 			return []byte(nameSegment[pos])
 		}
 
@@ -101,7 +188,7 @@ func (rp *ResponseParser) formatSeriesName(row Row, column string, query *Query)
 	return string(result)
 }
 
-func (rp *ResponseParser) buildSeriesNameFromQuery(row Row, column string) string {
+func buildFrameNameFromQuery(row Row, column string) string {
 	var tags []string
 	for k, v := range row.Tags {
 		tags = append(tags, fmt.Sprintf("%s: %s", k, v))
@@ -115,36 +202,53 @@ func (rp *ResponseParser) buildSeriesNameFromQuery(row Row, column string) strin
 	return fmt.Sprintf("%s.%s%s", row.Name, column, tagText)
 }
 
-func (rp *ResponseParser) parseTimepoint(valuePair []interface{}, valuePosition int) (tsdb.TimePoint, error) {
-	value := rp.parseValue(valuePair[valuePosition])
-
-	timestampNumber, ok := valuePair[0].(json.Number)
+func parseTimestamp(value interface{}) (time.Time, error) {
+	timestampNumber, ok := value.(json.Number)
 	if !ok {
-		return tsdb.TimePoint{}, fmt.Errorf("valuePair[0] has invalid type: %#v", valuePair[0])
+		return time.Time{}, fmt.Errorf("timestamp-value has invalid type: %#v", value)
 	}
-	timestamp, err := timestampNumber.Float64()
+	timestampFloat, err := timestampNumber.Float64()
 	if err != nil {
-		return tsdb.TimePoint{}, err
+		return time.Time{}, err
 	}
 
-	return tsdb.NewTimePoint(value, timestamp), nil
+	// currently in the code the influxdb-timestamps are requested with
+	// seconds-precision, meaning these values are seconds
+	t := time.Unix(int64(timestampFloat), 0).UTC()
+
+	return t, nil
 }
 
-func (rp *ResponseParser) parseValue(value interface{}) null.Float {
+func typeof(values [][]interface{}, colIndex int) string {
+	for _, value := range values {
+		if value != nil && value[colIndex] != nil {
+			return fmt.Sprintf("%T", value[colIndex])
+		}
+	}
+	return "null"
+}
+
+func parseNumber(value interface{}) *float64 {
+	// NOTE: we use pointers-to-float64 because we need
+	// to represent null-json-values. they come for example
+	// when we do a group-by with fill(null)
+
+	if value == nil {
+		// this is what json-nulls become
+		return nil
+	}
+
 	number, ok := value.(json.Number)
 	if !ok {
-		return null.FloatFromPtr(nil)
+		// in the current inmplementation, errors become nils
+		return nil
 	}
 
 	fvalue, err := number.Float64()
-	if err == nil {
-		return null.FloatFrom(fvalue)
+	if err != nil {
+		// in the current inmplementation, errors become nils
+		return nil
 	}
 
-	ivalue, err := number.Int64()
-	if err == nil {
-		return null.FloatFrom(float64(ivalue))
-	}
-
-	return null.FloatFromPtr(nil)
+	return &fvalue
 }

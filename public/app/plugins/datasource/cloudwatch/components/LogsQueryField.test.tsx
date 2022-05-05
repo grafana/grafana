@@ -1,24 +1,50 @@
-import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { shallow } from 'enzyme';
-import { CloudWatchLogsQueryField } from './LogsQueryField';
-import { ExploreId } from '../../../../types';
-import { DescribeLogGroupsRequest } from '../types';
+import _, { DebouncedFunc } from 'lodash'; // eslint-disable-line lodash/import-scope
+import React from 'react';
+import { act } from 'react-dom/test-utils';
+
 import { SelectableValue } from '@grafana/data';
 
-jest.mock('lodash/debounce', () => {
-  const fakeDebounce = (func: () => any, period: number) => func;
-  return fakeDebounce;
-});
+import { ExploreId } from '../../../../types';
+import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
+import { DescribeLogGroupsRequest } from '../types';
+
+import { CloudWatchLogsQueryField } from './LogsQueryField';
+
+jest
+  .spyOn(_, 'debounce')
+  .mockImplementation((func: (...args: any) => any, wait?: number) => func as DebouncedFunc<typeof func>);
 
 describe('CloudWatchLogsQueryField', () => {
+  it('runs onRunQuery on blur of Log Groups', async () => {
+    const onRunQuery = jest.fn();
+    const ds = setupMockedDataSource();
+
+    render(
+      <CloudWatchLogsQueryField
+        absoluteRange={{ from: 1, to: 10 }}
+        exploreId={ExploreId.left}
+        datasource={ds.datasource}
+        query={{} as any}
+        onRunQuery={onRunQuery}
+        onChange={() => {}}
+      />
+    );
+
+    const multiSelect = screen.getByLabelText('Log Groups');
+    await act(async () => {
+      fireEvent.blur(multiSelect);
+    });
+    expect(onRunQuery).toHaveBeenCalled();
+  });
+
   it('updates upstream query log groups on region change', async () => {
     const onChange = jest.fn();
     const wrapper = shallow(
       <CloudWatchLogsQueryField
         history={[]}
         absoluteRange={{ from: 1, to: 10 }}
-        syntaxLoaded={false}
-        syntax={{} as any}
         exploreId={ExploreId.left}
         datasource={
           {
@@ -50,7 +76,6 @@ describe('CloudWatchLogsQueryField', () => {
         onChange={onChange}
       />
     );
-    const getRegionSelect = () => wrapper.find({ label: 'Region' }).props().inputEl;
     const getLogGroupSelect = () => wrapper.find({ label: 'Log Groups' }).props().inputEl;
 
     getLogGroupSelect().props.onChange([{ value: 'log_group_1' }]);
@@ -58,12 +83,12 @@ describe('CloudWatchLogsQueryField', () => {
     expect(getLogGroupSelect().props.value[0].value).toBe('log_group_1');
 
     // We select new region where the selected log group does not exist
-    await getRegionSelect().props.onChange({ value: 'region2' });
+    await (wrapper.instance() as CloudWatchLogsQueryField).onRegionChange('region2');
 
     // We clear the select
     expect(getLogGroupSelect().props.value.length).toBe(0);
     // Make sure we correctly updated the upstream state
-    expect(onChange.mock.calls[onChange.mock.calls.length - 1][0]).toEqual({ region: 'region2', logGroupNames: [] });
+    expect(onChange).toHaveBeenLastCalledWith({ logGroupNames: [] });
   });
 
   it('should merge results of remote log groups search with existing results', async () => {
@@ -153,8 +178,6 @@ describe('CloudWatchLogsQueryField', () => {
       <CloudWatchLogsQueryField
         history={[]}
         absoluteRange={{ from: 1, to: 10 }}
-        syntaxLoaded={false}
-        syntax={{} as any}
         exploreId={ExploreId.left}
         datasource={
           {
@@ -174,7 +197,7 @@ describe('CloudWatchLogsQueryField', () => {
             },
             describeLogGroups(params: DescribeLogGroupsRequest) {
               const theLogGroups = allLogGroups
-                .filter(logGroupName => logGroupName.startsWith(params.logGroupNamePrefix ?? ''))
+                .filter((logGroupName) => logGroupName.startsWith(params.logGroupNamePrefix ?? ''))
                 .slice(0, Math.max(params.limit ?? 50, 50));
               return Promise.resolve(theLogGroups);
             },
@@ -188,7 +211,7 @@ describe('CloudWatchLogsQueryField', () => {
 
     const initialAvailableGroups = allLogGroups
       .slice(0, 50)
-      .map(logGroupName => ({ value: logGroupName, label: logGroupName }));
+      .map((logGroupName) => ({ value: logGroupName, label: logGroupName }));
     wrapper.setState({
       availableLogGroups: initialAvailableGroups,
     });
@@ -196,19 +219,19 @@ describe('CloudWatchLogsQueryField', () => {
     await wrapper.instance().onLogGroupSearch('Water', 'default', { action: 'input-change' });
 
     let nextAvailableGroups = (wrapper.state('availableLogGroups') as Array<SelectableValue<string>>).map(
-      logGroup => logGroup.value
+      (logGroup) => logGroup.value
     );
     expect(nextAvailableGroups).toEqual(
-      initialAvailableGroups.map(logGroup => logGroup.value).concat(['WaterGroup', 'WaterGroup2', 'WaterGroup3'])
+      initialAvailableGroups.map((logGroup) => logGroup.value).concat(['WaterGroup', 'WaterGroup2', 'WaterGroup3'])
     );
 
     await wrapper.instance().onLogGroupSearch('Velv', 'default', { action: 'input-change' });
     nextAvailableGroups = (wrapper.state('availableLogGroups') as Array<SelectableValue<string>>).map(
-      logGroup => logGroup.value
+      (logGroup) => logGroup.value
     );
     expect(nextAvailableGroups).toEqual(
       initialAvailableGroups
-        .map(logGroup => logGroup.value)
+        .map((logGroup) => logGroup.value)
         .concat(['WaterGroup', 'WaterGroup2', 'WaterGroup3', 'VelvetGroup', 'VelvetGroup2', 'VelvetGroup3'])
     );
   });

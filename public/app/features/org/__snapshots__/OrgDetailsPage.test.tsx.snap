@@ -35,15 +35,18 @@ exports[`Render should render organization and preferences 1`] = `
   <PageContents
     isLoading={false}
   >
-    <Component>
+    <VerticalGroup
+      spacing="lg"
+    >
       <OrgProfile
         onSubmit={[Function]}
         orgName="Cool org"
       />
       <SharedPreferences
+        disabled={false}
         resourceUri="org"
       />
-    </Component>
+    </VerticalGroup>
   </PageContents>
 </Page>
 `;

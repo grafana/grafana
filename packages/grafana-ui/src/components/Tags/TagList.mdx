@@ -15,8 +15,9 @@ List of tags with predefined margins and positioning.
 import { TagList } from '@grafana/ui';
 const tags = ['datasource-test', 'gdev', 'mysql', 'mssql'];
 
-<TagList tags={tags} onClick={tag => console.log(tag)} />
+<TagList tags={tags} onClick={(tag) => console.log(tag)} />;
 ```
 
 ### Props
+
 <Props of={TagList} />

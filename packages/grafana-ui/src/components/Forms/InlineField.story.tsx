@@ -1,7 +1,9 @@
-import React from 'react';
 import { action } from '@storybook/addon-actions';
+import React from 'react';
+
 import { Input } from '../Input/Input';
 import { Select } from '../Select/Select';
+
 import { InlineField } from './InlineField';
 import mdx from './InlineField.mdx';
 

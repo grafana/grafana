@@ -1,8 +1,10 @@
-import React from 'react';
-import { FieldType, LogRowModel, MutableDataFrame, Labels, LogLevel, DataQueryResponse } from '@grafana/data';
-import { getRowContexts, LogRowContextProvider } from './LogRowContextProvider';
 import { mount } from 'enzyme';
+import React from 'react';
 import { act } from 'react-dom/test-utils';
+
+import { FieldType, LogRowModel, MutableDataFrame, Labels, LogLevel, DataQueryResponse } from '@grafana/data';
+
+import { getRowContexts, LogRowContextProvider } from './LogRowContextProvider';
 
 describe('getRowContexts', () => {
   describe('when called with a DataFrame and results are returned', () => {
@@ -164,7 +166,11 @@ describe('LogRowContextProvider', () => {
         return <></>;
       });
       await act(async () => {
-        await mount(<LogRowContextProvider row={row} getRowContext={getRowContextMock} children={mockedChildren} />);
+        await mount(
+          <LogRowContextProvider row={row} getRowContext={getRowContextMock}>
+            {mockedChildren}
+          </LogRowContextProvider>
+        );
       });
     });
   });
@@ -175,8 +181,9 @@ const row: LogRowModel = {
   rowIndex: 0,
   dataFrame: new MutableDataFrame(),
   entry: '4',
-  labels: (null as any) as Labels,
+  labels: null as any as Labels,
   hasAnsi: false,
+  hasUnescapedContent: false,
   raw: '4',
   logLevel: LogLevel.info,
   timeEpochMs: 4,

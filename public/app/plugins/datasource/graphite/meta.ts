@@ -1,5 +1,6 @@
-import { MetricTankSeriesMeta } from './types';
 import { QueryResultMetaNotice } from '@grafana/data';
+
+import { MetricTankSeriesMeta } from './types';
 
 // https://github.com/grafana/metrictank/blob/master/scripts/config/storage-schemas.conf#L15-L46
 
@@ -73,7 +74,7 @@ export function parseSchemaRetentions(spec: string): RetentionInfo[] {
   if (!spec) {
     return [];
   }
-  return spec.split(',').map(str => {
+  return spec.split(',').map((str) => {
     const vals = str.split(':');
     return {
       interval: vals[0],

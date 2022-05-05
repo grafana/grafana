@@ -1,21 +1,23 @@
-import React, { useCallback, useState } from 'react';
-import { connect, MapStateToProps, useDispatch } from 'react-redux';
-
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import React, { useState } from 'react';
+import { connect, MapStateToProps } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 
 import { PanelPlugin } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { InspectTab } from 'app/features/inspector/types';
+import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 import { StoreState } from 'app/types';
-import { GetDataOptions } from '../../state/PanelQueryRunner';
+
+import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
+
 import { InspectContent } from './InspectContent';
 import { useDatasourceMetadata, useInspectTabs } from './hooks';
-import { InspectTab } from './types';
-import { updateLocation } from 'app/core/actions';
 
 interface OwnProps {
   dashboard: DashboardModel;
   panel: PanelModel;
-  defaultTab?: InspectTab;
 }
 
 export interface ConnectedProps {
@@ -24,27 +26,28 @@ export interface ConnectedProps {
 
 export type Props = OwnProps & ConnectedProps;
 
-const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultTab, plugin }) => {
-  if (!plugin) {
-    return null;
-  }
-
-  const dispatch = useDispatch();
+const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }) => {
   const [dataOptions, setDataOptions] = useState<GetDataOptions>({
     withTransforms: false,
     withFieldConfig: true,
   });
-  const { data, isLoading, error } = usePanelLatestData(panel, dataOptions);
+
+  const location = useLocation();
+  const { data, isLoading, error } = usePanelLatestData(panel, dataOptions, true);
   const metaDs = useDatasourceMetadata(data);
-  const tabs = useInspectTabs(plugin, dashboard, error, metaDs);
-  const onClose = useCallback(() => {
-    dispatch(
-      updateLocation({
-        query: { inspect: null, inspectTab: null },
-        partial: true,
-      })
-    );
-  }, [updateLocation]);
+  const tabs = useInspectTabs(panel, dashboard, plugin, error, metaDs);
+  const defaultTab = new URLSearchParams(location.search).get('inspectTab') as InspectTab;
+
+  const onClose = () => {
+    locationService.partial({
+      inspect: null,
+      inspectTab: null,
+    });
+  };
+
+  if (!plugin) {
+    return null;
+  }
 
   return (
     <InspectContent
@@ -64,7 +67,7 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultT
 };
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  const panelState = state.dashboard.panels[props.panel.id];
+  const panelState = getPanelStateForModel(state, props.panel);
   if (!panelState) {
     return { plugin: null };
   }

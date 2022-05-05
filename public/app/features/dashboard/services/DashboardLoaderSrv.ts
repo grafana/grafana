@@ -1,27 +1,20 @@
-import angular from 'angular';
-import moment from 'moment'; // eslint-disable-line no-restricted-imports
-import _ from 'lodash';
 import $ from 'jquery';
-import kbn from 'app/core/utils/kbn';
+import _, { isFunction } from 'lodash'; // eslint-disable-line lodash/import-scope
+import moment from 'moment'; // eslint-disable-line no-restricted-imports
+
 import { AppEvents, dateMath, UrlQueryValue } from '@grafana/data';
-import impressionSrv from 'app/core/services/impression_srv';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardSrv } from './DashboardSrv';
-import DatasourceSrv from 'app/features/plugins/datasource_srv';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import impressionSrv from 'app/core/services/impression_srv';
+import kbn from 'app/core/utils/kbn';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+
+import { appEvents } from '../../../core/core';
+
+import { getDashboardSrv } from './DashboardSrv';
 
 export class DashboardLoaderSrv {
-  /** @ngInject */
-  constructor(
-    private dashboardSrv: DashboardSrv,
-    private datasourceSrv: DatasourceSrv,
-    private $http: any,
-    private $timeout: any,
-    contextSrv: any,
-    private $routeParams: any,
-    private $rootScope: GrafanaRootScope
-  ) {}
-
+  constructor() {}
   _dashboardLoadFailed(title: string, snapshot?: boolean) {
     snapshot = snapshot || false;
     return {
@@ -46,12 +39,14 @@ export class DashboardLoaderSrv {
       promise = backendSrv.get('/api/snapshots/' + slug).catch(() => {
         return this._dashboardLoadFailed('Snapshot not found', true);
       });
+    } else if (type === 'ds') {
+      promise = this._loadFromDatasource(slug); // explore dashboards as code
     } else {
       promise = backendSrv
         .getDashboardByUid(uid)
         .then((result: any) => {
           if (result.meta.isFolder) {
-            this.$rootScope.appEvent(AppEvents.alertError, ['Dashboard not found']);
+            appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
             throw new Error('Dashboard not found');
           }
           return result;
@@ -75,7 +70,8 @@ export class DashboardLoaderSrv {
   _loadScriptedDashboard(file: string) {
     const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
-    return this.$http({ url: url, method: 'GET' })
+    return getBackendSrv()
+      .get(url)
       .then(this._executeScript.bind(this))
       .then(
         (result: any) => {
@@ -91,7 +87,7 @@ export class DashboardLoaderSrv {
         },
         (err: any) => {
           console.error('Script dashboard error ' + err);
-          this.$rootScope.appEvent(AppEvents.alertError, [
+          appEvents.emit(AppEvents.alertError, [
             'Script Error',
             'Please make sure it exists and returns a valid dashboard',
           ]);
@@ -100,12 +96,49 @@ export class DashboardLoaderSrv {
       );
   }
 
+  /**
+   * This is a temporary solution to load dashboards dynamically from a datasource
+   * Eventually this should become a plugin type or a special handler in the dashboard
+   * loading code
+   */
+  async _loadFromDatasource(dsid: string) {
+    const ds = await getDatasourceSrv().get(dsid);
+    if (!ds) {
+      return Promise.reject('can not find datasource: ' + dsid);
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const path = params.get('path');
+    if (!path) {
+      return Promise.reject('expecting path parameter');
+    }
+
+    const queryParams: { [key: string]: any } = {};
+
+    params.forEach((value, key) => {
+      queryParams[key] = value;
+    });
+
+    return getBackendSrv()
+      .get(`/api/datasources/${ds.id}/resources/${path}`, queryParams)
+      .then((data) => {
+        return {
+          meta: {
+            fromScript: true,
+            canDelete: false,
+            canSave: false,
+            canStar: false,
+          },
+          dashboard: data,
+        };
+      });
+  }
+
   _executeScript(result: any) {
     const services = {
-      dashboardSrv: this.dashboardSrv,
-      datasourceSrv: this.datasourceSrv,
+      dashboardSrv: getDashboardSrv(),
+      datasourceSrv: getDatasourceSrv(),
     };
-
     const scriptFunc = new Function(
       'ARGS',
       'kbn',
@@ -117,17 +150,26 @@ export class DashboardLoaderSrv {
       '$',
       'jQuery',
       'services',
-      result.data
+      result
     );
-    const scriptResult = scriptFunc(this.$routeParams, kbn, dateMath, _, moment, window, document, $, $, services);
+    const scriptResult = scriptFunc(
+      locationService.getSearchObject(),
+      kbn,
+      dateMath,
+      _,
+      moment,
+      window,
+      document,
+      $,
+      $,
+      services
+    );
 
     // Handle async dashboard scripts
-    if (_.isFunction(scriptResult)) {
-      return new Promise(resolve => {
+    if (isFunction(scriptResult)) {
+      return new Promise((resolve) => {
         scriptResult((dashboard: any) => {
-          this.$timeout(() => {
-            resolve({ data: dashboard });
-          });
+          resolve({ data: dashboard });
         });
       });
     }
@@ -136,4 +178,15 @@ export class DashboardLoaderSrv {
   }
 }
 
-angular.module('grafana.services').service('dashboardLoaderSrv', DashboardLoaderSrv);
+let dashboardLoaderSrv = new DashboardLoaderSrv();
+export { dashboardLoaderSrv };
+
+/** @internal
+ * Used for tests only
+ */
+export const setDashboardLoaderSrv = (srv: DashboardLoaderSrv) => {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('dashboardLoaderSrv can be only overriden in test environment');
+  }
+  dashboardLoaderSrv = srv;
+};

@@ -1,7 +1,9 @@
 import 'whatwg-fetch'; // fetch polyfill needed for Headers
 
-import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 import { of } from 'rxjs';
+
+import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
+
 import { BackendSrv } from '../backend_srv';
 
 /**
@@ -26,7 +28,7 @@ function makePromResponse() {
   };
 }
 
-export const backendSrv = ({
+export const backendSrv = {
   get: jest.fn(),
   getDashboardByUid: jest.fn(),
   getFolderByUid: jest.fn(),
@@ -38,6 +40,6 @@ export const backendSrv = ({
   fetch: (options: BackendSrvRequest) => {
     return of(makePromResponse() as FetchResponse);
   },
-} as unknown) as BackendSrv;
+} as unknown as BackendSrv;
 
 export const getBackendSrv = jest.fn().mockReturnValue(backendSrv);

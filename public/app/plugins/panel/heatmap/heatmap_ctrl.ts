@@ -1,10 +1,20 @@
-import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
+import { auto } from 'angular';
+import { defaultsDeep, includes, keys, map, reduce, min as _min, max as _max } from 'lodash';
+
+import { LegacyResponseData, PanelEvents, DataFrame, rangeUtil } from '@grafana/data';
+import appEvents from 'app/core/app_events';
 import TimeSeries from 'app/core/time_series2';
+import kbn from 'app/core/utils/kbn';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import { ZoomOutEvent } from 'app/types/events';
+
+import { DataProcessor } from '../graph/data_processor';
+
 import { axesEditor } from './axes_editor';
 import { heatmapDisplayEditor } from './display_editor';
-import rendering from './rendering';
 import {
   convertToHeatMap,
   convertToCards,
@@ -12,11 +22,7 @@ import {
   calculateBucketSize,
   sortSeriesByLabel,
 } from './heatmap_data_converter';
-import { auto } from 'angular';
-import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import { DataProcessor } from '../graph/data_processor';
-import { LegacyResponseData, PanelEvents, DataFrame, rangeUtil } from '@grafana/data';
-import { CoreEvents } from 'app/types';
+import rendering from './rendering';
 
 const X_BUCKET_NUMBER_DEFAULT = 30;
 const Y_BUCKET_NUMBER_DEFAULT = 10;
@@ -117,19 +123,20 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   selectionActivated: boolean;
   unitFormats: any;
   data: any;
-  series: TimeSeries[];
+  series: TimeSeries[] = [];
   dataWarning: any;
-  decimals: number;
-  scaledDecimals: number;
+  decimals = 0;
+  scaledDecimals = 0;
 
   processor: DataProcessor; // Shared with graph panel
 
   /** @ngInject */
-  constructor($scope: any, $injector: auto.IInjectorService) {
+  constructor($scope: any, $injector: auto.IInjectorService, templateSrv: TemplateSrv, timeSrv: TimeSrv) {
     super($scope, $injector);
+
     this.selectionActivated = false;
 
-    _.defaultsDeep(this.panel, panelDefaults);
+    defaultsDeep(this.panel, panelDefaults);
     this.opacityScales = opacityScales;
     this.colorModes = colorModes;
     this.colorSchemes = colorSchemes;
@@ -157,14 +164,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   zoomOut(evt: any) {
-    this.publishAppEvent(CoreEvents.zoomOut, 2);
+    appEvents.publish(new ZoomOutEvent({ scale: 2 }));
   }
 
   onRender() {
-    if (!this.range || !this.series) {
-      return;
-    }
-
     if (this.panel.dataFormat === 'tsbuckets') {
       this.convertHistogramToHeatmapData();
     } else {
@@ -173,6 +176,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   convertTimeSeriesToHeatmapData() {
+    if (!this.range || !this.series) {
+      return;
+    }
+
     let xBucketSize, yBucketSize, bucketsData, heatmapStats;
     const logBase = this.panel.yAxis.logBase;
 
@@ -232,11 +239,15 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   convertHistogramToHeatmapData() {
+    if (!this.range || !this.series) {
+      return;
+    }
+
     const panelDatasource = this.getPanelDataSourceType();
     let xBucketSize, yBucketSize, bucketsData, tsBuckets;
 
     // Try to sort series by bucket bound, if datasource doesn't do it.
-    if (!_.includes(dsSupportHistogramSort, panelDatasource)) {
+    if (!includes(dsSupportHistogramSort, panelDatasource)) {
       this.series.sort(sortSeriesByLabel);
     }
 
@@ -248,7 +259,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     // a top (or bottom, depends of datasource) bucket bound. Further, these values will be used as Y axis labels.
     bucketsData = histogramToHeatmap(this.series);
 
-    tsBuckets = _.map(this.series, 'label');
+    tsBuckets = map(this.series, 'label');
     const yBucketBound = this.panel.yBucketBound;
     if (
       (panelDatasource === 'prometheus' && yBucketBound !== 'lower' && yBucketBound !== 'middle') ||
@@ -263,7 +274,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     }
 
     // Calculate bucket size based on heatmap data
-    const xBucketBoundSet = _.map(_.keys(bucketsData), key => Number(key));
+    const xBucketBoundSet = map(keys(bucketsData), (key) => Number(key));
     xBucketSize = calculateBucketSize(xBucketBoundSet);
     // Always let yBucketSize=1 in 'tsbuckets' mode
     yBucketSize = 1;
@@ -295,14 +306,14 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
   // Directly support DataFrame
   onDataFramesReceived(data: DataFrame[]) {
-    this.series = this.processor.getSeriesList({ dataList: data, range: this.range }).map(ts => {
+    this.series = this.processor.getSeriesList({ dataList: data, range: this.range }).map((ts) => {
       ts.color = undefined; // remove whatever the processor set
       ts.flotpairs = ts.getFlotPairs(this.panel.nullPointMode);
       return ts;
     });
 
     this.dataWarning = null;
-    const datapointsCount = _.reduce(
+    const datapointsCount = reduce(
       this.series,
       (sum, series) => {
         return sum + series.datapoints.length;
@@ -341,9 +352,9 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   parseSeries(series: TimeSeries[]) {
-    const min = _.min(_.map(series, s => s.stats.min));
-    const minLog = _.min(_.map(series, s => s.stats.logmin));
-    const max = _.max(_.map(series, s => s.stats.max));
+    const min = _min(map(series, (s) => s.stats.min));
+    const minLog = _min(map(series, (s) => s.stats.logmin));
+    const max = _max(map(series, (s) => s.stats.max));
 
     return {
       max,
@@ -353,10 +364,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   parseHistogramSeries(series: TimeSeries[]) {
-    const bounds = _.map(series, s => Number(s.alias));
-    const min = _.min(bounds);
-    const minLog = _.min(bounds);
-    const max = _.max(bounds);
+    const bounds = map(series, (s) => Number(s.alias));
+    const min = _min(bounds);
+    const minLog = _min(bounds);
+    const max = _max(bounds);
 
     return {
       max: max,

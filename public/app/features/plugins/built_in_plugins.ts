@@ -35,28 +35,47 @@ const azureMonitorPlugin = async () =>
   await import(
     /* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/grafana-azure-monitor-datasource/module'
   );
+const tempoPlugin = async () =>
+  await import(/* webpackChunkName: "tempoPlugin" */ 'app/plugins/datasource/tempo/module');
+const alertmanagerPlugin = async () =>
+  await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
 
-import * as textPanel from 'app/plugins/panel/text/module';
-import * as graph2Panel from 'app/plugins/panel/graph2/module';
-import * as graph3Panel from 'app/plugins/panel/graph3/module';
-import * as graphPanel from 'app/plugins/panel/graph/module';
-import * as dashListPanel from 'app/plugins/panel/dashlist/module';
-import * as pluginsListPanel from 'app/plugins/panel/pluginlist/module';
+import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
 import * as alertListPanel from 'app/plugins/panel/alertlist/module';
 import * as annoListPanel from 'app/plugins/panel/annolist/module';
-import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
-import * as tablePanel from 'app/plugins/panel/table/module';
-import * as oldTablePanel from 'app/plugins/panel/table-old/module';
-import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
-import * as singlestatPanel2 from 'app/plugins/panel/stat/module';
-import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
-import * as gaugePanel from 'app/plugins/panel/gauge/module';
-import * as pieChartPanel from 'app/plugins/panel/piechart/module';
+import * as barChartPanel from 'app/plugins/panel/barchart/module';
 import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
+import * as candlestickPanel from 'app/plugins/panel/candlestick/module';
+import * as dashListPanel from 'app/plugins/panel/dashlist/module';
+import * as debugPanel from 'app/plugins/panel/debug/module';
+import * as gaugePanel from 'app/plugins/panel/gauge/module';
+import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
+import * as heatmapPanelNG from 'app/plugins/panel/heatmap-new/module';
+import * as histogramPanel from 'app/plugins/panel/histogram/module';
+import * as livePanel from 'app/plugins/panel/live/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
 import * as newsPanel from 'app/plugins/panel/news/module';
-import * as homeLinksPanel from 'app/plugins/panel/homelinks/module';
+import * as nodeGraph from 'app/plugins/panel/nodeGraph/module';
+import * as pieChartPanel from 'app/plugins/panel/piechart/module';
+import * as statPanel from 'app/plugins/panel/stat/module';
+import * as stateTimelinePanel from 'app/plugins/panel/state-timeline/module';
+import * as statusHistoryPanel from 'app/plugins/panel/status-history/module';
+import * as tablePanel from 'app/plugins/panel/table/module';
+import * as textPanel from 'app/plugins/panel/text/module';
+import * as timeseriesPanel from 'app/plugins/panel/timeseries/module';
+import * as tracesPanel from 'app/plugins/panel/traces/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
+import * as xyChartPanel from 'app/plugins/panel/xychart/module';
+
+// Async loaded panels
+const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
+const canvasPanel = async () => await import(/* webpackChunkName: "canvasPanel" */ 'app/plugins/panel/canvas/module');
+const iconPanel = async () => await import(/* webpackChunkName: "iconPanel" */ 'app/plugins/panel/icon/module');
+const graphPanel = async () => await import(/* webpackChunkName: "graphPlugin" */ 'app/plugins/panel/graph/module');
+const heatmapPanel = async () =>
+  await import(/* webpackChunkName: "heatmapPlugin" */ 'app/plugins/panel/heatmap/module');
+const tableOldPanel = async () =>
+  await import(/* webpackChunkName: "tableOldPlugin" */ 'app/plugins/panel/table-old/module');
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -77,28 +96,41 @@ const builtInPlugins: any = {
   'app/plugins/datasource/testdata/module': testDataDSPlugin,
   'app/plugins/datasource/cloud-monitoring/module': cloudMonitoringPlugin,
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
+  'app/plugins/datasource/tempo/module': tempoPlugin,
+  'app/plugins/datasource/alertmanager/module': alertmanagerPlugin,
 
   'app/plugins/panel/text/module': textPanel,
-  'app/plugins/panel/graph2/module': graph2Panel,
-  'app/plugins/panel/graph3/module': graph3Panel,
+  'app/plugins/panel/timeseries/module': timeseriesPanel,
+  'app/plugins/panel/state-timeline/module': stateTimelinePanel,
+  'app/plugins/panel/status-history/module': statusHistoryPanel,
+  'app/plugins/panel/candlestick/module': candlestickPanel,
   'app/plugins/panel/graph/module': graphPanel,
+  'app/plugins/panel/xychart/module': xyChartPanel,
+  'app/plugins/panel/geomap/module': geomapPanel,
+  'app/plugins/panel/canvas/module': canvasPanel,
+  'app/plugins/panel/icon/module': iconPanel,
   'app/plugins/panel/dashlist/module': dashListPanel,
-  'app/plugins/panel/pluginlist/module': pluginsListPanel,
   'app/plugins/panel/alertlist/module': alertListPanel,
   'app/plugins/panel/annolist/module': annoListPanel,
   'app/plugins/panel/heatmap/module': heatmapPanel,
+  'app/plugins/panel/heatmap-new/module': heatmapPanelNG,
   'app/plugins/panel/table/module': tablePanel,
-  'app/plugins/panel/table-old/module': oldTablePanel,
+  'app/plugins/panel/table-old/module': tableOldPanel,
   'app/plugins/panel/news/module': newsPanel,
-  'app/plugins/panel/singlestat/module': singlestatPanel,
-  'app/plugins/panel/stat/module': singlestatPanel2,
+  'app/plugins/panel/live/module': livePanel,
+  'app/plugins/panel/stat/module': statPanel,
+  'app/plugins/panel/debug/module': debugPanel,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,
   'app/plugins/panel/gauge/module': gaugePanel,
   'app/plugins/panel/piechart/module': pieChartPanel,
   'app/plugins/panel/bargauge/module': barGaugePanel,
+  'app/plugins/panel/barchart/module': barChartPanel,
   'app/plugins/panel/logs/module': logsPanel,
-  'app/plugins/panel/homelinks/module': homeLinksPanel,
+  'app/plugins/panel/traces/module': tracesPanel,
   'app/plugins/panel/welcome/module': welcomeBanner,
+  'app/plugins/panel/nodeGraph/module': nodeGraph,
+  'app/plugins/panel/histogram/module': histogramPanel,
+  'app/plugins/panel/alertGroups/module': alertGroupsPanel,
 };
 
 export default builtInPlugins;

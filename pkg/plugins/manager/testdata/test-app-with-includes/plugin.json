@@ -1,0 +1,37 @@
+{
+  "type": "app",
+  "name": "Test App",
+  "id": "test-app",
+  "info": {
+    "description": "Official Grafana Test App & Dashboard bundle",
+    "author": {
+      "name": "Test Inc.",
+      "url": "http://test.com"
+    },
+    "keywords": ["test"],
+    "links": [
+      {"name": "Project site", "url": "http://project.com"},
+      {"name": "License & Terms", "url": "http://license.com"}
+    ],
+    "version": "1.0.0",
+    "updated": "2015-02-10"
+  },
+  "includes": [
+    {
+      "type": "dashboard",
+      "name": "Nginx Memory",
+      "path": "dashboards/memory.json"
+    },
+    {
+      "type": "page",
+      "name": "Root Page (react)",
+      "path": "/a/my-simple-app",
+      "role": "Viewer",
+      "addToNav": true,
+      "defaultNav": true
+    }
+  ],
+  "dependencies": {
+    "grafanaDependency": ">=8.0.0"
+  }
+}

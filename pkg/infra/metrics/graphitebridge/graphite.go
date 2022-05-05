@@ -201,7 +201,11 @@ func (b *Bridge) Push() error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil && b.logger != nil {
+			b.logger.Println("Failed to close connection", "err", err)
+		}
+	}()
 
 	return b.writeMetrics(conn, mfs, b.prefix, model.Now())
 }

@@ -1,13 +1,14 @@
-import { variableAdapters } from '../adapters';
-import { createConstantVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { TemplatingState } from 'app/features/variables/state/reducers';
-import { updateConstantVariableOptions } from './actions';
-import { getRootReducer } from '../state/helpers';
-import { ConstantVariableModel, VariableHide, VariableOption } from '../types';
-import { toVariablePayload } from '../state/types';
-import { createConstantOptionsFromQuery } from './reducer';
+import { variableAdapters } from '../adapters';
+import { getRootReducer, RootReducerType } from '../state/helpers';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
+import { ConstantVariableModel, initialVariableModelState, VariableOption } from '../types';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
+import { updateConstantVariableOptions } from './actions';
+import { createConstantVariableAdapter } from './adapter';
+import { createConstantOptionsFromQuery } from './reducer';
 
 describe('constant actions', () => {
   variableAdapters.setInit(() => [createConstantVariableAdapter()]);
@@ -21,9 +22,12 @@ describe('constant actions', () => {
       };
 
       const variable: ConstantVariableModel = {
-        type: 'constant',
+        ...initialVariableModelState,
         id: '0',
-        global: false,
+        rootStateKey: 'key',
+        index: 0,
+        type: 'constant',
+        name: 'Constant',
         current: {
           value: '',
           text: '',
@@ -31,26 +35,19 @@ describe('constant actions', () => {
         },
         options: [],
         query: 'A',
-        name: 'Constant',
-        label: '',
-        hide: VariableHide.dontHide,
-        skipUrlSync: false,
-        index: 0,
       };
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenAsyncActionIsDispatched(updateConstantVariableOptions(toVariablePayload(variable)), true);
+        .whenActionIsDispatched(
+          toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenAsyncActionIsDispatched(updateConstantVariableOptions(toKeyedVariableIdentifier(variable)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [createAction, setCurrentAction] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(createAction).toEqual(createConstantOptionsFromQuery(toVariablePayload(variable)));
-        expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        toKeyedAction('key', createConstantOptionsFromQuery(toVariablePayload(variable))),
+        toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option })))
+      );
     });
   });
 });

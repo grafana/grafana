@@ -2,9 +2,9 @@
   "type": "panel",
   "name": "Bar gauge",
   "id": "bargauge",
-  "state": "beta",
 
   "info": {
+    "description": "Horizontal and vertical gauges",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"

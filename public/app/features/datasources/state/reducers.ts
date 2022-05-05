@@ -1,10 +1,11 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
-import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
 
-import { DataSourcesState, DataSourceSettingsState } from 'app/types';
-import { LayoutMode, LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
-import { DataSourceTypesLoadedPayload } from './actions';
+import { DataSourcePluginMeta, DataSourceSettings, LayoutMode, LayoutModes } from '@grafana/data';
+import { DataSourcesState, DataSourceSettingsState, TestingStatus } from 'app/types';
+
 import { GenericDataSourcePlugin } from '../settings/PluginSettings';
+
+import { DataSourceTypesLoadedPayload } from './actions';
 
 export const initialState: DataSourcesState = {
   dataSources: [],
@@ -96,11 +97,9 @@ export const dataSourcesReducer = (state: DataSourcesState = initialState, actio
 };
 
 export const initialDataSourceSettingsState: DataSourceSettingsState = {
-  testingStatus: {
-    status: null,
-    message: null,
-  },
+  testingStatus: {},
   loadError: null,
+  loading: true,
   plugin: null,
 };
 
@@ -112,23 +111,20 @@ export const initDataSourceSettingsFailed = createAction<Error>('dataSourceSetti
 
 export const testDataSourceStarting = createAction<undefined>('dataSourceSettings/testDataSourceStarting');
 
-export const testDataSourceSucceeded = createAction<{
-  status: string;
-  message: string;
-}>('dataSourceSettings/testDataSourceSucceeded');
+export const testDataSourceSucceeded = createAction<TestingStatus>('dataSourceSettings/testDataSourceSucceeded');
 
-export const testDataSourceFailed = createAction<{ message: string }>('dataSourceSettings/testDataSourceFailed');
+export const testDataSourceFailed = createAction<TestingStatus>('dataSourceSettings/testDataSourceFailed');
 
 export const dataSourceSettingsReducer = (
   state: DataSourceSettingsState = initialDataSourceSettingsState,
   action: AnyAction
 ): DataSourceSettingsState => {
   if (initDataSourceSettingsSucceeded.match(action)) {
-    return { ...state, plugin: action.payload, loadError: null };
+    return { ...state, plugin: action.payload, loadError: null, loading: false };
   }
 
   if (initDataSourceSettingsFailed.match(action)) {
-    return { ...state, plugin: null, loadError: action.payload.message };
+    return { ...state, plugin: null, loadError: action.payload.message, loading: false };
   }
 
   if (testDataSourceStarting.match(action)) {
@@ -145,8 +141,9 @@ export const dataSourceSettingsReducer = (
     return {
       ...state,
       testingStatus: {
-        status: action.payload.status,
-        message: action.payload.message,
+        status: action.payload?.status,
+        message: action.payload?.message,
+        details: action.payload?.details,
       },
     };
   }
@@ -156,7 +153,8 @@ export const dataSourceSettingsReducer = (
       ...state,
       testingStatus: {
         status: 'error',
-        message: action.payload.message,
+        message: action.payload?.message,
+        details: action.payload?.details,
       },
     };
   }

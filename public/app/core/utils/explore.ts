@@ -1,39 +1,39 @@
-// Libraries
-import _ from 'lodash';
+import { flatten, omit, uniq } from 'lodash';
 import { Unsubscribable } from 'rxjs';
-// Services & Utils
+import { v4 as uuidv4 } from 'uuid';
+
 import {
   CoreApp,
   DataQuery,
-  DataQueryError,
   DataQueryRequest,
   DataSourceApi,
   dateMath,
+  DateTime,
   DefaultTimeZone,
+  ExploreUrlState,
   HistoryItem,
   IntervalValues,
-  LogRowModel,
+  isDateTime,
   LogsDedupStrategy,
   LogsSortOrder,
+  rangeUtil,
   RawTimeRange,
   TimeFragment,
   TimeRange,
   TimeZone,
   toUtc,
   urlUtil,
-  ExploreUrlState,
-  rangeUtil,
 } from '@grafana/data';
-import store from 'app/core/store';
-import { v4 as uuidv4 } from 'uuid';
-import { getNextRefIdChar } from './query';
-// Types
-import { RefreshPicker } from '@grafana/ui';
-import { QueryOptions, QueryTransaction } from 'app/types/explore';
-import { config } from '../config';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
+import { RefreshPicker } from '@grafana/ui';
+import store from 'app/core/store';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
+import { EXPLORE_GRAPH_STYLES, ExploreGraphStyle, ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
+
+import { config } from '../config';
+
+import { getNextRefIdChar } from './query';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -41,9 +41,6 @@ export const DEFAULT_RANGE = {
 };
 
 export const DEFAULT_UI_STATE = {
-  showingTable: true,
-  showingGraph: true,
-  showingLogs: true,
   dedupStrategy: LogsDedupStrategy.none,
 };
 
@@ -52,40 +49,35 @@ const MAX_HISTORY_ITEMS = 100;
 export const LAST_USED_DATASOURCE_KEY = 'grafana.explore.datasource';
 export const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DATASOURCE_KEY}.${orgId}`;
 
-/**
- * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
- *
- * @param panelTargets The origin panel's query targets
- * @param panelDatasource The origin panel's datasource
- * @param datasourceSrv Datasource service to query other datasources in case the panel datasource is mixed
- * @param timeSrv Time service to get the current dashboard range from
- */
 export interface GetExploreUrlArguments {
   panel: PanelModel;
-  panelTargets: DataQuery[];
-  panelDatasource: DataSourceApi;
+  /** Datasource service to query other datasources in case the panel datasource is mixed */
   datasourceSrv: DataSourceSrv;
+  /** Time service to get the current dashboard range from */
   timeSrv: TimeSrv;
 }
 
+/**
+ * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
+ */
 export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
-  const { panel, panelTargets, panelDatasource, datasourceSrv, timeSrv } = args;
-  let exploreDatasource = panelDatasource;
+  const { panel, datasourceSrv, timeSrv } = args;
+  let exploreDatasource = await datasourceSrv.get(panel.datasource);
 
   /** In Explore, we don't have legend formatter and we don't want to keep
    * legend formatting as we can't change it
    */
-  let exploreTargets: DataQuery[] = panelTargets.map(t => _.omit(t, 'legendFormat'));
+  let exploreTargets: DataQuery[] = panel.targets.map((t) => omit(t, 'legendFormat'));
   let url: string | undefined;
 
   // Mixed datasources need to choose only one datasource
-  if (panelDatasource.meta?.id === 'mixed' && exploreTargets) {
+  if (exploreDatasource.meta?.id === 'mixed' && exploreTargets) {
     // Find first explore datasource among targets
     for (const t of exploreTargets) {
       const datasource = await datasourceSrv.get(t.datasource || undefined);
       if (datasource) {
         exploreDatasource = datasource;
-        exploreTargets = panelTargets.filter(t => t.datasource === datasource.name);
+        exploreTargets = panel.targets.filter((t) => t.datasource === datasource.name);
         break;
       }
     }
@@ -107,11 +99,11 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
         ...state,
         datasource: exploreDatasource.name,
         context: 'explore',
-        queries: exploreTargets.map(t => ({ ...t, datasource: exploreDatasource.name })),
+        queries: exploreTargets.map((t) => ({ ...t, datasource: exploreDatasource.getRef() })),
       };
     }
 
-    const exploreState = JSON.stringify({ ...state, originPanelId: panel.getSavedId() });
+    const exploreState = JSON.stringify(state);
     url = urlUtil.renderUrl('/explore', { left: exploreState });
   }
 
@@ -119,6 +111,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
 }
 
 export function buildQueryTransaction(
+  exploreId: ExploreId,
   queries: DataQuery[],
   queryOptions: QueryOptions,
   range: TimeRange,
@@ -151,20 +144,14 @@ export function buildQueryTransaction(
     panelId: panelId as any,
     targets: queries, // Datasources rely on DataQueries being passed under the targets key.
     range,
-    requestId: 'explore',
+    requestId: 'explore_' + exploreId,
     rangeRaw: range.raw,
     scopedVars: {
       __interval: { text: interval, value: interval },
       __interval_ms: { text: intervalMs, value: intervalMs },
     },
     maxDataPoints: queryOptions.maxDataPoints,
-    exploreMode: queryOptions.mode,
     liveStreaming: queryOptions.liveStreaming,
-    /**
-     * @deprecated (external API) showingGraph and showingTable are always set to true and set to true
-     */
-    showingGraph: true,
-    showingTable: true,
   };
 
   return {
@@ -173,14 +160,13 @@ export function buildQueryTransaction(
     scanning,
     id: generateKey(), // reusing for unique ID
     done: false,
-    latency: 0,
   };
 }
 
-export const clearQueryKeys: (query: DataQuery) => object = ({ key, refId, ...rest }) => rest;
+export const clearQueryKeys: (query: DataQuery) => DataQuery = ({ key, ...rest }) => rest;
 
 const isSegment = (segment: { [key: string]: string }, ...props: string[]) =>
-  props.some(prop => segment.hasOwnProperty(prop));
+  props.some((prop) => segment.hasOwnProperty(prop));
 
 enum ParseUrlStateIndex {
   RangeFrom = 0,
@@ -189,20 +175,13 @@ enum ParseUrlStateIndex {
   SegmentsStart = 3,
 }
 
-enum ParseUiStateIndex {
-  Graph = 0,
-  Logs = 1,
-  Table = 2,
-  Strategy = 3,
-}
-
 export const safeParseJson = (text?: string): any | undefined => {
   if (!text) {
     return;
   }
 
   try {
-    return JSON.parse(decodeURI(text));
+    return JSON.parse(text);
   } catch (error) {
     console.error(error);
   }
@@ -222,15 +201,28 @@ export const safeStringifyValue = (value: any, space?: number) => {
   return '';
 };
 
+const DEFAULT_GRAPH_STYLE: ExploreGraphStyle = 'lines';
+// we use this function to take any kind of data we loaded
+// from an external source (URL, localStorage, whatever),
+// and extract the graph-style from it, or return the default
+// graph-style if we are not able to do that.
+// it is important that this function is able to take any form of data,
+// (be it objects, or arrays, or booleans or whatever),
+// and produce a best-effort graphStyle.
+// note that typescript makes sure we make no mistake in this function.
+// we do not rely on ` as ` or ` any `.
+export const toGraphStyle = (data: unknown): ExploreGraphStyle => {
+  const found = EXPLORE_GRAPH_STYLES.find((v) => v === data);
+  return found ?? DEFAULT_GRAPH_STYLE;
+};
+
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const parsed = safeParseJson(initial);
   const errorResult: any = {
     datasource: null,
     queries: [],
     range: DEFAULT_RANGE,
-    ui: DEFAULT_UI_STATE,
     mode: null,
-    originPanelId: null,
   };
 
   if (!parsed) {
@@ -252,20 +244,10 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const queries = parsedSegments.filter(segment => !isSegment(segment, 'ui', 'originPanelId'));
+  const queries = parsedSegments.filter((segment) => !isSegment(segment, 'ui', 'mode', '__panelsState'));
 
-  const uiState = parsedSegments.filter(segment => isSegment(segment, 'ui'))[0];
-  const ui = uiState
-    ? {
-        showingGraph: uiState.ui[ParseUiStateIndex.Graph],
-        showingLogs: uiState.ui[ParseUiStateIndex.Logs],
-        showingTable: uiState.ui[ParseUiStateIndex.Table],
-        dedupStrategy: uiState.ui[ParseUiStateIndex.Strategy],
-      }
-    : DEFAULT_UI_STATE;
-
-  const originPanelId = parsedSegments.filter(segment => isSegment(segment, 'originPanelId'))[0];
-  return { datasource, queries, range, ui, originPanelId };
+  const panelsState = parsedSegments.find((segment) => isSegment(segment, '__panelsState'))?.__panelsState;
+  return { datasource, queries, range, panelsState };
 }
 
 export function generateKey(index = 0): string {
@@ -309,17 +291,20 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
 }
 
 /**
- * A target is non-empty when it has keys (with non-empty values) other than refId, key and context.
+ * A target is non-empty when it has keys (with non-empty values) other than refId, key, context and datasource.
+ * FIXME: While this is reasonable for practical use cases, a query without any propery might still be "non-empty"
+ * in its own scope, for instance when there's no user input needed. This might be the case for an hypothetic datasource in
+ * which query options are only set in its config and the query object itself, as generated from its query editor it's always "empty"
  */
-const validKeys = ['refId', 'key', 'context'];
-export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery[]): boolean {
+const validKeys = ['refId', 'key', 'context', 'datasource'];
+export function hasNonEmptyQuery<TQuery extends DataQuery>(queries: TQuery[]): boolean {
   return (
     queries &&
     queries.some((query: any) => {
       const keys = Object.keys(query)
-        .filter(key => validKeys.indexOf(key) === -1)
-        .map(k => query[k])
-        .filter(v => v);
+        .filter((key) => validKeys.indexOf(key) === -1)
+        .map((k) => query[k])
+        .filter((v) => v);
       return keys.length > 0;
     })
   );
@@ -328,14 +313,14 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
 /**
  * Update the query history. Side-effect: store history in local storage
  */
-export function updateHistory<T extends DataQuery = any>(
+export function updateHistory<T extends DataQuery>(
   history: Array<HistoryItem<T>>,
   datasourceId: string,
   queries: T[]
 ): Array<HistoryItem<T>> {
   const ts = Date.now();
   let updatedHistory = history;
-  queries.forEach(query => {
+  queries.forEach((query) => {
     updatedHistory = [{ query, ts }, ...updatedHistory];
   });
 
@@ -368,17 +353,23 @@ export const getQueryKeys = (queries: DataQuery[], datasourceInstance?: DataSour
   return queryKeys;
 };
 
-export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRange => {
-  return {
-    from: dateMath.parse(rawRange.from, false, timeZone as any)!,
-    to: dateMath.parse(rawRange.to, true, timeZone as any)!,
-    raw: rawRange,
-  };
+export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange, fiscalYearStartMonth: number): TimeRange => {
+  let range = rangeUtil.convertRawToRange(rawRange, timeZone, fiscalYearStartMonth);
+
+  if (range.to.isBefore(range.from)) {
+    range = rangeUtil.convertRawToRange({ from: range.raw.to, to: range.raw.from }, timeZone, fiscalYearStartMonth);
+  }
+
+  return range;
 };
 
-const parseRawTime = (value: any): TimeFragment | null => {
+const parseRawTime = (value: string | DateTime): TimeFragment | null => {
   if (value === null) {
     return null;
+  }
+
+  if (isDateTime(value)) {
+    return value;
   }
 
   if (value.indexOf('now') !== -1) {
@@ -395,15 +386,26 @@ const parseRawTime = (value: any): TimeFragment | null => {
     return toUtc(value, 'YYYY-MM-DD HH:mm:ss');
   }
 
-  if (!isNaN(value)) {
+  // This should handle cases where value is an epoch time as string
+  if (value.match(/^\d+$/)) {
     const epoch = parseInt(value, 10);
     return toUtc(epoch);
+  }
+
+  // This should handle ISO strings
+  const time = toUtc(value);
+  if (time.isValid()) {
+    return time;
   }
 
   return null;
 };
 
-export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): TimeRange => {
+export const getTimeRangeFromUrl = (
+  range: RawTimeRange,
+  timeZone: TimeZone,
+  fiscalYearStartMonth: number
+): TimeRange => {
   const raw = {
     from: parseRawTime(range.from)!,
     to: parseRawTime(range.to)!,
@@ -437,14 +439,6 @@ export const getValueWithRefId = (value?: any): any => {
   return undefined;
 };
 
-export const getFirstQueryErrorWithoutRefId = (errors?: DataQueryError[]): DataQueryError | undefined => {
-  if (!errors) {
-    return undefined;
-  }
-
-  return errors.filter(error => (error && error.refId ? false : true))[0];
-};
-
 export const getRefIds = (value: any): string[] => {
   if (!value) {
     return [];
@@ -465,7 +459,7 @@ export const getRefIds = (value: any): string[] => {
     refIds.push(getRefIds(value[key]));
   }
 
-  return _.uniq(_.flatten(refIds));
+  return uniq(flatten(refIds));
 };
 
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
@@ -494,11 +488,11 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
   return rangeUtil.calculateInterval(range, resolution, lowLimit);
 }
 
-export function deduplicateLogRowsById(rows: LogRowModel[]) {
-  return _.uniqBy(rows, 'uid');
-}
-
-export const getFirstNonQueryRowSpecificError = (queryErrors?: DataQueryError[]): DataQueryError | undefined => {
-  const refId = getValueWithRefId(queryErrors);
-  return refId ? undefined : getFirstQueryErrorWithoutRefId(queryErrors);
+export const copyStringToClipboard = (string: string) => {
+  const el = document.createElement('textarea');
+  el.value = string;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
 };

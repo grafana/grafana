@@ -1,5 +1,6 @@
+import { css } from '@emotion/css';
+
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
 import { stylesFactory } from '@grafana/ui';
 
 export const cardStyle = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
@@ -10,7 +11,7 @@ export const cardStyle = stylesFactory((theme: GrafanaTheme, complete: boolean) 
   const borderGradient = theme.isDark ? darkThemeGradients : lightThemeGradients;
 
   return `
-      background-color: ${theme.colors.bg1};
+      background-color: ${theme.colors.bg2};
       margin-right: ${theme.spacing.xl};
       border: 1px solid ${theme.colors.border1};
       border-bottom-left-radius: ${theme.border.radius.md};
@@ -45,5 +46,5 @@ export const iconStyle = stylesFactory(
 );
 
 export const cardContent = css`
-  padding: 24px 16px;
+  padding: 16px;
 `;

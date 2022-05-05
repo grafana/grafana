@@ -1,12 +1,13 @@
+import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';
+import { getRootReducer, RootReducerType } from '../state/helpers';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
+import { CustomVariableModel, initialVariableModelState, VariableOption } from '../types';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
 import { updateCustomVariableOptions } from './actions';
 import { createCustomVariableAdapter } from './adapter';
-import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { getRootReducer } from '../state/helpers';
-import { CustomVariableModel, VariableHide, VariableOption } from '../types';
-import { toVariablePayload } from '../state/types';
-import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
-import { TemplatingState } from '../state/reducers';
 import { createCustomOptionsFromQuery } from './reducer';
 
 describe('custom actions', () => {
@@ -21,9 +22,12 @@ describe('custom actions', () => {
       };
 
       const variable: CustomVariableModel = {
-        type: 'custom',
+        ...initialVariableModelState,
         id: '0',
-        global: false,
+        rootStateKey: 'key',
+        index: 0,
+        type: 'custom',
+        name: 'Custom',
         current: {
           value: '',
           text: '',
@@ -42,28 +46,21 @@ describe('custom actions', () => {
           },
         ],
         query: 'A,B',
-        name: 'Custom',
-        label: '',
-        hide: VariableHide.dontHide,
-        skipUrlSync: false,
-        index: 0,
         multi: true,
         includeAll: false,
       };
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
-        .whenAsyncActionIsDispatched(updateCustomVariableOptions(toVariablePayload(variable)), true);
+        .whenActionIsDispatched(
+          toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenAsyncActionIsDispatched(updateCustomVariableOptions(toKeyedVariableIdentifier(variable)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [createAction, setCurrentAction] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(createAction).toEqual(createCustomOptionsFromQuery(toVariablePayload(variable)));
-        expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        toKeyedAction('key', createCustomOptionsFromQuery(toVariablePayload(variable))),
+        toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option })))
+      );
     });
   });
 });

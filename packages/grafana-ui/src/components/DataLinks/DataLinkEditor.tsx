@@ -1,11 +1,14 @@
-import React, { ChangeEvent, useContext } from 'react';
-import { VariableSuggestion, GrafanaTheme, DataLink } from '@grafana/data';
-import { Switch } from '../Switch/Switch';
-import { css } from 'emotion';
-import { ThemeContext, stylesFactory } from '../../themes/index';
-import { DataLinkInput } from './DataLinkInput';
+import { css } from '@emotion/css';
+import React, { ChangeEvent } from 'react';
+
+import { VariableSuggestion, GrafanaTheme2, DataLink } from '@grafana/data';
+
+import { useStyles2 } from '../../themes/index';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
+import { Switch } from '../Switch/Switch';
+
+import { DataLinkInput } from './DataLinkInput';
 
 interface DataLinkEditorProps {
   index: number;
@@ -15,21 +18,20 @@ interface DataLinkEditorProps {
   onChange: (index: number, link: DataLink, callback?: () => void) => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   listItem: css`
-    margin-bottom: ${theme.spacing.sm};
+    margin-bottom: ${theme.spacing()};
   `,
   infoText: css`
-    padding-bottom: ${theme.spacing.md};
+    padding-bottom: ${theme.spacing(2)};
     margin-left: 66px;
-    color: ${theme.colors.textWeak};
+    color: ${theme.colors.text.secondary};
   `,
-}));
+});
 
 export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
   ({ index, value, onChange, suggestions, isLast }) => {
-    const theme = useContext(ThemeContext);
-    const styles = getStyles(theme);
+    const styles = useStyles2(getStyles);
 
     const onUrlChange = (url: string, callback?: () => void) => {
       onChange(index, { ...value, url }, callback);

@@ -1,9 +1,8 @@
-import { plugin as PrometheusDatasourcePlugin } from './module';
 import { ANNOTATION_QUERY_STEP_DEFAULT } from './datasource';
+import { plugin as PrometheusDatasourcePlugin } from './module';
 
 describe('module', () => {
   it('should have metrics query field in panels and Explore', () => {
-    expect(PrometheusDatasourcePlugin.components.ExploreMetricsQueryField).toBeDefined();
     expect(PrometheusDatasourcePlugin.components.QueryEditor).toBeDefined();
   });
   it('should have stepDefaultValuePlaceholder set in annotations ctrl', () => {

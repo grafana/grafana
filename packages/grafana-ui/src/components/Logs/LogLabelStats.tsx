@@ -1,11 +1,11 @@
+import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
+
 import { LogLabelStatsModel, GrafanaTheme } from '@grafana/data';
 
-import { Themeable } from '../../types/theme';
 import { stylesFactory } from '../../themes';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { withTheme } from '../../themes/index';
+import { Themeable } from '../../types/theme';
 
 //Components
 import { LogLabelStatsRow } from './LogLabelStatsRow';
@@ -13,24 +13,18 @@ import { LogLabelStatsRow } from './LogLabelStatsRow';
 const STATS_ROW_LIMIT = 5;
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const borderColor = selectThemeVariant(
-    {
-      light: theme.palette.gray5,
-      dark: theme.palette.dark9,
-    },
-    theme.type
-  );
   return {
     logsStats: css`
       label: logs-stats;
-      column-span: 2;
       background: inherit;
       color: ${theme.colors.text};
       word-break: break-all;
+      width: fit-content;
+      max-width: 100%;
     `,
     logsStatsHeader: css`
       label: logs-stats__header;
-      border-bottom: 1px solid ${borderColor};
+      border-bottom: 1px solid ${theme.colors.border2};
       display: flex;
     `,
     logsStatsTitle: css`
@@ -66,14 +60,14 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
     const { label, rowCount, stats, value, theme, isLabel } = this.props;
     const style = getStyles(theme);
     const topRows = stats.slice(0, STATS_ROW_LIMIT);
-    let activeRow = topRows.find(row => row.value === value);
+    let activeRow = topRows.find((row) => row.value === value);
     let otherRows = stats.slice(STATS_ROW_LIMIT);
     const insertActiveRow = !activeRow;
 
     // Remove active row from other to show extra
     if (insertActiveRow) {
-      activeRow = otherRows.find(row => row.value === value);
-      otherRows = otherRows.filter(row => row.value !== value);
+      activeRow = otherRows.find((row) => row.value === value);
+      otherRows = otherRows.filter((row) => row.value !== value);
     }
 
     const otherCount = otherRows.reduce((sum, row) => sum + row.count, 0);
@@ -82,14 +76,14 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
     const otherProportion = otherCount / total;
 
     return (
-      <td className={style.logsStats}>
+      <div className={style.logsStats} data-testid="logLabelStats">
         <div className={style.logsStatsHeader}>
           <div className={style.logsStatsTitle}>
             {label}: {total} of {rowCount} rows have that {isLabel ? 'label' : 'field'}
           </div>
         </div>
         <div className={style.logsStatsBody}>
-          {topRows.map(stat => (
+          {topRows.map((stat) => (
             <LogLabelStatsRow key={stat.value} {...stat} active={stat.value === value} />
           ))}
           {insertActiveRow && activeRow && <LogLabelStatsRow key={activeRow.value} {...activeRow} active />}
@@ -97,7 +91,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
             <LogLabelStatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />
           )}
         </div>
-      </td>
+      </div>
     );
   }
 }

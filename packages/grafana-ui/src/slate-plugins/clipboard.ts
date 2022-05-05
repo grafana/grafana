@@ -1,5 +1,6 @@
-import { Plugin } from '@grafana/slate-react';
 import { Editor as CoreEditor } from 'slate';
+
+import { Plugin } from '@grafana/slate-react';
 
 const getCopiedText = (textBlocks: string[], startOffset: number, endOffset: number) => {
   if (!textBlocks.length) {
@@ -8,6 +9,11 @@ const getCopiedText = (textBlocks: string[], startOffset: number, endOffset: num
 
   const excludingLastLineLength = textBlocks.slice(0, -1).join('').length + textBlocks.length - 1;
   return textBlocks.join('\n').slice(startOffset, excludingLastLineLength + endOffset);
+};
+
+// Remove unicode special symbol - byte order mark (BOM), U+FEFF.
+const removeBom = (str: string | undefined): string | undefined => {
+  return str?.replace(/[\uFEFF]/g, '');
 };
 
 export function ClipboardPlugin(): Plugin {
@@ -24,9 +30,9 @@ export function ClipboardPlugin(): Plugin {
       const selectedBlocks = document
         .getLeafBlocksAtRange(selection)
         .toArray()
-        .map(block => block.text);
+        .map((block) => block.text);
 
-      const copiedText = getCopiedText(selectedBlocks, startOffset, endOffset);
+      const copiedText = removeBom(getCopiedText(selectedBlocks, startOffset, endOffset));
       if (copiedText && clipEvent.clipboardData) {
         clipEvent.clipboardData.setData('Text', copiedText);
       }
@@ -38,10 +44,10 @@ export function ClipboardPlugin(): Plugin {
       const clipEvent = event as ClipboardEvent;
       clipEvent.preventDefault();
       if (clipEvent.clipboardData) {
-        const pastedValue = clipEvent.clipboardData.getData('Text');
-        const lines = pastedValue.split('\n');
+        const pastedValue = removeBom(clipEvent.clipboardData.getData('Text'));
+        const lines = pastedValue?.split('\n');
 
-        if (lines.length) {
+        if (lines && lines.length) {
           editor.insertText(lines[0]);
           for (const line of lines.slice(1)) {
             editor.splitBlock().insertText(line);

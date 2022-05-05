@@ -2,21 +2,28 @@ package annotations
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+var (
+	ErrTimerangeMissing = errors.New("missing timerange")
 )
 
 type Repository interface {
 	Save(item *Item) error
-	Update(item *Item) error
-	Find(query *ItemQuery) ([]*ItemDTO, error)
-	Delete(params *DeleteParams) error
+	Update(ctx context.Context, item *Item) error
+	Find(ctx context.Context, query *ItemQuery) ([]*ItemDTO, error)
+	Delete(ctx context.Context, params *DeleteParams) error
+	FindTags(ctx context.Context, query *TagsQuery) (FindTagsResult, error)
 }
 
 // AnnotationCleaner is responsible for cleaning up old annotations
 type AnnotationCleaner interface {
-	CleanAnnotations(ctx context.Context, cfg *setting.Cfg) error
+	CleanAnnotations(ctx context.Context, cfg *setting.Cfg) (int64, int64, error)
 }
 
 type ItemQuery struct {
@@ -31,23 +38,45 @@ type ItemQuery struct {
 	Tags         []string `json:"tags"`
 	Type         string   `json:"type"`
 	MatchAny     bool     `json:"matchAny"`
+	SignedInUser *models.SignedInUser
 
 	Limit int64 `json:"limit"`
 }
 
-type PostParams struct {
-	DashboardId int64  `json:"dashboardId"`
-	PanelId     int64  `json:"panelId"`
-	Epoch       int64  `json:"epoch"`
-	Title       string `json:"title"`
-	Text        string `json:"text"`
-	Icon        string `json:"icon"`
+// TagsQuery is the query for a tags search.
+type TagsQuery struct {
+	OrgID int64  `json:"orgId"`
+	Tag   string `json:"tag"`
+
+	Limit int64 `json:"limit"`
+}
+
+// Tag is the DB result of a tags search.
+type Tag struct {
+	Key   string
+	Value string
+	Count int64
+}
+
+// TagsDTO is the frontend DTO for Tag.
+type TagsDTO struct {
+	Tag   string `json:"tag"`
+	Count int64  `json:"count"`
+}
+
+// FindTagsResult is the result of a tags search.
+type FindTagsResult struct {
+	Tags []*TagsDTO `json:"tags"`
+}
+
+// GetAnnotationTagsResponse is a response struct for FindTagsResult.
+type GetAnnotationTagsResponse struct {
+	Result FindTagsResult `json:"result"`
 }
 
 type DeleteParams struct {
 	OrgId       int64
 	Id          int64
-	AlertId     int64
 	DashboardId int64
 	PanelId     int64
 }
@@ -98,22 +127,48 @@ func (i Item) TableName() string {
 }
 
 type ItemDTO struct {
-	Id          int64            `json:"id"`
-	AlertId     int64            `json:"alertId"`
-	AlertName   string           `json:"alertName"`
-	DashboardId int64            `json:"dashboardId"`
-	PanelId     int64            `json:"panelId"`
-	UserId      int64            `json:"userId"`
-	NewState    string           `json:"newState"`
-	PrevState   string           `json:"prevState"`
-	Created     int64            `json:"created"`
-	Updated     int64            `json:"updated"`
-	Time        int64            `json:"time"`
-	TimeEnd     int64            `json:"timeEnd"`
-	Text        string           `json:"text"`
-	Tags        []string         `json:"tags"`
-	Login       string           `json:"login"`
-	Email       string           `json:"email"`
-	AvatarUrl   string           `json:"avatarUrl"`
-	Data        *simplejson.Json `json:"data"`
+	Id           int64            `json:"id"`
+	AlertId      int64            `json:"alertId"`
+	AlertName    string           `json:"alertName"`
+	DashboardId  int64            `json:"dashboardId"`
+	DashboardUID *string          `json:"dashboardUID"`
+	PanelId      int64            `json:"panelId"`
+	UserId       int64            `json:"userId"`
+	NewState     string           `json:"newState"`
+	PrevState    string           `json:"prevState"`
+	Created      int64            `json:"created"`
+	Updated      int64            `json:"updated"`
+	Time         int64            `json:"time"`
+	TimeEnd      int64            `json:"timeEnd"`
+	Text         string           `json:"text"`
+	Tags         []string         `json:"tags"`
+	Login        string           `json:"login"`
+	Email        string           `json:"email"`
+	AvatarUrl    string           `json:"avatarUrl"`
+	Data         *simplejson.Json `json:"data"`
+}
+
+type annotationType int
+
+const (
+	Organization annotationType = iota
+	Dashboard
+)
+
+func (a annotationType) String() string {
+	switch a {
+	case Organization:
+		return "organization"
+	case Dashboard:
+		return "dashboard"
+	default:
+		return ""
+	}
+}
+
+func (annotation *ItemDTO) GetType() annotationType {
+	if annotation.DashboardId != 0 {
+		return Dashboard
+	}
+	return Organization
 }

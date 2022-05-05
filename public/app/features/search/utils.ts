@@ -1,9 +1,12 @@
 import { parse, SearchParserResult } from 'search-query-parser';
+
+import { UrlQueryMap } from '@grafana/data';
 import { IconName } from '@grafana/ui';
-import { UrlQueryMap, UrlQueryValue } from '@grafana/data';
-import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
-import { NO_ID_SECTIONS, SECTION_STORAGE_KEY } from './constants';
+
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
+
+import { NO_ID_SECTIONS, SECTION_STORAGE_KEY } from './constants';
+import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
 
 /**
  * Check if folder has id. Only Recent and Starred folders are the ones without
@@ -20,11 +23,11 @@ export const hasId = (str: string) => {
  * @param sections
  */
 export const getFlattenedSections = (sections: DashboardSection[]): string[] => {
-  return sections.flatMap(section => {
+  return sections.flatMap((section) => {
     const id = hasId(section.title) ? String(section.id) : section.title;
 
     if (section.expanded && section.items.length) {
-      return [id, ...section.items.map(item => `${id}-${item.id}`)];
+      return [id, ...section.items.map((item) => `${id}-${item.id}`)];
     }
     return id;
   });
@@ -35,7 +38,7 @@ export const getFlattenedSections = (sections: DashboardSection[]): string[] => 
  * @param sections
  */
 export const getVisibleItems = (sections: DashboardSection[]) => {
-  return sections.flatMap(section => {
+  return sections.flatMap((section) => {
     if (section.expanded) {
       return section.items;
     }
@@ -65,7 +68,7 @@ export const markSelected = (sections: DashboardSection[], selectedId: string) =
     if (result.expanded && result.items.length) {
       return {
         ...result,
-        items: result.items.map(item => {
+        items: result.items.map((item) => {
           const [sectionId, itemId] = selectedId.split('-');
           const lookup = getLookupField(sectionId);
           return { ...item, selected: String(item.id) === itemId && String(result[lookup]) === sectionId };
@@ -137,8 +140,8 @@ export const getCheckedDashboards = (sections: DashboardSection[]): DashboardSec
   }
 
   return sections.reduce((uids, section) => {
-    return section.items ? [...uids, ...section.items.filter(item => item.checked)] : uids;
-  }, []);
+    return section.items ? [...uids, ...section.items.filter((item) => item.checked)] : uids;
+  }, [] as DashboardSectionItem[]);
 };
 
 /**
@@ -150,7 +153,7 @@ export const getCheckedDashboardsUids = (sections: DashboardSection[]) => {
     return [];
   }
 
-  return getCheckedDashboards(sections).map(item => item.uid);
+  return getCheckedDashboards(sections).map((item) => item.uid);
 };
 
 /**
@@ -165,12 +168,12 @@ export const getCheckedUids = (sections: DashboardSection[]): UidsToDelete => {
   }
 
   return sections.reduce((result, section) => {
-    if (section?.id !== 0 && section.checked) {
-      return { ...result, folders: [...result.folders, section.uid] };
+    if (section?.id !== 0 && section.checked && section.uid) {
+      return { ...result, folders: [...result.folders, section.uid] } as UidsToDelete;
     } else {
-      return { ...result, dashboards: getCheckedDashboardsUids(sections) };
+      return { ...result, dashboards: getCheckedDashboardsUids(sections) } as UidsToDelete;
     }
-  }, emptyResults) as UidsToDelete;
+  }, emptyResults);
 };
 
 /**
@@ -189,9 +192,9 @@ export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
 
   if (parseQuery(query.query).folder === 'current') {
     try {
-      const { folderId } = getDashboardSrv().getCurrent()?.meta;
-      if (folderId) {
-        folderIds = [folderId];
+      const dash = getDashboardSrv().getCurrent();
+      if (dash?.meta.folderId) {
+        folderIds = [dash?.meta.folderId];
       }
     } catch (e) {
       console.error(e);
@@ -227,10 +230,7 @@ export const getSectionIcon = (section: DashboardSection): IconName => {
  * Get storage key for a dashboard folder by its title
  * @param title
  */
-export const getSectionStorageKey = (title: string) => {
-  if (!title) {
-    return '';
-  }
+export const getSectionStorageKey = (title = 'General') => {
   return `${SECTION_STORAGE_KEY}.${title.toLowerCase()}`;
 };
 
@@ -239,7 +239,7 @@ export const getSectionStorageKey = (title: string) => {
  * @param params
  * @param folder
  */
-export const parseRouteParams = (params: UrlQueryMap, folder?: UrlQueryValue) => {
+export const parseRouteParams = (params: UrlQueryMap) => {
   const cleanedParams = Object.entries(params).reduce((obj, [key, val]) => {
     if (!val) {
       return obj;
@@ -251,11 +251,13 @@ export const parseRouteParams = (params: UrlQueryMap, folder?: UrlQueryValue) =>
     return { ...obj, [key]: val };
   }, {} as Partial<DashboardQuery>);
 
-  if (folder) {
-    const folderStr = `folder:${folder}`;
+  if (params.folder) {
+    const folderStr = `folder:${params.folder}`;
     return {
-      params: { ...cleanedParams, query: `${folderStr} ${(cleanedParams.query ?? '').replace(folderStr, '')}` },
+      ...cleanedParams,
+      query: `${folderStr} ${(cleanedParams.query ?? '').replace(folderStr, '')}`,
     };
   }
-  return { params: cleanedParams };
+
+  return { ...cleanedParams };
 };

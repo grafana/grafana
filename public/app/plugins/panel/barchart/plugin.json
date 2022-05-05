@@ -1,0 +1,18 @@
+{
+  "type": "panel",
+  "name": "Bar chart",
+  "id": "barchart",
+  "state": "beta",
+
+  "info": {
+    "description": "Categorical charts with group support",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/barchart.svg",
+      "large": "img/barchart.svg"
+    }
+  }
+}

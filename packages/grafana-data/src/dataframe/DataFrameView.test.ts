@@ -1,7 +1,8 @@
-import { FieldType, DataFrameDTO } from '../types/dataFrame';
 import { DateTime } from '../datetime/moment_wrapper';
-import { MutableDataFrame } from './MutableDataFrame';
+import { FieldType, DataFrameDTO } from '../types/dataFrame';
+
 import { DataFrameView } from './DataFrameView';
+import { MutableDataFrame } from './MutableDataFrame';
 
 interface MySpecialObject {
   time: DateTime;
@@ -80,5 +81,20 @@ describe('dataFrameView', () => {
       name: 'a',
       value: 1,
     });
+  });
+
+  it('Can handle fields with number name', () => {
+    const view = new DataFrameView<MySpecialObject>(
+      new MutableDataFrame({
+        fields: [
+          { name: '1', type: FieldType.string, values: ['a'] },
+          { name: '2', type: FieldType.string, values: ['b'] },
+        ],
+      })
+    );
+
+    const obj = view.get(0) as any;
+    expect(obj['1']).toEqual('a');
+    expect(obj['2']).toEqual('b');
   });
 });

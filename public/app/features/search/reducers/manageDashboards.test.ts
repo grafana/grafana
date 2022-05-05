@@ -1,7 +1,8 @@
-import { TOGGLE_ALL_CHECKED, TOGGLE_CHECKED, DELETE_ITEMS, MOVE_ITEMS } from './actionTypes';
-import { manageDashboardsReducer as reducer, manageDashboardsState as state } from './manageDashboards';
 import { sections } from '../testData';
 import { DashboardSection, UidsToDelete } from '../types';
+
+import { TOGGLE_ALL_CHECKED, TOGGLE_CHECKED, DELETE_ITEMS, MOVE_ITEMS } from './actionTypes';
+import { manageDashboardsReducer as reducer, manageDashboardsState as state } from './manageDashboards';
 
 // Remove Recent and Starred sections as they're not used in manage dashboards
 const results = sections.slice(2);
@@ -86,7 +87,7 @@ describe('Manage dashboards reducer', () => {
   });
 
   it('should not display dashboards in a non-expanded folder', () => {
-    const general = results.find(res => res.id === 0);
+    const general = results.find((res) => res.id === 0);
     const toMove = { dashboards: general?.items, folder: { id: 4074 } };
     const newState = reducer({ ...state, results }, { type: MOVE_ITEMS, payload: toMove });
     expect(newState.results.find((res: DashboardSection) => res.id === 4074).items).toHaveLength(0);

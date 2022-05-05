@@ -1,5 +1,5 @@
-import React, { PureComponent } from 'react';
 import { throttle } from 'lodash';
+import React, { PureComponent } from 'react';
 import Draggable, { DraggableEventHandler } from 'react-draggable';
 
 import { PanelModel } from '../state/PanelModel';
@@ -16,9 +16,9 @@ interface State {
 
 export class PanelResizer extends PureComponent<Props, State> {
   initialHeight: number = Math.floor(document.documentElement.scrollHeight * 0.3);
-  prevEditorHeight: number;
+  prevEditorHeight?: number;
   throttledChangeHeight: (height: number) => void;
-  throttledResizeDone: () => void;
+  throttledResizeDone?: () => void;
   noStyles: object = {};
 
   constructor(props: Props) {

@@ -1,8 +1,12 @@
-import React from 'react';
-import { text } from '@storybook/addon-knobs';
-import { Button, Drawer } from '@grafana/ui';
+import { Story } from '@storybook/react';
+import React, { useState } from 'react';
+
+import { Button, Drawer, Tab, TabsBar } from '@grafana/ui';
+
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import { Props } from './Drawer';
 import mdx from './Drawer.mdx';
 
 export default {
@@ -13,12 +17,28 @@ export default {
     docs: {
       page: mdx,
     },
+    knobs: {
+      disable: true,
+    },
+    controls: {
+      exclude: ['onClose'],
+    },
+  },
+  args: {
+    closeOnMaskClick: true,
+    scrollableContent: false,
+    width: '40%',
+    expandable: false,
+    subtitle: 'This is a subtitle.',
+  },
+  argTypes: {
+    title: { control: { type: 'text' } },
+    width: { control: { type: 'text' } },
+    subtitle: { control: { type: 'text' } },
   },
 };
 
-export const global = () => {
-  const drawerTitle = text('title', 'Drawer title');
-
+export const Global: Story<Props> = (args) => {
   return (
     <UseState initialState={{ isOpen: false }}>
       {(state, updateValue) => {
@@ -27,8 +47,11 @@ export const global = () => {
             <Button onClick={() => updateValue({ isOpen: !state.isOpen })}>Open drawer</Button>
             {state.isOpen && (
               <Drawer
-                title={drawerTitle}
-                subtitle="This is a subtitle."
+                title={args.title}
+                subtitle={args.subtitle}
+                closeOnMaskClick={args.closeOnMaskClick}
+                scrollableContent={args.scrollableContent}
+                width={args.width}
                 onClose={() => {
                   updateValue({ isOpen: !state.isOpen });
                 }}
@@ -53,7 +76,11 @@ export const global = () => {
   );
 };
 
-export const longContent = () => {
+Global.args = {
+  title: 'Drawer title',
+};
+
+export const LongContent: Story<Props> = (args) => {
   return (
     <UseState initialState={{ isOpen: true }}>
       {(state, updateValue) => {
@@ -62,9 +89,11 @@ export const longContent = () => {
             <Button onClick={() => updateValue({ isOpen: !state.isOpen })}>Open drawer</Button>
             {state.isOpen && (
               <Drawer
-                scrollableContent
-                expandable
-                title="Drawer with long content"
+                title={args.title}
+                subtitle={args.subtitle}
+                closeOnMaskClick={args.closeOnMaskClick}
+                scrollableContent={args.scrollableContent}
+                width={args.width}
                 onClose={() => {
                   updateValue({ isOpen: !state.isOpen });
                 }}
@@ -148,10 +177,11 @@ export const longContent = () => {
     </UseState>
   );
 };
+LongContent.args = {
+  title: 'Drawer title with long content',
+};
 
-export const inLine = () => {
-  const drawerTitle = text('title', 'Storybook');
-
+export const InLine: Story<Props> = (args) => {
   return (
     <UseState initialState={{ isOpen: false }}>
       {(state, updateValue) => {
@@ -169,8 +199,12 @@ export const inLine = () => {
               <Button onClick={() => updateValue({ isOpen: !state.isOpen })}>Open drawer</Button>
               {state.isOpen && (
                 <Drawer
-                  inline={true}
-                  title={drawerTitle}
+                  inline={args.inline}
+                  title={args.title}
+                  subtitle={args.subtitle}
+                  closeOnMaskClick={args.closeOnMaskClick}
+                  scrollableContent={args.scrollableContent}
+                  width={args.width}
                   onClose={() => {
                     updateValue({ isOpen: !state.isOpen });
                   }}
@@ -193,3 +227,31 @@ export const inLine = () => {
     </UseState>
   );
 };
+
+InLine.args = {
+  title: 'Storybook',
+  inline: true,
+};
+
+export function WithTabs() {
+  const [activeTab, setActiveTab] = useState('options');
+
+  const tabs = (
+    <TabsBar>
+      <Tab label={'Options'} active={activeTab === 'options'} onChangeTab={() => setActiveTab('options')} />
+      <Tab
+        label={'Changes'}
+        active={activeTab === 'changes'}
+        onChangeTab={() => setActiveTab('changes')}
+        counter={10}
+      />
+    </TabsBar>
+  );
+
+  return (
+    <Drawer title={'Main title'} subtitle={'Sub title'} width={700} onClose={() => {}} tabs={tabs}>
+      {activeTab === 'options' && <div>Here are some options</div>}
+      {activeTab === 'changes' && <div>Here are some changes</div>}
+    </Drawer>
+  );
+}

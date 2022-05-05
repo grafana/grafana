@@ -1,108 +1,109 @@
-import React, { FC, useCallback, CSSProperties } from 'react';
-import { css, cx } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
+import { css } from '@emotion/css';
+import React, { FC, useCallback } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { useTheme, TagList, styleMixins, stylesFactory } from '@grafana/ui';
+import { Card, Icon, IconName, TagList, useStyles2 } from '@grafana/ui';
+
+import { SEARCH_ITEM_HEIGHT } from '../constants';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
+
 import { SearchCheckbox } from './SearchCheckbox';
-import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
 
 export interface Props {
   item: DashboardSectionItem;
   editable?: boolean;
   onTagSelected: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
-  style?: CSSProperties;
 }
 
-const selectors = e2eSelectors.pages.Dashboards;
+const selectors = e2eSelectors.components.Search;
 
-export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected, style }) => {
-  const theme = useTheme();
-  const styles = getResultsItemStyles(theme);
+const getIconFromMeta = (meta = ''): IconName => {
+  const metaIconMap = new Map<string, IconName>([
+    ['errors', 'info-circle'],
+    ['views', 'eye'],
+  ]);
 
-  const tagSelected = useCallback((tag: string, event: React.MouseEvent<HTMLElement>) => {
-    onTagSelected(tag);
-  }, []);
+  return metaIconMap.has(meta) ? metaIconMap.get(meta)! : 'sort-amount-down';
+};
 
-  const toggleItem = useCallback(
-    (event: React.MouseEvent) => {
+export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected }) => {
+  const styles = useStyles2(getStyles);
+  const tagSelected = useCallback(
+    (tag: string, event: React.MouseEvent<HTMLElement>) => {
+      event.stopPropagation();
       event.preventDefault();
+      onTagSelected(tag);
+    },
+    [onTagSelected]
+  );
+
+  const handleCheckboxClick = useCallback(
+    (ev: React.MouseEvent) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+
       if (onToggleChecked) {
         onToggleChecked(item);
       }
     },
-    [item]
+    [item, onToggleChecked]
   );
 
+  const folderTitle = item.folderTitle || 'General';
   return (
-    <div
-      style={style}
-      aria-label={selectors.dashboards(item.title)}
-      className={cx(styles.wrapper, { [styles.selected]: item.selected })}
+    <Card
+      data-testid={selectors.dashboardItem(item.title)}
+      href={item.url}
+      style={{ minHeight: SEARCH_ITEM_HEIGHT }}
+      className={styles.container}
     >
-      <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
-
-      <a href={item.url} className={styles.link}>
-        <div className={styles.body}>
-          <span>{item.title}</span>
-          <span className={styles.folderTitle}>{item.folderTitle}</span>
-        </div>
-      </a>
-      <TagList tags={item.tags} onClick={tagSelected} className={styles.tags} />
-    </div>
+      <Card.Heading>{item.title}</Card.Heading>
+      <Card.Figure align={'center'} className={styles.checkbox}>
+        <SearchCheckbox
+          aria-label="Select dashboard"
+          editable={editable}
+          checked={item.checked}
+          onClick={handleCheckboxClick}
+        />
+      </Card.Figure>
+      <Card.Meta separator={''}>
+        <span className={styles.metaContainer}>
+          <Icon name={'folder'} aria-hidden />
+          {folderTitle}
+        </span>
+        {item.sortMetaName && (
+          <span className={styles.metaContainer}>
+            <Icon name={getIconFromMeta(item.sortMetaName)} />
+            {item.sortMeta} {item.sortMetaName}
+          </span>
+        )}
+      </Card.Meta>
+      <Card.Tags>
+        <TagList tags={item.tags} onClick={tagSelected} getAriaLabel={(tag) => `Filter by tag "${tag}"`} />
+      </Card.Tags>
+    </Card>
   );
 };
 
-const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
-  wrapper: css`
-    ${styleMixins.listItem(theme)};
-    display: flex;
-    align-items: center;
-    height: ${SEARCH_ITEM_HEIGHT}px;
-    margin-bottom: ${SEARCH_ITEM_MARGIN}px;
-    padding: 0 ${theme.spacing.md};
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    container: css`
+      margin-bottom: ${theme.spacing(0.75)};
+      padding: ${theme.spacing(1)} ${theme.spacing(2)};
+    `,
+    metaContainer: css`
+      display: flex;
+      align-items: center;
+      margin-right: ${theme.spacing(1)};
 
-    &:last-child {
-      margin-bottom: ${SEARCH_ITEM_MARGIN * 2}px;
-    }
-
-    :hover {
-      cursor: pointer;
-    }
-  `,
-  selected: css`
-    ${styleMixins.listItemSelected(theme)};
-  `,
-  body: css`
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex: 1 1 auto;
-    overflow: hidden;
-  `,
-  folderTitle: css`
-    color: ${theme.colors.textWeak};
-    font-size: ${theme.typography.size.xs};
-    line-height: ${theme.typography.lineHeight.xs};
-    position: relative;
-    top: -1px;
-  `,
-  icon: css`
-    margin-left: 10px;
-  `,
-  tags: css`
-    flex-grow: 0;
-    justify-content: flex-end;
-    @media only screen and (max-width: ${theme.breakpoints.md}) {
-      display: none;
-    }
-  `,
-  link: css`
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-    flex-grow: 1;
-    height: 100%;
-  `,
-}));
+      svg {
+        margin-right: ${theme.spacing(0.5)};
+      }
+    `,
+    checkbox: css`
+      margin-right: 0;
+    `,
+  };
+};

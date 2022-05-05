@@ -1,14 +1,17 @@
-import React, { FC, useReducer } from 'react';
-import { Icon, IconName, Tooltip } from '@grafana/ui';
-import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
-import { DashboardLinksDashboard } from './DashboardLinksDashboard';
-import { getLinkSrv } from '../../../panel/panellinks/link_srv';
+import React, { FC } from 'react';
+import { useEffectOnce } from 'react-use';
 
+import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
+import { selectors } from '@grafana/e2e-selectors';
+import { TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { Icon, IconName, Tooltip, useForceUpdate } from '@grafana/ui';
+
+import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 import { DashboardModel } from '../../state';
 import { DashboardLink } from '../../state/DashboardModel';
-import { iconMap } from '../DashLinks/DashLinksEditorCtrl';
-import { useEffectOnce } from 'react-use';
-import { CoreEvents } from 'app/types';
+import { linkIconMap } from '../LinksSettings/LinkSettingsEdit';
+
+import { DashboardLinksDashboard } from './DashboardLinksDashboard';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -16,20 +19,16 @@ export interface Props {
 }
 
 export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
+  const forceUpdate = useForceUpdate();
+
+  useEffectOnce(() => {
+    const sub = dashboard.events.subscribe(TimeRangeUpdatedEvent, forceUpdate);
+    return () => sub.unsubscribe();
+  });
+
   if (!links.length) {
     return null;
   }
-
-  // Emulate forceUpdate (https://reactjs.org/docs/hooks-faq.html#is-there-something-like-forceupdate)
-  const [, forceUpdate] = useReducer(x => x + 1, 0);
-
-  useEffectOnce(() => {
-    dashboard.on(CoreEvents.timeRangeUpdated, forceUpdate);
-
-    return () => {
-      dashboard.off(CoreEvents.timeRangeUpdated, forceUpdate);
-    };
-  });
 
   return (
     <>
@@ -42,15 +41,21 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
         }
 
         const linkElement = (
-          <a className="gf-form-label" href={sanitizeUrl(linkInfo.href)} target={link.targetBlank ? '_blank' : '_self'}>
-            <Icon name={iconMap[link.icon] as IconName} style={{ marginRight: '4px' }} />
-            <span>{sanitize(linkInfo.title)}</span>
+          <a
+            className="gf-form-label gf-form-label--dashlink"
+            href={sanitizeUrl(linkInfo.href)}
+            target={link.targetBlank ? '_blank' : undefined}
+            rel="noreferrer"
+            data-testid={selectors.components.DashboardLinks.link}
+          >
+            <Icon aria-hidden name={linkIconMap[link.icon] as IconName} style={{ marginRight: '4px' }} />
+            <span>{linkInfo.title}</span>
           </a>
         );
 
         return (
-          <div key={key} className="gf-form">
-            {link.tooltip ? <Tooltip content={link.tooltip}>{linkElement}</Tooltip> : linkElement}
+          <div key={key} className="gf-form" data-testid={selectors.components.DashboardLinks.container}>
+            {link.tooltip ? <Tooltip content={linkInfo.tooltip}>{linkElement}</Tooltip> : linkElement}
           </div>
         );
       })}

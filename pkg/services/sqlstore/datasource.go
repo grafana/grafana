@@ -1,108 +1,135 @@
 package sqlstore
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-
-	"xorm.io/xorm"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"xorm.io/xorm"
 )
 
-func init() {
-	bus.AddHandler("sql", GetDataSources)
-	bus.AddHandler("sql", GetAllDataSources)
-	bus.AddHandler("sql", AddDataSource)
-	bus.AddHandler("sql", DeleteDataSourceById)
-	bus.AddHandler("sql", DeleteDataSourceByName)
-	bus.AddHandler("sql", UpdateDataSource)
-	bus.AddHandler("sql", GetDataSourceById)
-	bus.AddHandler("sql", GetDataSourceByName)
-}
-
-func getDataSourceByID(id, orgID int64, engine *xorm.Engine) (*models.DataSource, error) {
+// GetDataSource adds a datasource to the query model by querying by org_id as well as
+// either uid (preferred), id, or name and is added to the bus.
+func (ss *SQLStore) GetDataSource(ctx context.Context, query *models.GetDataSourceQuery) error {
 	metrics.MDBDataSourceQueryByID.Inc()
 
-	datasource := models.DataSource{OrgId: orgID, Id: id}
-	has, err := engine.Get(&datasource)
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		return ss.getDataSource(ctx, query, sess)
+	})
+}
+
+func (ss *SQLStore) getDataSource(ctx context.Context, query *models.GetDataSourceQuery, sess *DBSession) error {
+	if query.OrgId == 0 || (query.Id == 0 && len(query.Name) == 0 && len(query.Uid) == 0) {
+		return models.ErrDataSourceIdentifierNotSet
+	}
+
+	datasource := &models.DataSource{Name: query.Name, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
+	has, err := sess.Get(datasource)
+
 	if err != nil {
-		sqlog.Error("Failed getting data source", "err", err, "id", id, "orgId", orgID)
-		return nil, err
-	}
-	if !has {
-		sqlog.Debug("Failed to find data source", "id", id, "orgId", orgID)
-		return nil, models.ErrDataSourceNotFound
-	}
-
-	return &datasource, nil
-}
-
-func (ss *SqlStore) GetDataSourceByID(id, orgID int64) (*models.DataSource, error) {
-	return getDataSourceByID(id, orgID, ss.engine)
-}
-
-func GetDataSourceById(query *models.GetDataSourceByIdQuery) error {
-	ds, err := getDataSourceByID(query.Id, query.OrgId, x)
-	query.Result = ds
-
-	return err
-}
-
-func GetDataSourceByName(query *models.GetDataSourceByNameQuery) error {
-	datasource := models.DataSource{OrgId: query.OrgId, Name: query.Name}
-	has, err := x.Get(&datasource)
-
-	if !has {
+		sqlog.Error("Failed getting data source", "err", err, "uid", query.Uid, "id", query.Id, "name", query.Name, "orgId", query.OrgId)
+		return err
+	} else if !has {
 		return models.ErrDataSourceNotFound
 	}
 
-	query.Result = &datasource
-	return err
+	query.Result = datasource
+
+	return nil
 }
 
-func GetDataSources(query *models.GetDataSourcesQuery) error {
-	sess := x.Limit(5000, 0).Where("org_id=?", query.OrgId).Asc("name")
+func (ss *SQLStore) GetDataSources(ctx context.Context, query *models.GetDataSourcesQuery) error {
+	var sess *xorm.Session
+	return ss.WithDbSession(ctx, func(dbSess *DBSession) error {
+		if query.DataSourceLimit <= 0 {
+			sess = dbSess.Where("org_id=?", query.OrgId).Asc("name")
+		} else {
+			sess = dbSess.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgId).Asc("name")
+		}
+
+		query.Result = make([]*models.DataSource, 0)
+		return sess.Find(&query.Result)
+	})
+}
+
+// GetDataSourcesByType returns all datasources for a given type or an error if the specified type is an empty string
+func (ss *SQLStore) GetDataSourcesByType(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
+	if query.Type == "" {
+		return fmt.Errorf("datasource type cannot be empty")
+	}
 
 	query.Result = make([]*models.DataSource, 0)
-	return sess.Find(&query.Result)
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		return sess.Where("type=?", query.Type).Asc("id").Find(&query.Result)
+	})
 }
 
-func GetAllDataSources(query *models.GetAllDataSourcesQuery) error {
-	sess := x.Limit(5000, 0).Asc("name")
+// GetDefaultDataSource is used to get the default datasource of organization
+func (ss *SQLStore) GetDefaultDataSource(ctx context.Context, query *models.GetDefaultDataSourceQuery) error {
+	datasource := models.DataSource{}
+	return ss.WithDbSession(ctx, func(sess *DBSession) error {
+		exists, err := sess.Where("org_id=? AND is_default=?", query.OrgId, true).Get(&datasource)
 
-	query.Result = make([]*models.DataSource, 0)
-	return sess.Find(&query.Result)
-}
+		if !exists {
+			return models.ErrDataSourceNotFound
+		}
 
-func DeleteDataSourceById(cmd *models.DeleteDataSourceByIdCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		var rawSql = "DELETE FROM data_source WHERE id=? and org_id=?"
-		result, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
-		affected, _ := result.RowsAffected()
-		cmd.DeletedDatasourcesCount = affected
+		query.Result = &datasource
 		return err
 	})
 }
 
-func DeleteDataSourceByName(cmd *models.DeleteDataSourceByNameCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		var rawSql = "DELETE FROM data_source WHERE name=? and org_id=?"
-		result, err := sess.Exec(rawSql, cmd.Name, cmd.OrgId)
-		affected, _ := result.RowsAffected()
-		cmd.DeletedDatasourcesCount = affected
-		return err
+// DeleteDataSource removes a datasource by org_id as well as either uid (preferred), id, or name
+// and is added to the bus. It also removes permissions related to the datasource.
+func (ss *SQLStore) DeleteDataSource(ctx context.Context, cmd *models.DeleteDataSourceCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+		dsQuery := &models.GetDataSourceQuery{Id: cmd.ID, Uid: cmd.UID, Name: cmd.Name, OrgId: cmd.OrgID}
+		errGettingDS := ss.getDataSource(ctx, dsQuery, sess)
+
+		if errGettingDS != nil && !errors.Is(errGettingDS, models.ErrDataSourceNotFound) {
+			return errGettingDS
+		}
+
+		ds := dsQuery.Result
+		if ds != nil {
+			// Delete the data source
+			result, err := sess.Exec("DELETE FROM data_source WHERE org_id=? AND id=?", ds.OrgId, ds.Id)
+			if err != nil {
+				return err
+			}
+
+			cmd.DeletedDatasourcesCount, _ = result.RowsAffected()
+
+			// Remove associated AccessControl permissions
+			if _, errDeletingPerms := sess.Exec("DELETE FROM permission WHERE scope=?",
+				ac.Scope("datasources", "id", fmt.Sprint(dsQuery.Result.Id))); errDeletingPerms != nil {
+				return errDeletingPerms
+			}
+		}
+
+		// Publish data source deletion event
+		sess.publishAfterCommit(&events.DataSourceDeleted{
+			Timestamp: time.Now(),
+			Name:      cmd.Name,
+			ID:        cmd.ID,
+			UID:       cmd.UID,
+			OrgID:     cmd.OrgID,
+		})
+
+		return nil
 	})
 }
 
-func AddDataSource(cmd *models.AddDataSourceCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) AddDataSource(ctx context.Context, cmd *models.AddDataSourceCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		existing := models.DataSource{OrgId: cmd.OrgId, Name: cmd.Name}
 		has, _ := sess.Get(&existing)
 
@@ -137,7 +164,7 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 			BasicAuthPassword: cmd.BasicAuthPassword,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
-			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
+			SecureJsonData:    cmd.EncryptedSecureJsonData,
 			Created:           time.Now(),
 			Updated:           time.Now(),
 			Version:           1,
@@ -156,6 +183,14 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 		}
 
 		cmd.Result = ds
+
+		sess.publishAfterCommit(&events.DataSourceCreated{
+			Timestamp: time.Now(),
+			Name:      cmd.Name,
+			ID:        ds.Id,
+			UID:       cmd.Uid,
+			OrgID:     cmd.OrgId,
+		})
 		return nil
 	})
 }
@@ -163,16 +198,16 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 func updateIsDefaultFlag(ds *models.DataSource, sess *DBSession) error {
 	// Handle is default flag
 	if ds.IsDefault {
-		rawSql := "UPDATE data_source SET is_default=? WHERE org_id=? AND id <> ?"
-		if _, err := sess.Exec(rawSql, false, ds.OrgId, ds.Id); err != nil {
+		rawSQL := "UPDATE data_source SET is_default=? WHERE org_id=? AND id <> ?"
+		if _, err := sess.Exec(rawSQL, false, ds.OrgId, ds.Id); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) UpdateDataSource(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()
 		}
@@ -193,7 +228,7 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 			BasicAuthPassword: cmd.BasicAuthPassword,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
-			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
+			SecureJsonData:    cmd.EncryptedSecureJsonData,
 			Updated:           time.Now(),
 			ReadOnly:          cmd.ReadOnly,
 			Version:           cmd.Version + 1,
@@ -208,6 +243,7 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 		// plain text fields to SecureJsonData.
 		sess.MustCols("password")
 		sess.MustCols("basic_auth_password")
+		sess.MustCols("user")
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {

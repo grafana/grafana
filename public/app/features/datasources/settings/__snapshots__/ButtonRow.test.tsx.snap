@@ -4,28 +4,38 @@ exports[`Render should render component 1`] = `
 <div
   className="gf-form-button-row"
 >
-  <button
-    className="btn btn-success"
-    onClick={[MockFunction]}
-    type="submit"
+  <Button
+    fill="solid"
+    onClick={[Function]}
+    type="button"
+    variant="secondary"
   >
-    Test
-  </button>
-  <button
+    Back
+  </Button>
+  <LinkButton
+    disabled={false}
+    fill="solid"
+    href="/explore"
+    variant="secondary"
+  >
+    Explore
+  </LinkButton>
+  <Button
     aria-label="Data source settings page Delete button"
-    className="btn btn-danger"
     disabled={true}
     onClick={[MockFunction]}
     type="button"
+    variant="destructive"
   >
     Delete
-  </button>
-  <a
-    className="btn btn-inverse"
-    href="/datasources"
+  </Button>
+  <Button
+    onClick={[MockFunction]}
+    type="submit"
+    variant="primary"
   >
-    Back
-  </a>
+    Test
+  </Button>
 </div>
 `;
 
@@ -33,29 +43,39 @@ exports[`Render should render with buttons enabled 1`] = `
 <div
   className="gf-form-button-row"
 >
-  <button
-    aria-label="Data source settings page Save and Test button"
-    className="btn btn-primary"
-    disabled={false}
+  <Button
+    fill="solid"
     onClick={[Function]}
-    type="submit"
+    type="button"
+    variant="secondary"
   >
-    Save & Test
-  </button>
-  <button
+    Back
+  </Button>
+  <LinkButton
+    disabled={false}
+    fill="solid"
+    href="/explore"
+    variant="secondary"
+  >
+    Explore
+  </LinkButton>
+  <Button
     aria-label="Data source settings page Delete button"
-    className="btn btn-danger"
     disabled={false}
     onClick={[MockFunction]}
     type="button"
+    variant="destructive"
   >
     Delete
-  </button>
-  <a
-    className="btn btn-inverse"
-    href="/datasources"
+  </Button>
+  <Button
+    aria-label="Data source settings page Save and Test button"
+    disabled={false}
+    onClick={[Function]}
+    type="submit"
+    variant="primary"
   >
-    Back
-  </a>
+    Save & test
+  </Button>
 </div>
 `;

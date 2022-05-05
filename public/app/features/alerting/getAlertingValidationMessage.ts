@@ -1,6 +1,5 @@
-import { DataQuery } from '@grafana/data';
+import { DataQuery, DataSourceRef, DataTransformerConfig } from '@grafana/data';
 import { DataSourceSrv } from '@grafana/runtime';
-import { DataTransformerConfig } from '@grafana/data';
 
 export const getDefaultCondition = () => ({
   type: 'query',
@@ -14,7 +13,7 @@ export const getAlertingValidationMessage = async (
   transformations: DataTransformerConfig[] | undefined,
   targets: DataQuery[],
   datasourceSrv: DataSourceSrv,
-  datasourceName: string | null
+  datasource: DataSourceRef | null
 ): Promise<string> => {
   if (targets.length === 0) {
     return 'Could not find any metric queries';
@@ -28,8 +27,8 @@ export const getAlertingValidationMessage = async (
   let templateVariablesNotSupported = 0;
 
   for (const target of targets) {
-    const dsName = target.datasource || datasourceName;
-    const ds = await datasourceSrv.get(dsName);
+    const dsRef = target.datasource || datasource;
+    const ds = await datasourceSrv.get(dsRef);
     if (!ds.meta.alerting) {
       alertingNotSupported++;
     } else if (ds.targetContainsTemplate && ds.targetContainsTemplate(target)) {

@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import _values from 'lodash/values';
+import { values as _values } from 'lodash';
 
-import { followsFromRef } from './trace.fixture';
+import traceGenerator from '../demo/trace-generators';
+import { numberSortComparator } from '../utils/sort';
+
 import {
   getSpanId,
   getSpanName,
@@ -25,8 +27,7 @@ import {
   getSpanTimestamp,
 } from './span';
 import * as traceSelectors from './trace';
-import traceGenerator from '../demo/trace-generators';
-import { numberSortComparator } from '../utils/sort';
+import { followsFromRef } from './trace.fixture';
 
 const generatedTrace = traceGenerator.trace({ numberOfSpans: 45 });
 
@@ -37,15 +38,15 @@ it('getTraceId() should return the traceID', () => {
 it('hydrateSpansWithProcesses() should return the trace with processes on each span', () => {
   const hydratedTrace = traceSelectors.hydrateSpansWithProcesses(generatedTrace);
 
-  hydratedTrace.spans.forEach(span =>
+  hydratedTrace.spans.forEach((span) =>
     expect(getSpanProcess(span)).toBe(generatedTrace.processes[getSpanProcessId(span)])
   );
 });
 
 it('getTraceSpansAsMap() should return a map of all of the spans', () => {
   const spanMap = traceSelectors.getTraceSpansAsMap(generatedTrace);
-  [...spanMap.entries()].forEach(pair => {
-    expect(pair[1]).toEqual(generatedTrace.spans.find(span => getSpanId(span) === pair[0]));
+  [...spanMap.entries()].forEach((pair) => {
+    expect(pair[1]).toEqual(generatedTrace.spans.find((span) => getSpanId(span) === pair[0]));
   });
 });
 
@@ -56,7 +57,7 @@ describe('getTraceSpanIdsAsTree()', () => {
 
     tree.walk((value, node) => {
       const expectedParentValue = value === traceSelectors.TREE_ROOT_ID ? null : value;
-      node.children.forEach(childNode => {
+      node.children.forEach((childNode) => {
         expect(getSpanParentId(spanMap.get(childNode.value))).toBe(expectedParentValue);
       });
     });
@@ -134,7 +135,7 @@ it('getSpanDepthForTrace() should determine the depth of a given span in the par
     let depth = 2;
     let currentId = getSpanParentId(span);
 
-    const findCurrentSpanById = item => getSpanId(item) === currentId;
+    const findCurrentSpanById = (item) => getSpanId(item) === currentId;
     while (currentId !== getSpanId(generatedTrace.spans[0])) {
       depth++;
       currentId = getSpanParentId(generatedTrace.spans.find(findCurrentSpanById));
@@ -159,7 +160,7 @@ it('getSpanDepthForTrace() should determine the depth of a given span in the par
 
 it('getTraceServices() should return an unique array of all services in the trace', () => {
   const svcs = [...traceSelectors.getTraceServices(generatedTrace)].sort();
-  const set = new Set(_values(generatedTrace.processes).map(v => v.serviceName));
+  const set = new Set(_values(generatedTrace.processes).map((v) => v.serviceName));
   const setSvcs = [...set.values()].sort();
   expect(svcs).toEqual(setSvcs);
 });

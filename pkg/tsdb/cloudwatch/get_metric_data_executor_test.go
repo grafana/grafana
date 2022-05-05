@@ -7,13 +7,15 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var counter = 1
-
 type cloudWatchFakeClient struct {
+	cloudwatchiface.CloudWatchAPI
+
+	counterForGetMetricDataWithContext int
 }
 
 func (client *cloudWatchFakeClient) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
@@ -21,13 +23,13 @@ func (client *cloudWatchFakeClient) GetMetricDataWithContext(ctx aws.Context, in
 	res := []*cloudwatch.MetricDataResult{{
 		Values: []*float64{aws.Float64(12.3), aws.Float64(23.5)},
 	}}
-	if counter == 0 {
+	if client.counterForGetMetricDataWithContext == 0 {
 		nextToken = ""
 		res = []*cloudwatch.MetricDataResult{{
 			Values: []*float64{aws.Float64(100)},
 		}}
 	}
-	counter--
+	client.counterForGetMetricDataWithContext--
 	return &cloudwatch.GetMetricDataOutput{
 		MetricDataResults: res,
 		NextToken:         aws.String(nextToken),
@@ -37,7 +39,7 @@ func (client *cloudWatchFakeClient) GetMetricDataWithContext(ctx aws.Context, in
 func TestGetMetricDataExecutorTest(t *testing.T) {
 	executor := &cloudWatchExecutor{}
 	inputs := &cloudwatch.GetMetricDataInput{MetricDataQueries: []*cloudwatch.MetricDataQuery{}}
-	res, err := executor.executeRequest(context.Background(), &cloudWatchFakeClient{}, inputs)
+	res, err := executor.executeRequest(context.Background(), &cloudWatchFakeClient{counterForGetMetricDataWithContext: 1}, inputs)
 	require.NoError(t, err)
 	require.Len(t, res, 2)
 	require.Len(t, res[0].MetricDataResults[0].Values, 2)

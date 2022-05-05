@@ -1,7 +1,8 @@
-import { DashboardAcl } from './acl';
-import { DataQuery, PanelPlugin } from '@grafana/data';
+import { DataQuery } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { AngularComponent } from '@grafana/runtime';
+import { VariableModel } from 'app/features/variables/types';
+
+import { DashboardAcl } from './acl';
 
 export interface DashboardDTO {
   redirectUri?: string;
@@ -18,12 +19,11 @@ export interface DashboardMeta {
   canAdmin?: boolean;
   url?: string;
   folderId?: number;
-  fromExplore?: boolean;
+  folderUid?: string;
   canMakeEditable?: boolean;
   submenuEnabled?: boolean;
   provisioned?: boolean;
   provisionedExternalId?: string;
-  focusPanelId?: number;
   isStarred?: boolean;
   showSettings?: boolean;
   expires?: string;
@@ -34,13 +34,33 @@ export interface DashboardMeta {
   createdBy?: string;
   updated?: string;
   updatedBy?: string;
+  fromScript?: boolean;
+  fromFile?: boolean;
+  hasUnsavedFolderChange?: boolean;
+  annotationsPermissions?: AnnotationsPermissions;
+}
+
+export interface AnnotationActions {
+  canAdd: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+}
+
+export interface AnnotationsPermissions {
+  dashboard: AnnotationActions;
+  organization: AnnotationActions;
 }
 
 export interface DashboardDataDTO {
   title: string;
+  uid: string;
+  templating: {
+    list: VariableModel[];
+  };
+  panels?: any[];
 }
 
-export enum DashboardRouteInfo {
+export enum DashboardRoutes {
   Home = 'home-dashboard',
   New = 'new-dashboard',
   Normal = 'normal-dashboard',
@@ -60,8 +80,12 @@ export interface DashboardInitError {
   error: any;
 }
 
-export const KIOSK_MODE_TV = 'tv';
-export type KioskUrlValue = 'tv' | '1' | true;
+export enum KioskMode {
+  Off = 'off',
+  TV = 'tv',
+  Full = 'full',
+}
+
 export type GetMutableDashboardModelFn = () => DashboardModel | null;
 
 export interface QueriesToUpdateOnDashboardLoad {
@@ -69,18 +93,9 @@ export interface QueriesToUpdateOnDashboardLoad {
   queries: DataQuery[];
 }
 
-export interface PanelState {
-  pluginId: string;
-  plugin?: PanelPlugin;
-  angularComponent?: AngularComponent | null;
-}
-
 export interface DashboardState {
   getModel: GetMutableDashboardModelFn;
   initPhase: DashboardInitPhase;
-  isInitSlow: boolean;
   initError: DashboardInitError | null;
   permissions: DashboardAcl[];
-  modifiedQueries: QueriesToUpdateOnDashboardLoad | null;
-  panels: { [id: string]: PanelState };
 }

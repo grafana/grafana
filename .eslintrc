@@ -1,12 +1,39 @@
 {
   "extends": ["@grafana/eslint-config"],
   "root": true,
+  "plugins": ["@emotion", "lodash", "jest", "import"],
+  "settings": {
+    "import/internal-regex": "^(app/)|(@grafana)",
+    "import/external-module-folders": ["node_modules", ".yarn"]
+  },
+  "rules": {
+    "react/prop-types": "off",
+    "@emotion/jsx-import": "error",
+    "lodash/import-scope": [2, "member"],
+    "jest/no-focused-tests": "error",
+    "import/order": [
+      "error",
+      {
+        "groups": [["builtin", "external"], "internal", "parent", "sibling", "index"],
+        "newlines-between": "always",
+        "alphabetize": { "order": "asc" }
+      }
+    ]
+  },
   "overrides": [
     {
-      "files": ["packages/grafana-ui/**/*.{ts,tsx}", "public/app/**/*.{ts,tsx}"],
+      "files": ["packages/grafana-ui/src/components/uPlot/**/*.{ts,tsx}"],
       "rules": {
         "react-hooks/rules-of-hooks": "off",
         "react-hooks/exhaustive-deps": "off"
+      }
+    },
+    {
+      "files": ["packages/grafana-ui/src/components/ThemeDemos/**/*.{ts,tsx}"],
+      "rules": {
+        "@emotion/jsx-import": "off",
+        "react/jsx-uses-react": "off",
+        "react/react-in-jsx-scope": "off"
       }
     }
   ]

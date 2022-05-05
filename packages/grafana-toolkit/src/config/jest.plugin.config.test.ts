@@ -1,7 +1,14 @@
 import { jestConfig, allowedJestConfigOverrides } from './jest.plugin.config';
 
 describe('Jest config', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('should throw if not supported overrides provided', () => {
+    // Do not show console error,log when running test
+    jest.spyOn(console, 'error').mockImplementation();
+    jest.spyOn(console, 'log').mockImplementation();
     const getConfig = () => jestConfig(`${__dirname}/mocks/jestSetup/unsupportedOverrides`);
 
     expect(getConfig).toThrow('Provided Jest config is not supported');
@@ -26,7 +33,6 @@ describe('Jest config', () => {
     it('should preserve mapping for stylesheets when moduleNameMapper overrides provided', () => {
       const config = jestConfig(`${__dirname}/mocks/jestSetup/overrides`);
       expect(config.moduleNameMapper).toBeDefined();
-      expect(Object.keys(config.moduleNameMapper)).toHaveLength(2);
       expect(Object.keys(config.moduleNameMapper)).toContain('\\.(css|sass|scss)$');
       expect(Object.keys(config.moduleNameMapper)).toContain('someOverride');
     });

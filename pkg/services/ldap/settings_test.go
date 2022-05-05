@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestReadingLDAPSettings(t *testing.T) {
@@ -14,9 +15,10 @@ func TestReadingLDAPSettings(t *testing.T) {
 }
 
 func TestReadingLDAPSettingsWithEnvVariable(t *testing.T) {
-	os.Setenv("ENV_PASSWORD", "MySecret")
+	err := os.Setenv("ENV_PASSWORD", "MySecret")
+	require.NoError(t, err)
 
 	config, err := readConfig("testdata/ldap.toml")
-	assert.Nil(t, err, "No error when reading ldap config")
+	require.NoError(t, err)
 	assert.EqualValues(t, "MySecret", config.Servers[0].BindPassword)
 }

@@ -1,5 +1,6 @@
-import { Plugin } from '@grafana/slate-react';
 import { Editor as CoreEditor } from 'slate';
+
+import { Plugin } from '@grafana/slate-react';
 
 function getIndent(text: string) {
   let offset = text.length - text.trimLeft().length;
@@ -30,10 +31,7 @@ export function NewlinePlugin(): Plugin {
         const currentLineText = startBlock.text;
         const indent = getIndent(currentLineText);
 
-        return editor
-          .splitBlock()
-          .insertText(indent)
-          .focus();
+        return editor.splitBlock().insertText(indent).focus();
       }
 
       return next();

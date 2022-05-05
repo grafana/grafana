@@ -11,8 +11,6 @@ import (
 	"net/http"
 	"time"
 
-	"golang.org/x/net/context/ctxhttp"
-
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -42,13 +40,17 @@ var netClient = &http.Client{
 }
 
 func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
-	ns.log.Debug("Sending webhook", "url", webhook.Url, "http method", webhook.HttpMethod)
-
 	if webhook.HttpMethod == "" {
 		webhook.HttpMethod = http.MethodPost
 	}
 
-	request, err := http.NewRequest(webhook.HttpMethod, webhook.Url, bytes.NewReader([]byte(webhook.Body)))
+	ns.log.Debug("Sending webhook", "url", webhook.Url, "http method", webhook.HttpMethod)
+
+	if webhook.HttpMethod != http.MethodPost && webhook.HttpMethod != http.MethodPut {
+		return fmt.Errorf("webhook only supports HTTP methods PUT or POST")
+	}
+
+	request, err := http.NewRequestWithContext(ctx, webhook.HttpMethod, webhook.Url, bytes.NewReader([]byte(webhook.Body)))
 	if err != nil {
 		return err
 	}
@@ -57,23 +59,26 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 		webhook.ContentType = "application/json"
 	}
 
-	request.Header.Add("Content-Type", webhook.ContentType)
-	request.Header.Add("User-Agent", "Grafana")
+	request.Header.Set("Content-Type", webhook.ContentType)
+	request.Header.Set("User-Agent", "Grafana")
 
 	if webhook.User != "" && webhook.Password != "" {
-		request.Header.Add("Authorization", util.GetBasicAuthHeader(webhook.User, webhook.Password))
+		request.Header.Set("Authorization", util.GetBasicAuthHeader(webhook.User, webhook.Password))
 	}
 
 	for k, v := range webhook.HttpHeader {
 		request.Header.Set(k, v)
 	}
 
-	resp, err := ctxhttp.Do(ctx, netClient, request)
+	resp, err := netClient.Do(request)
 	if err != nil {
 		return err
 	}
-
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			ns.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	if resp.StatusCode/100 == 2 {
 		ns.log.Debug("Webhook succeeded", "url", webhook.Url, "statuscode", resp.Status)

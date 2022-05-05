@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { css, cx } from '@emotion/css';
 import * as React from 'react';
-import { css, cx } from 'emotion';
 
-import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
+import { stylesFactory } from '@grafana/ui';
+
 import { TNil } from '../../types';
 import DraggableManager, { DraggableBounds, DraggingUpdate } from '../../utils/DraggableManager';
-import { createStyle } from '../../Theme';
+import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
 
 // exported for testing
-export const getStyles = createStyle(() => {
+export const getStyles = stylesFactory(() => {
   return {
     TimelineViewingLayer: css`
       label: TimelineViewingLayer;
@@ -194,7 +195,7 @@ export default class TimelineViewingLayer extends React.PureComponent<TimelineVi
     this._root = undefined;
   }
 
-  componentWillReceiveProps(nextProps: TimelineViewingLayerProps) {
+  UNSAFE_componentWillReceiveProps(nextProps: TimelineViewingLayerProps) {
     const { boundsInvalidator } = this.props;
     if (boundsInvalidator !== nextProps.boundsInvalidator) {
       this._draggerReframe.resetBounds();

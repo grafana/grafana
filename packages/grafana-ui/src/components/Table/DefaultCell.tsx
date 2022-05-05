@@ -1,37 +1,32 @@
-import React, { FC, MouseEventHandler } from 'react';
-import { DisplayValue, Field, formattedValueToString, LinkModel } from '@grafana/data';
-
-import { TableCellDisplayMode, TableCellProps } from './types';
+import React, { FC, ReactElement } from 'react';
 import tinycolor from 'tinycolor2';
-import { TableStyles } from './styles';
-import { FilterActions } from './FilterActions';
 
-export const DefaultCell: FC<TableCellProps> = props => {
+import { DisplayValue, Field, formattedValueToString } from '@grafana/data';
+
+import { getTextColorForBackground, getCellLinks } from '../../utils';
+
+import { CellActions } from './CellActions';
+import { TableStyles } from './styles';
+import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types';
+
+export const DefaultCell: FC<TableCellProps> = (props) => {
   const { field, cell, tableStyles, row, cellProps } = props;
 
+  const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
   const displayValue = field.display!(cell.value);
-  const value = formattedValueToString(displayValue);
-  const cellStyle = getCellStyle(tableStyles, field, displayValue);
+
+  let value: string | ReactElement;
+  if (React.isValidElement(cell.value)) {
+    value = cell.value;
+  } else {
+    value = formattedValueToString(displayValue);
+  }
+
   const showFilters = field.config.filterable;
+  const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
+  const cellStyle = getCellStyle(tableStyles, field, displayValue, inspectEnabled);
 
-  let link: LinkModel<any> | undefined;
-  let onClick: MouseEventHandler<HTMLAnchorElement> | undefined;
-
-  if (field.getLinks) {
-    link = field.getLinks({
-      valueRowIndex: row.index,
-    })[0];
-  }
-
-  if (link && link.onClick) {
-    onClick = event => {
-      // Allow opening in new tab
-      if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
-        event.preventDefault();
-        link!.onClick(event);
-      }
-    };
-  }
+  const { link, onClick } = getCellLinks(field, row);
 
   return (
     <div {...cellProps} className={cellStyle}>
@@ -41,14 +36,25 @@ export const DefaultCell: FC<TableCellProps> = props => {
           {value}
         </a>
       )}
-      {showFilters && cell.value && <FilterActions {...props} />}
+      {showActions && <CellActions {...props} previewMode="text" />}
     </div>
   );
 };
 
-function getCellStyle(tableStyles: TableStyles, field: Field, displayValue: DisplayValue) {
+function getCellStyle(
+  tableStyles: TableStyles,
+  field: Field,
+  displayValue: DisplayValue,
+  disableOverflowOnHover = false
+) {
   if (field.config.custom?.displayMode === TableCellDisplayMode.ColorText) {
-    return tableStyles.buildCellContainerStyle(displayValue.color);
+    return tableStyles.buildCellContainerStyle(displayValue.color, undefined, !disableOverflowOnHover);
+  }
+
+  if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackgroundSolid) {
+    const bgColor = tinycolor(displayValue.color);
+    const textColor = getTextColorForBackground(displayValue.color!);
+    return tableStyles.buildCellContainerStyle(textColor, bgColor.toRgbString(), !disableOverflowOnHover);
   }
 
   if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground) {
@@ -58,8 +64,14 @@ function getCellStyle(tableStyles: TableStyles, field: Field, displayValue: Disp
       .spin(5)
       .toRgbString();
 
-    return tableStyles.buildCellContainerStyle('white', `linear-gradient(120deg, ${bgColor2}, ${displayValue.color})`);
+    const textColor = getTextColorForBackground(displayValue.color!);
+
+    return tableStyles.buildCellContainerStyle(
+      textColor,
+      `linear-gradient(120deg, ${bgColor2}, ${displayValue.color})`,
+      !disableOverflowOnHover
+    );
   }
 
-  return tableStyles.cellContainer;
+  return disableOverflowOnHover ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer;
 }

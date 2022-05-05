@@ -1,22 +1,40 @@
 import React, { SyntheticEvent } from 'react';
-import { EventsWithValidation, InlineFormLabel, regexValidation, LegacyForms } from '@grafana/ui';
-const { Select, Input, FormField, Switch } = LegacyForms;
+
 import {
-  SelectableValue,
-  onUpdateDatasourceJsonDataOptionChecked,
   DataSourcePluginOptionsEditorProps,
+  onUpdateDatasourceJsonDataOptionChecked,
+  SelectableValue,
+  updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import {
+  InlineField,
+  InlineSwitch,
+  EventsWithValidation,
+  InlineFormLabel,
+  LegacyForms,
+  regexValidation,
+} from '@grafana/ui';
+
 import { PromOptions } from '../types';
 
+import { ExemplarsSettings } from './ExemplarsSettings';
+const { Select, Input, FormField } = LegacyForms;
+
 const httpOptions = [
-  { value: 'GET', label: 'GET' },
   { value: 'POST', label: 'POST' },
+  { value: 'GET', label: 'GET' },
 ];
 
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
 
 export const PromSettings = (props: Props) => {
   const { options, onOptionsChange } = props;
+
+  // We are explicitly adding httpMethod so it is correctly displayed in dropdown. This way, it is more predictable for users.
+
+  if (!options.jsonData.httpMethod) {
+    options.jsonData.httpMethod = 'POST';
+  }
 
   return (
     <>
@@ -62,13 +80,14 @@ export const PromSettings = (props: Props) => {
         <div className="gf-form">
           <InlineFormLabel
             width={13}
-            tooltip="Specify the HTTP Method to query Prometheus. (POST is only available in Prometheus >= v2.1.0)"
+            tooltip="You can use either POST or GET HTTP method to query your Prometheus data source. POST is the recommended method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network."
           >
             HTTP Method
           </InlineFormLabel>
           <Select
+            aria-label="Select HTTP method"
             options={httpOptions}
-            value={httpOptions.find(o => o.value === options.jsonData.httpMethod)}
+            value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
             onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
             width={7}
           />
@@ -77,20 +96,23 @@ export const PromSettings = (props: Props) => {
       <h3 className="page-heading">Misc</h3>
       <div className="gf-form-group">
         <div className="gf-form">
-          <Switch
-            checked={options.jsonData.disableMetricsLookup ?? false}
+          <InlineField
+            labelWidth={28}
             label="Disable metrics lookup"
-            labelClass="width-14"
-            onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableMetricsLookup')}
             tooltip="Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances."
-          />
+          >
+            <InlineSwitch
+              value={options.jsonData.disableMetricsLookup ?? false}
+              onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableMetricsLookup')}
+            />
+          </InlineField>
         </div>
         <div className="gf-form-inline">
           <div className="gf-form max-width-30">
             <FormField
               label="Custom query parameters"
               labelWidth={14}
-              tooltip="Add Custom parameters to Prometheus or Thanos queries."
+              tooltip="Add Custom parameters to all Prometheus or Thanos queries."
               inputEl={
                 <Input
                   className="width-25"
@@ -104,6 +126,16 @@ export const PromSettings = (props: Props) => {
           </div>
         </div>
       </div>
+      <ExemplarsSettings
+        options={options.jsonData.exemplarTraceIdDestinations}
+        onChange={(exemplarOptions) =>
+          updateDatasourcePluginJsonDataOption(
+            { onOptionsChange, options },
+            'exemplarTraceIdDestinations',
+            exemplarOptions
+          )
+        }
+      />
     </>
   );
 };
@@ -129,16 +161,14 @@ export const getValueFromEventItem = (eventItem: SyntheticEvent<HTMLInputElement
   return (eventItem as SelectableValue<string>).value;
 };
 
-const onChangeHandler = (
-  key: keyof PromOptions,
-  options: Props['options'],
-  onOptionsChange: Props['onOptionsChange']
-) => (eventItem: SyntheticEvent<HTMLInputElement> | SelectableValue<string>) => {
-  onOptionsChange({
-    ...options,
-    jsonData: {
-      ...options.jsonData,
-      [key]: getValueFromEventItem(eventItem),
-    },
-  });
-};
+const onChangeHandler =
+  (key: keyof PromOptions, options: Props['options'], onOptionsChange: Props['onOptionsChange']) =>
+  (eventItem: SyntheticEvent<HTMLInputElement> | SelectableValue<string>) => {
+    onOptionsChange({
+      ...options,
+      jsonData: {
+        ...options.jsonData,
+        [key]: getValueFromEventItem(eventItem),
+      },
+    });
+  };

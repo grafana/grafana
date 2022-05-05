@@ -1,0 +1,21 @@
+import { ArgsTable } from '@storybook/addon-docs/blocks';
+import { DateTimePicker } from './DateTimePicker';
+
+# DateTimePicker
+
+A component for selecting a date _and_ time.
+
+### Usage
+
+```tsx
+import React, { useState } from 'react';
+import { DateTime, dateTime } from '@grafana/data';
+import { DateTimePicker } from '@grafana/ui';
+
+const [date, setDate] = useState<DateTime>(dateTime('2021-05-05 12:00:00'));
+return <DateTimePicker label="Date" date={date} onChange={setDate} />;
+```
+
+### Props
+
+<ArgsTable of={DateTimePicker} />

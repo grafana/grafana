@@ -1,39 +1,55 @@
 // Libraries
-import React, { PureComponent } from 'react';
-import classNames from 'classnames';
-
-// Components
-import DataSourcesListItem from './DataSourcesListItem';
+import { css } from '@emotion/css';
+import React, { FC } from 'react';
 
 // Types
-import { DataSourceSettings } from '@grafana/data';
-import { LayoutMode, LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
+import { DataSourceSettings, LayoutMode } from '@grafana/data';
+import { Card, Tag, useStyles } from '@grafana/ui';
 
 export interface Props {
   dataSources: DataSourceSettings[];
   layoutMode: LayoutMode;
 }
 
-export class DataSourcesList extends PureComponent<Props> {
-  render() {
-    const { dataSources, layoutMode } = this.props;
+export const DataSourcesList: FC<Props> = ({ dataSources, layoutMode }) => {
+  const styles = useStyles(getStyles);
 
-    const listStyle = classNames({
-      'card-section': true,
-      'card-list-layout-grid': layoutMode === LayoutModes.Grid,
-      'card-list-layout-list': layoutMode === LayoutModes.List,
-    });
-
-    return (
-      <section className={listStyle}>
-        <ol className="card-list">
-          {dataSources.map((dataSource, index) => {
-            return <DataSourcesListItem dataSource={dataSource} key={`${dataSource.id}-${index}`} />;
-          })}
-        </ol>
-      </section>
-    );
-  }
-}
+  return (
+    <ul className={styles.list}>
+      {dataSources.map((dataSource) => {
+        return (
+          <li key={dataSource.id}>
+            <Card href={`datasources/edit/${dataSource.uid}`}>
+              <Card.Heading>{dataSource.name}</Card.Heading>
+              <Card.Figure>
+                <img src={dataSource.typeLogoUrl} alt="" height="40px" width="40px" className={styles.logo} />
+              </Card.Figure>
+              <Card.Meta>
+                {[
+                  dataSource.typeName,
+                  dataSource.url,
+                  dataSource.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
+                ]}
+              </Card.Meta>
+            </Card>
+          </li>
+        );
+      })}
+    </ul>
+  );
+};
 
 export default DataSourcesList;
+
+const getStyles = () => {
+  return {
+    list: css({
+      listStyle: 'none',
+      display: 'grid',
+      // gap: '8px', Add back when legacy support for old Card interface is dropped
+    }),
+    logo: css({
+      objectFit: 'contain',
+    }),
+  };
+};

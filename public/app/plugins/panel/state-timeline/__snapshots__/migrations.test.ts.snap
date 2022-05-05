@@ -1,0 +1,67 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Timeline Migrations from discrete panel 1`] = `
+Object {
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "fillOpacity": 100,
+        "lineWidth": 0,
+      },
+      "mappings": Array [
+        Object {
+          "options": Object {
+            "1": Object {
+              "color": "#7EB26D",
+            },
+            "111": Object {
+              "text": "ONE",
+            },
+            "20": Object {
+              "color": "#EAB839",
+            },
+            "222": Object {
+              "text": "TWO",
+            },
+            "30": Object {
+              "color": "#EF843C",
+            },
+            "5": Object {
+              "color": "#E24D42",
+            },
+            "90": Object {
+              "color": "#6ED0E0",
+            },
+          },
+          "type": "value",
+        },
+        Object {
+          "options": Object {
+            "from": 1,
+            "result": Object {
+              "text": "AAA",
+            },
+            "to": 3,
+          },
+          "type": "range",
+        },
+        Object {
+          "options": Object {
+            "from": 4,
+            "result": Object {
+              "text": "BBB",
+            },
+            "to": 5,
+          },
+          "type": "range",
+        },
+      ],
+      "unit": "currencyGBP",
+    },
+    "overrides": Array [],
+  },
+  "options": Object {
+    "mergeValues": true,
+  },
+}
+`;

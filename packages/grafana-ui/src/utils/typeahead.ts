@@ -1,15 +1,19 @@
 import { default as calculateSize } from 'calculate-size';
-import { CompletionItemGroup, CompletionItem, CompletionItemKind } from '../types/completion';
+
 import { GrafanaTheme } from '@grafana/data';
+
+import { CompletionItemGroup, CompletionItem, CompletionItemKind } from '../types/completion';
 
 export const flattenGroupItems = (groupedItems: CompletionItemGroup[]): CompletionItem[] => {
   return groupedItems.reduce((all: CompletionItem[], { items, label }) => {
-    const titleItem: CompletionItem = {
+    all.push({
       label,
       kind: CompletionItemKind.GroupTitle,
-    };
-    all.push(titleItem, ...items);
-    return all;
+    });
+    return items.reduce((all, item) => {
+      all.push(item);
+      return all;
+    }, all);
   }, []);
 };
 

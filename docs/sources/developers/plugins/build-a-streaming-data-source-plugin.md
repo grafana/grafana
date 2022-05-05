@@ -1,13 +1,12 @@
 +++
 title = "Build a streaming data source plugin"
-type = "docs"
 +++
 
 # Build a streaming data source plugin
 
 This guide explains how to build a streaming data source plugin.
 
-This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "../../../../../tutorials/build-a-data-source-plugin.md" >}}).
+This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "/tutorials/build-a-data-source-plugin.md" >}}).
 
 When monitoring critical applications, you want your dashboard to refresh as soon as your data does. In Grafana, you can set your dashboards to automatically refresh at a certain interval, no matter what data source you use. Unfortunately, this means that your queries are requesting all the data to be sent again, regardless of whether the data has actually changed.
 
@@ -46,8 +45,8 @@ Grafana uses [RxJS](https://rxjs.dev/) to continuously send data from a data sou
    ```
 
    ```ts
-   const observables = options.targets.map(target => {
-     return new Observable<DataQueryResponse>(subscriber => {
+   const observables = options.targets.map((target) => {
+     return new Observable<DataQueryResponse>((subscriber) => {
        // ...
      });
    });
@@ -77,12 +76,17 @@ Grafana uses [RxJS](https://rxjs.dev/) to continuously send data from a data sou
 1. Use `subscriber.next()` to send the updated data frame whenever you receive new updates.
 
    ```ts
+   import { LoadingState } from '@grafana/data';
+   ```
+
+   ```ts
    const intervalId = setInterval(() => {
      frame.add({ time: Date.now(), value: Math.random() });
 
      subscriber.next({
        data: [frame],
        key: query.refId,
+       state: LoadingState.Streaming,
      });
    }, 500);
 
@@ -95,38 +99,39 @@ Grafana uses [RxJS](https://rxjs.dev/) to continuously send data from a data sou
 
 Here's the final `query` method.
 
-   ```ts
-   query(options: DataQueryRequest<MyQuery>): Observable<DataQueryResponse> {
-     const streams = options.targets.map(target => {
-       const query = defaults(target, defaultQuery);
+```ts
+query(options: DataQueryRequest<MyQuery>): Observable<DataQueryResponse> {
+  const streams = options.targets.map(target => {
+    const query = defaults(target, defaultQuery);
 
-       return new Observable<DataQueryResponse>(subscriber => {
-         const frame = new CircularDataFrame({
-           append: 'tail',
-           capacity: 1000,
-         });
+    return new Observable<DataQueryResponse>(subscriber => {
+      const frame = new CircularDataFrame({
+        append: 'tail',
+        capacity: 1000,
+      });
 
-         frame.refId = query.refId;
-         frame.addField({ name: 'time', type: FieldType.time });
-         frame.addField({ name: 'value', type: FieldType.number });
+      frame.refId = query.refId;
+      frame.addField({ name: 'time', type: FieldType.time });
+      frame.addField({ name: 'value', type: FieldType.number });
 
-         const intervalId = setInterval(() => {
-           frame.add({ time: Date.now(), value: Math.random() });
+      const intervalId = setInterval(() => {
+        frame.add({ time: Date.now(), value: Math.random() });
 
-           subscriber.next({
-             data: [frame],
-             key: query.refId,
-           });
-         }, 100);
+        subscriber.next({
+          data: [frame],
+          key: query.refId,
+          state: LoadingState.Streaming,
+        });
+      }, 100);
 
-         return () => {
-           clearInterval(intervalId);
-         };
-       });
-     });
+      return () => {
+        clearInterval(intervalId);
+      };
+    });
+  });
 
-     return merge(...streams);
-   }
-   ```
+  return merge(...streams);
+}
+```
 
 One limitation with this example is that the panel visualization is cleared every time you update the dashboard. If you have access to historical data, you can add, or _backfill_, it to the data frame before the first call to `subscriber.next()`.

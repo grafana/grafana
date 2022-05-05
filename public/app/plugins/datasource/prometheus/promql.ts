@@ -1,17 +1,98 @@
+import { Grammar } from 'prismjs';
+
 import { CompletionItem } from '@grafana/ui';
 
+// When changing RATE_RANGES, check if Loki/LogQL ranges should be changed too
+// @see public/app/plugins/datasource/loki/language_provider.ts
 export const RATE_RANGES: CompletionItem[] = [
-  { label: '$__interval', sortText: '$__interval' },
-  { label: '$__rate_interval', sortText: '$__rate_interval' },
-  { label: '1m', sortText: '00:01:00' },
-  { label: '5m', sortText: '00:05:00' },
-  { label: '10m', sortText: '00:10:00' },
-  { label: '30m', sortText: '00:30:00' },
-  { label: '1h', sortText: '01:00:00' },
-  { label: '1d', sortText: '24:00:00' },
+  { label: '$__interval', sortValue: '$__interval' },
+  { label: '$__rate_interval', sortValue: '$__rate_interval' },
+  { label: '$__range', sortValue: '$__range' },
+  { label: '1m', sortValue: '00:01:00' },
+  { label: '5m', sortValue: '00:05:00' },
+  { label: '10m', sortValue: '00:10:00' },
+  { label: '30m', sortValue: '00:30:00' },
+  { label: '1h', sortValue: '01:00:00' },
+  { label: '1d', sortValue: '24:00:00' },
 ];
 
 export const OPERATORS = ['by', 'group_left', 'group_right', 'ignoring', 'on', 'offset', 'without'];
+export const LOGICAL_OPERATORS = ['or', 'and', 'unless'];
+
+const TRIGONOMETRIC_FUNCTIONS: CompletionItem[] = [
+  {
+    label: 'acos',
+    insertText: 'acos',
+    detail: 'acos(v instant-vector)',
+    documentation: 'calculates the arccosine of all elements in v',
+  },
+  {
+    label: 'acosh',
+    insertText: 'acosh',
+    detail: 'acosh(v instant-vector)',
+    documentation: 'calculates the inverse hyperbolic cosine of all elements in v',
+  },
+  {
+    label: 'asin',
+    insertText: 'asin',
+    detail: 'asin(v instant-vector)',
+    documentation: 'calculates the arcsine of all elements in v',
+  },
+  {
+    label: 'asinh',
+    insertText: 'asinh',
+    detail: 'asinh(v instant-vector)',
+    documentation: 'calculates the inverse hyperbolic sine of all elements in v',
+  },
+  {
+    label: 'atan',
+    insertText: 'atan',
+    detail: 'atan(v instant-vector)',
+    documentation: 'calculates the arctangent of all elements in v',
+  },
+  {
+    label: 'atanh',
+    insertText: 'atanh',
+    detail: 'atanh(v instant-vector)',
+    documentation: 'calculates the inverse hyperbolic tangent of all elements in v',
+  },
+  {
+    label: 'cos',
+    insertText: 'cos',
+    detail: 'cos(v instant-vector)',
+    documentation: 'calculates the cosine of all elements in v',
+  },
+  {
+    label: 'cosh',
+    insertText: 'cosh',
+    detail: 'cosh(v instant-vector)',
+    documentation: 'calculates the hyperbolic cosine of all elements in v',
+  },
+  {
+    label: 'sin',
+    insertText: 'sin',
+    detail: 'sin(v instant-vector)',
+    documentation: 'calculates the sine of all elements in v',
+  },
+  {
+    label: 'sinh',
+    insertText: 'sinh',
+    detail: 'sinh(v instant-vector)',
+    documentation: 'calculates the hyperbolic sine of all elements in v',
+  },
+  {
+    label: 'tan',
+    insertText: 'tan',
+    detail: 'tan(v instant-vector)',
+    documentation: 'calculates the tangent of all elements in v',
+  },
+  {
+    label: 'tanh',
+    insertText: 'tanh',
+    detail: 'tanh(v instant-vector)',
+    documentation: 'calculates the hyperbolic tangent of all elements in v',
+  },
+];
 
 const AGGREGATION_OPERATORS: CompletionItem[] = [
   {
@@ -33,6 +114,11 @@ const AGGREGATION_OPERATORS: CompletionItem[] = [
     label: 'avg',
     insertText: 'avg',
     documentation: 'Calculate the average over dimensions',
+  },
+  {
+    label: 'group',
+    insertText: 'group',
+    documentation: 'All values in the resulting vector are 1',
   },
   {
     label: 'stddev',
@@ -73,6 +159,7 @@ const AGGREGATION_OPERATORS: CompletionItem[] = [
 
 export const FUNCTIONS = [
   ...AGGREGATION_OPERATORS,
+  ...TRIGONOMETRIC_FUNCTIONS,
   {
     insertText: 'abs',
     label: 'abs',
@@ -87,6 +174,13 @@ export const FUNCTIONS = [
       'Returns an empty vector if the vector passed to it has any elements and a 1-element vector with the value 1 if the vector passed to it has no elements. This is useful for alerting on when no time series exist for a given metric name and label combination.',
   },
   {
+    insertText: 'absent_over_time',
+    label: 'absent_over_time',
+    detail: 'absent(v range-vector)',
+    documentation:
+      'Returns an empty vector if the range vector passed to it has any elements and a 1-element vector with the value 1 if the range vector passed to it has no elements.',
+  },
+  {
     insertText: 'ceil',
     label: 'ceil',
     detail: 'ceil(v instant-vector)',
@@ -98,6 +192,13 @@ export const FUNCTIONS = [
     detail: 'changes(v range-vector)',
     documentation:
       'For each input time series, `changes(v range-vector)` returns the number of times its value has changed within the provided time range as an instant vector.',
+  },
+  {
+    insertText: 'clamp',
+    label: 'clamp',
+    detail: 'clamp(v instant-vector, min scalar, max scalar)',
+    documentation:
+      'Clamps the sample values of all elements in `v` to have a lower limit of `min` and an upper limit of `max`.',
   },
   {
     insertText: 'clamp_max',
@@ -117,6 +218,12 @@ export const FUNCTIONS = [
     detail: 'count_scalar(v instant-vector)',
     documentation:
       'Returns the number of elements in a time series vector as a scalar. This is in contrast to the `count()` aggregation operator, which always returns a vector (an empty one if the input vector is empty) and allows grouping by labels via a `by` clause.',
+  },
+  {
+    insertText: 'deg',
+    label: 'deg',
+    detail: 'deg(v instant-vector)',
+    documentation: 'Converts radians to degrees for all elements in v',
   },
   {
     insertText: 'day_of_month',
@@ -213,6 +320,14 @@ export const FUNCTIONS = [
       'Calculates the per-second instant rate of increase of the time series in the range vector. This is based on the last two data points. Breaks in monotonicity (such as counter resets due to target restarts) are automatically adjusted for.',
   },
   {
+    insertText: 'label_join',
+    label: 'label_join',
+    detail:
+      'label_join(v instant-vector, dst_label string, separator string, src_label_1 string, src_label_2 string, ...)',
+    documentation:
+      'For each timeseries in `v`, joins all the values of all the `src_labels` using `separator` and returns the timeseries with the label `dst_label` containing the joined value. There can be any number of `src_labels` in this function.',
+  },
+  {
     insertText: 'label_replace',
     label: 'label_replace',
     detail: 'label_replace(v instant-vector, dst_label string, replacement string, src_label string, regex string)',
@@ -224,7 +339,7 @@ export const FUNCTIONS = [
     label: 'ln',
     detail: 'ln(v instant-vector)',
     documentation:
-      'calculates the natural logarithm for all elements in `v`.\nSpecial cases are:\n * `ln(+Inf) = +Inf`\n * `ln(0) = -Inf`\n * `ln(x < 0) = NaN`\n * `ln(NaN) = NaN`',
+      'Calculates the natural logarithm for all elements in `v`.\nSpecial cases are:\n * `ln(+Inf) = +Inf`\n * `ln(0) = -Inf`\n * `ln(x < 0) = NaN`\n * `ln(NaN) = NaN`',
   },
   {
     insertText: 'log2',
@@ -255,11 +370,23 @@ export const FUNCTIONS = [
       'Returns the month of the year for each of the given times in UTC. Returned values are from 1 to 12, where 1 means January etc.',
   },
   {
+    insertText: 'pi',
+    label: 'pi',
+    detail: 'pi()',
+    documentation: 'Returns pi',
+  },
+  {
     insertText: 'predict_linear',
     label: 'predict_linear',
     detail: 'predict_linear(v range-vector, t scalar)',
     documentation:
       'Predicts the value of time series `t` seconds from now, based on the range vector `v`, using simple linear regression.',
+  },
+  {
+    insertText: 'rad',
+    label: 'rad',
+    detail: 'rad(v instant-vector)',
+    documentation: 'Converts degrees to radians for all elements in v',
   },
   {
     insertText: 'rate',
@@ -290,6 +417,13 @@ export const FUNCTIONS = [
       'Given a single-element input vector, `scalar(v instant-vector)` returns the sample value of that single element as a scalar. If the input vector does not have exactly one element, `scalar` will return `NaN`.',
   },
   {
+    insertText: 'sgn',
+    label: 'sgn',
+    detail: 'sgn(v instant-vector)',
+    documentation:
+      'Returns a vector with all sample values converted to their sign, defined as this: 1 if v is positive, -1 if v is negative and 0 if v is equal to zero.',
+  },
+  {
     insertText: 'sort',
     label: 'sort',
     detail: 'sort(v instant-vector)',
@@ -313,6 +447,13 @@ export const FUNCTIONS = [
     detail: 'time()',
     documentation:
       'Returns the number of seconds since January 1, 1970 UTC. Note that this does not actually return the current time, but the time at which the expression is to be evaluated.',
+  },
+  {
+    insertText: 'timestamp',
+    label: 'timestamp',
+    detail: 'timestamp(v instant-vector)',
+    documentation:
+      'Returns the timestamp of each of the samples of the given vector as the number of seconds since January 1, 1970 UTC.',
   },
   {
     insertText: 'vector',
@@ -374,9 +515,17 @@ export const FUNCTIONS = [
     detail: 'stdvar_over_time(range-vector)',
     documentation: 'The population standard variance of the values in the specified interval.',
   },
+  {
+    insertText: 'last_over_time',
+    label: 'last_over_time',
+    detail: 'last_over_time(range-vector)',
+    documentation: 'The most recent point value in specified interval.',
+  },
 ];
 
-const tokenizer = {
+export const PROM_KEYWORDS = FUNCTIONS.map((keyword) => keyword.label);
+
+export const promqlGrammar: Grammar = {
   comment: {
     pattern: /#.*/,
   },
@@ -392,7 +541,7 @@ const tokenizer = {
     },
   },
   'context-labels': {
-    pattern: /\{[^}]*(?=})/,
+    pattern: /\{[^}]*(?=}?)/,
     greedy: true,
     inside: {
       comment: {
@@ -411,7 +560,7 @@ const tokenizer = {
       punctuation: /[{]/,
     },
   },
-  function: new RegExp(`\\b(?:${FUNCTIONS.map(f => f.label).join('|')})(?=\\s*\\()`, 'i'),
+  function: new RegExp(`\\b(?:${FUNCTIONS.map((f) => f.label).join('|')})(?=\\s*\\()`, 'i'),
   'context-range': [
     {
       pattern: /\[[^\]]*(?=])/, // [1m]
@@ -433,9 +582,13 @@ const tokenizer = {
       },
     },
   ],
+  idList: {
+    pattern: /\d+(\|\d+)+/,
+    alias: 'number',
+  },
   number: /\b-?\d+((\.\d*)?([eE][+-]?\d+)?)?\b/,
   operator: new RegExp(`/[-+*/=%^~]|&&?|\\|?\\||!=?|<(?:=>?|<|>)?|>[>=]?|\\b(?:${OPERATORS.join('|')})\\b`, 'i'),
   punctuation: /[{};()`,.]/,
 };
 
-export default tokenizer;
+export default promqlGrammar;

@@ -1,35 +1,39 @@
-// Libaries
-import React, { PureComponent, FC, ReactNode } from 'react';
-import { connect, MapDispatchToProps } from 'react-redux';
-import { css } from 'emotion';
-// Utils & Services
-import { appEvents } from 'app/core/app_events';
-import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
-// Components
+import React, { FC, ReactNode } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+
+import { locationUtil, textUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpdate } from '@grafana/ui';
+import config from 'app/core/config';
+import { toggleKioskMode } from 'app/core/navigation/kiosk';
+import { DashboardCommentsModal } from 'app/features/dashboard/components/DashboardComments/DashboardCommentsModal';
+import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
+import { ShareModal } from 'app/features/dashboard/components/ShareModal';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
+import { KioskMode } from 'app/types';
+
+import { getDashboardSrv } from '../../services/DashboardSrv';
+import { DashboardModel } from '../../state';
+
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { Icon, ModalsController } from '@grafana/ui';
-import { textUtil } from '@grafana/data';
-import { BackButton } from 'app/core/components/BackButton/BackButton';
-// State
-import { updateLocation } from 'app/core/actions';
-import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-// Types
-import { DashboardModel } from '../../state';
-import { CoreEvents, StoreState } from 'app/types';
-import { ShareModal } from 'app/features/dashboard/components/ShareModal';
-import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
+
+const mapDispatchToProps = {
+  updateTimeZoneForSession,
+};
+
+const connector = connect(null, mapDispatchToProps);
 
 export interface OwnProps {
   dashboard: DashboardModel;
   isFullscreen: boolean;
-  $injector: any;
+  kioskMode: KioskMode;
+  hideTimePicker: boolean;
+  folderTitle?: string;
+  title: string;
   onAddPanel: () => void;
-}
-
-interface DispatchProps {
-  updateTimeZoneForSession: typeof updateTimeZoneForSession;
-  updateLocation: typeof updateLocation;
 }
 
 interface DashNavButtonModel {
@@ -49,113 +53,90 @@ export function addCustomRightAction(content: DashNavButtonModel) {
   customRightActions.push(content);
 }
 
-export interface StateProps {
-  location: any;
-}
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
-type Props = StateProps & OwnProps & DispatchProps;
+export const DashNav = React.memo<Props>((props) => {
+  const forceUpdate = useForceUpdate();
 
-class DashNav extends PureComponent<Props> {
-  playlistSrv: PlaylistSrv;
-
-  constructor(props: Props) {
-    super(props);
-    this.playlistSrv = this.props.$injector.get('playlistSrv');
-  }
-
-  onFolderNameClick = () => {
-    this.props.updateLocation({
-      query: { search: 'open', folder: 'current' },
-      partial: true,
-    });
-  };
-
-  onClose = () => {
-    this.props.updateLocation({
-      query: { viewPanel: null },
-      partial: true,
-    });
-  };
-
-  onToggleTVMode = () => {
-    appEvents.emit(CoreEvents.toggleKioskMode);
-  };
-
-  onOpenSettings = () => {
-    this.props.updateLocation({
-      query: { editview: 'settings' },
-      partial: true,
-    });
-  };
-
-  onStarDashboard = () => {
-    const { dashboard, $injector } = this.props;
-    const dashboardSrv = $injector.get('dashboardSrv');
+  const onStarDashboard = () => {
+    const dashboardSrv = getDashboardSrv();
+    const { dashboard } = props;
 
     dashboardSrv.starDashboard(dashboard.id, dashboard.meta.isStarred).then((newState: any) => {
       dashboard.meta.isStarred = newState;
-      this.forceUpdate();
+      forceUpdate();
     });
   };
 
-  onPlaylistPrev = () => {
-    this.playlistSrv.prev();
+  const onClose = () => {
+    locationService.partial({ viewPanel: null });
   };
 
-  onPlaylistNext = () => {
-    this.playlistSrv.next();
+  const onToggleTVMode = () => {
+    toggleKioskMode();
   };
 
-  onPlaylistStop = () => {
-    this.playlistSrv.stop();
-    this.forceUpdate();
+  const onOpenSettings = () => {
+    locationService.partial({ editview: 'settings' });
   };
 
-  onDashboardNameClick = () => {
-    this.props.updateLocation({
-      query: { search: 'open' },
-      partial: true,
-    });
+  const onPlaylistPrev = () => {
+    playlistSrv.prev();
   };
 
-  addCustomContent(actions: DashNavButtonModel[], buttons: ReactNode[]) {
+  const onPlaylistNext = () => {
+    playlistSrv.next();
+  };
+
+  const onPlaylistStop = () => {
+    playlistSrv.stop();
+    forceUpdate();
+  };
+
+  const addCustomContent = (actions: DashNavButtonModel[], buttons: ReactNode[]) => {
     actions.map((action, index) => {
       const Component = action.component;
-      const element = <Component {...this.props} key={`button-custom-${index}`} />;
+      const element = <Component {...props} key={`button-custom-${index}`} />;
       typeof action.index === 'number' ? buttons.splice(action.index, 0, element) : buttons.push(element);
     });
-  }
+  };
 
-  renderLeftActionsButton() {
-    const { dashboard } = this.props;
+  const isPlaylistRunning = () => {
+    return playlistSrv.isPlaying;
+  };
+
+  const renderLeftActionsButton = () => {
+    const { dashboard, kioskMode } = props;
     const { canStar, canShare, isStarred } = dashboard.meta;
-
     const buttons: ReactNode[] = [];
+
+    if (kioskMode !== KioskMode.Off || isPlaylistRunning()) {
+      return [];
+    }
+
     if (canStar) {
+      let desc = isStarred ? 'Unmark as favorite' : 'Mark as favorite';
       buttons.push(
         <DashNavButton
-          tooltip="Mark as favorite"
-          classSuffix="star"
+          tooltip={desc}
           icon={isStarred ? 'favorite' : 'star'}
           iconType={isStarred ? 'mono' : 'default'}
           iconSize="lg"
-          noBorder={true}
-          onClick={this.onStarDashboard}
+          onClick={onStarDashboard}
           key="button-star"
         />
       );
     }
 
     if (canShare) {
+      let desc = 'Share dashboard or panel';
       buttons.push(
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
             <DashNavButton
-              tooltip="Share dashboard"
-              classSuffix="share"
+              tooltip={desc}
               icon="share-alt"
               iconSize="lg"
-              noBorder={true}
               onClick={() => {
                 showModal(ShareModal, {
                   dashboard,
@@ -168,81 +149,83 @@ class DashNav extends PureComponent<Props> {
       );
     }
 
-    this.addCustomContent(customLeftActions, buttons);
+    if (dashboard.uid && config.featureToggles.dashboardComments) {
+      buttons.push(
+        <ModalsController key="button-dashboard-comments">
+          {({ showModal, hideModal }) => (
+            <DashNavButton
+              tooltip="Show dashboard comments"
+              icon="comment-alt-message"
+              iconSize="lg"
+              onClick={() => {
+                showModal(DashboardCommentsModal, {
+                  dashboard,
+                  onDismiss: hideModal,
+                });
+              }}
+            />
+          )}
+        </ModalsController>
+      );
+    }
+
+    addCustomContent(customLeftActions, buttons);
     return buttons;
-  }
+  };
 
-  renderDashboardTitleSearchButton() {
-    const { dashboard, isFullscreen } = this.props;
+  const renderPlaylistControls = () => {
+    return (
+      <ButtonGroup key="playlist-buttons">
+        <ToolbarButton tooltip="Go to previous dashboard" icon="backward" onClick={onPlaylistPrev} narrow />
+        <ToolbarButton onClick={onPlaylistStop}>Stop playlist</ToolbarButton>
+        <ToolbarButton tooltip="Go to next dashboard" icon="forward" onClick={onPlaylistNext} narrow />
+      </ButtonGroup>
+    );
+  };
 
-    const folderSymbol = css`
-      margin-right: 0 4px;
-    `;
-    const mainIconClassName = css`
-      margin-right: 8px;
-      margin-bottom: 3px;
-    `;
+  const renderTimeControls = () => {
+    const { dashboard, updateTimeZoneForSession, hideTimePicker } = props;
 
-    const folderTitle = dashboard.meta.folderTitle;
-    const haveFolder = (dashboard.meta.folderId ?? 0) > 0;
+    if (hideTimePicker) {
+      return null;
+    }
 
     return (
-      <>
-        <div>
-          <div className="navbar-page-btn">
-            {!isFullscreen && <Icon name="apps" size="lg" className={mainIconClassName} />}
-            {haveFolder && (
-              <>
-                <a className="navbar-page-btn__folder" onClick={this.onFolderNameClick}>
-                  {folderTitle} <span className={folderSymbol}>/</span>
-                </a>
-              </>
-            )}
-            <a onClick={this.onDashboardNameClick}>{dashboard.title}</a>
-          </div>
-        </div>
-        <div className="navbar-buttons navbar-buttons--actions">{this.renderLeftActionsButton()}</div>
-        <div className="navbar__spacer" />
-      </>
+      <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} key="time-controls" />
     );
-  }
+  };
 
-  renderBackButton() {
-    return (
-      <div className="navbar-edit">
-        <BackButton surface="dashboard" onClick={this.onClose} />
-      </div>
-    );
-  }
-
-  renderRightActionsButton() {
-    const { dashboard, onAddPanel } = this.props;
-    const { canSave, showSettings } = dashboard.meta;
+  const renderRightActionsButton = () => {
+    const { dashboard, onAddPanel, isFullscreen, kioskMode } = props;
+    const { canSave, canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
-
     const buttons: ReactNode[] = [];
-    if (canSave) {
-      buttons.push(
-        <DashNavButton
-          classSuffix="save"
-          tooltip="Add panel"
-          icon="panel-add"
-          onClick={onAddPanel}
-          iconType="mono"
-          iconSize="xl"
-          key="button-panel-add"
-        />
-      );
+    const tvButton = (
+      <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={onToggleTVMode} key="tv-button" />
+    );
+
+    if (isPlaylistRunning()) {
+      return [renderPlaylistControls(), renderTimeControls()];
+    }
+
+    if (kioskMode === KioskMode.TV) {
+      return [renderTimeControls(), tvButton];
+    }
+
+    if (canEdit && !isFullscreen) {
+      buttons.push(<ToolbarButton tooltip="Add panel" icon="panel-add" onClick={onAddPanel} key="button-panel-add" />);
+    }
+
+    if (canSave && !isFullscreen) {
       buttons.push(
         <ModalsController key="button-save">
           {({ showModal, hideModal }) => (
-            <DashNavButton
+            <ToolbarButton
               tooltip="Save dashboard"
-              classSuffix="save"
               icon="save"
               onClick={() => {
-                showModal(SaveDashboardModalProxy, {
+                showModal(SaveDashboardDrawer, {
                   dashboard,
                   onDismiss: hideModal,
                 });
@@ -255,10 +238,9 @@ class DashNav extends PureComponent<Props> {
 
     if (snapshotUrl) {
       buttons.push(
-        <DashNavButton
+        <ToolbarButton
           tooltip="Open original dashboard"
-          classSuffix="snapshot-origin"
-          href={textUtil.sanitizeUrl(snapshotUrl)}
+          onClick={() => gotoSnapshotOrigin(snapshotUrl)}
           icon="link"
           key="button-snapshot"
         />
@@ -267,78 +249,43 @@ class DashNav extends PureComponent<Props> {
 
     if (showSettings) {
       buttons.push(
-        <DashNavButton
-          tooltip="Dashboard settings"
-          classSuffix="settings"
-          icon="cog"
-          onClick={this.onOpenSettings}
-          key="button-settings"
-        />
+        <ToolbarButton tooltip="Dashboard settings" icon="cog" onClick={onOpenSettings} key="button-settings" />
       );
     }
 
-    this.addCustomContent(customRightActions, buttons);
+    addCustomContent(customRightActions, buttons);
+
+    buttons.push(renderTimeControls());
+    buttons.push(tvButton);
     return buttons;
-  }
+  };
 
-  render() {
-    const { dashboard, location, isFullscreen, updateTimeZoneForSession } = this.props;
+  const gotoSnapshotOrigin = (snapshotUrl: string) => {
+    window.location.href = textUtil.sanitizeUrl(snapshotUrl);
+  };
 
-    return (
-      <div className="navbar">
-        {isFullscreen && this.renderBackButton()}
-        {this.renderDashboardTitleSearchButton()}
+  const { isFullscreen, title, folderTitle } = props;
+  // this ensures the component rerenders when the location changes
+  const location = useLocation();
+  const titleHref = locationUtil.getUrlForPartial(location, { search: 'open' });
+  const parentHref = locationUtil.getUrlForPartial(location, { search: 'open', folder: 'current' });
+  const onGoBack = isFullscreen ? onClose : undefined;
 
-        {this.playlistSrv.isPlaying && (
-          <div className="navbar-buttons navbar-buttons--playlist">
-            <DashNavButton
-              tooltip="Go to previous dashboard"
-              classSuffix="tight"
-              icon="step-backward"
-              onClick={this.onPlaylistPrev}
-            />
-            <DashNavButton
-              tooltip="Stop playlist"
-              classSuffix="tight"
-              icon="square-shape"
-              onClick={this.onPlaylistStop}
-            />
-            <DashNavButton
-              tooltip="Go to next dashboard"
-              classSuffix="tight"
-              icon="forward"
-              onClick={this.onPlaylistNext}
-            />
-          </div>
-        )}
-
-        <div className="navbar-buttons navbar-buttons--actions">{this.renderRightActionsButton()}</div>
-
-        <div className="navbar-buttons navbar-buttons--tv">
-          <DashNavButton tooltip="Cycle view mode" classSuffix="tv" icon="monitor" onClick={this.onToggleTVMode} />
-        </div>
-
-        {!dashboard.timepicker.hidden && (
-          <div className="navbar-buttons">
-            <DashNavTimeControls
-              dashboard={dashboard}
-              location={location}
-              onChangeTimeZone={updateTimeZoneForSession}
-            />
-          </div>
-        )}
-      </div>
-    );
-  }
-}
-
-const mapStateToProps = (state: StoreState) => ({
-  location: state.location,
+  return (
+    <PageToolbar
+      pageIcon={isFullscreen ? undefined : 'apps'}
+      title={title}
+      parent={folderTitle}
+      titleHref={titleHref}
+      parentHref={parentHref}
+      onGoBack={onGoBack}
+      leftItems={renderLeftActionsButton()}
+    >
+      {renderRightActionsButton()}
+    </PageToolbar>
+  );
 });
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  updateLocation,
-  updateTimeZoneForSession,
-};
+DashNav.displayName = 'DashNav';
 
-export default connect(mapStateToProps, mapDispatchToProps)(DashNav);
+export default connector(DashNav);

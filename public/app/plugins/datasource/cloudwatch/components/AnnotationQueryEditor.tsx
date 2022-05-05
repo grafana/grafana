@@ -1,62 +1,89 @@
 import React, { ChangeEvent } from 'react';
-import { LegacyForms } from '@grafana/ui';
-const { Switch } = LegacyForms;
-import { PanelData } from '@grafana/data';
-import { AnnotationQuery } from '../types';
+
+import { QueryEditorProps } from '@grafana/data';
+import { EditorField, EditorHeader, EditorRow, InlineSelect, Space, EditorSwitch } from '@grafana/experimental';
+import { Alert, Input } from '@grafana/ui';
+
 import { CloudWatchDatasource } from '../datasource';
-import { QueryField, PanelQueryEditor } from './';
+import { isCloudWatchAnnotationQuery } from '../guards';
+import { useRegions } from '../hooks';
+import { CloudWatchJsonData, CloudWatchQuery, MetricStat } from '../types';
 
-export type Props = {
-  query: AnnotationQuery;
-  datasource: CloudWatchDatasource;
-  onChange: (value: AnnotationQuery) => void;
-  data?: PanelData;
-};
+import { MetricStatEditor } from './MetricStatEditor';
 
-export function AnnotationQueryEditor(props: React.PropsWithChildren<Props>) {
-  const { query, onChange } = props;
+export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
+
+export const AnnotationQueryEditor = (props: Props) => {
+  const { query, onChange, datasource } = props;
+  const [regions, regionIsLoading] = useRegions(datasource);
+
+  if (!isCloudWatchAnnotationQuery(query)) {
+    return (
+      <Alert severity="error" title="Invalid annotation query" topSpacing={2}>
+        {JSON.stringify(query, null, 4)}
+      </Alert>
+    );
+  }
+
   return (
     <>
-      <PanelQueryEditor
-        {...props}
-        onChange={(editorQuery: AnnotationQuery) => onChange({ ...query, ...editorQuery })}
-        onRunQuery={() => {}}
-        history={[]}
-      ></PanelQueryEditor>
-      <div className="gf-form-inline">
-        <Switch
-          label="Enable Prefix Matching"
-          labelClass="query-keyword"
-          checked={query.prefixMatching}
-          onChange={() => onChange({ ...query, prefixMatching: !query.prefixMatching })}
+      <EditorHeader>
+        <InlineSelect
+          label="Region"
+          value={regions.find((v) => v.value === query.region)}
+          placeholder="Select region"
+          allowCustomValue
+          onChange={({ value: region }) => region && onChange({ ...query, region })}
+          options={regions}
+          isLoading={regionIsLoading}
         />
-
-        <div className="gf-form gf-form--grow">
-          <QueryField label="Action">
-            <input
-              disabled={!query.prefixMatching}
-              className="gf-form-input width-12"
-              value={query.actionPrefix || ''}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                onChange({ ...query, actionPrefix: event.target.value })
-              }
-            />
-          </QueryField>
-          <QueryField label="Alarm Name">
-            <input
-              disabled={!query.prefixMatching}
-              className="gf-form-input width-12"
-              value={query.alarmNamePrefix || ''}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                onChange({ ...query, alarmNamePrefix: event.target.value })
-              }
-            />
-          </QueryField>
-          <div className="gf-form gf-form--grow">
-            <div className="gf-form-label gf-form-label--grow" />
-          </div>
-        </div>
-      </div>
+      </EditorHeader>
+      <Space v={0.5} />
+      <MetricStatEditor
+        {...props}
+        refId={query.refId}
+        metricStat={query}
+        disableExpressions={true}
+        onChange={(metricStat: MetricStat) => onChange({ ...query, ...metricStat })}
+        onRunQuery={() => {}}
+      ></MetricStatEditor>
+      <Space v={0.5} />
+      <EditorRow>
+        <EditorField label="Period" width={26} tooltip="Minimum interval between points in seconds.">
+          <Input
+            value={query.period || ''}
+            placeholder="auto"
+            onChange={(event: ChangeEvent<HTMLInputElement>) => onChange({ ...query, period: event.target.value })}
+          />
+        </EditorField>
+        <EditorField label="Enable Prefix Matching" optional={true}>
+          <EditorSwitch
+            value={query.prefixMatching}
+            onChange={(e) => {
+              onChange({
+                ...query,
+                prefixMatching: e.currentTarget.checked,
+              });
+            }}
+          />
+        </EditorField>
+        <EditorField label="Action" optional={true} disabled={!query.prefixMatching}>
+          <Input
+            value={query.actionPrefix || ''}
+            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              onChange({ ...query, actionPrefix: event.target.value })
+            }
+          />
+        </EditorField>
+        <EditorField label="Alarm Name" optional={true} disabled={!query.prefixMatching}>
+          <Input
+            value={query.alarmNamePrefix || ''}
+            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              onChange({ ...query, alarmNamePrefix: event.target.value })
+            }
+          />
+        </EditorField>
+      </EditorRow>
     </>
   );
-}
+};

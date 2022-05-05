@@ -1,9 +1,11 @@
-﻿import React from 'react';
-import { shallow } from 'enzyme';
+﻿import { shallow } from 'enzyme';
+import React from 'react';
+
 import { ApiKeysAddedModal, Props } from './ApiKeysAddedModal';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
+    onDismiss: jest.fn(),
     apiKey: 'api key test',
     rootPath: 'test/path',
   };

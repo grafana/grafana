@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+
 import { renderMarkdown } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 
@@ -71,7 +72,7 @@ export class PluginHelp extends PureComponent<Props, State> {
     }
 
     if (isError) {
-      return <h3>'Error occurred when loading help'</h3>;
+      return <h3>&apos;Error occurred when loading help&apos;</h3>;
     }
 
     if (type === 'panel_help' && help === '') {

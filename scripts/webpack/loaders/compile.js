@@ -1,10 +1,9 @@
 const loaderUtils = require('loader-utils');
-
-const WebWorkerTemplatePlugin = require('webpack/lib/webworker/WebWorkerTemplatePlugin');
 const ExternalsPlugin = require('webpack/lib/ExternalsPlugin');
-const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin');
 const LoaderTargetPlugin = require('webpack/lib/LoaderTargetPlugin');
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin');
+const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin');
+const WebWorkerTemplatePlugin = require('webpack/lib/webworker/WebWorkerTemplatePlugin');
 
 const COMPILATION_METADATA = Symbol('COMPILATION_METADATA');
 
@@ -52,7 +51,7 @@ module.exports.pitch = function pitch(remainingRequest) {
 
   const subCache = `subcache ${__dirname} ${remainingRequest}`;
 
-  childCompiler.plugin('compilation', compilation => {
+  childCompiler.plugin('compilation', (compilation) => {
     if (!compilation.cache) {
       return;
     }
@@ -83,7 +82,7 @@ module.exports.pitch = function pitch(remainingRequest) {
 
 function getOutputFilename(options, { target }) {
   if (!options) {
-    return { filename: `[hash].${target}.js`, options: undefined };
+    return { filename: `[fullhash].${target}.js`, options: undefined };
   }
   if (typeof options === 'string') {
     return { filename: options, options: undefined };

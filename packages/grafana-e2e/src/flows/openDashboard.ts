@@ -1,5 +1,6 @@
 import { e2e } from '../index';
 import { getScenarioContext } from '../support/scenarioContext';
+
 import { setDashboardTimeRange, TimeRangeConfig } from './setDashboardTimeRange';
 
 interface OpenDashboardDefault {
@@ -8,6 +9,7 @@ interface OpenDashboardDefault {
 
 interface OpenDashboardOptional {
   timeRange?: TimeRangeConfig;
+  queryParams?: object;
 }
 
 export type PartialOpenDashboardConfig = Partial<OpenDashboardDefault> & OpenDashboardOptional;
@@ -21,9 +23,9 @@ export const openDashboard = (config?: PartialOpenDashboardConfig) =>
       ...config,
     };
 
-    const { timeRange, uid } = fullConfig;
+    const { timeRange, uid, queryParams } = fullConfig;
 
-    e2e.pages.Dashboard.visit(uid);
+    e2e.pages.Dashboard.visit(uid, queryParams);
 
     if (timeRange) {
       setDashboardTimeRange(timeRange);

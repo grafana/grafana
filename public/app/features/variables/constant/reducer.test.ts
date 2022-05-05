@@ -1,11 +1,13 @@
+import { cloneDeep } from 'lodash';
+
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import cloneDeep from 'lodash/cloneDeep';
 import { getVariableTestContext } from '../state/helpers';
-import { toVariablePayload } from '../state/types';
-import { constantVariableReducer, createConstantOptionsFromQuery } from './reducer';
-import { VariablesState } from '../state/variablesReducer';
+import { VariablesState } from '../state/types';
 import { ConstantVariableModel } from '../types';
+import { toVariablePayload } from '../utils';
+
 import { createConstantVariableAdapter } from './adapter';
+import { constantVariableReducer, createConstantOptionsFromQuery } from './reducer';
 
 describe('constantVariableReducer', () => {
   const adapter = createConstantVariableAdapter();

@@ -1,17 +1,25 @@
 package search
 
 import (
+	"context"
 	"sort"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 )
 
-func init() {
-	registry.RegisterService(&SearchService{})
+func ProvideService(cfg *setting.Cfg, sqlstore *sqlstore.SQLStore) *SearchService {
+	s := &SearchService{
+		Cfg: cfg,
+		sortOptions: map[string]models.SortOption{
+			SortAlphaAsc.Name:  SortAlphaAsc,
+			SortAlphaDesc.Name: SortAlphaDesc,
+		},
+		sqlstore: sqlstore,
+	}
+	return s
 }
 
 type Query struct {
@@ -28,46 +36,22 @@ type Query struct {
 	Permission   models.PermissionType
 	Sort         string
 
-	Result HitList
+	Result models.HitList
 }
 
-type FindPersistedDashboardsQuery struct {
-	Title        string
-	OrgId        int64
-	SignedInUser *models.SignedInUser
-	IsStarred    bool
-	DashboardIds []int64
-	Type         string
-	FolderIds    []int64
-	Tags         []string
-	Limit        int64
-	Page         int64
-	Permission   models.PermissionType
-
-	Filters []interface{}
-
-	Result HitList
+type Service interface {
+	SearchHandler(context.Context, *Query) error
+	SortOptions() []models.SortOption
 }
 
 type SearchService struct {
-	Bus bus.Bus      `inject:""`
-	Cfg *setting.Cfg `inject:""`
-
-	sortOptions map[string]SortOption
+	Cfg         *setting.Cfg
+	sortOptions map[string]models.SortOption
+	sqlstore    sqlstore.Store
 }
 
-func (s *SearchService) Init() error {
-	s.Bus.AddHandler(s.searchHandler)
-	s.sortOptions = map[string]SortOption{
-		sortAlphaAsc.Name:  sortAlphaAsc,
-		sortAlphaDesc.Name: sortAlphaDesc,
-	}
-
-	return nil
-}
-
-func (s *SearchService) searchHandler(query *Query) error {
-	dashboardQuery := FindPersistedDashboardsQuery{
+func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
+	dashboardQuery := models.FindPersistedDashboardsQuery{
 		Title:        query.Title,
 		SignedInUser: query.SignedInUser,
 		IsStarred:    query.IsStarred,
@@ -81,12 +65,10 @@ func (s *SearchService) searchHandler(query *Query) error {
 	}
 
 	if sortOpt, exists := s.sortOptions[query.Sort]; exists {
-		for _, filter := range sortOpt.Filter {
-			dashboardQuery.Filters = append(dashboardQuery.Filters, filter)
-		}
+		dashboardQuery.Sort = sortOpt
 	}
 
-	if err := bus.Dispatch(&dashboardQuery); err != nil {
+	if err := s.sqlstore.SearchDashboards(ctx, &dashboardQuery); err != nil {
 		return err
 	}
 
@@ -95,7 +77,7 @@ func (s *SearchService) searchHandler(query *Query) error {
 		hits = sortedHits(hits)
 	}
 
-	if err := setStarredDashboards(query.SignedInUser.UserId, hits); err != nil {
+	if err := s.setStarredDashboards(ctx, query.SignedInUser.UserId, hits); err != nil {
 		return err
 	}
 
@@ -104,8 +86,8 @@ func (s *SearchService) searchHandler(query *Query) error {
 	return nil
 }
 
-func sortedHits(unsorted HitList) HitList {
-	hits := make(HitList, 0)
+func sortedHits(unsorted models.HitList) models.HitList {
+	hits := make(models.HitList, 0)
 	hits = append(hits, unsorted...)
 
 	sort.Sort(hits)
@@ -117,17 +99,18 @@ func sortedHits(unsorted HitList) HitList {
 	return hits
 }
 
-func setStarredDashboards(userID int64, hits []*Hit) error {
+func (s *SearchService) setStarredDashboards(ctx context.Context, userID int64, hits []*models.Hit) error {
 	query := models.GetUserStarsQuery{
 		UserId: userID,
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	err := s.sqlstore.GetUserStars(ctx, &query)
+	if err != nil {
 		return err
 	}
-
+	iuserstars := query.Result
 	for _, dashboard := range hits {
-		if _, ok := query.Result[dashboard.Id]; ok {
+		if _, ok := iuserstars[dashboard.ID]; ok {
 			dashboard.IsStarred = true
 		}
 	}

@@ -10,6 +10,7 @@ The image is self contained with all of the code in `/master`.
 The detection process expects a zip file in `/master/dist`.
 
 There are two patterns that will be matched for a build in the dist directory:
+
 ```
 grafana-6.0.0-ca0bc2c5pre3.windows-amd64.zip
 grafana-5.4.3.windows-amd64.zip
@@ -17,7 +18,7 @@ grafana-5.4.3.windows-amd64.zip
 
 ### Building an MSI
 
-The process is automated to expect a dist directory, and will build an msi for first matching grafana-*.windows-amd64.zip file found.
+The process is automated to expect a dist directory, and will build an msi for first matching grafana-\*.windows-amd64.zip file found.
 
 ```
 grafana-5.4.3.windows-amd64.zip
@@ -25,20 +26,21 @@ grafana-5.4.3.windows-amd64.zip
 
 ## CircleCI
 
-
-
 ## Manual
 
 A wrapper script takes a single argument for the path to a zip file, or searches for a file in dist.
 
 A manual build can be initiated using docker-compose
+
 ```
 cd oss
 docker-compose up --build
 ```
+
 ## Automated
 
 ## Testing
 
 ## Change Log
+
 v1.0.0 - initial commit

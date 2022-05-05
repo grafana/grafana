@@ -1,18 +1,30 @@
+import { cx, css } from '@emotion/css';
 import React, { FC } from 'react';
-import { cx, css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { useTheme } from '../../themes';
-import { InlineLabel } from './InlineLabel';
-import { PopoverContent } from '../Tooltip/Tooltip';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useTheme2 } from '../../themes';
+import { getChildId } from '../../utils/reactUtils';
+import { PopoverContent } from '../Tooltip';
+
 import { FieldProps } from './Field';
+import { FieldValidationMessage } from './FieldValidationMessage';
+import { InlineLabel } from './InlineLabel';
 
 export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'description' | 'error'> {
   /** Content for the label's tooltip */
   tooltip?: PopoverContent;
-  /** Custom width for the label */
+  /** Custom width for the label as a multiple of 8px */
   labelWidth?: number | 'auto';
   /** Make the field's child to fill the width of the row. Equivalent to setting `flex-grow:1` on the field */
   grow?: boolean;
+  /** Make field's background transparent */
+  transparent?: boolean;
+  /** Error message to display */
+  error?: string | null;
+  htmlFor?: string;
+  /** Make tooltip interactive */
+  interactive?: boolean;
 }
 
 export const InlineField: FC<Props> = ({
@@ -24,20 +36,26 @@ export const InlineField: FC<Props> = ({
   loading,
   disabled,
   className,
+  htmlFor,
   grow,
+  error,
+  transparent,
+  interactive,
   ...htmlProps
 }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getStyles(theme, grow);
-  const child = React.Children.only(children);
-  let inputId;
+  const inputId = htmlFor ?? getChildId(children);
 
-  if (child) {
-    inputId = (child as React.ReactElement<{ id?: string }>).props.id;
-  }
   const labelElement =
     typeof label === 'string' ? (
-      <InlineLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId}>
+      <InlineLabel
+        interactive={interactive}
+        width={labelWidth}
+        tooltip={tooltip}
+        htmlFor={inputId}
+        transparent={transparent}
+      >
         {label}
       </InlineLabel>
     ) : (
@@ -47,14 +65,21 @@ export const InlineField: FC<Props> = ({
   return (
     <div className={cx(styles.container, className)} {...htmlProps}>
       {labelElement}
-      {React.cloneElement(children, { invalid, disabled, loading })}
+      <div className={styles.childContainer}>
+        {React.cloneElement(children, { invalid, disabled, loading })}
+        {invalid && error && (
+          <div className={cx(styles.fieldValidationWrapper)}>
+            <FieldValidationMessage>{error}</FieldValidationMessage>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
 InlineField.displayName = 'InlineField';
 
-const getStyles = (theme: GrafanaTheme, grow?: boolean) => {
+const getStyles = (theme: GrafanaTheme2, grow?: boolean) => {
   return {
     container: css`
       display: flex;
@@ -63,15 +88,13 @@ const getStyles = (theme: GrafanaTheme, grow?: boolean) => {
       text-align: left;
       position: relative;
       flex: ${grow ? 1 : 0} 0 auto;
-      margin: 0 ${theme.spacing.xs} ${theme.spacing.xs} 0;
+      margin: 0 ${theme.spacing(0.5)} ${theme.spacing(0.5)} 0;
     `,
-    wrapper: css`
-      display: flex;
-      width: 100%;
+    childContainer: css`
+      flex: ${grow ? 1 : 0} 0 auto;
     `,
-
-    fillContainer: css`
-      flex-grow: 1;
+    fieldValidationWrapper: css`
+      margin-top: ${theme.spacing(0.5)};
     `,
   };
 };

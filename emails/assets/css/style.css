@@ -91,7 +91,8 @@ margin-bottom: 25px;
 .footer {
   background-color: #2e2e2e;
   color: #999999;
-  margin-top: 20px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 @media only screen and (max-width: 600px) {

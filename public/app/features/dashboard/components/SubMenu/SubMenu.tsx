@@ -1,17 +1,23 @@
+import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
+
+import { AnnotationQuery } from '@grafana/data';
+
 import { StoreState } from '../../../../types';
-import { getSubMenuVariables } from '../../../variables/state/selectors';
-import { VariableHide, VariableModel } from '../../../variables/types';
+import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
+import { VariableModel } from '../../../variables/types';
 import { DashboardModel } from '../../state';
-import { DashboardLinks } from './DashboardLinks';
-import { Annotations } from './Annotations';
-import { SubMenuItems } from './SubMenuItems';
 import { DashboardLink } from '../../state/DashboardModel';
+
+import { Annotations } from './Annotations';
+import { DashboardLinks } from './DashboardLinks';
+import { SubMenuItems } from './SubMenuItems';
 
 interface OwnProps {
   dashboard: DashboardModel;
   links: DashboardLink[];
+  annotations: AnnotationQuery[];
 }
 
 interface ConnectedProps {
@@ -36,31 +42,23 @@ class SubMenuUnConnected extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  isSubMenuVisible = () => {
-    if (this.props.dashboard.links.length > 0) {
-      return true;
-    }
-
-    const visibleVariables = this.props.variables.filter(variable => variable.hide !== VariableHide.hideVariable);
-    if (visibleVariables.length > 0) {
-      return true;
-    }
-
-    const visibleAnnotations = this.props.dashboard.annotations.list.filter(annotation => annotation.hide !== true);
-    return visibleAnnotations.length > 0;
-  };
-
   render() {
-    const { dashboard, variables, links } = this.props;
+    const { dashboard, variables, links, annotations } = this.props;
 
-    if (!this.isSubMenuVisible()) {
+    if (!dashboard.isSubMenuVisible()) {
       return null;
     }
 
     return (
       <div className="submenu-controls">
-        <SubMenuItems variables={variables} />
-        <Annotations annotations={dashboard.annotations.list} onAnnotationChanged={this.onAnnotationStateChanged} />
+        <form aria-label="Template variables" className={styles}>
+          <SubMenuItems variables={variables} />
+        </form>
+        <Annotations
+          annotations={annotations}
+          onAnnotationChanged={this.onAnnotationStateChanged}
+          events={dashboard.events}
+        />
         <div className="gf-form gf-form--grow" />
         {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
         <div className="clearfix" />
@@ -69,11 +67,20 @@ class SubMenuUnConnected extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => {
+  const { uid } = ownProps.dashboard;
+  const templatingState = getVariablesState(uid, state);
   return {
-    variables: getSubMenuVariables(state.templating.variables),
+    variables: getSubMenuVariables(uid, templatingState.variables),
   };
 };
 
+const styles = css`
+  display: flex;
+  flex-wrap: wrap;
+  display: contents;
+`;
+
 export const SubMenu = connect(mapStateToProps)(SubMenuUnConnected);
+
 SubMenu.displayName = 'SubMenu';

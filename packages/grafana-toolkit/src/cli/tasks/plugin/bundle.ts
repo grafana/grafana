@@ -1,20 +1,23 @@
-import webpack = require('webpack');
-import formatWebpackMessages = require('react-dev-utils/formatWebpackMessages');
 import clearConsole = require('react-dev-utils/clearConsole');
+import formatWebpackMessages = require('react-dev-utils/formatWebpackMessages');
+import webpack = require('webpack');
+
 import { loadWebpackConfig } from '../../../config/webpack.plugin.config';
 
 export interface PluginBundleOptions {
   watch: boolean;
   production?: boolean;
   yarnlink?: boolean;
+  preserveConsole?: boolean;
 }
 
-// export const bundlePlugin = useSpinner<PluginBundleOptions>('Bundle plugin', ({ watch }) => {
-export const bundlePlugin = async ({ watch, production }: PluginBundleOptions) => {
+// export const bundlePlugin = ({ watch, production }: PluginBundleOptions) => useSpinner('Bundle plugin', async () => {
+export const bundlePlugin = async ({ watch, production, preserveConsole }: PluginBundleOptions) => {
   const compiler = webpack(
     await loadWebpackConfig({
       watch,
       production,
+      preserveConsole,
     })
   );
 
@@ -23,6 +26,7 @@ export const bundlePlugin = async ({ watch, production }: PluginBundleOptions) =
       console.log('Started watching plugin for changes...');
       compiler.watch({}, (err, stats) => {});
 
+      // @ts-ignore
       compiler.hooks.invalid.tap('invalid', () => {
         clearConsole();
         console.log('Compiling...');
@@ -40,32 +44,34 @@ export const bundlePlugin = async ({ watch, production }: PluginBundleOptions) =
 
         if (output.errors.length) {
           console.log('Compilation failed!');
-          output.errors.forEach(e => console.log(e));
+          output.errors.forEach((e) => console.log(e));
 
           if (output.warnings.length) {
             console.log('Warnings:');
-            output.warnings.forEach(w => console.log(w));
+            output.warnings.forEach((w) => console.log(w));
           }
         }
         if (output.errors.length === 0 && output.warnings.length) {
           console.log('Compiled with warnings!');
-          output.warnings.forEach(w => console.log(w));
+          output.warnings.forEach((w) => console.log(w));
         }
       });
     } else {
       compiler.run((err: Error, stats: webpack.Stats) => {
         if (err) {
-          reject(err.message);
-
+          reject(err);
           return;
         }
+
         if (stats.hasErrors()) {
-          stats.compilation.errors.forEach(e => {
+          stats.compilation.errors.forEach((e) => {
             console.log(e.message);
           });
 
           reject('Build failed');
+          return;
         }
+
         console.log('\n', stats.toString({ colors: true }), '\n');
         resolve();
       });

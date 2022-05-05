@@ -14,9 +14,10 @@
 
 import React from 'react';
 
+import { TNil } from '../../../types';
+
 import DividerDemo from './DividerDemo';
 import RegionDemo from './RegionDemo';
-import { TNil } from '../../../types';
 
 import './DraggableManagerDemo.css';
 
@@ -58,7 +59,7 @@ export default class DraggableManagerDemo extends React.PureComponent<{}, Dragga
         <section className="DraggableManagerDemo--scenario">
           <h2>Dragging a Sub-Region</h2>
           <p>Click and drag horizontally somewhere in the colored area, below.</p>
-          <p>Value: {regionDragging && regionDragging.map(n => n.toFixed(3)).join(', ')}</p>
+          <p>Value: {regionDragging && regionDragging.map((n) => n.toFixed(3)).join(', ')}</p>
           <div className="DraggableManagerDemo--realm">
             <RegionDemo regionCursor={regionCursor} regionDragging={regionDragging} updateState={this._updateState} />
           </div>

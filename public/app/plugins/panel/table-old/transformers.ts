@@ -1,9 +1,11 @@
-import _ from 'lodash';
-import flatten from 'app/core/utils/flatten';
-import TimeSeries from 'app/core/time_series2';
-import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
-import { TableTransform } from './types';
+import { findIndex, isObject, map } from 'lodash';
+
 import { Column, TableData } from '@grafana/data';
+import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+import TimeSeries from 'app/core/time_series2';
+import flatten from 'app/core/utils/flatten';
+
+import { TableTransform } from './types';
 
 const transformers: { [key: string]: TableTransform } = {};
 export const timeSeriesFormatFilterer = (data: any): any[] => {
@@ -160,7 +162,7 @@ transformers['annotations'] = {
 
 transformers['table'] = {
   description: 'Table',
-  getColumns: data => {
+  getColumns: (data) => {
     if (!data || data.length === 0) {
       return [];
     }
@@ -177,7 +179,7 @@ transformers['table'] = {
 
     // Union of all columns
     const columns = filteredData.reduce((acc: Column[], series: TableData) => {
-      series.columns.forEach(col => {
+      series.columns.forEach((col) => {
         const { text } = col;
         if (columnNames[text] === undefined) {
           columnNames[text] = acc.length;
@@ -194,7 +196,7 @@ transformers['table'] = {
       return;
     }
     const filteredData = tableDataFormatFilterer(data);
-    const noTableIndex = _.findIndex(filteredData, d => 'columns' in d && 'rows' in d);
+    const noTableIndex = findIndex(filteredData, (d) => 'columns' in d && 'rows' in d);
     if (noTableIndex < 0) {
       throw {
         message: `Result of query #${String.fromCharCode(
@@ -209,7 +211,7 @@ transformers['table'] = {
 
 transformers['json'] = {
   description: 'JSON Data',
-  getColumns: data => {
+  getColumns: (data) => {
     if (!data || data.length === 0) {
       return [];
     }
@@ -232,7 +234,7 @@ transformers['json'] = {
       }
     }
 
-    return _.map(names, (value, key) => {
+    return map(names, (value, key) => {
       return { text: key, value: key };
     });
   },
@@ -261,7 +263,7 @@ transformers['json'] = {
         const dp = series.datapoints[y];
         const values = [];
 
-        if (_.isObject(dp) && panel.columns.length > 0) {
+        if (isObject(dp) && panel.columns.length > 0) {
           const flattened = flatten(dp);
           for (z = 0; z < panel.columns.length; z++) {
             values.push(flattened[panel.columns[z].value]);

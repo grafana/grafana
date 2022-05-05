@@ -15,11 +15,12 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1547810606599,
+  "iteration": 1610180483405,
   "links": [],
   "panels": [
     {
       "collapsed": false,
+      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -33,6 +34,40 @@
     },
     {
       "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "decimals": 2,
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#7EB26D",
+                "index": 0,
+                "value": null
+              },
+              {
+                "color": "#ef843c",
+                "index": 1,
+                "value": 75
+              },
+              {
+                "color": "#e24d42",
+                "index": 2,
+                "value": 90
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 8,
         "w": 5,
@@ -42,50 +77,18 @@
       "id": 2,
       "links": [],
       "nullPointMode": "null",
-      "options-gauge": {
+      "options": {
         "baseColor": "#299c46",
-        "decimals": 2,
-        "maxValue": 100,
-        "minValue": 0,
-        "options": {
-          "baseColor": "#299c46",
-          "decimals": 0,
-          "maxValue": 100,
-          "minValue": 0,
-          "prefix": "",
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true,
-          "stat": "avg",
-          "suffix": "",
-          "thresholds": [],
-          "unit": "none",
-          "valueMappings": []
+        "reduceOptions": {
+          "calcs": ["mean"],
+          "fields": "",
+          "values": false
         },
-        "prefix": "",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
-        "stat": "avg",
-        "suffix": "",
-        "thresholds": [
-          {
-            "color": "#e24d42",
-            "index": 2,
-            "value": 90
-          },
-          {
-            "color": "#ef843c",
-            "index": 1,
-            "value": 75
-          },
-          {
-            "color": "#7EB26D",
-            "index": 0,
-            "value": null
-          }
-        ],
-        "unit": "ms",
-        "valueMappings": []
+        "text": {}
       },
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -100,6 +103,40 @@
     },
     {
       "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "decimals": null,
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#7EB26D",
+                "index": 0,
+                "value": null
+              },
+              {
+                "color": "#ef843c",
+                "index": 1,
+                "value": 75
+              },
+              {
+                "color": "#e24d42",
+                "index": 2,
+                "value": 90
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 8,
         "w": 6,
@@ -109,50 +146,18 @@
       "id": 5,
       "links": [],
       "nullPointMode": "null",
-      "options-gauge": {
+      "options": {
         "baseColor": "#299c46",
-        "decimals": null,
-        "maxValue": 100,
-        "minValue": 0,
-        "options": {
-          "baseColor": "#299c46",
-          "decimals": 0,
-          "maxValue": 100,
-          "minValue": 0,
-          "prefix": "",
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true,
-          "stat": "avg",
-          "suffix": "",
-          "thresholds": [],
-          "unit": "none",
-          "valueMappings": []
+        "reduceOptions": {
+          "calcs": ["max"],
+          "fields": "",
+          "values": false
         },
-        "prefix": "",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
-        "stat": "max",
-        "suffix": "",
-        "thresholds": [
-          {
-            "color": "#e24d42",
-            "index": 2,
-            "value": 90
-          },
-          {
-            "color": "#ef843c",
-            "index": 1,
-            "value": 75
-          },
-          {
-            "color": "#7EB26D",
-            "index": 0,
-            "value": null
-          }
-        ],
-        "unit": "ms",
-        "valueMappings": []
+        "text": {}
       },
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -167,6 +172,40 @@
     },
     {
       "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "decimals": null,
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#7EB26D",
+                "index": 0,
+                "value": null
+              },
+              {
+                "color": "#ef843c",
+                "index": 1,
+                "value": 75
+              },
+              {
+                "color": "#e24d42",
+                "index": 2,
+                "value": 90
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 8,
         "w": 5,
@@ -176,50 +215,18 @@
       "id": 6,
       "links": [],
       "nullPointMode": "null",
-      "options-gauge": {
+      "options": {
         "baseColor": "#299c46",
-        "decimals": null,
-        "maxValue": 100,
-        "minValue": 0,
-        "options": {
-          "baseColor": "#299c46",
-          "decimals": 0,
-          "maxValue": 100,
-          "minValue": 0,
-          "prefix": "",
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true,
-          "stat": "avg",
-          "suffix": "",
-          "thresholds": [],
-          "unit": "none",
-          "valueMappings": []
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
         },
-        "prefix": "p",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
-        "stat": "current",
-        "suffix": "s",
-        "thresholds": [
-          {
-            "color": "#e24d42",
-            "index": 2,
-            "value": 90
-          },
-          {
-            "color": "#ef843c",
-            "index": 1,
-            "value": 75
-          },
-          {
-            "color": "#7EB26D",
-            "index": 0,
-            "value": null
-          }
-        ],
-        "unit": "none",
-        "valueMappings": []
+        "text": {}
       },
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -234,6 +241,40 @@
     },
     {
       "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "decimals": "",
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#7EB26D",
+                "index": 0,
+                "value": null
+              },
+              {
+                "color": "#ef843c",
+                "index": 1,
+                "value": 75
+              },
+              {
+                "color": "#e24d42",
+                "index": 2,
+                "value": 90
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 4,
         "w": 3,
@@ -243,50 +284,18 @@
       "id": 16,
       "links": [],
       "nullPointMode": "null",
-      "options-gauge": {
+      "options": {
         "baseColor": "#299c46",
-        "decimals": "",
-        "maxValue": 100,
-        "minValue": 0,
-        "options": {
-          "baseColor": "#299c46",
-          "decimals": 0,
-          "maxValue": 100,
-          "minValue": 0,
-          "prefix": "",
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true,
-          "stat": "avg",
-          "suffix": "",
-          "thresholds": [],
-          "unit": "none",
-          "valueMappings": []
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
         },
-        "prefix": "",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
-        "stat": "current",
-        "suffix": "",
-        "thresholds": [
-          {
-            "color": "#e24d42",
-            "index": 2,
-            "value": 90
-          },
-          {
-            "color": "#ef843c",
-            "index": 1,
-            "value": 75
-          },
-          {
-            "color": "#7EB26D",
-            "index": 0,
-            "value": null
-          }
-        ],
-        "unit": "none",
-        "valueMappings": []
+        "text": {}
       },
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -301,6 +310,40 @@
     },
     {
       "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "decimals": "",
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#7EB26D",
+                "index": 0,
+                "value": null
+              },
+              {
+                "color": "#ef843c",
+                "index": 1,
+                "value": 75
+              },
+              {
+                "color": "#e24d42",
+                "index": 2,
+                "value": 90
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 4,
         "w": 5,
@@ -310,50 +353,18 @@
       "id": 18,
       "links": [],
       "nullPointMode": "null",
-      "options-gauge": {
+      "options": {
         "baseColor": "#299c46",
-        "decimals": "",
-        "maxValue": 100,
-        "minValue": 0,
-        "options": {
-          "baseColor": "#299c46",
-          "decimals": 0,
-          "maxValue": 100,
-          "minValue": 0,
-          "prefix": "",
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true,
-          "stat": "avg",
-          "suffix": "",
-          "thresholds": [],
-          "unit": "none",
-          "valueMappings": []
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
         },
-        "prefix": "",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
-        "stat": "current",
-        "suffix": "",
-        "thresholds": [
-          {
-            "color": "#e24d42",
-            "index": 2,
-            "value": 90
-          },
-          {
-            "color": "#ef843c",
-            "index": 1,
-            "value": 75
-          },
-          {
-            "color": "#7EB26D",
-            "index": 0,
-            "value": null
-          }
-        ],
-        "unit": "none",
-        "valueMappings": []
+        "text": {}
       },
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -368,6 +379,40 @@
     },
     {
       "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "decimals": "",
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#7EB26D",
+                "index": 0,
+                "value": null
+              },
+              {
+                "color": "#ef843c",
+                "index": 1,
+                "value": 75
+              },
+              {
+                "color": "#e24d42",
+                "index": 2,
+                "value": 90
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 4,
         "w": 3,
@@ -377,50 +422,18 @@
       "id": 17,
       "links": [],
       "nullPointMode": "null",
-      "options-gauge": {
+      "options": {
         "baseColor": "#299c46",
-        "decimals": "",
-        "maxValue": 100,
-        "minValue": 0,
-        "options": {
-          "baseColor": "#299c46",
-          "decimals": 0,
-          "maxValue": 100,
-          "minValue": 0,
-          "prefix": "",
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true,
-          "stat": "avg",
-          "suffix": "",
-          "thresholds": [],
-          "unit": "none",
-          "valueMappings": []
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
         },
-        "prefix": "",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
-        "stat": "current",
-        "suffix": "",
-        "thresholds": [
-          {
-            "color": "#e24d42",
-            "index": 2,
-            "value": 90
-          },
-          {
-            "color": "#ef843c",
-            "index": 1,
-            "value": 75
-          },
-          {
-            "color": "#7EB26D",
-            "index": 0,
-            "value": null
-          }
-        ],
-        "unit": "none",
-        "valueMappings": []
+        "text": {}
       },
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -435,6 +448,40 @@
     },
     {
       "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "decimals": "",
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#7EB26D",
+                "index": 0,
+                "value": null
+              },
+              {
+                "color": "#ef843c",
+                "index": 1,
+                "value": 75
+              },
+              {
+                "color": "#e24d42",
+                "index": 2,
+                "value": 90
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 4,
         "w": 5,
@@ -444,50 +491,18 @@
       "id": 19,
       "links": [],
       "nullPointMode": "null",
-      "options-gauge": {
+      "options": {
         "baseColor": "#299c46",
-        "decimals": "",
-        "maxValue": 100,
-        "minValue": 0,
-        "options": {
-          "baseColor": "#299c46",
-          "decimals": 0,
-          "maxValue": 100,
-          "minValue": 0,
-          "prefix": "",
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true,
-          "stat": "avg",
-          "suffix": "",
-          "thresholds": [],
-          "unit": "none",
-          "valueMappings": []
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
         },
-        "prefix": "",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
-        "stat": "current",
-        "suffix": "",
-        "thresholds": [
-          {
-            "color": "#e24d42",
-            "index": 2,
-            "value": 90
-          },
-          {
-            "color": "#ef843c",
-            "index": 1,
-            "value": 75
-          },
-          {
-            "color": "#7EB26D",
-            "index": 0,
-            "value": null
-          }
-        ],
-        "unit": "none",
-        "valueMappings": []
+        "text": {}
       },
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -501,12 +516,87 @@
       "type": "gauge"
     },
     {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 30,
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.4.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "null,null"
+        }
+      ],
+      "title": "Only nulls and no user set min & max",
+      "type": "gauge"
+    },
+    {
       "collapsed": false,
+      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 14
       },
       "id": 15,
       "panels": [],
@@ -515,69 +605,71 @@
     },
     {
       "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "decimals": "",
+          "mappings": [
+            {
+              "from": "",
+              "id": 1,
+              "operator": "",
+              "text": "TEN",
+              "to": "",
+              "type": 1,
+              "value": "10"
+            }
+          ],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#7EB26D",
+                "index": 0,
+                "value": null
+              },
+              {
+                "color": "#ef843c",
+                "index": 1,
+                "value": 75
+              },
+              {
+                "color": "#e24d42",
+                "index": 2,
+                "value": 90
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 8,
         "w": 4,
         "x": 0,
-        "y": 10
+        "y": 15
       },
       "id": 12,
       "links": [],
       "nullPointMode": "null",
-      "options-gauge": {
+      "options": {
         "baseColor": "#299c46",
-        "decimals": "",
-        "maxValue": 100,
-        "minValue": 0,
-        "options": {
-          "baseColor": "#299c46",
-          "decimals": 0,
-          "maxValue": 100,
-          "minValue": 0,
-          "prefix": "",
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true,
-          "stat": "avg",
-          "suffix": "",
-          "thresholds": [],
-          "unit": "none",
-          "valueMappings": []
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
         },
-        "prefix": "",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
-        "stat": "current",
-        "suffix": "",
-        "thresholds": [
-          {
-            "color": "#e24d42",
-            "index": 2,
-            "value": 90
-          },
-          {
-            "color": "#ef843c",
-            "index": 1,
-            "value": 75
-          },
-          {
-            "color": "#7EB26D",
-            "index": 0,
-            "value": null
-          }
-        ],
-        "unit": "none",
-        "valueMappings": [
-          {
-            "from": "",
-            "id": 1,
-            "operator": "",
-            "text": "TEN",
-            "to": "",
-            "type": 1,
-            "value": "10"
-          }
-        ]
+        "text": {}
       },
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -593,69 +685,71 @@
     {
       "datasource": "gdev-testdata",
       "description": "should read N/A",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "decimals": "",
+          "mappings": [
+            {
+              "from": "",
+              "id": 1,
+              "operator": "",
+              "text": "N/A",
+              "to": "",
+              "type": 1,
+              "value": "null"
+            }
+          ],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#7EB26D",
+                "index": 0,
+                "value": null
+              },
+              {
+                "color": "#ef843c",
+                "index": 1,
+                "value": 75
+              },
+              {
+                "color": "#e24d42",
+                "index": 2,
+                "value": 90
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 8,
         "w": 4,
         "x": 4,
-        "y": 10
+        "y": 15
       },
       "id": 13,
       "links": [],
       "nullPointMode": "null",
-      "options-gauge": {
+      "options": {
         "baseColor": "#299c46",
-        "decimals": "",
-        "maxValue": 100,
-        "minValue": 0,
-        "options": {
-          "baseColor": "#299c46",
-          "decimals": 0,
-          "maxValue": 100,
-          "minValue": 0,
-          "prefix": "",
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true,
-          "stat": "avg",
-          "suffix": "",
-          "thresholds": [],
-          "unit": "none",
-          "valueMappings": []
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
         },
-        "prefix": "",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
-        "stat": "current",
-        "suffix": "",
-        "thresholds": [
-          {
-            "color": "#e24d42",
-            "index": 2,
-            "value": 90
-          },
-          {
-            "color": "#ef843c",
-            "index": 1,
-            "value": 75
-          },
-          {
-            "color": "#7EB26D",
-            "index": 0,
-            "value": null
-          }
-        ],
-        "unit": "none",
-        "valueMappings": [
-          {
-            "from": "",
-            "id": 1,
-            "operator": "",
-            "text": "N/A",
-            "to": "",
-            "type": 1,
-            "value": "null"
-          }
-        ]
+        "text": {}
       },
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -671,69 +765,71 @@
     {
       "datasource": "gdev-testdata",
       "description": "should read N/A",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "decimals": "",
+          "mappings": [
+            {
+              "from": "0",
+              "id": 1,
+              "operator": "",
+              "text": "OK",
+              "to": "10",
+              "type": 2,
+              "value": "null"
+            }
+          ],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#7EB26D",
+                "index": 0,
+                "value": null
+              },
+              {
+                "color": "#ef843c",
+                "index": 1,
+                "value": 75
+              },
+              {
+                "color": "#e24d42",
+                "index": 2,
+                "value": 90
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 8,
         "w": 6,
         "x": 8,
-        "y": 10
+        "y": 15
       },
       "id": 20,
       "links": [],
       "nullPointMode": "null",
-      "options-gauge": {
+      "options": {
         "baseColor": "#299c46",
-        "decimals": "",
-        "maxValue": 100,
-        "minValue": 0,
-        "options": {
-          "baseColor": "#299c46",
-          "decimals": 0,
-          "maxValue": 100,
-          "minValue": 0,
-          "prefix": "",
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true,
-          "stat": "avg",
-          "suffix": "",
-          "thresholds": [],
-          "unit": "none",
-          "valueMappings": []
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
         },
-        "prefix": "",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
-        "stat": "current",
-        "suffix": "",
-        "thresholds": [
-          {
-            "color": "#e24d42",
-            "index": 2,
-            "value": 90
-          },
-          {
-            "color": "#ef843c",
-            "index": 1,
-            "value": 75
-          },
-          {
-            "color": "#7EB26D",
-            "index": 0,
-            "value": null
-          }
-        ],
-        "unit": "none",
-        "valueMappings": [
-          {
-            "from": "0",
-            "id": 1,
-            "operator": "",
-            "text": "OK",
-            "to": "10",
-            "type": 2,
-            "value": "null"
-          }
-        ]
+        "text": {}
       },
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -749,78 +845,80 @@
     {
       "datasource": "gdev-testdata",
       "description": "should read N/A",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "decimals": "",
+          "mappings": [
+            {
+              "from": "0",
+              "id": 1,
+              "operator": "",
+              "text": "OK",
+              "to": "90",
+              "type": 2,
+              "value": "null"
+            },
+            {
+              "from": "90",
+              "id": 2,
+              "operator": "",
+              "text": "BAD",
+              "to": "100",
+              "type": 2,
+              "value": ""
+            }
+          ],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#7EB26D",
+                "index": 0,
+                "value": null
+              },
+              {
+                "color": "#ef843c",
+                "index": 1,
+                "value": 75
+              },
+              {
+                "color": "#e24d42",
+                "index": 2,
+                "value": 90
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 8,
         "w": 6,
         "x": 14,
-        "y": 10
+        "y": 15
       },
       "id": 21,
       "links": [],
       "nullPointMode": "null",
-      "options-gauge": {
+      "options": {
         "baseColor": "#299c46",
-        "decimals": "",
-        "maxValue": 100,
-        "minValue": 0,
-        "options": {
-          "baseColor": "#299c46",
-          "decimals": 0,
-          "maxValue": 100,
-          "minValue": 0,
-          "prefix": "",
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true,
-          "stat": "avg",
-          "suffix": "",
-          "thresholds": [],
-          "unit": "none",
-          "valueMappings": []
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
         },
-        "prefix": "",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
-        "stat": "current",
-        "suffix": "",
-        "thresholds": [
-          {
-            "color": "#e24d42",
-            "index": 2,
-            "value": 90
-          },
-          {
-            "color": "#ef843c",
-            "index": 1,
-            "value": 75
-          },
-          {
-            "color": "#7EB26D",
-            "index": 0,
-            "value": null
-          }
-        ],
-        "unit": "none",
-        "valueMappings": [
-          {
-            "from": "0",
-            "id": 1,
-            "operator": "",
-            "text": "OK",
-            "to": "90",
-            "type": 2,
-            "value": "null"
-          },
-          {
-            "from": "90",
-            "id": 2,
-            "operator": "",
-            "text": "BAD",
-            "to": "100",
-            "type": 2,
-            "value": ""
-          }
-        ]
+        "text": {}
       },
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -835,11 +933,12 @@
     },
     {
       "collapsed": false,
+      "datasource": null,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 18
+        "y": 23
       },
       "id": 9,
       "panels": [],
@@ -848,59 +947,61 @@
     },
     {
       "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "decimals": "2",
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#7EB26D",
+                "index": 0,
+                "value": null
+              },
+              {
+                "color": "#ef843c",
+                "index": 1,
+                "value": 75
+              },
+              {
+                "color": "#e24d42",
+                "index": 2,
+                "value": 90
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 8,
         "w": 6,
         "x": 0,
-        "y": 19
+        "y": 24
       },
       "id": 7,
       "links": [],
       "nullPointMode": "null",
-      "options-gauge": {
+      "options": {
         "baseColor": "#299c46",
-        "decimals": "2",
-        "maxValue": 100,
-        "minValue": 0,
-        "options": {
-          "baseColor": "#299c46",
-          "decimals": 0,
-          "maxValue": 100,
-          "minValue": 0,
-          "prefix": "",
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true,
-          "stat": "avg",
-          "suffix": "",
-          "thresholds": [],
-          "unit": "none",
-          "valueMappings": []
+        "reduceOptions": {
+          "calcs": ["mean"],
+          "fields": "",
+          "values": false
         },
-        "prefix": "$Servers",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
-        "stat": "avg",
-        "suffix": "",
-        "thresholds": [
-          {
-            "color": "#e24d42",
-            "index": 2,
-            "value": 90
-          },
-          {
-            "color": "#ef843c",
-            "index": 1,
-            "value": 75
-          },
-          {
-            "color": "#7EB26D",
-            "index": 0,
-            "value": null
-          }
-        ],
-        "unit": "ms",
-        "valueMappings": []
+        "text": {}
       },
+      "pluginVersion": "7.4.0-pre",
       "repeat": "Servers",
       "repeatDirection": "h",
       "scopedVars": {
@@ -924,62 +1025,63 @@
     },
     {
       "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "decimals": "2",
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#7EB26D",
+                "index": 0,
+                "value": null
+              },
+              {
+                "color": "#ef843c",
+                "index": 1,
+                "value": 75
+              },
+              {
+                "color": "#e24d42",
+                "index": 2,
+                "value": 90
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 8,
         "w": 6,
         "x": 6,
-        "y": 19
+        "y": 24
       },
-      "id": 22,
+      "id": 26,
       "links": [],
       "nullPointMode": "null",
-      "options-gauge": {
+      "options": {
         "baseColor": "#299c46",
-        "decimals": "2",
-        "maxValue": 100,
-        "minValue": 0,
-        "options": {
-          "baseColor": "#299c46",
-          "decimals": 0,
-          "maxValue": 100,
-          "minValue": 0,
-          "prefix": "",
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true,
-          "stat": "avg",
-          "suffix": "",
-          "thresholds": [],
-          "unit": "none",
-          "valueMappings": []
+        "reduceOptions": {
+          "calcs": ["mean"],
+          "fields": "",
+          "values": false
         },
-        "prefix": "$Servers",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
-        "stat": "avg",
-        "suffix": "",
-        "thresholds": [
-          {
-            "color": "#e24d42",
-            "index": 2,
-            "value": 90
-          },
-          {
-            "color": "#ef843c",
-            "index": 1,
-            "value": 75
-          },
-          {
-            "color": "#7EB26D",
-            "index": 0,
-            "value": null
-          }
-        ],
-        "unit": "ms",
-        "valueMappings": []
+        "text": {}
       },
-      "repeat": null,
+      "pluginVersion": "7.4.0-pre",
       "repeatDirection": "h",
-      "repeatIteration": 1547810606599,
+      "repeatIteration": 1610180483405,
       "repeatPanelId": 7,
       "scopedVars": {
         "Servers": {
@@ -1002,62 +1104,63 @@
     },
     {
       "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "decimals": "2",
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#7EB26D",
+                "index": 0,
+                "value": null
+              },
+              {
+                "color": "#ef843c",
+                "index": 1,
+                "value": 75
+              },
+              {
+                "color": "#e24d42",
+                "index": 2,
+                "value": 90
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 8,
         "w": 6,
         "x": 12,
-        "y": 19
+        "y": 24
       },
-      "id": 23,
+      "id": 27,
       "links": [],
       "nullPointMode": "null",
-      "options-gauge": {
+      "options": {
         "baseColor": "#299c46",
-        "decimals": "2",
-        "maxValue": 100,
-        "minValue": 0,
-        "options": {
-          "baseColor": "#299c46",
-          "decimals": 0,
-          "maxValue": 100,
-          "minValue": 0,
-          "prefix": "",
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true,
-          "stat": "avg",
-          "suffix": "",
-          "thresholds": [],
-          "unit": "none",
-          "valueMappings": []
+        "reduceOptions": {
+          "calcs": ["mean"],
+          "fields": "",
+          "values": false
         },
-        "prefix": "$Servers",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
-        "stat": "avg",
-        "suffix": "",
-        "thresholds": [
-          {
-            "color": "#e24d42",
-            "index": 2,
-            "value": 90
-          },
-          {
-            "color": "#ef843c",
-            "index": 1,
-            "value": 75
-          },
-          {
-            "color": "#7EB26D",
-            "index": 0,
-            "value": null
-          }
-        ],
-        "unit": "ms",
-        "valueMappings": []
+        "text": {}
       },
-      "repeat": null,
+      "pluginVersion": "7.4.0-pre",
       "repeatDirection": "h",
-      "repeatIteration": 1547810606599,
+      "repeatIteration": 1610180483405,
       "repeatPanelId": 7,
       "scopedVars": {
         "Servers": {
@@ -1080,62 +1183,63 @@
     },
     {
       "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {},
+          "decimals": "2",
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#7EB26D",
+                "index": 0,
+                "value": null
+              },
+              {
+                "color": "#ef843c",
+                "index": 1,
+                "value": 75
+              },
+              {
+                "color": "#e24d42",
+                "index": 2,
+                "value": 90
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 8,
         "w": 6,
         "x": 18,
-        "y": 19
+        "y": 24
       },
-      "id": 24,
+      "id": 28,
       "links": [],
       "nullPointMode": "null",
-      "options-gauge": {
+      "options": {
         "baseColor": "#299c46",
-        "decimals": "2",
-        "maxValue": 100,
-        "minValue": 0,
-        "options": {
-          "baseColor": "#299c46",
-          "decimals": 0,
-          "maxValue": 100,
-          "minValue": 0,
-          "prefix": "",
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true,
-          "stat": "avg",
-          "suffix": "",
-          "thresholds": [],
-          "unit": "none",
-          "valueMappings": []
+        "reduceOptions": {
+          "calcs": ["mean"],
+          "fields": "",
+          "values": false
         },
-        "prefix": "$Servers",
         "showThresholdLabels": false,
         "showThresholdMarkers": true,
-        "stat": "avg",
-        "suffix": "",
-        "thresholds": [
-          {
-            "color": "#e24d42",
-            "index": 2,
-            "value": 90
-          },
-          {
-            "color": "#ef843c",
-            "index": 1,
-            "value": 75
-          },
-          {
-            "color": "#7EB26D",
-            "index": 0,
-            "value": null
-          }
-        ],
-        "unit": "ms",
-        "valueMappings": []
+        "text": {}
       },
-      "repeat": null,
+      "pluginVersion": "7.4.0-pre",
       "repeatDirection": "h",
-      "repeatIteration": 1547810606599,
+      "repeatIteration": 1610180483405,
       "repeatPanelId": 7,
       "scopedVars": {
         "Servers": {
@@ -1158,7 +1262,7 @@
     }
   ],
   "refresh": false,
-  "schemaVersion": 17,
+  "schemaVersion": 27,
   "style": "dark",
   "tags": ["gdev", "panel-tests"],
   "templating": {
@@ -1171,6 +1275,8 @@
           "text": "All",
           "value": ["$__all"]
         },
+        "description": null,
+        "error": null,
         "hide": 0,
         "includeAll": true,
         "label": null,
@@ -1220,5 +1326,5 @@
   "timezone": "",
   "title": "Panel Tests - Gauge",
   "uid": "_5rDmaQiz",
-  "version": 5
+  "version": 2
 }

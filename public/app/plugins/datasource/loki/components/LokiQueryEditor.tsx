@@ -1,90 +1,71 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React from 'react';
 
 // Types
-import { QueryEditorProps } from '@grafana/data';
 import { InlineFormLabel } from '@grafana/ui';
-import { LokiDatasource } from '../datasource';
-import { LokiQuery } from '../types';
+
+import { LokiOptionFields } from './LokiOptionFields';
 import { LokiQueryField } from './LokiQueryField';
+import { LokiQueryEditorProps } from './types';
 
-type Props = QueryEditorProps<LokiDatasource, LokiQuery>;
+export function LokiQueryEditor(props: LokiQueryEditorProps) {
+  const { query, data, datasource, onChange, onRunQuery, range } = props;
 
-interface State {
-  legendFormat: string;
-}
-
-export class LokiQueryEditor extends PureComponent<Props, State> {
-  // Query target to be modified and used for queries
-  query: LokiQuery;
-
-  constructor(props: Props) {
-    super(props);
-    // Use default query to prevent undefined input values
-    const defaultQuery: Partial<LokiQuery> = { expr: '', legendFormat: '' };
-    const query = Object.assign({}, defaultQuery, props.query);
-    this.query = query;
-    // Query target properties that are fully controlled inputs
-    this.state = {
-      // Fully controlled text inputs
-      legendFormat: query.legendFormat ?? '',
-    };
-  }
-
-  onFieldChange = (query: LokiQuery, override?: any) => {
-    this.query.expr = query.expr;
+  const onLegendChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+    const nextQuery = { ...query, legendFormat: e.currentTarget.value };
+    onChange(nextQuery);
   };
 
-  onLegendChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
-    const legendFormat = e.currentTarget.value;
-    this.query.legendFormat = legendFormat;
-    this.setState({ legendFormat });
-  };
-
-  onRunQuery = () => {
-    const { query } = this;
-    this.props.onChange(query);
-    this.props.onRunQuery();
-  };
-
-  render() {
-    const { datasource, query, data, range } = this.props;
-    const { legendFormat } = this.state;
-
-    return (
-      <div>
-        <LokiQueryField
-          datasource={datasource}
-          query={query}
-          onChange={this.onFieldChange}
-          onRunQuery={this.onRunQuery}
-          history={[]}
-          data={data}
-          range={range}
-        />
-
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <InlineFormLabel
-              width={7}
-              tooltip="Controls the name of the time series, using name or pattern. For example
+  const legendField = (
+    <div className="gf-form-inline">
+      <div className="gf-form">
+        <InlineFormLabel
+          width={6}
+          tooltip="Controls the name of the time series, using name or pattern. For example
         {{hostname}} will be replaced with label value for the label hostname. The legend only applies to metric queries."
-            >
-              Legend
-            </InlineFormLabel>
-            <input
-              type="text"
-              className="gf-form-input"
-              placeholder="legend format"
-              value={legendFormat}
-              onChange={this.onLegendChange}
-              onBlur={this.onRunQuery}
-            />
-          </div>
-        </div>
+        >
+          Legend
+        </InlineFormLabel>
+        <input
+          type="text"
+          className="gf-form-input"
+          placeholder="legend format"
+          value={query.legendFormat || ''}
+          onChange={onLegendChange}
+          onBlur={onRunQuery}
+        />
       </div>
-    );
-  }
+    </div>
+  );
+
+  return (
+    <LokiQueryField
+      datasource={datasource}
+      query={query}
+      onChange={onChange}
+      onRunQuery={onRunQuery}
+      onBlur={onRunQuery}
+      history={[]}
+      data={data}
+      data-testid={testIds.editor}
+      range={range}
+      ExtraFieldElement={
+        <>
+          <LokiOptionFields
+            lineLimitValue={query?.maxLines?.toString() || ''}
+            resolution={query?.resolution || 1}
+            query={query}
+            onRunQuery={onRunQuery}
+            onChange={onChange}
+            runOnBlur={true}
+          />
+          {legendField}
+        </>
+      }
+    />
+  );
 }
 
-export default LokiQueryEditor;
+export const testIds = {
+  editor: 'loki-editor',
+};

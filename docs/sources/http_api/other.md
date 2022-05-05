@@ -3,12 +3,7 @@ title = "Other HTTP API "
 description = "Grafana Other HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "other"]
 aliases = ["/docs/grafana/latest/http_api/other/"]
-type = "docs"
-[menu.docs]
-name = "Other"
-parent = "http_api"
 +++
-
 
 # Frontend Settings API
 

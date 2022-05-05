@@ -1,9 +1,7 @@
 import React from 'react';
-import { Icon } from '../../../Icon/Icon';
+import { components } from 'react-select';
 
-// Ignoring because I couldn't get @types/react-select work with Torkel's fork
-// @ts-ignore
-import { components } from '@torkelo/react-select';
+import { Icon } from '../../../Icon/Icon';
 
 export const IndicatorsContainer = (props: any) => {
   const isOpen = props.selectProps.menuIsOpen;

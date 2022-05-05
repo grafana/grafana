@@ -1,19 +1,21 @@
+import { DataTransformerConfig } from '@grafana/data';
+
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { groupByTransformer, GroupByTransformerOptions, GroupByOperationID } from './groupBy';
-import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { transformDataFrame } from '../transformDataFrame';
 import { Field, FieldType } from '../../types';
-import { DataTransformerID } from './ids';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ArrayVector } from '../../vector';
 import { ReducerID } from '../fieldReducer';
-import { DataTransformerConfig } from '@grafana/data';
+import { transformDataFrame } from '../transformDataFrame';
+
+import { GroupByOperationID, groupByTransformer, GroupByTransformerOptions } from './groupBy';
+import { DataTransformerID } from './ids';
 
 describe('GroupBy transformer', () => {
   beforeAll(() => {
     mockTransformationsRegistry([groupByTransformer]);
   });
 
-  it('should not apply transformation if config is missing group by fields', () => {
+  it('should not apply transformation if config is missing group by fields', async () => {
     const testSeries = toDataFrame({
       name: 'A',
       fields: [
@@ -35,11 +37,13 @@ describe('GroupBy transformer', () => {
       },
     };
 
-    const result = transformDataFrame([cfg], [testSeries]);
-    expect(result[0]).toBe(testSeries);
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      expect(result[0]).toBe(testSeries);
+    });
   });
 
-  it('should group values by message', () => {
+  it('should group values by message', async () => {
     const testSeries = toDataFrame({
       name: 'A',
       fields: [
@@ -61,21 +65,22 @@ describe('GroupBy transformer', () => {
       },
     };
 
-    const result = transformDataFrame([cfg], [testSeries]);
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: new ArrayVector(['one', 'two', 'three']),
+          config: {},
+        },
+      ];
 
-    const expected: Field[] = [
-      {
-        name: 'message',
-        type: FieldType.string,
-        values: new ArrayVector(['one', 'two', 'three']),
-        config: {},
-      },
-    ];
-
-    expect(result[0].fields).toEqual(expected);
+      expect(result[0].fields).toEqual(expected);
+    });
   });
 
-  it('should group values by message and summarize values', () => {
+  it('should group values by message and summarize values', async () => {
     const testSeries = toDataFrame({
       name: 'A',
       fields: [
@@ -101,27 +106,28 @@ describe('GroupBy transformer', () => {
       },
     };
 
-    const result = transformDataFrame([cfg], [testSeries]);
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: new ArrayVector(['one', 'two', 'three']),
+          config: {},
+        },
+        {
+          name: 'values (sum)',
+          type: FieldType.number,
+          values: new ArrayVector([1, 4, 9]),
+          config: {},
+        },
+      ];
 
-    const expected: Field[] = [
-      {
-        name: 'message',
-        type: FieldType.string,
-        values: new ArrayVector(['one', 'two', 'three']),
-        config: {},
-      },
-      {
-        name: 'values (sum)',
-        type: FieldType.number,
-        values: new ArrayVector([1, 4, 9]),
-        config: {},
-      },
-    ];
-
-    expect(result[0].fields).toEqual(expected);
+      expect(result[0].fields).toEqual(expected);
+    });
   });
 
-  it('should group by and compute a few calculations for each group of values', () => {
+  it('should group by and compute a few calculations for each group of values', async () => {
     const testSeries = toDataFrame({
       name: 'A',
       fields: [
@@ -151,39 +157,40 @@ describe('GroupBy transformer', () => {
       },
     };
 
-    const result = transformDataFrame([cfg], [testSeries]);
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: new ArrayVector(['one', 'two', 'three']),
+          config: {},
+        },
+        {
+          name: 'time (count)',
+          type: FieldType.number,
+          values: new ArrayVector([1, 2, 3]),
+          config: {},
+        },
+        {
+          name: 'time (last)',
+          type: FieldType.time,
+          values: new ArrayVector([3000, 5000, 8000]),
+          config: {},
+        },
+        {
+          name: 'values (sum)',
+          type: FieldType.number,
+          values: new ArrayVector([1, 4, 9]),
+          config: {},
+        },
+      ];
 
-    const expected: Field[] = [
-      {
-        name: 'message',
-        type: FieldType.string,
-        values: new ArrayVector(['one', 'two', 'three']),
-        config: {},
-      },
-      {
-        name: 'time (count)',
-        type: FieldType.number,
-        values: new ArrayVector([1, 2, 3]),
-        config: {},
-      },
-      {
-        name: 'time (last)',
-        type: FieldType.time,
-        values: new ArrayVector([3000, 5000, 8000]),
-        config: {},
-      },
-      {
-        name: 'values (sum)',
-        type: FieldType.number,
-        values: new ArrayVector([1, 4, 9]),
-        config: {},
-      },
-    ];
-
-    expect(result[0].fields).toEqual(expected);
+      expect(result[0].fields).toEqual(expected);
+    });
   });
 
-  it('should group values in data frames induvidually', () => {
+  it('should group values in data frames individually', async () => {
     const testSeries = [
       toDataFrame({
         name: 'A',
@@ -219,39 +226,86 @@ describe('GroupBy transformer', () => {
       },
     };
 
-    const result = transformDataFrame([cfg], testSeries);
+    await expect(transformDataFrame([cfg], testSeries)).toEmitValuesWith((received) => {
+      const result = received[0];
+      const expectedA: Field[] = [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: new ArrayVector(['one', 'two', 'three']),
+          config: {},
+        },
+        {
+          name: 'values (sum)',
+          type: FieldType.number,
+          values: new ArrayVector([1, 4, 9]),
+          config: {},
+        },
+      ];
 
-    const expectedA: Field[] = [
-      {
-        name: 'message',
-        type: FieldType.string,
-        values: new ArrayVector(['one', 'two', 'three']),
-        config: {},
-      },
-      {
-        name: 'values (sum)',
-        type: FieldType.number,
-        values: new ArrayVector([1, 4, 9]),
-        config: {},
-      },
-    ];
+      const expectedB: Field[] = [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: new ArrayVector(['one', 'two', 'three']),
+          config: {},
+        },
+        {
+          name: 'values (sum)',
+          type: FieldType.number,
+          values: new ArrayVector([0, 7, 8]),
+          config: {},
+        },
+      ];
 
-    const expectedB: Field[] = [
-      {
-        name: 'message',
-        type: FieldType.string,
-        values: new ArrayVector(['one', 'two', 'three']),
-        config: {},
-      },
-      {
-        name: 'values (sum)',
-        type: FieldType.number,
-        values: new ArrayVector([0, 7, 8]),
-        config: {},
-      },
-    ];
+      expect(result[0].fields).toEqual(expectedA);
+      expect(result[1].fields).toEqual(expectedB);
+    });
+  });
 
-    expect(result[0].fields).toEqual(expectedA);
-    expect(result[1].fields).toEqual(expectedB);
+  it('should group values and keep the order of the fields', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'message', type: FieldType.string, values: ['500', '404', '404', 'one', 'one', 'two', '200'] },
+        { name: 'values', type: FieldType.number, values: [1, 2, 2, 3, 3, 3, 4] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
+      id: DataTransformerID.groupBy,
+      options: {
+        fields: {
+          message: {
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+          values: {
+            operation: GroupByOperationID.aggregate,
+            aggregations: [ReducerID.sum],
+          },
+        },
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: new ArrayVector(['500', '404', 'one', 'two', '200']),
+          config: {},
+        },
+        {
+          name: 'values (sum)',
+          type: FieldType.number,
+          values: new ArrayVector([1, 4, 6, 3, 4]),
+          config: {},
+        },
+      ];
+
+      expect(result[0].fields).toEqual(expected);
+    });
   });
 });

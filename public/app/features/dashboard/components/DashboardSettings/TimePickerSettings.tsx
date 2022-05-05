@@ -1,20 +1,25 @@
+import { isEmpty } from 'lodash';
 import React, { PureComponent } from 'react';
-import { Input, LegacyForms, TimeZonePicker, Tooltip } from '@grafana/ui';
+
 import { rangeUtil, TimeZone } from '@grafana/data';
-import isEmpty from 'lodash/isEmpty';
 import { selectors } from '@grafana/e2e-selectors';
+import { CollapsableSection, Field, Input, Switch, TimeZonePicker, WeekStartPicker } from '@grafana/ui';
+
 import { AutoRefreshIntervals } from './AutoRefreshIntervals';
 
 interface Props {
+  onWeekStartChange: (weekStart: string) => void;
   onTimeZoneChange: (timeZone: TimeZone) => void;
   onRefreshIntervalChange: (interval: string[]) => void;
   onNowDelayChange: (nowDelay: string) => void;
   onHideTimePickerChange: (hide: boolean) => void;
-  renderCount: number; // hack to make sure Angular changes are propagated properly, please remove when DashboardSettings are migrated to React
+  onLiveNowChange: (liveNow: boolean) => void;
   refreshIntervals: string[];
   timePickerHidden: boolean;
   nowDelay: string;
   timezone: TimeZone;
+  weekStart: string;
+  liveNow: boolean;
 }
 
 interface State {
@@ -44,58 +49,68 @@ export class TimePickerSettings extends PureComponent<Props, State> {
     this.props.onHideTimePickerChange(!this.props.timePickerHidden);
   };
 
-  onTimeZoneChange = (timeZone: string) => {
+  onLiveNowChange = () => {
+    this.props.onLiveNowChange(!this.props.liveNow);
+  };
+
+  onTimeZoneChange = (timeZone?: string) => {
     if (typeof timeZone !== 'string') {
       return;
     }
     this.props.onTimeZoneChange(timeZone);
   };
 
+  onWeekStartChange = (weekStart: string) => {
+    this.props.onWeekStartChange(weekStart);
+  };
+
   render() {
     return (
-      <div className="editor-row">
-        <h5 className="section-heading">Time Options</h5>
-        <div className="gf-form-group">
-          <div className="gf-form" aria-label={selectors.components.TimeZonePicker.container}>
-            <label className="gf-form-label width-7">Timezone</label>
-            <TimeZonePicker
-              includeInternal={true}
-              value={this.props.timezone}
-              onChange={this.onTimeZoneChange}
-              width={40}
-            />
-          </div>
-          <AutoRefreshIntervals
-            renderCount={this.props.renderCount}
-            refreshIntervals={this.props.refreshIntervals}
-            onRefreshIntervalChange={this.props.onRefreshIntervalChange}
+      <CollapsableSection label="Time options" isOpen={true}>
+        <Field label="Timezone" data-testid={selectors.components.TimeZonePicker.containerV2}>
+          <TimeZonePicker
+            inputId="time-options-input"
+            includeInternal={true}
+            value={this.props.timezone}
+            onChange={this.onTimeZoneChange}
+            width={40}
           />
-          <div className="gf-form">
-            <span className="gf-form-label width-7">Now delay now-</span>
-            <Tooltip
-              placement="right"
-              content={'Enter 1m to ignore the last minute (because it can contain incomplete metrics)'}
-            >
-              <Input
-                width={60}
-                invalid={!this.state.isNowDelayValid}
-                placeholder="0m"
-                onChange={this.onNowDelayChange}
-                defaultValue={this.props.nowDelay}
-              />
-            </Tooltip>
-          </div>
-
-          <div className="gf-form">
-            <LegacyForms.Switch
-              labelClass="width-7"
-              label="Hide time picker"
-              checked={this.props.timePickerHidden ?? false}
-              onChange={this.onHideTimePickerChange}
-            />
-          </div>
-        </div>
-      </div>
+        </Field>
+        <Field label="Week start" data-testid={selectors.components.WeekStartPicker.containerV2}>
+          <WeekStartPicker
+            inputId="week-start-input"
+            width={40}
+            value={this.props.weekStart}
+            onChange={this.onWeekStartChange}
+          />
+        </Field>
+        <AutoRefreshIntervals
+          refreshIntervals={this.props.refreshIntervals}
+          onRefreshIntervalChange={this.props.onRefreshIntervalChange}
+        />
+        <Field label="Now delay" description="Exclude recent data that may be incomplete.">
+          <Input
+            id="now-delay-input"
+            invalid={!this.state.isNowDelayValid}
+            placeholder="0m"
+            onChange={this.onNowDelayChange}
+            defaultValue={this.props.nowDelay}
+          />
+        </Field>
+        <Field label="Hide time picker">
+          <Switch
+            id="hide-time-picker-toggle"
+            value={!!this.props.timePickerHidden}
+            onChange={this.onHideTimePickerChange}
+          />
+        </Field>
+        <Field
+          label="Refresh live dashboards"
+          description="Continuously re-draw panels where the time range references 'now'"
+        >
+          <Switch id="refresh-live-dashboards-toggle" value={!!this.props.liveNow} onChange={this.onLiveNowChange} />
+        </Field>
+      </CollapsableSection>
     );
   }
 }

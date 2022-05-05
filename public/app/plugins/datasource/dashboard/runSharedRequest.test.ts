@@ -1,13 +1,14 @@
-import { isSharedDashboardQuery } from './runSharedRequest';
 import { DataSourceApi } from '@grafana/data';
+
+import { isSharedDashboardQuery } from './runSharedRequest';
 
 describe('SharedQueryRunner', () => {
   it('should identify shared queries', () => {
     expect(isSharedDashboardQuery('-- Dashboard --')).toBe(true);
 
     expect(isSharedDashboardQuery('')).toBe(false);
-    expect(isSharedDashboardQuery((undefined as unknown) as string | DataSourceApi)).toBe(false);
-    expect(isSharedDashboardQuery((null as unknown) as string | DataSourceApi)).toBe(false);
+    expect(isSharedDashboardQuery(undefined as unknown as null)).toBe(false);
+    expect(isSharedDashboardQuery(null)).toBe(false);
 
     const ds = {
       meta: {

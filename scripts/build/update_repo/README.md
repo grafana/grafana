@@ -1,7 +1,5 @@
 # Repository updates deb/rpm
 
-
-
 ## Testing
 
 It's possible to test the repo updates for rpm and deb by running the test scripts within a docker container like this. Tests are being executed by using two buckets on gcp setup for testing.

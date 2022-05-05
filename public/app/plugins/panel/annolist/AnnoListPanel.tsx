@@ -1,15 +1,26 @@
-// Libraries
+import { css } from '@emotion/css';
+import { FocusScope } from '@react-aria/focus';
 import React, { PureComponent } from 'react';
-// Types
-import { AnnoOptions } from './types';
-import { AnnotationEvent, AppEvents, dateTime, DurationUnit, PanelProps } from '@grafana/data';
-import { Tooltip } from '@grafana/ui';
-import { getBackendSrv, getLocationSrv } from '@grafana/runtime';
+import { Subscription } from 'rxjs';
+
+import {
+  AnnotationChangeEvent,
+  AnnotationEvent,
+  AppEvents,
+  dateTime,
+  DurationUnit,
+  GrafanaTheme,
+  locationUtil,
+  PanelProps,
+} from '@grafana/data';
+import { config, getBackendSrv, locationService } from '@grafana/runtime';
+import { CustomScrollbar, stylesFactory, TagList } from '@grafana/ui';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
-import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import appEvents from 'app/core/app_events';
-import { css, cx } from 'emotion';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+
+import { AnnotationListItem } from './AnnotationListItem';
+import { AnnoOptions } from './types';
 
 interface UserInfo {
   id?: number;
@@ -17,7 +28,7 @@ interface UserInfo {
   email?: string;
 }
 
-interface Props extends PanelProps<AnnoOptions> {}
+export interface Props extends PanelProps<AnnoOptions> {}
 interface State {
   annotations: AnnotationEvent[];
   timeInfo: string;
@@ -25,8 +36,11 @@ interface State {
   queryUser?: UserInfo;
   queryTags: string[];
 }
-
 export class AnnoListPanel extends PureComponent<Props, State> {
+  style = getStyles(config.theme);
+  subs = new Subscription();
+  tagListRef = React.createRef<HTMLUListElement>();
+
   constructor(props: Props) {
     super(props);
 
@@ -40,6 +54,19 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.doSearch();
+
+    // When an annotation on this dashboard changes, re-run the query
+    this.subs.add(
+      this.props.eventBus.getStream(AnnotationChangeEvent).subscribe({
+        next: () => {
+          this.doSearch();
+        },
+      })
+    );
+  }
+
+  componentWillUnmount() {
+    this.subs.unsubscribe();
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
@@ -48,7 +75,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       options !== prevProps.options ||
       this.state.queryTags !== prevState.queryTags ||
       this.state.queryUser !== prevState.queryUser ||
-      timeRange !== prevProps.timeRange;
+      (options.onlyInTimeRange && timeRange !== prevProps.timeRange);
 
     if (needsQuery) {
       this.doSearch();
@@ -57,8 +84,8 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 
   async doSearch() {
     // http://docs.grafana.org/http_api/annotations/
-    // https://github.com/grafana/grafana/blob/master/public/app/core/services/backend_srv.ts
-    // https://github.com/grafana/grafana/blob/master/public/app/features/annotations/annotations_srv.ts
+    // https://github.com/grafana/grafana/blob/main/public/app/core/services/backend_srv.ts
+    // https://github.com/grafana/grafana/blob/main/public/app/features/annotations/annotations_srv.ts
 
     const { options } = this.props;
     const { queryUser, queryTags } = this.state;
@@ -70,7 +97,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     };
 
     if (options.onlyFromThisDashboard) {
-      params.dashboardId = getDashboardSrv().getCurrent().id;
+      params.dashboardId = getDashboardSrv().getCurrent()?.id;
     }
 
     let timeInfo = '';
@@ -87,7 +114,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     }
 
     if (options.tags && options.tags.length) {
-      params.tags = options.tags;
+      params.tags = options.tags.map((tag) => this.props.replaceVariables(tag));
     }
 
     if (queryTags.length) {
@@ -103,8 +130,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     });
   }
 
-  onAnnoClick = (e: React.SyntheticEvent, anno: AnnotationEvent) => {
-    e.stopPropagation();
+  onAnnoClick = async (anno: AnnotationEvent) => {
     if (!anno.time) {
       return;
     }
@@ -115,34 +141,28 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 
     const params: any = {
       from: this._timeOffset(anno.time, options.navigateBefore, true),
-      to: this._timeOffset(anno.time, options.navigateAfter, false),
+      to: this._timeOffset(anno.timeEnd ?? anno.time, options.navigateAfter, false),
     };
 
     if (options.navigateToPanel) {
       params.viewPanel = anno.panelId;
     }
 
-    if (current.id === anno.dashboardId) {
-      getLocationSrv().update({
-        query: params,
-        partial: true,
-      });
+    if (current?.id === anno.dashboardId) {
+      locationService.partial(params);
       return;
     }
 
-    getBackendSrv()
-      .get('/api/search', { dashboardIds: anno.dashboardId })
-      .then((res: any[]) => {
-        if (res && res.length && res[0].id === anno.dashboardId) {
-          const dash = res[0];
-          getLocationSrv().update({
-            query: params,
-            path: dash.url,
-          });
-          return;
-        }
-        appEvents.emit(AppEvents.alertWarning, ['Unknown Dashboard: ' + anno.dashboardId]);
-      });
+    const result = await getBackendSrv().get('/api/search', { dashboardIds: anno.dashboardId });
+    if (result && result.length && result[0].id === anno.dashboardId) {
+      const dash = result[0];
+      const url = new URL(dash.url, window.location.origin);
+      url.searchParams.set('from', params.from);
+      url.searchParams.set('to', params.to);
+      locationService.push(locationUtil.stripBaseFromUrl(url.toString()));
+      return;
+    }
+    appEvents.emit(AppEvents.alertWarning, ['Unknown Dashboard: ' + anno.dashboardId]);
   };
 
   _timeOffset(time: number, offset: string, subtract = false): number {
@@ -161,15 +181,34 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     return t.add(incr, unit as DurationUnit).valueOf();
   }
 
-  onTagClick = (e: React.SyntheticEvent, tag: string, remove?: boolean) => {
-    e.stopPropagation();
-    const queryTags = remove ? this.state.queryTags.filter(item => item !== tag) : [...this.state.queryTags, tag];
+  onTagClick = (tag: string, remove?: boolean) => {
+    if (!remove && this.state.queryTags.includes(tag)) {
+      return;
+    }
 
-    this.setState({ queryTags });
+    const queryTags = remove ? this.state.queryTags.filter((item) => item !== tag) : [...this.state.queryTags, tag];
+
+    // Logic to ensure keyboard focus isn't lost when the currently
+    // focused tag is removed
+    let nextTag: HTMLElement | undefined = undefined;
+    if (remove) {
+      const focusedTag = document.activeElement;
+      const dataTagId = focusedTag?.getAttribute('data-tag-id');
+      if (this.tagListRef.current?.contains(focusedTag) && dataTagId) {
+        const parsedTagId = Number.parseInt(dataTagId, 10);
+        const possibleNextTag =
+          this.tagListRef.current.querySelector(`[data-tag-id="${parsedTagId + 1}"]`) ??
+          this.tagListRef.current.querySelector(`[data-tag-id="${parsedTagId - 1}"]`);
+        if (possibleNextTag instanceof HTMLElement) {
+          nextTag = possibleNextTag;
+        }
+      }
+    }
+
+    this.setState({ queryTags }, () => nextTag?.focus());
   };
 
-  onUserClick = (e: React.SyntheticEvent, anno: AnnotationEvent) => {
-    e.stopPropagation();
+  onUserClick = (anno: AnnotationEvent) => {
     this.setState({
       queryUser: {
         id: anno.userId,
@@ -185,79 +224,26 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     });
   };
 
-  renderTags = (tags?: string[], remove?: boolean): JSX.Element | null => {
-    if (!tags || !tags.length) {
-      return null;
-    }
-    return (
-      <>
-        {tags.map(tag => {
-          return (
-            <span key={tag} onClick={e => this.onTagClick(e, tag, remove)} className="pointer">
-              <TagBadge label={tag} removeIcon={!!remove} count={0} />
-            </span>
-          );
-        })}
-      </>
-    );
-  };
-
   renderItem = (anno: AnnotationEvent, index: number): JSX.Element => {
     const { options } = this.props;
-    const { showUser, showTags, showTime } = options;
     const dashboard = getDashboardSrv().getCurrent();
+    if (!dashboard) {
+      return <></>;
+    }
 
     return (
-      <div className="dashlist-item">
-        <span
-          className="dashlist-link pointer"
-          onClick={e => {
-            this.onAnnoClick(e, anno);
-          }}
-        >
-          <span
-            className={cx([
-              'dashlist-title',
-              css`
-                margin-right: 8px;
-              `,
-            ])}
-          >
-            {anno.text}
-          </span>
-
-          <span className="pluginlist-message">
-            {anno.login && showUser && (
-              <span className="graph-annotation">
-                <Tooltip
-                  content={
-                    <span>
-                      Created by:
-                      <br /> {anno.email}
-                    </span>
-                  }
-                  theme="info"
-                  placement="top"
-                >
-                  <span onClick={e => this.onUserClick(e, anno)} className="graph-annotation__user">
-                    <img src={anno.avatarUrl} />
-                  </span>
-                </Tooltip>
-              </span>
-            )}
-            {showTags && this.renderTags(anno.tags, false)}
-          </span>
-
-          <span className="pluginlist-version">
-            {showTime && anno.time && <span>{dashboard.formatDate(anno.time)}</span>}
-          </span>
-        </span>
-      </div>
+      <AnnotationListItem
+        annotation={anno}
+        formatDate={dashboard.formatDate}
+        onClick={this.onAnnoClick}
+        onAvatarClick={this.onUserClick}
+        onTagClick={this.onTagClick}
+        options={options}
+      />
     );
   };
 
   render() {
-    const { height } = this.props;
     const { loaded, annotations, queryUser, queryTags } = this.state;
     if (!loaded) {
       return <div>loading...</div>;
@@ -266,37 +252,63 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     // Previously we showed inidication that it covered all time
     // { timeInfo && (
     //   <span className="panel-time-info">
-    //     <i className="fa fa-clock-o" /> {timeInfo}
+    //     <Icon name="clock-nine" /> {timeInfo}
     //   </span>
     // )}
 
     const hasFilter = queryUser || queryTags.length > 0;
-
     return (
-      <div style={{ height, overflow: 'scroll' }}>
+      <CustomScrollbar autoHeightMin="100%">
         {hasFilter && (
-          <div>
-            <b>Filter: &nbsp; </b>
+          <div className={this.style.filter}>
+            <b>Filter:</b>
             {queryUser && (
               <span onClick={this.onClearUser} className="pointer">
                 {queryUser.email}
               </span>
             )}
-            {queryTags.length > 0 && this.renderTags(queryTags, true)}
+            {queryTags.length > 0 && (
+              <FocusScope restoreFocus>
+                <TagList
+                  icon="times"
+                  tags={queryTags}
+                  onClick={(tag) => this.onTagClick(tag, true)}
+                  getAriaLabel={(name) => `Remove ${name} tag`}
+                  className={this.style.tagList}
+                  ref={this.tagListRef}
+                />
+              </FocusScope>
+            )}
           </div>
         )}
 
-        {annotations.length < 1 && <div className="panel-alert-list__no-alerts">No Annotations Found</div>}
+        {annotations.length < 1 && <div className={this.style.noneFound}>No Annotations Found</div>}
 
-        <AbstractList
-          items={annotations}
-          renderItem={this.renderItem}
-          getItemKey={item => {
-            return item.id + '';
-          }}
-          className="dashlist"
-        />
-      </div>
+        <AbstractList items={annotations} renderItem={this.renderItem} getItemKey={(item) => `${item.id}`} />
+      </CustomScrollbar>
     );
   }
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  noneFound: css`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: calc(100% - 30px);
+  `,
+  filter: css({
+    display: 'flex',
+    padding: `0px ${theme.spacing.xs}`,
+    b: {
+      paddingRight: theme.spacing.sm,
+    },
+  }),
+  tagList: css({
+    justifyContent: 'flex-start',
+    'li > button': {
+      paddingLeft: '3px',
+    },
+  }),
+}));

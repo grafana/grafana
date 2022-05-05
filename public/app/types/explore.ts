@@ -1,38 +1,37 @@
-import { Unsubscribable } from 'rxjs';
-import {
-  HistoryItem,
-  DataQuery,
-  DataSourceApi,
-  QueryHint,
-  PanelData,
-  DataQueryRequest,
-  RawTimeRange,
-  LogLevel,
-  TimeRange,
-  LogsModel,
-  LogsDedupStrategy,
-  AbsoluteTimeRange,
-  GraphSeriesXY,
-  DataFrame,
-  ExploreMode,
-  ExploreUrlState,
-} from '@grafana/data';
+import { Observable, SubscriptionLike, Unsubscribable } from 'rxjs';
 
-import { Emitter } from 'app/core/core';
+import {
+  AbsoluteTimeRange,
+  DataFrame,
+  DataQuery,
+  DataQueryRequest,
+  DataSourceApi,
+  HistoryItem,
+  LogsModel,
+  PanelData,
+  QueryHint,
+  RawTimeRange,
+  TimeRange,
+  EventBusExtended,
+  DataQueryResponse,
+  ExplorePanelsState,
+} from '@grafana/data';
+import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
 export enum ExploreId {
   left = 'left',
   right = 'right',
 }
 
+export type ExploreQueryParams = {
+  left: string;
+  right: string;
+};
+
 /**
  * Global Explore state
  */
 export interface ExploreState {
-  /**
-   * True if split view is active.
-   */
-  split: boolean;
   /**
    * True if time interval for panels are synced. Only possible with split mode.
    */
@@ -44,12 +43,27 @@ export interface ExploreState {
   /**
    * Explore state of the right area in split view.
    */
-  right: ExploreItemState;
+  right?: ExploreItemState;
+
   /**
-   * History of all queries
+   * Settings for rich history (note: filters are stored per each pane separately)
    */
-  richHistory: RichHistoryQuery[];
+  richHistorySettings?: RichHistorySettings;
+
+  /**
+   * True if local storage quota was exceeded when a rich history item was added. This is to prevent showing
+   * multiple errors when local storage is full.
+   */
+  richHistoryStorageFull: boolean;
+
+  /**
+   * True if a warning message of hitting the exceeded number of items has been shown already.
+   */
+  richHistoryLimitExceededWarningShown: boolean;
 }
+
+export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
+export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
 
 export interface ExploreItemState {
   /**
@@ -61,25 +75,17 @@ export interface ExploreItemState {
    */
   datasourceInstance?: DataSourceApi | null;
   /**
-   * Current data source name or null if default
-   */
-  requestedDatasourceName: string | null;
-  /**
-   * True if the datasource is loading. `null` if the loading has not started yet.
-   */
-  datasourceLoading: boolean | null;
-  /**
    * True if there is no datasource to be selected.
    */
   datasourceMissing: boolean;
   /**
    * Emitter to send events to the rest of Grafana.
    */
-  eventBridge: Emitter;
+  eventBridge: EventBusExtended;
   /**
    * List of timeseries to be shown in the Explore graph result viewer.
    */
-  graphResult: GraphSeriesXY[] | null;
+  graphResult: DataFrame[] | null;
   /**
    * History of recent queries. Datasource-specific and initialized via localStorage.
    */
@@ -94,11 +100,6 @@ export interface ExploreItemState {
    * Used to distinguish URL state injection versus split view state injection.
    */
   initialized: boolean;
-  /**
-   * Log line substrings to be highlighted as you type in a query field.
-   * Currently supports only the first query row.
-   */
-  logsHighlighterExpressions?: string[];
   /**
    * Log query result to be displayed in the logs result viewer.
    */
@@ -131,33 +132,9 @@ export interface ExploreItemState {
   queryKeys: string[];
 
   /**
-   * Current logs deduplication strategy
-   */
-  dedupStrategy: LogsDedupStrategy;
-
-  /**
-   * Currently hidden log series
-   */
-  hiddenLogLevels?: LogLevel[];
-
-  /**
    * How often query should be refreshed
    */
   refreshInterval?: string;
-
-  /**
-   * Copy of the state of the URL which is in store.location.query. This is duplicated here so we can diff the two
-   * after a change to see if we need to sync url state back to redux store (like on clicking Back in browser).
-   */
-  urlState: ExploreUrlState | null;
-
-  /**
-   * Map of what changed between real url and local urlState so we can partially update just the things that are needed.
-   */
-  update: ExploreUpdateState;
-
-  latency: number;
-  supportedModes: ExploreMode[];
 
   /**
    * If true, the view is in live tailing mode.
@@ -168,22 +145,39 @@ export interface ExploreItemState {
    * If true, the live tailing view is paused.
    */
   isPaused: boolean;
-  urlReplaced: boolean;
 
   querySubscription?: Unsubscribable;
 
-  queryResponse: PanelData;
-
-  /**
-   * Panel Id that is set if we come to explore from a penel. Used so we can get back to it and optionally modify the
-   * query of that panel.
-   */
-  originPanelId?: number | null;
+  queryResponse: ExplorePanelData;
 
   showLogs?: boolean;
   showMetrics?: boolean;
   showTable?: boolean;
   showTrace?: boolean;
+  showNodeGraph?: boolean;
+
+  /**
+   * History of all queries
+   */
+  richHistory: RichHistoryQuery[];
+  richHistorySearchFilters?: RichHistorySearchFilters;
+
+  /**
+   * We are using caching to store query responses of queries run from logs navigation.
+   * In logs navigation, we do pagination and we don't want our users to unnecessarily run the same queries that they've run just moments before.
+   * We are currently caching last 5 query responses.
+   */
+  cache: Array<{ key: string; value: ExplorePanelData }>;
+
+  // properties below should be more generic if we add more providers
+  // see also: DataSourceWithLogsVolumeSupport
+  logsVolumeDataProvider?: Observable<DataQueryResponse>;
+  logsVolumeDataSubscription?: SubscriptionLike;
+  logsVolumeData?: DataQueryResponse;
+
+  /* explore graph style */
+  graphStyle: ExploreGraphStyle;
+  panelsState: ExplorePanelsState;
 }
 
 export interface ExploreUpdateState {
@@ -191,14 +185,12 @@ export interface ExploreUpdateState {
   queries: boolean;
   range: boolean;
   mode: boolean;
-  ui: boolean;
 }
 
 export interface QueryOptions {
   minInterval?: string;
   maxDataPoints?: number;
   liveStreaming?: boolean;
-  mode?: ExploreMode;
 }
 
 export interface QueryTransaction {
@@ -206,20 +198,29 @@ export interface QueryTransaction {
   done: boolean;
   error?: string | JSX.Element;
   hints?: QueryHint[];
-  latency: number;
   request: DataQueryRequest;
   queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
 
-export type RichHistoryQuery = {
-  ts: number;
+export type RichHistoryQuery<T extends DataQuery = DataQuery> = {
+  id: string;
+  createdAt: number;
+  datasourceUid: string;
   datasourceName: string;
-  datasourceId: string;
   starred: boolean;
   comment: string;
-  queries: DataQuery[];
-  sessionName: string;
-  timeRange?: string;
+  queries: T[];
 };
+
+export interface ExplorePanelData extends PanelData {
+  graphFrames: DataFrame[];
+  tableFrames: DataFrame[];
+  logsFrames: DataFrame[];
+  traceFrames: DataFrame[];
+  nodeGraphFrames: DataFrame[];
+  graphResult: DataFrame[] | null;
+  tableResult: DataFrame | null;
+  logsResult: LogsModel | null;
+}

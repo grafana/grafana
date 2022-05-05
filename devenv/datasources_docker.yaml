@@ -23,27 +23,35 @@ datasources:
     isDefault: true
     type: testdata
 
-  - name: gdev-influxdb
+  - name: gdev-influxdb1-influxql
     type: influxdb
     access: proxy
     database: site
     user: grafana
-    url: http://influxdb:8086
-    jsonData:
-      timeInterval: "15s"
+    url: http://influxdb1:8086
     secureJsonData:
       password: grafana
 
-  - name: gdev-influxdb-telegraf
+  - name: gdev-influxdb-flux
     type: influxdb
     access: proxy
-    database: telegraf
-    user: grafana
-    url: http://telegraf:8086
-    jsonData:
-      timeInterval: "10s"
+    url: http://influxdb:8086
     secureJsonData:
-      password: grafana
+      token: mytoken
+    jsonData:
+      version: Flux
+      organization: myorg
+      defaultBucket: mybucket
+
+  - name: gdev-influxdb-influxql
+    type: influxdb
+    access: proxy
+    database: mybucket
+    url: http://influxdb:8086
+    jsonData:
+      httpHeaderName1: "Authorization"
+    secureJsonData:
+      httpHeaderValue1: "Token mytoken"
 
   - name: gdev-opentsdb
     type: opentsdb
@@ -77,7 +85,7 @@ datasources:
     type: elasticsearch
     access: proxy
     database: "[metrics-]YYYY.MM.DD"
-    url: http://elasticsearch5:10200
+    url: http://elasticsearch5:9200
     jsonData:
       interval: Daily
       timeField: "@timestamp"
@@ -92,6 +100,26 @@ datasources:
       interval: Daily
       timeField: "@timestamp"
       esVersion: 5
+
+  - name: gdev-elasticsearch-v56-metrics
+    type: elasticsearch
+    access: proxy
+    database: "[metrics-]YYYY.MM.DD"
+    url: http://elasticsearch5:9200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 56
+
+  - name: gdev-elasticsearch-v56-logs
+    type: elasticsearch
+    access: proxy
+    database: "[logs-]YYYY.MM.DD"
+    url: http://elasticsearch5:9200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 56
 
   - name: gdev-elasticsearch-v6-metrics
     type: elasticsearch
@@ -192,6 +220,17 @@ datasources:
     secureJsonData:
       password: Password!
 
+  - name: gdev-mssql-tls
+    type: mssql
+    url: localhost:1434
+    database: grafana
+    user: grafana
+    jsonData:
+      encrypt: "true"
+      tlsSkipVerify: true
+    secureJsonData:
+      password: Password!
+
   - name: gdev-mssql-ds-tests
     type: mssql
     url: mssqltests:1433
@@ -226,20 +265,6 @@ datasources:
     jsonData:
       authType: credentials
       defaultRegion: eu-west-2
-
-  # Keep to test old /api/prom API
-  - name: gdev-loki-0.3
-    type: loki
-    access: proxy
-    url: http://loki0.3:3100
-    editable: false
-
-  # First version with new v1 API (remove once v1 is out)
-  - name: gdev-loki-0.4
-    type: loki
-    access: proxy
-    url: http://loki0.4:3100
-    editable: false
 
   - name: gdev-loki
     type: loki

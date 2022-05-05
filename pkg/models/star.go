@@ -2,7 +2,7 @@ package models
 
 import "errors"
 
-var ErrCommandValidationFailed = errors.New("Command missing required fields")
+var ErrCommandValidationFailed = errors.New("command missing required fields")
 
 type Star struct {
 	Id          int64

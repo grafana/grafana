@@ -1,13 +1,22 @@
-import _ from 'lodash';
-import { DashboardModel } from '../state/DashboardModel';
-import { PanelModel } from '../state/PanelModel';
+import { keys as _keys } from 'lodash';
+
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
+import { expect } from '../../../../test/lib/common';
 import { variableAdapters } from '../../variables/adapters';
 import { createAdHocVariableAdapter } from '../../variables/adhoc/adapter';
+import { createCustomVariableAdapter } from '../../variables/custom/adapter';
 import { createQueryVariableAdapter } from '../../variables/query/adapter';
+import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
+import { DashboardModel } from '../state/DashboardModel';
+import { PanelModel } from '../state/PanelModel';
 
 jest.mock('app/core/services/context_srv', () => ({}));
-variableAdapters.setInit(() => [createQueryVariableAdapter(), createAdHocVariableAdapter()]);
+
+variableAdapters.setInit(() => [
+  createQueryVariableAdapter(),
+  createAdHocVariableAdapter(),
+  createCustomVariableAdapter(),
+]);
 
 describe('DashboardModel', () => {
   describe('when creating new dashboard model defaults only', () => {
@@ -48,11 +57,13 @@ describe('DashboardModel', () => {
   describe('getSaveModelClone', () => {
     it('should sort keys', () => {
       const model = new DashboardModel({});
+      model.autoUpdate = null;
+
       const saveModel = model.getSaveModelClone();
-      const keys = _.keys(saveModel);
+      const keys = _keys(saveModel);
 
       expect(keys[0]).toBe('annotations');
-      expect(keys[1]).toBe('autoUpdate');
+      expect(keys[1]).toBe('editable');
     });
 
     it('should remove add panel panels', () => {
@@ -260,20 +271,19 @@ describe('DashboardModel', () => {
     });
   });
 
-  describe('updateSubmenuVisibility with empty lists', () => {
+  describe('isSubMenuVisible with empty lists', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({});
-      model.updateSubmenuVisibility();
     });
 
-    it('should not enable submmenu', () => {
-      expect(model.meta.submenuEnabled).toBe(false);
+    it('should not show submenu', () => {
+      expect(model.isSubMenuVisible()).toBe(false);
     });
   });
 
-  describe('updateSubmenuVisibility with annotation', () => {
+  describe('isSubMenuVisible with annotation', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
@@ -282,32 +292,35 @@ describe('DashboardModel', () => {
           list: [{}],
         },
       });
-      model.updateSubmenuVisibility();
     });
 
-    it('should enable submmenu', () => {
-      expect(model.meta.submenuEnabled).toBe(true);
+    it('should show submmenu', () => {
+      expect(model.isSubMenuVisible()).toBe(true);
     });
   });
 
-  describe('updateSubmenuVisibility with template var', () => {
+  describe('isSubMenuVisible with template var', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
-      model = new DashboardModel({
-        templating: {
-          list: [{}],
+      model = new DashboardModel(
+        {
+          templating: {
+            list: [{}],
+          },
         },
-      });
-      model.updateSubmenuVisibility();
+        {},
+        // getVariablesFromState stub to return a variable
+        () => [{} as any]
+      );
     });
 
     it('should enable submmenu', () => {
-      expect(model.meta.submenuEnabled).toBe(true);
+      expect(model.isSubMenuVisible()).toBe(true);
     });
   });
 
-  describe('updateSubmenuVisibility with hidden template var', () => {
+  describe('isSubMenuVisible with hidden template var', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
@@ -316,15 +329,14 @@ describe('DashboardModel', () => {
           list: [{ hide: 2 }],
         },
       });
-      model.updateSubmenuVisibility();
     });
 
     it('should not enable submmenu', () => {
-      expect(model.meta.submenuEnabled).toBe(false);
+      expect(model.isSubMenuVisible()).toBe(false);
     });
   });
 
-  describe('updateSubmenuVisibility with hidden annotation toggle', () => {
+  describe('isSubMenuVisible with hidden annotation toggle', () => {
     let dashboard: DashboardModel;
 
     beforeEach(() => {
@@ -333,11 +345,10 @@ describe('DashboardModel', () => {
           list: [{ hide: true }],
         },
       });
-      dashboard.updateSubmenuVisibility();
     });
 
     it('should not enable submmenu', () => {
-      expect(dashboard.meta.submenuEnabled).toBe(false);
+      expect(dashboard.isSubMenuVisible()).toBe(false);
     });
   });
 
@@ -359,7 +370,7 @@ describe('DashboardModel', () => {
 
     it('should remove panels and put them inside collapsed row', () => {
       expect(dashboard.panels.length).toBe(3);
-      expect(dashboard.panels[1].panels.length).toBe(2);
+      expect(dashboard.panels[1].panels?.length).toBe(2);
     });
 
     describe('and when removing row and its panels', () => {
@@ -454,10 +465,52 @@ describe('DashboardModel', () => {
     });
   });
 
-  describe('Given model with time', () => {
-    let model: DashboardModel;
+  describe('When expanding row with panels that do not contain an x and y pos', () => {
+    let dashboard: DashboardModel;
 
     beforeEach(() => {
+      dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          {
+            id: 2,
+            type: 'row',
+            gridPos: { x: 0, y: 6, w: 24, h: 1 },
+            collapsed: true,
+            panels: [
+              { id: 3, type: 'graph', gridPos: { w: 12, h: 2 } },
+              { id: 4, type: 'graph', gridPos: { w: 12, h: 2 } },
+            ],
+          },
+          { id: 5, type: 'row', gridPos: { x: 0, y: 7, w: 1, h: 1 } },
+        ],
+      });
+      dashboard.toggleRow(dashboard.panels[1]);
+    });
+
+    it('should correctly set the x and y values for the inner panels', () => {
+      expect(dashboard.panels[2].gridPos).toMatchObject({
+        x: 0,
+        y: 7,
+        w: 12,
+        h: 2,
+      });
+
+      expect(dashboard.panels[3].gridPos).toMatchObject({
+        x: 0,
+        y: 7,
+        w: 12,
+        h: 2,
+      });
+    });
+  });
+
+  describe('Given model with time', () => {
+    let model: DashboardModel;
+    let consoleWarnSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
       model = new DashboardModel({
         time: {
           from: 'now-6h',
@@ -469,6 +522,10 @@ describe('DashboardModel', () => {
         from: 'now-3h',
         to: 'now-1h',
       };
+    });
+
+    afterEach(() => {
+      consoleWarnSpy.mockRestore();
     });
 
     it('hasTimeChanged should be true', () => {
@@ -510,6 +567,114 @@ describe('DashboardModel', () => {
 
       expect(saveModel.time.from).toBe('now-3h');
       expect(saveModel.time.to).toBe('now-1h');
+    });
+
+    it('getSaveModelClone should remove repeated panels and scopedVars', () => {
+      const dashboardJSON = {
+        panels: [
+          { id: 1, type: 'row', repeat: 'dc', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
+          { id: 2, repeat: 'app', repeatDirection: 'h', gridPos: { x: 0, y: 1, h: 2, w: 8 } },
+        ],
+        templating: {
+          list: [
+            {
+              name: 'dc',
+              type: 'custom',
+              current: {
+                text: 'dc1 + dc2',
+                value: ['dc1', 'dc2'],
+              },
+              options: [
+                { text: 'dc1', value: 'dc1', selected: true },
+                { text: 'dc2', value: 'dc2', selected: true },
+              ],
+            },
+            {
+              name: 'app',
+              type: 'custom',
+              current: {
+                text: 'se1 + se2',
+                value: ['se1', 'se2'],
+              },
+              options: [
+                { text: 'se1', value: 'se1', selected: true },
+                { text: 'se2', value: 'se2', selected: true },
+              ],
+            },
+          ],
+        },
+      };
+
+      const model = getDashboardModel(dashboardJSON);
+      model.processRepeats();
+      expect(model.panels.filter((x) => x.type === 'row')).toHaveLength(2);
+      expect(model.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+
+      const saveModel = model.getSaveModelClone();
+      expect(saveModel.panels.length).toBe(2);
+      expect(saveModel.panels[0].scopedVars).toBe(undefined);
+      expect(saveModel.panels[1].scopedVars).toBe(undefined);
+
+      model.collapseRows();
+      const savedModelWithCollapsedRows: any = model.getSaveModelClone();
+      expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(1);
+    });
+
+    it('getSaveModelClone should not remove repeated panels and scopedVars during snapshot', () => {
+      const dashboardJSON = {
+        panels: [
+          { id: 1, type: 'row', repeat: 'dc', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
+          { id: 2, repeat: 'app', repeatDirection: 'h', gridPos: { x: 0, y: 1, h: 2, w: 8 } },
+        ],
+        templating: {
+          list: [
+            {
+              name: 'dc',
+              type: 'custom',
+              current: {
+                text: 'dc1 + dc2',
+                value: ['dc1', 'dc2'],
+              },
+              options: [
+                { text: 'dc1', value: 'dc1', selected: true },
+                { text: 'dc2', value: 'dc2', selected: true },
+              ],
+            },
+            {
+              name: 'app',
+              type: 'custom',
+              current: {
+                text: 'se1 + se2',
+                value: ['se1', 'se2'],
+              },
+              options: [
+                { text: 'se1', value: 'se1', selected: true },
+                { text: 'se2', value: 'se2', selected: true },
+              ],
+            },
+          ],
+        },
+      };
+
+      const model = getDashboardModel(dashboardJSON);
+      model.processRepeats();
+      expect(model.panels.filter((x) => x.type === 'row')).toHaveLength(2);
+      expect(model.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+
+      model.snapshot = { timestamp: new Date() };
+      const saveModel = model.getSaveModelClone();
+      expect(saveModel.panels.filter((x) => x.type === 'row')).toHaveLength(2);
+      expect(saveModel.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
+      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
+      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+
+      model.collapseRows();
+      const savedModelWithCollapsedRows: any = model.getSaveModelClone();
+      expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(2);
     });
   });
 
@@ -673,15 +838,210 @@ describe('DashboardModel', () => {
 
     it('toggleLegendsForAll should toggle all legends on on first execution', () => {
       model.toggleLegendsForAll();
-      const legendsOn = model.panels.filter(panel => panel.legend!.show === true);
+      const legendsOn = model.panels.filter((panel) => panel.legend!.show === true);
       expect(legendsOn.length).toBe(3);
     });
 
     it('toggleLegendsForAll should toggle all legends off on second execution', () => {
       model.toggleLegendsForAll();
       model.toggleLegendsForAll();
-      const legendsOn = model.panels.filter(panel => panel.legend!.show === true);
+      const legendsOn = model.panels.filter((panel) => panel.legend!.show === true);
       expect(legendsOn.length).toBe(0);
+    });
+  });
+
+  describe('canAddAnnotations', () => {
+    it.each`
+      canEdit  | canMakeEditable | expected
+      ${false} | ${false}        | ${false}
+      ${false} | ${true}         | ${true}
+      ${true}  | ${false}        | ${true}
+      ${true}  | ${true}         | ${true}
+    `(
+      'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable} and expected:{$expected}',
+      ({ canEdit, canMakeEditable, expected }) => {
+        const dashboard = new DashboardModel({});
+        dashboard.meta.canEdit = canEdit;
+        dashboard.meta.canMakeEditable = canMakeEditable;
+
+        const result = dashboard.canEditDashboard();
+
+        expect(result).toBe(expected);
+      }
+    );
+  });
+
+  describe('canEditPanel', () => {
+    it('returns false if the dashboard cannot be edited', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+        ],
+      });
+      dashboard.meta.canEdit = false;
+      const panel = dashboard.getPanelById(2);
+      expect(dashboard.canEditPanel(panel)).toBe(false);
+    });
+
+    it('returns false if no panel is passed in', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+        ],
+      });
+      expect(dashboard.canEditPanel()).toBe(false);
+    });
+
+    it('returns false if the panel is a repeat', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+          { id: 3, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 }, repeatPanelId: 2 },
+        ],
+      });
+      const panel = dashboard.getPanelById(3);
+      expect(dashboard.canEditPanel(panel)).toBe(false);
+    });
+
+    it('returns false if the panel is a row', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+        ],
+      });
+      const panel = dashboard.getPanelById(1);
+      expect(dashboard.canEditPanel(panel)).toBe(false);
+    });
+
+    it('returns true otherwise', () => {
+      const dashboard = new DashboardModel({
+        panels: [
+          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
+        ],
+      });
+      const panel = dashboard.getPanelById(2);
+      expect(dashboard.canEditPanel(panel)).toBe(true);
+    });
+  });
+});
+
+describe('exitViewPanel', () => {
+  function getTestContext() {
+    const panel: any = { setIsViewing: jest.fn() };
+    const dashboard = new DashboardModel({});
+    dashboard.startRefresh = jest.fn();
+    dashboard.panelInView = panel;
+
+    return { dashboard, panel };
+  }
+
+  describe('when called', () => {
+    it('then panelInView is set to undefined', () => {
+      const { dashboard, panel } = getTestContext();
+
+      dashboard.exitViewPanel(panel);
+
+      expect(dashboard.panelInView).toBeUndefined();
+    });
+
+    it('then setIsViewing is called on panel', () => {
+      const { dashboard, panel } = getTestContext();
+
+      dashboard.exitViewPanel(panel);
+
+      expect(panel.setIsViewing).toHaveBeenCalledWith(false);
+    });
+
+    it('then startRefresh is not called', () => {
+      const { dashboard, panel } = getTestContext();
+
+      dashboard.exitViewPanel(panel);
+
+      expect(dashboard.startRefresh).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe('exitPanelEditor', () => {
+  function getTestContext(setPreviousAutoRefresh = false) {
+    const panel: any = { destroy: jest.fn() };
+    const dashboard = new DashboardModel({});
+    const timeSrvMock = {
+      pauseAutoRefresh: jest.fn(),
+      resumeAutoRefresh: jest.fn(),
+      setAutoRefresh: jest.fn(),
+    } as unknown as TimeSrv;
+    dashboard.startRefresh = jest.fn();
+    dashboard.panelInEdit = panel;
+    if (setPreviousAutoRefresh) {
+      timeSrvMock.previousAutoRefresh = '5s';
+    }
+    setTimeSrv(timeSrvMock);
+    return { dashboard, panel, timeSrvMock };
+  }
+
+  describe('when called', () => {
+    it('then panelInEdit is set to undefined', () => {
+      const { dashboard } = getTestContext();
+
+      dashboard.exitPanelEditor();
+
+      expect(dashboard.panelInEdit).toBeUndefined();
+    });
+
+    it('then destroy is called on panel', () => {
+      const { dashboard, panel } = getTestContext();
+
+      dashboard.exitPanelEditor();
+
+      expect(panel.destroy).toHaveBeenCalled();
+    });
+
+    it('then startRefresh is not called', () => {
+      const { dashboard } = getTestContext();
+
+      dashboard.exitPanelEditor();
+
+      expect(dashboard.startRefresh).not.toHaveBeenCalled();
+    });
+
+    it('then auto refresh property is resumed', () => {
+      const { dashboard, timeSrvMock } = getTestContext(true);
+      dashboard.exitPanelEditor();
+      expect(timeSrvMock.resumeAutoRefresh).toHaveBeenCalled();
+    });
+  });
+});
+
+describe('initEditPanel', () => {
+  function getTestContext() {
+    const dashboard = new DashboardModel({});
+    const timeSrvMock = {
+      pauseAutoRefresh: jest.fn(),
+      resumeAutoRefresh: jest.fn(),
+    } as unknown as TimeSrv;
+    setTimeSrv(timeSrvMock);
+    return { dashboard, timeSrvMock };
+  }
+
+  describe('when called', () => {
+    it('then panelInEdit is not undefined', () => {
+      const { dashboard } = getTestContext();
+      dashboard.addPanel({ type: 'timeseries' });
+      dashboard.initEditPanel(dashboard.panels[0]);
+      expect(dashboard.panelInEdit).not.toBeUndefined();
+    });
+
+    it('then auto-refresh is paused', () => {
+      const { dashboard, timeSrvMock } = getTestContext();
+      dashboard.addPanel({ type: 'timeseries' });
+      dashboard.initEditPanel(dashboard.panels[0]);
+      expect(timeSrvMock.pauseAutoRefresh).toHaveBeenCalled();
     });
   });
 });

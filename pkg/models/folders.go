@@ -8,13 +8,15 @@ import (
 
 // Typed errors
 var (
-	ErrFolderNotFound                = errors.New("Folder not found")
-	ErrFolderVersionMismatch         = errors.New("The folder has been changed by someone else")
-	ErrFolderTitleEmpty              = errors.New("Folder title cannot be empty")
-	ErrFolderWithSameUIDExists       = errors.New("A folder/dashboard with the same uid already exists")
-	ErrFolderSameNameExists          = errors.New("A folder or dashboard in the general folder with the same name already exists")
-	ErrFolderFailedGenerateUniqueUid = errors.New("Failed to generate unique folder id")
-	ErrFolderAccessDenied            = errors.New("Access denied to folder")
+	ErrFolderNotFound                = errors.New("folder not found")
+	ErrFolderVersionMismatch         = errors.New("the folder has been changed by someone else")
+	ErrFolderTitleEmpty              = errors.New("folder title cannot be empty")
+	ErrFolderWithSameUIDExists       = errors.New("a folder/dashboard with the same uid already exists")
+	ErrFolderInvalidUID              = errors.New("invalid uid for folder provided")
+	ErrFolderSameNameExists          = errors.New("a folder or dashboard in the general folder with the same name already exists")
+	ErrFolderFailedGenerateUniqueUid = errors.New("failed to generate unique folder ID")
+	ErrFolderAccessDenied            = errors.New("access denied to folder")
+	ErrFolderContainsAlertRules      = errors.New("folder contains alert rules")
 )
 
 type Folder struct {
@@ -32,21 +34,29 @@ type Folder struct {
 	HasAcl    bool
 }
 
-// GetDashboardModel turns the command into the saveable model
-func (cmd *CreateFolderCommand) GetDashboardModel(orgId int64, userId int64) *Dashboard {
-	dashFolder := NewDashboardFolder(strings.TrimSpace(cmd.Title))
-	dashFolder.OrgId = orgId
-	dashFolder.SetUid(strings.TrimSpace(cmd.Uid))
+// NewFolder creates a new Folder
+func NewFolder(title string) *Folder {
+	folder := &Folder{}
+	folder.Title = title
+	folder.Created = time.Now()
+	folder.Updated = time.Now()
+	return folder
+}
 
-	if userId == 0 {
-		userId = -1
+// DashboardToFolder converts Dashboard to Folder
+func DashboardToFolder(dash *Dashboard) *Folder {
+	return &Folder{
+		Id:        dash.Id,
+		Uid:       dash.Uid,
+		Title:     dash.Title,
+		HasAcl:    dash.HasAcl,
+		Url:       dash.GetUrl(),
+		Version:   dash.Version,
+		Created:   dash.Created,
+		CreatedBy: dash.CreatedBy,
+		Updated:   dash.Updated,
+		UpdatedBy: dash.UpdatedBy,
 	}
-
-	dashFolder.CreatedBy = userId
-	dashFolder.UpdatedBy = userId
-	dashFolder.UpdateSlug()
-
-	return dashFolder
 }
 
 // UpdateDashboardModel updates an existing model from command into model for update
@@ -78,7 +88,7 @@ type CreateFolderCommand struct {
 	Uid   string `json:"uid"`
 	Title string `json:"title"`
 
-	Result *Folder
+	Result *Folder `json:"-"`
 }
 
 type UpdateFolderCommand struct {
@@ -87,7 +97,7 @@ type UpdateFolderCommand struct {
 	Version   int    `json:"version"`
 	Overwrite bool   `json:"overwrite"`
 
-	Result *Folder
+	Result *Folder `json:"-"`
 }
 
 //

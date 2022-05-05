@@ -1,4 +1,5 @@
 import { selectors } from '@grafana/e2e-selectors';
+
 import { GraphCtrl } from './module';
 
 export class AxesEditorCtrl {
@@ -51,7 +52,13 @@ export class AxesEditorCtrl {
   setUnitFormat(axis: { format: any }) {
     return (unit: string) => {
       axis.format = unit;
-      this.panelCtrl.render();
+      // if already set via field config we clear that
+      if (this.panel.fieldConfig.defaults.unit) {
+        this.panel.fieldConfig.defaults.unit = undefined;
+        this.panelCtrl.refresh();
+      } else {
+        this.panelCtrl.render();
+      }
     };
   }
 

@@ -1,16 +1,19 @@
 import React, { FC, useCallback, useState } from 'react';
+
+import { DataSourceRef, SelectableValue } from '@grafana/data';
 import { AdHocVariableFilter } from 'app/features/variables/types';
-import { SelectableValue } from '@grafana/data';
+
 import { AdHocFilterKey, REMOVE_FILTER_KEY } from './AdHocFilterKey';
 import { AdHocFilterRenderer } from './AdHocFilterRenderer';
 
 interface Props {
-  datasource: string;
+  datasource: DataSourceRef;
   onCompleted: (filter: AdHocVariableFilter) => void;
   appendBefore?: React.ReactNode;
+  getTagKeysOptions?: any;
 }
 
-export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onCompleted }) => {
+export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onCompleted, getTagKeysOptions }) => {
   const [key, setKey] = useState<string | null>(null);
   const [operator, setOperator] = useState<string>('=');
 
@@ -25,9 +28,10 @@ export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onComp
     [setKey]
   );
 
-  const onOperatorChanged = useCallback((item: SelectableValue<string>) => setOperator(item.value ?? ''), [
-    setOperator,
-  ]);
+  const onOperatorChanged = useCallback(
+    (item: SelectableValue<string>) => setOperator(item.value ?? ''),
+    [setOperator]
+  );
 
   const onValueChanged = useCallback(
     (item: SelectableValue<string>) => {
@@ -40,11 +44,18 @@ export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onComp
       setKey(null);
       setOperator('=');
     },
-    [onCompleted, key, setKey, setOperator]
+    [onCompleted, operator, key]
   );
 
   if (key === null) {
-    return <AdHocFilterKey datasource={datasource} filterKey={key} onChange={onKeyChanged} />;
+    return (
+      <AdHocFilterKey
+        datasource={datasource}
+        filterKey={key}
+        onChange={onKeyChanged}
+        getTagKeysOptions={getTagKeysOptions}
+      />
+    );
   }
 
   return (
@@ -57,6 +68,7 @@ export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onComp
         onKeyChange={onKeyChanged}
         onOperatorChange={onOperatorChanged}
         onValueChange={onValueChanged}
+        getTagKeysOptions={getTagKeysOptions}
       />
     </React.Fragment>
   );

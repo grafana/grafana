@@ -1,7 +1,9 @@
 import execa from 'execa';
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
+
 import { PluginBuildInfo } from '@grafana/data';
+
 import { JobInfo } from './types';
 
 const getJobFromProcessArgv = () => {
@@ -117,7 +119,7 @@ export const writeJobStats = (startTime: number, workDir: string) => {
     buildNumber: getBuildNumber(),
   };
   const f = path.resolve(workDir, 'job.json');
-  fs.writeFile(f, JSON.stringify(stats, null, 2), err => {
+  fs.writeFile(f, JSON.stringify(stats, null, 2), (err) => {
     if (err) {
       throw new Error('Unable to stats: ' + f);
     }

@@ -3,10 +3,6 @@ title = "Dashboard Versions HTTP API "
 description = "Grafana Dashboard Versions HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "dashboard", "versions"]
 aliases = ["/docs/grafana/latest/http_api/dashboardversions/"]
-type = "docs"
-[menu.docs]
-name = "Dashboard Versions"
-parent = "http_api"
 +++
 
 # Dashboard Versions
@@ -71,9 +67,9 @@ Status Codes:
 
 ## Get dashboard version
 
-`GET /api/dashboards/id/:dashboardId/versions/:id`
+`GET /api/dashboards/id/:dashboardId/versions/:version`
 
-Get the dashboard version with the given id, for the dashboard with the given id.
+Get the dashboard version with the given version, for the dashboard with the given id.
 
 **Example request for getting a dashboard version**:
 

@@ -1,17 +1,19 @@
-import _ from 'lodash';
-import { colors } from '@grafana/ui';
+import { find } from 'lodash';
+
 import {
-  getColorFromHexRgbOrName,
-  TimeRange,
-  FieldType,
-  Field,
   DataFrame,
-  getTimeField,
   dateTime,
+  Field,
+  FieldType,
+  getColorForTheme,
   getFieldDisplayName,
+  getTimeField,
+  TimeRange,
 } from '@grafana/data';
-import TimeSeries from 'app/core/time_series2';
+import { colors } from '@grafana/ui';
+import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 import config from 'app/core/config';
+import TimeSeries from 'app/core/time_series2';
 
 type Options = {
   dataList: DataFrame[];
@@ -30,12 +32,15 @@ export class DataProcessor {
     }
 
     for (let i = 0; i < dataList.length; i++) {
-      const series = dataList[i];
-      const { timeField } = getTimeField(series);
+      let series = dataList[i];
+      let { timeField } = getTimeField(series);
 
       if (!timeField) {
         continue;
       }
+
+      series = applyNullInsertThreshold(series, timeField.name);
+      timeField = getTimeField(series).timeField!; // use updated length
 
       for (let j = 0; j < series.fields.length; j++) {
         const field = series.fields[j];
@@ -84,7 +89,7 @@ export class DataProcessor {
     const series = new TimeSeries({
       datapoints: datapoints || [],
       alias: alias,
-      color: getColorFromHexRgbOrName(color, config.theme.type),
+      color: getColorForTheme(color, config.theme),
       unit: field.config ? field.config.unit : undefined,
       dataFrameIndex,
       fieldIndex,
@@ -95,7 +100,11 @@ export class DataProcessor {
       const from = range.from;
 
       if (last - from.valueOf() < -10000) {
-        series.isOutsideRange = true;
+        // If the data is in reverse order
+        const first = datapoints[0][1];
+        if (first - from.valueOf() < -10000) {
+          series.isOutsideRange = true;
+        }
       }
     }
     return series;
@@ -143,7 +152,7 @@ export class DataProcessor {
         }
 
         const validOptions = this.getXAxisValueOptions({});
-        const found: any = _.find(validOptions, { value: this.panel.xaxis.values[0] });
+        const found: any = find(validOptions, { value: this.panel.xaxis.values[0] });
         if (!found) {
           this.panel.xaxis.values = ['total'];
         }

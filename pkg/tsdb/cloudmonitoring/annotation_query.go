@@ -2,85 +2,64 @@ package cloudmonitoring
 
 import (
 	"context"
-	"strconv"
+	"encoding/json"
 	"strings"
-	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-func (e *CloudMonitoringExecutor) executeAnnotationQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
-	}
+func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
+	*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
 
-	firstQuery := tsdbQuery.Queries[0]
-
-	queries, err := e.buildQueries(tsdbQuery)
+	queries, err := s.buildQueryExecutors(req)
 	if err != nil {
-		return nil, err
+		return resp, err
 	}
 
-	queryRes, resp, err := e.executeQuery(ctx, queries[0], tsdbQuery)
+	queryRes, dr, _, err := queries[0].run(ctx, req, s, dsInfo, s.tracer)
 	if err != nil {
-		return nil, err
+		return resp, err
 	}
 
-	metricQuery := firstQuery.Model.Get("metricQuery")
-	title := metricQuery.Get("title").MustString()
-	text := metricQuery.Get("text").MustString()
-	tags := metricQuery.Get("tags").MustString()
-	err = e.parseToAnnotations(queryRes, resp, queries[0], title, text, tags)
-	result.Results[firstQuery.RefId] = queryRes
+	mq := struct {
+		Title string `json:"title"`
+		Text  string `json:"text"`
+	}{}
 
-	return result, err
+	firstQuery := req.Queries[0]
+	err = json.Unmarshal(firstQuery.JSON, &mq)
+	if err != nil {
+		return resp, nil
+	}
+	err = queries[0].parseToAnnotations(queryRes, dr, mq.Title, mq.Text)
+	resp.Responses[firstQuery.RefID] = *queryRes
+
+	return resp, err
 }
 
-func (e *CloudMonitoringExecutor) parseToAnnotations(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, query *cloudMonitoringQuery, title string, text string, tags string) error {
-	annotations := make([]map[string]string, 0)
-
-	for _, series := range data.TimeSeries {
-		// reverse the order to be ascending
-		for i := len(series.Points) - 1; i >= 0; i-- {
-			point := series.Points[i]
-			value := strconv.FormatFloat(point.Value.DoubleValue, 'f', 6, 64)
-			if series.ValueType == "STRING" {
-				value = point.Value.StringValue
-			}
-			annotation := make(map[string]string)
-			annotation["time"] = point.Interval.EndTime.UTC().Format(time.RFC3339)
-			annotation["title"] = formatAnnotationText(title, value, series.Metric.Type, series.Metric.Labels, series.Resource.Labels)
-			annotation["tags"] = tags
-			annotation["text"] = formatAnnotationText(text, value, series.Metric.Type, series.Metric.Labels, series.Resource.Labels)
-			annotations = append(annotations, annotation)
+func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) transformAnnotationToFrame(annotations []map[string]string, result *backend.DataResponse) {
+	frames := data.Frames{}
+	for _, a := range annotations {
+		frame := &data.Frame{
+			RefID: timeSeriesQuery.getRefID(),
+			Fields: []*data.Field{
+				data.NewField("time", nil, a["time"]),
+				data.NewField("title", nil, a["title"]),
+				data.NewField("tags", nil, a["tags"]),
+				data.NewField("text", nil, a["text"]),
+			},
+			Meta: &data.FrameMeta{
+				Custom: map[string]interface{}{
+					"rowCount": len(a),
+				},
+			},
 		}
+		frames = append(frames, frame)
 	}
-
-	transformAnnotationToTable(annotations, queryRes)
-	return nil
-}
-
-func transformAnnotationToTable(data []map[string]string, result *tsdb.QueryResult) {
-	table := &tsdb.Table{
-		Columns: make([]tsdb.TableColumn, 4),
-		Rows:    make([]tsdb.RowValues, 0),
-	}
-	table.Columns[0].Text = "time"
-	table.Columns[1].Text = "title"
-	table.Columns[2].Text = "tags"
-	table.Columns[3].Text = "text"
-
-	for _, r := range data {
-		values := make([]interface{}, 4)
-		values[0] = r["time"]
-		values[1] = r["title"]
-		values[2] = r["tags"]
-		values[3] = r["text"]
-		table.Rows = append(table.Rows, values)
-	}
-	result.Tables = append(result.Tables, table)
-	result.Meta.Set("rowCount", len(data))
-	slog.Info("anno", "len", len(data))
+	result.Frames = frames
+	slog.Info("anno", "len", len(annotations))
 }
 
 func formatAnnotationText(annotationText string, pointValue string, metricType string, metricLabels map[string]string, resourceLabels map[string]string) string {

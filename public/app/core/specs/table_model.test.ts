@@ -55,6 +55,34 @@ describe('when sorting table asc', () => {
   });
 });
 
+describe('when sorting table with cols being undefined', () => {
+  let table: TableModel;
+  const panel = {
+    sort: { cols: undefined, desc: false },
+  };
+
+  beforeEach(() => {
+    table = new TableModel();
+    // @ts-ignore
+    table.columns = [{}, {}];
+    table.rows = [
+      [100, 11],
+      [105, 15],
+      [103, 10],
+    ];
+    // This is needed because after 8.3 cols can be undefined
+    // https://github.com/grafana/grafana/issues/44127
+    //@ts-ignore
+    table.sort(panel.sort);
+  });
+
+  it('should return the original table without sorting', () => {
+    expect(table.rows[0][1]).toBe(11);
+    expect(table.rows[1][1]).toBe(15);
+    expect(table.rows[2][1]).toBe(10);
+  });
+});
+
 describe('when sorting with nulls', () => {
   let table: TableModel;
   let values;
@@ -77,25 +105,25 @@ describe('when sorting with nulls', () => {
 
   it('numbers with nulls at end with asc sort', () => {
     table.sort({ col: 0, desc: false });
-    values = table.rows.map(row => row[0]);
+    values = table.rows.map((row) => row[0]);
     expect(values).toEqual([-8, 0, 0, 2, 19, 42, null, null]);
   });
 
   it('numbers with nulls at start with desc sort', () => {
     table.sort({ col: 0, desc: true });
-    values = table.rows.map(row => row[0]);
+    values = table.rows.map((row) => row[0]);
     expect(values).toEqual([null, null, 42, 19, 2, 0, 0, -8]);
   });
 
   it('strings with nulls at end with asc sort', () => {
     table.sort({ col: 1, desc: false });
-    values = table.rows.map(row => row[1]);
+    values = table.rows.map((row) => row[1]);
     expect(values).toEqual(['', '', 'a', 'b', 'c', 'd', null, null]);
   });
 
   it('strings with nulls at start with desc sort', () => {
     table.sort({ col: 1, desc: true });
-    values = table.rows.map(row => row[1]);
+    values = table.rows.map((row) => row[1]);
     expect(values).toEqual([null, null, 'd', 'c', 'b', 'a', '', '']);
   });
 });
@@ -156,13 +184,13 @@ describe('mergeTables', () => {
       columns: [{ text: 'Time' }, { text: 'Label Key 1' }, { text: 'Value' }],
       rows: [[time, 'Label Value 1', 42]],
     }),
-    ({
+    {
       target: 'series1',
       datapoints: [
         [12.12, time],
         [14.44, time + 1],
       ],
-    } as any) as TableModel,
+    } as any as TableModel,
   ];
 
   it('should return the single table as is', () => {

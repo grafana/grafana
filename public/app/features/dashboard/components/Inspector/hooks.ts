@@ -1,16 +1,20 @@
-import { DataQueryError, DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
-import useAsync from 'react-use/lib/useAsync';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { DashboardModel } from 'app/features/dashboard/state';
 import { useMemo } from 'react';
+import useAsync from 'react-use/lib/useAsync';
+
+import { DataQueryError, DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { InspectTab } from 'app/features/inspector/types';
+
 import { supportsDataQuery } from '../PanelEditor/utils';
-import { InspectTab } from './types';
+
+import { PanelInspectActionSupplier } from './PanelInspectActions';
 
 /**
  * Given PanelData return first data source supporting metadata inspector
  */
 export const useDatasourceMetadata = (data?: PanelData) => {
-  const state = useAsync<DataSourceApi | undefined>(async () => {
+  const state = useAsync(async () => {
     const targets = data?.request?.targets || [];
 
     if (data && data.series && targets.length) {
@@ -34,8 +38,9 @@ export const useDatasourceMetadata = (data?: PanelData) => {
  * Configures tabs for PanelInspector
  */
 export const useInspectTabs = (
-  plugin: PanelPlugin,
+  panel: PanelModel,
   dashboard: DashboardModel,
+  plugin: PanelPlugin | undefined | null,
   error?: DataQueryError,
   metaDs?: DataSourceApi
 ) => {
@@ -56,9 +61,16 @@ export const useInspectTabs = (
       tabs.push({ label: 'Error', value: InspectTab.Error });
     }
 
+    // This is a quick internal hack to allow custom actions in inspect
+    // For 8.1, something like this should be exposed through grafana/runtime
+    const supplier = (window as any).grafanaPanelInspectActionSupplier as PanelInspectActionSupplier;
+    if (supplier && supplier.getActions(panel)) {
+      tabs.push({ label: 'Actions', value: InspectTab.Actions });
+    }
+
     if (dashboard.meta.canEdit && supportsDataQuery(plugin)) {
       tabs.push({ label: 'Query', value: InspectTab.Query });
     }
     return tabs;
-  }, [plugin, metaDs, dashboard, error]);
+  }, [panel, plugin, metaDs, dashboard, error]);
 };

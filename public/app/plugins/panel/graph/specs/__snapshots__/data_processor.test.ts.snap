@@ -157,6 +157,37 @@ Array [
     "unit": undefined,
     "valueFormater": [Function],
   },
+  TimeSeries {
+    "alias": "series with time as strings v1",
+    "aliasEscaped": "series with time as strings v1",
+    "bars": Object {
+      "fillColor": "#1F78C1",
+    },
+    "color": "#1F78C1",
+    "dataFrameIndex": 3,
+    "datapoints": Array [
+      Array [
+        0.1,
+        1609462800000,
+      ],
+      Array [
+        0.2,
+        1609462800000,
+      ],
+      Array [
+        0.3,
+        1609466400000,
+      ],
+    ],
+    "fieldIndex": 0,
+    "hasMsResolution": false,
+    "id": "series with time as strings v1",
+    "label": "series with time as strings v1",
+    "legend": true,
+    "stats": Object {},
+    "unit": undefined,
+    "valueFormater": [Function],
+  },
 ]
 `;
 
@@ -230,6 +261,18 @@ Array [
       Array [
         3.3,
         1003,
+      ],
+      Array [
+        0.1,
+        1609462800000,
+      ],
+      Array [
+        0.2,
+        1609462800000,
+      ],
+      Array [
+        0.3,
+        1609466400000,
       ],
     ],
     "fieldIndex": 1,

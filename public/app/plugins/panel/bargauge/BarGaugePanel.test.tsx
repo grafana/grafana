@@ -1,23 +1,24 @@
-import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
+import React from 'react';
+
 import {
-  PanelData,
   dateMath,
-  TimeRange,
-  VizOrientation,
-  PanelProps,
-  LoadingState,
   dateTime,
   FieldConfigSource,
+  LoadingState,
+  PanelData,
+  PanelProps,
+  TimeRange,
   toDataFrame,
+  VizOrientation,
 } from '@grafana/data';
-import { BarGaugeDisplayMode } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { BarGaugeDisplayMode } from '@grafana/ui';
 
 import { BarGaugePanel } from './BarGaugePanel';
 import { BarGaugeOptions } from './types';
 
-const valueSelector = selectors.components.Panels.Visualization.BarGauge.value;
+const valueSelector = selectors.components.Panels.Visualization.BarGauge.valueV2;
 
 describe('BarGaugePanel', () => {
   describe('when empty result is rendered', () => {
@@ -28,7 +29,7 @@ describe('BarGaugePanel', () => {
     });
 
     it('should render with title "No data"', () => {
-      const displayValue = wrapper.find(`div[aria-label="${valueSelector}"]`).text();
+      const displayValue = wrapper.find(`div[data-testid="${valueSelector}"]`).text();
       expect(displayValue).toBe('No data');
     });
   });
@@ -49,7 +50,7 @@ describe('BarGaugePanel', () => {
     });
 
     it('should render with title "No data"', () => {
-      const displayValue = wrapper.find(`div[aria-label="${valueSelector}"]`).text();
+      const displayValue = wrapper.find(`div[data-testid="${valueSelector}"]`).text();
       expect(displayValue).toBe('100');
     });
   });
@@ -74,6 +75,8 @@ function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<B
     },
     orientation: VizOrientation.Horizontal,
     showUnfilled: true,
+    minVizHeight: 10,
+    minVizWidth: 0,
   };
   const fieldConfig: FieldConfigSource = {
     defaults: {},
@@ -92,11 +95,12 @@ function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<B
       onFieldConfigChange={() => {}}
       onOptionsChange={() => {}}
       onChangeTimeRange={() => {}}
-      replaceVariables={s => s}
+      replaceVariables={(s) => s}
       renderCounter={0}
       width={532}
       transparent={false}
       height={250}
+      eventBus={{} as any}
     />
   );
 }

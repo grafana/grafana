@@ -6,10 +6,10 @@ interface Props {
   children: JSX.Element;
   in: boolean;
   unmountOnExit?: boolean;
-  onExited?: ExitHandler;
+  onExited?: ExitHandler<HTMLDivElement>;
 }
 
-export const FadeIn: FC<Props> = props => {
+export const FadeIn: FC<Props> = (props) => {
   const defaultStyle: CSSProperties = {
     transition: `opacity ${props.duration}ms linear`,
     opacity: 0,
@@ -29,7 +29,7 @@ export const FadeIn: FC<Props> = props => {
       unmountOnExit={props.unmountOnExit || false}
       onExited={props.onExited}
     >
-      {state => (
+      {(state) => (
         <div
           style={{
             ...defaultStyle,

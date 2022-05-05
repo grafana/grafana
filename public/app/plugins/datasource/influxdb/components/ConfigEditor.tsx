@@ -1,4 +1,6 @@
+import { uniqueId } from 'lodash';
 import React, { PureComponent } from 'react';
+
 import {
   DataSourcePluginOptionsEditorProps,
   SelectableValue,
@@ -7,9 +9,11 @@ import {
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceSecureJsonDataOption,
+  updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/ui';
-const { Select, Input, SecretFormField } = LegacyForms;
+import { Alert, DataSourceHttpSettings, InfoBox, InlineField, InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
+
+const { Input, SecretFormField } = LegacyForms;
 import { InfluxOptions, InfluxSecureJsonData, InfluxVersion } from '../types';
 
 const httpModes = [
@@ -21,18 +25,33 @@ const versions = [
   {
     label: 'InfluxQL',
     value: InfluxVersion.InfluxQL,
-    description: 'The InfluxDB SQL-like query language.  Supported in InfluxDB 1.x',
+    description: 'The InfluxDB SQL-like query language.',
   },
   {
     label: 'Flux',
     value: InfluxVersion.Flux,
-    description: 'Advanced data scripting and query language.  Supported in InfluxDB 2.x and 1.8+ (beta)',
+    description: 'Advanced data scripting and query language.  Supported in InfluxDB 2.x and 1.8+',
   },
 ] as Array<SelectableValue<InfluxVersion>>;
 
 export type Props = DataSourcePluginOptionsEditorProps<InfluxOptions>;
+type State = {
+  maxSeries: string | undefined;
+};
 
-export class ConfigEditor extends PureComponent<Props> {
+export class ConfigEditor extends PureComponent<Props, State> {
+  state = {
+    maxSeries: '',
+  };
+
+  htmlPrefix: string;
+
+  constructor(props: Props) {
+    super(props);
+    this.state.maxSeries = props.options.jsonData.maxSeries?.toString() || '';
+    this.htmlPrefix = uniqueId('influxdb-config');
+  }
+
   // 1x
   onResetPassword = () => {
     updateDatasourcePluginResetOption(this.props, 'password');
@@ -62,63 +81,26 @@ export class ConfigEditor extends PureComponent<Props> {
       delete copy.user;
       delete copy.database;
     }
-    onOptionsChange(copy);
-  };
 
-  onUpdateInflux2xURL = (e: React.SyntheticEvent<HTMLInputElement>) => {
-    const { options, onOptionsChange } = this.props;
-    onOptionsChange({
-      ...options,
-      url: e.currentTarget.value,
-      access: 'proxy',
-      basicAuth: true,
-    });
+    onOptionsChange(copy);
   };
 
   renderInflux2x() {
     const { options } = this.props;
     const { secureJsonFields } = options;
     const secureJsonData = (options.secureJsonData || {}) as InfluxSecureJsonData;
+    const { htmlPrefix } = this;
 
     return (
-      <div>
-        <div className="gf-form-group">
-          <div className="width-30 grafana-info-box">
-            <h5>Support for flux in Grafana is currently in beta</h5>
-            <p>
-              Please report any issues to: <br />
-              <a href="https://github.com/grafana/grafana/issues/new/choose">
-                https://github.com/grafana/grafana/issues
-              </a>
-            </p>
-          </div>
-        </div>
-        <br />
-
-        <h3 className="page-heading">Connection</h3>
+      <>
         <div className="gf-form-inline">
           <div className="gf-form">
-            <InlineFormLabel
-              className="width-10"
-              tooltip="This URL needs to be accessible from the grafana backend/server."
-            >
-              URL
+            <InlineFormLabel htmlFor={`${htmlPrefix}-org`} className="width-10">
+              Organization
             </InlineFormLabel>
-            <div className="width-20">
-              <Input
-                className="width-20"
-                value={options.url || ''}
-                placeholder="http://localhost:9999"
-                onChange={this.onUpdateInflux2xURL}
-              />
-            </div>
-          </div>
-        </div>
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <InlineFormLabel className="width-10">Organization</InlineFormLabel>
             <div className="width-10">
               <Input
+                id={`${htmlPrefix}-org`}
                 className="width-20"
                 value={options.jsonData.organization || ''}
                 onChange={onUpdateDatasourceJsonDataOption(this.props, 'organization')}
@@ -132,6 +114,7 @@ export class ConfigEditor extends PureComponent<Props> {
               isConfigured={(secureJsonFields && secureJsonFields.token) as boolean}
               value={secureJsonData.token || ''}
               label="Token"
+              aria-label="Token"
               labelWidth={10}
               inputWidth={20}
               onReset={this.onResetToken}
@@ -172,124 +155,121 @@ export class ConfigEditor extends PureComponent<Props> {
             </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   renderInflux1x() {
-    const { options, onOptionsChange } = this.props;
+    const { options } = this.props;
     const { secureJsonFields } = options;
     const secureJsonData = (options.secureJsonData || {}) as InfluxSecureJsonData;
+    const { htmlPrefix } = this;
 
     return (
-      <div>
-        <DataSourceHttpSettings
-          showAccessOptions={true}
-          dataSourceConfig={options}
-          defaultUrl="http://localhost:8086"
-          onChange={onOptionsChange}
-        />
-
-        <h3 className="page-heading">InfluxDB Details</h3>
-        <div className="gf-form-group">
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel className="width-10">Database</InlineFormLabel>
-              <div className="width-20">
-                <Input
-                  className="width-20"
-                  value={options.database || ''}
-                  onChange={onUpdateDatasourceOption(this.props, 'database')}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel className="width-10">User</InlineFormLabel>
-              <div className="width-10">
-                <Input
-                  className="width-20"
-                  value={options.user || ''}
-                  onChange={onUpdateDatasourceOption(this.props, 'user')}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <SecretFormField
-                isConfigured={(secureJsonFields && secureJsonFields.password) as boolean}
-                value={secureJsonData.password || ''}
-                label="Password"
-                labelWidth={10}
-                inputWidth={20}
-                onReset={this.onResetPassword}
-                onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'password')}
+      <>
+        <InfoBox>
+          <h5>Database Access</h5>
+          <p>
+            Setting the database for this datasource does not deny access to other databases. The InfluxDB query syntax
+            allows switching the database in the query. For example:
+            <code>SHOW MEASUREMENTS ON _internal</code> or
+            <code>SELECT * FROM &quot;_internal&quot;..&quot;database&quot; LIMIT 10</code>
+            <br />
+            <br />
+            To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
+          </p>
+        </InfoBox>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel htmlFor={`${htmlPrefix}-db`} className="width-10">
+              Database
+            </InlineFormLabel>
+            <div className="width-20">
+              <Input
+                id={`${htmlPrefix}-db`}
+                className="width-20"
+                value={options.database || ''}
+                onChange={onUpdateDatasourceOption(this.props, 'database')}
               />
             </div>
           </div>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel
-                className="width-10"
-                tooltip="You can use either GET or POST HTTP method to query your InfluxDB database. The POST
+        </div>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel htmlFor={`${htmlPrefix}-user`} className="width-10">
+              User
+            </InlineFormLabel>
+            <div className="width-10">
+              <Input
+                id={`${htmlPrefix}-user`}
+                className="width-20"
+                value={options.user || ''}
+                onChange={onUpdateDatasourceOption(this.props, 'user')}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <SecretFormField
+              isConfigured={(secureJsonFields && secureJsonFields.password) as boolean}
+              value={secureJsonData.password || ''}
+              label="Password"
+              aria-label="Password"
+              labelWidth={10}
+              inputWidth={20}
+              onReset={this.onResetPassword}
+              onChange={onUpdateDatasourceSecureJsonDataOption(this.props, 'password')}
+            />
+          </div>
+        </div>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel
+              htmlFor={`${htmlPrefix}-http-method`}
+              className="width-10"
+              tooltip="You can use either GET or POST HTTP method to query your InfluxDB database. The POST
           method allows you to perform heavy requests (with a lots of WHERE clause) while the GET method
           will restrict you and return an error if the query is too large."
-              >
-                HTTP Method
-              </InlineFormLabel>
-              <Select
+            >
+              HTTP Method
+            </InlineFormLabel>
+            <Select
+              inputId={`${htmlPrefix}-http-method`}
+              className="width-10"
+              value={httpModes.find((httpMode) => httpMode.value === options.jsonData.httpMode)}
+              options={httpModes}
+              defaultValue={options.jsonData.httpMode}
+              onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'httpMode')}
+            />
+          </div>
+        </div>
+
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel
+              className="width-10"
+              tooltip="A lower limit for the auto group by time interval. Recommended to be set to write frequency,
+				for example 1m if your data is written every minute."
+            >
+              Min time interval
+            </InlineFormLabel>
+            <div className="width-10">
+              <Input
                 className="width-10"
-                value={httpModes.find(httpMode => httpMode.value === options.jsonData.httpMode)}
-                options={httpModes}
-                defaultValue={options.jsonData.httpMode}
-                onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'httpMode')}
+                placeholder="10s"
+                value={options.jsonData.timeInterval || ''}
+                onChange={onUpdateDatasourceJsonDataOption(this.props, 'timeInterval')}
               />
             </div>
           </div>
         </div>
-
-        <div className="gf-form-group">
-          <div className="grafana-info-box">
-            <h5>Database Access</h5>
-            <p>
-              Setting the database for this datasource does not deny access to other databases. The InfluxDB query
-              syntax allows switching the database in the query. For example:
-              <code>SHOW MEASUREMENTS ON _internal</code> or <code>SELECT * FROM "_internal".."database" LIMIT 10</code>
-              <br />
-              <br />
-              To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
-            </p>
-          </div>
-        </div>
-        <div className="gf-form-group">
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel
-                className="width-10"
-                tooltip="A lower limit for the auto group by time interval. Recommended to be set to write frequency,
-				for example 1m if your data is written every minute."
-              >
-                Min time interval
-              </InlineFormLabel>
-              <div className="width-10">
-                <Input
-                  className="width-10"
-                  placeholder="10s"
-                  value={options.jsonData.timeInterval || ''}
-                  onChange={onUpdateDatasourceJsonDataOption(this.props, 'timeInterval')}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      </>
     );
   }
 
   render() {
-    const { options } = this.props;
+    const { options, onOptionsChange } = this.props;
 
     return (
       <>
@@ -298,6 +278,7 @@ export class ConfigEditor extends PureComponent<Props> {
           <div className="gf-form-inline">
             <div className="gf-form">
               <Select
+                aria-label="Query language"
                 className="width-30"
                 value={options.jsonData.version === InfluxVersion.Flux ? versions[1] : versions[0]}
                 options={versions}
@@ -308,7 +289,58 @@ export class ConfigEditor extends PureComponent<Props> {
           </div>
         </div>
 
-        {options.jsonData.version === InfluxVersion.Flux ? this.renderInflux2x() : this.renderInflux1x()}
+        {options.jsonData.version === InfluxVersion.Flux && (
+          <InfoBox>
+            <h5>Support for Flux in Grafana is currently in beta</h5>
+            <p>
+              Please report any issues to: <br />
+              <a href="https://github.com/grafana/grafana/issues/new/choose">
+                https://github.com/grafana/grafana/issues
+              </a>
+            </p>
+          </InfoBox>
+        )}
+
+        {options.access === 'direct' && (
+          <Alert title="Deprecation Notice" severity="warning">
+            Browser access mode in the InfluxDB datasource is deprecated and will be removed in a future release.
+          </Alert>
+        )}
+
+        <DataSourceHttpSettings
+          showAccessOptions={true}
+          dataSourceConfig={options}
+          defaultUrl="http://localhost:8086"
+          onChange={onOptionsChange}
+        />
+
+        <div className="gf-form-group">
+          <div>
+            <h3 className="page-heading">InfluxDB Details</h3>
+          </div>
+          {options.jsonData.version === InfluxVersion.Flux ? this.renderInflux2x() : this.renderInflux1x()}
+          <div className="gf-form-inline">
+            <InlineField
+              labelWidth={20}
+              label="Max series"
+              tooltip="Limit the number of series/tables that Grafana will process. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000."
+            >
+              <Input
+                placeholder="1000"
+                type="number"
+                className="width-10"
+                value={this.state.maxSeries}
+                onChange={(event) => {
+                  // We duplicate this state so that we allow to write freely inside the input. We don't have
+                  // any influence over saving so this seems to be only way to do this.
+                  this.setState({ maxSeries: event.currentTarget.value });
+                  const val = parseInt(event.currentTarget.value, 10);
+                  updateDatasourcePluginJsonDataOption(this.props, 'maxSeries', Number.isFinite(val) ? val : undefined);
+                }}
+              />
+            </InlineField>
+          </div>
+        </div>
       </>
     );
   }

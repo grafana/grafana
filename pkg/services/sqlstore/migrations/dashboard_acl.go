@@ -20,6 +20,10 @@ func addDashboardAclMigrations(mg *Migrator) {
 			{Cols: []string{"dashboard_id"}},
 			{Cols: []string{"dashboard_id", "user_id"}, Type: UniqueIndex},
 			{Cols: []string{"dashboard_id", "team_id"}, Type: UniqueIndex},
+			{Cols: []string{"user_id"}},
+			{Cols: []string{"team_id"}},
+			{Cols: []string{"org_id", "role"}},
+			{Cols: []string{"permission"}},
 		},
 	}
 
@@ -29,6 +33,10 @@ func addDashboardAclMigrations(mg *Migrator) {
 	mg.AddMigration("add index dashboard_acl_dashboard_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[0]))
 	mg.AddMigration("add unique index dashboard_acl_dashboard_id_user_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[1]))
 	mg.AddMigration("add unique index dashboard_acl_dashboard_id_team_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[2]))
+	mg.AddMigration("add index dashboard_acl_user_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[3]))
+	mg.AddMigration("add index dashboard_acl_team_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[4]))
+	mg.AddMigration("add index dashboard_acl_org_id_role", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[5]))
+	mg.AddMigration("add index dashboard_permission", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[6]))
 
 	const rawSQL = `
 INSERT INTO dashboard_acl
@@ -45,5 +53,8 @@ INSERT INTO dashboard_acl
 		(-1,-1, 2,'Editor','2017-06-20','2017-06-20')
 	`
 
-	mg.AddMigration("save default acl rules in dashboard_acl table", NewRawSqlMigration(rawSQL))
+	mg.AddMigration("save default acl rules in dashboard_acl table", NewRawSQLMigration(rawSQL))
+
+	mg.AddMigration("delete acl rules for deleted dashboards and folders", NewRawSQLMigration(
+		"DELETE FROM dashboard_acl WHERE dashboard_id NOT IN (SELECT id FROM dashboard) AND dashboard_id != -1"))
 }

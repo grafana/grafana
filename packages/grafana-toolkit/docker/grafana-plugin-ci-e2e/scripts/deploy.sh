@@ -5,12 +5,12 @@ source "/etc/profile"
 source "./deploy-slim.sh"
 source "./deploy-common.sh"
 
-NODEVER="v12.18.3-linux-x64"
+NODEVER="v16.13.2"
 # Install Node
-wget -O - "https://nodejs.org/dist/v12.18.3/node-${NODEVER}.tar.xz" | tar Jvxf - -C "/tmp"
+wget -O - "https://nodejs.org/dist/${NODEVER}/node-${NODEVER}-linux-x64.tar.xz" | tar Jvxf - -C "/tmp"
 
 # Move node to /usr/local so it's in the path
-pushd /tmp/node-${NODEVER}
+pushd /tmp/node-${NODEVER}-linux-x64
 /bin/rm -f CHANGELOG.md README.md LICENSE
 /bin/cp -r * /usr/local
 popd
@@ -22,16 +22,16 @@ source "/etc/profile"
 npm i -g yarn
 
 # Install Go
-filename="go1.15.1.linux-amd64.tar.gz"
-get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "70ac0dbf60a8ee9236f337ed0daa7a4c3b98f6186d4497826f68e97c0c0413f6"
+filename="go1.18.linux-amd64.tar.gz"
+get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "e85278e98f57cdb150fe8409e6e5df5343ecb13cebf03a5d5ff12bd55a80264f"
 untar_file "/tmp/$filename"
 
 # Install golangci-lint
-GOLANGCILINT_VERSION=1.31.0
+GOLANGCILINT_VERSION=1.45.0
 filename="golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64"
 get_file "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/$filename.tar.gz" \
     "/tmp/$filename.tar.gz" \
-    "9a5d47b51442d68b718af4c7350f4406cdc087e2236a5b9ae52f37aebede6cb3"
+    "ca06a2b170f41a9e1e34d40ca88b15b8fed2d7e37310f0c08b7fc244c34292a9"
 untar_file "/tmp/$filename.tar.gz"
 ln -s /usr/local/${filename}/golangci-lint /usr/local/bin/golangci-lint
 ln -s /usr/local/go/bin/go /usr/local/bin/go
@@ -41,10 +41,10 @@ chmod 755 /usr/local/bin/golangci-lint
 # Install code climate
 get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64" \
     "/usr/local/bin/cc-test-reporter" \
-    "b4138199aa755ebfe171b57cc46910b13258ace5fbc4eaa099c42607cd0bff32"
+    "9fbe34cd207924d8f51ac0f3ffa690df4169e055cd7134a2370f6650f5b356e1"
 chmod 755 /usr/local/bin/cc-test-reporter
 
-wget -O /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.11/grabpl"
+wget -O /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.27/grabpl"
 chmod +x /usr/local/bin/grabpl
 
 # Install Mage
@@ -56,11 +56,10 @@ mv $HOME/go/bin/mage /usr/local/bin
 /bin/rm -rf /tmp/mage
 /bin/rm -rf $HOME/go
 
-# Install grafana-toolkit deps
-pushd /usr/local/grafana-toolkit
-yarn install
-ln -s /usr/local/grafana-toolkit/bin/grafana-toolkit.js /usr/local/bin/grafana-toolkit
-popd
+# add cypress
+yarn global add cypress
+# verify cypress install
+cypress verify
 
 # Get the size down
 /bin/rm -rf /var/lib/apt/lists

@@ -21,7 +21,7 @@ export class InfluxDatasourceMock {
   }
 
   private getMeasurements(): FieldReturnValue[] {
-    return Object.keys(this.measurements).map(key => ({ text: key }));
+    return Object.keys(this.measurements).map((key) => ({ text: key }));
   }
 
   private getMeasurementFields(query: string): FieldReturnValue[] {
@@ -43,7 +43,7 @@ export class InfluxDatasourceMock {
       );
     }
 
-    return fields.map(field => ({
+    return fields.map((field) => ({
       text: field.name,
     }));
   }

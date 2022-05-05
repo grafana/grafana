@@ -7,12 +7,12 @@ import (
 
 // Typed errors
 var (
-	ErrTeamNotFound                         = errors.New("Team not found")
-	ErrTeamNameTaken                        = errors.New("Team name is taken")
-	ErrTeamMemberNotFound                   = errors.New("Team member not found")
-	ErrLastTeamAdmin                        = errors.New("Not allowed to remove last admin")
-	ErrNotAllowedToUpdateTeam               = errors.New("User not allowed to update team")
-	ErrNotAllowedToUpdateTeamInDifferentOrg = errors.New("User not allowed to update team in another org")
+	ErrTeamNotFound                         = errors.New("team not found")
+	ErrTeamNameTaken                        = errors.New("team name is taken")
+	ErrTeamMemberNotFound                   = errors.New("team member not found")
+	ErrLastTeamAdmin                        = errors.New("not allowed to remove last admin")
+	ErrNotAllowedToUpdateTeam               = errors.New("user not allowed to update team")
+	ErrNotAllowedToUpdateTeamInDifferentOrg = errors.New("user not allowed to update team in another org")
 )
 
 // Team model
@@ -50,10 +50,16 @@ type DeleteTeamCommand struct {
 }
 
 type GetTeamByIdQuery struct {
-	OrgId  int64
-	Id     int64
-	Result *TeamDTO
+	OrgId        int64
+	Id           int64
+	SignedInUser *SignedInUser
+	HiddenUsers  map[string]struct{}
+	Result       *TeamDTO
+	UserIdFilter int64
 }
+
+// FilterIgnoreUser is used in a get / search teams query when the caller does not want to filter teams by user ID / membership
+const FilterIgnoreUser int64 = 0
 
 type GetTeamsByUserQuery struct {
 	OrgId  int64
@@ -68,18 +74,21 @@ type SearchTeamsQuery struct {
 	Page         int
 	OrgId        int64
 	UserIdFilter int64
+	SignedInUser *SignedInUser
+	HiddenUsers  map[string]struct{}
 
 	Result SearchTeamQueryResult
 }
 
 type TeamDTO struct {
-	Id          int64          `json:"id"`
-	OrgId       int64          `json:"orgId"`
-	Name        string         `json:"name"`
-	Email       string         `json:"email"`
-	AvatarUrl   string         `json:"avatarUrl"`
-	MemberCount int64          `json:"memberCount"`
-	Permission  PermissionType `json:"permission"`
+	Id            int64           `json:"id"`
+	OrgId         int64           `json:"orgId"`
+	Name          string          `json:"name"`
+	Email         string          `json:"email"`
+	AvatarUrl     string          `json:"avatarUrl"`
+	MemberCount   int64           `json:"memberCount"`
+	Permission    PermissionType  `json:"permission"`
+	AccessControl map[string]bool `json:"accessControl"`
 }
 
 type SearchTeamQueryResult struct {

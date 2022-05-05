@@ -10,7 +10,13 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
   }
 
   // Single field with tags
-  const valuesWithLabels = frame.fields.filter(f => f.labels !== undefined);
+  const valuesWithLabels: Field[] = [];
+  for (const field of frame.fields) {
+    if (field.labels && Object.keys(field.labels).length > 0) {
+      valuesWithLabels.push(field);
+    }
+  }
+
   if (valuesWithLabels.length === 1) {
     return formatLabels(valuesWithLabels[0].labels!);
   }
@@ -18,8 +24,8 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
   // list all the
   if (index === undefined) {
     return frame.fields
-      .filter(f => f.type !== FieldType.time)
-      .map(f => getFieldDisplayName(f, frame))
+      .filter((f) => f.type !== FieldType.time)
+      .map((f) => getFieldDisplayName(f, frame))
       .join(', ');
   }
 
@@ -32,22 +38,22 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
 
 export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   const existingTitle = field.state?.displayName;
+  const multipleFrames = Boolean(allFrames && allFrames.length > 1);
 
-  if (existingTitle) {
+  if (existingTitle && multipleFrames === field.state?.multipleFrames) {
     return existingTitle;
   }
 
   const displayName = calculateFieldDisplayName(field, frame, allFrames);
-  field.state = {
-    ...field.state,
-    displayName,
-  };
+  field.state = field.state || {};
+  field.state.displayName = displayName;
+  field.state.multipleFrames = multipleFrames;
 
   return displayName;
 }
 
 /**
- * Get an appropriate display name. If the 'displayName' field config is set, use that
+ * Get an appropriate display name. If the 'displayName' field config is set, use that.
  */
 function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   const hasConfigTitle = field.config?.displayName && field.config?.displayName.length;
@@ -125,7 +131,44 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
     displayName = TIME_SERIES_VALUE_FIELD_NAME;
   }
 
+  // Ensure unique field name
+  if (displayName === field.name) {
+    displayName = getUniqueFieldName(field, frame);
+  }
+
   return displayName;
+}
+
+function getUniqueFieldName(field: Field, frame?: DataFrame) {
+  let dupeCount = 0;
+  let foundSelf = false;
+
+  if (frame) {
+    for (let i = 0; i < frame.fields.length; i++) {
+      const otherField = frame.fields[i];
+
+      if (field === otherField) {
+        foundSelf = true;
+
+        if (dupeCount > 0) {
+          dupeCount++;
+          break;
+        }
+      } else if (field.name === otherField.name) {
+        dupeCount++;
+
+        if (foundSelf) {
+          break;
+        }
+      }
+    }
+  }
+
+  if (dupeCount) {
+    return `${field.name} ${dupeCount}`;
+  }
+
+  return field.name;
 }
 
 /**

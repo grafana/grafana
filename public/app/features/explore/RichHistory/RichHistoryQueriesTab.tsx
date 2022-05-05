@@ -1,38 +1,30 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { css } from 'emotion';
-import { uniqBy, debounce } from 'lodash';
+import { css } from '@emotion/css';
+import React, { useEffect } from 'react';
 
-// Types
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
-
-// Utils
-import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-
+import { FilterInput, MultiSelect, RangeSlider, Select, stylesFactory, useTheme } from '@grafana/ui';
 import {
-  SortOrder,
+  createDatasourcesList,
   mapNumbertoTimeInSlider,
   mapQueriesToHeadings,
-  createDatasourcesList,
-  filterAndSortQueries,
+  SortOrder,
+  RichHistorySearchFilters,
+  RichHistorySettings,
 } from 'app/core/utils/richHistory';
+import { ExploreId, RichHistoryQuery } from 'app/types/explore';
 
-// Components
-import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
-import { Slider, Select } from '@grafana/ui';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import RichHistoryCard from './RichHistoryCard';
 
 export interface Props {
   queries: RichHistoryQuery[];
-  sortOrder: SortOrder;
-  activeDatasourceOnly: boolean;
-  datasourceFilters: SelectableValue[] | null;
-  retentionPeriod: number;
+  activeDatasourceInstance?: string;
+  updateFilters: (filtersToUpdate?: Partial<RichHistorySearchFilters>) => void;
+  clearRichHistoryResults: () => void;
+  richHistorySettings: RichHistorySettings;
+  richHistorySearchFilters?: RichHistorySearchFilters;
   exploreId: ExploreId;
   height: number;
-  onChangeSortOrder: (sortOrder: SortOrder) => void;
-  onSelectDatasourceFilters: (value: SelectableValue[]) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
@@ -106,7 +98,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
     `,
     footer: css`
       height: 60px;
-      margin-top: ${theme.spacing.lg};
+      margin: ${theme.spacing.lg} auto;
       display: flex;
       justify-content: center;
       font-weight: ${theme.typography.weight.light};
@@ -126,130 +118,122 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
 
 export function RichHistoryQueriesTab(props: Props) {
   const {
-    datasourceFilters,
-    onSelectDatasourceFilters,
     queries,
-    onChangeSortOrder,
-    sortOrder,
-    activeDatasourceOnly,
-    retentionPeriod,
+    richHistorySearchFilters,
+    updateFilters,
+    clearRichHistoryResults,
+    richHistorySettings,
     exploreId,
     height,
+    activeDatasourceInstance,
   } = props;
-
-  const [timeFilter, setTimeFilter] = useState<[number, number]>([0, retentionPeriod]);
-  const [filteredQueries, setFilteredQueries] = useState<RichHistoryQuery[]>([]);
-  const [searchInput, setSearchInput] = useState('');
 
   const theme = useTheme();
   const styles = getStyles(theme, height);
 
-  const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map(d => d.datasourceName);
-  const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
-
-  const filterAndSortQueriesDebounced = useCallback(
-    debounce((searchValue: string) => {
-      setFilteredQueries(
-        filterAndSortQueries(
-          queries,
-          sortOrder,
-          datasourceFilters?.map(d => d.value) as string[] | null,
-          searchValue,
-          timeFilter
-        )
-      );
-    }, 300),
-    [timeFilter, queries, sortOrder, datasourceFilters]
-  );
+  const listOfDatasources = createDatasourcesList();
 
   useEffect(() => {
-    setFilteredQueries(
-      filterAndSortQueries(
-        queries,
-        sortOrder,
-        datasourceFilters?.map(d => d.value) as string[] | null,
-        searchInput,
-        timeFilter
-      )
-    );
-  }, [timeFilter, queries, sortOrder, datasourceFilters]);
+    const datasourceFilters =
+      richHistorySettings.activeDatasourceOnly && activeDatasourceInstance
+        ? [activeDatasourceInstance]
+        : richHistorySettings.lastUsedDatasourceFilters;
+    const filters: RichHistorySearchFilters = {
+      search: '',
+      sortOrder: SortOrder.Descending,
+      datasourceFilters,
+      from: 0,
+      to: richHistorySettings.retentionPeriod,
+      starred: false,
+    };
+    updateFilters(filters);
+
+    return () => {
+      clearRichHistoryResults();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!richHistorySearchFilters) {
+    return <span>Loading...</span>;
+  }
 
   /* mappedQueriesToHeadings is an object where query headings (stringified dates/data sources)
    * are keys and arrays with queries that belong to that headings are values.
    */
-  const mappedQueriesToHeadings = mapQueriesToHeadings(filteredQueries, sortOrder);
+  const mappedQueriesToHeadings = mapQueriesToHeadings(queries, richHistorySearchFilters.sortOrder);
 
   return (
     <div className={styles.container}>
       <div className={styles.containerSlider}>
         <div className={styles.slider}>
           <div className="label-slider">Filter history</div>
-          <div className="label-slider">{mapNumbertoTimeInSlider(timeFilter[0])}</div>
+          <div className="label-slider">{mapNumbertoTimeInSlider(richHistorySearchFilters.from)}</div>
           <div className="slider">
-            <Slider
+            <RangeSlider
               tooltipAlwaysVisible={false}
               min={0}
-              max={retentionPeriod}
-              value={timeFilter}
+              max={richHistorySettings.retentionPeriod}
+              value={[richHistorySearchFilters.from, richHistorySearchFilters.to]}
               orientation="vertical"
               formatTooltipResult={mapNumbertoTimeInSlider}
               reverse={true}
-              onAfterChange={setTimeFilter as () => number[]}
+              onAfterChange={(value) => {
+                updateFilters({ from: value![0], to: value![1] });
+              }}
             />
           </div>
-          <div className="label-slider">{mapNumbertoTimeInSlider(timeFilter[1])}</div>
+          <div className="label-slider">{mapNumbertoTimeInSlider(richHistorySearchFilters.to)}</div>
         </div>
       </div>
 
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
-          {!activeDatasourceOnly && (
-            <div aria-label="Filter datasources" className={styles.multiselect}>
-              <Select
-                isMulti={true}
-                options={listOfDatasources}
-                value={datasourceFilters}
-                placeholder="Filter queries for data sources(s)"
-                onChange={onSelectDatasourceFilters}
-              />
-            </div>
+          {!richHistorySettings.activeDatasourceOnly && (
+            <MultiSelect
+              className={styles.multiselect}
+              options={listOfDatasources.map((ds) => {
+                return { value: ds.name, label: ds.name };
+              })}
+              value={richHistorySearchFilters.datasourceFilters}
+              placeholder="Filter queries for data sources(s)"
+              aria-label="Filter queries for data sources(s)"
+              onChange={(options: SelectableValue[]) => {
+                updateFilters({ datasourceFilters: options.map((option) => option.value) });
+              }}
+            />
           )}
           <div className={styles.filterInput}>
             <FilterInput
-              labelClassName="gf-form--has-input-icon gf-form--grow"
-              inputClassName="gf-form-input"
               placeholder="Search queries"
-              value={searchInput}
-              onChange={(value: string) => {
-                setSearchInput(value);
-                filterAndSortQueriesDebounced(value);
-              }}
+              value={richHistorySearchFilters.search}
+              onChange={(search: string) => updateFilters({ search })}
             />
           </div>
           <div aria-label="Sort queries" className={styles.sort}>
             <Select
-              value={sortOrderOptions.filter(order => order.value === sortOrder)}
+              value={sortOrderOptions.filter((order) => order.value === richHistorySearchFilters.sortOrder)}
               options={sortOrderOptions}
               placeholder="Sort queries by"
-              onChange={e => onChangeSortOrder(e.value as SortOrder)}
+              onChange={(e: SelectableValue<SortOrder>) => updateFilters({ sortOrder: e.value })}
             />
           </div>
         </div>
-        {Object.keys(mappedQueriesToHeadings).map(heading => {
+        {Object.keys(mappedQueriesToHeadings).map((heading) => {
           return (
             <div key={heading}>
               <div className={styles.heading}>
                 {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
               </div>
               {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
-                const idx = listOfDatasources.findIndex(d => d.label === q.datasourceName);
+                const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
                 return (
                   <RichHistoryCard
                     query={q}
-                    key={q.ts}
+                    key={q.id}
                     exploreId={exploreId}
-                    dsImg={listOfDatasources[idx].imgUrl}
-                    isRemoved={listOfDatasources[idx].isRemoved}
+                    dsImg={idx === -1 ? 'public/img/icn-datasource.svg' : listOfDatasources[idx].imgUrl}
+                    isRemoved={idx === -1}
                   />
                 );
               })}

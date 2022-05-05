@@ -27,7 +27,7 @@ func (s *SocialGoogle) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		Email string `json:"email"`
 	}
 
-	response, err := HttpGet(client, s.apiUrl)
+	response, err := s.httpGet(client, s.apiUrl)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}

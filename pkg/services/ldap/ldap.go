@@ -7,12 +7,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
+	"net"
+	"strconv"
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
+	"gopkg.in/ldap.v3"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"gopkg.in/ldap.v3"
 )
 
 // IConnection is interface for LDAP connection manipulation
@@ -71,10 +74,10 @@ const UsersMaxRequest = 500
 var (
 
 	// ErrInvalidCredentials is returned if username and password do not match
-	ErrInvalidCredentials = errors.New("Invalid Username or Password")
+	ErrInvalidCredentials = errors.New("invalid username or password")
 
 	// ErrCouldNotFindUser is returned when username hasn't been found (not username+password)
-	ErrCouldNotFindUser = errors.New("Can't find user in LDAP")
+	ErrCouldNotFindUser = errors.New("can't find user in LDAP")
 )
 
 // New creates the new LDAP connection
@@ -93,6 +96,8 @@ func (server *Server) Dial() error {
 	if server.Config.RootCACert != "" {
 		certPool = x509.NewCertPool()
 		for _, caCertFile := range strings.Split(server.Config.RootCACert, " ") {
+			// nolint:gosec
+			// We can ignore the gosec G304 warning on this one because `caCertFile` comes from ldap config.
 			pem, err := ioutil.ReadFile(caCertFile)
 			if err != nil {
 				return err
@@ -110,7 +115,9 @@ func (server *Server) Dial() error {
 		}
 	}
 	for _, host := range strings.Split(server.Config.Host, " ") {
-		address := fmt.Sprintf("%s:%d", host, server.Config.Port)
+		// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
+		host = strings.TrimSuffix(strings.TrimPrefix(host, "["), "]")
+		address := net.JoinHostPort(host, strconv.Itoa(server.Config.Port))
 		if server.Config.UseSSL {
 			tlsCfg := &tls.Config{
 				InsecureSkipVerify: server.Config.SkipVerifySSL,
@@ -246,16 +253,11 @@ func (server *Server) Users(logins []string) (
 	[]*models.ExternalUserInfo,
 	error,
 ) {
-	var users []*ldap.Entry
+	var users [][]*ldap.Entry
 	err := getUsersIteration(logins, func(previous, current int) error {
-		entries, err := server.users(logins[previous:current])
-		if err != nil {
-			return err
-		}
-
-		users = append(users, entries...)
-
-		return nil
+		var err error
+		users, err = server.users(logins[previous:current])
+		return err
 	})
 	if err != nil {
 		return nil, err
@@ -302,12 +304,14 @@ func getUsersIteration(logins []string, fn func(int, int) error) error {
 
 // users is helper method for the Users()
 func (server *Server) users(logins []string) (
-	[]*ldap.Entry,
+	[][]*ldap.Entry,
 	error,
 ) {
 	var result *ldap.SearchResult
 	var Config = server.Config
 	var err error
+
+	var entries = make([][]*ldap.Entry, 0, len(Config.SearchBaseDNs))
 
 	for _, base := range Config.SearchBaseDNs {
 		result, err = server.Connection.Search(
@@ -318,11 +322,11 @@ func (server *Server) users(logins []string) (
 		}
 
 		if len(result.Entries) > 0 {
-			break
+			entries = append(entries, result.Entries)
 		}
 	}
 
-	return result.Entries, nil
+	return entries, nil
 }
 
 // validateGrafanaUser validates user access.
@@ -418,7 +422,7 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 			continue
 		}
 
-		if isMemberOf(memberOf, group.GroupDN) {
+		if IsMemberOf(memberOf, group.GroupDN) {
 			extUser.OrgRoles[group.OrgId] = group.OrgRole
 			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
 				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
@@ -473,11 +477,11 @@ func (server *Server) AdminBind() error {
 func (server *Server) userBind(path, password string) error {
 	err := server.Connection.Bind(path, password)
 	if err != nil {
-		if ldapErr, ok := err.(*ldap.Error); ok {
-			if ldapErr.ResultCode == 49 {
-				return ErrInvalidCredentials
-			}
+		var ldapErr *ldap.Error
+		if errors.As(err, &ldapErr) && ldapErr.ResultCode == 49 {
+			return ErrInvalidCredentials
 		}
+
 		return err
 	}
 
@@ -551,17 +555,26 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 // serializeUsers serializes the users
 // from LDAP result to ExternalInfo struct
 func (server *Server) serializeUsers(
-	entries []*ldap.Entry,
+	entries [][]*ldap.Entry,
 ) ([]*models.ExternalUserInfo, error) {
 	var serialized []*models.ExternalUserInfo
+	var users = map[string]struct{}{}
 
-	for _, user := range entries {
-		extUser, err := server.buildGrafanaUser(user)
-		if err != nil {
-			return nil, err
+	for _, dn := range entries {
+		for _, user := range dn {
+			extUser, err := server.buildGrafanaUser(user)
+			if err != nil {
+				return nil, err
+			}
+
+			if _, exists := users[extUser.Login]; exists {
+				// ignore duplicates
+				continue
+			}
+			users[extUser.Login] = struct{}{}
+
+			serialized = append(serialized, extUser)
 		}
-
-		serialized = append(serialized, extUser)
 	}
 
 	return serialized, nil

@@ -5,8 +5,14 @@ import {
   parseCredentials,
   parseHeaders,
   parseInitFromOptions,
+  parseResponseBody,
   parseUrlFromOptions,
 } from './fetch';
+
+jest.mock('@grafana/data', () => ({
+  ...(jest.requireActual('@grafana/data') as unknown as object),
+  deprecationWarning: () => {},
+}));
 
 describe('parseUrlFromOptions', () => {
   it.each`
@@ -126,4 +132,49 @@ describe('parseCredentials', () => {
       expect(parseCredentials(options)).toEqual(expected);
     }
   );
+});
+
+describe('parseResponseBody', () => {
+  const rsp = {} as unknown as Response;
+  it('parses json', async () => {
+    const value = { hello: 'world' };
+    const body = await parseResponseBody(
+      {
+        ...rsp,
+        json: jest.fn().mockImplementationOnce(() => value),
+      },
+      'json'
+    );
+    expect(body).toEqual(value);
+  });
+
+  it('parses text', async () => {
+    const value = 'RAW TEXT';
+    const body = await parseResponseBody(
+      {
+        ...rsp,
+        text: jest.fn().mockImplementationOnce(() => value),
+      },
+      'text'
+    );
+    expect(body).toEqual(value);
+  });
+
+  it('undefined text', async () => {
+    const value = 'RAW TEXT';
+    const body = await parseResponseBody({
+      ...rsp,
+      text: jest.fn().mockImplementationOnce(() => value),
+    });
+    expect(body).toEqual(value);
+  });
+
+  it('undefined as parsed json', async () => {
+    const value = { hello: 'world' };
+    const body = await parseResponseBody({
+      ...rsp,
+      text: jest.fn().mockImplementationOnce(() => JSON.stringify(value)),
+    });
+    expect(body).toEqual(value);
+  });
 });

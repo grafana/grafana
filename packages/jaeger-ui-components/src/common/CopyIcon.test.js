@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
-import { shallow } from 'enzyme';
 import * as copy from 'copy-to-clipboard';
-import { UIButton, UITooltip } from '../uiElementsContext';
+import { shallow } from 'enzyme';
+import React from 'react';
+
+import { Button, Tooltip } from '@grafana/ui';
 
 import CopyIcon from './CopyIcon';
 
@@ -47,24 +48,13 @@ describe('<CopyIcon />', () => {
     expect(wrapper.state().hasCopied).toBe(false);
     expect(copySpy).not.toHaveBeenCalled();
 
-    wrapper.find(UIButton).simulate('click');
+    wrapper.find(Button).simulate('click');
     expect(wrapper.state().hasCopied).toBe(true);
     expect(copySpy).toHaveBeenCalledWith(props.copyText);
   });
 
-  it('updates state when tooltip hides and state.hasCopied is true', () => {
-    wrapper.setState({ hasCopied: true });
-    wrapper.find(UITooltip).prop('onVisibleChange')(false);
-    expect(wrapper.state().hasCopied).toBe(false);
-
-    const state = wrapper.state();
-    wrapper.find(UITooltip).prop('onVisibleChange')(false);
-    expect(wrapper.state()).toBe(state);
-  });
-
   it('persists state when tooltip opens', () => {
     wrapper.setState({ hasCopied: true });
-    wrapper.find(UITooltip).prop('onVisibleChange')(true);
     expect(wrapper.state().hasCopied).toBe(true);
   });
 });

@@ -1,57 +1,36 @@
 +++
-title = "Alerting"
-type = "docs"
-[menu.docs]
-identifier = "alerting"
-parent = "features"
-weight = 6
+title = "Alerts"
+weight = 455
+aliases = ["/docs/grafana/latest/alerting/", "/docs/grafana/latest/alerting/unified-alerting/difference-old-new/"]
 +++
 
-# Alerts overview
+# Grafana alerts
 
-Alerts allow you to identify problems in your system moments after they occur. By quickly identifying unintended changes in your system, you can minimize disruptions to your services.
+Grafana alerts allow you to learn about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services. It centralizes alerting information in a single, searchable view that allows you to:
 
-Alerts consists of two parts:
+- Create and manage Grafana alerts
+- Create and manage Grafana Mimir and Loki managed alerts
+- View alerting information from Prometheus and Alertmanager compatible data sources
 
-- Alert rules - When the alert is triggered. Alert rules are defined by one or more conditions that are regularly evaluated by Grafana.
-- Notification channel - How the alert is delivered. When the conditions of an alert rule are met, the Grafana notifies the channels configured for that alert.
+For new installations or existing installs without alerting configured, Grafana alerting is enabled by default.
 
-Currently only the graph panel visualization supports alerts.
+| Release     | Cloud         | Enterprise    | OSS           |
+| ----------- | ------------- | ------------- | ------------- |
+| Grafana 9.0 | On by default | On by default | On by default |
 
-## Alert tasks
+- For existing OSS installations with legacy dashboard alerting, you can [opt-in]({{< relref "./opt-in.md" >}}) to Grafana alerting.
+- For Grafana Cloud instances using legacy cloud alerting, contact customer support to migrate to Grafana alerting.
 
-You can perform the following tasks for alerts:
+Before you begin, we recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "./fundamentals/_index.md" >}}) of Grafana alerting. Refer to [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to learn more about controlling access to alerts using fine-grained permissions.
 
-- [Add or edit an alert notification channel]({{< relref "notifications.md" >}})
-- [Create an alert rule]({{< relref "create-alerts.md" >}})
-- [View existing alert rules and their current state]({{< relref "view-alerts.md" >}})
-- [Test alert rules and troubleshoot]({{< relref "troubleshoot-alerts.md" >}})
-
-## Clustering
-
-Currently alerting supports a limited form of high availability. Since v4.2.0 of Grafana, alert notifications are deduped when running multiple servers. This means all alerts are executed on every server but no duplicate alert notifications are sent due to the deduping logic. Proper load balancing of alerts will be introduced in the future.
-
-## Notifications
-
-You can also set alert rule notifications along with a detailed message about the alert rule. The message can contain anything: information about how you might solve the issue, link to runbook, and so on.
-
-The actual notifications are configured and shared between multiple alerts.
-
-## Alert execution
-
-Alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
-of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `InfluxDB`, `Elasticsearch`,
-`Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Data Explorer`.
-
-## Metrics from the alert engine
-
-The alert engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../administration/metrics/" >}}).
-
-Description | Type | Metric name
----------- | ----------- | ----------
-Total number of alerts | counter | `alerting.active_alerts`
-Alert execution result | counter | `alerting.result`
-Notifications sent counter | counter | `alerting.notifications_sent`
-Alert execution timer | timer | `alerting.execution_time`
-
-
+- [What's new in Grafana alerting]({{< relref "./difference-old-new.md" >}})
+- [Enable Grafana alerting in OSS]({{< relref "./opt-in.md" >}})
+- [Migrating legacy alerts]({{< relref "./migrating-legacy-alerts.md" >}})
+- [Create Grafana managed alerting rules]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
+- [Create Grafana Mimir or Loki managed alerting rules]({{< relref "alerting-rules/create-mimir-loki-managed-rule.md" >}})
+- [View existing alerting rules and manage their current state]({{< relref "alerting-rules/rule-list.md" >}})
+- [View the state and health of alerting rules]({{< relref "./fundamentals/state-and-health.md" >}})
+- [View alert groupings]({{< relref "./alert-groups.md" >}})
+- [Add or edit an alert contact point]({{< relref "./contact-points.md" >}})
+- [Add or edit notification policies]({{< relref "./notifications/_index.md" >}})
+- [Add or edit silences]({{< relref "./silences.md" >}})

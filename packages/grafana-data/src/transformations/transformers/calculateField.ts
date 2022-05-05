@@ -1,16 +1,20 @@
-import { DataFrame, DataTransformerInfo, Vector, FieldType, Field, NullValueMode } from '../../types';
-import { DataTransformerID } from './ids';
-import { ReducerID, fieldReducers } from '../fieldReducer';
+import { defaults } from 'lodash';
+import { map } from 'rxjs/operators';
+
+import { getTimeField } from '../../dataframe/processDataFrame';
+import { getFieldDisplayName } from '../../field';
+import { DataFrame, DataTransformerInfo, Field, FieldType, NullValueMode, Vector } from '../../types';
+import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
+import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
+import { AsNumberVector } from '../../vector/AsNumberVector';
+import { RowVector } from '../../vector/RowVector';
+import { doStandardCalcs, fieldReducers, ReducerID } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
-import { RowVector } from '../../vector/RowVector';
-import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
-import { doStandardCalcs } from '../fieldReducer';
-import { getTimeField } from '../../dataframe/processDataFrame';
-import defaults from 'lodash/defaults';
-import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
+
 import { ensureColumnsTransformer } from './ensureColumns';
-import { getFieldDisplayName } from '../../field';
+import { DataTransformerID } from './ids';
+import { noopTransformer } from './noop';
 
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
@@ -68,56 +72,69 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       reducer: ReducerID.sum,
     },
   },
-  transformer: options => (data: DataFrame[]) => {
-    if (options && options.timeSeries !== false) {
-      data = ensureColumnsTransformer.transformer(null)(data);
-    }
+  operator: (options, replace) => (outerSource) => {
+    const operator =
+      options && options.timeSeries !== false ? ensureColumnsTransformer.operator(null) : noopTransformer.operator({});
 
-    const mode = options.mode ?? CalculateFieldMode.ReduceRow;
-    let creator: ValuesCreator | undefined = undefined;
+    options.alias = replace ? replace(options.alias) : options.alias;
 
-    if (mode === CalculateFieldMode.ReduceRow) {
-      creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
-    } else if (mode === CalculateFieldMode.BinaryOperation) {
-      creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions), data);
-    }
+    return outerSource.pipe(
+      operator,
+      map((data) => {
+        const mode = options.mode ?? CalculateFieldMode.ReduceRow;
+        let creator: ValuesCreator | undefined = undefined;
 
-    // Nothing configured
-    if (!creator) {
-      return data;
-    }
-
-    return data.map(frame => {
-      // delegate field creation to the specific function
-      const values = creator!(frame);
-      if (!values) {
-        return frame;
-      }
-
-      const field = {
-        name: getNameFromOptions(options),
-        type: FieldType.number,
-        config: {},
-        values,
-      };
-      let fields: Field[] = [];
-
-      // Replace all fields with the single field
-      if (options.replaceFields) {
-        const { timeField } = getTimeField(frame);
-        if (timeField && options.timeSeries !== false) {
-          fields = [timeField, field];
-        } else {
-          fields = [field];
+        if (mode === CalculateFieldMode.ReduceRow) {
+          creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
+        } else if (mode === CalculateFieldMode.BinaryOperation) {
+          const binaryOptions = replace
+            ? {
+                ...options.binary,
+                left: replace ? replace(options.binary?.left) : options.binary?.left,
+                right: replace ? replace(options.binary?.right) : options.binary?.right,
+              }
+            : options.binary;
+          creator = getBinaryCreator(defaults(binaryOptions, defaultBinaryOptions), data);
         }
-      } else {
-        fields = [...frame.fields, field];
-      }
-      return {
-        ...frame,
-        fields,
-      };
-    });
+
+        // Nothing configured
+        if (!creator) {
+          return data;
+        }
+
+        return data.map((frame) => {
+          // delegate field creation to the specific function
+          const values = creator!(frame);
+          if (!values) {
+            return frame;
+          }
+
+          const field = {
+            name: getNameFromOptions(options),
+            type: FieldType.number,
+            config: {},
+            values,
+          };
+          let fields: Field[] = [];
+
+          // Replace all fields with the single field
+          if (options.replaceFields) {
+            const { timeField } = getTimeField(frame);
+            if (timeField && options.timeSeries !== false) {
+              fields = [timeField, field];
+            } else {
+              fields = [field];
+            }
+          } else {
+            fields = [...frame.fields, field];
+          }
+          return {
+            ...frame,
+            fields,
+          };
+        });
+      })
+    );
   },
 };
 
@@ -129,7 +146,9 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
   if (options.include && options.include.length) {
     matcher = getFieldMatcher({
       id: FieldMatcherID.byNames,
-      options: options.include,
+      options: {
+        names: options.include,
+      },
     });
   }
 
@@ -179,6 +198,9 @@ function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string, allFr
 
   for (const f of frame.fields) {
     if (name === getFieldDisplayName(f, frame, allFrames)) {
+      if (f.type === FieldType.boolean) {
+        return new AsNumberVector(f.values);
+      }
       return f.values;
     }
   }
@@ -198,7 +220,7 @@ function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[]): Value
     const left = findFieldValuesWithNameOrConstant(frame, options.left, allFrames);
     const right = findFieldValuesWithNameOrConstant(frame, options.right, allFrames);
     if (!left || !right || !operator) {
-      return (undefined as unknown) as Vector;
+      return undefined as unknown as Vector;
     }
 
     return new BinaryOperationVector(left, right, operator.operation);

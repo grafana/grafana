@@ -1,9 +1,12 @@
 import { DataFrameView, FieldCache, KeyValue, MutableDataFrame } from '@grafana/data';
-import { ElasticResponse } from '../elastic_response';
 import flatten from 'app/core/utils/flatten';
 
+import { ElasticResponse } from '../elastic_response';
+import { highlightTags } from '../query_def';
+import { ElasticsearchQuery } from '../types';
+
 describe('ElasticResponse', () => {
-  let targets: any;
+  let targets: ElasticsearchQuery[];
   let response: any;
   let result: any;
 
@@ -12,12 +15,17 @@ describe('ElasticResponse', () => {
     // therefore we only process responses as DataFrames when there's at least one
     // raw_data (new) query type.
     // We should test if refId gets populated wether there's such type of query or not
-    const countQuery = {
+    interface MockedQueryData {
+      target: ElasticsearchQuery;
+      response: any;
+    }
+
+    const countQuery: MockedQueryData = {
       target: {
         refId: 'COUNT_GROUPBY_DATE_HISTOGRAM',
         metrics: [{ type: 'count', id: 'c_1' }],
         bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: 'c_2' }],
-      },
+      } as ElasticsearchQuery,
       response: {
         aggregations: {
           c_2: {
@@ -32,7 +40,7 @@ describe('ElasticResponse', () => {
       },
     };
 
-    const countGroupByHistogramQuery = {
+    const countGroupByHistogramQuery: MockedQueryData = {
       target: {
         refId: 'COUNT_GROUPBY_HISTOGRAM',
         metrics: [{ type: 'count', id: 'h_3' }],
@@ -47,7 +55,7 @@ describe('ElasticResponse', () => {
       },
     };
 
-    const rawDocumentQuery = {
+    const rawDocumentQuery: MockedQueryData = {
       target: {
         refId: 'RAW_DOC',
         metrics: [{ type: 'raw_document', id: 'r_5' }],
@@ -73,10 +81,10 @@ describe('ElasticResponse', () => {
       },
     };
 
-    const percentilesQuery = {
+    const percentilesQuery: MockedQueryData = {
       target: {
         refId: 'PERCENTILE',
-        metrics: [{ type: 'percentiles', settings: { percents: [75, 90] }, id: 'p_1' }],
+        metrics: [{ type: 'percentiles', settings: { percents: ['75', '90'] }, id: 'p_1' }],
         bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: 'p_3' }],
       },
       response: {
@@ -99,7 +107,7 @@ describe('ElasticResponse', () => {
       },
     };
 
-    const extendedStatsQuery = {
+    const extendedStatsQuery: MockedQueryData = {
       target: {
         refId: 'EXTENDEDSTATS',
         metrics: [
@@ -475,7 +483,7 @@ describe('ElasticResponse', () => {
       targets = [
         {
           refId: 'A',
-          metrics: [{ type: 'percentiles', settings: { percents: [75, 90] }, id: '1' }],
+          metrics: [{ type: 'percentiles', settings: { percents: ['75', '90'] }, id: '1', field: '@value' }],
           bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
         },
       ];
@@ -508,8 +516,8 @@ describe('ElasticResponse', () => {
     it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
       expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('p75');
-      expect(result.data[1].target).toBe('p90');
+      expect(result.data[0].target).toBe('p75 @value');
+      expect(result.data[1].target).toBe('p90 @value');
       expect(result.data[0].datapoints[0][0]).toBe(3.3);
       expect(result.data[0].datapoints[0][1]).toBe(1000);
       expect(result.data[1].datapoints[1][0]).toBe(4.5);
@@ -528,6 +536,7 @@ describe('ElasticResponse', () => {
               type: 'extended_stats',
               meta: { max: true, std_deviation_bounds_upper: true },
               id: '1',
+              field: '@value',
             },
           ],
           bucketAggs: [
@@ -587,11 +596,80 @@ describe('ElasticResponse', () => {
     it('should return 4 series', () => {
       expect(result.data.length).toBe(4);
       expect(result.data[0].datapoints.length).toBe(1);
-      expect(result.data[0].target).toBe('server1 Max');
-      expect(result.data[1].target).toBe('server1 Std Dev Upper');
+      expect(result.data[0].target).toBe('server1 Max @value');
+      expect(result.data[1].target).toBe('server1 Std Dev Upper @value');
 
       expect(result.data[0].datapoints[0][0]).toBe(10.2);
       expect(result.data[1].datapoints[0][0]).toBe(3);
+    });
+  });
+
+  describe('with top_metrics', () => {
+    beforeEach(() => {
+      targets = [
+        {
+          refId: 'A',
+          metrics: [
+            {
+              type: 'top_metrics',
+              settings: {
+                order: 'top',
+                orderBy: '@timestamp',
+                metrics: ['@value', '@anotherValue'],
+              },
+              id: '1',
+            },
+          ],
+          bucketAggs: [{ type: 'date_histogram', id: '2' }],
+        },
+      ];
+      response = {
+        responses: [
+          {
+            aggregations: {
+              '2': {
+                buckets: [
+                  {
+                    key: new Date('2021-01-01T00:00:00.000Z').valueOf(),
+                    key_as_string: '2021-01-01T00:00:00.000Z',
+                    '1': {
+                      top: [{ sort: ['2021-01-01T00:00:00.000Z'], metrics: { '@value': 1, '@anotherValue': 2 } }],
+                    },
+                  },
+                  {
+                    key: new Date('2021-01-01T00:00:10.000Z').valueOf(),
+                    key_as_string: '2021-01-01T00:00:10.000Z',
+                    '1': {
+                      top: [{ sort: ['2021-01-01T00:00:10.000Z'], metrics: { '@value': 1, '@anotherValue': 2 } }],
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      };
+    });
+
+    it('should return 2 series', () => {
+      const result = new ElasticResponse(targets, response).getTimeSeries();
+      expect(result.data.length).toBe(2);
+
+      const firstSeries = result.data[0];
+      expect(firstSeries.target).toBe('Top Metrics @value');
+      expect(firstSeries.datapoints.length).toBe(2);
+      expect(firstSeries.datapoints).toEqual([
+        [1, new Date('2021-01-01T00:00:00.000Z').valueOf()],
+        [1, new Date('2021-01-01T00:00:10.000Z').valueOf()],
+      ]);
+
+      const secondSeries = result.data[1];
+      expect(secondSeries.target).toBe('Top Metrics @anotherValue');
+      expect(secondSeries.datapoints.length).toBe(2);
+      expect(secondSeries.datapoints).toEqual([
+        [2, new Date('2021-01-01T00:00:00.000Z').valueOf()],
+        [2, new Date('2021-01-01T00:00:10.000Z').valueOf()],
+      ]);
     });
   });
 
@@ -714,7 +792,10 @@ describe('ElasticResponse', () => {
               id: '2',
               type: 'filters',
               settings: {
-                filters: [{ query: '@metric:cpu' }, { query: '@metric:logins.count' }],
+                filters: [
+                  { query: '@metric:cpu', label: '' },
+                  { query: '@metric:logins.count', label: '' },
+                ],
               },
             },
             { type: 'date_histogram', field: '@timestamp', id: '3' },
@@ -766,13 +847,16 @@ describe('ElasticResponse', () => {
       targets = [
         {
           refId: 'A',
-          metrics: [{ type: 'avg', id: '1' }, { type: 'count' }],
+          metrics: [
+            { type: 'avg', id: '1', field: '@value' },
+            { type: 'count', id: '3' },
+          ],
           bucketAggs: [
             {
               id: '2',
               type: 'date_histogram',
               field: 'host',
-              settings: { trimEdges: 1 },
+              settings: { trimEdges: '1' },
             },
           ],
         },
@@ -820,7 +904,10 @@ describe('ElasticResponse', () => {
       targets = [
         {
           refId: 'A',
-          metrics: [{ type: 'avg', id: '1' }, { type: 'count' }],
+          metrics: [
+            { type: 'avg', id: '1', field: '@value' },
+            { type: 'count', id: '3' },
+          ],
           bucketAggs: [{ id: '2', type: 'terms', field: 'host' }],
         },
       ];
@@ -871,8 +958,8 @@ describe('ElasticResponse', () => {
       targets = [
         {
           refId: 'A',
-          metrics: [{ type: 'percentiles', field: 'value', settings: { percents: [75, 90] }, id: '1' }],
-          bucketAggs: [{ type: 'term', field: 'id', id: '3' }],
+          metrics: [{ type: 'percentiles', field: 'value', settings: { percents: ['75', '90'] }, id: '1' }],
+          bucketAggs: [{ type: 'terms', field: 'id', id: '3' }],
         },
       ];
       response = {
@@ -1016,7 +1103,6 @@ describe('ElasticResponse', () => {
             { id: '3', type: 'max', field: '@value' },
             {
               id: '4',
-              field: 'select field',
               pipelineVariables: [
                 { name: 'var1', pipelineAgg: '1' },
                 { name: 'var2', pipelineAgg: '3' },
@@ -1084,7 +1170,6 @@ describe('ElasticResponse', () => {
             { id: '3', type: 'max', field: '@value' },
             {
               id: '4',
-              field: 'select field',
               pipelineVariables: [
                 { name: 'var1', pipelineAgg: '1' },
                 { name: 'var2', pipelineAgg: '3' },
@@ -1094,7 +1179,6 @@ describe('ElasticResponse', () => {
             },
             {
               id: '5',
-              field: 'select field',
               pipelineVariables: [
                 { name: 'var1', pipelineAgg: '1' },
                 { name: 'var2', pipelineAgg: '3' },
@@ -1152,19 +1236,55 @@ describe('ElasticResponse', () => {
     });
   });
 
+  describe('Raw Data Query', () => {
+    beforeEach(() => {
+      targets = [
+        {
+          refId: 'A',
+          metrics: [{ type: 'raw_data', id: '1' }],
+          bucketAggs: [],
+        },
+      ];
+
+      response = {
+        responses: [
+          {
+            hits: {
+              total: {
+                relation: 'eq',
+                value: 1,
+              },
+              hits: [
+                {
+                  _id: '1',
+                  _type: '_doc',
+                  _index: 'index',
+                  _source: { sourceProp: 'asd' },
+                },
+              ],
+            },
+          },
+        ],
+      };
+
+      result = new ElasticResponse(targets, response).getTimeSeries();
+    });
+
+    it('should create dataframes with filterable fields', () => {
+      for (const field of result.data[0].fields) {
+        expect(field.config.filterable).toBe(true);
+      }
+    });
+  });
+
   describe('simple logs query and count', () => {
-    const targets: any = [
+    const targets: ElasticsearchQuery[] = [
       {
         refId: 'A',
         metrics: [{ type: 'count', id: '1' }],
         bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '2' }],
-        context: 'explore',
-        interval: '10s',
-        isLogsQuery: true,
         key: 'Q-1561369883389-0.7611823271062786-0',
-        liveStreaming: false,
-        maxDataPoints: 1620,
-        query: '',
+        query: 'hello AND message',
         timeField: '@timestamp',
       },
     ];
@@ -1194,11 +1314,17 @@ describe('ElasticResponse', () => {
                 _source: {
                   '@timestamp': '2019-06-24T09:51:19.765Z',
                   host: 'djisaodjsoad',
+                  number: 1,
                   message: 'hello, i am a message',
                   level: 'debug',
                   fields: {
                     lvl: 'debug',
                   },
+                },
+                highlight: {
+                  message: [
+                    `${highlightTags.pre}hello${highlightTags.post}, i am a ${highlightTags.pre}message${highlightTags.post}`,
+                  ],
                 },
               },
               {
@@ -1208,11 +1334,17 @@ describe('ElasticResponse', () => {
                 _source: {
                   '@timestamp': '2019-06-24T09:52:19.765Z',
                   host: 'dsalkdakdop',
+                  number: 2,
                   message: 'hello, i am also message',
                   level: 'error',
                   fields: {
                     lvl: 'info',
                   },
+                },
+                highlight: {
+                  message: [
+                    `${highlightTags.pre}hello${highlightTags.post}, i am a ${highlightTags.pre}message${highlightTags.post}`,
+                  ],
                 },
               },
             ],
@@ -1225,7 +1357,13 @@ describe('ElasticResponse', () => {
       const result = new ElasticResponse(targets, response).getLogs();
       expect(result.data.length).toBe(2);
       const logResults = result.data[0] as MutableDataFrame;
-      const fields = logResults.fields.map(f => {
+      expect(logResults).toHaveProperty('meta');
+      expect(logResults.meta).toEqual({
+        searchWords: ['hello', 'message'],
+        preferredVisualisationType: 'logs',
+      });
+
+      const fields = logResults.fields.map((f) => {
         return {
           name: f.name,
           type: f.type,
@@ -1245,7 +1383,7 @@ describe('ElasticResponse', () => {
         expect(r._source).toEqual(
           flatten(
             response.responses[0].hits.hits[i]._source,
-            (null as unknown) as { delimiter?: any; maxDepth?: any; safe?: any }
+            null as unknown as { delimiter?: any; maxDepth?: any; safe?: any }
           )
         );
       }
@@ -1277,6 +1415,57 @@ describe('ElasticResponse', () => {
       const fieldCache = new FieldCache(result.data[0]);
       const field = fieldCache.getFieldByName('level');
       expect(field?.values.toArray()).toEqual(['debug', 'info']);
+    });
+
+    it('should correctly guess field types', () => {
+      const result = new ElasticResponse(targets, response).getLogs();
+      const logResults = result.data[0] as MutableDataFrame;
+
+      const fields = logResults.fields.map((f) => {
+        return {
+          name: f.name,
+          type: f.type,
+        };
+      });
+
+      expect(fields).toContainEqual({ name: '@timestamp', type: 'time' });
+      expect(fields).toContainEqual({ name: 'number', type: 'number' });
+      expect(fields).toContainEqual({ name: 'message', type: 'string' });
+    });
+  });
+
+  describe('logs query with empty response', () => {
+    const targets: ElasticsearchQuery[] = [
+      {
+        refId: 'A',
+        metrics: [{ type: 'logs', id: '2' }],
+        bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '1' }],
+        key: 'Q-1561369883389-0.7611823271062786-0',
+        query: 'hello AND message',
+        timeField: '@timestamp',
+      },
+    ];
+    const response = {
+      responses: [
+        {
+          hits: { hits: [] },
+          aggregations: {
+            '1': {
+              buckets: [
+                { key_as_string: '1633676760000', key: 1633676760000, doc_count: 0 },
+                { key_as_string: '1633676770000', key: 1633676770000, doc_count: 0 },
+                { key_as_string: '1633676780000', key: 1633676780000, doc_count: 0 },
+              ],
+            },
+          },
+          status: 200,
+        },
+      ],
+    };
+
+    it('should return histogram aggregation and documents', () => {
+      const result = new ElasticResponse(targets, response).getLogs('message', 'level');
+      expect(result.data.length).toBe(2);
     });
   });
 });

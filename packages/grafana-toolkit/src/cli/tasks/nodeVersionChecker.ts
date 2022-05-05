@@ -1,7 +1,8 @@
-import { Task, TaskRunner } from './task';
 import chalk from 'chalk';
-import { coerce, satisfies } from 'semver';
 import { readFileSync } from 'fs';
+import { coerce, satisfies } from 'semver';
+
+import { Task, TaskRunner } from './task';
 
 interface FailedVersionCheck {
   file: string;
@@ -15,7 +16,7 @@ const packageJsonFile = 'package.json';
 
 const failures: FailedVersionCheck[] = [];
 
-export const nodeVersionFiles = [packageJsonFile, 'Dockerfile', '.circleci/config.yml'];
+export const nodeVersionFiles = [packageJsonFile, 'Dockerfile'];
 
 const nodeVersionCheckerRunner: TaskRunner<NodeVersionCheckerOptions> = async () => {
   // Read version from package json and treat that as the expected version in all other locations
@@ -67,8 +68,6 @@ const nodeVersionCheckerRunner: TaskRunner<NodeVersionCheckerOptions> = async ()
 
   console.log(chalk.yellow('--------------------------------------------------------------------'));
   console.log(chalk.yellow('All node versions seem ok.'));
-  console.log(chalk.yellow("Don't forget to sync https://github.com/grafana/grafana-build-container"));
-  console.log(chalk.yellow(`also if you changed the engine version in ${packageJsonFile}`));
   console.log(chalk.yellow('--------------------------------------------------------------------'));
 };
 

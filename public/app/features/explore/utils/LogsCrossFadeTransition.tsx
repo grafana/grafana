@@ -1,6 +1,6 @@
-import React from 'react';
+import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
-import { css } from 'emotion';
+import React from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 const transitionDuration = 500;

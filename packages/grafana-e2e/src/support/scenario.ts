@@ -7,6 +7,7 @@ export interface ScenarioArguments {
   skipScenario?: boolean;
   addScenarioDataSource?: boolean;
   addScenarioDashBoard?: boolean;
+  loginViaApi?: boolean;
 }
 
 export const e2eScenario = ({
@@ -16,12 +17,13 @@ export const e2eScenario = ({
   skipScenario = false,
   addScenarioDataSource = false,
   addScenarioDashBoard = false,
+  loginViaApi = true,
 }: ScenarioArguments) => {
   describe(describeName, () => {
     if (skipScenario) {
       it.skip(itName, () => scenario());
     } else {
-      before(() => e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD')));
+      before(() => e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'), loginViaApi));
 
       beforeEach(() => {
         Cypress.Cookies.preserveOnce('grafana_session');

@@ -62,6 +62,15 @@ export type BackendSrvRequest = {
   params?: Record<string, any>;
 
   /**
+   * Define how the response object should be parsed.  See:
+   *
+   * https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Sending_and_Receiving_Binary_Data
+   *
+   * By default values are json parsed from text
+   */
+  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob';
+
+  /**
    * The credentials read-only property of the Request interface indicates whether the user agent should send cookies from the other domain in the case of cross-origin requests.
    */
   credentials?: RequestCredentials;
@@ -105,10 +114,10 @@ export interface FetchErrorDataProps {
  *
  * @public
  */
-export interface FetchError<T extends FetchErrorDataProps = any> {
+export interface FetchError<T = any> {
   status: number;
   statusText?: string;
-  data: T | string;
+  data: T;
   cancelled?: boolean;
   isHandled?: boolean;
   config: BackendSrvRequest;
@@ -131,25 +140,26 @@ export interface FetchError<T extends FetchErrorDataProps = any> {
  */
 export interface BackendSrv {
   get(url: string, params?: any, requestId?: string): Promise<any>;
-  delete(url: string): Promise<any>;
+  delete(url: string, data?: any): Promise<any>;
   post(url: string, data?: any): Promise<any>;
   patch(url: string, data?: any): Promise<any>;
   put(url: string, data?: any): Promise<any>;
 
   /**
    * @deprecated Use the fetch function instead. If you prefer to work with a promise
-   * call the toPromise() function on the Observable returned by fetch.
+   * wrap the Observable returned by fetch with the lastValueFrom function.
    */
   request(options: BackendSrvRequest): Promise<any>;
 
   /**
-   * @deprecated Use the fetch function instead
    * Special function used to communicate with datasources that will emit core
    * events that the Grafana QueryInspector and QueryEditor is listening for to be able
    * to display datasource query information. Can be skipped by adding `option.silent`
    * when initializing the request.
+   *
+   * @deprecated Use the fetch function instead
    */
-  datasourceRequest(options: BackendSrvRequest): Promise<any>;
+  datasourceRequest<T = any>(options: BackendSrvRequest): Promise<FetchResponse<T>>;
 
   /**
    * Observable http request interface

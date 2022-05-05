@@ -1,10 +1,11 @@
-import _ from 'lodash';
 import React, { Component } from 'react';
 
-import { CloudWatchLogsQuery } from '../types';
 import { PanelData } from '@grafana/data';
+import { Icon } from '@grafana/ui';
+
 import { encodeUrl, AwsUrl } from '../aws_url';
 import { CloudWatchDatasource } from '../datasource';
+import { CloudWatchLogsQuery } from '../types';
 
 interface Props {
   query: CloudWatchLogsQuery;
@@ -57,8 +58,8 @@ export default class CloudWatchLink extends Component<Props, State> {
   render() {
     const { href } = this.state;
     return (
-      <a href={href} target="_blank" rel="noopener">
-        <i className="fa fa-share-square-o" /> CloudWatch Logs Insights
+      <a href={href} target="_blank" rel="noopener noreferrer">
+        <Icon name="share-alt" /> CloudWatch Logs Insights
       </a>
     );
   }

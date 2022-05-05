@@ -1,32 +1,35 @@
-import React, { FC, memo, useCallback, useMemo } from 'react';
-import { DataFrame, Field, getFieldDisplayName } from '@grafana/data';
+import React, { FC, memo, useCallback, useEffect, useMemo } from 'react';
 import {
   Cell,
   Column,
-  HeaderGroup,
+  TableState,
   useAbsoluteLayout,
   useFilters,
-  UseFiltersState,
+  usePagination,
   useResizeColumns,
-  UseResizeColumnsState,
   useSortBy,
-  UseSortByState,
   useTable,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import { getColumns } from './utils';
-import { useTheme } from '../../themes';
+
+import { DataFrame, getFieldDisplayName } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { Pagination } from '../Pagination/Pagination';
+
+import { FooterRow } from './FooterRow';
+import { HeaderRow } from './HeaderRow';
+import { TableCell } from './TableCell';
+import { getTableStyles } from './styles';
 import {
   TableColumnResizeActionCallback,
   TableFilterActionCallback,
+  FooterItem,
   TableSortByActionCallback,
   TableSortByFieldState,
 } from './types';
-import { getTableStyles, TableStyles } from './styles';
-import { Icon } from '../Icon/Icon';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { Filter } from './Filter';
-import { TableCell } from './TableCell';
+import { getColumns, sortCaseInsensitive, sortNumber } from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
 
@@ -38,22 +41,22 @@ export interface Props {
   /** Minimal column width specified in pixels */
   columnMinWidth?: number;
   noHeader?: boolean;
+  showTypeIcons?: boolean;
   resizable?: boolean;
   initialSortBy?: TableSortByFieldState[];
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
+  footerValues?: FooterItem[];
+  enablePagination?: boolean;
 }
 
-interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}>, UseFiltersState<{}> {}
-
-function useTableStateReducer(props: Props) {
+function useTableStateReducer({ onColumnResize, onSortByChange, data }: Props) {
   return useCallback(
-    (newState: ReactTableInternalState, action: any) => {
+    (newState: TableState, action: any) => {
       switch (action.type) {
         case 'columnDoneResizing':
-          if (props.onColumnResize) {
-            const { data } = props;
+          if (onColumnResize) {
             const info = (newState.columnResizing.headerIdWidths as any)[0];
             const columnIdString = info[0];
             const fieldIndex = parseInt(columnIdString, 10);
@@ -65,11 +68,10 @@ function useTableStateReducer(props: Props) {
             }
 
             const fieldDisplayName = getFieldDisplayName(field, data);
-            props.onColumnResize(fieldDisplayName, width);
+            onColumnResize(fieldDisplayName, width);
           }
         case 'toggleSortBy':
-          if (props.onSortByChange) {
-            const { data } = props;
+          if (onSortByChange) {
             const sortByFields: TableSortByFieldState[] = [];
 
             for (const sortItem of newState.sortBy) {
@@ -84,24 +86,24 @@ function useTableStateReducer(props: Props) {
               });
             }
 
-            props.onSortByChange(sortByFields);
+            onSortByChange(sortByFields);
           }
           break;
       }
 
       return newState;
     },
-    [props.onColumnResize, props.onSortByChange, props.data]
+    [data, onColumnResize, onSortByChange]
   );
 }
 
-function getInitialState(props: Props, columns: Column[]): Partial<ReactTableInternalState> {
-  const state: Partial<ReactTableInternalState> = {};
+function getInitialState(initialSortBy: Props['initialSortBy'], columns: Column[]): Partial<TableState> {
+  const state: Partial<TableState> = {};
 
-  if (props.initialSortBy) {
+  if (initialSortBy) {
     state.sortBy = [];
 
-    for (const sortBy of props.initialSortBy) {
+    for (const sortBy of initialSortBy) {
       for (const col of columns) {
         if (col.Header === sortBy.displayName) {
           state.sortBy.push({ id: col.id as string, desc: sortBy.desc });
@@ -123,9 +125,35 @@ export const Table: FC<Props> = memo((props: Props) => {
     columnMinWidth = COLUMN_MIN_WIDTH,
     noHeader,
     resizable = true,
+    initialSortBy,
+    footerValues,
+    showTypeIcons,
+    enablePagination,
   } = props;
-  const theme = useTheme();
-  const tableStyles = getTableStyles(theme);
+
+  const tableStyles = useStyles2(getTableStyles);
+  const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
+
+  const footerHeight = useMemo(() => {
+    const EXTENDED_ROW_HEIGHT = 33;
+    let length = 0;
+
+    if (!footerValues) {
+      return 0;
+    }
+
+    for (const fv of footerValues) {
+      if (Array.isArray(fv) && fv.length > length) {
+        length = fv.length;
+      }
+    }
+
+    if (length > 1) {
+      return EXTENDED_ROW_HEIGHT * length;
+    }
+
+    return EXTENDED_ROW_HEIGHT;
+  }, [footerValues]);
 
   // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
   // The cells use the field to look up values
@@ -140,7 +168,10 @@ export const Table: FC<Props> = memo((props: Props) => {
   }, [data]);
 
   // React-table column definitions
-  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);
+  const memoizedColumns = useMemo(
+    () => getColumns(data, width, columnMinWidth, footerValues),
+    [data, width, columnMinWidth, footerValues]
+  );
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer(props);
@@ -151,106 +182,136 @@ export const Table: FC<Props> = memo((props: Props) => {
       data: memoizedData,
       disableResizing: !resizable,
       stateReducer: stateReducer,
-      initialState: getInitialState(props, memoizedColumns),
+      initialState: getInitialState(initialSortBy, memoizedColumns),
+      sortTypes: {
+        number: sortNumber, // the builtin number type on react-table does not handle NaN values
+        'alphanumeric-insensitive': sortCaseInsensitive, // should be replace with the builtin string when react-table is upgraded, see https://github.com/tannerlinsley/react-table/pull/3235
+      },
     }),
-    [memoizedColumns, memoizedData, stateReducer, resizable]
+    [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer]
   );
 
-  const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
-    options,
-    useFilters,
-    useSortBy,
-    useAbsoluteLayout,
-    useResizeColumns
-  );
+  const {
+    getTableProps,
+    headerGroups,
+    rows,
+    prepareRow,
+    totalColumnsWidth,
+    footerGroups,
+    page,
+    state,
+    gotoPage,
+    setPageSize,
+    pageOptions,
+  } = useTable(options, useFilters, useSortBy, usePagination, useAbsoluteLayout, useResizeColumns);
+
+  let listHeight = height - (headerHeight + footerHeight);
+  if (enablePagination) {
+    listHeight -= tableStyles.cellHeight;
+  }
+  const pageSize = Math.round(listHeight / tableStyles.cellHeight) - 1;
+
+  useEffect(() => {
+    // Don't update the page size if it is less than 1
+    if (pageSize <= 0) {
+      return;
+    }
+    setPageSize(pageSize);
+  }, [pageSize, setPageSize]);
 
   const RenderRow = React.useCallback(
-    ({ index, style }) => {
-      const row = rows[index];
+    ({ index: rowIndex, style }) => {
+      let row = rows[rowIndex];
+      if (enablePagination) {
+        row = page[rowIndex];
+      }
       prepareRow(row);
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
           {row.cells.map((cell: Cell, index: number) => (
             <TableCell
               key={index}
-              field={data.fields[index]}
               tableStyles={tableStyles}
               cell={cell}
               onCellFilterAdded={onCellFilterAdded}
+              columnIndex={index}
+              columnCount={row.cells.length}
             />
           ))}
         </div>
       );
     },
-    [prepareRow, rows]
+    [onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles]
   );
 
-  const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
+  const onNavigate = useCallback(
+    (toPage: number) => {
+      gotoPage(toPage - 1);
+    },
+    [gotoPage]
+  );
 
+  const itemCount = enablePagination ? page.length : rows.length;
+  let paginationEl = null;
+  if (enablePagination) {
+    const itemsRangeStart = state.pageIndex * state.pageSize + 1;
+    let itemsRangeEnd = itemsRangeStart + state.pageSize - 1;
+    const isSmall = width < 500;
+    if (itemsRangeEnd > data.length) {
+      itemsRangeEnd = data.length;
+    }
+    paginationEl = (
+      <div className={tableStyles.paginationWrapper}>
+        <div>
+          <Pagination
+            currentPage={state.pageIndex + 1}
+            numberOfPages={pageOptions.length}
+            showSmallVersion={isSmall}
+            onNavigate={onNavigate}
+          />
+        </div>
+        {isSmall ? null : (
+          <div className={tableStyles.paginationSummary}>
+            {itemsRangeStart} - {itemsRangeEnd} of {data.length} rows
+          </div>
+        )}
+      </div>
+    );
+  }
   return (
-    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel}>
+    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table">
       <CustomScrollbar hideVerticalTrack={true}>
-        <div style={{ width: `${totalColumnsWidth}px` }}>
-          {!noHeader && (
-            <div>
-              {headerGroups.map((headerGroup: HeaderGroup) => {
-                return (
-                  <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()}>
-                    {headerGroup.headers.map((column: Column, index: number) =>
-                      renderHeaderCell(column, tableStyles, data.fields[index])
-                    )}
-                  </div>
-                );
-              })}
+        <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
+          {!noHeader && <HeaderRow data={data} headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
+          {itemCount > 0 ? (
+            <FixedSizeList
+              height={listHeight}
+              itemCount={itemCount}
+              itemSize={tableStyles.rowHeight}
+              width={'100%'}
+              style={{ overflow: 'hidden auto' }}
+            >
+              {RenderRow}
+            </FixedSizeList>
+          ) : (
+            <div style={{ height: height - headerHeight }} className={tableStyles.noData}>
+              No data
             </div>
           )}
-          <FixedSizeList
-            height={height - headerHeight}
-            itemCount={rows.length}
-            itemSize={tableStyles.rowHeight}
-            width={'100%'}
-            style={{ overflow: 'hidden auto' }}
-          >
-            {RenderRow}
-          </FixedSizeList>
+          {footerValues && (
+            <FooterRow
+              height={footerHeight}
+              isPaginationVisible={Boolean(enablePagination)}
+              footerValues={footerValues}
+              footerGroups={footerGroups}
+              totalColumnsWidth={totalColumnsWidth}
+            />
+          )}
         </div>
       </CustomScrollbar>
+      {paginationEl}
     </div>
   );
 });
 
 Table.displayName = 'Table';
-
-function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) {
-  const headerProps = column.getHeaderProps();
-
-  if (column.canResize) {
-    headerProps.style.userSelect = column.isResizing ? 'none' : 'auto'; // disables selecting text while resizing
-  }
-
-  headerProps.style.position = 'absolute';
-  headerProps.style.justifyContent = (column as any).justifyContent;
-
-  return (
-    <div className={tableStyles.headerCell} {...headerProps}>
-      {column.canSort && (
-        <>
-          <div
-            {...column.getSortByToggleProps()}
-            className={tableStyles.headerCellLabel}
-            title={column.render('Header')}
-          >
-            <div>{column.render('Header')}</div>
-            <div>
-              {column.isSorted && (column.isSortedDesc ? <Icon name="arrow-down" /> : <Icon name="arrow-up" />)}
-            </div>
-          </div>
-          {column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
-        </>
-      )}
-      {!column.canSort && column.render('Header')}
-      {!column.canSort && column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
-      {column.canResize && <div {...column.getResizerProps()} className={tableStyles.resizeHandle} />}
-    </div>
-  );
-}

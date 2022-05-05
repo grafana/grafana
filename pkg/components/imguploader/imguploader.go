@@ -6,13 +6,14 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/imguploader/gcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
-	pngExt                         = ".png"
-	defaultSGcsSignedUrlExpiration = 7 * 24 * time.Hour // 7 days
+	pngExt                        = ".png"
+	defaultGCSSignedURLExpiration = 7 * 24 * time.Hour // 7 days
 )
 
 type ImageUploader interface {
@@ -69,7 +70,7 @@ func NewImageUploader() (ImageUploader, error) {
 
 		url := webdavSec.Key("url").String()
 		if url == "" {
-			return nil, fmt.Errorf("Could not find url key for image.uploader.webdav")
+			return nil, fmt.Errorf("could not find URL key for image.uploader.webdav")
 		}
 
 		public_url := webdavSec.Key("public_url").String()
@@ -86,10 +87,19 @@ func NewImageUploader() (ImageUploader, error) {
 		keyFile := gcssec.Key("key_file").MustString("")
 		bucketName := gcssec.Key("bucket").MustString("")
 		path := gcssec.Key("path").MustString("")
-		enableSignedUrls := gcssec.Key("enable_signed_urls").MustBool(false)
-		signedUrlExpiration := gcssec.Key("signed_url_expiration").MustString(defaultSGcsSignedUrlExpiration.String())
+		enableSignedURLs := gcssec.Key("enable_signed_urls").MustBool(false)
+		exp := gcssec.Key("signed_url_expiration").MustString("")
+		var suExp time.Duration
+		if exp != "" {
+			suExp, err = time.ParseDuration(exp)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			suExp = defaultGCSSignedURLExpiration
+		}
 
-		return NewGCSUploader(keyFile, bucketName, path, enableSignedUrls, signedUrlExpiration)
+		return gcs.NewUploader(keyFile, bucketName, path, enableSignedURLs, suExp)
 	case "azure_blob":
 		azureBlobSec, err := setting.Raw.GetSection("external_image_storage.azure_blob")
 		if err != nil {
@@ -143,5 +153,5 @@ func getRegionAndBucketFromUrl(url string) (*s3Info, error) {
 		return info, nil
 	}
 
-	return nil, fmt.Errorf("Could not find bucket setting for image.uploader.s3")
+	return nil, fmt.Errorf("could not find bucket setting for image.uploader.s3")
 }

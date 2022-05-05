@@ -1,35 +1,33 @@
+import { Story } from '@storybook/react';
 import React from 'react';
-import { boolean, text, select } from '@storybook/addon-knobs';
-import { Badge, BadgeColor } from '@grafana/ui';
+
+import { Badge, BadgeProps } from '@grafana/ui';
+
+import { iconOptions } from '../../utils/storybook/knobs';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import mdx from './Badge.mdx';
 
 export default {
   title: 'Data Display/Badge',
   component: Badge,
-  decorators: [],
+  decorators: [withCenteredStory],
   parameters: {
-    docs: {},
+    docs: { page: mdx },
+  },
+  argTypes: {
+    icon: { options: iconOptions, control: { type: 'select' } },
+    color: { control: 'select' },
+    text: { control: 'text' },
   },
 };
 
-export const basic = () => {
-  const badgeColor = select<BadgeColor>(
-    'Badge color',
-    {
-      Red: 'red',
-      Green: 'green',
-      Blue: 'blue',
-      Orange: 'orange',
-    },
-    'blue'
-  );
-  const withIcon = boolean('With icon', true);
-  const tooltipText = text('Tooltip text', '');
-  return (
-    <Badge
-      text={'Badge label'}
-      color={badgeColor}
-      icon={withIcon ? 'rocket' : undefined}
-      tooltip={tooltipText.trim() === '' ? undefined : tooltipText}
-    />
-  );
+const Template: Story<BadgeProps> = (args) => <Badge {...args} />;
+
+export const Basic = Template.bind({});
+
+Basic.args = {
+  text: 'Badge label',
+  color: 'blue',
+  icon: 'rocket',
 };

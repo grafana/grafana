@@ -1,4 +1,5 @@
 import { Grammar } from 'prismjs';
+
 import { CompletionItem } from '@grafana/ui';
 
 export const QUERY_COMMANDS: CompletionItem[] = [
@@ -333,11 +334,11 @@ const tokenizer: Grammar = {
     greedy: true,
   },
   'query-command': {
-    pattern: new RegExp(`\\b(?:${QUERY_COMMANDS.map(command => command.label).join('|')})\\b`, 'i'),
+    pattern: new RegExp(`\\b(?:${QUERY_COMMANDS.map((command) => command.label).join('|')})\\b`, 'i'),
     alias: 'function',
   },
   function: {
-    pattern: new RegExp(`\\b(?:${FUNCTIONS.map(f => f.label).join('|')})\\b`, 'i'),
+    pattern: new RegExp(`\\b(?:${FUNCTIONS.map((f) => f.label).join('|')})\\b`, 'i'),
   },
   keyword: {
     pattern: new RegExp(`(\\s+)(${KEYWORDS.join('|')})(?=\\s+)`, 'i'),

@@ -2,15 +2,17 @@ package notifiers
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -48,7 +50,7 @@ func init() {
 }
 
 // NewAlertmanagerNotifier returns a new Alertmanager notifier
-func NewAlertmanagerNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+func NewAlertmanagerNotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	urlString := model.Settings.Get("url").MustString()
 	if urlString == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
@@ -62,10 +64,10 @@ func NewAlertmanagerNotifier(model *models.AlertNotification) (alerting.Notifier
 		}
 	}
 	basicAuthUser := model.Settings.Get("basicAuthUser").MustString()
-	basicAuthPassword := model.DecryptedValue("basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString())
+	basicAuthPassword := fn(context.Background(), model.SecureSettings, "basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString(), setting.SecretKey)
 
 	return &AlertmanagerNotifier{
-		NotifierBase:      NewNotifierBase(model),
+		NotifierBase:      NewNotifierBase(model, ns),
 		URL:               url,
 		BasicAuthUser:     basicAuthUser,
 		BasicAuthPassword: basicAuthPassword,
@@ -170,6 +172,7 @@ func (am *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error 
 
 	bodyJSON := simplejson.NewFromAny(alerts)
 	body, _ := bodyJSON.MarshalJSON()
+	errCnt := 0
 
 	for _, url := range am.URL {
 		cmd := &models.SendWebhookSync{
@@ -180,10 +183,15 @@ func (am *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error 
 			Body:       string(body),
 		}
 
-		if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+		if err := am.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 			am.log.Error("Failed to send alertmanager", "error", err, "alertmanager", am.Name, "url", url)
-			return err
+			errCnt++
 		}
+	}
+
+	// This happens when every dispatch return error
+	if errCnt == len(am.URL) {
+		return fmt.Errorf("failed to send alert to alertmanager")
 	}
 
 	return nil

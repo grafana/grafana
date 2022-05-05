@@ -1,7 +1,11 @@
+import { Meta, Story } from '@storybook/react';
 import React from 'react';
-import { number, color } from '@storybook/addon-knobs';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
 import { Spinner } from '@grafana/ui';
+
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import { Props } from './Spinner';
 import mdx from './Spinner.mdx';
 
 export default {
@@ -12,27 +16,42 @@ export default {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['className', 'iconClassName', 'style', 'inline'],
+    },
   },
-};
+  argTypes: {
+    backgroundColor: { control: { type: 'color' } },
+    color: { control: { type: 'color' } },
+  },
+} as Meta;
 
-export const basic = () => {
-  return (
-    <div>
-      <Spinner />
-    </div>
-  );
-};
+interface StoryProps extends Partial<Props> {
+  backgroundColor: string;
+  color: string;
+  withStyle: boolean;
+}
 
-export const withStyle = () => {
+export const Basic: Story<StoryProps> = (args) => {
   return (
     <div>
       <Spinner
-        style={{
-          backgroundColor: color('White', 'white'),
-          color: color('Red', 'red'),
-        }}
-        size={number('Size', 34)}
+        style={
+          args.withStyle === true
+            ? {
+                backgroundColor: `${args.backgroundColor}`,
+                color: `${args.color}`,
+              }
+            : {}
+        }
+        size={args.size}
       />
     </div>
   );
+};
+Basic.args = {
+  backgroundColor: 'white',
+  color: 'red',
+  size: 34,
+  withStyle: false,
 };

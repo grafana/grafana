@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
 
 import AccordianKeyValues, { KeyValuesSummary } from './AccordianKeyValues';
 import * as markers from './AccordianKeyValues.markers';
@@ -47,8 +47,8 @@ describe('<KeyValuesSummary>', () => {
   });
 
   it('renders the data as text', () => {
-    const texts = wrapper.find('li').map(node => node.text());
-    const expectedTexts = tags.map(tag => `${tag.key}=${tag.value}`);
+    const texts = wrapper.find('li').map((node) => node.text());
+    const expectedTexts = tags.map((tag) => `${tag.key}=${tag.value}`);
     expect(texts).toEqual(expectedTexts);
   });
 });

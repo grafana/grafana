@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { getPanelInspectorStyles } from './styles';
-import { CustomScrollbar, Drawer, TabContent } from '@grafana/ui';
-import { InspectSubtitle } from './InspectSubtitle';
-import { InspectDataTab } from './InspectDataTab';
-import { InspectMetadataTab } from './InspectMetadataTab';
-import { InspectJSONTab } from './InspectJSONTab';
-import { InspectErrorTab } from './InspectErrorTab';
-import { InspectStatsTab } from './InspectStatsTab';
-import { QueryInspector } from './QueryInspector';
-import { InspectTab } from './types';
+
+import { DataSourceApi, formattedValueToString, getValueFormat, PanelData, PanelPlugin } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+import { Drawer, Tab, TabsBar } from '@grafana/ui';
+import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
+import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
+import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
+import { InspectMetadataTab } from 'app/features/inspector/InspectMetadataTab';
+import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
+import { QueryInspector } from 'app/features/inspector/QueryInspector';
+import { InspectTab } from 'app/features/inspector/types';
+
+import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { DashboardModel, PanelModel } from '../../state';
-import { DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
-import { GetDataOptions } from '../../state/PanelQueryRunner';
 
 interface Props {
   dashboard: DashboardModel;
@@ -48,29 +49,38 @@ export const InspectContent: React.FC<Props> = ({
     return null;
   }
 
-  const styles = getPanelInspectorStyles();
   const error = data?.error;
 
   // Validate that the active tab is actually valid and allowed
   let activeTab = currentTab;
-  if (!tabs.find(item => item.value === currentTab)) {
+  if (!tabs.find((item) => item.value === currentTab)) {
     activeTab = InspectTab.JSON;
   }
 
+  const title = getTemplateSrv().replace(panel.title, panel.scopedVars, 'text');
+
   return (
     <Drawer
-      title={`Inspect: ${panel.title}` || 'Panel inspect'}
-      subtitle={
-        <InspectSubtitle
-          tabs={tabs}
-          tab={activeTab}
-          data={data}
-          onSelectTab={item => setCurrentTab(item.value || InspectTab.Data)}
-        />
-      }
+      title={`Inspect: ${title || 'Panel'}`}
+      subtitle={data && formatStats(data)}
       width="50%"
       onClose={onClose}
       expandable
+      scrollableContent
+      tabs={
+        <TabsBar>
+          {tabs.map((t, index) => {
+            return (
+              <Tab
+                key={`${t.value}-${index}`}
+                label={t.label}
+                active={t.value === activeTab}
+                onChangeTab={() => setCurrentTab(t.value || InspectTab.Data)}
+              />
+            );
+          })}
+        </TabsBar>
+      }
     >
       {activeTab === InspectTab.Data && (
         <InspectDataTab
@@ -79,22 +89,34 @@ export const InspectContent: React.FC<Props> = ({
           isLoading={isDataLoading}
           options={dataOptions}
           onOptionsChange={onDataOptionsChange}
+          timeZone={dashboard.timezone}
         />
       )}
-      <CustomScrollbar autoHeightMin="100%">
-        <TabContent className={styles.tabContent}>
-          {data && activeTab === InspectTab.Meta && (
-            <InspectMetadataTab data={data} metadataDatasource={metadataDatasource} />
-          )}
+      {data && activeTab === InspectTab.Meta && (
+        <InspectMetadataTab data={data} metadataDatasource={metadataDatasource} />
+      )}
 
-          {activeTab === InspectTab.JSON && (
-            <InspectJSONTab panel={panel} dashboard={dashboard} data={data} onClose={onClose} />
-          )}
-          {activeTab === InspectTab.Error && <InspectErrorTab error={error} />}
-          {data && activeTab === InspectTab.Stats && <InspectStatsTab data={data} timeZone={dashboard.getTimezone()} />}
-          {data && activeTab === InspectTab.Query && <QueryInspector panel={panel} data={data.series} />}
-        </TabContent>
-      </CustomScrollbar>
+      {activeTab === InspectTab.JSON && (
+        <InspectJSONTab panel={panel} dashboard={dashboard} data={data} onClose={onClose} />
+      )}
+      {activeTab === InspectTab.Error && <InspectErrorTab error={error} />}
+      {data && activeTab === InspectTab.Stats && <InspectStatsTab data={data} timeZone={dashboard.getTimezone()} />}
+      {data && activeTab === InspectTab.Query && (
+        <QueryInspector panel={panel} data={data.series} onRefreshQuery={() => panel.refresh()} />
+      )}
     </Drawer>
   );
 };
+
+function formatStats(data: PanelData) {
+  const { request } = data;
+  if (!request) {
+    return '';
+  }
+
+  const queryCount = request.targets.length;
+  const requestTime = request.endTime ? request.endTime - request.startTime : 0;
+  const formatted = formattedValueToString(getValueFormat('ms')(requestTime));
+
+  return `${queryCount} queries with total query time of ${formatted}`;
+}

@@ -1,13 +1,13 @@
 #!/bin/bash
 
-. e2e/variables
+. scripts/grafana-server/variables
 
 if [ "$BASE_URL" != "" ]; then
     echo -e "BASE_URL set, skipping starting server"
 else
   # Start it in the background
-  ./e2e/start-server 2>&1 > e2e/server.log &
-  ./e2e/wait-for-grafana
+  ./scripts/grafana-server/start-server 2>&1 > scripts/grafana-server/server.log &
+  ./scripts/grafana-server/wait-for-grafana
 fi
 
 ./e2e/run-suite "$@"

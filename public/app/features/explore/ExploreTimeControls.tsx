@@ -1,29 +1,24 @@
-// Libaries
 import React, { Component } from 'react';
 
-// Types
-import { ExploreId } from 'app/types';
-import { TimeRange, TimeZone, RawTimeRange, dateTimeForTimeZone } from '@grafana/data';
-
-// State
-
-// Components
-import { TimeSyncButton } from './TimeSyncButton';
+import { TimeRange, TimeZone, RawTimeRange, dateTimeForTimeZone, dateMath } from '@grafana/data';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
-
-// Utils & Services
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { ExploreId } from 'app/types';
+
+import { TimeSyncButton } from './TimeSyncButton';
 
 export interface Props {
   exploreId: ExploreId;
   hideText?: boolean;
   range: TimeRange;
   timeZone: TimeZone;
+  fiscalYearStartMonth: number;
   splitted: boolean;
   syncedTimes: boolean;
   onChangeTimeSync: () => void;
   onChangeTime: (range: RawTimeRange) => void;
   onChangeTimeZone: (timeZone: TimeZone) => void;
+  onChangeFiscalYearStartMonth: (fiscalYearStartMonth: number) => void;
 }
 
 export class ExploreTimeControls extends Component<Props> {
@@ -42,7 +37,13 @@ export class ExploreTimeControls extends Component<Props> {
   onMoveBack = () => this.onMoveTimePicker(-1);
 
   onChangeTimePicker = (timeRange: TimeRange) => {
-    this.props.onChangeTime(timeRange.raw);
+    const adjustedFrom = dateMath.isMathString(timeRange.raw.from) ? timeRange.raw.from : timeRange.from;
+    const adjustedTo = dateMath.isMathString(timeRange.raw.to) ? timeRange.raw.to : timeRange.to;
+
+    this.props.onChangeTime({
+      from: adjustedFrom,
+      to: adjustedTo,
+    });
   };
 
   onZoom = () => {
@@ -57,11 +58,22 @@ export class ExploreTimeControls extends Component<Props> {
   };
 
   render() {
-    const { range, timeZone, splitted, syncedTimes, onChangeTimeSync, hideText, onChangeTimeZone } = this.props;
+    const {
+      range,
+      timeZone,
+      fiscalYearStartMonth,
+      splitted,
+      syncedTimes,
+      onChangeTimeSync,
+      hideText,
+      onChangeTimeZone,
+      onChangeFiscalYearStartMonth,
+    } = this.props;
     const timeSyncButton = splitted ? <TimeSyncButton onClick={onChangeTimeSync} isSynced={syncedTimes} /> : undefined;
     const timePickerCommonProps = {
       value: range,
       timeZone,
+      fiscalYearStartMonth,
       onMoveBackward: this.onMoveBack,
       onMoveForward: this.onMoveForward,
       onZoom: this.onZoom,
@@ -73,8 +85,10 @@ export class ExploreTimeControls extends Component<Props> {
         {...timePickerCommonProps}
         timeSyncButton={timeSyncButton}
         isSynced={syncedTimes}
+        widthOverride={splitted ? window.innerWidth / 2 : undefined}
         onChange={this.onChangeTimePicker}
         onChangeTimeZone={onChangeTimeZone}
+        onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
       />
     );
   }

@@ -13,8 +13,9 @@ import (
 
 type SocialGitlab struct {
 	*SocialBase
-	allowedGroups []string
-	apiUrl        string
+	allowedGroups     []string
+	apiUrl            string
+	roleAttributePath string
 }
 
 func (s *SocialGitlab) Type() int {
@@ -62,7 +63,7 @@ func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]string,
 		return nil, next
 	}
 
-	response, err := HttpGet(client, url)
+	response, err := s.httpGet(client, url)
 	if err != nil {
 		s.log.Error("Error getting groups from GitLab API", "err", err)
 		return nil, next
@@ -98,21 +99,26 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		State    string
 	}
 
-	response, err := HttpGet(client, s.apiUrl+"/user")
+	response, err := s.httpGet(client, s.apiUrl+"/user")
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
 	err = json.Unmarshal(response.Body, &data)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting user info: %s", err)
+		return nil, fmt.Errorf("error getting user info: %s", err)
 	}
 
 	if data.State != "active" {
-		return nil, fmt.Errorf("User %s is inactive", data.Username)
+		return nil, fmt.Errorf("user %s is inactive", data.Username)
 	}
 
 	groups := s.GetGroups(client)
+
+	role, err := s.extractRole(response.Body)
+	if err != nil {
+		s.log.Error("Failed to extract role", "error", err)
+	}
 
 	userInfo := &BasicUserInfo{
 		Id:     fmt.Sprintf("%d", data.Id),
@@ -120,11 +126,25 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		Login:  data.Username,
 		Email:  data.Email,
 		Groups: groups,
+		Role:   role,
 	}
 
 	if !s.IsGroupMember(groups) {
-		return nil, ErrMissingGroupMembership
+		return nil, errMissingGroupMembership
 	}
 
 	return userInfo, nil
+}
+
+func (s *SocialGitlab) extractRole(rawJSON []byte) (string, error) {
+	if s.roleAttributePath == "" {
+		return "", nil
+	}
+
+	role, err := s.searchJSONForStringAttr(s.roleAttributePath, rawJSON)
+
+	if err != nil {
+		return "", err
+	}
+	return role, nil
 }

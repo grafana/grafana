@@ -14,8 +14,8 @@
 
 jest.mock('./Tween');
 
-import { scrollBy, scrollTo, cancel } from './scroll-page';
 import Tween from './Tween';
+import { scrollBy, scrollTo, cancel } from './scroll-page';
 
 // keep track of instances, manually
 // https://github.com/facebook/jest/issues/5019
@@ -26,9 +26,9 @@ describe('scroll-by', () => {
     window.scrollY = 100;
     tweenInstances.length = 0;
     Tween.mockClear();
-    Tween.mockImplementation(opts => {
+    Tween.mockImplementation((opts) => {
       const rv = { to: opts.to, onUpdate: opts.onUpdate };
-      Object.keys(Tween.prototype).forEach(name => {
+      Object.keys(Tween.prototype).forEach((name) => {
         if (name !== 'constructor') {
           rv[name] = jest.fn();
         }

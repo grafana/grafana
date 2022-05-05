@@ -1,10 +1,12 @@
+import { css } from '@emotion/css';
 import React from 'react';
+
 import { FieldConfigEditorProps, StringFieldConfigSettings, GrafanaTheme } from '@grafana/data';
-import { Input } from '../Input/Input';
-import { Icon } from '../Icon/Icon';
+
 import { stylesFactory, getTheme } from '../../themes';
-import { css } from 'emotion';
 import { Button } from '../Button';
+import { Icon } from '../Icon/Icon';
+import { Input } from '../Input/Input';
 
 type Props = FieldConfigEditorProps<string[], StringFieldConfigSettings>;
 interface State {
@@ -65,8 +67,8 @@ export class StringArrayEditor extends React.PureComponent<Props, State> {
               className={styles.textInput}
               key={`${index}/${v}`}
               defaultValue={v || ''}
-              onBlur={e => this.onValueChange(e, index)}
-              onKeyDown={e => this.onValueChange(e, index)}
+              onBlur={(e) => this.onValueChange(e, index)}
+              onKeyDown={(e) => this.onValueChange(e, index)}
               suffix={<Icon className={styles.trashIcon} name="trash-alt" onClick={() => this.onRemoveString(index)} />}
             />
           );
@@ -78,8 +80,8 @@ export class StringArrayEditor extends React.PureComponent<Props, State> {
             className={styles.textInput}
             placeholder={placeholder}
             defaultValue={''}
-            onBlur={e => this.onValueChange(e, -1)}
-            onKeyDown={e => this.onValueChange(e, -1)}
+            onBlur={(e) => this.onValueChange(e, -1)}
+            onKeyDown={(e) => this.onValueChange(e, -1)}
             suffix={<Icon name="plus-circle" />}
           />
         ) : (

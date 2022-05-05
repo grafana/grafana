@@ -1,12 +1,18 @@
-import React, { PureComponent } from 'react';
-import { config } from 'app/core/config';
-import { css } from 'emotion';
-import { IconName, stylesFactory, Tab, TabContent, TabsBar } from '@grafana/ui';
-import { QueriesTab } from '../../panel_editor/QueriesTab';
-import { AlertTab } from 'app/features/alerting/AlertTab';
-import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
+import { css } from '@emotion/css';
+import React, { FC, useEffect } from 'react';
+import { Subscription } from 'rxjs';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { IconName, Tab, TabContent, TabsBar, useForceUpdate, useStyles2 } from '@grafana/ui';
+import AlertTabIndex from 'app/features/alerting/AlertTabIndex';
+import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
+import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
+
 import { DashboardModel, PanelModel } from '../../state';
-import { CoreEvents } from 'app/types';
+import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
+
+import { PanelEditorQueries } from './PanelEditorQueries';
 import { PanelEditorTab, PanelEditorTabId } from './types';
 
 interface PanelEditorTabsProps {
@@ -16,77 +22,110 @@ interface PanelEditorTabsProps {
   onChangeTab: (tab: PanelEditorTab) => void;
 }
 
-export class PanelEditorTabs extends PureComponent<PanelEditorTabsProps> {
-  componentDidMount() {
-    const { panel } = this.props;
-    panel.on(CoreEvents.queryChanged, this.triggerForceUpdate);
-    panel.on(CoreEvents.transformationChanged, this.triggerForceUpdate);
-  }
+export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, dashboard, tabs, onChangeTab }) => {
+  const forceUpdate = useForceUpdate();
+  const styles = useStyles2(getStyles);
 
-  componentWillUnmount() {
-    const { panel } = this.props;
-    panel.off(CoreEvents.queryChanged, this.triggerForceUpdate);
-    panel.off(CoreEvents.transformationChanged, this.triggerForceUpdate);
-  }
+  useEffect(() => {
+    const eventSubs = new Subscription();
+    eventSubs.add(panel.events.subscribe(PanelQueriesChangedEvent, forceUpdate));
+    eventSubs.add(panel.events.subscribe(PanelTransformationsChangedEvent, forceUpdate));
+    return () => eventSubs.unsubscribe();
+  }, [panel, forceUpdate]);
 
-  triggerForceUpdate = () => {
-    this.forceUpdate();
-  };
+  const activeTab = tabs.find((item) => item.active)!;
 
-  getCounter = (tab: PanelEditorTab) => {
-    const { panel } = this.props;
-
-    switch (tab.id) {
-      case PanelEditorTabId.Query:
-        return panel.targets.length;
-      case PanelEditorTabId.Alert:
-        return panel.alert ? 1 : 0;
-      case PanelEditorTabId.Transform:
-        const transformations = panel.getTransformations() ?? [];
-        return transformations.length;
-    }
-
+  if (tabs.length === 0) {
     return null;
-  };
-
-  render() {
-    const { dashboard, onChangeTab, tabs, panel } = this.props;
-    const styles = getPanelEditorTabsStyles();
-    const activeTab = tabs.find(item => item.active)!;
-
-    if (tabs.length === 0) {
-      return null;
-    }
-
-    return (
-      <div className={styles.wrapper}>
-        <TabsBar className={styles.tabBar}>
-          {tabs.map(tab => {
-            return (
-              <Tab
-                key={tab.id}
-                label={tab.text}
-                active={tab.active}
-                onChangeTab={() => onChangeTab(tab)}
-                icon={tab.icon as IconName}
-                counter={this.getCounter(tab)}
-              />
-            );
-          })}
-        </TabsBar>
-        <TabContent className={styles.tabContent}>
-          {activeTab.id === PanelEditorTabId.Query && <QueriesTab panel={panel} dashboard={dashboard} />}
-          {activeTab.id === PanelEditorTabId.Alert && <AlertTab panel={panel} dashboard={dashboard} />}
-          {activeTab.id === PanelEditorTabId.Transform && <TransformationsEditor panel={panel} />}
-        </TabContent>
-      </div>
-    );
   }
+
+  return (
+    <div className={styles.wrapper}>
+      <TabsBar className={styles.tabBar} hideBorder>
+        {tabs.map((tab) => {
+          if (tab.id === PanelEditorTabId.Alert) {
+            return renderAlertTab(tab, panel, dashboard, onChangeTab);
+          }
+          return (
+            <Tab
+              key={tab.id}
+              label={tab.text}
+              active={tab.active}
+              onChangeTab={() => onChangeTab(tab)}
+              icon={tab.icon as IconName}
+              counter={getCounter(panel, tab)}
+            />
+          );
+        })}
+      </TabsBar>
+      <TabContent className={styles.tabContent}>
+        {activeTab.id === PanelEditorTabId.Query && <PanelEditorQueries panel={panel} queries={panel.targets} />}
+        {activeTab.id === PanelEditorTabId.Alert && <AlertTabIndex panel={panel} dashboard={dashboard} />}
+        {activeTab.id === PanelEditorTabId.Transform && <TransformationsEditor panel={panel} />}
+      </TabContent>
+    </div>
+  );
+});
+
+PanelEditorTabs.displayName = 'PanelEditorTabs';
+
+function getCounter(panel: PanelModel, tab: PanelEditorTab) {
+  switch (tab.id) {
+    case PanelEditorTabId.Query:
+      return panel.targets.length;
+    case PanelEditorTabId.Alert:
+      return panel.alert ? 1 : 0;
+    case PanelEditorTabId.Transform:
+      const transformations = panel.getTransformations() ?? [];
+      return transformations.length;
+  }
+
+  return null;
 }
 
-const getPanelEditorTabsStyles = stylesFactory(() => {
-  const { theme } = config;
+function renderAlertTab(
+  tab: PanelEditorTab,
+  panel: PanelModel,
+  dashboard: DashboardModel,
+  onChangeTab: (tab: PanelEditorTab) => void
+) {
+  const alertingDisabled = !config.alertingEnabled && !config.unifiedAlertingEnabled;
 
+  if (alertingDisabled) {
+    return null;
+  }
+
+  if (config.unifiedAlertingEnabled) {
+    return (
+      <PanelAlertTab
+        key={tab.id}
+        label={tab.text}
+        active={tab.active}
+        onChangeTab={() => onChangeTab(tab)}
+        icon={tab.icon as IconName}
+        panel={panel}
+        dashboard={dashboard}
+      />
+    );
+  }
+
+  if (config.alertingEnabled) {
+    return (
+      <Tab
+        key={tab.id}
+        label={tab.text}
+        active={tab.active}
+        onChangeTab={() => onChangeTab(tab)}
+        icon={tab.icon as IconName}
+        counter={getCounter(panel, tab)}
+      />
+    );
+  }
+
+  return null;
+}
+
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
       display: flex;
@@ -94,7 +133,7 @@ const getPanelEditorTabsStyles = stylesFactory(() => {
       height: 100%;
     `,
     tabBar: css`
-      padding-left: ${theme.spacing.md};
+      padding-left: ${theme.spacing(2)};
     `,
     tabContent: css`
       padding: 0;
@@ -102,12 +141,11 @@ const getPanelEditorTabsStyles = stylesFactory(() => {
       flex-direction: column;
       flex-grow: 1;
       min-height: 0;
-      background: ${theme.colors.panelBg};
-      border-right: 1px solid ${theme.colors.pageHeaderBorder};
-
-      .toolbar {
-        background: transparent;
-      }
+      background: ${theme.colors.background.primary};
+      border: 1px solid ${theme.components.panel.borderColor};
+      border-left: none;
+      border-bottom: none;
+      border-top-right-radius: ${theme.shape.borderRadius(1.5)};
     `,
   };
-});
+};

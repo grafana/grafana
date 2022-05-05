@@ -11,17 +11,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import React from 'react';
 import { shallow, mount } from 'enzyme';
+import React from 'react';
+
+import traceGenerator from '../demo/trace-generators';
+import transformTraceData from '../model/transform-trace-data';
 
 import ListView from './ListView';
 import SpanBarRow from './SpanBarRow';
 import DetailState from './SpanDetail/DetailState';
 import SpanDetailRow from './SpanDetailRow';
-import VirtualizedTraceView, { DEFAULT_HEIGHTS } from './VirtualizedTraceView';
-import traceGenerator from '../demo/trace-generators';
-import transformTraceData from '../model/transform-trace-data';
 import SpanTreeOffset from './SpanTreeOffset';
+import VirtualizedTraceView, { DEFAULT_HEIGHTS } from './VirtualizedTraceView';
 
 jest.mock('./SpanTreeOffset');
 
@@ -30,6 +31,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
   let instance;
 
   const trace = transformTraceData(traceGenerator.trace({ numberOfSpans: 10 }));
+  const topOfExploreViewRef = jest.fn();
   const props = {
     childrenHiddenIDs: new Set(),
     childrenToggle: jest.fn(),
@@ -50,6 +52,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
     spanNameColumnWidth: 0.5,
     trace,
     uiFind: 'uiFind',
+    topOfExploreViewRef,
   };
 
   function expandRow(rowIndex) {
@@ -65,7 +68,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
     const spans = [
       trace.spans[0],
       // this span is condidered to have collapsed children
-      { spanID: newSpanID, depth: 1 },
+      { spanID: newSpanID, depth: 1, traceID: trace.traceID },
       // these two "spans" are children and should be hidden
       { depth: 2 },
       { depth: 3 },
@@ -84,13 +87,12 @@ describe('<VirtualizedTraceViewImpl>', () => {
 
   beforeEach(() => {
     SpanTreeOffset.mockReturnValue(<div />);
-    Object.keys(props).forEach(key => {
+    Object.keys(props).forEach((key) => {
       if (typeof props[key] === 'function') {
         props[key].mockReset();
       }
     });
     wrapper = shallow(<VirtualizedTraceView {...props} />)
-      .dive()
       .dive()
       .dive();
     instance = wrapper.instance();
@@ -107,6 +109,10 @@ describe('<VirtualizedTraceViewImpl>', () => {
 
   it('renders a ListView', () => {
     expect(wrapper.find(ListView)).toBeDefined();
+  });
+
+  it('renders scrollToTopButton', () => {
+    expect(wrapper.find({ title: 'Scroll to top' }).exists()).toBeTruthy();
   });
 
   it('sets the trace for global state.traceTimeline', () => {
@@ -227,20 +233,20 @@ describe('<VirtualizedTraceViewImpl>', () => {
     }
 
     it('works when nothing is expanded or collapsed', () => {
-      verify(0, `${trace.spans[0].spanID}--bar`);
+      verify(0, `${trace.spans[0].traceID}--${trace.spans[0].spanID}--bar`);
     });
 
     it('works when rows are expanded', () => {
       expandRow(1);
-      verify(1, `${trace.spans[1].spanID}--bar`);
-      verify(2, `${trace.spans[1].spanID}--detail`);
-      verify(3, `${trace.spans[2].spanID}--bar`);
+      verify(1, `${trace.spans[1].traceID}--${trace.spans[1].spanID}--bar`);
+      verify(2, `${trace.spans[1].traceID}--${trace.spans[1].spanID}--detail`);
+      verify(3, `${trace.spans[2].traceID}--${trace.spans[2].spanID}--bar`);
     });
 
     it('works when a parent span is collapsed', () => {
       const spans = addSpansAndCollapseTheirParent();
-      verify(1, `${spans[1].spanID}--bar`);
-      verify(2, `${spans[4].spanID}--bar`);
+      verify(1, `${spans[1].traceID}--${spans[1].spanID}--bar`);
+      verify(2, `${spans[4].traceID}--${spans[4].spanID}--bar`);
     });
   });
 
@@ -250,20 +256,20 @@ describe('<VirtualizedTraceViewImpl>', () => {
     }
 
     it('works when nothing is expanded or collapsed', () => {
-      verify(`${trace.spans[0].spanID}--bar`, 0);
+      verify(`${trace.traceID}--${trace.spans[0].spanID}--bar`, 0);
     });
 
     it('works when rows are expanded', () => {
       expandRow(1);
-      verify(`${trace.spans[1].spanID}--bar`, 1);
-      verify(`${trace.spans[1].spanID}--detail`, 2);
-      verify(`${trace.spans[2].spanID}--bar`, 3);
+      verify(`${trace.spans[1].traceID}--${trace.spans[1].spanID}--bar`, 1);
+      verify(`${trace.spans[1].traceID}--${trace.spans[1].spanID}--detail`, 2);
+      verify(`${trace.spans[2].traceID}--${trace.spans[2].spanID}--bar`, 3);
     });
 
     it('works when a parent span is collapsed', () => {
       const spans = addSpansAndCollapseTheirParent();
-      verify(`${spans[1].spanID}--bar`, 1);
-      verify(`${spans[4].spanID}--bar`, 2);
+      verify(`${spans[1].traceID}--${spans[1].spanID}--bar`, 1);
+      verify(`${spans[4].traceID}--${spans[4].spanID}--bar`, 2);
     });
   });
 
@@ -300,7 +306,8 @@ describe('<VirtualizedTraceViewImpl>', () => {
       expect(
         rowWrapper.containsMatchingElement(
           <SpanBarRow
-            className={instance.clippingCssClasses}
+            clippingLeft={instance.getClipping().left}
+            clippingRight={instance.getClipping().right}
             columnDivision={props.spanNameColumnWidth}
             isChildrenExpanded
             isDetailExpanded={false}
@@ -349,6 +356,23 @@ describe('<VirtualizedTraceViewImpl>', () => {
           />
         )
       ).toBe(true);
+    });
+
+    it('renders a SpanBarRow with a client span and no instrumented server span', () => {
+      const externServiceName = 'externalServiceTest';
+      const leafSpan = trace.spans.find((span) => !span.hasChildren);
+      const leafSpanIndex = trace.spans.indexOf(leafSpan);
+      const clientTags = [
+        { key: 'span.kind', value: 'client' },
+        { key: 'peer.service', value: externServiceName },
+        ...leafSpan.tags,
+      ];
+      const altTrace = updateSpan(trace, leafSpanIndex, { tags: clientTags });
+      wrapper.setProps({ trace: altTrace });
+      const rowWrapper = mount(instance.renderRow('some-key', {}, leafSpanIndex, {}));
+      const spanBarRow = rowWrapper.find(SpanBarRow);
+      expect(spanBarRow.length).toBe(1);
+      expect(spanBarRow.prop('noInstrumentedServer')).not.toBeNull();
     });
   });
 

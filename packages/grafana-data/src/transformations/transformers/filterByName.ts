@@ -1,8 +1,9 @@
-import { DataTransformerID } from './ids';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
 import { FieldMatcherID } from '../matchers/ids';
-import { FilterOptions, filterFieldsTransformer } from './filter';
 import { RegexpOrNamesMatcherOptions } from '../matchers/nameMatcher';
+
+import { filterFieldsTransformer } from './filter';
+import { DataTransformerID } from './ids';
 
 export interface FilterFieldsByNameTransformerOptions {
   include?: RegexpOrNamesMatcherOptions;
@@ -19,14 +20,13 @@ export const filterFieldsByNameTransformer: DataTransformerInfo<FilterFieldsByNa
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options: FilterFieldsByNameTransformerOptions) => {
-    const filterOptions: FilterOptions = {
-      include: getMatcherConfig(options.include),
-      exclude: getMatcherConfig(options.exclude),
-    };
-
-    return filterFieldsTransformer.transformer(filterOptions);
-  },
+  operator: (options) => (source) =>
+    source.pipe(
+      filterFieldsTransformer.operator({
+        include: getMatcherConfig(options.include),
+        exclude: getMatcherConfig(options.exclude),
+      })
+    ),
 };
 
 const getMatcherConfig = (options?: RegexpOrNamesMatcherOptions): MatcherConfig | undefined => {
@@ -41,7 +41,7 @@ const getMatcherConfig = (options?: RegexpOrNamesMatcherOptions): MatcherConfig 
   }
 
   if (!pattern) {
-    return { id: FieldMatcherID.byNames, options: names };
+    return { id: FieldMatcherID.byNames, options: { names } };
   }
 
   if (!Array.isArray(names) || names.length === 0) {

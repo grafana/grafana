@@ -1,7 +1,8 @@
-import React from 'react';
-import { QueryOperationRow } from './QueryOperationRow';
 import { mount, shallow } from 'enzyme';
+import React from 'react';
 import { act } from 'react-dom/test-utils';
+
+import { QueryOperationRow } from './QueryOperationRow';
 
 describe('QueryOperationRow', () => {
   it('renders', () => {
@@ -32,7 +33,7 @@ describe('QueryOperationRow', () => {
       const onOpenSpy = jest.fn();
       const onCloseSpy = jest.fn();
       const wrapper = mount(
-        <QueryOperationRow onOpen={onOpenSpy} onClose={onCloseSpy} isOpen={false} id="test-id" index={0}>
+        <QueryOperationRow title="title" onOpen={onOpenSpy} onClose={onCloseSpy} isOpen={false} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
       );
@@ -56,11 +57,11 @@ describe('QueryOperationRow', () => {
     });
   });
 
-  describe('title rendering', () => {
-    it('should render title provided as element', () => {
+  describe('headerElement rendering', () => {
+    it('should render headerElement provided as element', () => {
       const title = <div aria-label="test title">Test</div>;
       const wrapper = shallow(
-        <QueryOperationRow title={title} id="test-id" index={0}>
+        <QueryOperationRow headerElement={title} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
       );
@@ -68,10 +69,11 @@ describe('QueryOperationRow', () => {
       const titleEl = wrapper.find({ 'aria-label': 'test title' });
       expect(titleEl).toHaveLength(1);
     });
-    it('should render title provided as function', () => {
+
+    it('should render headerElement provided as function', () => {
       const title = () => <div aria-label="test title">Test</div>;
       const wrapper = shallow(
-        <QueryOperationRow title={title} id="test-id" index={0}>
+        <QueryOperationRow headerElement={title} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
       );
@@ -80,14 +82,14 @@ describe('QueryOperationRow', () => {
       expect(titleEl).toHaveLength(1);
     });
 
-    it('should expose api to title rendered as function', () => {
+    it('should expose api to headerElement rendered as function', () => {
       const propsSpy = jest.fn();
       const title = (props: any) => {
         propsSpy(props);
         return <div aria-label="test title">Test</div>;
       };
       shallow(
-        <QueryOperationRow title={title} id="test-id" index={0}>
+        <QueryOperationRow headerElement={title} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
       );
@@ -132,9 +134,7 @@ describe('QueryOperationRow', () => {
         </QueryOperationRow>
       );
 
-      expect(Object.keys(propsSpy.mock.calls[0][0])).toContainEqual('isOpen');
-      expect(Object.keys(propsSpy.mock.calls[0][0])).toContainEqual('openRow');
-      expect(Object.keys(propsSpy.mock.calls[0][0])).toContainEqual('closeRow');
+      expect(Object.keys(propsSpy.mock.calls[0][0])).toEqual(['isOpen', 'onOpen', 'onClose']);
     });
   });
 });

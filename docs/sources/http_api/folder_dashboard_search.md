@@ -3,10 +3,6 @@ title = "Folder/Dashboard Search HTTP API "
 description = "Grafana Folder/Dashboard Search HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "search", "folder", "dashboard"]
 aliases = ["/docs/grafana/latest/http_api/folder_dashboard_search/"]
-type = "docs"
-[menu.docs]
-name = "Folder/dashboard search"
-parent = "http_api"
 +++
 
 # Folder/Dashboard Search API
@@ -23,7 +19,7 @@ Query parameters:
 - **dashboardIds** – List of dashboard id's to search for
 - **folderIds** – List of folder id's to search in for dashboards
 - **starred** – Flag indicating if only starred Dashboards should be returned
-- **limit** – Limit the number of returned results (max 5000)
+- **limit** – Limit the number of returned results (max is 5000; default is 1000)
 - **page** – Use this parameter to access hits beyond limit. Numbering starts at 1. limit param acts as page size. Only available in Grafana v6.2+.
 
 **Example request for retrieving folders and dashboards of the general folder**:

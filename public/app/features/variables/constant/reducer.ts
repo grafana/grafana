@@ -1,21 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ConstantVariableModel, VariableHide, VariableOption } from '../types';
-import { getInstanceState, NEW_VARIABLE_ID, VariablePayload } from '../state/types';
-import { initialVariablesState, VariablesState } from '../state/variablesReducer';
+
+import { getInstanceState } from '../state/selectors';
+import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
+import { ConstantVariableModel, initialVariableModelState, VariableHide, VariableOption } from '../types';
 
 export const initialConstantVariableModelState: ConstantVariableModel = {
-  id: NEW_VARIABLE_ID,
-  global: false,
+  ...initialVariableModelState,
   type: 'constant',
-  name: '',
   hide: VariableHide.hideVariable,
-  label: '',
   query: '',
   current: {} as VariableOption,
   options: [],
-  skipUrlSync: false,
-  index: -1,
-  initLock: null,
 };
 
 export const constantVariableSlice = createSlice({

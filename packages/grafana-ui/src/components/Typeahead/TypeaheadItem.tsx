@@ -1,12 +1,14 @@
-import React, { useContext } from 'react';
-
+import { css, cx } from '@emotion/css';
+import React from 'react';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
-import { css, cx } from 'emotion';
+
 import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
+
+import { useStyles } from '../../themes/ThemeContext';
 import { CompletionItem, CompletionItemKind } from '../../types/completion';
-import { ThemeContext } from '../../themes/ThemeContext';
+
+import { PartialHighlighter } from './PartialHighlighter';
 
 interface Props {
   isSelected: boolean;
@@ -38,7 +40,7 @@ const getStyles = (theme: GrafanaTheme) => ({
 
   typeaheadItemSelected: css`
     label: type-ahead-item-selected;
-    background-color: ${selectThemeVariant({ light: theme.palette.gray6, dark: theme.palette.dark9 }, theme.type)};
+    background-color: ${theme.colors.bg2};
   `,
 
   typeaheadItemMatch: css`
@@ -59,8 +61,7 @@ const getStyles = (theme: GrafanaTheme) => ({
 });
 
 export const TypeaheadItem: React.FC<Props> = (props: Props) => {
-  const theme = useContext(ThemeContext);
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
 
   const { isSelected, item, prefix, style, onMouseEnter, onMouseLeave, onClickItem } = props;
   const className = isSelected ? cx([styles.typeaheadItem, styles.typeaheadItemSelected]) : cx([styles.typeaheadItem]);
@@ -84,7 +85,20 @@ export const TypeaheadItem: React.FC<Props> = (props: Props) => {
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <Highlighter textToHighlight={label} searchWords={[prefix]} highlightClassName={highlightClassName} />
+      {item.highlightParts !== undefined ? (
+        <PartialHighlighter
+          text={label}
+          highlightClassName={highlightClassName}
+          highlightParts={item.highlightParts}
+        ></PartialHighlighter>
+      ) : (
+        <Highlighter
+          textToHighlight={label}
+          searchWords={[prefix ?? '']}
+          autoEscape={true}
+          highlightClassName={highlightClassName}
+        />
+      )}
     </li>
   );
 };

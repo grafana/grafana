@@ -5,10 +5,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func ValidateHostHeader(domain string) macaron.Handler {
+func ValidateHostHeader(cfg *setting.Cfg) web.Handler {
 	return func(c *models.ReqContext) {
 		// ignore local render calls
 		if c.IsRenderCall {
@@ -20,8 +20,8 @@ func ValidateHostHeader(domain string) macaron.Handler {
 			h = h[:i]
 		}
 
-		if !strings.EqualFold(h, domain) {
-			c.Redirect(strings.TrimSuffix(setting.AppUrl, "/")+c.Req.RequestURI, 301)
+		if !strings.EqualFold(h, cfg.Domain) {
+			c.Redirect(strings.TrimSuffix(cfg.AppURL, "/")+c.Req.RequestURI, 301)
 			return
 		}
 	}

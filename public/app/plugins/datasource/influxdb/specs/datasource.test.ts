@@ -1,15 +1,18 @@
-import InfluxDatasource from '../datasource';
-
+import { lastValueFrom, of } from 'rxjs';
 import { TemplateSrvStub } from 'test/specs/helpers';
+
+import { FetchResponse } from '@grafana/runtime';
+import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+
+import InfluxDatasource from '../datasource';
 
 //@ts-ignore
 const templateSrv = new TemplateSrvStub();
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
   getBackendSrv: () => backendSrv,
-  getTemplateSrv: () => templateSrv,
 }));
 
 describe('InfluxDataSource', () => {
@@ -17,12 +20,12 @@ describe('InfluxDataSource', () => {
     instanceSettings: { url: 'url', name: 'influxDb', jsonData: { httpMode: 'GET' } },
   };
 
-  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+  const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
   beforeEach(() => {
     jest.clearAllMocks();
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
-    ctx.ds = new InfluxDatasource(ctx.instanceSettings);
+    ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
   });
 
   describe('When issuing metricFindQuery', () => {
@@ -36,12 +39,13 @@ describe('InfluxDataSource', () => {
     let requestQuery: any, requestMethod: any, requestData: any, response: any;
 
     beforeEach(async () => {
-      datasourceRequestMock.mockImplementation((req: any) => {
+      fetchMock.mockImplementation((req: any) => {
         requestMethod = req.method;
         requestQuery = req.params.q;
         requestData = req.data;
-        return Promise.resolve({
+        return of({
           data: {
+            status: 'success',
             results: [
               {
                 series: [
@@ -54,7 +58,7 @@ describe('InfluxDataSource', () => {
               },
             ],
           },
-        });
+        } as FetchResponse);
       });
 
       response = await ctx.ds.metricFindQuery(query, queryOptions);
@@ -97,8 +101,8 @@ describe('InfluxDataSource', () => {
     };
 
     it('throws an error', async () => {
-      datasourceRequestMock.mockImplementation((req: any) => {
-        return Promise.resolve({
+      fetchMock.mockImplementation((req: any) => {
+        return of({
           data: {
             results: [
               {
@@ -106,11 +110,11 @@ describe('InfluxDataSource', () => {
               },
             ],
           },
-        });
+        } as FetchResponse);
       });
 
       try {
-        await ctx.ds.query(queryOptions).toPromise();
+        await lastValueFrom(ctx.ds.query(queryOptions));
       } catch (err) {
         expect(err.message).toBe('InfluxDB Error: Query timeout');
       }
@@ -124,7 +128,7 @@ describe('InfluxDataSource', () => {
 
     beforeEach(() => {
       ctx.instanceSettings.url = '/api/datasources/proxy/1';
-      ctx.ds = new InfluxDatasource(ctx.instanceSettings);
+      ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
     });
 
     describe('When issuing metricFindQuery', () => {
@@ -133,23 +137,25 @@ describe('InfluxDataSource', () => {
       let requestMethod: any, requestQueryParameter: any, queryEncoded: any, requestQuery: any;
 
       beforeEach(async () => {
-        datasourceRequestMock.mockImplementation((req: any) => {
+        fetchMock.mockImplementation((req: any) => {
           requestMethod = req.method;
           requestQueryParameter = req.params;
           requestQuery = req.data;
-          return Promise.resolve({
-            results: [
-              {
-                series: [
-                  {
-                    name: 'measurement',
-                    columns: ['max'],
-                    values: [[1]],
-                  },
-                ],
-              },
-            ],
-          });
+          return of({
+            data: {
+              results: [
+                {
+                  series: [
+                    {
+                      name: 'measurement',
+                      columns: ['max'],
+                      values: [[1]],
+                    },
+                  ],
+                },
+              ],
+            },
+          } as FetchResponse);
         });
 
         queryEncoded = await ctx.ds.serializeParams({ q: query });
@@ -166,6 +172,102 @@ describe('InfluxDataSource', () => {
 
       it('should not have q as a query parameter', () => {
         expect(requestQueryParameter).not.toHaveProperty('q');
+      });
+    });
+  });
+
+  describe('Variables should be interpolated correctly', () => {
+    const templateSrv: any = { replace: jest.fn() };
+    const instanceSettings: any = {};
+    const ds = new InfluxDatasource(instanceSettings, templateSrv);
+    const text = 'interpolationText';
+    templateSrv.replace.mockReturnValue(text);
+
+    const fluxQuery = {
+      refId: 'x',
+      query: '$interpolationVar',
+    };
+
+    const influxQuery = {
+      refId: 'x',
+      alias: '$interpolationVar',
+      measurement: '$interpolationVar',
+      policy: '$interpolationVar',
+      limit: '$interpolationVar',
+      slimit: '$interpolationVar',
+      tz: '$interpolationVar',
+      tags: [
+        {
+          key: 'cpu',
+          operator: '=~',
+          value: '/^$interpolationVar$/',
+        },
+      ],
+      groupBy: [
+        {
+          params: ['$interpolationVar'],
+          type: 'tag',
+        },
+      ],
+      select: [
+        [
+          {
+            params: ['$interpolationVar'],
+            type: 'field',
+          },
+        ],
+      ],
+    };
+
+    function fluxChecks(query: any) {
+      expect(templateSrv.replace).toBeCalledTimes(1);
+      expect(query).toBe(text);
+    }
+
+    function influxChecks(query: any) {
+      expect(templateSrv.replace).toBeCalledTimes(10);
+      expect(query.alias).toBe(text);
+      expect(query.measurement).toBe(text);
+      expect(query.policy).toBe(text);
+      expect(query.limit).toBe(text);
+      expect(query.slimit).toBe(text);
+      expect(query.tz).toBe(text);
+      expect(query.tags![0].value).toBe(text);
+      expect(query.groupBy![0].params![0]).toBe(text);
+      expect(query.select![0][0].params![0]).toBe(text);
+    }
+
+    describe('when interpolating query variables for dashboard->explore', () => {
+      it('should interpolate all variables with Flux mode', () => {
+        ds.isFlux = true;
+        const queries = ds.interpolateVariablesInQueries([fluxQuery], {
+          interpolationVar: { text: text, value: text },
+        });
+        fluxChecks(queries[0].query);
+      });
+
+      it('should interpolate all variables with InfluxQL mode', () => {
+        ds.isFlux = false;
+        const queries = ds.interpolateVariablesInQueries([influxQuery], {
+          interpolationVar: { text: text, value: text },
+        });
+        influxChecks(queries[0]);
+      });
+    });
+
+    describe('when interpolating template variables', () => {
+      it('should apply all template variables with Flux mode', () => {
+        ds.isFlux = true;
+        const query = ds.applyTemplateVariables(fluxQuery, { interpolationVar: { text: text, value: text } });
+        fluxChecks(query.query);
+      });
+
+      it('should apply all template variables with InfluxQL mode', () => {
+        ds.isFlux = false;
+        ds.access = 'proxy';
+        config.featureToggles.influxdbBackendMigration = true;
+        const query = ds.applyTemplateVariables(influxQuery, { interpolationVar: { text: text, value: text } });
+        influxChecks(query);
       });
     });
   });

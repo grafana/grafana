@@ -1,142 +1,192 @@
-import { AppEvents, DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
-import { validateVariableSelectionState } from '../state/actions';
-import { QueryVariableModel, VariableRefresh } from '../types';
+import { Subscription } from 'rxjs';
+
+import { DataSourceRef } from '@grafana/data';
+import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
+
 import { ThunkResult } from '../../../types';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import templateSrv from '../../templating/template_srv';
-import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import appEvents from '../../../core/app_events';
-import { importDataSourcePlugin } from '../../plugins/plugin_loader';
-import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
-import { getVariable } from '../state/selectors';
+import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
-import { variableAdapters } from '../adapters';
+import { getQueryVariableEditorState } from '../editor/selectors';
+import { updateOptions } from '../state/actions';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { getVariable, getVariablesState } from '../state/selectors';
 import { changeVariableProp } from '../state/sharedReducer';
-import { updateVariableOptions, updateVariableTags } from './reducer';
-import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
+import { QueryVariableModel } from '../types';
+import { hasOngoingTransaction, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
+import { getVariableQueryRunner } from './VariableQueryRunner';
+import { variableQueryObserver } from './variableQueryObserver';
 
 export const updateQueryVariableOptions = (
-  identifier: VariableIdentifier,
+  identifier: KeyedVariableIdentifier,
   searchFilter?: string
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
     try {
-      const beforeUid = getState().templating.transaction.uid;
-      if (getState().templating.editor.id === variableInState.id) {
-        dispatch(removeVariableEditorError({ errorProp: 'update' }));
-      }
-      const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');
-      const queryOptions: any = { range: undefined, variable: variableInState, searchFilter };
-      if (variableInState.refresh === VariableRefresh.onTimeRangeChanged) {
-        queryOptions.range = getTimeSrv().timeRange();
-      }
-
-      if (!dataSource.metricFindQuery) {
+      const { rootStateKey } = identifier;
+      if (!hasOngoingTransaction(rootStateKey, getState())) {
+        // we might have cancelled a batch so then variable state is removed
         return;
       }
 
-      const results = await dataSource.metricFindQuery(variableInState.query, queryOptions);
-
-      const afterUid = getState().templating.transaction.uid;
-      if (beforeUid !== afterUid) {
-        // we started another batch before this metricFindQuery finished let's abort
-        return;
+      const variableInState = getVariable<QueryVariableModel>(identifier, getState());
+      if (getVariablesState(rootStateKey, getState()).editor.id === variableInState.id) {
+        dispatch(toKeyedAction(rootStateKey, removeVariableEditorError({ errorProp: 'update' })));
       }
+      const datasource = await getDataSourceSrv().get(variableInState.datasource ?? '');
 
-      const templatedRegex = getTemplatedRegex(variableInState);
-      await dispatch(updateVariableOptions(toVariablePayload(variableInState, { results, templatedRegex })));
+      // We need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
+      // variable will have the wrong current value as input
+      await new Promise((resolve, reject) => {
+        const subscription: Subscription = new Subscription();
+        const observer = variableQueryObserver(resolve, reject, subscription);
+        const responseSubscription = getVariableQueryRunner().getResponse(identifier).subscribe(observer);
+        subscription.add(responseSubscription);
 
-      if (variableInState.useTags) {
-        const tagResults = await dataSource.metricFindQuery(variableInState.tagsQuery, queryOptions);
-        await dispatch(updateVariableTags(toVariablePayload(variableInState, tagResults)));
-      }
-
-      // If we are searching options there is no need to validate selection state
-      // This condition was added to as validateVariableSelectionState will update the current value of the variable
-      // So after search and selection the current value is already update so no setValue, refresh & url update is performed
-      // The if statement below fixes https://github.com/grafana/grafana/issues/25671
-      if (!searchFilter) {
-        await dispatch(validateVariableSelectionState(toVariableIdentifier(variableInState)));
-      }
+        getVariableQueryRunner().queueRequest({ identifier, datasource, searchFilter });
+      });
     } catch (err) {
-      console.error(err);
-      if (err.data && err.data.message) {
-        err.message = err.data.message;
+      const error = toDataQueryError(err);
+      const { rootStateKey } = identifier;
+      if (getVariablesState(rootStateKey, getState()).editor.id === identifier.id) {
+        dispatch(
+          toKeyedAction(rootStateKey, addVariableEditorError({ errorProp: 'update', errorText: error.message }))
+        );
       }
-      if (getState().templating.editor.id === variableInState.id) {
-        dispatch(addVariableEditorError({ errorProp: 'update', errorText: err.message }));
-      }
-      appEvents.emit(AppEvents.alertError, [
-        'Templating',
-        'Template variables could not be initialized: ' + err.message,
-      ]);
+
+      throw error;
     }
   };
 };
 
-export const initQueryVariableEditor = (identifier: VariableIdentifier): ThunkResult<void> => async (
-  dispatch,
-  getState
-) => {
-  const dataSources: DataSourceSelectItem[] = getDatasourceSrv()
-    .getMetricSources()
-    .filter(ds => !ds.meta.mixed && ds.value !== null);
-
-  const defaultDatasource: DataSourceSelectItem = { name: '', value: '', meta: {} as DataSourcePluginMeta, sort: '' };
-  const allDataSources = [defaultDatasource].concat(dataSources);
-  dispatch(changeVariableEditorExtended({ propName: 'dataSources', propValue: allDataSources }));
-
-  const variable = getVariable<QueryVariableModel>(identifier.id, getState());
-  if (!variable.datasource) {
-    return;
-  }
-  await dispatch(changeQueryVariableDataSource(toVariableIdentifier(variable), variable.datasource));
-};
+export const initQueryVariableEditor =
+  (identifier: KeyedVariableIdentifier): ThunkResult<void> =>
+  async (dispatch, getState) => {
+    const variable = getVariable<QueryVariableModel>(identifier, getState());
+    await dispatch(changeQueryVariableDataSource(toKeyedVariableIdentifier(variable), variable.datasource));
+  };
 
 export const changeQueryVariableDataSource = (
-  identifier: VariableIdentifier,
-  name: string | null
+  identifier: KeyedVariableIdentifier,
+  name: DataSourceRef | null
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {
-      const dataSource = await getDatasourceSrv().get(name ?? '');
-      const dsPlugin = await importDataSourcePlugin(dataSource.meta!);
-      const VariableQueryEditor = dsPlugin.components.VariableQueryEditor ?? DefaultVariableQueryEditor;
-      dispatch(changeVariableEditorExtended({ propName: 'dataSource', propValue: dataSource }));
-      dispatch(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: VariableQueryEditor }));
+      const { rootStateKey } = identifier;
+      const { editor } = getVariablesState(rootStateKey, getState());
+      const extendedEditorState = getQueryVariableEditorState(editor);
+      const previousDatasource = extendedEditorState?.dataSource;
+      const dataSource = await getDataSourceSrv().get(name ?? '');
+
+      if (previousDatasource && previousDatasource.type !== dataSource?.type) {
+        dispatch(
+          toKeyedAction(
+            rootStateKey,
+            changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: '' }))
+          )
+        );
+      }
+
+      const VariableQueryEditor = await getVariableQueryEditor(dataSource);
+
+      dispatch(
+        toKeyedAction(
+          rootStateKey,
+          changeVariableEditorExtended({
+            dataSource,
+            VariableQueryEditor,
+          })
+        )
+      );
     } catch (err) {
       console.error(err);
     }
   };
 };
 
-export const changeQueryVariableQuery = (
-  identifier: VariableIdentifier,
-  query: any,
-  definition: string
-): ThunkResult<void> => async (dispatch, getState) => {
-  const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
-  if (typeof query === 'string' && query.match(new RegExp('\\$' + variableInState.name + '(/| |$)'))) {
-    const errorText = 'Query cannot contain a reference to itself. Variable: $' + variableInState.name;
-    dispatch(addVariableEditorError({ errorProp: 'query', errorText }));
-    return;
+export const changeQueryVariableQuery =
+  (identifier: KeyedVariableIdentifier, query: any, definition?: string): ThunkResult<void> =>
+  async (dispatch, getState) => {
+    const { rootStateKey } = identifier;
+    const variableInState = getVariable<QueryVariableModel>(identifier, getState());
+    if (hasSelfReferencingQuery(variableInState.name, query)) {
+      const errorText = 'Query cannot contain a reference to itself. Variable: $' + variableInState.name;
+      dispatch(toKeyedAction(rootStateKey, addVariableEditorError({ errorProp: 'query', errorText })));
+      return;
+    }
+
+    dispatch(toKeyedAction(rootStateKey, removeVariableEditorError({ errorProp: 'query' })));
+    dispatch(
+      toKeyedAction(
+        rootStateKey,
+        changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query }))
+      )
+    );
+
+    if (definition) {
+      dispatch(
+        toKeyedAction(
+          rootStateKey,
+          changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition }))
+        )
+      );
+    } else if (typeof query === 'string') {
+      dispatch(
+        toKeyedAction(
+          rootStateKey,
+          changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: query }))
+        )
+      );
+    }
+
+    await dispatch(updateOptions(identifier));
+  };
+
+export function hasSelfReferencingQuery(name: string, query: any): boolean {
+  if (typeof query === 'string' && query.match(new RegExp('\\$' + name + '(/| |$)'))) {
+    return true;
   }
 
-  dispatch(removeVariableEditorError({ errorProp: 'query' }));
-  dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
-  dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition })));
-  await variableAdapters.get(identifier.type).updateOptions(variableInState);
-};
+  const flattened = flattenQuery(query);
 
-const getTemplatedRegex = (variable: QueryVariableModel): string => {
-  if (!variable) {
-    return '';
+  for (let prop in flattened) {
+    if (flattened.hasOwnProperty(prop)) {
+      const value = flattened[prop];
+      if (typeof value === 'string' && value.match(new RegExp('\\$' + name + '(/| |$)'))) {
+        return true;
+      }
+    }
   }
 
-  if (!variable.regex) {
-    return '';
+  return false;
+}
+
+/*
+ * Function that takes any object and flattens all props into one level deep object
+ * */
+export function flattenQuery(query: any): any {
+  if (typeof query !== 'object') {
+    return { query };
   }
 
-  return templateSrv.replace(variable.regex, {}, 'regex');
-};
+  const keys = Object.keys(query);
+  const flattened = keys.reduce((all, key) => {
+    const value = query[key];
+    if (typeof value !== 'object') {
+      all[key] = value;
+      return all;
+    }
+
+    const result = flattenQuery(value);
+    for (let childProp in result) {
+      if (result.hasOwnProperty(childProp)) {
+        all[`${key}_${childProp}`] = result[childProp];
+      }
+    }
+
+    return all;
+  }, {} as Record<string, any>);
+
+  return flattened;
+}

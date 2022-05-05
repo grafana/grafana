@@ -1,22 +1,27 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
 
+	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func GetFolders(c *models.ReqContext) Response {
-	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
-	folders, err := s.GetFolders(c.QueryInt64("limit"))
+func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
+	folders, err := hs.folderService.GetFolders(c.Req.Context(), c.SignedInUser, c.OrgId, c.QueryInt64("limit"), c.QueryInt64("page"))
 
 	if err != nil {
-		return toFolderError(err)
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
 	result := make([]dtos.FolderSearchHit, 0)
@@ -29,86 +34,95 @@ func GetFolders(c *models.ReqContext) Response {
 		})
 	}
 
-	return JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
-func GetFolderByUID(c *models.ReqContext) Response {
-	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
-	folder, err := s.GetFolderByUID(c.Params(":uid"))
-
+func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
+	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, web.Params(c.Req)[":uid"])
 	if err != nil {
-		return toFolderError(err)
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	return JSON(200, toFolderDto(g, folder))
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
-func GetFolderByID(c *models.ReqContext) Response {
-	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
-	folder, err := s.GetFolderByID(c.ParamsInt64(":id"))
+func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
-		return toFolderError(err)
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+	folder, err := hs.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, id, c.OrgId)
+	if err != nil {
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	return JSON(200, toFolderDto(g, folder))
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.toFolderDto(c.Req.Context(), g, folder))
 }
 
-func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolderCommand) Response {
-	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
-	err := s.CreateFolder(&cmd)
+func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
+	cmd := models.CreateFolderCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	folder, err := hs.folderService.CreateFolder(c.Req.Context(), c.SignedInUser, c.OrgId, cmd.Title, cmd.Uid)
 	if err != nil {
-		return toFolderError(err)
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	if hs.Cfg.EditorsCanAdmin {
-		if err := dashboards.MakeUserAdmin(hs.Bus, c.OrgId, c.SignedInUser.UserId, cmd.Result.Id, true); err != nil {
-			hs.log.Error("Could not make user admin", "folder", cmd.Result.Title, "user", c.SignedInUser.UserId, "error", err)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.toFolderDto(c.Req.Context(), g, folder))
+}
+
+func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
+	cmd := models.UpdateFolderCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	err := hs.folderService.UpdateFolder(c.Req.Context(), c.SignedInUser, c.OrgId, web.Params(c.Req)[":uid"], &cmd)
+	if err != nil {
+		return apierrors.ToFolderErrorResponse(err)
+	}
+
+	g := guardian.New(c.Req.Context(), cmd.Result.Id, c.OrgId, c.SignedInUser)
+	return response.JSON(http.StatusOK, hs.toFolderDto(c.Req.Context(), g, cmd.Result))
+}
+
+func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
+	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
+	if err != nil {
+		if errors.Is(err, libraryelements.ErrFolderHasConnectedLibraryElements) {
+			return response.Error(403, "Folder could not be deleted because it contains library elements in use", err)
 		}
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
-	return JSON(200, toFolderDto(g, cmd.Result))
-}
-
-func UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) Response {
-	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
-	err := s.UpdateFolder(c.Params(":uid"), &cmd)
+	f, err := hs.folderService.DeleteFolder(c.Req.Context(), c.SignedInUser, c.OrgId, web.Params(c.Req)[":uid"], c.QueryBool("forceDeleteRules"))
 	if err != nil {
-		return toFolderError(err)
+		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
-	return JSON(200, toFolderDto(g, cmd.Result))
-}
-
-func DeleteFolder(c *models.ReqContext) Response {
-	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
-	f, err := s.DeleteFolder(c.Params(":uid"))
-	if err != nil {
-		return toFolderError(err)
-	}
-
-	return JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"title":   f.Title,
 		"message": fmt.Sprintf("Folder %s deleted", f.Title),
 		"id":      f.Id,
 	})
 }
 
-func toFolderDto(g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
+func (hs *HTTPServer) toFolderDto(ctx context.Context, g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
 	canEdit, _ := g.CanEdit()
 	canSave, _ := g.CanSave()
 	canAdmin, _ := g.CanAdmin()
+	canDelete, _ := g.CanDelete()
 
 	// Finding creator and last updater of the folder
 	updater, creator := anonString, anonString
 	if folder.CreatedBy > 0 {
-		creator = getUserLogin(folder.CreatedBy)
+		creator = hs.getUserLogin(ctx, folder.CreatedBy)
 	}
 	if folder.UpdatedBy > 0 {
-		updater = getUserLogin(folder.UpdatedBy)
+		updater = hs.getUserLogin(ctx, folder.UpdatedBy)
 	}
 
 	return dtos.Folder{
@@ -120,40 +134,11 @@ func toFolderDto(g guardian.DashboardGuardian, folder *models.Folder) dtos.Folde
 		CanSave:   canSave,
 		CanEdit:   canEdit,
 		CanAdmin:  canAdmin,
+		CanDelete: canDelete,
 		CreatedBy: creator,
 		Created:   folder.Created,
 		UpdatedBy: updater,
 		Updated:   folder.Updated,
 		Version:   folder.Version,
 	}
-}
-
-func toFolderError(err error) Response {
-	var dashboardErr models.DashboardErr
-	if ok := errors.As(err, &dashboardErr); ok {
-		return Error(dashboardErr.StatusCode, err.Error(), err)
-	}
-
-	if err == models.ErrFolderTitleEmpty ||
-		err == models.ErrFolderSameNameExists ||
-		err == models.ErrFolderWithSameUIDExists ||
-		err == models.ErrDashboardTypeMismatch ||
-		err == models.ErrDashboardInvalidUid ||
-		err == models.ErrDashboardUidTooLong {
-		return Error(400, err.Error(), nil)
-	}
-
-	if err == models.ErrFolderAccessDenied {
-		return Error(403, "Access denied", err)
-	}
-
-	if err == models.ErrFolderNotFound {
-		return JSON(404, util.DynMap{"status": "not-found", "message": models.ErrFolderNotFound.Error()})
-	}
-
-	if err == models.ErrFolderVersionMismatch {
-		return JSON(412, util.DynMap{"status": "version-mismatch", "message": models.ErrFolderVersionMismatch.Error()})
-	}
-
-	return Error(500, "Folder API error", err)
 }

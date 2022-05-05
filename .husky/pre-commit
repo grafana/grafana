@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Ignore husky hooks if no frontend code has been changed
+git diff --cached --name-only | grep -v --quiet "^pkg/" || exit 0
+
+. "$(dirname "$0")/_/husky.sh"
+
+yarn run precommit

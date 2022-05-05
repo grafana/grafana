@@ -1,6 +1,7 @@
-import { feedToDataFrame } from './utils';
-import { RssFeed, NewsItem } from './types';
 import { DataFrameView } from '@grafana/data';
+
+import { Feed, NewsItem } from './types';
+import { feedToDataFrame } from './utils';
 
 describe('news', () => {
   test('convert RssFeed to DataFrame', () => {
@@ -65,4 +66,4 @@ const grafana20191216 = {
   link: 'https://grafana.com/blog/',
   language: 'en-us',
   lastBuildDate: 'Fri, 13 Dec 2019 00:00:00 +0000',
-} as RssFeed;
+} as Feed;

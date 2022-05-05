@@ -22,7 +22,7 @@ func addUserAuthMigrations(mg *Migrator) {
 	// add indices
 	addTableIndicesMigrations(mg, "v1", userAuthV1)
 
-	mg.AddMigration("alter user_auth.auth_id to length 190", NewRawSqlMigration("").
+	mg.AddMigration("alter user_auth.auth_id to length 190", NewRawSQLMigration("").
 		Postgres("ALTER TABLE user_auth ALTER COLUMN auth_id TYPE VARCHAR(190);").
 		Mysql("ALTER TABLE user_auth MODIFY auth_id VARCHAR(190);"))
 
@@ -41,5 +41,9 @@ func addUserAuthMigrations(mg *Migrator) {
 
 	mg.AddMigration("Add index to user_id column in user_auth", NewAddIndexMigration(userAuthV1, &Index{
 		Cols: []string{"user_id"},
+	}))
+
+	mg.AddMigration("Add OAuth ID token to user_auth", NewAddColumnMigration(userAuthV1, &Column{
+		Name: "o_auth_id_token", Type: DB_Text, Nullable: true,
 	}))
 }

@@ -6,36 +6,32 @@ import (
 	"net/http"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/macaron.v1"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBasicAuthenticatedRequest(t *testing.T) {
-	expectedUser := "prometheus"
-	expectedPass := "password"
+	const expectedUser = "prometheus"
+	const expectedPass = "password"
 
-	Convey("Given a valid set of basic auth credentials", t, func() {
-		httpReq, err := http.NewRequest("GET", "http://localhost:3000/metrics", nil)
-		So(err, ShouldBeNil)
-		req := macaron.Request{
-			Request: httpReq,
-		}
+	t.Run("Given a valid set of basic auth credentials", func(t *testing.T) {
+		req, err := http.NewRequest("GET", "http://localhost:3000/metrics", nil)
+		require.NoError(t, err)
 		encodedCreds := encodeBasicAuthCredentials(expectedUser, expectedPass)
-		req.Header.Add("Authorization", fmt.Sprintf("Basic %s", encodedCreds))
+		req.Header.Set("Authorization", fmt.Sprintf("Basic %s", encodedCreds))
 		authenticated := BasicAuthenticatedRequest(req, expectedUser, expectedPass)
-		So(authenticated, ShouldBeTrue)
+
+		assert.True(t, authenticated)
 	})
 
-	Convey("Given an invalid set of basic auth credentials", t, func() {
-		httpReq, err := http.NewRequest("GET", "http://localhost:3000/metrics", nil)
-		So(err, ShouldBeNil)
-		req := macaron.Request{
-			Request: httpReq,
-		}
+	t.Run("Given an invalid set of basic auth credentials", func(t *testing.T) {
+		req, err := http.NewRequest("GET", "http://localhost:3000/metrics", nil)
+		require.NoError(t, err)
 		encodedCreds := encodeBasicAuthCredentials("invaliduser", "invalidpass")
-		req.Header.Add("Authorization", fmt.Sprintf("Basic %s", encodedCreds))
+		req.Header.Set("Authorization", fmt.Sprintf("Basic %s", encodedCreds))
 		authenticated := BasicAuthenticatedRequest(req, expectedUser, expectedPass)
-		So(authenticated, ShouldBeFalse)
+
+		assert.False(t, authenticated)
 	})
 }
 

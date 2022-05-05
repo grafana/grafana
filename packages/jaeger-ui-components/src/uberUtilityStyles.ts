@@ -1,4 +1,4 @@
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 export const ubRelative = css`
   position: relative;
@@ -32,6 +32,10 @@ export const ubFlex = css`
 
 export const ubItemsCenter = css`
   align-items: center;
+`;
+
+export const ubItemsStart = css`
+  align-items: start;
 `;
 
 export const ubFlexAuto = css`

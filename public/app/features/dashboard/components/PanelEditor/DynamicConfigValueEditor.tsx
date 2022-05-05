@@ -1,8 +1,18 @@
-import { DynamicConfigValue, FieldConfigOptionsRegistry, FieldOverrideContext, GrafanaTheme } from '@grafana/data';
+import { css, cx } from '@emotion/css';
 import React from 'react';
+// @ts-ignore
+import Highlighter from 'react-highlight-words';
+
+import {
+  DynamicConfigValue,
+  FieldConfigOptionsRegistry,
+  FieldConfigProperty,
+  FieldOverrideContext,
+  GrafanaTheme,
+} from '@grafana/data';
 import { Counter, Field, HorizontalGroup, IconButton, Label, stylesFactory, useTheme } from '@grafana/ui';
-import { css, cx } from 'emotion';
-import { OptionsGroup } from './OptionsGroup';
+
+import { OptionsPaneCategory } from './OptionsPaneCategory';
 
 interface DynamicConfigValueEditorProps {
   property: DynamicConfigValue;
@@ -10,7 +20,8 @@ interface DynamicConfigValueEditorProps {
   onChange: (value: DynamicConfigValue) => void;
   context: FieldOverrideContext;
   onRemove: () => void;
-  isCollapsible?: boolean;
+  isSystemOverride?: boolean;
+  searchQuery: string;
 }
 
 export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> = ({
@@ -19,7 +30,8 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   registry,
   onChange,
   onRemove,
-  isCollapsible,
+  isSystemOverride,
+  searchQuery,
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -28,41 +40,62 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   if (!item) {
     return null;
   }
+
+  const isCollapsible =
+    Array.isArray(property.value) ||
+    property.id === FieldConfigProperty.Thresholds ||
+    property.id === FieldConfigProperty.Links ||
+    property.id === FieldConfigProperty.Mappings;
+
+  const labelCategory = item.category?.filter((c) => c !== item.name);
   let editor;
 
-  const renderLabel = (includeDescription = true, includeCounter = false) => (isExpanded = false) => (
-    <HorizontalGroup justify="space-between">
-      <Label description={includeDescription ? item.description : undefined}>
-        {item.name}
-        {!isExpanded && includeCounter && item.getItemsCount && <Counter value={item.getItemsCount(property.value)} />}
-      </Label>
-      <div>
-        <IconButton name="times" onClick={onRemove} />
-      </div>
-    </HorizontalGroup>
-  );
+  /* eslint-disable react/display-name */
+  const renderLabel =
+    (includeDescription = true, includeCounter = false) =>
+    (isExpanded = false) =>
+      (
+        <HorizontalGroup justify="space-between">
+          <Label category={labelCategory} description={includeDescription ? item.description : undefined}>
+            <Highlighter
+              textToHighlight={item.name}
+              searchWords={[searchQuery]}
+              highlightClassName={'search-fragment-highlight'}
+            />
+            {!isExpanded && includeCounter && item.getItemsCount && (
+              <Counter value={item.getItemsCount(property.value)} />
+            )}
+          </Label>
+          {!isSystemOverride && (
+            <div>
+              <IconButton name="times" onClick={onRemove} />
+            </div>
+          )}
+        </HorizontalGroup>
+      );
+  /* eslint-enable react/display-name */
 
   if (isCollapsible) {
     editor = (
-      <OptionsGroup
+      <OptionsPaneCategory
         id={item.name}
         renderTitle={renderLabel(false, true)}
         className={css`
           padding-left: 0;
           padding-right: 0;
         `}
-        nested
-        defaultToClosed={property.value !== undefined}
+        isNested
+        isOpenDefault={property.value !== undefined}
       >
         <item.override
           value={property.value}
-          onChange={value => {
+          onChange={(value) => {
             onChange(value);
           }}
           item={item}
           context={context}
         />
-      </OptionsGroup>
+      </OptionsPaneCategory>
     );
   } else {
     editor = (
@@ -70,7 +103,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
         <Field label={renderLabel()()} description={item.description}>
           <item.override
             value={property.value}
-            onChange={value => {
+            onChange={(value) => {
               onChange(value);
             }}
             item={item}

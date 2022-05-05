@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package serverlock
@@ -7,29 +8,30 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestServerLok(t *testing.T) {
 	sl := createTestableServerLock(t)
 
 	counter := 0
-	fn := func() { counter++ }
-	atInterval := time.Second * 1
+	fn := func(context.Context) { counter++ }
+	atInterval := time.Hour
 	ctx := context.Background()
 
 	//this time `fn` should be executed
-	assert.Nil(t, sl.LockAndExecute(ctx, "test-operation", atInterval, fn))
+	require.Nil(t, sl.LockAndExecute(ctx, "test-operation", atInterval, fn))
+	require.Equal(t, 1, counter)
 
 	//this should not execute `fn`
-	assert.Nil(t, sl.LockAndExecute(ctx, "test-operation", atInterval, fn))
-	assert.Nil(t, sl.LockAndExecute(ctx, "test-operation", atInterval, fn))
+	require.Nil(t, sl.LockAndExecute(ctx, "test-operation", atInterval, fn))
+	require.Nil(t, sl.LockAndExecute(ctx, "test-operation", atInterval, fn))
+	require.Equal(t, 1, counter)
 
-	// wait 2 second.
-	<-time.After(time.Second * 2)
+	atInterval = time.Millisecond
 
 	// now `fn` should be executed again
 	err := sl.LockAndExecute(ctx, "test-operation", atInterval, fn)
-	assert.Nil(t, err)
-	assert.Equal(t, counter, 2)
+	require.Nil(t, err)
+	require.Equal(t, 2, counter)
 }

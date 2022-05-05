@@ -1,18 +1,22 @@
+import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
-import { getTagColorsFromName, Icon, Tooltip } from '@grafana/ui';
+
 import { selectors } from '@grafana/e2e-selectors';
+import { Tooltip } from '@grafana/ui';
 
-import { VariableOption, VariableTag } from '../../types';
+import { VariableOption } from '../../types';
 
-export interface Props {
+export interface Props extends React.HTMLProps<HTMLUListElement> {
   multi: boolean;
   values: VariableOption[];
   selectedValues: VariableOption[];
-  tags: VariableTag[];
   highlightIndex: number;
   onToggle: (option: VariableOption, clearOthers: boolean) => void;
   onToggleAll: () => void;
-  onToggleTag: (tag: VariableTag) => void;
+  /**
+   * Used for aria-controls
+   */
+  id: string;
 }
 
 export class VariableOptions extends PureComponent<Props> {
@@ -27,64 +31,28 @@ export class VariableOptions extends PureComponent<Props> {
     this.props.onToggleAll();
   };
 
-  onToggleTag = (tag: VariableTag) => (event: React.MouseEvent<HTMLAnchorElement>) => {
-    this.handleEvent(event);
-    this.props.onToggleTag(tag);
-  };
-
   handleEvent(event: React.MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
     event.stopPropagation();
   }
 
   render() {
-    const { multi, values, tags } = this.props;
+    // Don't want to pass faulty rest props to the div
+    const { multi, values, highlightIndex, selectedValues, onToggle, onToggleAll, ...restProps } = this.props;
 
     return (
-      <div
-        className={`${multi ? 'variable-value-dropdown multi' : 'variable-value-dropdown single'}`}
-        aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
-      >
+      <div className={`${multi ? 'variable-value-dropdown multi' : 'variable-value-dropdown single'}`}>
         <div className="variable-options-wrapper">
-          <div className="variable-options-column">
+          <ul
+            className={listStyles}
+            aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
+            {...restProps}
+          >
             {this.renderMultiToggle()}
             {values.map((option, index) => this.renderOption(option, index))}
-          </div>
-          {this.renderTags(tags)}
+          </ul>
         </div>
       </div>
-    );
-  }
-
-  renderTags(tags: VariableTag[]) {
-    if (tags.length === 0) {
-      return null;
-    }
-
-    return (
-      <div className="variable-options-column">
-        <div className="variable-options-column-header text-center">Tags</div>
-        {tags.map(tag => this.renderTag(tag))}
-      </div>
-    );
-  }
-
-  renderTag(tag: VariableTag) {
-    const { color, borderColor } = getTagColorsFromName(tag.text.toString());
-
-    return (
-      <a
-        key={`${tag.text}`}
-        className={`${tag.selected ? 'variable-option-tag pointer selected' : 'variable-option-tag pointer'}`}
-        onClick={this.onToggleTag(tag)}
-      >
-        <span className="fa fa-fw variable-option-icon"></span>
-        <span className="label-tag" style={{ backgroundColor: color, borderColor }}>
-          {tag.text}&nbsp;&nbsp;
-          <Icon name="tag-alt" />
-          &nbsp;
-        </span>
-      </a>
     );
   }
 
@@ -94,12 +62,14 @@ export class VariableOptions extends PureComponent<Props> {
     const highlightClass = index === highlightIndex ? `${selectClass} highlighted` : selectClass;
 
     return (
-      <a key={`${option.value}`} className={highlightClass} onClick={this.onToggle(option)}>
-        <span className="variable-option-icon"></span>
-        <span aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(`${option.text}`)}>
-          {option.text}
-        </span>
-      </a>
+      <li key={`${option.value}`}>
+        <a role="checkbox" aria-checked={option.selected} className={highlightClass} onClick={this.onToggle(option)}>
+          <span className="variable-option-icon"></span>
+          <span data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(`${option.text}`)}>
+            {option.text}
+          </span>
+        </a>
+      </li>
     );
   }
 
@@ -118,7 +88,10 @@ export class VariableOptions extends PureComponent<Props> {
               ? 'variable-options-column-header many-selected'
               : 'variable-options-column-header'
           }`}
+          role="checkbox"
+          aria-checked={selectedValues.length > 1 ? 'mixed' : 'false'}
           onClick={this.onToggleAll}
+          aria-label="Toggle all values"
           data-placement="top"
         >
           <span className="variable-option-icon"></span>
@@ -128,3 +101,10 @@ export class VariableOptions extends PureComponent<Props> {
     );
   }
 }
+
+const listStyles = cx(
+  'variable-options-column',
+  css`
+    list-style-type: none;
+  `
+);

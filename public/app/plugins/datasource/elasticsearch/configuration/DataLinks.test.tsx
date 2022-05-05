@@ -1,9 +1,11 @@
-import React from 'react';
 import { mount } from 'enzyme';
-import { DataLinks } from './DataLinks';
-import { Button } from '@grafana/ui';
-import { DataLink } from './DataLink';
+import React from 'react';
 import { act } from 'react-dom/test-utils';
+
+import { Button } from '@grafana/ui';
+
+import { DataLink } from './DataLink';
+import { DataLinks } from './DataLinks';
 
 describe('DataLinks', () => {
   let originalGetSelection: typeof window.getSelection;
@@ -65,10 +67,7 @@ describe('DataLinks', () => {
         wrapper = await mount(<DataLinks value={testValue} onChange={onChangeMock} />);
       }
     );
-    const removeButton = wrapper
-      .find(DataLink)
-      .at(0)
-      .find(Button);
+    const removeButton = wrapper.find(DataLink).at(0).find(Button);
     removeButton.simulate('click');
     const newValue = onChangeMock.mock.calls[0][0];
     expect(newValue.length).toBe(1);

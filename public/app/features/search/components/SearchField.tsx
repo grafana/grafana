@@ -1,7 +1,9 @@
-import React, { FC, useContext } from 'react';
-import { css, cx } from 'emotion';
-import { ThemeContext } from '@grafana/ui';
+import { css, cx } from '@emotion/css';
+import React, { FC } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
+import { useStyles } from '@grafana/ui';
+
 import { DashboardQuery } from '../types';
 
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
@@ -57,8 +59,7 @@ const getSearchFieldStyles = (theme: GrafanaTheme) => ({
 });
 
 export const SearchField: FC<SearchFieldProps> = ({ query, onChange, size, clearable, className, ...inputProps }) => {
-  const theme = useContext(ThemeContext);
-  const styles = getSearchFieldStyles(theme);
+  const styles = useStyles(getSearchFieldStyles);
 
   return (
     <div className={cx(styles.wrapper, className)}>
@@ -69,7 +70,7 @@ export const SearchField: FC<SearchFieldProps> = ({ query, onChange, size, clear
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
           onChange(event.currentTarget.value);
         }}
-        tabIndex={1}
+        tabIndex={0}
         spellCheck={false}
         className={styles.input}
         {...inputProps}

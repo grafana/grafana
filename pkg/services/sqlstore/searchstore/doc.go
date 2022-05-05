@@ -7,7 +7,7 @@
 // without fuzziness and in a single SQL query.
 //
 // Search queries are a combination of an outer query which Builder
-// creates automatically when calling the Builder.ToSql method and an
+// creates automatically when calling the Builder.ToSQL method and an
 // inner query feeding that which lists the IDs of the dashboards that
 // should be part of the result set. By default search will return all
 // dashboards (behind pagination) but it is possible to dynamically add

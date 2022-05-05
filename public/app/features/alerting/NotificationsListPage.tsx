@@ -1,13 +1,15 @@
 import React, { useState, FC, useEffect } from 'react';
+import { useAsyncFn } from 'react-use';
+
+import { getBackendSrv } from '@grafana/runtime';
+import { HorizontalGroup, Button, LinkButton } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import Page from 'app/core/components/Page/Page';
-import { getBackendSrv } from '@grafana/runtime';
-import { useAsyncFn } from 'react-use';
 import { appEvents } from 'app/core/core';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { HorizontalGroup, Button, LinkButton } from '@grafana/ui';
-import { CoreEvents } from 'app/types';
 import { AlertNotification } from 'app/types/alerting';
+
+import { ShowConfirmModalEvent } from '../../types/events';
 
 const NotificationsListPage: FC = () => {
   const navModel = useNavModel('channels');
@@ -20,23 +22,25 @@ const NotificationsListPage: FC = () => {
 
   const [state, fetchNotifications] = useAsyncFn(getNotifications);
   useEffect(() => {
-    fetchNotifications().then(res => {
+    fetchNotifications().then((res) => {
       setNotifications(res);
     });
-  }, []);
+  }, [fetchNotifications]);
 
   const deleteNotification = (id: number) => {
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete',
-      text: 'Do you want to delete this notification channel?',
-      text2: `Deleting this notification channel will not delete from alerts any references to it`,
-      icon: 'trash-alt',
-      confirmText: 'Delete',
-      yesText: 'Delete',
-      onConfirm: async () => {
-        deleteNotificationConfirmed(id);
-      },
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Delete',
+        text: 'Do you want to delete this notification channel?',
+        text2: `Deleting this notification channel will not delete from alerts any references to it`,
+        icon: 'trash-alt',
+        confirmText: 'Delete',
+        yesText: 'Delete',
+        onConfirm: async () => {
+          deleteNotificationConfirmed(id);
+        },
+      })
+    );
   };
 
   const deleteNotificationConfirmed = async (id: number) => {
@@ -68,7 +72,7 @@ const NotificationsListPage: FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {notifications.map(notification => (
+                {notifications.map((notification) => (
                   <tr key={notification.id}>
                     <td className="link-td">
                       <a href={`alerting/notification/${notification.id}/edit`}>{notification.name}</a>

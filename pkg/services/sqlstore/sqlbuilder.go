@@ -7,12 +7,12 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type SqlBuilder struct {
+type SQLBuilder struct {
 	sql    bytes.Buffer
 	params []interface{}
 }
 
-func (sb *SqlBuilder) Write(sql string, params ...interface{}) {
+func (sb *SQLBuilder) Write(sql string, params ...interface{}) {
 	sb.sql.WriteString(sql)
 
 	if len(params) > 0 {
@@ -20,15 +20,19 @@ func (sb *SqlBuilder) Write(sql string, params ...interface{}) {
 	}
 }
 
-func (sb *SqlBuilder) GetSqlString() string {
+func (sb *SQLBuilder) GetSQLString() string {
 	return sb.sql.String()
 }
 
-func (sb *SqlBuilder) AddParams(params ...interface{}) {
+func (sb *SQLBuilder) GetParams() []interface{} {
+	return sb.params
+}
+
+func (sb *SQLBuilder) AddParams(params ...interface{}) {
 	sb.params = append(sb.params, params...)
 }
 
-func (sb *SqlBuilder) writeDashboardPermissionFilter(user *models.SignedInUser, permission models.PermissionType) {
+func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *models.SignedInUser, permission models.PermissionType) {
 	if user.OrgRole == models.ROLE_ADMIN {
 		return
 	}
@@ -47,17 +51,15 @@ func (sb *SqlBuilder) writeDashboardPermissionFilter(user *models.SignedInUser, 
 			SELECT distinct DashboardId from (
 				SELECT d.id AS DashboardId
 					FROM dashboard AS d
-					LEFT JOIN dashboard AS folder on folder.id = d.folder_id
 					LEFT JOIN dashboard_acl AS da ON
 						da.dashboard_id = d.id OR
 						da.dashboard_id = d.folder_id
-					LEFT JOIN team_member as ugm on ugm.team_id = da.team_id
 					WHERE
 						d.org_id = ? AND
 						da.permission >= ? AND
 						(
 							da.user_id = ? OR
-							ugm.user_id = ? OR
+							da.team_id IN (SELECT team_id from team_member AS tm WHERE tm.user_id = ?) OR
 							da.role IN (?` + strings.Repeat(",?", len(okRoles)-1) + `)
 						)
 				UNION

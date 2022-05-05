@@ -1,5 +1,7 @@
-﻿import React, { PureComponent } from 'react';
+﻿import React, { PropsWithChildren, useLayoutEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
+
+import { useTheme2 } from '../../themes';
 
 interface Props {
   className?: string;
@@ -7,37 +9,48 @@ interface Props {
   forwardedRef?: any;
 }
 
-export class Portal extends PureComponent<Props> {
-  node: HTMLElement = document.createElement('div');
-  portalRoot: HTMLElement;
+export function Portal(props: PropsWithChildren<Props>) {
+  const { children, className, root, forwardedRef } = props;
+  const theme = useTheme2();
+  const node = useRef<HTMLDivElement | null>(null);
+  const portalRoot = root ?? getPortalContainer();
 
-  constructor(props: Props) {
-    super(props);
-    const { className, root = document.body } = this.props;
-
+  if (!node.current) {
+    node.current = document.createElement('div');
     if (className) {
-      this.node.classList.add(className);
+      node.current.className = className;
+    }
+    node.current.style.position = 'relative';
+    node.current.style.zIndex = `${theme.zIndex.portal}`;
+  }
+
+  useLayoutEffect(() => {
+    if (node.current) {
+      portalRoot.appendChild(node.current);
     }
 
-    this.portalRoot = root;
-    this.portalRoot.appendChild(this.node);
-  }
+    return () => {
+      if (node.current) {
+        portalRoot.removeChild(node.current);
+      }
+    };
+  }, [portalRoot]);
 
-  componentWillUnmount() {
-    this.portalRoot.removeChild(this.node);
-  }
+  return ReactDOM.createPortal(<div ref={forwardedRef}>{children}</div>, node.current);
+}
 
-  render() {
-    // Default z-index is high to make sure
-    return ReactDOM.createPortal(
-      <div style={{ zIndex: 1051, position: 'relative' }} ref={this.props.forwardedRef}>
-        {this.props.children}
-      </div>,
-      this.node
-    );
-  }
+/** @internal */
+export function getPortalContainer() {
+  return window.document.getElementById('grafana-portal-container') ?? document.body;
+}
+
+/** @internal */
+export function PortalContainer() {
+  return <div id="grafana-portal-container" />;
 }
 
 export const RefForwardingPortal = React.forwardRef<HTMLDivElement, Props>((props, ref) => {
   return <Portal {...props} forwardedRef={ref} />;
 });
+
+RefForwardingPortal.displayName = 'RefForwardingPortal';

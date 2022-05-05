@@ -1,7 +1,9 @@
-import React from 'react';
 import { mount } from 'enzyme';
-import { DashboardRow } from './DashboardRow';
+import React from 'react';
+
 import { PanelModel } from '../../state/PanelModel';
+
+import { DashboardRow } from './DashboardRow';
 
 describe('DashboardRow', () => {
   let wrapper: any, panel: PanelModel, dashboardMock: any;
@@ -13,6 +15,7 @@ describe('DashboardRow', () => {
       meta: {
         canEdit: true,
       },
+      events: { subscribe: jest.fn() },
     };
 
     panel = new PanelModel({ collapsed: false });
@@ -29,6 +32,10 @@ describe('DashboardRow', () => {
 
     expect(wrapper.find('.dashboard-row--collapsed')).toHaveLength(1);
     expect(dashboardMock.toggleRow.mock.calls).toHaveLength(1);
+  });
+
+  it('Should subscribe to event during mount', () => {
+    expect(dashboardMock.events.subscribe.mock.calls).toHaveLength(1);
   });
 
   it('should have two actions as admin', () => {

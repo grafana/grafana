@@ -1,11 +1,16 @@
-import { FieldConfig } from './dataFrame';
-import { DataTransformerConfig } from './transformations';
+import { DataFrameDTO, FieldConfig } from './dataFrame';
+import { DataFrameType } from './dataFrameTypes';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
+import { DataTopic } from './query';
+import { DataTransformerConfig } from './transformations';
+
+import { PanelPluginDataSupport } from '.';
 
 export type KeyValue<T = any> = Record<string, T>;
 
 /**
  * Represent panel data loading state.
+ * @public
  */
 export enum LoadingState {
   NotStarted = 'NotStarted',
@@ -15,13 +20,16 @@ export enum LoadingState {
   Error = 'Error',
 }
 
-export enum DataTopic {
-  Annotations = 'annotations',
-}
+// Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
+export const preferredVisualizationTypes = ['graph', 'table', 'logs', 'trace', 'nodeGraph'] as const;
+export type PreferredVisualisationType = typeof preferredVisualizationTypes[number];
 
-export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';
-
+/**
+ * @public
+ */
 export interface QueryResultMeta {
+  type?: DataFrameType;
+
   /** DatasSource Specific Values */
   custom?: Record<string, any>;
 
@@ -37,6 +45,12 @@ export interface QueryResultMeta {
   /** Currently used to show results in Explore only in preferred visualisation option */
   preferredVisualisationType?: PreferredVisualisationType;
 
+  /** The path for live stream updates for this frame */
+  channel?: string;
+
+  /** Did the query response come from the cache */
+  isCachedResponse?: boolean;
+
   /**
    * Optionally identify which topic the frame should be assigned to.
    * A value specified in the response will override what the request asked for.
@@ -50,9 +64,18 @@ export interface QueryResultMeta {
   executedQueryString?: string;
 
   /**
+   * A browsable path on the datasource
+   */
+  path?: string;
+
+  /**
+   * defaults to '/'
+   */
+  pathSeparator?: string;
+
+  /**
    * Legacy data source specific, should be moved to custom
    * */
-  gmdMeta?: any[]; // used by cloudwatch
   alignmentPeriod?: number; // used by cloud monitoring
   searchWords?: string[]; // used by log models and loki
   limit?: number; // used by log models and loki
@@ -67,6 +90,7 @@ export interface QueryResultMetaStat extends FieldConfig {
 
 /**
  * QueryResultMetaNotice is a structure that provides user notices for query result data
+ * @public
  */
 export interface QueryResultMetaNotice {
   /**
@@ -91,6 +115,9 @@ export interface QueryResultMetaNotice {
   inspect?: 'meta' | 'error' | 'data' | 'stats';
 }
 
+/**
+ * @public
+ */
 export interface QueryResultBase {
   /**
    * Matches the query target refId
@@ -106,7 +133,6 @@ export interface QueryResultBase {
 export interface Labels {
   [key: string]: string;
 }
-
 export interface Column {
   text: string; // For a Column, the 'text' is the field name
   filterable?: boolean;
@@ -146,6 +172,9 @@ export enum NullValueMode {
  * Describes and API for exposing panel specific data configurations.
  */
 export interface DataConfigSource {
+  configRev?: number;
+  getDataSupport: () => PanelPluginDataSupport;
   getTransformations: () => DataTransformerConfig[] | undefined;
   getFieldOverrideOptions: () => ApplyFieldOverrideOptions | undefined;
+  snapshotData?: DataFrameDTO[];
 }

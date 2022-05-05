@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/oauth2"
 )
 
@@ -18,6 +19,7 @@ type UserAuth struct {
 	Created           time.Time
 	OAuthAccessToken  string
 	OAuthRefreshToken string
+	OAuthIdToken      string
 	OAuthTokenType    string
 	OAuthExpiry       time.Time
 }
@@ -35,6 +37,19 @@ type ExternalUserInfo struct {
 	IsGrafanaAdmin *bool // This is a pointer to know if we should sync this or not (nil = ignore sync)
 	IsDisabled     bool
 }
+
+type LoginInfo struct {
+	AuthModule    string
+	User          *User
+	ExternalUser  ExternalUserInfo
+	LoginUsername string
+	HTTPStatus    int
+	Error         error
+}
+
+// RequestURIKey is used as key to save request URI in contexts
+// (used for the Enterprise auditing feature)
+type RequestURIKey struct{}
 
 // ---------------------
 // COMMANDS
@@ -65,15 +80,6 @@ type DeleteAuthInfoCommand struct {
 	UserAuth *UserAuth
 }
 
-type SendLoginLogCommand struct {
-	ReqContext   *ReqContext
-	LogAction    string
-	User         *User
-	ExternalUser *ExternalUserInfo
-	HTTPStatus   int
-	Error        error
-}
-
 // ----------------------
 // QUERIES
 
@@ -84,6 +90,7 @@ type LoginUserQuery struct {
 	User       *User
 	IpAddress  string
 	AuthModule string
+	Cfg        *setting.Cfg
 }
 
 type GetUserByAuthInfoQuery struct {
@@ -92,8 +99,6 @@ type GetUserByAuthInfoQuery struct {
 	UserId     int64
 	Email      string
 	Login      string
-
-	Result *User
 }
 
 type GetExternalUserInfoByLoginQuery struct {
@@ -114,14 +119,4 @@ type TeamOrgGroupDTO struct {
 	TeamName string `json:"teamName"`
 	OrgName  string `json:"orgName"`
 	GroupDN  string `json:"groupDN"`
-}
-
-type GetTeamsForLDAPGroupCommand struct {
-	Groups []string
-	Result []TeamOrgGroupDTO
-}
-
-type SyncTeamsCommand struct {
-	ExternalUser *ExternalUserInfo
-	User         *User
 }

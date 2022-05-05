@@ -1,12 +1,13 @@
-import { ScopedVars } from './ScopedVars';
-import { DataQuery } from './datasource';
+import { ExplorePanelsState } from './explore';
+import { InterpolateFunction } from './panel';
+import { DataQuery } from './query';
 
 /**
  * Callback info for DataLink click events
  */
 export interface DataLinkClickEvent<T = any> {
   origin: T;
-  scopedVars?: ScopedVars;
+  replaceVariables: InterpolateFunction | undefined;
   e?: any; // mouse|react event
 }
 
@@ -33,13 +34,18 @@ export interface DataLink<T extends DataQuery = any> {
   onClick?: (event: DataLinkClickEvent) => void;
 
   // If dataLink represents internal link this has to be filled. Internal link is defined as a query in a particular
-  // datas ource that we want to show to the user. Usually this results in a link to explore but can also lead to
+  // data source that we want to show to the user. Usually this results in a link to explore but can also lead to
   // more custom onClick behaviour if needed.
   // @internal and subject to change in future releases
-  internal?: {
-    query: T;
-    datasourceUid: string;
-  };
+  internal?: InternalDataLink<T>;
+}
+
+/** @internal */
+export interface InternalDataLink<T extends DataQuery = any> {
+  query: T;
+  datasourceUid: string;
+  datasourceName: string;
+  panelsState?: ExplorePanelsState;
 }
 
 export type LinkTarget = '_blank' | '_self' | undefined;
@@ -54,7 +60,7 @@ export interface LinkModel<T = any> {
   origin: T;
 
   // When a click callback exists, this is passed the raw mouse|react event
-  onClick?: (e: any) => void;
+  onClick?: (e: any, origin?: any) => void;
 }
 
 /**
@@ -63,7 +69,7 @@ export interface LinkModel<T = any> {
  * TODO: ScopedVars in in GrafanaUI package!
  */
 export interface LinkModelSupplier<T extends object> {
-  getLinks(scopedVars?: any): Array<LinkModel<T>>;
+  getLinks(replaceVariables?: InterpolateFunction): Array<LinkModel<T>>;
 }
 
 export enum VariableOrigin {

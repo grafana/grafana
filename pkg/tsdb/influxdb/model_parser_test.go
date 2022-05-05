@@ -4,20 +4,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
 )
 
-func TestInfluxdbQueryParser(t *testing.T) {
-	Convey("Influxdb query parser", t, func() {
-		parser := &InfluxdbQueryParser{}
-		dsInfo := &models.DataSource{
-			JsonData: simplejson.New(),
-		}
+func TestInfluxdbQueryParser_Parse(t *testing.T) {
+	parser := &InfluxdbQueryParser{}
 
-		Convey("can parse influxdb json model", func() {
-			json := `
+	t.Run("can parse influxdb json model", func(t *testing.T) {
+		json := `
         {
         "groupBy": [
           {
@@ -41,6 +36,9 @@ func TestInfluxdbQueryParser(t *testing.T) {
         ],
         "measurement": "logins.count",
         "tz": "Europe/Paris",
+        "limit": "1",
+        "slimit": "1",
+        "orderByTime": "ASC",
         "policy": "default",
         "refId": "B",
         "resultFormat": "time_series",
@@ -106,22 +104,27 @@ func TestInfluxdbQueryParser(t *testing.T) {
         ]
       }
       `
-			dsInfo.JsonData.Set("timeInterval", ">20s")
-			modelJson, err := simplejson.NewJson([]byte(json))
-			So(err, ShouldBeNil)
 
-			res, err := parser.Parse(modelJson, dsInfo)
-			So(err, ShouldBeNil)
-			So(len(res.GroupBy), ShouldEqual, 3)
-			So(len(res.Selects), ShouldEqual, 3)
-			So(len(res.Tags), ShouldEqual, 2)
-			So(res.Tz, ShouldEqual, "Europe/Paris")
-			So(res.Interval, ShouldEqual, time.Second*20)
-			So(res.Alias, ShouldEqual, "series alias")
-		})
+		query := backend.DataQuery{
+			JSON:     []byte(json),
+			Interval: time.Second * 20,
+		}
 
-		Convey("can part raw query json model", func() {
-			json := `
+		res, err := parser.Parse(query)
+		require.NoError(t, err)
+		require.Len(t, res.GroupBy, 3)
+		require.Len(t, res.Selects, 3)
+		require.Len(t, res.Tags, 2)
+		require.Equal(t, "Europe/Paris", res.Tz)
+		require.Equal(t, "1", res.Limit)
+		require.Equal(t, "1", res.Slimit)
+		require.Equal(t, "ASC", res.OrderByTime)
+		require.Equal(t, time.Second*20, res.Interval)
+		require.Equal(t, "series alias", res.Alias)
+	})
+
+	t.Run("can parse raw query json model", func(t *testing.T) {
+		json := `
       {
         "groupBy": [
           {
@@ -165,16 +168,36 @@ func TestInfluxdbQueryParser(t *testing.T) {
       }
       `
 
-			modelJson, err := simplejson.NewJson([]byte(json))
-			So(err, ShouldBeNil)
+		query := backend.DataQuery{
+			JSON:     []byte(json),
+			Interval: time.Second * 10,
+		}
 
-			res, err := parser.Parse(modelJson, dsInfo)
-			So(err, ShouldBeNil)
-			So(res.RawQuery, ShouldEqual, "RawDummyQuery")
-			So(len(res.GroupBy), ShouldEqual, 2)
-			So(len(res.Selects), ShouldEqual, 1)
-			So(len(res.Tags), ShouldEqual, 0)
-			So(res.Interval, ShouldEqual, time.Second*10)
-		})
+		res, err := parser.Parse(query)
+		require.NoError(t, err)
+		require.Equal(t, "RawDummyQuery", res.RawQuery)
+		require.Len(t, res.GroupBy, 2)
+		require.Len(t, res.Selects, 1)
+		require.Empty(t, res.Tags)
+		require.Equal(t, time.Second*10, res.Interval)
+	})
+
+	t.Run("will enforce a minInterval of 1 millisecond", func(t *testing.T) {
+		json := `
+      {
+        "query": "RawDummyQuery",
+        "rawQuery": true,
+        "resultFormat": "time_series"
+      }
+      `
+
+		query := backend.DataQuery{
+			JSON:     []byte(json),
+			Interval: time.Millisecond * 0,
+		}
+
+		res, err := parser.Parse(query)
+		require.NoError(t, err)
+		require.Equal(t, time.Millisecond*1, res.Interval)
 	})
 }

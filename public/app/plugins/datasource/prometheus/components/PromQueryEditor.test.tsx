@@ -1,10 +1,12 @@
+import { screen, render } from '@testing-library/react';
 import React from 'react';
-import { shallow } from 'enzyme';
-import { dateTime } from '@grafana/data';
 
-import { PromQueryEditor } from './PromQueryEditor';
+import { dateTime, CoreApp } from '@grafana/data';
+
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
+
+import { PromQueryEditor, testIds } from './PromQueryEditor';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
   return {
@@ -17,10 +19,24 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => {
   };
 });
 
+jest.mock('./monaco-query-field/MonacoQueryFieldWrapper', () => {
+  const fakeQueryField = () => <div>prometheus query field</div>;
+  return {
+    MonacoQueryFieldWrapper: fakeQueryField,
+  };
+});
+
 const setup = (propOverrides?: object) => {
   const datasourceMock: unknown = {
-    createQuery: jest.fn(q => q),
+    createQuery: jest.fn((q) => q),
     getPrometheusTime: jest.fn((date, roundup) => 123),
+    languageProvider: {
+      start: () => Promise.resolve([]),
+      syntax: () => {},
+      getLabelKeys: () => [],
+      metrics: [],
+    },
+    getInitHints: () => [],
   };
   const datasource: PrometheusDatasource = datasourceMock as PrometheusDatasource;
   const onRunQuery = jest.fn();
@@ -36,18 +52,24 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  const wrapper = shallow(<PromQueryEditor {...props} />);
-  const instance = wrapper.instance() as PromQueryEditor;
-
-  return {
-    instance,
-    wrapper,
-  };
+  return render(<PromQueryEditor {...props} />);
 };
 
 describe('Render PromQueryEditor with basic options', () => {
-  it('should render', () => {
-    const { wrapper } = setup();
-    expect(wrapper).toMatchSnapshot();
+  it('should render editor', () => {
+    setup();
+    expect(screen.getByTestId(testIds.editor)).toBeInTheDocument();
+  });
+
+  it('should render exemplar editor for dashboard', () => {
+    setup({ app: CoreApp.Dashboard });
+    expect(screen.getByTestId(testIds.editor)).toBeInTheDocument();
+    expect(screen.getByTestId(testIds.exemplar)).toBeInTheDocument();
+  });
+
+  it('should not render exemplar editor for unified alerting', () => {
+    setup({ app: CoreApp.UnifiedAlerting });
+    expect(screen.getByTestId(testIds.editor)).toBeInTheDocument();
+    expect(screen.queryByTestId(testIds.exemplar)).not.toBeInTheDocument();
   });
 });

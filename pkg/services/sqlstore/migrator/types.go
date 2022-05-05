@@ -8,17 +8,21 @@ import (
 )
 
 const (
-	POSTGRES = "postgres"
-	SQLITE   = "sqlite3"
-	MYSQL    = "mysql"
+	Postgres = "postgres"
+	SQLite   = "sqlite3"
+	MySQL    = "mysql"
 	MSSQL    = "mssql"
 )
 
 type Migration interface {
-	Sql(dialect Dialect) string
+	SQL(dialect Dialect) string
 	Id() string
 	SetId(string)
 	GetCondition() MigrationCondition
+	// SkipMigrationLog is used by dashboard alert migration to Grafana 8 Alerts
+	// for skipping recording it in the migration_log so that it can run several times.
+	// For all the other migrations it should be false.
+	SkipMigrationLog() bool
 }
 
 type CodeMigration interface {
@@ -76,8 +80,7 @@ var (
 	DB_Integer   = "INTEGER"
 	DB_BigInt    = "BIGINT"
 
-	DB_Enum = "ENUM"
-	DB_Set  = "SET"
+	DB_Set = "SET"
 
 	DB_Char       = "CHAR"
 	DB_Varchar    = "VARCHAR"

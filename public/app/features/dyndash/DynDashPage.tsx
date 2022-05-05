@@ -1,9 +1,7 @@
 // Libraries
 import React, { FC } from 'react';
-import { connect } from 'react-redux';
 
 // Types
-import { StoreState } from 'app/types';
 import { getDemoScene } from './scenes/demo';
 import { SceneView } from './components/SceneView';
 import { useObservable } from '@grafana/data';
@@ -12,7 +10,7 @@ export interface Props {
   name: string;
 }
 
-export const DynDashPageUnconnected: FC<Props> = ({ name }) => {
+export const DynDash: FC<Props> = ({ name }) => {
   const scene = useObservable(getDemoScene(name), null);
 
   if (!scene) {
@@ -26,10 +24,3 @@ export const DynDashPageUnconnected: FC<Props> = ({ name }) => {
   );
 };
 
-export const mapStateToProps = (state: StoreState) => ({
-  name: state.location.routeParams.name,
-});
-
-const mapDispatchToProps = {};
-
-export default connect(mapStateToProps, mapDispatchToProps)(DynDashPageUnconnected);

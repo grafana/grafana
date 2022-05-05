@@ -1,6 +1,10 @@
 import { MutableVector } from '../types/vector';
+
 import { FunctionalVector } from './FunctionalVector';
 
+/**
+ * @public
+ */
 export class ArrayVector<T = any> extends FunctionalVector<T> implements MutableVector<T> {
   buffer: T[];
 

@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { mount, shallow } from 'enzyme';
+import React from 'react';
+
+import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
 import ListView from './index';
-import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
 // Util to get list of all callbacks added to an event emitter by event type.
 // jest adds "error" event listeners to window, this util makes it easier to
@@ -69,7 +70,7 @@ describe('<ListView>', () => {
     itemsWrapperClassName: 'SomeClassName',
     viewBuffer: 10,
     viewBufferMin: 5,
-    windowScroller: false,
+    windowScroller: true,
   };
 
   describe('shallow tests', () => {
@@ -114,7 +115,7 @@ describe('<ListView>', () => {
 
       let oldRender;
       let oldInitWrapper;
-      const initWrapperMock = jest.fn(elm => {
+      const initWrapperMock = jest.fn((elm) => {
         if (elm != null) {
           // jsDom requires `defineProperties` instead of just setting the props
           Object.defineProperties(elm, {
@@ -150,10 +151,6 @@ describe('<ListView>', () => {
         initWrapperMock.mockClear();
         wrapper = mount(<ListView {...props} />);
         instance = wrapper.instance();
-      });
-
-      it('getViewHeight() returns the viewHeight', () => {
-        expect(instance.getViewHeight()).toBe(clientHeight);
       });
 
       it('getBottomVisibleIndex() returns a number', () => {
@@ -205,7 +202,7 @@ describe('<ListView>', () => {
         expect(eventListeners.scroll).toEqual([instance._onScroll]);
       });
 
-      it('calls _positionList when the document is scrolled', done => {
+      it('calls _positionList when the document is scrolled', (done) => {
         const event = new Event('scroll');
         const fn = jest.spyOn(instance, '_positionList');
         expect(instance._isScrolledOrResized).toBe(false);
@@ -233,9 +230,9 @@ describe('<ListView>', () => {
           },
         });
         const hasChanged = instance._isViewChanged();
+        expect(hasChanged).toBe(true);
         expect(spyFns.clientHeight).toHaveBeenCalled();
         expect(spyFns.scrollTop).toHaveBeenCalled();
-        expect(hasChanged).toBe(true);
       });
     });
   });

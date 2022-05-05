@@ -1,38 +1,31 @@
 // Libraries
 import classNames from 'classnames';
 import React, { PureComponent } from 'react';
-
-// Ignoring because I couldn't get @types/react-select work with Torkel's fork
-// @ts-ignore
-import { default as ReactSelect } from '@torkelo/react-select';
-// @ts-ignore
-import Creatable from '@torkelo/react-select/creatable';
-// @ts-ignore
-import { CreatableProps } from 'react-select';
-// @ts-ignore
-import { default as ReactAsyncSelect } from '@torkelo/react-select/async';
-// @ts-ignore
-import { components } from '@torkelo/react-select';
+import { default as ReactSelect, components } from 'react-select';
+import { default as ReactAsyncSelect } from 'react-select/async';
+import Creatable from 'react-select/creatable';
 
 // Components
-import { SelectOption } from './SelectOption';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+
+import { ThemeContext } from '../../../../themes';
+import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
 import { SelectOptionGroup } from '../../../Select/SelectOptionGroup';
 import { SingleValue } from '../../../Select/SingleValue';
+import resetSelectStyles from '../../../Select/resetSelectStyles';
 import { SelectCommonProps, SelectAsyncProps } from '../../../Select/types';
+import { Tooltip, PopoverContent } from '../../../Tooltip';
+
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
-import resetSelectStyles from '../../../Select/resetSelectStyles';
-import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
-import { PopoverContent } from '../../../Tooltip/Tooltip';
-import { Tooltip } from '../../../Tooltip/Tooltip';
-import { SelectableValue } from '@grafana/data';
+import { SelectOption } from './SelectOption';
 
 /**
  * Changes in new selects:
  * - noOptionsMessage & loadingMessage is of string type
  * - isDisabled is renamed to disabled
  */
-type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled' | 'value'>;
+type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled' | 'value' | 'loadingMessage'>;
 
 interface AsyncProps<T> extends LegacyCommonProps<T>, Omit<SelectAsyncProps<T>, 'loadingMessage'> {
   loadingMessage?: () => string;
@@ -42,7 +35,7 @@ interface AsyncProps<T> extends LegacyCommonProps<T>, Omit<SelectAsyncProps<T>, 
   value?: SelectableValue<T>;
 }
 
-interface LegacySelectProps<T> extends LegacyCommonProps<T> {
+export interface LegacySelectProps<T> extends LegacyCommonProps<T> {
   tooltipContent?: PopoverContent;
   noOptionsMessage?: () => string;
   isDisabled?: boolean;
@@ -59,6 +52,8 @@ export const MenuList = (props: any) => {
   );
 };
 export class Select<T> extends PureComponent<LegacySelectProps<T>> {
+  static contextType = ThemeContext;
+
   static defaultProps: Partial<LegacySelectProps<any>> = {
     className: '',
     isDisabled: false,
@@ -111,6 +106,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
       onOpenMenu,
       allowCustomValue,
       formatCreateLabel,
+      'aria-label': ariaLabel,
     } = this.props;
 
     let widthClass = '';
@@ -118,11 +114,11 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
       widthClass = 'width-' + width;
     }
 
-    let SelectComponent: ReactSelect | Creatable = ReactSelect;
+    let SelectComponent = ReactSelect;
     const creatableOptions: any = {};
 
     if (allowCustomValue) {
-      SelectComponent = Creatable;
+      SelectComponent = Creatable as any;
       creatableOptions.formatCreateLabel = formatCreateLabel ?? ((input: string) => input);
     }
 
@@ -146,7 +142,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
               onChange={onChange}
               options={options}
               placeholder={placeholder || 'Choose'}
-              styles={resetSelectStyles()}
+              styles={resetSelectStyles(this.context as GrafanaTheme2)}
               isDisabled={isDisabled}
               isLoading={isLoading}
               isClearable={isClearable}
@@ -154,13 +150,14 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
               onBlur={onBlur}
               openMenuOnFocus={openMenuOnFocus}
               maxMenuHeight={maxMenuHeight}
-              noOptionsMessage={() => noOptionsMessage}
+              noOptionsMessage={noOptionsMessage}
               isMulti={isMulti}
               backspaceRemovesValue={backspaceRemovesValue}
               menuIsOpen={isOpen}
               onMenuOpen={onOpenMenuInternal}
               onMenuClose={onCloseMenuInternal}
               tabSelectsValue={tabSelectsValue}
+              aria-label={ariaLabel}
               {...creatableOptions}
             />
           );
@@ -238,14 +235,17 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               }}
               defaultValue={defaultValue}
               value={value}
+              //@ts-expect-error
               getOptionLabel={getOptionLabel}
               getOptionValue={getOptionValue}
               menuShouldScrollIntoView={false}
+              //@ts-expect-error
               onChange={onChange}
               loadOptions={loadOptions}
               isLoading={isLoading}
               defaultOptions={defaultOptions}
               placeholder={placeholder || 'Choose'}
+              //@ts-expect-error
               styles={resetSelectStyles()}
               loadingMessage={() => loadingMessage}
               noOptionsMessage={noOptionsMessage}

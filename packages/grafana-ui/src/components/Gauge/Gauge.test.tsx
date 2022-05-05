@@ -1,9 +1,11 @@
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
+
+import { ThresholdsMode, FieldConfig, FieldColorModeId } from '@grafana/data';
+
+import { getTheme } from '../../themes';
 
 import { Gauge, Props } from './Gauge';
-import { getTheme } from '../../themes';
-import { ThresholdsMode, FieldConfig } from '@grafana/data';
 
 jest.mock('jquery', () => ({
   plot: jest.fn(),
@@ -13,6 +15,9 @@ const setup = (propOverrides?: FieldConfig) => {
   const field: FieldConfig = {
     min: 0,
     max: 100,
+    color: {
+      mode: FieldColorModeId.Thresholds,
+    },
     thresholds: {
       mode: ThresholdsMode.Absolute,
       steps: [{ value: -Infinity, color: '#7EB26D' }],

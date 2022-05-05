@@ -1,14 +1,16 @@
-import cloneDeep from 'lodash/cloneDeep';
-import { CustomVariableModel } from '../types';
+import { cloneDeep } from 'lodash';
+
 import { dispatch } from '../../../store/store';
-import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
-import { customVariableReducer, initialCustomVariableModelState } from './reducer';
-import { OptionsPicker } from '../pickers';
+import { ALL_VARIABLE_TEXT } from '../constants';
+import { optionPickerFactory } from '../pickers';
+import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
+import { CustomVariableModel } from '../types';
+import { isAllVariable, toKeyedVariableIdentifier } from '../utils';
+
 import { CustomVariableEditor } from './CustomVariableEditor';
 import { updateCustomVariableOptions } from './actions';
-import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
-import { isAllVariable } from '../utils';
+import { customVariableReducer, initialCustomVariableModelState } from './reducer';
 
 export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableModel> => {
   return {
@@ -17,25 +19,25 @@ export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableMod
     name: 'Custom',
     initialState: initialCustomVariableModelState,
     reducer: customVariableReducer,
-    picker: OptionsPicker,
+    picker: optionPickerFactory<CustomVariableModel>(),
     editor: CustomVariableEditor,
     dependsOn: () => {
       return false;
     },
     setValue: async (variable, option, emitChanges = false) => {
-      await dispatch(setOptionAsCurrent(toVariableIdentifier(variable), option, emitChanges));
+      await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
-      await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
+      await dispatch(setOptionFromUrl(toKeyedVariableIdentifier(variable), urlValue));
     },
-    updateOptions: async variable => {
-      await dispatch(updateCustomVariableOptions(toVariableIdentifier(variable)));
+    updateOptions: async (variable) => {
+      await dispatch(updateCustomVariableOptions(toKeyedVariableIdentifier(variable)));
     },
-    getSaveModel: variable => {
-      const { index, id, initLock, global, ...rest } = cloneDeep(variable);
+    getSaveModel: (variable) => {
+      const { index, id, state, global, rootStateKey, ...rest } = cloneDeep(variable);
       return rest;
     },
-    getValueForUrl: variable => {
+    getValueForUrl: (variable) => {
       if (isAllVariable(variable)) {
         return ALL_VARIABLE_TEXT;
       }

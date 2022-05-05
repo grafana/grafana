@@ -19,10 +19,10 @@ func TestCorePlugin(t *testing.T) {
 		require.NotNil(t, p)
 		require.NoError(t, p.Start(context.Background()))
 		require.NoError(t, p.Stop(context.Background()))
-		require.False(t, p.IsManaged())
+		require.True(t, p.IsManaged())
 		require.False(t, p.Exited())
 
-		_, err = p.CollectMetrics(context.Background())
+		_, err = p.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{})
 		require.Equal(t, backendplugin.ErrMethodNotImplemented, err)
 
 		_, err = p.CheckHealth(context.Background(), nil)
@@ -36,11 +36,13 @@ func TestCorePlugin(t *testing.T) {
 		checkHealthCalled := false
 		callResourceCalled := false
 		factory := coreplugin.New(backend.ServeOpts{
-			CheckHealthHandler: backend.CheckHealthHandlerFunc(func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+			CheckHealthHandler: backend.CheckHealthHandlerFunc(func(ctx context.Context,
+				req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 				checkHealthCalled = true
 				return nil, nil
 			}),
-			CallResourceHandler: backend.CallResourceHandlerFunc(func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+			CallResourceHandler: backend.CallResourceHandlerFunc(func(ctx context.Context,
+				req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 				callResourceCalled = true
 				return nil
 			}),
@@ -50,10 +52,10 @@ func TestCorePlugin(t *testing.T) {
 		require.NotNil(t, p)
 		require.NoError(t, p.Start(context.Background()))
 		require.NoError(t, p.Stop(context.Background()))
-		require.False(t, p.IsManaged())
+		require.True(t, p.IsManaged())
 		require.False(t, p.Exited())
 
-		_, err = p.CollectMetrics(context.Background())
+		_, err = p.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{})
 		require.Equal(t, backendplugin.ErrMethodNotImplemented, err)
 
 		_, err = p.CheckHealth(context.Background(), &backend.CheckHealthRequest{})

@@ -1,0 +1,28 @@
+{{Subject .Subject "{{.Title}}"}}
+
+{{.Title}}
+----------------
+
+{{.Message}}
+
+{{if ne .Error "" }}
+Error message:
+{{.Error}}
+{{end}}
+
+{{if ne .State "ok" }}
+{{range .EvalMatches}}
+Metric name:
+{{.Metric}}
+Value:
+{{.Value}}
+{{end}}
+{{end}}
+
+View your Alert rule:
+{{.RuleUrl}}"
+
+Go to the Alerts page:
+{{.AlertPageUrl}}
+
+Sent by Grafana v{{.BuildVersion}} (c) 2022 Grafana Labs

@@ -2,11 +2,8 @@
 title = "Provisioning"
 description = ""
 keywords = ["grafana", "provisioning"]
-type = "docs"
 aliases = ["/docs/grafana/latest/installation/provisioning"]
-[menu.docs]
-parent = "admin"
-weight = 8
+weight = 800
 +++
 
 # Provisioning Grafana
@@ -23,16 +20,16 @@ Check out the [configuration]({{< relref "configuration.md" >}}) page for more i
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
 - The custom configuration file path can be overridden using the `--config` parameter
 
-> **Note.** If you have installed Grafana using the `deb` or `rpm`
+> **Note:** If you have installed Grafana using the `deb` or `rpm`
 > packages, then your configuration file is located at
 > `/etc/grafana/grafana.ini`. This path is specified in the Grafana
 > init.d script using `--config` file parameter.
 
 ### Using Environment Variables
 
-It is possible to use environment variable interpolation in all 3 provisioning config types. Allowed syntax
+It is possible to use environment variable interpolation in all 3 provisioning configuration types. Allowed syntax
 is either `$ENV_VAR_NAME` or `${ENV_VAR_NAME}` and can be used only for values not for keys or bigger parts
-of the configs. It is not available in the dashboard's definition files just the dashboard provisioning
+of the configurations. It is not available in the dashboard's definition files just the dashboard provisioning
 configuration.
 Example:
 
@@ -140,40 +137,58 @@ Please refer to each datasource documentation for specific provisioning examples
 | ------------- | ---------------------------------------------------------------------------------- |
 | Elasticsearch | Elasticsearch uses the `database` property to configure the index for a datasource |
 
-#### Json Data
+#### JSON Data
 
 Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `jsonData` field. Here are the most common settings that the core datasources use.
 
-| Name                    | Type    | Datasource                                                       | Description                                                                                 |
-| ----------------------- | ------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| tlsAuth                 | boolean | _All_                                                            | Enable TLS authentication using client cert configured in secure json data                  |
-| tlsAuthWithCACert       | boolean | _All_                                                            | Enable TLS authentication using CA cert                                                     |
-| tlsSkipVerify           | boolean | _All_                                                            | Controls whether a client verifies the server's certificate chain and host name.            |
-| graphiteVersion         | string  | Graphite                                                         | Graphite version                                                                            |
-| timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source                         |
-| httpMode                | string  | Influxdb, Prometheus                                             | HTTP Method. 'GET', 'POST', defaults to GET                 |
-| esVersion               | number  | Elasticsearch                                                    | Elasticsearch version as a number (2/5/56/60/70)                                            |
-| timeField               | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                |
-| interval                | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |
-| logMessageField         | string  | Elasticsearch                                                    | Which field should be used as the log message                                               |
-| logLevelField           | string  | Elasticsearch                                                    | Which field should be used to indicate the priority of the log message                      |
-| authType                | string  | Cloudwatch                                                       | Auth provider. keys/credentials/arn                                                         |
-| assumeRoleArn           | string  | Cloudwatch                                                       | ARN of Assume Role                                                                          |
-| defaultRegion           | string  | Cloudwatch                                                       | AWS region                                                                                  |
-| customMetricsNamespaces | string  | Cloudwatch                                                       | Namespaces of Custom Metrics                                                                |
-| profile                 | string  | Cloudwatch                                                       | Custom credentials profile
-| tsdbVersion             | string  | OpenTSDB                                                         | Version                                                                                     |
-| tsdbResolution          | string  | OpenTSDB                                                         | Resolution                                                                                  |
-| sslmode                 | string  | PostgreSQL                                                       | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full'                                 |
-| sslRootCertFile         | string  | PostgreSQL                                                       | SSL server root certificate file, must be readable by the Grafana user                      |
-| sslCertFile             | string  | PostgreSQL                                                       | SSL client certificate file, must be readable by the Grafana user                           |
-| sslKeyFile              | string  | PostgreSQL                                                       | SSL client key file, must be readable by _only_ the Grafana user                            |
-| encrypt                 | string  | MSSQL                                                            | Connection SSL encryption handling. 'disable', 'false' or 'true'                            |
-| postgresVersion         | number  | PostgreSQL                                                       | Postgres version as a number (903/904/905/906/1000) meaning v9.3, v9.4, ..., v10            |
-| timescaledb             | boolean | PostgreSQL                                                       | Enable usage of TimescaleDB extension                                                       |
-| maxOpenConns            | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of open connections to the database (Grafana v5.4+)                          |
-| maxIdleConns            | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of connections in the idle connection pool (Grafana v5.4+)                   |
-| connMaxLifetime         | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum amount of time in seconds a connection may be reused (Grafana v5.4+)                |
+> **Note:** Datasources tagged with _HTTP\*_ below denotes any data source which communicates using the HTTP protocol, e.g. all core data source plugins except MySQL, PostgreSQL and MSSQL.
+
+| Name                       | Type    | Datasource                                                       | Description                                                                                                                                                                                                                                                                                                         |
+| -------------------------- | ------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| tlsAuth                    | boolean | _HTTP\*_, MySQL                                                  | Enable TLS authentication using client cert configured in secure json data                                                                                                                                                                                                                                          |
+| tlsAuthWithCACert          | boolean | _HTTP\*_, MySQL, PostgreSQL                                      | Enable TLS authentication using CA cert                                                                                                                                                                                                                                                                             |
+| tlsSkipVerify              | boolean | _HTTP\*_, MySQL, PostgreSQL, MSSQL                               | Controls whether a client verifies the server's certificate chain and host name.                                                                                                                                                                                                                                    |
+| serverName                 | string  | _HTTP\*_, MSSQL                                                  | Optional. Controls the server name used for certificate common name/subject alternative name verification. Defaults to using the data source URL.                                                                                                                                                                   |
+| timeout                    | string  | _HTTP\*_                                                         | Request timeout in seconds. Overrides dataproxy.timeout option                                                                                                                                                                                                                                                      |
+| graphiteVersion            | string  | Graphite                                                         | Graphite version                                                                                                                                                                                                                                                                                                    |
+| timeInterval               | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source.                                                                                                                                                                                                                                                |
+| httpMode                   | string  | Influxdb                                                         | HTTP Method. 'GET', 'POST', defaults to GET                                                                                                                                                                                                                                                                         |
+| maxSeries                  | number  | Influxdb                                                         | Max number of series/tables that Grafana processes                                                                                                                                                                                                                                                                  |
+| httpMethod                 | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to POST                                                                                                                                                                                                                                                                        |
+| customQueryParameters      | string  | Prometheus                                                       | Query parameters to add, as a URL-encoded string.                                                                                                                                                                                                                                                                   |
+| manageAlerts               | boolean | Prometheus and Loki                                              | Manage alerts via Alerting UI                                                                                                                                                                                                                                                                                       |
+| esVersion                  | string  | Elasticsearch                                                    | Elasticsearch version (E.g. `7.0.0`, `7.6.1`)                                                                                                                                                                                                                                                                       |
+| timeField                  | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                                                                                                                                                                                                                                        |
+| interval                   | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly'                                                                                                                                                                                                                         |
+| logMessageField            | string  | Elasticsearch                                                    | Which field should be used as the log message                                                                                                                                                                                                                                                                       |
+| logLevelField              | string  | Elasticsearch                                                    | Which field should be used to indicate the priority of the log message                                                                                                                                                                                                                                              |
+| maxConcurrentShardRequests | number  | Elasticsearch                                                    | Maximum number of concurrent shard requests that each sub-search request executes per node. Defaults to 5 if esVersion is greater than or equals 7.0.0. When the esVersion is less than 7.0.0 and greater than or equals 5.6.0, then the default value is 256. Option is ignored when esVersion is less than 5.6.0. |
+| sigV4Auth                  | boolean | Elasticsearch and Prometheus                                     | Enable usage of SigV4                                                                                                                                                                                                                                                                                               |
+| sigV4AuthType              | string  | Elasticsearch and Prometheus                                     | SigV4 auth provider. default/credentials/keys                                                                                                                                                                                                                                                                       |
+| sigV4ExternalId            | string  | Elasticsearch and Prometheus                                     | Optional SigV4 External ID                                                                                                                                                                                                                                                                                          |
+| sigV4AssumeRoleArn         | string  | Elasticsearch and Prometheus                                     | Optional SigV4 ARN role to assume                                                                                                                                                                                                                                                                                   |
+| sigV4Region                | string  | Elasticsearch and Prometheus                                     | SigV4 AWS region                                                                                                                                                                                                                                                                                                    |
+| sigV4Profile               | string  | Elasticsearch and Prometheus                                     | Optional SigV4 credentials profile                                                                                                                                                                                                                                                                                  |
+| authType                   | string  | Cloudwatch                                                       | Auth provider. default/credentials/keys                                                                                                                                                                                                                                                                             |
+| externalId                 | string  | Cloudwatch                                                       | Optional External ID                                                                                                                                                                                                                                                                                                |
+| assumeRoleArn              | string  | Cloudwatch                                                       | Optional ARN role to assume                                                                                                                                                                                                                                                                                         |
+| defaultRegion              | string  | Cloudwatch                                                       | Optional default AWS region                                                                                                                                                                                                                                                                                         |
+| customMetricsNamespaces    | string  | Cloudwatch                                                       | Namespaces of Custom Metrics                                                                                                                                                                                                                                                                                        |
+| profile                    | string  | Cloudwatch                                                       | Optional credentials profile                                                                                                                                                                                                                                                                                        |
+| tsdbVersion                | string  | OpenTSDB                                                         | Version                                                                                                                                                                                                                                                                                                             |
+| tsdbResolution             | string  | OpenTSDB                                                         | Resolution                                                                                                                                                                                                                                                                                                          |
+| sslmode                    | string  | PostgreSQL                                                       | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full'                                                                                                                                                                                                                                                         |
+| tlsConfigurationMethod     | string  | PostgreSQL                                                       | SSL Certificate configuration, either by 'file-path' or 'file-content'                                                                                                                                                                                                                                              |
+| sslRootCertFile            | string  | PostgreSQL, MSSQL                                                | SSL server root certificate file, must be readable by the Grafana user                                                                                                                                                                                                                                              |
+| sslCertFile                | string  | PostgreSQL                                                       | SSL client certificate file, must be readable by the Grafana user                                                                                                                                                                                                                                                   |
+| sslKeyFile                 | string  | PostgreSQL                                                       | SSL client key file, must be readable by _only_ the Grafana user                                                                                                                                                                                                                                                    |
+| encrypt                    | string  | MSSQL                                                            | Connection SSL encryption handling. 'disable', 'false' or 'true'                                                                                                                                                                                                                                                    |
+| postgresVersion            | number  | PostgreSQL                                                       | Postgres version as a number (903/904/905/906/1000) meaning v9.3, v9.4, ..., v10                                                                                                                                                                                                                                    |
+| timescaledb                | boolean | PostgreSQL                                                       | Enable usage of TimescaleDB extension                                                                                                                                                                                                                                                                               |
+| maxOpenConns               | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of open connections to the database (Grafana v5.4+)                                                                                                                                                                                                                                                  |
+| maxIdleConns               | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of connections in the idle connection pool (Grafana v5.4+)                                                                                                                                                                                                                                           |
+| connMaxLifetime            | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum amount of time in seconds a connection may be reused (Grafana v5.4+)                                                                                                                                                                                                                                        |
+| keepCookies                | array   | _HTTP\*_                                                         | Cookies that needs to be passed along while communicating with datasources                                                                                                                                                                                                                                          |
 
 #### Secure Json Data
 
@@ -181,15 +196,19 @@ Since not all datasources have the same configuration settings we only have the 
 
 Secure json data is a map of settings that will be encrypted with [secret key]({{< relref "configuration.md#secret-key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
 
-| Name              | Type   | Datasource | Description                             |
-| ----------------- | ------ | ---------- | --------------------------------------- |
-| tlsCACert         | string | _All_      | CA cert for out going requests          |
-| tlsClientCert     | string | _All_      | TLS Client cert for outgoing requests   |
-| tlsClientKey      | string | _All_      | TLS Client key for outgoing requests    |
-| password          | string | _All_      | password                                |
-| basicAuthPassword | string | _All_      | password for basic authentication       |
-| accessKey         | string | Cloudwatch | Access key for connecting to Cloudwatch |
-| secretKey         | string | Cloudwatch | Secret key for connecting to Cloudwatch |
+> **Note:** Datasources tagged with _HTTP\*_ below denotes any data source which communicates using the HTTP protocol, e.g. all core data source plugins except MySQL, PostgreSQL and MSSQL.
+
+| Name              | Type   | Datasource                         | Description                                              |
+| ----------------- | ------ | ---------------------------------- | -------------------------------------------------------- |
+| tlsCACert         | string | _HTTP\*_, MySQL, PostgreSQL        | CA cert for out going requests                           |
+| tlsClientCert     | string | _HTTP\*_, MySQL, PostgreSQL        | TLS Client cert for outgoing requests                    |
+| tlsClientKey      | string | _HTTP\*_, MySQL, PostgreSQL        | TLS Client key for outgoing requests                     |
+| password          | string | _HTTP\*_, MySQL, PostgreSQL, MSSQL | password                                                 |
+| basicAuthPassword | string | _HTTP\*_                           | password for basic authentication                        |
+| accessKey         | string | Cloudwatch                         | Access key for connecting to Cloudwatch                  |
+| secretKey         | string | Cloudwatch                         | Secret key for connecting to Cloudwatch                  |
+| sigV4AccessKey    | string | Elasticsearch and Prometheus       | SigV4 access key. Required when using keys auth provider |
+| sigV4SecretKey    | string | Elasticsearch and Prometheus       | SigV4 secret key. Required when using keys auth provider |
 
 #### Custom HTTP headers for datasources
 
@@ -293,23 +312,25 @@ Grafana offers options to export the JSON definition of a dashboard. Either `Cop
 
 Note: The JSON definition in the input field when using `Copy JSON to Clipboard` or `Save JSON to file` will have the `id` field automatically removed to aid the provisioning workflow.
 
-{{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Reusable Dashboard URLs
 
-If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards between Grafana instances and provisioning Grafana from configuration without breaking the URLs given since the new dashboard URL uses the uid as identifier.
-When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
-By default, Grafana will delete dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
+If the dashboard in the JSON file contains an [UID]({{< relref "../dashboards/json-model.md" >}}), Grafana forces insert/update on that UID. This allows you to migrate dashboards between Grafana instances and provisioning Grafana from configuration without breaking the URLs given because the new dashboard URL uses the UID as identifier.
+When Grafana starts, it updates/inserts all dashboards available in the configured folders. If you modify the file, then the dashboard is also updated.
+By default, Grafana deletes dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
 
-> **Note.** Provisioning allows you to overwrite existing dashboards
+> **Note:** Provisioning allows you to overwrite existing dashboards
 > which leads to problems if you re-use settings that are supposed to be unique.
 > Be careful not to re-use the same `title` multiple times within a folder
 > or `uid` within the same installation as this will cause weird behaviors.
 
 ### Provision folders structure from filesystem to Grafana
+
 If you already store your dashboards using folders in a git repo or on a filesystem, and also you want to have the same folder names in the Grafana menu, you can use `foldersFromFilesStructure` option.
 
 For example, to replicate these dashboards structure from the filesystem to Grafana,
+
 ```
 /etc/dashboards
 ├── /server
@@ -319,21 +340,24 @@ For example, to replicate these dashboards structure from the filesystem to Graf
     ├── /requests_dashboard.json
     └── /resources_dashboard.json
 ```
+
 you need to specify just this short provision configuration file.
+
 ```yaml
 apiVersion: 1
 
 providers:
-- name: dashboards
-  type: file
-  updateIntervalSeconds: 30
-  options:
-    path: /etc/dashboards
-    foldersFromFilesStructure: true
+  - name: dashboards
+    type: file
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/dashboards
+      foldersFromFilesStructure: true
 ```
+
 `server` and `application` will become new folders in Grafana menu.
 
-> **Note.** `folder` and `folderUid` options should be empty or missing to make `foldersFromFilesStructure` work.
+> **Note:** `folder` and `folderUid` options should be empty or missing to make `foldersFromFilesStructure` work.
 
 > **Note:** To provision dashboards to the General folder, store them in the root of your `path`.
 
@@ -409,32 +433,45 @@ delete_notifiers:
 
 The following sections detail the supported settings and secure settings for each alert notification type. Secure settings are stored encrypted in the database and you add them to `secure_settings` in the YAML file instead of `settings`.
 
-> **Note**: Secure settings is supported since Grafana v7.2.
+> **Note:** Secure settings is supported since Grafana v7.2.
 
 #### Alert notification `pushover`
 
-| Name     | Secure setting |
-| -------- | -------------- |
-| apiToken | yes |
-| userKey  | yes |
-| device   | |
-| retry    | |
-| expire   | |
+| Name       | Secure setting |
+| ---------- | -------------- |
+| apiToken   | yes            |
+| userKey    | yes            |
+| device     |                |
+| priority   |                |
+| okPriority |                |
+| retry      |                |
+| expire     |                |
+| sound      |                |
+| okSound    |                |
+
+#### Alert notification `discord`
+
+| Name                 | Secure setting |
+| -------------------- | -------------- |
+| url                  | yes            |
+| avatar_url           |                |
+| content              |                |
+| use_discord_username |                |
 
 #### Alert notification `slack`
 
 | Name           | Secure setting |
 | -------------- | -------------- |
-| url            | yes |
-| recipient      | |
-| username       | |
-| icon_emoji     | |
-| icon_url       | |
-| uploadImage    | |
-| mentionUsers   | |
-| mentionGroups  | |
-| mentionChannel | |
-| token          | yes |
+| url            | yes            |
+| recipient      |                |
+| username       |                |
+| icon_emoji     |                |
+| icon_url       |                |
+| uploadImage    |                |
+| mentionUsers   |                |
+| mentionGroups  |                |
+| mentionChannel |                |
+| token          | yes            |
 
 #### Alert notification `victorops`
 
@@ -453,33 +490,44 @@ The following sections detail the supported settings and secure settings for eac
 #### Alert notification `LINE`
 
 | Name  | Secure setting |
-| ----- | - |
-| token | yes |
+| ----- | -------------- |
+| token | yes            |
 
 #### Alert notification `pagerduty`
 
 | Name           | Secure setting |
-| -------------- | - |
-| integrationKey | yes |
-| autoResolve    | |
+| -------------- | -------------- |
+| integrationKey | yes            |
+| autoResolve    |                |
 
 #### Alert notification `sensu`
 
 | Name     | Secure setting |
-| -------- | - | 
-| url      | |
-| source   | |
-| handler  | |
-| username | |
-| password | yes |
+| -------- | -------------- |
+| url      |                |
+| source   |                |
+| handler  |                |
+| username |                |
+| password | yes            |
+
+#### Alert notification `sensugo`
+
+| Name      | Secure setting |
+| --------- | -------------- |
+| url       |                |
+| apikey    | yes            |
+| entity    |                |
+| check     |                |
+| handler   |                |
+| namespace |                |
 
 #### Alert notification `prometheus-alertmanager`
 
 | Name              | Secure setting |
-| ----------------- | - |
-| url               | |
-| basicAuthUser     | |
-| basicAuthPassword | yes |
+| ----------------- | -------------- |
+| url               |                |
+| basicAuthUser     |                |
+| basicAuthPassword | yes            |
 
 #### Alert notification `teams`
 
@@ -511,38 +559,46 @@ The following sections detail the supported settings and secure settings for eac
 #### Alert notification `opsgenie`
 
 | Name             | Secure setting |
-| ---------------- | - |
-| apiKey           | yes |
-| apiUrl           | |
-| autoClose        | |
-| overridePriority | |
+| ---------------- | -------------- |
+| apiKey           | yes            |
+| apiUrl           |                |
+| autoClose        |                |
+| overridePriority |                |
+| sendTagsAs       |                |
 
 #### Alert notification `telegram`
 
 | Name        | Secure setting |
-| ----------- | - |
-| bottoken    | yes |
-| chatid      | |
-| uploadImage | |
+| ----------- | -------------- |
+| bottoken    | yes            |
+| chatid      |                |
+| uploadImage |                |
 
 #### Alert notification `threema`
 
 | Name         | Secure setting |
-| ------------ | - |
-| gateway_id   | |
-| recipient_id | |
-| api_secret   | yes |
+| ------------ | -------------- |
+| gateway_id   |                |
+| recipient_id |                |
+| api_secret   | yes            |
 
 #### Alert notification `webhook`
 
-| Name     | Secure setting |
-| -------- | - |
-| url      | |
-| username | |
-| password | yes |
+| Name       | Secure setting |
+| ---------- | -------------- |
+| url        |                |
+| httpMethod |                |
+| username   |                |
+| password   | yes            |
 
 #### Alert notification `googlechat`
 
 | Name |
 | ---- |
 | url  |
+
+## Grafana Enterprise
+
+Grafana Enterprise supports provisioning for the following resources:
+
+- [Access control provisioning]({{< relref "../enterprise/access-control/_index.md" >}})

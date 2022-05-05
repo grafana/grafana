@@ -1,4 +1,11 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
+
+import { PluginMeta, PluginMetaInfo, PluginType, LayoutModes } from '@grafana/data';
+import { DataSourceSettingsState, DataSourcesState } from 'app/types';
+
+import { getMockDataSource, getMockDataSources } from '../__mocks__/dataSourcesMocks';
+import { GenericDataSourcePlugin } from '../settings/PluginSettings';
+
 import {
   dataSourceLoaded,
   dataSourceMetaLoaded,
@@ -17,11 +24,6 @@ import {
   setDataSourceTypeSearchQuery,
   setIsDefault,
 } from './reducers';
-import { getMockDataSource, getMockDataSources } from '../__mocks__/dataSourcesMocks';
-import { LayoutModes } from 'app/core/components/LayoutSelector/LayoutSelector';
-import { DataSourceSettingsState, DataSourcesState } from 'app/types';
-import { PluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
-import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
 const mockPlugin = () =>
   ({
@@ -40,7 +42,7 @@ const mockPlugin = () =>
 describe('dataSourcesReducer', () => {
   describe('when dataSourcesLoaded is dispatched', () => {
     it('then state should be correct', () => {
-      const dataSources = getMockDataSources(0);
+      const dataSources = getMockDataSources(1);
 
       reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, initialState)
@@ -151,7 +153,7 @@ describe('dataSourceSettingsReducer', () => {
         .thenStateShouldEqual({
           ...initialDataSourceSettingsState,
           plugin: {} as GenericDataSourcePlugin,
-          loadError: null,
+          loading: false,
         });
     });
   });
@@ -164,9 +166,13 @@ describe('dataSourceSettingsReducer', () => {
           plugin: {} as GenericDataSourcePlugin,
         })
         .whenActionIsDispatched(initDataSourceSettingsFailed(new Error('Some error')))
-        .thenStatePredicateShouldEqual(resultingState => {
-          expect(resultingState.plugin).toEqual(null);
-          expect(resultingState.loadError).toEqual('Some error');
+        .thenStatePredicateShouldEqual((resultingState) => {
+          expect(resultingState).toEqual({
+            testingStatus: {},
+            loadError: 'Some error',
+            loading: false,
+            plugin: null,
+          });
           return true;
         });
     });

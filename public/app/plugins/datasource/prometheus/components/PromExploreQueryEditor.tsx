@@ -1,52 +1,36 @@
-import React, { memo, FC } from 'react';
+import React, { memo, useEffect } from 'react';
 
-// Types
-import { ExploreQueryFieldProps } from '@grafana/data';
+import { QueryEditorProps, CoreApp } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
 
-import PromQueryField from './PromQueryField';
 import { PromExploreExtraField } from './PromExploreExtraField';
+import PromQueryField from './PromQueryField';
 
-export type Props = ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions>;
+export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>;
 
-export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
+export const PromExploreQueryEditor = memo((props: Props) => {
   const { range, query, data, datasource, history, onChange, onRunQuery } = props;
 
-  function onChangeQueryStep(value: string) {
-    const { query, onChange } = props;
-    const nextQuery = { ...query, interval: value };
-    onChange(nextQuery);
-  }
-
-  function onStepChange(e: React.SyntheticEvent<HTMLInputElement>) {
-    if (e.currentTarget.value !== query.interval) {
-      onChangeQueryStep(e.currentTarget.value);
+  // Setting default values
+  useEffect(() => {
+    if (query.expr === undefined) {
+      onChange({ ...query, expr: '' });
     }
-  }
-
-  function onReturnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter' && (e.shiftKey || e.ctrlKey)) {
-      onRunQuery();
+    if (query.exemplar === undefined) {
+      onChange({ ...query, exemplar: true });
     }
-  }
 
-  function onQueryTypeChange(value: string) {
-    const { query, onChange } = props;
-    let nextQuery;
-    if (value === 'instant') {
-      nextQuery = { ...query, instant: true, range: false };
-    } else if (value === 'range') {
-      nextQuery = { ...query, instant: false, range: true };
-    } else {
-      nextQuery = { ...query, instant: true, range: true };
+    // Override query type to "Both" only for new queries (no query.expr).
+    if (!query.instant && !query.range && !query.expr) {
+      onChange({ ...query, instant: true, range: true });
     }
-    onChange(nextQuery);
-  }
+  }, [onChange, query]);
 
   return (
     <PromQueryField
+      app={CoreApp.Explore}
       datasource={datasource}
       query={query}
       range={range}
@@ -55,17 +39,16 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
       onBlur={() => {}}
       history={history}
       data={data}
+      data-testid={testIds.editor}
       ExtraFieldElement={
-        <PromExploreExtraField
-          queryType={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
-          stepValue={query.interval || ''}
-          onQueryTypeChange={onQueryTypeChange}
-          onStepChange={onStepChange}
-          onKeyDownFunc={onReturnKeyDown}
-        />
+        <PromExploreExtraField query={query} onChange={onChange} datasource={datasource} onRunQuery={onRunQuery} />
       }
     />
   );
-};
+});
 
-export default memo(PromExploreQueryEditor);
+PromExploreQueryEditor.displayName = 'PromExploreQueryEditor';
+
+export const testIds = {
+  editor: 'prom-editor-explore',
+};

@@ -1,4 +1,5 @@
 import { DataSourcePluginMeta, DataSourceSettings, UrlQueryValue } from '@grafana/data';
+
 import { DataSourcesState } from '../../../types/datasources';
 
 export const getDataSources = (state: DataSourcesState) => {
@@ -18,7 +19,7 @@ export const getDataSourcePlugins = (state: DataSourcesState) => {
 };
 
 export const getDataSource = (state: DataSourcesState, dataSourceId: UrlQueryValue): DataSourceSettings => {
-  if (state.dataSource.id === parseInt(dataSourceId as string, 10)) {
+  if (state.dataSource.uid === dataSourceId) {
     return state.dataSource;
   }
   return {} as DataSourceSettings;

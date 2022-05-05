@@ -1,11 +1,21 @@
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
+import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+
 import { NavModel } from '@grafana/data';
 
-import { OrgDetailsPage, Props } from './OrgDetailsPage';
 import { Organization } from '../../types';
-import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+
+import { OrgDetailsPage, Props } from './OrgDetailsPage';
 import { setOrganizationName } from './state/reducers';
+
+jest.mock('app/core/core', () => {
+  return {
+    contextSrv: {
+      hasPermission: () => true,
+    },
+  };
+});
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

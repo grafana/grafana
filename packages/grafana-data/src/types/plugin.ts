@@ -1,13 +1,16 @@
-import { ComponentClass } from 'react';
-import { KeyValue } from './data';
-import { LiveChannelSupport } from './live';
+import { ComponentType } from 'react';
 
+import { KeyValue } from './data';
+
+/** Describes plugins life cycle status */
 export enum PluginState {
-  alpha = 'alpha', // Only included it `enable_alpha` is true
+  alpha = 'alpha', // Only included if `enable_alpha` config option is true
   beta = 'beta', // Will show a warning banner
+  stable = 'stable', // Will not show anything
   deprecated = 'deprecated', // Will continue to work -- but not show up in the options to add
 }
 
+/** Describes {@link https://grafana.com/docs/grafana/latest/plugins | type of plugin} */
 export enum PluginType {
   panel = 'panel',
   datasource = 'datasource',
@@ -15,12 +18,35 @@ export enum PluginType {
   renderer = 'renderer',
 }
 
+/** Describes status of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/ | plugin signature} */
 export enum PluginSignatureStatus {
   internal = 'internal', // core plugin, no signature
   valid = 'valid', // signed and accurate MANIFEST
   invalid = 'invalid', // invalid signature
   modified = 'modified', // valid signature, but content mismatch
-  unsigned = 'unsigned', // no MANIFEST file
+  missing = 'missing', // missing signature file
+}
+
+/** Describes level of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/#plugin-signature-levels/ | plugin signature level} */
+export enum PluginSignatureType {
+  grafana = 'grafana',
+  commercial = 'commercial',
+  community = 'community',
+  private = 'private',
+  core = 'core',
+}
+
+/** Describes error code returned from Grafana plugins API call */
+export enum PluginErrorCode {
+  missingSignature = 'signatureMissing',
+  invalidSignature = 'signatureInvalid',
+  modifiedSignature = 'signatureModified',
+}
+
+/** Describes error returned from Grafana plugins API call */
+export interface PluginError {
+  errorCode: PluginErrorCode;
+  pluginId: string;
 }
 
 export interface PluginMeta<T extends KeyValue = {}> {
@@ -48,6 +74,8 @@ export interface PluginMeta<T extends KeyValue = {}> {
   latestVersion?: string;
   pinned?: boolean;
   signature?: PluginSignatureStatus;
+  signatureType?: PluginSignatureType;
+  signatureOrg?: string;
   live?: boolean;
 }
 
@@ -59,6 +87,7 @@ interface PluginDependencyInfo {
 }
 
 export interface PluginDependencies {
+  grafanaDependency?: string;
   grafanaVersion: string;
   plugins: PluginDependencyInfo[];
 }
@@ -131,7 +160,7 @@ export interface PluginConfigPage<T extends PluginMeta> {
   icon?: string;
   id: string; // Unique, in URL
 
-  body: ComponentClass<PluginConfigPageProps<T>>;
+  body: ComponentType<PluginConfigPageProps<T>>;
 }
 
 export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
@@ -140,13 +169,6 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
 
   // This is set if the plugin system had errors loading the plugin
   loadError?: boolean;
-
-  /**
-   * Live streaming support
-   *
-   * Note: `plugin.json` must also define `live: true`
-   */
-  channelSupport?: LiveChannelSupport;
 
   // Config control (app/datasource)
   angularConfigCtrl?: any;
@@ -164,10 +186,10 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   }
 
   /**
-   * Specify how the plugin should support paths within the live streaming environment
+   * @deprecated -- this is no longer necessary and will be removed
    */
-  setChannelSupport(support: LiveChannelSupport) {
-    this.channelSupport = support;
+  setChannelSupport(support: any) {
+    console.warn('[deprecation] plugin is using ignored option: setChannelSupport', this.meta);
     return this;
   }
 

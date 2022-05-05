@@ -1,0 +1,14 @@
+{
+  "type": "datasource",
+  "name": "Child",
+  "id": "test-app",
+  "info": {
+    "description": "Child plugin",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "http://grafana.com"
+    },
+    "version": "1.0.0",
+    "updated": "2020-10-20"
+  }
+}

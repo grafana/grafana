@@ -1,7 +1,4 @@
-import { Area } from './Area';
-import { Line } from './Line';
-import { Point } from './Point';
-import { Axis } from './Axis';
-import { Scale } from './Scale';
-import { SeriesGeometry } from './SeriesGeometry';
-export { Area, Line, Point, SeriesGeometry, Axis, Scale };
+import { EventsCanvas } from './EventsCanvas';
+import { Marker } from './Marker';
+import { XYCanvas } from './XYCanvas';
+export { XYCanvas, Marker, EventsCanvas };

@@ -1,7 +1,8 @@
-import path from 'path';
 import fs from 'fs';
-import { JobInfo, WorkflowInfo, CoverageInfo, TestResultsInfo } from './types';
+import path from 'path';
+
 import { getBuildNumber, getCiFolder } from './env';
+import { JobInfo, WorkflowInfo, CoverageInfo, TestResultsInfo } from './types';
 
 export const agregateWorkflowInfo = (): WorkflowInfo => {
   const now = Date.now();
@@ -20,7 +21,7 @@ export const agregateWorkflowInfo = (): WorkflowInfo => {
   if (fs.existsSync(jobsFolder)) {
     const files = fs.readdirSync(jobsFolder);
     if (files && files.length) {
-      files.forEach(file => {
+      files.forEach((file) => {
         const p = path.resolve(jobsFolder, file, 'job.json');
         if (fs.existsSync(p)) {
           const job = require(p) as JobInfo;
@@ -51,7 +52,7 @@ export const agregateCoverageInfo = (): CoverageInfo[] => {
   if (fs.existsSync(jobsFolder)) {
     const files = fs.readdirSync(jobsFolder);
     if (files && files.length) {
-      files.forEach(file => {
+      files.forEach((file) => {
         const dir = path.resolve(jobsFolder, file, 'coverage');
         if (fs.existsSync(dir)) {
           const s = path.resolve(dir, 'coverage-summary.json');
@@ -83,7 +84,7 @@ export const agregateTestInfo = (): TestResultsInfo[] => {
   if (fs.existsSync(jobsFolder)) {
     const files = fs.readdirSync(jobsFolder);
     if (files && files.length) {
-      files.forEach(file => {
+      files.forEach((file) => {
         if (file.startsWith('test')) {
           const summary = path.resolve(jobsFolder, file, 'results.json');
           if (fs.existsSync(summary)) {

@@ -1,25 +1,42 @@
-import { getFieldLinksForExplore } from './links';
 import {
   ArrayVector,
   DataLink,
-  DataSourceInstanceSettings,
   dateTime,
   Field,
   FieldType,
+  InterpolateFunction,
   LinkModel,
-  ScopedVars,
   TimeRange,
 } from '@grafana/data';
+import { setTemplateSrv } from '@grafana/runtime';
+
+import { setContextSrv } from '../../../core/services/context_srv';
 import { setLinkSrv } from '../../panel/panellinks/link_srv';
-import { setDataSourceSrv } from '@grafana/runtime';
+
+import { getFieldLinksForExplore } from './links';
 
 describe('getFieldLinksForExplore', () => {
+  beforeEach(() => {
+    setTemplateSrv({
+      replace(target, scopedVars, format) {
+        return target ?? '';
+      },
+      getVariables() {
+        return [];
+      },
+      containsTemplate() {
+        return false;
+      },
+      updateTimeRange(timeRange: TimeRange) {},
+    });
+  });
+
   it('returns correct link model for external link', () => {
     const { field, range } = setup({
       title: 'external',
       url: 'http://regionalhost',
     });
-    const links = getFieldLinksForExplore(field, 0, jest.fn(), range);
+    const links = getFieldLinksForExplore({ field, rowIndex: 0, splitOpenFn: jest.fn(), range });
 
     expect(links[0].href).toBe('http://regionalhost');
     expect(links[0].title).toBe('external');
@@ -30,7 +47,7 @@ describe('getFieldLinksForExplore', () => {
       title: '',
       url: 'http://regionalhost',
     });
-    const links = getFieldLinksForExplore(field, 0, jest.fn(), range);
+    const links = getFieldLinksForExplore({ field, rowIndex: 0, splitOpenFn: jest.fn(), range });
 
     expect(links[0].href).toBe('http://regionalhost');
     expect(links[0].title).toBe('regionalhost');
@@ -43,13 +60,21 @@ describe('getFieldLinksForExplore', () => {
       internal: {
         query: { query: 'query_1' },
         datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+        panelsState: {
+          trace: {
+            spanId: 'abcdef',
+          },
+        },
       },
     });
     const splitfn = jest.fn();
-    const links = getFieldLinksForExplore(field, 0, splitfn, range);
+    const links = getFieldLinksForExplore({ field, rowIndex: 0, splitOpenFn: splitfn, range });
 
     expect(links[0].href).toBe(
-      '/explore?left={"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}],"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}'
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}],"panelsState":{"trace":{"spanId":"abcdef"}}}'
+      )}`
     );
     expect(links[0].title).toBe('test_ds');
 
@@ -57,13 +82,53 @@ describe('getFieldLinksForExplore', () => {
       links[0].onClick({});
     }
 
-    expect(splitfn).toBeCalledWith({ datasourceUid: 'uid_1', query: { query: 'query_1' } });
+    expect(splitfn).toBeCalledWith({
+      datasourceUid: 'uid_1',
+      query: { query: 'query_1' },
+      range,
+      panelsState: {
+        trace: {
+          spanId: 'abcdef',
+        },
+      },
+    });
+  });
+
+  it('returns correct link model for external link when user does not have access to explore', () => {
+    const { field, range } = setup(
+      {
+        title: 'external',
+        url: 'http://regionalhost',
+      },
+      false
+    );
+    const links = getFieldLinksForExplore({ field, rowIndex: 0, range });
+
+    expect(links[0].href).toBe('http://regionalhost');
+    expect(links[0].title).toBe('external');
+  });
+
+  it('returns no internal links if when user does not have access to explore', () => {
+    const { field, range } = setup(
+      {
+        title: '',
+        url: '',
+        internal: {
+          query: { query: 'query_1' },
+          datasourceUid: 'uid_1',
+          datasourceName: 'test_ds',
+        },
+      },
+      false
+    );
+    const links = getFieldLinksForExplore({ field, rowIndex: 0, range });
+    expect(links).toHaveLength(0);
   });
 });
 
-function setup(link: DataLink) {
+function setup(link: DataLink, hasAccess = true) {
   setLinkSrv({
-    getDataLinkUIModel(link: DataLink, scopedVars: ScopedVars, origin: any): LinkModel<any> {
+    getDataLinkUIModel(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin: any): LinkModel<any> {
       return {
         href: link.url,
         title: link.title,
@@ -78,18 +143,11 @@ function setup(link: DataLink) {
       return link.url;
     },
   });
-  setDataSourceSrv({
-    getDataSourceSettingsByUid(uid: string) {
-      return {
-        id: 1,
-        uid: 'uid_1',
-        type: 'metrics',
-        name: 'test_ds',
-        meta: {},
-        jsonData: {},
-      } as DataSourceInstanceSettings;
-    },
+
+  setContextSrv({
+    hasAccessToExplore: () => hasAccess,
   } as any);
+
   const field: Field<string> = {
     name: 'flux-dimensions',
     type: FieldType.string,
@@ -100,8 +158,8 @@ function setup(link: DataLink) {
   };
 
   const range: TimeRange = {
-    from: dateTime(),
-    to: dateTime(),
+    from: dateTime('2020-10-14T00:00:00'),
+    to: dateTime('2020-10-14T01:00:00'),
     raw: {
       from: 'now-1h',
       to: 'now',

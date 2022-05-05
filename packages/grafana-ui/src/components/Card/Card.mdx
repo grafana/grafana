@@ -1,0 +1,450 @@
+import { Meta, Preview, Props } from '@storybook/addon-docs/blocks';
+import { Card } from './Card';
+import { Button } from '../Button';
+import { IconButton } from '../IconButton/IconButton';
+import { TagList } from '../Tags/TagList';
+
+export const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png';
+
+<Meta title="MDX/Card" component={Card} />
+
+# Card
+
+## Usage
+
+### Basic
+
+A basic `Card` component expects at least a heading, used as a title.
+
+```jsx
+<Card>
+  <Card.Heading>Filter by name</Card.Heading>
+  <Card.Description>Filter data by query.</Card.Description>
+</Card>
+```
+
+<Preview>
+  <Card>
+    <Card.Heading>Filter by name</Card.Heading>
+    <Card.Description>Filter data by query.</Card.Description>
+  </Card>
+</Preview>
+
+### Multiple metadata elements
+
+For providing metadata elements, which can be any extra information for the card, `Card.Meta` component should be used. If metadata consists of multiple strings, each of them has to be escaped (wrapped in brackets `{}`) or better passed in as an array.
+
+```jsx
+<Card>
+  <Card.Heading>Test dashboard</Card.Heading>
+  <Card.Meta>{['Folder: Test', 'Views: 100']}</Card.Meta>
+</Card>
+```
+
+<Preview>
+  <Card>
+    <Card.Heading>Test dashboard</Card.Heading>
+    <Card.Meta>{['Folder: Test', 'Views: 100']}</Card.Meta>
+  </Card>
+</Preview>
+
+Metadata also accepts HTML elements, which could be links, for example. For elements, that are not strings, a `key` prop has to be manually specified.
+
+```jsx
+<Card>
+  <Card.Heading>Test dashboard</Card.Heading>
+  <Card.Meta>
+    Grafana
+    <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+      https://ops-us-east4.grafana.net/api/prom
+    </a>
+  </Card.Meta>
+</Card>
+```
+
+<Preview>
+  <Card>
+    <Card.Heading>Test dashboard</Card.Heading>
+    <Card.Meta>
+      Grafana
+      <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+        https://ops-us-east4.grafana.net/api/prom
+      </a>
+    </Card.Meta>
+  </Card>
+</Preview>
+
+The separator for multiple metadata elements defaults to a vertical line `|`, but can be customised.
+
+```jsx
+<Card>
+  <Card.Heading>Test dashboard</Card.Heading>
+  <Card.Meta separator={'-'}>
+    Grafana
+    <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+      https://ops-us-east4.grafana.net/api/prom
+    </a>
+  </Card.Meta>
+</Card>
+```
+
+<Preview>
+  <Card>
+    <Card.Heading>Test dashboard</Card.Heading>
+    <Card.Meta separator={'-'}>
+      Grafana
+      <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+        https://ops-us-east4.grafana.net/api/prom
+      </a>
+    </Card.Meta>
+  </Card>
+</Preview>
+
+### Tags
+
+Tags can be rendered inside the Card, by being wrapped in `Card.Tags` component. Note that this component does not provide any tag styling and that should be handled by the children. It is recommended to use it with Grafana-UI's `TagList` component.
+
+```jsx
+<Card>
+  <Card.Heading>Test dashboard</Card.Heading>
+  <Card.Description>Card with a list of tags</Card.Description>
+  <Card.Tags>
+    <TagList tags={['tag1', 'tag2', 'tag3']} onClick={(tag) => console.log(tag)} />
+  </Card.Tags>
+</Card>
+```
+
+<Preview>
+  <Card>
+    <Card.Heading>Test dashboard</Card.Heading>
+    <Card.Description>Card with a list of tags</Card.Description>
+    <Card.Tags>
+      <TagList tags={['tag1', 'tag2', 'tag3']} onClick={(tag) => console.log(tag)} />
+    </Card.Tags>
+  </Card>
+</Preview>
+
+### As a link
+
+Card can be used as a clickable link item by specifying `href` prop.
+
+```jsx
+<Card href="https://grafana.com">
+  <Card.Heading>Redirect to Grafana</Card.Heading>
+  <Card.Description>Clicking this card will redirect to grafana website</Card.Description>
+</Card>
+```
+
+<Preview>
+  <Card href="https://grafana.com">
+    <Card.Heading>Redirect to Grafana</Card.Heading>
+    <Card.Description>Clicking this card will redirect to grafana website</Card.Description>
+  </Card>
+</Preview>
+
+### As a button
+
+Card can be used as a clickable buttons item by specifying `onClick` prop.
+
+```jsx
+<Card onClick={() => alert('Hello, Grafana!')}>
+  <Card.Heading>Hello, Grafana</Card.Heading>
+  <Card.Description>Clicking this card will create an alert</Card.Description>
+</Card>
+```
+
+<Preview>
+  <Card onClick={() => alert('Hello, Grafana!')}>
+    <Card.Heading>Hello, Grafana</Card.Heading>
+    <Card.Description>Clicking this card will create an alert</Card.Description>
+  </Card>
+</Preview>
+
+> **Note**: When used in conjunction with [Metadata elements](#multiple-metadata-elements), clicking on any element
+> inside `<Card.Meta>` will prevent the card action to be executed (either `href` to be followed or `onClick` to be called).
+>
+> Example:
+
+```jsx
+<Card onClick={() => alert('Hello, Grafana!')}>
+  <Card.Heading>Hello, Grafana</Card.Heading>
+  <Card.Meta>Clicking on this text (Meta) WILL NOT trigger the alert!</Card.Meta>
+  <Card.Description>Clicking on this text (Description) WILL trigger the alert!</Card.Description>
+</Card>
+```
+
+<Preview>
+  <Card onClick={() => alert('Hello, Grafana!')}>
+    <Card.Heading>Hello, Grafana</Card.Heading>
+    <Card.Meta>Clicking on this text (Meta) WILL NOT trigger the alert!</Card.Meta>
+    <Card.Description>Clicking on this text (Description) WILL trigger the alert!</Card.Description>
+  </Card>
+</Preview>
+
+### Inside a list item
+
+To render cards in a list, it is possible to nest them inside `li` items.
+
+```jsx
+<ul>
+  <li>
+    <Card>
+      <Card.Heading>List card item</Card.Heading>
+      <Card.Description>Card that is rendered inside li element.</Card.Description>
+    </Card>
+  </li>
+  <li>
+    <Card>
+      <Card.Heading>List card item</Card.Heading>
+      <Card.Description>Card that is rendered inside li element.</Card.Description>
+    </Card>
+  </li>
+  <li>
+    <Card>
+      <Card.Heading>List card item</Card.Heading>
+      <Card.Description>Card that is rendered inside li element.</Card.Description>
+    </Card>
+  </li>
+  <li>
+    <Card>
+      <Card.Heading>List card item</Card.Heading>
+      <Card.Description>Card that is rendered inside li element.</Card.Description>
+    </Card>
+  </li>
+</ul>
+```
+
+<Preview>
+  <ul style={{ padding: '20px', maxWidth: '800px', listStyle: 'none', display: 'grid' }}>
+    <li>
+      <Card>
+        <Card.Heading>List card item</Card.Heading>
+        <Card.Description>Card that is rendered inside li element.</Card.Description>
+      </Card>
+    </li>
+    <li>
+      <Card>
+        <Card.Heading>List card item</Card.Heading>
+        <Card.Description>Card that is rendered inside li element.</Card.Description>
+      </Card>
+    </li>
+    <li>
+      <Card>
+        <Card.Heading>List card item</Card.Heading>
+        <Card.Description>Card that is rendered inside li element.</Card.Description>
+      </Card>
+    </li>
+    <li>
+      <Card>
+        <Card.Heading>List card item</Card.Heading>
+        <Card.Description>Card that is rendered inside li element.</Card.Description>
+      </Card>
+    </li>
+  </ul>
+</Preview>
+
+### With media elements
+
+Cards can also be rendered with media content such icons or images. Such elements need to be wrapped in `Card.Figure` component.
+
+```jsx
+<Card>
+  <Card.Heading>1-ops-tools1-fallback</Card.Heading>
+  <Card.Figure>
+    <img src={logo} alt="Grafana Logo" width="40" height="40" />
+  </Card.Figure>
+  <Card.Meta>
+    Grafana
+    <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+      https://ops-us-east4.grafana.net/api/prom
+    </a>
+  </Card.Meta>
+</Card>
+```
+
+<Preview>
+  <Card>
+    <Card.Heading>1-ops-tools1-fallback</Card.Heading>
+    <Card.Figure>
+      <img src={logo} alt="Grafana Logo" width="40" height="40" />
+    </Card.Figure>
+    <Card.Meta>
+      Grafana
+      <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+        https://ops-us-east4.grafana.net/api/prom
+      </a>
+    </Card.Meta>
+  </Card>
+</Preview>
+
+### Action Cards
+
+Cards also accept primary and secondary actions. Usually the primary actions are displayed as buttons while secondary actions are displayed as icon buttons. The actions need to be wrappd in `Card.Actions` and `Card.SecondaryActions` components respectively.
+
+```jsx
+<Card>
+  <Card.Heading>1-ops-tools1-fallback</Card.Heading>
+  <Card.Meta>
+    Grafana
+    <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+      https://ops-us-east4.grafana.net/api/prom
+    </a>
+  </Card.Meta>
+  <Card.Figure>
+    <img src={logo} alt="Grafana Logo" width="40" height="40" />
+  </Card.Figure>
+  <Card.Actions>
+    <Button key="settings" variant="secondary">
+      Settings
+    </Button>
+    <Button key="explore" variant="secondary">
+      Explore
+    </Button>
+  </Card.Actions>
+  <Card.SecondaryActions>
+    <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />
+    <IconButton key="delete" name="trash-alt" tooltip="Delete this data source" />
+  </Card.SecondaryActions>
+</Card>
+```
+
+<Preview>
+  <Card>
+    <Card.Heading>1-ops-tools1-fallback</Card.Heading>
+    <Card.Meta>
+      Grafana
+      <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+        https://ops-us-east4.grafana.net/api/prom
+      </a>
+    </Card.Meta>
+    <Card.Figure>
+      <img src={logo} alt="Grafana Logo" width="40" height="40" />
+    </Card.Figure>
+    <Card.Actions>
+      <Button key="settings" variant="secondary">
+        Settings
+      </Button>
+      <Button key="explore" variant="secondary">
+        Explore
+      </Button>
+    </Card.Actions>
+    <Card.SecondaryActions>
+      <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />
+      <IconButton key="delete" name="trash-alt" tooltip="Delete this data source" />
+    </Card.SecondaryActions>
+  </Card>
+</Preview>
+
+### Disabled state
+
+Card can have a disabled state, effectively making it and its actions non-clickable. If there are any actions, they will be disabled instead of the whole card.
+
+```jsx
+<Card disabled>
+  <Card.Heading>1-ops-tools1-fallback</Card.Heading>
+  <Card.Meta>
+    Grafana
+    <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+      https://ops-us-east4.grafana.net/api/prom
+    </a>
+  </Card.Meta>
+  <Card.Figure>
+    <img src={logo} alt="Grafana Logo" width="40" height="40" />
+  </Card.Figure>
+</Card>
+```
+
+<Preview>
+  <Card disabled>
+    <Card.Heading>1-ops-tools1-fallback</Card.Heading>
+    <Card.Meta>
+      Grafana
+      <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+        https://ops-us-east4.grafana.net/api/prom
+      </a>
+    </Card.Meta>
+    <Card.Figure>
+      <img src={logo} alt="Grafana Logo" width="40" height="40" />
+    </Card.Figure>
+  </Card>
+</Preview>
+
+```jsx
+<Card disabled>
+  <Card.Heading>1-ops-tools1-fallback</Card.Heading>
+  <Card.Meta>
+    Grafana
+    <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+      https://ops-us-east4.grafana.net/api/prom
+    </a>
+  </Card.Meta>
+  <Card.Figure>
+    <img src={logo} alt="Grafana Logo" width="40" height="40" />
+  </Card.Figure>
+  <Card.Actions>
+    <Button key="settings" variant="secondary">
+      Settings
+    </Button>
+    <Button key="explore" variant="secondary">
+      Explore
+    </Button>
+  </Card.Actions>
+  <Card.SecondaryActions>
+    <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />
+    <IconButton key="delete" name="trash-alt" tooltip="Delete this data source" />
+  </Card.SecondaryActions>
+</Card>
+```
+
+<Preview>
+  <Card disabled>
+    <Card.Heading>1-ops-tools1-fallback</Card.Heading>
+    <Card.Meta>
+      Grafana
+      <a key="prom-link" href="https://ops-us-east4.grafana.net/api/prom">
+        https://ops-us-east4.grafana.net/api/prom
+      </a>
+    </Card.Meta>
+    <Card.Figure>
+      <img src={logo} alt="Grafana Logo" width="40" height="40" />
+    </Card.Figure>
+    <Card.Actions>
+      <Button key="settings" variant="secondary">
+        Settings
+      </Button>
+      <Button key="explore" variant="secondary">
+        Explore
+      </Button>
+    </Card.Actions>
+    <Card.SecondaryActions>
+      <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />
+      <IconButton key="delete" name="trash-alt" tooltip="Delete this data source" />
+    </Card.SecondaryActions>
+  </Card>
+</Preview>
+
+### Selectable
+
+```jsx
+<Card isSelected disabled>
+  <Card.Heading>Option #1</Card.Heading>
+  <Card.Meta>This is a really great option, you won't regret it.</Card.Meta>
+  <Card.Figure>
+    <img src={logo} alt="Grafana Logo" width="40" height="40" />
+  </Card.Figure>
+</Card>
+```
+
+<Preview>
+  <Card isSelected disabled>
+    <Card.Heading>Option #1</Card.Heading>
+    <Card.Description>This is a really great option, you won't regret it.</Card.Description>
+    <Card.Figure>
+      <img src={logo} alt="Grafana Logo" width="40" height="40" />
+    </Card.Figure>
+  </Card>
+</Preview>
+
+### Props
+
+<Props of={Card} />

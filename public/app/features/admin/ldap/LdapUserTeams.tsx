@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+
 import { Tooltip, Icon } from '@grafana/ui';
 import { LdapTeam } from 'app/types';
 
@@ -8,7 +9,7 @@ interface Props {
 }
 
 export const LdapUserTeams: FC<Props> = ({ teams, showAttributeMapping }) => {
-  const items = showAttributeMapping ? teams : teams.filter(item => item.teamName);
+  const items = showAttributeMapping ? teams : teams.filter((item) => item.teamName);
 
   return (
     <div className="gf-form-group">

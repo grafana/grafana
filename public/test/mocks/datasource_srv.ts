@@ -1,9 +1,13 @@
+import { Observable } from 'rxjs';
+
 import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
+  DataSourceRef,
+  getDataSourceUID,
 } from '@grafana/data';
 
 export class DatasourceSrvMock {
@@ -11,15 +15,16 @@ export class DatasourceSrvMock {
     //
   }
 
-  get(name?: string): Promise<DataSourceApi> {
-    if (!name) {
+  get(ref?: DataSourceRef | string): Promise<DataSourceApi> {
+    if (!ref) {
       return Promise.resolve(this.defaultDS);
     }
-    const ds = this.datasources[name];
+    const uid = getDataSourceUID(ref) ?? '';
+    const ds = this.datasources[uid];
     if (ds) {
       return Promise.resolve(ds);
     }
-    return Promise.reject('Unknown Datasource: ' + name);
+    return Promise.reject(`Unknown Datasource: ${JSON.stringify(ref)}`);
   }
 }
 
@@ -40,10 +45,41 @@ export class MockDataSourceApi extends DataSourceApi {
       return Promise.reject(this.error);
     }
 
-    return new Promise(resolver => {
+    return new Promise((resolver) => {
       setTimeout(() => {
         resolver(this.result);
       });
+    });
+  }
+
+  testDatasource() {
+    return Promise.resolve();
+  }
+}
+
+export class MockObservableDataSourceApi extends DataSourceApi {
+  results: DataQueryResponse[] = [{ data: [] }];
+
+  constructor(name?: string, results?: DataQueryResponse[], meta?: any, private error: string | null = null) {
+    super({ name: name ? name : 'MockDataSourceApi' } as DataSourceInstanceSettings);
+
+    if (results) {
+      this.results = results;
+    }
+
+    this.meta = meta || ({} as DataSourcePluginMeta);
+  }
+
+  query(request: DataQueryRequest): Observable<DataQueryResponse> {
+    return new Observable((observer) => {
+      if (this.error) {
+        observer.error(this.error);
+      }
+
+      if (this.results) {
+        this.results.forEach((response) => observer.next(response));
+        observer.complete();
+      }
     });
   }
 

@@ -66,6 +66,7 @@ In case a member leaves, the [offboarding](#offboarding) procedure is applied.
 The current team members are:
 
 - Alexander Zobnin ([Grafana Labs](https://grafana.com/))
+- Alex Khomenko ([Grafana Labs](https://grafana.com/))
 - Andrej Ocenas ([Grafana Labs](https://grafana.com/))
 - Arve Knudsen ([Grafana Labs](https://grafana.com/))
 - Brian Gann ([Grafana Labs](https://grafana.com/))
@@ -77,6 +78,8 @@ The current team members are:
 - Diana Sarlinska ([Grafana Labs](https://grafana.com/))
 - Dominik Prokop ([Grafana Labs](https://grafana.com/))
 - Emil Tullstedt ([Grafana Labs](https://grafana.com/))
+- Erik Sundell ([Grafana Labs](https://grafana.com/))
+- Fredrik Enestad ([Embark Studios](https://www.embark-studios.com/))
 - Hugo Häggmark ([Grafana Labs](https://grafana.com/))
 - Ivana Huckova ([Grafana Labs](https://grafana.com/))
 - Jeroen Op 't Eynde ([Grafana Labs](https://grafana.com/))
@@ -97,9 +100,11 @@ The current team members are:
 - Ryan McKinley ([Grafana Labs](https://grafana.com/))
 - Sofia Papagiannaki ([Grafana Labs](https://grafana.com/))
 - Stephanie Closson ([Grafana Labs](https://grafana.com/))
-- Tobias Skarhed ([Grafana Labs](https://grafana.com/))
+- Tobias Skarhed ([CERN](https://home.web.cern.ch/))
 - Torkel Ödegaard ([Grafana Labs](https://grafana.com/))
 - Utkarsh Bhatnagar ([Tinder](https://www.tinder.com/))
+- Will Browne ([Grafana Labs](https://grafana.com/))
+- Zoltán Bedi ([Grafana Labs](https://grafana.com/))
 
 ### Maintainers
 
@@ -196,8 +201,8 @@ The ex-member is
 
 If needed, we reserve the right to publicly announce removal.
 
-[coc]: https://github.com/grafana/grafana/blob/master/CODE_OF_CONDUCT.md
+[coc]: https://github.com/grafana/grafana/blob/main/CODE_OF_CONDUCT.md
 [devs]: https://groups.google.com/forum/#!forum/grafana-developers
-[maintainers]: https://github.com/grafana/grafana/blob/master/MAINTAINERS.md
+[maintainers]: https://github.com/grafana/grafana/blob/main/MAINTAINERS.md
 [rough]: https://tools.ietf.org/html/rfc7282
 [team]: https://groups.google.com/forum/#!forum/grafana-team

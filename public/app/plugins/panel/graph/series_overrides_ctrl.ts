@@ -1,6 +1,7 @@
-import _ from 'lodash';
-import coreModule from 'app/core/core_module';
+import { map, each, isUndefined } from 'lodash';
+
 import { textUtil } from '@grafana/data';
+import coreModule from 'app/angular/core_module';
 
 /** @ngInject */
 export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: any) {
@@ -15,7 +16,7 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
       propertyName: propertyName,
       index: $scope.overrideMenu.length,
       values,
-      submenu: _.map(values, value => {
+      submenu: map(values, (value) => {
         return { text: String(value), value: value };
       }),
     };
@@ -79,16 +80,16 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
   };
 
   $scope.getSeriesNames = () => {
-    return _.map($scope.ctrl.seriesList, series => {
+    return map($scope.ctrl.seriesList, (series) => {
       return textUtil.escapeHtml(series.alias);
     });
   };
 
   $scope.updateCurrentOverrides = () => {
     $scope.currentOverrides = [];
-    _.each($scope.overrideMenu, option => {
+    each($scope.overrideMenu, (option) => {
       const value = $scope.override[option.propertyName];
-      if (_.isUndefined(value)) {
+      if (isUndefined(value)) {
         return;
       }
       $scope.currentOverrides.push({
@@ -109,50 +110,16 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
   $scope.addOverrideOption('Staircase line', 'steppedLine', [true, false]);
   $scope.addOverrideOption('Dashes', 'dashes', [true, false]);
   $scope.addOverrideOption('Hidden Series', 'hiddenSeries', [true, false]);
-  $scope.addOverrideOption('Dash Length', 'dashLength', [
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18,
-    19,
-    20,
-  ]);
-  $scope.addOverrideOption('Dash Space', 'spaceLength', [
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18,
-    19,
-    20,
-  ]);
+  $scope.addOverrideOption(
+    'Dash Length',
+    'dashLength',
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+  );
+  $scope.addOverrideOption(
+    'Dash Space',
+    'spaceLength',
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+  );
   $scope.addOverrideOption('Points', 'points', [true, false]);
   $scope.addOverrideOption('Points Radius', 'pointradius', [1, 2, 3, 4, 5]);
   $scope.addOverrideOption('Stack', 'stack', [true, false, 'A', 'B', 'C', 'D']);

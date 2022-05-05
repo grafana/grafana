@@ -1,5 +1,7 @@
 import { GrafanaThemeType } from '@grafana/data';
+
 import { selectThemeVariant } from './selectThemeVariant';
+
 import { mockTheme } from './index';
 
 const lightThemeMock = {
@@ -18,7 +20,7 @@ const darkThemeMock = {
 
 describe('Theme variable variant selector', () => {
   // @ts-ignore
-  const restoreTheme = mockTheme(name => (name === GrafanaThemeType.Light ? lightThemeMock : darkThemeMock));
+  const restoreTheme = mockTheme((name) => (name === GrafanaThemeType.Light ? lightThemeMock : darkThemeMock));
 
   afterAll(() => {
     restoreTheme();

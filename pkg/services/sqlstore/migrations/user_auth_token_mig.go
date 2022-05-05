@@ -23,10 +23,25 @@ func addUserAuthTokenMigrations(mg *Migrator) {
 		Indices: []*Index{
 			{Cols: []string{"auth_token"}, Type: UniqueIndex},
 			{Cols: []string{"prev_auth_token"}, Type: UniqueIndex},
+			{Cols: []string{"user_id"}, Type: IndexType},
 		},
 	}
 
 	mg.AddMigration("create user auth token table", NewAddTableMigration(userAuthTokenV1))
 	mg.AddMigration("add unique index user_auth_token.auth_token", NewAddIndexMigration(userAuthTokenV1, userAuthTokenV1.Indices[0]))
 	mg.AddMigration("add unique index user_auth_token.prev_auth_token", NewAddIndexMigration(userAuthTokenV1, userAuthTokenV1.Indices[1]))
+
+	mg.AddMigration("add index user_auth_token.user_id", NewAddIndexMigration(userAuthTokenV1, userAuthTokenV1.Indices[2]))
+
+	mg.AddMigration(
+		"Add revoked_at to the user auth token",
+		NewAddColumnMigration(
+			userAuthTokenV1,
+			&Column{
+				Name:     "revoked_at",
+				Type:     DB_Int,
+				Nullable: true,
+			},
+		),
+	)
 }

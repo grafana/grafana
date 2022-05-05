@@ -17,16 +17,16 @@ package middleware
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"runtime"
 
-	"gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var (
@@ -51,6 +51,9 @@ func stack(skip int) []byte {
 		// Print this much at least.  If we can't find the source, it won't show.
 		fmt.Fprintf(buf, "%s:%d (0x%x)\n", file, line, pc)
 		if file != lastFile {
+			// We can ignore the gosec G304 warning on this one because `file`
+			// comes from the runtime.Caller() function.
+			// nolint:gosec
 			data, err := ioutil.ReadFile(file)
 			if err != nil {
 				continue
@@ -99,60 +102,65 @@ func function(pc uintptr) []byte {
 
 // Recovery returns a middleware that recovers from any panics and writes a 500 if there was one.
 // While Martini is in development mode, Recovery will also output the panic as HTML.
-func Recovery() macaron.Handler {
-	return func(c *macaron.Context) {
+func Recovery(cfg *setting.Cfg) web.Handler {
+	return func(c *web.Context) {
 		defer func() {
-			if err := recover(); err != nil {
-				panicLogger := log.Root
+			if r := recover(); r != nil {
+				var panicLogger log.Logger
+				panicLogger = log.New("recovery")
 				// try to get request logger
-				if ctx, ok := c.Data["ctx"]; ok {
-					ctxTyped := ctx.(*models.ReqContext)
-					panicLogger = ctxTyped.Logger
+				ctx := contexthandler.FromContext(c.Req.Context())
+				if ctx != nil {
+					panicLogger = ctx.Logger
 				}
 
-				// http.ErrAbortHandler is suppressed by default in the http package
-				// and used as a signal for aborting requests. Suppresses stacktrace
-				// since it doesn't add any important information.
-				if err == http.ErrAbortHandler {
-					panicLogger.Error("Request error", "error", err)
-					return
+				if err, ok := r.(error); ok {
+					// http.ErrAbortHandler is suppressed by default in the http package
+					// and used as a signal for aborting requests. Suppresses stacktrace
+					// since it doesn't add any important information.
+					if errors.Is(err, http.ErrAbortHandler) {
+						panicLogger.Error("Request error", "error", err)
+						return
+					}
 				}
 
 				stack := stack(3)
-				panicLogger.Error("Request error", "error", err, "stack", string(stack))
+				panicLogger.Error("Request error", "error", r, "stack", string(stack))
 
 				// if response has already been written, skip.
-				if c.Written() {
+				if c.Resp.Written() {
 					return
 				}
 
-				c.Data["Title"] = "Server Error"
-				c.Data["AppSubUrl"] = setting.AppSubUrl
-				c.Data["Theme"] = setting.DefaultTheme
+				data := struct {
+					Title     string
+					AppTitle  string
+					AppSubUrl string
+					Theme     string
+					ErrorMsg  string
+				}{"Server Error", "Grafana", cfg.AppSubURL, cfg.DefaultTheme, ""}
 
-				if setting.Env == setting.DEV {
-					if theErr, ok := err.(error); ok {
-						c.Data["Title"] = theErr.Error()
+				if setting.Env == setting.Dev {
+					if err, ok := r.(error); ok {
+						data.Title = err.Error()
 					}
 
-					c.Data["ErrorMsg"] = string(stack)
+					data.ErrorMsg = string(stack)
 				}
 
-				ctx, ok := c.Data["ctx"].(*models.ReqContext)
-
-				if ok && ctx.IsApiRequest() {
+				if ctx != nil && ctx.IsApiRequest() {
 					resp := make(map[string]interface{})
 					resp["message"] = "Internal Server Error - Check the Grafana server logs for the detailed error message."
 
-					if c.Data["ErrorMsg"] != nil {
-						resp["error"] = fmt.Sprintf("%v - %v", c.Data["Title"], c.Data["ErrorMsg"])
+					if data.ErrorMsg != "" {
+						resp["error"] = fmt.Sprintf("%v - %v", data.Title, data.ErrorMsg)
 					} else {
-						resp["error"] = c.Data["Title"]
+						resp["error"] = data.Title
 					}
 
 					c.JSON(500, resp)
 				} else {
-					c.HTML(500, setting.ERR_TEMPLATE_NAME)
+					c.HTML(500, cfg.ErrTemplateName, data)
 				}
 			}
 		}()

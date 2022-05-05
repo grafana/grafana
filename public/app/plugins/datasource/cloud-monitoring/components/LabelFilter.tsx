@@ -1,9 +1,15 @@
-import React, { FunctionComponent, Fragment } from 'react';
-import _ from 'lodash';
-import { SelectableValue } from '@grafana/data';
-import { Segment, Icon } from '@grafana/ui';
-import { labelsToGroupedOptions, filtersToStringArray, stringArrayToFilters, toOption } from '../functions';
+import { flatten } from 'lodash';
+import React, { FunctionComponent, useCallback, useMemo } from 'react';
+
+import { SelectableValue, toOption } from '@grafana/data';
+import { Button, HorizontalGroup, Select, VerticalGroup } from '@grafana/ui';
+import { CustomControlProps } from '@grafana/ui/src/components/Select/types';
+
+import { SELECT_WIDTH } from '../constants';
+import { labelsToGroupedOptions, stringArrayToFilters } from '../functions';
 import { Filter } from '../types';
+
+import { QueryEditorRow } from '.';
 
 export interface Props {
   labels: { [key: string]: string[] };
@@ -12,9 +18,23 @@ export interface Props {
   variableOptionGroup: SelectableValue<string>;
 }
 
-const removeText = '-- remove filter --';
-const removeOption: SelectableValue<string> = { label: removeText, value: removeText, icon: 'times' };
 const operators = ['=', '!=', '=~', '!=~'];
+
+const FilterButton = React.forwardRef<HTMLButtonElement, CustomControlProps<string>>(
+  ({ value, isOpen, invalid, ...rest }, ref) => {
+    return <Button {...rest} ref={ref} variant="secondary" icon="plus" aria-label="Add filter"></Button>;
+  }
+);
+FilterButton.displayName = 'FilterButton';
+
+const OperatorButton = React.forwardRef<HTMLButtonElement, CustomControlProps<string>>(({ value, ...rest }, ref) => {
+  return (
+    <Button {...rest} ref={ref} variant="secondary">
+      <span className="query-segment-operator">{value?.label}</span>
+    </Button>
+  );
+});
+OperatorButton.displayName = 'OperatorButton';
 
 export const LabelFilter: FunctionComponent<Props> = ({
   labels = {},
@@ -22,72 +42,113 @@ export const LabelFilter: FunctionComponent<Props> = ({
   onChange,
   variableOptionGroup,
 }) => {
-  const filters = stringArrayToFilters(filterArray);
+  const filters = useMemo(() => stringArrayToFilters(filterArray), [filterArray]);
+  const options = useMemo(
+    () => [variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))],
+    [labels, variableOptionGroup]
+  );
 
-  const options = [removeOption, variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))];
+  const filtersToStringArray = useCallback((filters: Filter[]) => {
+    const strArr = flatten(filters.map(({ key, operator, value, condition }) => [key, operator, value, condition!]));
+    return strArr.slice(0, strArr.length - 1);
+  }, []);
+
+  const AddFilter = () => {
+    return (
+      <Select
+        allowCustomValue
+        options={[variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))]}
+        onChange={({ value: key = '' }) =>
+          onChange(filtersToStringArray([...filters, { key, operator: '=', condition: 'AND', value: '' }]))
+        }
+        menuPlacement="bottom"
+        renderControl={FilterButton}
+      />
+    );
+  };
 
   return (
-    <div className="gf-form-inline">
-      <label className="gf-form-label query-keyword width-9">Filter</label>
-      {filters.map(({ key, operator, value, condition }, index) => (
-        <Fragment key={index}>
-          <Segment
-            allowCustomValue
-            value={key}
-            options={options}
-            onChange={({ value: key = '' }) => {
-              if (key === removeText) {
-                onChange(filtersToStringArray(filters.filter((_, i) => i !== index)));
-              } else {
-                onChange(
-                  filtersToStringArray(
-                    filters.map((f, i) => (i === index ? { key, operator, condition, value: '' } : f))
-                  )
-                );
-              }
-            }}
-          />
-          <Segment
-            value={operator}
-            className="gf-form-label query-segment-operator"
-            options={operators.map(toOption)}
-            onChange={({ value: operator = '=' }) =>
-              onChange(filtersToStringArray(filters.map((f, i) => (i === index ? { ...f, operator } : f))))
+    <QueryEditorRow
+      label="Filter"
+      tooltip={
+        'To reduce the amount of data charted, apply a filter. A filter has three components: a label, a comparison, and a value. The comparison can be an equality, inequality, or regular expression.'
+      }
+      noFillEnd={filters.length > 1}
+    >
+      <VerticalGroup spacing="xs" width="auto">
+        {filters.map(({ key, operator, value, condition }, index) => {
+          // Add the current key and value as options if they are manually entered
+          const keyPresent = options.some((op) => {
+            if (op.options) {
+              return options.some((opp) => opp.label === key);
             }
-          />
-          <Segment
-            allowCustomValue
-            value={value}
-            placeholder="add filter value"
-            options={
-              labels.hasOwnProperty(key) ? [variableOptionGroup, ...labels[key].map(toOption)] : [variableOptionGroup]
-            }
-            onChange={({ value = '' }) =>
-              onChange(filtersToStringArray(filters.map((f, i) => (i === index ? { ...f, value } : f))))
-            }
-          />
-          {filters.length > 1 && index + 1 !== filters.length && (
-            <label className="gf-form-label query-keyword">{condition}</label>
-          )}
-        </Fragment>
-      ))}
-      {Object.values(filters).every(({ value }) => value) && (
-        <Segment
-          allowCustomValue
-          Component={
-            <a className="gf-form-label query-part">
-              <Icon name="plus" />
-            </a>
+            return op.label === key;
+          });
+          if (!keyPresent) {
+            options.push({ label: key, value: key });
           }
-          options={[variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))]}
-          onChange={({ value: key = '' }) =>
-            onChange(filtersToStringArray([...filters, { key, operator: '=', condition: 'AND', value: '' } as Filter]))
+
+          const valueOptions = labels.hasOwnProperty(key)
+            ? [variableOptionGroup, ...labels[key].map(toOption)]
+            : [variableOptionGroup];
+          const valuePresent = valueOptions.some((op) => {
+            return op.label === value;
+          });
+          if (!valuePresent) {
+            valueOptions.push({ label: value, value });
           }
-        />
-      )}
-      <div className="gf-form gf-form--grow">
-        <label className="gf-form-label gf-form-label--grow"></label>
-      </div>
-    </div>
+
+          return (
+            <HorizontalGroup key={index} spacing="xs" width="auto">
+              <Select
+                aria-label="Filter label key"
+                width={SELECT_WIDTH}
+                allowCustomValue
+                formatCreateLabel={(v) => `Use label key: ${v}`}
+                value={key}
+                options={options}
+                onChange={({ value: key = '' }) => {
+                  onChange(
+                    filtersToStringArray(
+                      filters.map((f, i) => (i === index ? { key, operator, condition, value: '' } : f))
+                    )
+                  );
+                }}
+              />
+              <Select
+                value={operator}
+                options={operators.map(toOption)}
+                onChange={({ value: operator = '=' }) =>
+                  onChange(filtersToStringArray(filters.map((f, i) => (i === index ? { ...f, operator } : f))))
+                }
+                menuPlacement="bottom"
+                renderControl={OperatorButton}
+              />
+              <Select
+                aria-label="Filter label value"
+                width={SELECT_WIDTH}
+                formatCreateLabel={(v) => `Use label value: ${v}`}
+                allowCustomValue
+                value={value}
+                placeholder="add filter value"
+                options={valueOptions}
+                onChange={({ value = '' }) =>
+                  onChange(filtersToStringArray(filters.map((f, i) => (i === index ? { ...f, value } : f))))
+                }
+              />
+              <Button
+                variant="secondary"
+                size="md"
+                icon="trash-alt"
+                aria-label="Remove"
+                onClick={() => onChange(filtersToStringArray(filters.filter((_, i) => i !== index)))}
+              ></Button>
+              {index + 1 === filters.length && Object.values(filters).every(({ value }) => value) && <AddFilter />}
+            </HorizontalGroup>
+          );
+        })}
+        {!filters.length && <AddFilter />}
+      </VerticalGroup>
+    </QueryEditorRow>
   );
 };

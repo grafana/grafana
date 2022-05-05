@@ -7,21 +7,24 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var grafanaComProxyTransport = &http.Transport{
 	Proxy: http.ProxyFromEnvironment,
-	Dial: (&net.Dialer{
+	DialContext: (&net.Dialer{
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
-	}).Dial,
+	}).DialContext,
 	TLSHandshakeTimeout: 10 * time.Second,
 }
 
-func ReverseProxyGnetReq(proxyPath string) *httputil.ReverseProxy {
+func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string) *httputil.ReverseProxy {
 	url, _ := url.Parse(setting.GrafanaComUrl)
 
 	director := func(req *http.Request) {
@@ -35,15 +38,17 @@ func ReverseProxyGnetReq(proxyPath string) *httputil.ReverseProxy {
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
 		req.Header.Del("Authorization")
+
+		// send the current Grafana version for each request proxied to GCOM
+		req.Header.Add("grafana-version", version)
 	}
 
-	return &httputil.ReverseProxy{Director: director}
+	return proxyutil.NewReverseProxy(logger, director)
 }
 
-func ProxyGnetRequest(c *models.ReqContext) {
-	proxyPath := c.Params("*")
-	proxy := ReverseProxyGnetReq(proxyPath)
+func (hs *HTTPServer) ProxyGnetRequest(c *models.ReqContext) {
+	proxyPath := web.Params(c.Req)["*"]
+	proxy := ReverseProxyGnetReq(c.Logger, proxyPath, hs.Cfg.BuildVersion)
 	proxy.Transport = grafanaComProxyTransport
-	proxy.ServeHTTP(c.Resp, c.Req.Request)
-	c.Resp.Header().Del("Set-Cookie")
+	proxy.ServeHTTP(c.Resp, c.Req)
 }

@@ -1,7 +1,13 @@
+import { SystemDateFormatSettings } from '../datetime';
+import { MapLayerOptions } from '../geo/layer';
+import { GrafanaTheme2 } from '../themes';
+
 import { DataSourceInstanceSettings } from './datasource';
+import { FeatureToggles } from './featureToggles.gen';
 import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
-import { SystemDateFormatSettings } from '../datetime';
+
+import { NavLinkDTO, OrgRole } from '.';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -11,37 +17,20 @@ import { SystemDateFormatSettings } from '../datetime';
 export interface BuildInfo {
   version: string;
   commit: string;
-  /**
-   * Is set to true when running Grafana Enterprise edition.
-   *
-   * @deprecated use `licenseInfo.hasLicense` instead
-   */
-  isEnterprise: boolean;
   env: string;
-  edition: string;
+  edition: GrafanaEdition;
   latestVersion: string;
   hasUpdate: boolean;
   hideVersion: boolean;
 }
 
 /**
- * Describes available feature toggles in Grafana. These can be configured via the
- * `conf/custom.ini` to enable features under development or not yet available in
- * stable version.
- *
- * @public
+ * @internal
  */
-export interface FeatureToggles {
-  live: boolean;
-  expressions: boolean;
-
-  /**
-   * @remarks
-   * Available only in Grafana Enterprise
-   */
-  meta: boolean;
-  datasourceInsights: boolean;
-  reportGrid: boolean;
+export enum GrafanaEdition {
+  OpenSource = 'Open Source',
+  Pro = 'Pro',
+  Enterprise = 'Enterprise',
 }
 
 /**
@@ -50,16 +39,98 @@ export interface FeatureToggles {
  * @public
  */
 export interface LicenseInfo {
-  hasLicense: boolean;
   expiry: number;
   licenseUrl: string;
   stateInfo: string;
+  edition: GrafanaEdition;
+  enabledFeatures: { [key: string]: boolean };
+  trialExpiry?: number;
+}
+
+/**
+ * Describes Sentry integration config
+ *
+ * @public
+ */
+export interface SentryConfig {
+  enabled: boolean;
+  dsn: string;
+  customEndpoint: string;
+  sampleRate: number;
+}
+
+/**
+ * Describes the plugins that should be preloaded prior to start Grafana.
+ *
+ * @public
+ */
+export type PreloadPlugin = {
+  path: string;
+  version: string;
+};
+
+/** Supported OAuth services
+ *
+ * @public
+ */
+export type OAuth =
+  | 'github'
+  | 'gitlab'
+  | 'google'
+  | 'generic_oauth'
+  // | 'grafananet' Deprecated. Key always changed to "grafana_com"
+  | 'grafana_com'
+  | 'azuread'
+  | 'okta';
+
+/** Map of enabled OAuth services and their respective names
+ *
+ * @public
+ */
+export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: string }>>;
+
+/** Current user info included in bootData
+ *
+ * @internal
+ */
+export interface CurrentUserDTO {
+  isSignedIn: boolean;
+  id: number;
+  externalUserId: string;
+  login: string;
+  email: string;
+  name: string;
+  lightTheme: boolean;
+  orgCount: number;
+  orgId: number;
+  orgName: string;
+  orgRole: OrgRole | '';
+  isGrafanaAdmin: boolean;
+  gravatarUrl: string;
+  timezone: string;
+  weekStart: string;
+  locale: string;
+  permissions?: Record<string, boolean>;
+}
+
+/** Contains essential user and config info
+ *
+ * @internal
+ */
+export interface BootData {
+  user: CurrentUserDTO;
+  settings: GrafanaConfig;
+  navTree: NavLinkDTO[];
+  themePaths: {
+    light: string;
+    dark: string;
+  };
 }
 
 /**
  * Describes all the different Grafana configuration values available for an instance.
  *
- * @public
+ * @internal
  */
 export interface GrafanaConfig {
   datasources: { [str: string]: DataSourceInstanceSettings };
@@ -69,7 +140,7 @@ export interface GrafanaConfig {
   windowTitlePrefix: string;
   buildInfo: BuildInfo;
   newPanelTitle: string;
-  bootData: any;
+  bootData: BootData;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
@@ -82,23 +153,36 @@ export interface GrafanaConfig {
   alertingMinInterval: number;
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
+  queryHistoryEnabled: boolean;
+  helpEnabled: boolean;
+  profileEnabled: boolean;
   ldapEnabled: boolean;
+  sigV4AuthEnabled: boolean;
   samlEnabled: boolean;
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
-  oauth: any;
+  oauth: OAuthSettings;
   disableUserSignUp: boolean;
-  loginHint: any;
-  passwordHint: any;
-  loginError: any;
+  loginHint: string;
+  passwordHint: string;
+  loginError?: string;
   navTree: any;
   viewersCanEdit: boolean;
   editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
+  liveEnabled: boolean;
   theme: GrafanaTheme;
-  pluginsToPreload: string[];
+  theme2: GrafanaTheme2;
+  pluginsToPreload: PreloadPlugin[];
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
+  sentry: SentryConfig;
+  customTheme?: any;
+  geomapDefaultBaseLayer?: MapLayerOptions;
+  geomapDisableCustomBaseLayer?: boolean;
+  unifiedAlertingEnabled: boolean;
+  angularSupportEnabled: boolean;
+  feedbackLinksEnabled: boolean;
 }

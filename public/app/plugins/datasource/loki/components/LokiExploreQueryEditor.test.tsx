@@ -1,13 +1,16 @@
-import React from 'react';
 import { mount, shallow } from 'enzyme';
+import React from 'react';
 import { act } from 'react-dom/test-utils';
-import LokiExploreQueryEditor from './LokiExploreQueryEditor';
-import { LokiExploreExtraField } from './LokiExploreExtraField';
-import { LokiDatasource } from '../datasource';
-import { LokiQuery } from '../types';
+
 import { ExploreMode, LoadingState, PanelData, toUtc, TimeRange } from '@grafana/data';
-import { makeMockLokiDatasource } from '../mocks';
+
+import { LokiDatasource } from '../datasource';
 import LokiLanguageProvider from '../language_provider';
+import { makeMockLokiDatasource } from '../mocks';
+import { LokiQuery } from '../types';
+
+import { LokiExploreQueryEditor } from './LokiExploreQueryEditor';
+import { LokiOptionFields } from './LokiOptionFields';
 
 const setup = (renderMethod: any, propOverrides?: object) => {
   const datasource: LokiDatasource = makeMockLokiDatasource({});
@@ -93,7 +96,7 @@ describe('LokiExploreQueryEditor', () => {
     // @ts-ignore strict null error TS2345: Argument of type '() => Promise<void>' is not assignable to parameter of type '() => void | undefined'.
     await act(async () => {
       const wrapper = setup(mount);
-      expect(wrapper.find(LokiExploreExtraField).length).toBe(1);
+      expect(wrapper.find(LokiOptionFields).length).toBe(1);
     });
   });
 });

@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { shallow, mount } from 'enzyme';
+import React from 'react';
 
-import SpanGraph from './SpanGraph';
-import TracePageHeader, { HEADER_ITEMS } from './TracePageHeader';
 import LabeledList from '../common/LabeledList';
 import traceGenerator from '../demo/trace-generators';
 import { getTraceName } from '../model/trace-viewer';
 import transformTraceData from '../model/transform-trace-data';
+
+import SpanGraph from './SpanGraph';
+import TracePageHeader, { HEADER_ITEMS } from './TracePageHeader';
 
 describe('<TracePageHeader>', () => {
   const trace = transformTraceData(traceGenerator.trace({}));
@@ -58,6 +59,11 @@ describe('<TracePageHeader>', () => {
       expect(item.contains(HEADER_ITEMS[i].title)).toBeTruthy();
       expect(item.contains(HEADER_ITEMS[i].renderer(defaultProps.trace))).toBeTruthy();
     });
+  });
+
+  it('renders start time in header with millisecond precision', () => {
+    const startTimeMs = wrapper.find(LabeledList).props().items[0].value.props.children[1].props.children;
+    expect(startTimeMs).toMatch(/:\d\d\.\d\d\d/g);
   });
 
   it('renders a <SpanGraph>', () => {

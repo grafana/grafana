@@ -1,0 +1,75 @@
+import { ArgsTable } from '@storybook/addon-docs/blocks';
+import { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary';
+import { ErrorWithStack } from './ErrorWithStack';
+
+# ErrorBoundary
+
+A React component that catches errors in child components. Useful for logging or displaying a fallback UI in case of errors. More information about error boundaries is available at [React documentation website](https://reactjs.org/docs/error-boundaries.html).
+
+### Usage
+
+```jsx
+import { ErrorBoundary, Alert } from '@grafana/ui';
+
+<ErrorBoundary>
+  {({ error }) => {
+    if (error) {
+      return <Alert title={error.message} />;
+    }
+    return <Component />;
+  }}
+</ErrorBoundary>;
+```
+
+# ErrorBoundaryAlert
+
+An error boundary component with built-in alert to display in case of error.
+
+### Usage
+
+```jsx
+import { ErrorBoundaryAlert } from '@grafana/ui';
+
+<ErrorBoundaryAlert>
+  <Component />
+</ErrorBoundaryAlert>;
+```
+
+### Props
+
+<ArgsTable of={ErrorBoundaryAlert} />
+
+# ErrorWithStack
+
+A component that displays error together with its stack trace.
+
+### Usage
+
+```jsx
+import { ErrorWithStack } from '@grafana/ui';
+
+<ErrorWithStack error={new Error('Test error')} title={'Unexpected error'} errorInfo={null} />;
+```
+
+### Props
+
+<ArgsTable of={ErrorWithStack} />
+
+# withErrorBoundary
+
+a HOC to conveniently wrap component in an error boundary
+
+### Usage
+
+```jsx
+import { withErrorBoundary } from '@grafana/ui';
+
+interface MyCompProps {}
+
+const MyComp = withErrorBoundary(
+  (props: MyCompProps) => {
+    return <>...</>;
+  },
+  { style: 'page' }
+);
+```

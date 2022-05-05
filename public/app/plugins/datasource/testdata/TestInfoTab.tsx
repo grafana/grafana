@@ -1,8 +1,10 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-// Types
 import { PluginConfigPageProps, DataSourcePluginMeta, DataSourceJsonData } from '@grafana/data';
+import { LinkButton } from '@grafana/ui';
+
+// Types
 
 interface Props extends PluginConfigPageProps<DataSourcePluginMeta<DataSourceJsonData>> {}
 
@@ -14,17 +16,17 @@ export class TestInfoTab extends PureComponent<Props> {
   render() {
     return (
       <div>
-        See github for more information about setting up a reproducable test environment.
+        See github for more information about setting up a reproducible test environment.
         <br />
         <br />
-        <a
-          className="btn btn-inverse"
-          href="https://github.com/grafana/grafana/tree/master/devenv"
+        <LinkButton
+          variant="secondary"
+          href="https://github.com/grafana/grafana/tree/main/devenv"
           target="_blank"
-          rel="noopener"
+          rel="noopener noreferrer"
         >
           GitHub
-        </a>
+        </LinkButton>
         <br />
       </div>
     );

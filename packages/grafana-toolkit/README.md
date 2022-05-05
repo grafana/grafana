@@ -15,6 +15,8 @@ yarn install
 yarn dev
 ```
 
+> **Note:** If running NPM 7+ the `npx` commands mentioned in this article may hang. The workaround is to use `npx --legacy-peer-deps <command to run>`.
+
 ## Update your plugin to use grafana-toolkit
 
 Follow the steps below to start using grafana-toolkit in your existing plugin.
@@ -61,6 +63,7 @@ With grafana-toolkit, we give you a CLI that addresses common tasks performed wh
 - `grafana-toolkit plugin:dev`
 - `grafana-toolkit plugin:test`
 - `grafana-toolkit plugin:build`
+- `grafana-toolkit plugin:sign`
 
 ### Create your plugin
 
@@ -93,6 +96,7 @@ Available options:
 - `-u`, `--updateSnapshot` - Performs snapshots update.
 - `--testNamePattern=<regex>` - Runs test with names that match provided regex (https://jestjs.io/docs/en/cli#testnamepattern-regex).
 - `--testPathPattern=<regex>` - Runs test with paths that match provided regex (https://jestjs.io/docs/en/cli#testpathpattern-regex).
+- `--maxWorkers=<num>|<string>` - Limit number of Jest workers spawned (https://jestjs.io/docs/en/cli#--maxworkersnumstring)
 
 ### Build your plugin
 
@@ -102,13 +106,29 @@ This command creates a production-ready build of your plugin.
 
 Available options:
 
+- `--skipTest` - Skip running tests as part of build. Useful if you're running the build as part of a larger pipeline.
+- `--skipLint` - Skip linting as part of build. Useful if you're running the build as part of a larger pipeline.
 - `--coverage` - Reports code coverage after the test step of the build.
+- `--preserveConsole` - Preserves console statements in the code.
+
+### Sign your plugin
+
+`grafana-toolkit plugin:sign`
+
+This command creates a signed MANIFEST.txt file which Grafana uses to validate the integrity of the plugin.
+
+Available options:
+
+- `--signatureType` - The [type of Signature](https://grafana.com/legal/plugins/) you are generating: `private`, `community` or `commercial`
+- `--rootUrls` - For private signatures, a list of the Grafana instance URLs that the plugin will be used on
+
+To generate a signature, you will need to sign up for a free account on https://grafana.com, create an API key with the Plugin Publisher role, and pass that in the `GRAFANA_API_KEY` environment variable.
 
 ## FAQ
 
 ### Which version of grafana-toolkit should I use?
 
-See [Grafana packages versioning guide](https://github.com/grafana/grafana/blob/master/packages/README.md#versioning).
+See [Grafana packages versioning guide](https://github.com/grafana/grafana/blob/main/packages/README.md#versioning).
 
 ### What tools does grafana-toolkit use?
 
@@ -173,7 +193,7 @@ import 'path/to/your/css_or_sass';
 
 The styles will be injected via `style` tag during runtime.
 
-> Note that imported static assets will be inlined as base64 URIs. _This can be subject of change in the future!_
+> **Note:** that imported static assets will be inlined as base64 URIs. _This can be subject of change in the future!_
 
 #### Theme-specific stylesheets
 
@@ -192,7 +212,7 @@ loadPluginCss({
 
 You must add `@grafana/runtime` to your plugin dependencies by running `yarn add @grafana/runtime` or `npm install @grafana/runtime`.
 
-> Note that in this case static files (png, svg, json, html) are all copied to dist directory when the plugin is bundled. Relative paths to those files does not change!
+> **Note:** that in this case static files (png, svg, json, html) are all copied to dist directory when the plugin is bundled. Relative paths to those files does not change!
 
 #### Emotion
 
@@ -224,7 +244,7 @@ const MyComponent = () => {
 };
 ```
 
-To learn more about using Grafana theme please refer to [Theme usage guide](https://github.com/grafana/grafana/blob/master/style_guides/themes.md#react)
+To learn more about using Grafana theme please refer to [Theme usage guide](https://github.com/grafana/grafana/blob/main/style_guides/themes.md#react)
 
 > We do not support Emotion's `css` prop. Use className instead!
 
@@ -245,7 +265,7 @@ Yes! However, it's important that your `tsconfig.json` file contains the followi
 
 ### Can I adjust ESLint configuration to suit my needs?
 
-grafana-toolkit comes with [default config for ESLint](https://github.com/grafana/grafana/blob/master/packages/grafana-toolkit/src/config/eslint.plugin.json). For now, there is now way to customise ESLint config.
+grafana-toolkit comes with [default config for ESLint](https://github.com/grafana/grafana/blob/main/packages/grafana-toolkit/src/config/eslint.plugin.json). For now, there is no way to customise ESLint config.
 
 ### How is Prettier integrated into grafana-toolkit workflow?
 
@@ -282,6 +302,24 @@ If your comments include ES2016 code, then SystemJS v0.20.19, which Grafana uses
 
 To fix this error, remove the ES2016 code from your comments.
 
+### I would like to dynamically import modules in my plugin
+
+Create a webpack.config.js with this content (in the root of _your_ plugin)
+
+```ts
+// webpack.config.js
+const pluginJson = require('./src/plugin.json');
+module.exports.getWebpackConfig = (config, options) => ({
+  ...config,
+  output: {
+    ...config.output,
+    publicPath: `public/plugins/${pluginJson.id}/`,
+  },
+});
+```
+
+The plugin id is the id written in the plugin.json file.
+
 ## Contribute to grafana-toolkit
 
 You can contribute to grafana-toolkit by helping develop it or by debugging it.
@@ -291,7 +329,7 @@ You can contribute to grafana-toolkit by helping develop it or by debugging it.
 Typically plugins should be developed using the `@grafana/toolkit` installed from npm. However, when working on the toolkit, you might want to use the local version. Follow the steps below to develop with a local version:
 
 1. Clone [Grafana repository](https://github.com/grafana/grafana).
-2. Navigate to the directory you have cloned Grafana repo to and then run `yarn install --pure-lockfile`.
+2. Navigate to the directory you have cloned Grafana repo to and then run `yarn install --immutable`.
 3. Navigate to `<GRAFANA_DIR>/packages/grafana-toolkit` and then run `yarn link`.
 4. Navigate to the directory where your plugin code is and then run `npx grafana-toolkit plugin:dev --yarnlink`. This adds all dependencies required by grafana-toolkit to your project, as well as link your local grafana-toolkit version to be used by the plugin.
 

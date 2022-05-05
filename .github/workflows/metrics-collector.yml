@@ -1,0 +1,35 @@
+#
+# When triggered by the cron job it will also collect metrics for:
+#  * number of issues without label
+#  * number of issues with "needs more info"
+#  * number of issues with "needs investigation"
+#  * number of issues with label type/bug
+#  * number of open issues in current milestone
+#
+# https://github.com/grafana/grafana-github-actions/blob/main/metrics-collector/index.ts
+#
+name: Github issue metrics collection
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  issues:
+    types: [opened, closed]
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Actions
+        uses: actions/checkout@v3
+        with:
+          repository: "grafana/grafana-github-actions"
+          path: ./actions
+          ref: main
+      - name: Install Actions
+        run: npm install --production --prefix ./actions
+      - name: Run metrics collector
+        uses: ./actions/metrics-collector
+        with:
+          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
+          configPath: "metrics-collector"

@@ -1,13 +1,14 @@
 package notifiers
 
 import (
+	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -46,7 +47,7 @@ func init() {
 
 // NewVictoropsNotifier creates an instance of VictoropsNotifier that
 // handles posting notifications to Victorops REST API
-func NewVictoropsNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+func NewVictoropsNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	autoResolve := model.Settings.Get("autoResolve").MustBool(true)
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
@@ -55,7 +56,7 @@ func NewVictoropsNotifier(model *models.AlertNotification) (alerting.Notifier, e
 	noDataAlertType := model.Settings.Get("noDataAlertType").MustString(AlertStateWarning)
 
 	return &VictoropsNotifier{
-		NotifierBase:    NewNotifierBase(model),
+		NotifierBase:    NewNotifierBase(model, ns),
 		URL:             url,
 		NoDataAlertType: noDataAlertType,
 		AutoResolve:     autoResolve,
@@ -74,22 +75,35 @@ type VictoropsNotifier struct {
 	log             log.Logger
 }
 
-// Notify sends notification to Victorops via POST to URL endpoint
-func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
-	vn.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.ID, "notification", vn.Name)
-
+func (vn *VictoropsNotifier) buildEventPayload(evalContext *alerting.EvalContext) (*simplejson.Json, error) {
 	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
 		vn.log.Error("Failed get rule link", "error", err)
-		return err
+		return nil, err
 	}
 
 	if evalContext.Rule.State == models.AlertStateOK && !vn.AutoResolve {
 		vn.log.Info("Not alerting VictorOps", "state", evalContext.Rule.State, "auto resolve", vn.AutoResolve)
-		return nil
+		return nil, nil
 	}
 
 	messageType := AlertStateCritical // Default to alerting and change based on state checks (Ensures string type)
+	for _, tag := range evalContext.Rule.AlertRuleTags {
+		if strings.ToLower(tag.Key) == "severity" {
+			// Only set severity if it's one of the PD supported enum values
+			// Info, Warning, Error, or Critical (case insensitive)
+			switch sev := strings.ToUpper(tag.Value); sev {
+			case "INFO":
+				fallthrough
+			case "WARNING":
+				fallthrough
+			case "CRITICAL":
+				messageType = sev
+			default:
+				vn.log.Warn("Ignoring invalid severity tag", "severity", sev)
+			}
+		}
+	}
 
 	if evalContext.Rule.State == models.AlertStateNoData { // translate 'NODATA' to set alert
 		messageType = vn.NoDataAlertType
@@ -127,10 +141,22 @@ func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		bodyJSON.Set("image_url", evalContext.ImagePublicURL)
 	}
 
+	return bodyJSON, nil
+}
+
+// Notify sends notification to Victorops via POST to URL endpoint
+func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
+	vn.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.ID, "notification", vn.Name)
+
+	bodyJSON, err := vn.buildEventPayload(evalContext)
+	if err != nil {
+		return err
+	}
+
 	data, _ := bodyJSON.MarshalJSON()
 	cmd := &models.SendWebhookSync{Url: vn.URL, Body: string(data)}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := vn.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		vn.log.Error("Failed to send Victorops notification", "error", err, "webhook", vn.Name)
 		return err
 	}

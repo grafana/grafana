@@ -1,11 +1,9 @@
 import { DataSourcePlugin } from '@grafana/data';
-import { ANNOTATION_QUERY_STEP_DEFAULT, PrometheusDatasource } from './datasource';
 
-import { PromQueryEditor } from './components/PromQueryEditor';
 import PromCheatSheet from './components/PromCheatSheet';
-import PromExploreQueryEditor from './components/PromExploreQueryEditor';
-
+import PromQueryEditorByApp from './components/PromQueryEditorByApp';
 import { ConfigEditor } from './configuration/ConfigEditor';
+import { ANNOTATION_QUERY_STEP_DEFAULT, PrometheusDatasource } from './datasource';
 
 class PrometheusAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
@@ -13,8 +11,7 @@ class PrometheusAnnotationsQueryCtrl {
 }
 
 export const plugin = new DataSourcePlugin(PrometheusDatasource)
-  .setQueryEditor(PromQueryEditor)
+  .setQueryEditor(PromQueryEditorByApp)
   .setConfigEditor(ConfigEditor)
-  .setExploreMetricsQueryField(PromExploreQueryEditor)
   .setAnnotationQueryCtrl(PrometheusAnnotationsQueryCtrl)
-  .setExploreStartPage(PromCheatSheet);
+  .setQueryEditorHelp(PromCheatSheet);

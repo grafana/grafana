@@ -1,6 +1,7 @@
 import { Labels } from './data';
-import { GraphSeriesXY } from './graph';
 import { DataFrame } from './dataFrame';
+import { DataQueryResponse } from './datasource';
+import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
 
 /**
@@ -20,6 +21,7 @@ export enum LogLevel {
   error = 'error',
   info = 'info',
   information = 'info',
+  informational = 'info',
   notice = 'info',
   dbug = 'debug',
   debug = 'debug',
@@ -27,10 +29,12 @@ export enum LogLevel {
   unknown = 'unknown',
 }
 
+// Used for meta information such as common labels or returned log rows in logs view in Explore
 export enum LogsMetaKind {
   Number,
   String,
   LabelsMap,
+  Error,
 }
 
 export enum LogsSortOrder {
@@ -60,6 +64,7 @@ export interface LogRowModel {
   // Actual log line
   entry: string;
   hasAnsi: boolean;
+  hasUnescapedContent: boolean;
   labels: Labels;
   logLevel: LogLevel;
   raw: string;
@@ -79,8 +84,10 @@ export interface LogsModel {
   hasUniqueLabels: boolean;
   meta?: LogsMetaItem[];
   rows: LogRowModel[];
-  series?: GraphSeriesXY[];
+  series?: DataFrame[];
+  // visibleRange is time range for histogram created from log results
   visibleRange?: AbsoluteTimeRange;
+  queries?: DataQuery[];
 }
 
 export interface LogSearchMatch {
@@ -126,9 +133,9 @@ export interface LogsParser {
   getValueFromField: (field: string) => string;
   /**
    * Function to verify if this is a valid parser for the given line.
-   * The parser accepts the line unless it returns undefined.
+   * The parser accepts the line if it returns true.
    */
-  test: (line: string) => any;
+  test: (line: string) => boolean;
 }
 
 export enum LogsDedupDescription {
@@ -137,3 +144,31 @@ export enum LogsDedupDescription {
   numbers = 'De-duplication of successive lines that are identical when ignoring numbers, e.g., IP addresses, latencies.',
   signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
 }
+
+/**
+ * @alpha
+ */
+export interface DataSourceWithLogsContextSupport {
+  /**
+   * Retrieve context for a given log row
+   */
+  getLogRowContext: <TContextQueryOptions extends {}>(
+    row: LogRowModel,
+    options?: TContextQueryOptions
+  ) => Promise<DataQueryResponse>;
+
+  showContextToggle(row?: LogRowModel): boolean;
+}
+
+/**
+ * @alpha
+ */
+export const hasLogsContextSupport = (datasource: any): datasource is DataSourceWithLogsContextSupport => {
+  if (!datasource) {
+    return false;
+  }
+
+  const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
+
+  return withLogsSupport.getLogRowContext !== undefined && withLogsSupport.showContextToggle !== undefined;
+};

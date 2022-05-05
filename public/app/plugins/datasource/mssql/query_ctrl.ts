@@ -1,19 +1,9 @@
-import _ from 'lodash';
-import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
-import { PanelEvents } from '@grafana/data';
-import { getLocationSrv } from '@grafana/runtime';
 
-export interface MssqlQuery {
-  refId: string;
-  format: string;
-  alias: string;
-  rawSql: string;
-}
+import { PanelEvents, QueryResultMeta } from '@grafana/data';
+import { QueryCtrl } from 'app/plugins/sdk';
 
-export interface QueryMeta {
-  sql: string;
-}
+import { MssqlQuery } from './types';
 
 const defaultQuery = `SELECT
   $__timeEpoch(<time_column>),
@@ -26,13 +16,13 @@ WHERE
 ORDER BY
   <time_column> ASC`;
 
-export class MssqlQueryCtrl extends QueryCtrl {
+export class MssqlQueryCtrl extends QueryCtrl<MssqlQuery> {
   static templateUrl = 'partials/query.editor.html';
 
   formats: any[];
-  target: MssqlQuery;
-  lastQueryError: string | null;
-  showHelp: boolean;
+  lastQueryMeta?: QueryResultMeta;
+  lastQueryError?: string;
+  showHelp = false;
 
   /** @ngInject */
   constructor($scope: any, $injector: auto.IInjectorService) {
@@ -59,15 +49,9 @@ export class MssqlQueryCtrl extends QueryCtrl {
     this.panelCtrl.events.on(PanelEvents.dataError, this.onDataError.bind(this), $scope);
   }
 
-  showQueryInspector() {
-    getLocationSrv().update({
-      query: { inspect: this.panel.id, inspectTab: 'query' },
-      partial: true,
-    });
-  }
-
   onDataReceived(dataList: any) {
-    this.lastQueryError = null;
+    this.lastQueryError = undefined;
+    this.lastQueryMeta = dataList[0]?.meta;
   }
 
   onDataError(err: any) {

@@ -1,7 +1,9 @@
-import React from 'react';
 import { mount, shallow } from 'enzyme';
-import { ConfigEditor } from './ConfigEditor';
+import React from 'react';
+
 import { DataSourceHttpSettings } from '@grafana/ui';
+
+import { ConfigEditor } from './ConfigEditor';
 import { ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';
 import { createDefaultConfigOptions } from './mocks';
@@ -20,9 +22,9 @@ describe('ConfigEditor', () => {
 
   it('should set defaults', () => {
     const options = createDefaultConfigOptions();
-    //@ts-ignore
+    // @ts-ignore
     delete options.jsonData.esVersion;
-    //@ts-ignore
+    // @ts-ignore
     delete options.jsonData.timeField;
     delete options.jsonData.maxConcurrentShardRequests;
 
@@ -30,8 +32,8 @@ describe('ConfigEditor', () => {
 
     mount(
       <ConfigEditor
-        onOptionsChange={options => {
-          expect(options.jsonData.esVersion).toBe(5);
+        onOptionsChange={(options) => {
+          expect(options.jsonData.esVersion).toBe('5.0.0');
           expect(options.jsonData.timeField).toBe('@timestamp');
           expect(options.jsonData.maxConcurrentShardRequests).toBe(256);
         }}
@@ -41,17 +43,10 @@ describe('ConfigEditor', () => {
   });
 
   it('should not apply default if values are set', () => {
-    expect.assertions(3);
+    const onChange = jest.fn();
 
-    mount(
-      <ConfigEditor
-        onOptionsChange={options => {
-          expect(options.jsonData.esVersion).toBe(70);
-          expect(options.jsonData.timeField).toBe('@time');
-          expect(options.jsonData.maxConcurrentShardRequests).toBe(300);
-        }}
-        options={createDefaultConfigOptions()}
-      />
-    );
+    mount(<ConfigEditor onOptionsChange={onChange} options={createDefaultConfigOptions()} />);
+
+    expect(onChange).toHaveBeenCalledTimes(0);
   });
 });

@@ -3,44 +3,44 @@ title = "HTTP API"
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "overview"]
 aliases = ["/docs/grafana/latest/overview"]
-type = "docs"
-[menu.docs]
-name = "HTTP API"
-identifier = "http_api"
-weight = 9
+weight = 170
 +++
 
+# HTTP API reference
 
-# HTTP API Reference
+The Grafana backend exposes an HTTP API, which is the same API that is used by the frontend to do everything from saving
+dashboards, creating users, and updating data sources.
 
-The Grafana backend exposes an HTTP API, the same API is used by the frontend to do everything from saving
-dashboards, creating users and updating data sources.
+## HTTP APIs
 
-## Supported HTTP APIs:
+- [Admin API]({{< relref "admin.md" >}})
+- [Alerting Notification Channels API]({{< relref "alerting_notification_channels.md" >}})
+- [Alerting API]({{< relref "alerting.md" >}})
+- [Annotations API]({{< relref "annotations.md" >}})
+- [Authentication API]({{< relref "auth.md" >}})
+- [Dashboard API]({{< relref "dashboard.md" >}})
+- [Dashboard Permissions API]({{< relref "dashboard_permissions.md" >}})
+- [Dashboard Versions API]({{< relref "dashboard_versions.md" >}})
+- [Data source API]({{< relref "data_source.md" >}})
+- [Folder API]({{< relref "folder.md" >}})
+- [Folder Permissions API]({{< relref "folder_permissions.md" >}})
+- [Folder/Dashboard Search API]({{< relref "folder_dashboard_search.md" >}})
+- [Library Element API]({{< relref "library_element.md" >}})
+- [Organization API]({{< relref "org.md" >}})
+- [Other API]({{< relref "other.md" >}})
+- [Playlists API]({{< relref "playlist.md" >}})
+- [Preferences API]({{< relref "preferences.md" >}})
+- [Short URL API]({{< relref "short_url.md" >}})
+- [Snapshot API]({{< relref "snapshot.md" >}})
+- [Team API]({{< relref "team.md" >}})
+- [User API]({{< relref "user.md" >}})
 
+## Grafana Enterprise HTTP APIs
 
-* [Authentication API]({{< relref "auth.md" >}})
-* [Dashboard API]({{< relref "dashboard.md" >}})
-* [Dashboard Versions API]({{< relref "dashboard_versions.md" >}})
-* [Dashboard Permissions API]({{< relref "dashboard_permissions.md" >}})
-* [Folder API]({{< relref "folder.md" >}})
-* [Folder Permissions API]({{< relref "folder_permissions.md" >}})
-* [Folder/dashboard search API]({{< relref "folder_dashboard_search.md" >}})
-* [Data Source API]({{< relref "data_source.md" >}})
-* [Organization API]({{< relref "org.md" >}})
-* [Snapshot API]({{< relref "snapshot.md" >}})
-* [Annotations API]({{< relref "annotations.md" >}})
-* [Playlists API]({{< relref "playlist.md" >}})
-* [Alerting API]({{< relref "alerting.md" >}})
-* [Alert Notification Channels API]({{< relref "alerting_notification_channels.md" >}})
-* [User API]({{< relref "user.md" >}})
-* [Team API]({{< relref "team.md" >}})
-* [Admin API]({{< relref "admin.md" >}})
-* [Preferences API]({{< relref "preferences.md" >}})
-* [Other API]({{< relref "other.md" >}})
+Grafana Enterprise includes all of the Grafana OSS APIs as well as those that follow:
 
-### Grafana Enterprise HTTP APIs
-
-* [Data Source Permissions API]({{< relref "datasource_permissions.md" >}})
-* [External Group Sync API]({{< relref "external_group_sync.md" >}})
-* [Reporting API]({{< relref "reporting.md" >}})
+- [Role-based access control API]({{< relref "access_control.md" >}})
+- [Data source permissions API]({{< relref "datasource_permissions.md" >}})
+- [External group sync API]({{< relref "external_group_sync.md" >}})
+- [License API]({{< relref "licensing.md" >}})
+- [Reporting API]({{< relref "reporting.md" >}})

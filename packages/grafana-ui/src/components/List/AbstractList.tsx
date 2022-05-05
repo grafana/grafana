@@ -1,5 +1,6 @@
+import { cx, css } from '@emotion/css';
 import React from 'react';
-import { cx, css } from 'emotion';
+
 import { stylesFactory } from '../../themes';
 
 export interface ListProps<T> {

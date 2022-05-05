@@ -12,18 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { css } from '@emotion/css';
 import React from 'react';
-import { css } from 'emotion';
+
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { stylesFactory, withTheme2 } from '@grafana/ui';
+
+import { autoColor } from '../Theme';
+import { SpanLinkFunc } from '../types';
+import { TraceLog, TraceSpan, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 
 import SpanDetail from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
 import SpanTreeOffset from './SpanTreeOffset';
 import TimelineRow from './TimelineRow';
-import { autoColor, createStyle, Theme, withTheme } from '../Theme';
+import { TopOfViewRefType } from './VirtualizedTraceView';
 
-import { TraceLog, TraceSpan, TraceKeyValuePair, TraceLink } from '@grafana/data';
-
-const getStyles = createStyle((theme: Theme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     expandedAccent: css`
       cursor: pointer;
@@ -57,7 +62,7 @@ const getStyles = createStyle((theme: Theme) => {
       }
     `,
     infoWrapper: css`
-      background: ${autoColor(theme, '#f5f5f5')};
+      label: infoWrapper;
       border: 1px solid ${autoColor(theme, '#d3d3d3')};
       border-top: 3px solid;
       padding: 0.75rem;
@@ -74,6 +79,7 @@ type SpanDetailRowProps = {
   logItemToggle: (spanID: string, log: TraceLog) => void;
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
+  referenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   referencesToggle: (spanID: string) => void;
   warningsToggle: (spanID: string) => void;
   stackTracesToggle: (spanID: string) => void;
@@ -84,7 +90,11 @@ type SpanDetailRowProps = {
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
-  theme: Theme;
+  theme: GrafanaTheme2;
+  createSpanLink?: SpanLinkFunc;
+  focusedSpanId?: string;
+  createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
+  topOfViewRefType?: TopOfViewRefType;
 };
 
 export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProps> {
@@ -105,6 +115,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       logItemToggle,
       logsToggle,
       processToggle,
+      referenceItemToggle,
       referencesToggle,
       warningsToggle,
       stackTracesToggle,
@@ -116,11 +127,15 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
       theme,
+      createSpanLink,
+      focusedSpanId,
+      createFocusSpanLink,
+      topOfViewRefType,
     } = this.props;
     const styles = getStyles(theme);
     return (
       <TimelineRow>
-        <TimelineRow.Cell width={columnDivision}>
+        <TimelineRow.Cell width={columnDivision} style={{ overflow: 'hidden' }}>
           <SpanTreeOffset
             span={span}
             showChildrenIcon={false}
@@ -147,6 +162,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               logItemToggle={logItemToggle}
               logsToggle={logsToggle}
               processToggle={processToggle}
+              referenceItemToggle={referenceItemToggle}
               referencesToggle={referencesToggle}
               warningsToggle={warningsToggle}
               stackTracesToggle={stackTracesToggle}
@@ -154,6 +170,10 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               tagsToggle={tagsToggle}
               traceStartTime={traceStartTime}
               focusSpan={focusSpan}
+              createSpanLink={createSpanLink}
+              focusedSpanId={focusedSpanId}
+              createFocusSpanLink={createFocusSpanLink}
+              topOfViewRefType={topOfViewRefType}
             />
           </div>
         </TimelineRow.Cell>
@@ -162,4 +182,4 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
   }
 }
 
-export default withTheme(UnthemedSpanDetailRow);
+export default withTheme2(UnthemedSpanDetailRow);

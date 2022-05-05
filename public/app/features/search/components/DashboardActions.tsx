@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+
 import { HorizontalGroup, LinkButton } from '@grafana/ui';
 
 export interface Props {
@@ -19,10 +20,12 @@ export const DashboardActions: FC<Props> = ({ folderId, isEditor, canEdit }) => 
   };
 
   return (
-    <HorizontalGroup spacing="md" align="center">
-      {canEdit && <LinkButton href={actionUrl('new')}>New Dashboard</LinkButton>}
-      {!folderId && isEditor && <LinkButton href="dashboards/folder/new">New Folder</LinkButton>}
-      {canEdit && <LinkButton href={actionUrl('import')}>Import</LinkButton>}
-    </HorizontalGroup>
+    <div>
+      <HorizontalGroup spacing="md" align="center">
+        {canEdit && <LinkButton href={actionUrl('new')}>New Dashboard</LinkButton>}
+        {!folderId && isEditor && <LinkButton href="dashboards/folder/new">New Folder</LinkButton>}
+        {canEdit && <LinkButton href={actionUrl('import')}>Import</LinkButton>}
+      </HorizontalGroup>
+    </div>
   );
 };

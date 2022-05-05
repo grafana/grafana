@@ -21,6 +21,16 @@ var (
 		StatusCode: 404,
 		Status:     "not-found",
 	}
+	ErrDashboardCorrupt = DashboardErr{
+		Reason:     "Dashboard data is missing or corrupt",
+		StatusCode: 500,
+		Status:     "not-found",
+	}
+	ErrDashboardPanelNotFound = DashboardErr{
+		Reason:     "Dashboard panel not found",
+		StatusCode: 404,
+		Status:     "not-found",
+	}
 	ErrDashboardFolderNotFound = DashboardErr{
 		Reason:     "Folder not found",
 		StatusCode: 404,
@@ -46,6 +56,7 @@ var (
 	ErrDashboardTitleEmpty = DashboardErr{
 		Reason:     "Dashboard title cannot be empty",
 		StatusCode: 400,
+		Status:     "empty-name",
 	}
 	ErrDashboardFolderCannotHaveParent = DashboardErr{
 		Reason:     "A Dashboard Folder cannot be added to another folder",
@@ -70,6 +81,7 @@ var (
 	ErrDashboardWithSameNameAsFolder = DashboardErr{
 		Reason:     "Dashboard name cannot be the same as folder",
 		StatusCode: 400,
+		Status:     "name-match",
 	}
 	ErrDashboardFolderNameExists = DashboardErr{
 		Reason:     "A folder with that name already exists",
@@ -102,6 +114,28 @@ var (
 	ErrDashboardIdentifierNotSet = DashboardErr{
 		Reason:     "Unique identifier needed to be able to get a dashboard",
 		StatusCode: 400,
+	}
+	ErrDashboardIdentifierInvalid = DashboardErr{
+		Reason:     "Dashboard ID not a number",
+		StatusCode: 400,
+	}
+	ErrDashboardPanelIdentifierInvalid = DashboardErr{
+		Reason:     "Dashboard panel ID not a number",
+		StatusCode: 400,
+	}
+	ErrDashboardOrPanelIdentifierNotSet = DashboardErr{
+		Reason:     "Unique identifier needed to be able to get a dashboard panel",
+		StatusCode: 400,
+	}
+	ErrProvisionedDashboardNotFound = DashboardErr{
+		Reason:     "Dashboard is not provisioned",
+		StatusCode: 404,
+		Status:     "not-found",
+	}
+	ErrDashboardThumbnailNotFound = DashboardErr{
+		Reason:     "Dashboard thumbnail not found",
+		StatusCode: 404,
+		Status:     "not-found",
 	}
 )
 
@@ -139,7 +173,7 @@ type UpdatePluginDashboardError struct {
 }
 
 func (d UpdatePluginDashboardError) Error() string {
-	return "Dashboard belong to plugin"
+	return "Dashboard belongs to plugin"
 }
 
 const (
@@ -272,11 +306,6 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	return dash
 }
 
-// GetString a
-func (d *Dashboard) GetString(prop string, defaultValue string) string {
-	return d.Data.Get(prop).MustString(defaultValue)
-}
-
 // UpdateSlug updates the slug
 func (d *Dashboard) UpdateSlug() {
 	title := d.Data.Get("title").MustString()
@@ -299,13 +328,8 @@ func SlugifyTitle(title string) string {
 }
 
 // GetUrl return the html url for a folder if it's folder, otherwise for a dashboard
-func (dash *Dashboard) GetUrl() string {
-	return GetDashboardFolderUrl(dash.IsFolder, dash.Uid, dash.Slug)
-}
-
-// Return the html url for a dashboard
-func (d *Dashboard) GenerateUrl() string {
-	return GetDashboardUrl(d.Uid, d.Slug)
+func (d *Dashboard) GetUrl() string {
+	return GetDashboardFolderUrl(d.IsFolder, d.Uid, d.Slug)
 }
 
 // GetDashboardFolderUrl return the html url for a folder if it's folder, otherwise for a dashboard
@@ -317,17 +341,22 @@ func GetDashboardFolderUrl(isFolder bool, uid string, slug string) string {
 	return GetDashboardUrl(uid, slug)
 }
 
-// GetDashboardUrl return the html url for a dashboard
+// GetDashboardUrl returns the HTML url for a dashboard.
 func GetDashboardUrl(uid string, slug string) string {
 	return fmt.Sprintf("%s/d/%s/%s", setting.AppSubUrl, uid, slug)
 }
 
-// GetFullDashboardUrl return the full url for a dashboard
+// GetKioskModeDashboardUrl returns the HTML url for a dashboard in kiosk mode.
+func GetKioskModeDashboardUrl(uid string, slug string, theme Theme) string {
+	return fmt.Sprintf("%s?kiosk&theme=%s", GetDashboardUrl(uid, slug), string(theme))
+}
+
+// GetFullDashboardUrl returns the full URL for a dashboard.
 func GetFullDashboardUrl(uid string, slug string) string {
 	return fmt.Sprintf("%sd/%s/%s", setting.AppUrl, uid, slug)
 }
 
-// GetFolderUrl return the html url for a folder
+// GetFolderUrl returns the HTML url for a folder.
 func GetFolderUrl(folderUid string, slug string) string {
 	return fmt.Sprintf("%s/dashboards/f/%s/%s", setting.AppSubUrl, folderUid, slug)
 }
@@ -349,11 +378,18 @@ type SaveDashboardCommand struct {
 	RestoredFrom int              `json:"-"`
 	PluginId     string           `json:"-"`
 	FolderId     int64            `json:"folderId"`
+	FolderUid    string           `json:"folderUid"`
 	IsFolder     bool             `json:"isFolder"`
 
 	UpdatedAt time.Time
 
-	Result *Dashboard
+	Result *Dashboard `json:"-"`
+}
+
+type TrimDashboardCommand struct {
+	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
+	Meta      *simplejson.Json `json:"meta"`
+	Result    *Dashboard       `json:"-"`
 }
 
 type DashboardProvisioning struct {
@@ -365,23 +401,10 @@ type DashboardProvisioning struct {
 	Updated     int64
 }
 
-type SaveProvisionedDashboardCommand struct {
-	DashboardCmd          *SaveDashboardCommand
-	DashboardProvisioning *DashboardProvisioning
-
-	Result *Dashboard
-}
-
 type DeleteDashboardCommand struct {
-	Id    int64
-	OrgId int64
-}
-
-type ValidateDashboardBeforeSaveCommand struct {
-	OrgId     int64
-	Dashboard *Dashboard
-	Overwrite bool
-	Result    *ValidateDashboardBeforeSaveResult
+	Id                     int64
+	OrgId                  int64
+	ForceDeleteFolderRules bool
 }
 
 type DeleteOrphanedProvisionedDashboardsCommand struct {
@@ -435,16 +458,6 @@ type GetDashboardSlugByIdQuery struct {
 	Result string
 }
 
-type GetProvisionedDashboardDataByIdQuery struct {
-	DashboardId int64
-	Result      *DashboardProvisioning
-}
-
-type GetProvisionedDashboardDataQuery struct {
-	Name   string
-	Result []*DashboardProvisioning
-}
-
 type GetDashboardsBySlugQuery struct {
 	OrgId int64
 	Slug  string
@@ -466,8 +479,4 @@ type DashboardRef struct {
 type GetDashboardRefByIdQuery struct {
 	Id     int64
 	Result *DashboardRef
-}
-
-type UnprovisionDashboardCommand struct {
-	Id int64
 }

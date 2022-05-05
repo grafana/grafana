@@ -2,12 +2,7 @@
 title = "Upgrade Grafana"
 description = "Guide for upgrading Grafana"
 keywords = ["grafana", "configuration", "documentation", "upgrade"]
-type = "docs"
-[menu.docs]
-name = "Upgrade Grafana"
-identifier = "upgrading"
-parent = "installation"
-weight = 800
+weight = 700
 +++
 
 # Upgrade Grafana
@@ -15,13 +10,14 @@ weight = 800
 We recommend that you upgrade Grafana often to stay up to date with the latest fixes and enhancements.
 In order to make this a reality, Grafana upgrades are backward compatible and the upgrade process is simple and quick.
 
-Upgrading is generally safe (between many minor and one major version) and dashboards and graphs will look the same. There may be minor breaking changes in some edge cases, which are outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
+Upgrading is generally safe (between many minor and one major version) and dashboards and graphs will look the same. There may be minor breaking changes in some edge cases, which are outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md)
 
 ## Backup
 
 We recommend that you backup a few things in case you have to rollback the upgrade.
+
 - Installed plugins - Back them up before you upgrade them in case you want to rollback the Grafana version and want to get the exact same versions you were running before the upgrade.
-- Configuration files do not need to be backed up. However, you might want to in case you add new config options after upgrade and then rollback.
+- Configuration files do not need to be backed up. However, you might want to in case you add new configuration options after upgrade and then rollback.
 
 ### Database backup
 
@@ -52,6 +48,7 @@ backup:
 restore:
 > psql grafana < grafana_backup
 ```
+
 ### Ubuntu or Debian
 
 You can upgrade Grafana by following the same procedure as when you installed it.
@@ -65,7 +62,7 @@ links.
 
 ```bash
 wget <debian package url>
-sudo apt-get install -y adduser libfontconfig1
+sudo apt-get install -y adduser
 sudo dpkg -i grafana_<version>_amd64.deb
 ```
 
@@ -82,7 +79,7 @@ sudo apt-get upgrade
 
 If you downloaded the binary `.tar.gz` package, then you can just download and extract the new package and overwrite all your existing files. However, this might overwrite your config changes.
 
-We recommend that you save your custom config changes in a file named `<grafana_install_dir>/conf/custom.ini`.
+We recommend that you save your custom configuration changes in a file named `<grafana_install_dir>/conf/custom.ini`.
 This allows you to upgrade Grafana without risking losing your configuration changes.
 
 ### Centos / RHEL
@@ -108,7 +105,7 @@ docker run -d --name=my-grafana-container --restart=always -v /var/lib/grafana:/
 
 ### Windows
 
-If you downloaded the Windows binary package you can just download a newer package and extract to the same location (and overwrite the existing files). This might overwrite your config changes. We recommend that you save your config changes in a file named `<grafana_install_dir>/conf/custom.ini` as this will make upgrades easier without risking losing your config changes.
+If you downloaded the Windows binary package you can just download a newer package and extract to the same location (and overwrite the existing files). This might overwrite your configuration changes. We recommend that you save your configuration changes in a file named `<grafana_install_dir>/conf/custom.ini` as this will make upgrades easier without risking losing your configuration changes.
 
 ## Update plugins
 
@@ -125,7 +122,7 @@ grafana-cli plugins update-all
 
 The dashboard grid layout engine has changed. All dashboards will be automatically upgraded to new positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana. Some external panel plugins might need to be updated to work properly.
 
-For more details on the new panel positioning system, [click here]({{< relref "../reference/dashboard.md#panel-size-position" >}})
+For more details on the new panel positioning system, refer to [panel size position]({{< relref "../dashboards/json-model.md#panel-size-position" >}})
 
 ## Upgrading to v5.2
 
@@ -138,7 +135,7 @@ If you're using systemd and have a large amount of annotations consider temporar
 ## Upgrading to v6.0
 
 If you have text panels with script tags they will no longer work due to a new setting that per default disallow unsanitized HTML.
-Read more [here]({{< relref "../administration/configuration/#disable-sanitize-html" >}}) about this new setting.
+For more information about the new setting, refer to [disable sanitize html]({{< relref "../administration/configuration/#disable-sanitize-html" >}}).
 
 ### Authentication and security
 
@@ -175,15 +172,15 @@ will keep working with unencrypted passwords. If you want to migrate to encrypte
 you can do that by:
 
 - For data sources created through UI, you need to go to data source config, re-enter the password or basic auth
-password and save the data source.
+  password and save the data source.
 - For data sources created by provisioning, you need to update your config file and use secureJsonData.password or
-secureJsonData.basicAuthPassword field. See [provisioning docs]({{< relref "../administration/provisioning" >}}) for example of current
-configuration.
+  secureJsonData.basicAuthPassword field. See [provisioning docs]({{< relref "../administration/provisioning" >}}) for example of current
+  configuration.
 
 ### Embedding Grafana
 
 If you're embedding Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>` on a different website it will no longer work due to a new setting
-that per default instructs the browser to not allow Grafana to be embedded. Read more [here]({{< relref "../administration/configuration/#allow-embedding" >}}) about
+that per default instructs the browser to not allow Grafana to be embedded. For more information about embedding Grafana, refer to [configuration embedding]({{< relref "../administration/configuration/#allow-embedding" >}}) about
 this new setting.
 
 ### Session storage is no longer used
@@ -231,7 +228,7 @@ Chrome 80 treats cookies as `SameSite=Lax` by default if no `SameSite` attribute
 
 Due to this change in Chrome, the `[security]` setting `cookie_samesite` configured to `none` now renders cookies with `SameSite=None` attribute compared to before where no `SameSite` attribute was added to cookies. To get the old behavior, use value `disabled` instead of `none`, see [cookie_samesite in Configuration]({{< relref "../administration/configuration/#cookie-samesite" >}}) for more information.
 
-**Note:** There is currently a bug affecting Mac OSX and iOS that causes `SameSite=None` cookies to be treated as `SameSite=Strict` and therefore not sent with cross-site requests, see https://bugs.webkit.org/show_bug.cgi?id=198181 for details. Until this is fixed, `SameSite=None` might not work properly on Safari.
+> **Note:** There is currently a bug affecting Mac OSX and iOS that causes `SameSite=None` cookies to be treated as `SameSite=Strict` and therefore not sent with cross-site requests, see https://bugs.webkit.org/show_bug.cgi?id=198181 for details. Until this is fixed, `SameSite=None` might not work properly on Safari.
 
 This version of Chrome also rejects insecure `SameSite=None` cookies. See https://www.chromestatus.com/feature/5633521622188032 for more information. Make sure that you
 change the `[security]` setting `cookie_secure` to `true` and use HTTPS when `cookie_samesite` is configured to `none`, otherwise authentication in Grafana won't work properly.
@@ -240,15 +237,15 @@ change the `[security]` setting `cookie_secure` to `true` and use HTTPS when `co
 
 ### PhantomJS removed
 
-PhantomJS was deprecated in [Grafana v6.4]({{< relref "../guides/whats-new-in-v6-4.md#phantomjs-deprecation" >}}) and starting from Grafana v7.0.0, all PhantomJS support has been removed. This means that Grafana no longer ships with a built-in image renderer, and we advise you to install the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
+PhantomJS was deprecated in [Grafana v6.4]({{< relref "../whatsnew/whats-new-in-v6-4.md#phantomjs-deprecation" >}}) and starting from Grafana v7.0.0, all PhantomJS support has been removed. This means that Grafana no longer ships with a built-in image renderer, and we advise you to install the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
 
 ### Dashboard minimum refresh interval enforced
 
-A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds. Read more [here]({{< relref "../administration/configuration/#min-refresh-interval" >}}) about this setting.
+A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds. For more information about this setting, refer to [minimum refresh interval]({{< relref "../administration/configuration/#min-refresh-interval" >}}).
 
 ### Backend plugins
 
-Grafana now requires backend plugins to be signed. If a backend plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure backend plugin binaries and files haven't been tampered with.  All Grafana Labs authored backend plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. Read more [here]({{< relref "../administration/#allow-loading-unsigned-plugins" >}}) about this setting.
+Grafana now requires backend plugins to be signed. If a backend plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure backend plugin binaries and files haven't been tampered with. All Grafana Labs authored backend plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. For more information about this setting, refer to [allow loading unsigned plugins]({{< relref "../administration/#allow_loading_unsigned_plugins" >}}).
 
 ### Cookie path
 
@@ -261,6 +258,7 @@ Starting from Grafana v7.0.0, the cookie path does not include the trailing slas
 Before Grafana v7.2 alert notification channels did not store sensitive settings/secrets such as API tokens and password encrypted in the database. In Grafana v7.2, creating a new alert notification channel will store sensitive settings encrypted in the database.
 
 The following alert notifiers have been updated to support storing their sensitive settings encrypted:
+
 - Slack (URL and Token)
 - Pagerduty (Integration Key)
 - Webhook (Password)
@@ -277,3 +275,119 @@ For existing alert notification channels, there is no automatic migration of sto
 > Please note that when migrating a notification channel and later downgrading Grafana to an earlier version, the notification channel will not be able to read stored sensitive settings and, as a result, not function as expected.
 
 For provisioning of alert notification channels, refer to [Alert notification channels]({{< relref "../administration/provisioning.md#alert-notification-channels" >}}).
+
+## Upgrading to v7.3
+
+### AWS CloudWatch data source
+
+The AWS CloudWatch data source's authentication scheme has changed in Grafana 7.3. Most importantly the authentication method _ARN_ has been removed, and a new one has been added: _AWS SDK Default_. Existing data source configurations using the former will fallback to the latter. Assuming an IAM role will still work though, and the old _ARN_ method would use the default AWS SDK authentication method under the hood anyway.
+
+Since _ARN_ has been removed as an authentication method, we have instead made it into an option for providing the ARN of an IAM role to assume. This works independently of the authentication method you choose.
+
+The new authentication method, _AWS SDK Default_, uses the default AWS Go SDK credential chain, which at the time of writing looks for credentials in the following order:
+
+1. Environment variables.
+1. Shared credentials file.
+1. If your application uses an ECS task definition or RunTask API operation, IAM role for tasks.
+1. If your application is running on an Amazon EC2 instance, IAM role for Amazon EC2.
+
+The other authentication methods, _Access and secret key_ and _Credentials file_, have changed in regards to fallbacks. If these methods fail, they no longer fallback to other methods. e.g. environment variables. If you want fallbacks, you should use _AWS SDK Default_ instead.
+
+For more information and details, please refer to [Using AWS CloudWatch in Grafana]({{< relref "../datasources/aws-cloudwatch/aws-authentication.md" >}}).
+
+### User invites database migration
+
+The database table _temp_user_, that tracks user invites, is subject to a database migration that changes the data type of the _created_ and _updated_ columns:
+
+| Database | Old data type | New data type |
+| -------- | ------------- | ------------- |
+| Sqlite   | DATETIME      | INTEGER       |
+| MySQL    | DATETIME      | INT           |
+| Postgres | TIMESTAMP     | INTEGER       |
+
+> Please note that if downgrading Grafana to an earlier version, you have to manually change the data type of the _created_ and _updated_ columns back to _old data type_ , otherwise the user invite feature doesn't function as expected.
+
+### Snapshots database migration
+
+The database table _dashboard_snapshot_, that stores dashboard snapshots, adds a new column _dashboard_encrypted_ for storing an encrypted snapshot.
+NOTE: Only snapshots created on Grafana 7.3 or later will use this column to store snapshot data as encrypted. Snapshots created before this version will be unaffected and remain unencrypted.
+
+### Use of the root group in the Docker images
+
+The Grafana Docker images use the `root` group instead of the `grafana` group. This change can cause builds to break for users who extend the Grafana Docker image. Learn more about this change in the [Docker migration instructions]({{< relref "docker/#migrate-to-v73-or-later">}})
+
+## Upgrading to v7.5
+
+### VictorOps Alert Notifier
+
+The VictorOps alert notifier now accepts a `severity` tag, in a similar vein to the PagerDuty alert notifier. The possible values are outlined in the [VictorOps docs](https://help.victorops.com/knowledge-base/incident-fields-glossary/).
+
+For example, if you want an alert to be `INFO`-level in VictorOps, create a tag `severity=info` (case-insensitive) in your alert.
+
+## Upgrading to v8.0
+
+### Plugins
+
+Grafana now requires all plugins to be signed. If a plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure plugin files and binaries haven't been tampered with. All Grafana Labs authored plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. For more information about this setting, refer to [allow loading unsigned plugins]({{< relref "../administration/#allow_loading_unsigned_plugins" >}}).
+
+### Grafana Live
+
+Grafana now maintains persistent WebSocket connections for real-time messaging needs.
+
+When WebSocket connection is established, Grafana checks the request Origin header due to security reasons (for example, to prevent hijacking of WebSocket connection). If you have a properly defined public URL (`root_url` server option) then the origin check should successfully pass for WebSocket requests originating from public URL pages. In case of an unsuccessful origin check, Grafana returns a 403 error. It's also possible to add a list of additional origin patterns for the origin check.
+
+To handle many concurrent WebSocket connections you may need to tune your OS settings or infrastructure. Grafana Live is enabled by default and supports 100 concurrent WebSocket connections max to avoid possible problems with the file descriptor OS limit. As soon as your setup meets the requirements to scale the number of persistent connections this limit can be increased. You also have an option to disable Grafana Live.
+
+Refer to [Grafana Live configuration]({{< relref "../live/configure-grafana-live.md" >}}) documentation for more information.
+
+### Postgres, MySQL, Microsoft SQL Server data sources
+
+Grafana v8.0 changes the underlying data structure to [data frames]({{< relref "../developers/plugins/data-frames.md" >}}) for the Postgres, MySQL, Microsoft SQL Server data sources. As a result, a _Time series_ query result gets returned in a [wide format]({{< relref "../developers/plugins/data-frames.md#wide-format" >}}). To make the visualizations work as they did before, you might have to do some manual migrations.
+
+For any existing panels/visualizations using a _Time series_ query, where the time column is only needed for filtering the time range, for example, using the bar gauge or pie chart panel, we recommend that you use a _Table query_ instead and exclude the time column as a field in the response.
+Refer to this [issue comment](https://github.com/grafana/grafana/issues/35534#issuecomment-861519658) for detailed instructions and workarounds.
+
+#### Prefix added to series names
+
+When you have a query where there's a time value and a numeric value selected together with a string value that's not named _metric_, the graph panel renders series names as `value <hostname>` rather than just `<hostname>` which was the case before Grafana 8.
+
+```sql
+SELECT
+  $__timeGroup("createdAt",'10m'),
+  avg(value) as "value",
+  hostname
+FROM grafana_metric
+WHERE $__timeFilter("createdAt")
+GROUP BY time, hostname
+ORDER BY time
+```
+
+There are two possible workarounds to resolve this problem:
+
+1. In Grafana v8.0.3, use an alias of the string column selected as `metric`. for example, `hostname as metric`.
+2. Use the [Standard field definitions' display name]({{< relref "../panels/standard-field-definitions.md#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
+
+For more information, refer to the our relational databases documentation of [Postgres]({{< relref "../datasources/postgres.md#time-series-queries" >}}), [MySQL]({{< relref "../datasources/mysql.md#time-series-queries" >}}), [Microsoft SQL Server]({{< relref "../datasources/mssql.md#time-series-queries" >}}).
+
+## Upgrading to v8.1
+
+### Use of unencrypted passwords for data sources no longer supported
+
+As of Grafana v8.1, we no longer support unencrypted storage of passwords and basic auth passwords.
+
+> **Note:** Since Grafana v6.2, new or updated data sources store passwords and basic auth passwords encrypted. See [upgrade note]({{< relref "#ensure-encryption-of-data-source-secrets" >}}) for more information. However, unencrypted passwords and basic auth passwords were also allowed.
+
+To migrate to encrypted storage, follow the instructions from the [v6.2 upgrade notes]({{< relref "#ensure-encryption-of-data-source-secrets" >}}). You can also use a `grafana-cli` command to migrate all of your data sources to use encrypted storage of secrets. See [migrate data and encrypt passwords]({{< relref "../administration/cli.md#migrate-data-and-encrypt-passwords" >}}) for further instructions.
+
+## Upgrading to 8.3
+
+In 8.3, Grafana dashboards now reference data sources using an object with `uid` and `type` properties instead of the data source name property. A schema migration is applied when existing dashboards open. If you provision dashboards to multiple Grafana instances, then we recommend that you also provision data sources. You can specify the `uid` to be the same for data sources across your instances.
+If you need to find the `uid` for a data source created in the UI, check the URL of the data source settings page. The URL follows the pattern ` /data source/edit/${uid}`, meaning the last part is the `uid`.
+
+## Upgrading to 8.5
+
+The concept of a `default` data source existed in Grafana since the beginning. However, the meaning and behavior were not clear. The default data source was not just the starting data source for new panels but it was also saved using a special value (null). This made it possible to change the default data source to another and have that change impact all dashboards that used the default data source.
+
+This behavior was not very intuitive and creates issues for users who want to change the default without it impacting existing dashboards.
+That is why we are changing the behavior in 8.5. From now on, the `default` data source will not be a persisted property but just the starting data source for new panels and queries.
+Existing dashboards that still have panels with a `datasource` set to null will be migrated when the dashboard opens. The migration will set the data source property to the **current** default data source.

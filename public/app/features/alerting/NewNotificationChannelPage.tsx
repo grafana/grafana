@@ -1,36 +1,22 @@
 import React, { PureComponent } from 'react';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { NavModel } from '@grafana/data';
+import { connect, ConnectedProps } from 'react-redux';
+
 import { config } from '@grafana/runtime';
 import { Form } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
+import { getNavModel } from 'app/core/selectors/navModel';
+
+import { NotificationChannelDTO, StoreState } from '../../types';
+
 import { NotificationChannelForm } from './components/NotificationChannelForm';
+import { createNotificationChannel, loadNotificationTypes, testNotificationChannel } from './state/actions';
+import { resetSecureField } from './state/reducers';
 import {
   defaultValues,
   mapChannelsToSelectableValue,
   transformSubmitData,
   transformTestData,
 } from './utils/notificationChannels';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { createNotificationChannel, loadNotificationTypes, testNotificationChannel } from './state/actions';
-import { NotificationChannelType, NotificationChannelDTO, StoreState } from '../../types';
-import { resetSecureField } from './state/reducers';
-
-interface OwnProps {}
-
-interface ConnectedProps {
-  navModel: NavModel;
-  notificationChannelTypes: NotificationChannelType[];
-}
-
-interface DispatchProps {
-  createNotificationChannel: typeof createNotificationChannel;
-  loadNotificationTypes: typeof loadNotificationTypes;
-  testNotificationChannel: typeof testNotificationChannel;
-  resetSecureField: typeof resetSecureField;
-}
-
-type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class NewNotificationChannelPage extends PureComponent<Props> {
   componentDidMount() {
@@ -54,11 +40,11 @@ class NewNotificationChannelPage extends PureComponent<Props> {
           <h2 className="page-sub-heading">New notification channel</h2>
           <Form onSubmit={this.onSubmit} validateOn="onChange" defaultValues={defaultValues} maxWidth={600}>
             {({ register, errors, control, getValues, watch }) => {
-              const selectedChannel = notificationChannelTypes.find(c => c.value === getValues().type.value);
+              const selectedChannel = notificationChannelTypes.find((c) => c.value === getValues().type.value);
 
               return (
                 <NotificationChannelForm
-                  selectableChannels={mapChannelsToSelectableValue(notificationChannelTypes)}
+                  selectableChannels={mapChannelsToSelectableValue(notificationChannelTypes, true)}
                   selectedChannel={selectedChannel}
                   onTestChannel={this.onTestChannel}
                   register={register}
@@ -79,18 +65,18 @@ class NewNotificationChannelPage extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
-  return {
-    navModel: getNavModel(state.navIndex, 'channels'),
-    notificationChannelTypes: state.notificationChannel.notificationChannelTypes,
-  };
-};
+const mapStateToProps = (state: StoreState) => ({
+  navModel: getNavModel(state.navIndex, 'channels'),
+  notificationChannelTypes: state.notificationChannel.notificationChannelTypes,
+});
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
+const mapDispatchToProps = {
   createNotificationChannel,
   loadNotificationTypes,
   testNotificationChannel,
   resetSecureField,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(NewNotificationChannelPage);
+const connector = connect(mapStateToProps, mapDispatchToProps);
+type Props = ConnectedProps<typeof connector>;
+export default connector(NewNotificationChannelPage);

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+DEFAULT_RUNDIR=scripts/grafana-server/tmp
+RUNDIR=${RUNDIR:-$DEFAULT_RUNDIR}
+DEFAULT_ARCH=
+HOME_PATH=$PWD/$RUNDIR
+PIDFILE=$RUNDIR/pid
+PROV_DIR=$RUNDIR/conf/provisioning
+DEFAULT_HOST=localhost
+DEFAULT_PORT=3001

@@ -12,27 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { createTheme } from '@grafana/data';
+
 import { getColorByKey, clear } from './color-generator';
-import { defaultTheme } from '../Theme';
 
 it('gives the same color for the same key', () => {
   clear();
-  const colorOne = getColorByKey('serviceA', defaultTheme);
-  const colorTwo = getColorByKey('serviceA', defaultTheme);
+  const colorOne = getColorByKey('serviceA', createTheme());
+  const colorTwo = getColorByKey('serviceA', createTheme());
   expect(colorOne).toBe(colorTwo);
 });
 
 it('gives different colors for each for each key', () => {
   clear();
-  const colorOne = getColorByKey('serviceA', defaultTheme);
-  const colorTwo = getColorByKey('serviceB', defaultTheme);
+  const colorOne = getColorByKey('serviceA', createTheme());
+  const colorTwo = getColorByKey('serviceB', createTheme());
   expect(colorOne).not.toBe(colorTwo);
 });
 
 it('should clear cache', () => {
   clear();
-  const colorOne = getColorByKey('serviceA', defaultTheme);
+  const colorOne = getColorByKey('serviceA', createTheme());
   clear();
-  const colorTwo = getColorByKey('serviceB', defaultTheme);
+  const colorTwo = getColorByKey('serviceB', createTheme());
   expect(colorOne).toBe(colorTwo);
 });

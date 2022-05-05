@@ -1,6 +1,7 @@
+import { TemplateSrvStub } from 'test/specs/helpers';
+
 import gfunc from '../gfunc';
 import GraphiteQuery from '../graphite_query';
-import { TemplateSrvStub } from 'test/specs/helpers';
 
 describe('Graphite query model', () => {
   const ctx: any = {
@@ -72,6 +73,27 @@ describe('Graphite query model', () => {
     it('should add $limit to highestMax function param', () => {
       expect(ctx.queryModel.segments.length).toBe(0);
       expect(ctx.queryModel.functions[1].params[0]).toBe('$limit');
+    });
+  });
+
+  describe('when query is generated from segments', () => {
+    beforeEach(() => {
+      ctx.target = { refId: 'A', target: '' };
+      ctx.queryModel = new GraphiteQuery(ctx.datasource, ctx.target, ctx.templateSrv);
+    });
+
+    it('and no segments are selected then the query is empty', () => {
+      ctx.queryModel.segments = [{ value: 'select metric' }];
+      ctx.queryModel.updateModelTarget(ctx.targets);
+
+      expect(ctx.queryModel.target.target).toBe('');
+    });
+
+    it('and some segments are selected then segments without selected value are omitted', () => {
+      ctx.queryModel.segments = [{ value: 'foo' }, { value: 'bar' }, { value: 'select metric' }];
+      ctx.queryModel.updateModelTarget(ctx.targets);
+
+      expect(ctx.queryModel.target.target).toBe('foo.bar');
     });
   });
 });

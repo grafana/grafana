@@ -4,13 +4,16 @@ import { DataSourceHttpSettings } from './DataSourceHttpSettings';
 <Meta title="MDX|DataSourceHttpSettings" component={DataSourceHttpSettings} />
 
 # DataSourceHttpSettings
+
 Component for displaying the configuration options for a data source plugin.
 
 ### When to use
+
 It is used in a `ConfigEditor` for data source plugins. You can find more examples in our core data source
- plugins [here](https://github.com/grafana/grafana/tree/master/public/app/plugins/datasource).
+plugins [here](https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource).
 
 ### Example usage
+
 ```jsx
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
@@ -21,6 +24,7 @@ export const ConfigEditor = (props: Props) => {
         dataSourceConfig={options}
         showAccessOptions={true}
         onChange={onOptionsChange}
+        sigV4AuthEnabled={false}
       />
 
       {/* Additional configuration settings for your data source plugin.*/}

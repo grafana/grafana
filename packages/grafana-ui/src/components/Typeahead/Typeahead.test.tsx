@@ -1,9 +1,10 @@
-import React from 'react';
 import { mount } from 'enzyme';
+import React from 'react';
+
+import { CompletionItemGroup, CompletionItemKind } from '../../types';
 
 import { Typeahead, State } from './Typeahead';
 import { TypeaheadItem } from './TypeaheadItem';
-import { CompletionItemKind } from '../../types';
 
 describe('Typeahead', () => {
   const completionItemGroups = [{ label: 'my group', items: [{ label: 'first item' }] }];
@@ -42,5 +43,15 @@ describe('Typeahead', () => {
     items = component.find(TypeaheadItem);
     expect(items.get(0).props.isSelected).toBeFalsy();
     expect(items.get(1).props.isSelected).toBeTruthy();
+  });
+  it('can be rendered properly even if the size of items is large', () => {
+    const completionItemGroups: CompletionItemGroup[] = [{ label: 'my group', items: [] }];
+    const itemsSize = 1000000;
+    for (let i = 0; i < itemsSize; i++) {
+      completionItemGroups[0].items.push({ label: 'item' + i });
+    }
+
+    const component = mount(<Typeahead origin="test" groupedItems={completionItemGroups} isOpen />);
+    expect(component.find('.typeahead')).toHaveLength(1);
   });
 });

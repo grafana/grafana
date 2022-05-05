@@ -1,32 +1,47 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
-import { Icon } from '@grafana/ui';
+import { connect, ConnectedProps } from 'react-redux';
+
+import { SelectableValue } from '@grafana/data';
+import { Button, FilterInput, Label } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { TeamMember, User } from 'app/types';
-import { addTeamMember } from './state/actions';
-import { getSearchMemberQuery, isSignedInUserTeamAdmin } from './state/selectors';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { WithFeatureToggle } from 'app/core/components/WithFeatureToggle';
 import { config } from 'app/core/config';
-import { contextSrv, User as SignedInUser } from 'app/core/services/context_srv';
-import TeamMemberRow from './TeamMemberRow';
-import { setSearchMemberQuery } from './state/reducers';
+import { contextSrv } from 'app/core/services/context_srv';
+import { TeamMember, OrgUser } from 'app/types';
 
-export interface Props {
-  members: TeamMember[];
-  searchMemberQuery: string;
-  addTeamMember: typeof addTeamMember;
-  setSearchMemberQuery: typeof setSearchMemberQuery;
-  syncEnabled: boolean;
-  editorsCanAdmin: boolean;
-  signedInUser: SignedInUser;
+import TeamMemberRow from './TeamMemberRow';
+import { addTeamMember } from './state/actions';
+import { setSearchMemberQuery } from './state/reducers';
+import { getSearchMemberQuery, isSignedInUserTeamAdmin } from './state/selectors';
+
+function mapStateToProps(state: any) {
+  return {
+    searchMemberQuery: getSearchMemberQuery(state.team),
+    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
+    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
+  };
 }
+
+const mapDispatchToProps = {
+  addTeamMember,
+  setSearchMemberQuery,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+interface OwnProps {
+  members: TeamMember[];
+  syncEnabled: boolean;
+}
+
+export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export interface State {
   isAdding: boolean;
-  newTeamMember?: User | null;
+  newTeamMember?: SelectableValue<OrgUser['userId']> | null;
 }
 
 export class TeamMembers extends PureComponent<Props, State> {
@@ -43,7 +58,7 @@ export class TeamMembers extends PureComponent<Props, State> {
     this.setState({ isAdding: !this.state.isAdding });
   };
 
-  onUserSelected = (user: User) => {
+  onUserSelected = (user: SelectableValue<OrgUser['userId']>) => {
     this.setState({ newTeamMember: user });
   };
 
@@ -59,7 +74,7 @@ export class TeamMembers extends PureComponent<Props, State> {
 
     return (
       <td>
-        {labels.map(label => (
+        {labels.map((label) => (
           <TagBadge key={label} label={label} removeIcon={false} count={0} onClick={() => {}} />
         ))}
       </td>
@@ -75,38 +90,23 @@ export class TeamMembers extends PureComponent<Props, State> {
       <div>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
-            <FilterInput
-              labelClassName="gf-form--has-input-icon gf-form--grow"
-              inputClassName="gf-form-input"
-              placeholder="Search members"
-              value={searchMemberQuery}
-              onChange={this.onSearchQueryChange}
-            />
+            <FilterInput placeholder="Search members" value={searchMemberQuery} onChange={this.onSearchQueryChange} />
           </div>
-
-          <div className="page-action-bar__spacer" />
-
-          <button
-            className="btn btn-primary pull-right"
-            onClick={this.onToggleAdding}
-            disabled={isAdding || !isTeamAdmin}
-          >
+          <Button className="pull-right" onClick={this.onToggleAdding} disabled={isAdding || !isTeamAdmin}>
             Add member
-          </button>
+          </Button>
         </div>
 
         <SlideDown in={isAdding}>
           <div className="cta-form">
-            <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
-              <Icon name="times" />
-            </button>
-            <h5>Add team member</h5>
+            <CloseButton aria-label="Close 'Add team member' dialogue" onClick={this.onToggleAdding} />
+            <Label htmlFor="user-picker">Add team member</Label>
             <div className="gf-form-inline">
-              <UserPicker onSelected={this.onUserSelected} className="min-width-30" />
+              <UserPicker inputId="user-picker" onSelected={this.onUserSelected} className="min-width-30" />
               {this.state.newTeamMember && (
-                <button className="btn btn-primary gf-form-btn" type="submit" onClick={this.onAddUserToTeam}>
+                <Button type="submit" onClick={this.onAddUserToTeam}>
                   Add to team
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -129,7 +129,7 @@ export class TeamMembers extends PureComponent<Props, State> {
             </thead>
             <tbody>
               {members &&
-                members.map(member => (
+                members.map((member) => (
                   <TeamMemberRow
                     key={member.userId}
                     member={member}
@@ -146,17 +146,4 @@ export class TeamMembers extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state: any) {
-  return {
-    searchMemberQuery: getSearchMemberQuery(state.team),
-    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
-    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
-  };
-}
-
-const mapDispatchToProps = {
-  addTeamMember,
-  setSearchMemberQuery,
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(TeamMembers);
+export default connector(TeamMembers);

@@ -1,37 +1,83 @@
-import { mapInternalLinkToExplore } from './dataLinks';
-import { FieldType } from '../types';
+import { DataLink, FieldType } from '../types';
 import { ArrayVector } from '../vector';
+
+import { mapInternalLinkToExplore } from './dataLinks';
 
 describe('mapInternalLinkToExplore', () => {
   it('creates internal link', () => {
-    const link = mapInternalLinkToExplore(
-      {
-        url: '',
-        title: '',
-        internal: {
-          datasourceUid: 'uid',
-          query: { query: '12344' },
-        },
+    const dataLink = {
+      url: '',
+      title: '',
+      internal: {
+        datasourceUid: 'uid',
+        datasourceName: 'dsName',
+        query: { query: '12344' },
       },
-      {},
-      {} as any,
-      {
+    };
+
+    const link = mapInternalLinkToExplore({
+      link: dataLink,
+      internalLink: dataLink.internal,
+      scopedVars: {},
+      range: {} as any,
+      field: {
         name: 'test',
         type: FieldType.number,
         config: {},
         values: new ArrayVector([2]),
       },
-      {
-        replaceVariables: val => val,
-        getDataSourceSettingsByUid: uid => ({ name: 'testDS' } as any),
-      }
-    );
+      replaceVariables: (val) => val,
+    });
 
     expect(link).toEqual(
       expect.objectContaining({
-        title: 'testDS',
-        href:
-          '/explore?left={"datasource":"testDS","queries":[{"query":"12344"}],"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}',
+        title: 'dsName',
+        href: `/explore?left=${encodeURIComponent(
+          '{"datasource":"dsName","queries":[{"query":"12344"}],"panelsState":{}}'
+        )}`,
+        onClick: undefined,
+      })
+    );
+  });
+
+  it('includes panels state', () => {
+    const panelsState = {
+      trace: {
+        spanId: 'abcdef',
+      },
+    };
+
+    const dataLink: DataLink = {
+      url: '',
+      title: '',
+      internal: {
+        datasourceUid: 'uid',
+        datasourceName: 'dsName',
+        query: { query: '12344' },
+        panelsState,
+      },
+    };
+
+    const link = mapInternalLinkToExplore({
+      link: dataLink,
+      internalLink: dataLink.internal!,
+      scopedVars: {},
+      range: {} as any,
+      field: {
+        name: 'test',
+        type: FieldType.number,
+        config: {},
+        values: new ArrayVector([2]),
+      },
+      replaceVariables: (val) => val,
+    });
+
+    expect(link).toEqual(
+      expect.objectContaining({
+        title: 'dsName',
+        href: `/explore?left=${encodeURIComponent(
+          '{"datasource":"dsName","queries":[{"query":"12344"}],"panelsState":{"trace":{"spanId":"abcdef"}}}'
+        )}`,
         onClick: undefined,
       })
     );

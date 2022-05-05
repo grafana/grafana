@@ -53,6 +53,12 @@ Run auth proxy test:
 $ ./run.sh -c auth_proxy_test
 ```
 
+Run API key test (option `-k` must be a valid `admin` API key)
+
+```bash
+$ ./run.sh -c auth_token_test -k "<api key here>"
+```
+
 
 Example output:
 
@@ -75,7 +81,7 @@ Example output:
 
     █ user auth token test
 
-      █ user authenticates thru ui with username and password
+      █ user authenticates through ui with username and password
 
         ✓ response status is 200
         ✓ response has cookie 'grafana_session' with 32 characters

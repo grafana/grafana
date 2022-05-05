@@ -19,40 +19,54 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func Logger() macaron.Handler {
-	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
+func Logger(cfg *setting.Cfg) web.Handler {
+	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
 		start := time.Now()
-		c.Data["perfmon.start"] = start
 
-		rw := res.(macaron.ResponseWriter)
+		rw := res.(web.ResponseWriter)
 		c.Next()
 
-		timeTakenMs := time.Since(start) / time.Millisecond
-
-		if timer, ok := c.Data["perfmon.timer"]; ok {
-			timerTyped := timer.(prometheus.Summary)
-			timerTyped.Observe(float64(timeTakenMs))
+		timeTaken := time.Since(start) / time.Millisecond
+		duration := time.Since(start).String()
+		ctx := contexthandler.FromContext(c.Req.Context())
+		if ctx != nil && ctx.PerfmonTimer != nil {
+			ctx.PerfmonTimer.Observe(float64(timeTaken))
 		}
 
 		status := rw.Status()
 		if status == 200 || status == 304 {
-			if !setting.RouterLogging {
+			if !cfg.RouterLogging {
 				return
 			}
 		}
 
-		if ctx, ok := c.Data["ctx"]; ok {
-			ctxTyped := ctx.(*models.ReqContext)
-			if status == 500 {
-				ctxTyped.Logger.Error("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "time_ms", int64(timeTakenMs), "size", rw.Size(), "referer", req.Referer())
+		if ctx != nil {
+			logParams := []interface{}{
+				"method", req.Method,
+				"path", req.URL.Path,
+				"status", status,
+				"remote_addr", c.RemoteAddr(),
+				"time_ms", int64(timeTaken),
+				"duration", duration,
+				"size", rw.Size(),
+				"referer", req.Referer(),
+			}
+
+			traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
+			if traceID != "" {
+				logParams = append(logParams, "traceID", traceID)
+			}
+
+			if status >= 500 {
+				ctx.Logger.Error("Request Completed", logParams...)
 			} else {
-				ctxTyped.Logger.Info("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "time_ms", int64(timeTakenMs), "size", rw.Size(), "referer", req.Referer())
+				ctx.Logger.Info("Request Completed", logParams...)
 			}
 		}
 	}

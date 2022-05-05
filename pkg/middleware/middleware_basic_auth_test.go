@@ -4,149 +4,96 @@ import (
 	"encoding/json"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-
-	"github.com/grafana/grafana/pkg/bus"
-	authLogin "github.com/grafana/grafana/pkg/login"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMiddlewareBasicAuth(t *testing.T) {
-	Convey("Given the basic auth", t, func() {
-		var oldBasicAuthEnabled = setting.BasicAuthEnabled
-		var oldDisableBruteForceLoginProtection = setting.DisableBruteForceLoginProtection
-		var id int64 = 12
+	const id int64 = 12
 
-		Convey("Setup", func() {
-			setting.BasicAuthEnabled = true
-			setting.DisableBruteForceLoginProtection = true
-			bus.ClearBusHandlers()
-		})
+	configure := func(cfg *setting.Cfg) {
+		cfg.BasicAuthEnabled = true
+		cfg.DisableBruteForceLoginProtection = true
+	}
 
-		middlewareScenario(t, "Valid API key", func(sc *scenarioContext) {
-			var orgID int64 = 2
-			keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
-			So(err, ShouldBeNil)
+	middlewareScenario(t, "Valid API key", func(t *testing.T, sc *scenarioContext) {
+		const orgID int64 = 2
+		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+		require.NoError(t, err)
 
-			bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
-				query.Result = &models.ApiKey{OrgId: orgID, Role: models.ROLE_EDITOR, Key: keyhash}
-				return nil
-			})
+		sc.mockSQLStore.ExpectedAPIKey = &models.ApiKey{OrgId: orgID, Role: models.ROLE_EDITOR, Key: keyhash}
 
-			authHeader := util.GetBasicAuthHeader("api_key", "eyJrIjoidjVuQXdwTWFmRlA2em5hUzR1cmhkV0RMUzU1MTFNNDIiLCJuIjoiYXNkIiwiaWQiOjF9")
-			sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
+		authHeader := util.GetBasicAuthHeader("api_key", "eyJrIjoidjVuQXdwTWFmRlA2em5hUzR1cmhkV0RMUzU1MTFNNDIiLCJuIjoiYXNkIiwiaWQiOjF9")
+		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
 
-			Convey("Should return 200", func() {
-				So(sc.resp.Code, ShouldEqual, 200)
-			})
+		assert.Equal(t, 200, sc.resp.Code)
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, orgID, sc.context.OrgId)
+		assert.Equal(t, models.ROLE_EDITOR, sc.context.OrgRole)
+	}, configure)
 
-			Convey("Should init middleware context", func() {
-				So(sc.context.IsSignedIn, ShouldEqual, true)
-				So(sc.context.OrgId, ShouldEqual, orgID)
-				So(sc.context.OrgRole, ShouldEqual, models.ROLE_EDITOR)
-			})
-		})
+	middlewareScenario(t, "Handle auth", func(t *testing.T, sc *scenarioContext) {
+		const password = "MyPass"
+		const orgID int64 = 2
 
-		middlewareScenario(t, "Handle auth", func(sc *scenarioContext) {
-			var password = "MyPass"
-			var salt = "Salt"
-			var orgID int64 = 2
+		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: id}
 
-			bus.AddHandler("grafana-auth", func(query *models.LoginUserQuery) error {
-				encoded, err := util.EncodePassword(password, salt)
-				if err != nil {
-					return err
-				}
-				query.User = &models.User{
-					Password: encoded,
-					Salt:     salt,
-				}
-				return nil
-			})
+		authHeader := util.GetBasicAuthHeader("myUser", password)
+		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
 
-			bus.AddHandler("get-sign-user", func(query *models.GetSignedInUserQuery) error {
-				query.Result = &models.SignedInUser{OrgId: orgID, UserId: id}
-				return nil
-			})
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, orgID, sc.context.OrgId)
+		assert.Equal(t, id, sc.context.UserId)
+	}, configure)
 
-			authHeader := util.GetBasicAuthHeader("myUser", password)
-			sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
+	middlewareScenario(t, "Auth sequence", func(t *testing.T, sc *scenarioContext) {
+		const password = "MyPass"
+		const salt = "Salt"
 
-			Convey("Should init middleware context with users", func() {
-				So(sc.context.IsSignedIn, ShouldEqual, true)
-				So(sc.context.OrgId, ShouldEqual, orgID)
-				So(sc.context.UserId, ShouldEqual, id)
-			})
+		encoded, err := util.EncodePassword(password, salt)
+		require.NoError(t, err)
 
-			bus.ClearBusHandlers()
-		})
+		sc.mockSQLStore.ExpectedUser = &models.User{Password: encoded, Id: id, Salt: salt}
+		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: id}
+		login.ProvideService(sc.mockSQLStore, &logintest.LoginServiceFake{})
 
-		middlewareScenario(t, "Auth sequence", func(sc *scenarioContext) {
-			var password = "MyPass"
-			var salt = "Salt"
+		authHeader := util.GetBasicAuthHeader("myUser", password)
+		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
+		require.NotNil(t, sc.context)
 
-			authLogin.Init()
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, id, sc.context.UserId)
+	}, configure)
 
-			bus.AddHandler("user-query", func(query *models.GetUserByLoginQuery) error {
-				encoded, err := util.EncodePassword(password, salt)
-				if err != nil {
-					return err
-				}
-				query.Result = &models.User{
-					Password: encoded,
-					Id:       id,
-					Salt:     salt,
-				}
-				return nil
-			})
+	middlewareScenario(t, "Should return error if user is not found", func(t *testing.T, sc *scenarioContext) {
+		sc.mockSQLStore.ExpectedError = models.ErrUserNotFound
+		sc.fakeReq("GET", "/")
+		sc.req.SetBasicAuth("user", "password")
+		sc.exec()
 
-			bus.AddHandler("get-sign-user", func(query *models.GetSignedInUserQuery) error {
-				query.Result = &models.SignedInUser{UserId: query.UserId}
-				return nil
-			})
+		err := json.NewDecoder(sc.resp.Body).Decode(&sc.respJson)
+		require.Error(t, err)
 
-			authHeader := util.GetBasicAuthHeader("myUser", password)
-			sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
+		assert.Equal(t, 401, sc.resp.Code)
+		assert.Equal(t, contexthandler.InvalidUsernamePassword, sc.respJson["message"])
+	}, configure)
 
-			Convey("Should init middleware context with user", func() {
-				So(sc.context.IsSignedIn, ShouldEqual, true)
-				So(sc.context.UserId, ShouldEqual, id)
-			})
-		})
+	middlewareScenario(t, "Should return error if user & password do not match", func(t *testing.T, sc *scenarioContext) {
+		sc.mockSQLStore.ExpectedError = models.ErrUserNotFound
+		sc.fakeReq("GET", "/")
+		sc.req.SetBasicAuth("killa", "gorilla")
+		sc.exec()
 
-		middlewareScenario(t, "Should return error if user is not found", func(sc *scenarioContext) {
-			sc.fakeReq("GET", "/")
-			sc.req.SetBasicAuth("user", "password")
-			sc.exec()
+		err := json.NewDecoder(sc.resp.Body).Decode(&sc.respJson)
+		require.Error(t, err)
 
-			err := json.NewDecoder(sc.resp.Body).Decode(&sc.respJson)
-			So(err, ShouldNotBeNil)
-
-			So(sc.resp.Code, ShouldEqual, 401)
-			So(sc.respJson["message"], ShouldEqual, errStringInvalidUsernamePassword)
-		})
-
-		middlewareScenario(t, "Should return error if user & password do not match", func(sc *scenarioContext) {
-			bus.AddHandler("user-query", func(loginUserQuery *models.GetUserByLoginQuery) error {
-				return nil
-			})
-
-			sc.fakeReq("GET", "/")
-			sc.req.SetBasicAuth("killa", "gorilla")
-			sc.exec()
-
-			err := json.NewDecoder(sc.resp.Body).Decode(&sc.respJson)
-			So(err, ShouldNotBeNil)
-
-			So(sc.resp.Code, ShouldEqual, 401)
-			So(sc.respJson["message"], ShouldEqual, errStringInvalidUsernamePassword)
-		})
-
-		Convey("Destroy", func() {
-			setting.BasicAuthEnabled = oldBasicAuthEnabled
-			setting.DisableBruteForceLoginProtection = oldDisableBruteForceLoginProtection
-		})
-	})
+		assert.Equal(t, 401, sc.resp.Code)
+		assert.Equal(t, contexthandler.InvalidUsernamePassword, sc.respJson["message"])
+	}, configure)
 }

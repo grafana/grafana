@@ -1,20 +1,23 @@
+import { css } from '@emotion/css';
 import React, { useState } from 'react';
-import { css } from 'emotion';
-import { Button, stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
-import { DerivedFieldConfig } from '../types';
-import { DerivedField } from './DerivedField';
-import { DebugSection } from './DebugSection';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+import { GrafanaTheme2, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
+import { Button, useTheme2 } from '@grafana/ui';
+
+import { DerivedFieldConfig } from '../types';
+
+import { DebugSection } from './DebugSection';
+import { DerivedField } from './DerivedField';
+
+const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`
-    padding-bottom: ${theme.spacing.md};
-    color: ${theme.colors.textWeak};
+    padding-bottom: ${theme.spacing(2)};
+    color: ${theme.colors.text.secondary};
   `,
   derivedField: css`
-    margin-bottom: ${theme.spacing.sm};
+    margin-bottom: ${theme.spacing(1)};
   `,
-}));
+});
 
 type Props = {
   value?: DerivedFieldConfig[];
@@ -23,7 +26,7 @@ type Props = {
 
 export const DerivedFields = (props: Props) => {
   const { value, onChange } = props;
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getStyles(theme);
 
   const [showDebug, setShowDebug] = useState(false);
@@ -33,7 +36,7 @@ export const DerivedFields = (props: Props) => {
       <h3 className="page-heading">Derived fields</h3>
 
       <div className={styles.infoText}>
-        Derived fields can be used to extract new fields from the log message and create link from it's value.
+        Derived fields can be used to extract new fields from a log message and create a link from its value.
       </div>
 
       <div className="gf-form-group">
@@ -44,7 +47,7 @@ export const DerivedFields = (props: Props) => {
                 className={styles.derivedField}
                 key={index}
                 value={field}
-                onChange={newField => {
+                onChange={(newField) => {
                   const newDerivedFields = [...value];
                   newDerivedFields.splice(index, 1, newField);
                   onChange(newDerivedFields);
@@ -72,7 +75,7 @@ export const DerivedFields = (props: Props) => {
               margin-right: 10px;
             `}
             icon="plus"
-            onClick={event => {
+            onClick={(event) => {
               event.preventDefault();
               const newDerivedFields = [...(value || []), { name: '', matcherRegex: '' }];
               onChange(newDerivedFields);
@@ -82,7 +85,7 @@ export const DerivedFields = (props: Props) => {
           </Button>
 
           {value && value.length > 0 && (
-            <Button variant="secondary" onClick={() => setShowDebug(!showDebug)}>
+            <Button variant="secondary" type="button" onClick={() => setShowDebug(!showDebug)}>
               {showDebug ? 'Hide example log message' : 'Show example log message'}
             </Button>
           )}

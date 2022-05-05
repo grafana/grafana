@@ -5,7 +5,7 @@ const {
 const { resolve } = require('path');
 
 // @todo use https://github.com/bahmutov/cypress-extends when possible
-module.exports = async baseConfig => {
+module.exports = async (baseConfig) => {
   // From CLI
   const {
     env: { CWD, UPDATE_SCREENSHOTS },
@@ -29,7 +29,7 @@ module.exports = async baseConfig => {
 
     const customProjectConfig = await readFile(`${CWD}/cypress.json`, 'utf8')
       .then(JSON.parse)
-      .then(config => {
+      .then((config) => {
         const pathKeys = [
           'fileServerFolder',
           'fixturesFolder',
@@ -52,7 +52,7 @@ module.exports = async baseConfig => {
           })
         );
       })
-      .catch(error => {
+      .catch((error) => {
         if (error.code === 'ENOENT') {
           // File is optional
           return {};

@@ -1,127 +1,115 @@
 package login
 
 import (
+	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestLoginAttemptsValidation(t *testing.T) {
-	Convey("Validate login attempts", t, func() {
-		Convey("Given brute force login protection enabled", func() {
-			setting.DisableBruteForceLoginProtection = false
+func TestValidateLoginAttempts(t *testing.T) {
+	testCases := []struct {
+		name          string
+		loginAttempts int64
+		cfg           *setting.Cfg
+		expected      error
+	}{
+		{
+			name:          "When brute force protection enabled and user login attempt count is less than max",
+			loginAttempts: maxInvalidLoginAttempts - 1,
+			cfg:           cfgWithBruteForceLoginProtectionEnabled(t),
+			expected:      nil,
+		},
+		{
+			name:          "When brute force protection enabled and user login attempt count equals max",
+			loginAttempts: maxInvalidLoginAttempts,
+			cfg:           cfgWithBruteForceLoginProtectionEnabled(t),
+			expected:      ErrTooManyLoginAttempts,
+		},
+		{
+			name:          "When brute force protection enabled and user login attempt count is greater than max",
+			loginAttempts: maxInvalidLoginAttempts + 1,
+			cfg:           cfgWithBruteForceLoginProtectionEnabled(t),
+			expected:      ErrTooManyLoginAttempts,
+		},
 
-			Convey("When user login attempt count equals max-1 ", func() {
-				withLoginAttempts(maxInvalidLoginAttempts - 1)
-				err := validateLoginAttempts("user")
+		{
+			name:          "When brute force protection disabled and user login attempt count is less than max",
+			loginAttempts: maxInvalidLoginAttempts - 1,
+			cfg:           cfgWithBruteForceLoginProtectionDisabled(t),
+			expected:      nil,
+		},
+		{
+			name:          "When brute force protection disabled and user login attempt count equals max",
+			loginAttempts: maxInvalidLoginAttempts,
+			cfg:           cfgWithBruteForceLoginProtectionDisabled(t),
+			expected:      nil,
+		},
+		{
+			name:          "When brute force protection disabled and user login attempt count is greater than max",
+			loginAttempts: maxInvalidLoginAttempts + 1,
+			cfg:           cfgWithBruteForceLoginProtectionDisabled(t),
+			expected:      nil,
+		},
+	}
 
-				Convey("it should not result in error", func() {
-					So(err, ShouldBeNil)
-				})
-			})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			store := mockstore.NewSQLStoreMock()
+			store.ExpectedLoginAttempts = tc.loginAttempts
 
-			Convey("When user login attempt count equals max ", func() {
-				withLoginAttempts(maxInvalidLoginAttempts)
-				err := validateLoginAttempts("user")
+			query := &models.LoginUserQuery{Username: "user", Cfg: tc.cfg}
 
-				Convey("it should result in too many login attempts error", func() {
-					So(err, ShouldEqual, ErrTooManyLoginAttempts)
-				})
-			})
-
-			Convey("When user login attempt count is greater than max ", func() {
-				withLoginAttempts(maxInvalidLoginAttempts + 5)
-				err := validateLoginAttempts("user")
-
-				Convey("it should result in too many login attempts error", func() {
-					So(err, ShouldEqual, ErrTooManyLoginAttempts)
-				})
-			})
-
-			Convey("When saving invalid login attempt", func() {
-				defer bus.ClearBusHandlers()
-				createLoginAttemptCmd := &models.CreateLoginAttemptCommand{}
-
-				bus.AddHandler("test", func(cmd *models.CreateLoginAttemptCommand) error {
-					createLoginAttemptCmd = cmd
-					return nil
-				})
-
-				err := saveInvalidLoginAttempt(&models.LoginUserQuery{
-					Username:  "user",
-					Password:  "pwd",
-					IpAddress: "192.168.1.1:56433",
-				})
-				So(err, ShouldBeNil)
-
-				Convey("it should dispatch command", func() {
-					So(createLoginAttemptCmd, ShouldNotBeNil)
-					So(createLoginAttemptCmd.Username, ShouldEqual, "user")
-					So(createLoginAttemptCmd.IpAddress, ShouldEqual, "192.168.1.1:56433")
-				})
-			})
+			err := validateLoginAttempts(context.Background(), query, store)
+			require.Equal(t, tc.expected, err)
 		})
+	}
+}
 
-		Convey("Given brute force login protection disabled", func() {
-			setting.DisableBruteForceLoginProtection = true
+func TestSaveInvalidLoginAttempt(t *testing.T) {
+	t.Run("When brute force protection enabled", func(t *testing.T) {
+		store := mockstore.NewSQLStoreMock()
+		err := saveInvalidLoginAttempt(context.Background(), &models.LoginUserQuery{
+			Username:  "user",
+			Password:  "pwd",
+			IpAddress: "192.168.1.1:56433",
+			Cfg:       cfgWithBruteForceLoginProtectionEnabled(t),
+		}, store)
+		require.NoError(t, err)
 
-			Convey("When user login attempt count equals max-1 ", func() {
-				withLoginAttempts(maxInvalidLoginAttempts - 1)
-				err := validateLoginAttempts("user")
+		require.NotNil(t, store.LastLoginAttemptCommand)
+		assert.Equal(t, "user", store.LastLoginAttemptCommand.Username)
+		assert.Equal(t, "192.168.1.1:56433", store.LastLoginAttemptCommand.IpAddress)
+	})
 
-				Convey("it should not result in error", func() {
-					So(err, ShouldBeNil)
-				})
-			})
+	t.Run("When brute force protection disabled", func(t *testing.T) {
+		store := mockstore.NewSQLStoreMock()
+		err := saveInvalidLoginAttempt(context.Background(), &models.LoginUserQuery{
+			Username:  "user",
+			Password:  "pwd",
+			IpAddress: "192.168.1.1:56433",
+			Cfg:       cfgWithBruteForceLoginProtectionDisabled(t),
+		}, store)
+		require.NoError(t, err)
 
-			Convey("When user login attempt count equals max ", func() {
-				withLoginAttempts(maxInvalidLoginAttempts)
-				err := validateLoginAttempts("user")
-
-				Convey("it should not result in error", func() {
-					So(err, ShouldBeNil)
-				})
-			})
-
-			Convey("When user login attempt count is greater than max ", func() {
-				withLoginAttempts(maxInvalidLoginAttempts + 5)
-				err := validateLoginAttempts("user")
-
-				Convey("it should not result in error", func() {
-					So(err, ShouldBeNil)
-				})
-			})
-
-			Convey("When saving invalid login attempt", func() {
-				defer bus.ClearBusHandlers()
-				createLoginAttemptCmd := (*models.CreateLoginAttemptCommand)(nil)
-
-				bus.AddHandler("test", func(cmd *models.CreateLoginAttemptCommand) error {
-					createLoginAttemptCmd = cmd
-					return nil
-				})
-
-				err := saveInvalidLoginAttempt(&models.LoginUserQuery{
-					Username:  "user",
-					Password:  "pwd",
-					IpAddress: "192.168.1.1:56433",
-				})
-				So(err, ShouldBeNil)
-
-				Convey("it should not dispatch command", func() {
-					So(createLoginAttemptCmd, ShouldBeNil)
-				})
-			})
-		})
+		require.Nil(t, store.LastLoginAttemptCommand)
 	})
 }
 
-func withLoginAttempts(loginAttempts int64) {
-	bus.AddHandler("test", func(query *models.GetUserLoginAttemptCountQuery) error {
-		query.Result = loginAttempts
-		return nil
-	})
+func cfgWithBruteForceLoginProtectionDisabled(t *testing.T) *setting.Cfg {
+	t.Helper()
+	cfg := setting.NewCfg()
+	cfg.DisableBruteForceLoginProtection = true
+	return cfg
+}
+
+func cfgWithBruteForceLoginProtectionEnabled(t *testing.T) *setting.Cfg {
+	t.Helper()
+	cfg := setting.NewCfg()
+	require.False(t, cfg.DisableBruteForceLoginProtection)
+	return cfg
 }

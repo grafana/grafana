@@ -1,13 +1,15 @@
 package notifiers
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -35,14 +37,14 @@ const (
 )
 
 // NewLINENotifier is the constructor for the LINE notifier
-func NewLINENotifier(model *models.AlertNotification) (alerting.Notifier, error) {
-	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
+func NewLINENotifier(model *models.AlertNotification, fn alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
+	token := fn(context.Background(), model.SecureSettings, "token", model.Settings.Get("token").MustString(), setting.SecretKey)
 	if token == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find token in settings"}
 	}
 
 	return &LineNotifier{
-		NotifierBase: NewNotifierBase(model),
+		NotifierBase: NewNotifierBase(model, ns),
 		Token:        token,
 		log:          log.New("alerting.notifier.line"),
 	}, nil
@@ -90,7 +92,7 @@ func (ln *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
 		Body: form.Encode(),
 	}
 
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+	if err := ln.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		ln.log.Error("Failed to send notification to LINE", "error", err, "body", body)
 		return err
 	}

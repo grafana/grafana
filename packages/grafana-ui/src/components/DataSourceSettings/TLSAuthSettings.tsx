@@ -1,8 +1,12 @@
+import { css, cx } from '@emotion/css';
 import React from 'react';
+
 import { KeyValue } from '@grafana/data';
-import { css, cx } from 'emotion';
-import { Tooltip } from '../Tooltip/Tooltip';
+
+import { FormField } from '../FormField/FormField';
 import { Icon } from '../Icon/Icon';
+import { Tooltip } from '../Tooltip/Tooltip';
+
 import { CertificationKey } from './CertificationKey';
 import { HttpSettingsBaseProps } from './types';
 
@@ -10,8 +14,9 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
   const hasTLSCACert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsCACert;
   const hasTLSClientCert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsClientCert;
   const hasTLSClientKey = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsClientKey;
+  const hasServerName = dataSourceConfig.jsonData && dataSourceConfig.jsonData.serverName;
 
-  const onResetClickFactory = (field: string) => (event: React.MouseEvent<HTMLAnchorElement>) => {
+  const onResetClickFactory = (field: string) => (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     const newSecureJsonFields: KeyValue<boolean> = { ...dataSourceConfig.secureJsonFields };
     newSecureJsonFields[field] = false;
@@ -31,6 +36,18 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
     });
   };
 
+  const onServerNameLabelChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
+    const newJsonData = {
+      ...dataSourceConfig.jsonData,
+      serverName: event.currentTarget.value,
+    };
+
+    onChange({
+      ...dataSourceConfig,
+      jsonData: newJsonData,
+    });
+  };
+
   return (
     <div className="gf-form-group">
       <div
@@ -41,10 +58,10 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
           `
         )}
       >
-        <h6>TLS Auth Details</h6>
+        <h6>TLS/SSL Auth Details</h6>
         <Tooltip
           placement="right-end"
-          content="TLS Certs are encrypted and stored in the Grafana database."
+          content="TLS/SSL Certs are encrypted and stored in the Grafana database."
           theme="info"
         >
           <div className="gf-form-help-icon gf-form-help-icon--right-normal">
@@ -65,6 +82,16 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
 
         {dataSourceConfig.jsonData.tlsAuth && (
           <>
+            <div className="gf-form">
+              <FormField
+                label="ServerName"
+                labelWidth={7}
+                inputWidth={30}
+                placeholder="domain.example.com"
+                value={hasServerName && dataSourceConfig.jsonData.serverName}
+                onChange={onServerNameLabelChange}
+              />
+            </div>
             <CertificationKey
               hasCert={!!hasTLSClientCert}
               label="Client Cert"

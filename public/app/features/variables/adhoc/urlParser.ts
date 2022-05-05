@@ -1,13 +1,10 @@
-import { AdHocVariableFilter } from 'app/features/variables/types';
-import { UrlQueryValue } from '@grafana/data';
 import { isArray, isString } from 'lodash';
 
+import { UrlQueryValue } from '@grafana/data';
+import { AdHocVariableFilter } from 'app/features/variables/types';
+
 export const toUrl = (filters: AdHocVariableFilter[]): string[] => {
-  return filters.map(filter =>
-    toArray(filter)
-      .map(escapeDelimiter)
-      .join('|')
-  );
+  return filters.map((filter) => toArray(filter).map(escapeDelimiter).join('|'));
 };
 
 export const toFilters = (value: UrlQueryValue): AdHocVariableFilter[] => {
@@ -20,12 +17,20 @@ export const toFilters = (value: UrlQueryValue): AdHocVariableFilter[] => {
   return filter === null ? [] : [filter];
 };
 
-function escapeDelimiter(value: string) {
-  return value.replace(/\|/g, '__gfp__');
+function escapeDelimiter(value: string | undefined): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  return /\|/g[Symbol.replace](value, '__gfp__');
 }
 
-function unescapeDelimiter(value: string) {
-  return value.replace(/__gfp__/g, '|');
+function unescapeDelimiter(value: string | undefined): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  return /__gfp__/g[Symbol.replace](value, '|');
 }
 
 function toArray(filter: AdHocVariableFilter): string[] {

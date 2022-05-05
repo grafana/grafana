@@ -1,8 +1,10 @@
-import Prism from 'prismjs';
+import Prism, { LanguageMap } from 'prismjs';
 import { Block, Text, Decoration } from 'slate';
+
 import { Plugin } from '@grafana/slate-react';
-import Options, { OptionsFormat } from './options';
+
 import TOKEN_MARK from './TOKEN_MARK';
+import Options, { OptionsFormat } from './options';
 
 export interface Token {
   content: string;
@@ -19,7 +21,7 @@ export interface Token {
 /**
  * A Slate plugin to highlight code syntax.
  */
-export function SlatePrism(optsParam: OptionsFormat = {}): Plugin {
+export function SlatePrism(optsParam: OptionsFormat = {}, prismLanguages = Prism.languages as LanguageMap): Plugin {
   const opts: Options = new Options(optsParam);
 
   return {
@@ -30,7 +32,7 @@ export function SlatePrism(optsParam: OptionsFormat = {}): Plugin {
 
       const block = Block.create(node as Block);
       const grammarName = opts.getSyntax(block);
-      const grammar = Prism.languages[grammarName];
+      const grammar = prismLanguages[grammarName];
 
       if (!grammar) {
         // Grammar not loaded
@@ -39,7 +41,7 @@ export function SlatePrism(optsParam: OptionsFormat = {}): Plugin {
 
       // Tokenize the whole block text
       const texts = block.getTexts();
-      const blockText = texts.map(text => text && text.getText()).join('\n');
+      const blockText = texts.map((text) => text && text.getText()).join('\n');
       const tokens = Prism.tokenize(blockText, grammar);
       const flattened = flattenTokens(tokens);
 
@@ -71,7 +73,7 @@ function decorateNode(opts: Options, tokens: Array<string | Prism.Token>, block:
   let textStart = 0;
   let textEnd = 0;
 
-  texts.forEach(text => {
+  texts.forEach((text) => {
     textEnd = textStart + text!.getText().length;
 
     let offset = 0;
@@ -194,9 +196,9 @@ function flattenToken(token: string | Prism.Token | Array<string | Prism.Token>)
       },
     ];
   } else if (Array.isArray(token)) {
-    return token.flatMap(t => flattenToken(t));
+    return token.flatMap((t) => flattenToken(t));
   } else if (token instanceof Prism.Token) {
-    return flattenToken(token.content).flatMap(t => {
+    return flattenToken(token.content).flatMap((t) => {
       let aliases: string[] = [];
       if (typeof token.alias === 'string') {
         aliases = [token.alias];

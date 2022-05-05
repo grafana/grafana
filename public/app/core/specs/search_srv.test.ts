@@ -1,7 +1,9 @@
-import { SearchSrv } from 'app/core/services/search_srv';
-import impressionSrv from 'app/core/services/impression_srv';
-import { contextSrv } from 'app/core/services/context_srv';
 import { beforeEach } from 'test/lib/common';
+
+import { contextSrv } from 'app/core/services/context_srv';
+import impressionSrv from 'app/core/services/impression_srv';
+import { SearchSrv } from 'app/core/services/search_srv';
+
 import { backendSrv } from '../services/backend_srv';
 
 jest.mock('app/core/store', () => {
@@ -48,7 +50,7 @@ describe('SearchSrv', () => {
 
       impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([1, 2]);
 
-      return searchSrv.search({ query: '' }).then(res => {
+      return searchSrv.search({ query: '' }).then((res) => {
         results = res;
       });
     });
@@ -80,7 +82,7 @@ describe('SearchSrv', () => {
 
         impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([4, 5, 1, 2, 3]);
 
-        return searchSrv.search({ query: '' }).then(res => {
+        return searchSrv.search({ query: '' }).then((res) => {
           results = res;
         });
       });
@@ -99,7 +101,7 @@ describe('SearchSrv', () => {
     beforeEach(() => {
       searchMock.mockImplementation(jest.fn().mockReturnValue(Promise.resolve([{ id: 1, title: 'starred' }])));
 
-      return searchSrv.search({ query: '' }).then(res => {
+      return searchSrv.search({ query: '' }).then((res) => {
         results = res;
       });
     });
@@ -127,7 +129,7 @@ describe('SearchSrv', () => {
       );
 
       impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([1, 2]);
-      return searchSrv.search({ query: '' }).then(res => {
+      return searchSrv.search({ query: '' }).then((res) => {
         results = res;
       });
     });
@@ -179,7 +181,7 @@ describe('SearchSrv', () => {
           )
       );
 
-      return searchSrv.search({ query: '' }).then(res => {
+      return searchSrv.search({ query: '' }).then((res) => {
         results = res;
       });
     });
@@ -218,7 +220,7 @@ describe('SearchSrv', () => {
         )
       );
 
-      return searchSrv.search({ query: 'search' }).then(res => {
+      return searchSrv.search({ query: 'search' }).then((res) => {
         results = res;
       });
     });

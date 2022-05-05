@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { shallow, mount } from 'enzyme';
+import React from 'react';
 
 import ReferenceLink from './ReferenceLink';
 import ExternalLinkContext from './externalLinkContext';
@@ -55,9 +55,14 @@ describe(ReferenceLink, () => {
     });
 
     it('throws if ExternalLinkContext is not set', () => {
+      // Prevent writing to stderr during this render.
+      const err = console.error;
+      console.error = jest.fn();
       expect(() => mount(<ReferenceLink reference={externalRef} focusSpan={focusMock} />)).toThrow(
         'ExternalLinkContext'
       );
+      // Restore writing to stderr.
+      console.error = err;
     });
   });
   describe('focus span', () => {

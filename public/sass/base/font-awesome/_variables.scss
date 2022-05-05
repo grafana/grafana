@@ -9,7 +9,7 @@ $fa-css-prefix: fa !default;
 $fa-version: '4.7.0' !default;
 $fa-border-color: #eee !default;
 $fa-inverse: #fff !default;
-$fa-li-width: (30em / 14) !default;
+$fa-li-width: calc(30em / 14) !default;
 
 $fa-var-500px: '\f26e';
 $fa-var-address-book: '\f2b9';

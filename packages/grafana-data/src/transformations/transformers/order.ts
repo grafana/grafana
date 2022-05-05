@@ -1,7 +1,10 @@
-import { DataTransformerID } from './ids';
-import { DataTransformerInfo } from '../../types/transformations';
-import { DataFrame, Field } from '../../types';
+import { map } from 'rxjs/operators';
+
 import { getFieldDisplayName } from '../../field/fieldState';
+import { DataFrame, Field } from '../../types';
+import { DataTransformerInfo } from '../../types/transformations';
+
+import { DataTransformerID } from './ids';
 
 export interface OrderFieldsTransformerOptions {
   indexByName: Record<string, number>;
@@ -19,40 +22,38 @@ export const orderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerO
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options: OrderFieldsTransformerOptions) => {
-    const orderer = createFieldsOrderer(options.indexByName);
+  operator: (options) => (source) =>
+    source.pipe(
+      map((data) => {
+        const orderer = createFieldsOrderer(options.indexByName);
 
-    return (data: DataFrame[]) => {
-      if (!Array.isArray(data) || data.length === 0) {
-        return data;
-      }
+        if (!Array.isArray(data) || data.length === 0) {
+          return data;
+        }
 
-      return data.map(frame => ({
-        ...frame,
-        fields: orderer(frame.fields, data, frame),
-      }));
-    };
-  },
+        return data.map((frame) => ({
+          ...frame,
+          fields: orderer(frame.fields, data, frame),
+        }));
+      })
+    ),
 };
 
 export const createOrderFieldsComparer = (indexByName: Record<string, number>) => (a: string, b: string) => {
   return indexOfField(a, indexByName) - indexOfField(b, indexByName);
 };
 
-const createFieldsOrderer = (indexByName: Record<string, number>) => (
-  fields: Field[],
-  data: DataFrame[],
-  frame: DataFrame
-) => {
-  if (!Array.isArray(fields) || fields.length === 0) {
-    return fields;
-  }
-  if (!indexByName || Object.keys(indexByName).length === 0) {
-    return fields;
-  }
-  const comparer = createOrderFieldsComparer(indexByName);
-  return fields.sort((a, b) => comparer(getFieldDisplayName(a, frame, data), getFieldDisplayName(b, frame, data)));
-};
+const createFieldsOrderer =
+  (indexByName: Record<string, number>) => (fields: Field[], data: DataFrame[], frame: DataFrame) => {
+    if (!Array.isArray(fields) || fields.length === 0) {
+      return fields;
+    }
+    if (!indexByName || Object.keys(indexByName).length === 0) {
+      return fields;
+    }
+    const comparer = createOrderFieldsComparer(indexByName);
+    return fields.sort((a, b) => comparer(getFieldDisplayName(a, frame, data), getFieldDisplayName(b, frame, data)));
+  };
 
 const indexOfField = (fieldName: string, indexByName: Record<string, number>) => {
   if (Number.isInteger(indexByName[fieldName])) {

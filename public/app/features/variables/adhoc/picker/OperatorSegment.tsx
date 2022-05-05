@@ -1,13 +1,14 @@
 import React, { FC } from 'react';
-import { Segment } from '@grafana/ui';
+
 import { SelectableValue } from '@grafana/data';
+import { Segment } from '@grafana/ui';
 
 interface Props {
   value: string;
   onChange: (item: SelectableValue<string>) => void;
 }
 
-const options = ['=', '!=', '<', '>', '=~', '!~'].map<SelectableValue<string>>(value => ({
+const options = ['=', '!=', '<', '>', '=~', '!~'].map<SelectableValue<string>>((value) => ({
   label: value,
   value,
 }));

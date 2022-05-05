@@ -1,10 +1,11 @@
-import { FieldType } from '../../types/dataFrame';
-import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { FieldMatcherID } from '../matchers/ids';
+import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { filterFieldsTransformer } from './filter';
+import { FieldMatcherID } from '../matchers/ids';
 import { transformDataFrame } from '../transformDataFrame';
+
+import { filterFieldsTransformer } from './filter';
+import { DataTransformerID } from './ids';
 
 export const simpleSeriesWithTypes = toDataFrame({
   fields: [
@@ -20,7 +21,7 @@ describe('Filter Transformer', () => {
     mockTransformationsRegistry([filterFieldsTransformer]);
   });
 
-  it('filters by include', () => {
+  it('filters by include', async () => {
     const cfg = {
       id: DataTransformerID.filterFields,
       options: {
@@ -28,8 +29,11 @@ describe('Filter Transformer', () => {
       },
     };
 
-    const filtered = transformDataFrame([cfg], [simpleSeriesWithTypes])[0];
-    expect(filtered.fields.length).toBe(1);
-    expect(filtered.fields[0].name).toBe('D');
+    await expect(transformDataFrame([cfg], [simpleSeriesWithTypes])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+      expect(filtered.fields.length).toBe(1);
+      expect(filtered.fields[0].name).toBe('D');
+    });
   });
 });

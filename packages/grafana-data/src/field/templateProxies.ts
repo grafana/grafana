@@ -1,6 +1,7 @@
 import { DataFrame, Field } from '../types';
-import { getFieldDisplayName } from './fieldState';
 import { formatLabels } from '../utils/labels';
+
+import { getFieldDisplayName } from './fieldState';
 
 /**
  * This object is created often, and only used when tmplates exist.  Using a proxy lets us delay
@@ -26,9 +27,7 @@ export function getTemplateProxyForField(field: Field, frame?: DataFrame, frames
           }
           return {
             ...field.labels,
-            __values: Object.values(field.labels)
-              .sort()
-              .join(', '),
+            __values: Object.values(field.labels).sort().join(', '),
             toString: () => {
               return formatLabels(field.labels!, '', true);
             },

@@ -1,7 +1,9 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDebounce } from 'react-use';
-import { SearchSrv } from 'app/core/services/search_srv';
+
 import { backendSrv } from 'app/core/services/backend_srv';
+import { SearchSrv } from 'app/core/services/search_srv';
+
 import { FETCH_RESULTS, FETCH_ITEMS, TOGGLE_SECTION, SEARCH_START, FETCH_ITEMS_START } from '../reducers/actionTypes';
 import { DashboardSection, UseSearch } from '../types';
 import { hasId, getParsedQuery } from '../utils';
@@ -23,7 +25,7 @@ export const useSearch: UseSearch = (query, reducer, params = {}) => {
   const search = () => {
     dispatch({ type: SEARCH_START });
     const parsedQuery = getParsedQuery(query, queryParsing);
-    searchSrv.search(parsedQuery).then(results => {
+    searchSrv.search(parsedQuery).then((results) => {
       dispatch({ type: FETCH_RESULTS, payload: results });
     });
   };
@@ -31,21 +33,24 @@ export const useSearch: UseSearch = (query, reducer, params = {}) => {
   // Set loading state before debounced search
   useEffect(() => {
     dispatch({ type: SEARCH_START });
-  }, [query.tag, query.sort, query.starred, query.layout]);
+  }, [query.tag, query.sort, query.starred, query.layout, dispatch]);
 
   useDebounce(search, 300, [query, queryParsing]);
 
-  const onToggleSection = (section: DashboardSection) => {
-    if (hasId(section.title) && !section.items.length) {
-      dispatch({ type: FETCH_ITEMS_START, payload: section.id });
-      backendSrv.search({ folderIds: [section.id] }).then(items => {
-        dispatch({ type: FETCH_ITEMS, payload: { section, items } });
+  const onToggleSection = useCallback(
+    (section: DashboardSection) => {
+      if (hasId(section.title) && !section.items.length) {
+        dispatch({ type: FETCH_ITEMS_START, payload: section.id });
+        backendSrv.search({ folderIds: [section.id] }).then((items) => {
+          dispatch({ type: FETCH_ITEMS, payload: { section, items } });
+          dispatch({ type: TOGGLE_SECTION, payload: section });
+        });
+      } else {
         dispatch({ type: TOGGLE_SECTION, payload: section });
-      });
-    } else {
-      dispatch({ type: TOGGLE_SECTION, payload: section });
-    }
-  };
+      }
+    },
+    [dispatch]
+  );
 
   return { state, dispatch, onToggleSection };
 };

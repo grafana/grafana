@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Theme } from '../Theme';
 import memoizeOne from 'memoize-one';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { colors } from '@grafana/ui';
 
 // TS needs the precise return type
 function strToRgb(s: string): [number, number, number] {
@@ -62,7 +64,7 @@ class ColorGenerator {
   /**
    * Retrieve the RGB values associated with a key. Adds the key and associates
    * it with a color if the key is not recognized.
-   * @return {number[]} An array of three ints [0, 255] representing a color.
+   * @returns {number[]} An array of three ints [0, 255] representing a color.
    */
   getRgbColorByKey(key: string): [number, number, number] {
     const i = this._getColorIndex(key);
@@ -83,10 +85,10 @@ export function clear() {
   getGenerator([]);
 }
 
-export function getColorByKey(key: string, theme: Theme) {
-  return getGenerator(theme.servicesColorPalette).getColorByKey(key);
+export function getColorByKey(key: string, theme: GrafanaTheme2) {
+  return getGenerator(colors).getColorByKey(key);
 }
 
-export function getRgbColorByKey(key: string, theme: Theme): [number, number, number] {
-  return getGenerator(theme.servicesColorPalette).getRgbColorByKey(key);
+export function getRgbColorByKey(key: string, theme: GrafanaTheme2): [number, number, number] {
+  return getGenerator(colors).getRgbColorByKey(key);
 }

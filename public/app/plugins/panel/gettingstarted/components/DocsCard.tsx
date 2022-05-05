@@ -1,8 +1,11 @@
+import { css } from '@emotion/css';
 import React, { FC } from 'react';
-import { Card } from '../types';
-import { Icon, stylesFactory, useTheme } from '@grafana/ui';
+
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { Icon, stylesFactory, useTheme } from '@grafana/ui';
+
+import { Card } from '../types';
+
 import { cardContent, cardStyle, iconStyle } from './sharedStyles';
 
 interface Props {
@@ -16,7 +19,7 @@ export const DocsCard: FC<Props> = ({ card }) => {
   return (
     <div className={styles.card}>
       <div className={cardContent}>
-        <a href={`${card.href}?utm_source=grafana_gettingstarted`}>
+        <a href={`${card.href}?utm_source=grafana_gettingstarted`} className={styles.url}>
           <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
           <h4 className={styles.title}>{card.title}</h4>
           <div>
@@ -24,7 +27,12 @@ export const DocsCard: FC<Props> = ({ card }) => {
           </div>
         </a>
       </div>
-      <a href={`${card.learnHref}?utm_source=grafana_gettingstarted`} className={styles.url} target="_blank">
+      <a
+        href={`${card.learnHref}?utm_source=grafana_gettingstarted`}
+        className={styles.learnUrl}
+        target="_blank"
+        rel="noreferrer"
+      >
         Learn how in the docs <Icon name="external-link-alt" />
       </a>
     </div>
@@ -48,9 +56,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
       margin-bottom: ${theme.spacing.md};
     `,
     title: css`
-      margin-bottom: 48px;
+      margin-bottom: ${theme.spacing.md};
     `,
     url: css`
+      display: inline-block;
+    `,
+    learnUrl: css`
       border-top: 1px solid ${theme.colors.border1};
       position: absolute;
       bottom: 0;

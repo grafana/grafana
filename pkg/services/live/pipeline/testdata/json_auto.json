@@ -1,0 +1,10 @@
+{
+  "ax": 1,
+  "string_array": ["1", "2"],
+  "int_array": [1, 2],
+  "map_with_floats": {
+    "key1": 2.0,
+    "key2": 3.0
+  },
+  "bx": null
+}

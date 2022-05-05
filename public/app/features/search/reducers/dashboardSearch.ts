@@ -1,5 +1,6 @@
 import { DashboardSection, SearchAction } from '../types';
 import { getFlattenedSections, getLookupField, markSelected } from '../utils';
+
 import {
   FETCH_ITEMS,
   FETCH_RESULTS,
@@ -71,7 +72,7 @@ export const searchReducer = (state: DashboardsSearchState, action: SearchAction
       if (id) {
         return {
           ...state,
-          results: state.results.map(result => (result.id === id ? { ...result, itemsFetching: true } : result)),
+          results: state.results.map((result) => (result.id === id ? { ...result, itemsFetching: true } : result)),
         };
       }
       return state;

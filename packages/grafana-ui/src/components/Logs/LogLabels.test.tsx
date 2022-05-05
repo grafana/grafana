@@ -1,8 +1,9 @@
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
+
+import { getTheme } from '../../themes';
 
 import { UnThemedLogLabels as LogLabels } from './LogLabels';
-import { getTheme } from '../../themes';
 
 describe('<LogLabels />', () => {
   it('renders notice when no labels are found', () => {
@@ -19,5 +20,10 @@ describe('<LogLabels />', () => {
     expect(wrapper.text()).toContain('bar');
     expect(wrapper.text()).not.toContain('42');
     expect(wrapper.text()).not.toContain('13');
+  });
+  it('excludes labels with empty string values', () => {
+    const wrapper = shallow(<LogLabels labels={{ foo: 'bar', baz: '' }} theme={getTheme()} />);
+    expect(wrapper.text()).toContain('bar');
+    expect(wrapper.html()).not.toContain('baz');
   });
 });

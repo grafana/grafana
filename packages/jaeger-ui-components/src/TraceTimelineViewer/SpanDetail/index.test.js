@@ -14,40 +14,41 @@
 
 jest.mock('../utils');
 
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
+
+import LabeledList from '../../common/LabeledList';
+import traceGenerator from '../../demo/trace-generators';
+import transformTraceData from '../../model/transform-trace-data';
+import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
 import AccordianLogs from './AccordianLogs';
 import DetailState from './DetailState';
+
 import SpanDetail from './index';
-import { formatDuration } from '../utils';
-import CopyIcon from '../../common/CopyIcon';
-import LabeledList from '../../common/LabeledList';
-import traceGenerator from '../../demo/trace-generators';
-import transformTraceData from '../../model/transform-trace-data';
 
 describe('<SpanDetail>', () => {
   let wrapper;
 
   // use `transformTraceData` on a fake trace to get a fully processed span
   const span = transformTraceData(traceGenerator.trace({ numberOfSpans: 1 })).spans[0];
-  const detailState = new DetailState()
-    .toggleLogs()
-    .toggleProcess()
-    .toggleReferences()
-    .toggleTags();
+  const detailState = new DetailState().toggleLogs().toggleProcess().toggleReferences().toggleTags();
   const traceStartTime = 5;
+  const topOfExploreViewRef = jest.fn();
   const props = {
     detailState,
     span,
     traceStartTime,
+    topOfExploreViewRef,
     logItemToggle: jest.fn(),
     logsToggle: jest.fn(),
     processToggle: jest.fn(),
     tagsToggle: jest.fn(),
     warningsToggle: jest.fn(),
     referencesToggle: jest.fn(),
+    createFocusSpanLink: jest.fn(),
+    topOfViewRefType: 'Explore',
   };
   span.logs = [
     {
@@ -133,7 +134,7 @@ describe('<SpanDetail>', () => {
     expect(
       overview
         .prop('items')
-        .map(item => item.label)
+        .map((item) => item.label)
         .sort()
     ).toEqual(words);
   });
@@ -184,12 +185,7 @@ describe('<SpanDetail>', () => {
     expect(props.referencesToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
-  it('renders CopyIcon with deep link URL', () => {
-    expect(
-      wrapper
-        .find(CopyIcon)
-        .prop('copyText')
-        .includes(`?uiFind=${props.span.spanID}`)
-    ).toBe(true);
+  it('renders deep link URL', () => {
+    expect(wrapper.find('a').exists()).toBeTruthy();
   });
 });

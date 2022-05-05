@@ -1,5 +1,6 @@
-import { Task, TaskRunner } from './task';
 import GithubClient from '../utils/githubClient';
+
+import { Task, TaskRunner } from './task';
 
 interface CherryPickOptions {
   enterprise: boolean;
@@ -9,7 +10,7 @@ interface CherryPickOptions {
 const pagingParser = (linkStr: string): { prev?: string; next?: string; last?: string; first?: string } => {
   return linkStr
     .split(',')
-    .map(rel => {
+    .map((rel) => {
       //@ts-ignore
       return rel.split(';').map((curr, idx) => {
         if (idx === 0) {
@@ -22,7 +23,7 @@ const pagingParser = (linkStr: string): { prev?: string; next?: string; last?: s
         }
       });
     })
-    .reduce(function(obj, curr, i) {
+    .reduce(function (obj, curr, i) {
       //@ts-ignore
       obj[curr[1]] = curr[0];
       return obj;

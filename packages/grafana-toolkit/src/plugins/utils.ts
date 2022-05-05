@@ -1,7 +1,9 @@
 import execa from 'execa';
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
+
 import { KeyValue } from '@grafana/data';
+
 import { ExtensionSize, ZipFileInfo, GitLogInfo } from './types';
 
 const md5File = require('md5-file');
@@ -10,7 +12,7 @@ export function getGrafanaVersions(): KeyValue<string> {
   const dir = path.resolve(process.cwd(), 'node_modules', '@grafana');
   const versions: KeyValue = {};
   try {
-    fs.readdirSync(dir).forEach(file => {
+    fs.readdirSync(dir).forEach((file) => {
       const json = require(path.resolve(dir, file, 'package.json'));
       versions[file] = json.version;
     });
@@ -25,7 +27,7 @@ export function getFileSizeReportInFolder(dir: string, info?: ExtensionSize): Ex
 
   const files = fs.readdirSync(dir);
   if (files) {
-    files.forEach(file => {
+    files.forEach((file) => {
       const newbase = path.join(dir, file);
       const stat = fs.statSync(newbase);
       if (stat.isDirectory()) {
@@ -64,7 +66,7 @@ export async function getPackageDetails(zipFile: string, zipSrc: string, writeCh
     const idx = exe.stdout.indexOf(' ');
     const sha1 = exe.stdout.substring(0, idx);
     if (writeChecksum) {
-      fs.writeFile(zipFile + '.sha1', sha1, err => {});
+      fs.writeFile(zipFile + '.sha1', sha1, (err) => {});
     }
     info.sha1 = sha1;
   } catch {
@@ -83,7 +85,7 @@ export function findImagesInFolder(dir: string, prefix = '', append?: string[]):
 
   const files = fs.readdirSync(dir);
   if (files) {
-    files.forEach(file => {
+    files.forEach((file) => {
       if (file.endsWith('.png')) {
         imgs.push(file);
       }

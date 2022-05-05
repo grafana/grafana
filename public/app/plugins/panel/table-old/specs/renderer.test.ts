@@ -1,7 +1,10 @@
-import _ from 'lodash';
+import { each } from 'lodash';
+
+import { ScopedVars, TimeZone } from '@grafana/data';
+import { getTheme } from '@grafana/ui';
 import TableModel from 'app/core/table_model';
+
 import { TableRenderer } from '../renderer';
-import { getColorDefinitionByName, ScopedVars, TimeZone } from '@grafana/data';
 import { ColumnRender } from '../types';
 
 const utc: TimeZone = 'utc';
@@ -14,7 +17,7 @@ const templateSrv = {
   replace: (value: any, scopedVars: ScopedVars) => {
     if (scopedVars) {
       // For testing variables replacement in link
-      _.each(scopedVars, (val, key) => {
+      each(scopedVars, (val, key) => {
         value = value.replace('$' + key, val.value);
       });
     }
@@ -23,8 +26,6 @@ const templateSrv = {
 };
 
 describe('when rendering table', () => {
-  const SemiDarkOrange = getColorDefinitionByName('semi-dark-orange');
-
   describe('given 13 columns', () => {
     const table = new TableModel();
     table.columns = [
@@ -87,7 +88,7 @@ describe('when rendering table', () => {
           decimals: 1,
           colorMode: 'value',
           thresholds: [50, 80],
-          colors: ['#00ff00', SemiDarkOrange.name, 'rgb(1,0,0)'],
+          colors: ['#00ff00', 'semi-dark-orange', 'rgb(1,0,0)'],
         },
         {
           pattern: 'String',
@@ -178,7 +179,7 @@ describe('when rendering table', () => {
           ],
           colorMode: 'value',
           thresholds: [1, 2],
-          colors: ['#00ff00', SemiDarkOrange.name, 'rgb(1,0,0)'],
+          colors: ['#00ff00', 'semi-dark-orange', 'rgb(1,0,0)'],
         },
         {
           pattern: 'RangeMappingColored',
@@ -198,7 +199,7 @@ describe('when rendering table', () => {
           ],
           colorMode: 'value',
           thresholds: [2, 5],
-          colors: ['#00ff00', SemiDarkOrange.name, 'rgb(1,0,0)'],
+          colors: ['#00ff00', 'semi-dark-orange', 'rgb(1,0,0)'],
         },
         {
           pattern: 'HiddenType',
@@ -212,7 +213,7 @@ describe('when rendering table', () => {
     };
 
     //@ts-ignore
-    const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv);
+    const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv, getTheme());
 
     it('time column should be formatted', () => {
       const html = renderer.renderCell(0, 0, 1388556366666);
@@ -271,7 +272,7 @@ describe('when rendering table', () => {
 
     it('colored cell should have style (handles named color values', () => {
       const html = renderer.renderCell(2, 0, 55);
-      expect(html).toBe(`<td style="color:${SemiDarkOrange.variants.dark}">55.0</td>`);
+      expect(html).toBe(`<td style="color:${'#FF780A'}">55.0</td>`);
     });
 
     it('colored cell should have style handles(rgb color values)', () => {
@@ -368,12 +369,12 @@ describe('when rendering table', () => {
 
     it('value should be mapped to text and colored cell should have style', () => {
       const html = renderer.renderCell(11, 0, 1);
-      expect(html).toBe(`<td style="color:${SemiDarkOrange.variants.dark}">on</td>`);
+      expect(html).toBe(`<td style="color:${'#FF780A'}">on</td>`);
     });
 
     it('value should be mapped to text and colored cell should have style', () => {
       const html = renderer.renderCell(11, 0, '1');
-      expect(html).toBe(`<td style="color:${SemiDarkOrange.variants.dark}">on</td>`);
+      expect(html).toBe(`<td style="color:${'#FF780A'}">on</td>`);
     });
 
     it('value should be mapped to text and colored cell should have style', () => {
@@ -403,7 +404,7 @@ describe('when rendering table', () => {
 
     it('value should be mapped to text (range) and colored cell should have style', () => {
       const html = renderer.renderCell(12, 0, 4);
-      expect(html).toBe(`<td style="color:${SemiDarkOrange.variants.dark}">off</td>`);
+      expect(html).toBe(`<td style="color:${'#FF780A'}">off</td>`);
     });
 
     it('value should be mapped to text (range) and colored cell should have style', () => {
@@ -468,7 +469,7 @@ describe('when rendering table with different patterns', () => {
       };
 
       //@ts-ignore
-      const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv);
+      const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv, getTheme());
       const html = renderer.renderCell(1, 0, 1230);
 
       expect(html).toBe(expected);
@@ -538,7 +539,7 @@ describe('when rendering cells with different alignment options', () => {
       };
 
       //@ts-ignore
-      const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv);
+      const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv, getTheme());
       const html = renderer.renderCell(1, 0, 42);
 
       expect(html).toBe(expected);

@@ -1,4 +1,3 @@
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
   DataLink,
   DisplayValue,
@@ -6,13 +5,15 @@ import {
   formattedValueToString,
   getFieldDisplayValuesProxy,
   getTimeField,
+  InterpolateFunction,
   Labels,
   LinkModelSupplier,
   ScopedVar,
   ScopedVars,
 } from '@grafana/data';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+
 import { getLinkSrv } from './link_srv';
-import { config } from 'app/core/config';
 
 interface SeriesVars {
   name?: string;
@@ -38,11 +39,11 @@ interface DataViewVars {
   fields?: Record<string, DisplayValue>;
 }
 
-interface DataLinkScopedVars {
-  __series?: ScopedVar<SeriesVars>;
-  __field?: ScopedVar<FieldVars>;
-  __value?: ScopedVar<ValueVars>;
-  __data?: ScopedVar<DataViewVars>;
+interface DataLinkScopedVars extends ScopedVars {
+  __series: ScopedVar<SeriesVars>;
+  __field: ScopedVar<FieldVars>;
+  __value: ScopedVar<ValueVars>;
+  __data: ScopedVar<DataViewVars>;
 }
 
 /**
@@ -55,10 +56,8 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
   }
 
   return {
-    getLinks: (existingScopedVars?: any) => {
-      const scopedVars: DataLinkScopedVars = {
-        ...(existingScopedVars ?? {}),
-      };
+    getLinks: (replaceVariables: InterpolateFunction) => {
+      const scopedVars: Partial<DataLinkScopedVars> = {};
 
       if (value.view) {
         const { dataFrame } = value.view;
@@ -101,8 +100,9 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
               value: {
                 name: dataFrame.name,
                 refId: dataFrame.refId,
-                fields: getFieldDisplayValuesProxy(dataFrame, value.rowIndex!, {
-                  theme: config.theme,
+                fields: getFieldDisplayValuesProxy({
+                  frame: dataFrame,
+                  rowIndex: value.rowIndex!,
                 }),
               },
               text: 'Data',
@@ -124,15 +124,23 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
         console.log('VALUE', value);
       }
 
+      const replace: InterpolateFunction = (value: string, vars: ScopedVars | undefined, fmt?: string | Function) => {
+        const finalVars: ScopedVars = {
+          ...(scopedVars as ScopedVars),
+          ...vars,
+        };
+        return replaceVariables(value, finalVars, fmt);
+      };
+
       return links.map((link: DataLink) => {
-        return getLinkSrv().getDataLinkUIModel(link, scopedVars as ScopedVars, value);
+        return getLinkSrv().getDataLinkUIModel(link, replace, value);
       });
     },
   };
 };
 
-export const getPanelLinksSupplier = (value: PanelModel): LinkModelSupplier<PanelModel> | undefined => {
-  const links = value.links;
+export const getPanelLinksSupplier = (panel: PanelModel): LinkModelSupplier<PanelModel> | undefined => {
+  const links = panel.links;
 
   if (!links || links.length === 0) {
     return undefined;
@@ -140,8 +148,8 @@ export const getPanelLinksSupplier = (value: PanelModel): LinkModelSupplier<Pane
 
   return {
     getLinks: () => {
-      return links.map(link => {
-        return getLinkSrv().getDataLinkUIModel(link, value.scopedVars, value);
+      return links.map((link) => {
+        return getLinkSrv().getDataLinkUIModel(link, panel.replaceVariables, panel);
       });
     },
   };

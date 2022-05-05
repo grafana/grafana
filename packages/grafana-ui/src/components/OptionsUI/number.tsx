@@ -1,10 +1,12 @@
 import React, { useCallback } from 'react';
+
 import {
   FieldConfigEditorProps,
   toIntegerOrUndefined,
   toFloatOrUndefined,
   NumberFieldConfigSettings,
 } from '@grafana/data';
+
 import { Input } from '../Input/Input';
 
 export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFieldConfigSettings>> = ({
@@ -36,7 +38,7 @@ export const NumberValueEditor: React.FC<FieldConfigEditorProps<number, NumberFi
         );
       }
     },
-    [onChange]
+    [onChange, settings?.integer]
   );
 
   const defaultValue = value === undefined || value === null || isNaN(value) ? '' : value.toString();

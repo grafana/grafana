@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import _get from 'lodash/get';
+import { get as _get } from 'lodash';
+
+import { TNil } from '../../types';
 
 import EUpdateTypes from './EUpdateTypes';
 import { DraggableBounds, DraggingUpdate } from './types';
-import { TNil } from '../../types';
 
 const LEFT_MOUSE_BUTTON = 0;
 

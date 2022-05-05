@@ -1,14 +1,14 @@
+import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
-import { css } from 'emotion';
-import { Button, DataLinkInput, stylesFactory, LegacyForms } from '@grafana/ui';
-const { Switch, FormField } = LegacyForms;
+import { usePrevious } from 'react-use';
+
 import { VariableSuggestion } from '@grafana/data';
-import { DataSourceSelectItem } from '@grafana/data';
+import { DataSourcePicker } from '@grafana/runtime';
+import { Button, DataLinkInput, stylesFactory, LegacyForms } from '@grafana/ui';
 
 import { DerivedFieldConfig } from '../types';
-import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { usePrevious } from 'react-use';
+
+const { Switch, FormField } = LegacyForms;
 
 const getStyles = stylesFactory(() => ({
   row: css`
@@ -20,6 +20,12 @@ const getStyles = stylesFactory(() => ({
   `,
   regexField: css`
     flex: 3;
+  `,
+  urlField: css`
+    flex: 1;
+  `,
+  urlDisplayLabelField: css`
+    flex: 1;
   `,
 }));
 
@@ -81,7 +87,7 @@ export const DerivedField = (props: Props) => {
           variant="destructive"
           title="Remove field"
           icon="times"
-          onClick={event => {
+          onClick={(event) => {
             event.preventDefault();
             onDelete();
           }}
@@ -91,26 +97,34 @@ export const DerivedField = (props: Props) => {
         />
       </div>
 
-      <FormField
-        label={showInternalLink ? 'Query' : 'URL'}
-        labelWidth={5}
-        inputEl={
-          <DataLinkInput
-            placeholder={showInternalLink ? '${__value.raw}' : 'http://example.com/${__value.raw}'}
-            value={value.url || ''}
-            onChange={newValue =>
-              onChange({
-                ...value,
-                url: newValue,
-              })
-            }
-            suggestions={suggestions}
-          />
-        }
-        className={css`
-          width: 100%;
-        `}
-      />
+      <div className={styles.row}>
+        <FormField
+          label={showInternalLink ? 'Query' : 'URL'}
+          inputEl={
+            <DataLinkInput
+              placeholder={showInternalLink ? '${__value.raw}' : 'http://example.com/${__value.raw}'}
+              value={value.url || ''}
+              onChange={(newValue) =>
+                onChange({
+                  ...value,
+                  url: newValue,
+                })
+              }
+              suggestions={suggestions}
+            />
+          }
+          className={styles.urlField}
+        />
+        <FormField
+          className={styles.urlDisplayLabelField}
+          inputWidth={null}
+          label="URL Label"
+          type="text"
+          value={value.urlDisplayLabel}
+          onChange={handleChange('urlDisplayLabel')}
+          tooltip={'Use to override the button label when this derived field is found in a log.'}
+        />
+      </div>
 
       <div className={styles.row}>
         <Switch
@@ -128,48 +142,18 @@ export const DerivedField = (props: Props) => {
         />
 
         {showInternalLink && (
-          <DataSourceSection
-            onChange={datasourceUid => {
+          <DataSourcePicker
+            tracing={true}
+            onChange={(ds) =>
               onChange({
                 ...value,
-                datasourceUid,
-              });
-            }}
-            datasourceUid={value.datasourceUid}
+                datasourceUid: ds.uid,
+              })
+            }
+            current={value.datasourceUid}
           />
         )}
       </div>
     </div>
-  );
-};
-
-type DataSourceSectionProps = {
-  datasourceUid?: string;
-  onChange: (uid: string) => void;
-};
-
-const DataSourceSection = (props: DataSourceSectionProps) => {
-  const { datasourceUid, onChange } = props;
-  const datasources: DataSourceSelectItem[] = getDatasourceSrv()
-    .getExternal()
-    // At this moment only Jaeger and Zipkin datasource is supported as the link target.
-    .filter(ds => ds.meta.tracing)
-    .map(
-      ds =>
-        ({
-          value: ds.uid,
-          name: ds.name,
-          meta: ds.meta,
-        } as DataSourceSelectItem)
-    );
-
-  let selectedDatasource = datasourceUid && datasources.find(d => d.value === datasourceUid);
-  return (
-    <DataSourcePicker
-      // Uid and value should be always set in the db and so in the items.
-      onChange={ds => onChange(ds.value!)}
-      datasources={datasources}
-      current={selectedDatasource || undefined}
-    />
   );
 };

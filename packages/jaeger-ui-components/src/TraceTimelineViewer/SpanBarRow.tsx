@@ -12,102 +12,94 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { css, keyframes } from '@emotion/css';
+import cx from 'classnames';
 import * as React from 'react';
 import IoAlert from 'react-icons/lib/io/alert';
 import IoArrowRightA from 'react-icons/lib/io/arrow-right-a';
-import IoNetwork from 'react-icons/lib/io/network';
 import MdFileUpload from 'react-icons/lib/md/file-upload';
-import { css } from 'emotion';
-import cx from 'classnames';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
+
+import { autoColor } from '../Theme';
+import { SpanLinkFunc, TNil } from '../types';
+import { TraceSpan } from '../types/trace';
 
 import ReferencesButton from './ReferencesButton';
+import SpanBar from './SpanBar';
+import SpanTreeOffset from './SpanTreeOffset';
+import Ticks from './Ticks';
 import TimelineRow from './TimelineRow';
 import { formatDuration, ViewedBoundsFunctionType } from './utils';
-import SpanTreeOffset from './SpanTreeOffset';
-import SpanBar from './SpanBar';
-import Ticks from './Ticks';
 
-import { TNil } from '../types';
-import { TraceSpan } from '@grafana/data';
-import { autoColor, createStyle, Theme, withTheme } from '../Theme';
+const spanBarClassName = 'spanBar';
+const spanBarLabelClassName = 'spanBarLabel';
+const nameWrapperClassName = 'nameWrapper';
+const nameWrapperMatchingFilterClassName = 'nameWrapperMatchingFilter';
+const viewClassName = 'jaegerView';
+const nameColumnClassName = 'nameColumn';
 
-const getStyles = createStyle((theme: Theme) => {
-  const spanBar = css`
-    label: spanBar;
-  `;
-  const spanBarLabel = css`
-    label: spanBarLabel;
-  `;
-  const nameWrapper = css`
-    label: nameWrapper;
-    background: ${autoColor(theme, '#f8f8f8')};
-    line-height: 27px;
-    overflow: hidden;
-    display: flex;
-    &:hover {
-      border-right: 1px solid ${autoColor(theme, '#bbb')};
-      float: left;
-      min-width: calc(100% + 1px);
-      overflow: visible;
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+  const animations = {
+    flash: keyframes`
+    label: flash;
+    from {
+      background-color: ${autoColor(theme, '#68b9ff')};
     }
-  `;
-
-  const nameWrapperMatchingFilter = css`
-    label: nameWrapperMatchingFilter;
-    background-color: ${autoColor(theme, '#fffce4')};
-  `;
-
-  const endpointName = css`
-    label: endpointName;
-    color: ${autoColor(theme, '#808080')};
-  `;
-
-  const view = css`
-    label: view;
-    position: relative;
-  `;
-
-  const viewExpanded = css`
-    label: viewExpanded;
-    background: ${autoColor(theme, '#f8f8f8')};
-    outline: 1px solid ${autoColor(theme, '#ddd')};
-  `;
-
-  const viewExpandedAndMatchingFilter = css`
-    label: viewExpandedAndMatchingFilter;
-    background: ${autoColor(theme, '#fff3d7')};
-    outline: 1px solid ${autoColor(theme, '#ddd')};
-  `;
-
-  const nameColumn = css`
-    label: nameColumn;
-    position: relative;
-    white-space: nowrap;
-    z-index: 1;
-    &:hover {
-      z-index: 1;
+    to {
+      background-color: default;
     }
-  `;
+  `,
+  };
 
   return {
-    spanBar,
-    spanBarLabel,
-    nameWrapper,
-    nameWrapperMatchingFilter,
-    nameColumn,
-    endpointName,
-    view,
-    viewExpanded,
-    viewExpandedAndMatchingFilter,
+    nameWrapper: css`
+      label: nameWrapper;
+      line-height: 27px;
+      overflow: hidden;
+      display: flex;
+    `,
+    nameWrapperMatchingFilter: css`
+      label: nameWrapperMatchingFilter;
+      background-color: ${autoColor(theme, '#fffce4')};
+    `,
+    nameColumn: css`
+      label: nameColumn;
+      position: relative;
+      white-space: nowrap;
+      z-index: 1;
+      &:hover {
+        z-index: 1;
+      }
+    `,
+    endpointName: css`
+      label: endpointName;
+      color: ${autoColor(theme, '#808080')};
+    `,
+    view: css`
+      label: view;
+      position: relative;
+    `,
+    viewExpanded: css`
+      label: viewExpanded;
+      background: ${autoColor(theme, '#f8f8f8')};
+      outline: 1px solid ${autoColor(theme, '#ddd')};
+    `,
+    viewExpandedAndMatchingFilter: css`
+      label: viewExpandedAndMatchingFilter;
+      background: ${autoColor(theme, '#fff3d7')};
+      outline: 1px solid ${autoColor(theme, '#ddd')};
+    `,
     row: css`
       label: row;
-      &:hover .${spanBar} {
+      &:hover .${spanBarClassName} {
         opacity: 1;
       }
-      &:hover .${spanBarLabel} {
+      &:hover .${spanBarLabelClassName} {
         color: ${autoColor(theme, '#000')};
       }
-      &:hover .${nameWrapper} {
+      &:hover .${nameWrapperClassName} {
         background: #f8f8f8;
         background: linear-gradient(
           90deg,
@@ -116,14 +108,14 @@ const getStyles = createStyle((theme: Theme) => {
           ${autoColor(theme, '#eee')}
         );
       }
-      &:hover .${view} {
+      &:hover .${viewClassName} {
         background-color: ${autoColor(theme, '#f5f5f5')};
         outline: 1px solid ${autoColor(theme, '#ddd')};
       }
     `,
     rowClippingLeft: css`
       label: rowClippingLeft;
-      & .${nameColumn}::before {
+      & .${nameColumnClassName}::before {
         content: ' ';
         height: 100%;
         position: absolute;
@@ -139,7 +131,7 @@ const getStyles = createStyle((theme: Theme) => {
     `,
     rowClippingRight: css`
       label: rowClippingRight;
-      & .${view}::before {
+      & .${viewClassName}::before {
         content: ' ';
         height: 100%;
         position: absolute;
@@ -155,43 +147,62 @@ const getStyles = createStyle((theme: Theme) => {
     `,
     rowExpanded: css`
       label: rowExpanded;
-      & .${spanBar} {
+      & .${spanBarClassName} {
         opacity: 1;
       }
-      & .${spanBarLabel} {
+      & .${spanBarLabelClassName} {
         color: ${autoColor(theme, '#000')};
       }
-      & .${nameWrapper}, &:hover .${nameWrapper} {
+      & .${nameWrapperClassName}, &:hover .${nameWrapperClassName} {
         background: ${autoColor(theme, '#f0f0f0')};
         box-shadow: 0 1px 0 ${autoColor(theme, '#ddd')};
       }
-      & .${nameWrapperMatchingFilter} {
+      & .${nameWrapperMatchingFilterClassName} {
         background: ${autoColor(theme, '#fff3d7')};
       }
-      &:hover .${view} {
+      &:hover .${viewClassName} {
         background: ${autoColor(theme, '#eee')};
       }
     `,
     rowMatchingFilter: css`
       label: rowMatchingFilter;
-      background-color: ${autoColor(theme, '#fffce4')};
-      &:hover .${nameWrapper} {
+      background-color: ${autoColor(theme, '#fffbde')};
+      &:hover .${nameWrapperClassName} {
         background: linear-gradient(
           90deg,
-          ${autoColor(theme, '#fff5e1')},
-          ${autoColor(theme, '#fff5e1')} 75%,
-          ${autoColor(theme, '#ffe6c9')}
+          ${autoColor(theme, '#fffbde')},
+          ${autoColor(theme, '#fffbde')} 75%,
+          ${autoColor(theme, '#f7f1c6')}
         );
       }
-      &:hover .${view} {
-        background-color: ${autoColor(theme, '#fff3d7')};
+      &:hover .${viewClassName} {
+        background-color: ${autoColor(theme, '#f7f1c6')};
         outline: 1px solid ${autoColor(theme, '#ddd')};
+      }
+    `,
+    rowFocused: css`
+      label: rowFocused;
+      background-color: ${autoColor(theme, '#cbe7ff')};
+      animation: ${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0);
+      & .${nameWrapperClassName}, .${viewClassName}, .${nameWrapperMatchingFilterClassName} {
+        background-color: ${autoColor(theme, '#cbe7ff')};
+        animation: ${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0);
+      }
+      & .${spanBarClassName} {
+        opacity: 1;
+      }
+      & .${spanBarLabelClassName} {
+        color: ${autoColor(theme, '#000')};
+      }
+      &:hover .${nameWrapperClassName}, :hover .${viewClassName} {
+        background: ${autoColor(theme, '#d5ebff')};
+        box-shadow: 0 1px 0 ${autoColor(theme, '#ddd')};
       }
     `,
 
     rowExpandedAndMatchingFilter: css`
       label: rowExpandedAndMatchingFilter;
-      &:hover .${view} {
+      &:hover .${viewClassName} {
         background: ${autoColor(theme, '#ffeccf')};
       }
     `,
@@ -230,7 +241,7 @@ const getStyles = createStyle((theme: Theme) => {
       &:focus {
         text-decoration: none;
       }
-      &:hover > .${endpointName} {
+      &:hover > small {
         color: ${autoColor(theme, '#000')};
       }
     `,
@@ -282,12 +293,13 @@ const getStyles = createStyle((theme: Theme) => {
 
 type SpanBarRowProps = {
   className?: string;
-  theme: Theme;
+  theme: GrafanaTheme2;
   color: string;
   columnDivision: number;
   isChildrenExpanded: boolean;
   isDetailExpanded: boolean;
   isMatchingFilter: boolean;
+  isFocused: boolean;
   onDetailToggled: (spanID: string) => void;
   onChildrenToggled: (spanID: string) => void;
   numTicks: number;
@@ -297,6 +309,12 @@ type SpanBarRowProps = {
         viewEnd: number;
         color: string;
         operationName: string;
+        serviceName: string;
+      }
+    | TNil;
+  noInstrumentedServer?:
+    | {
+        color: string;
         serviceName: string;
       }
     | TNil;
@@ -310,6 +328,7 @@ type SpanBarRowProps = {
   removeHoverIndentGuideId: (spanID: string) => void;
   clippingLeft?: boolean;
   clippingRight?: boolean;
+  createSpanLink?: SpanLinkFunc;
 };
 
 /**
@@ -343,8 +362,10 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       isChildrenExpanded,
       isDetailExpanded,
       isMatchingFilter,
+      isFocused,
       numTicks,
       rpc,
+      noInstrumentedServer,
       showErrorIcon,
       getViewedBounds,
       traceStartTime,
@@ -356,6 +377,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       clippingLeft,
       clippingRight,
       theme,
+      createSpanLink,
     } = this.props;
     const {
       duration,
@@ -388,14 +410,20 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             [styles.rowExpanded]: isDetailExpanded,
             [styles.rowMatchingFilter]: isMatchingFilter,
             [styles.rowExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
+            [styles.rowFocused]: isFocused,
             [styles.rowClippingLeft]: clippingLeft,
             [styles.rowClippingRight]: clippingRight,
           },
           className
         )}
       >
-        <TimelineRow.Cell className={styles.nameColumn} width={columnDivision}>
-          <div className={cx(styles.nameWrapper, { [styles.nameWrapperMatchingFilter]: isMatchingFilter })}>
+        <TimelineRow.Cell className={cx(styles.nameColumn, nameColumnClassName)} width={columnDivision}>
+          <div
+            className={cx(styles.nameWrapper, nameWrapperClassName, {
+              [styles.nameWrapperMatchingFilter]: isMatchingFilter,
+              nameWrapperMatchingFilter: isMatchingFilter,
+            })}
+          >
             <SpanTreeOffset
               childrenVisible={isChildrenExpanded}
               span={span}
@@ -407,6 +435,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             <a
               className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
               aria-checked={isDetailExpanded}
+              title={labelDetail}
               onClick={this._detailToggle}
               role="switch"
               style={{ borderColor: color }}
@@ -434,16 +463,54 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                     {rpc.serviceName}
                   </span>
                 )}
+                {noInstrumentedServer && (
+                  <span>
+                    <IoArrowRightA />{' '}
+                    <i className={styles.rpcColorMarker} style={{ background: noInstrumentedServer.color }} />
+                    {noInstrumentedServer.serviceName}
+                  </span>
+                )}
               </span>
               <small className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</small>
+              <small className={styles.endpointName}> | {label}</small>
             </a>
+            {createSpanLink &&
+              (() => {
+                const link = createSpanLink(span);
+                if (link) {
+                  return (
+                    <a
+                      href={link.href}
+                      // Needs to have target otherwise preventDefault would not work due to angularRouter.
+                      target={'_blank'}
+                      style={{ marginRight: '5px' }}
+                      rel="noopener noreferrer"
+                      onClick={
+                        link.onClick
+                          ? (event) => {
+                              if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+                                event.preventDefault();
+                                link.onClick(event);
+                              }
+                            }
+                          : undefined
+                      }
+                    >
+                      {link.content}
+                    </a>
+                  );
+                } else {
+                  return null;
+                }
+              })()}
+
             {span.references && span.references.length > 1 && (
               <ReferencesButton
                 references={span.references}
                 tooltipText="Contains multiple references"
                 focusSpan={focusSpan}
               >
-                <IoNetwork />
+                <Icon name="link" />
               </ReferencesButton>
             )}
             {span.subsidiarilyReferencedBy && span.subsidiarilyReferencedBy.length > 0 && (
@@ -460,7 +527,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
           </div>
         </TimelineRow.Cell>
         <TimelineRow.Cell
-          className={cx(styles.view, {
+          className={cx(styles.view, viewClassName, {
             [styles.viewExpanded]: isDetailExpanded,
             [styles.viewExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
           })}
@@ -480,8 +547,8 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             longLabel={longLabel}
             traceStartTime={traceStartTime}
             span={span}
-            labelClassName={`${styles.spanBarLabel} ${hintClassName}`}
-            className={styles.spanBar}
+            labelClassName={`${spanBarLabelClassName} ${hintClassName}`}
+            className={spanBarClassName}
           />
         </TimelineRow.Cell>
       </TimelineRow>
@@ -489,4 +556,4 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
   }
 }
 
-export default withTheme(UnthemedSpanBarRow);
+export default withTheme2(UnthemedSpanBarRow);

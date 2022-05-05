@@ -1,9 +1,9 @@
-import { e2e } from '../index';
-import { getLocalStorage, requireLocalStorage } from '../support/localStorage';
+import { e2e } from '..';
 import { getScenarioContext } from '../support/scenarioContext';
+
 import { selectOption } from './selectOption';
 import { setDashboardTimeRange } from './setDashboardTimeRange';
-import { setTimeRange, TimeRangeConfig } from './setTimeRange';
+import { TimeRangeConfig } from './setTimeRange';
 
 interface AddPanelOverrides {
   dataSourceName: string;
@@ -38,7 +38,6 @@ interface ConfigurePanelOptional {
 
 interface ConfigurePanelRequired {
   isEdit: boolean;
-  isExplore: boolean;
 }
 
 export type PartialConfigurePanelConfig = Partial<ConfigurePanelDefault> &
@@ -74,7 +73,6 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       dashboardUid,
       dataSourceName,
       isEdit,
-      isExplore,
       matchScreenshot,
       panelTitle,
       queriesForm,
@@ -84,41 +82,25 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       visualizationName,
     } = fullConfig;
 
-    if (isEdit && isExplore) {
-      throw new TypeError('Invalid configuration');
+    if (visitDashboardAtStart) {
+      e2e.flows.openDashboard({ uid: dashboardUid });
     }
 
-    if (isExplore) {
-      e2e.pages.Explore.visit();
+    if (isEdit) {
+      e2e.components.Panels.Panel.title(panelTitle).click();
+      e2e.components.Panels.Panel.headerItems('Edit').click();
     } else {
-      if (visitDashboardAtStart) {
-        e2e.flows.openDashboard({ uid: dashboardUid });
-      }
-
-      if (isEdit) {
-        e2e.components.Panels.Panel.title(panelTitle).click();
-        e2e.components.Panels.Panel.headerItems('Edit').click();
-      } else {
-        e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
-        e2e.pages.AddDashboard.addNewPanel().click();
-      }
+      e2e.components.PageToolbar.item('Add panel').click();
+      e2e.pages.AddDashboard.addNewPanel().click();
     }
 
     if (timeRange) {
-      if (isExplore) {
-        e2e.pages.Explore.Toolbar.navBar().within(() => setTimeRange(timeRange));
-      } else {
-        setDashboardTimeRange(timeRange);
-      }
+      setDashboardTimeRange(timeRange);
     }
-
-    e2e().server();
 
     // @todo alias '/**/*.js*' as '@pluginModule' when possible: https://github.com/cypress-io/cypress/issues/1296
 
-    e2e()
-      .route(chartData.method, chartData.route)
-      .as('chartData');
+    e2e().intercept(chartData.method, chartData.route).as('chartData');
 
     if (dataSourceName) {
       selectOption({
@@ -127,53 +109,26 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       });
     }
 
-    // @todo instead wait for '@pluginModule'
+    // @todo instead wait for '@pluginModule' if not already loaded
     e2e().wait(2000);
 
-    // There is no usable data when the query is empty,
-    // and Cypress had an issue with some plugins where the request wasn't noticed, despite occuring in manual tests
-    if (isEdit) {
-      // Avoid cache flakiness (where @chartData isn't requested)
-      // @todo this may not be necessary anymore
-      e2e()
-        .get('.refresh-picker-buttons .btn')
-        .first()
-        .click({ force: true });
+    // `panelTitle` is needed to edit the panel, and unlikely to have its value changed at that point
+    const changeTitle = panelTitle && !isEdit;
 
-      e2e().wait('@chartData');
-    }
-
-    if (!isExplore) {
-      // `panelTitle` is needed to edit the panel, and unlikely to have its value changed at that point
-      const changeTitle = panelTitle && !isEdit;
-
-      if (changeTitle || visualizationName) {
-        openOptions();
-
-        if (changeTitle) {
-          openOptionsGroup('settings');
-          getOptionsGroup('settings')
-            .find('[value="Panel Title"]')
-            .scrollIntoView()
-            .clear()
-            .type(panelTitle as string);
-        }
-
-        if (visualizationName) {
-          openOptionsGroup('type');
-          e2e.components.PluginVisualization.item(visualizationName)
-            .scrollIntoView()
-            .click();
-        }
-
-        // Consistently closed
-        closeOptionsGroup('settings');
-        closeOptionsGroup('type');
-        closeOptions();
-      } else {
-        // Consistently closed
-        closeOptions();
+    if (changeTitle || visualizationName) {
+      if (changeTitle && panelTitle) {
+        e2e.components.PanelEditor.OptionsPane.fieldLabel('Panel options Title').type(`{selectall}${panelTitle}`);
       }
+
+      if (visualizationName) {
+        e2e.components.PluginVisualization.item(visualizationName).scrollIntoView().click();
+
+        // @todo wait for '@pluginModule' if not a core visualization and not already loaded
+        e2e().wait(2000);
+      }
+    } else {
+      // Consistently closed
+      closeOptions();
     }
 
     if (queriesForm) {
@@ -192,20 +147,8 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     //e2e.components.QueryEditorRow.actionButton('Disable/enable query').click();
     //e2e().wait('@chartData');
 
-    if (!isExplore) {
-      e2e()
-        .get('button[title="Apply changes and go back to dashboard"]')
-        .click();
-      e2e()
-        .url()
-        .should('include', `/d/${dashboardUid}`);
-    }
-
     // Avoid annotations flakiness
-    e2e()
-      .get('.refresh-picker-buttons .btn')
-      .first()
-      .click();
+    e2e.components.RefreshPicker.runButtonV2().first().should('be.visible').click({ force: true });
 
     e2e().wait('@chartData');
 
@@ -215,11 +158,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     if (matchScreenshot) {
       let visualization;
 
-      if (isExplore) {
-        visualization = e2e.pages.Explore.General.graph();
-      } else {
-        visualization = e2e.components.Panels.Panel.containerByTitle(panelTitle).find('.panel-content');
-      }
+      visualization = e2e.components.Panels.Panel.containerByTitle(panelTitle).find('.panel-content');
 
       visualization.scrollIntoView().screenshot(screenshotName);
       e2e().compareScreenshots(screenshotName);
@@ -230,62 +169,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
   });
 
 // @todo this actually returns type `Cypress.Chainable`
-const closeOptions = (): any =>
-  isOptionsOpen().then((isOpen: any) => {
-    if (isOpen) {
-      e2e.components.PanelEditor.OptionsPane.close().click();
-    }
-  });
-
-// @todo this actually returns type `Cypress.Chainable`
-const closeOptionsGroup = (name: string): any =>
-  isOptionsGroupOpen(name).then((isOpen: any) => {
-    if (isOpen) {
-      toggleOptionsGroup(name);
-    }
-  });
-
-const getOptionsGroup = (name: string) => e2e().get(`.options-group:has([aria-label="Options group Panel ${name}"])`);
-
-// @todo this actually returns type `Cypress.Chainable`
-const isOptionsGroupOpen = (name: string): any =>
-  requireLocalStorage(`grafana.dashboard.editor.ui.optionGroup[Panel ${name}]`).then(({ defaultToClosed }: any) => {
-    // @todo remove `wrap` when possible
-    return e2e().wrap(!defaultToClosed, { log: false });
-  });
-
-// @todo this actually returns type `Cypress.Chainable`
-const isOptionsOpen = (): any =>
-  getLocalStorage('grafana.dashboard.editor.ui').then((data: any) => {
-    if (data) {
-      // @todo remove `wrap` when possible
-      return e2e().wrap(data.isPanelOptionsVisible, { log: false });
-    } else {
-      // @todo remove `wrap` when possible
-      return e2e().wrap(true, { log: false });
-    }
-  });
-
-// @todo this actually returns type `Cypress.Chainable`
-const openOptions = (): any =>
-  isOptionsOpen().then((isOpen: any) => {
-    if (!isOpen) {
-      e2e.components.PanelEditor.OptionsPane.open().click();
-    }
-  });
-
-// @todo this actually returns type `Cypress.Chainable`
-const openOptionsGroup = (name: string): any =>
-  isOptionsGroupOpen(name).then((isOpen: any) => {
-    if (!isOpen) {
-      toggleOptionsGroup(name);
-    }
-  });
-
-const toggleOptionsGroup = (name: string) =>
-  getOptionsGroup(name)
-    .find('.editor-options-group-toggle')
-    .click();
+const closeOptions = () => e2e.components.PanelEditor.toggleVizOptions().click();
 
 export const VISUALIZATION_ALERT_LIST = 'Alert list';
 export const VISUALIZATION_BAR_GAUGE = 'Bar gauge';

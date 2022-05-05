@@ -1,16 +1,17 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { NavModel } from '@grafana/data';
 
-import Page from 'app/core/components/Page/Page';
-import OrgProfile from './OrgProfile';
-import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
-import { loadOrganization, updateOrganization } from './state/actions';
-import { Organization, StoreState } from 'app/types';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { setOrganizationName } from './state/reducers';
+import { NavModel } from '@grafana/data';
 import { VerticalGroup } from '@grafana/ui';
+import Page from 'app/core/components/Page/Page';
+import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
+import { contextSrv } from 'app/core/core';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { AccessControlAction, Organization, StoreState } from 'app/types';
+
+import OrgProfile from './OrgProfile';
+import { loadOrganization, updateOrganization } from './state/actions';
+import { setOrganizationName } from './state/reducers';
 
 export interface Props {
   navModel: NavModel;
@@ -33,14 +34,17 @@ export class OrgDetailsPage extends PureComponent<Props> {
   render() {
     const { navModel, organization } = this.props;
     const isLoading = Object.keys(organization).length === 0;
+    const canReadOrg = contextSrv.hasPermission(AccessControlAction.OrgsRead);
+    const canReadPreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesRead);
+    const canWritePreferences = contextSrv.hasPermission(AccessControlAction.OrgsPreferencesWrite);
 
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
           {!isLoading && (
-            <VerticalGroup>
-              <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />
-              <SharedPreferences resourceUri="org" />
+            <VerticalGroup spacing="lg">
+              {canReadOrg && <OrgProfile onSubmit={this.onUpdateOrganization} orgName={organization.name} />}
+              {canReadPreferences && <SharedPreferences resourceUri="org" disabled={!canWritePreferences} />}
             </VerticalGroup>
           )}
         </Page.Contents>
@@ -62,4 +66,4 @@ const mapDispatchToProps = {
   updateOrganization,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(OrgDetailsPage));
+export default connect(mapStateToProps, mapDispatchToProps)(OrgDetailsPage);

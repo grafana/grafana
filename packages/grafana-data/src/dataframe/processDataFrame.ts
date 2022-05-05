@@ -2,6 +2,9 @@
 import { isArray, isBoolean, isNumber, isString } from 'lodash';
 
 // Types
+import { isDateTime } from '../datetime/moment_wrapper';
+import { fieldIndexComparer } from '../field/fieldComparers';
+import { getFieldDisplayName } from '../field/fieldState';
 import {
   DataFrame,
   Field,
@@ -17,20 +20,20 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
   TIME_SERIES_TIME_FIELD_NAME,
 } from '../types/index';
-import { isDateTime } from '../datetime/moment_wrapper';
 import { ArrayVector } from '../vector/ArrayVector';
-import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
+import { vectorToArray } from '../vector/vectorToArray';
+
 import { ArrayDataFrame } from './ArrayDataFrame';
-import { getFieldDisplayName } from '../field/fieldState';
-import { fieldIndexComparer } from '../field/fieldComparers';
+import { dataFrameFromJSON } from './DataFrameJSON';
+import { MutableDataFrame } from './MutableDataFrame';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
-  const fields = table.columns.map(c => {
+  const fields = table.columns.map((c) => {
     // TODO: should be Column but type does not exists there so not sure whats up here.
     const { text, type, ...disp } = c as any;
     return {
-      name: text, // rename 'text' to the 'name' field
+      name: text?.length ? text : c, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,
       values: new ArrayVector(),
       type: type && Object.values(FieldType).includes(type as FieldType) ? (type as FieldType) : FieldType.other,
@@ -188,9 +191,32 @@ export function guessFieldTypeFromNameAndValue(name: string, v: any): FieldType 
 }
 
 /**
+ * Check the field type to see what the contents are
+ */
+export function getFieldTypeFromValue(v: any): FieldType {
+  if (v instanceof Date || isDateTime(v)) {
+    return FieldType.time;
+  }
+
+  if (isNumber(v)) {
+    return FieldType.number;
+  }
+
+  if (isString(v)) {
+    return FieldType.string;
+  }
+
+  if (isBoolean(v)) {
+    return FieldType.boolean;
+  }
+
+  return FieldType.other;
+}
+
+/**
  * Given a value this will guess the best column type
  *
- * TODO: better Date/Time support!  Look for standard date strings?
+ * NOTE: this is will try to see if string values can be mapped to other types (like number)
  */
 export function guessFieldTypeFromValue(v: any): FieldType {
   if (v instanceof Date || isDateTime(v)) {
@@ -235,7 +261,7 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
   // 2. Check the first non-null value
   for (let i = 0; i < field.values.length; i++) {
     const v = field.values.get(i);
-    if (v !== null) {
+    if (v != null) {
       return guessFieldTypeFromValue(v);
     }
   }
@@ -256,7 +282,7 @@ export const guessFieldTypes = (series: DataFrame, guessDefined = false): DataFr
       // Something is missing a type, return a modified copy
       return {
         ...series,
-        fields: series.fields.map(field => {
+        fields: series.fields.map((field) => {
           if (field.type && field.type !== FieldType.other && !guessDefined) {
             return field;
           }
@@ -283,7 +309,7 @@ export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwn
 export function toDataFrame(data: any): DataFrame {
   if ('fields' in data) {
     // DataFrameDTO does not have length
-    if ('length' in data) {
+    if ('length' in data && data.fields[0]?.values?.get) {
       return data as DataFrame;
     }
 
@@ -301,6 +327,9 @@ export function toDataFrame(data: any): DataFrame {
   }
 
   if (data.hasOwnProperty('data')) {
+    if (data.hasOwnProperty('schema')) {
+      return dataFrameFromJSON(data);
+    }
     return convertGraphSeriesToDataFrame(data);
   }
 
@@ -367,7 +396,7 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
   }
 
   return {
-    columns: fields.map(f => {
+    columns: fields.map((f) => {
       const { name, config } = f;
       if (config) {
         // keep unit etc
@@ -401,7 +430,7 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
 
   return {
     ...data,
-    fields: data.fields.map(f => {
+    fields: data.fields.map((f) => {
       return {
         ...f,
         values: new SortedVector(f.values, index),
@@ -416,7 +445,7 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
 export function reverseDataFrame(data: DataFrame): DataFrame {
   return {
     ...data,
-    fields: data.fields.map(f => {
+    fields: data.fields.map((f) => {
       const copy = [...f.values.toArray()];
       copy.reverse();
       return {
@@ -442,18 +471,17 @@ export function getDataFrameRow(data: DataFrame, row: number): any[] {
  * Returns a copy that does not include functions
  */
 export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
-  const fields: FieldDTO[] = data.fields.map(f => {
-    let values = f.values.toArray();
-    if (!Array.isArray(values)) {
-      // Apache arrow will pack objects into typed arrays
-      // Float64Array, etc
-      // TODO: Float64Array could be used directly
-      values = [];
-      for (let i = 0; i < f.values.length; i++) {
-        values.push(f.values.get(i));
-      }
-    }
+  return toFilteredDataFrameDTO(data);
+}
 
+export function toFilteredDataFrameDTO(data: DataFrame, fieldPredicate?: (f: Field) => boolean): DataFrameDTO {
+  const filteredFields = fieldPredicate ? data.fields.filter(fieldPredicate) : data.fields;
+  const fields: FieldDTO[] = filteredFields.map((f) => {
+    let values = f.values.toArray();
+    // The byte buffers serialize like objects
+    if (values instanceof Float64Array) {
+      values = vectorToArray(f.values);
+    }
     return {
       name: f.name,
       type: f.type,

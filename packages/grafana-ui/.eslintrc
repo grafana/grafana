@@ -1,12 +1,13 @@
 {
   "rules": {
-    "no-restricted-imports": ["error", { "patterns": ["@grafana/runtime", "@grafana/ui", "@grafana/e2e"] }]
+    "no-restricted-imports": ["error", { "patterns": ["@grafana/runtime", "@grafana/data/*", "@grafana/ui", "@grafana/e2e"] }]
   },
   "overrides": [
     {
       "files": ["**/*.{test,story}.{ts,tsx}"],
       "rules": {
-        "no-restricted-imports": "off"
+        "no-restricted-imports": "off",
+        "react/prop-types": "off"
       }
     }
   ]

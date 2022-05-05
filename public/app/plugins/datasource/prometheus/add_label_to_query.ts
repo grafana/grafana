@@ -1,118 +1,100 @@
-import _ from 'lodash';
+import { parser } from 'lezer-promql';
 
-const keywords = 'by|without|on|ignoring|group_left|group_right|bool|or|and|unless';
+import { PromQueryModeller } from './querybuilder/PromQueryModeller';
+import { buildVisualQueryFromString } from './querybuilder/parsing';
+import { QueryBuilderLabelFilter } from './querybuilder/shared/types';
+import { PromVisualQuery } from './querybuilder/types';
 
-// Duplicate from mode-prometheus.js, which can't be used in tests due to global ace not being loaded.
-const builtInWords = [
-  keywords,
-  'count|count_values|min|max|avg|sum|stddev|stdvar|bottomk|topk|quantile',
-  'true|false|null|__name__|job',
-  'abs|absent|ceil|changes|clamp_max|clamp_min|count_scalar|day_of_month|day_of_week|days_in_month|delta|deriv',
-  'drop_common_labels|exp|floor|histogram_quantile|holt_winters|hour|idelta|increase|irate|label_replace|ln|log2',
-  'log10|minute|month|predict_linear|rate|resets|round|scalar|sort|sort_desc|sqrt|time|vector|year|avg_over_time',
-  'min_over_time|max_over_time|sum_over_time|count_over_time|quantile_over_time|stddev_over_time|stdvar_over_time',
-]
-  .join('|')
-  .split('|');
-
-const metricNameRegexp = /([A-Za-z:][\w:]*)\b(?![\(\]{=!",])/g;
-const selectorRegexp = /{([^{]*)}/g;
-
-export function addLabelToQuery(
-  query: string,
-  key: string,
-  value: string | number,
-  operator?: string,
-  hasNoMetrics?: boolean
-): string {
+/**
+ * Adds label filter to existing query. Useful for query modification for example for ad hoc filters.
+ *
+ * It uses PromQL parser to find instances of metric and labels, alters them and then splices them back into the query.
+ * Ideally we could use the parse -> change -> render is a simple 3 steps but right now building the visual query
+ * object does not support all possible queries.
+ *
+ * So instead this just operates on substrings of the query with labels and operates just on those. This makes this
+ * more robust and can alter even invalid queries, and preserves in general the query structure and whitespace.
+ * @param query
+ * @param key
+ * @param value
+ * @param operator
+ */
+export function addLabelToQuery(query: string, key: string, value: string | number, operator = '='): string {
   if (!key || !value) {
     throw new Error('Need label to add to query.');
   }
 
+  const vectorSelectorPositions = getVectorSelectorPositions(query);
+  if (!vectorSelectorPositions.length) {
+    return query;
+  }
+
+  const filter = toLabelFilter(key, value, operator);
+  return addFilter(query, vectorSelectorPositions, filter);
+}
+
+type VectorSelectorPosition = { from: number; to: number; query: PromVisualQuery };
+
+/**
+ * Parse the string and get all VectorSelector positions in the query together with parsed representation of the vector
+ * selector.
+ * @param query
+ */
+function getVectorSelectorPositions(query: string): VectorSelectorPosition[] {
+  const tree = parser.parse(query);
+  const positions: VectorSelectorPosition[] = [];
+  tree.iterate({
+    enter: (type, from, to, get): false | void => {
+      if (type.name === 'VectorSelector') {
+        const visQuery = buildVisualQueryFromString(query.substring(from, to));
+        positions.push({ query: visQuery.query, from, to });
+        return false;
+      }
+    },
+  });
+  return positions;
+}
+
+function toLabelFilter(key: string, value: string | number, operator: string): QueryBuilderLabelFilter {
   // We need to make sure that we convert the value back to string because it may be a number
   const transformedValue = value === Infinity ? '+Inf' : value.toString();
+  return { label: key, op: operator, value: transformedValue };
+}
 
-  // Add empty selectors to bare metric names
-  let previousWord: string;
-  query = query.replace(metricNameRegexp, (match, word, offset) => {
-    const insideSelector = isPositionInsideChars(query, offset, '{', '}');
-    // Handle "sum by (key) (metric)"
-    const previousWordIsKeyWord = previousWord && keywords.split('|').indexOf(previousWord) > -1;
+function addFilter(
+  query: string,
+  vectorSelectorPositions: VectorSelectorPosition[],
+  filter: QueryBuilderLabelFilter
+): string {
+  const modeller = new PromQueryModeller();
+  let newQuery = '';
+  let prev = 0;
 
-    // check for colon as as "word boundary" symbol
-    const isColonBounded = word.endsWith(':');
+  for (let i = 0; i < vectorSelectorPositions.length; i++) {
+    // This is basically just doing splice on a string for each matched vector selector.
 
-    previousWord = word;
+    const match = vectorSelectorPositions[i];
+    const isLast = i === vectorSelectorPositions.length - 1;
 
-    // with Prometheus datasource, adds an empty selector to a bare metric name
-    // but doesn't add it with Loki datasource so there are no unnecessary labels
-    // e.g. when the filter contains a dash (-) character inside
-    if (
-      !hasNoMetrics &&
-      !insideSelector &&
-      !isColonBounded &&
-      !previousWordIsKeyWord &&
-      builtInWords.indexOf(word) === -1
-    ) {
-      return `${word}{}`;
+    const start = query.substring(prev, match.from);
+    const end = isLast ? query.substring(match.to) : '';
+
+    if (!labelExists(match.query.labels, filter)) {
+      // We don't want to add duplicate labels.
+      match.query.labels.push(filter);
     }
-    return word;
-  });
-
-  // Adding label to existing selectors
-  let match = selectorRegexp.exec(query);
-  const parts = [];
-  let lastIndex = 0;
-  let suffix = '';
-
-  while (match) {
-    const prefix = query.slice(lastIndex, match.index);
-    const selector = match[1];
-    const selectorWithLabel = addLabelToSelector(selector, key, transformedValue, operator);
-    lastIndex = match.index + match[1].length + 2;
-    suffix = query.slice(match.index + match[0].length);
-    parts.push(prefix, selectorWithLabel);
-    match = selectorRegexp.exec(query);
+    const newLabels = modeller.renderQuery(match.query);
+    newQuery += start + newLabels + end;
+    prev = match.to;
   }
-
-  parts.push(suffix);
-  return parts.join('');
+  return newQuery;
 }
 
-const labelRegexp = /(\w+)\s*(=|!=|=~|!~)\s*("[^"]*")/g;
-
-export function addLabelToSelector(selector: string, labelKey: string, labelValue: string, labelOperator?: string) {
-  const parsedLabels = [];
-
-  // Split selector into labels
-  if (selector) {
-    let match = labelRegexp.exec(selector);
-    while (match) {
-      parsedLabels.push({ key: match[1], operator: match[2], value: match[3] });
-      match = labelRegexp.exec(selector);
-    }
-  }
-
-  // Add new label
-  const operatorForLabelKey = labelOperator || '=';
-  parsedLabels.push({ key: labelKey, operator: operatorForLabelKey, value: `"${labelValue}"` });
-
-  // Sort labels by key and put them together
-  const formatted = _.chain(parsedLabels)
-    .uniqWith(_.isEqual)
-    .compact()
-    .sortBy('key')
-    .map(({ key, operator, value }) => `${key}${operator}${value}`)
-    .value()
-    .join(',');
-
-  return `{${formatted}}`;
+/**
+ * Check if label exists in the list of labels but ignore the operator.
+ * @param labels
+ * @param filter
+ */
+function labelExists(labels: QueryBuilderLabelFilter[], filter: QueryBuilderLabelFilter) {
+  return labels.find((label) => label.label === filter.label && label.value === filter.value);
 }
-
-function isPositionInsideChars(text: string, position: number, openChar: string, closeChar: string) {
-  const nextSelectorStart = text.slice(position).indexOf(openChar);
-  const nextSelectorEnd = text.slice(position).indexOf(closeChar);
-  return nextSelectorEnd > -1 && (nextSelectorStart === -1 || nextSelectorStart > nextSelectorEnd);
-}
-
-export default addLabelToQuery;

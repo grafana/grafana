@@ -1,17 +1,15 @@
-import React from 'react';
-import { boolean } from '@storybook/addon-knobs';
-import { SeriesColorPicker, ColorPicker } from '@grafana/ui';
 import { action } from '@storybook/addon-actions';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { UseState } from '../../utils/storybook/UseState';
-import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
-import mdx from './ColorPicker.mdx';
+import { Meta, Story } from '@storybook/react';
+import React from 'react';
 
-const getColorPickerKnobs = () => {
-  return {
-    enableNamedColors: boolean('Enable named colors', false),
-  };
-};
+import { SeriesColorPicker, ColorPicker } from '@grafana/ui';
+
+import { UseState } from '../../utils/storybook/UseState';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
+
+import mdx from './ColorPicker.mdx';
+import { ColorPickerProps } from './ColorPickerPopover';
 
 export default {
   title: 'Pickers and Editors/ColorPicker',
@@ -22,12 +20,16 @@ export default {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['color', 'onChange', 'onColorChange'],
+    },
   },
-};
+  args: {
+    enableNamedColors: false,
+  },
+} as Meta;
 
-export const basic = () => {
-  const { enableNamedColors } = getColorPickerKnobs();
-
+export const Basic: Story<ColorPickerProps> = ({ enableNamedColors }) => {
   return (
     <UseState initialState="#00ff00">
       {(selectedColor, updateSelectedColor) => {
@@ -44,9 +46,7 @@ export const basic = () => {
   );
 };
 
-export const seriesColorPicker = () => {
-  const { enableNamedColors } = getColorPickerKnobs();
-
+export const SeriesPicker: Story<ColorPickerProps> = ({ enableNamedColors }) => {
   return (
     <UseState initialState="#00ff00">
       {(selectedColor, updateSelectedColor) => {
@@ -56,7 +56,7 @@ export const seriesColorPicker = () => {
             yaxis={1}
             onToggleAxis={() => {}}
             color={selectedColor}
-            onChange={color => updateSelectedColor(color)}
+            onChange={(color) => updateSelectedColor(color)}
           >
             {({ ref, showColorPicker, hideColorPicker }) => (
               <div

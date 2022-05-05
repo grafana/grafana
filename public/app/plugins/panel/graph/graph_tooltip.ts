@@ -1,12 +1,20 @@
 import $ from 'jquery';
+
+import {
+  textUtil,
+  systemDateFormats,
+  LegacyGraphHoverClearEvent,
+  LegacyGraphHoverEvent,
+  DataHoverClearEvent,
+} from '@grafana/data';
 import { appEvents } from 'app/core/core';
 import { CoreEvents } from 'app/types';
-import { textUtil, systemDateFormats } from '@grafana/data';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;
   const ctrl = scope.ctrl;
   const panel = ctrl.panel;
+  const hoverEvent = new LegacyGraphHoverEvent({ pos: {}, point: {}, panel: this.panel });
 
   const $tooltip = $('<div class="graph-tooltip">');
 
@@ -55,10 +63,10 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     if (xMode === 'time') {
       innerHtml = '<div class="graph-tooltip-time">' + absoluteTime + '</div>' + innerHtml;
     }
-    $tooltip.html(innerHtml).place_tt(pos.pageX + 20, pos.pageY);
+    $tooltip.html(innerHtml).place_tt(pos.pageX, pos.pageY, { offset: 10 });
   };
 
-  this.getMultiSeriesPlotHoverInfo = function(seriesList: any[], pos: { x: number }) {
+  this.getMultiSeriesPlotHoverInfo = function (seriesList: any[], pos: { x: number }) {
     let value, i, series, hoverIndex, hoverDistance, pointTime, yaxis;
     // 3 sub-arrays, 1st for hidden series, 2nd for left yaxis, 3rd for right yaxis.
     let results: any = [[], [], []];
@@ -102,17 +110,11 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         minTime = pointTime;
       }
 
-      if (series.stack) {
-        if (panel.tooltip.value_type === 'individual') {
-          value = series.data[hoverIndex][1];
-        } else if (!series.stack) {
-          value = series.data[hoverIndex][1];
-        } else {
-          lastValue += series.data[hoverIndex][1];
-          value = lastValue;
-        }
-      } else {
-        value = series.data[hoverIndex][1];
+      value = series.data[hoverIndex][1];
+
+      if (series.stack && value !== null && panel.tooltip.value_type !== 'individual') {
+        lastValue += value;
+        value = lastValue;
       }
 
       // Highlighting multiple Points depending on the plot type
@@ -157,15 +159,21 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         plot.unhighlight();
       }
     }
-    appEvents.emit(CoreEvents.graphHoverClear);
+    dashboard.events.publish(new LegacyGraphHoverClearEvent());
+    dashboard.events.publish(new DataHoverClearEvent());
   });
 
   elem.bind('plothover', (event: any, pos: { panelRelY: number; pageY: number }, item: any) => {
     self.show(pos, item);
 
     // broadcast to other graph panels that we are hovering!
-    pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
-    appEvents.emit(CoreEvents.graphHover, { pos: pos, panel: panel });
+    if (!dashboard.panelInEdit) {
+      pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
+      hoverEvent.payload.pos = pos;
+      hoverEvent.payload.panel = panel;
+      hoverEvent.payload.point['time'] = (pos as any).x;
+      dashboard.events.publish(hoverEvent);
+    }
   });
 
   elem.bind('plotclick', (event: any, pos: any, item: any) => {

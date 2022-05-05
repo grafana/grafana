@@ -1,23 +1,38 @@
 import { Observable } from 'rxjs';
-import { QueryRunnerOptions } from 'app/features/dashboard/state/PanelQueryRunner';
-import { DashboardQuery, SHARED_DASHBODARD_QUERY } from './types';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { LoadingState, DefaultTimeRange, DataQuery, PanelData, DataSourceApi, DataQueryRequest } from '@grafana/data';
 
-export function isSharedDashboardQuery(datasource: string | DataSourceApi | null) {
+import {
+  DataQuery,
+  DataQueryRequest,
+  DataSourceApi,
+  DataSourceRef,
+  getDefaultTimeRange,
+  LoadingState,
+  PanelData,
+} from '@grafana/data';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { QueryRunnerOptions } from 'app/features/query/state/PanelQueryRunner';
+
+import { DashboardQuery, SHARED_DASHBOARD_QUERY } from './types';
+
+export function isSharedDashboardQuery(datasource: string | DataSourceRef | DataSourceApi | null) {
   if (!datasource) {
     // default datasource
     return false;
   }
-  if (datasource === SHARED_DASHBODARD_QUERY) {
-    return true;
+
+  if (typeof datasource === 'string') {
+    return datasource === SHARED_DASHBOARD_QUERY;
   }
-  const ds = datasource as DataSourceApi;
-  return ds.meta && ds.meta.name === SHARED_DASHBODARD_QUERY;
+
+  if ('meta' in datasource) {
+    return datasource.meta.name === SHARED_DASHBOARD_QUERY || datasource.uid === SHARED_DASHBOARD_QUERY;
+  }
+
+  return datasource.uid === SHARED_DASHBOARD_QUERY;
 }
 
 export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelData> {
-  return new Observable<PanelData>(subscriber => {
+  return new Observable<PanelData>((subscriber) => {
     const dashboard = getDashboardSrv().getCurrent();
     const listenToPanelId = getPanelIdFromQuery(options.queries);
 
@@ -26,7 +41,7 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
       return undefined;
     }
 
-    const listenToPanel = dashboard.getPanelById(listenToPanelId);
+    const listenToPanel = dashboard?.getPanelById(listenToPanelId);
 
     if (!listenToPanel) {
       subscriber.next(getQueryError('Unknown Panel: ' + listenToPanelId));
@@ -72,6 +87,6 @@ function getQueryError(msg: string): PanelData {
     series: [],
     request: {} as DataQueryRequest,
     error: { message: msg },
-    timeRange: DefaultTimeRange,
+    timeRange: getDefaultTimeRange(),
   };
 }

@@ -1,7 +1,9 @@
-import _ from 'lodash';
+import { reduce } from 'lodash';
+
 import kbn from 'app/core/utils/kbn';
 
 function renderTagCondition(tag: { operator: any; value: string; condition: any; key: string }, index: number) {
+  // FIXME: merge this function with influx_query_model/renderTagCondition
   let str = '';
   let operator = tag.operator;
   let value = tag.value;
@@ -17,9 +19,9 @@ function renderTagCondition(tag: { operator: any; value: string; condition: any;
     }
   }
 
-  // quote value unless regex or number
-  if (operator !== '=~' && operator !== '!~' && isNaN(+value)) {
-    value = "'" + value + "'";
+  // quote value unless regex or number, or if empty-string
+  if (value === '' || (operator !== '=~' && operator !== '!~' && isNaN(+value))) {
+    value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
   }
 
   return str + '"' + tag.key + '" ' + operator + ' ' + value;
@@ -44,7 +46,8 @@ export class InfluxQueryBuilder {
     } else if (type === 'MEASUREMENTS') {
       query = 'SHOW MEASUREMENTS';
       if (withMeasurementFilter) {
-        query += ' WITH MEASUREMENT =~ /' + kbn.regexEscape(withMeasurementFilter) + '/';
+        // we do a case-insensitive regex-based lookup
+        query += ' WITH MEASUREMENT =~ /(?i)' + kbn.regexEscape(withMeasurementFilter) + '/';
       }
     } else if (type === 'FIELDS') {
       measurement = this.target.measurement;
@@ -83,7 +86,7 @@ export class InfluxQueryBuilder {
     }
 
     if (this.target.tags && this.target.tags.length > 0) {
-      const whereConditions = _.reduce(
+      const whereConditions = reduce(
         this.target.tags,
         (memo, tag) => {
           // do not add a condition for the key we want to explore for

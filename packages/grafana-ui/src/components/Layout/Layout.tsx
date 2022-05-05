@@ -1,6 +1,8 @@
+import { css, cx } from '@emotion/css';
 import React, { HTMLProps } from 'react';
-import { css, cx } from 'emotion';
+
 import { GrafanaTheme } from '@grafana/data';
+
 import { stylesFactory, useTheme } from '../../themes';
 
 enum Orientation {
@@ -36,12 +38,13 @@ export const Layout: React.FC<LayoutProps> = ({
   align = 'normal',
   wrap = false,
   width = '100%',
+  height = '100%',
   ...rest
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme, orientation, spacing, justify, align, wrap);
   return (
-    <div className={styles.layout} style={{ width }} {...rest}>
+    <div className={styles.layout} style={{ width, height }} {...rest}>
       {React.Children.toArray(children)
         .filter(Boolean)
         .map((child, index) => {
@@ -62,6 +65,7 @@ export const HorizontalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({
   align = 'center',
   wrap,
   width,
+  height,
 }) => (
   <Layout
     spacing={spacing}
@@ -69,6 +73,7 @@ export const HorizontalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({
     orientation={Orientation.Horizontal}
     align={align}
     width={width}
+    height={height}
     wrap={wrap}
   >
     {children}
@@ -80,8 +85,16 @@ export const VerticalGroup: React.FC<Omit<LayoutProps, 'orientation' | 'wrap'>> 
   justify,
   align,
   width,
+  height,
 }) => (
-  <Layout spacing={spacing} justify={justify} orientation={Orientation.Vertical} align={align} width={width}>
+  <Layout
+    spacing={spacing}
+    justify={justify}
+    orientation={Orientation.Vertical}
+    align={align}
+    width={width}
+    height={height}
+  >
     {children}
   </Layout>
 );
@@ -117,9 +130,11 @@ const getStyles = stylesFactory(
         ? 0
         : `-${finalSpacing}`;
 
+    const label = orientation === Orientation.Vertical ? 'vertical-group' : 'horizontal-group';
+
     return {
       layout: css`
-        label: HorizontalGroup;
+        label: ${label};
         display: flex;
         flex-direction: ${orientation === Orientation.Vertical ? 'column' : 'row'};
         flex-wrap: ${wrap ? 'wrap' : 'nowrap'};
@@ -131,6 +146,7 @@ const getStyles = stylesFactory(
         margin-bottom: ${marginCompensation};
       `,
       childWrapper: css`
+        label: layoutChildrenWrapper;
         margin-bottom: ${orientation === Orientation.Horizontal && !wrap ? 0 : finalSpacing};
         margin-right: ${orientation === Orientation.Horizontal ? finalSpacing : 0};
         display: flex;
@@ -150,6 +166,7 @@ const getContainerStyles = stylesFactory((theme: GrafanaTheme, padding?: Spacing
   const marginSize = (margin && margin !== 'none' && theme.spacing[margin]) || 0;
   return {
     wrapper: css`
+      label: container;
       margin: ${marginSize};
       padding: ${paddingSize};
     `,

@@ -1,5 +1,5 @@
-import { Field } from '../types/dataFrame';
 import { KeyValue } from '../types/data';
+import { Field } from '../types/dataFrame';
 
 export interface Dimension<T = any> {
   // Name of the dimension
@@ -33,7 +33,7 @@ export const getValueFromDimension = (dimension: Dimension, column: number, row:
 };
 
 export const getAllValuesFromDimension = (dimension: Dimension, column: number, row: number) => {
-  return dimension.columns.map(c => c.values.get(row));
+  return dimension.columns.map((c) => c.values.get(row));
 };
 
 export const getDimensionByName = (dimensions: Dimensions, name: string) => dimensions[name];

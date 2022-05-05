@@ -1,20 +1,35 @@
-import React from 'react';
 import { shallow } from 'enzyme';
-import { Props, TeamPages } from './TeamPages';
-import { OrgRole, Team, TeamMember } from '../../types';
-import { getMockTeam } from './__mocks__/teamMocks';
-import { User } from 'app/core/services/context_srv';
-import { NavModel } from '@grafana/data';
+import React from 'react';
 
-jest.mock('app/core/config', () => ({
-  ...((jest.requireActual('app/core/config') as unknown) as object),
-  licenseInfo: {
-    hasLicense: true,
+import { NavModel, createTheme } from '@grafana/data';
+import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { User } from 'app/core/services/context_srv';
+
+import { OrgRole, Team, TeamMember } from '../../types';
+
+import { Props, TeamPages } from './TeamPages';
+import { getMockTeam } from './__mocks__/teamMocks';
+
+jest.mock('@grafana/runtime/src/config', () => ({
+  ...(jest.requireActual('@grafana/runtime/src/config') as unknown as object),
+  config: {
+    licenseInfo: {
+      enabledFeatures: { teamsync: true },
+    },
+    featureToggles: { accesscontrol: false },
   },
 }));
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
+    ...getRouteComponentProps({
+      match: {
+        params: {
+          id: '1',
+          page: null,
+        },
+      } as any,
+    }),
     navModel: {} as NavModel,
     teamId: 1,
     loadTeam: jest.fn(),
@@ -23,6 +38,7 @@ const setup = (propOverrides?: object) => {
     team: {} as Team,
     members: [] as TeamMember[],
     editorsCanAdmin: false,
+    theme: createTheme(),
     signedInUser: {
       id: 1,
       isGrafanaAdmin: false,

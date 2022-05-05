@@ -1,33 +1,61 @@
-import React, { FunctionComponent, useMemo } from 'react';
-import { VariableHide, VariableModel } from '../types';
+import React, { FunctionComponent, PropsWithChildren, ReactElement, useMemo } from 'react';
+
 import { selectors } from '@grafana/e2e-selectors';
+import { Tooltip } from '@grafana/ui';
+
 import { variableAdapters } from '../adapters';
+import { VariableHide, VariableModel } from '../types';
 
 interface Props {
   variable: VariableModel;
 }
 
-export const PickerRenderer: FunctionComponent<Props> = props => {
+export const PickerRenderer: FunctionComponent<Props> = (props) => {
   const PickerToRender = useMemo(() => variableAdapters.get(props.variable.type).picker, [props.variable]);
-  const labelOrName = useMemo(() => props.variable.label || props.variable.name, [props.variable]);
 
   if (!props.variable) {
-    return <div>Couldn't load variable</div>;
+    return <div>Couldn&apos;t load variable</div>;
   }
 
   return (
     <div className="gf-form">
-      {props.variable.hide === VariableHide.dontHide && (
-        <label
-          className="gf-form-label gf-form-label--variable"
-          aria-label={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
-        >
-          {labelOrName}
-        </label>
-      )}
+      <PickerLabel variable={props.variable} />
       {props.variable.hide !== VariableHide.hideVariable && PickerToRender && (
         <PickerToRender variable={props.variable} />
       )}
     </div>
   );
 };
+
+function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | null {
+  const labelOrName = useMemo(() => variable.label || variable.name, [variable]);
+
+  if (variable.hide !== VariableHide.dontHide) {
+    return null;
+  }
+
+  const elementId = `var-${variable.id}`;
+  if (variable.description) {
+    return (
+      <Tooltip content={variable.description} placement={'bottom'}>
+        <label
+          className="gf-form-label gf-form-label--variable"
+          data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
+          htmlFor={elementId}
+        >
+          {labelOrName}
+        </label>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <label
+      className="gf-form-label gf-form-label--variable"
+      data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
+      htmlFor={elementId}
+    >
+      {labelOrName}
+    </label>
+  );
+}

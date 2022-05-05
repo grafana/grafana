@@ -1,7 +1,7 @@
-import { TimeZone } from '@grafana/data';
-import { OrgRole } from '.';
+import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
 
-export interface OrgUser {
+import { OrgRole } from '.';
+export interface OrgUser extends WithAccessControlMetadata {
   avatarUrl: string;
   email: string;
   lastSeenAt: string;
@@ -23,7 +23,9 @@ export interface User {
   orgId?: number;
 }
 
-export interface UserDTO {
+export type Unit = { name: string; url: string };
+
+export interface UserDTO extends WithAccessControlMetadata {
   id: number;
   login: string;
   email: string;
@@ -38,6 +40,10 @@ export interface UserDTO {
   avatarUrl?: string;
   orgId?: number;
   lastSeenAtAge?: string;
+  licensedRole?: string;
+  permissions?: string[];
+  teams?: Unit[];
+  orgs?: Unit[];
 }
 
 export interface Invitee {
@@ -59,18 +65,13 @@ export interface Invitee {
 
 export interface UsersState {
   users: OrgUser[];
-  invitees: Invitee[];
   searchQuery: string;
+  searchPage: number;
   canInvite: boolean;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
   hasFetched: boolean;
-}
-
-export interface UserState {
-  orgId: number;
-  timeZone: TimeZone;
 }
 
 export interface UserSession {
@@ -93,11 +94,11 @@ export interface UserOrg {
 }
 
 export interface UserAdminState {
-  user: UserDTO | null;
+  user?: UserDTO;
   sessions: UserSession[];
   orgs: UserOrg[];
   isLoading: boolean;
-  error?: UserAdminError | null;
+  error?: UserAdminError;
 }
 
 export interface UserAdminError {
@@ -105,6 +106,7 @@ export interface UserAdminError {
   body: string;
 }
 
+export type UserFilter = Record<string, string | boolean | SelectableValue[]>;
 export interface UserListAdminState {
   users: UserDTO[];
   query: string;
@@ -112,4 +114,6 @@ export interface UserListAdminState {
   page: number;
   totalPages: number;
   showPaging: boolean;
+  filters: UserFilter[];
+  isLoading: boolean;
 }

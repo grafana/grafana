@@ -1,8 +1,11 @@
-import React from 'react';
 import { shallow } from 'enzyme';
-import { MetricSelect } from './MetricSelect';
+import React from 'react';
+
 import { LegacyForms } from '@grafana/ui';
+
 import { expect } from '../../../../test/lib/common';
+
+import { MetricSelect } from './MetricSelect';
 
 const { Select } = LegacyForms;
 
@@ -36,7 +39,7 @@ describe('MetricSelect', () => {
       const wrapper = shallow(<MetricSelect {...props} />);
       const select = wrapper.find(Select);
 
-      select.props().onChange({ value: 'foo' });
+      select.props().onChange({ value: 'foo' }, { action: 'select-option', option: undefined });
 
       expect(select.props().noOptionsMessage).toBeDefined();
 

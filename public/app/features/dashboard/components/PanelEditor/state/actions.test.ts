@@ -1,9 +1,11 @@
-import { thunkTester } from '../../../../../../test/core/thunk/thunkTester';
-import { closeCompleted, initialState, PanelEditorState } from './reducers';
-import { initPanelEditor, panelEditorCleanUp } from './actions';
-import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
-import { DashboardModel, PanelModel } from '../../../state';
+import { panelModelAndPluginReady, removePanel } from 'app/features/panel/state/reducers';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
+
+import { thunkTester } from '../../../../../../test/core/thunk/thunkTester';
+import { DashboardModel, PanelModel } from '../../../state';
+
+import { exitPanelEditor, initPanelEditor, skipPanelUpdate } from './actions';
+import { closeEditor, initialState, PanelEditorState } from './reducers';
 
 describe('panelEditor actions', () => {
   describe('initPanelEditor', () => {
@@ -14,15 +16,20 @@ describe('panelEditor actions', () => {
       const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
 
       const dispatchedActions = await thunkTester({
-        panelEditorNew: { ...initialState },
+        panelEditor: { ...initialState },
+        plugins: {
+          panels: {},
+        },
       })
         .givenThunk(initPanelEditor)
         .whenThunkIsDispatched(sourcePanel, dashboard);
 
-      expect(dispatchedActions.length).toBe(1);
-      expect(dispatchedActions[0].payload.sourcePanel).toBe(sourcePanel);
-      expect(dispatchedActions[0].payload.panel).not.toBe(sourcePanel);
-      expect(dispatchedActions[0].payload.panel.id).not.toBe(sourcePanel.id);
+      expect(dispatchedActions.length).toBe(2);
+      expect(dispatchedActions[0].type).toBe(panelModelAndPluginReady.type);
+
+      expect(dispatchedActions[1].payload.sourcePanel).toBe(sourcePanel);
+      expect(dispatchedActions[1].payload.panel).not.toBe(sourcePanel);
+      expect(dispatchedActions[1].payload.panel.id).toBe(sourcePanel.id);
     });
   });
 
@@ -43,17 +50,18 @@ describe('panelEditor actions', () => {
       };
 
       const dispatchedActions = await thunkTester({
+        panels: {},
         panelEditor: state,
         dashboard: {
           getModel: () => dashboard,
         },
       })
-        .givenThunk(panelEditorCleanUp)
+        .givenThunk(exitPanelEditor)
         .whenThunkIsDispatched();
 
       expect(dispatchedActions.length).toBe(2);
-      expect(dispatchedActions[0].type).toBe(cleanUpEditPanel.type);
-      expect(dispatchedActions[1].type).toBe(closeCompleted.type);
+      expect(dispatchedActions[0].type).toBe(removePanel.type);
+      expect(dispatchedActions[1].type).toBe(closeEditor.type);
       expect(sourcePanel.getOptions()).toEqual({ prop: true });
       expect(sourcePanel.id).toEqual(12);
     });
@@ -79,11 +87,12 @@ describe('panelEditor actions', () => {
 
       const dispatchedActions = await thunkTester({
         panelEditor: state,
+        panels: {},
         dashboard: {
           getModel: () => dashboard,
         },
       })
-        .givenThunk(panelEditorCleanUp)
+        .givenThunk(exitPanelEditor)
         .whenThunkIsDispatched();
 
       expect(dispatchedActions.length).toBe(3);
@@ -114,15 +123,58 @@ describe('panelEditor actions', () => {
 
       const dispatchedActions = await thunkTester({
         panelEditor: state,
+        panels: {},
         dashboard: {
           getModel: () => dashboard,
         },
       })
-        .givenThunk(panelEditorCleanUp)
+        .givenThunk(exitPanelEditor)
         .whenThunkIsDispatched();
 
       expect(dispatchedActions.length).toBe(2);
       expect(sourcePanel.getOptions()).toEqual({});
+    });
+  });
+
+  describe('skipPanelUpdate', () => {
+    describe('when called with panel with an library uid different from the modified panel', () => {
+      it('then it should return true', () => {
+        const meta: any = {};
+        const modified: any = { libraryPanel: { uid: '123', name: 'Name', meta, version: 1 } };
+        const panel: any = { libraryPanel: { uid: '456', name: 'Name', meta, version: 1 } };
+
+        expect(skipPanelUpdate(modified, panel)).toEqual(true);
+      });
+    });
+
+    describe('when called with a panel that is the same as the modified panel', () => {
+      it('then it should return true', () => {
+        const meta: any = {};
+        const modified: any = { id: 14, libraryPanel: { uid: '123', name: 'Name', meta, version: 1 } };
+        const panel: any = { id: 14, libraryPanel: { uid: '123', name: 'Name', meta, version: 1 } };
+
+        expect(skipPanelUpdate(modified, panel)).toEqual(true);
+      });
+    });
+
+    describe('when called with a panel that is repeated', () => {
+      it('then it should return true', () => {
+        const meta: any = {};
+        const modified: any = { libraryPanel: { uid: '123', name: 'Name', meta, version: 1 } };
+        const panel: any = { repeatPanelId: 14, libraryPanel: { uid: '123', name: 'Name', meta, version: 1 } };
+
+        expect(skipPanelUpdate(modified, panel)).toEqual(true);
+      });
+    });
+
+    describe('when called with a panel that is a duplicate of the modified panel', () => {
+      it('then it should return false', () => {
+        const meta: any = {};
+        const modified: any = { libraryPanel: { uid: '123', name: 'Name', meta, version: 1 } };
+        const panel: any = { libraryPanel: { uid: '123', name: 'Name', meta, version: 1 } };
+
+        expect(skipPanelUpdate(modified, panel)).toEqual(false);
+      });
     });
   });
 });

@@ -8,7 +8,7 @@ import (
 // listRemoteCommand prints out all plugins in the remote repo with latest version supported on current platform.
 // If there are no supported versions for plugin it is skipped.
 func (cmd Command) listRemoteCommand(c utils.CommandLine) error {
-	plugin, err := cmd.Client.ListAllPlugins(c.RepoDirectory())
+	plugin, err := cmd.Client.ListAllPlugins(c.PluginRepoURL())
 	if err != nil {
 		return err
 	}
@@ -18,7 +18,7 @@ func (cmd Command) listRemoteCommand(c utils.CommandLine) error {
 		if len(plugin.Versions) > 0 {
 			ver := latestSupportedVersion(&plugin)
 			if ver != nil {
-				logger.Infof("id: %v version: %s\n", plugin.Id, ver.Version)
+				logger.Infof("id: %v version: %s\n", plugin.ID, ver.Version)
 			}
 		}
 	}

@@ -1,7 +1,16 @@
-import React from 'react';
 import { shallow, ShallowWrapper } from 'enzyme';
-import { DashboardGrid, Props } from './DashboardGrid';
+import React from 'react';
+
 import { DashboardModel } from '../state';
+
+import { DashboardGridUnconnected as DashboardGrid, Props } from './DashboardGrid';
+
+jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
+  const LazyLoader: React.FC = ({ children }) => {
+    return <>{children}</>;
+  };
+  return { LazyLoader };
+});
 
 interface ScenarioContext {
   props: Props;
@@ -53,14 +62,14 @@ function dashboardGridScenario(description: string, scenarioFn: (ctx: ScenarioCo
     let setupFn: () => void;
 
     const ctx: ScenarioContext = {
-      setup: fn => {
+      setup: (fn) => {
         setupFn = fn;
       },
       props: {
         editPanel: null,
         viewPanel: null,
-        scrollTop: 0,
         dashboard: getTestDashboard(),
+        cleanAndRemoveMany: jest.fn,
       },
       setProps: (props: Partial<Props>) => {
         Object.assign(ctx.props, props);
@@ -80,7 +89,7 @@ function dashboardGridScenario(description: string, scenarioFn: (ctx: ScenarioCo
 }
 
 describe('DashboardGrid', () => {
-  dashboardGridScenario('Can render dashboard grid', ctx => {
+  dashboardGridScenario('Can render dashboard grid', (ctx) => {
     ctx.setup(() => {});
 
     it('Should render', () => {

@@ -1,0 +1,16 @@
+  graphite09:
+    build: docker/blocks/graphite09
+    ports:
+      - "8380:80"
+      - "2303:2003"
+      - "2304:2004"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  fake-graphite09-data:
+    image: grafana/fake-data-gen
+    environment:
+      FD_DATASOURCE: graphite
+      FD_PORT: 2303
+      FD_GRAPHITE_VERSION: 0.9

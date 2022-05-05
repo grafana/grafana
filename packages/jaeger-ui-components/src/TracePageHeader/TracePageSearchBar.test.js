@@ -12,20 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
 
-import * as markers from './TracePageSearchBar.markers';
-import TracePageSearchBar, { getStyles } from './TracePageSearchBar';
+import { createTheme } from '@grafana/data';
+
 import UiFindInput from '../common/UiFindInput';
+
+import TracePageSearchBar, { getStyles } from './TracePageSearchBar';
+import * as markers from './TracePageSearchBar.markers';
 
 const defaultProps = {
   forwardedRef: React.createRef(),
   navigable: true,
-  nextResult: () => {},
-  prevResult: () => {},
-  resultCount: 0,
-  textFilter: 'something',
+  suffix: '',
+  searchValue: 'something',
 };
 
 describe('<TracePageSearchBar>', () => {
@@ -45,34 +46,32 @@ describe('<TracePageSearchBar>', () => {
           name: 'search',
         })
       );
-      expect(suffix.hasClass(getStyles().TracePageSearchBarCount)).toBe(true);
-      expect(suffix.text()).toBe(String(defaultProps.resultCount));
+      const theme = createTheme();
+      expect(suffix.hasClass(getStyles(theme).TracePageSearchBarSuffix)).toBe(true);
+      expect(suffix.text()).toBe(String(defaultProps.suffix));
     });
 
     it('renders buttons', () => {
-      const buttons = wrapper.find('UIButton');
-      expect(buttons.length).toBe(4);
-      buttons.forEach(button => {
-        expect(button.hasClass(getStyles().TracePageSearchBarBtn)).toBe(true);
-        expect(button.hasClass(getStyles().TracePageSearchBarBtnDisabled)).toBe(false);
+      const buttons = wrapper.find('Button');
+      expect(buttons.length).toBe(2);
+      buttons.forEach((button) => {
         expect(button.prop('disabled')).toBe(false);
       });
-      expect(wrapper.find('UIButton[icon="up"]').prop('onClick')).toBe(defaultProps.prevResult);
-      expect(wrapper.find('UIButton[icon="down"]').prop('onClick')).toBe(defaultProps.nextResult);
-      expect(wrapper.find('UIButton[icon="close"]').prop('onClick')).toBe(defaultProps.clearSearch);
     });
 
-    it('hides navigation buttons when not navigable', () => {
+    it('only shows navigable buttons when navigable is true', () => {
       wrapper.setProps({ navigable: false });
-      const button = wrapper.find('UIButton');
-      expect(button.length).toBe(1);
-      expect(button.prop('icon')).toBe('close');
+      var buttons = wrapper.find('Button');
+      expect(buttons.length).toBe(0);
+      wrapper.setProps({ navigable: true });
+      buttons = wrapper.find('Button');
+      expect(buttons.length).toBe(2);
     });
   });
 
   describe('falsy textFilter', () => {
     beforeEach(() => {
-      wrapper.setProps({ textFilter: '' });
+      wrapper.setProps({ searchValue: '' });
     });
 
     it('renders UiFindInput with correct props', () => {
@@ -80,11 +79,9 @@ describe('<TracePageSearchBar>', () => {
     });
 
     it('renders buttons', () => {
-      const buttons = wrapper.find('UIButton');
-      expect(buttons.length).toBe(4);
-      buttons.forEach(button => {
-        expect(button.hasClass(getStyles().TracePageSearchBarBtn)).toBe(true);
-        expect(button.hasClass(getStyles().TracePageSearchBarBtnDisabled)).toBe(true);
+      const buttons = wrapper.find('Button');
+      expect(buttons.length).toBe(2);
+      buttons.forEach((button) => {
         expect(button.prop('disabled')).toBe(true);
       });
     });

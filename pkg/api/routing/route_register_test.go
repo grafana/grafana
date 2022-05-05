@@ -5,42 +5,38 @@ import (
 	"strconv"
 	"testing"
 
-	"gopkg.in/macaron.v1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type fakeRouter struct {
 	route []route
 }
 
-func (fr *fakeRouter) Handle(method, pattern string, handlers []macaron.Handler) *macaron.Route {
+func (fr *fakeRouter) Handle(method, pattern string, handlers []web.Handler) {
 	fr.route = append(fr.route, route{
 		pattern:  pattern,
 		method:   method,
 		handlers: handlers,
 	})
-
-	return &macaron.Route{}
 }
 
-func (fr *fakeRouter) Get(pattern string, handlers ...macaron.Handler) *macaron.Route {
+func (fr *fakeRouter) Get(pattern string, handlers ...web.Handler) {
 	fr.route = append(fr.route, route{
 		pattern:  pattern,
 		method:   http.MethodGet,
 		handlers: handlers,
 	})
-
-	return &macaron.Route{}
 }
 
-func emptyHandlers(n int) []macaron.Handler {
-	var res []macaron.Handler
+func emptyHandlers(n int) []web.Handler {
+	var res []web.Handler
 	for i := 1; n >= i; i++ {
 		res = append(res, emptyHandler(strconv.Itoa(i)))
 	}
 	return res
 }
 
-func emptyHandler(name string) macaron.Handler {
+func emptyHandler(name string) web.Handler {
 	return struct{ name string }{name: name}
 }
 
@@ -214,8 +210,13 @@ func TestNamedMiddlewareRouteRegister(t *testing.T) {
 		{method: "GET", pattern: "/user/admin/all", handlers: emptyHandlers(5)},
 	}
 
+	namedMiddlewares := map[string]bool{}
 	// Setup
-	rr := NewRouteRegister(emptyHandler)
+	rr := NewRouteRegister(func(name string) web.Handler {
+		namedMiddlewares[name] = true
+
+		return struct{ name string }{name: name}
+	})
 
 	rr.Delete("/admin", emptyHandler("1"))
 	rr.Get("/down", emptyHandler("1"), emptyHandler("2"))
@@ -245,6 +246,10 @@ func TestNamedMiddlewareRouteRegister(t *testing.T) {
 
 		if testTable[i].pattern != fr.route[i].pattern {
 			t.Errorf("want %s got %v", testTable[i].pattern, fr.route[i].pattern)
+		}
+
+		if _, exist := namedMiddlewares[testTable[i].pattern]; !exist {
+			t.Errorf("could not find named route named %s", testTable[i].pattern)
 		}
 
 		if len(testTable[i].handlers) != len(fr.route[i].handlers) {

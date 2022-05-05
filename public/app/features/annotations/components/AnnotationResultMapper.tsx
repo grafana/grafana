@@ -10,9 +10,9 @@ import {
   AnnotationEventFieldSource,
   getValueFormat,
 } from '@grafana/data';
+import { Select, Tooltip, Icon } from '@grafana/ui';
 
 import { annotationEventNames, AnnotationFieldInfo } from '../standardAnnotationSupport';
-import { Select, Tooltip, Icon } from '@grafana/ui';
 import { AnnotationQueryResponse } from '../types';
 
 // const valueOptions: Array<SelectableValue<AnnotationEventFieldSource>> = [
@@ -44,7 +44,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
   updateFields = () => {
     const frame = this.props.response?.panelData?.series[0];
     if (frame && frame.fields) {
-      const fieldNames = frame.fields.map(f => {
+      const fieldNames = frame.fields.map((f) => {
         const name = getFieldDisplayName(f, frame);
 
         let description = '';
@@ -115,7 +115,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
 
     let picker = fieldNames;
     const current = mapping.value;
-    let currentValue = fieldNames.find(f => current === f.value);
+    let currentValue = fieldNames.find((f) => current === f.value);
     if (current) {
       picker = [...fieldNames];
       if (!currentValue) {
@@ -147,6 +147,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
         </td>
         {/* <td>
           <Select
+
             value={valueOptions.find(v => v.value === mapping.source) || valueOptions[0]}
             options={valueOptions}
             onChange={(v: SelectableValue<AnnotationEventFieldSource>) => {
@@ -185,7 +186,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
           </tr>
         </thead>
         <tbody>
-          {annotationEventNames.map(row => {
+          {annotationEventNames.map((row) => {
             return this.renderRow(row, mappings[row.key] || {}, first);
           })}
         </tbody>

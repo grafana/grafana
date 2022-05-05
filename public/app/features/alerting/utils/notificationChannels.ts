@@ -1,4 +1,5 @@
 import memoizeOne from 'memoize-one';
+
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { NotificationChannelDTO, NotificationChannelType } from 'app/types';
@@ -22,12 +23,20 @@ export const defaultValues: NotificationChannelDTO = {
 };
 
 export const mapChannelsToSelectableValue = memoizeOne(
-  (notificationChannels: NotificationChannelType[]): Array<SelectableValue<string>> => {
-    return notificationChannels.map(channel => ({
-      value: channel.value,
-      label: channel.label,
-      description: channel.description,
-    }));
+  (notificationChannels: NotificationChannelType[], includeDescription: boolean): Array<SelectableValue<string>> => {
+    return notificationChannels.map((channel) => {
+      if (includeDescription) {
+        return {
+          value: channel.value,
+          label: channel.label,
+          description: channel.description,
+        };
+      }
+      return {
+        value: channel.value,
+        label: channel.label,
+      };
+    });
   }
 );
 

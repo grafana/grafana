@@ -1,10 +1,11 @@
 import chalk from 'chalk';
 import commandExists from 'command-exists';
-import { promises as fs, readFileSync } from 'fs';
+import { promises as fs, readFileSync, existsSync, unlinkSync } from 'fs';
 import { prompt } from 'inquirer';
-import kebabCase from 'lodash/kebabCase';
+import { kebabCase } from 'lodash';
 import path from 'path';
-import gitPromise from 'simple-git/promise';
+import gitPromise from 'simple-git';
+
 import { promptConfirm, promptInput } from '../../utils/prompt';
 import { rmdir } from '../../utils/rmdir';
 import { useSpinner } from '../../utils/useSpinner';
@@ -49,8 +50,8 @@ export const getPluginId = (pluginDetails: PluginDetails) =>
 export const getPluginKeywords = (pluginDetails: PluginDetails) =>
   pluginDetails.keywords
     .split(',')
-    .map(k => k.trim())
-    .filter(k => k !== '');
+    .map((k) => k.trim())
+    .filter((k) => k !== '');
 
 export const verifyGitExists = async () => {
   return new Promise((resolve, reject) => {
@@ -97,21 +98,26 @@ export const promptPluginDetails = async (name?: string) => {
   };
 };
 
-export const fetchTemplate = useSpinner<{ type: PluginType; dest: string }>(
-  'Fetching plugin template...',
-  async ({ type, dest }) => {
+export const fetchTemplate = ({ type, dest }: { type: PluginType; dest: string }) =>
+  useSpinner('Fetching plugin template...', async () => {
     const url = RepositoriesPaths[type];
     if (!url) {
       throw new Error('Unknown plugin type');
     }
 
     await simpleGit.clone(url, dest);
-  }
-);
+  });
 
-export const prepareJsonFiles = useSpinner<{ type: PluginType; pluginDetails: PluginDetails; pluginPath: string }>(
-  'Saving package.json and plugin.json files',
-  async ({ type, pluginDetails, pluginPath }) => {
+export const prepareJsonFiles = ({
+  type,
+  pluginDetails,
+  pluginPath,
+}: {
+  type: PluginType;
+  pluginDetails: PluginDetails;
+  pluginPath: string;
+}) =>
+  useSpinner('Saving package.json and plugin.json files', async () => {
     const packageJsonPath = path.resolve(pluginPath, 'package.json');
     const pluginJsonPath = path.resolve(pluginPath, 'src/plugin.json');
     const packageJson: any = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
@@ -146,12 +152,10 @@ export const prepareJsonFiles = useSpinner<{ type: PluginType; pluginDetails: Pl
         return fs.writeFile(filePath, JSON.stringify(f, null, 2));
       })
     );
-  }
-);
+  });
 
-export const removeGitFiles = useSpinner<string>('Cleaning', async pluginPath =>
-  rmdir(`${path.resolve(pluginPath, '.git')}`)
-);
+export const removeGitFiles = (pluginPath: string) =>
+  useSpinner('Cleaning', async () => rmdir(`${path.resolve(pluginPath, '.git')}`));
 
 /* eslint-disable no-console */
 export const formatPluginDetails = (details: PluginDetails) => {
@@ -174,6 +178,7 @@ export const printGrafanaTutorialsDetails = (type: PluginType) => {
   console.group();
   console.log();
   console.log(chalk.bold.yellow(`Congrats! You have just created ${PluginNames[type]}.`));
+  console.log('Please run `yarn install` to install frontend dependencies.');
   console.log();
   if (type !== 'backend-datasource-plugin') {
     console.log(`${PluginNames[type]} tutorial: ${TutorialPaths[type]}`);
@@ -185,3 +190,10 @@ export const printGrafanaTutorialsDetails = (type: PluginType) => {
   console.groupEnd();
 };
 /* eslint-enable no-console */
+
+export const removeLockFile = ({ pluginPath }: { pluginPath: string }) => {
+  const lockFilePath = path.resolve(pluginPath, 'yarn.lock');
+  if (existsSync(lockFilePath)) {
+    unlinkSync(lockFilePath);
+  }
+};

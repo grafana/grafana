@@ -1,4 +1,6 @@
-export class SelectionReference {
+import { VirtualElement } from '@popperjs/core/lib/types';
+
+export class SelectionReference implements VirtualElement {
   getBoundingClientRect() {
     const selection = window.getSelection();
     const node = selection && selection.anchorNode;
@@ -15,7 +17,7 @@ export class SelectionReference {
       right: 0,
       width: 0,
       height: 0,
-    };
+    } as DOMRect;
   }
 
   get clientWidth() {

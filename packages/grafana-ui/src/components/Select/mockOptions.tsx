@@ -1,5 +1,6 @@
-import { SelectableValue } from '@grafana/data';
 import { kebabCase } from 'lodash';
+
+import { SelectableValue } from '@grafana/data';
 
 export const generateOptions = (desc = false) => {
   const values = [
@@ -25,7 +26,7 @@ export const generateOptions = (desc = false) => {
     'Han Harnish',
   ];
 
-  return values.map<SelectableValue<string>>(name => ({
+  return values.map<SelectableValue<string>>((name) => ({
     value: kebabCase(name),
     label: name,
     description: desc ? `This is a description of ${name}` : undefined,

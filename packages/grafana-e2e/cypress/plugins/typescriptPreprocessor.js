@@ -1,5 +1,5 @@
-const { resolve } = require('path');
 const wp = require('@cypress/webpack-preprocessor');
+const { resolve } = require('path');
 
 const anyNodeModules = /node_modules/;
 const packageRoot = resolve(`${__dirname}/../../`);
@@ -9,7 +9,7 @@ const webpackOptions = {
   module: {
     rules: [
       {
-        include: modulePath => {
+        include: (modulePath) => {
           if (!anyNodeModules.test(modulePath)) {
             // Is a file within the project
             return true;
@@ -22,6 +22,9 @@ const webpackOptions = {
         use: [
           {
             loader: 'ts-loader',
+            options: {
+              transpileOnly: true,
+            },
           },
         ],
       },

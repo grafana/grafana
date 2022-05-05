@@ -1,15 +1,17 @@
 package pluginproxy
 
 import (
+	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -20,56 +22,57 @@ type templateData struct {
 	SecureJsonData map[string]string
 }
 
-func getHeaders(route *plugins.AppPluginRoute, orgId int64, appID string) (http.Header, error) {
-	result := http.Header{}
-
-	query := models.GetPluginSettingByIdQuery{OrgId: orgId, PluginId: appID}
-
-	if err := bus.Dispatch(&query); err != nil {
-		return nil, err
-	}
-
-	data := templateData{
-		JsonData:       query.Result.JsonData,
-		SecureJsonData: query.Result.SecureJsonData.Decrypt(),
-	}
-
-	err := addHeaders(&result, route, data)
-	return result, err
-}
-
-func updateURL(route *plugins.AppPluginRoute, orgId int64, appID string) (string, error) {
-	query := models.GetPluginSettingByIdQuery{OrgId: orgId, PluginId: appID}
-	if err := bus.Dispatch(&query); err != nil {
-		return "", err
-	}
-
-	data := templateData{
-		JsonData:       query.Result.JsonData,
-		SecureJsonData: query.Result.SecureJsonData.Decrypt(),
-	}
-	interpolated, err := InterpolateString(route.URL, data)
-	if err != nil {
-		return "", err
-	}
-	return interpolated, err
-}
-
 // NewApiPluginProxy create a plugin proxy
-func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appID string, cfg *setting.Cfg) *httputil.ReverseProxy {
-	targetURL, _ := url.Parse(route.URL)
+func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.Route,
+	appID string, cfg *setting.Cfg, pluginSettingsService pluginsettings.Service,
+	secretsService secrets.Service) *httputil.ReverseProxy {
+	appProxyLogger := logger.New(
+		"userId", ctx.UserId,
+		"orgId", ctx.OrgId,
+		"uname", ctx.Login,
+		"app", appID,
+		"path", ctx.Req.URL.Path,
+		"remote_addr", ctx.RemoteAddr(),
+		"referer", ctx.Req.Referer(),
+	)
 
 	director := func(req *http.Request) {
+		query := pluginsettings.GetByPluginIDArgs{OrgID: ctx.OrgId, PluginID: appID}
+		ps, err := pluginSettingsService.GetPluginSettingByPluginID(ctx.Req.Context(), &query)
+		if err != nil {
+			ctx.JsonApiErr(500, "Failed to fetch plugin settings", err)
+			return
+		}
+
+		secureJsonData, err := secretsService.DecryptJsonData(ctx.Req.Context(), ps.SecureJSONData)
+		if err != nil {
+			ctx.JsonApiErr(500, "Failed to decrypt plugin settings", err)
+			return
+		}
+
+		data := templateData{
+			JsonData:       ps.JSONData,
+			SecureJsonData: secureJsonData,
+		}
+
+		interpolatedURL, err := interpolateString(route.URL, data)
+		if err != nil {
+			ctx.JsonApiErr(500, "Could not interpolate plugin route url", err)
+			return
+		}
+		targetURL, err := url.Parse(interpolatedURL)
+		if err != nil {
+			ctx.JsonApiErr(500, "Could not parse url", err)
+			return
+		}
 		req.URL.Scheme = targetURL.Scheme
 		req.URL.Host = targetURL.Host
 		req.Host = targetURL.Host
-
 		req.URL.Path = util.JoinURLFragments(targetURL.Path, proxyPath)
+
 		// clear cookie headers
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
-
-		proxyutil.PrepareProxyRequest(req)
 
 		// Create a HTTP header with the context in it.
 		ctxJSON, err := json.Marshal(ctx.SignedInUser)
@@ -82,38 +85,41 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 
 		applyUserHeader(cfg.SendUserHeader, req, ctx.SignedInUser)
 
-		if len(route.Headers) > 0 {
-			headers, err := getHeaders(route, ctx.OrgId, appID)
-			if err != nil {
-				ctx.JsonApiErr(500, "Could not generate plugin route header", err)
-				return
-			}
-
-			for key, value := range headers {
-				log.Tracef("setting key %v value <redacted>", key)
-				req.Header.Set(key, value[0])
-			}
+		if err := addHeaders(&req.Header, route, data); err != nil {
+			ctx.JsonApiErr(500, "Failed to render plugin headers", err)
+			return
 		}
 
-		if len(route.URL) > 0 {
-			interpolatedURL, err := updateURL(route, ctx.OrgId, appID)
-			if err != nil {
-				ctx.JsonApiErr(500, "Could not interpolate plugin route url", err)
-			}
-			targetURL, err := url.Parse(interpolatedURL)
-			if err != nil {
-				ctx.JsonApiErr(500, "Could not parse custom url: %v", err)
-				return
-			}
-			req.URL.Scheme = targetURL.Scheme
-			req.URL.Host = targetURL.Host
-			req.Host = targetURL.Host
-			req.URL.Path = util.JoinURLFragments(targetURL.Path, proxyPath)
+		if err := setBodyContent(req, route, data); err != nil {
+			appProxyLogger.Error("Failed to set plugin route body content", "error", err)
 		}
-
-		// reqBytes, _ := httputil.DumpRequestOut(req, true);
-		// log.Tracef("Proxying plugin request: %s", string(reqBytes))
 	}
 
-	return &httputil.ReverseProxy{Director: director}
+	logAppPluginProxyRequest(appID, cfg, ctx)
+
+	return proxyutil.NewReverseProxy(appProxyLogger, director)
+}
+
+func logAppPluginProxyRequest(appID string, cfg *setting.Cfg, c *models.ReqContext) {
+	if !cfg.DataProxyLogging {
+		return
+	}
+
+	var body string
+	if c.Req.Body != nil {
+		buffer, err := ioutil.ReadAll(c.Req.Body)
+		if err == nil {
+			c.Req.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
+			body = string(buffer)
+		}
+	}
+
+	logger.Info("Proxying incoming request",
+		"userid", c.UserId,
+		"orgid", c.OrgId,
+		"username", c.Login,
+		"app", appID,
+		"uri", c.Req.RequestURI,
+		"method", c.Req.Method,
+		"body", body)
 }

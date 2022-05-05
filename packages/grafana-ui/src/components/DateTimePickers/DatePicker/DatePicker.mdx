@@ -1,0 +1,27 @@
+import { ArgsTable } from '@storybook/addon-docs/blocks';
+import { DatePicker } from './DatePicker';
+
+# DatePicker
+
+A component with a calendar view for selecting a date.
+
+### Usage
+
+```tsx
+import React, { useState } from 'react';
+import { DatePicker, Button } from '@grafana/ui';
+
+const [date, setDate] = useState<Date>(new Date());
+const [open, setOpen] = useState(false);
+
+return (
+  <>
+    <Button onClick={() => setOpen(true)}>Show Calendar</Button>
+    <DatePicker isOpen={open} value={date} onChange={(newDate) => setDate(newDate)} onClose={() => setOpen(false)} />
+  </>
+);
+```
+
+### Props
+
+<ArgsTable of={DatePicker} />

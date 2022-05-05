@@ -1,11 +1,13 @@
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
+
 import { NavModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
-import Page from '../Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
+
+import Page from '../Page/Page';
 
 interface ConnectedProps {
   navModel: NavModel;
@@ -64,7 +66,7 @@ export class ErrorPage extends PureComponent<Props> {
                       </p>
                       <p>
                         If the error persists, seek help on the{' '}
-                        <a href="https://community.grafana.com" target="_blank" className="error-link">
+                        <a href="https://community.grafana.com" target="_blank" rel="noreferrer" className="error-link">
                           community site
                         </a>
                         .
@@ -81,7 +83,7 @@ export class ErrorPage extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
   return {
     navModel: getNavModel(state.navIndex, 'not-found'),
   };

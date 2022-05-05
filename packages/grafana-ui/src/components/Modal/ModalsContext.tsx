@@ -7,7 +7,7 @@ interface ModalsContextState {
   hideModal: () => void;
 }
 
-const ModalsContext = React.createContext<ModalsContextState>({
+export const ModalsContext = React.createContext<ModalsContextState>({
   component: null,
   props: {},
   showModal: () => {},

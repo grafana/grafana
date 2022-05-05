@@ -1,8 +1,9 @@
 import { DataSourcePlugin } from '@grafana/data';
-import { TestDataDataSource } from './datasource';
-import { TestDataQueryCtrl } from './query_ctrl';
-import { TestInfoTab } from './TestInfoTab';
+
 import { ConfigEditor } from './ConfigEditor';
+import { QueryEditor } from './QueryEditor';
+import { TestInfoTab } from './TestInfoTab';
+import { TestDataDataSource } from './datasource';
 
 class TestDataAnnotationsQueryCtrl {
   annotation: any;
@@ -12,7 +13,7 @@ class TestDataAnnotationsQueryCtrl {
 
 export const plugin = new DataSourcePlugin(TestDataDataSource)
   .setConfigEditor(ConfigEditor)
-  .setQueryCtrl(TestDataQueryCtrl)
+  .setQueryEditor(QueryEditor)
   .setAnnotationQueryCtrl(TestDataAnnotationsQueryCtrl)
   .addConfigPage({
     title: 'Setup',

@@ -1,4 +1,4 @@
-import { SqlPartDef, SqlPart } from 'app/core/components/sql_part/sql_part';
+import { SqlPartDef, SqlPart } from 'app/angular/components/sql_part/sql_part';
 
 const index: any[] = [];
 
@@ -49,7 +49,9 @@ register({
     {
       name: 'name',
       type: 'string',
-      options: ['avg', 'count', 'min', 'max', 'sum', 'stddev', 'variance'],
+      options: [],
+      baseOptions: ['avg', 'count', 'min', 'max', 'sum', 'stddev', 'variance'],
+      timescaleOptions: ['first', 'last'],
     },
   ],
   defaultParams: ['avg'],

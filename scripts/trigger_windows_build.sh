@@ -8,7 +8,7 @@ post_data=$(cat <<EOF
 {
   "accountName": "Torkeldegaard",
   "projectSlug": "grafana",
-  "branch": "master",
+  "branch": "main",
   "commitId": "${_commit}",
   "environmentVariables": {
     "buildType": "${_buildType}"

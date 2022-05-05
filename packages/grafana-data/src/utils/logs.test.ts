@@ -1,5 +1,6 @@
-import { LogLevel, LogsModel, LogRowModel, LogsSortOrder } from '../types/logs';
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
+import { LogLevel, LogsModel, LogRowModel, LogsSortOrder } from '../types/logs';
+
 import {
   getLogLevel,
   calculateLogsLabelStats,
@@ -9,6 +10,7 @@ import {
   calculateStats,
   getLogLevelFromKey,
   sortLogsResult,
+  checkLogsError,
 } from './logs';
 
 describe('getLoglevel()', () => {
@@ -115,7 +117,7 @@ describe('LogsParsers', () => {
       expect(parser.test('foo=bar')).toBeTruthy();
     });
 
-    test('should return parsed fields', () => {
+    test('should return detected fields', () => {
       expect(
         parser.getFields(
           'foo=bar baz="42 + 1" msg="[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1" time(ms)=50 label{foo}=bar'
@@ -164,14 +166,15 @@ describe('LogsParsers', () => {
 
     test('should detect format', () => {
       expect(parser.test('foo')).toBeFalsy();
+      expect(parser.test('"foo"')).toBeFalsy();
       expect(parser.test('{"foo":"bar"}')).toBeTruthy();
     });
 
-    test('should return parsed fields', () => {
+    test('should return detected fields', () => {
       expect(parser.getFields('{ "foo" : "bar", "baz" : 42 }')).toEqual(['"foo":"bar"', '"baz":42']);
     });
 
-    test('should return parsed fields for nested quotes', () => {
+    test('should return detected fields for nested quotes', () => {
       expect(parser.getFields(`{"foo":"bar: '[value=\\"42\\"]'"}`)).toEqual([`"foo":"bar: '[value=\\"42\\"]'"`]);
     });
 
@@ -294,6 +297,7 @@ describe('sortLogsResult', () => {
     dataFrame: new MutableDataFrame(),
     entry: '',
     hasAnsi: false,
+    hasUnescapedContent: false,
     labels: {},
     logLevel: LogLevel.info,
     raw: '',
@@ -311,6 +315,7 @@ describe('sortLogsResult', () => {
     dataFrame: new MutableDataFrame(),
     entry: '',
     hasAnsi: false,
+    hasUnescapedContent: false,
     labels: {},
     logLevel: LogLevel.info,
     raw: '',
@@ -350,5 +355,17 @@ describe('sortLogsResult', () => {
         hasUniqueLabels: false,
       });
     });
+  });
+});
+
+describe('checkLogsError()', () => {
+  const log = {
+    labels: {
+      __error__: 'Error Message',
+      foo: 'boo',
+    },
+  } as any as LogRowModel;
+  test('should return correct error if error is present', () => {
+    expect(checkLogsError(log)).toStrictEqual({ hasError: true, errorMessage: 'Error Message' });
   });
 });

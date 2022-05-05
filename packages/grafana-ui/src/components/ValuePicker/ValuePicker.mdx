@@ -1,0 +1,37 @@
+import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { ValuePicker } from './ValuePicker';
+
+<Meta title="MDX|Button" component={ValuePicker} />
+
+# ValuePicker
+
+A component that looks like a button but transforms into a select when clicked.
+
+### Example usage
+
+This component is currently used when adding [FieldOverrides](https://grafana.com/docs/grafana/latest/panels/field-options/) in the panel edit mode.
+
+```tsx
+<ValuePicker
+  label="Choose an option"
+  options={[
+    {
+      value: 'option1',
+      label: 'Option 1',
+    },
+    {
+      value: 'option2',
+      label: 'Option 2',
+    },
+    {
+      value: 'option3',
+      label: 'Option 3',
+    },
+  ]}
+  onChange={(value) => doThings}
+  variant="primary"
+  size="md"
+/>
+```
+
+<Props of={ValuePicker} />

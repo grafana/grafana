@@ -1,18 +1,29 @@
-import React from 'react';
-import { Portal } from '../Portal/Portal';
-import { cx } from 'emotion';
-import { withTheme } from '../../themes';
-import { IconName } from '../../types';
-import { Themeable } from '../../types';
-import { getModalStyles } from './getModalStyles';
-import { ModalHeader } from './ModalHeader';
-import { IconButton } from '../IconButton/IconButton';
+import { cx } from '@emotion/css';
+import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
+import { OverlayContainer, useOverlay } from '@react-aria/overlays';
+import React, { PropsWithChildren, useRef } from 'react';
 
-export interface Props extends Themeable {
+import { useTheme2 } from '../../themes';
+import { IconName } from '../../types';
+import { IconButton } from '../IconButton/IconButton';
+import { HorizontalGroup } from '../Layout/Layout';
+
+import { ModalHeader } from './ModalHeader';
+import { getModalStyles } from './getModalStyles';
+
+export interface Props {
+  /** @deprecated no longer used */
   icon?: IconName;
+  /** @deprecated no longer used */
+  iconTooltip?: string;
   /** Title for the modal or custom header element */
   title: string | JSX.Element;
   className?: string;
+  contentClassName?: string;
+  closeOnEscape?: boolean;
+  closeOnBackdropClick?: boolean;
+  trapFocus?: boolean;
 
   isOpen?: boolean;
   onDismiss?: () => void;
@@ -21,46 +32,104 @@ export interface Props extends Themeable {
   onClickBackdrop?: () => void;
 }
 
-export class UnthemedModal extends React.PureComponent<Props> {
-  onDismiss = () => {
-    if (this.props.onDismiss) {
-      this.props.onDismiss();
-    }
-  };
+export function Modal(props: PropsWithChildren<Props>) {
+  const {
+    title,
+    children,
+    isOpen = false,
+    closeOnEscape = true,
+    closeOnBackdropClick = true,
+    className,
+    contentClassName,
+    onDismiss,
+    onClickBackdrop,
+    trapFocus = true,
+  } = props;
+  const theme = useTheme2();
+  const styles = getModalStyles(theme);
 
-  onClickBackdrop = () => {
-    this.onDismiss();
-  };
+  const ref = useRef<HTMLDivElement>(null);
 
-  renderDefaultHeader(title: string) {
-    const { icon } = this.props;
+  // Handle interacting outside the dialog and pressing
+  // the Escape key to close the modal.
+  const { overlayProps, underlayProps } = useOverlay(
+    { isKeyboardDismissDisabled: closeOnEscape, isOpen, onClose: onDismiss },
+    ref
+  );
 
-    return <ModalHeader icon={icon} title={title} />;
+  // Get props for the dialog and its title
+  const { dialogProps, titleProps } = useDialog({}, ref);
+
+  if (!isOpen) {
+    return null;
   }
 
-  render() {
-    const { title, isOpen = false, theme, className } = this.props;
-    const styles = getModalStyles(theme);
+  const headerClass = cx(styles.modalHeader, typeof title !== 'string' && styles.modalHeaderWithTabs);
 
-    if (!isOpen) {
-      return null;
-    }
-
-    return (
-      <Portal>
-        <div className={cx(styles.modal, className)}>
-          <div className={styles.modalHeader}>
-            {typeof title === 'string' ? this.renderDefaultHeader(title) : title}
+  return (
+    <OverlayContainer>
+      <div
+        className={styles.modalBackdrop}
+        onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
+        {...underlayProps}
+      />
+      <FocusScope contain={trapFocus} autoFocus restoreFocus>
+        <div className={cx(styles.modal, className)} ref={ref} {...overlayProps} {...dialogProps}>
+          <div className={headerClass}>
+            {typeof title === 'string' && <DefaultModalHeader {...props} title={title} id={titleProps.id} />}
+            {
+              // FIXME: custom title components won't get an accessible title.
+              // Do we really want to support them or shall we just limit this ModalTabsHeader?
+              typeof title !== 'string' && title
+            }
             <div className={styles.modalHeaderClose}>
-              <IconButton surface="header" name="times" size="lg" onClick={this.onDismiss} />
+              <IconButton aria-label="Close dialogue" surface="header" name="times" size="xl" onClick={onDismiss} />
             </div>
           </div>
-          <div className={styles.modalContent}>{this.props.children}</div>
+          <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
         </div>
-        <div className={styles.modalBackdrop} onClick={this.props.onClickBackdrop || this.onClickBackdrop} />
-      </Portal>
-    );
-  }
+      </FocusScope>
+    </OverlayContainer>
+  );
 }
 
-export const Modal = withTheme(UnthemedModal);
+function ModalButtonRow({ leftItems, children }: { leftItems?: React.ReactNode; children: React.ReactNode }) {
+  const theme = useTheme2();
+  const styles = getModalStyles(theme);
+
+  if (leftItems) {
+    return (
+      <div className={styles.modalButtonRow}>
+        <HorizontalGroup justify="space-between">
+          <HorizontalGroup justify="flex-start" spacing="md">
+            {leftItems}
+          </HorizontalGroup>
+          <HorizontalGroup justify="flex-end" spacing="md">
+            {children}
+          </HorizontalGroup>
+        </HorizontalGroup>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.modalButtonRow}>
+      <HorizontalGroup justify="flex-end" spacing="md">
+        {children}
+      </HorizontalGroup>
+    </div>
+  );
+}
+
+Modal.ButtonRow = ModalButtonRow;
+
+interface DefaultModalHeaderProps {
+  id?: string;
+  title: string;
+  icon?: IconName;
+  iconTooltip?: string;
+}
+
+function DefaultModalHeader({ icon, iconTooltip, title, id }: DefaultModalHeaderProps): JSX.Element {
+  return <ModalHeader icon={icon} iconTooltip={iconTooltip} title={title} id={id} />;
+}

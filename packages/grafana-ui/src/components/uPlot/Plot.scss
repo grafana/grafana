@@ -1,0 +1,23 @@
+// importing the uPlot css so it will be bundled with the rest of the styling.
+@import 'uplot/dist/uPlot.min.css';
+
+.uplot {
+  font-family: inherit;
+}
+
+.u-select {
+  background: rgba(120, 120, 130, 0.2);
+}
+
+.u-cursor-x {
+  border-right: 1px dashed rgba(120, 120, 130, 0.5);
+}
+
+.u-cursor-y {
+  width: 100%;
+  border-bottom: 1px dashed rgba(120, 120, 130, 0.5);
+}
+
+.shared-crosshair:not(.plot-active) .u-cursor-pt {
+  display: none !important;
+}

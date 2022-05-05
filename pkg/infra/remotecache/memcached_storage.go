@@ -1,6 +1,7 @@
 package remotecache
 
 import (
+	"context"
 	"time"
 
 	"github.com/bradfitz/gomemcache/memcache"
@@ -28,7 +29,7 @@ func newItem(sid string, data []byte, expire int32) *memcache.Item {
 }
 
 // Set sets value to given key in the cache.
-func (s *memcachedStorage) Set(key string, val interface{}, expires time.Duration) error {
+func (s *memcachedStorage) Set(ctx context.Context, key string, val interface{}, expires time.Duration) error {
 	item := &cachedItem{Val: val}
 	bytes, err := encodeGob(item)
 	if err != nil {
@@ -45,7 +46,7 @@ func (s *memcachedStorage) Set(key string, val interface{}, expires time.Duratio
 }
 
 // Get gets value by given key in the cache.
-func (s *memcachedStorage) Get(key string) (interface{}, error) {
+func (s *memcachedStorage) Get(ctx context.Context, key string) (interface{}, error) {
 	memcachedItem, err := s.c.Get(key)
 	if err != nil && err.Error() == "memcache: cache miss" {
 		return nil, ErrCacheItemNotFound
@@ -66,6 +67,6 @@ func (s *memcachedStorage) Get(key string) (interface{}, error) {
 }
 
 // Delete delete a key from the cache
-func (s *memcachedStorage) Delete(key string) error {
+func (s *memcachedStorage) Delete(ctx context.Context, key string) error {
 	return s.c.Delete(key)
 }

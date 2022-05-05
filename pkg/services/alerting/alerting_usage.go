@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -20,19 +21,19 @@ type UsageStats struct {
 // UsageStatsQuerier returns usage stats about alert rules
 // configured in Grafana.
 type UsageStatsQuerier interface {
-	QueryUsageStats() (*UsageStats, error)
+	QueryUsageStats(context.Context) (*UsageStats, error)
 }
 
 // QueryUsageStats returns usage stats about alert rules
 // configured in Grafana.
-func (ae *AlertEngine) QueryUsageStats() (*UsageStats, error) {
+func (e *AlertEngine) QueryUsageStats(ctx context.Context) (*UsageStats, error) {
 	cmd := &models.GetAllAlertsQuery{}
-	err := ae.Bus.Dispatch(cmd)
+	err := e.sqlStore.GetAllAlertQueryHandler(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	dsUsage, err := ae.mapRulesToUsageStats(cmd.Result)
+	dsUsage, err := e.mapRulesToUsageStats(ctx, cmd.Result)
 	if err != nil {
 		return nil, err
 	}
@@ -42,13 +43,13 @@ func (ae *AlertEngine) QueryUsageStats() (*UsageStats, error) {
 	}, nil
 }
 
-func (ae *AlertEngine) mapRulesToUsageStats(rules []*models.Alert) (DatasourceAlertUsage, error) {
+func (e *AlertEngine) mapRulesToUsageStats(ctx context.Context, rules []*models.Alert) (DatasourceAlertUsage, error) {
 	// map of datasourceId type and frequency
 	typeCount := map[int64]int{}
 	for _, a := range rules {
-		dss, err := ae.parseAlertRuleModel(a.Settings)
+		dss, err := e.parseAlertRuleModel(a.Settings)
 		if err != nil {
-			ae.log.Debug("could not parse settings for alert rule", "id", a.Id)
+			e.log.Debug("could not parse settings for alert rule", "id", a.Id)
 			continue
 		}
 
@@ -61,8 +62,8 @@ func (ae *AlertEngine) mapRulesToUsageStats(rules []*models.Alert) (DatasourceAl
 	// map of datsource types and frequency
 	result := map[string]int{}
 	for k, v := range typeCount {
-		query := &models.GetDataSourceByIdQuery{Id: k}
-		err := ae.Bus.Dispatch(query)
+		query := &models.GetDataSourceQuery{Id: k}
+		err := e.sqlStore.GetDataSource(ctx, query)
 		if err != nil {
 			return map[string]int{}, nil
 		}
@@ -74,7 +75,7 @@ func (ae *AlertEngine) mapRulesToUsageStats(rules []*models.Alert) (DatasourceAl
 	return result, nil
 }
 
-func (ae *AlertEngine) parseAlertRuleModel(settings json.Marshaler) ([]int64, error) {
+func (e *AlertEngine) parseAlertRuleModel(settings json.Marshaler) ([]int64, error) {
 	datasourceIDs := []int64{}
 	model := alertJSONModel{}
 

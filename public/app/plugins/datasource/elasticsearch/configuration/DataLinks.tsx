@@ -1,19 +1,24 @@
+import { css } from '@emotion/css';
 import React from 'react';
-import { css } from 'emotion';
-import { Button, stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
+
+import { GrafanaTheme2, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
+import { Button, useStyles2 } from '@grafana/ui';
+
 import { DataLinkConfig } from '../types';
+
 import { DataLink } from './DataLink';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  infoText: css`
-    padding-bottom: ${theme.spacing.md};
-    color: ${theme.colors.textWeak};
-  `,
-  dataLink: css`
-    margin-bottom: ${theme.spacing.sm};
-  `,
-}));
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    infoText: css`
+      padding-bottom: ${theme.spacing(2)};
+      color: ${theme.colors.text.secondary};
+    `,
+    dataLink: css`
+      margin-bottom: ${theme.spacing(1)};
+    `,
+  };
+};
 
 type Props = {
   value?: DataLinkConfig[];
@@ -21,8 +26,7 @@ type Props = {
 };
 export const DataLinks = (props: Props) => {
   const { value, onChange } = props;
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   return (
     <>
@@ -32,15 +36,15 @@ export const DataLinks = (props: Props) => {
         Add links to existing fields. Links will be shown in log row details next to the field value.
       </div>
 
-      <div className="gf-form-group">
-        {value &&
-          value.map((field, index) => {
+      {value && value.length > 0 && (
+        <div className="gf-form-group">
+          {value.map((field, index) => {
             return (
               <DataLink
                 className={styles.dataLink}
                 key={index}
                 value={field}
-                onChange={newField => {
+                onChange={(newField) => {
                   const newDataLinks = [...value];
                   newDataLinks.splice(index, 1, newField);
                   onChange(newDataLinks);
@@ -61,23 +65,24 @@ export const DataLinks = (props: Props) => {
               />
             );
           })}
-        <div>
-          <Button
-            variant={'secondary'}
-            className={css`
-              margin-right: 10px;
-            `}
-            icon="plus"
-            onClick={event => {
-              event.preventDefault();
-              const newDataLinks = [...(value || []), { field: '', url: '' }];
-              onChange(newDataLinks);
-            }}
-          >
-            Add
-          </Button>
         </div>
-      </div>
+      )}
+
+      <Button
+        type="button"
+        variant={'secondary'}
+        className={css`
+          margin-right: 10px;
+        `}
+        icon="plus"
+        onClick={(event) => {
+          event.preventDefault();
+          const newDataLinks = [...(value || []), { field: '', url: '' }];
+          onChange(newDataLinks);
+        }}
+      >
+        Add
+      </Button>
     </>
   );
 };
