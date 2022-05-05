@@ -1,6 +1,7 @@
 package converter
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -19,6 +20,9 @@ func logf(format string, a ...interface{}) {
 func ReadPrometheusStyleResult(iter *jsoniter.Iterator) *backend.DataResponse {
 	var rsp *backend.DataResponse
 	status := "unknown"
+	errorType := ""
+	err := ""
+	warnings := []data.Notice{}
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		switch l1Field {
@@ -28,20 +32,56 @@ func ReadPrometheusStyleResult(iter *jsoniter.Iterator) *backend.DataResponse {
 		case "data":
 			rsp = readPrometheusData(iter)
 
-		// case "error":
-		// case "errorType":
-		// case "warnings":
+		case "error":
+			err = iter.ReadString()
+
+		case "errorType":
+			errorType = iter.ReadString()
+
+		case "warnings":
+			warnings = readWarnings(iter)
+
 		default:
 			v := iter.Read()
 			logf("[ROOT] TODO, support key: %s / %v\n", l1Field, v)
 		}
 	}
 
-	if status != "success" {
-		logf("ERROR: %s\n", status)
+	if status == "error" {
+		return &backend.DataResponse{
+			Error: fmt.Errorf("%s: %s", errorType, err),
+		}
+	}
+
+	if len(warnings) > 0 {
+		for _, frame := range rsp.Frames {
+			if frame.Meta == nil {
+				frame.Meta = &data.FrameMeta{}
+			}
+			frame.Meta.Notices = warnings
+		}
 	}
 
 	return rsp
+}
+
+func readWarnings(iter *jsoniter.Iterator) []data.Notice {
+	warnings := []data.Notice{}
+	if iter.WhatIsNext() != jsoniter.ArrayValue {
+		return warnings
+	}
+
+	for iter.ReadArray() {
+		if iter.WhatIsNext() == jsoniter.StringValue {
+			notice := data.Notice{
+				Severity: data.NoticeSeverityWarning,
+				Text:     iter.ReadString(),
+			}
+			warnings = append(warnings, notice)
+		}
+	}
+
+	return warnings
 }
 
 func readPrometheusData(iter *jsoniter.Iterator) *backend.DataResponse {
@@ -67,11 +107,15 @@ func readPrometheusData(iter *jsoniter.Iterator) *backend.DataResponse {
 		case "result":
 			switch resultType {
 			case "matrix":
-				rsp = readMatrixOrVector(iter)
+				rsp = readMatrixOrVector(iter, resultType)
 			case "vector":
-				rsp = readMatrixOrVector(iter)
+				rsp = readMatrixOrVector(iter, resultType)
 			case "streams":
 				rsp = readStream(iter)
+			case "string":
+				rsp = readString(iter)
+			case "scalar":
+				rsp = readScalar(iter)
 			default:
 				iter.Skip()
 				rsp = &backend.DataResponse{
@@ -193,6 +237,9 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 			delete(labels, "__name__")
 			valueField.Labels = labels
 			frame = data.NewFrame("", timeField, valueField)
+			frame.Meta = &data.FrameMeta{
+				Custom: resultTypeToCustomMeta("exemplar"),
+			}
 			for iter.ReadArray() {
 				for l2Field := iter.ReadObject(); l2Field != ""; l2Field = iter.ReadObject() {
 					switch l2Field {
@@ -249,13 +296,66 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 	return frame, pairs
 }
 
-func readMatrixOrVector(iter *jsoniter.Iterator) *backend.DataResponse {
+func readString(iter *jsoniter.Iterator) *backend.DataResponse {
+	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
+	timeField.Name = data.TimeSeriesTimeFieldName
+	valueField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	valueField.Name = data.TimeSeriesValueFieldName
+	valueField.Labels = data.Labels{}
+
+	iter.ReadArray()
+	t := iter.ReadFloat64()
+	iter.ReadArray()
+	v := iter.ReadString()
+	iter.ReadArray()
+
+	tt := timeFromFloat(t)
+	timeField.Append(tt)
+	valueField.Append(v)
+
+	frame := data.NewFrame("", timeField, valueField)
+	frame.Meta = &data.FrameMeta{
+		Type:   data.FrameTypeTimeSeriesMany,
+		Custom: resultTypeToCustomMeta("string"),
+	}
+
+	return &backend.DataResponse{
+		Frames: []*data.Frame{frame},
+	}
+}
+
+func readScalar(iter *jsoniter.Iterator) *backend.DataResponse {
+	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
+	timeField.Name = data.TimeSeriesTimeFieldName
+	valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
+	valueField.Name = data.TimeSeriesValueFieldName
+	valueField.Labels = data.Labels{}
+
+	t, v, err := readTimeValuePair(iter)
+	if err == nil {
+		timeField.Append(t)
+		valueField.Append(v)
+	}
+
+	frame := data.NewFrame("", timeField, valueField)
+	frame.Meta = &data.FrameMeta{
+		Type:   data.FrameTypeTimeSeriesMany,
+		Custom: resultTypeToCustomMeta("scalar"),
+	}
+
+	return &backend.DataResponse{
+		Frames: []*data.Frame{frame},
+	}
+}
+
+func readMatrixOrVector(iter *jsoniter.Iterator, resultType string) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
 	for iter.ReadArray() {
 		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 		timeField.Name = data.TimeSeriesTimeFieldName
 		valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
+		valueField.Name = data.TimeSeriesValueFieldName
 		valueField.Labels = data.Labels{}
 
 		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
@@ -282,17 +382,10 @@ func readMatrixOrVector(iter *jsoniter.Iterator) *backend.DataResponse {
 			}
 		}
 
-		name, ok := valueField.Labels["__name__"]
-		if ok {
-			valueField.Name = name
-			delete(valueField.Labels, "__name__")
-		} else {
-			valueField.Name = data.TimeSeriesValueFieldName
-		}
-
 		frame := data.NewFrame("", timeField, valueField)
 		frame.Meta = &data.FrameMeta{
-			Type: data.FrameTypeTimeSeriesMany,
+			Type:   data.FrameTypeTimeSeriesMany,
+			Custom: resultTypeToCustomMeta(resultType),
 		}
 		rsp.Frames = append(rsp.Frames, frame)
 	}
@@ -315,7 +408,7 @@ func readTimeValuePair(iter *jsoniter.Iterator) (time.Time, float64, error) {
 func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
-	labelsField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	labelsField := data.NewFieldFromFieldType(data.FieldTypeJSON, 0)
 	labelsField.Name = "__labels" // avoid automatically spreading this by labels
 
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
@@ -329,14 +422,20 @@ func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 	tsField.Name = "TS"
 
 	labels := data.Labels{}
-	labelString := labels.String()
+	labelJson, err := labelsToRawJson(labels)
+	if err != nil {
+		return &backend.DataResponse{Error: err}
+	}
 
 	for iter.ReadArray() {
 		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 			switch l1Field {
 			case "stream":
 				iter.ReadVal(&labels)
-				labelString = labels.String()
+				labelJson, err = labelsToRawJson(labels)
+				if err != nil {
+					return &backend.DataResponse{Error: err}
+				}
 
 			case "values":
 				for iter.ReadArray() {
@@ -348,7 +447,7 @@ func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 
 					t := timeFromLokiString(ts)
 
-					labelsField.Append(labelString)
+					labelsField.Append(labelJson)
 					timeField.Append(t)
 					lineField.Append(line)
 					tsField.Append(ts)
@@ -362,6 +461,10 @@ func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 	rsp.Frames = append(rsp.Frames, frame)
 
 	return rsp
+}
+
+func resultTypeToCustomMeta(resultType string) map[string]string {
+	return map[string]string{"resultType": resultType}
 }
 
 func timeFromFloat(fv float64) time.Time {
@@ -383,4 +486,14 @@ func timeFromLokiString(str string) time.Time {
 	ss, _ := strconv.ParseInt(str[0:10], 10, 64)
 	ns, _ := strconv.ParseInt(str[10:], 10, 64)
 	return time.Unix(ss, ns).UTC()
+}
+
+func labelsToRawJson(labels data.Labels) (json.RawMessage, error) {
+	// data.Labels when converted to JSON keep the fields sorted
+	bytes, err := jsoniter.Marshal(labels)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.RawMessage(bytes), nil
 }

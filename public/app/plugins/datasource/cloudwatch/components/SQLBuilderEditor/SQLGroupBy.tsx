@@ -100,7 +100,6 @@ const GroupByItem: React.FC<GroupByItemProps> = (props) => {
         options={options}
         allowCustomValue
         onChange={({ value }) => value && onChange(setGroupByField(value))}
-        menuShouldPortal
       />
 
       <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />

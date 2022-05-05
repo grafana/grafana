@@ -138,9 +138,9 @@ func ProvideTeamPermissions(
 	return resourcepermissions.New(options, cfg, router, ac, store, sql)
 }
 
-var DashboardViewActions = []string{accesscontrol.ActionDashboardsRead}
-var DashboardEditActions = append(DashboardViewActions, []string{accesscontrol.ActionDashboardsWrite, accesscontrol.ActionDashboardsDelete}...)
-var DashboardAdminActions = append(DashboardEditActions, []string{accesscontrol.ActionDashboardsPermissionsRead, accesscontrol.ActionDashboardsPermissionsWrite}...)
+var DashboardViewActions = []string{dashboards.ActionDashboardsRead}
+var DashboardEditActions = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete}...)
+var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
 
 func ProvideDashboardPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore,
@@ -203,7 +203,7 @@ func ProvideDashboardPermissions(
 }
 
 var FolderViewActions = []string{dashboards.ActionFoldersRead}
-var FolderEditActions = append(FolderViewActions, []string{dashboards.ActionFoldersWrite, dashboards.ActionFoldersDelete, accesscontrol.ActionDashboardsCreate}...)
+var FolderEditActions = append(FolderViewActions, []string{dashboards.ActionFoldersWrite, dashboards.ActionFoldersDelete, dashboards.ActionDashboardsCreate}...)
 var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)
 
 func ProvideFolderPermissions(
