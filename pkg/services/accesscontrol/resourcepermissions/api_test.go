@@ -452,7 +452,7 @@ func TestApi_InheritSolver(t *testing.T) {
 			}
 			// Add the inheritance solver "resourceID -> [parentID]" "orphanedID -> []"
 			service, sql := setupTestEnvironment(t, userPermissions,
-				withInheritance(testOptions, testInheritedScopeSolver, testInheritedScopePrefixes),
+				withInheritance(testOptions, testInheritedScopeSolver),
 			)
 			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{
 				1: accesscontrol.GroupScopesByAction(userPermissions),
@@ -471,7 +471,7 @@ func TestApi_InheritSolver(t *testing.T) {
 	}
 }
 
-func withInheritance(options Options, solver InheritedScopesSolver, inheritedPrefixes []string) Options {
+func withInheritance(options Options, solver InheritedScopesSolver) Options {
 	options.InheritedScopesSolver = solver
 	return options
 }
@@ -516,7 +516,6 @@ var testOptions = Options{
 	},
 }
 
-var testInheritedScopePrefixes = []string{"parents:id:"}
 var testInheritedScopeSolver = func(ctx context.Context, orgID int64, id string) ([]string, error) {
 	if id == "resourceID" { // Has parent
 		return []string{"parents:id:parentID"}, nil
