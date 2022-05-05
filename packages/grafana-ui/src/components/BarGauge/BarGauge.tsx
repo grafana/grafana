@@ -115,7 +115,7 @@ export class BarGauge extends PureComponent<Props> {
 
     return (
       <div style={styles.wrapper}>
-        {showLabels === 'always' && (
+        {showLabels !== 'never' && (
           <FormattedValueDisplay
             data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
             value={value}
@@ -145,7 +145,15 @@ export class BarGauge extends PureComponent<Props> {
     const valueColor = getValueColor(this.props);
 
     const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
-    const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation, text);
+    const valueStyles = getValueStyles(
+      valueToBaseSizeOn,
+      valueColor,
+      valueWidth,
+      valueHeight,
+      orientation,
+      showLabels,
+      text
+    );
 
     const containerStyles: CSSProperties = {
       width: `${wrapperWidth}px`,
@@ -193,7 +201,7 @@ export class BarGauge extends PureComponent<Props> {
     return (
       <div style={containerStyles}>
         {cells}
-        {showLabels === 'always' && (
+        {showLabels !== 'never' && (
           <FormattedValueDisplay
             data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
             value={value}
@@ -446,7 +454,7 @@ export function getValuePercent(value: number, minValue: number, maxValue: numbe
  * Only exported to for unit test
  */
 export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
-  const { displayMode, field, value, alignmentFactors, orientation, theme, text } = props;
+  const { displayMode, field, value, alignmentFactors, orientation, theme, text, showLabels } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
   const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
@@ -455,7 +463,15 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   const valueColor = getValueColor(props);
 
   const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
-  const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation, text);
+  const valueStyles = getValueStyles(
+    valueToBaseSizeOn,
+    valueColor,
+    valueWidth,
+    valueHeight,
+    orientation,
+    showLabels,
+    text
+  );
 
   const isBasic = displayMode === 'basic';
   const wrapperStyles: CSSProperties = {
@@ -618,6 +634,7 @@ function getValueStyles(
   width: number,
   height: number,
   orientation: VizOrientation,
+  showLabels?: string,
   text?: TextDisplayOptions
 ): CSSProperties {
   const styles: CSSProperties = {
@@ -645,6 +662,15 @@ function getValueStyles(
     styles.paddingRight = `${VALUE_LEFT_PADDING}px`;
     // Need to remove the left padding from the text width constraints
     textWidth -= VALUE_LEFT_PADDING;
+  }
+
+  if (showLabels === 'overlay') {
+    styles.position = 'absolute';
+    styles.top = 0;
+    styles.right = 0;
+    styles.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    styles.height = '100%';
+    styles.width = 'auto';
   }
 
   return styles;
