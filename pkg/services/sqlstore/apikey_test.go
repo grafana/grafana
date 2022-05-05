@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -187,7 +186,7 @@ func TestSQLStore_GetAPIKeys(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
+			store := InitTestDB(t, InitTestDBOpt{})
 			seedApiKeys(t, store, 10)
 
 			query := &models.GetApiKeysQuery{OrgId: 1, User: tt.user}

@@ -202,9 +202,12 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
 	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
+	features := featuremgmt.WithFeatures()
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	service := dashboardservice.ProvideDashboardService(
-		setting.NewCfg(), dashboardStore, dashAlertExtractor,
-		featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+		cfg, dashboardStore, dashAlertExtractor,
+		features, acmock.NewPermissionsServicesMock(),
 	)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
@@ -218,6 +221,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 
 	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures()
+	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	permissionsServices := acmock.NewPermissionsServicesMock()
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
 
@@ -317,17 +321,20 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		sqlStore := sqlstore.InitTestDB(t)
 		guardian.InitLegacyGuardian(sqlStore)
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
+		features := featuremgmt.WithFeatures()
+		cfg := setting.NewCfg()
+		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		dashboardService := dashboardservice.ProvideDashboardService(
-			setting.NewCfg(), dashboardStore, nil,
-			featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
+			cfg, dashboardStore, nil,
+			features, acmock.NewPermissionsServicesMock(),
 		)
 		ac := acmock.New()
 		service := LibraryElementService{
-			Cfg:      setting.NewCfg(),
+			Cfg:      cfg,
 			SQLStore: sqlStore,
 			folderService: dashboardservice.ProvideFolderService(
-				setting.NewCfg(), dashboardService, dashboardStore, nil,
-				featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(), ac, nil,
+				cfg, dashboardService, dashboardStore, nil,
+				features, acmock.NewPermissionsServicesMock(), ac, nil,
 			),
 		}
 

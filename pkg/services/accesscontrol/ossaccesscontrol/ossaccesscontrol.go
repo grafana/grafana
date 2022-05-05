@@ -155,7 +155,7 @@ func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser
 	builtInRoles := []string{string(user.OrgRole)}
 
 	// With built-in role simplifying, inheritance is performed upon role registration.
-	if !ac.features.IsEnabled(featuremgmt.FlagAccesscontrolBuiltins) {
+	if ac.IsDisabled() {
 		for _, br := range user.OrgRole.Children() {
 			builtInRoles = append(builtInRoles, string(br))
 		}
