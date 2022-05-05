@@ -43,7 +43,7 @@ type DashboardServiceImpl struct {
 func ProvideDashboardService(
 	cfg *setting.Cfg, store m.Store, dashAlertExtractor alerting.DashAlertExtractor,
 	features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
-	sql *sqlstore.SQLStore, ac accesscontrol.AccessControl,
+	sql sqlstore.Store, ac accesscontrol.AccessControl,
 ) *DashboardServiceImpl {
 	ac.RegisterScopeAttributeResolver(m.NewDashboardIDScopeResolver(sql, store))
 	ac.RegisterScopeAttributeResolver(m.NewDashboardUIDScopeResolver(sql, store))
