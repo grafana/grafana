@@ -39,7 +39,6 @@ type AccessControlDashboardGuardian struct {
 	log                log.Logger
 	dashboardID        int64
 	dashboard          *models.Dashboard
-	parentFolderUID    string
 	user               *models.SignedInUser
 	store              sqlstore.Store
 	ac                 accesscontrol.AccessControl
