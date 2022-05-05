@@ -6,27 +6,31 @@ import (
 )
 
 // Base represents the static information about a specific error.
-// The Reason is used to determine the status code that should be
-// returned for the error, and the MessageID is passed to the caller
-// to serve as the base for user facing error messages.
-//
-// MessageID should be structured as component.error-brief, for example
-//   login.failed-authentication
-//   dashboards.validation-error
-//   dashboards.uid-already-exists
+// Always use NewBase to create new instances of Base.
 type Base struct {
-	Reason        StatusReason
-	MessageID     string
-	PublicMessage string
-	LogLevel      LogLevel
+	// Because Base is typically instantiated as a package or global
+	// variable, having private members reduces the probability of a
+	// bug messing with the error base.
+	reason        StatusReason
+	messageID     string
+	publicMessage string
+	logLevel      LogLevel
 }
 
 // NewBase initializes a Base that is used to construct Error:s.
+// The reason is used to determine the status code that should be
+// returned for the error, and the msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.error-brief, for example
+//   login.failed-authentication
+//   dashboards.validation-error
+//   dashboards.uid-already-exists
 func NewBase(reason StatusReason, msgID string, opts ...BaseOpt) Base {
 	b := Base{
-		Reason:    reason,
-		MessageID: msgID,
-		LogLevel:  reason.Status().LogLevel(),
+		reason:    reason,
+		messageID: msgID,
+		logLevel:  reason.Status().LogLevel(),
 	}
 
 	for _, opt := range opts {
@@ -44,7 +48,7 @@ type BaseOpt func(Base) Base
 // Used as a functional option to NewBase.
 func WithLogLevel(lvl LogLevel) BaseOpt {
 	return func(b Base) Base {
-		b.LogLevel = lvl
+		b.logLevel = lvl
 		return b
 	}
 }
@@ -55,7 +59,7 @@ func WithLogLevel(lvl LogLevel) BaseOpt {
 // Used as a functional option to NewBase.
 func WithPublicMessage(message string) BaseOpt {
 	return func(b Base) Base {
-		b.PublicMessage = message
+		b.publicMessage = message
 		return b
 	}
 }
@@ -67,12 +71,12 @@ func (b Base) Errorf(format string, args ...interface{}) Error {
 	err := fmt.Errorf(format, args...)
 
 	return Error{
-		Reason:        b.Reason,
+		Reason:        b.reason,
 		LogMessage:    err.Error(),
-		PublicMessage: b.PublicMessage,
-		MessageID:     b.MessageID,
+		PublicMessage: b.publicMessage,
+		MessageID:     b.messageID,
 		Underlying:    errors.Unwrap(err),
-		LogLevel:      b.LogLevel,
+		LogLevel:      b.logLevel,
 	}
 }
 

@@ -26,7 +26,7 @@ type TemplateData struct {
 // This is useful where the public payload is populated with fields that
 // should be present in the internal error representation.
 func (b Base) Template(pattern string, opts ...TemplateOpt) (Template, error) {
-	tmpl, err := template.New(b.MessageID).Parse(pattern)
+	tmpl, err := template.New(b.messageID + "~private").Parse(pattern)
 	if err != nil {
 		return Template{}, err
 	}
@@ -67,15 +67,15 @@ func (b Base) MustTemplate(pattern string, opts ...TemplateOpt) Template {
 func WithPublic(pattern string) TemplateOpt {
 	return func(t Template) (Template, error) {
 		var err error
-		t.publicTemplate, err = template.New(t.Base.MessageID + ".pub").Parse(pattern)
+		t.publicTemplate, err = template.New(t.Base.messageID + "~public").Parse(pattern)
 		return t, err
 	}
 }
 
 // WithPublicFromLog copies over the template for the log message to be
 // used for the user facing error message.
-// References to TemplateData.Error  or TemplateData.Private will not be
-// evaluated for the public message.
+// TemplateData.Error and TemplateData.Private will not be populated
+// when rendering the public message.
 //
 // Used as a functional option to Base.Template.
 func WithPublicFromLog() TemplateOpt {
@@ -86,7 +86,7 @@ func WithPublicFromLog() TemplateOpt {
 }
 
 // Build returns a new Error based on the base Template and the provided
-// TemplateData, embedding the error in TemplateData.Error if set.
+// TemplateData, wrapping the error in TemplateData.Error if set.
 //
 // Build can fail and return an error that is not of type Error.
 func (t Template) Build(data TemplateData) error {
@@ -108,13 +108,10 @@ func (t Template) Build(data TemplateData) error {
 		}
 	}
 
-	return Error{
-		Reason:        t.Base.Reason,
-		MessageID:     t.Base.MessageID,
-		LogLevel:      t.Base.LogLevel,
-		LogMessage:    buf.String(),
-		Underlying:    data.Error,
-		PublicMessage: pubBuf.String(),
-		PublicPayload: data.Public,
-	}
+	e := t.Base.Errorf("%s", buf.String())
+	e.PublicMessage = pubBuf.String()
+	e.PublicPayload = data.Public
+	e.Underlying = data.Error
+
+	return e
 }
