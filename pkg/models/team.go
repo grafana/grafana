@@ -2,8 +2,11 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"time"
 )
+
+const MIN_ALLOWED_USER_DEFINED_TEAM_ID = 20
 
 // Typed errors
 var (
@@ -13,6 +16,7 @@ var (
 	ErrLastTeamAdmin                        = errors.New("not allowed to remove last admin")
 	ErrNotAllowedToUpdateTeam               = errors.New("user not allowed to update team")
 	ErrNotAllowedToUpdateTeamInDifferentOrg = errors.New("user not allowed to update team in another org")
+	ErrForbiddenUserDefinedTeamID = fmt.Errorf("User defined team identifiers should be greater than %d", MIN_ALLOWED_USER_DEFINED_TEAM_ID)
 )
 
 // Team model
@@ -36,6 +40,13 @@ type CreateTeamCommand struct {
 	OrgId int64  `json:"-"`
 
 	Result Team `json:"-"`
+}
+
+func (cmd CreateTeamCommand) Validate() error {
+	if cmd.ID != 0 && cmd.ID < MIN_ALLOWED_USER_DEFINED_TEAM_ID {
+		return ErrForbiddenUserDefinedTeamID
+	}
+	return nil
 }
 
 type UpdateTeamCommand struct {

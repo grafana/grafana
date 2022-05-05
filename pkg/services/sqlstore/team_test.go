@@ -357,6 +357,7 @@ func TestCreateTeam(t *testing.T) {
 	teamName := "team1"
 
 	t.Run("creating a team with a user defined ID it should succeeds", func(t *testing.T) {
+		// create a team: reserve team identifier 1
 		team1, err := sqlStore.CreateTeamWithID(teamName, "", testOrgID, teamID)
 		require.NoError(t, err)
 		assert.Equal(t, team1.Id, teamID)
@@ -374,7 +375,15 @@ func TestCreateTeam(t *testing.T) {
 		})
 
 		t.Run("creating a team with a sequential ID that is taken, it should succeed", func(t *testing.T) {
-			_, err := sqlStore.CreateTeam("team3", "", testOrgID)
+			// create two more teams: reserve team identifiers 2 & 3
+			for i := 2; i < 3; i++ {
+				teamID := int64(i)
+				_, err := sqlStore.CreateTeamWithID(fmt.Sprintf("team%d", i), "", testOrgID, teamID)
+				require.NoError(t, err)
+			}
+
+			// create a team without providing identifier 
+			_, err := sqlStore.CreateTeam("team4", "", testOrgID)
 			require.NoError(t, err)
 		})
 	})

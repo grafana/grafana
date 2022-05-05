@@ -152,6 +152,40 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			r := hs.CreateTeam(c)
 			assert.Equal(t, 200, r.Status())
 			assert.False(t, stub.warnCalled)
+
+			t.Run("with not allowed user defined team identifier", func(t *testing.T) {
+				stub := &testLogger{}
+				c := &models.ReqContext{
+					Context:      &web.Context{Req: req},
+					SignedInUser: &models.SignedInUser{UserId: 42},
+					Logger:       stub,
+				}
+				c.OrgRole = models.ROLE_EDITOR
+				c.Req.Body = mockRequestBody(models.CreateTeamCommand{
+					Name: fmt.Sprintf("%s-%d", teamName, models.MIN_ALLOWED_USER_DEFINED_TEAM_ID - 1),
+					ID: models.MIN_ALLOWED_USER_DEFINED_TEAM_ID - 1,
+				})
+				c.Req.Header.Add("Content-Type", "application/json")
+				r := hs.CreateTeam(c)
+				assert.Equal(t, http.StatusBadRequest, r.Status())
+			})
+
+			t.Run("with allowed user defined team identifier", func(t *testing.T) {
+				stub := &testLogger{}
+				c := &models.ReqContext{
+					Context:      &web.Context{Req: req},
+					SignedInUser: &models.SignedInUser{UserId: 42},
+					Logger:       stub,
+				}
+				c.OrgRole = models.ROLE_EDITOR
+				c.Req.Body = mockRequestBody(models.CreateTeamCommand{
+					Name: fmt.Sprintf("%s-%d", teamName, models.MIN_ALLOWED_USER_DEFINED_TEAM_ID),
+					ID: models.MIN_ALLOWED_USER_DEFINED_TEAM_ID,
+				})
+				c.Req.Header.Add("Content-Type", "application/json")
+				r := hs.CreateTeam(c)
+				assert.Equal(t, http.StatusOK, r.Status())
+			})
 		})
 	})
 }
