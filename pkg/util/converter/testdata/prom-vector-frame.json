@@ -3,7 +3,10 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many"
+          "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          }
         },
         "fields": [
           {
@@ -21,8 +24,8 @@
             },
             "labels": {
               "__name__": "up",
-              "job": "prometheus",
-              "instance": "localhost:9090"
+              "instance": "localhost:9090",
+              "job": "prometheus"
             }
           }
         ]
@@ -41,7 +44,10 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many"
+          "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          }
         },
         "fields": [
           {
@@ -58,9 +64,9 @@
               "frame": "float64"
             },
             "labels": {
-              "job": "node",
+              "__name__": "up",
               "instance": "localhost:9100",
-              "__name__": "up"
+              "job": "node"
             }
           }
         ]
@@ -79,7 +85,10 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many"
+          "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          }
         },
         "fields": [
           {
@@ -124,7 +133,10 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many"
+          "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          }
         },
         "fields": [
           {
@@ -169,7 +181,10 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many"
+          "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          }
         },
         "fields": [
           {

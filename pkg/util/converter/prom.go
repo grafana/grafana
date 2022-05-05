@@ -107,9 +107,9 @@ func readPrometheusData(iter *jsoniter.Iterator) *backend.DataResponse {
 		case "result":
 			switch resultType {
 			case "matrix":
-				rsp = readMatrixOrVector(iter)
+				rsp = readMatrixOrVector(iter, resultType)
 			case "vector":
-				rsp = readMatrixOrVector(iter)
+				rsp = readMatrixOrVector(iter, resultType)
 			case "streams":
 				rsp = readStream(iter)
 			case "string":
@@ -237,6 +237,9 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 			delete(labels, "__name__")
 			valueField.Labels = labels
 			frame = data.NewFrame("", timeField, valueField)
+			frame.Meta = &data.FrameMeta{
+				Custom: resultTypeToCustomMeta("exemplar"),
+			}
 			for iter.ReadArray() {
 				for l2Field := iter.ReadObject(); l2Field != ""; l2Field = iter.ReadObject() {
 					switch l2Field {
@@ -312,7 +315,8 @@ func readString(iter *jsoniter.Iterator) *backend.DataResponse {
 
 	frame := data.NewFrame("", timeField, valueField)
 	frame.Meta = &data.FrameMeta{
-		Type: data.FrameTypeTimeSeriesMany,
+		Type:   data.FrameTypeTimeSeriesMany,
+		Custom: resultTypeToCustomMeta("string"),
 	}
 
 	return &backend.DataResponse{
@@ -335,7 +339,8 @@ func readScalar(iter *jsoniter.Iterator) *backend.DataResponse {
 
 	frame := data.NewFrame("", timeField, valueField)
 	frame.Meta = &data.FrameMeta{
-		Type: data.FrameTypeTimeSeriesMany,
+		Type:   data.FrameTypeTimeSeriesMany,
+		Custom: resultTypeToCustomMeta("scalar"),
 	}
 
 	return &backend.DataResponse{
@@ -343,7 +348,7 @@ func readScalar(iter *jsoniter.Iterator) *backend.DataResponse {
 	}
 }
 
-func readMatrixOrVector(iter *jsoniter.Iterator) *backend.DataResponse {
+func readMatrixOrVector(iter *jsoniter.Iterator, resultType string) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
 
 	for iter.ReadArray() {
@@ -379,7 +384,8 @@ func readMatrixOrVector(iter *jsoniter.Iterator) *backend.DataResponse {
 
 		frame := data.NewFrame("", timeField, valueField)
 		frame.Meta = &data.FrameMeta{
-			Type: data.FrameTypeTimeSeriesMany,
+			Type:   data.FrameTypeTimeSeriesMany,
+			Custom: resultTypeToCustomMeta(resultType),
 		}
 		rsp.Frames = append(rsp.Frames, frame)
 	}
@@ -455,6 +461,10 @@ func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
 	rsp.Frames = append(rsp.Frames, frame)
 
 	return rsp
+}
+
+func resultTypeToCustomMeta(resultType string) map[string]string {
+	return map[string]string{"resultType": resultType}
 }
 
 func timeFromFloat(fv float64) time.Time {
