@@ -23,11 +23,11 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
     container: css`
       label: Icon;
       display: inline-block;
+      line-height: 0;
     `,
     icon: css`
       vertical-align: middle;
       display: inline-block;
-      margin-bottom: ${theme.spacing.xxs};
       fill: currentColor;
     `,
     orange: css`
