@@ -139,7 +139,6 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
         <>
           <InlineField label="Unit" {...inlineFieldProps} data-testid="unit-select">
             <Select
-              menuShouldPortal
               id={`ES-query-${query.refId}_metric-${metric.id}-unit`}
               onChange={(e) => dispatch(changeMetricSetting({ metric, settingName: 'unit', newValue: e.value }))}
               options={rateAggUnitOptions}
@@ -149,7 +148,6 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
 
           <InlineField label="Mode" {...inlineFieldProps} data-testid="mode-select">
             <Select
-              menuShouldPortal
               id={`ES-query-${query.refId}_metric-${metric.id}-mode`}
               onChange={(e) => dispatch(changeMetricSetting({ metric, settingName: 'mode', newValue: e.value }))}
               options={rateAggModeOptions}
