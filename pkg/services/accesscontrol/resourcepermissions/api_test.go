@@ -473,7 +473,6 @@ func TestApi_InheritSolver(t *testing.T) {
 
 func withInheritance(options Options, solver InheritedScopesSolver, inheritedPrefixes []string) Options {
 	options.InheritedScopesSolver = solver
-	options.InheritedScopePrefixes = inheritedPrefixes
 	return options
 }
 
