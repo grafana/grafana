@@ -582,12 +582,12 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []*accesscontrol.Permission) (*AccessControlDashboardGuardian, *models.Dashboard) {
 	t.Helper()
 	store := sqlstore.InitTestDB(t)
-
 	toSave := models.NewDashboard(uid)
 	toSave.SetUid(uid)
 
+	dashStore := dashdb.ProvideDashboardStore(store)
 	// seed dashboard
-	dash, err := dashdb.ProvideDashboardStore(store).SaveDashboard(models.SaveDashboardCommand{
+	dash, err := dashStore.SaveDashboard(models.SaveDashboardCommand{
 		Dashboard: toSave.Data,
 		UserId:    1,
 		OrgId:     1,
@@ -595,6 +595,12 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []*acc
 	})
 	require.NoError(t, err)
 	ac := accesscontrolmock.New().WithPermissions(permissions)
+
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(store, dashStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(store, dashStore))
+
 	services, err := ossaccesscontrol.ProvidePermissionsServices(setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store))
 	require.NoError(t, err)
 
