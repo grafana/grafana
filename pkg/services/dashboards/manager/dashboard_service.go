@@ -15,7 +15,6 @@ import (
 	m "github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -43,10 +42,10 @@ type DashboardServiceImpl struct {
 func ProvideDashboardService(
 	cfg *setting.Cfg, store m.Store, dashAlertExtractor alerting.DashAlertExtractor,
 	features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
-	sql sqlstore.Store, ac accesscontrol.AccessControl,
+	ac accesscontrol.AccessControl,
 ) *DashboardServiceImpl {
-	ac.RegisterScopeAttributeResolver(m.NewDashboardIDScopeResolver(sql, store))
-	ac.RegisterScopeAttributeResolver(m.NewDashboardUIDScopeResolver(sql, store))
+	ac.RegisterScopeAttributeResolver(m.NewDashboardIDScopeResolver(store))
+	ac.RegisterScopeAttributeResolver(m.NewDashboardUIDScopeResolver(store))
 
 	return &DashboardServiceImpl{
 		cfg:                  cfg,
