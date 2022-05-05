@@ -1,10 +1,9 @@
-package streaming
+package querydata
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"regexp"
 	"time"
 
@@ -16,11 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/streaming/client"
-	"github.com/grafana/grafana/pkg/util/converter"
 	"github.com/grafana/grafana/pkg/util/maputil"
-	jsoniter "github.com/json-iterator/go"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -36,7 +33,7 @@ type ExemplarEvent struct {
 	Labels map[string]string
 }
 
-type Streaming struct {
+type QueryData struct {
 	intervalCalculator intervalv2.Calculator
 	tracer             tracing.Tracer
 	getClient          clientGetter
@@ -53,7 +50,7 @@ func New(
 	tracer tracing.Tracer,
 	settings backend.DataSourceInstanceSettings,
 	plog log.Logger,
-) (*Streaming, error) {
+) (*QueryData, error) {
 	var jsonData map[string]interface{}
 	if err := json.Unmarshal(settings.JSONData, &jsonData); err != nil {
 		return nil, fmt.Errorf("error reading settings: %w", err)
@@ -70,7 +67,7 @@ func New(
 		return nil, err
 	}
 
-	return &Streaming{
+	return &QueryData{
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracer,
 		log:                plog,
@@ -81,7 +78,7 @@ func New(
 	}, nil
 }
 
-func (s *Streaming) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	fromAlert := req.Headers["FromAlert"] == "true"
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
@@ -97,7 +94,7 @@ func (s *Streaming) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.Que
 		if err != nil {
 			return &result, err
 		}
-		r, err := s.runQuery(ctx, client, query)
+		r, err := s.fetch(ctx, client, query)
 		if err != nil {
 			return &result, err
 		}
@@ -111,7 +108,7 @@ func (s *Streaming) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.Que
 	return &result, nil
 }
 
-func (s *Streaming) runQuery(ctx context.Context, client *client.Client, q *models.Query) (*backend.DataResponse, error) {
+func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.Query) (*backend.DataResponse, error) {
 	s.log.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr)
 
 	traceCtx, span := s.trace(ctx, q)
@@ -153,48 +150,31 @@ func (s *Streaming) runQuery(ctx context.Context, client *client.Client, q *mode
 	return response, nil
 }
 
-func (s *Streaming) rangeQuery(ctx context.Context, c *client.Client, q *models.Query) (*backend.DataResponse, error) {
+func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query) (*backend.DataResponse, error) {
 	res, err := c.QueryRange(ctx, q)
 	if err != nil {
 		return nil, err
 	}
-	return s.parseResponse(ctx, q, res, models.RangeQueryType)
+	return s.parseResponse(ctx, q, res)
 }
 
-func (s *Streaming) instantQuery(ctx context.Context, c *client.Client, q *models.Query) (*backend.DataResponse, error) {
+func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query) (*backend.DataResponse, error) {
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
 		return nil, err
 	}
-	return s.parseResponse(ctx, q, res, models.InstantQueryType)
+	return s.parseResponse(ctx, q, res)
 }
 
-func (s *Streaming) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query) (*backend.DataResponse, error) {
+func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query) (*backend.DataResponse, error) {
 	res, err := c.QueryExemplars(ctx, q)
 	if err != nil {
 		return nil, err
 	}
-	return s.parseResponse(ctx, q, res, models.InstantQueryType)
+	return s.parseResponse(ctx, q, res)
 }
 
-func (s *Streaming) parseResponse(ctx context.Context, q *models.Query, res *http.Response, t models.TimeSeriesQueryType) (*backend.DataResponse, error) {
-	defer res.Body.Close()
-
-	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
-	r := converter.ReadPrometheusStyleResult(iter)
-	if r == nil {
-		return nil, fmt.Errorf("received empty response from prometheus")
-	}
-
-	// The ExecutedQueryString can be viewed in QueryInspector in UI
-	for _, frame := range r.Frames {
-		addMetadataToFrame(q, frame, t)
-	}
-
-	return r, nil
-}
-
-func (s *Streaming) trace(ctx context.Context, q *models.Query) (context.Context, tracing.Span) {
+func (s *QueryData) trace(ctx context.Context, q *models.Query) (context.Context, tracing.Span) {
 	traceCtx, span := s.tracer.Start(ctx, "datasource.prometheus")
 	span.SetAttributes("expr", q.Expr, attribute.Key("expr").String(q.Expr))
 	span.SetAttributes("start_unixnano", q.Start, attribute.Key("start_unixnano").Int64(q.Start.UnixNano()))
