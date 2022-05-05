@@ -1,3 +1,5 @@
+import { lastValueFrom } from 'rxjs';
+
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { RichHistoryQuery } from 'app/types/explore';
 
@@ -14,6 +16,12 @@ export type RichHistoryRemoteStorageDTO = {
   starred: boolean;
   comment: string;
   queries: DataQuery[];
+};
+
+type RichHistoryRemoteStorageResultsPayloadDTO = {
+  result: {
+    queryHistory: RichHistoryRemoteStorageDTO[];
+  };
 };
 
 export default class RichHistoryRemoteStorage implements RichHistoryStorage {
@@ -39,8 +47,15 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
 
   async getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryQuery[]> {
     const params = buildQueryParams(filters);
-    const queryHistory = await getBackendSrv().get(`/api/query-history?${params}`);
-    return (queryHistory.result.queryHistory || []).map(fromDTO);
+    const queryHistory = await lastValueFrom(
+      getBackendSrv().fetch({
+        method: 'GET',
+        url: `/api/query-history?${params}`,
+        // to ensure any previous requests are cancelled
+        requestId: 'query-history-get-all',
+      })
+    );
+    return ((queryHistory.data as RichHistoryRemoteStorageResultsPayloadDTO).result.queryHistory || []).map(fromDTO);
   }
 
   async getSettings(): Promise<RichHistorySettings> {
