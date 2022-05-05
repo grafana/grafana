@@ -114,7 +114,8 @@ func TestTemplateService(t *testing.T) {
 
 				_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
-				require.ErrorContains(t, err, "failed to deserialize")
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "failed to deserialize")
 			})
 
 			t.Run("when no AM config in current org", func(t *testing.T) {
@@ -126,7 +127,8 @@ func TestTemplateService(t *testing.T) {
 
 				_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
-				require.ErrorContains(t, err, "no alertmanager configuration")
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "no alertmanager configuration")
 			})
 
 			t.Run("when provenance fails to save", func(t *testing.T) {
@@ -143,7 +145,8 @@ func TestTemplateService(t *testing.T) {
 
 				_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
-				require.ErrorContains(t, err, "failed to save provenance")
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "failed to save provenance")
 			})
 
 			t.Run("when AM config fails to save", func(t *testing.T) {
@@ -160,7 +163,8 @@ func TestTemplateService(t *testing.T) {
 
 				_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
-				require.ErrorContains(t, err, "failed to save config")
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "failed to save config")
 			})
 		})
 
@@ -254,7 +258,8 @@ func TestTemplateService(t *testing.T) {
 
 				err := sut.DeleteTemplate(context.Background(), 1, "template")
 
-				require.ErrorContains(t, err, "failed to deserialize")
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "failed to deserialize")
 			})
 
 			t.Run("when no AM config in current org", func(t *testing.T) {
@@ -265,7 +270,8 @@ func TestTemplateService(t *testing.T) {
 
 				err := sut.DeleteTemplate(context.Background(), 1, "template")
 
-				require.ErrorContains(t, err, "no alertmanager configuration")
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "no alertmanager configuration")
 			})
 
 			t.Run("when provenance fails to save", func(t *testing.T) {
@@ -281,7 +287,8 @@ func TestTemplateService(t *testing.T) {
 
 				err := sut.DeleteTemplate(context.Background(), 1, "template")
 
-				require.ErrorContains(t, err, "failed to save provenance")
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "failed to save provenance")
 			})
 
 			t.Run("when AM config fails to save", func(t *testing.T) {
@@ -297,7 +304,8 @@ func TestTemplateService(t *testing.T) {
 
 				err := sut.DeleteTemplate(context.Background(), 1, "template")
 
-				require.ErrorContains(t, err, "failed to save config")
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "failed to save config")
 			})
 		})
 
