@@ -111,6 +111,8 @@ func readPrometheusData(iter *jsoniter.Iterator) *backend.DataResponse {
 				rsp = readMatrixOrVector(iter)
 			case "streams":
 				rsp = readStream(iter)
+			case "string":
+				rsp = readString(iter)
 			case "scalar":
 				rsp = readScalar(iter)
 			default:
@@ -288,6 +290,33 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 	}
 
 	return frame, pairs
+}
+
+func readString(iter *jsoniter.Iterator) *backend.DataResponse {
+	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
+	timeField.Name = data.TimeSeriesTimeFieldName
+	valueField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	valueField.Name = data.TimeSeriesValueFieldName
+	valueField.Labels = data.Labels{}
+
+	iter.ReadArray()
+	t := iter.ReadFloat64()
+	iter.ReadArray()
+	v := iter.ReadString()
+	iter.ReadArray()
+
+	tt := timeFromFloat(t)
+	timeField.Append(tt)
+	valueField.Append(v)
+
+	frame := data.NewFrame("", timeField, valueField)
+	frame.Meta = &data.FrameMeta{
+		Type: data.FrameTypeTimeSeriesMany,
+	}
+
+	return &backend.DataResponse{
+		Frames: []*data.Frame{frame},
+	}
 }
 
 func readScalar(iter *jsoniter.Iterator) *backend.DataResponse {
