@@ -509,6 +509,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, props: Props) => {
       display: flex;
       flex-grow: 1;
       flex-wrap: wrap;
+      gap: ${theme.spacing(1, 2)};
     `,
     panelWrapper: css`
       flex: 1 1 0;
