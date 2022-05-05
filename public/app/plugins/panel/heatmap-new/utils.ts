@@ -1,7 +1,7 @@
 import { MutableRefObject, RefObject } from 'react';
 import uPlot from 'uplot';
 
-import { DataFrame, Field, GrafanaTheme2, incrRoundUp, incrRoundDn, TimeRange, DataFrameType } from '@grafana/data';
+import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 
