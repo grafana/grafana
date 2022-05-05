@@ -86,8 +86,8 @@ export const TagsInput: FC<Props> = ({
           value={newTagName}
           onKeyUp={onKeyboardAdd}
           onKeyDown={(e) => {
-            // onKeyDown is triggered before onKeyUp triggering submit behaviour if this component is used inside forms
-            // moving onKeyboardAdd callback here doesn't work since text input is not captured in onKeyDown
+            // onKeyDown is triggered before onKeyUp, triggering submit behaviour on Enter press if this component
+            // is used inside forms. Moving onKeyboardAdd callback here doesn't work since text input is not captured in onKeyDown
             if (e.key === 'Enter') {
               e.preventDefault();
             }
