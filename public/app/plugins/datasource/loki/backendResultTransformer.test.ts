@@ -62,7 +62,6 @@ describe('loki backendResultTransformer', () => {
         lokiQueryStatKey: 'Summary: total bytes processed',
       },
     };
-    expectedFrame.fields[3].type = FieldType.time;
 
     const expected: DataQueryResponse = { data: [expectedFrame] };
 
