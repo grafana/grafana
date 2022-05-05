@@ -25,6 +25,13 @@ func ProvideDashboardStore(sqlStore *sqlstore.SQLStore) *DashboardStore {
 	return &DashboardStore{sqlStore: sqlStore, log: log.New("dashboard-store")}
 }
 
+func (d *DashboardStore) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) (*models.Dashboard, error) {
+	if err := d.sqlStore.GetDashboard(ctx, query); err != nil {
+		return nil, err
+	}
+	return query.Result, nil
+}
+
 func (d *DashboardStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error) {
 	isParentFolderChanged := false
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {

@@ -37,6 +37,7 @@ type DashboardProvisioningService interface {
 //go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename database_mock.go
 // Store is a dashboard store.
 type Store interface {
+	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) (*models.Dashboard, error)
 	// ValidateDashboardBeforeSave validates a dashboard before save.
 	ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error)
 	GetProvisionedDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
