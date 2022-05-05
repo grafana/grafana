@@ -8,7 +8,7 @@ import { FileUpload } from './FileUpload';
 describe('FileUpload', () => {
   it('should render upload button with default text and no file name', () => {
     render(<FileUpload onFileUpload={() => {}} />);
-    expect(screen.getByText('Upload file')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Upload file' })).toBeInTheDocument();
     expect(screen.queryByLabelText('File name')).toBeNull();
   });
 
