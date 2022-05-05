@@ -31,7 +31,7 @@ const inputFrame: DataFrame = {
           json: true,
         },
       },
-      values: new ArrayVector(['{ "level": "info", "code": "41🌙" }', '{ "level": "error", "code": "41🌙" }']),
+      values: new ArrayVector([`[["level", "info"],["code", "41🌙"]]`, `[["level", "error"],["code", "41🌙"]]`]),
     },
     {
       name: 'tsNs',
