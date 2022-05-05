@@ -78,6 +78,15 @@ func (r DiffReport) String() string {
 	return b.String()
 }
 
+// Paths returns the slice of paths of the current DiffReport
+func (r DiffReport) Paths() []string {
+	var result = make([]string, len(r))
+	for _, diff := range r {
+		result = append(result, diff.Path)
+	}
+	return result
+}
+
 type Diff struct {
 	// Path to the field that has difference separated by period. Array index and key are designated by square brackets.
 	// For example, Annotations[12345].Data.Fields[0].ID
