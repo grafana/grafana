@@ -207,7 +207,7 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	service := dashboardservice.ProvideDashboardService(
 		cfg, dashboardStore, dashAlertExtractor,
-		features, acmock.NewPermissionsServicesMock(),
+		featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(), acmock.New(),
 	)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
@@ -227,7 +227,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 
 	d := dashboardservice.ProvideDashboardService(
 		cfg, dashboardStore, nil,
-		features, permissionsServices,
+		features, permissionsServices, acmock.New(),
 	)
 	ac := acmock.New()
 	s := dashboardservice.ProvideFolderService(
@@ -318,6 +318,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		}}
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
+		ac := acmock.New()
 		sqlStore := sqlstore.InitTestDB(t)
 		guardian.InitLegacyGuardian(sqlStore)
 		dashboardStore := database.ProvideDashboardStore(sqlStore)
@@ -326,9 +327,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		dashboardService := dashboardservice.ProvideDashboardService(
 			cfg, dashboardStore, nil,
-			features, acmock.NewPermissionsServicesMock(),
+			featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(), ac,
 		)
-		ac := acmock.New()
 		service := LibraryElementService{
 			Cfg:      cfg,
 			SQLStore: sqlStore,
