@@ -114,7 +114,7 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 	if dis := pCtx.DataSourceInstanceSettings; dis != nil {
 		err := json.Unmarshal(dis.JSONData, &keepCookieModel)
 		if err != nil {
-			hs.log.Warn("failed to to unpack JSONData in datasource instance settings", "err", err)
+			hs.log.Warn("failed to unpack JSONData in datasource instance settings", "err", err)
 		}
 	}
 	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies)
