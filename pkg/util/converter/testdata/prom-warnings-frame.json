@@ -24,12 +24,13 @@
             }
           },
           {
-            "name": "up",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
             },
             "labels": {
+              "__name__": "up",
               "instance": "localhost:9090",
               "job": "prometheus"
             }
@@ -71,12 +72,13 @@
             }
           },
           {
-            "name": "up",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
             },
             "labels": {
+              "__name__": "up",
               "instance": "localhost:9100",
               "job": "node"
             }
