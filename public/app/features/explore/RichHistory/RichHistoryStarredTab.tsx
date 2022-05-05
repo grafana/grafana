@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { stylesFactory, useTheme, Select, MultiSelect, FilterInput } from '@grafana/ui';
 import {
   createDatasourcesList,
@@ -16,6 +17,7 @@ import RichHistoryCard from './RichHistoryCard';
 
 export interface Props {
   queries: RichHistoryQuery[];
+  loading: boolean;
   activeDatasourceInstance: string;
   updateFilters: (filtersToUpdate: Partial<RichHistorySearchFilters>) => void;
   clearRichHistoryResults: () => void;
@@ -75,6 +77,7 @@ export function RichHistoryStarredTab(props: Props) {
     activeDatasourceInstance,
     richHistorySettings,
     queries,
+    loading,
     richHistorySearchFilters,
     exploreId,
   } = props;
@@ -142,19 +145,23 @@ export function RichHistoryStarredTab(props: Props) {
             />
           </div>
         </div>
-        {queries.map((q) => {
-          const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
-          return (
-            <RichHistoryCard
-              query={q}
-              key={q.id}
-              exploreId={exploreId}
-              dsImg={idx === -1 ? 'public/img/icn-datasource.svg' : listOfDatasources[idx].imgUrl}
-              isRemoved={idx === -1}
-            />
-          );
-        })}
-        <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
+        {loading && <span>Loading results...</span>}
+        {!loading &&
+          queries.map((q) => {
+            const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
+            return (
+              <RichHistoryCard
+                query={q}
+                key={q.id}
+                exploreId={exploreId}
+                dsImg={idx === -1 ? 'public/img/icn-datasource.svg' : listOfDatasources[idx].imgUrl}
+                isRemoved={idx === -1}
+              />
+            );
+          })}
+        {!config.queryHistoryEnabled && (
+          <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
+        )}
       </div>
     </div>
   );

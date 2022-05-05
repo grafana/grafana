@@ -42,7 +42,15 @@ export interface RichHistoryProps extends Themeable {
   onClose: () => void;
 }
 
+type RichHistoryState = {
+  loading: boolean;
+};
+
 class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
+  state: RichHistoryState = {
+    loading: false,
+  };
+
   updateSettings = (settingsToUpdate: Partial<RichHistorySettings>) => {
     this.props.updateHistorySettings({ ...this.props.richHistorySettings, ...settingsToUpdate });
   };
@@ -62,6 +70,9 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
 
   loadRichHistory = debounce(() => {
     this.props.loadRichHistory(this.props.exploreId);
+    this.setState({
+      loading: true,
+    });
   }, 300);
 
   onChangeRetentionPeriod = (retentionPeriod: SelectableValue<number>) => {
@@ -76,9 +87,18 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
   toggleActiveDatasourceOnly = () =>
     this.updateSettings({ activeDatasourceOnly: !this.props.richHistorySettings.activeDatasourceOnly });
 
+  componentDidUpdate(prevProps: Readonly<RichHistoryProps>, prevState: Readonly<{}>, snapshot?: any) {
+    if (prevProps.richHistory !== this.props.richHistory) {
+      this.setState({
+        loading: false,
+      });
+    }
+  }
+
   render() {
     const { richHistory, height, exploreId, deleteRichHistory, onClose, firstTab, activeDatasourceInstance } =
       this.props;
+    const { loading } = this.state;
 
     const QueriesTab: TabConfig = {
       label: 'Query history',
@@ -86,6 +106,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
       content: (
         <RichHistoryQueriesTab
           queries={richHistory}
+          loading={loading}
           updateFilters={this.updateFilters}
           clearRichHistoryResults={() => this.props.clearRichHistoryResults(this.props.exploreId)}
           activeDatasourceInstance={activeDatasourceInstance}
@@ -104,6 +125,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps> {
       content: (
         <RichHistoryStarredTab
           queries={richHistory}
+          loading={loading}
           activeDatasourceInstance={activeDatasourceInstance}
           updateFilters={this.updateFilters}
           clearRichHistoryResults={() => this.props.clearRichHistoryResults(this.props.exploreId)}

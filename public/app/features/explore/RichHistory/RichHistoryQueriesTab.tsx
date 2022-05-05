@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { FilterInput, MultiSelect, RangeSlider, Select, stylesFactory, useTheme } from '@grafana/ui';
 import {
   createDatasourcesList,
@@ -18,6 +19,7 @@ import RichHistoryCard from './RichHistoryCard';
 
 export interface Props {
   queries: RichHistoryQuery[];
+  loading: boolean;
   activeDatasourceInstance: string;
   updateFilters: (filtersToUpdate?: Partial<RichHistorySearchFilters>) => void;
   clearRichHistoryResults: () => void;
@@ -119,6 +121,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
 export function RichHistoryQueriesTab(props: Props) {
   const {
     queries,
+    loading,
     richHistorySearchFilters,
     updateFilters,
     clearRichHistoryResults,
@@ -219,28 +222,34 @@ export function RichHistoryQueriesTab(props: Props) {
             />
           </div>
         </div>
-        {Object.keys(mappedQueriesToHeadings).map((heading) => {
-          return (
-            <div key={heading}>
-              <div className={styles.heading}>
-                {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
+
+        {loading && <span>Loading results...</span>}
+
+        {!loading &&
+          Object.keys(mappedQueriesToHeadings).map((heading) => {
+            return (
+              <div key={heading}>
+                <div className={styles.heading}>
+                  {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
+                </div>
+                {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
+                  const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
+                  return (
+                    <RichHistoryCard
+                      query={q}
+                      key={q.id}
+                      exploreId={exploreId}
+                      dsImg={idx === -1 ? 'public/img/icn-datasource.svg' : listOfDatasources[idx].imgUrl}
+                      isRemoved={idx === -1}
+                    />
+                  );
+                })}
               </div>
-              {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
-                const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
-                return (
-                  <RichHistoryCard
-                    query={q}
-                    key={q.id}
-                    exploreId={exploreId}
-                    dsImg={idx === -1 ? 'public/img/icn-datasource.svg' : listOfDatasources[idx].imgUrl}
-                    isRemoved={idx === -1}
-                  />
-                );
-              })}
-            </div>
-          );
-        })}
-        <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
+            );
+          })}
+        {!config.queryHistoryEnabled && (
+          <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
+        )}
       </div>
     </div>
   );

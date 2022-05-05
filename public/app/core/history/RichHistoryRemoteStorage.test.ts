@@ -1,3 +1,5 @@
+import { of } from 'rxjs';
+
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';
 import { RichHistoryQuery } from '../../types';
 import { SortOrder } from '../utils/richHistoryTypes';
@@ -15,11 +17,12 @@ dsMock.init(
   ''
 );
 
-const getMock = jest.fn();
 const postMock = jest.fn();
+const fetchMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
+    fetch: fetchMock,
     get: getMock,
     post: postMock,
   }),
@@ -30,6 +33,7 @@ describe('RichHistoryRemoteStorage', () => {
   let storage: RichHistoryRemoteStorage;
 
   beforeEach(() => {
+    fetchMock.mockReset();
     storage = new RichHistoryRemoteStorage();
   });
 
@@ -62,11 +66,15 @@ describe('RichHistoryRemoteStorage', () => {
   it('returns list of query history items', async () => {
     const { richHistoryQuery, dto } = setup();
     const returnedDTOs: RichHistoryRemoteStorageDTO[] = [dto];
-    getMock.mockReturnValue({
-      result: {
-        queryHistory: returnedDTOs,
-      },
-    });
+    fetchMock.mockReturnValue(
+      of({
+        data: {
+          result: {
+            queryHistory: returnedDTOs,
+          },
+        },
+      })
+    );
     const search = 'foo';
     const datasourceFilters = ['name-of-ds1', 'name-of-ds2'];
     const sortOrder = SortOrder.Descending;
@@ -78,9 +86,11 @@ describe('RichHistoryRemoteStorage', () => {
 
     const items = await storage.getRichHistory({ search, datasourceFilters, sortOrder, starred, to, from });
 
-    expect(getMock).toBeCalledWith(
-      `/api/query-history?datasourceUid=ds1&datasourceUid=ds2&searchString=${search}&sort=time-desc&to=now-${from}d&from=now-${to}d&limit=${expectedLimit}&page=${expectedPage}&onlyStarred=${starred}`
-    );
+    expect(fetchMock).toBeCalledWith({
+      method: 'GET',
+      url: `/api/query-history?datasourceUid=ds1&datasourceUid=ds2&searchString=${search}&sort=time-desc&to=now-${from}d&from=now-${to}d&limit=${expectedLimit}&page=${expectedPage}&onlyStarred=${starred}`,
+      requestId: 'query-history-get-all',
+    });
     expect(items).toMatchObject([richHistoryQuery]);
   });
 

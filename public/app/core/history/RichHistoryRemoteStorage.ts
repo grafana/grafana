@@ -30,6 +30,12 @@ type RichHistoryRemoteStorageMigrationPayloadDTO = {
   queries: RichHistoryRemoteStorageMigrationDTO[];
 };
 
+type RichHistoryRemoteStorageResultsPayloadDTO = {
+  result: {
+    queryHistory: RichHistoryRemoteStorageDTO[];
+  };
+};
+
 export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   async addToRichHistory(
     newRichHistoryQuery: Omit<RichHistoryQuery, 'id' | 'createdAt'>
@@ -53,8 +59,15 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
 
   async getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryQuery[]> {
     const params = buildQueryParams(filters);
-    const queryHistory = await getBackendSrv().get(`/api/query-history?${params}`);
-    return (queryHistory.result.queryHistory || []).map(fromDTO);
+    const queryHistory = await lastValueFrom(
+      getBackendSrv().fetch({
+        method: 'GET',
+        url: `/api/query-history?${params}`,
+        // to ensure any previous requests are cancelled
+        requestId: 'query-history-get-all',
+      })
+    );
+    return ((queryHistory.data as RichHistoryRemoteStorageResultsPayloadDTO).result.queryHistory || []).map(fromDTO);
   }
 
   async getSettings(): Promise<RichHistorySettings> {
