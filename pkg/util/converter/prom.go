@@ -349,14 +349,24 @@ func readScalar(iter *jsoniter.Iterator) *backend.DataResponse {
 }
 
 func readMatrixOrVector(iter *jsoniter.Iterator, resultType string) *backend.DataResponse {
-	rsp := &backend.DataResponse{}
+	rowIdx := 0
+	timeMap := map[int64]int{}
+	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
+	timeField.Name = data.TimeSeriesTimeFieldName
+	frame := data.NewFrame("", timeField)
+	frame.Meta = &data.FrameMeta{
+		Type:   data.FrameTypeTimeSeriesMany,
+		Custom: resultTypeToCustomMeta(resultType),
+	}
+	rsp := &backend.DataResponse{
+		Frames: []*data.Frame{frame},
+	}
 
 	for iter.ReadArray() {
-		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
-		timeField.Name = data.TimeSeriesTimeFieldName
-		valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
+		valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, frame.Rows())
 		valueField.Name = data.TimeSeriesValueFieldName
 		valueField.Labels = data.Labels{}
+		frame.Fields = append(frame.Fields, valueField)
 
 		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 			switch l1Field {
@@ -364,33 +374,51 @@ func readMatrixOrVector(iter *jsoniter.Iterator, resultType string) *backend.Dat
 				iter.ReadVal(&valueField.Labels)
 
 			case "value":
-				t, v, err := readTimeValuePair(iter)
-				if err == nil {
-					timeField.Append(t)
-					valueField.Append(v)
-				}
+				timeMap, rowIdx = addValueToFrame(frame, timeMap, rowIdx, iter)
 
 			// nolint:goconst
 			case "values":
 				for iter.ReadArray() {
-					t, v, err := readTimeValuePair(iter)
-					if err == nil {
-						timeField.Append(t)
-						valueField.Append(v)
-					}
+					timeMap, rowIdx = addValueToFrame(frame, timeMap, rowIdx, iter)
 				}
 			}
 		}
 
-		frame := data.NewFrame("", timeField, valueField)
-		frame.Meta = &data.FrameMeta{
-			Type:   data.FrameTypeTimeSeriesMany,
-			Custom: resultTypeToCustomMeta(resultType),
-		}
-		rsp.Frames = append(rsp.Frames, frame)
 	}
 
 	return rsp
+}
+
+func addValueToFrame(frame *data.Frame, timeMap map[int64]int, rowIdx int, iter *jsoniter.Iterator) (map[int64]int, int) {
+	timeField := frame.Fields[0]
+	valueField := frame.Fields[len(frame.Fields)-1]
+
+	t, v, err := readTimeValuePair(iter)
+	if err != nil {
+		return timeMap, rowIdx
+	}
+
+	ns := t.UnixNano()
+	i, ok := timeMap[ns]
+	if !ok {
+		timeMap[ns] = rowIdx
+		i = rowIdx
+		expandFrame(frame, i)
+		rowIdx++
+	}
+
+	timeField.Set(i, t)
+	valueField.Set(i, v)
+
+	return timeMap, rowIdx
+}
+
+func expandFrame(frame *data.Frame, idx int) {
+	for _, f := range frame.Fields {
+		if idx+1 > f.Len() {
+			f.Extend(idx + 1 - f.Len())
+		}
+	}
 }
 
 func readTimeValuePair(iter *jsoniter.Iterator) (time.Time, float64, error) {
