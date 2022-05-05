@@ -125,7 +125,6 @@ export const HeatmapTab = ({
     const yMax: number = yField.values.get(yMaxIdx);
     const count: number = countField.values.get(index);
 
-    console.log('data', data, 'heatmapData', heatmapData);
     const summaryData: DataFrame = {
       fields: [
         {

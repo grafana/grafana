@@ -92,13 +92,13 @@ export function findAndPrepareHeatmapData(
   let exemplarPalette: string[] = [];
   const infoFrame = findDataFramesInPanelData(data);
   const info = prepareHeatmapData(infoFrame!, options, theme);
-  const infoMapping = getDataMapping(info, infoFrame?.[0]!);
+  const infoMapping = getDataMapping(info, infoFrame?.[0]!, { requireCount: false });
   const exemplarsFrame: DataFrame | undefined = findExemplarFrameInPanelData(data);
   let exemplarMapping: Array<number[] | null> = [null];
   if (exemplarsFrame && info) {
     exemplars = calculatUsingExistingHeatmap(exemplarsFrame, info);
     // Use the mapping/geometry from the data heatmap
-    exemplarMapping = getDataMapping(exemplars, exemplarsFrame);
+    exemplarMapping = getDataMapping(info, exemplarsFrame, { requireCount: false });
     const countMax = Math.max(...info.heatmap?.fields?.[2]?.values.toArray()!);
     exemplarPalette = quantizeScheme(
       {
@@ -108,6 +108,7 @@ export function findAndPrepareHeatmapData(
       theme
     );
   }
+  console.log('data', data, 'info', info, 'infoMapping', infoMapping);
   return [info, infoMapping, exemplars, exemplarMapping, exemplarPalette];
 }
 

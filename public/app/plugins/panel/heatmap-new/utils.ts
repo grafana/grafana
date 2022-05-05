@@ -15,6 +15,7 @@ import {
   TimeRange,
   TimeZone,
   ValueLinkConfig,
+  DataFrameType,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
@@ -47,6 +48,14 @@ export interface HeatmapHoverEvent {
 export interface HeatmapZoomEvent {
   xMin: number;
   xMax: number;
+}
+
+export interface DataMapOptions {
+  requireCount?: boolean;
+  xMin?: number;
+  xMax?: number;
+  yMin?: number;
+  yMax?: number;
 }
 
 interface PrepConfigOpts {
@@ -489,17 +498,27 @@ export const getHeatmapArrays = (dataFrame: DataFrame): Array<number[] | undefin
   return [xField?.values.toArray(), yField?.values.toArray(), countField?.values.toArray()];
 };
 
-export const getDataMapping = (heatmapData: HeatmapData, origData: DataFrame): Array<number[] | null> => {
+export const getDataMapping = (
+  heatmapData: HeatmapData,
+  origData: DataFrame,
+  options?: DataMapOptions
+): Array<number[] | null> => {
   const [fxs, fys, fcounts] = getHeatmapFields(heatmapData.heatmap!);
   const xos: number[] | undefined = origData.fields.find((f: Field) => f.type === 'time')?.values.toArray();
   const yos: number[] | undefined = origData.fields.find((f: Field) => f.type === 'number')?.values.toArray();
 
+  if (heatmapData.heatmap?.meta?.type !== DataFrameType.HeatmapScanlines) {
+    return [null];
+  }
+
   if (fxs && fys && fcounts && xos && yos) {
     const mapping: Array<number[] | null> = new Array(heatmapData.xBucketCount! * heatmapData.yBucketCount!).fill(null);
-    const xsmin = fxs.state?.calcs?.min ?? fxs.state?.range?.min ?? fxs.values.get(0);
-    const ysmin = fys.state?.calcs?.min ?? fys.state?.range?.min ?? fys.values.get(0);
-    const xsmax = fxs.values.get(fxs.values.length - 1) + heatmapData.xBucketSize! * heatmapData.xBucketCount!;
-    const ysmax = fys.values.get(fys.values.length - 1) + heatmapData.yBucketSize! * heatmapData.yBucketCount!;
+    const xsmin = options?.xMin ?? fxs.state?.calcs?.min ?? fxs.state?.range?.min ?? fxs.values.get(0);
+    const ysmin = options?.yMin ?? fys.state?.calcs?.min ?? fys.state?.range?.min ?? fys.values.get(0);
+    const xsmax =
+      options?.xMax ?? fxs.values.get(fxs.values.length - 1) + heatmapData.xBucketSize! * heatmapData.xBucketCount!;
+    const ysmax =
+      options?.yMax ?? fys.values.get(fys.values.length - 1) + heatmapData.yBucketSize! * heatmapData.yBucketCount!;
     xos.forEach((xo: number, i: number) => {
       const yo = yos[i];
       const xBucketIdx = Math.floor(incrRoundDn(incrRoundUp((xo - xsmin) / heatmapData.xBucketSize!, 1e-7), 1e-7));
@@ -515,14 +534,12 @@ export const getDataMapping = (heatmapData: HeatmapData, origData: DataFrame): A
 
       const index = xBucketIdx * heatmapData.yBucketCount! + yBucketIdx;
       const count = fcounts.values.get(index);
-      if (count > 0) {
+      if (count > 0 || !options?.requireCount) {
         if (mapping[index] === null) {
           mapping[index] = [];
         }
         mapping[index]?.push(i);
       }
-
-      // console.log(i, "i", "index", index, "xo", xo, "yo", yo, "xbc", heatmapData.xBucketCount, "xbs", heatmapData.xBucketSize, "ybc", heatmapData.yBucketCount, "ybs", heatmapData.yBucketSize, "xBucketIdx", xBucketIdx, "yBucketIdx", yBucketIdx);
     });
     return mapping;
   }
@@ -535,8 +552,6 @@ export const resolveMappingToData = (
   onSplitOpen: SplitOpen | undefined,
   timeRange: TimeRange
 ): DataFrame[] => {
-  console.log('dataframe', data, 'indicies', indicies);
-
   if (!indicies) {
     return [];
   }
@@ -598,7 +613,23 @@ export const findExemplarFrameInPanelData = (data: PanelData): DataFrame | undef
 };
 
 export const findDataFramesInPanelData = (data: PanelData): DataFrame[] | undefined => {
-  return data.series?.filter((frame: DataFrame) => frame.meta?.custom?.resultType !== 'exemplar');
+  return data.series
+    ?.filter((frame: DataFrame) => frame.meta?.custom?.resultType !== 'exemplar')
+    .reduce((tally: DataFrame[], curr: DataFrame) => {
+      // We must have at least 2 fields. One time, and one numeric for this to work.
+      if (curr.fields.length < 2) {
+        return tally;
+      }
+
+      const timeField: Field | unknown = curr.fields.find((f: Field) => f.type === 'time');
+      const valueField: Field | unknown = curr.fields.find((f: Field) => f.type === 'number');
+
+      if (timeField && valueField) {
+        tally.push(curr);
+      }
+
+      return tally;
+    }, []);
 };
 
 export const timeFormatter = (value: number, timeZone: TimeZone) => {
