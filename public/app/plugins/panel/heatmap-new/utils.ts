@@ -42,6 +42,8 @@ export interface DataMapOptions {
   yMax?: number;
 }
 
+export const HEATMAP_NOT_SCANLINES_ERROR = 'A calculated heatmap was expected, but not found';
+
 interface PrepConfigOpts {
   dataRef: RefObject<HeatmapData>;
   theme: GrafanaTheme2;
@@ -484,16 +486,16 @@ export const getHeatmapArrays = (dataFrame: DataFrame): Array<number[] | undefin
 
 export const getDataMapping = (
   heatmapData: HeatmapData,
-  origData: DataFrame,
+  rawData: DataFrame,
   options?: DataMapOptions
 ): Array<number[] | null> => {
-  const [fxs, fys, fcounts] = getHeatmapFields(heatmapData.heatmap!);
-  const xos: number[] | undefined = origData.fields.find((f: Field) => f.type === 'time')?.values.toArray();
-  const yos: number[] | undefined = origData.fields.find((f: Field) => f.type === 'number')?.values.toArray();
-
   if (heatmapData.heatmap?.meta?.type !== DataFrameType.HeatmapScanlines) {
-    return [null];
+    throw HEATMAP_NOT_SCANLINES_ERROR;
   }
+
+  const [fxs, fys, fcounts] = getHeatmapFields(heatmapData.heatmap!);
+  const xos: number[] | undefined = rawData.fields.find((f: Field) => f.type === 'time')?.values.toArray();
+  const yos: number[] | undefined = rawData.fields.find((f: Field) => f.type === 'number')?.values.toArray();
 
   if (fxs && fys && fcounts && xos && yos) {
     const mapping: Array<number[] | null> = new Array(heatmapData.xBucketCount! * heatmapData.yBucketCount!).fill(null);

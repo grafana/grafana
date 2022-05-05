@@ -1,7 +1,7 @@
 import { ArrayVector, DataFrameType, FieldType } from '@grafana/data';
 
 import { BucketLayout } from './fields';
-import { getDataMapping } from './utils';
+import { getDataMapping, HEATMAP_NOT_SCANLINES_ERROR } from './utils';
 
 describe('creating a heatmap data mapping', () => {
   describe('generates a simple data mapping with orderly data', () => {
@@ -105,7 +105,7 @@ describe('creating a heatmap data mapping', () => {
       yBucketSize: 3,
       yLayout: BucketLayout.ge,
     };
-    const origData = {
+    const rawData = {
       name: 'origdata',
       fields: [
         {
@@ -128,7 +128,7 @@ describe('creating a heatmap data mapping', () => {
       // In this case, we are just finding proper values, but don't care if a values
       // exists in the bucket in the original data or not. Therefore, we should see
       // a value mapped into the second mapping bucket containing the value '8'.
-      const mapping = getDataMapping(heatmap, origData, { requireCount: false });
+      const mapping = getDataMapping(heatmap, rawData, { requireCount: false });
       expect(mapping.length).toEqual(3);
       expect(mapping[0]).toEqual([1, 4]);
       expect(mapping[1]).toEqual([8]);
@@ -138,7 +138,7 @@ describe('creating a heatmap data mapping', () => {
     it('puts data in to the proper buckets, when we do care about the count', () => {
       // In this case, the second value in the count is 0, and we are following the count.
       // Therefore, the second index of the mapping should not contain a value.
-      const mapping = getDataMapping(heatmap, origData, { requireCount: true });
+      const mapping = getDataMapping(heatmap, rawData, { requireCount: true });
       expect(mapping.length).toEqual(3);
       expect(mapping[0]).toEqual([1, 4]);
       expect(mapping[1]).toEqual(null);
@@ -146,7 +146,7 @@ describe('creating a heatmap data mapping', () => {
     });
 
     it('puts data into the proper buckets, given min and max values in the options', () => {
-      const mapping = getDataMapping(heatmap, origData, {
+      const mapping = getDataMapping(heatmap, rawData, {
         requireCount: false,
         xMin: 3,
         xMax: 6,
@@ -261,7 +261,7 @@ describe('creating a heatmap data mapping', () => {
       yBucketSize: 3,
       yLayout: BucketLayout.ge,
     };
-    const origData = {
+    const rawData = {
       name: 'origdata',
       fields: [
         {
@@ -281,7 +281,7 @@ describe('creating a heatmap data mapping', () => {
     };
 
     it('Will not process heatmap buckets', () => {
-      expect(
+      expect(() =>
         getDataMapping(
           {
             ...heatmap,
@@ -292,11 +292,11 @@ describe('creating a heatmap data mapping', () => {
               },
             },
           },
-          origData
+          rawData
         )
-      ).toEqual([null]);
+      ).toThrow(HEATMAP_NOT_SCANLINES_ERROR);
 
-      expect(
+      expect(() =>
         getDataMapping(
           {
             ...heatmap,
@@ -307,11 +307,11 @@ describe('creating a heatmap data mapping', () => {
               },
             },
           },
-          origData
+          rawData
         )
-      ).toEqual([null]);
+      ).toThrow(HEATMAP_NOT_SCANLINES_ERROR);
 
-      expect(
+      expect(() =>
         getDataMapping(
           {
             ...heatmap,
@@ -322,9 +322,9 @@ describe('creating a heatmap data mapping', () => {
               },
             },
           },
-          origData
+          rawData
         )
-      ).toEqual([null]);
+      ).toThrow(HEATMAP_NOT_SCANLINES_ERROR);
     });
   });
 });
