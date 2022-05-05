@@ -6,7 +6,7 @@ import { InlineField } from '@grafana/ui';
 import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
 import { useDimensionKeys, useMetrics, useNamespaces, useRegions } from '../../hooks';
-import { migrateVariableQuery } from '../../migrations';
+import { migrateVariableQuery } from '../../migrations/variableQueryMigrations';
 import { CloudWatchJsonData, CloudWatchQuery, VariableQuery, VariableQueryType } from '../../types';
 
 import { MultiFilter } from './MultiFilter';

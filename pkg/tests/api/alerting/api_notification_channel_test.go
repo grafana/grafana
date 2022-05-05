@@ -62,7 +62,10 @@ func TestTestReceivers(t *testing.T) {
 
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, `{"traceID":"00000000000000000000000000000000"}`, string(b))
+		res := Response{}
+		err = json.Unmarshal(b, &res)
+		require.NoError(t, err)
+		require.NotEmpty(t, res.TraceID)
 	})
 
 	t.Run("assert working receiver returns OK", func(t *testing.T) {

@@ -131,10 +131,6 @@ const (
 	// Lock database during migrations
 	FlagMigrationLocking = "migrationLocking"
 
-	// FlagSaveDashboardDrawer
-	// Use a drawer to show save dashboard dialog
-	FlagSaveDashboardDrawer = "saveDashboardDrawer"
-
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
@@ -178,4 +174,12 @@ const (
 	// FlagCloudWatchDynamicLabels
 	// Use dynamic labels instead of alias patterns in CloudWatch datasource
 	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
+
+	// FlagDatasourceQueryMultiStatus
+	// Introduce HTTP 207 Multi Status for api/ds/query
+	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
+
+	// FlagAzureMonitorExperimentalUI
+	// Use grafana-experimental UI in Azure Monitor
+	FlagAzureMonitorExperimentalUI = "azureMonitorExperimentalUI"
 )

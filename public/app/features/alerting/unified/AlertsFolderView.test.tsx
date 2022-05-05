@@ -55,11 +55,19 @@ describe('AlertsFolderView tests', () => {
       rulesSource: GRAFANA_RULES_SOURCE_NAME,
       groups: [
         {
-          name: 'default',
+          name: 'group1',
           rules: [
             mockCombinedRule({ name: 'Test Alert 1' }),
             mockCombinedRule({ name: 'Test Alert 2' }),
             mockCombinedRule({ name: 'Test Alert 3' }),
+          ],
+        },
+        {
+          name: 'group2',
+          rules: [
+            mockCombinedRule({ name: 'Test Alert 4' }),
+            mockCombinedRule({ name: 'Test Alert 5' }),
+            mockCombinedRule({ name: 'Test Alert 6' }),
           ],
         },
       ],
@@ -78,13 +86,16 @@ describe('AlertsFolderView tests', () => {
 
     // Assert
     const alertRows = ui.ruleList.row.queryAll();
-    expect(alertRows).toHaveLength(3);
+    expect(alertRows).toHaveLength(6);
     expect(alertRows[0]).toHaveTextContent('Test Alert 1');
     expect(alertRows[1]).toHaveTextContent('Test Alert 2');
     expect(alertRows[2]).toHaveTextContent('Test Alert 3');
+    expect(alertRows[3]).toHaveTextContent('Test Alert 4');
+    expect(alertRows[4]).toHaveTextContent('Test Alert 5');
+    expect(alertRows[5]).toHaveTextContent('Test Alert 6');
   });
 
-  it('Shold not display alert rules when the namespace name does not match the folder name', () => {
+  it('Should not display alert rules when the namespace name does not match the folder name', () => {
     // Arrange
     const store = configureStore();
     const folder = mockFolder();

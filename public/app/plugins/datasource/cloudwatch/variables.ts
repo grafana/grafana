@@ -5,7 +5,7 @@ import { CustomVariableSupport, DataQueryRequest, DataQueryResponse } from '@gra
 
 import { VariableQueryEditor } from './components/VariableQueryEditor/VariableQueryEditor';
 import { CloudWatchDatasource } from './datasource';
-import { migrateVariableQuery } from './migrations';
+import { migrateVariableQuery } from './migrations/variableQueryMigrations';
 import { VariableQuery, VariableQueryType } from './types';
 
 export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchDatasource, VariableQuery> {
