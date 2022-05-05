@@ -2,6 +2,11 @@
   "frames": [
     {
       "schema": {
+        "meta": {
+          "custom": {
+            "resultType": "exemplar"
+          }
+        },
         "fields": [
           {
             "type": "time",
@@ -56,6 +61,11 @@
     },
     {
       "schema": {
+        "meta": {
+          "custom": {
+            "resultType": "exemplar"
+          }
+        },
         "fields": [
           {
             "type": "time",

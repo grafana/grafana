@@ -311,6 +311,18 @@ func TestRequestParser(t *testing.T) {
 		assert.Equal(t, "$$", res.RefId)
 		assert.Regexp(t, validMetricDataID, res.Id)
 	})
+
+	t.Run("parseRequestQuery sets label when label is present in json query", func(t *testing.T) {
+		query := getBaseJsonQuery()
+		query.Set("alias", "some alias")
+		query.Set("label", "some label")
+
+		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+
+		assert.NoError(t, err)
+		assert.Equal(t, "some alias", res.Alias) // alias is unmodified
+		assert.Equal(t, "some label", res.Label)
+	})
 }
 
 func getBaseJsonQuery() *simplejson.Json {

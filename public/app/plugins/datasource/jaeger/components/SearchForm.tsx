@@ -104,7 +104,6 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         <InlineField label="Service" labelWidth={14} grow>
           <AsyncSelect
             inputId="service"
-            menuShouldPortal
             cacheOptions={false}
             loadOptions={serviceSearch}
             onOpenMenu={() => loadServices('/api/services', 'services')}
@@ -128,7 +127,6 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         <InlineField label="Operation" labelWidth={14} grow disabled={!query.service}>
           <AsyncSelect
             inputId="operation"
-            menuShouldPortal
             cacheOptions={false}
             loadOptions={operationSearch}
             onOpenMenu={() =>

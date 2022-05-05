@@ -104,7 +104,7 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
 export class Explore extends React.PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   absoluteTimeUnsubsciber: Unsubscribable | undefined;
-  topOfExploreViewRef = createRef<HTMLDivElement>();
+  topOfViewRef = createRef<HTMLDivElement>();
 
   constructor(props: Props) {
     super(props);
@@ -313,8 +313,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           dataFrames={dataFrames}
           splitOpenFn={splitOpen}
           scrollElement={this.scrollElement}
-          topOfExploreViewRef={this.topOfExploreViewRef}
           queryResponse={queryResponse}
+          topOfViewRef={this.topOfViewRef}
         />
       )
     );
@@ -357,11 +357,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         autoHeightMin={'100%'}
         scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
       >
-        <ExploreToolbar
-          exploreId={exploreId}
-          onChangeTime={this.onChangeTime}
-          topOfExploreViewRef={this.topOfExploreViewRef}
-        />
+        <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} topOfViewRef={this.topOfViewRef} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
           <div className="explore-container">
