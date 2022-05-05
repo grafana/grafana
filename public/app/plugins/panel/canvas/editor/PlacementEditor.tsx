@@ -9,6 +9,7 @@ import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
 
 import { PanelOptions } from '../models.gen';
 
+import { ConstraintSelectionBox } from './ConstraintSelectionBox';
 import { CanvasEditorOptions } from './elementEditor';
 
 const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width', 'height'];
@@ -46,15 +47,23 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
   const { options } = element;
   const { placement, constraint: layout } = options;
 
-  const onHorizontalConstraintChange = (h: SelectableValue<HorizontalConstraint>) => {
-    element.options.constraint!.horizontal = h.value;
+  const onHorizontalConstraintSelect = (h: SelectableValue<HorizontalConstraint>) => {
+    onHorizontalConstraintChange(h.value!);
+  };
+
+  const onHorizontalConstraintChange = (h: HorizontalConstraint) => {
+    element.options.constraint!.horizontal = h;
     element.setPlacementFromConstraint();
     settings.scene.revId++;
     settings.scene.save(true);
   };
 
-  const onVerticalConstraintChange = (v: SelectableValue<VerticalConstraint>) => {
-    element.options.constraint!.vertical = v.value;
+  const onVerticalConstraintSelect = (v: SelectableValue<VerticalConstraint>) => {
+    onVerticalConstraintChange(v.value!);
+  };
+
+  const onVerticalConstraintChange = (v: VerticalConstraint) => {
+    element.options.constraint!.vertical = v;
     element.setPlacementFromConstraint();
     settings.scene.revId++;
     settings.scene.save(true);
@@ -69,10 +78,15 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
   return (
     <div>
       <VerticalGroup>
-        <Select options={verticalOptions} onChange={onVerticalConstraintChange} value={layout?.vertical} />
+        <ConstraintSelectionBox
+          onVerticalConstraintChange={onVerticalConstraintChange}
+          onHorizontalConstraintChange={onHorizontalConstraintChange}
+          currentConstraints={element.options.constraint}
+        />
+        <Select options={verticalOptions} onChange={onVerticalConstraintSelect} value={layout?.vertical} />
         <Select
           options={horizontalOptions}
-          onChange={onHorizontalConstraintChange}
+          onChange={onHorizontalConstraintSelect}
           value={options.constraint?.horizontal}
         />
       </VerticalGroup>
