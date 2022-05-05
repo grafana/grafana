@@ -144,3 +144,19 @@ func (ss *SQLStore) GetApiKeyByName(ctx context.Context, query *models.GetApiKey
 		return nil
 	})
 }
+
+func (ss *SQLStore) GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error) {
+	var apikey *models.ApiKey
+	err := ss.WithDbSession(ctx, func(sess *DBSession) error {
+		has, err := sess.Where("key=?", hash).Get(apikey)
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrInvalidApiKey
+		}
+
+		return nil
+	})
+
+	return apikey, err
+}

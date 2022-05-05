@@ -662,3 +662,7 @@ func (m *SQLStoreMock) GetDashboardSlugById(ctx context.Context, query *models.G
 func (m *SQLStoreMock) IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error {
 	return m.ExpectedError
 }
+
+func (m *SQLStoreMock) GetAPIKeyByHash(ctx context.Context, hash string) (*models.ApiKey, error) {
+	return nil, m.ExpectedError
+}
