@@ -37,7 +37,7 @@ func TestMatrixResponses(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
 			responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
-			goldenFileName := filepath.Join("../testdata", test.filepath+".result.golden.txt")
+			goldenFileName := filepath.Join("../testdata", test.filepath+".buffered.result.golden.txt")
 
 			query, err := loadStoredPrometheusQuery(queryFileName)
 			require.NoError(t, err)

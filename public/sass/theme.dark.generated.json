@@ -86,8 +86,8 @@
       "disabledOpacity": 0.38
     },
     "gradients": {
-      "brandHorizontal": " linear-gradient(270deg, #F55F3E 0%, #FF8833 100%);",
-      "brandVertical": "linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%);"
+      "brandHorizontal": "linear-gradient(270deg, #F55F3E 0%, #FF8833 100%)",
+      "brandVertical": "linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%)"
     },
     "contrastThreshold": 3,
     "hoverFactor": 0.03,
@@ -129,7 +129,7 @@
       "background": "#111217"
     },
     "tooltip": {
-      "background": "#35383e",
+      "background": "#22252b",
       "text": "rgb(204, 204, 220)"
     },
     "dashboard": {
@@ -141,6 +141,12 @@
     },
     "sidemenu": {
       "width": 48
+    },
+    "menuTabs": {
+      "height": 41
+    },
+    "horizontalDrawer": {
+      "defaultHeight": 400
     }
   },
   "typography": {
