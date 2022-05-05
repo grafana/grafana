@@ -53,7 +53,6 @@ export const ConditionField: FC = () => {
         name="condition"
         render={({ field: { onChange, ref, ...field } }) => (
           <Select
-            menuShouldPortal
             aria-label="Condition"
             {...field}
             width={42}

@@ -1,0 +1,3 @@
+
+ERROR: bad_data: invalid parameter "start": cannot parse "" to a valid timestamp====== TEST DATA RESPONSE (arrow base64) ======
+ERROR=bad_data: invalid parameter "start": cannot parse "" to a valid timestamp
