@@ -16,7 +16,7 @@ import (
 //       200: []MessageTemplate
 //       400: ValidationError
 
-// swagger:route GET /api/provisioning/templates/{ID} provisioning RouteGetTemplate
+// swagger:route GET /api/provisioning/templates/{name} provisioning RouteGetTemplate
 //
 // Get a message template.
 //
@@ -24,7 +24,7 @@ import (
 //       200: MessageTemplate
 //       404: NotFound
 
-// swagger:route PUT /api/provisioning/templates/{ID} provisioning RoutePutTemplate
+// swagger:route PUT /api/provisioning/templates/{name} provisioning RoutePutTemplate
 //
 // Updates an existing template.
 //
@@ -35,7 +35,7 @@ import (
 //       202: Accepted
 //       400: ValidationError
 
-// swagger:route DELETE /api/provisioning/templates/{ID} provisioning RouteDeleteTemplate
+// swagger:route DELETE /api/provisioning/templates/{name} provisioning RouteDeleteTemplate
 //
 // Delete a template.
 //

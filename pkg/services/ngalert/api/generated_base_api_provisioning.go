@@ -101,11 +101,11 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Delete(
-			toMacaronPath("/api/provisioning/templates/{ID}"),
-			api.authorize(http.MethodDelete, "/api/provisioning/templates/{ID}"),
+			toMacaronPath("/api/provisioning/templates/{name}"),
+			api.authorize(http.MethodDelete, "/api/provisioning/templates/{name}"),
 			metrics.Instrument(
 				http.MethodDelete,
-				"/api/provisioning/templates/{ID}",
+				"/api/provisioning/templates/{name}",
 				srv.RouteDeleteTemplate,
 				m,
 			),
@@ -131,11 +131,11 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/templates/{ID}"),
-			api.authorize(http.MethodGet, "/api/provisioning/templates/{ID}"),
+			toMacaronPath("/api/provisioning/templates/{name}"),
+			api.authorize(http.MethodGet, "/api/provisioning/templates/{name}"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/templates/{ID}",
+				"/api/provisioning/templates/{name}",
 				srv.RouteGetTemplate,
 				m,
 			),
@@ -181,11 +181,11 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/provisioning/templates/{ID}"),
-			api.authorize(http.MethodPut, "/api/provisioning/templates/{ID}"),
+			toMacaronPath("/api/provisioning/templates/{name}"),
+			api.authorize(http.MethodPut, "/api/provisioning/templates/{name}"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/templates/{ID}",
+				"/api/provisioning/templates/{name}",
 				srv.RoutePutTemplate,
 				m,
 			),
