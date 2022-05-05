@@ -45,7 +45,7 @@ describe('SecondaryActions', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: /Add row button/i })).toHaveAttribute('disabled');
+    expect(screen.getByRole('button', { name: /Add row button/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /Rich history button/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Query inspector button/i })).toBeInTheDocument();
   });
