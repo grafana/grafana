@@ -44,8 +44,9 @@ var (
 )
 
 type datasourceInfo struct {
-	HTTPClient *http.Client
-	URL        string
+	HTTPClient    *http.Client
+	URL           string
+	OauthPassThru bool
 
 	// open streams
 	streams   map[string]data.FrameJSONCache
@@ -62,6 +63,10 @@ type QueryJSONModel struct {
 	Resolution   int64  `json:"resolution"`
 	MaxLines     int    `json:"maxLines"`
 	VolumeQuery  bool   `json:"volumeQuery"`
+}
+
+type DataSourceJSONModel struct {
+	OauthPassThru bool `json:"oauthPassThru"`
 }
 
 func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
@@ -82,16 +87,54 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
+		jsonModel := DataSourceJSONModel{}
+		err = json.Unmarshal(settings.JSONData, &jsonModel)
+		if err != nil {
+			return nil, err
+		}
+
 		model := &datasourceInfo{
-			HTTPClient: client,
-			URL:        settings.URL,
-			streams:    make(map[string]data.FrameJSONCache),
+			HTTPClient:    client,
+			URL:           settings.URL,
+			OauthPassThru: jsonModel.OauthPassThru,
+			streams:       make(map[string]data.FrameJSONCache),
 		}
 		return model, nil
 	}
 }
 
+func getOauthTokenForQueryData(dsInfo *datasourceInfo, headers map[string]string) string {
+	if !dsInfo.OauthPassThru {
+		return ""
+	}
+
+	return headers["Authorization"]
+}
+
+func getOauthTokenForCallResource(dsInfo *datasourceInfo, headers map[string][]string) string {
+	if !dsInfo.OauthPassThru {
+		return ""
+	}
+
+	accessValues := headers["Authorization"]
+
+	if len(accessValues) == 0 {
+		return ""
+	}
+
+	return accessValues[0]
+}
+
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	dsInfo, err := s.getDSInfo(req.PluginContext)
+	if err != nil {
+		return err
+	}
+
+	return callResource(ctx, req, sender, dsInfo, s.plog)
+}
+
+func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger) error {
 	url := req.URL
 
 	// a very basic is-this-url-valid check
@@ -105,12 +148,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	}
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
 
-	dsInfo, err := s.getDSInfo(req.PluginContext)
-	if err != nil {
-		return err
-	}
-
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, s.plog)
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, getOauthTokenForCallResource(dsInfo, req.Headers))
 	bytes, err := api.RawQuery(ctx, lokiURL)
 
 	if err != nil {
@@ -127,14 +165,19 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	result := backend.NewQueryDataResponse()
-
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
+		result := backend.NewQueryDataResponse()
 		return result, err
 	}
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, s.plog)
+	return queryData(ctx, req, dsInfo, s.plog, s.tracer)
+}
+
+func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, plog log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponse()
+
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, getOauthTokenForQueryData(dsInfo, req.Headers))
 
 	queries, err := parseQuery(req)
 	if err != nil {
@@ -142,8 +185,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	for _, query := range queries {
-		s.plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
-		_, span := s.tracer.Start(ctx, "alerting.loki")
+		plog.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
+		_, span := tracer.Start(ctx, "alerting.loki")
 		span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
 		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
 		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
