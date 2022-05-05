@@ -18,8 +18,9 @@ import { getTermCounts } from '../service/backend';
 import { DashboardSearchItemType, DashboardSectionItem, SearchLayout } from '../types';
 
 import { ActionRow } from './components/ActionRow';
+import { ManageActions } from './components/ManageActions';
 import { SearchResultsTable } from './components/SearchResultsTable';
-import { newSearchSelection } from './selection';
+import { newSearchSelection, updateSearchSelection } from './selection';
 
 const node: NavModelItem = {
   id: 'search',
@@ -37,7 +38,6 @@ export default function SearchPage() {
   const [showManage, setShowManage] = useState(false); // grid vs list view
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
-  const hasSelection = searchSelection.items.size > 0;
 
   const results = useAsync(() => {
     const { query: searchQuery, tag: tags, datasource } = query;
@@ -73,6 +73,14 @@ export default function SearchPage() {
 
   const onTagSelected = (tag: string) => {
     onTagFilterChange([...new Set(query.tag as string[]).add(tag)]);
+  };
+
+  const toggleSelection = (kind: string, uid: string) => {
+    const current = searchSelection.isSelected(kind, uid);
+    if (kind === 'folder') {
+      // ??? also select all children?
+    }
+    setSearchSelection(updateSearchSelection(searchSelection, !current, kind, [uid]));
   };
 
   const showPreviews = query.layout === SearchLayout.Grid && config.featureToggles.dashboardPreviews;
@@ -114,14 +122,13 @@ export default function SearchPage() {
           if (showPreviews) {
             const view = new DataFrameView<QueryResult>(df);
 
-            // HACK for grid view
+            // Hacked to reuse existing SearchCard (and old DashboardSectionItem)
             const itemProps = {
               editable: showManage,
               onToggleChecked: (item: any) => {
                 const d = item as DashboardSectionItem;
                 const t = d.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
-                const v = !searchSelection.isSelected(t, d.uid!);
-                setSearchSelection(searchSelection.update(v, t, [d.uid!]));
+                toggleSelection(t, d.uid!);
               },
               onTagSelected,
             };
@@ -139,21 +146,22 @@ export default function SearchPage() {
                 className={styles.wrapper}
                 innerElementType="ul"
                 height={height}
-                width={width}
+                width={width - 2}
               >
                 {({ columnIndex, rowIndex, style }) => {
                   const index = rowIndex * numColumns + columnIndex;
                   const item = view.get(index);
+                  const kind = item.kind ?? 'dashboard';
                   const facade: DashboardSectionItem = {
                     uid: item.uid,
                     title: item.name,
                     url: item.url,
                     uri: item.url,
-                    type: item.kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
+                    type: kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
                     id: 666, // do not use me!
                     isStarred: false,
                     tags: item.tags ?? [],
-                    selected: searchSelection.isSelected(item.kind, item.uid),
+                    selected: searchSelection.isSelected(kind, item.uid),
                   };
 
                   // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
@@ -172,7 +180,8 @@ export default function SearchPage() {
             <>
               <SearchResultsTable
                 data={df}
-                showCheckbox={showManage}
+                selection={showManage ? searchSelection.isSelected : undefined}
+                selectionToggle={toggleSelection}
                 layout={query.layout}
                 width={width - 5}
                 height={height}
@@ -205,23 +214,25 @@ export default function SearchPage() {
         <br />
         <hr />
 
-        {hasSelection && <div>{JSON.stringify(searchSelection.items)}</div>}
-
-        <ActionRow
-          onLayoutChange={(v) => {
-            if (v === SearchLayout.Folders) {
-              if (query.query) {
-                onQueryChange(''); // parent will clear the sort
+        {Boolean(searchSelection.items.size > 0) ? (
+          <ManageActions items={searchSelection.items} />
+        ) : (
+          <ActionRow
+            onLayoutChange={(v) => {
+              if (v === SearchLayout.Folders) {
+                if (query.query) {
+                  onQueryChange(''); // parent will clear the sort
+                }
               }
-            }
-            onLayoutChange(v);
-          }}
-          onSortChange={onSortChange}
-          onTagFilterChange={onTagFilterChange}
-          getTagOptions={getTagOptions}
-          onDatasourceChange={onDatasourceChange}
-          query={query}
-        />
+              onLayoutChange(v);
+            }}
+            onSortChange={onSortChange}
+            onTagFilterChange={onTagFilterChange}
+            getTagOptions={getTagOptions}
+            onDatasourceChange={onDatasourceChange}
+            query={query}
+          />
+        )}
 
         {showPreviews && (
           <PreviewsSystemRequirements

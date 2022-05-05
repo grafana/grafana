@@ -1,9 +1,9 @@
+export type SelectionChecker = (kind: string, uid: string) => boolean;
+export type SelectionToggle = (kind: string, uid: string) => void;
+
 export interface SearchSelection {
   // Check if an item is selected
-  isSelected: (kind: string, uid: string) => boolean;
-
-  // Will return a new instance with an updated object (will trigger a react state change!)
-  update: (selected: boolean, kind: string, uids: string[]) => SearchSelection;
+  isSelected: SelectionChecker;
 
   // Selected items by kind
   items: Map<string, Set<string>>;
@@ -17,35 +17,42 @@ export function newSearchSelection(): SearchSelection {
     return Boolean(items.get(kind)?.has(uid));
   };
 
-  const update = (selected: boolean, kind: string, uids: string[]) => {
-    if (uids.length) {
-      const k = items.get(kind);
-      if (k) {
-        for (const uid of uids) {
-          if (selected) {
-            k.add(uid);
-          } else {
-            k.delete(uid);
-          }
-        }
-        if (k.size < 1) {
-          items.delete(kind);
-        }
-      } else if (selected) {
-        items.set(kind, new Set<string>(uids));
-      }
-    }
-
-    return {
-      isSelected,
-      update,
-      items,
-    };
+  return {
+    items,
+    isSelected,
   };
+}
+
+export function updateSearchSelection(
+  old: SearchSelection,
+  selected: boolean,
+  kind: string,
+  uids: string[]
+): SearchSelection {
+  const items = old.items; // mutate! :/
+
+  if (uids.length) {
+    const k = items.get(kind);
+    if (k) {
+      for (const uid of uids) {
+        if (selected) {
+          k.add(uid);
+        } else {
+          k.delete(uid);
+        }
+      }
+      if (k.size < 1) {
+        items.delete(kind);
+      }
+    } else if (selected) {
+      items.set(kind, new Set<string>(uids));
+    }
+  }
 
   return {
-    isSelected,
-    update,
     items,
+    isSelected: (kind: string, uid: string) => {
+      return Boolean(items.get(kind)?.has(uid));
+    },
   };
 }

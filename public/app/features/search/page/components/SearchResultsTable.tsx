@@ -10,6 +10,7 @@ import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
 
 import { LocationInfo } from '../../service';
 import { SearchLayout } from '../../types';
+import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { generateColumns } from './columns';
 
@@ -17,7 +18,8 @@ type Props = {
   data: DataFrame;
   width: number;
   height: number;
-  showCheckbox: boolean;
+  selection?: SelectionChecker;
+  selectionToggle?: SelectionToggle;
   layout: SearchLayout;
   tags: string[];
   onTagFilterChange: (tags: string[]) => void;
@@ -51,7 +53,8 @@ export const SearchResultsTable = ({
   width,
   height,
   tags,
-  showCheckbox,
+  selection,
+  selectionToggle,
   layout,
   onTagFilterChange,
   onDatasourceChange,
@@ -77,13 +80,25 @@ export const SearchResultsTable = ({
       access,
       isDashboardList,
       width,
-      showCheckbox,
+      selection,
+      selectionToggle,
       styles,
       tags,
       onTagFilterChange,
       onDatasourceChange
     );
-  }, [data.meta?.type, layout, access, width, styles, tags, showCheckbox, onTagFilterChange, onDatasourceChange]);
+  }, [
+    data.meta?.type,
+    layout,
+    access,
+    width,
+    styles,
+    tags,
+    selection,
+    selectionToggle,
+    onTagFilterChange,
+    onDatasourceChange,
+  ]);
 
   const options: TableOptions<{}> = useMemo(
     () => ({
