@@ -1,4 +1,4 @@
-package streaming_test
+package querydata_test
 
 import (
 	"bytes"
@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/streaming"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -60,7 +60,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 		tctx := setup()
 
-		qm := models.Model{
+		qm := models.QueryModel{
 			LegendFormat:  "legend {{app}}",
 			UtcOffsetSec:  0,
 			ExemplarQuery: true,
@@ -105,7 +105,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 
-		qm := models.Model{
+		qm := models.QueryModel{
 			LegendFormat: "legend {{app}}",
 			UtcOffsetSec: 0,
 			RangeQuery:   true,
@@ -153,7 +153,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 
-		qm := models.Model{
+		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
 			RangeQuery:   true,
@@ -195,7 +195,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 
-		qm := models.Model{
+		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
 			RangeQuery:   true,
@@ -237,7 +237,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 
-		qm := models.Model{
+		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
 			RangeQuery:   true,
@@ -271,7 +271,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 				},
 			},
 		}
-		qm := models.Model{
+		qm := models.QueryModel{
 			LegendFormat: "legend {{app}}",
 			UtcOffsetSec: 0,
 			InstantQuery: true,
@@ -311,7 +311,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 				Timestamp: 123,
 			},
 		}
-		qm := models.Model{
+		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
 			InstantQuery: true,
@@ -357,7 +357,7 @@ func execute(tctx *testContext, query backend.DataQuery, qr interface{}) (data.F
 	}
 	tctx.httpProvider.setResponse(promRes)
 
-	res, err := tctx.streaming.ExecuteTimeSeriesQuery(context.Background(), &req)
+	res, err := tctx.queryData.Execute(context.Background(), &req)
 	if err != nil {
 		return nil, err
 	}
@@ -394,7 +394,7 @@ func toAPIResponse(d interface{}) (*http.Response, error) {
 
 type testContext struct {
 	httpProvider *fakeHttpClientProvider
-	streaming    *streaming.Streaming
+	queryData    *querydata.QueryData
 }
 
 func setup() *testContext {
@@ -411,7 +411,7 @@ func setup() *testContext {
 			Body:       ioutil.NopCloser(bytes.NewReader([]byte(`{}`))),
 		},
 	}
-	streaming, _ := streaming.New(
+	queryData, _ := querydata.New(
 		httpProvider,
 		setting.NewCfg(),
 		&fakeFeatureToggles{enabled: true},
@@ -422,7 +422,7 @@ func setup() *testContext {
 
 	return &testContext{
 		httpProvider: httpProvider,
-		streaming:    streaming,
+		queryData:    queryData,
 	}
 }
 

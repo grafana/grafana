@@ -1,20 +1,45 @@
-package streaming
+package querydata
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"sort"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
+	"github.com/grafana/grafana/pkg/util/converter"
+	jsoniter "github.com/json-iterator/go"
 )
 
-func addMetadataToFrame(q *models.Query, frame *data.Frame, t models.TimeSeriesQueryType) {
+func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) (*backend.DataResponse, error) {
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			s.log.Error("Failed to close response body", "err", err)
+		}
+	}()
+
+	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
+	r := converter.ReadPrometheusStyleResult(iter)
+	if r == nil {
+		return nil, fmt.Errorf("received empty response from prometheus")
+	}
+
+	// The ExecutedQueryString can be viewed in QueryInspector in UI
+	for _, frame := range r.Frames {
+		addMetadataToFrame(q, frame)
+	}
+
+	return r, nil
+}
+
+func addMetadataToFrame(q *models.Query, frame *data.Frame) {
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
 	frame.Meta.ExecutedQueryString = executedQueryString(q)
-	frame.Meta.Custom = map[string]string{"resultType": string(t)}
 	frame.Name = getName(q, frame)
 	frame.Fields[0].Config = &data.FieldConfig{Interval: float64(q.Step.Milliseconds())}
 	if frame.Name != "" {
