@@ -83,12 +83,8 @@ func NewFolderIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
 	})
 }
 
-type dashboardStore interface {
-	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
-}
-
 // NewDashboardIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "dashboards:id:" into uid based dashboard and folder scope.
-func NewDashboardIDScopeResolver(dashStore dashboardStore, folderStore Store) (string, ac.ScopeAttributeResolver) {
+func NewDashboardIDScopeResolver(store Store) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeDashboardsProvider.GetResourceScope("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		if !strings.HasPrefix(scope, prefix) {
@@ -100,29 +96,29 @@ func NewDashboardIDScopeResolver(dashStore dashboardStore, folderStore Store) (s
 			return nil, err
 		}
 
-		query := &models.GetDashboardQuery{OrgId: orgID, Id: id}
-		if err := dashStore.GetDashboard(ctx, query); err != nil {
-			return nil, err
-		}
-
-		if query.Result.FolderId == 0 {
-			return []string{
-				ScopeDashboardsProvider.GetResourceScopeUID(query.Result.Uid),
-				ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID),
-			}, nil
-		}
-
-		folder, err := folderStore.GetFolderByID(ctx, orgID, query.Result.FolderId)
+		dash, err := store.GetDashboard(ctx, &models.GetDashboardQuery{OrgId: orgID, Id: id})
 		if err != nil {
 			return nil, err
 		}
 
-		return []string{ScopeDashboardsProvider.GetResourceScopeUID(query.Result.Uid), ScopeFoldersProvider.GetResourceScopeUID(folder.Uid)}, nil
+		if dash.FolderId == 0 {
+			return []string{
+				ScopeDashboardsProvider.GetResourceScopeUID(dash.Uid),
+				ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID),
+			}, nil
+		}
+
+		folder, err := store.GetFolderByID(ctx, orgID, dash.FolderId)
+		if err != nil {
+			return nil, err
+		}
+
+		return []string{ScopeDashboardsProvider.GetResourceScopeUID(dash.Uid), ScopeFoldersProvider.GetResourceScopeUID(folder.Uid)}, nil
 	})
 }
 
 // NewDashboardUIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "dashboards:uid:" into uid based dashboard and folder scope.
-func NewDashboardUIDScopeResolver(dashStore dashboardStore, folderStore Store) (string, ac.ScopeAttributeResolver) {
+func NewDashboardUIDScopeResolver(store Store) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeDashboardsProvider.GetResourceScopeUID("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		if !strings.HasPrefix(scope, prefix) {
@@ -134,23 +130,23 @@ func NewDashboardUIDScopeResolver(dashStore dashboardStore, folderStore Store) (
 			return nil, err
 		}
 
-		query := &models.GetDashboardQuery{OrgId: orgID, Uid: uid}
-		if err := dashStore.GetDashboard(ctx, query); err != nil {
-			return nil, err
-		}
-
-		if query.Result.FolderId == 0 {
-			return []string{
-				ScopeDashboardsProvider.GetResourceScopeUID(query.Result.Uid),
-				ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID),
-			}, nil
-		}
-
-		folder, err := folderStore.GetFolderByID(ctx, orgID, query.Result.FolderId)
+		dash, err := store.GetDashboard(ctx, &models.GetDashboardQuery{OrgId: orgID, Uid: uid})
 		if err != nil {
 			return nil, err
 		}
 
-		return []string{ScopeDashboardsProvider.GetResourceScopeUID(query.Result.Uid), ScopeFoldersProvider.GetResourceScopeUID(folder.Uid)}, nil
+		if dash.FolderId == 0 {
+			return []string{
+				ScopeDashboardsProvider.GetResourceScopeUID(dash.Uid),
+				ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID),
+			}, nil
+		}
+
+		folder, err := store.GetFolderByID(ctx, orgID, dash.FolderId)
+		if err != nil {
+			return nil, err
+		}
+
+		return []string{ScopeDashboardsProvider.GetResourceScopeUID(dash.Uid), ScopeFoldersProvider.GetResourceScopeUID(folder.Uid)}, nil
 	})
 }

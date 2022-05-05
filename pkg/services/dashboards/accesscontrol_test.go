@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -136,17 +135,15 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 
 func TestNewDashboardIDScopeResolver(t *testing.T) {
 	t.Run("prefix should be expected", func(t *testing.T) {
-		store := &mockstore.SQLStoreMock{}
-		prefix, _ := dashboards.NewDashboardIDScopeResolver(store, &dashboards.FakeDashboardStore{})
+		prefix, _ := dashboards.NewDashboardIDScopeResolver(&dashboards.FakeDashboardStore{})
 		require.Equal(t, "dashboards:id:", prefix)
 	})
 
 	t.Run("resolver should convert to uid dashboard and general folder scopes", func(t *testing.T) {
-		store := &mockstore.SQLStoreMock{}
-		store.ExpectedDashboard = &models.Dashboard{Uid: "dash", FolderId: 0}
-		folderStore := &dashboards.FakeDashboardStore{}
+		store := &dashboards.FakeDashboardStore{}
+		store.On("GetDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{Uid: "dash"}, nil)
 
-		_, resolver := dashboards.NewDashboardIDScopeResolver(store, folderStore)
+		_, resolver := dashboards.NewDashboardIDScopeResolver(store)
 
 		scopes, err := resolver.Resolve(context.Background(), 1, "dashboards:id:1")
 		require.NoError(t, err)
@@ -156,12 +153,11 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 	})
 
 	t.Run("resolver should convert to uid dashboard and folder scopes", func(t *testing.T) {
-		store := &mockstore.SQLStoreMock{}
-		store.ExpectedDashboard = &models.Dashboard{Uid: "dash", FolderId: 1}
-		folderStore := &dashboards.FakeDashboardStore{}
-		folderStore.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(&models.Folder{Uid: "folder"}, nil)
+		store := &dashboards.FakeDashboardStore{}
+		store.On("GetDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{Uid: "dash", FolderId: 1}, nil)
+		store.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(&models.Folder{Uid: "folder"}, nil)
 
-		_, resolver := dashboards.NewDashboardUIDScopeResolver(store, folderStore)
+		_, resolver := dashboards.NewDashboardUIDScopeResolver(store)
 
 		scopes, err := resolver.Resolve(context.Background(), 1, "dashboards:uid:dash")
 		require.NoError(t, err)
@@ -172,18 +168,16 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 }
 
 func TestNewDashboardUIDScopeResolver(t *testing.T) {
-	store := &mockstore.SQLStoreMock{}
 	t.Run("prefix should be expected", func(t *testing.T) {
-		prefix, _ := dashboards.NewDashboardUIDScopeResolver(store, &dashboards.FakeDashboardStore{})
+		prefix, _ := dashboards.NewDashboardUIDScopeResolver(&dashboards.FakeDashboardStore{})
 		require.Equal(t, "dashboards:uid:", prefix)
 	})
 
 	t.Run("resolver should convert to uid dashboard and general folder scopes", func(t *testing.T) {
-		store := &mockstore.SQLStoreMock{}
-		store.ExpectedDashboard = &models.Dashboard{Uid: "dash", FolderId: 0}
-		folderStore := &dashboards.FakeDashboardStore{}
+		store := &dashboards.FakeDashboardStore{}
+		store.On("GetDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{Uid: "dash"}, nil)
 
-		_, resolver := dashboards.NewDashboardUIDScopeResolver(store, folderStore)
+		_, resolver := dashboards.NewDashboardUIDScopeResolver(store)
 
 		scopes, err := resolver.Resolve(context.Background(), 1, "dashboards:uid:dash")
 		require.NoError(t, err)
@@ -193,12 +187,11 @@ func TestNewDashboardUIDScopeResolver(t *testing.T) {
 	})
 
 	t.Run("resolver should convert to uid dashboard and folder scopes", func(t *testing.T) {
-		store := &mockstore.SQLStoreMock{}
-		store.ExpectedDashboard = &models.Dashboard{Uid: "dash", FolderId: 1}
-		folderStore := &dashboards.FakeDashboardStore{}
-		folderStore.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(&models.Folder{Uid: "folder"}, nil)
+		store := &dashboards.FakeDashboardStore{}
+		store.On("GetDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{Uid: "dash", FolderId: 1}, nil)
+		store.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(&models.Folder{Uid: "folder"}, nil)
 
-		_, resolver := dashboards.NewDashboardUIDScopeResolver(store, folderStore)
+		_, resolver := dashboards.NewDashboardUIDScopeResolver(store)
 
 		scopes, err := resolver.Resolve(context.Background(), 1, "dashboards:uid:dash")
 		require.NoError(t, err)
