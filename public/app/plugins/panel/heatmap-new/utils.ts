@@ -34,14 +34,6 @@ export interface HeatmapZoomEvent {
   xMax: number;
 }
 
-export interface HeatmapDataMapping {
-  lookup: Array<number[] | null>;
-  high: number[]; // index of values bigger than the max Y
-  low: number[]; // index of values less than the min Y
-}
-
-export const HEATMAP_NOT_SCANLINES_ERROR = 'A calculated heatmap was expected, but not found';
-
 interface PrepConfigOpts {
   dataRef: RefObject<HeatmapData>;
   theme: GrafanaTheme2;
@@ -467,69 +459,4 @@ export const countsToFills = (u: uPlot, seriesIdx: number, palette: string[]) =>
   }
 
   return indexedFills;
-};
-
-export const getHeatmapFields = (dataFrame: DataFrame): Array<Field | undefined> => {
-  const xField: Field | undefined = dataFrame.fields.find((f) => f.name === 'xMin');
-  const yField: Field | undefined = dataFrame.fields.find((f) => f.name === 'yMin');
-  const countField: Field | undefined = dataFrame.fields.find((f) => f.name === 'count');
-
-  return [xField, yField, countField];
-};
-
-export const getHeatmapArrays = (dataFrame: DataFrame): Array<number[] | undefined> => {
-  const [xField, yField, countField] = getHeatmapFields(dataFrame);
-  return [xField?.values.toArray(), yField?.values.toArray(), countField?.values.toArray()];
-};
-
-export const getDataMapping = (heatmapData: HeatmapData, rawData: DataFrame): HeatmapDataMapping => {
-  if (heatmapData.heatmap?.meta?.type !== DataFrameType.HeatmapScanlines) {
-    throw HEATMAP_NOT_SCANLINES_ERROR;
-  }
-
-  const [fxs, fys] = getHeatmapFields(heatmapData.heatmap!);
-
-  if (!fxs || !fys) {
-    throw HEATMAP_NOT_SCANLINES_ERROR;
-  }
-
-  const mapping: HeatmapDataMapping = {
-    lookup: new Array(heatmapData.xBucketCount! * heatmapData.yBucketCount!).fill(null),
-    high: [],
-    low: [],
-  };
-
-  const xos: number[] | undefined = rawData.fields.find((f: Field) => f.type === 'time')?.values.toArray();
-  const yos: number[] | undefined = rawData.fields.find((f: Field) => f.type === 'number')?.values.toArray();
-
-  if (!xos || !yos) {
-    return mapping;
-  }
-
-  const xsmin = fxs.values.get(0);
-  const ysmin = fys.values.get(0);
-  const xsmax = fxs.values.get(fxs.values.length - 1) + heatmapData.xBucketSize!;
-  const ysmax = fys.values.get(fys.values.length - 1) + heatmapData.yBucketSize!;
-  xos.forEach((xo: number, i: number) => {
-    const yo = yos[i];
-    const xBucketIdx = Math.floor(incrRoundDn(incrRoundUp((xo - xsmin) / heatmapData.xBucketSize!, 1e-7), 1e-7));
-    const yBucketIdx = Math.floor(incrRoundDn(incrRoundUp((yo - ysmin) / heatmapData.yBucketSize!, 1e-7), 1e-7));
-
-    if (xo < xsmin || yo < ysmin) {
-      mapping.low.push(i);
-      return;
-    }
-
-    if (xo >= xsmax || yo >= ysmax) {
-      mapping.high.push(i);
-      return;
-    }
-
-    const index = xBucketIdx * heatmapData.yBucketCount! + yBucketIdx;
-    if (mapping.lookup[index] === null) {
-      mapping.lookup[index] = [];
-    }
-    mapping.lookup[index]?.push(i);
-  });
-  return mapping;
 };
