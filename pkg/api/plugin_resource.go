@@ -40,6 +40,10 @@ func (hs *HTTPServer) callPluginResource(c *models.ReqContext, pluginID string) 
 	}
 
 	req, err := hs.pluginResourceRequest(c, pCtx)
+	if err != nil {
+		handleCallResourceError(err, c)
+		return
+	}
 
 	if err = hs.makePluginResourceRequest(c.Resp, req, pCtx); err != nil {
 		handleCallResourceError(err, c)
@@ -58,6 +62,10 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *models.ReqContext, plu
 	}
 
 	req, err := hs.pluginResourceRequest(c, pCtx)
+	if err != nil {
+		handleCallResourceError(err, c)
+		return
+	}
 
 	if hs.DataProxy.OAuthTokenService.IsOAuthPassThruEnabled(ds) {
 		if token := hs.DataProxy.OAuthTokenService.GetCurrentOAuthToken(c.Req.Context(), c.SignedInUser); token != nil {
