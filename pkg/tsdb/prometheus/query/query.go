@@ -86,6 +86,19 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 	}, nil
 }
 
+func (query *Query) Type() TimeSeriesQueryType {
+	if query.InstantQuery {
+		return InstantQueryType
+	}
+	if query.RangeQuery {
+		return RangeQueryType
+	}
+	if query.ExemplarQuery {
+		return ExemplarQueryType
+	}
+	return UnknownQueryType
+}
+
 func (query *Query) TimeRange() TimeRange {
 	return TimeRange{
 		Step: query.Step,
