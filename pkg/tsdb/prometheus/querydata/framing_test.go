@@ -1,4 +1,4 @@
-package streaming_test
+package querydata_test
 
 import (
 	"bytes"
@@ -32,7 +32,7 @@ func TestMatrixResponses(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			queryFileName := filepath.Join("../testdata", test.filepath+".models.json")
+			queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
 			responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
 			goldenFileName := filepath.Join("../testdata", test.filepath+".result.golden.txt")
 
@@ -80,7 +80,7 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 		return nil, err
 	}
 
-	qm := models.Model{
+	qm := models.QueryModel{
 		RangeQuery: sq.RangeQuery,
 		Expr:       sq.Expr,
 	}
@@ -112,7 +112,7 @@ func runQuery(response []byte, q *backend.QueryDataRequest) (*backend.QueryDataR
 		Body:       ioutil.NopCloser(bytes.NewReader(response)),
 	}
 	tCtx.httpProvider.setResponse(res)
-	return tCtx.streaming.ExecuteTimeSeriesQuery(context.Background(), q)
+	return tCtx.queryData.Execute(context.Background(), q)
 }
 
 type fakeLogger struct {

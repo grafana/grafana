@@ -1,4 +1,4 @@
-package streaming_test
+package querydata_test
 
 import (
 	"bytes"
@@ -30,7 +30,7 @@ func BenchmarkJson(b *testing.B) {
 			Body:       ioutil.NopCloser(bytes.NewReader(body)),
 		}
 		tCtx.httpProvider.setResponse(&res)
-		_, err := tCtx.streaming.ExecuteTimeSeriesQuery(context.Background(), q)
+		_, err := tCtx.queryData.Execute(context.Background(), q)
 		require.NoError(b, err)
 	}
 }
@@ -72,7 +72,7 @@ func createJsonTestData(start int64, step int64, timestampCount int, seriesCount
 	}
 	bytes := []byte(fmt.Sprintf(`{"status":"success","data":{"resultType":"matrix","result":[%v]}}`, strings.Join(allSeries, ",")))
 
-	qm := models.Model{
+	qm := models.QueryModel{
 		RangeQuery: true,
 		Expr:       "test",
 	}
