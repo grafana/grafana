@@ -2,7 +2,7 @@
 title: 'Plan your Grafana RBAC rollout strategy'
 menuTitle: 'Plan your RBAC rollout strategy'
 description: 'Plan your RBAC rollout strategy before you begin assigning roles to users and teams.'
-aliases: [docs/grafana/latest/enterprise/access-control/usage-scenarios/]
+aliases: ['/docs/grafana/latest/enterprise/access-control/usage-scenarios/']
 weight: 20
 ---
 

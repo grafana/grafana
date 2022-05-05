@@ -55,31 +55,31 @@ func TestNewAccessControlDashboardPermissionFilter(t *testing.T) {
 			queryType:  randomType,
 			permission: models.PERMISSION_ADMIN,
 			expectedDashboardActions: []string{
-				accesscontrol.ActionDashboardsRead,
-				accesscontrol.ActionDashboardsWrite,
+				dashboards.ActionDashboardsRead,
+				dashboards.ActionDashboardsWrite,
 			},
 			expectedFolderActions: []string{
 				dashboards.ActionFoldersRead,
-				accesscontrol.ActionDashboardsCreate,
+				dashboards.ActionDashboardsCreate,
 			},
 		},
 		{
 			queryType:  randomType,
 			permission: models.PERMISSION_EDIT,
 			expectedDashboardActions: []string{
-				accesscontrol.ActionDashboardsRead,
-				accesscontrol.ActionDashboardsWrite,
+				dashboards.ActionDashboardsRead,
+				dashboards.ActionDashboardsWrite,
 			},
 			expectedFolderActions: []string{
 				dashboards.ActionFoldersRead,
-				accesscontrol.ActionDashboardsCreate,
+				dashboards.ActionDashboardsCreate,
 			},
 		},
 		{
 			queryType:  randomType,
 			permission: models.PERMISSION_VIEW,
 			expectedDashboardActions: []string{
-				accesscontrol.ActionDashboardsRead,
+				dashboards.ActionDashboardsRead,
 			},
 			expectedFolderActions: []string{
 				dashboards.ActionFoldersRead,

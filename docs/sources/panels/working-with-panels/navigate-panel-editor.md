@@ -27,7 +27,7 @@ This page describes the parts of the Grafana panel editor.
    - **Query tab -** Select your data source and enter queries here. For more information, refer to [Add a query]({{< relref "../query-a-data-source/add-a-query.md" >}}).
 
    - **Transform tab -** Apply data transformations. For more information, refer to [Transform data]({{< relref "../transform-data/_index.md" >}}).
-   - **Alert tab -** Write alert rules. For more information, refer to [Overview of Grafana 8 alerting]({{< relref "../../alerting/unified-alerting/_index.md" >}}).
+   - **Alert tab -** Write alert rules. For more information, refer to [Overview of Grafana 8 alerting]({{< relref "../../alerting/_index.md" >}}).
 
 4. Panel display options: The display options section contains tabs where you configure almost every aspect of your data visualization, including:
 

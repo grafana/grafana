@@ -111,7 +111,6 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
               <div className="width-13">
                 <Select
                   inputId={'alert-state-filter'}
-                  menuShouldPortal
                   options={this.stateFilters}
                   onChange={this.onStateFilterChanged}
                   value={this.getStateFilter()}

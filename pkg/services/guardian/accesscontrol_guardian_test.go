@@ -36,7 +36,7 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsWrite,
+					Action: dashboards.ActionDashboardsWrite,
 					Scope:  "dashboards:*",
 				},
 			},
@@ -47,7 +47,7 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsWrite,
+					Action: dashboards.ActionDashboardsWrite,
 					Scope:  "folders:*",
 				},
 			},
@@ -58,7 +58,7 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsWrite,
+					Action: dashboards.ActionDashboardsWrite,
 					Scope:  "dashboards:uid:1",
 				},
 			},
@@ -69,7 +69,7 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsWrite,
+					Action: dashboards.ActionDashboardsWrite,
 					Scope:  "folders:uid:general",
 				},
 			},
@@ -80,7 +80,7 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsWrite,
+					Action: dashboards.ActionDashboardsWrite,
 					Scope:  "dashboards:uid:10",
 				},
 			},
@@ -91,7 +91,7 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsWrite,
+					Action: dashboards.ActionDashboardsWrite,
 					Scope:  "folders:uid:100",
 				},
 			},
@@ -116,7 +116,7 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsWrite,
+					Action: dashboards.ActionDashboardsWrite,
 					Scope:  "dashboards:*",
 				},
 			},
@@ -127,7 +127,7 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsWrite,
+					Action: dashboards.ActionDashboardsWrite,
 					Scope:  "folders:*",
 				},
 			},
@@ -138,7 +138,7 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsWrite,
+					Action: dashboards.ActionDashboardsWrite,
 					Scope:  "dashboards:uid:1",
 				},
 			},
@@ -149,7 +149,7 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsWrite,
+					Action: dashboards.ActionDashboardsWrite,
 					Scope:  "folders:uid:general",
 				},
 			},
@@ -160,7 +160,7 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsWrite,
+					Action: dashboards.ActionDashboardsWrite,
 					Scope:  "dashboards:uid:10",
 				},
 			},
@@ -171,7 +171,7 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsWrite,
+					Action: dashboards.ActionDashboardsWrite,
 					Scope:  "folders:uid:10",
 				},
 			},
@@ -182,7 +182,7 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsRead,
+					Action: dashboards.ActionDashboardsRead,
 					Scope:  "dashboards:uid:1",
 				},
 			},
@@ -212,7 +212,7 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsRead,
+					Action: dashboards.ActionDashboardsRead,
 					Scope:  "dashboards:*",
 				},
 			},
@@ -223,7 +223,7 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsRead,
+					Action: dashboards.ActionDashboardsRead,
 					Scope:  "folders:*",
 				},
 			},
@@ -234,7 +234,7 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsRead,
+					Action: dashboards.ActionDashboardsRead,
 					Scope:  "dashboards:uid:1",
 				},
 			},
@@ -245,7 +245,7 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsRead,
+					Action: dashboards.ActionDashboardsRead,
 					Scope:  "folders:uid:general",
 				},
 			},
@@ -256,7 +256,7 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsRead,
+					Action: dashboards.ActionDashboardsRead,
 					Scope:  "dashboards:uid:10",
 				},
 			},
@@ -267,7 +267,7 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsRead,
+					Action: dashboards.ActionDashboardsRead,
 					Scope:  "folders:uid:10",
 				},
 			},
@@ -292,11 +292,11 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsPermissionsRead,
+					Action: dashboards.ActionDashboardsPermissionsRead,
 					Scope:  "dashboards:*",
 				},
 				{
-					Action: accesscontrol.ActionDashboardsPermissionsWrite,
+					Action: dashboards.ActionDashboardsPermissionsWrite,
 					Scope:  "dashboards:*",
 				},
 			},
@@ -307,11 +307,11 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsPermissionsRead,
+					Action: dashboards.ActionDashboardsPermissionsRead,
 					Scope:  "folders:*",
 				},
 				{
-					Action: accesscontrol.ActionDashboardsPermissionsWrite,
+					Action: dashboards.ActionDashboardsPermissionsWrite,
 					Scope:  "folders:*",
 				},
 			},
@@ -322,11 +322,11 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsPermissionsRead,
+					Action: dashboards.ActionDashboardsPermissionsRead,
 					Scope:  "dashboards:uid:1",
 				},
 				{
-					Action: accesscontrol.ActionDashboardsPermissionsWrite,
+					Action: dashboards.ActionDashboardsPermissionsWrite,
 					Scope:  "dashboards:uid:1",
 				},
 			},
@@ -337,11 +337,11 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsPermissionsRead,
+					Action: dashboards.ActionDashboardsPermissionsRead,
 					Scope:  "folders:uid:general",
 				},
 				{
-					Action: accesscontrol.ActionDashboardsPermissionsWrite,
+					Action: dashboards.ActionDashboardsPermissionsWrite,
 					Scope:  "folders:uid:general",
 				},
 			},
@@ -352,11 +352,11 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsPermissionsRead,
+					Action: dashboards.ActionDashboardsPermissionsRead,
 					Scope:  "dashboards:uid:10",
 				},
 				{
-					Action: accesscontrol.ActionDashboardsPermissionsWrite,
+					Action: dashboards.ActionDashboardsPermissionsWrite,
 					Scope:  "dashboards:uid:10",
 				},
 			},
@@ -367,11 +367,11 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsPermissionsRead,
+					Action: dashboards.ActionDashboardsPermissionsRead,
 					Scope:  "folders:uid:10",
 				},
 				{
-					Action: accesscontrol.ActionDashboardsPermissionsWrite,
+					Action: dashboards.ActionDashboardsPermissionsWrite,
 					Scope:  "folders:uid:10",
 				},
 			},
@@ -396,7 +396,7 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsDelete,
+					Action: dashboards.ActionDashboardsDelete,
 					Scope:  "dashboards:*",
 				},
 			},
@@ -407,7 +407,7 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsDelete,
+					Action: dashboards.ActionDashboardsDelete,
 					Scope:  "folders:*",
 				},
 			},
@@ -418,7 +418,7 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsDelete,
+					Action: dashboards.ActionDashboardsDelete,
 					Scope:  "dashboards:uid:1",
 				},
 			},
@@ -429,7 +429,7 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsDelete,
+					Action: dashboards.ActionDashboardsDelete,
 					Scope:  "folders:uid:general",
 				},
 			},
@@ -440,7 +440,7 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsDelete,
+					Action: dashboards.ActionDashboardsDelete,
 					Scope:  "dashboards:uid:10",
 				},
 			},
@@ -451,7 +451,7 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			dashUID: "1",
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionDashboardsDelete,
+					Action: dashboards.ActionDashboardsDelete,
 					Scope:  "folders:uid:10",
 				},
 			},
@@ -485,7 +485,7 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 			isFolder: false,
 			folderID: 0,
 			permissions: []*accesscontrol.Permission{
-				{Action: accesscontrol.ActionDashboardsCreate, Scope: "folders:uid:general"},
+				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:general"},
 			},
 			expected: true,
 		},
@@ -494,7 +494,7 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 			isFolder: false,
 			folderID: 0,
 			permissions: []*accesscontrol.Permission{
-				{Action: accesscontrol.ActionDashboardsCreate, Scope: "folders:*"},
+				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:*"},
 			},
 			expected: true,
 		},

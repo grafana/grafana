@@ -111,3 +111,14 @@ export function getDatasourceAPIId(dataSourceName: string) {
   }
   return String(ds.id);
 }
+
+export function getDatasourceAPIUid(dataSourceName: string) {
+  if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
+    return GRAFANA_RULES_SOURCE_NAME;
+  }
+  const ds = getDataSourceByName(dataSourceName);
+  if (!ds) {
+    throw new Error(`Datasource "${dataSourceName}" not found`);
+  }
+  return ds.uid;
+}

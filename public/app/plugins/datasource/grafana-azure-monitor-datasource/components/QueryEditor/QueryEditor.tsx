@@ -18,6 +18,7 @@ import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';
 import MetricsQueryEditor from '../MetricsQueryEditor';
 import NewMetricsQueryEditor from '../NewMetricsQueryEditor/MetricsQueryEditor';
+import { QueryHeader } from '../QueryHeader';
 import { Space } from '../Space';
 
 import QueryTypeField from './QueryTypeField';
@@ -34,6 +35,7 @@ const QueryEditor: React.FC<AzureMonitorQueryEditorProps> = ({
   datasource,
   onChange,
   onRunQuery: baseOnRunQuery,
+  data,
 }) => {
   const [errorMessage, setError] = useLastError();
   const onRunQuery = useMemo(() => debounce(baseOnRunQuery, 500), [baseOnRunQuery]);
@@ -56,9 +58,13 @@ const QueryEditor: React.FC<AzureMonitorQueryEditorProps> = ({
 
   return (
     <div data-testid="azure-monitor-query-editor">
-      <QueryTypeField query={query} onQueryChange={onQueryChange} />
+      {config.featureToggles.azureMonitorExperimentalUI && <QueryHeader query={query} onQueryChange={onQueryChange} />}
+      {!config.featureToggles.azureMonitorExperimentalUI && (
+        <QueryTypeField query={query} onQueryChange={onQueryChange} />
+      )}
 
       <EditorForQueryType
+        data={data}
         subscriptionId={subscriptionId}
         query={query}
         datasource={datasource}
@@ -86,6 +92,7 @@ interface EditorForQueryTypeProps extends Omit<AzureMonitorQueryEditorProps, 'on
 }
 
 const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
+  data,
   subscriptionId,
   query,
   datasource,
@@ -98,6 +105,7 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
       if (config.featureToggles.azureMonitorResourcePickerForMetrics) {
         return (
           <NewMetricsQueryEditor
+            data={data}
             query={query}
             datasource={datasource}
             onChange={onChange}
@@ -108,6 +116,7 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
       }
       return (
         <MetricsQueryEditor
+          data={data}
           subscriptionId={subscriptionId}
           query={query}
           datasource={datasource}
