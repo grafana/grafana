@@ -44,7 +44,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	// Support for version after their end-of-life (currently <7.10.0) was removed
 	lastSupportedVersion, _ := semver.NewVersion("7.10.0")
 	if dsInfo.ESVersion.LessThan(lastSupportedVersion) {
-		return &backend.QueryDataResponse{}, fmt.Errorf("support for elasticsearch versions after their end-of-life (currently versions < 7.10) was removed, err=%v", err)
+		return &backend.QueryDataResponse{}, fmt.Errorf("support for elasticsearch versions after their end-of-life (currently versions < 7.10) was removed")
 	}
 
 	if len(req.Queries) == 0 {
