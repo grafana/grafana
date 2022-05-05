@@ -342,7 +342,7 @@ func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl bool, enableAc
 func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg) accessControlScenarioContext {
 	var db *sqlstore.SQLStore
 	if useFakeAccessControl && enableAccessControl {
-		db = sqlstore.InitTestDBWithAC(t)
+		db = sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
 	} else {
 		db = sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
 	}

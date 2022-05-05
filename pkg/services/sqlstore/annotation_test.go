@@ -338,7 +338,7 @@ func TestAnnotations(t *testing.T) {
 }
 
 func TestAnnotationListingWithRBAC(t *testing.T) {
-	sql := sqlstore.InitTestDBWithAC(t)
+	sql := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
 	dashboardStore := dashboardstore.ProvideDashboardStore(sql)
 

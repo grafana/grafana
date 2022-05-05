@@ -395,7 +395,7 @@ func TestSQLStore_SearchTeams(t *testing.T) {
 		},
 	}
 
-	store := InitTestDBWithAC(t)
+	store := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
 
 	// Seed 10 teams
 	for i := 1; i <= 10; i++ {
@@ -454,7 +454,7 @@ func TestSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, errAddMember)
 	}
 
-	store := InitTestDBWithAC(t)
+	store := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
 	setup(store)
 
 	type getTeamMembersTestCase struct {

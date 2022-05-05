@@ -186,7 +186,7 @@ func TestSQLStore_GetAPIKeys(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store := InitTestDBWithAC(t)
+			store := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
 			seedApiKeys(t, store, 10)
 
 			query := &models.GetApiKeysQuery{OrgId: 1, User: tt.user}
