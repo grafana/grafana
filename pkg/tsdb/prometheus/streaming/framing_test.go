@@ -1,8 +1,11 @@
 package streaming_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -104,6 +107,11 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 
 func runQuery(response []byte, q *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	tCtx := setup()
+	res := &http.Response{
+		StatusCode: 200,
+		Body:       ioutil.NopCloser(bytes.NewReader(response)),
+	}
+	tCtx.httpProvider.setResponse(res)
 	return tCtx.streaming.ExecuteTimeSeriesQuery(context.Background(), q)
 }
 

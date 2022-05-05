@@ -117,38 +117,67 @@ func (s *Streaming) runQuery(ctx context.Context, client *client.Client, q *quer
 	traceCtx, span := s.trace(ctx, q)
 	defer span.End()
 
-	var (
-		err error
-		res *http.Response
-	)
+	response := &backend.DataResponse{
+		Frames: data.Frames{},
+		Error:  nil,
+	}
 
 	if q.RangeQuery {
-		res, err = client.QueryRange(traceCtx, q)
+		res, err := s.rangeQuery(traceCtx, client, q)
 		if err != nil {
 			return nil, err
 		}
+		response.Frames = res.Frames
 	}
 
 	if q.InstantQuery {
-		res, err = client.QueryInstant(traceCtx, q)
+		res, err := s.instantQuery(traceCtx, client, q)
 		if err != nil {
 			return nil, err
 		}
+		response.Frames = append(response.Frames, res.Frames...)
 	}
 
 	if q.ExemplarQuery {
-		if res, err = client.QueryExemplars(traceCtx, q); err != nil {
+		res, err := s.exemplarQuery(traceCtx, client, q)
+		if err != nil {
 			// If exemplar query returns error, we want to only log it and
 			// continue with other results processing
 			s.log.Error("Exemplar query failed", "query", q.Expr, "err", err)
-			return &backend.DataResponse{Frames: data.Frames{}}, nil
+		}
+		if res != nil {
+			response.Frames = append(response.Frames, res.Frames...)
 		}
 	}
 
-	if res == nil {
-		return nil, fmt.Errorf("no response received for query %s", q.Expr)
-	}
+	return response, nil
+}
 
+func (s *Streaming) rangeQuery(ctx context.Context, c *client.Client, q *query.Query) (*backend.DataResponse, error) {
+	res, err := c.QueryRange(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	return s.parseResponse(ctx, q, res, query.RangeQueryType)
+}
+
+func (s *Streaming) instantQuery(ctx context.Context, c *client.Client, q *query.Query) (*backend.DataResponse, error) {
+	res, err := c.QueryInstant(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	return s.parseResponse(ctx, q, res, query.InstantQueryType)
+}
+
+func (s *Streaming) exemplarQuery(ctx context.Context, c *client.Client, q *query.Query) (*backend.DataResponse, error) {
+	res, err := c.QueryExemplars(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	return s.parseResponse(ctx, q, res, query.InstantQueryType)
+}
+
+func (s *Streaming) parseResponse(ctx context.Context, q *query.Query, res *http.Response, t query.TimeSeriesQueryType) (*backend.DataResponse, error) {
 	defer res.Body.Close()
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
@@ -159,7 +188,7 @@ func (s *Streaming) runQuery(ctx context.Context, client *client.Client, q *quer
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
 	for _, frame := range r.Frames {
-		addMetadataToFrame(q, frame)
+		addMetadataToFrame(q, frame, t)
 	}
 
 	return r, nil

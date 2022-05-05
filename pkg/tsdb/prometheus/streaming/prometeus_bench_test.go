@@ -22,15 +22,14 @@ import (
 // - go tool pprof -http=localhost:6061 memprofile.out
 func BenchmarkJson(b *testing.B) {
 	body, q := createJsonTestData(1642000000, 1, 300, 400)
-	require.Equal(b, "A", string(body))
-	res := http.Response{
-		StatusCode: 200,
-		Body:       ioutil.NopCloser(bytes.NewReader(body)),
-	}
 	tCtx := setup()
-	tCtx.httpProvider.setResponse(&res)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
+		res := http.Response{
+			StatusCode: 200,
+			Body:       ioutil.NopCloser(bytes.NewReader(body)),
+		}
+		tCtx.httpProvider.setResponse(&res)
 		_, err := tCtx.streaming.ExecuteTimeSeriesQuery(context.Background(), q)
 		require.NoError(b, err)
 	}

@@ -9,11 +9,12 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/query"
 )
 
-func addMetadataToFrame(q *query.Query, frame *data.Frame) {
+func addMetadataToFrame(q *query.Query, frame *data.Frame, t query.TimeSeriesQueryType) {
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
 	frame.Meta.ExecutedQueryString = executedQueryString(q)
+	frame.Meta.Custom = map[string]string{"resultType": string(t)}
 	frame.Name = getName(q, frame)
 	frame.Fields[0].Config = &data.FieldConfig{Interval: float64(q.Step.Milliseconds())}
 	if frame.Name != "" {
