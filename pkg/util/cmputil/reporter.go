@@ -87,15 +87,15 @@ type Diff struct {
 }
 
 func (d *Diff) String() string {
-	left := d.Left.String()
+	return fmt.Sprintf("%v:\n\t-: %+v\n\t+: %+v\n", d.Path, describeReflectValue(d.Left), describeReflectValue(d.Right))
+}
+
+func describeReflectValue(v reflect.Value) interface{} {
 	// invalid reflect.Value is produced when two collections (slices\maps) are compared and one misses value.
 	// This way go-cmp indicates that an element was added\removed from a list.
-	if !d.Left.IsValid() {
-		left = "<none>"
+	if !v.IsValid() {
+		return "<none>"
 	}
-	right := d.Right.String()
-	if !d.Right.IsValid() {
-		right = "<none>"
-	}
-	return fmt.Sprintf("%v:\n\t-: %+v\n\t+: %+v", d.Path, left, right)
+	return v
+}
 }
