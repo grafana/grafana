@@ -19,7 +19,6 @@ import {
   rangeUtil,
   ScopedVars,
   TimeRange,
-  timeZoneAbbrevation,
 } from '@grafana/data';
 import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
