@@ -26,19 +26,25 @@ Panel: {
                     ui.OptionsWithLegend
                     ui.OptionsWithTooltip
                     ui.OptionsWithTextFormatting
-                    orientation: ui.VizOrientation
-                    // TODO this default is a guess based on common devenv values
+                    xField?: string
+                    colorByField?: string
+                    orientation: ui.VizOrientation | *"auto"
                     stacking: ui.StackingMode | *"none"
-                    showValue: ui.VisibilityMode
-                    barWidth: number
-                    groupWidth: number
+                    showValue: ui.VisibilityMode | *"auto"
+                    barWidth: number | *0.97
+                    barRadius?: number | *0
+                    groupWidth: number | *0.7
+                    xTickLabelRotation: number | *0
+                    xTickLabelMaxLength: number
+                    xTickLabelSpacing?: number | *0
                 } @cuetsy(kind="interface")
                 PanelFieldConfig: {
                     ui.AxisConfig
                     ui.HideableFieldConfig
-                    lineWidth?: number
-                    fillOpacity?: number
-                    gradientMode?: ui.GraphGradientMode
+                    lineWidth?: number | *1
+                    fillOpacity?: number | *80
+                    gradientMode?: ui.GraphGradientMode | *"none"
+                    axisSoftMin: number | *0
                 } @cuetsy(kind="interface")
             }
         ]
