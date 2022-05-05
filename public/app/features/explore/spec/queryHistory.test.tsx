@@ -1,4 +1,5 @@
 import React from 'react';
+import { of } from 'rxjs';
 
 import { serializeStateToUrlParam } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -179,20 +180,26 @@ describe('Explore: Query History', () => {
       const { datasources } = setupExplore();
       setupLocalStorageRichHistory('loki');
       (datasources.loki.query as jest.Mock).mockReturnValueOnce(makeLogsQueryResponse());
-      getMock.mockReturnValue({ result: { queryHistory: [] } });
+      fetchMock.mockReturnValue(of({ data: { result: { queryHistory: [] } } }));
       await waitForExplore();
 
       await openQueryHistory();
-      expect(postMock).toBeCalledWith('/api/query-history/migrate', {
-        queries: [expect.objectContaining({ datasourceUid: 'loki' })],
-      });
-      postMock.mockReset();
+      expect(fetchMock).toBeCalledWith(
+        expect.objectContaining({
+          url: expect.stringMatching('/api/query-history/migrate'),
+          data: { queries: [expect.objectContaining({ datasourceUid: 'loki' })] },
+        })
+      );
+      fetchMock.mockReset();
+      fetchMock.mockReturnValue(of({ data: { result: { queryHistory: [] } } }));
 
       await closeQueryHistory();
       await openQueryHistory();
-      expect(postMock).not.toBeCalledWith('/api/query-history/migrate', {
-        queries: [expect.objectContaining({ datasourceUid: 'loki' })],
-      });
+      expect(fetchMock).not.toBeCalledWith(
+        expect.objectContaining({
+          url: expect.stringMatching('/api/query-history/migrate'),
+        })
+      );
     });
   });
 });
