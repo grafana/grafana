@@ -1330,6 +1330,15 @@
    },
    "type": "array"
   },
+  "MessageTemplateContent": {
+   "properties": {
+    "Template": {
+     "type": "string"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
   "MonthRange": {
    "properties": {
     "Begin": {
@@ -3516,6 +3525,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3526,9 +3536,7 @@
    "required": [
     "name"
    ],
-   "type": "object",
-   "x-go-name": "Receiver",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "object"
   },
   "silence": {
    "description": "Silence silence",
@@ -4940,7 +4948,19 @@
     ]
    }
   },
-  "/api/provisioning/templates/{ID}": {
+  "/api/provisioning/templates/{name}": {
+   "delete": {
+    "operationId": "RouteDeleteTemplate",
+    "responses": {
+     "204": {
+      "$ref": "#/responses/Accepted"
+     }
+    },
+    "summary": "Delete a template.",
+    "tags": [
+     "provisioning"
+    ]
+   },
    "get": {
     "operationId": "RouteGetTemplate",
     "responses": {
@@ -4952,6 +4972,36 @@
      }
     },
     "summary": "Get a message template.",
+    "tags": [
+     "provisioning"
+    ]
+   },
+   "put": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RoutePutTemplate",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/MessageTemplateContent"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "$ref": "#/responses/Accepted"
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Updates an existing template.",
     "tags": [
      "provisioning"
     ]

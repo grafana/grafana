@@ -21,6 +21,7 @@ import (
 
 type ProvisioningApiForkingService interface {
 	RouteDeleteContactpoints(*models.ReqContext) response.Response
+	RouteDeleteTemplate(*models.ReqContext) response.Response
 	RouteGetContactpoints(*models.ReqContext) response.Response
 	RouteGetPolicyTree(*models.ReqContext) response.Response
 	RouteGetTemplate(*models.ReqContext) response.Response
@@ -28,10 +29,15 @@ type ProvisioningApiForkingService interface {
 	RoutePostContactpoints(*models.ReqContext) response.Response
 	RoutePostPolicyTree(*models.ReqContext) response.Response
 	RoutePutContactpoints(*models.ReqContext) response.Response
+	RoutePutTemplate(*models.ReqContext) response.Response
 }
 
 func (f *ForkedProvisioningApi) RouteDeleteContactpoints(ctx *models.ReqContext) response.Response {
 	return f.forkRouteDeleteContactpoints(ctx)
+}
+
+func (f *ForkedProvisioningApi) RouteDeleteTemplate(ctx *models.ReqContext) response.Response {
+	return f.forkRouteDeleteTemplate(ctx)
 }
 
 func (f *ForkedProvisioningApi) RouteGetContactpoints(ctx *models.ReqContext) response.Response {
@@ -74,6 +80,14 @@ func (f *ForkedProvisioningApi) RoutePutContactpoints(ctx *models.ReqContext) re
 	return f.forkRoutePutContactpoints(ctx, conf)
 }
 
+func (f *ForkedProvisioningApi) RoutePutTemplate(ctx *models.ReqContext) response.Response {
+	conf := apimodels.MessageTemplateContent{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRoutePutTemplate(ctx, conf)
+}
+
 func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
@@ -83,6 +97,16 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 				http.MethodDelete,
 				"/api/provisioning/contact-points/{ID}",
 				srv.RouteDeleteContactpoints,
+				m,
+			),
+		)
+		group.Delete(
+			toMacaronPath("/api/provisioning/templates/{name}"),
+			api.authorize(http.MethodDelete, "/api/provisioning/templates/{name}"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/provisioning/templates/{name}",
+				srv.RouteDeleteTemplate,
 				m,
 			),
 		)
@@ -107,11 +131,11 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/provisioning/templates/{ID}"),
-			api.authorize(http.MethodGet, "/api/provisioning/templates/{ID}"),
+			toMacaronPath("/api/provisioning/templates/{name}"),
+			api.authorize(http.MethodGet, "/api/provisioning/templates/{name}"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/provisioning/templates/{ID}",
+				"/api/provisioning/templates/{name}",
 				srv.RouteGetTemplate,
 				m,
 			),
@@ -153,6 +177,16 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 				http.MethodPut,
 				"/api/provisioning/contact-points",
 				srv.RoutePutContactpoints,
+				m,
+			),
+		)
+		group.Put(
+			toMacaronPath("/api/provisioning/templates/{name}"),
+			api.authorize(http.MethodPut, "/api/provisioning/templates/{name}"),
+			metrics.Instrument(
+				http.MethodPut,
+				"/api/provisioning/templates/{name}",
+				srv.RoutePutTemplate,
 				m,
 			),
 		)
