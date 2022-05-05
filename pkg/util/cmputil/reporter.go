@@ -98,4 +98,23 @@ func describeReflectValue(v reflect.Value) interface{} {
 	}
 	return v
 }
+
+// IsAddOperation returns true when
+//  - Left does not have value and Right has
+//  - the kind of Left and Right is either reflect.Slice or reflect.Map and the length of Left is less than length of Right
+// In all other cases it returns false.
+// NOTE: this is applicable to diff of Maps and Slices only
+func (d *Diff) IsAddOperation() bool {
+	return !d.Left.IsValid() && d.Right.IsValid() || (d.Left.Kind() == d.Right.Kind() && // cmp reports adding first element to a nil slice as creation of one and therefore Left is valid and it is nil and right is a new slice
+		(d.Left.Kind() == reflect.Slice || d.Left.Kind() == reflect.Map) && d.Left.Len() < d.Right.Len())
+}
+
+// IsDeleteOperation returns true when
+//  - Right does not have value and Left has
+//  - the kind of Left and Right is either reflect.Slice or reflect.Map and the length of Right is less than length of Left
+// In all other cases it returns false.
+// NOTE: this is applicable to diff of Maps and Slices only
+func (d *Diff) IsDeleteOperation() bool {
+	return d.Left.IsValid() && !d.Right.IsValid() || (d.Left.Kind() == d.Right.Kind() &&
+		(d.Left.Kind() == reflect.Slice || d.Left.Kind() == reflect.Map) && d.Left.Len() > d.Right.Len())
 }
