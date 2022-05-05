@@ -10,14 +10,15 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(cfg *setting.Cfg,
+func ProvideService(features featuremgmt.FeatureToggles, cfg *setting.Cfg,
 	provider accesscontrol.PermissionsProvider, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
 	var errDeclareRoles error
-	s := ProvideOSSAccessControl(cfg, provider)
+	s := ProvideOSSAccessControl(features, cfg, provider)
 	if !s.IsDisabled() {
 		api := api.AccessControlAPI{
 			RouteRegister: routeRegister,
@@ -31,8 +32,9 @@ func ProvideService(cfg *setting.Cfg,
 	return s, errDeclareRoles
 }
 
-func ProvideOSSAccessControl(cfg *setting.Cfg, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
+func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, cfg *setting.Cfg, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
 	s := &OSSAccessControlService{
+		features:       features,
 		cfg:            cfg,
 		provider:       provider,
 		log:            log.New("accesscontrol"),
@@ -46,6 +48,7 @@ func ProvideOSSAccessControl(cfg *setting.Cfg, provider accesscontrol.Permission
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
 	log            log.Logger
+	features       featuremgmt.FeatureToggles
 	cfg            *setting.Cfg
 	scopeResolvers accesscontrol.ScopeResolvers
 	provider       accesscontrol.PermissionsProvider
@@ -155,7 +158,7 @@ func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser
 	builtInRoles := []string{string(user.OrgRole)}
 
 	// With built-in role simplifying, inheritance is performed upon role registration.
-	if ac.IsDisabled() {
+	if !ac.features.IsEnabled(featuremgmt.FlagAccesscontrolBuiltins) {
 		for _, br := range user.OrgRole.Children() {
 			builtInRoles = append(builtInRoles, string(br))
 		}
