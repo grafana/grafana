@@ -54,7 +54,7 @@ export const FileUpload: FC<Props> = ({
         accept={accept}
         data-testid={selectors.components.FileUpload.inputField}
       />
-      <label className={cx(style.labelWrapper, className)}>
+      <label htmlFor="fileUpload" className={cx(style.labelWrapper, className)}>
         <Icon name="upload" className={style.icon} />
         {children}
       </label>
