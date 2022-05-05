@@ -108,7 +108,7 @@ func (ss *SQLStore) createTeam(team models.Team, retryOnPrimaryKeyFailure bool) 
 		return err
 	})
 	retries := 3
-	for i := 0; i < retries && err != nil && retryOnPrimaryKeyFailure && ss.Dialect.IsPrimaryKeyConstrainViolation(err); i ++ {
+	for i := 0; i < retries && err != nil && retryOnPrimaryKeyFailure && ss.Dialect.IsPrimaryKeyConstrainViolation(err); i++ {
 		// In PostgreSQL the sequence is not updated on explicit INSERTs with a provided value for an autoincremented column
 		// However, after the failure, the sequence is set to the current value; therefore, a subsequent INSERT succeeds.
 		// https://gist.github.com/zserge/694b0a1dfb76a7366d5000cda93ee2e5

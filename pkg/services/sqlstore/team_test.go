@@ -382,7 +382,7 @@ func TestCreateTeam(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			// create a team without providing identifier 
+			// create a team without providing identifier
 			_, err := sqlStore.CreateTeam("team4", "", testOrgID)
 			require.NoError(t, err)
 		})

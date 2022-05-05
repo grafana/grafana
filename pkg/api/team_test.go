@@ -162,8 +162,8 @@ func TestTeamAPIEndpoint(t *testing.T) {
 				}
 				c.OrgRole = models.ROLE_EDITOR
 				c.Req.Body = mockRequestBody(models.CreateTeamCommand{
-					Name: fmt.Sprintf("%s-%d", teamName, models.MIN_ALLOWED_USER_DEFINED_TEAM_ID - 1),
-					ID: models.MIN_ALLOWED_USER_DEFINED_TEAM_ID - 1,
+					Name: fmt.Sprintf("%s-%d", teamName, models.MIN_ALLOWED_USER_DEFINED_TEAM_ID-1),
+					ID:   models.MIN_ALLOWED_USER_DEFINED_TEAM_ID - 1,
 				})
 				c.Req.Header.Add("Content-Type", "application/json")
 				r := hs.CreateTeam(c)
@@ -180,7 +180,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 				c.OrgRole = models.ROLE_EDITOR
 				c.Req.Body = mockRequestBody(models.CreateTeamCommand{
 					Name: fmt.Sprintf("%s-%d", teamName, models.MIN_ALLOWED_USER_DEFINED_TEAM_ID),
-					ID: models.MIN_ALLOWED_USER_DEFINED_TEAM_ID,
+					ID:   models.MIN_ALLOWED_USER_DEFINED_TEAM_ID,
 				})
 				c.Req.Header.Add("Content-Type", "application/json")
 				r := hs.CreateTeam(c)
