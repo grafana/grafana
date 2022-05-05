@@ -16,7 +16,7 @@ var (
 	ErrLastTeamAdmin                        = errors.New("not allowed to remove last admin")
 	ErrNotAllowedToUpdateTeam               = errors.New("user not allowed to update team")
 	ErrNotAllowedToUpdateTeamInDifferentOrg = errors.New("user not allowed to update team in another org")
-	ErrForbiddenUserDefinedTeamID = fmt.Errorf("User defined team identifiers should be greater than %d", MIN_ALLOWED_USER_DEFINED_TEAM_ID)
+	ErrForbiddenUserDefinedTeamID           = fmt.Errorf("User defined team identifiers should be greater than %d", MIN_ALLOWED_USER_DEFINED_TEAM_ID)
 )
 
 // Team model
