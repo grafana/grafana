@@ -201,6 +201,8 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	label := model.Get("label").MustString()
 	returnData := !model.Get("hide").MustBool(false)
 	queryType := model.Get("type").MustString()
+	timezoneUTCOffset := model.Get("timezoneUTCOffset").MustString("")
+
 	if queryType == "" {
 		// If no type is provided we assume we are called by alerting service, which requires to return data!
 		// Note, this is sort of a hack, but the official Grafana interfaces do not carry the information
@@ -221,23 +223,24 @@ func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time
 	}
 
 	return &cloudWatchQuery{
-		RefId:            refId,
-		Region:           region,
-		Id:               id,
-		Namespace:        namespace,
-		MetricName:       metricName,
-		Statistic:        statistic,
-		Expression:       expression,
-		ReturnData:       returnData,
-		Dimensions:       dimensions,
-		Period:           period,
-		Alias:            alias,
-		Label:            label,
-		MatchExact:       matchExact,
-		UsedExpression:   "",
-		MetricQueryType:  metricQueryType,
-		MetricEditorMode: metricEditorModeValue,
-		SqlExpression:    sqlExpression,
+		RefId:             refId,
+		Region:            region,
+		Id:                id,
+		Namespace:         namespace,
+		MetricName:        metricName,
+		Statistic:         statistic,
+		Expression:        expression,
+		ReturnData:        returnData,
+		Dimensions:        dimensions,
+		Period:            period,
+		Alias:             alias,
+		Label:             label,
+		MatchExact:        matchExact,
+		UsedExpression:    "",
+		MetricQueryType:   metricQueryType,
+		MetricEditorMode:  metricEditorModeValue,
+		SqlExpression:     sqlExpression,
+		TimezoneUTCOffset: timezoneUTCOffset,
 	}, nil
 }
 
