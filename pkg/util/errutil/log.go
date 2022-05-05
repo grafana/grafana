@@ -11,7 +11,9 @@ const (
 	LevelError   LogLevel = "error"
 )
 
-// LogInterface is a subset of github.com/grafana/grafana/
+// LogInterface is a subset of github.com/grafana/grafana/pkg/infra/log.Logger
+// to avoid having to depend on other packages in the module so that
+// there's no risk of circular dependencies.
 type LogInterface interface {
 	Debug(msg string, ctx ...interface{})
 	Info(msg string, ctx ...interface{})
