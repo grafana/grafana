@@ -88,20 +88,49 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Respons
 			return nil
 		}
 
-		deletableRulesFGAC, err := srv.accessibleRulesFGAC(q.Result, hasAccess, logger)
-		if err != nil {
-			return err
-		}
+		var canDelete []*ngmodels.AlertRule
+		var cannotDelete []string
 
-		deletableRulesProvisioning, err := srv.accessibleRulesProvisioning(q.Result, provenances, logger)
-		if err != nil {
-			return err
-		}
-
-		for uid := range deletableRulesFGAC {
-			if _, exists := deletableRulesProvisioning[uid]; exists {
-				deletableRules = append(deletableRules, uid)
+		// partition will partation the given rules in two, one partition
+		// being the rules that fulfill the predicate the other partation being
+		// the ruleIDs not fulfilling it.
+		partition := func(alerts []*ngmodels.AlertRule, predicate func(rule *ngmodels.AlertRule) bool) ([]*ngmodels.AlertRule, []string) {
+			positive, negative := make([]*ngmodels.AlertRule, 0, len(alerts)), make([]string, 0, len(alerts))
+			for _, rule := range alerts {
+				if predicate(rule) {
+					positive = append(positive, rule)
+					continue
+				}
+				negative = append(negative, rule.UID)
 			}
+			return positive, negative
+		}
+
+		canDelete, cannotDelete = partition(q.Result, func(rule *ngmodels.AlertRule) bool {
+			return authorizeDatasourceAccessForRule(rule, hasAccess)
+		})
+		if len(canDelete) == 0 {
+			return fmt.Errorf("%w to delete rules because user is not authorized to access data sources used by the rules", ErrAuthorization)
+		}
+		if len(cannotDelete) > 0 {
+			logger.Info("user cannot delete one or many alert rules because it does not have access to data sources. Those rules will be skipped", "expected", len(q.Result), "authorized", len(canDelete), "unauthorized", cannotDelete)
+		}
+
+		canDelete, cannotDelete = partition(canDelete, func(rule *ngmodels.AlertRule) bool {
+			provenance, exists := provenances[rule.UID]
+			return (exists && provenance == ngmodels.ProvenanceNone) || !exists
+		})
+
+		if len(canDelete) == 0 {
+			return fmt.Errorf("all rules have been provisioned and cannot be deleted through this api")
+		}
+
+		if len(cannotDelete) > 0 {
+			logger.Info("user cannot delete one or many alert rules because it does have a provenance set. Those rules will be skipped", "expected", len(q.Result), "provenance_none", len(canDelete), "provenance_set", cannotDelete)
+		}
+
+		for _, rule := range canDelete {
+			deletableRules = append(deletableRules, rule.UID)
 		}
 
 		return srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.OrgId, deletableRules...)
@@ -124,53 +153,6 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Respons
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rules deleted"})
-}
-
-// accessibleRulesFGAC will return the rules that are accessible for the user
-// while checking against FGAC. If none is accessible, an error will be returned.
-func (srv RulerSrv) accessibleRulesFGAC(rules []*ngmodels.AlertRule, hasAccess func(evaluator accesscontrol.Evaluator) bool, logger *log.ConcreteLogger) (map[string]struct{}, error) {
-	canDelete, cannotDelete := make(map[string]struct{}), make([]string, 0)
-	for _, rule := range rules {
-		if authorizeDatasourceAccessForRule(rule, hasAccess) {
-			canDelete[rule.UID] = struct{}{}
-			continue
-		}
-		cannotDelete = append(cannotDelete, rule.UID)
-	}
-
-	if len(canDelete) == 0 {
-		return nil, fmt.Errorf("%w to delete rules because user is not authorized to access data sources used by the rules", ErrAuthorization)
-	}
-
-	if len(cannotDelete) > 0 {
-		logger.Info("user cannot delete one or many alert rules because it does not have access to data sources. Those rules will be skipped", "expected", len(rules), "authorized", len(canDelete), "unauthorized", cannotDelete)
-	}
-
-	return canDelete, nil
-}
-
-// accessibleRulesProvisioning will return the rules that are accessible for
-// the user while checking against the provenance. If none is accessible, an
-// error will be returned.
-func (srv RulerSrv) accessibleRulesProvisioning(rules []*ngmodels.AlertRule, provenances map[string]ngmodels.Provenance, logger *log.ConcreteLogger) (map[string]struct{}, error) {
-	canDelete, cannotDelete := make(map[string]struct{}), make([]string, 0)
-	for _, rule := range rules {
-		if provenance, exists := provenances[rule.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
-			canDelete[rule.UID] = struct{}{}
-			continue
-		}
-		cannotDelete = append(cannotDelete, rule.UID)
-	}
-
-	if len(canDelete) == 0 {
-		return nil, fmt.Errorf("all rules have been provisioned and cannot be deleted through this api")
-	}
-
-	if len(cannotDelete) > 0 {
-		logger.Info("user cannot delete one or many alert rules because it does has a provenance set. Those rules will be skipped", "expected", len(rules), "provenance_none", len(canDelete), "provenance_set", cannotDelete)
-	}
-
-	return canDelete, nil
 }
 
 func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.Response {
