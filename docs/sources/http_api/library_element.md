@@ -269,7 +269,8 @@ Creates a new library element.
 
 JSON Body schema:
 
-- **folderId** – Optional, the ID of the folder where the library element is stored.
+- **folderId** – ID of the folder where the library element is stored. It is deprecated since Grafana v9
+- **folderUid** – Optional, the UID of the folder where the library element is stored, empty string when it is General folder
 - **name** – Optional, the name of the library element.
 - **model** – The JSON model for the library element.
 - **kind** – Kind of element to create, Use `1` for library panels or `2` for library variables.
@@ -285,7 +286,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
   "uid": "nErXDvCkzz",
-  "folderId": 0,
+  "folderUid": "",
   "name": "Example library panel",
   "model": {...},
   "kind": 1
@@ -303,6 +304,7 @@ Content-Type: application/json
         "id": 28,
         "orgId": 1,
         "folderId": 0,
+        "folderUid": "",
         "uid": "nErXDvCkzz",
         "name": "Example library panel",
         "kind": 1,
@@ -346,7 +348,8 @@ Updates an existing library element identified by uid.
 
 JSON Body schema:
 
-- **folderId** – ID of the folder where the library element is stored.
+- **folderId** – ID of the folder where the library element is stored. It is deprecated since Grafana v9
+- **folderUid** – UID of the folder where the library element is stored, empty string when it is General folder.
 - **name** – Name of the library element.
 - **model** – The JSON model for the library element.
 - **kind** – Kind of element to create. Use `1` for library panels or `2` for library variables.
@@ -379,6 +382,7 @@ Content-Type: application/json
         "id": 28,
         "orgId": 1,
         "folderId": 0,
+        "folderUid": "",
         "uid": "nErXDvCkzz",
         "name": "Renamed library panel",
         "kind": 1,

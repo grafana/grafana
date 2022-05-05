@@ -1,25 +1,39 @@
-import { Component } from 'react';
-import { Subscription } from 'rxjs';
+import { css } from '@emotion/css';
+import React, { Component } from 'react';
+import { ReplaySubject, Subscription } from 'rxjs';
 
-import { PanelProps } from '@grafana/data';
-import { PanelContext, PanelContextRoot } from '@grafana/ui';
+import { GrafanaTheme, PanelProps } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime/src';
+import { Button, PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
 import { CanvasFrameOptions } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
+import { InlineEdit } from './InlineEdit';
 import { PanelOptions } from './models.gen';
 
 interface Props extends PanelProps<PanelOptions> {}
 
 interface State {
   refresh: number;
+  openInlineEdit: boolean;
 }
 
 export interface InstanceState {
   scene: Scene;
   selected: ElementState[];
 }
+
+export interface SelectionAction {
+  panel: CanvasPanel;
+}
+
+let canvasInstances: CanvasPanel[] = [];
+let activeCanvasPanel: CanvasPanel | undefined = undefined;
+let isInlineEditOpen = false;
+
+export const activePanelSubject = new ReplaySubject<SelectionAction>(1);
 
 export class CanvasPanel extends Component<Props, State> {
   static contextType = PanelContextRoot;
@@ -28,11 +42,14 @@ export class CanvasPanel extends Component<Props, State> {
   readonly scene: Scene;
   private subs = new Subscription();
   needsReload = false;
+  styles = getStyles(config.theme);
+  isEditing = locationService.getSearchObject().editPanel !== undefined;
 
   constructor(props: Props) {
     super(props);
     this.state = {
       refresh: 0,
+      openInlineEdit: false,
     };
 
     // Only the initial options are ever used.
@@ -45,6 +62,7 @@ export class CanvasPanel extends Component<Props, State> {
       this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt) => {
         // Remove current selection when entering edit mode for any panel in dashboard
         this.scene.clearCurrentSelection();
+        this.inlineEditButtonClose();
       })
     );
 
@@ -58,6 +76,9 @@ export class CanvasPanel extends Component<Props, State> {
   }
 
   componentDidMount() {
+    activeCanvasPanel = this;
+    activePanelSubject.next({ panel: this });
+
     this.panelContext = this.context as PanelContext;
     if (this.panelContext.onInstanceStateChange) {
       this.panelContext.onInstanceStateChange({
@@ -73,14 +94,27 @@ export class CanvasPanel extends Component<Props, State> {
               selected: v,
               layer: this.scene.root,
             });
+
+            activeCanvasPanel = this;
+            activePanelSubject.next({ panel: this });
+
+            canvasInstances.forEach((canvasInstance) => {
+              if (canvasInstance !== activeCanvasPanel) {
+                canvasInstance.scene.clearCurrentSelection(true);
+              }
+            });
           },
         })
       );
     }
+
+    canvasInstances.push(this);
   }
 
   componentWillUnmount() {
     this.subs.unsubscribe();
+    isInlineEditOpen = false;
+    canvasInstances = canvasInstances.filter((ci) => ci.props.id !== activeCanvasPanel?.props.id);
   }
 
   // NOTE, all changes to the scene flow through this function
@@ -91,6 +125,7 @@ export class CanvasPanel extends Component<Props, State> {
       ...options,
       root,
     });
+
     this.setState({ refresh: this.state.refresh + 1 });
     // console.log('send changes', root);
   };
@@ -112,6 +147,10 @@ export class CanvasPanel extends Component<Props, State> {
       changed = true;
     }
 
+    if (this.state.openInlineEdit !== nextState.openInlineEdit) {
+      changed = true;
+    }
+
     // After editing, the options are valid, but the scene was in a different panel or inline editing mode has changed
     const shouldUpdateSceneAndPanel = this.needsReload && this.props.options !== nextProps.options;
     const inlineEditingSwitched = this.props.options.inlineEditing !== nextProps.options.inlineEditing;
@@ -130,7 +169,60 @@ export class CanvasPanel extends Component<Props, State> {
     return changed;
   }
 
+  inlineEditButtonClick = () => {
+    if (isInlineEditOpen) {
+      this.forceUpdate();
+      this.setActivePanel();
+      return;
+    }
+
+    this.setActivePanel();
+    this.setState({ openInlineEdit: true });
+    isInlineEditOpen = true;
+  };
+
+  inlineEditButtonClose = () => {
+    this.setState({ openInlineEdit: false });
+    isInlineEditOpen = false;
+  };
+
+  setActivePanel = () => {
+    activeCanvasPanel = this;
+    activePanelSubject.next({ panel: this });
+  };
+
+  renderInlineEdit = () => {
+    return <InlineEdit onClose={() => this.inlineEditButtonClose()} />;
+  };
+
   render() {
-    return this.scene.render();
+    return (
+      <>
+        {this.scene.render()}
+        {this.props.options.inlineEditing && !this.isEditing && (
+          <div>
+            <div className={this.styles.inlineEditButton}>
+              <Button
+                size="lg"
+                variant="secondary"
+                icon="edit"
+                data-btninlineedit={this.props.id}
+                onClick={this.inlineEditButtonClick}
+              />
+            </div>
+            {this.state.openInlineEdit && this.renderInlineEdit()}
+          </div>
+        )}
+      </>
+    );
   }
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  inlineEditButton: css`
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    z-index: 999;
+  `,
+}));

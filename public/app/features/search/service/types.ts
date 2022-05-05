@@ -3,6 +3,7 @@ import { DataFrame, DataSourceRef } from '@grafana/data';
 export interface QueryResult {
   kind: string; // panel, dashboard, folder
   name: string;
+  uid: string;
   description?: string;
   url: string; // link to value (unique)
   tags?: string[];
