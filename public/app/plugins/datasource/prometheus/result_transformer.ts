@@ -611,7 +611,8 @@ function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
   return 0;
 }
 
-function parseSampleValue(value: string): number {
+/** @internal */
+export function parseSampleValue(value: string): number {
   if (INFINITY_SAMPLE_REGEX.test(value)) {
     return value[0] === '-' ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
   }

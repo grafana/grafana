@@ -1,6 +1,6 @@
 import { DataFrame, FieldType, DataQueryRequest, DataQueryResponse, MutableDataFrame } from '@grafana/data';
 
-import { transform, transformV2, transformDFToTable } from './result_transformer';
+import { transform, transformV2, transformDFToTable, parseSampleValue } from './result_transformer';
 import { PromQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -33,6 +33,43 @@ const matrixResponse = {
 };
 
 describe('Prometheus Result Transformer', () => {
+  describe('parse variants of "+Inf" and "-Inf" strings', () => {
+    it('+Inf', () => {
+      expect(parseSampleValue('+Inf')).toEqual(Number.POSITIVE_INFINITY);
+    });
+    it('Inf', () => {
+      expect(parseSampleValue('Inf')).toEqual(Number.POSITIVE_INFINITY);
+    });
+    it('inf', () => {
+      expect(parseSampleValue('inf')).toEqual(Number.POSITIVE_INFINITY);
+    });
+    it('+Infinity', () => {
+      expect(parseSampleValue('+Infinity')).toEqual(Number.POSITIVE_INFINITY);
+    });
+    it('+infinity', () => {
+      expect(parseSampleValue('+infinity')).toEqual(Number.POSITIVE_INFINITY);
+    });
+    it('infinity', () => {
+      expect(parseSampleValue('infinity')).toEqual(Number.POSITIVE_INFINITY);
+    });
+
+    it('-Inf', () => {
+      expect(parseSampleValue('-Inf')).toEqual(Number.NEGATIVE_INFINITY);
+    });
+
+    it('-inf', () => {
+      expect(parseSampleValue('-inf')).toEqual(Number.NEGATIVE_INFINITY);
+    });
+
+    it('-Infinity', () => {
+      expect(parseSampleValue('-Infinity')).toEqual(Number.NEGATIVE_INFINITY);
+    });
+
+    it('-infinity', () => {
+      expect(parseSampleValue('-infinity')).toEqual(Number.NEGATIVE_INFINITY);
+    });
+  });
+
   describe('transformV2', () => {
     it('results with time_series format should be enriched with preferredVisualisationType', () => {
       const request = {
@@ -788,104 +825,12 @@ describe('Prometheus Result Transformer', () => {
           },
         };
 
-        it('should correctly parse values (+Inf)', () => {
-          response.data.result[1] = '+Inf';
-
+        it('should correctly parse values', () => {
           const result: DataFrame[] = transform({ data: response } as any, {
             ...options,
             target: { format: 'table' },
           });
           expect(result[0].fields[1].values.toArray()).toEqual([Number.POSITIVE_INFINITY]);
-        });
-
-        it('should correctly parse values (+inf)', () => {
-          response.data.result[1] = '+inf';
-
-          const result: DataFrame[] = transform({ data: response } as any, {
-            ...options,
-            target: { format: 'table' },
-          });
-          expect(result[0].fields[1].values.toArray()).toEqual([Number.POSITIVE_INFINITY]);
-        });
-
-        it('should correctly parse values (inf)', () => {
-          response.data.result[1] = 'inf';
-
-          const result: DataFrame[] = transform({ data: response } as any, {
-            ...options,
-            target: { format: 'table' },
-          });
-          expect(result[0].fields[1].values.toArray()).toEqual([Number.POSITIVE_INFINITY]);
-        });
-
-        it('should correctly parse values (+Infinity)', () => {
-          response.data.result[1] = '+Infinity';
-
-          const result: DataFrame[] = transform({ data: response } as any, {
-            ...options,
-            target: { format: 'table' },
-          });
-          expect(result[0].fields[1].values.toArray()).toEqual([Number.POSITIVE_INFINITY]);
-        });
-
-        it('should correctly parse values (+infinity)', () => {
-          response.data.result[1] = '+infinity';
-
-          const result: DataFrame[] = transform({ data: response } as any, {
-            ...options,
-            target: { format: 'table' },
-          });
-          expect(result[0].fields[1].values.toArray()).toEqual([Number.POSITIVE_INFINITY]);
-        });
-
-        it('should correctly parse values (infinity)', () => {
-          response.data.result[1] = 'infinity';
-
-          const result: DataFrame[] = transform({ data: response } as any, {
-            ...options,
-            target: { format: 'table' },
-          });
-          expect(result[0].fields[1].values.toArray()).toEqual([Number.POSITIVE_INFINITY]);
-        });
-
-        it('should correctly parse values (-Inf)', () => {
-          response.data.result[1] = '-Inf';
-
-          const result: DataFrame[] = transform({ data: response } as any, {
-            ...options,
-            target: { format: 'table' },
-          });
-          expect(result[0].fields[1].values.toArray()).toEqual([Number.NEGATIVE_INFINITY]);
-        });
-
-        it('should correctly parse values (-inf)', () => {
-          response.data.result[1] = '-inf';
-
-          const result: DataFrame[] = transform({ data: response } as any, {
-            ...options,
-            target: { format: 'table' },
-          });
-          expect(result[0].fields[1].values.toArray()).toEqual([Number.NEGATIVE_INFINITY]);
-        });
-
-        it('should correctly parse values (-Infinity)', () => {
-          response.data.result[1] = '-Infinity';
-
-          const result: DataFrame[] = transform({ data: response } as any, {
-            ...options,
-            target: { format: 'table' },
-          });
-          expect(result[0].fields[1].values.toArray()).toEqual([Number.NEGATIVE_INFINITY]);
-        });
-
-        it('should correctly parse values (-infinity)', () => {
-          response.data.result[1] = '-infinity';
-
-          const result: DataFrame[] = transform({ data: response } as any, {
-            ...options,
-            target: { format: 'table' },
-          });
-          expect(result[0].fields[1].values.toArray()).toEqual([Number.NEGATIVE_INFINITY]);
         });
       });
 
