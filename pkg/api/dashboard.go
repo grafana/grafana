@@ -310,7 +310,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	if hs.Features.IsEnabled(featuremgmt.FlagCoremodelValidation) {
+	if hs.Features.IsEnabled(featuremgmt.FlagValidateDashboardsOnSave) {
 		// Ideally, coremodel validation calls would be integrated into the web
 		// framework. But this does the job for now.
 		if cm, has := hs.CoremodelRegistry.Get("dashboard"); has {

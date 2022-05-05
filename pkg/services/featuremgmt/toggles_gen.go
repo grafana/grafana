@@ -182,8 +182,8 @@ const (
 	// FlagAzureMonitorExperimentalUI
 	// Use grafana-experimental UI in Azure Monitor
 	FlagAzureMonitorExperimentalUI = "azureMonitorExperimentalUI"
-  
-	// FlagCoremodelValidation
-	// Validate objects (e.g. dashboards) against coremodel schemas
-	FlagCoremodelValidation = "coremodelValidation"
+
+	// FlagValidateDashboardsOnSave
+	// Validate dashboard JSON POSTed to api/dashboards/db
+	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
 )

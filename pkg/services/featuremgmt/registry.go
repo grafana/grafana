@@ -249,8 +249,8 @@ var (
 			FrontendOnly:    true,
 		},
 		{
-    	Name:            "coremodelValidation",
-			Description:     "Validate objects (e.g. dashboards) against coremodel schemas",
+			Name:            "validateDashboardsOnSave",
+			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
 			State:           FeatureStateAlpha,
 			RequiresRestart: true,
 		},
