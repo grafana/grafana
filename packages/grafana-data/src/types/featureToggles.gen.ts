@@ -60,9 +60,6 @@ export interface FeatureToggles {
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   azureMonitorExperimentalUI?: boolean;
-<<<<<<< HEAD
-  validateDashboardsOnSave?: boolean;
-=======
   traceToMetrics?: boolean;
->>>>>>> origin/main
+  validateDashboardsOnSave?: boolean;
 }
