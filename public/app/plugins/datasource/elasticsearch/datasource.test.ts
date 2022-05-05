@@ -412,101 +412,101 @@ describe('ElasticDatasource', function (this: any) {
     });
   });
 
-  describe('When getting fields', () => {
-    const data = {
-      metricbeat: {
-        mappings: {
-          metricsets: {
-            _all: {},
-            _meta: {
-              test: 'something',
-            },
-            properties: {
-              '@timestamp': { type: 'date' },
-              __timestamp: { type: 'date' },
-              '@timestampnano': { type: 'date_nanos' },
-              beat: {
-                properties: {
-                  name: {
-                    fields: { raw: { type: 'keyword' } },
-                    type: 'string',
-                  },
-                  hostname: { type: 'string' },
-                },
-              },
-              system: {
-                properties: {
-                  cpu: {
-                    properties: {
-                      system: { type: 'float' },
-                      user: { type: 'float' },
-                    },
-                  },
-                  process: {
-                    properties: {
-                      cpu: {
-                        properties: {
-                          total: { type: 'float' },
-                        },
-                      },
-                      name: { type: 'string' },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    };
+  // describe('When getting fields', () => {
+  // const data = {
+  //   metricbeat: {
+  //     mappings: {
+  //       metricsets: {
+  //         _all: {},
+  //         _meta: {
+  //           test: 'something',
+  //         },
+  //         properties: {
+  //           '@timestamp': { type: 'date' },
+  //           __timestamp: { type: 'date' },
+  //           '@timestampnano': { type: 'date_nanos' },
+  //           beat: {
+  //             properties: {
+  //               name: {
+  //                 fields: { raw: { type: 'keyword' } },
+  //                 type: 'string',
+  //               },
+  //               hostname: { type: 'string' },
+  //             },
+  //           },
+  //           system: {
+  //             properties: {
+  //               cpu: {
+  //                 properties: {
+  //                   system: { type: 'float' },
+  //                   user: { type: 'float' },
+  //                 },
+  //               },
+  //               process: {
+  //                 properties: {
+  //                   cpu: {
+  //                     properties: {
+  //                       total: { type: 'float' },
+  //                     },
+  //                   },
+  //                   name: { type: 'string' },
+  //                 },
+  //               },
+  //             },
+  //           },
+  //         },
+  //       },
+  //     },
+  //   },
+  // };
 
-    // it('should return nested fields', async () => {
-    //   const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
+  // it('should return nested fields', async () => {
+  //   const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
 
-    //   await expect(ds.getFields()).toEmitValuesWith((received) => {
-    //     expect(received.length).toBe(1);
-    //     const fieldObjects = received[0];
-    //     const fields = map(fieldObjects, 'text');
+  //   await expect(ds.getFields()).toEmitValuesWith((received) => {
+  //     expect(received.length).toBe(1);
+  //     const fieldObjects = received[0];
+  //     const fields = map(fieldObjects, 'text');
 
-    //     expect(fields).toEqual([
-    //       '@timestamp',
-    //       '__timestamp',
-    //       '@timestampnano',
-    //       'beat.name.raw',
-    //       'beat.name',
-    //       'beat.hostname',
-    //       'system.cpu.system',
-    //       'system.cpu.user',
-    //       'system.process.cpu.total',
-    //       'system.process.name',
-    //     ]);
-    //   });
-    // });
+  //     expect(fields).toEqual([
+  //       '@timestamp',
+  //       '__timestamp',
+  //       '@timestampnano',
+  //       'beat.name.raw',
+  //       'beat.name',
+  //       'beat.hostname',
+  //       'system.cpu.system',
+  //       'system.cpu.user',
+  //       'system.process.cpu.total',
+  //       'system.process.name',
+  //     ]);
+  //   });
+  // });
 
-    // it('should return number fields', async () => {
-    //   const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
+  // it('should return number fields', async () => {
+  //   const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
 
-    //   await expect(ds.getFields(['number'])).toEmitValuesWith((received) => {
-    //     expect(received.length).toBe(1);
-    //     const fieldObjects = received[0];
-    //     const fields = map(fieldObjects, 'text');
+  //   await expect(ds.getFields(['number'])).toEmitValuesWith((received) => {
+  //     expect(received.length).toBe(1);
+  //     const fieldObjects = received[0];
+  //     const fields = map(fieldObjects, 'text');
 
-    //     expect(fields).toEqual(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
-    //   });
-    // });
+  //     expect(fields).toEqual(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
+  //   });
+  // });
 
-    //   it('should return date fields', async () => {
-    //     const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
+  //   it('should return date fields', async () => {
+  //     const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
 
-    //     await expect(ds.getFields(['date'])).toEmitValuesWith((received) => {
-    //       expect(received.length).toBe(1);
-    //       const fieldObjects = received[0];
-    //       const fields = map(fieldObjects, 'text');
+  //     await expect(ds.getFields(['date'])).toEmitValuesWith((received) => {
+  //       expect(received.length).toBe(1);
+  //       const fieldObjects = received[0];
+  //       const fields = map(fieldObjects, 'text');
 
-    //       expect(fields).toEqual(['@timestamp', '__timestamp', '@timestampnano']);
-    //     });
-    //   });
-  });
+  //       expect(fields).toEqual(['@timestamp', '__timestamp', '@timestampnano']);
+  //     });
+  //   });
+  // });
 
   describe('When getting field mappings on indices with gaps', () => {
     const basicResponse = {
@@ -527,18 +527,18 @@ describe('ElasticDatasource', function (this: any) {
       },
     };
 
-    const alternateResponse = {
-      metricbeat: {
-        mappings: {
-          metricsets: {
-            _all: {},
-            properties: {
-              '@timestamp': { type: 'date' },
-            },
-          },
-        },
-      },
-    };
+    // const alternateResponse = {
+    //   metricbeat: {
+    //     mappings: {
+    //       metricsets: {
+    //         _all: {},
+    //         properties: {
+    //           '@timestamp': { type: 'date' },
+    //         },
+    //       },
+    //     },
+    //   },
+    // };
 
     // it('should return fields of the newest available index', async () => {
     //   const twoDaysBefore = toUtc().subtract(2, 'day').format('YYYY.MM.DD');
