@@ -1,9 +1,7 @@
 package loki
 
 import (
-	"bytes"
 	"context"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/require"
 )
 
@@ -59,7 +56,7 @@ func TestSuccessResponse(t *testing.T) {
 			bytes, err := os.ReadFile(responseFileName)
 			require.NoError(t, err)
 
-			frames, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes), &test.query)
+			frames, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil), &test.query)
 			require.NoError(t, err)
 
 			dr := &backend.DataResponse{
@@ -119,35 +116,11 @@ func TestErrorResponse(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward})
+			frames, err := runQuery(context.Background(), makeMockedAPI(400, test.contentType, test.body, nil), &lokiQuery{QueryType: QueryTypeRange, Direction: DirectionBackward})
 
 			require.Len(t, frames, 0)
 			require.Error(t, err)
 			require.EqualError(t, err, test.errorMessage)
 		})
 	}
-}
-
-type mockedRoundTripper struct {
-	statusCode    int
-	responseBytes []byte
-	contentType   string
-}
-
-func (mockedRT *mockedRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	header := http.Header{}
-	header.Add("Content-Type", mockedRT.contentType)
-	return &http.Response{
-		StatusCode: mockedRT.statusCode,
-		Header:     header,
-		Body:       ioutil.NopCloser(bytes.NewReader(mockedRT.responseBytes)),
-	}, nil
-}
-
-func makeMockedAPI(statusCode int, contentType string, responseBytes []byte) *LokiAPI {
-	client := http.Client{
-		Transport: &mockedRoundTripper{statusCode: statusCode, contentType: contentType, responseBytes: responseBytes},
-	}
-
-	return newLokiAPI(&client, "http://localhost:9999", log.New("test"))
 }

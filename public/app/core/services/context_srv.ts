@@ -112,6 +112,10 @@ export class ContextSrv {
     return Boolean(config.featureToggles['accesscontrol']);
   }
 
+  accessControlBuiltinRefactorEnabled(): boolean {
+    return Boolean(config.featureToggles['accesscontrol-builtins']);
+  }
+
   licensedAccessControlEnabled(): boolean {
     return featureEnabled('accesscontrol') && Boolean(config.featureToggles['accesscontrol']);
   }
