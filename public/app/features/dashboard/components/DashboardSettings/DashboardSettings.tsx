@@ -41,7 +41,9 @@ const onClose = () => locationService.partial({ editview: null });
 const MakeEditable = (props: { onMakeEditable: () => any }) => (
   <div>
     <div className="dashboard-settings__header">Dashboard not editable</div>
-    <Button onClick={props.onMakeEditable}>Make editable</Button>
+    <Button type="submit" onClick={props.onMakeEditable}>
+      Make editable
+    </Button>
   </div>
 );
 

@@ -87,7 +87,6 @@ export const ScalarDimensionEditor: FC<StandardEditorProps<ScalarDimensionConfig
           </InlineField>
         </InlineFieldRow>
         <Select
-          menuShouldPortal
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}

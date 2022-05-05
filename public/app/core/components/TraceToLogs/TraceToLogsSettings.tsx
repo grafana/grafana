@@ -47,7 +47,10 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         <InlineField tooltip="The data source the trace is going to navigate to" label="Data source" labelWidth={26}>
           <DataSourcePicker
             inputId="trace-to-logs-data-source-picker"
-            logs
+            filter={(ds) => {
+              // Trace to logs only supports loki and splunk at the moment
+              return ds.type === 'loki' || ds.type === 'grafana-splunk-datasource';
+            }}
             current={options.jsonData.tracesToLogs?.datasourceUid}
             noDefault={true}
             width={40}

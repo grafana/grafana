@@ -7309,7 +7309,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/utils@npm:3.11.3, @react-aria/utils@npm:^3.11.3":
+"@react-aria/utils@npm:3.12.0":
+  version: 3.12.0
+  resolution: "@react-aria/utils@npm:3.12.0"
+  dependencies:
+    "@babel/runtime": ^7.6.2
+    "@react-aria/ssr": ^3.1.2
+    "@react-stately/utils": ^3.4.1
+    "@react-types/shared": ^3.12.0
+    clsx: ^1.1.1
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: 8dbcecbc84828e6a76f2509405e9cc500c51a9b25ac795b1f723fde99a0de3a08f8733468d6c5f667f65d94adf9b05c7d345f7fd754057d09481907b2073fdbf
+  languageName: node
+  linkType: hard
+
+"@react-aria/utils@npm:^3.11.3":
   version: 3.11.3
   resolution: "@react-aria/utils@npm:3.11.3"
   dependencies:
@@ -7489,7 +7504,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/shared@npm:3.11.2, @react-types/shared@npm:^3.11.2":
+"@react-types/shared@npm:3.12.0, @react-types/shared@npm:^3.12.0":
+  version: 3.12.0
+  resolution: "@react-types/shared@npm:3.12.0"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1
+  checksum: 400590e560154506919debb3bdf3c54760176e7d6b521c94a45730e7388366b874f0167be0f6710c2a9bd35f9edbf895b0147881689ac0242880c532ababe369
+  languageName: node
+  linkType: hard
+
+"@react-types/shared@npm:^3.11.2":
   version: 3.11.2
   resolution: "@react-types/shared@npm:3.11.2"
   peerDependencies:
@@ -10777,6 +10801,15 @@ __metadata:
     hoist-non-react-statics: ^3.3.0
     redux: ^4.0.0
   checksum: 5e0405d0d312f1b5e2dd48ab5833d3226295931fe8d276bd0891fafe4dd7ba9efbc74b1e8b30685ba96e9dc1a63d57444ae335785ce6fda96900d5fc9f800dcf
+  languageName: node
+  linkType: hard
+
+"@types/react-resizable@npm:^1.7.4":
+  version: 1.7.4
+  resolution: "@types/react-resizable@npm:1.7.4"
+  dependencies:
+    "@types/react": "*"
+  checksum: d665bb2ddf830b9f841be21204cee119602b3d983537a94ccbad40deb7cd602e04742e3e013009bbb27c2d0fe72441b29ed48bc75f7e482cfb25eaf45f281dc9
   languageName: node
   linkType: hard
 
@@ -20873,14 +20906,14 @@ __metadata:
     "@react-aria/interactions": 3.8.3
     "@react-aria/menu": 3.4.3
     "@react-aria/overlays": 3.8.1
-    "@react-aria/utils": 3.11.3
+    "@react-aria/utils": 3.12.0
     "@react-stately/collections": 3.3.7
     "@react-stately/menu": 3.2.6
     "@react-stately/tree": 3.2.3
     "@react-types/button": 3.4.4
     "@react-types/menu": 3.5.2
     "@react-types/overlays": 3.5.4
-    "@react-types/shared": 3.11.2
+    "@react-types/shared": 3.12.0
     "@reduxjs/toolkit": 1.8.0
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
     "@sentry/browser": 6.19.1
@@ -20929,6 +20962,7 @@ __metadata:
     "@types/react-highlight-words": 0.16.4
     "@types/react-loadable": 5.5.6
     "@types/react-redux": 7.1.23
+    "@types/react-resizable": ^1.7.4
     "@types/react-router-dom": 5.3.3
     "@types/react-table": ^7
     "@types/react-test-renderer": 17.0.1
@@ -21030,7 +21064,7 @@ __metadata:
     lint-staged: 12.3.7
     lodash: 4.17.21
     logfmt: ^1.3.2
-    lru-cache: 7.7.1
+    lru-cache: 7.9.0
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.6.0
     minisearch: 5.0.0-beta1
@@ -25770,10 +25804,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lru-cache@npm:7.7.1":
-  version: 7.7.1
-  resolution: "lru-cache@npm:7.7.1"
-  checksum: f362c5a2cfa8ad6fe557ec43dc1b7a9695cce84a5652a43ff813609f782f5da576631e7dfad41878bf19a7a69438f38375178635ee80de269aa314280ca2f59e
+"lru-cache@npm:7.9.0":
+  version: 7.9.0
+  resolution: "lru-cache@npm:7.9.0"
+  checksum: c91a293a103d11ea4f07de4122ba4f73d8203d0de51852fb612b1764296aebf623a3e11dddef1b3aefdc8d71af97d52b222dad5459dcb967713bbab9a19fed7d
   languageName: node
   linkType: hard
 
