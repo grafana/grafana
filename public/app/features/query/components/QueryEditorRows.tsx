@@ -5,6 +5,7 @@ import {
   CoreApp,
   DataQuery,
   DataSourceInstanceSettings,
+  DataSourceRef,
   EventBusExtended,
   HistoryItem,
   PanelData,
@@ -60,13 +61,18 @@ export class QueryEditorRows extends PureComponent<Props> {
           return item;
         }
 
+        const dataSourceRef: DataSourceRef = {
+          type: dataSource.type,
+          uid: dataSource.uid,
+        };
+
         if (item.datasource) {
           const previous = getDataSourceSrv().getInstanceSettings(item.datasource);
 
           if (previous?.type === dataSource.type) {
             return {
               ...item,
-              datasource: { uid: dataSource.uid },
+              datasource: dataSourceRef,
             };
           }
         }
@@ -74,7 +80,7 @@ export class QueryEditorRows extends PureComponent<Props> {
         return {
           refId: item.refId,
           hide: item.hide,
-          datasource: { uid: dataSource.uid },
+          datasource: dataSourceRef,
         };
       })
     );
