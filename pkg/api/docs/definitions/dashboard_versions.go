@@ -28,7 +28,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 404: notFoundError
 // 500: internalServerError
 
-// swagger:route GET /dashboards/uid/:uid/versions/:uid dashboard_versions getDashboardVersionByUID
+// swagger:route GET /dashboards/uid/{uid}/versions/{DashboardVersionID} dashboard_versions getDashboardVersionByUID
 //
 // Get a specific dashboard version using UID.
 //
@@ -58,7 +58,7 @@ type DashboardIdParam struct {
 	DashboardID int64
 }
 
-// swagger:parameters getDashboardVersion
+// swagger:parameters getDashboardVersion getDashboardVersionByUID
 type DashboardVersionIdParam struct {
 	// in:path
 	DashboardVersionID int64
