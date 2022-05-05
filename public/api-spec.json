@@ -507,14 +507,6 @@
         "operationId": "addUserRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -522,6 +514,14 @@
             "schema": {
               "$ref": "#/definitions/AddUserRoleCommand"
             }
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -548,14 +548,6 @@
         "operationId": "removeUserRole",
         "parameters": [
           {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "UserID",
-            "name": "user_id",
-            "in": "path",
-            "required": true
-          },
-          {
             "type": "string",
             "x-go-name": "RoleUID",
             "name": "roleUID",
@@ -568,6 +560,14 @@
             "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
             "name": "global",
             "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID",
+            "name": "user_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -6671,6 +6671,14 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          },
+          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -6678,14 +6686,6 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -6719,16 +6719,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           }
@@ -8906,6 +8906,11 @@
           "format": "int64",
           "x-go-name": "FolderID"
         },
+        "folderUID": {
+          "description": "UID of the folder where the library element is stored.",
+          "type": "string",
+          "x-go-name": "FolderUID"
+        },
         "kind": {
           "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
           "type": "integer",
@@ -10493,6 +10498,10 @@
           "format": "int64",
           "x-go-name": "FolderID"
         },
+        "folderUID": {
+          "type": "string",
+          "x-go-name": "FolderUID"
+        },
         "id": {
           "type": "integer",
           "format": "int64",
@@ -10721,7 +10730,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "x-go-name": "ID"
+          "x-go-name": "Id"
         },
         "target": {
           "type": "string",
@@ -10736,7 +10745,7 @@
           "x-go-name": "Url"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "NavbarPreference": {
       "type": "object",
@@ -10937,6 +10946,11 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "FolderID"
+        },
+        "folderUID": {
+          "description": "UID of the folder where the library element is stored.",
+          "type": "string",
+          "x-go-name": "FolderUID"
         },
         "kind": {
           "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
