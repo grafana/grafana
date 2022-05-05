@@ -17,14 +17,11 @@ dsMock.init(
   ''
 );
 
-const postMock = jest.fn();
 const fetchMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     fetch: fetchMock,
-    get: getMock,
-    post: postMock,
   }),
   getDataSourceSrv: () => dsMock,
 }));
@@ -96,9 +93,13 @@ describe('RichHistoryRemoteStorage', () => {
 
   it('migrates provided rich history items', async () => {
     const { richHistoryQuery, dto } = setup();
+    fetchMock.mockReturnValue(of({}));
     await storage.migrate([richHistoryQuery]);
-    expect(postMock).toBeCalledWith('/api/query-history/migrate', {
-      queries: [dto],
+    expect(fetchMock).toBeCalledWith({
+      url: '/api/query-history/migrate',
+      method: 'POST',
+      data: { queries: [dto] },
+      showSuccessAlert: false,
     });
   });
 });
