@@ -69,8 +69,8 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       background: input.background,
     },
     tooltip: {
-      background: colors.mode === 'light' ? '#555' : '#35383e',
-      text: colors.mode === 'light' ? '#FFF' : colors.text.primary,
+      background: colors.background.secondary,
+      text: colors.text.primary,
     },
     dashboard: {
       background: colors.background.canvas,
