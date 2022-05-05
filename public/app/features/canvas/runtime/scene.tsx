@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import Moveable from 'moveable';
 import React, { CSSProperties } from 'react';
+import { MoveableManagerInterface, Renderer } from 'react-moveable';
 import { ReplaySubject, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
@@ -11,18 +12,18 @@ import { config } from 'app/core/config';
 import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import {
   ColorDimensionConfig,
+  DimensionContext,
   ResourceDimensionConfig,
+  ScalarDimensionConfig,
   ScaleDimensionConfig,
   TextDimensionConfig,
-  DimensionContext,
-  ScalarDimensionConfig,
 } from 'app/features/dimensions';
 import {
   getColorDimensionFromData,
-  getScaleDimensionFromData,
   getResourceDimensionFromData,
-  getTextDimensionFromData,
   getScalarDimensionFromData,
+  getScaleDimensionFromData,
+  getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
@@ -60,6 +61,37 @@ export class Scene {
   constructor(cfg: CanvasFrameOptions, enableEditing: boolean, public onSave: (cfg: CanvasFrameOptions) => void) {
     this.root = this.load(cfg, enableEditing);
   }
+
+  customAble = {
+    name: 'customAble',
+    props: {},
+    events: {},
+    render(moveable: MoveableManagerInterface<any, any>, React: Renderer) {
+      const rect = moveable.getRect();
+      return (
+        <div
+          key={'dimension-viewer'}
+          className={'moveable-dimension'}
+          style={{
+            position: 'absolute',
+            left: `${rect.width / 2}px`,
+            top: `${rect.height + 20}px`,
+            background: '#4af',
+            borderRadius: '2px',
+            padding: '2px 4px',
+            color: 'white',
+            fontSize: '13px',
+            whiteSpace: 'nowrap',
+            fontWeight: 'bold',
+            willChange: 'transform',
+            transform: 'translate(-50%, 0px)',
+          }}
+        >
+          {Math.round(rect.offsetWidth)} x {Math.round(rect.offsetHeight)}
+        </div>
+      );
+    },
+  };
 
   getNextElementName = (isFrame = false) => {
     const label = isFrame ? 'Frame' : 'Element';
@@ -307,6 +339,10 @@ export class Scene {
     this.moveable = new Moveable(this.div!, {
       draggable: allowChanges,
       resizable: allowChanges,
+      ables: [this.customAble],
+      props: {
+        customAble: true,
+      },
       origin: false,
     })
       .on('clickGroup', (event) => {
@@ -388,11 +424,5 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   wrap: css`
     overflow: hidden;
     position: relative;
-  `,
-
-  toolbar: css`
-    position: absolute;
-    bottom: 0;
-    margin: 10px;
   `,
 }));
