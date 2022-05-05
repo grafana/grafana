@@ -79,7 +79,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         })
         .addRadio({
           path: 'gaugeLabels',
-          name: 'Display Guage Labels',
+          name: 'Display gauge labels',
           description: 'How labels are displayed on guages',
           settings: {
             options: [
