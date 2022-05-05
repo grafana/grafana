@@ -13,7 +13,13 @@ func GetQueriesFromDashboard(dashboard *simplejson.Json) map[int64][]*simplejson
 		var panelQueries []*simplejson.Json
 
 		for _, queryObj := range panel.Get("targets").MustArray() {
-			panelQueries = append(panelQueries, simplejson.NewFromAny(queryObj))
+			query := simplejson.NewFromAny(queryObj)
+
+			if _, ok := query.CheckGet("datasource"); !ok {
+				query.Set("datasource", panel.Get("datasource"))
+			}
+
+			panelQueries = append(panelQueries, query)
 		}
 
 		result[panel.Get("id").MustInt64()] = panelQueries
