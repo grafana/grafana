@@ -10,8 +10,9 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/loki/pkg/loghttp"
+	"github.com/grafana/grafana/pkg/util/converter"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -137,7 +138,7 @@ func makeLokiError(body io.ReadCloser) error {
 	return fmt.Errorf("%v", errorMessage)
 }
 
-func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (*loghttp.QueryResponse, error) {
+func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames, error) {
 	req, err := makeDataRequest(ctx, api.url, query, api.oauthToken)
 	if err != nil {
 		return nil, err
@@ -158,13 +159,14 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (*loghttp.Qu
 		return nil, makeLokiError(resp.Body)
 	}
 
-	var response loghttp.QueryResponse
-	err = jsoniter.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		return nil, err
+	iter := jsoniter.Parse(jsoniter.ConfigDefault, resp.Body, 1024)
+	res := converter.ReadPrometheusStyleResult(iter)
+
+	if res.Error != nil {
+		return nil, res.Error
 	}
 
-	return &response, nil
+	return res.Frames, nil
 }
 
 func makeRawRequest(ctx context.Context, lokiDsUrl string, resourceURL string, oauthToken string) (*http.Request, error) {
