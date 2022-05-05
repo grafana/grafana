@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/streaming/client"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 
 	"github.com/stretchr/testify/require"
 )
