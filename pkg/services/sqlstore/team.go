@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type TeamStore interface {
@@ -214,7 +213,7 @@ func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQu
 		acFilter ac.SQLFilter
 		err      error
 	)
-	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+	if !ac.IsDisabled(ss.Cfg) {
 		acFilter, err = ac.Filter(query.SignedInUser, "team.id", "teams:id:", ac.ActionTeamsRead)
 		if err != nil {
 			return err
@@ -259,7 +258,7 @@ func (ss *SQLStore) SearchTeams(ctx context.Context, query *models.SearchTeamsQu
 	}
 
 	// Only count teams user can see
-	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+	if !ac.IsDisabled(ss.Cfg) {
 		countSess.Where(acFilter.Where, acFilter.Args...)
 	}
 
@@ -513,7 +512,7 @@ func (ss *SQLStore) GetTeamMembers(ctx context.Context, query *models.GetTeamMem
 	// With accesscontrol we filter out users based on the SignedInUser's permissions
 	// Note we assume that checking SignedInUser is allowed to see team members for this team has already been performed
 	// If the signed in user is not set no member will be returned
-	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+	if !ac.IsDisabled(ss.Cfg) {
 		sqlID := fmt.Sprintf("%s.%s", x.Dialect().Quote("user"), x.Dialect().Quote("id"))
 		*acFilter, err = ac.Filter(query.SignedInUser, sqlID, "users:id:", ac.ActionOrgUsersRead)
 		if err != nil {

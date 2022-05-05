@@ -171,7 +171,7 @@ func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *models.Signe
 	}
 
 	var permissionErr error
-	if f.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+	if !accesscontrol.IsDisabled(f.cfg) {
 		_, permissionErr = f.permissions.SetPermissions(ctx, orgID, folder.Uid, []accesscontrol.SetResourcePermissionCommand{
 			{UserID: userID, Permission: models.PERMISSION_ADMIN.String()},
 			{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},

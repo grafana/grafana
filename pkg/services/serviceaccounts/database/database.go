@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"xorm.io/xorm"
@@ -313,7 +312,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 				s.sqlStore.Dialect.Quote("user"),
 				s.sqlStore.Dialect.BooleanStr(true)))
 
-		if s.sqlStore.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+		if !accesscontrol.IsDisabled(s.sqlStore.Cfg) {
 			acFilter, err := accesscontrol.Filter(signedInUser, "org_user.user_id", "serviceaccounts:id:", serviceaccounts.ActionRead)
 			if err != nil {
 				return err
