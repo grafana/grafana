@@ -19,9 +19,9 @@ func TestApiKeyValidation(t *testing.T) {
 	require.Equal(t, "yscW25imSKJIuav8zF37RZmnbiDvB05G", keyInfo.Secret)
 	require.Equal(t, "fcaaf58a", keyInfo.Checksum)
 
-	valid, err := keyInfo.IsValid(result.HashedKey)
+	hash, err := keyInfo.Hash()
 	require.NoError(t, err)
-	require.True(t, valid)
+	require.Equal(t, result.HashedKey, hash)
 }
 
 func TestApiKeyGen(t *testing.T) {
@@ -34,7 +34,7 @@ func TestApiKeyGen(t *testing.T) {
 	keyInfo, err := Decode(result.ClientSecret)
 	require.NoError(t, err)
 
-	valid, err := keyInfo.IsValid(result.HashedKey)
+	hash, err := keyInfo.Hash()
 	require.NoError(t, err)
-	require.True(t, valid)
+	require.Equal(t, result.HashedKey, hash)
 }

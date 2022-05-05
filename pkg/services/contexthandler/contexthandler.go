@@ -186,6 +186,50 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 	return true
 }
 
+func (h *ContextHandler) getPrefixedAPIKey(ctx context.Context, keyString string) (*models.ApiKey, error) {
+	// prefixed decode key
+	decoded, err := apikeygenprefix.Decode(keyString)
+	if err != nil {
+		return nil, err
+	}
+
+	hash, err := decoded.Hash()
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := h.SQLStore.GetAPIKeyByHash(ctx, hash)
+	if err != nil {
+		return nil, err
+	}
+
+	return key, nil
+}
+
+func (h *ContextHandler) getAPIKey(reqContext *models.ReqContext, keyString string) (*models.ApiKey, error) {
+	decoded, err := apikeygen.Decode(keyString)
+	if err != nil {
+		return nil, err
+	}
+
+	// fetch key
+	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
+	if err := h.SQLStore.GetApiKeyByName(reqContext.Req.Context(), &keyQuery); err != nil {
+		return nil, err
+	}
+
+	// validate api key
+	isValid, err := apikeygen.IsValid(decoded, keyQuery.Result.Key)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		return nil, apikeygen.ErrInvalidApiKey
+	}
+
+	return keyQuery.Result, nil
+}
+
 func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bool {
 	header := reqContext.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
@@ -207,32 +251,19 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	defer span.End()
 
 	// base64 decode key
-	decoded, err := apikeygen.Decode(keyString)
-	if err != nil && strings.HasPrefix(keyString, "gl") {
-		// prefixed decode key
-		decoded, err = apikeygenprefix.Decode(keyString)
-	} else if err != nil {
-		reqContext.JsonApiErr(401, InvalidAPIKey, err)
-		return true
+	// We always need to try old key format first otherwise we'll invalidate all keys
+	// begining with "gl_"
+	var (
+		apikey *models.ApiKey
+		errKey error
+	)
+	apikey, errKey = h.getAPIKey(reqContext, keyString)
+	if errKey != nil && strings.HasPrefix(keyString, apikeygenprefix.GrafanaPrefix) {
+		apikey, errKey = h.getPrefixedAPIKey(reqContext.Req.Context(), keyString)
 	}
 
-	// fetch key
-	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
-	if err := h.SQLStore.GetApiKeyByName(reqContext.Req.Context(), &keyQuery); err != nil {
-		reqContext.JsonApiErr(401, InvalidAPIKey, err)
-		return true
-	}
-
-	apikey := keyQuery.Result
-
-	// validate api key
-	isValid, err := apikeygen.IsValid(decoded, apikey.Key)
-	if err != nil {
-		reqContext.JsonApiErr(500, "Validating API key failed", err)
-		return true
-	}
-	if !isValid {
-		reqContext.JsonApiErr(401, InvalidAPIKey, err)
+	if errKey != nil {
+		reqContext.JsonApiErr(http.StatusUnauthorized, InvalidAPIKey, errKey)
 		return true
 	}
 
@@ -242,7 +273,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		getTime = time.Now
 	}
 	if apikey.Expires != nil && *apikey.Expires <= getTime().Unix() {
-		reqContext.JsonApiErr(401, "Expired API key", err)
+		reqContext.JsonApiErr(401, "Expired API key", nil)
 		return true
 	}
 

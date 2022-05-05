@@ -154,9 +154,9 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 				keyInfo, err := apikeygenprefix.Decode(actualBody["key"].(string))
 				assert.NoError(t, err)
 
-				isValid, err := keyInfo.IsValid(query.Result.Key)
-				assert.NoError(t, err)
-				assert.True(t, isValid)
+				hash, err := keyInfo.Hash()
+				require.NoError(t, err)
+				require.Equal(t, query.Result.Key, hash)
 			}
 		})
 	}

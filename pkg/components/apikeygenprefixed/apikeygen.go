@@ -21,12 +21,12 @@ type PrefixedKey struct {
 	Checksum  string
 }
 
-func (p *PrefixedKey) IsValid(hashedKey string) (bool, error) {
-	check, err := util.EncodePassword(p.Secret, p.Checksum)
+func (p *PrefixedKey) Hash() (string, error) {
+	hash, err := util.EncodePassword(p.Secret, p.Checksum)
 	if err != nil {
-		return false, err
+		return "", err
 	}
-	return check == hashedKey, nil
+	return hash, nil
 }
 
 func (p *PrefixedKey) key() string {
@@ -60,7 +60,7 @@ func New(serviceID string) (KeyGenResult, error) {
 	key := PrefixedKey{ServiceID: serviceID, Secret: secret, Checksum: ""}
 	key.Checksum = key.CalculateChecksum()
 
-	result.HashedKey, err = util.EncodePassword(secret, key.Checksum)
+	result.HashedKey, err = key.Hash()
 	if err != nil {
 		return result, err
 	}
