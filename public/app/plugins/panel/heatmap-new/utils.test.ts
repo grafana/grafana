@@ -62,10 +62,10 @@ describe('creating a heatmap data mapping', () => {
     );
 
     it('takes good data, and delivers a working data mapping', () => {
-      expect(mapping.length).toEqual(3);
-      expect(mapping[0]).toEqual([0, 1, 2]);
-      expect(mapping[1]).toEqual([3, 4, 5]);
-      expect(mapping[2]).toEqual([6, 7, 8]);
+      expect(mapping.lookup.length).toEqual(3);
+      expect(mapping.lookup[0]).toEqual([0, 1, 2]);
+      expect(mapping.lookup[1]).toEqual([3, 4, 5]);
+      expect(mapping.lookup[2]).toEqual([6, 7, 8]);
     });
   });
 
@@ -93,7 +93,7 @@ describe('creating a heatmap data mapping', () => {
             name: 'count',
             type: FieldType.number,
             config: {},
-            values: new ArrayVector([2, 0, 6]),
+            values: new ArrayVector([2, 1, 6]),
           },
         ],
         length: 3,
@@ -128,32 +128,11 @@ describe('creating a heatmap data mapping', () => {
       // In this case, we are just finding proper values, but don't care if a values
       // exists in the bucket in the original data or not. Therefore, we should see
       // a value mapped into the second mapping bucket containing the value '8'.
-      const mapping = getDataMapping(heatmap, rawData, { requireCount: false });
-      expect(mapping.length).toEqual(3);
-      expect(mapping[0]).toEqual([1, 4]);
-      expect(mapping[1]).toEqual([8]);
-      expect(mapping[2]).toEqual([0, 2, 3, 5, 6, 7]);
-    });
-
-    it('puts data in to the proper buckets, when we do care about the count', () => {
-      // In this case, the second value in the count is 0, and we are following the count.
-      // Therefore, the second index of the mapping should not contain a value.
-      const mapping = getDataMapping(heatmap, rawData, { requireCount: true });
-      expect(mapping.length).toEqual(3);
-      expect(mapping[0]).toEqual([1, 4]);
-      expect(mapping[1]).toEqual(null);
-      expect(mapping[2]).toEqual([0, 2, 3, 5, 6, 7]);
-    });
-
-    it('puts data into the proper buckets, given min and max values in the options', () => {
-      const mapping = getDataMapping(heatmap, rawData, {
-        requireCount: false,
-        xMin: 3,
-        xMax: 6,
-        yMin: 3,
-        yMax: 7,
-      });
-      expect(mapping).toEqual([null, [3, 5], null]);
+      const mapping = getDataMapping(heatmap, rawData);
+      expect(mapping.lookup.length).toEqual(3);
+      expect(mapping.lookup[0]).toEqual([1, 4]);
+      expect(mapping.lookup[1]).toEqual([8]);
+      expect(mapping.lookup[2]).toEqual([0, 2, 3, 5, 6, 7]);
     });
   });
 
@@ -215,13 +194,17 @@ describe('creating a heatmap data mapping', () => {
     );
 
     it('Creates the data mapping correctly', () => {
-      expect(mapping.length).toEqual(9);
-      expect(mapping).toEqual([null, null, [0, 2], null, null, [3, 4, 5], null, [6, 8], null]);
+      expect(mapping.lookup.length).toEqual(9);
+      expect(mapping).toEqual({
+        lookup: [null, null, [0, 2], null, null, [3, 4, 5], null, [6, 8], null],
+        low: [1],
+        high: [7],
+      });
     });
 
     it('filters out minimum and maximum values', () => {
-      expect(mapping.flat()).not.toContainEqual(1);
-      expect(mapping.flat()).not.toContainEqual(10);
+      expect(mapping.lookup.flat()).not.toContainEqual(1);
+      expect(mapping.lookup.flat()).not.toContainEqual(10);
     });
   });
 
