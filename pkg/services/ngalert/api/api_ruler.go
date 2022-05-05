@@ -370,7 +370,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 // All operations are performed in a single transaction
 //nolint: gocyclo
 func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *models.Folder, groupName string, rules []*ngmodels.AlertRule) response.Response {
-	var mergedChanges *changes
+	var finalChanges *changes
 	hasAccess := accesscontrol.HasAccess(srv.ac, c)
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
 		logger := srv.log.New("namespace_uid", namespace.Uid, "group", groupName, "org_id", c.OrgId, "user_id", c.UserId)
@@ -381,48 +381,9 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 		}
 
 		if groupChanges.isEmpty() {
-			mergedChanges = groupChanges
+			finalChanges = groupChanges
 			logger.Info("no changes detected in the request. Do nothing")
 			return nil
-		}
-
-		provenances, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.OrgId, (&ngmodels.AlertRule{}).ResourceType())
-		if err != nil {
-			return err
-		}
-
-		provisioningChanges := &changes{}
-		// New rules don't need to be checked for provenance, just copy the whole slice.
-		provisioningChanges.New = groupChanges.New
-		for _, rule := range groupChanges.Update {
-			if provenance, exists := provenances[rule.Existing.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
-				provisioningChanges.Update = append(provisioningChanges.Update, rule)
-			}
-		}
-		for _, rule := range groupChanges.Delete {
-			if provenance, exists := provenances[rule.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
-				provisioningChanges.Delete = append(provisioningChanges.Delete, rule)
-			}
-		}
-
-		if provisioningChanges.isEmpty() {
-			logger.Info("no changes detected that have 'none' provenance in the request. Do nothing",
-				"provenance_invalid_add", len(groupChanges.New),
-				"provenance_invalid_update", len(groupChanges.Update),
-				"provenance_invalid_delete", len(groupChanges.Delete))
-			return nil
-		}
-
-		if len(groupChanges.Delete) > len(provisioningChanges.Delete) {
-			logger.Info("provenance is not 'none' for one or many rules in the group that should be deleted. those rules will be skipped",
-				"expected", len(groupChanges.Delete),
-				"allowed", len(provisioningChanges.Delete))
-		}
-
-		if len(groupChanges.Update) > len(provisioningChanges.Update) {
-			logger.Info("provenance is not 'none' for one or many rules in the group that should be updated. those rules will be skipped",
-				"expected", len(groupChanges.Update),
-				"allowed", len(provisioningChanges.Update))
 		}
 
 		authorizedChanges, err := authorizeRuleChanges(namespace, groupChanges, func(evaluator accesscontrol.Evaluator) bool {
@@ -441,23 +402,57 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			logger.Info("user is not authorized to delete one or many rules in the group. those rules will be skipped", "expected", len(groupChanges.Delete), "authorized", len(authorizedChanges.Delete))
 		}
 
-		// merged changes contains all changes that are allowed by FGAC and
-		// have not a provenace from a provisoning tool yet.
-		mergedChanges = intersectChanges(provisioningChanges, authorizedChanges)
+		provenances, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.OrgId, (&ngmodels.AlertRule{}).ResourceType())
+		if err != nil {
+			return err
+		}
 
-		logger.Debug("updating database with the authorized changes", "add", len(mergedChanges.New), "update", len(mergedChanges.New), "delete", len(mergedChanges.Delete))
+		// New rules don't need to be checked for provenance, just copy the whole slice.
+		finalChanges.New = authorizedChanges.New
+		for _, rule := range authorizedChanges.Update {
+			if provenance, exists := provenances[rule.Existing.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
+				finalChanges.Update = append(finalChanges.Update, rule)
+			}
+		}
+		for _, rule := range authorizedChanges.Delete {
+			if provenance, exists := provenances[rule.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
+				finalChanges.Delete = append(finalChanges.Delete, rule)
+			}
+		}
 
-		if len(mergedChanges.Update) > 0 || len(mergedChanges.New) > 0 {
-			updates := make([]store.UpdateRule, 0, len(mergedChanges.Update))
-			inserts := make([]ngmodels.AlertRule, 0, len(mergedChanges.New))
-			for _, update := range mergedChanges.Update {
+		if finalChanges.isEmpty() {
+			logger.Info("no changes detected that have 'none' provenance in the request. Do nothing",
+				"provenance_invalid_add", len(authorizedChanges.New),
+				"provenance_invalid_update", len(authorizedChanges.Update),
+				"provenance_invalid_delete", len(authorizedChanges.Delete))
+			return nil
+		}
+
+		if len(authorizedChanges.Delete) > len(finalChanges.Delete) {
+			logger.Info("provenance is not 'none' for one or many rules in the group that should be deleted. those rules will be skipped",
+				"expected", len(authorizedChanges.Delete),
+				"allowed", len(authorizedChanges.Delete))
+		}
+
+		if len(authorizedChanges.Update) > len(finalChanges.Update) {
+			logger.Info("provenance is not 'none' for one or many rules in the group that should be updated. those rules will be skipped",
+				"expected", len(authorizedChanges.Update),
+				"allowed", len(authorizedChanges.Update))
+		}
+
+		logger.Debug("updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
+
+		if len(finalChanges.Update) > 0 || len(finalChanges.New) > 0 {
+			updates := make([]store.UpdateRule, 0, len(finalChanges.Update))
+			inserts := make([]ngmodels.AlertRule, 0, len(finalChanges.New))
+			for _, update := range finalChanges.Update {
 				logger.Debug("updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
 				updates = append(updates, store.UpdateRule{
 					Existing: update.Existing,
 					New:      *update.New,
 				})
 			}
-			for _, rule := range mergedChanges.New {
+			for _, rule := range finalChanges.New {
 				inserts = append(inserts, *rule)
 			}
 			err = srv.store.InsertAlertRules(tranCtx, inserts)
@@ -470,9 +465,9 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			}
 		}
 
-		if len(mergedChanges.Delete) > 0 {
-			UIDs := make([]string, 0, len(mergedChanges.Delete))
-			for _, rule := range mergedChanges.Delete {
+		if len(finalChanges.Delete) > 0 {
+			UIDs := make([]string, 0, len(finalChanges.Delete))
+			for _, rule := range finalChanges.Delete {
 				UIDs = append(UIDs, rule.UID)
 			}
 
@@ -481,7 +476,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			}
 		}
 
-		if len(mergedChanges.New) > 0 {
+		if len(finalChanges.New) > 0 {
 			limitReached, err := srv.QuotaService.CheckQuotaReached(tranCtx, "alert_rule", &quota.ScopeParameters{
 				OrgId:  c.OrgId,
 				UserId: c.UserId,
@@ -509,21 +504,21 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	for _, rule := range mergedChanges.Update {
+	for _, rule := range finalChanges.Update {
 		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   rule.Existing.UID,
 		})
 	}
 
-	for _, rule := range mergedChanges.Delete {
+	for _, rule := range finalChanges.Delete {
 		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   rule.UID,
 		})
 	}
 
-	if mergedChanges.isEmpty() {
+	if finalChanges.isEmpty() {
 		return response.JSON(http.StatusAccepted, util.DynMap{"message": "no changes detected in the rule group"})
 	}
 
@@ -586,40 +581,6 @@ type changes struct {
 
 func (c *changes) isEmpty() bool {
 	return len(c.Update)+len(c.New)+len(c.Delete) == 0
-}
-
-// intersectChanges will return a new change set that contains all changes
-// that are in  both sets a and b.
-func intersectChanges(a, b *changes) *changes {
-	m := &changes{}
-outerNew:
-	for _, x := range a.New {
-		for _, y := range b.New {
-			if x.UID == y.UID {
-				m.New = append(m.New, x)
-				continue outerNew
-			}
-		}
-	}
-outerDelete:
-	for _, x := range a.Delete {
-		for _, y := range b.Delete {
-			if x.UID == y.UID {
-				m.Delete = append(m.Delete, x)
-				continue outerDelete
-			}
-		}
-	}
-outerUpdate:
-	for _, x := range a.Update {
-		for _, y := range b.Update {
-			if x.Existing.UID == y.Existing.UID {
-				m.Update = append(m.Update, x)
-				continue outerUpdate
-			}
-		}
-	}
-	return m
 }
 
 // calculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).
