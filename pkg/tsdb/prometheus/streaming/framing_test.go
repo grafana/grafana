@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/query"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
 func TestMatrixResponses(t *testing.T) {
@@ -32,7 +32,7 @@ func TestMatrixResponses(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
+			queryFileName := filepath.Join("../testdata", test.filepath+".models.json")
 			responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
 			goldenFileName := filepath.Join("../testdata", test.filepath+".result.golden.txt")
 
@@ -55,7 +55,7 @@ func TestMatrixResponses(t *testing.T) {
 }
 
 // we store the prometheus query data in a json file, here is some minimal code
-// to be able to read it back. unfortunately we cannot use the query.Query
+// to be able to read it back. unfortunately we cannot use the models.Query
 // struct here, because it has `time.time` and `time.duration` fields that
 // cannot be unmarshalled from JSON automatically.
 type storedPrometheusQuery struct {
@@ -80,7 +80,7 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 		return nil, err
 	}
 
-	qm := query.Model{
+	qm := models.Model{
 		RangeQuery: sq.RangeQuery,
 		Expr:       sq.Expr,
 	}

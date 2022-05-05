@@ -1,4 +1,4 @@
-package query_test
+package models_test
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/query"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,7 +34,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			RefID:     "A",
 		}
 
-		res, err := query.Parse(q, "15s", intervalCalculator, true)
+		res, err := models.Parse(q, "15s", intervalCalculator, true)
 		require.NoError(t, err)
 		require.Equal(t, false, res.ExemplarQuery)
 	})
@@ -51,7 +51,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, res.Step)
 	})
@@ -69,7 +69,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*15, res.Step)
 	})
@@ -87,7 +87,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*20, res.Step)
 	})
@@ -105,7 +105,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*2, res.Step)
 	})
@@ -123,7 +123,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "240s", intervalCalculator, false)
+		res, err := models.Parse(q, "240s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*4, res.Step)
 	})
@@ -141,7 +141,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [2m]})", res.Expr)
 	})
@@ -159,7 +159,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [2m]})", res.Expr)
 	})
@@ -177,7 +177,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [120000]})", res.Expr)
 	})
@@ -195,7 +195,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [120000]}) + rate(ALERTS{job=\"test\" [2m]})", res.Expr)
 	})
@@ -213,7 +213,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [120000]}) + rate(ALERTS{job=\"test\" [2m]})", res.Expr)
 	})
@@ -231,7 +231,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [172800s]})", res.Expr)
 	})
@@ -249,7 +249,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [172800]})", res.Expr)
 	})
@@ -267,7 +267,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [172800s]})", res.Expr)
 	})
@@ -285,7 +285,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [0]})", res.Expr)
 	})
@@ -303,7 +303,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [1]})", res.Expr)
 	})
@@ -321,7 +321,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [172800000]})", res.Expr)
 	})
@@ -339,7 +339,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [20]})", res.Expr)
 	})
@@ -358,7 +358,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [5m15s]})", res.Expr)
 	})
@@ -377,7 +377,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, "rate(ALERTS{job=\"test\" [1m0s]})", res.Expr)
 		require.Equal(t, 1*time.Minute, res.Step)
@@ -397,7 +397,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"range": true
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, true, res.RangeQuery)
 	})
@@ -417,7 +417,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"instant": true
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, true, res.RangeQuery)
 		require.Equal(t, true, res.InstantQuery)
@@ -436,7 +436,7 @@ func TestPrometheus_timeSeriesQuery_parseTimeSeriesQuery(t *testing.T) {
 			"refId": "A"
 		}`, timeRange)
 
-		res, err := query.Parse(q, "15s", intervalCalculator, false)
+		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.Equal(t, true, res.RangeQuery)
 	})
