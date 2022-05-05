@@ -543,6 +543,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 	query := models.GetDashboardVersionsQuery{
 		OrgId:       c.OrgId,
 		DashboardId: dashID,
+		UID:         dashUID,
 		Limit:       c.QueryInt("limit"),
 		Start:       c.QueryInt("start"),
 	}

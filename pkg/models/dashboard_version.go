@@ -48,6 +48,7 @@ type DashboardVersionMeta struct {
 type DashboardVersionDTO struct {
 	Id            int64     `json:"id"`
 	DashboardId   int64     `json:"dashboardId"`
+	UID           string    `json:"uid"`
 	ParentVersion int       `json:"parentVersion"`
 	RestoredFrom  int       `json:"restoredFrom"`
 	Version       int       `json:"version"`
@@ -70,6 +71,7 @@ type GetDashboardVersionQuery struct {
 
 type GetDashboardVersionsQuery struct {
 	DashboardId int64
+	UID         string
 	OrgId       int64
 	Limit       int
 	Start       int
