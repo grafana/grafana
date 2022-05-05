@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { FilterInput, MultiSelect, RangeSlider, Select, stylesFactory, useTheme } from '@grafana/ui';
 import {
   createDatasourcesList,
@@ -246,7 +247,9 @@ export function RichHistoryQueriesTab(props: Props) {
               </div>
             );
           })}
-        <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
+        {!config.queryHistoryEnabled && (
+          <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
+        )}
       </div>
     </div>
   );
