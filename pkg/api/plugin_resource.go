@@ -19,8 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var errInvalidPluginRequest = errors.New("invalid plugin request")
-
 // CallResource passes a resource call from a plugin to the backend plugin.
 //
 // /api/plugins/:pluginId/resources/*
@@ -39,9 +37,9 @@ func (hs *HTTPServer) callPluginResource(c *models.ReqContext, pluginID string) 
 		return
 	}
 
-	req, err := hs.pluginResourceRequest(c, pCtx)
+	req, err := hs.pluginResourceRequest(c)
 	if err != nil {
-		handleCallResourceError(err, c)
+		c.JsonApiErr(http.StatusBadRequest, "Failed for create plugin resource request", err)
 		return
 	}
 
@@ -61,9 +59,20 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *models.ReqContext, plu
 		return
 	}
 
-	req, err := hs.pluginResourceRequest(c, pCtx)
+	var dsURL string
+	if pCtx.DataSourceInstanceSettings != nil {
+		dsURL = pCtx.DataSourceInstanceSettings.URL
+	}
+
+	err = hs.PluginRequestValidator.Validate(dsURL, c.Req)
 	if err != nil {
-		handleCallResourceError(err, c)
+		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
+		return
+	}
+
+	req, err := hs.pluginResourceRequest(c)
+	if err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "Failed for create plugin resource request", err)
 		return
 	}
 
@@ -83,17 +92,7 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *models.ReqContext, plu
 	}
 }
 
-func (hs *HTTPServer) pluginResourceRequest(c *models.ReqContext, pCtx backend.PluginContext) (*http.Request, error) {
-	var dsURL string
-	if pCtx.DataSourceInstanceSettings != nil {
-		dsURL = pCtx.DataSourceInstanceSettings.URL
-	}
-
-	err := hs.PluginRequestValidator.Validate(dsURL, c.Req)
-	if err != nil {
-		return nil, errInvalidPluginRequest
-	}
-
+func (hs *HTTPServer) pluginResourceRequest(c *models.ReqContext) (*http.Request, error) {
 	clonedReq := c.Req.Clone(c.Req.Context())
 	rawURL := web.Params(c.Req)["*"]
 	if clonedReq.URL.RawQuery != "" {
@@ -220,10 +219,6 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 }
 
 func handleCallResourceError(err error, reqCtx *models.ReqContext) {
-	if errors.Is(err, errInvalidPluginRequest) {
-		reqCtx.JsonApiErr(http.StatusForbidden, "Access denied", err)
-		return
-	}
 	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
 		reqCtx.JsonApiErr(503, "Plugin unavailable", err)
 		return
