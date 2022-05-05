@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/query"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/streaming/client"
 	"github.com/grafana/grafana/pkg/util/converter"
 	"github.com/grafana/grafana/pkg/util/maputil"
@@ -93,7 +93,7 @@ func (s *Streaming) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.Que
 	}
 
 	for _, q := range req.Queries {
-		query, err := query.Parse(q, s.TimeInterval, s.intervalCalculator, fromAlert)
+		query, err := models.Parse(q, s.TimeInterval, s.intervalCalculator, fromAlert)
 		if err != nil {
 			return &result, err
 		}
@@ -111,7 +111,7 @@ func (s *Streaming) ExecuteTimeSeriesQuery(ctx context.Context, req *backend.Que
 	return &result, nil
 }
 
-func (s *Streaming) runQuery(ctx context.Context, client *client.Client, q *query.Query) (*backend.DataResponse, error) {
+func (s *Streaming) runQuery(ctx context.Context, client *client.Client, q *models.Query) (*backend.DataResponse, error) {
 	s.log.Debug("Sending query", "start", q.Start, "end", q.End, "step", q.Step, "query", q.Expr)
 
 	traceCtx, span := s.trace(ctx, q)
@@ -153,31 +153,31 @@ func (s *Streaming) runQuery(ctx context.Context, client *client.Client, q *quer
 	return response, nil
 }
 
-func (s *Streaming) rangeQuery(ctx context.Context, c *client.Client, q *query.Query) (*backend.DataResponse, error) {
+func (s *Streaming) rangeQuery(ctx context.Context, c *client.Client, q *models.Query) (*backend.DataResponse, error) {
 	res, err := c.QueryRange(ctx, q)
 	if err != nil {
 		return nil, err
 	}
-	return s.parseResponse(ctx, q, res, query.RangeQueryType)
+	return s.parseResponse(ctx, q, res, models.RangeQueryType)
 }
 
-func (s *Streaming) instantQuery(ctx context.Context, c *client.Client, q *query.Query) (*backend.DataResponse, error) {
+func (s *Streaming) instantQuery(ctx context.Context, c *client.Client, q *models.Query) (*backend.DataResponse, error) {
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
 		return nil, err
 	}
-	return s.parseResponse(ctx, q, res, query.InstantQueryType)
+	return s.parseResponse(ctx, q, res, models.InstantQueryType)
 }
 
-func (s *Streaming) exemplarQuery(ctx context.Context, c *client.Client, q *query.Query) (*backend.DataResponse, error) {
+func (s *Streaming) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query) (*backend.DataResponse, error) {
 	res, err := c.QueryExemplars(ctx, q)
 	if err != nil {
 		return nil, err
 	}
-	return s.parseResponse(ctx, q, res, query.InstantQueryType)
+	return s.parseResponse(ctx, q, res, models.InstantQueryType)
 }
 
-func (s *Streaming) parseResponse(ctx context.Context, q *query.Query, res *http.Response, t query.TimeSeriesQueryType) (*backend.DataResponse, error) {
+func (s *Streaming) parseResponse(ctx context.Context, q *models.Query, res *http.Response, t models.TimeSeriesQueryType) (*backend.DataResponse, error) {
 	defer res.Body.Close()
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
@@ -194,7 +194,7 @@ func (s *Streaming) parseResponse(ctx context.Context, q *query.Query, res *http
 	return r, nil
 }
 
-func (s *Streaming) trace(ctx context.Context, q *query.Query) (context.Context, tracing.Span) {
+func (s *Streaming) trace(ctx context.Context, q *models.Query) (context.Context, tracing.Span) {
 	traceCtx, span := s.tracer.Start(ctx, "datasource.prometheus")
 	span.SetAttributes("expr", q.Expr, attribute.Key("expr").String(q.Expr))
 	span.SetAttributes("start_unixnano", q.Start, attribute.Key("start_unixnano").Int64(q.Start.UnixNano()))

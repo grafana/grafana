@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/query"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/streaming"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	p "github.com/prometheus/common/model"
@@ -60,7 +60,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 		tctx := setup()
 
-		qm := query.Model{
+		qm := models.Model{
 			LegendFormat:  "legend {{app}}",
 			UtcOffsetSec:  0,
 			ExemplarQuery: true,
@@ -105,7 +105,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 
-		qm := query.Model{
+		qm := models.Model{
 			LegendFormat: "legend {{app}}",
 			UtcOffsetSec: 0,
 			RangeQuery:   true,
@@ -153,7 +153,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 
-		qm := query.Model{
+		qm := models.Model{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
 			RangeQuery:   true,
@@ -195,7 +195,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 
-		qm := query.Model{
+		qm := models.Model{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
 			RangeQuery:   true,
@@ -237,7 +237,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 
-		qm := query.Model{
+		qm := models.Model{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
 			RangeQuery:   true,
@@ -271,7 +271,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 				},
 			},
 		}
-		qm := query.Model{
+		qm := models.Model{
 			LegendFormat: "legend {{app}}",
 			UtcOffsetSec: 0,
 			InstantQuery: true,
@@ -311,7 +311,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 				Timestamp: 123,
 			},
 		}
-		qm := query.Model{
+		qm := models.Model{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
 			InstantQuery: true,

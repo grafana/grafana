@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/query"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
-func addMetadataToFrame(q *query.Query, frame *data.Frame, t query.TimeSeriesQueryType) {
+func addMetadataToFrame(q *models.Query, frame *data.Frame, t models.TimeSeriesQueryType) {
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
@@ -49,11 +49,11 @@ func metricNameFromLabels(f *data.Frame) string {
 	}
 }
 
-func executedQueryString(q *query.Query) string {
+func executedQueryString(q *models.Query) string {
 	return "Expr: " + q.Expr + "\n" + "Step: " + q.Step.String()
 }
 
-func getName(q *query.Query, frame *data.Frame) string {
+func getName(q *models.Query, frame *data.Frame) string {
 	labels := frame.Fields[1].Labels
 	legend := metricNameFromLabels(frame)
 

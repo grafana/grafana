@@ -1,4 +1,4 @@
-package query
+package models
 
 import (
 	"encoding/json"
@@ -11,9 +11,39 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
+//Internal interval and range variables
+const (
+	varInterval     = "$__interval"
+	varIntervalMs   = "$__interval_ms"
+	varRange        = "$__range"
+	varRangeS       = "$__range_s"
+	varRangeMs      = "$__range_ms"
+	varRateInterval = "$__rate_interval"
+)
+
+//Internal interval and range variables with {} syntax
+//Repetitive code, we should have functionality to unify these
+const (
+	varIntervalAlt     = "${__interval}"
+	varIntervalMsAlt   = "${__interval_ms}"
+	varRangeAlt        = "${__range}"
+	varRangeSAlt       = "${__range_s}"
+	varRangeMsAlt      = "${__range_ms}"
+	varRateIntervalAlt = "${__rate_interval}"
+)
+
+type TimeSeriesQueryType string
+
+const (
+	RangeQueryType    TimeSeriesQueryType = "range"
+	InstantQueryType  TimeSeriesQueryType = "instant"
+	ExemplarQueryType TimeSeriesQueryType = "exemplar"
+	UnknownQueryType  TimeSeriesQueryType = "unknown"
+)
+
 var safeResolution = 11000
 
-type Model struct {
+type QueryModel struct {
 	Expr           string `json:"expr"`
 	LegendFormat   string `json:"legendFormat"`
 	Interval       string `json:"interval"`
@@ -46,7 +76,7 @@ type Query struct {
 }
 
 func Parse(query backend.DataQuery, timeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool) (*Query, error) {
-	model := &Model{}
+	model := &QueryModel{}
 	if err := json.Unmarshal(query.JSON, model); err != nil {
 		return nil, err
 	}
@@ -108,7 +138,7 @@ func (query *Query) TimeRange() TimeRange {
 	}
 }
 
-func calculatePrometheusInterval(model *Model, timeInterval string, query backend.DataQuery, intervalCalculator intervalv2.Calculator) (time.Duration, error) {
+func calculatePrometheusInterval(model *QueryModel, timeInterval string, query backend.DataQuery, intervalCalculator intervalv2.Calculator) (time.Duration, error) {
 	queryInterval := model.Interval
 
 	//If we are using variable for interval/step, we will replace it with calculated interval
@@ -155,7 +185,7 @@ func calculateRateInterval(interval time.Duration, scrapeInterval string, interv
 	return rateInterval
 }
 
-func interpolateVariables(model *Model, interval time.Duration, timeRange time.Duration, intervalCalculator intervalv2.Calculator, timeInterval string) string {
+func interpolateVariables(model *QueryModel, interval time.Duration, timeRange time.Duration, intervalCalculator intervalv2.Calculator, timeInterval string) string {
 	expr := model.Expr
 	rangeMs := timeRange.Milliseconds()
 	rangeSRounded := int64(math.Round(float64(rangeMs) / 1000.0))
