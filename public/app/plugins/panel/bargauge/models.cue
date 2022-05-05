@@ -24,7 +24,7 @@ Panel: {
                     ui.SingleStatBaseOptions
                     displayMode: ui.BarGaugeDisplayMode
                     showUnfilled: bool
-                }
+                } @cuetsy(kind="interface")
             }
         ]
     ]
