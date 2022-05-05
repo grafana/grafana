@@ -31,7 +31,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}
-	return toJsonStreamingResponse(resp)
+	return hs.toJsonStreamingResponse(resp)
 }
 
 func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalResponse {
@@ -147,7 +147,7 @@ func (hs *HTTPServer) QueryMetricsFromDashboard(c *models.ReqContext) response.R
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}
-	return toJsonStreamingResponse(resp)
+	return hs.toJsonStreamingResponse(resp)
 }
 
 // QueryMetrics returns query metrics
@@ -198,11 +198,16 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext) response.Response {
 	return response.JSON(statusCode, &legacyResp)
 }
 
-func toJsonStreamingResponse(qdr *backend.QueryDataResponse) response.Response {
+func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) response.Response {
+	statusWhenError := http.StatusBadRequest
+	if hs.Features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
+		statusWhenError = http.StatusMultiStatus
+	}
+
 	statusCode := http.StatusOK
 	for _, res := range qdr.Responses {
 		if res.Error != nil {
-			statusCode = http.StatusBadRequest
+			statusCode = statusWhenError
 		}
 	}
 

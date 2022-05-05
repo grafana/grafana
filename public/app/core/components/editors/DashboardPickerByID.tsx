@@ -45,7 +45,6 @@ export const DashboardPickerByID: FC<Props> = ({
   return (
     <AsyncSelect
       inputId={id}
-      menuShouldPortal
       width={width}
       isClearable={isClearable}
       defaultOptions={true}

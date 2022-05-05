@@ -22,10 +22,10 @@ import (
 
 var (
 	provisionerPermissions = map[string][]string{
-		m.ActionFoldersCreate:                {},
-		m.ActionFoldersWrite:                 {m.ScopeFoldersAll},
-		accesscontrol.ActionDashboardsCreate: {m.ScopeFoldersAll},
-		accesscontrol.ActionDashboardsWrite:  {m.ScopeFoldersAll},
+		m.ActionFoldersCreate:    {},
+		m.ActionFoldersWrite:     {m.ScopeFoldersAll},
+		m.ActionDashboardsCreate: {m.ScopeFoldersAll},
+		m.ActionDashboardsWrite:  {m.ScopeFoldersAll},
 	}
 )
 

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -402,7 +403,7 @@ func TestAnnotationListingWithRBAC(t *testing.T) {
 			description: "Should find all annotations when has permissions to list all annotations and read all dashboards",
 			permissions: map[string][]string{
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsAll},
-				accesscontrol.ActionDashboardsRead:  {accesscontrol.ScopeDashboardsAll},
+				dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
 			},
 			expectedAnnotationIds: []int64{dash1Annotation.Id, dash2Annotation.Id, organizationAnnotation.Id},
 		},
@@ -410,7 +411,7 @@ func TestAnnotationListingWithRBAC(t *testing.T) {
 			description: "Should find all dashboard annotations",
 			permissions: map[string][]string{
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
-				accesscontrol.ActionDashboardsRead:  {accesscontrol.ScopeDashboardsAll},
+				dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
 			},
 			expectedAnnotationIds: []int64{dash1Annotation.Id, dash2Annotation.Id},
 		},
@@ -418,7 +419,7 @@ func TestAnnotationListingWithRBAC(t *testing.T) {
 			description: "Should find only annotations from dashboards that user can read",
 			permissions: map[string][]string{
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
-				accesscontrol.ActionDashboardsRead:  {fmt.Sprintf("dashboards:uid:%s", dash1UID)},
+				dashboards.ActionDashboardsRead:     {fmt.Sprintf("dashboards:uid:%s", dash1UID)},
 			},
 			expectedAnnotationIds: []int64{dash1Annotation.Id},
 		},
@@ -433,14 +434,14 @@ func TestAnnotationListingWithRBAC(t *testing.T) {
 			description: "Should find only organization annotations",
 			permissions: map[string][]string{
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeOrganization},
-				accesscontrol.ActionDashboardsRead:  {accesscontrol.ScopeDashboardsAll},
+				dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
 			},
 			expectedAnnotationIds: []int64{organizationAnnotation.Id},
 		},
 		{
 			description: "Should error if user doesn't have annotation read permissions",
 			permissions: map[string][]string{
-				accesscontrol.ActionDashboardsRead: {accesscontrol.ScopeDashboardsAll},
+				dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll},
 			},
 			expectedError: true,
 		},
