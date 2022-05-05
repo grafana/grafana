@@ -127,7 +127,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
 
-			permissionScenario(t, "When creating a new dashboard by existing title in folder, it should create dashboard guardian for folder with correct arguments and result in access denied error",
+			permissionScenario(t, "When creating a new dashboard by existing title in folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
 				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
@@ -142,12 +142,12 @@ func TestIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(cmd, sc.sqlStore)
 					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
 
-					assert.Equal(t, sc.savedFolder.Id, sc.dashboardGuardianMock.DashId)
+					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
 					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
 
-			permissionScenario(t, "When creating a new dashboard by existing UID in folder, it should create dashboard guardian for folder with correct arguments and result in access denied error",
+			permissionScenario(t, "When creating a new dashboard by existing UID in folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
 				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
@@ -163,7 +163,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(cmd, sc.sqlStore)
 					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
 
-					assert.Equal(t, sc.savedFolder.Id, sc.dashboardGuardianMock.DashId)
+					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
 					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
@@ -210,7 +210,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
 
-			permissionScenario(t, "When moving a dashboard by existing ID to other folder from General folder, it should create dashboard guardian for other folder with correct arguments and result in access denied error",
+			permissionScenario(t, "When moving a dashboard by existing ID to other folder from General folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
 				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
@@ -226,12 +226,12 @@ func TestIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(cmd, sc.sqlStore)
 					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
 
-					assert.Equal(t, sc.otherSavedFolder.Id, sc.dashboardGuardianMock.DashId)
+					assert.Equal(t, sc.savedDashInGeneralFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
 					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
 
-			permissionScenario(t, "When moving a dashboard by existing id to the General folder from other folder, it should create dashboard guardian for General folder with correct arguments and result in access denied error",
+			permissionScenario(t, "When moving a dashboard by existing id to the General folder from other folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
 				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
@@ -247,12 +247,12 @@ func TestIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(cmd, sc.sqlStore)
 					assert.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
 
-					assert.Equal(t, int64(0), sc.dashboardGuardianMock.DashId)
+					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
 					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
 
-			permissionScenario(t, "When moving a dashboard by existing uid to other folder from General folder, it should create dashboard guardian for other folder with correct arguments and result in access denied error",
+			permissionScenario(t, "When moving a dashboard by existing uid to other folder from General folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
 				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
@@ -268,12 +268,12 @@ func TestIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(cmd, sc.sqlStore)
 					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
 
-					assert.Equal(t, sc.otherSavedFolder.Id, sc.dashboardGuardianMock.DashId)
+					assert.Equal(t, sc.savedDashInGeneralFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
 					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
 
-			permissionScenario(t, "When moving a dashboard by existing UID to the General folder from other folder, it should create dashboard guardian for General folder with correct arguments and result in access denied error",
+			permissionScenario(t, "When moving a dashboard by existing UID to the General folder from other folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
 				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
@@ -289,7 +289,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 					err := callSaveWithError(cmd, sc.sqlStore)
 					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
 
-					assert.Equal(t, int64(0), sc.dashboardGuardianMock.DashId)
+					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
 					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
