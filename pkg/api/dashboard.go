@@ -602,6 +602,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 	dashVersionMeta := &models.DashboardVersionMeta{
 		Id:            query.Result.Id,
 		DashboardId:   query.Result.DashboardId,
+		UID:           query.Result.UID,
 		Data:          query.Result.Data,
 		ParentVersion: query.Result.ParentVersion,
 		RestoredFrom:  query.Result.RestoredFrom,

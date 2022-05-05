@@ -204,6 +204,7 @@ Content-Length: 1300
 {
   "id": 1,
   "dashboardId": 1,
+  "uid": "QA7wKklGz",
   "parentVersion": 0,
   "restoredFrom": 0,
   "version": 1,
