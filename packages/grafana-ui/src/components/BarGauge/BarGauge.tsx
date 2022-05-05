@@ -110,17 +110,18 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderBasicAndGradientBars(): ReactNode {
-    const { value, showUnfilled } = this.props;
-
+    const { value, showUnfilled, showLabels } = this.props;
     const styles = getBasicAndGradientStyles(this.props);
 
     return (
       <div style={styles.wrapper}>
-        <FormattedValueDisplay
-          data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
-          value={value}
-          style={styles.value}
-        />
+        {showLabels === 'always' && (
+          <FormattedValueDisplay
+            data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
+            value={value}
+            style={styles.value}
+          />
+        )}
         {showUnfilled && <div style={styles.emptyBar} />}
         <div style={styles.bar} />
       </div>
@@ -128,7 +129,8 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderRetroBars(): ReactNode {
-    const { display, field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, text } = this.props;
+    const { display, field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, text, showLabels } =
+      this.props;
     const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperWidth, wrapperHeight } =
       calculateBarAndValueDimensions(this.props);
     const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
@@ -188,12 +190,10 @@ export class BarGauge extends PureComponent<Props> {
       cells.push(<div key={i.toString()} style={cellStyles} />);
     }
 
-    let displayLabels = 'always';
-
     return (
       <div style={containerStyles}>
         {cells}
-        {displayLabels === 'always' && (
+        {showLabels === 'always' && (
           <FormattedValueDisplay
             data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
             value={value}
@@ -341,17 +341,20 @@ interface BarAndValueDimensions {
  * Only exported for unit tests
  **/
 export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
-  const { height, width, orientation, text, alignmentFactors } = props;
+  const { height, width, orientation, text, alignmentFactors, showLabels } = props;
   const titleDim = calculateTitleDimensions(props);
   const value = alignmentFactors ?? props.value;
   const valueString = formattedValueToString(value);
 
-  let maxBarHeight = 0;
-  let maxBarWidth = 0;
-  let valueHeight = 0;
-  let valueWidth = 0;
-  let wrapperWidth = 0;
-  let wrapperHeight = 0;
+  // Setup initial dimensions
+  let dims = {
+    maxBarHeight: 0,
+    maxBarWidth: 0,
+    valueHeight: 0,
+    valueWidth: 0,
+    wrapperWidth: 0,
+    wrapperHeight: 0,
+  };
 
   // measure text with title font size or min 14px
   const fontSizeToMeasureWith = text?.valueSize ?? Math.max(titleDim.fontSize, 12);
@@ -360,40 +363,41 @@ export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensi
 
   if (isVertical(orientation)) {
     if (text?.valueSize) {
-      valueHeight = text.valueSize * VALUE_LINE_HEIGHT;
+      dims.valueHeight = text.valueSize * VALUE_LINE_HEIGHT;
+    } else if (showLabels !== 'always') {
+      dims.valueHeight = 0;
+      dims.valueWidth = 0;
     } else {
-      valueHeight = Math.min(Math.max(height * 0.1, MIN_VALUE_HEIGHT), MAX_VALUE_HEIGHT);
+      dims.valueHeight = Math.min(Math.max(height * 0.1, MIN_VALUE_HEIGHT), MAX_VALUE_HEIGHT);
     }
 
-    valueWidth = width;
-    maxBarHeight = height - (titleDim.height + valueHeight);
-    maxBarWidth = width;
-    wrapperWidth = width;
-    wrapperHeight = height - titleDim.height;
+    dims.valueWidth = width;
+    dims.maxBarHeight = height - (titleDim.height + dims.valueHeight);
+    dims.maxBarWidth = width;
+    dims.wrapperWidth = width;
+    dims.wrapperHeight = height - titleDim.height;
   } else {
-    valueHeight = height - titleDim.height;
-    valueWidth = Math.max(Math.min(width * 0.2, MAX_VALUE_WIDTH), realValueWidth);
+    if (showLabels === 'always') {
+      dims.valueHeight = height - titleDim.height;
+      dims.valueWidth = Math.max(Math.min(width * 0.2, MAX_VALUE_WIDTH), realValueWidth);
+    } else {
+      dims.valueWidth = 0;
+      dims.valueHeight = 0;
+    }
 
-    maxBarHeight = height - titleDim.height;
-    maxBarWidth = width - valueWidth - titleDim.width;
+    dims.maxBarHeight = height - titleDim.height;
+    dims.maxBarWidth = width - dims.valueWidth - titleDim.width;
 
     if (titleDim.placement === 'above') {
-      wrapperWidth = width;
-      wrapperHeight = height - titleDim.height;
+      dims.wrapperWidth = width;
+      dims.wrapperHeight = height - titleDim.height;
     } else {
-      wrapperWidth = width - titleDim.width;
-      wrapperHeight = height;
+      dims.wrapperWidth = width - titleDim.width;
+      dims.wrapperHeight = height;
     }
   }
 
-  return {
-    valueWidth,
-    valueHeight,
-    maxBarWidth,
-    maxBarHeight,
-    wrapperHeight,
-    wrapperWidth,
-  };
+  return dims;
 }
 
 export function getCellColor(
@@ -514,7 +518,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     emptyBar.left = '-3px';
 
     //adjust empty region to always have same height as colored bar
-    emptyBar.height = `${valueHeight}px`;
+    emptyBar.height = `${maxBarHeight}px`;
 
     if (isBasic) {
       // Basic styles

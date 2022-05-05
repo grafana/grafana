@@ -70,6 +70,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
         itemSpacing={1}
         lcdCellWidth={8}
         displayMode={barGaugeMode}
+        showLabels={field.config.custom.gaugeLabels}
       />
     );
   };
@@ -94,6 +95,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
           itemSpacing={1}
           lcdCellWidth={8}
           displayMode={barGaugeMode}
+          showLabels={field.config.custom.gaugeLabels}
         />
       )}
     </div>
