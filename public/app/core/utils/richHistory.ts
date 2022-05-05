@@ -4,7 +4,11 @@ import { DataQuery, DataSourceApi, dateTimeFormat, ExploreUrlState, urlUtil } fr
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
-import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
+import {
+  createErrorNotification,
+  createSuccessNotification,
+  createWarningNotification,
+} from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 import { RichHistoryQuery } from 'app/types/explore';
 
@@ -143,6 +147,7 @@ export async function migrateQueryHistoryFromLocalStorage(): Promise<LocalStorag
       return LocalStorageMigrationStatus.NotNeeded;
     }
     await richHistoryRemoteStorage.migrate(richHistory);
+    dispatch(notifyApp(createSuccessNotification('Query history successfully migrated from local storage')));
     return LocalStorageMigrationStatus.Successful;
   } catch (error) {
     dispatch(notifyApp(createWarningNotification(`Query history migration failed. ${error.message}`)));

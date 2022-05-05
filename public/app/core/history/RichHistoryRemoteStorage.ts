@@ -1,3 +1,5 @@
+import { lastValueFrom } from 'rxjs';
+
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { RichHistoryQuery } from 'app/types/explore';
 
@@ -80,9 +82,14 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
    * @internal Used only for migration purposes. Will be removed in future.
    */
   async migrate(richHistory: RichHistoryQuery[]) {
-    await getBackendSrv().post(`/api/query-history/migrate`, {
-      queries: richHistory.map(toDTO),
-    } as RichHistoryRemoteStorageMigrationPayloadDTO);
+    await lastValueFrom(
+      getBackendSrv().fetch({
+        url: '/api/query-history/migrate',
+        method: 'POST',
+        data: { queries: richHistory.map(toDTO) } as RichHistoryRemoteStorageMigrationPayloadDTO,
+        showSuccessAlert: false,
+      })
+    );
   }
 }
 
