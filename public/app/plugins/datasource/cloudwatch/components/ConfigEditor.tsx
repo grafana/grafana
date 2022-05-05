@@ -9,8 +9,10 @@ import {
   onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginJsonDataOption,
   SelectableValue,
+  updateDatasourcePluginOption,
 } from '@grafana/data';
-import { Input, InlineField, MultiSelect } from '@grafana/ui';
+import { getBackendSrv } from '@grafana/runtime';
+import { Input, InlineField, MultiSelect, Button } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -34,17 +36,24 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
   const [logGroups, setLogGroups] = useState<SelectableValue[]>([]);
   const [loadingLogGroups, setLoadingLogGroups] = useState(false);
 
-  const loadLogGroups =
-    datasource &&
-    defaultRegion &&
-    (() => datasource!.describeLogGroups({ region: defaultRegion }).then((lg) => lg.map(toOption)));
-  useAsync(async () => {
-    if (loadLogGroups) {
-      setLoadingLogGroups(true);
-      setLogGroups(await loadLogGroups().finally(() => setLoadingLogGroups(false)));
-      return;
-    }
-  }, [datasource, defaultRegion]);
+  const saveOptions = async (): Promise<void> => {
+    await getBackendSrv()
+      .put(`/api/datasources/${options.id}`, options)
+      .then((result: { datasource: any }) => {
+        updateDatasourcePluginOption(props, 'version', result.datasource.version);
+      });
+  };
+
+  const loadLogGroups = async () => {
+    await saveOptions();
+
+    setLoadingLogGroups(true);
+    const groups = await datasource!
+      .describeLogGroups({ region: datasource!.getActualRegion() })
+      .then((lg) => lg.map(toOption));
+    setLogGroups(groups);
+    setLoadingLogGroups(false);
+  };
 
   return (
     <>
@@ -103,6 +112,9 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
             allowCustomValue
           />
         </InlineField>
+        <Button type="button" onClick={loadLogGroups}>
+          Load Log Groups
+        </Button>
       </div>
 
       <XrayLinkConfig
