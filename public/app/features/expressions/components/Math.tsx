@@ -86,7 +86,7 @@ export const Math: FC<Props> = ({ labelWidth, onChange, query }) => {
             description="The inf, infn, nan, and null functions all return a single value of the name"
           />
           <DocumentedFunction name="round" description="returns a rounded integer value. It's able to operate on series or escalar values." />
-          <DocumentedFunction name="ceil" description="rounds the number up to the nearest integer value" />
+          <DocumentedFunction name="ceil" description="rounds the number up to the nearest integer value. It's able to operate on series or escalar values." />
           <DocumentedFunction name="floor" description="rounds the number down to the nearest integer value" />
         </div>
         <div>
