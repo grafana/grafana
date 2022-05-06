@@ -180,6 +180,7 @@ export const RolePickerMenu = ({
         customStyles.menuWrapper,
         css`
           bottom: ${offset > 0 ? `${offset}px` : 'unset'};
+          top: ${offset < 0 ? `${Math.abs(offset)}px` : 'unset'};
         `
       )}
     >
