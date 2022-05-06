@@ -142,7 +142,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			c.Req.Header.Add("Content-Type", "application/json")
 			r := hs.CreateTeam(c)
 			assert.Equal(t, 200, r.Status())
-			assert.NotZero(t, logger.WarnLogs.Calls)
+			assert.Zero(t, logger.WarnLogs.Calls)
 		})
 	})
 }
