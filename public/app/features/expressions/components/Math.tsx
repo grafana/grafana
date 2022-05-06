@@ -87,7 +87,7 @@ export const Math: FC<Props> = ({ labelWidth, onChange, query }) => {
           />
           <DocumentedFunction name="round" description="returns a rounded integer value. It's able to operate on series or escalar values." />
           <DocumentedFunction name="ceil" description="rounds the number up to the nearest integer value. It's able to operate on series or escalar values." />
-          <DocumentedFunction name="floor" description="rounds the number down to the nearest integer value" />
+          <DocumentedFunction name="floor" description="rounds the number down to the nearest integer value. It's able to operate on series or escalar values." />
         </div>
         <div>
           See our additional documentation on{' '}
