@@ -483,8 +483,8 @@ func TestDashboard_SortingOptions(t *testing.T) {
 	assert.Less(t, dashB.Id, dashA.Id)
 	qNoSort := &models.FindPersistedDashboardsQuery{
 		SignedInUser: &models.SignedInUser{
-			OrgId: 1,
-			UserId: 1,
+			OrgId:   1,
+			UserId:  1,
 			OrgRole: models.ROLE_ADMIN,
 			Permissions: map[int64]map[string][]string{
 				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
@@ -499,8 +499,8 @@ func TestDashboard_SortingOptions(t *testing.T) {
 
 	qSort := &models.FindPersistedDashboardsQuery{
 		SignedInUser: &models.SignedInUser{
-			OrgId: 1,
-			UserId: 1,
+			OrgId:   1,
+			UserId:  1,
 			OrgRole: models.ROLE_ADMIN,
 			Permissions: map[int64]map[string][]string{
 				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
@@ -527,8 +527,8 @@ func TestDashboard_Filter(t *testing.T) {
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	qNoFilter := &models.FindPersistedDashboardsQuery{
 		SignedInUser: &models.SignedInUser{
-			OrgId: 1,
-			UserId: 1,
+			OrgId:   1,
+			UserId:  1,
 			OrgRole: models.ROLE_ADMIN,
 			Permissions: map[int64]map[string][]string{
 				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
@@ -541,8 +541,8 @@ func TestDashboard_Filter(t *testing.T) {
 
 	qFilter := &models.FindPersistedDashboardsQuery{
 		SignedInUser: &models.SignedInUser{
-			OrgId: 1,
-			UserId: 1,
+			OrgId:   1,
+			UserId:  1,
 			OrgRole: models.ROLE_ADMIN,
 			Permissions: map[int64]map[string][]string{
 				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},

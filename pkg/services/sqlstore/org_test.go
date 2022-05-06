@@ -124,7 +124,7 @@ func TestAccountDataAccess(t *testing.T) {
 				query := models.SearchOrgUsersQuery{
 					OrgID: ac1.OrgId,
 					Page:  1,
-					User: testUser,
+					User:  testUser,
 				}
 				err = sqlStore.SearchOrgUsers(context.Background(), &query)
 
@@ -137,7 +137,7 @@ func TestAccountDataAccess(t *testing.T) {
 					OrgID: ac1.OrgId,
 					Limit: 1,
 					Page:  1,
-					User: testUser,
+					User:  testUser,
 				}
 				err = sqlStore.SearchOrgUsers(context.Background(), &query)
 

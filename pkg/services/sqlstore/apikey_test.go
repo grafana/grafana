@@ -100,7 +100,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 			timeNow()
 
 			testUser := &models.SignedInUser{
-				OrgId:              1,
+				OrgId: 1,
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionAPIKeyRead: []string{accesscontrol.ScopeAPIKeysAll}},
 				},
