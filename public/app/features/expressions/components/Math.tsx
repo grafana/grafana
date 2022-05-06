@@ -63,19 +63,19 @@ export const Math: FC<Props> = ({ labelWidth, onChange, query }) => {
           />
           <DocumentedFunction
             name="is_inf"
-            description="takes a number or a series and returns 1 for Inf values (negative or positive) and 0 for other values"
+            description="returns 1 for Inf values (negative or positive) and 0 for other values. It's able to operate on series or scalar values."
           />
           <DocumentedFunction
             name="is_nan"
-            description="takes a number or a series and returns 1 for NaN values and 0 for other values"
+            description="returns 1 for NaN values and 0 for other values. It's able to operate on series or scalar values."
           />
           <DocumentedFunction
             name="is_null"
-            description="takes a number or a series and returns 1 for null values and 0 for other values"
+            description="returns 1 for null values and 0 for other values. It's able to operate on series or scalar values."
           />
           <DocumentedFunction
             name="is_number"
-            description="takes a number or a series and returns 1 for all real number values and 0 for non-number"
+            description="returns 1 for all real number values and 0 for non-number. It's able to operate on series or scalar values."
           />
           <DocumentedFunction
             name="log"
