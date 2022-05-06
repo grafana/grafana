@@ -48,7 +48,7 @@ describe('Azure Monitor QueryEditor', () => {
       ...mockQuery,
       azureMonitor: {
         ...mockQuery.azureMonitor,
-        dimensionFilters: [{ dimension: '', operator: 'eq', filter: '*', filters: [] }],
+        dimensionFilters: [{ dimension: '', operator: 'eq', filters: [] }],
       },
     });
     rerender(
@@ -69,7 +69,7 @@ describe('Azure Monitor QueryEditor', () => {
       ...mockQuery,
       azureMonitor: {
         ...mockQuery.azureMonitor,
-        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '*', filters: [] }],
+        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filters: [] }],
       },
     });
     expect(screen.queryByText('Test Dimension 1')).toBeInTheDocument();
@@ -81,7 +81,7 @@ describe('Azure Monitor QueryEditor', () => {
     const mockPanelData = createMockPanelData();
     mockQuery.azureMonitor = {
       ...mockQuery.azureMonitor,
-      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '*' }],
+      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filters: [] }],
     };
     const onQueryChange = jest.fn();
     const dimensionOptions = [
@@ -127,7 +127,7 @@ describe('Azure Monitor QueryEditor', () => {
     const mockPanelData = createMockPanelData();
     mockQuery.azureMonitor = {
       ...mockQuery.azureMonitor,
-      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '*' }],
+      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filters: [] }],
     };
 
     mockPanelData.series = [
@@ -168,7 +168,7 @@ describe('Azure Monitor QueryEditor', () => {
     const mockPanelData = createMockPanelData();
     mockQuery.azureMonitor = {
       ...mockQuery.azureMonitor,
-      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '*', filters: ['testlabel'] }],
+      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filters: ['testlabel'] }],
     };
 
     mockPanelData.series = [
@@ -205,7 +205,7 @@ describe('Azure Monitor QueryEditor', () => {
       ...mockQuery,
       azureMonitor: {
         ...mockQuery.azureMonitor,
-        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '*', filters: [] }],
+        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filters: [] }],
       },
     });
     mockPanelData.series = [
@@ -292,7 +292,7 @@ describe('Azure Monitor QueryEditor', () => {
       ...mockQuery,
       azureMonitor: {
         ...mockQuery.azureMonitor,
-        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '*', filters: ['testlabel'] }],
+        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filters: ['testlabel'] }],
       },
     });
     mockPanelData.series = [
@@ -330,9 +330,7 @@ describe('Azure Monitor QueryEditor', () => {
       ...mockQuery,
       azureMonitor: {
         ...mockQuery.azureMonitor,
-        dimensionFilters: [
-          { dimension: 'TestDimension1', operator: 'eq', filter: '*', filters: ['testlabel', 'testlabel2'] },
-        ],
+        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filters: ['testlabel', 'testlabel2'] }],
       },
     });
     mockPanelData.series = [
