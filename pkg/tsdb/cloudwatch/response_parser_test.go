@@ -28,7 +28,7 @@ func loadGetMetricDataOutputsFromFile(filePath string) ([]*cloudwatch.GetMetricD
 func TestCloudWatchResponseParser(t *testing.T) {
 	startTime := time.Now()
 	endTime := startTime.Add(2 * time.Hour)
-	t.Run("when aggregating response for query id a", func(t *testing.T) {
+	t.Run("when aggregating multi-outputs response", func(t *testing.T) {
 		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/multiple-outputs-query-a.json")
 		require.NoError(t, err)
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
@@ -57,7 +57,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		})
 	})
 
-	t.Run("when aggregating response for query id b", func(t *testing.T) {
+	t.Run("when aggregating multi-outputs response with PartialData and ArithmeticError", func(t *testing.T) {
 		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/multiple-outputs-query-b.json")
 		require.NoError(t, err)
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
