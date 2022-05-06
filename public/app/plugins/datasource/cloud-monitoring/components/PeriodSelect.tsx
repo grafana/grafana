@@ -37,7 +37,6 @@ export function PeriodSelect({
 
   return (
     <Select
-      menuShouldPortal
       width={selectWidth}
       onChange={({ value }) => onChange(value!)}
       value={[...options, ...templateVariableOptions].find((s) => s.value === current)}

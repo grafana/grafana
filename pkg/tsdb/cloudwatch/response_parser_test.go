@@ -143,7 +143,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			MetricQueryType:  MetricQueryTypeSearch,
 			MetricEditorMode: MetricEditorModeBuilder,
 		}
-		frames, err := buildDataFrames(startTime, endTime, *response, query)
+		frames, err := buildDataFrames(startTime, endTime, *response, query, false)
 		require.NoError(t, err)
 
 		frame1 := frames[0]
@@ -207,7 +207,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			MetricQueryType:  MetricQueryTypeSearch,
 			MetricEditorMode: MetricEditorModeBuilder,
 		}
-		frames, err := buildDataFrames(startTime, endTime, *response, query)
+		frames, err := buildDataFrames(startTime, endTime, *response, query, false)
 		require.NoError(t, err)
 
 		frame1 := frames[0]
@@ -272,7 +272,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			MetricQueryType:  MetricQueryTypeSearch,
 			MetricEditorMode: MetricEditorModeBuilder,
 		}
-		frames, err := buildDataFrames(startTime, endTime, *response, query)
+		frames, err := buildDataFrames(startTime, endTime, *response, query, false)
 		require.NoError(t, err)
 
 		assert.Equal(t, "lb3 Expanded", frames[0].Name)
@@ -311,7 +311,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			MetricQueryType:  MetricQueryTypeSearch,
 			MetricEditorMode: MetricEditorModeBuilder,
 		}
-		frames, err := buildDataFrames(startTime, endTime, *response, query)
+		frames, err := buildDataFrames(startTime, endTime, *response, query, false)
 		require.NoError(t, err)
 
 		assert.Len(t, frames, 2)
@@ -354,7 +354,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			MetricQueryType:  MetricQueryTypeSearch,
 			MetricEditorMode: MetricEditorModeBuilder,
 		}
-		frames, err := buildDataFrames(startTime, endTime, *response, query)
+		frames, err := buildDataFrames(startTime, endTime, *response, query, false)
 		require.NoError(t, err)
 
 		assert.Len(t, frames, 2)
@@ -395,7 +395,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			MetricQueryType:  MetricQueryTypeQuery,
 			MetricEditorMode: MetricEditorModeRaw,
 		}
-		frames, err := buildDataFrames(startTime, endTime, *response, query)
+		frames, err := buildDataFrames(startTime, endTime, *response, query, false)
 		require.NoError(t, err)
 
 		assert.False(t, strings.Contains(frames[0].Name, "AWS/ApplicationELB"))
@@ -445,7 +445,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			MetricQueryType:  MetricQueryTypeSearch,
 			MetricEditorMode: MetricEditorModeBuilder,
 		}
-		frames, err := buildDataFrames(startTime, endTime, *response, query)
+		frames, err := buildDataFrames(startTime, endTime, *response, query, false)
 		require.NoError(t, err)
 
 		frame := frames[0]
@@ -457,5 +457,24 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		assert.Equal(t, 30.0, *frame.Fields[1].At(2).(*float64))
 		assert.Equal(t, "Value", frame.Fields[1].Name)
 		assert.Equal(t, "", frame.Fields[1].Config.DisplayName)
+	})
+
+	t.Run("buildDataFrames should use response label as frame name when dynamic label is enabled", func(t *testing.T) {
+		response := &queryRowResponse{
+			Labels: []string{"some response label"},
+			Metrics: map[string]*cloudwatch.MetricDataResult{
+				"some response label": {
+					Timestamps: []*time.Time{},
+					Values:     []*float64{aws.Float64(10)},
+					StatusCode: aws.String("Complete"),
+				},
+			},
+		}
+
+		frames, err := buildDataFrames(startTime, endTime, *response, &cloudWatchQuery{}, true)
+
+		assert.NoError(t, err)
+		require.Len(t, frames, 1)
+		assert.Equal(t, "some response label", frames[0].Name)
 	})
 }

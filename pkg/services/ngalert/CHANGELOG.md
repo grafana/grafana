@@ -45,7 +45,6 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 
 ## Grafana Alerting - main / unreleased
 
-- [BUGFIX] Use `NaN` and do not panic when captured alert values are empty #48370 
 - [ENHANCEMENT] Scheduler: Ticker expose new metrics. In legacy, metrics are prefixed with `legacy_` #47828, #48190
   - `grafana_alerting_ticker_last_consumed_tick_timestamp_seconds`
   - `grafana_alerting_ticker_next_tick_timestamp_seconds`
@@ -53,6 +52,15 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
 - [FEATURE] Indicate whether routes are provisioned when GETting Alertmanager configuration #47857
 - [FEATURE] Indicate whether contact point is provisioned when GETting Alertmanager configuration #48323
 - [FEATURE] Indicate whether alert rule is provisioned when GETting the rule #48458
+
+## 8.5.3
+
+- [BUGFIX] Migration: Remove data source disabled property when migrating alerts #48559
+
+## 8.5.2
+
+- [FEATURE] Migration: Adds `force_migration` as a flag to prevent truncating the unified alerting tables as we migrate. #48526
+- [BUGFIX] Use `NaN` and do not panic when captured alert values are empty #48370
 
 ## 8.5.1
 

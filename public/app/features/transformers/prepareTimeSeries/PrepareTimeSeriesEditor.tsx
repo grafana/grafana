@@ -71,7 +71,6 @@ export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSer
       <InlineFieldRow>
         <InlineField label="Format" labelWidth={12}>
           <Select
-            menuShouldPortal
             width={35}
             options={formats}
             value={formats.find((v) => v.value === options.format) || formats[0]}

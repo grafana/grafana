@@ -90,4 +90,22 @@ describe('Azure Monitor QueryEditor', () => {
     // reset config to not impact future tests
     config.featureToggles.azureMonitorResourcePickerForMetrics = originalConfigValue;
   });
+
+  it('should render the experimental QueryHeader when feature toggle is enabled', async () => {
+    const originalConfigValue = config.featureToggles.azureMonitorExperimentalUI;
+
+    config.featureToggles.azureMonitorExperimentalUI = true;
+
+    const mockDatasource = createMockDatasource();
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.AzureMonitor,
+    };
+
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
+
+    await waitFor(() => expect(screen.getByTestId('azure-monitor-experimental-header')).toBeInTheDocument());
+
+    config.featureToggles.azureMonitorExperimentalUI = originalConfigValue;
+  });
 });
