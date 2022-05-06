@@ -408,6 +408,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 		}
 
 		// New rules don't need to be checked for provenance, just copy the whole slice.
+		finalChanges = &changes{}
 		finalChanges.New = authorizedChanges.New
 		for _, rule := range authorizedChanges.Update {
 			if provenance, exists := provenances[rule.Existing.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
