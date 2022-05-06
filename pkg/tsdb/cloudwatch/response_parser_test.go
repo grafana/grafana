@@ -74,7 +74,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	})
 
 	t.Run("when aggregating multi-outputs response", func(t *testing.T) {
-		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/multi-metric-same-label-output.json")
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/single-output-multiple-metric-data-results.json")
 		require.NoError(t, err)
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
 		idA := "a"
