@@ -1,15 +1,11 @@
 package metrics
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
 func MigrateDimensionFilters(filters []types.AzureMonitorDimensionFilter) []types.AzureMonitorDimensionFilter {
-	fmt.Println(filters)
 	var newFilters []types.AzureMonitorDimensionFilter
-	fmt.Println(newFilters)
 	for _, filter := range filters {
 		newFilter := filter
 		newFilter.Filter = nil
@@ -41,6 +37,5 @@ func MigrateDimensionFilters(filters []types.AzureMonitorDimensionFilter) []type
 			newFilters = append(newFilters, newFilter)
 		}
 	}
-	fmt.Println(newFilters)
 	return newFilters
 }
