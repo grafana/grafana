@@ -15,7 +15,7 @@ export interface Props {
   disabled?: boolean;
   builtinRolesDisabled?: boolean;
   showBuiltInRole?: boolean;
-  onRolesChange: (newRoles: string[]) => void;
+  onRolesChange: (newRoles: Role[]) => void;
   onBuiltinRoleChange?: (newRole: OrgRole) => void;
   updateDisabled?: boolean;
 }
@@ -80,7 +80,7 @@ export const RolePicker = ({
     setSelectedBuiltInRole(role);
   };
 
-  const onUpdate = (newRoles: string[], newBuiltInRole?: OrgRole) => {
+  const onUpdate = (newRoles: Role[], newBuiltInRole?: OrgRole) => {
     if (onBuiltinRoleChange && newBuiltInRole) {
       onBuiltinRoleChange(newBuiltInRole);
     }

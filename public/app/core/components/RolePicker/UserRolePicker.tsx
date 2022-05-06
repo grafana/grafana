@@ -17,7 +17,8 @@ export interface Props {
   disabled?: boolean;
   builtinRolesDisabled?: boolean;
   updateDisabled?: boolean;
-  onApplyRoles?: (newRoles: string[], userId: number, orgId: number | undefined) => void;
+  onApplyRoles?: (newRoles: Role[], userId: number, orgId: number | undefined) => void;
+  pendingRoles?: Role[];
 }
 
 export const UserRolePicker: FC<Props> = ({
@@ -31,9 +32,15 @@ export const UserRolePicker: FC<Props> = ({
   builtinRolesDisabled,
   updateDisabled,
   onApplyRoles,
+  pendingRoles,
 }) => {
   const [{ loading, value: appliedRoles = [] }, getUserRoles] = useAsyncFn(async () => {
     try {
+      if (updateDisabled) {
+        if (pendingRoles?.length! > 0) {
+          return pendingRoles;
+        }
+      }
       if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)) {
         return await fetchUserRoles(userId, orgId);
       }
@@ -42,16 +49,16 @@ export const UserRolePicker: FC<Props> = ({
       console.error('Error loading options');
     }
     return [];
-  }, [orgId, userId]);
+  }, [orgId, userId, pendingRoles]);
 
   useEffect(() => {
     // only load roles when there is an Org selected
     if (orgId) {
       getUserRoles();
     }
-  }, [orgId, userId, getUserRoles]);
+  }, [orgId, getUserRoles, pendingRoles]);
 
-  const onRolesChange = async (roles: string[]) => {
+  const onRolesChange = async (roles: Role[]) => {
     if (!updateDisabled) {
       await updateUserRoles(roles, userId, orgId);
       await getUserRoles();
@@ -64,11 +71,11 @@ export const UserRolePicker: FC<Props> = ({
 
   return (
     <RolePicker
+      appliedRoles={appliedRoles}
       builtInRole={builtInRole}
       onRolesChange={onRolesChange}
       onBuiltinRoleChange={onBuiltinRoleChange}
       roleOptions={roleOptions}
-      appliedRoles={appliedRoles}
       builtInRoles={builtInRoles}
       isLoading={loading}
       disabled={disabled}

@@ -75,6 +75,11 @@ const ServiceAccountsListPage = ({
   const onRoleChange = (role: OrgRole, serviceAccount: ServiceAccountDTO) => {
     const updatedServiceAccount = { ...serviceAccount, role: role };
     updateServiceAccount(updatedServiceAccount);
+    // need to refetch to display the new value in the list
+    fetchServiceAccounts();
+    if (contextSrv.licensedAccessControlEnabled()) {
+      fetchACOptions();
+    }
   };
   return (
     <Page navModel={navModel}>

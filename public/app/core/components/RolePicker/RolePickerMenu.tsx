@@ -40,7 +40,7 @@ interface RolePickerMenuProps {
   showBuiltInRole?: boolean;
   onSelect: (roles: Role[]) => void;
   onBuiltInRoleSelect?: (role: OrgRole) => void;
-  onUpdate: (newRoles: string[], newBuiltInRole?: OrgRole) => void;
+  onUpdate: (newRoles: Role[], newBuiltInRole?: OrgRole) => void;
   onClear?: () => void;
   updateDisabled?: boolean;
 }
@@ -169,11 +169,12 @@ export const RolePickerMenu = ({
 
   const onUpdateInternal = () => {
     const selectedCustomRoles: string[] = [];
+    // TODO: needed?
     for (const key in selectedOptions) {
       const roleUID = selectedOptions[key]?.uid;
       selectedCustomRoles.push(roleUID);
     }
-    onUpdate(selectedCustomRoles, selectedBuiltInRole);
+    onUpdate(selectedOptions, selectedBuiltInRole);
   };
 
   return (

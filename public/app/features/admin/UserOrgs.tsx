@@ -161,8 +161,9 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
     }
   }
 
-  onOrgRemove = () => {
-    const { org } = this.props;
+  onOrgRemove = async () => {
+    const { org, user } = this.props;
+    user && (await updateUserRoles([], user.id, org.orgId));
     this.props.onOrgRemove(org.orgId);
   };
 
@@ -291,7 +292,7 @@ interface AddToOrgModalState {
   roleOptions: Role[];
   pendingOrgId: number | null;
   pendingUserId: number | null;
-  pendingRoles: string[];
+  pendingRoles: Role[];
 }
 
 export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgModalState> {
@@ -329,7 +330,16 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     if (contextSrv.licensedAccessControlEnabled()) {
       if (contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate)) {
         if (this.state.pendingUserId) {
-          await updateUserRoles(this.state.pendingRoles, this.state.pendingUserId!, this.state.pendingOrgId!);
+          const updateResult = await updateUserRoles(
+            this.state.pendingRoles,
+            this.state.pendingUserId!,
+            this.state.pendingOrgId!
+          );
+          console.log('UserOrgs: onAddUserToOrg updateUserRoles result:', updateResult);
+          // clear pending state
+          this.state.pendingOrgId = null;
+          this.state.pendingRoles = [];
+          this.state.pendingUserId = null;
         }
       }
     }
@@ -348,7 +358,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     }
   };
 
-  onRoleUpdate = async (roles: string[], userId: number, orgId: number | undefined) => {
+  onRoleUpdate = async (roles: Role[], userId: number, orgId: number | undefined) => {
     // keep the new role assignments for user
     this.setState({
       pendingRoles: roles,
@@ -383,6 +393,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
               roleOptions={roleOptions}
               updateDisabled={true}
               onApplyRoles={this.onRoleUpdate}
+              pendingRoles={this.state.pendingRoles}
             />
           ) : (
             <OrgRolePicker inputId="new-org-role-input" value={role} onChange={this.onOrgRoleChange} />
