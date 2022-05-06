@@ -38,7 +38,9 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			assert.Len(t, aggregatedResponse[idA].Metrics, 2)
 		})
 		t.Run("should have points for label1 taken from both getMetricDataOutputs", func(t *testing.T) {
-			assert.Len(t, aggregatedResponse[idA].Metrics["label1"].Values, 10)
+			require.NotNil(t, *aggregatedResponse[idA].Metrics[0].Label)
+			require.Equal(t, "label1", *aggregatedResponse[idA].Metrics[0].Label)
+			assert.Len(t, aggregatedResponse[idA].Metrics[0].Values, 10)
 		})
 		t.Run("should have statuscode 'Complete'", func(t *testing.T) {
 			assert.Equal(t, "Complete", aggregatedResponse[idA].StatusCode)
@@ -96,8 +98,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &queryRowResponse{
 			Labels: []string{"lb1", "lb2"},
-			Metrics: map[string]*cloudwatch.MetricDataResult{
-				"lb1": {
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
 					Id:    aws.String("id1"),
 					Label: aws.String("lb1"),
 					Timestamps: []*time.Time{
@@ -112,7 +114,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					},
 					StatusCode: aws.String("Complete"),
 				},
-				"lb2": {
+				{
 					Id:    aws.String("id2"),
 					Label: aws.String("lb2"),
 					Timestamps: []*time.Time{
@@ -161,8 +163,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &queryRowResponse{
 			Labels: []string{"lb1 Sum", "lb2 Average"},
-			Metrics: map[string]*cloudwatch.MetricDataResult{
-				"lb1 Sum": {
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
 					Id:    aws.String("id1"),
 					Label: aws.String("lb1 Sum"),
 					Timestamps: []*time.Time{
@@ -177,7 +179,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					},
 					StatusCode: aws.String("Complete"),
 				},
-				"lb2 Average": {
+				{
 					Id:    aws.String("id2"),
 					Label: aws.String("lb2 Average"),
 					Timestamps: []*time.Time{
@@ -225,8 +227,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &queryRowResponse{
 			Labels: []string{"lb3", "lb4"},
-			Metrics: map[string]*cloudwatch.MetricDataResult{
-				"lb3": {
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
 					Id:    aws.String("lb3"),
 					Label: aws.String("lb3"),
 					Timestamps: []*time.Time{
@@ -241,7 +243,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 					},
 					StatusCode: aws.String("Complete"),
 				},
-				"lb4": {
+				{
 					Id:    aws.String("lb4"),
 					Label: aws.String("lb4"),
 					Timestamps: []*time.Time{
@@ -285,8 +287,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &queryRowResponse{
 			Labels: []string{"lb3"},
-			Metrics: map[string]*cloudwatch.MetricDataResult{
-				"lb3": {
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
 					Id:    aws.String("lb3"),
 					Label: aws.String("lb3"),
 					Timestamps: []*time.Time{
@@ -325,8 +327,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &queryRowResponse{
 			Labels: []string{"lb3"},
-			Metrics: map[string]*cloudwatch.MetricDataResult{
-				"lb3": {
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
 					Id:    aws.String("lb3"),
 					Label: aws.String("lb3"),
 					Timestamps: []*time.Time{
@@ -368,8 +370,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &queryRowResponse{
 			Labels: []string{"lb3"},
-			Metrics: map[string]*cloudwatch.MetricDataResult{
-				"lb3": {
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
 					Id:    aws.String("lb3"),
 					Label: aws.String("lb3"),
 					Timestamps: []*time.Time{
@@ -413,8 +415,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		timestamp := time.Unix(0, 0)
 		response := &queryRowResponse{
 			Labels: []string{"lb"},
-			Metrics: map[string]*cloudwatch.MetricDataResult{
-				"lb": {
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
 					Id:    aws.String("id1"),
 					Label: aws.String("lb"),
 					Timestamps: []*time.Time{
@@ -464,8 +466,9 @@ func TestCloudWatchResponseParser(t *testing.T) {
 	t.Run("buildDataFrames should use response label as frame name when dynamic label is enabled", func(t *testing.T) {
 		response := &queryRowResponse{
 			Labels: []string{"some response label"},
-			Metrics: map[string]*cloudwatch.MetricDataResult{
-				"some response label": {
+			Metrics: []*cloudwatch.MetricDataResult{
+				{
+					Label:      aws.String("some response label"),
 					Timestamps: []*time.Time{},
 					Values:     []*float64{aws.Float64(10)},
 					StatusCode: aws.String("Complete"),

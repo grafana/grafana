@@ -8,7 +8,7 @@ type queryRowResponse struct {
 	Labels                 []string
 	HasArithmeticError     bool
 	ArithmeticErrorMessage string
-	Metrics                map[string]*cloudwatch.MetricDataResult
+	Metrics                []*cloudwatch.MetricDataResult
 	StatusCode             string
 }
 
@@ -22,25 +22,28 @@ func newQueryRowResponse() queryRowResponse {
 		HasArithmeticError:     false,
 		ArithmeticErrorMessage: "",
 		Labels:                 []string{},
-		Metrics:                map[string]*cloudwatch.MetricDataResult{},
+		Metrics:                []*cloudwatch.MetricDataResult{},
 	}
 }
 
 func (q *queryRowResponse) addMetricDataResult(mdr *cloudwatch.MetricDataResult) {
 	label := *mdr.Label
-	q.Labels = append(q.Labels, label)
-	q.Metrics[label] = mdr
-	q.StatusCode = *mdr.StatusCode
-}
-
-func (q *queryRowResponse) appendTimeSeries(mdr *cloudwatch.MetricDataResult) {
-	if _, exists := q.Metrics[*mdr.Label]; !exists {
-		q.Metrics[*mdr.Label] = &cloudwatch.MetricDataResult{}
+	found := false
+	for _, m := range q.Metrics {
+		if label == *m.Label && *m.StatusCode == "PartialData" {
+			m.Timestamps = append(m.Timestamps, mdr.Timestamps...)
+			m.Values = append(m.Values, mdr.Values...)
+			q.StatusCode = *mdr.StatusCode
+			found = true
+			break
+		}
 	}
-	metric := q.Metrics[*mdr.Label]
-	metric.Timestamps = append(metric.Timestamps, mdr.Timestamps...)
-	metric.Values = append(metric.Values, mdr.Values...)
-	q.StatusCode = *mdr.StatusCode
+
+	if !found {
+		q.Labels = append(q.Labels, label)
+		q.Metrics = append(q.Metrics, mdr)
+		q.StatusCode = *mdr.StatusCode
+	}
 }
 
 func (q *queryRowResponse) addArithmeticError(message *string) {
