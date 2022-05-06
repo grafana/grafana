@@ -9,10 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/stretchr/testify/assert"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 func TestApiKeyDataAccess(t *testing.T) {
@@ -98,7 +99,13 @@ func TestApiKeyDataAccess(t *testing.T) {
 			// advance mocked getTime by 1s
 			timeNow()
 
-			query := models.GetApiKeysQuery{OrgId: 1, IncludeExpired: false}
+			testUser := &models.SignedInUser{
+				OrgId:              1,
+				Permissions: map[int64]map[string][]string{
+					1: {accesscontrol.ActionAPIKeyRead: []string{accesscontrol.ScopeAPIKeysAll}},
+				},
+			}
+			query := models.GetApiKeysQuery{OrgId: 1, IncludeExpired: false, User: testUser}
 			err = ss.GetAPIKeys(context.Background(), &query)
 			assert.Nil(t, err)
 
@@ -108,7 +115,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 				}
 			}
 
-			query = models.GetApiKeysQuery{OrgId: 1, IncludeExpired: true}
+			query = models.GetApiKeysQuery{OrgId: 1, IncludeExpired: true, User: testUser}
 			err = ss.GetAPIKeys(context.Background(), &query)
 			assert.Nil(t, err)
 
