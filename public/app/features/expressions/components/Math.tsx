@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { ChangeEvent, FC, useCallback, useState } from 'react';
+import React, { ChangeEvent, FC } from 'react';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -17,11 +18,7 @@ const mathPlaceholder =
   'Math operations on one more queries, you reference the query by ${refId} ie. $A, $B, $C etc\n' + 'Example: $A + $B';
 
 export const Math: FC<Props> = ({ labelWidth, onChange, query }) => {
-  const [showHelp, setShowHelp] = useState<boolean>(true);
-
-  const toggleShowHelp = useCallback(() => {
-    setShowHelp((show) => !show);
-  }, []);
+  const [showHelp, toggleShowHelp] = useToggle(true);
 
   const onExpressionChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     onChange({ ...query, expression: event.target.value });
