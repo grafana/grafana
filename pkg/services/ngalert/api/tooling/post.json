@@ -3569,7 +3569,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3580,7 +3579,9 @@
    "required": [
     "name"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "Receiver",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "silence": {
    "description": "Silence silence",
@@ -4927,11 +4928,11 @@
      "provisioning"
     ]
    },
-   "post": {
+   "put": {
     "consumes": [
      "application/json"
     ],
-    "operationId": "RoutePostPolicyTree",
+    "operationId": "RoutePutPolicyTree",
     "parameters": [
      {
       "in": "body",
