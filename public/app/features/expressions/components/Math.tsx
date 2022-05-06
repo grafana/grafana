@@ -15,7 +15,8 @@ interface Props {
 }
 
 const mathPlaceholder =
-  'Math operations on one or more queries. You reference the query by ${refId} ie. $A, $B, $C etc\n' + 'The sum of two scalar values: $A + $B > 10';
+  'Math operations on one or more queries. You reference the query by ${refId} ie. $A, $B, $C etc\n' +
+  'The sum of two scalar values: $A + $B > 10';
 
 export const Math: FC<Props> = ({ labelWidth, onChange, query }) => {
   const [showHelp, toggleShowHelp] = useToggle(true);
@@ -50,7 +51,7 @@ export const Math: FC<Props> = ({ labelWidth, onChange, query }) => {
           <Icon name="book-open" /> Math operator
         </header>
         <div>
-          Run math operations on one or more queries. You reference the query by ${refId} ie. $A, $B, $C etc.
+          Run math operations on one or more queries. You reference the query by {'${refId}'} ie. $A, $B, $C etc.
           <br />
           Example: <code>$A + $B</code>
         </div>
