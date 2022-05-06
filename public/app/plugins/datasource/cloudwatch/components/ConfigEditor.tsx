@@ -1,6 +1,6 @@
-import { unionBy } from 'lodash';
+import { debounce, unionBy } from 'lodash';
 import React, { FC, useEffect, useState } from 'react';
-import { useAsync, useDebounce } from 'react-use';
+import { useDebounce } from 'react-use';
 
 import { ConnectionConfig } from '@grafana/aws-sdk';
 import {
@@ -12,25 +12,26 @@ import {
   updateDatasourcePluginOption,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Input, InlineField, MultiSelect, Button } from '@grafana/ui';
+import { Input, InlineField, MultiSelect } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import { createWarningNotification } from 'app/core/copy/appNotification';
+import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { store } from 'app/store/store';
+import { dispatch, store } from 'app/store/store';
 
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
 import { toOption } from '../utils/utils';
 
+import { MAX_LOG_GROUPS, MAX_VISIBLE_LOG_GROUPS } from './LogsQueryField';
 import { XrayLinkConfig } from './XrayLinkConfig';
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, CloudWatchSecureJsonData>;
 
 export const ConfigEditor: FC<Props> = (props: Props) => {
   const { options } = props;
-  const { defaultLogGroups, defaultRegion, logsTimeout } = options.jsonData;
+  const { defaultLogGroups, logsTimeout } = options.jsonData;
 
-  const datasource = useDatasource(options.name);
+  const { datasource, setSaved } = useDatasource(options.name);
   useAuthenticationWarning(options.jsonData);
   const logsTimeoutError = useTimoutValidation(logsTimeout);
   const [logGroups, setLogGroups] = useState<SelectableValue[]>([]);
@@ -42,18 +43,41 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
       .then((result: { datasource: any }) => {
         updateDatasourcePluginOption(props, 'version', result.datasource.version);
       });
+    setSaved(true);
   };
 
   const loadLogGroups = async () => {
     await saveOptions();
 
+    // Don't call describeLogGroups if datasource or region doesn't exist
+    if (!datasource || !datasource.getActualRegion()) {
+      const missingConfig = !datasource ? 'Datasource' : 'Region';
+      dispatch(notifyApp(createErrorNotification(`Failed to get log groups: ${missingConfig} not configured`)));
+      setLogGroups([]);
+      return;
+    }
     setLoadingLogGroups(true);
-    const groups = await datasource!
-      .describeLogGroups({ region: datasource!.getActualRegion() })
-      .then((lg) => lg.map(toOption));
-    setLogGroups(groups);
+    try {
+      const groups = await datasource
+        .describeLogGroups({ region: datasource.getActualRegion() })
+        .then((lg) => lg.map(toOption));
+      setLogGroups(groups);
+    } catch (err) {
+      let errMessage = 'unknown error';
+      if (typeof err !== 'string') {
+        try {
+          errMessage = JSON.stringify(err);
+        } catch (e) {}
+      } else {
+        errMessage = err;
+      }
+      dispatch(notifyApp(createErrorNotification(errMessage)));
+      setLogGroups([]);
+    }
     setLoadingLogGroups(false);
   };
+
+  const loadLogGroupsDebounced = debounce(loadLogGroups, 300);
 
   return (
     <>
@@ -93,10 +117,10 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
         <InlineField
           label="Default Log Groups"
           labelWidth={28}
-          tooltip="Optional. Default log groups for new CloudWatch Logs queries."
+          tooltip="Optionally, specify default log groups for new CloudWatch Logs queries."
         >
           <MultiSelect
-            value={defaultLogGroups}
+            value={defaultLogGroups ?? []}
             width={60}
             onChange={(groups) => {
               updateDatasourcePluginJsonDataOption(
@@ -109,12 +133,16 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
             }}
             options={unionBy(logGroups, defaultLogGroups?.map(toOption), 'value')}
             isLoading={loadingLogGroups}
+            onOpenMenu={loadLogGroupsDebounced}
+            isOptionDisabled={() => !!defaultLogGroups && defaultLogGroups.length >= MAX_LOG_GROUPS}
+            placeholder="Choose Log Groups"
+            maxVisibleValues={MAX_VISIBLE_LOG_GROUPS}
+            noOptionsMessage="No log groups available"
+            aria-label="Log Groups"
+            isClearable={true}
             allowCustomValue
           />
         </InlineField>
-        <Button type="button" onClick={loadLogGroups}>
-          Load Log Groups
-        </Button>
       </div>
 
       <XrayLinkConfig
@@ -145,6 +173,7 @@ function useAuthenticationWarning(jsonData: CloudWatchJsonData) {
 
 function useDatasource(datasourceName: string) {
   const [datasource, setDatasource] = useState<CloudWatchDatasource>();
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     getDatasourceSrv()
@@ -154,9 +183,10 @@ function useDatasource(datasourceName: string) {
         // So a "as" type assertion here is a necessary evil.
         setDatasource(datasource as CloudWatchDatasource);
       });
-  }, [datasourceName]);
+    setSaved(false);
+  }, [datasourceName, saved]);
 
-  return datasource;
+  return { datasource, setSaved };
 }
 
 function useTimoutValidation(value: string | undefined) {

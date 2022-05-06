@@ -31,6 +31,9 @@ const rowGap = css`
   gap: 3px;
 `;
 
+export const MAX_LOG_GROUPS = 20;
+export const MAX_VISIBLE_LOG_GROUPS = 4;
+
 interface State {
   hint:
     | {

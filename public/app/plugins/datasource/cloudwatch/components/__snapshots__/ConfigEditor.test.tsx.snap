@@ -72,13 +72,34 @@ exports[`Render should disable access key id field 1`] = `
       invalid={false}
       label="Timeout"
       labelWidth={28}
-      tooltip="Custom timout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as \\"15m\\" \\"30s\\" \\"2000ms\\" etc."
+      tooltip="Custom timeout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as \\"15m\\" \\"30s\\" \\"2000ms\\" etc."
     >
       <Input
         onChange={[Function]}
         placeholder="15m"
         title="The timeout must be a valid duration string, such as \\"15m\\" \\"30s\\" \\"2000ms\\" etc."
         value=""
+        width={60}
+      />
+    </InlineField>
+    <InlineField
+      label="Default Log Groups"
+      labelWidth={28}
+      tooltip="Optionally, specify default log groups for new CloudWatch Logs queries."
+    >
+      <MultiSelect
+        allowCustomValue={true}
+        aria-label="Log Groups"
+        isClearable={true}
+        isLoading={false}
+        isOptionDisabled={[Function]}
+        maxVisibleValues={4}
+        noOptionsMessage="No log groups available"
+        onChange={[Function]}
+        onOpenMenu={[Function]}
+        options={Array []}
+        placeholder="Choose Log Groups"
+        value={Array []}
         width={60}
       />
     </InlineField>
@@ -156,13 +177,34 @@ exports[`Render should render component 1`] = `
       invalid={false}
       label="Timeout"
       labelWidth={28}
-      tooltip="Custom timout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as \\"15m\\" \\"30s\\" \\"2000ms\\" etc."
+      tooltip="Custom timeout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as \\"15m\\" \\"30s\\" \\"2000ms\\" etc."
     >
       <Input
         onChange={[Function]}
         placeholder="15m"
         title="The timeout must be a valid duration string, such as \\"15m\\" \\"30s\\" \\"2000ms\\" etc."
         value=""
+        width={60}
+      />
+    </InlineField>
+    <InlineField
+      label="Default Log Groups"
+      labelWidth={28}
+      tooltip="Optionally, specify default log groups for new CloudWatch Logs queries."
+    >
+      <MultiSelect
+        allowCustomValue={true}
+        aria-label="Log Groups"
+        isClearable={true}
+        isLoading={false}
+        isOptionDisabled={[Function]}
+        maxVisibleValues={4}
+        noOptionsMessage="No log groups available"
+        onChange={[Function]}
+        onOpenMenu={[Function]}
+        options={Array []}
+        placeholder="Choose Log Groups"
+        value={Array []}
         width={60}
       />
     </InlineField>
@@ -245,13 +287,34 @@ exports[`Render should show access key and secret access key fields 1`] = `
       invalid={false}
       label="Timeout"
       labelWidth={28}
-      tooltip="Custom timout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as \\"15m\\" \\"30s\\" \\"2000ms\\" etc."
+      tooltip="Custom timeout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as \\"15m\\" \\"30s\\" \\"2000ms\\" etc."
     >
       <Input
         onChange={[Function]}
         placeholder="15m"
         title="The timeout must be a valid duration string, such as \\"15m\\" \\"30s\\" \\"2000ms\\" etc."
         value=""
+        width={60}
+      />
+    </InlineField>
+    <InlineField
+      label="Default Log Groups"
+      labelWidth={28}
+      tooltip="Optionally, specify default log groups for new CloudWatch Logs queries."
+    >
+      <MultiSelect
+        allowCustomValue={true}
+        aria-label="Log Groups"
+        isClearable={true}
+        isLoading={false}
+        isOptionDisabled={[Function]}
+        maxVisibleValues={4}
+        noOptionsMessage="No log groups available"
+        onChange={[Function]}
+        onOpenMenu={[Function]}
+        options={Array []}
+        placeholder="Choose Log Groups"
+        value={Array []}
         width={60}
       />
     </InlineField>
@@ -334,13 +397,34 @@ exports[`Render should show arn role field 1`] = `
       invalid={false}
       label="Timeout"
       labelWidth={28}
-      tooltip="Custom timout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as \\"15m\\" \\"30s\\" \\"2000ms\\" etc."
+      tooltip="Custom timeout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as \\"15m\\" \\"30s\\" \\"2000ms\\" etc."
     >
       <Input
         onChange={[Function]}
         placeholder="15m"
         title="The timeout must be a valid duration string, such as \\"15m\\" \\"30s\\" \\"2000ms\\" etc."
         value=""
+        width={60}
+      />
+    </InlineField>
+    <InlineField
+      label="Default Log Groups"
+      labelWidth={28}
+      tooltip="Optionally, specify default log groups for new CloudWatch Logs queries."
+    >
+      <MultiSelect
+        allowCustomValue={true}
+        aria-label="Log Groups"
+        isClearable={true}
+        isLoading={false}
+        isOptionDisabled={[Function]}
+        maxVisibleValues={4}
+        noOptionsMessage="No log groups available"
+        onChange={[Function]}
+        onOpenMenu={[Function]}
+        options={Array []}
+        placeholder="Choose Log Groups"
+        value={Array []}
         width={60}
       />
     </InlineField>
@@ -423,13 +507,34 @@ exports[`Render should show credentials profile name field 1`] = `
       invalid={false}
       label="Timeout"
       labelWidth={28}
-      tooltip="Custom timout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as \\"15m\\" \\"30s\\" \\"2000ms\\" etc."
+      tooltip="Custom timeout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as \\"15m\\" \\"30s\\" \\"2000ms\\" etc."
     >
       <Input
         onChange={[Function]}
         placeholder="15m"
         title="The timeout must be a valid duration string, such as \\"15m\\" \\"30s\\" \\"2000ms\\" etc."
         value=""
+        width={60}
+      />
+    </InlineField>
+    <InlineField
+      label="Default Log Groups"
+      labelWidth={28}
+      tooltip="Optionally, specify default log groups for new CloudWatch Logs queries."
+    >
+      <MultiSelect
+        allowCustomValue={true}
+        aria-label="Log Groups"
+        isClearable={true}
+        isLoading={false}
+        isOptionDisabled={[Function]}
+        maxVisibleValues={4}
+        noOptionsMessage="No log groups available"
+        onChange={[Function]}
+        onOpenMenu={[Function]}
+        options={Array []}
+        placeholder="Choose Log Groups"
+        value={Array []}
         width={60}
       />
     </InlineField>
