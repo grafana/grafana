@@ -179,17 +179,14 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 			return nil, err
 		}
 
-		if len(starredItemsLinks) > 0 {
-			navTree = append(navTree, &dtos.NavLink{
-				Text:       "Starred",
-				Id:         "starred",
-				Icon:       "star",
-				SortWeight: dtos.WeightSavedItems,
-				Section:    dtos.NavSectionCore,
-				Children:   starredItemsLinks,
-			})
-		}
-
+		navTree = append(navTree, &dtos.NavLink{
+			Text:       "Starred",
+			Id:         "starred",
+			Icon:       "star",
+			SortWeight: dtos.WeightSavedItems,
+			Section:    dtos.NavSectionCore,
+			Children:   starredItemsLinks,
+		})
 	}
 
 	if hasEditPerm && !hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
