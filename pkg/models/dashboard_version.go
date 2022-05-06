@@ -71,7 +71,7 @@ type GetDashboardVersionQuery struct {
 
 type GetDashboardVersionsQuery struct {
 	DashboardId int64
-	UID         string
+	DashboardUID         string
 	OrgId       int64
 	Limit       int
 	Start       int
