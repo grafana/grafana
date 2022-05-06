@@ -18,6 +18,7 @@ import { COMMON_LABELS } from '../../../core/logs_model';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 import usePanelScroll from './usePanelScroll';
 import usePopulateData from './usePopulateData';
+import { calculateAndPostLogsNewHeight } from './utils';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
@@ -94,9 +95,15 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     </div>
   );
 
+  const handleClick = () => {
+    setTimeout(() => {
+      calculateAndPostLogsNewHeight();
+    }, 50);
+  };
+
   return (
     <CustomScrollbar autoHide>
-      <div className={style.container}>
+      <div className={style.container} onClick={handleClick}>
         {showCommonLabels && !isAscending && renderCommonLabels()}
         <LogRows
           logRows={logRows}
