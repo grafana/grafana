@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	search "github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -173,19 +174,22 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	navTree := []*dtos.NavLink{}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagSavedItems) {
-		savedItemsLinks, err := hs.buildSavedItemsNavLinks(c, prefs)
+		starredItemsLinks, err := hs.buildStarredItemsNavLinks(c, prefs)
 		if err != nil {
 			return nil, err
 		}
 
-		navTree = append(navTree, &dtos.NavLink{
-			Text:       "Saved items",
-			Id:         "saved-items",
-			Icon:       "bookmark",
-			SortWeight: dtos.WeightSavedItems,
-			Section:    dtos.NavSectionCore,
-			Children:   savedItemsLinks,
-		})
+		if len(starredItemsLinks) > 0 {
+			navTree = append(navTree, &dtos.NavLink{
+				Text:       "Starred",
+				Id:         "starred",
+				Icon:       "star",
+				SortWeight: dtos.WeightSavedItems,
+				Section:    dtos.NavSectionCore,
+				Children:   starredItemsLinks,
+			})
+		}
+
 	}
 
 	if hasEditPerm && !hs.Features.IsEnabled(featuremgmt.FlagNewNavigation) {
@@ -411,24 +415,31 @@ func (hs *HTTPServer) addHelpLinks(navTree []*dtos.NavLink, c *models.ReqContext
 	return navTree
 }
 
-func (hs *HTTPServer) buildSavedItemsNavLinks(c *models.ReqContext, prefs *pref.Preference) ([]*dtos.NavLink, error) {
-	savedItemsChildNavs := []*dtos.NavLink{}
+func (hs *HTTPServer) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pref.Preference) ([]*dtos.NavLink, error) {
+	starredItemsChildNavs := []*dtos.NavLink{}
 
-	// query preferences table for any saved items
-	savedItems := prefs.JSONData.Navbar.SavedItems
+	searchQuery := search.Query{
+		SignedInUser: c.SignedInUser,
+		IsStarred:    true,
+		OrgId:        c.OrgId,
+	}
 
-	if len(savedItems) > 0 {
-		for _, savedItem := range savedItems {
-			savedItemsChildNavs = append(savedItemsChildNavs, &dtos.NavLink{
-				Id:     savedItem.ID,
-				Text:   savedItem.Text,
-				Url:    savedItem.Url,
-				Target: savedItem.Target,
+	err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(searchQuery.Result) > 0 {
+		for _, starredItem := range searchQuery.Result {
+			starredItemsChildNavs = append(starredItemsChildNavs, &dtos.NavLink{
+				Id:   starredItem.UID,
+				Text: starredItem.Title,
+				Url:  starredItem.URL,
 			})
 		}
 	}
 
-	return savedItemsChildNavs, nil
+	return starredItemsChildNavs, nil
 }
 
 func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm bool) []*dtos.NavLink {
