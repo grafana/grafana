@@ -30,7 +30,7 @@ interface Props {
   hideLayout?: boolean;
 }
 
-function getValidQueryLayout(q: DashboardQuery): SearchLayout {
+export function getValidQueryLayout(q: DashboardQuery): SearchLayout {
   // Folders is not valid when a query exists
   if (q.layout === SearchLayout.Folders) {
     if (q.query || q.sort) {
@@ -82,7 +82,7 @@ export const ActionRow: FC<Props> = ({
 
 ActionRow.displayName = 'ActionRow';
 
-const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     actionRow: css`
       display: none;

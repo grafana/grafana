@@ -7,6 +7,7 @@ import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
 import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
 
 import { LocationInfo } from '../../service';
+import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { FieldAccess, TableColumn } from './SearchResultsTable';
 
@@ -14,7 +15,8 @@ export const generateColumns = (
   data: DataFrameView<FieldAccess>,
   isDashboardList: boolean,
   availableWidth: number,
-  showCheckbox: boolean,
+  selection: SelectionChecker | undefined,
+  selectionToggle: SelectionToggle | undefined,
   styles: { [key: string]: string },
   tags: string[],
   onTagFilterChange: (tags: string[]) => void,
@@ -22,13 +24,14 @@ export const generateColumns = (
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
   const uidField = data.fields.uid!;
+  const kindField = data.fields.kind!;
   const access = data.fields;
 
   availableWidth -= 8; // ???
   let width = 50;
 
-  // TODO: Add optional checkbox support
-  if (showCheckbox) {
+  if (selection && selectionToggle) {
+    width = 30;
     columns.push({
       id: `column-checkbox`,
       Header: () => (
@@ -37,20 +40,25 @@ export const generateColumns = (
             onChange={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              console.log('SELECT ALL!!!', e);
+              alert('SELECT ALL!!!');
             }}
           />
         </div>
       ),
-      width: 30,
+      width,
       Cell: (p) => {
         const uid = uidField.values.get(p.row.index);
+        const kind = kindField ? kindField.values.get(p.row.index) : 'dashboard'; // HACK for now
+        const selected = selection(kind, uid);
+        const hasUID = uid != null; // Panels don't have UID! Likely should not be shown on pages with manage options
         return (
           <div {...p.cellProps} className={p.cellStyle}>
             <div className={styles.checkbox}>
               <Checkbox
+                disabled={!hasUID}
+                value={selected && hasUID}
                 onChange={(e) => {
-                  console.log('SELECTED!!!', uid);
+                  selectionToggle(kind, uid);
                 }}
               />
             </div>
@@ -260,10 +268,10 @@ function makeTypeColumn(
   return {
     Cell: DefaultCell,
     id: `column-type`,
-    field: kindField,
+    field: kindField ?? typeField,
     Header: 'Type',
     accessor: (row: any, i: number) => {
-      const kind = kindField.values.get(i);
+      const kind = kindField?.values.get(i) ?? 'dashboard';
       let icon = 'public/img/icons/unicons/apps.svg';
       let txt = 'Dashboard';
       if (kind) {
