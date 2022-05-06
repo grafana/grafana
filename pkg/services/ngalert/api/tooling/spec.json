@@ -1252,7 +1252,7 @@
           }
         }
       },
-      "post": {
+      "put": {
         "consumes": [
           "application/json"
         ],
@@ -1260,7 +1260,7 @@
           "provisioning"
         ],
         "summary": "Sets the notification policy tree.",
-        "operationId": "RoutePostPolicyTree",
+        "operationId": "RoutePutPolicyTree",
         "parameters": [
           {
             "name": "Body",
@@ -5096,7 +5096,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -5119,6 +5118,8 @@
           "$ref": "#/definitions/receiver"
         }
       },
+      "x-go-name": "AlertGroup",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
@@ -5511,7 +5512,6 @@
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -5552,10 +5552,11 @@
           "x-go-name": "StartsAt"
         }
       },
+      "x-go-name": "PostableSilence",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "name"
@@ -5567,6 +5568,8 @@
           "x-go-name": "Name"
         }
       },
+      "x-go-name": "Receiver",
+      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/receiver"
     },
     "silence": {
