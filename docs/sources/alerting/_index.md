@@ -23,7 +23,6 @@ For new installations or existing installs without alerting configured, Grafana 
 
 Before you begin, we recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "./fundamentals/_index.md" >}}) of Grafana alerting. Refer to [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to learn more about controlling access to alerts using fine-grained permissions.
 
-- [What's new in Grafana alerting]({{< relref "./difference-old-new.md" >}})
 - [Enable Grafana alerting in OSS]({{< relref "./opt-in.md" >}})
 - [Migrating legacy alerts]({{< relref "./migrating-legacy-alerts.md" >}})
 - [Create Grafana managed alerting rules]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
