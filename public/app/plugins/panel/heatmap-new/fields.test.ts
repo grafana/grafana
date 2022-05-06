@@ -1,6 +1,6 @@
 import { createTheme, ArrayVector, DataFrameType, FieldType } from '@grafana/data';
 
-import { BucketLayout, getAnnotationMapping, HEATMAP_NOT_SCANLINES_ERROR } from './fields';
+import { BucketLayout, getExemplarsMapping, HEATMAP_NOT_SCANLINES_ERROR } from './fields';
 import { PanelOptions } from './models.gen';
 
 const theme = createTheme();
@@ -16,7 +16,7 @@ describe('Heatmap data', () => {
 
 describe('creating a heatmap data mapping', () => {
   describe('generates a simple data mapping with orderly data', () => {
-    const mapping = getAnnotationMapping(
+    const mapping = getExemplarsMapping(
       {
         heatmap: {
           name: 'test',
@@ -139,7 +139,7 @@ describe('creating a heatmap data mapping', () => {
       // In this case, we are just finding proper values, but don't care if a values
       // exists in the bucket in the original data or not. Therefore, we should see
       // a value mapped into the second mapping bucket containing the value '8'.
-      const mapping = getAnnotationMapping(heatmap, rawData);
+      const mapping = getExemplarsMapping(heatmap, rawData);
       expect(mapping.lookup.length).toEqual(3);
       expect(mapping.lookup[0]).toEqual([1, 4]);
       expect(mapping.lookup[1]).toEqual([8]);
@@ -148,7 +148,7 @@ describe('creating a heatmap data mapping', () => {
   });
 
   describe('Handles a larger data set that will not fill all buckets', () => {
-    const mapping = getAnnotationMapping(
+    const mapping = getExemplarsMapping(
       {
         heatmap: {
           name: 'test',
@@ -276,7 +276,7 @@ describe('creating a heatmap data mapping', () => {
 
     it('Will not process heatmap buckets', () => {
       expect(() =>
-        getAnnotationMapping(
+        getExemplarsMapping(
           {
             ...heatmap,
             heatmap: {
@@ -291,7 +291,7 @@ describe('creating a heatmap data mapping', () => {
       ).toThrow(HEATMAP_NOT_SCANLINES_ERROR);
 
       expect(() =>
-        getAnnotationMapping(
+        getExemplarsMapping(
           {
             ...heatmap,
             heatmap: {
@@ -306,7 +306,7 @@ describe('creating a heatmap data mapping', () => {
       ).toThrow(HEATMAP_NOT_SCANLINES_ERROR);
 
       expect(() =>
-        getAnnotationMapping(
+        getExemplarsMapping(
           {
             ...heatmap,
             heatmap: {

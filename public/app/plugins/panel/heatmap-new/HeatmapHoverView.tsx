@@ -62,6 +62,7 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
   const xBucketMax = xBucketMin + data.xBucketSize;
 
   const count = countVals?.[hover.index];
+  const exemplarIndex = data.exemplarsMappings?.lookup; //?.[hover.index];
 
   const visibleFields = data.heatmap?.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
   const links: Array<LinkModel<Field>> = [];
@@ -175,6 +176,7 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
           {getFieldDisplayName(countField!, data.heatmap)}: {count}
         </div>
       </div>
+      {exemplarIndex && <div>EXEMPLARS: {JSON.stringify(exemplarIndex)}</div>}
       {links.length > 0 && (
         <VerticalGroup>
           {links.map((link, i) => (
