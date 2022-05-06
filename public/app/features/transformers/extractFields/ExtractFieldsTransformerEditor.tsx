@@ -3,7 +3,6 @@ import React from 'react';
 import {
   DataTransformerID,
   FieldNamePickerConfigSettings,
-  PluginState,
   SelectableValue,
   StandardEditorsRegistryItem,
   TransformerRegistryItem,
