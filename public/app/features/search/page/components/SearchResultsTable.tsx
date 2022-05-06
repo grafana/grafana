@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { useTable, Column, TableOptions, Cell, useAbsoluteLayout } from 'react-table';
 import { FixedSizeList } from 'react-window';
 
-import { DataFrame, DataFrameType, DataFrameView, DataSourceRef, Field, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, DataFrameView, DataSourceRef, Field, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
