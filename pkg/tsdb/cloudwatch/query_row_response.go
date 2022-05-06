@@ -26,23 +26,22 @@ func newQueryRowResponse() queryRowResponse {
 	}
 }
 
-func (q *queryRowResponse) addMetricDataResult(mdr *cloudwatch.MetricDataResult) {
-	label := *mdr.Label
-	found := false
-	for _, m := range q.Metrics {
-		if label == *m.Label && *m.StatusCode == "PartialData" {
-			m.Timestamps = append(m.Timestamps, mdr.Timestamps...)
-			m.Values = append(m.Values, mdr.Values...)
-			q.StatusCode = *mdr.StatusCode
-			found = true
-			break
+func (q *queryRowResponse) addMetricDataResult(mdr *cloudwatch.MetricDataResult, partialDataSet map[string]*cloudwatch.MetricDataResult) {
+	if metricDataResult, ok := partialDataSet[*mdr.Label]; ok {
+		metricDataResult.Timestamps = append(metricDataResult.Timestamps, mdr.Timestamps...)
+		metricDataResult.Values = append(metricDataResult.Values, mdr.Values...)
+		q.StatusCode = *mdr.StatusCode
+		if *mdr.StatusCode != "PartialData" {
+			delete(partialDataSet, *mdr.Label)
 		}
+		return
 	}
 
-	if !found {
-		q.Labels = append(q.Labels, label)
-		q.Metrics = append(q.Metrics, mdr)
-		q.StatusCode = *mdr.StatusCode
+	q.Labels = append(q.Labels, *mdr.Label)
+	q.Metrics = append(q.Metrics, mdr)
+	q.StatusCode = *mdr.StatusCode
+	if *mdr.StatusCode == "PartialData" {
+		partialDataSet[*mdr.Label] = mdr
 	}
 }
 

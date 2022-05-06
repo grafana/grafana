@@ -54,6 +54,7 @@ func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) m
 		maxQueryResultsExceeded:    false,
 		maxMatchingResultsExceeded: false,
 	}
+	var partialDataSet = make(map[string]*cloudwatch.MetricDataResult)
 	for _, gmdo := range getMetricDataOutputs {
 		for _, message := range gmdo.Messages {
 			if _, exists := errorCodes[*message.Code]; exists {
@@ -74,7 +75,7 @@ func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) m
 				}
 			}
 
-			response.addMetricDataResult(r)
+			response.addMetricDataResult(r, partialDataSet)
 
 			for code := range errorCodes {
 				if _, exists := response.ErrorCodes[code]; exists {
