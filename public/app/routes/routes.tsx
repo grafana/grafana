@@ -38,6 +38,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/p/:uid/:slug?',
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Normal,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/PublicDashboardPage')
+      ),
+    },
+    {
       path: '/dashboard/:type/:slug',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Normal,
@@ -47,6 +55,16 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/new',
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.New,
+      // TODO[Router]
+      //roles: () => (contextSrv.hasEditPermissionInFolders ? [contextSrv.user.orgRole] : ['Admin']),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
+      ),
+    },
+    {
+      path: '/dashboard/public123',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.New,
       // TODO[Router]

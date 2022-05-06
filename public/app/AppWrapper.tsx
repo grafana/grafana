@@ -95,6 +95,10 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
       });
     };
 
+    const isPublicDashboardRoute = () => {
+      return window.location.pathname.split('/')[1] === 'p';
+    };
+
     return (
       <Provider store={store}>
         <I18nProvider>
@@ -110,7 +114,9 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                     {config.featureToggles.commandPalette && <CommandPalette />}
                     <div className="grafana-app">
                       <Router history={locationService.getHistory()}>
-                        {ready && <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>}
+                        {!isPublicDashboardRoute() && ready && (
+                          <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>
+                        )}
                         <main className="main-view">
                           {pageBanners.map((Banner, index) => (
                             <Banner key={index.toString()} />

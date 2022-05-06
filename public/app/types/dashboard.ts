@@ -66,6 +66,7 @@ export enum DashboardRoutes {
   New = 'new-dashboard',
   Normal = 'normal-dashboard',
   Scripted = 'scripted-dashboard',
+  Public = 'public-dashboard',
 }
 
 export enum DashboardInitPhase {

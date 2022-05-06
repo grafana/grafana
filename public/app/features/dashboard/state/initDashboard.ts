@@ -60,6 +60,25 @@ async function fetchDashboard(
         dashDTO.meta.canStar = false;
         return dashDTO;
       }
+      case DashboardRoutes.Public: {
+        const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
+
+        // append kiosk mode to url so we dont load nav bar and dashboard header
+        // if ('URLSearchParams' in window) {
+        //   var searchParams = new URLSearchParams(window.location.search);
+        //   searchParams.set("kiosk", "1");
+        //
+        //   const cur = window.location.search
+        //   const url = '?' + searchParams.toString()
+        //   console.log(cur, url)
+        //
+        //   if (window.location.search !== url) {
+        //     window.location.search = url;
+        //   }
+        // }
+
+        return dashDTO;
+      }
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 
