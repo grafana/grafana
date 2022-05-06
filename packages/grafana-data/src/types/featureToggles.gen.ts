@@ -59,4 +59,5 @@ export interface FeatureToggles {
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   azureMonitorExperimentalUI?: boolean;
+  traceToMetrics?: boolean;
 }

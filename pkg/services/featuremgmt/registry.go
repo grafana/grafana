@@ -243,5 +243,11 @@ var (
 			RequiresDevMode: true,
 			FrontendOnly:    true,
 		},
+		{
+			Name:         "traceToMetrics",
+			Description:  "Enable trace to metrics links",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
 	}
 )

@@ -61,6 +61,10 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 	}
 
 	store := InitTestDB(t, InitTestDBOpt{})
+	store.Cfg.IsEnterprise = true
+	defer func() {
+		store.Cfg.IsEnterprise = false
+	}()
 	seedOrgUsers(t, store, 10)
 
 	for _, tt := range tests {
