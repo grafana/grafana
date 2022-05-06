@@ -52,8 +52,13 @@ describe('panelEditor actions', () => {
       const dispatchedActions = await thunkTester({
         panels: {},
         panelEditor: state,
-        dashboard: {
-          getModel: () => dashboard,
+        dashboards: {
+          byKey: {
+            home: {
+              getModel: () => dashboard,
+            },
+          },
+          currentKey: 'home',
         },
       })
         .givenThunk(exitPanelEditor)
@@ -88,8 +93,13 @@ describe('panelEditor actions', () => {
       const dispatchedActions = await thunkTester({
         panelEditor: state,
         panels: {},
-        dashboard: {
-          getModel: () => dashboard,
+        dashboards: {
+          byKey: {
+            home: {
+              getModel: () => dashboard,
+            },
+          },
+          currentKey: 'home',
         },
       })
         .givenThunk(exitPanelEditor)
@@ -124,8 +134,13 @@ describe('panelEditor actions', () => {
       const dispatchedActions = await thunkTester({
         panelEditor: state,
         panels: {},
-        dashboard: {
-          getModel: () => dashboard,
+        dashboards: {
+          byKey: {
+            home: {
+              getModel: () => dashboard,
+            },
+          },
+          currentKey: 'home',
         },
       })
         .givenThunk(exitPanelEditor)

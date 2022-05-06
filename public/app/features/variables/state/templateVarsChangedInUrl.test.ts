@@ -1,6 +1,6 @@
 import { DashboardState, StoreState } from '../../../types';
 import { DashboardModel } from '../../dashboard/state';
-import { initialState } from '../../dashboard/state/reducers';
+import { initialDash } from '../../dashboard/state/reducers';
 import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -35,19 +35,24 @@ async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}, variable: V
 
   const templateVariableValueUpdatedMock = jest.fn();
   const startRefreshMock = jest.fn();
-  const dashboard: DashboardState = {
-    ...initialState,
-    getModel: () => {
-      dashboardModel.templateVariableValueUpdated = templateVariableValueUpdatedMock;
-      dashboardModel.startRefresh = startRefreshMock;
-      dashboardModel.templating = { list: [variable] };
-      return dashboardModel;
+  const dashboards: DashboardState = {
+    byKey: {
+      home: {
+        ...initialDash,
+        getModel: () => {
+          dashboardModel.templateVariableValueUpdated = templateVariableValueUpdatedMock;
+          dashboardModel.startRefresh = startRefreshMock;
+          dashboardModel.templating = { list: [variable] };
+          return dashboardModel;
+        },
+      },
     },
+    currentKey: 'home',
   };
 
   const variables: VariablesState = { variable };
   const state: Partial<StoreState> = {
-    dashboard,
+    dashboards,
     ...getPreloadedState(key, { variables }),
   };
   const getState = () => state as unknown as StoreState;

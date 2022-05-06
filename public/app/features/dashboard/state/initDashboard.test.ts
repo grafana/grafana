@@ -115,8 +115,11 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
         location: {
           query: {},
         },
-        dashboard: {
-          initPhase: DashboardInitPhase.Services,
+        dashboards: {
+          byKey: {
+            home: { initPhase: DashboardInitPhase.Services },
+          },
+          currentKey: 'home',
         },
         user: {},
         explore: {
@@ -180,7 +183,7 @@ describeInitScenario('Initializing new dashboard', (ctx) => {
 
   it('Should send action dashboardInitCompleted', () => {
     expect(ctx.actions[7].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[7].payload.title).toBe('New dashboard');
+    expect(ctx.actions[7].payload.dash.title).toBe('New dashboard');
   });
 
   it('Should initialize services', () => {
@@ -268,7 +271,7 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
 
 describeInitScenario('Initializing previously canceled dashboard initialization', (ctx) => {
   ctx.setup(() => {
-    ctx.storeState.dashboard.initPhase = DashboardInitPhase.Fetching;
+    ctx.storeState.dashboards.byKey['home'].initPhase = DashboardInitPhase.Fetching;
   });
 
   it('Should send action dashboardInitFetching', () => {

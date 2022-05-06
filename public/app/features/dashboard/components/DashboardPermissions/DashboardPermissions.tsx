@@ -12,19 +12,20 @@ import { DashboardAcl, PermissionLevel, NewDashboardAclItem } from 'app/types/ac
 import { checkFolderPermissions } from '../../../folders/state/actions';
 import { DashboardModel } from '../../state/DashboardModel';
 import {
-  getDashboardPermissions,
+  fetchDashboardPermissions,
   addDashboardPermission,
   removeDashboardPermission,
   updateDashboardPermission,
 } from '../../state/actions';
+import { selectCurrentDashboard } from '../../state/reducers';
 
 const mapStateToProps = (state: StoreState) => ({
-  permissions: state.dashboard.permissions,
+  permissions: selectCurrentDashboard(state.dashboards).permissions,
   canViewFolderPermissions: state.folder.canViewFolderPermissions,
 });
 
 const mapDispatchToProps = {
-  getDashboardPermissions,
+  fetchDashboardPermissions,
   addDashboardPermission,
   removeDashboardPermission,
   updateDashboardPermission,
@@ -53,7 +54,7 @@ export class DashboardPermissionsUnconnected extends PureComponent<Props, State>
   }
 
   componentDidMount() {
-    this.props.getDashboardPermissions(this.props.dashboard.id);
+    this.props.fetchDashboardPermissions(this.props.dashboard.key);
     if (this.props.dashboard.meta.folderUid) {
       this.props.checkFolderPermissions(this.props.dashboard.meta.folderUid);
     }
@@ -64,15 +65,15 @@ export class DashboardPermissionsUnconnected extends PureComponent<Props, State>
   };
 
   onRemoveItem = (item: DashboardAcl) => {
-    this.props.removeDashboardPermission(this.props.dashboard.id, item);
+    this.props.removeDashboardPermission({ key: this.props.dashboard.key, itemToDelete: item });
   };
 
   onPermissionChanged = (item: DashboardAcl, level: PermissionLevel) => {
-    this.props.updateDashboardPermission(this.props.dashboard.id, item, level);
+    this.props.updateDashboardPermission({ key: this.props.dashboard.key, itemToUpdate: item, level });
   };
 
   onAddPermission = (newItem: NewDashboardAclItem) => {
-    return this.props.addDashboardPermission(this.props.dashboard.id, newItem);
+    return this.props.addDashboardPermission({ key: this.props.dashboard.key, newItem });
   };
 
   onCancelAddPermission = () => {

@@ -32,6 +32,7 @@ import { liveTimer } from '../dashgrid/liveTimer';
 import { getTimeSrv } from '../services/TimeSrv';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
+import { selectCurrentDashboard } from '../state/reducers';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -51,11 +52,14 @@ type DashboardPageRouteSearchParams = {
   refresh?: string;
 };
 
-export const mapStateToProps = (state: StoreState) => ({
-  initPhase: state.dashboard.initPhase,
-  initError: state.dashboard.initError,
-  dashboard: state.dashboard.getModel(),
-});
+export const mapStateToProps = (state: StoreState) => {
+  const dash = selectCurrentDashboard(state.dashboards);
+  return {
+    initPhase: dash.initPhase,
+    initError: dash.initError,
+    dashboard: dash.getModel(),
+  };
+};
 
 const mapDispatchToProps = {
   initDashboard,
@@ -107,7 +111,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   closeDashboard() {
-    this.props.cleanUpDashboardAndVariables();
+    this.props.dashboard && this.props.cleanUpDashboardAndVariables(this.props.dashboard.key);
     this.setState(this.getCleanState());
   }
 

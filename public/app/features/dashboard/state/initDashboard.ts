@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 import { locationUtil, setWeekStart } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
@@ -35,6 +37,7 @@ async function fetchDashboard(
   getState: () => StoreState
 ): Promise<DashboardDTO | null> {
   // When creating new or adding panels to a dashboard from explore we load it from local storage
+  const dashKey = getDashKey(args);
   const model = store.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
   if (model) {
     removeDashboardToFetchFromLocalStorage();
@@ -91,10 +94,31 @@ async function fetchDashboard(
       return null;
     }
 
-    dispatch(dashboardInitFailed({ message: 'Failed to fetch dashboard', error: err }));
+    dispatch(dashboardInitFailed({ message: 'Failed to fetch dashboard', key: dashKey, error: err }));
     console.error(err);
     return null;
   }
+}
+
+function getDashKey(args: InitDashboardArgs): string {
+  if (args.routeName === 'home-dashboard') {
+    return 'home';
+  }
+
+  if (args.routeName === 'new-dashboard') {
+    return 'new';
+  }
+
+  if (args.routeName === 'normal-dashboard') {
+    if (args.urlType && args.urlSlug && ['snapshot', 'script', 'ds'].includes(args.urlType)) {
+      return args.urlSlug;
+    } else if (args.urlUid) {
+      return args.urlUid;
+    }
+  }
+
+  console.warn('Unable to get dashboard key...');
+  return uuidv4();
 }
 
 /**
@@ -108,8 +132,9 @@ async function fetchDashboard(
  */
 export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   return async (dispatch, getState) => {
+    const dashKey = getDashKey(args);
     // set fetching state
-    dispatch(dashboardInitFetching());
+    dispatch(dashboardInitFetching({ key: dashKey }));
 
     // fetch dashboard data
     const dashDTO = await fetchDashboard(args, dispatch, getState);
@@ -120,14 +145,14 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // set initializing state
-    dispatch(dashboardInitServices());
+    dispatch(dashboardInitServices({ key: dashKey }));
 
     // create model
     let dashboard: DashboardModel;
     try {
-      dashboard = new DashboardModel(dashDTO.dashboard, dashDTO.meta);
+      dashboard = new DashboardModel({ ...dashDTO.dashboard, key: dashKey }, dashDTO.meta);
     } catch (err) {
-      dispatch(dashboardInitFailed({ message: 'Failed create dashboard model', error: err }));
+      dispatch(dashboardInitFailed({ message: 'Failed create dashboard model', key: dashKey, error: err }));
       console.error(err);
       return;
     }
@@ -167,7 +192,10 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // If dashboard is in a different init phase it means it cancelled during service init
-    if (getState().dashboard.initPhase !== DashboardInitPhase.Services) {
+    if (
+      dashKey in getState().dashboards.byKey &&
+      getState().dashboards.byKey[dashKey].initPhase !== DashboardInitPhase.Services
+    ) {
       return;
     }
 
@@ -203,7 +231,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // yay we are done
-    dispatch(dashboardInitCompleted(dashboard));
+    dispatch(dashboardInitCompleted({ dash: dashboard, key: dashKey }));
   };
 }
 

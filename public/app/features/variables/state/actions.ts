@@ -14,6 +14,7 @@ import { notifyApp } from 'app/core/actions';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { selectCurrentDashboard } from 'app/features/dashboard/state/reducers';
 import { store } from 'app/store/store';
 
 import { createErrorNotification } from '../../../core/copy/appNotification';
@@ -593,7 +594,7 @@ export const variableUpdated = (
 
     const variables = getVariablesByKey(rootStateKey, state);
     const g = createGraph(variables);
-    const panels = state.dashboard?.getModel()?.panels ?? [];
+    const panels = selectCurrentDashboard(state.dashboards ?? {}).getModel()?.panels ?? [];
     const event: VariablesChangedEvent = isAdHoc(variableInState)
       ? { refreshAll: true, panelIds: [] } // for adhoc variables we don't know which panels that will be impacted
       : { refreshAll: false, panelIds: getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels) };
@@ -668,7 +669,7 @@ const timeRangeUpdated =
     const updatedOptions = updatedVariable.options;
 
     if (JSON.stringify(previousOptions) !== JSON.stringify(updatedOptions)) {
-      const dashboard = getState().dashboard.getModel();
+      const dashboard = selectCurrentDashboard(getState().dashboards).getModel();
       dashboard?.templateVariableValueUpdated();
     }
   };
@@ -677,7 +678,7 @@ export const templateVarsChangedInUrl =
   (key: string, vars: ExtendedUrlQueryMap, events: typeof appEvents = appEvents): ThunkResult<void> =>
   async (dispatch, getState) => {
     const update: Array<Promise<any>> = [];
-    const dashboard = getState().dashboard.getModel();
+    const dashboard = selectCurrentDashboard(getState().dashboards).getModel();
     for (const variable of getVariablesByKey(key, getState())) {
       const key = `var-${variable.name}`;
       if (!vars.hasOwnProperty(key)) {

@@ -63,7 +63,7 @@ export class DataSourceDashboards extends PureComponent<Props> {
       });
     }
 
-    importDashboard(data, dashboard.title);
+    importDashboard({ data, dashboardTitle: dashboard.title });
   };
 
   onRemove = (dashboard: PluginDashboard) => {

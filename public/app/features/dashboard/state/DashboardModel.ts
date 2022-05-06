@@ -67,6 +67,7 @@ export interface DashboardLink {
 }
 
 export class DashboardModel implements TimeModel {
+  key: string;
   id: any;
   uid: string;
   title: string;
@@ -124,6 +125,7 @@ export class DashboardModel implements TimeModel {
     appEventsSubscription: true,
     panelsAffectedByVariableChange: true,
     lastRefresh: true,
+    key: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
@@ -131,6 +133,7 @@ export class DashboardModel implements TimeModel {
       data = {};
     }
 
+    this.key = data.key;
     this.events = new EventBusSrv();
     this.id = data.id || null;
     this.uid = data.uid || null;

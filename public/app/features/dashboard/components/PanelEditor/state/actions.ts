@@ -1,6 +1,7 @@
 import { pick } from 'lodash';
 
 import store from 'app/core/store';
+import { selectCurrentDashboard } from 'app/features/dashboard/state/reducers';
 import { cleanUpPanelState, initPanelState } from 'app/features/panel/state/actions';
 import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
 import { ThunkResult } from 'app/types';
@@ -108,7 +109,7 @@ export function skipPanelUpdate(modifiedPanel: PanelModel, panelToUpdate: PanelM
 
 export function exitPanelEditor(): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const dashboard = getStore().dashboard.getModel();
+    const dashboard = selectCurrentDashboard(getStore().dashboards).getModel();
     const { getPanel, getSourcePanel, shouldDiscardChanges } = getStore().panelEditor;
     const panel = getPanel();
 

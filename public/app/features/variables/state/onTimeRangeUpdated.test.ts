@@ -1,4 +1,5 @@
 import { dateTime, TimeRange } from '@grafana/data';
+import { initialDash } from 'app/features/dashboard/state/reducers';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
@@ -65,9 +66,16 @@ const getTestContext = (dashboard: DashboardModel) => {
   const startRefreshMock = jest.fn();
   dashboard.templateVariableValueUpdated = templateVariableValueUpdatedMock;
   dashboard.startRefresh = startRefreshMock;
-  const dashboardState = {
-    getModel: () => dashboard,
-  } as unknown as DashboardState;
+  dashboard.key = 'home';
+  const dashboardState: DashboardState = {
+    byKey: {
+      home: {
+        ...initialDash,
+        getModel: () => dashboard,
+      },
+    },
+    currentKey: 'home',
+  };
   const adapter = variableAdapters.get('interval');
   const templatingState = {
     variables: {
@@ -76,7 +84,7 @@ const getTestContext = (dashboard: DashboardModel) => {
     },
   };
   const preloadedState = {
-    dashboard: dashboardState,
+    dashboards: dashboardState,
     ...getPreloadedState(key, templatingState),
   } as unknown as RootReducerType;
 
@@ -227,5 +235,5 @@ describe('when onTimeRangeUpdated is dispatched', () => {
 });
 
 function getDashboardModel(): DashboardModel {
-  return new DashboardModel({ schemaVersion: 9999 }); // ignore any schema migrations
+  return new DashboardModel({ schemaVersion: 9999, key: 'home' }); // ignore any schema migrations
 }

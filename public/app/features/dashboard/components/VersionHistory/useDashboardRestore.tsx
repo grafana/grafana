@@ -8,6 +8,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { StoreState } from 'app/types';
 
 import { DashboardModel } from '../../state';
+import { selectCurrentDashboard } from '../../state/reducers';
 
 import { historySrv } from './HistorySrv';
 
@@ -16,7 +17,7 @@ const restoreDashboard = async (version: number, dashboard: DashboardModel) => {
 };
 
 export const useDashboardRestore = (version: number) => {
-  const dashboard = useSelector((state: StoreState) => state.dashboard.getModel());
+  const dashboard = useSelector((state: StoreState) => selectCurrentDashboard(state.dashboards).getModel());
   const [state, onRestoreDashboard] = useAsyncFn(async () => await restoreDashboard(version, dashboard!), []);
   const notifyApp = useAppNotification();
 

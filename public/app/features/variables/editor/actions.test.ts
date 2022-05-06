@@ -53,7 +53,9 @@ describe('switchToListMode', () => {
     jest.spyOn(selectors, 'getEditorVariables').mockReturnValue([]);
     jest.spyOn(inspectUtils, 'createUsagesNetwork').mockReturnValue({ usages: [], unUsed: [] });
     jest.spyOn(inspectUtils, 'transformUsagesToNetwork').mockReturnValue([]);
-    const mockGetState = jest.fn().mockReturnValue({ templating: initialKeyedVariablesState, dashboard: initialState });
+    const mockGetState = jest
+      .fn()
+      .mockReturnValue({ templating: initialKeyedVariablesState, dashboards: initialState });
     const mockDispatch = jest.fn();
 
     switchToListMode(null)(mockDispatch, mockGetState, undefined);

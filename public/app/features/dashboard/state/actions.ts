@@ -2,21 +2,19 @@ import { TimeZone } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { loadPluginDashboards } from 'app/features/plugins/admin/state/actions';
 import { updateTimeZoneForSession, updateWeekStartForSession } from 'app/features/profile/state/reducers';
-import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel, ThunkResult } from 'app/types';
+import {
+  createAsyncThunk,
+  DashboardAcl,
+  DashboardAclDTO,
+  DashboardAclUpdateDTO,
+  NewDashboardAclItem,
+  PermissionLevel,
+} from 'app/types';
 
-import { loadPluginDashboards } from '../../plugins/admin/state/actions';
 import { cancelVariables } from '../../variables/state/actions';
 import { getTimeSrv } from '../services/TimeSrv';
-
-import { cleanUpDashboard, loadDashboardPermissions } from './reducers';
-
-export function getDashboardPermissions(id: number): ThunkResult<void> {
-  return async (dispatch) => {
-    const permissions = await getBackendSrv().get(`/api/dashboards/id/${id}/permissions`);
-    dispatch(loadDashboardPermissions(permissions));
-  };
-}
 
 function toUpdateItem(item: DashboardAcl): DashboardAclUpdateDTO {
   return {
@@ -27,15 +25,46 @@ function toUpdateItem(item: DashboardAcl): DashboardAclUpdateDTO {
   };
 }
 
-export function updateDashboardPermission(
-  dashboardId: number,
-  itemToUpdate: DashboardAcl,
-  level: PermissionLevel
-): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    const { dashboard } = getStore();
-    const itemsToUpdate = [];
+export const fetchDashboardPermissions = createAsyncThunk(
+  'dashboards/fetchDashboardPermissions',
+  async (key: string, { getState }) => {
+    const dashboardState = getState().dashboards;
+    if (!(key in dashboardState)) {
+      throw new Error(`Unable to find dashboard with key "${key}"`);
+    }
 
+    const dashModel = dashboardState.byKey[key].getModel();
+    if (!dashModel) {
+      throw new Error(`Dashboard state entry with key "${key}" has empty model`);
+    }
+
+    const dashId = dashModel.id;
+    const dashboardAclDTOs: DashboardAclDTO[] = await getBackendSrv().get(`/api/dashboards/id/${dashId}/permissions`);
+    return { key, dashboardAclDTOs };
+  }
+);
+
+interface UpdateDashboardPermissionArgs {
+  key: string;
+  itemToUpdate: DashboardAcl;
+  level: PermissionLevel;
+}
+
+export const updateDashboardPermission = createAsyncThunk(
+  'dashboards/updateDashboardPermission',
+  async ({ key, itemToUpdate, level }: UpdateDashboardPermissionArgs, { dispatch, getState }) => {
+    const dashboardState = getState().dashboards;
+    if (!(key in dashboardState)) {
+      throw new Error(`Unable to find dashboard with key "${key}"`);
+    }
+
+    const dashboard = dashboardState.byKey[key];
+    const dashboardModel = dashboard.getModel();
+    if (!dashboardModel) {
+      throw new Error(`Dashboard state entry with key "${key}" has empty model`);
+    }
+
+    const itemsToUpdate = [];
     for (const item of dashboard.permissions) {
       if (item.inherited) {
         continue;
@@ -43,7 +72,7 @@ export function updateDashboardPermission(
 
       const updated = toUpdateItem(item);
 
-      // if this is the item we want to update, update it's permission
+      // if this is the item we want to update, update its permission
       if (itemToUpdate === item) {
         updated.permission = level;
       }
@@ -51,14 +80,24 @@ export function updateDashboardPermission(
       itemsToUpdate.push(updated);
     }
 
-    await getBackendSrv().post(`/api/dashboards/id/${dashboardId}/permissions`, { items: itemsToUpdate });
-    await dispatch(getDashboardPermissions(dashboardId));
-  };
-}
+    await getBackendSrv().post(`/api/dashboards/id/${dashboardModel.id}/permissions`, { items: itemsToUpdate });
+    await dispatch(fetchDashboardPermissions(key));
+  }
+);
 
-export function removeDashboardPermission(dashboardId: number, itemToDelete: DashboardAcl): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    const dashboard = getStore().dashboard;
+export const removeDashboardPermission = createAsyncThunk(
+  'dashboards/removeDashboardPermission',
+  async ({ key, itemToDelete }: { key: string; itemToDelete: DashboardAcl }, { dispatch, getState }) => {
+    const dashboardState = getState().dashboards;
+    if (!(key in dashboardState)) {
+      throw new Error(`Unable to find dashboard with key "${key}"`);
+    }
+
+    const dashboard = getState().dashboards.byKey[key];
+    const dashboardModel = dashboard.getModel();
+    if (!dashboardModel) {
+      throw new Error(`Dashboard state entry with key "${key}" has empty model`);
+    }
     const itemsToUpdate = [];
 
     for (const item of dashboard.permissions) {
@@ -68,14 +107,24 @@ export function removeDashboardPermission(dashboardId: number, itemToDelete: Das
       itemsToUpdate.push(toUpdateItem(item));
     }
 
-    await getBackendSrv().post(`/api/dashboards/id/${dashboardId}/permissions`, { items: itemsToUpdate });
-    await dispatch(getDashboardPermissions(dashboardId));
-  };
-}
+    await getBackendSrv().post(`/api/dashboards/id/${dashboardModel.id}/permissions`, { items: itemsToUpdate });
+    await dispatch(fetchDashboardPermissions(key));
+  }
+);
 
-export function addDashboardPermission(dashboardId: number, newItem: NewDashboardAclItem): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    const { dashboard } = getStore();
+export const addDashboardPermission = createAsyncThunk(
+  'dashboards/addDashboardPermission',
+  async ({ key, newItem }: { key: string; newItem: NewDashboardAclItem }, { dispatch, getState }) => {
+    const dashboardState = getState().dashboards;
+    if (!(key in dashboardState)) {
+      throw new Error(`Unable to find dashboard with key "${key}"`);
+    }
+
+    const dashboard = dashboardState.byKey[key];
+    const dashboardModel = dashboard.getModel();
+    if (!dashboardModel) {
+      throw new Error(`Dashboard state entry with key "${key}" has empty model`);
+    }
     const itemsToUpdate = [];
 
     for (const item of dashboard.permissions) {
@@ -92,50 +141,57 @@ export function addDashboardPermission(dashboardId: number, newItem: NewDashboar
       permission: newItem.permission,
     });
 
-    await getBackendSrv().post(`/api/dashboards/id/${dashboardId}/permissions`, { items: itemsToUpdate });
-    await dispatch(getDashboardPermissions(dashboardId));
-  };
-}
+    await getBackendSrv().post(`/api/dashboards/id/${dashboardModel.id}/permissions`, { items: itemsToUpdate });
+    await dispatch(fetchDashboardPermissions(key));
+  }
+);
 
-export function importDashboard(data: any, dashboardTitle: string): ThunkResult<void> {
-  return async (dispatch) => {
+export const importDashboard = createAsyncThunk(
+  'dashboards/importDashboard',
+  async ({ data, dashboardTitle }: { data: any; dashboardTitle: string }, { dispatch }) => {
     await getBackendSrv().post('/api/dashboards/import', data);
     dispatch(notifyApp(createSuccessNotification('Dashboard Imported', dashboardTitle)));
     dispatch(loadPluginDashboards());
-  };
-}
-
-export function removeDashboard(uid: string): ThunkResult<void> {
-  return async (dispatch) => {
-    await getBackendSrv().delete(`/api/dashboards/uid/${uid}`);
-    dispatch(loadPluginDashboards());
-  };
-}
-
-export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch, getStore) => {
-  const store = getStore();
-  const dashboard = store.dashboard.getModel();
-
-  if (dashboard) {
-    dashboard.destroy();
-    dispatch(cancelVariables(dashboard.uid));
   }
+);
 
-  getTimeSrv().stopAutoRefresh();
+export const removeDashboard = createAsyncThunk('dashboards/removeDashboard', async (uid: string, { dispatch }) => {
+  await getBackendSrv().delete(`/api/dashboards/uid/${uid}`);
+  dispatch(loadPluginDashboards());
+});
 
-  dispatch(cleanUpDashboard());
-};
+export const cleanUpDashboardAndVariables = createAsyncThunk(
+  'dashboards/cleanUpDashboardAndVariables',
+  (key: string, { dispatch, getState }) => {
+    const dashboardState = getState().dashboards;
+    if (!(key in dashboardState)) {
+      throw new Error(`Unable to find dashboard with key "${key}"`);
+    }
 
-export const updateTimeZoneDashboard =
-  (timeZone: TimeZone): ThunkResult<void> =>
-  (dispatch) => {
-    dispatch(updateTimeZoneForSession(timeZone));
+    const dashboard = dashboardState.byKey[key].getModel();
+
+    if (dashboard) {
+      dashboard.destroy();
+      dispatch(cancelVariables(dashboard.uid));
+    }
+
+    getTimeSrv().stopAutoRefresh();
+    return { key };
+  }
+);
+
+export const updateTimeZoneDashboard = createAsyncThunk(
+  'dashboards/updateTimeZoneDashboard',
+  async (timeZone: TimeZone, { dispatch }) => {
+    await dispatch(updateTimeZoneForSession(timeZone));
     getTimeSrv().refreshTimeModel();
-  };
+  }
+);
 
-export const updateWeekStartDashboard =
-  (weekStart: string): ThunkResult<void> =>
-  (dispatch) => {
-    dispatch(updateWeekStartForSession(weekStart));
+export const updateWeekStartDashboard = createAsyncThunk(
+  'dashboards/updateWeekStartDashboard',
+  async (weekStart: string, { dispatch }) => {
+    await dispatch(updateWeekStartForSession(weekStart));
     getTimeSrv().refreshTimeModel();
-  };
+  }
+);

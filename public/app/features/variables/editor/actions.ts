@@ -1,6 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import { VariableType } from '@grafana/data';
+import { selectCurrentDashboard } from 'app/features/dashboard/state/reducers';
 
 import { ThunkResult } from '../../../types';
 import { variableAdapters } from '../adapters';
@@ -126,7 +127,7 @@ export const switchToListMode =
     dispatch(toKeyedAction(rootStateKey, clearIdInEditor()));
     const state = getState();
     const variables = getEditorVariables(rootStateKey, state);
-    const dashboard = state.dashboard.getModel();
+    const dashboard = selectCurrentDashboard(getState().dashboards).getModel();
     const { usages } = createUsagesNetwork(variables, dashboard);
     const usagesNetwork = transformUsagesToNetwork(usages);
 

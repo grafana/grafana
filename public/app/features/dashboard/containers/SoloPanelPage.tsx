@@ -8,6 +8,7 @@ import { StoreState } from 'app/types';
 
 import { DashboardPanel } from '../dashgrid/DashboardPanel';
 import { initDashboard } from '../state/initDashboard';
+import { selectCurrentDashboard } from '../state/reducers';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -16,7 +17,7 @@ export interface DashboardPageRouteParams {
 }
 
 const mapStateToProps = (state: StoreState) => ({
-  dashboard: state.dashboard.getModel(),
+  dashboard: selectCurrentDashboard(state.dashboards).getModel(),
 });
 
 const mapDispatchToProps = {

@@ -146,11 +146,11 @@ export const getVariableTestContext = <Model extends VariableModel>(
 
 export const getRootReducer = () =>
   combineReducers({
-    dashboard: dashboardReducer,
+    dashboards: dashboardReducer,
     templating: keyedVariablesReducer,
   });
 
-export type RootReducerType = { dashboard: DashboardState; templating: KeyedVariablesState };
+export type RootReducerType = { dashboards: DashboardState; templating: KeyedVariablesState };
 
 export const getTemplatingRootReducer = () =>
   combineReducers({

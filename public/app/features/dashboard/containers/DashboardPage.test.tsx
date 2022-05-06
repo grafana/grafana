@@ -78,6 +78,7 @@ function getTestDashboard(overrides?: any, metaOverrides?: any): DashboardModel 
   const data = Object.assign(
     {
       title: 'My dashboard',
+      key: 'home',
       panels: [
         {
           id: 1,

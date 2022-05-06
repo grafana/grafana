@@ -93,9 +93,14 @@ export interface QueriesToUpdateOnDashboardLoad {
   queries: DataQuery[];
 }
 
-export interface DashboardState {
+export interface DashboardEntity {
   getModel: GetMutableDashboardModelFn;
   initPhase: DashboardInitPhase;
   initError: DashboardInitError | null;
   permissions: DashboardAcl[];
+}
+
+export interface DashboardState {
+  byKey: Record<string, DashboardEntity>;
+  currentKey: string | null;
 }
