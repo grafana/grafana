@@ -28,8 +28,8 @@ func loadGetMetricDataOutputsFromFile(filePath string) ([]*cloudwatch.GetMetricD
 func TestCloudWatchResponseParser(t *testing.T) {
 	startTime := time.Now()
 	endTime := startTime.Add(2 * time.Hour)
-	t.Run("when aggregating response", func(t *testing.T) {
-		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/multiple-outputs.json")
+	t.Run("when aggregating response a", func(t *testing.T) {
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/multiple-outputs-query-a.json")
 		require.NoError(t, err)
 		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
 		t.Run("response for id a", func(t *testing.T) {
@@ -57,10 +57,16 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				assert.True(t, aggregatedResponse[idA].ErrorCodes["MaxMatchingResultsExceeded"])
 			})
 		})
+	})
+
+	t.Run("when aggregating response b", func(t *testing.T) {
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/multiple-outputs-query-b.json")
+		require.NoError(t, err)
+		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
 		t.Run("response for id b", func(t *testing.T) {
 			idB := "b"
-			t.Run("should have statuscode is 'Partial'", func(t *testing.T) {
-				assert.Equal(t, "Partial", aggregatedResponse[idB].StatusCode)
+			t.Run("should have statuscode is 'PartialData'", func(t *testing.T) {
+				assert.Equal(t, "PartialData", aggregatedResponse[idB].StatusCode)
 			})
 			t.Run("should have an arithmetic error and an error message", func(t *testing.T) {
 				assert.True(t, aggregatedResponse[idB].HasArithmeticError)
