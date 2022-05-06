@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { Button, Checkbox, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { getStyles } from './ActionRow';
+import { ConfirmDeleteModal } from './ConfirmDeleteModal';
+import { MoveToFolderModal } from './MoveToFolderModal';
 
 type Props = {
   items: Map<string, Set<string>>;
@@ -11,11 +13,13 @@ type Props = {
 export function ManageActions({ items }: Props) {
   const styles = useStyles2(getStyles);
 
+  // TODO: check user permissions for move and delete
   const canMove = true;
   const canDelete = true;
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
 
   const onMove = () => {
-    alert('TODO, move....');
+    setIsMoveModalOpen(true);
   };
 
   const onDelete = () => {
@@ -48,6 +52,13 @@ export function ManageActions({ items }: Props) {
           })}
         </HorizontalGroup>
       </div>
+
+      <MoveToFolderModal
+        onMoveItems={items}
+        results={items}
+        isOpen={isMoveModalOpen}
+        onDismiss={() => setIsMoveModalOpen(false)}
+      />
     </div>
   );
 }
