@@ -24,6 +24,16 @@ func TestAnnotations(t *testing.T) {
 	sql := sqlstore.InitTestDB(t)
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
 
+	testUser := &models.SignedInUser{
+		OrgId: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {
+				accesscontrol.ActionAnnotationsRead: []string{accesscontrol.ScopeAnnotationsAll},
+				dashboards.ActionDashboardsRead:     []string{dashboards.ScopeDashboardsAll},
+			},
+		},
+	}
+
 	t.Run("Testing annotation create, read, update and delete", func(t *testing.T) {
 		t.Cleanup(func() {
 			err := sql.WithDbSession(context.Background(), func(dbSession *sqlstore.DBSession) error {
@@ -37,16 +47,38 @@ func TestAnnotations(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
+		dashboardStore := dashboardstore.ProvideDashboardStore(sql)
+
+		testDashboard1 := models.SaveDashboardCommand{
+			UserId: 1,
+			OrgId:  1,
+			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				"title": "Dashboard 1",
+			}),
+		}
+		dashboard, err := dashboardStore.SaveDashboard(testDashboard1)
+		require.NoError(t, err)
+
+		testDashboard2 := models.SaveDashboardCommand{
+			UserId: 1,
+			OrgId:  1,
+			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				"title": "Dashboard 2",
+			}),
+		}
+		dashboard2, err := dashboardStore.SaveDashboard(testDashboard2)
+		require.NoError(t, err)
+
 		annotation := &annotations.Item{
 			OrgId:       1,
 			UserId:      1,
-			DashboardId: 1,
+			DashboardId: dashboard.Id,
 			Text:        "hello",
 			Type:        "alert",
 			Epoch:       10,
 			Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
 		}
-		err := repo.Save(annotation)
+		err = repo.Save(annotation)
 		require.NoError(t, err)
 		assert.Greater(t, annotation.Id, int64(0))
 		assert.Equal(t, annotation.Epoch, annotation.EpochEnd)
@@ -54,7 +86,7 @@ func TestAnnotations(t *testing.T) {
 		annotation2 := &annotations.Item{
 			OrgId:       1,
 			UserId:      1,
-			DashboardId: 2,
+			DashboardId: dashboard2.Id,
 			Text:        "hello",
 			Type:        "alert",
 			Epoch:       21, // Should swap epoch & epochEnd
@@ -92,10 +124,11 @@ func TestAnnotations(t *testing.T) {
 		assert.Greater(t, globalAnnotation2.Id, int64(0))
 		t.Run("Can query for annotation by dashboard id", func(t *testing.T) {
 			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
-				OrgId:       1,
-				DashboardId: 1,
-				From:        0,
-				To:          15,
+				OrgId:        1,
+				DashboardId:  dashboard.Id,
+				From:         0,
+				To:           15,
+				SignedInUser: testUser,
 			})
 
 			require.NoError(t, err)
@@ -112,6 +145,7 @@ func TestAnnotations(t *testing.T) {
 			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
 				OrgId:        1,
 				AnnotationId: annotation2.Id,
+				SignedInUser: testUser,
 			})
 			require.NoError(t, err)
 			assert.Len(t, items, 1)
@@ -120,10 +154,11 @@ func TestAnnotations(t *testing.T) {
 
 		t.Run("Should not find any when item is outside time range", func(t *testing.T) {
 			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
-				OrgId:       1,
-				DashboardId: 1,
-				From:        12,
-				To:          15,
+				OrgId:        1,
+				DashboardId:  1,
+				From:         12,
+				To:           15,
+				SignedInUser: testUser,
 			})
 			require.NoError(t, err)
 			assert.Empty(t, items)
@@ -131,11 +166,12 @@ func TestAnnotations(t *testing.T) {
 
 		t.Run("Should not find one when tag filter does not match", func(t *testing.T) {
 			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
-				OrgId:       1,
-				DashboardId: 1,
-				From:        1,
-				To:          15,
-				Tags:        []string{"asd"},
+				OrgId:        1,
+				DashboardId:  1,
+				From:         1,
+				To:           15,
+				Tags:         []string{"asd"},
+				SignedInUser: testUser,
 			})
 			require.NoError(t, err)
 			assert.Empty(t, items)
@@ -143,11 +179,12 @@ func TestAnnotations(t *testing.T) {
 
 		t.Run("Should not find one when type filter does not match", func(t *testing.T) {
 			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
-				OrgId:       1,
-				DashboardId: 1,
-				From:        1,
-				To:          15,
-				Type:        "alert",
+				OrgId:        1,
+				DashboardId:  1,
+				From:         1,
+				To:           15,
+				Type:         "alert",
+				SignedInUser: testUser,
 			})
 			require.NoError(t, err)
 			assert.Empty(t, items)
@@ -155,11 +192,12 @@ func TestAnnotations(t *testing.T) {
 
 		t.Run("Should find one when all tag filters does match", func(t *testing.T) {
 			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
-				OrgId:       1,
-				DashboardId: 1,
-				From:        1,
-				To:          15, // this will exclude the second test annotation
-				Tags:        []string{"outage", "error"},
+				OrgId:        1,
+				DashboardId:  1,
+				From:         1,
+				To:           15, // this will exclude the second test annotation
+				Tags:         []string{"outage", "error"},
+				SignedInUser: testUser,
 			})
 			require.NoError(t, err)
 			assert.Len(t, items, 1)
@@ -167,11 +205,12 @@ func TestAnnotations(t *testing.T) {
 
 		t.Run("Should find two annotations using partial match", func(t *testing.T) {
 			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
-				OrgId:    1,
-				From:     1,
-				To:       25,
-				MatchAny: true,
-				Tags:     []string{"rollback", "deploy"},
+				OrgId:        1,
+				From:         1,
+				To:           25,
+				MatchAny:     true,
+				Tags:         []string{"rollback", "deploy"},
+				SignedInUser: testUser,
 			})
 			require.NoError(t, err)
 			assert.Len(t, items, 2)
@@ -179,11 +218,12 @@ func TestAnnotations(t *testing.T) {
 
 		t.Run("Should find one when all key value tag filters does match", func(t *testing.T) {
 			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
-				OrgId:       1,
-				DashboardId: 1,
-				From:        1,
-				To:          15,
-				Tags:        []string{"type:outage", "server:server-1"},
+				OrgId:        1,
+				DashboardId:  1,
+				From:         1,
+				To:           15,
+				Tags:         []string{"type:outage", "server:server-1"},
+				SignedInUser: testUser,
 			})
 			require.NoError(t, err)
 			assert.Len(t, items, 1)
@@ -191,10 +231,11 @@ func TestAnnotations(t *testing.T) {
 
 		t.Run("Can update annotation and remove all tags", func(t *testing.T) {
 			query := &annotations.ItemQuery{
-				OrgId:       1,
-				DashboardId: 1,
-				From:        0,
-				To:          15,
+				OrgId:        1,
+				DashboardId:  1,
+				From:         0,
+				To:           15,
+				SignedInUser: testUser,
 			}
 			items, err := repo.Find(context.Background(), query)
 			require.NoError(t, err)
@@ -218,10 +259,11 @@ func TestAnnotations(t *testing.T) {
 
 		t.Run("Can update annotation with new tags", func(t *testing.T) {
 			query := &annotations.ItemQuery{
-				OrgId:       1,
-				DashboardId: 1,
-				From:        0,
-				To:          15,
+				OrgId:        1,
+				DashboardId:  1,
+				From:         0,
+				To:           15,
+				SignedInUser: testUser,
 			}
 			items, err := repo.Find(context.Background(), query)
 			require.NoError(t, err)
@@ -246,10 +288,11 @@ func TestAnnotations(t *testing.T) {
 
 		t.Run("Can delete annotation", func(t *testing.T) {
 			query := &annotations.ItemQuery{
-				OrgId:       1,
-				DashboardId: 1,
-				From:        0,
-				To:          15,
+				OrgId:        1,
+				DashboardId:  1,
+				From:         0,
+				To:           15,
+				SignedInUser: testUser,
 			}
 			items, err := repo.Find(context.Background(), query)
 			require.NoError(t, err)
@@ -267,11 +310,12 @@ func TestAnnotations(t *testing.T) {
 			annotation3 := &annotations.Item{
 				OrgId:       1,
 				UserId:      1,
-				DashboardId: 3,
+				DashboardId: dashboard2.Id,
 				Text:        "toBeDeletedWithPanelId",
 				Type:        "alert",
 				Epoch:       11,
 				Tags:        []string{"test"},
+				PanelId:     20,
 			}
 			err = repo.Save(annotation3)
 			require.NoError(t, err)
@@ -279,6 +323,7 @@ func TestAnnotations(t *testing.T) {
 			query := &annotations.ItemQuery{
 				OrgId:        1,
 				AnnotationId: annotation3.Id,
+				SignedInUser: testUser,
 			}
 			items, err := repo.Find(context.Background(), query)
 			require.NoError(t, err)

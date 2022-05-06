@@ -2656,6 +2656,7 @@ func createFolder(t *testing.T, folderUID, grafanaListedAddr, login, password st
 	payload := fmt.Sprintf(`{"uid": "%s","title": "%s"}`, folderUID, folderUID)
 	u := fmt.Sprintf("http://%s:%s@%s/api/folders", login, password, grafanaListedAddr)
 	r := strings.NewReader(payload)
+	// nolint:gosec
 	resp, err := http.Post(u, "application/json", r)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
