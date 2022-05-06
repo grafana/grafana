@@ -1,83 +1,81 @@
-import { PageToolbar, useForceUpdate } from '@grafana/ui';
+import { useObservable } from '@grafana/data';
+import { PageToolbar } from '@grafana/ui';
 import { GRID_CELL_HEIGHT } from 'app/core/constants';
 import React from 'react';
+import { ReplaySubject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-export class Scene {
-  title: string = 'Title';
-  panels: ScenePanel[] = [];
+export abstract class SceneElement<T> {
+  subject = new ReplaySubject<T>();
 
-  update = () => { };
+  constructor(public props: T) {
+    this.subject.next(props);
+  }
+
+  update(props: Partial<T>) {
+    this.props = {
+      ...this.props,
+      ...props
+    };
+    this.subject.next(this.props);
+  }
 }
 
+interface SceneProps {
+  title: string;
+  panels: ScenePanel[]
+};
+
+export class Scene extends SceneElement<SceneProps> {
+
+}
+
+
 export function SceneRenderer({ scene }: { scene: Scene }) {
-  scene.update = useForceUpdate();
+  const { title, panels } = useObservable(scene.subject, scene.props)
+  console.log('render scene');
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', width: '100%' }}>
-      <PageToolbar title={scene.title} />
+      <PageToolbar title={title} />
       <div style={{ padding: 16, width: '100%', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        {scene.panels.map(panel => <ScenePanelRenderer panel={panel} />)}
+        {panels.map(panel => <ScenePanelRenderer key={panel.props.id} panel={panel} />)}
       </div>
     </div>
   )
 }
 
-export class ScenePanel {
-  id = uuidv4();
+export interface PanelProps {
+  id: string;
   title?: string;
-  width: number = 10;
-  height: number = 5;
+  width: number;
+  height: number;
 }
 
-export function ScenePanelRenderer({ panel }: { panel: ScenePanel }) {
-  // panel.update = useForceUpdate();
+export class ScenePanel extends SceneElement<PanelProps> { }
+
+export const ScenePanelRenderer = React.memo<{ panel: ScenePanel }>(({ panel }) => {
+  const { title } = useObservable(panel.subject, panel.props);
+  console.log('render panel');
 
   return (
-    <div key={panel.id} id={panel.id} style={getSceneItemStyles(panel)}>
-      {panel.title && <h2>{panel.title}</h2>}
+    <div style={getSceneItemStyles(panel.props)}>
+      {title && <h2>{title}</h2>}
     </div>
   );
-}
+});
 
 export interface ScenePanelSize {
   width: number;
   height: number;
 }
 
-function getSceneItemStyles(panel: ScenePanel) {
+function getSceneItemStyles(props: PanelProps) {
   return {
-    width: `${(panel.width / 24) * 100}%`,
-    height: `${panel.height * GRID_CELL_HEIGHT}px`,
+    width: `${(props.width / 24) * 100}%`,
+    height: `${props.height * GRID_CELL_HEIGHT}px`,
     border: '1px solid #DD3344',
   }
 }
 
-export function getDemoScene(): Scene {
-  const scene = new Scene();
-
-  setTimeout(() => {
-    scene.title = 'new title';
-    scene.panels.push(new ScenePanel())
-    scene.panels.push(new ScenePanel())
-    scene.update();
-  }, 1000);
-
-  return scene;
-}
-
-// interface PanelProps {
-//   panel: ScenePanel;
-// }
-
-// const ScenePanelView: FC<PanelProps> = ({ panel }) => {
-//   switch (panel.type) {
-//     case 'viz':
-//       return <SceneVizView panel={panel} />;
-//     case 'scene':
-//       return <SceneView model={panel} />;
-//     case 'component':
-//       return <ComponentView panel={panel} />;
-//   }
-// };
 

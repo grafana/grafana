@@ -3,7 +3,8 @@ import React, { FC } from 'react';
 
 // Types
 // import { useObservable } from '@grafana/data';
-import { getDemoScene, SceneRenderer } from './models/scene';
+import { SceneRenderer } from './models/scene';
+import { getDemoScene } from './scenes/demo';
 
 export interface Props {
   name: string;

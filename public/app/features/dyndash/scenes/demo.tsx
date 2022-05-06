@@ -1,3 +1,52 @@
+import { Scene, ScenePanel } from "../models/scene";
+
+export function getDemoScene(): Scene {
+  const scene = new Scene({
+    title: 'Hello',
+    panels: []
+  });
+
+  setTimeout(() => {
+    scene.update({
+      panels: [
+        getDynamicPanel(),
+        new ScenePanel({
+          id: '2',
+          title: 'another panel',
+          width: 10,
+          height: 5,
+        })
+      ]
+    })
+  }, 2000);
+
+  setTimeout(() => {
+    scene.update({
+      title: 'New title',
+    })
+  }, 10000);
+
+  return scene;
+}
+
+function getDynamicPanel(): ScenePanel {
+  const panel = new ScenePanel({
+    title: 'A panel',
+    id: '1',
+    width: 10,
+    height: 5
+  });
+
+  // setInterval(() => {
+  //   counter += 1;
+  //   panel.update({
+  //     title: 'A panel ' + counter,
+  //   })
+  // }, 1000)
+
+  return panel;
+}
+
 // import React from 'react';
 // import { CoreApp, DataQueryRequest, dateMath, LoadingState, PanelData, TimeRange } from '@grafana/data';
 
