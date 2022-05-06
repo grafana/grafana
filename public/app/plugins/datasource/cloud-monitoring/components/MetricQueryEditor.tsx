@@ -139,6 +139,7 @@ function Editor({
             onChange={(graphPeriod: string) => onQueryChange({ ...query, graphPeriod })}
             graphPeriod={query.graphPeriod}
             refId={refId}
+            variableOptionGroup={variableOptionGroup}
           />
         </>
       )}

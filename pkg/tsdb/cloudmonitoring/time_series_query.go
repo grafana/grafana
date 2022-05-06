@@ -23,7 +23,7 @@ import (
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *backend.QueryDataRequest) string {
 	if timeSeriesQuery.GraphPeriod != "disabled" {
 		graphPeriod := timeSeriesQuery.GraphPeriod
-		if graphPeriod == "" {
+		if graphPeriod == "auto" || graphPeriod == "" {
 			intervalCalculator := intervalv2.NewCalculator(intervalv2.CalculatorOptions{})
 			interval := intervalCalculator.Calculate(req.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, req.Queries[0].MaxDataPoints)
 			graphPeriod = interval.Text

@@ -1,18 +1,20 @@
 import React, { FunctionComponent } from 'react';
 
-import { Input, Switch } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { Switch } from '@grafana/ui';
 
-import { SELECT_WIDTH } from '../constants';
+import { GRAPH_PERIODS, SELECT_WIDTH } from '../constants';
 
-import { QueryEditorRow } from '.';
+import { PeriodSelect, QueryEditorRow } from '.';
 
 export interface Props {
   refId: string;
   onChange: (period: string) => void;
+  variableOptionGroup: SelectableValue<string>;
   graphPeriod?: string;
 }
 
-export const GraphPeriod: FunctionComponent<Props> = ({ refId, onChange, graphPeriod }) => {
+export const GraphPeriod: FunctionComponent<Props> = ({ refId, onChange, graphPeriod, variableOptionGroup }) => {
   return (
     <>
       <QueryEditorRow
@@ -30,14 +32,14 @@ export const GraphPeriod: FunctionComponent<Props> = ({ refId, onChange, graphPe
           value={graphPeriod !== 'disabled'}
           onChange={(e) => onChange(e.currentTarget.checked ? '' : 'disabled')}
         />
-        <Input
-          label="value"
-          id={`${refId}-graph-period`}
-          width={SELECT_WIDTH}
-          placeholder={'auto'}
-          value={graphPeriod}
-          onChange={(e) => onChange(e.currentTarget.value)}
+        <PeriodSelect
+          inputId={`${refId}-graph-period`}
+          templateVariableOptions={variableOptionGroup.options}
+          current={graphPeriod}
+          onChange={onChange}
+          selectWidth={SELECT_WIDTH}
           disabled={graphPeriod === 'disabled'}
+          aligmentPeriods={GRAPH_PERIODS}
         />
       </QueryEditorRow>
     </>

@@ -1,12 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { select } from 'react-select-event';
 
 import { GraphPeriod, Props } from './GraphPeriod';
 
 const props: Props = {
   onChange: jest.fn(),
   refId: 'A',
+  variableOptionGroup: { options: [] },
 };
 
 describe('Graph Period', () => {
@@ -26,8 +28,12 @@ describe('Graph Period', () => {
   it('should set a different value', async () => {
     const onChange = jest.fn();
     render(<GraphPeriod {...props} onChange={onChange} />);
-    const s = screen.getByLabelText('Graph period');
-    await userEvent.type(s, '1s');
-    expect(onChange).toHaveBeenCalledWith('1s');
+    const selectEl = screen.getByLabelText('Graph period');
+    expect(selectEl).toBeInTheDocument();
+
+    await select(selectEl, '1m', {
+      container: document.body,
+    });
+    expect(onChange).toHaveBeenCalledWith('1m');
   });
 });
