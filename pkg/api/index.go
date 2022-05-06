@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	search "github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -415,23 +414,34 @@ func (hs *HTTPServer) addHelpLinks(navTree []*dtos.NavLink, c *models.ReqContext
 func (hs *HTTPServer) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pref.Preference) ([]*dtos.NavLink, error) {
 	starredItemsChildNavs := []*dtos.NavLink{}
 
-	searchQuery := search.Query{
-		SignedInUser: c.SignedInUser,
-		IsStarred:    true,
-		OrgId:        c.OrgId,
+	query := models.GetUserStarsQuery{
+		UserId: c.SignedInUser.UserId,
 	}
 
-	err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
+	err := hs.SQLStore.GetUserStars(c.Req.Context(), &query)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(searchQuery.Result) > 0 {
-		for _, starredItem := range searchQuery.Result {
+	starredDashboardIDs := query.Result
+	starredDashboards := []*models.Dashboard{}
+	for dashboardId := range starredDashboardIDs {
+		query := &models.GetDashboardQuery{
+			Id:    dashboardId,
+			OrgId: c.OrgId,
+		}
+		err := hs.SQLStore.GetDashboard(c.Req.Context(), query)
+		if err == nil {
+			starredDashboards = append(starredDashboards, query.Result)
+		}
+	}
+
+	if len(starredDashboards) > 0 {
+		for _, starredItem := range starredDashboards {
 			starredItemsChildNavs = append(starredItemsChildNavs, &dtos.NavLink{
-				Id:   starredItem.UID,
+				Id:   starredItem.Uid,
 				Text: starredItem.Title,
-				Url:  starredItem.URL,
+				Url:  starredItem.GetUrl(),
 			})
 		}
 	}

@@ -65,7 +65,7 @@ export const DashNav = React.memo<Props>((props) => {
     const { dashboard, setStarred } = props;
 
     dashboardSrv.starDashboard(dashboard.id, dashboard.meta.isStarred).then((newState: any) => {
-      setStarred({ dashboard, isStarred: newState });
+      setStarred({ id: dashboard.uid, title: dashboard.title, url: dashboard.meta.url ?? '', isStarred: newState });
       dashboard.meta.isStarred = newState;
       forceUpdate();
     });
