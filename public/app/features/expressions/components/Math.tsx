@@ -79,7 +79,7 @@ export const Math: FC<Props> = ({ labelWidth, onChange, query }) => {
           />
           <DocumentedFunction
             name="log"
-            description="returns the natural logarithm of of its argument which can be a number or a series"
+            description="returns the natural logarithm of its argument, which can be a number or a series"
           />
           <DocumentedFunction
             name="inf, infn, nan, and null"
