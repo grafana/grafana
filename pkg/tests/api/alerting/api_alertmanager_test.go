@@ -2658,6 +2658,9 @@ func createFolder(t *testing.T, folderUID, grafanaListedAddr, login, password st
 	r := strings.NewReader(payload)
 	// nolint:gosec
 	resp, err := http.Post(u, "application/json", r)
+	t.Cleanup(func() {
+		require.NoError(t, resp.Body.Close())
+	})
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	return err
