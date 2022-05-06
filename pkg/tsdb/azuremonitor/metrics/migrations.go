@@ -15,10 +15,8 @@ func MigrateDimensionFilters(filters []types.AzureMonitorDimensionFilter) []type
 		} else {
 			oldFilter := *filter.Filter
 			// If there is an old filter and no new ones then construct the new array and append
-			if filter.Filters == nil {
-				if oldFilter != "*" {
-					newFilter.Filters = []string{oldFilter}
-				}
+			if filter.Filters == nil && oldFilter != "*" {
+				newFilter.Filters = []string{oldFilter}
 				// If both the new and old fields are specified (edge case) then construct the appropriate values
 			} else {
 				hasFilter := false
