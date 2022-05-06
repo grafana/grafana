@@ -83,7 +83,7 @@ export const Math: FC<Props> = ({ labelWidth, onChange, query }) => {
           />
           <DocumentedFunction
             name="inf, infn, nan, and null"
-            description="The inf, infn, nan, and null functions all return a single value of the name"
+            description="The inf for infinity positive, infn for infinity negative, nan, and null functions all return a single scalar value that matches its name"
           />
           <DocumentedFunction name="round" description="returns a rounded integer value. It's able to operate on series or escalar values." />
           <DocumentedFunction name="ceil" description="rounds the number up to the nearest integer value. It's able to operate on series or escalar values." />
