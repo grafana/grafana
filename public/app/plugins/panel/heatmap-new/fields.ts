@@ -1,12 +1,16 @@
 import {
   DataFrame,
   DataFrameType,
+  Field,
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
   getFieldDisplayName,
   getValueFormat,
   GrafanaTheme2,
+  incrRoundDn,
+  incrRoundUp,
+  PanelData,
 } from '@grafana/data';
 import { calculateHeatmapFromData, bucketsToScanlines } from 'app/features/transformers/calculateHeatmap/heatmap';
 
@@ -17,9 +21,19 @@ export const enum BucketLayout {
   ge = 'ge',
 }
 
+export interface HeatmapDataMapping {
+  lookup: Array<number[] | null>;
+  high: number[]; // index of values bigger than the max Y
+  low: number[]; // index of values less than the min Y
+}
+
+export const HEATMAP_NOT_SCANLINES_ERROR = 'A calculated heatmap was expected, but not found';
+
 export interface HeatmapData {
   // List of heatmap frames
   heatmap?: DataFrame;
+  annotations?: DataFrame;
+  annotationMappings?: HeatmapDataMapping;
 
   yAxisValues?: Array<number | string | null>;
 
@@ -39,25 +53,25 @@ export interface HeatmapData {
   warning?: string;
 }
 
-export function prepareHeatmapData(
-  frames: DataFrame[] | undefined,
-  options: PanelOptions,
-  theme: GrafanaTheme2
-): HeatmapData {
+export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme: GrafanaTheme2): HeatmapData {
+  const frames = data.series;
   if (!frames?.length) {
     return {};
   }
 
   const { source } = options;
+
+  const annotations = data.annotations?.[0]; // TODO: Maybe join on time with frames
+
   if (source === HeatmapSourceMode.Calculate) {
     // TODO, check for error etc
-    return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), theme);
+    return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), annotations, theme);
   }
 
   // Find a well defined heatmap
   let scanlinesHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanlines);
   if (scanlinesHeatmap) {
-    return getHeatmapData(scanlinesHeatmap, theme);
+    return getHeatmapData(scanlinesHeatmap, annotations, theme);
   }
 
   let bucketsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapBuckets);
@@ -66,19 +80,79 @@ export function prepareHeatmapData(
       yAxisValues: frames[0].fields.flatMap((field) =>
         field.type === FieldType.number ? getFieldDisplayName(field) : []
       ),
-      ...getHeatmapData(bucketsToScanlines(bucketsHeatmap), theme),
+      ...getHeatmapData(bucketsToScanlines(bucketsHeatmap), annotations, theme),
     };
   }
 
   if (source === HeatmapSourceMode.Data) {
-    return getHeatmapData(bucketsToScanlines(frames[0]), theme);
+    return getHeatmapData(bucketsToScanlines(frames[0]), annotations, theme);
   }
 
   // TODO, check for error etc
-  return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), theme);
+  return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), annotations, theme);
 }
 
-const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => {
+const getHeatmapFields = (dataFrame: DataFrame): Array<Field | undefined> => {
+  const xField: Field | undefined = dataFrame.fields.find((f) => f.name === 'xMin');
+  const yField: Field | undefined = dataFrame.fields.find((f) => f.name === 'yMin');
+  const countField: Field | undefined = dataFrame.fields.find((f) => f.name === 'count');
+
+  return [xField, yField, countField];
+};
+
+export const getAnnotationMapping = (heatmapData: HeatmapData, rawData: DataFrame): HeatmapDataMapping => {
+  if (heatmapData.heatmap?.meta?.type !== DataFrameType.HeatmapScanlines) {
+    throw HEATMAP_NOT_SCANLINES_ERROR;
+  }
+
+  const [fxs, fys] = getHeatmapFields(heatmapData.heatmap!);
+
+  if (!fxs || !fys) {
+    throw HEATMAP_NOT_SCANLINES_ERROR;
+  }
+
+  const mapping: HeatmapDataMapping = {
+    lookup: new Array(heatmapData.xBucketCount! * heatmapData.yBucketCount!).fill(null),
+    high: [],
+    low: [],
+  };
+
+  const xos: number[] | undefined = rawData.fields.find((f: Field) => f.type === 'time')?.values.toArray();
+  const yos: number[] | undefined = rawData.fields.find((f: Field) => f.type === 'number')?.values.toArray();
+
+  if (!xos || !yos) {
+    return mapping;
+  }
+
+  const xsmin = fxs.values.get(0);
+  const ysmin = fys.values.get(0);
+  const xsmax = fxs.values.get(fxs.values.length - 1) + heatmapData.xBucketSize!;
+  const ysmax = fys.values.get(fys.values.length - 1) + heatmapData.yBucketSize!;
+  xos.forEach((xo: number, i: number) => {
+    const yo = yos[i];
+    const xBucketIdx = Math.floor(incrRoundDn(incrRoundUp((xo - xsmin) / heatmapData.xBucketSize!, 1e-7), 1e-7));
+    const yBucketIdx = Math.floor(incrRoundDn(incrRoundUp((yo - ysmin) / heatmapData.yBucketSize!, 1e-7), 1e-7));
+
+    if (xo < xsmin || yo < ysmin) {
+      mapping.low.push(i);
+      return;
+    }
+
+    if (xo >= xsmax || yo >= ysmax) {
+      mapping.high.push(i);
+      return;
+    }
+
+    const index = xBucketIdx * heatmapData.yBucketCount! + yBucketIdx;
+    if (mapping.lookup[index] === null) {
+      mapping.lookup[index] = [];
+    }
+    mapping.lookup[index]?.push(i);
+  });
+  return mapping;
+};
+
+const getHeatmapData = (frame: DataFrame, annotations: DataFrame | undefined, theme: GrafanaTheme2): HeatmapData => {
   if (frame.meta?.type !== DataFrameType.HeatmapScanlines) {
     return {
       warning: 'Expected heatmap scanlines format',
@@ -114,8 +188,9 @@ const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => 
 
   // The "count" field
   const disp = frame.fields[2].display ?? getValueFormat('short');
-  return {
+  const data: HeatmapData = {
     heatmap: frame,
+    annotations,
     xBucketSize: xBinIncr,
     yBucketSize: yBinIncr,
     xBucketCount: xBinQty,
@@ -127,4 +202,10 @@ const getHeatmapData = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => 
 
     display: (v) => formattedValueToString(disp(v)),
   };
+
+  if (annotations) {
+    data.annotationMappings = getAnnotationMapping(data, annotations);
+  }
+
+  return data;
 };

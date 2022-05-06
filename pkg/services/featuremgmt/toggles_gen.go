@@ -182,4 +182,8 @@ const (
 	// FlagAzureMonitorExperimentalUI
 	// Use grafana-experimental UI in Azure Monitor
 	FlagAzureMonitorExperimentalUI = "azureMonitorExperimentalUI"
+
+	// FlagTraceToMetrics
+	// Enable trace to metrics links
+	FlagTraceToMetrics = "traceToMetrics"
 )

@@ -28,28 +28,8 @@ function processStreamFrame(frame: DataFrame, query: LokiQuery | undefined): Dat
       lokiQueryStatKey: 'Summary: total bytes processed',
     },
   };
-  const newFrame = setFrameMeta(frame, meta);
 
-  const newFields = newFrame.fields.map((field) => {
-    switch (field.name) {
-      case 'tsNs': {
-        // we need to switch the field-type to be `time`
-        return {
-          ...field,
-          type: FieldType.time,
-        };
-      }
-      default: {
-        // no modification needed
-        return field;
-      }
-    }
-  });
-
-  return {
-    ...newFrame,
-    fields: newFields,
-  };
+  return setFrameMeta(frame, meta);
 }
 
 function processStreamsFrames(frames: DataFrame[], queryMap: Map<string, LokiQuery>): DataFrame[] {

@@ -190,7 +190,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       : []),
   ];
   const styles = useStyles2(getStyles);
-  const link = createSpanLink?.(span);
+  const links = createSpanLink?.(span);
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
 
   return (
@@ -201,8 +201,11 @@ export default function SpanDetail(props: SpanDetailProps) {
           <LabeledList className={ubTxRightAlign} divider={true} items={overviewItems} />
         </div>
       </div>
-      {link ? (
-        <DataLinkButton link={{ ...link, title: 'Logs for this span' } as any} buttonProps={{ icon: 'gf-logs' }} />
+      {links?.logLinks?.[0] ? (
+        <DataLinkButton
+          link={{ ...links?.logLinks?.[0], title: 'Logs for this span' } as any}
+          buttonProps={{ icon: 'gf-logs' }}
+        />
       ) : null}
       <Divider className={ubMy1} type={'horizontal'} />
       <div>

@@ -138,6 +138,7 @@ func (s *Service) collect(ctx context.Context) (map[string]interface{}, error) {
 	m["stats.folders_viewers_can_edit.count"] = statsQuery.Result.FoldersViewersCanEdit
 	m["stats.folders_viewers_can_admin.count"] = statsQuery.Result.FoldersViewersCanAdmin
 	m["stats.api_keys.count"] = statsQuery.Result.APIKeys
+	m["stats.data_keys.count"] = statsQuery.Result.DataKeys
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
@@ -326,6 +327,7 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.StatsTotalAlertRules.Set(float64(statsQuery.Result.AlertRules))
 	metrics.StatsTotalLibraryPanels.Set(float64(statsQuery.Result.LibraryPanels))
 	metrics.StatsTotalLibraryVariables.Set(float64(statsQuery.Result.LibraryVariables))
+	metrics.StatsTotalDataKeys.Set(float64(statsQuery.Result.DataKeys))
 
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := s.sqlstore.GetDataSourceStats(ctx, &dsStats); err != nil {
