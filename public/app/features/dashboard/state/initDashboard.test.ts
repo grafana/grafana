@@ -117,9 +117,9 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
         },
         dashboards: {
           byKey: {
-            home: { initPhase: DashboardInitPhase.Services },
+            [DASH_UID]: { initPhase: DashboardInitPhase.Services },
           },
-          currentKey: 'home',
+          currentKey: DASH_UID,
         },
         user: {},
         explore: {
@@ -254,7 +254,7 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
 
   it('Should send action dashboardInitCompleted', () => {
     expect(ctx.actions[8].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[8].payload.title).toBe('My cool dashboard');
+    expect(ctx.actions[8].payload.dash.title).toBe('My cool dashboard');
   });
 
   it('Should initialize services', () => {
@@ -271,7 +271,7 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
 
 describeInitScenario('Initializing previously canceled dashboard initialization', (ctx) => {
   ctx.setup(() => {
-    ctx.storeState.dashboards.byKey['home'].initPhase = DashboardInitPhase.Fetching;
+    ctx.storeState.dashboards.byKey[DASH_UID].initPhase = DashboardInitPhase.Fetching;
   });
 
   it('Should send action dashboardInitFetching', () => {
@@ -298,6 +298,8 @@ describeInitScenario('Initializing previously canceled dashboard initialization'
 describeInitScenario('Initializing snapshot dashboard', (ctx) => {
   ctx.setup(() => {
     ctx.args.urlUid = undefined;
+    ctx.args.urlSlug = 'snapshot-slug';
+    ctx.args.urlType = 'snapshot';
   });
 
   it('Should send action initVariablesTransaction with correct payload', () => {
