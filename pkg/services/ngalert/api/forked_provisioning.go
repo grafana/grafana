@@ -23,8 +23,8 @@ func (f *ForkedProvisioningApi) forkRouteGetPolicyTree(ctx *models.ReqContext) r
 	return f.svc.RouteGetPolicyTree(ctx)
 }
 
-func (f *ForkedProvisioningApi) forkRoutePostPolicyTree(ctx *models.ReqContext, route apimodels.Route) response.Response {
-	return f.svc.RoutePostPolicyTree(ctx, route)
+func (f *ForkedProvisioningApi) forkRoutePutPolicyTree(ctx *models.ReqContext, route apimodels.Route) response.Response {
+	return f.svc.RoutePutPolicyTree(ctx, route)
 }
 
 func (f *ForkedProvisioningApi) forkRouteGetContactpoints(ctx *models.ReqContext) response.Response {
