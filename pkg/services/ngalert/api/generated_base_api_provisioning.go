@@ -27,7 +27,7 @@ type ProvisioningApiForkingService interface {
 	RouteGetTemplate(*models.ReqContext) response.Response
 	RouteGetTemplates(*models.ReqContext) response.Response
 	RoutePostContactpoints(*models.ReqContext) response.Response
-	RoutePutContactpoints(*models.ReqContext) response.Response
+	RoutePutContactpoint(*models.ReqContext) response.Response
 	RoutePutPolicyTree(*models.ReqContext) response.Response
 	RoutePutTemplate(*models.ReqContext) response.Response
 }
@@ -64,12 +64,12 @@ func (f *ForkedProvisioningApi) RoutePostContactpoints(ctx *models.ReqContext) r
 	return f.forkRoutePostContactpoints(ctx, conf)
 }
 
-func (f *ForkedProvisioningApi) RoutePutContactpoints(ctx *models.ReqContext) response.Response {
+func (f *ForkedProvisioningApi) RoutePutContactpoint(ctx *models.ReqContext) response.Response {
 	conf := apimodels.EmbeddedContactPoint{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePutContactpoints(ctx, conf)
+	return f.forkRoutePutContactpoint(ctx, conf)
 }
 
 func (f *ForkedProvisioningApi) RoutePutPolicyTree(ctx *models.ReqContext) response.Response {
@@ -161,12 +161,12 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		group.Put(
-			toMacaronPath("/api/provisioning/contact-points"),
-			api.authorize(http.MethodPut, "/api/provisioning/contact-points"),
+			toMacaronPath("/api/provisioning/contact-points/{ID}"),
+			api.authorize(http.MethodPut, "/api/provisioning/contact-points/{ID}"),
 			metrics.Instrument(
 				http.MethodPut,
-				"/api/provisioning/contact-points",
-				srv.RoutePutContactpoints,
+				"/api/provisioning/contact-points/{ID}",
+				srv.RoutePutContactpoint,
 				m,
 			),
 		)

@@ -1144,36 +1144,6 @@
           }
         }
       },
-      "put": {
-        "consumes": [
-          "application/json"
-        ],
-        "tags": [
-          "provisioning"
-        ],
-        "summary": "Update an existing contact point.",
-        "operationId": "RoutePutContactpoints",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/EmbeddedContactPoint"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "$ref": "#/responses/Accepted"
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
       "post": {
         "consumes": [
           "application/json"
@@ -1206,6 +1176,36 @@
       }
     },
     "/api/provisioning/contact-points/{ID}": {
+      "put": {
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Update an existing contact point.",
+        "operationId": "RoutePutContactpoint",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/responses/Accepted"
+          },
+          "400": {
+            "description": "ValidationError",
+            "schema": {
+              "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
       "delete": {
         "consumes": [
           "application/json"
@@ -5375,12 +5375,11 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
       },
-      "x-go-name": "GettableSilences",
-      "x-go-package": "github.com/prometheus/alertmanager/api/v2/models",
       "$ref": "#/definitions/gettableSilences"
     },
     "labelSet": {

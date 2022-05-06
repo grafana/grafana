@@ -86,6 +86,8 @@ func (srv *ProvisioningSrv) RoutePostContactPoint(c *models.ReqContext, cp apimo
 }
 
 func (srv *ProvisioningSrv) RoutePutContactPoint(c *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
+	id := web.Params(c.Req)[":ID"]
+	cp.UID = id
 	err := srv.contactPointService.UpdateContactPoint(c.Req.Context(), c.OrgId, cp, alerting_models.ProvenanceAPI)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
