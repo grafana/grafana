@@ -222,7 +222,6 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         <Field label="Expire">
           <Select
             inputId="expire-select-input"
-            menuShouldPortal
             width={30}
             options={expireOptions}
             value={selectedExpireOption}

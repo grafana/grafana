@@ -27,7 +27,7 @@ describe('simple search', () => {
 
     const searcher = new MiniSearcher(supplier);
     let results = await searcher.search('name');
-    expect(results.body.fields[1].values.toArray()).toMatchInlineSnapshot(`
+    expect(results.body.fields[2].values.toArray()).toMatchInlineSnapshot(`
       Array [
         "A name (dash)",
         "B name (dash)",
@@ -37,7 +37,7 @@ describe('simple search', () => {
     `);
 
     results = await searcher.search('B');
-    expect(results.body.fields[1].values.toArray()).toMatchInlineSnapshot(`
+    expect(results.body.fields[2].values.toArray()).toMatchInlineSnapshot(`
       Array [
         "B name (dash)",
         "B name (panels)",

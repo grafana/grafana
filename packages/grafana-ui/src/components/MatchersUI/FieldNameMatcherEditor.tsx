@@ -23,7 +23,7 @@ export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   );
 
   const selectedOption = selectOptions.find((v) => v.value === options);
-  return <Select menuShouldPortal value={selectedOption} options={selectOptions} onChange={onChange} inputId={id} />;
+  return <Select value={selectedOption} options={selectOptions} onChange={onChange} inputId={id} />;
 });
 FieldNameMatcherEditor.displayName = 'FieldNameMatcherEditor';
 

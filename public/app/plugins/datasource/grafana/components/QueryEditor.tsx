@@ -248,7 +248,6 @@ export class QueryEditor extends PureComponent<Props, State> {
         <div className="gf-form">
           <InlineField label="Channel" grow={true} labelWidth={labelWidth}>
             <Select
-              menuShouldPortal
               options={channels}
               value={currentChannel || ''}
               onChange={this.onChannelChange}
@@ -265,7 +264,6 @@ export class QueryEditor extends PureComponent<Props, State> {
           <div className="gf-form">
             <InlineField label="Fields" grow={true} labelWidth={labelWidth}>
               <Select
-                menuShouldPortal
                 options={fields}
                 value={filter?.fields || []}
                 onChange={this.onFieldNamesChange}
@@ -328,7 +326,6 @@ export class QueryEditor extends PureComponent<Props, State> {
       <InlineFieldRow>
         <InlineField label="Path" grow={true} labelWidth={labelWidth}>
           <Select
-            menuShouldPortal
             options={folders}
             value={currentFolder || ''}
             onChange={this.onFolderChanged}
@@ -382,7 +379,6 @@ export class QueryEditor extends PureComponent<Props, State> {
         <InlineFieldRow>
           <InlineField label="Query type" grow={true} labelWidth={labelWidth}>
             <Select
-              menuShouldPortal
               options={this.queryTypes}
               value={this.queryTypes.find((v) => v.value === query.queryType) || this.queryTypes[0]}
               onChange={this.onQueryTypeChange}

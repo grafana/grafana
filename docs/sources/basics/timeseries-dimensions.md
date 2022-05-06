@@ -22,7 +22,7 @@ To identify unique series within a set of time series, Grafana stores dimensions
 
 ## Labels
 
-Each time series in Grafana optionally has labels. Labels are set a of key/value pairs for identifying dimensions. Example labels could be `{location=us}` or `{country=us,state=ma,city=boston}`. Within a set of time series, the combination of its name and labels identifies each series. For example, `temperature {country=us,state=ma,city=boston}` could identify the series of temperature values for the city of Boston in the US.
+Each time series in Grafana optionally has labels. Labels are a set of key/value pairs for identifying dimensions. Example labels could be `{location=us}` or `{country=us,state=ma,city=boston}`. Within a set of time series, the combination of its name and labels identifies each series. For example, `temperature {country=us,state=ma,city=boston}` could identify the series of temperature values for the city of Boston in the US.
 
 Different sources of time series data have dimensions stored natively, or common storage patterns that allow the data to be extracted into dimensions.
 
@@ -76,7 +76,7 @@ In this case the labels that represent the dimensions will have two keys based o
 
 > **Note:** More than one dimension is currently only supported in the Logs queries within the Azure Monitor service as of version 7.1.
 
-> **Note:** Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert. See the documentation on [creating alerts with multiple series]({{< relref "../alerting/old-alerting/create-alerts.md#multiple-series" >}}).
+> **Note:** Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert. For more information, see See the documentation on [creating alerts with multiple series]({{< relref "../alerting/alerting-rules/create-grafana-managed-rule.md#single-and-multi-dimensional-rule" >}}).
 
 ### Multiple values
 

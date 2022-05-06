@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { FC, FormEvent, useCallback, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -31,6 +32,7 @@ export const FileUpload: FC<Props> = ({
 }) => {
   const style = useStyles2(getStyles(size));
   const [fileName, setFileName] = useState('');
+  const id = uuidv4();
 
   const onChange = useCallback(
     (event: FormEvent<HTMLInputElement>) => {
@@ -47,14 +49,14 @@ export const FileUpload: FC<Props> = ({
     <>
       <input
         type="file"
-        id="fileUpload"
+        id={id}
         className={style.fileUpload}
         onChange={onChange}
         multiple={false}
         accept={accept}
         data-testid={selectors.components.FileUpload.inputField}
       />
-      <label className={cx(style.labelWrapper, className)}>
+      <label role="button" htmlFor={id} className={cx(style.labelWrapper, className)}>
         <Icon name="upload" className={style.icon} />
         {children}
       </label>
