@@ -5,9 +5,14 @@ import { RadioButtonGroup, Tag } from '@grafana/ui';
 
 import { QueryEditorMode } from './types';
 
+export type UIOptions = {
+  [key in QueryEditorMode]: boolean;
+};
+
 export interface Props {
   mode: QueryEditorMode;
   onChange: (mode: QueryEditorMode) => void;
+  uiOptions: UIOptions;
 }
 
 const editorModes = [
@@ -30,10 +35,11 @@ const editorModes = [
   { label: 'Code', value: QueryEditorMode.Code },
 ];
 
-export function QueryEditorModeToggle({ mode, onChange }: Props) {
+export function QueryEditorModeToggle({ mode, onChange, uiOptions }: Props) {
+  const modes = editorModes.filter((m) => uiOptions[m.value]);
   return (
     <div data-testid={'QueryEditorModeToggle'}>
-      <RadioButtonGroup options={editorModes} size="sm" value={mode} onChange={onChange} />
+      <RadioButtonGroup options={modes} size="sm" value={mode} onChange={onChange} />
     </div>
   );
 }

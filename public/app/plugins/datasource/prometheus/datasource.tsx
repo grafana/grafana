@@ -40,6 +40,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { PromApplication, PromBuildInfo } from 'app/types/unified-alerting-dto';
 
 import { addLabelToQuery } from './add_label_to_query';
+import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import { renderLegendFormat } from './legend';
@@ -120,6 +121,12 @@ export class PrometheusDatasource
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
   }
+
+  annotations = {
+    QueryEditor: AnnotationQueryEditor,
+    useLegacyRunner: true,
+    dontUseMapping: true,
+  };
 
   init = async () => {
     this.loadRules();
