@@ -35,7 +35,7 @@ func (f *ForkedProvisioningApi) forkRoutePostContactpoints(ctx *models.ReqContex
 	return f.svc.RoutePostContactPoint(ctx, cp)
 }
 
-func (f *ForkedProvisioningApi) forkRoutePutContactpoints(ctx *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
+func (f *ForkedProvisioningApi) forkRoutePutContactpoint(ctx *models.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
 	return f.svc.RoutePutContactPoint(ctx, cp)
 }
 
