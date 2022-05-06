@@ -4,6 +4,7 @@ import { catchError, map, mergeMap, toArray } from 'rxjs/operators';
 
 import {
   ArrayVector,
+  DataFrame,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
@@ -13,6 +14,7 @@ import {
   FieldType,
   isValidGoDuration,
   LoadingState,
+  toDataFrame,
 } from '@grafana/data';
 import { config, BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
@@ -377,85 +379,91 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
         ],
       };
 
-      var df = responses[0].data.filter((x) => {
-        return x.refId === rateMetric.query;
-      })[0];
-      const rateTrend = responses[0].data.filter((x) => {
-        return x.refId === rateTrendMetric.query;
-      });
-      const errorRate = responses[0].data.filter((x) => {
-        return x.refId === errorRateMetric.query;
-      });
-      const errorRateTrend = responses[0].data.filter((x) => {
-        return x.refId === errorRateTrendMetric.query;
-      });
-      const duration = responses[0].data.filter((x) => {
-        return x.refId === durationMetric.query;
-      });
+      var df: DataFrame;
+      if (responses[0].data.length === 4) {
+        // filter does not return table results
+        df = toDataFrame([]);
+      } else {
+        df = responses[0].data.filter((x) => {
+          return x.refId === rateMetric.query;
+        })[0];
+        const rateTrend = responses[0].data.filter((x) => {
+          return x.refId === rateTrendMetric.query;
+        });
+        const errorRate = responses[0].data.filter((x) => {
+          return x.refId === errorRateMetric.query;
+        });
+        const errorRateTrend = responses[0].data.filter((x) => {
+          return x.refId === errorRateTrendMetric.query;
+        });
+        const duration = responses[0].data.filter((x) => {
+          return x.refId === durationMetric.query;
+        });
 
-      df.fields.shift(); // remove time field
-      df.fields[0].name = 'Name';
-      df.fields[1].name = 'Rate';
-      df.fields[1].config = getFieldConfig(rateMetric, request, datasourceUid);
+        df.fields.shift(); // remove time field
+        df.fields[0].name = 'Name';
+        df.fields[1].name = 'Rate';
+        df.fields[1].config = getFieldConfig(rateMetric, request, datasourceUid);
 
-      df.fields.push({
-        ...rateTrend[0].fields[1],
-        values: new ArrayVector([
-          rateTrend[0].fields[1].values.toArray(),
-          rateTrend[1].fields[1].values.toArray(),
-          rateTrend[2].fields[1].values.toArray(),
-          rateTrend[3].fields[1].values.toArray(),
-          rateTrend[4].fields[1].values.toArray(),
-        ]),
-        name: 'Trend (Rate)',
-        labels: null,
-        config: {
-          color: {
-            mode: 'continuous-BlPu',
+        df.fields.push({
+          ...rateTrend[0].fields[1],
+          values: new ArrayVector([
+            rateTrend[0].fields[1].values.toArray(),
+            rateTrend[1].fields[1].values.toArray(),
+            rateTrend[2].fields[1].values.toArray(),
+            rateTrend[3].fields[1].values.toArray(),
+            rateTrend[4].fields[1].values.toArray(),
+          ]),
+          name: 'Trend (Rate)',
+          labels: null,
+          config: {
+            color: {
+              mode: 'continuous-BlPu',
+            },
+            custom: {
+              displayMode: 'area-chart',
+            },
           },
-          custom: {
-            displayMode: 'area-chart',
-          },
-        },
-      });
+        });
 
-      df.fields.push({
-        ...errorRate[0].fields[2],
-        name: 'Error Rate',
-        config: getFieldConfig(apmMetrics[2], request, datasourceUid),
-      });
+        df.fields.push({
+          ...errorRate[0].fields[2],
+          name: 'Error Rate',
+          config: getFieldConfig(apmMetrics[2], request, datasourceUid),
+        });
 
-      df.fields.push({
-        ...errorRateTrend[0].fields[2],
-        name: 'Trend (Error Rate)',
-        labels: null,
-        config: {
-          color: {
-            mode: 'continuous-BlPu',
+        df.fields.push({
+          ...errorRateTrend[0].fields[2],
+          name: 'Trend (Error Rate)',
+          labels: null,
+          config: {
+            color: {
+              mode: 'continuous-BlPu',
+            },
+            custom: {
+              displayMode: 'lcd-gauge',
+            },
           },
-          custom: {
-            displayMode: 'lcd-gauge',
-          },
-        },
-      });
+        });
 
-      df.fields.push({
-        ...duration[0].fields[1],
-        name: 'Duration',
-        config: getFieldConfig(apmMetrics[4], request, datasourceUid),
-      });
+        df.fields.push({
+          ...duration[0].fields[1],
+          name: 'Duration',
+          config: getFieldConfig(apmMetrics[4], request, datasourceUid),
+        });
 
-      df.fields.push({
-        name: 'Links',
-        type: FieldType.string,
-        values: new ArrayVector(['Tempo', 'Tempo', 'Tempo', 'Tempo', 'Tempo']),
-        config: {
-          custom: {
-            instant: true,
+        df.fields.push({
+          name: 'Links',
+          type: FieldType.string,
+          values: new ArrayVector(['Tempo', 'Tempo', 'Tempo', 'Tempo', 'Tempo']),
+          config: {
+            custom: {
+              instant: true,
+            },
+            links: [makeTempoLink('traces_spanmetrics_calls_total', '')],
           },
-          links: [makeTempoLink('traces_spanmetrics_calls_total', '')],
-        },
-      });
+        });
+      }
 
       return {
         data: [df, nodes, edges],
