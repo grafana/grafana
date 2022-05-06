@@ -1,6 +1,6 @@
 +++
 title = "Alerts"
-weight = 455
+weight = 114
 aliases = ["/docs/grafana/latest/alerting/", "/docs/grafana/latest/alerting/unified-alerting/difference-old-new/"]
 +++
 
