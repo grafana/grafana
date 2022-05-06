@@ -31,6 +31,7 @@ func TestProvideFolderService(t *testing.T) {
 		store := &dashboards.FakeDashboardStore{}
 		cfg := setting.NewCfg()
 		features := featuremgmt.WithFeatures()
+		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		permissionsServices := acmock.NewPermissionsServicesMock()
 		dashboardService := ProvideDashboardService(cfg, store, nil, features, permissionsServices)
 		ac := acmock.New()
@@ -49,6 +50,7 @@ func TestFolderService(t *testing.T) {
 		store := &dashboards.FakeDashboardStore{}
 		cfg := setting.NewCfg()
 		features := featuremgmt.WithFeatures()
+		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		permissionsServices := acmock.NewPermissionsServicesMock()
 		dashboardService := ProvideDashboardService(cfg, store, nil, features, permissionsServices)
 		mockStore := mockstore.NewSQLStoreMock()

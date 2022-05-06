@@ -858,8 +858,10 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 
 	dto := toSaveDashboardDto(cmd)
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := ProvideDashboardService(
-		setting.NewCfg(), dashboardStore, &dummyDashAlertExtractor{},
+		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(),
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
@@ -871,8 +873,10 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) error {
 	dto := toSaveDashboardDto(cmd)
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := ProvideDashboardService(
-		setting.NewCfg(), dashboardStore, &dummyDashAlertExtractor{},
+		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(),
 	)
 	_, err := service.SaveDashboard(context.Background(), &dto, false)
@@ -902,8 +906,10 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 	}
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := ProvideDashboardService(
-		setting.NewCfg(), dashboardStore, &dummyDashAlertExtractor{},
+		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(),
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
@@ -934,8 +940,10 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 	}
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := ProvideDashboardService(
-		setting.NewCfg(), dashboardStore, &dummyDashAlertExtractor{},
+		cfg, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(),
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)

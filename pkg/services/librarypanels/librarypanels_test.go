@@ -1423,8 +1423,10 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.Sig
 
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
 	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := dashboardservice.ProvideDashboardService(
-		setting.NewCfg(), dashboardStore, dashAlertService,
+		cfg, dashboardStore, dashAlertService,
 		featuremgmt.WithFeatures(), acmock.NewPermissionsServicesMock(),
 	)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
@@ -1438,6 +1440,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	t.Helper()
 
 	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	features := featuremgmt.WithFeatures()
 	permissionsServices := acmock.NewPermissionsServicesMock()
 	dashboardStore := database.ProvideDashboardStore(sqlStore)
