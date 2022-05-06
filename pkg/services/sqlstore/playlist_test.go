@@ -22,6 +22,13 @@ func TestIntegrationPlaylistDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		uid := cmd.Result.Uid
 
+		t.Run("Can get playlist items", func(t *testing.T) {
+			get := &models.GetPlaylistItemsByUidQuery{PlaylistUid: uid, OrgId: 1}
+			err = ss.GetPlaylistItem(context.Background(), get)
+			require.NoError(t, err)
+			require.Equal(t, len(*get.Result), len(items))
+		})
+
 		t.Run("Can update playlist", func(t *testing.T) {
 			items := []models.PlaylistItemDTO{
 				{Title: "influxdb", Value: "influxdb", Type: "dashboard_by_tag"},
