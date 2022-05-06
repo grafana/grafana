@@ -46,7 +46,7 @@ func addPlaylistMigrations(mg *Migrator) {
 
 	// Replacing auto-incremented playlistIDs with string UIDs
 	mg.AddMigration("Add UID column to playlist", NewAddColumnMigration(playlistV2, &Column{
-		Name: "uid", Type: DB_NVarchar, Length: 80, Nullable: false,
+		Name: "uid", Type: DB_NVarchar, Length: 80, Nullable: false, Default: "0",
 	}))
 
 	// copy the (string representation of) existing IDs into the new uid column.
@@ -58,14 +58,4 @@ func addPlaylistMigrations(mg *Migrator) {
 	mg.AddMigration("Add index for uid in playlist", NewAddIndexMigration(playlistV2, &Index{
 		Cols: []string{"org_id", "uid"}, Type: UniqueIndex,
 	}))
-
-	mg.AddMigration("Add playlistUID column to playlistItems", NewAddColumnMigration(playlistItemV2, &Column{
-		Name: "playlist_uid", Type: DB_NVarchar, Length: 80, Nullable: false,
-	}))
-
-	// copy the string representation of existing IDs into the new uid column.
-	mg.AddMigration("Update uid column values in playlist_item", NewRawSQLMigration("").
-		SQLite("UPDATE playlist_item SET playlist_uid=printf('%d',playlist_id) WHERE playlist_uid IS NULL;").
-		Postgres("UPDATE playlist_item SET playlist_uid=playlist_id::text WHERE playlist_uid IS NULL;").
-		Mysql("UPDATE playlist_item SET playlist_uid=playlist_id WHERE playlist_uid IS NULL;"))
 }
