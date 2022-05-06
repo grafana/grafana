@@ -11,9 +11,25 @@ import (
 )
 
 // Sets sharing configuration for dashboard
-func (hs *HTTPServer) ShareDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetPublicDashboard(c *models.ReqContext) response.Response {
+
+	pdc, err := hs.dashboardService.GetPublicDashboardConfig(c.Req.Context(), c.OrgId, web.Params(c.Req)[":uid"])
+	fmt.Println(pdc)
+
+	if errors.Is(err, models.ErrDashboardNotFound) {
+		return response.Error(http.StatusNotFound, "dashboard not found", err)
+	}
+
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "error retrieving public dashboard config", err)
+	}
+
+	return response.JSON(http.StatusOK, pdc)
+}
+
+// Sets sharing configuration for dashboard
+func (hs *HTTPServer) SavePublicDashboard(c *models.ReqContext) response.Response {
 	pdc := models.PublicDashboardConfig{}
-	fmt.Println("test1")
 
 	if err := web.Bind(c.Req, &pdc); err != nil {
 		fmt.Println(err)
@@ -28,7 +44,7 @@ func (hs *HTTPServer) ShareDashboard(c *models.ReqContext) response.Response {
 
 	sharingConfig, err := hs.dashboardService.SavePublicDashboardConfig(c.Req.Context(), &dto)
 
-	if errors.Is(err, models.ErrDataSourceNotFound) {
+	if errors.Is(err, models.ErrDashboardNotFound) {
 		return response.Error(http.StatusNotFound, "dashboard not found", err)
 	}
 
