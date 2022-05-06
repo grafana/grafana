@@ -166,9 +166,15 @@ func (ss *SQLStore) GetPlaylistItem(ctx context.Context, query *models.GetPlayli
 			return models.ErrCommandValidationFailed
 		}
 
-		var playlistItems = make([]models.PlaylistItem, 0)
-		err := sess.Where("playlist_uid=? and org_id = ?", query.PlaylistUid, query.OrgId).Find(&playlistItems)
+		// get the playlist Id
+		get := &models.GetPlaylistByUidQuery{Uid: query.PlaylistUid, OrgId: query.OrgId}
+		err := ss.GetPlaylist(ctx, get)
+		if err != nil {
+			return err
+		}
 
+		var playlistItems = make([]models.PlaylistItem, 0)
+		err = sess.Where("playlist_id=?", get.Result.Id).Find(&playlistItems)
 		query.Result = &playlistItems
 
 		return err
