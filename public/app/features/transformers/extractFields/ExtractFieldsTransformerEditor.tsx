@@ -91,5 +91,4 @@ export const extractFieldsTransformRegistryItem: TransformerRegistryItem<Extract
   transformation: extractFieldsTransformer,
   name: 'Extract fields',
   description: `Parse fields from content (JSON, labels, etc)`,
-  state: PluginState.alpha,
 };
