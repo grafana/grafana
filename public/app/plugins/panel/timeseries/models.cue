@@ -25,8 +25,8 @@ Panel: {
                 PanelOptions: {
                     legend: ui.VizLegendOptions
                     tooltip: ui.VizTooltipOptions
-                }
-                PanelFieldConfig: ui.GraphFieldConfig
+                } @cuetsy(kind="interface")
+                PanelFieldConfig: ui.GraphFieldConfig & {} @cuetsy(kind="interface")
             }
         ]
     ]

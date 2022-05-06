@@ -16,20 +16,20 @@ import (
 
 var dashboardPermissionTranslation = map[models.PermissionType][]string{
 	models.PERMISSION_VIEW: {
-		ac.ActionDashboardsRead,
+		dashboards.ActionDashboardsRead,
 	},
 	models.PERMISSION_EDIT: {
-		ac.ActionDashboardsRead,
-		ac.ActionDashboardsWrite,
-		ac.ActionDashboardsDelete,
+		dashboards.ActionDashboardsRead,
+		dashboards.ActionDashboardsWrite,
+		dashboards.ActionDashboardsDelete,
 	},
 	models.PERMISSION_ADMIN: {
-		ac.ActionDashboardsRead,
-		ac.ActionDashboardsWrite,
-		ac.ActionDashboardsCreate,
-		ac.ActionDashboardsDelete,
-		ac.ActionDashboardsPermissionsRead,
-		ac.ActionDashboardsPermissionsWrite,
+		dashboards.ActionDashboardsRead,
+		dashboards.ActionDashboardsWrite,
+		dashboards.ActionDashboardsCreate,
+		dashboards.ActionDashboardsDelete,
+		dashboards.ActionDashboardsPermissionsRead,
+		dashboards.ActionDashboardsPermissionsWrite,
 	},
 }
 
@@ -38,7 +38,7 @@ var folderPermissionTranslation = map[models.PermissionType][]string{
 		dashboards.ActionFoldersRead,
 	}...),
 	models.PERMISSION_EDIT: append(dashboardPermissionTranslation[models.PERMISSION_EDIT], []string{
-		ac.ActionDashboardsCreate,
+		dashboards.ActionDashboardsCreate,
 		dashboards.ActionFoldersRead,
 		dashboards.ActionFoldersWrite,
 		dashboards.ActionFoldersCreate,

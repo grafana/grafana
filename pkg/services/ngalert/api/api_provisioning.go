@@ -20,6 +20,7 @@ type ProvisioningSrv struct {
 	log                 log.Logger
 	policies            NotificationPolicyService
 	contactPointService ContactPointService
+	templates           TemplateService
 }
 
 type ContactPointService interface {
@@ -27,6 +28,12 @@ type ContactPointService interface {
 	CreateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint, p alerting_models.Provenance) (apimodels.EmbeddedContactPoint, error)
 	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint, p alerting_models.Provenance) error
 	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error
+}
+
+type TemplateService interface {
+	GetTemplates(ctx context.Context, orgID int64) (map[string]string, error)
+	SetTemplate(ctx context.Context, orgID int64, tmpl apimodels.MessageTemplate) (apimodels.MessageTemplate, error)
+	DeleteTemplate(ctx context.Context, orgID int64, name string) error
 }
 
 type NotificationPolicyService interface {
@@ -47,7 +54,6 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Re
 }
 
 func (srv *ProvisioningSrv) RoutePostPolicyTree(c *models.ReqContext, tree apimodels.Route) response.Response {
-	// TODO: lift validation out of definitions.Rotue.UnmarshalJSON and friends into a dedicated validator.
 	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgId, tree, alerting_models.ProvenanceAPI)
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
@@ -94,4 +100,54 @@ func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *models.ReqContext) respon
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "contactpoint deleted"})
+}
+
+func (srv *ProvisioningSrv) RouteGetTemplates(c *models.ReqContext) response.Response {
+	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	result := make([]apimodels.MessageTemplate, 0, len(templates))
+	for k, v := range templates {
+		result = append(result, apimodels.MessageTemplate{Name: k, Template: v})
+	}
+	return response.JSON(http.StatusOK, result)
+}
+
+func (srv *ProvisioningSrv) RouteGetTemplate(c *models.ReqContext) response.Response {
+	id := web.Params(c.Req)[":name"]
+	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	if tmpl, ok := templates[id]; ok {
+		return response.JSON(http.StatusOK, apimodels.MessageTemplate{Name: id, Template: tmpl})
+	}
+	return response.Empty(http.StatusNotFound)
+}
+
+func (srv *ProvisioningSrv) RoutePutTemplate(c *models.ReqContext, body apimodels.MessageTemplateContent) response.Response {
+	name := web.Params(c.Req)[":name"]
+	tmpl := apimodels.MessageTemplate{
+		Name:       name,
+		Template:   body.Template,
+		Provenance: alerting_models.ProvenanceAPI,
+	}
+	modified, err := srv.templates.SetTemplate(c.Req.Context(), c.OrgId, tmpl)
+	if err != nil {
+		if errors.Is(err, provisioning.ErrValidation) {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusAccepted, modified)
+}
+
+func (srv *ProvisioningSrv) RouteDeleteTemplate(c *models.ReqContext) response.Response {
+	name := web.Params(c.Req)[":name"]
+	err := srv.templates.DeleteTemplate(c.Req.Context(), c.OrgId, name)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusNoContent, nil)
 }

@@ -42,3 +42,19 @@ func (f *ForkedProvisioningApi) forkRoutePutContactpoints(ctx *models.ReqContext
 func (f *ForkedProvisioningApi) forkRouteDeleteContactpoints(ctx *models.ReqContext) response.Response {
 	return f.svc.RouteDeleteContactPoint(ctx)
 }
+
+func (f *ForkedProvisioningApi) forkRouteGetTemplates(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteGetTemplates(ctx)
+}
+
+func (f *ForkedProvisioningApi) forkRouteGetTemplate(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteGetTemplate(ctx)
+}
+
+func (f *ForkedProvisioningApi) forkRoutePutTemplate(ctx *models.ReqContext, body apimodels.MessageTemplateContent) response.Response {
+	return f.svc.RoutePutTemplate(ctx, body)
+}
+
+func (f *ForkedProvisioningApi) forkRouteDeleteTemplate(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteDeleteTemplate(ctx)
+}

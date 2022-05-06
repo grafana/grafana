@@ -41,7 +41,6 @@ export function OrgPicker({ onSelected, className, inputId, autoFocus, excludeOr
 
   return (
     <AsyncSelect
-      menuShouldPortal
       inputId={inputId}
       className={className}
       isLoading={orgOptionsState.loading}

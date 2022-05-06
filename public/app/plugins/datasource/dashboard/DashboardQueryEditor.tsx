@@ -124,7 +124,6 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
     <>
       <InlineField label="Use results from panel" grow>
         <Select
-          menuShouldPortal
           inputId={selectId}
           placeholder="Choose panel"
           isSearchable={true}

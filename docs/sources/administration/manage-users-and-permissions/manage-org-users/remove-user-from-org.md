@@ -1,6 +1,6 @@
 +++
 title = "Remove a user from an organization"
-aliases = ["docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/remove-user-from-org.md"]
+aliases = ["/docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/remove-user-from-org/"]
 weight = 40
 +++
 

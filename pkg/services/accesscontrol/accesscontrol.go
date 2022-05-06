@@ -7,6 +7,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Options struct {
@@ -32,9 +34,9 @@ type AccessControl interface {
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(...RoleRegistration) error
 
-	// RegisterAttributeScopeResolver allows the caller to register a scope resolver for a
+	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
-	RegisterAttributeScopeResolver(scopePrefix string, resolver AttributeScopeResolveFunc)
+	RegisterScopeAttributeResolver(scopePrefix string, resolver ScopeAttributeResolver)
 }
 
 type PermissionsProvider interface {
@@ -221,4 +223,8 @@ func extractPrefixes(prefix string) (string, string, bool) {
 	rootPrefix := parts[0] + ":"
 	attributePrefix := rootPrefix + parts[1] + ":"
 	return rootPrefix, attributePrefix, true
+}
+
+func IsDisabled(cfg *setting.Cfg) bool {
+	return !cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol)
 }
