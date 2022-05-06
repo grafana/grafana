@@ -18,10 +18,6 @@ export const UpgradePage: React.FC<Props> = ({ navModel }) => {
     <Page navModel={navModel}>
       <Page.Contents>
         <ServerStats />
-        <UpgradeInfo
-          editionNotice="You are running the open-source version of Grafana.
-        You have to install the Enterprise edition in order enable Enterprise features."
-        />
       </Page.Contents>
     </Page>
   );
