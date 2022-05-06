@@ -15,10 +15,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -252,6 +254,8 @@ func TestCollectingUsageStats(t *testing.T) {
 	assert.EqualValues(t, 1, metrics["stats.packaging.deb.count"])
 	assert.EqualValues(t, 1, metrics["stats.distributor.hosted-grafana.count"])
 
+	assert.EqualValues(t, 11, metrics["stats.data_keys.count"])
+
 	assert.InDelta(t, int64(65), metrics["stats.uptime"], 6)
 }
 
@@ -294,6 +298,7 @@ func mockSystemStats(sqlStore *mockstore.SQLStoreMock) {
 		FoldersViewersCanAdmin:    1,
 		FoldersViewersCanEdit:     5,
 		APIKeys:                   2,
+		DataKeys:                  11,
 	}
 }
 
