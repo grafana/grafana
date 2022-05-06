@@ -750,9 +750,9 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			setUpRBACGuardian(t)
-			sc.acmock.
+			sc.ac.
 				RegisterScopeAttributeResolver(AnnotationTypeScopeResolver())
-			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgId)
+			setAccessControlPermissions(sc.ac, tt.args.permissions, sc.initCtx.OrgId)
 
 			r := callAPI(sc.server, tt.args.method, tt.args.url, tt.args.body, t)
 			assert.Equalf(t, tt.want, r.Code, "Annotations API(%v)", tt.args.url)
@@ -945,7 +945,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			setUpRBACGuardian(t)
-			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgId)
+			setAccessControlPermissions(sc.ac, tt.args.permissions, sc.initCtx.OrgId)
 			dashboardAnnotation := &annotations.Item{Id: 1, DashboardId: 1}
 			organizationAnnotation := &annotations.Item{Id: 2, DashboardId: 0}
 

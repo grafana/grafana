@@ -269,8 +269,8 @@ type accessControlScenarioContext struct {
 	// hs is a minimal HTTPServer for the accesscontrol tests to pass.
 	hs *HTTPServer
 
-	// acmock is an accesscontrol mock used to fake users rights.
-	acmock *accesscontrolmock.Mock
+	// ac is the component to check user permissions
+	ac accesscontrol.AccessControl
 
 	// db is a test database initialized with InitTestDB
 	db sqlstore.Store
@@ -281,14 +281,18 @@ type accessControlScenarioContext struct {
 	dashboardsStore dashboards.Store
 }
 
-func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []*accesscontrol.Permission, org int64) {
-	acmock.GetUserPermissionsFunc =
-		func(_ context.Context, u *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
-			if u.OrgId == org {
-				return perms, nil
+func setAccessControlPermissions(ac accesscontrol.AccessControl, perms []*accesscontrol.Permission, org int64) {
+	// set permissions if it is a mocked access control service
+	mock, ok := ac.(*accesscontrolmock.Mock)
+	if ok {
+		mock.GetUserPermissionsFunc =
+			func(_ context.Context, u *models.SignedInUser, _ accesscontrol.Options) ([]*accesscontrol.Permission, error) {
+				if u.OrgId == org {
+					return perms, nil
+				}
+				return nil, nil
 			}
-			return nil, nil
-		}
+	}
 }
 
 // setInitCtxSignedInUser sets a copy of the user in initCtx
@@ -355,48 +359,44 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 	features := featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol, enableAccessControl)
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
-	var acmock *accesscontrolmock.Mock
-
 	dashboardsStore := dashboardsstore.ProvideDashboardStore(db)
-
 	routeRegister := routing.NewRouteRegister()
 
-	// Create minimal HTTP Server
-	hs := &HTTPServer{
-		Cfg:                cfg,
-		Features:           features,
-		Live:               newTestLive(t, db),
-		QuotaService:       &quota.QuotaService{Cfg: cfg},
-		RouteRegister:      routeRegister,
-		SQLStore:           store,
-		searchUsersService: searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
-		dashboardService:   dashboardservice.ProvideDashboardService(cfg, dashboardsStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(), acmock),
-		preferenceService:  preftest.NewPreferenceServiceFake(),
-	}
+	var ac accesscontrol.AccessControl
+	acStore := database.ProvideService(db)
 
 	// Defining the accesscontrol service has to be done before registering routes
 	if useFakeAccessControl {
-		acmock = accesscontrolmock.New()
+		mock := accesscontrolmock.New()
 		if !enableAccessControl {
-			acmock = acmock.WithDisabled()
+			mock = mock.WithDisabled()
 		}
-		hs.AccessControl = acmock
-		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, acmock, database.ProvideService(db))
-		require.NoError(t, err)
-		hs.teamPermissionsService = teamPermissionService
+		ac = mock
 	} else {
-		ac, errInitAc := ossaccesscontrol.ProvideService(hs.Features, database.ProvideService(db), routing.NewRouteRegister())
-		require.NoError(t, errInitAc)
-		hs.AccessControl = ac
+		ac, _ = ossaccesscontrol.ProvideService(features, acStore, routeRegister)
 		// Perform role registration
-		err := hs.declareFixedRoles()
-		require.NoError(t, err)
-		err = ac.RegisterFixedRoles(context.Background())
-		require.NoError(t, err)
-		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, database.ProvideService(db))
-		require.NoError(t, err)
-		hs.teamPermissionsService = teamPermissionService
 	}
+
+	permissionServices, err := ossaccesscontrol.ProvidePermissionsServices(cfg, routeRegister, db, ac, acStore)
+	require.NoError(t, err)
+
+	// Create minimal HTTP Server
+	hs := &HTTPServer{
+		Cfg:                    cfg,
+		Features:               features,
+		Live:                   newTestLive(t, db),
+		QuotaService:           &quota.QuotaService{Cfg: cfg},
+		RouteRegister:          routeRegister,
+		SQLStore:               store,
+		AccessControl:          ac,
+		searchUsersService:     searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
+		dashboardService:       dashboardservice.ProvideDashboardService(cfg, dashboardsStore, nil, features, permissionServices, ac),
+		teamPermissionsService: permissionServices.GetTeamService(),
+		preferenceService:      preftest.NewPreferenceServiceFake(),
+	}
+
+	require.NoError(t, hs.declareFixedRoles())
+	require.NoError(t, ac.(accesscontrol.RoleRegistry).RegisterFixedRoles(context.Background()))
 
 	// Instantiate a new Server
 	m := web.New()
@@ -419,7 +419,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		server:          m,
 		initCtx:         initCtx,
 		hs:              hs,
-		acmock:          acmock,
+		ac:              ac,
 		db:              db,
 		cfg:             cfg,
 		dashboardsStore: dashboardsStore,

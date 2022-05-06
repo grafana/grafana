@@ -224,7 +224,7 @@ func TestOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			sc := setupHTTPServer(t, true, true)
 			setInitCtxSignedInViewer(sc.initCtx)
-			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgId)
+			setAccessControlPermissions(sc.ac, test.permissions, sc.initCtx.OrgId)
 
 			response := callAPI(sc.server, http.MethodGet, test.url, nil, t)
 			assert.Equal(t, test.expectedCode, response.Code)
