@@ -9,7 +9,7 @@ aliases = ["/docs/grafana/latest/http_api/dashboardversions/"]
 
 ## Get all dashboard versions
 
-> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new dashboard versions API](#get-all-dashboard-verions-by-dashboard-uid).
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new dashboard versions API](#get-all-dashboard-versions-by-dashboard-uid).
 
 Query parameters:
 
