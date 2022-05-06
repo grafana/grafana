@@ -184,13 +184,15 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/provisioning/policies",
 		http.MethodGet + "/api/provisioning/contact-points",
 		http.MethodGet + "/api/provisioning/templates",
-		http.MethodGet + "/api/provisioning/templates/{ID}":
+		http.MethodGet + "/api/provisioning/templates/{name}":
 		return middleware.ReqSignedIn
 
 	case http.MethodPost + "/api/provisioning/policies",
 		http.MethodPost + "/api/provisioning/contact-points",
 		http.MethodPut + "/api/provisioning/contact-points",
-		http.MethodDelete + "/api/provisioning/contact-points/{ID}":
+		http.MethodDelete + "/api/provisioning/contact-points/{ID}",
+		http.MethodPut + "/api/provisioning/templates/{name}",
+		http.MethodDelete + "/api/provisioning/templates/{name}":
 		return middleware.ReqEditorRole
 	}
 
