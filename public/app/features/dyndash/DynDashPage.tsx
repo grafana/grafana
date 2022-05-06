@@ -10,17 +10,19 @@ export interface Props {
   name: string;
 }
 
-export const DynDash: FC<Props> = ({ name }) => {
+export const DynDashPage: FC<Props> = ({ name }) => {
   const scene = useObservable(getDemoScene(name), null);
 
   if (!scene) {
     return <h2>Loading...</h2>;
   }
+  console.log('scene', scene);
 
   return (
-    <div className="dashboard-container">
+    <div style={{ height: '100%', display: 'flex', width: '100%' }}>
       <SceneView model={scene} />
     </div>
   );
 };
 
+export default DynDashPage;

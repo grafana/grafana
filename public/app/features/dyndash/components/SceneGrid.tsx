@@ -12,48 +12,23 @@ export interface Props {
 }
 
 export const SceneGrid: FC<Props> = ({ panels }) => {
-  const layout = panels.map(panel => {
-    return {
-      i: panel.id,
-      x: panel.gridPos.x,
-      y: panel.gridPos.y,
-      w: panel.gridPos.w,
-      h: panel.gridPos.h,
-    };
-  });
-
   return (
-    <AutoSizer>
-      {({ width }) => {
-        if (width === 0) {
-          return null;
-        }
-
-        return (
-          <ReactGridLayout
-            width={width}
-            className={'layout'}
-            isDraggable={false}
-            isResizable={false}
-            containerPadding={[0, 0]}
-            useCSSTransforms={false}
-            margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
-            cols={GRID_COLUMN_COUNT}
-            rowHeight={GRID_CELL_HEIGHT}
-            draggableHandle=".grid-drag-handle"
-            layout={layout}
-          >
-            {panels.map(panel => (
-              <div key={panel.id} id={panel.id}>
-                <ScenePanelView panel={panel} key={panel.id} />
-              </div>
-            ))}
-          </ReactGridLayout>
-        );
-      }}
-    </AutoSizer>
+    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+      {panels.map(panel => (
+        <div key={panel.id} id={panel.id} style={getSceneItemStyles(panel)}>
+          <ScenePanelView panel={panel} key={panel.id} />
+        </div>
+      ))}
+    </div>
   );
 };
+
+function getSceneItemStyles(panel: SceneItem) {
+  return {
+    width: `${(24 / panel.gridPos.w) * 100}%`,
+    height: `${panel.gridPos.h * GRID_CELL_HEIGHT}px`,
+  }
+}
 
 interface PanelProps {
   panel: SceneItem;

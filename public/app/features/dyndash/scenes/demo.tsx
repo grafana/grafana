@@ -4,9 +4,9 @@ import { Button } from '@grafana/ui';
 import { Observable, of, Subscription } from 'rxjs';
 import { Scene, SceneItem, SceneItemList, ScenePanel, VizPanel } from '../models';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { runRequest } from 'app/features/dashboard/state/runRequest';
 import { map, mergeMap } from 'rxjs/operators';
 import { v4 as newUuid } from 'uuid';
+import { runRequest } from 'app/features/query/state/runRequest';
 
 export function getDemoScene(name: string): Observable<Scene> {
   return new Observable<Scene>(observer => {
@@ -15,37 +15,60 @@ export function getDemoScene(name: string): Observable<Scene> {
       panels: [],
     };
 
-    const onButtonHit = () => {
-      scene.panels.push(getDemoPanel());
-      observer.next(scene);
-    };
-
-    // const onAddNested = () => {
-    //   panels.push(
-    //     of({
-    //       id: newUuid(),
-    //       title: 'inner scene',
-    //       type: 'scene',
-    //       gridPos: { x: 12, y: 1, w: 12, h: 1 },
-    //       panels: getDemoPanels(),
-    //     })
-    //   );
-    //   observer.next(panels);
-    // };
-
-    scene.panels.push(getDemoPanel());
-
-    // panels.push(
-    //   of({
-    //     id: 'button3',
-    //     type: 'component',
-    //     gridPos: { x: 12, y: 1, w: 12, h: 1 },
-    //     component: () => <Button onClick={onAddNested}>Add nested scene</Button>,
-    //   })
-    // );
-
     observer.next(scene);
+
+    const sub = getDemoData().subscribe({
+      next: (data) => {
+
+        const panels = data.series.map((series, index) => {
+          return of({
+            id: `data-${index}`,
+            type: 'viz',
+            title: series.name,
+            gridPos: { x: 0, y: index, w: 24, h: 5 },
+            data: of({
+              ...data,
+              series: [series]
+            })
+          } as VizPanel);
+        })
+
+        console.log('got data', data, panels);
+        observer.next({
+          ...scene,
+          panels,
+        })
+      }
+    })
+
+    return () => {
+      sub.unsubscribe();
+      console.log('teardown');
+    }
   });
+
+  // const onAddNested = () => {
+  //   panels.push(
+  //     of({
+  //       id: newUuid(),
+  //       title: 'inner scene',
+  //       type: 'scene',
+  //       gridPos: { x: 12, y: 1, w: 12, h: 1 },
+  //       panels: getDemoPanels(),
+  //     })
+  //   );
+  //   observer.next(panels);
+  // };
+
+  // panels.push(
+  //   of({
+  //     id: 'button3',
+  //     type: 'component',
+  //     gridPos: { x: 12, y: 1, w: 12, h: 1 },
+  //     component: () => <Button onClick={onAddNested}>Add nested scene</Button>,
+  //   })
+  // );
+
 
   // return new Observable<SceneItemList>(observer => {
   //   const panels: SceneItem[] = [];
@@ -103,48 +126,50 @@ export function getDemoScene(name: string): Observable<Scene> {
   // });
 }
 
-function getDemoPanel(): Observable<SceneItem> {
-  return new Observable<SceneItem>(observer => {
-    let counter = 1;
+// function getDemoPanel(): Observable<SceneItem> {
+//   return new Observable<SceneItem>(observer => {
+//     const panel: VizPanel = {
+//       id: newUuid(),
+//       type: 'viz',
+//       title: 'Demo panel',
+//       vizId: 'bar-gauge',
+//       gridPos: { x: 0, y: 0, w: 12, h: 5 },
+//       data: of({
+//         state: LoadingState.Done,
+//         series: [],
+//         timeRange: {} as TimeRange,
+//       } as PanelData),
+//     };
 
-    const panel: VizPanel = {
-      id: newUuid(),
-      type: 'viz',
-      title: 'Demo panel',
-      vizId: 'bar-gauge',
-      gridPos: { x: 0, y: 0, w: 12, h: 3 },
-      data: of({
-        state: LoadingState.Done,
-        series: [],
-        timeRange: {} as TimeRange,
-      } as PanelData),
-    };
+//     // setInterval(() => {
+//     //   observer.next({
+//     //     ...panel,
+//     //     title: 'Demo panel ' + counter++,
+//     //   });
+//     // }, 2000);
 
-    setInterval(() => {
-      observer.next({
-        ...panel,
-        title: 'Demo panel ' + counter++,
-      });
-    }, 2000);
+//     observer.next(panel);
+//   });
+// }
 
-    observer.next(panel);
-  });
-}
-
-function getQueryPanels(): Observable<SceneItem[]> {
-  return getDemoData().pipe(
-    map(data => {
-      return data.series.map((series, index) => {
-        return {
-          id: `data-${index}`,
-          type: 'viz',
-          title: series.name,
-          gridPos: { x: 0, y: index, w: 24, h: 1 },
-        } as VizPanel;
-      });
-    })
-  );
-}
+// function getQueryPanels(): Observable<SceneItem[]> {
+//   return getDemoData().pipe(
+//     map(data => {
+//       return data.series.map((series, index) => {
+//         return {
+//           id: `data-${index}`,
+//           type: 'viz',
+//           title: series.name,
+//           gridPos: { x: 0, y: index, w: 24, h: 1 },
+//           data: of({
+//             ...data,
+//             series: [series]
+//           })
+//         } as VizPanel;
+//       });
+//     })
+//   );
+// }
 
 function getDemoData(): Observable<PanelData> {
   return new Observable<PanelData>(observer => {
