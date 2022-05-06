@@ -6,7 +6,7 @@ weight = 450
 aliases = ["/docs/grafana/latest/alerting/unified-alerting/silences/"]
 +++
 
-# Silences
+# About alerting silences
 
 Use silences to stop notifications from one or more alerting rules. Silences do not prevent alert rules from being evaluated. Nor do they not stop alerting instances from being shown in the user interface. Silences only stop notifications from getting created. A silence lasts for only a specified window of time.
 
