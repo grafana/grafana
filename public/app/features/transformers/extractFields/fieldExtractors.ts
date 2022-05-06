@@ -14,10 +14,20 @@ const extJSON: FieldExtractor = {
   id: FieldExtractorID.JSON,
   name: 'JSON',
   description: 'Parse JSON string',
-  parse: (v: string) => {
-    return JSON.parse(v);
-  },
+  parse: parseJson,
 };
+
+function parseJson(raw: string): Record<string, any> {
+  const flatten = function (obj: Record<string, any>, path: string | null = null): Record<string, any> {
+    return Object.keys(obj).reduce((acc: Record<string, any>, key: string): Record<string, any> => {
+      const newPath = [path, key].filter(Boolean).join('.');
+      return typeof obj?.[key] === 'object'
+        ? { ...acc, ...flatten(obj[key], newPath) }
+        : { ...acc, [newPath]: obj[key] };
+    }, {});
+  };
+  return flatten(JSON.parse(raw));
+}
 
 function parseKeyValuePairs(raw: string): Record<string, string> {
   const buff: string[] = []; // array of characters

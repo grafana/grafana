@@ -14,6 +14,22 @@ describe('Extract fields from text', () => {
     `);
   });
 
+  it('Test complex json extraction', async () => {
+    const extractor = fieldExtractors.get(FieldExtractorID.JSON);
+    const out = extractor.parse('{"a":"1","b":2,"c":3,"d":{"e":4},"f":[5,6]}');
+
+    expect(out).toMatchInlineSnapshot(`
+      Object {
+        "a": "1",
+        "b": 2,
+        "c": 3,
+        "d.e": 4,
+        "f.0": 5,
+        "f.1": 6,
+      }
+    `);
+  });
+
   it('Test key-values with single/double quotes', async () => {
     const extractor = fieldExtractors.get(FieldExtractorID.KeyValues);
     const out = extractor.parse('a="1",   "b"=\'2\',c=3  x:y ;\r\nz="d and 4"');
