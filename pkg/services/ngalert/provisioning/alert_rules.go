@@ -43,28 +43,18 @@ func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, 
 func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) error {
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err := service.ruleStore.InsertAlertRules(ctx, []models.AlertRule{
-
-			{
-				ID:        rule.ID,
-				UID:       rule.UID,
-				OrgID:     rule.OrgID,
-				Title:     rule.Title,
-				Data:      rule.Data,
-				Condition: rule.Condition,
-				Version:   rule.Version,
-				RuleGroup: rule.RuleGroup,
-			},
+			rule,
 		})
 		if err != nil {
 			return err
 		}
-		return service.provenanceStore.SetProvenance(ctx, provenanceOrgAdapter{}, provenance)
+		return service.provenanceStore.SetProvenance(ctx, &rule, rule.OrgID, provenance)
 	})
 }
 
 func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) error {
 	// check that provenance is not changed in a invalid way
-	storedProvenance, err := service.provenanceStore.GetProvenance(ctx, &rule)
+	storedProvenance, err := service.provenanceStore.GetProvenance(ctx, &rule, rule.OrgID)
 	if err != nil {
 		return err
 	}
@@ -79,22 +69,13 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 		err := service.ruleStore.UpdateAlertRules(ctx, []store.UpdateRule{
 			{
 				Existing: &storedRule,
-				New: models.AlertRule{
-					ID:        rule.ID,
-					UID:       rule.UID,
-					OrgID:     rule.OrgID,
-					Title:     rule.Title,
-					Data:      rule.Data,
-					Condition: rule.Condition,
-					Version:   rule.Version,
-					RuleGroup: rule.RuleGroup,
-				},
+				New:      rule,
 			},
 		})
 		if err != nil {
 			return err
 		}
-		return service.provenanceStore.SetProvenance(ctx, provenanceOrgAdapter{}, provenance)
+		return service.provenanceStore.SetProvenance(ctx, &rule, rule.OrgID, provenance)
 	})
 }
 
@@ -104,7 +85,7 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int6
 		UID:   ruleUID,
 	}
 	// check that provenance is not changed in a invalid way
-	storedProvenance, err := service.provenanceStore.GetProvenance(ctx, rule)
+	storedProvenance, err := service.provenanceStore.GetProvenance(ctx, rule, rule.OrgID)
 	if err != nil {
 		return err
 	}
@@ -116,6 +97,6 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int6
 		if err != nil {
 			return err
 		}
-		return service.provenanceStore.DeleteProvenance(ctx, rule)
+		return service.provenanceStore.DeleteProvenance(ctx, rule, rule.OrgID)
 	})
 }
