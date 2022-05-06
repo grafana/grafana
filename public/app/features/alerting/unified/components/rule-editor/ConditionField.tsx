@@ -39,7 +39,7 @@ export const ConditionField: FC = () => {
     if (lastExpression) {
       setValue('condition', lastExpression.refId, { shouldValidate: true });
     }
-  }, [expressions, queries, setValue]);
+  }, [expressions, setValue]);
 
   // reset condition if option no longer exists or if it is unset, but there are options available
   useEffect(() => {
@@ -51,7 +51,7 @@ export const ConditionField: FC = () => {
     } else if (!condition && lastExpression) {
       setValue('condition', lastExpression.refId, { shouldValidate: true });
     }
-  }, [condition, expressions, options, queries, setValue]);
+  }, [condition, expressions, options, setValue]);
 
   return (
     <Field
