@@ -257,7 +257,7 @@ func (hs *HTTPServer) registerRoutes() {
 				return ac.EvalAny(
 					ac.EvalPermission(ac.ActionOrgUsersRead),
 					ac.EvalPermission(ac.ActionTeamsPermissionsWrite),
-					ac.EvalPermission(ac.ActionDashboardsPermissionsWrite),
+					ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite),
 					ac.EvalPermission(dashboards.ActionFoldersPermissionsWrite),
 				)
 			}
