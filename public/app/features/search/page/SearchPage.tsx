@@ -17,7 +17,7 @@ import { getGrafanaSearcher, QueryFilters, QueryResult } from '../service';
 import { getTermCounts } from '../service/backend';
 import { DashboardSearchItemType, DashboardSectionItem, SearchLayout } from '../types';
 
-import { ActionRow } from './components/ActionRow';
+import { ActionRow, getValidQueryLayout } from './components/ActionRow';
 import { ManageActions } from './components/ManageActions';
 import { SearchResultsTable } from './components/SearchResultsTable';
 import { newSearchSelection, updateSearchSelection } from './selection';
@@ -83,7 +83,8 @@ export default function SearchPage() {
     setSearchSelection(updateSearchSelection(searchSelection, !current, kind, [uid]));
   };
 
-  const showPreviews = query.layout === SearchLayout.Grid && config.featureToggles.dashboardPreviews;
+  const layout = getValidQueryLayout(query);
+  const showPreviews = layout === SearchLayout.Grid && config.featureToggles.dashboardPreviews;
 
   const renderResults = () => {
     if (results.loading) {
@@ -161,7 +162,7 @@ export default function SearchPage() {
                     id: 666, // do not use me!
                     isStarred: false,
                     tags: item.tags ?? [],
-                    selected: searchSelection.isSelected(kind, item.uid),
+                    checked: searchSelection.isSelected(kind, item.uid),
                   };
 
                   // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
@@ -182,7 +183,7 @@ export default function SearchPage() {
                 data={df}
                 selection={showManage ? searchSelection.isSelected : undefined}
                 selectionToggle={toggleSelection}
-                layout={query.layout}
+                layout={layout}
                 width={width - 5}
                 height={height}
                 tags={query.tag}

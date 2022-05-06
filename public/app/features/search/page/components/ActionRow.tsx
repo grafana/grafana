@@ -30,7 +30,7 @@ interface Props {
   hideLayout?: boolean;
 }
 
-function getValidQueryLayout(q: DashboardQuery): SearchLayout {
+export function getValidQueryLayout(q: DashboardQuery): SearchLayout {
   // Folders is not valid when a query exists
   if (q.layout === SearchLayout.Folders) {
     if (q.query || q.sort) {

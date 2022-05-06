@@ -75,7 +75,7 @@ export const SearchResultsTable = ({
   // React-table column definitions
   const access = useMemo(() => new DataFrameView<FieldAccess>(data), [data]);
   const memoizedColumns = useMemo(() => {
-    const isDashboardList = data.meta?.type === DataFrameType.DirectoryListing || layout === SearchLayout.Folders;
+    const isDashboardList = layout === SearchLayout.Folders;
     return generateColumns(
       access,
       isDashboardList,
@@ -87,18 +87,7 @@ export const SearchResultsTable = ({
       onTagFilterChange,
       onDatasourceChange
     );
-  }, [
-    data.meta?.type,
-    layout,
-    access,
-    width,
-    styles,
-    tags,
-    selection,
-    selectionToggle,
-    onTagFilterChange,
-    onDatasourceChange,
-  ]);
+  }, [layout, access, width, styles, tags, selection, selectionToggle, onTagFilterChange, onDatasourceChange]);
 
   const options: TableOptions<{}> = useMemo(
     () => ({

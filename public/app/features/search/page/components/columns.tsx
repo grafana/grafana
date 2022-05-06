@@ -30,8 +30,8 @@ export const generateColumns = (
   availableWidth -= 8; // ???
   let width = 50;
 
-  // TODO: Add optional checkbox support
   if (selection && selectionToggle) {
+    width = 30;
     columns.push({
       id: `column-checkbox`,
       Header: () => (
@@ -45,16 +45,18 @@ export const generateColumns = (
           />
         </div>
       ),
-      width: 30,
+      width,
       Cell: (p) => {
         const uid = uidField.values.get(p.row.index);
         const kind = kindField ? kindField.values.get(p.row.index) : 'dashboard'; // HACK for now
         const selected = selection(kind, uid);
+        const hasUID = uid != null; // Panels don't have UID! Likely should not be shown on pages with manage options
         return (
           <div {...p.cellProps} className={p.cellStyle}>
             <div className={styles.checkbox}>
               <Checkbox
-                value={selected}
+                disabled={!hasUID}
+                value={selected && hasUID}
                 onChange={(e) => {
                   selectionToggle(kind, uid);
                 }}
@@ -266,10 +268,10 @@ function makeTypeColumn(
   return {
     Cell: DefaultCell,
     id: `column-type`,
-    field: kindField,
+    field: kindField ?? typeField,
     Header: 'Type',
     accessor: (row: any, i: number) => {
-      const kind = kindField.values.get(i);
+      const kind = kindField?.values.get(i) ?? 'dashboard';
       let icon = 'public/img/icons/unicons/apps.svg';
       let txt = 'Dashboard';
       if (kind) {
