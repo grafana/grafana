@@ -5,21 +5,30 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 
-export type RadioButtonDotProps = {
+export interface RadioButtonDotProps {
   id: string;
   name: string;
   checked?: boolean;
   disabled?: boolean;
   label: React.ReactNode;
   description?: string;
-};
+  onClick?: (id: string) => void;
+}
 
-export const RadioButtonDot = ({ id, name, label, checked, disabled, description }: RadioButtonDotProps) => {
+export const RadioButtonDot = ({ id, name, label, checked, disabled, description, onClick }: RadioButtonDotProps) => {
   const styles = useStyles2(getStyles);
 
   return (
     <label title={description} className={styles.label}>
-      <input id={id} name={name} type="radio" checked={checked} disabled={disabled} className={styles.input} />
+      <input
+        id={id}
+        name={name}
+        type="radio"
+        checked={checked}
+        disabled={disabled}
+        className={styles.input}
+        onClick={() => onClick && onClick(id)}
+      />
       {label}
     </label>
   );

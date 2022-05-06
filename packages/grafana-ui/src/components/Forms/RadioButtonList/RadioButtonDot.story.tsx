@@ -4,7 +4,7 @@ import React from 'react';
 import { RadioButtonDot } from './RadioButtonDot';
 
 export default {
-  title: 'Forms/RadioButtonDot',
+  title: 'Forms/RadioButtonList/Dots',
   component: RadioButtonDot,
 } as Meta;
 
