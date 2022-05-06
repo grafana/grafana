@@ -142,16 +142,9 @@ type AzureMonitorJSONQuery struct {
 type AzureMonitorDimensionFilter struct {
 	Dimension string   `json:"dimension"`
 	Operator  string   `json:"operator"`
-	Filter    string   `json:"filter"`
 	Filters   []string `json:"filters,omitempty"`
-}
-
-func (a AzureMonitorDimensionFilter) String() string {
-	filter := "*"
-	if a.Filter != "" {
-		filter = a.Filter
-	}
-	return fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter)
+	// Deprecated: To support multiselection, filters are passed in a slice now. Also migrated in frontend.
+	Filter *string `json:"filter,omitempty"`
 }
 
 func (a AzureMonitorDimensionFilter) ConstructFiltersString() string {

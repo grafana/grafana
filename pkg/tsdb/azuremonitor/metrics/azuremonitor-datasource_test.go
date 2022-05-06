@@ -32,7 +32,8 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 	duration, _ := time.ParseDuration("400s")
-
+	wildcardFilter := "*"
+	testFilter := "test"
 	tests := []struct {
 		name                         string
 		azureMonitorVariedProperties map[string]interface{}
@@ -101,7 +102,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			name: "legacy query without resourceURI and has dimensionFilter*s* property with one dimension",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
-				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: "*"}},
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: &wildcardFilter}},
 				"top":              "30",
 			},
 			queryInterval:           duration,
@@ -112,7 +113,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			name: "legacy query without resourceURI and has dimensionFilter*s* property with two dimensions",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
-				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: "*"}, {Dimension: "tier", Operator: "eq", Filter: "*"}},
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: &wildcardFilter}, {Dimension: "tier", Operator: "eq", Filter: &wildcardFilter}},
 				"top":              "30",
 			},
 			queryInterval:           duration,
@@ -134,7 +135,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			name: "has dimensionFilter*s* property with not equals operator",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
-				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "ne", Filter: "*", Filters: []string{"test"}}},
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "ne", Filter: &wildcardFilter, Filters: []string{"test"}}},
 				"top":              "30",
 			},
 			queryInterval:           duration,
@@ -145,7 +146,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			name: "has dimensionFilter*s* property with startsWith operator",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
-				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "sw", Filter: "test"}},
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "sw", Filter: &testFilter}},
 				"top":              "30",
 			},
 			queryInterval:           duration,
@@ -156,7 +157,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			name: "correctly sets dimension operator to eq (irrespective of operator) when filter value is '*'",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
-				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "sw", Filter: "*"}, {Dimension: "tier", Operator: "ne", Filter: "*"}},
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "sw", Filter: &wildcardFilter}, {Dimension: "tier", Operator: "ne", Filter: &wildcardFilter}},
 				"top":              "30",
 			},
 			queryInterval:           duration,
@@ -167,7 +168,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			name: "correctly constructs target when multiple filter values are provided for the 'eq' operator",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
-				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: "*", Filters: []string{"test", "test2"}}},
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "eq", Filter: &wildcardFilter, Filters: []string{"test", "test2"}}},
 				"top":              "30",
 			},
 			queryInterval:           duration,
@@ -178,7 +179,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			name: "correctly constructs target when multiple filter values are provided for ne 'eq' operator",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":        "PT1M",
-				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "ne", Filter: "*", Filters: []string{"test", "test2"}}},
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "ne", Filter: &wildcardFilter, Filters: []string{"test", "test2"}}},
 				"top":              "30",
 			},
 			queryInterval:           duration,
