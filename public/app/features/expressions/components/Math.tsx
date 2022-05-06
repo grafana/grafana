@@ -50,7 +50,7 @@ export const Math: FC<Props> = ({ labelWidth, onChange, query }) => {
           <Icon name="book-open" /> Math operator
         </header>
         <div>
-          Run Math operations on one more queries, you reference the query by {'${refId}'} ie. $A, $B, $C etc.
+          Run math operations on one or more queries. You reference the query by ${refId} ie. $A, $B, $C etc.
           <br />
           Example: <code>$A + $B</code>
         </div>
