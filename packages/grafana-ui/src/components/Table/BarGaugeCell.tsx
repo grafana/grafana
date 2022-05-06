@@ -76,12 +76,12 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
-      {hasLinks && (
+      {hasLinks && !isNaN(displayValue.numeric) && (
         <DataLinksContextMenu links={getLinks} config={config}>
           {(api) => renderComponent(api)}
         </DataLinksContextMenu>
       )}
-      {!hasLinks && (
+      {!hasLinks && !isNaN(displayValue.numeric) && (
         <BarGauge
           width={innerWidth}
           height={tableStyles.cellHeightInner}

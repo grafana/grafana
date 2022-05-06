@@ -182,14 +182,17 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         pxAlign: false,
         scaleKey,
         theme,
+        colorMode,
+        thresholds: config.thresholds,
         drawStyle: customConfig.drawStyle!,
         lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,
         lineInterpolation: customConfig.lineInterpolation,
+        gradientMode: customConfig.gradientMode,
         showPoints: pointsMode,
         pointSize: customConfig.pointSize,
         fillOpacity: customConfig.fillOpacity,
-        fillColor: customConfig.fillColor ?? seriesColor,
+        fillColor: customConfig.fillColor,
       });
     }
 

@@ -136,11 +136,29 @@ export const totalsMetric = 'traces_service_graph_request_total';
 export const failedMetric = 'traces_service_graph_request_failed_total';
 export const histogramMetric = 'traces_service_graph_request_server_seconds_bucket';
 
-export const apmMetric = 'topk(5, sum(rate(traces_spanmetrics_calls_total{%%}[$__range] @ end())) by (span_name))';
-export const apmMetric2 =
-  'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",%%}[$__range] @ end())) by (span_name))';
-export const apmMetric3 =
-  'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",%%}[$__range] @ end())) by (le))';
+export const rateMetric = {
+  query: 'topk(5, sum(rate(traces_spanmetrics_calls_total{%%}[$__range] @ end())) by (span_name))',
+  instant: true,
+};
+export const rateTrendMetric = {
+  query: 'topk(5, sum(rate(traces_spanmetrics_calls_total{%%}[$__range])) by (span_name))',
+  instant: false,
+};
+export const errorRateMetric = {
+  query:
+    'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",%%}[$__range] @ end())) by (span_name))',
+  instant: true,
+};
+export const errorRateTrendMetric = {
+  query:
+    'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",%%}[$__range])) by (span_name))',
+  instant: true,
+};
+export const durationMetric = {
+  query:
+    'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",%%}[$__range] @ end())) by (le))',
+  instant: true,
+};
 
 export const serviceMapMetrics = [
   secondsMetric,
@@ -152,7 +170,7 @@ export const serviceMapMetrics = [
   // 'traces_service_graph_untagged_spans_total',
 ];
 
-export const apmMetrics = [apmMetric, apmMetric2, apmMetric3];
+export const apmMetrics = [rateMetric, rateTrendMetric, errorRateMetric, errorRateTrendMetric, durationMetric];
 
 /**
  * Map response from multiple prometheus metrics into a node graph data frames with nodes and edges.

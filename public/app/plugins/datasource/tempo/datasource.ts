@@ -13,7 +13,6 @@ import {
   FieldType,
   isValidGoDuration,
   LoadingState,
-  toDataFrame,
 } from '@grafana/data';
 import { config, BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
@@ -32,6 +31,11 @@ import {
   serviceMapMetrics,
   apmMetrics,
   totalsMetric,
+  rateMetric,
+  rateTrendMetric,
+  durationMetric,
+  errorRateMetric,
+  errorRateTrendMetric,
 } from './graphTransform';
 import {
   transformTrace,
@@ -373,61 +377,85 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
         ],
       };
 
-      const df = toDataFrame(responses[0].data[0]);
-      const df2 = toDataFrame(responses[0].data[1]);
-      const df3 = toDataFrame(responses[0].data[2]);
-      df.fields.push(df2.fields[2]);
-      df.fields.push(df3.fields[1]);
-      df.fields.shift();
+      var df = responses[0].data.filter((x) => {
+        return x.refId === rateMetric.query;
+      })[0];
+      const rateTrend = responses[0].data.filter((x) => {
+        return x.refId === rateTrendMetric.query;
+      });
+      const errorRate = responses[0].data.filter((x) => {
+        return x.refId === errorRateMetric.query;
+      });
+      const errorRateTrend = responses[0].data.filter((x) => {
+        return x.refId === errorRateTrendMetric.query;
+      });
+      const duration = responses[0].data.filter((x) => {
+        return x.refId === durationMetric.query;
+      });
+
+      df.fields.shift(); // remove time field
       df.fields[0].name = 'Name';
       df.fields[1].name = 'Rate';
-      df.fields[1].config.links = [];
-      df.fields[1].config.links?.push(
-        makePromLink(
-          'Run ' + apmMetrics[0],
-          buildExpr(apmMetrics[0], request.targets[0].serviceMapQuery),
-          datasourceUid,
-          true
-        )
-      );
-      df.fields[2].name = 'Error Rate';
-      df.fields[2].config.links = [];
-      df.fields[2].config.links?.push(
-        makePromLink(
-          'Run ' + apmMetrics[1],
-          buildExpr(apmMetrics[1], request.targets[0].serviceMapQuery),
-          datasourceUid,
-          true
-        )
-      );
-      df.fields[3].name = 'Duration';
-      df.fields[3].config.links = [];
-      df.fields[3].config.links?.push(
-        makePromLink(
-          'Run ' + apmMetrics[2],
-          buildExpr(apmMetrics[2], request.targets[0].serviceMapQuery),
-          datasourceUid,
-          true
-        )
-      );
-      const linksField = {
+      df.fields[1].config = getFieldConfig(rateMetric, request, datasourceUid);
+
+      df.fields.push({
+        ...rateTrend[0].fields[1],
+        values: new ArrayVector([
+          rateTrend[0].fields[1].values.toArray(),
+          rateTrend[1].fields[1].values.toArray(),
+          rateTrend[2].fields[1].values.toArray(),
+          rateTrend[3].fields[1].values.toArray(),
+          rateTrend[4].fields[1].values.toArray(),
+        ]),
+        name: 'Trend (Rate)',
+        labels: null,
+        config: {
+          color: {
+            mode: 'continuous-BlPu',
+          },
+          custom: {
+            displayMode: 'area-chart',
+          },
+        },
+      });
+
+      df.fields.push({
+        ...errorRate[0].fields[2],
+        name: 'Error Rate',
+        config: getFieldConfig(apmMetrics[2], request, datasourceUid),
+      });
+
+      df.fields.push({
+        ...errorRateTrend[0].fields[2],
+        name: 'Trend (Error Rate)',
+        labels: null,
+        config: {
+          color: {
+            mode: 'continuous-BlPu',
+          },
+          custom: {
+            displayMode: 'lcd-gauge',
+          },
+        },
+      });
+
+      df.fields.push({
+        ...duration[0].fields[1],
+        name: 'Duration',
+        config: getFieldConfig(apmMetrics[4], request, datasourceUid),
+      });
+
+      df.fields.push({
         name: 'Links',
         type: FieldType.string,
-        values: new ArrayVector(),
+        values: new ArrayVector(['Tempo', 'Tempo', 'Tempo', 'Tempo', 'Tempo']),
         config: {
           custom: {
-            filterable: true,
             instant: true,
           },
           links: [makeTempoLink('traces_spanmetrics_calls_total', '')],
         },
-      };
-      linksField.values.add('Tempo');
-      linksField.values.add('Tempo');
-      linksField.values.add('Tempo');
-      linksField.values.add('Tempo');
-      linksField.values.add('Tempo');
-      df.fields.push(linksField);
+      });
 
       return {
         data: [df, nodes, edges],
@@ -435,6 +463,19 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
       };
     })
   );
+}
+
+function getFieldConfig(metric: any, request: DataQueryRequest<TempoQuery>, datasourceUid: string) {
+  return {
+    links: [
+      makePromLink(
+        metric.query,
+        buildExpr(metric.query, request.targets[0].serviceMapQuery),
+        datasourceUid,
+        metric.instant
+      ),
+    ],
+  };
 }
 
 function makePromLink(title: string, metric: string, datasourceUid: string, instant: boolean) {
@@ -482,11 +523,11 @@ function addApmMetricsToRequest(
   promQuery: DataQueryRequest<PromQuery>
 ): DataQueryRequest<PromQuery> {
   const metrics = apmMetrics.map((metric) => {
-    const expr = buildExpr(metric, options.targets[0].serviceMapQuery);
+    const expr = buildExpr(metric.query, options.targets[0].serviceMapQuery);
     return {
-      refId: metric,
+      refId: metric.query,
       expr: expr,
-      instant: true,
+      instant: metric.instant,
     };
   });
 
