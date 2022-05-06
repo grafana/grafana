@@ -73,6 +73,25 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		})
 	})
 
+	t.Run("when aggregating multi-outputs response", func(t *testing.T) {
+		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/multi-metric-same-label-output.json")
+		require.NoError(t, err)
+		aggregatedResponse := aggregateResponse(getMetricDataOutputs)
+		idA := "a"
+		t.Run("should have one label", func(t *testing.T) {
+			assert.Len(t, aggregatedResponse[idA].Labels, 1)
+			assert.Len(t, aggregatedResponse[idA].Metrics, 1)
+		})
+		t.Run("should have points for label1 taken from both MetricDataResults", func(t *testing.T) {
+			require.NotNil(t, *aggregatedResponse[idA].Metrics[0].Label)
+			require.Equal(t, "label1", *aggregatedResponse[idA].Metrics[0].Label)
+			assert.Len(t, aggregatedResponse[idA].Metrics[0].Values, 6)
+		})
+		t.Run("should have statuscode 'Complete'", func(t *testing.T) {
+			assert.Equal(t, "Complete", aggregatedResponse[idA].StatusCode)
+		})
+	})
+
 	t.Run("when aggregating response and error codes are in first GetMetricDataOutput", func(t *testing.T) {
 		getMetricDataOutputs, err := loadGetMetricDataOutputsFromFile("./test-data/multiple-outputs2.json")
 		require.NoError(t, err)
