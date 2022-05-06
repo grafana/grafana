@@ -404,5 +404,5 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode: KioskMo
 });
 
 export const PublicDashboardPage = withTheme2(UnthemedDashboardPage);
-PublicDashboardPage.displayName = 'DashboardPage';
+PublicDashboardPage.displayName = 'PublicDashboardPage';
 export default connector(PublicDashboardPage);
