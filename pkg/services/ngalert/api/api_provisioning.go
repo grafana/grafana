@@ -35,6 +35,7 @@ type ContactPointService interface {
 type NotificationPolicyService interface {
 	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
 	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance) error
+	ResetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, error)
 }
 
 type AlertRuleService interface {
@@ -48,7 +49,7 @@ type AlertRuleService interface {
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Response {
 	policies, err := srv.policies.GetPolicyTree(c.Req.Context(), c.OrgId)
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-		return ErrResp(http.StatusNotFound, err, "")
+		return response.Error(http.StatusNotFound, err.Error(), nil)
 	}
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -57,20 +58,27 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Re
 	return response.JSON(http.StatusOK, policies)
 }
 
-func (srv *ProvisioningSrv) RoutePostPolicyTree(c *models.ReqContext, tree definitions.Route) response.Response {
-	// TODO: lift validation out of definitions.Rotue.UnmarshalJSON and friends into a dedicated validator.
+func (srv *ProvisioningSrv) RoutePutPolicyTree(c *models.ReqContext, tree definitions.Route) response.Response {
 	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgId, tree, alerting_models.ProvenanceAPI)
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-		return ErrResp(http.StatusNotFound, err, "")
+		return response.Error(http.StatusNotFound, err.Error(), nil)
 	}
 	if errors.Is(err, provisioning.ErrValidation) {
-		return ErrResp(http.StatusBadRequest, err, "")
+		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "policies updated"})
+}
+
+func (srv *ProvisioningSrv) RouteResetPolicyTree(c *models.ReqContext) response.Response {
+	tree, err := srv.policies.ResetPolicyTree(c.Req.Context(), c.OrgId)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusAccepted, tree)
 }
 
 func (srv *ProvisioningSrv) RouteGetContactPoints(c *models.ReqContext) response.Response {

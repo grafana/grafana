@@ -29,11 +29,12 @@ type ProvisioningApiForkingService interface {
 	RouteGetPolicyTree(*models.ReqContext) response.Response
 	RoutePostAlertRule(*models.ReqContext) response.Response
 	RoutePostContactpoints(*models.ReqContext) response.Response
-	RoutePostPolicyTree(*models.ReqContext) response.Response
 	RoutePutAlertRule(*models.ReqContext) response.Response
 	RoutePutAlertRuleGroup(*models.ReqContext) response.Response
 	RoutePutContactpoint(*models.ReqContext) response.Response
 	RouteInternalPutContactpoint(*models.ReqContext) response.Response // LOGZ.IO GRAFANA CHANGE :: DEV-32721 - Internal API to manage contact points
+	RoutePutPolicyTree(*models.ReqContext) response.Response
+	RouteResetPolicyTree(*models.ReqContext) response.Response
 }
 
 func (f *ForkedProvisioningApi) RouteDeleteAlertRule(ctx *models.ReqContext) response.Response {
@@ -88,14 +89,6 @@ func (f *ForkedProvisioningApi) RoutePostContactpoints(ctx *models.ReqContext) r
 	return f.forkRoutePostContactpoints(ctx, conf)
 }
 
-func (f *ForkedProvisioningApi) RoutePostPolicyTree(ctx *models.ReqContext) response.Response {
-	conf := apimodels.Route{}
-	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	return f.forkRoutePostPolicyTree(ctx, conf)
-}
-
 func (f *ForkedProvisioningApi) RoutePutAlertRule(ctx *models.ReqContext) response.Response {
 	uIDParam := web.Params(ctx.Req)[":UID"]
 	conf := apimodels.AlertRule{}
@@ -134,6 +127,18 @@ func (f *ForkedProvisioningApi) RouteInternalPutContactpoint(ctx *models.ReqCont
 }
 
 // LOGZ.IO GRAFANA CHANGE :: end
+
+func (f *ForkedProvisioningApi) RoutePutPolicyTree(ctx *models.ReqContext) response.Response {
+	conf := apimodels.Route{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.forkRoutePutPolicyTree(ctx, conf)
+}
+
+func (f *ForkedProvisioningApi) RouteResetPolicyTree(ctx *models.ReqContext) response.Response {
+	return f.forkRouteResetPolicyTree(ctx)
+}
 
 func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingService, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
@@ -202,8 +207,8 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 		)
 		// LOGZ.IO GRAFANA CHANGE :: end
 		group.Get(
-			toMacaronPath("/api/provisioning/policies"),
-			api.authorize(http.MethodGet, "/api/provisioning/policies"),
+			toMacaronPath("/api/v1/provisioning/policies"),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/policies"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/policies",
@@ -231,13 +236,13 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 				m,
 			),
 		)
-		group.Post(
-			toMacaronPath("/api/provisioning/policies"),
-			api.authorize(http.MethodPost, "/api/provisioning/policies"),
+		group.Put(
+			toMacaronPath("/api/v1/provisioning/policies"),
+			api.authorize(http.MethodPut, "/api/v1/provisioning/policies"),
 			metrics.Instrument(
-				http.MethodPost,
-				"/api/provisioning/policies",
-				srv.RoutePostPolicyTree,
+				http.MethodPut,
+				"/api/v1/provisioning/policies",
+				srv.RoutePutPolicyTree,
 				m,
 			),
 		)
@@ -283,5 +288,15 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 			),
 		)
 		// LOGZ.IO GRAFANA CHANGE :: end
+		group.Delete(
+			toMacaronPath("/api/v1/provisioning/policies"),
+			api.authorize(http.MethodDelete, "/api/v1/provisioning/policies"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/v1/provisioning/policies",
+				srv.RouteResetPolicyTree,
+				m,
+			),
+		)
 	}, middleware.ReqSignedIn)
 }
