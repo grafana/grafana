@@ -129,28 +129,27 @@ const getStyles = (theme: GrafanaTheme2, showHelp?: boolean) => ({
     font-weight: ${theme.typography.h5.fontWeight};
   `,
   documentationLink: css`
-    color: ${theme.v1.colors.linkExternal};
-    text-decoration: ${theme.v1.typography.link.decoration};
+    color: ${theme.colors.text.link};
   `,
   documentationContainer: css`
     display: ${showHelp ? 'flex' : 'none'};
     flex: 1;
     flex-direction: column;
-    gap: ${theme.v1.spacing.md};
+    gap: ${theme.spacing(2)};
   `,
   documentationFunctions: css`
     display: grid;
     grid-template-columns: max-content auto;
-    column-gap: ${theme.v1.spacing.md};
+    column-gap: ${theme.spacing(2)};
   `,
 });
 
 const getDocumentedFunctionStyles = (theme: GrafanaTheme2) => ({
   name: css`
-    font-weight: ${theme.v1.typography.weight.bold};
+    font-weight: ${theme.typography.fontWeightBold};
   `,
   description: css`
-    font-size: ${theme.v1.typography.size.sm};
-    color: ${theme.v1.colors.textFaint};
+    font-size: ${theme.typography.bodySmall.fontSize};
+    color: ${theme.colors.text.disabled};
   `,
 });
