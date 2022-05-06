@@ -14,4 +14,10 @@ Silences do not prevent alert rules from being evaluated. They also do not stop 
 
 You can configure Grafana managed silences as well as silences for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}). For more information, see [Alertmanager]({{< relref "../fundamentals/alertmanager.md" >}}).
 
-> **Note:** Before Grafana v8.2, the configuration of the embedded Alertmanager was shared across organisations. Users of Grafana 8.0 and 8.1 are advised to use the new Grafana 8 Alerts only if they have one organisation. Otherwise, silences for the Grafana managed alerts will be visible by all organizations.
+See also:
+
+- [About label matching for alert suppression]({{< relref "./label-matching-alert-suppression.md" >}})
+- [Create a silence]({{< relref "./create-silence.md" >}})
+- [Create a URL to link to a silence form]({{< relref "./linking-to-silence-form.md" >}})
+- [Edit silences]({{< relref "./edit-silence.md" >}})
+- [Remove a silences]({{< relref "./remove-silence.md" >}})

@@ -1,12 +1,12 @@
 +++
-title = "Linking to a silence form"
+title = "Create URL to link to silence form"
 description = "Linking to a silence form"
 keywords = ["grafana", "alerting", "silence", "mute"]
-weight = 453
+weight = 451
 aliases = ["/docs/grafana/latest/alerting/unified-alerting/silences/"]
 +++
 
-# Create a URL to silence form with defaults filled in
+# Create a URL to link to a silence form
 
 When linking to a silence form, provide the default matching labels and comment via `matchers` and `comment` query parameters. The `matchers` parameter requires one more matching labels of the type `[label][operator][value]` joined by a comma while the `operator` parameter can be one of the following: `=` (equals, not regex), `!=` (not equals, not regex), `=~` (equals, regex), `!~` (not equals, regex).
 

@@ -16,7 +16,7 @@ To add a silence:
 1. Click **New Silence** to open the Create silence page.
 1. In **Silence start and end**, select the start and end date to indicate when the silence should go into effect and expire.
 1. Optionally, in **Duration**, specify how long the silence is enforced. This automatically updates the end time in the **Silence start and end** field.
-1. In the **Name** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to. For more information, see [Label matching for alert suppression](#label-matching-for-alert-suppression).
+1. In the **Name** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to. For more information, see [Label matching for alert suppression]({{< relref "./label-matching-alert-suppression.md" >}}).
 1. In **Comment**, add details about the silence.
 1. In **Creator**, enter the name of the silence owner or keep the default owner.
 1. Click **Create**.
