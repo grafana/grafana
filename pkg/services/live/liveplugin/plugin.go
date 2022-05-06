@@ -83,5 +83,4 @@ func (g *ContextGetter) GetPluginContext(ctx context.Context, user *models.Signe
 		return backend.PluginContext{}, false, errutil.Wrap("Failed to get datasource", err)
 	}
 	return g.pluginContextProvider.GetWithDataSource(ctx, pluginID, user, ds)
-
 }
