@@ -15,11 +15,11 @@ var (
 // A DashboardVersion represents the comparable data in a dashboard, allowing
 // diffs of the dashboard to be performed.
 type DashboardVersion struct {
-	Id            int64  `json:"id"`
-	DashboardId   int64  `json:"dashboardId"`
-	ParentVersion int    `json:"parentVersion"`
-	RestoredFrom  int    `json:"restoredFrom"`
-	Version       int    `json:"version"`
+	Id            int64 `json:"id"`
+	DashboardId   int64 `json:"dashboardId"`
+	ParentVersion int   `json:"parentVersion"`
+	RestoredFrom  int   `json:"restoredFrom"`
+	Version       int   `json:"version"`
 
 	Created   time.Time `json:"created"`
 	CreatedBy int64     `json:"createdBy"`
@@ -34,7 +34,7 @@ type DashboardVersion struct {
 type DashboardVersionMeta struct {
 	Id            int64            `json:"id"`
 	DashboardId   int64            `json:"dashboardId"`
-	UID           string           `json:"uid"`
+	DashboardUID  string           `json:"uid"`
 	ParentVersion int              `json:"parentVersion"`
 	RestoredFrom  int              `json:"restoredFrom"`
 	Version       int              `json:"version"`
