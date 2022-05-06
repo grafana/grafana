@@ -181,7 +181,7 @@ Status Codes:
 
 ## Get dashboard version by dashboard UID
 
-`GET /api/dashboards/id/:dashboardId/versions/:uid`
+`GET /api/dashboards/uid/:uid/versions/:version`
 
 Get the dashboard version with the given version, for the dashboard with the given UID.
 
