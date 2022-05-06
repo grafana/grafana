@@ -74,6 +74,7 @@ const usePopulateData = ({ data }: Props) => {
       const clonedData = cloneDeep(newData);
       const updatedData = addMessageToData(clonedData, newLog);
       setNewData(updatedData);
+      window.parent.postMessage('Message Received', '*');
     };
 
     window.addEventListener('message', postMessage);
