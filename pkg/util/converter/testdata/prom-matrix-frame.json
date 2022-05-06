@@ -3,7 +3,7 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-wide",
           "custom": {
             "resultType": "matrix"
           }
@@ -20,7 +20,8 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
             },
             "labels": {
               "__name__": "up",
@@ -32,7 +33,8 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
             },
             "labels": {
               "__name__": "up",

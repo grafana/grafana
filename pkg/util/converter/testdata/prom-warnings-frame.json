@@ -3,7 +3,7 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-wide",
           "custom": {
             "resultType": "vector"
           },
@@ -30,7 +30,8 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
             },
             "labels": {
               "__name__": "up",
@@ -42,7 +43,8 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
             },
             "labels": {
               "__name__": "up",
@@ -54,7 +56,8 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
             },
             "labels": {
               "level": "error",
@@ -65,7 +68,8 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
             },
             "labels": {
               "level": "info",
@@ -76,7 +80,8 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
             },
             "labels": {
               "level": "debug",
@@ -91,19 +96,19 @@
             1435781451781,1645029699000
           ],
           [
-            1,0
-          ],
-          [
-            0,0
+            1,null
           ],
           [
             0,null
           ],
           [
-            0,null
+            null,null
           ],
           [
-            0,null
+            null,null
+          ],
+          [
+            null,null
           ]
         ],
         "entities": [

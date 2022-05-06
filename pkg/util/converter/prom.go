@@ -334,7 +334,7 @@ func readScalar(iter *jsoniter.Iterator) *backend.DataResponse {
 	t, v, err := readTimeValuePair(iter)
 	if err == nil {
 		timeField.Append(t)
-		valueField.Append(v)
+		valueField.Append(*v)
 	}
 
 	frame := data.NewFrame("", timeField, valueField)
@@ -355,7 +355,7 @@ func readMatrixOrVector(iter *jsoniter.Iterator, resultType string) *backend.Dat
 	timeField.Name = data.TimeSeriesTimeFieldName
 	frame := data.NewFrame("", timeField)
 	frame.Meta = &data.FrameMeta{
-		Type:   data.FrameTypeTimeSeriesMany,
+		Type:   data.FrameTypeTimeSeriesWide,
 		Custom: resultTypeToCustomMeta(resultType),
 	}
 	rsp := &backend.DataResponse{
@@ -363,7 +363,7 @@ func readMatrixOrVector(iter *jsoniter.Iterator, resultType string) *backend.Dat
 	}
 
 	for iter.ReadArray() {
-		valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, frame.Rows())
+		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, frame.Rows())
 		valueField.Name = data.TimeSeriesValueFieldName
 		valueField.Labels = data.Labels{}
 		frame.Fields = append(frame.Fields, valueField)
@@ -374,12 +374,12 @@ func readMatrixOrVector(iter *jsoniter.Iterator, resultType string) *backend.Dat
 				iter.ReadVal(&valueField.Labels)
 
 			case "value":
-				timeMap, rowIdx = addValueToFrame(frame, timeMap, rowIdx, iter)
+				timeMap, rowIdx = addValuePairToFrame(frame, timeMap, rowIdx, iter)
 
 			// nolint:goconst
 			case "values":
 				for iter.ReadArray() {
-					timeMap, rowIdx = addValueToFrame(frame, timeMap, rowIdx, iter)
+					timeMap, rowIdx = addValuePairToFrame(frame, timeMap, rowIdx, iter)
 				}
 			}
 		}
@@ -389,7 +389,7 @@ func readMatrixOrVector(iter *jsoniter.Iterator, resultType string) *backend.Dat
 	return rsp
 }
 
-func addValueToFrame(frame *data.Frame, timeMap map[int64]int, rowIdx int, iter *jsoniter.Iterator) (map[int64]int, int) {
+func addValuePairToFrame(frame *data.Frame, timeMap map[int64]int, rowIdx int, iter *jsoniter.Iterator) (map[int64]int, int) {
 	timeField := frame.Fields[0]
 	valueField := frame.Fields[len(frame.Fields)-1]
 
@@ -421,16 +421,14 @@ func expandFrame(frame *data.Frame, idx int) {
 	}
 }
 
-func readTimeValuePair(iter *jsoniter.Iterator) (time.Time, float64, error) {
+func readTimeValuePair(iter *jsoniter.Iterator) (time.Time, *float64, error) {
 	iter.ReadArray()
-	t := iter.ReadFloat64()
+	t := timeFromFloat(iter.ReadFloat64())
 	iter.ReadArray()
-	v := iter.ReadString()
+	fv, err := strconv.ParseFloat(string(iter.ReadStringAsSlice()), 64)
 	iter.ReadArray()
 
-	tt := timeFromFloat(t)
-	fv, err := strconv.ParseFloat(v, 64)
-	return tt, fv, err
+	return t, &fv, err
 }
 
 func readStream(iter *jsoniter.Iterator) *backend.DataResponse {
