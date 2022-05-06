@@ -16,7 +16,7 @@ export const ConstraintSelectionBox = ({
   onHorizontalConstraintChange,
   currentConstraints,
 }: Props) => {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles(currentConstraints));
 
   const onClickTopConstraint = () => {
     onVerticalConstraintChange(VerticalConstraint.Top);
@@ -26,12 +26,20 @@ export const ConstraintSelectionBox = ({
     onVerticalConstraintChange(VerticalConstraint.Bottom);
   };
 
+  const onClickVerticalCenterConstraint = () => {
+    onVerticalConstraintChange(VerticalConstraint.Center);
+  };
+
   const onClickLeftConstraint = () => {
     onHorizontalConstraintChange(HorizontalConstraint.Left);
   };
 
   const onClickRightConstraint = () => {
     onHorizontalConstraintChange(HorizontalConstraint.Right);
+  };
+
+  const onClickHorizontalCenterConstraint = () => {
+    onHorizontalConstraintChange(HorizontalConstraint.Center);
   };
 
   return (
@@ -52,56 +60,124 @@ export const ConstraintSelectionBox = ({
 -927 18 -17 17 -18 65 -18 926 0 832 1 911 16 927 16 18 45 19 468 21 248 2
 659 2 912 0 431 -2 462 -4 478 -21z"
         />
-        <path
-          className={styles.topConstraint}
+        <rect className={styles.topConstraint} height="228" width="46" y="1735" x="1123" />
+        <rect
+          className={styles.constraintHover}
           onClick={onClickTopConstraint}
-          fill="#fff"
-          d="M1125 1968 c-3 -8 -4 -66 -3 -129 3 -106 4 -114 23 -114 19 0 20 7
-20 125 0 111 -2 125 -18 128 -9 2 -19 -3 -22 -10z"
+          height="350"
+          width="300"
+          y="1680"
+          x="985"
+          fill="transparent"
         />
-        <path
+        <rect className={styles.bottomConstraint} height="228" width="46" y="210" x="1123" />
+        <rect
+          className={styles.constraintHover}
           onClick={onClickBottomConstraint}
-          fill="#fff"
-          d="M1125 438 c-3 -8 -4 -66 -3 -129 3 -106 4 -114 23 -114 19 0 20 7 20
-125 0 111 -2 125 -18 128 -9 2 -19 -3 -22 -10z"
+          height="350"
+          width="300"
+          y="135"
+          x="985"
+          fill="transparent"
         />
-        <path
+        <rect className={styles.leftConstraint} height="46" width="228" y="1060" x="265" />
+        <rect
+          className={styles.constraintHover}
           onClick={onClickLeftConstraint}
-          fill="#fff"
-          d="M253 1095 c-11 -30 12 -36 133 -33 111 3 119 4 119 23 0 19 -8 20
--123 23 -105 2 -123 0 -129 -13z"
+          height="300"
+          width="350"
+          y="925"
+          x="200"
+          fill="transparent"
         />
-        <path
+        <rect className={styles.rightConstraint} height="46" width="228" y="1060" x="1795" />
+        <rect
+          className={styles.constraintHover}
           onClick={onClickRightConstraint}
-          fill="#fff"
-          d="M1783 1095 c-11 -30 12 -36 133 -33 111 3 119 4 119 23 0 19 -8 20
--123 23 -105 2 -123 0 -129 -13z"
+          height="300"
+          width="350"
+          y="925"
+          x="1730"
+          fill="transparent"
         />
         <path
-          fill="#fff"
+          className={styles.box}
           d="M568 1669 c-17 -9 -18 -48 -18 -584 0 -558 1 -575 19 -585 27 -14
 1125 -14 1152 0 18 10 19 27 19 580 0 504 -2 570 -16 584 -14 14 -80 16 -577
 16 -363 -1 -568 -4 -579 -11z m1119 -42 c4 -5 4 -1079 0 -1084 -5 -4 -1079 -4
 -1084 0 -5 6 -4 1077 1 1085 4 7 1076 6 1083 -1z"
         />
-        <rect height="46.46269" width="3.68657" y="96.08956" x="113.11941" fill="#fff" />
-        <rect height="3.73134" width="46.04478" y="117.64181" x="91.82091" fill="#fff" />
-        {/* <path
-          fill="#fff"
-          d="M1125 1310 c-4 -6 -5 -55 -3 -108 l3 -96 -105 -1 c-98 0 -105 -1
--105 -20 0 -19 7 -20 105 -20 l104 -1 1 -104 c0 -98 1 -105 20 -105 19 0 20 7
-20 105 l1 104 104 1 c98 0 105 1 105 20 0 19 -7 20 -105 20 l-104 1 -1 104 c0
-89 -2 105 -17 108 -9 2 -19 -2 -23 -8z"
-        /> */}
+        <rect className={styles.verticalCenterConstraint} height="456" width="46" y="855" x="1123" />
+        <rect
+          className={styles.constraintHover}
+          onClick={onClickVerticalCenterConstraint}
+          height="660"
+          width="300"
+          y="750"
+          x="995"
+          fill="transparent"
+        />
+        <rect className={styles.horizontalCenterConstraint} height="46" width="456" y="1060" x="918" />
+        <rect
+          className={styles.constraintHover}
+          onClick={onClickHorizontalCenterConstraint}
+          height="300"
+          width="660"
+          y="925"
+          x="815"
+          fill="transparent"
+        />
       </g>
     </svg>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  topConstraint: css`
-    :hover {
-      d: path ('M10,30 A20,20 0,0,1 50,30 A20,20 0,0,1 90,30 Q90,60 50,90 Q10,60 10,30 z M5,5 L90,90');
-    }
-  `,
-});
+const getStyles = (currentConstraints: Constraint) => (theme: GrafanaTheme2) => {
+  const HOVER_COLOR = '#daebf7';
+  const HOVER_OPACITY = '0.3';
+  const SELECTED_COLOR = '#0d99ff';
+
+  const selectionBoxColor = theme.isDark ? '#ffffff' : '#000000';
+
+  return {
+    constraintHover: css`
+      &:hover {
+        fill: ${HOVER_COLOR};
+        fill-opacity: ${HOVER_OPACITY};
+      }
+    `,
+    topConstraint: css`
+      ${currentConstraints.vertical === VerticalConstraint.Top
+        ? `width: 92pt; x: 1077; fill: ${SELECTED_COLOR};`
+        : `fill: ${selectionBoxColor};`}
+    `,
+    bottomConstraint: css`
+      ${currentConstraints.vertical === VerticalConstraint.Bottom
+        ? `width: 92pt; x: 1077; fill: ${SELECTED_COLOR};`
+        : `fill: ${selectionBoxColor};`}
+    `,
+    leftConstraint: css`
+      ${currentConstraints.horizontal === HorizontalConstraint.Left
+        ? `height: 92pt; y: 1014; fill: ${SELECTED_COLOR};`
+        : `fill: ${selectionBoxColor};`}
+    `,
+    rightConstraint: css`
+      ${currentConstraints.horizontal === HorizontalConstraint.Right
+        ? `height: 92pt; y: 1014; fill: ${SELECTED_COLOR};`
+        : `fill: ${selectionBoxColor};`}
+    `,
+    horizontalCenterConstraint: css`
+      ${currentConstraints.horizontal === HorizontalConstraint.Center
+        ? `height: 92pt; y: 1014; fill: ${SELECTED_COLOR};`
+        : `fill: ${selectionBoxColor};`}
+    `,
+    verticalCenterConstraint: css`
+      ${currentConstraints.vertical === VerticalConstraint.Center
+        ? `width: 92pt; x: 1077; fill: ${SELECTED_COLOR};`
+        : `fill: ${selectionBoxColor};`}
+    `,
+    box: css`
+      fill: ${selectionBoxColor};
+    `,
+  };
+};

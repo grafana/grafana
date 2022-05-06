@@ -81,7 +81,7 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
         <ConstraintSelectionBox
           onVerticalConstraintChange={onVerticalConstraintChange}
           onHorizontalConstraintChange={onHorizontalConstraintChange}
-          currentConstraints={element.options.constraint}
+          currentConstraints={element.options.constraint ?? {}}
         />
         <Select options={verticalOptions} onChange={onVerticalConstraintSelect} value={layout?.vertical} />
         <Select
