@@ -33,7 +33,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   }
 
   componentDidUpdate(oldProps: Props) {
-    if (this.props.annotation !== oldProps.annotation) {
+    if (this.props.annotation !== oldProps.annotation && !this.props.datasource.annotations?.useLegacyRunner) {
       this.verifyDataSource();
     }
   }
@@ -57,6 +57,13 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
 
   onRunQuery = async () => {
     const { datasource, annotation } = this.props;
+    if (datasource.annotations?.useLegacyRunner) {
+      // In the new UI the running of query is done so the data can be mapped. In the legacy annotations this does
+      // not exist as the annotationQuery already returns annotation events which cannot be mapped. This means that
+      // right now running a query for data source with legacy runner does not make much sense.
+      return;
+    }
+
     const dashboard = getDashboardSrv().getCurrent();
     if (!dashboard) {
       return;
@@ -156,11 +163,15 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     );
   }
 
+  onAnnotationChange = (annotation: AnnotationQuery) => {
+    this.props.onChange(annotation);
+  };
+
   render() {
     const { datasource, annotation } = this.props;
     const { response } = this.state;
 
-    // Find the annotaiton runner
+    // Find the annotation runner
     let QueryEditor = datasource.annotations?.QueryEditor || datasource.components?.QueryEditor;
     if (!QueryEditor) {
       return <div>Annotations are not supported. This datasource needs to export a QueryEditor</div>;
@@ -177,8 +188,10 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
           onRunQuery={this.onRunQuery}
           data={response?.panelData}
           range={getTimeSrv().timeRange()}
+          annotation={annotation}
+          onAnnotationChange={this.onAnnotationChange}
         />
-        {datasource.type !== 'datasource' && (
+        {!datasource.annotations!.dontUseMapping && (
           <>
             {this.renderStatus()}
             <AnnotationFieldMapper response={response} mappings={annotation.mappings} change={this.onMappingChange} />

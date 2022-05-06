@@ -12,6 +12,10 @@ export class LegacyAnnotationQueryRunner implements AnnotationQueryRunner {
       return false;
     }
 
+    if (datasource.annotations?.useLegacyRunner) {
+      return true;
+    }
+
     return Boolean(datasource.annotationQuery && !datasource.annotations);
   }
 

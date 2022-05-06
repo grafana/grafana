@@ -20,12 +20,13 @@ export const standardAnnotationSupport: AnnotationSupport = {
   /**
    * Assume the stored value is standard model.
    */
-  prepareAnnotation: (json: any) => {
+  prepareAnnotation: (json) => {
     if (isString(json?.query)) {
       const { query, ...rest } = json;
       return {
         ...rest,
         target: {
+          refId: 'annotation_query',
           query,
         },
         mappings: {},
@@ -35,14 +36,12 @@ export const standardAnnotationSupport: AnnotationSupport = {
   },
 
   /**
-   * Convert the stored JSON model and environment to a standard data source query object.
-   * This query will be executed in the data source and the results converted into events.
-   * Returning an undefined result will quietly skip query execution
+   * Default is ot just return target from the annotation.
    */
   prepareQuery: (anno: AnnotationQuery) => anno.target,
 
   /**
-   * When the standard frame > event processing is insufficient, this allows explicit control of the mappings
+   * Provides default processing from dataFrame to annotation events.
    */
   processEvents: (anno: AnnotationQuery, data: DataFrame[]) => {
     return getAnnotationsFromData(data, anno.mappings);
@@ -50,7 +49,7 @@ export const standardAnnotationSupport: AnnotationSupport = {
 };
 
 /**
- * Flatten all panel data into a single frame
+ * Flatten all frames into a single frame with mergeTransformer.
  */
 
 export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFrame | undefined> {

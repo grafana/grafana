@@ -77,6 +77,10 @@ export interface AnnotationEventFieldMapping {
 }
 
 export type AnnotationEventMappings = Partial<Record<keyof AnnotationEvent, AnnotationEventFieldMapping>>;
+type AnnotationQueryEditorProps<TQuery extends DataQuery> = QueryEditorProps<any, TQuery> & {
+  annotation: AnnotationQuery<TQuery>;
+  onAnnotationChange: (annotation: AnnotationQuery<TQuery>) => void;
+};
 
 /**
  * Since Grafana 7.2
@@ -86,24 +90,35 @@ export type AnnotationEventMappings = Partial<Record<keyof AnnotationEvent, Anno
 export interface AnnotationSupport<TQuery extends DataQuery = DataQuery, TAnno = AnnotationQuery<TQuery>> {
   /**
    * This hook lets you manipulate any existing stored values before running them though the processor.
-   * This is particularly helpful when dealing with migrating old formats.  ie query as a string vs object
+   * This is particularly helpful when dealing with migrating old formats.  ie query as a string vs object.
    */
-  prepareAnnotation?(json: any): TAnno;
+  prepareAnnotation?(json: AnnotationQuery<TQuery>): AnnotationQuery<TQuery>;
 
   /**
    * Convert the stored JSON model to a standard datasource query object.
    * This query will be executed in the datasource and the results converted into events.
    * Returning an undefined result will quietly skip query execution
    */
-  prepareQuery?(anno: TAnno): TQuery | undefined;
+  prepareQuery?(anno: AnnotationQuery<TQuery>): TQuery | undefined;
 
   /**
    * When the standard frame > event processing is insufficient, this allows explicit control of the mappings
    */
-  processEvents?(anno: TAnno, data: DataFrame[]): Observable<AnnotationEvent[] | undefined>;
+  processEvents?(anno: AnnotationQuery<TQuery>, data: DataFrame[]): Observable<AnnotationEvent[] | undefined>;
 
   /**
    * Specify a custom QueryEditor for the annotation page.  If not specified, the standard one will be used
    */
-  QueryEditor?: ComponentType<QueryEditorProps<any, TQuery>>;
+  QueryEditor?: ComponentType<AnnotationQueryEditorProps<TQuery>>;
+
+  /**
+   * Opt out of using the default mapping functionality on frontend.
+   */
+  dontUseMapping?: boolean;
+
+  /**
+   * Use legacy runner. Used only as an escape hatch for easier transition to React based annotation editor.
+   * @private
+   */
+  useLegacyRunner?: boolean;
 }

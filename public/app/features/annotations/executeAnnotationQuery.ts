@@ -1,7 +1,7 @@
 import { Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
-import { CoreApp, DataQueryRequest, DataSourceApi, rangeUtil, ScopedVars } from '@grafana/data';
+import { AnnotationQuery, CoreApp, DataQueryRequest, DataSourceApi, rangeUtil, ScopedVars } from '@grafana/data';
 
 import { runRequest } from '../query/state/runRequest';
 
@@ -16,7 +16,7 @@ function getNextRequestId() {
 export function executeAnnotationQuery(
   options: AnnotationQueryOptions,
   datasource: DataSourceApi,
-  savedJsonAnno: any
+  savedJsonAnno: AnnotationQuery
 ): Observable<AnnotationQueryResponse> {
   const processor = {
     ...standardAnnotationSupport,
