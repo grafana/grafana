@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -13,39 +14,65 @@ import (
 	"testing"
 )
 
-func TestApiBehindFeatureFlag(t *testing.T) {
+func TestApiRetrieveConfig(t *testing.T) {
+	pdc := &models.PublicDashboardConfig{IsPublic: true}
+
 	testCases := []struct {
-		name                 string
-		featureFlags         []string
-		expectedHttpResponse int
+		name                        string
+		dashboardUid                string
+		expectedHttpResponse        int
+		publicDashboardConfigResult *models.PublicDashboardConfig
+		publicDashboardConfigError  error
 	}{
 		{
-			name:                 "returns 404 when feature flag not enabled",
-			featureFlags:         []string{},
-			expectedHttpResponse: http.StatusNotFound,
+			name:                        "retrieves public dashboard config when dashboard is found",
+			dashboardUid:                "1",
+			expectedHttpResponse:        http.StatusOK,
+			publicDashboardConfigResult: pdc,
+			publicDashboardConfigError:  nil,
 		},
 		{
-			name:                 "returns 200 when feature flag is enabled",
-			featureFlags:         []string{featuremgmt.FlagPublicDashboards},
-			expectedHttpResponse: http.StatusOK,
+			name:                        "returns 404 when dashboard not found",
+			dashboardUid:                "77777",
+			expectedHttpResponse:        http.StatusNotFound,
+			publicDashboardConfigResult: nil,
+			publicDashboardConfigError:  models.ErrDashboardNotFound,
+		},
+		{
+			name:                        "returns 500 when internal server error",
+			dashboardUid:                "1",
+			expectedHttpResponse:        http.StatusInternalServerError,
+			publicDashboardConfigResult: nil,
+			publicDashboardConfigError:  errors.New("database broken"),
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			sc := setupHTTPServerWithMockDb(t, false, false, test.featureFlags)
+			sc := setupHTTPServerWithMockDb(t, false, false, []string{featuremgmt.FlagPublicDashboards})
+
 			sc.hs.dashboardService = &dashboards.FakeDashboardService{
-				SavePublicDashboardConfigResult: &models.PublicDashboardConfig{IsPublic: false},
+				PublicDashboardConfigResult: test.publicDashboardConfigResult,
+				PublicDashboardConfigError:  test.publicDashboardConfigError,
 			}
+
 			setInitCtxSignedInViewer(sc.initCtx)
 			response := callAPI(
 				sc.server,
-				http.MethodPost,
+				http.MethodGet,
 				fmt.Sprintf("/api/dashboards/uid/1/public-config"),
-				strings.NewReader(`{ "isPublic": true }`),
+				nil,
 				t,
 			)
+
 			assert.Equal(t, test.expectedHttpResponse, response.Code)
+
+			if test.expectedHttpResponse == http.StatusOK {
+				var pdcResp models.PublicDashboardConfig
+				json.Unmarshal(response.Body.Bytes(), &pdcResp)
+				assert.Equal(t, test.publicDashboardConfigResult, &pdcResp)
+			}
+
 		})
 	}
 
@@ -76,7 +103,7 @@ func TestApiPersistsValue(t *testing.T) {
 		{
 			name:                 "returns 404 when dashboard not found",
 			expectedHttpResponse: http.StatusNotFound,
-			saveDashboardError:   models.ErrDataSourceNotFound,
+			saveDashboardError:   models.ErrDashboardNotFound,
 			isPublicResult:       false,
 		},
 	}
@@ -86,8 +113,8 @@ func TestApiPersistsValue(t *testing.T) {
 			sc := setupHTTPServerWithMockDb(t, false, false, []string{featuremgmt.FlagPublicDashboards})
 
 			sc.hs.dashboardService = &dashboards.FakeDashboardService{
-				SavePublicDashboardConfigResult: &models.PublicDashboardConfig{IsPublic: test.isPublicResult},
-				SaveDashboardError:              test.saveDashboardError,
+				PublicDashboardConfigResult: &models.PublicDashboardConfig{IsPublic: test.isPublicResult},
+				PublicDashboardConfigError:  test.saveDashboardError,
 			}
 
 			setInitCtxSignedInViewer(sc.initCtx)

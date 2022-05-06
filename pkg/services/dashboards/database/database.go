@@ -184,6 +184,26 @@ func (d *DashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models
 	return cmd.Result, err
 }
 
+// retrieves public dashboard configuration
+func (d *DashboardStore) GetPublicDashboardConfig(orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error) {
+	var result []*models.Dashboard
+
+	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		return sess.Where("org_id = ? AND uid= ?", orgId, dashboardUid).Find(&result)
+	})
+
+	if len(result) == 0 {
+		return nil, models.ErrDashboardNotFound
+	}
+
+	pdc := &models.PublicDashboardConfig{
+		IsPublic: result[0].IsPublic,
+	}
+
+	return pdc, err
+}
+
+// stores public dashboard configuration
 func (d *DashboardStore) SavePublicDashboardConfig(cmd models.SavePublicDashboardConfigCommand) (*models.PublicDashboardConfig, error) {
 	err := d.sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		affectedRowCount, err := sess.Table("dashboard").Where("org_id = ? AND uid = ?", cmd.OrgId, cmd.Uid).Update(map[string]interface{}{"is_public": cmd.PublicDashboardConfig.IsPublic})

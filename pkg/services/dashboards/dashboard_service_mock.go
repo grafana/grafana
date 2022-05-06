@@ -9,11 +9,13 @@ import (
 type FakeDashboardService struct {
 	DashboardService
 
-	SaveDashboardResult             *models.Dashboard
-	SavePublicDashboardConfigResult *models.PublicDashboardConfig
-	SaveDashboardError              error
-	SavedDashboards                 []*SaveDashboardDTO
-	ProvisionedDashData             *models.DashboardProvisioning
+	SaveDashboardResult *models.Dashboard
+	SavedDashboards     []*SaveDashboardDTO
+	ProvisionedDashData *models.DashboardProvisioning
+
+	PublicDashboardConfigResult *models.PublicDashboardConfig
+	PublicDashboardConfigError  error
+	SaveDashboardError          error
 }
 
 func (s *FakeDashboardService) SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error) {
@@ -26,8 +28,12 @@ func (s *FakeDashboardService) SaveDashboard(ctx context.Context, dto *SaveDashb
 	return s.SaveDashboardResult, s.SaveDashboardError
 }
 
+func (s *FakeDashboardService) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboardConfig, error) {
+	return s.PublicDashboardConfigResult, s.PublicDashboardConfigError
+}
+
 func (s *FakeDashboardService) SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*models.PublicDashboardConfig, error) {
-	return s.SavePublicDashboardConfigResult, s.SaveDashboardError
+	return s.PublicDashboardConfigResult, s.SaveDashboardError
 }
 
 func (s *FakeDashboardService) ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error) {

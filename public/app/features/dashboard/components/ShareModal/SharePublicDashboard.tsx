@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { Button, Field, Switch } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import { createErrorNotification } from 'app/core/copy/appNotification';
+import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 
-import { dashboardCanBePublic, savePublicConfig, SharingConfiguration } from './SharePublicDashboardUtils';
+import {
+  dashboardCanBePublic,
+  getPublicDashboardConfig,
+  savePublicDashboardConfig,
+  PublicDashboardConfig,
+} from './SharePublicDashboardUtils';
 import { ShareModalTabProps } from './types';
 
 interface Props extends ShareModalTabProps {}
@@ -14,19 +19,33 @@ interface Props extends ShareModalTabProps {}
 // 2. figure out how to disable the switch
 
 export const SharePublicDashboard = (props: Props) => {
-  const [isPublic, setIsPublic] = useState(props.dashboard.meta.isPublic ?? false);
+  const [publicDashboardConfig, setPublicDashboardConfig] = useState<PublicDashboardConfig>({ isPublic: false });
+  const dashboardUid = props.dashboard.uid;
+
+  useEffect(() => {
+    getPublicDashboardConfig(dashboardUid)
+      .then((pdc: PublicDashboardConfig) => {
+        setPublicDashboardConfig(pdc);
+      })
+      .catch(() => {
+        dispatch(notifyApp(createErrorNotification('Failed to retrieve public dashboard config')));
+      });
+  }, [dashboardUid]);
 
   const onSavePublicConfig = () => {
     // verify dashboard can be public
-    if (dashboardCanBePublic(props.dashboard)) {
+    if (!dashboardCanBePublic(props.dashboard)) {
       dispatch(notifyApp(createErrorNotification('This dashboard cannot be made public')));
       return;
     }
 
-    savePublicConfig({
-      isPublic: isPublic,
-      dashboardUid: props.dashboard.uid,
-    } as SharingConfiguration);
+    try {
+      savePublicDashboardConfig(props.dashboard.uid, publicDashboardConfig);
+      dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
+    } catch (err) {
+      console.error('Error while making dashboard public', err);
+      dispatch(notifyApp(createErrorNotification('Error making dashboard public')));
+    }
   };
 
   return (
@@ -35,9 +54,13 @@ export const SharePublicDashboard = (props: Props) => {
       <Field label="Enabled" description="Configures whether current dashboard can be available publicly">
         <Switch
           id="share-current-time-range"
-          disabled={dashboardCanBePublic(props.dashboard)}
-          value={isPublic}
-          onChange={() => setIsPublic(!isPublic)}
+          disabled={!dashboardCanBePublic(props.dashboard)}
+          value={publicDashboardConfig?.isPublic}
+          onChange={() =>
+            setPublicDashboardConfig((state) => {
+              return { ...state, isPublic: !state.isPublic };
+            })
+          }
         />
       </Field>
       <Button onClick={onSavePublicConfig}>Save Sharing Configuration</Button>
