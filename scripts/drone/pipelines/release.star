@@ -402,18 +402,25 @@ def publish_packages_pipeline():
         'event': ['promote'],
         'target': ['public'],
     }
-    steps = [
+    oss_steps = [
         download_grabpl_step(),
         store_packages_step(edition='oss', ver_mode='release'),
+    ]
+
+    enterprise_steps = [
+        download_grabpl_step(),
         store_packages_step(edition='enterprise', ver_mode='release'),
+    ]
+    deps = [
+        'publish-artifacts-public',
+        'publish-docker-oss-public',
+        'publish-docker-enterprise-public'
     ]
 
     return [pipeline(
-        name='publish-packages', trigger=trigger, steps=steps, edition="all", depends_on=[
-            'publish-artifacts-public',
-            'publish-docker-oss-public',
-            'publish-docker-enterprise-public'
-        ]
+        name='publish-packages-oss', trigger=trigger, steps=oss_steps, edition="all", depends_on=deps
+    ), pipeline(
+        name='publish-packages-enterprise', trigger=trigger, steps=enterprise_steps, edition="all", depends_on=deps
     )]
 
 def publish_npm_pipelines(mode):

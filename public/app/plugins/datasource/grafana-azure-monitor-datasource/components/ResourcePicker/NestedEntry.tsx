@@ -27,8 +27,8 @@ export const NestedEntry: React.FC<NestedEntryProps> = ({
   isDisabled,
   isOpen,
   isSelectable,
-  scrollIntoView,
   level,
+  scrollIntoView,
   onToggleCollapse,
   onSelectedChange,
 }) => {

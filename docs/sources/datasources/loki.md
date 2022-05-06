@@ -55,45 +55,92 @@ The new field with the link shown in log details:
 
 ## Loki query editor
 
-You can use the Loki query editor to create log and metric queries.
+Loki query editor is separated into 3 distinct modes that you can switch between. See docs for each section below.
 
-| Name               | Description                                                                                                                                                                                   |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Query expression` | Loki query expression, refer to the [LogQL documentation](https://grafana.com/docs/loki/latest/logql/) for more information.                                                                  |
-| `Query type`       | Choose the type of query to run. The instant type queries against a single point in time. We are using "To" time from the time range. The range type queries over the selected range of time. |
-| `Line limit`       | Upper limit for number of log lines returned by query. The default is the Maximum lines limit set in Loki settings.                                                                           |
-| `Legend`           | Available only in Dashboard. Controls the name of the time series, using name or pattern. For example `{{hostname}}` is replaced with the label value for the label `hostname`.               |
+At the top of the editor there is `Run query` button that will run the query and `Explain | Builder | Code` tabs to switch between the editor modes. If the query editor is in Builder mode there are additional elements explained in the Builder section.
 
-### Log browser
+Each mode is synchronized with the other modes, so you can switch between them without losing your work, although there are some limitations. Some more complex queries are not yet supported in the builder mode. If you try to switch from `Code` to `Builder` with such query, editor will show a popup explaining that you can lose some parts of the query, and you can decide if you still want to continue to `Builder` mode or not.
+
+### Code mode
+
+Code mode allows you to write raw queries in a textual editor. It implements autocomplete features and syntax highlighting to help with writing complex queries. In addition, it also contains `Log browser` to further aid with writing queries (see more docs below).
+
+For more information about Loki query language, refer to the [Loki documentation](https://grafana.com/docs/loki/latest/logql/).
+
+#### Autocomplete
+
+Autocomplete kicks automatically in appropriate times during typing. Autocomplete can suggest both static functions, aggregations and parsers but also dynamic items like labels. Autocomplete dropdown also shows documentation for the suggested items, either static one or dynamic metric documentation where available.
+
+#### Log browser
 
 With Loki log browser you can easily navigate through your list of labels and values and construct the query of your choice. Log browser has multi-step selection:
 
 1. Choose the labels you would like to consider for your search.
-2. Pick the values for selected labels. Log browser supports facetting and therefore it shows you only possible label combinations.
+2. Search for the values for selected labels. Search filed supports fuzzy search. Log browser also supports facetting and therefore it shows you only possible label combinations.
 3. Choose the type of query - logs query or rate metrics query. Additionally, you can also validate selector.
 
 {{< figure src="/static/img/docs/v75/loki_log_browser.png" class="docs-image--no-shadow" max-width="800px" caption="Screenshot of the log browser for Loki" >}}
+
+#### Options
+
+| Name         | Description                                                                                                                                                                                                                                                                           |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Type`       | Choose the type of query to run. The `instant` type queries against a single point in time. We are using "To" time from the time range. The `range` type queries over the selected range of time.                                                                                     |
+| `Line limit` | Upper limit for number of log lines returned by query. The default is the Maximum lines limit set in Loki settings.                                                                                                                                                                   |
+| `Legend`     | Available only in Dashboard. Controls the name of the time series, using name or pattern. For example `{{hostname}}` is replaced with the label value for the label `hostname`.                                                                                                       |
+| `Resolution` | Resolution 1/1 sets step parameter of Loki metrics range queries such that each pixel corresponds to one data point. For better performance, lower resolutions can be picked. 1/2 only retrieves a data point for every other pixel, and 1/10 retrieves one data point per 10 pixels. |
+
+### Builder mode
+
+#### Toolbar
+
+In addition to `Run query` button and mode switcher, in builder mode additional elements are available:
+
+| Name           | Description                                                                                                                       |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Query patterns | A list of useful operation patterns that can be used to quickly add multiple operations to your query to achieve a specific goal. |
+| Raw query      | Toggle to show raw query generated by the builder that will be sent to Loki instance.                                             |
+
+#### Labels selector
+
+Select desired labels and their values from the dropdown list. When label is selected, available values are fetched from the server. Use the `+` button to add more labels. Use the `x` button to remove a label.
+
+#### Operations
+
+Use the `+ Operations` button to add operation to your query. Operations are grouped into sections for easier navigation. When the operations dropdown is open, write into the search input to search and filter operations list.
+
+Operations in a query are shown as boxes in the operations section. Each has a header with a name and additional action buttons. Hover over the operation header to show the action buttons. Click the `v` button to quickly replace the operation with different one of the same type. Click the `info` button to open operations' description tooltip. Click the `x` button to remove the operation.
+
+Operation can have additional parameters under the operation header. See the operation description or Loki docs for more details about each operation.
+
+Some operations make sense only in specific order, if adding an operation would result in nonsensical query, operation will be added to the correct place. To order operations manually drag operation box by the operation name and drop in appropriate place.
+
+#### Raw query
+
+This section is shown only if the `Raw query` switch from the query editor top toolbar is set to `on`. It shows the raw query that will be created and executed by the query editor.
+
+### Explain mode
+
+Explain mode helps with understanding the query. It shows a step by step explanation of all query parts and the operations.
 
 ## Querying with Loki
 
 There are two types of LogQL queries:
 
-- Log queries - Return the contents of log lines.
-- Metric queries - Extend log queries and calculate sample values based on the content of logs from a log query.
+- Log queries
+- Metric queries
 
 ### Log queries
 
-Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a [LogQL](https://grafana.com/docs/loki/latest/logql/#log-queries) query to display your logs.
+Loki log queries return the contents of the log lines. Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a LogQL query to display your logs.F or more information about log queries and LogQL, refer to the [Loki log queries documentation](https://grafana.com/docs/loki/latest/logql/log_queries/)
 
-A log query consists of two parts: log stream selector, and a log pipeline. For performance reasons begin by choosing a log stream by selecting a log label.
-
-### Log context
+#### Log context
 
 When using a search expression as detailed above, you can retrieve the context surrounding your filtered results.
 By clicking the `Show Context` link on the filtered rows, you'll be able to investigate the log messages that came before and after the
 log message you're interested in.
 
-### Live tailing
+#### Live tailing
 
 Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore]({{< relref "../explore/#loki-specific-features" >}}).
 
@@ -138,9 +185,9 @@ In your `server` section, add the following configuration:
 
 > **Note:** This feature is only available in Grafana v6.3+.
 
-## Metric queries
+### Metric queries
 
-LogQL supports wrapping a log query with functions that allow for creating metrics out of the logs. See [LogQL](https://grafana.com/docs/loki/latest/logql/#metric-queries) documentation on how to create and use metrics queries.
+LogQL supports wrapping a log query with functions that allow for creating metrics out of the logs. For more information about metric queries, refer to the [Loki metric queries documentation](https://grafana.com/docs/loki/latest/logql/metric_queries/)
 
 ## Templating
 

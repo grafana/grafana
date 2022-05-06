@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { PanelData } from '@grafana/data/src/types';
 import { InlineFieldRow } from '@grafana/ui';
 
 import type Datasource from '../../datasource';
@@ -18,6 +19,7 @@ import { ResourceRowType } from '../ResourcePicker/types';
 import { useMetricNames, useMetricNamespaces, useMetricMetadata } from './dataHooks';
 
 interface MetricsQueryEditorProps {
+  data: PanelData | undefined;
   query: AzureMonitorQuery;
   datasource: Datasource;
   onChange: (newQuery: AzureMonitorQuery) => void;
@@ -26,6 +28,7 @@ interface MetricsQueryEditorProps {
 }
 
 const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
+  data,
   query,
   datasource,
   variableOptionGroup,
@@ -88,6 +91,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
         />
       </InlineFieldRow>
       <DimensionFields
+        data={data}
         query={query}
         datasource={datasource}
         variableOptionGroup={variableOptionGroup}

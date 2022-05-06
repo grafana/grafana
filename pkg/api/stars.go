@@ -9,6 +9,32 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
+	query := models.GetUserStarsQuery{
+		UserId: c.SignedInUser.UserId,
+	}
+
+	err := hs.SQLStore.GetUserStars(c.Req.Context(), &query)
+	if err != nil {
+		return response.Error(500, "Failed to get user stars", err)
+	}
+
+	iuserstars := query.Result
+	uids := []string{}
+	for dashboardId := range iuserstars {
+		query := &models.GetDashboardQuery{
+			Id:    dashboardId,
+			OrgId: c.OrgId,
+		}
+		err := hs.SQLStore.GetDashboard(c.Req.Context(), query)
+		if err != nil {
+			return response.Error(500, "Failed to get dashboard", err)
+		}
+		uids = append(uids, query.Result.Uid)
+	}
+	return response.JSON(200, uids)
+}
+
 func (hs *HTTPServer) StarDashboard(c *models.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
