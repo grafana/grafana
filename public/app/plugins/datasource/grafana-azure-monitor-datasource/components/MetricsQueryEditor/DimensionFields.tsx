@@ -104,7 +104,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
   };
 
   const onFilterInputChange = (index: number, v: SelectableValue<string> | null) => {
-    onFieldChange(index, 'filter', v?.value ?? '');
+    onFieldChange(index, 'filters', [v?.value ?? '']);
   };
 
   const getValidDimensionOptions = (selectedDimension: string) => {
@@ -184,9 +184,9 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
               <Select
                 menuShouldPortal
                 placeholder="Select value"
-                value={filter.filter ? filter.filter : ''}
+                value={filter.filters ? filter.filters[0] : ''}
                 allowCustomValue
-                options={getValidFilterOptions(filter.filter, filter.dimension)}
+                options={getValidFilterOptions(filter.filters ? filter.filters[0] : '', filter.dimension)}
                 onChange={(v) => onFilterInputChange(index, v)}
                 isClearable
               />
