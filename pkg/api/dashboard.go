@@ -541,11 +541,11 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 	}
 
 	query := models.GetDashboardVersionsQuery{
-		OrgId:       c.OrgId,
-		DashboardId: dashID,
-		UID:         dashUID,
-		Limit:       c.QueryInt("limit"),
-		Start:       c.QueryInt("start"),
+		OrgId:        c.OrgId,
+		DashboardId:  dashID,
+		DashboardUID: dashUID,
+		Limit:        c.QueryInt("limit"),
+		Start:        c.QueryInt("start"),
 	}
 
 	if err := hs.SQLStore.GetDashboardVersions(c.Req.Context(), &query); err != nil {
