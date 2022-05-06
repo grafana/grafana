@@ -15,7 +15,7 @@ interface Props {
 }
 
 const mathPlaceholder =
-  'Math operations on one more queries, you reference the query by ${refId} ie. $A, $B, $C etc\n' + 'Example: $A + $B';
+  'Math operations on one or more queries. You reference the query by ${refId} ie. $A, $B, $C etc\n' + 'The sum of two scalar values: $A + $B > 10';
 
 export const Math: FC<Props> = ({ labelWidth, onChange, query }) => {
   const [showHelp, toggleShowHelp] = useToggle(true);
