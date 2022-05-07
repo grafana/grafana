@@ -4,7 +4,6 @@ import { catchError, map, mergeMap, toArray } from 'rxjs/operators';
 
 import {
   ArrayVector,
-  DataFrame,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
@@ -439,9 +438,14 @@ function getApmTableFrame(
     }
 
     if (rateTrend.length > 0 && rateTrend[0].fields?.length > 1) {
+      var values = [];
+      for (const frame in rateTrend) {
+        values.push(rateTrend[frame].fields[1].values.toArray());
+      }
+
       df.fields.push({
         ...rateTrend[0].fields[1],
-        values: getRateTrendValues(rateTrend),
+        values: new ArrayVector(values),
         name: 'Trend (Rate)',
         labels: null,
         config: {
@@ -528,14 +532,6 @@ function getApmTableFrame(
   return df;
 }
 
-function getRateTrendValues(rateTrend: any) {
-  var values = [];
-  for (const frame in rateTrend) {
-    values.push(rateTrend[frame].fields[1].values.toArray());
-  }
-  return new ArrayVector(values);
-}
-
 function makePromLink(title: string, metric: string, datasourceUid: string, instant: boolean) {
   return {
     url: '',
@@ -568,14 +564,14 @@ function makeTempoLink(title: string, query: string) {
 }
 
 function buildExpr(metric: string, serviceMapQuery: string | undefined) {
-  if (serviceMapQuery) {
-    // map serviceGraph metric tags to APM metric tags
-    serviceMapQuery = serviceMapQuery.replace('client', 'service').replace('server', 'service');
-
-    serviceMapQuery = serviceMapQuery.replace('{', '').replace('}', '');
-    return `${metric.replace('REPLACE_STRING', serviceMapQuery)}`;
+  if (!serviceMapQuery || serviceMapQuery === '{}') {
+    const replaceString = metric.includes(',REPLACE_STRING') ? ',REPLACE_STRING' : 'REPLACE_STRING';
+    return `${metric.replace(replaceString, '')}`;
   }
-  return `${metric.replace('REPLACE_STRING', '')}`;
+  // map serviceGraph metric tags to APM metric tags
+  serviceMapQuery = serviceMapQuery.replace('client', 'service').replace('server', 'service');
+  serviceMapQuery = serviceMapQuery.replace('{', '').replace('}', '');
+  return `${metric.replace('REPLACE_STRING', serviceMapQuery)}`;
 }
 
 function addApmMetricsToRequest(
