@@ -1,7 +1,7 @@
-import { isArray, isNumber } from 'lodash';
+import { isArray } from 'lodash';
 import React, { FC } from 'react';
 
-import { ArrayVector, Field, FieldType, FieldConfig, NumericRange, reduceField, ReducerID } from '@grafana/data';
+import { ArrayVector, Field, FieldType, FieldConfig, getMinMaxAndDelta } from '@grafana/data';
 import { GraphDrawStyle, GraphFieldConfig, LineInterpolation } from '@grafana/schema';
 
 import { Sparkline } from '../Sparkline/Sparkline';
@@ -48,35 +48,4 @@ export const AreaChartCell: FC<TableCellProps> = (props) => {
       />
     </div>
   );
-
-  function getMinMaxAndDelta(field: Field): NumericRange {
-    if (field.type !== FieldType.number) {
-      return { min: 0, max: 100, delta: 100 };
-    }
-
-    // Calculate min/max if required
-    let min = field.config.min;
-    let max = field.config.max;
-
-    if (!isNumber(min) || !isNumber(max)) {
-      if (field.values && field.values.length) {
-        const stats = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
-        if (!isNumber(min)) {
-          min = stats[ReducerID.min];
-        }
-        if (!isNumber(max)) {
-          max = stats[ReducerID.max];
-        }
-      } else {
-        min = 0;
-        max = 100;
-      }
-    }
-
-    return {
-      min,
-      max,
-      delta: max! - min!,
-    };
-  }
 };
