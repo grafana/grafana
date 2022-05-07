@@ -23,6 +23,8 @@ type ProvisioningApiForkingService interface {
 	RouteDeleteContactpoints(*models.ReqContext) response.Response
 	RouteGetContactpoints(*models.ReqContext) response.Response
 	RouteGetPolicyTree(*models.ReqContext) response.Response
+	RouteGetTemplate(*models.ReqContext) response.Response
+	RouteGetTemplates(*models.ReqContext) response.Response
 	RoutePostContactpoints(*models.ReqContext) response.Response
 	RoutePostPolicyTree(*models.ReqContext) response.Response
 	RoutePutContactpoints(*models.ReqContext) response.Response
@@ -38,6 +40,14 @@ func (f *ForkedProvisioningApi) RouteGetContactpoints(ctx *models.ReqContext) re
 
 func (f *ForkedProvisioningApi) RouteGetPolicyTree(ctx *models.ReqContext) response.Response {
 	return f.forkRouteGetPolicyTree(ctx)
+}
+
+func (f *ForkedProvisioningApi) RouteGetTemplate(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetTemplate(ctx)
+}
+
+func (f *ForkedProvisioningApi) RouteGetTemplates(ctx *models.ReqContext) response.Response {
+	return f.forkRouteGetTemplates(ctx)
 }
 
 func (f *ForkedProvisioningApi) RoutePostContactpoints(ctx *models.ReqContext) response.Response {
@@ -93,6 +103,26 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApiForkingServi
 				http.MethodGet,
 				"/api/provisioning/policies",
 				srv.RouteGetPolicyTree,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/provisioning/templates/{ID}"),
+			api.authorize(http.MethodGet, "/api/provisioning/templates/{ID}"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/provisioning/templates/{ID}",
+				srv.RouteGetTemplate,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/provisioning/templates"),
+			api.authorize(http.MethodGet, "/api/provisioning/templates"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/provisioning/templates",
+				srv.RouteGetTemplates,
 				m,
 			),
 		)

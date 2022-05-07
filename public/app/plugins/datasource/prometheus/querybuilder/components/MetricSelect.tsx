@@ -30,6 +30,12 @@ export function MetricSelect({ query, onChange, onGetMetrics }: Props) {
     if (!label) {
       return false;
     }
+
+    // custom value is not a string label but a react node
+    if (!label.toLowerCase) {
+      return true;
+    }
+
     const searchWords = searchQuery.split(splitSeparator);
     return searchWords.reduce((acc, cur) => acc && label.toLowerCase().includes(cur.toLowerCase()), true);
   }, []);

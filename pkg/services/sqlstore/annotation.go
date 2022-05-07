@@ -42,7 +42,7 @@ func NewSQLAnnotationRepo(sql *SQLStore) SQLAnnotationRepo {
 }
 
 func (r *SQLAnnotationRepo) Save(item *annotations.Item) error {
-	return inTransaction(func(sess *DBSession) error {
+	return r.sql.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
 		tags := models.ParseTagPairs(item.Tags)
 		item.Tags = models.JoinTagPairs(tags)
 		item.Created = timeNow().UnixNano() / int64(time.Millisecond)

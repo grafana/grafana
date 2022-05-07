@@ -31,7 +31,7 @@ export const richHistoryLimitExceededAction = createAction('explore/richHistoryL
 export const richHistorySettingsUpdatedAction = createAction<RichHistorySettings>('explore/richHistorySettingsUpdated');
 export const richHistorySearchFiltersUpdatedAction = createAction<{
   exploreId: ExploreId;
-  filters: RichHistorySearchFilters;
+  filters?: RichHistorySearchFilters;
 }>('explore/richHistorySearchFiltersUpdatedAction');
 
 /**
