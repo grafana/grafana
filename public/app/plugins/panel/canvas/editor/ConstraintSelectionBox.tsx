@@ -46,8 +46,8 @@ export const ConstraintSelectionBox = ({
     <svg
       version="1.0"
       xmlns="http://www.w3.org/2000/svg"
-      width="228.000000pt"
-      height="228.000000pt"
+      width="75.000000pt"
+      height="75.000000pt"
       viewBox="0 0 228.000000 228.000000"
       preserveAspectRatio="xMidYMid meet"
     >
@@ -67,7 +67,7 @@ export const ConstraintSelectionBox = ({
           height="350"
           width="300"
           y="1680"
-          x="985"
+          x="995"
           fill="transparent"
         />
         <rect className={styles.bottomConstraint} height="228" width="46" y="210" x="1123" />
@@ -77,7 +77,7 @@ export const ConstraintSelectionBox = ({
           height="350"
           width="300"
           y="135"
-          x="985"
+          x="995"
           fill="transparent"
         />
         <rect className={styles.leftConstraint} height="46" width="228" y="1060" x="265" />
@@ -134,7 +134,7 @@ export const ConstraintSelectionBox = ({
 
 const getStyles = (currentConstraints: Constraint) => (theme: GrafanaTheme2) => {
   const HOVER_COLOR = '#daebf7';
-  const HOVER_OPACITY = '0.3';
+  const HOVER_OPACITY = '0.6';
   const SELECTED_COLOR = '#0d99ff';
 
   const selectionBoxColor = theme.isDark ? '#ffffff' : '#000000';
@@ -148,12 +148,12 @@ const getStyles = (currentConstraints: Constraint) => (theme: GrafanaTheme2) => 
     `,
     topConstraint: css`
       ${currentConstraints.vertical === VerticalConstraint.Top
-        ? `width: 92pt; x: 1077; fill: ${SELECTED_COLOR};`
+        ? `width: 92pt; x: 1085; fill: ${SELECTED_COLOR};`
         : `fill: ${selectionBoxColor};`}
     `,
     bottomConstraint: css`
       ${currentConstraints.vertical === VerticalConstraint.Bottom
-        ? `width: 92pt; x: 1077; fill: ${SELECTED_COLOR};`
+        ? `width: 92pt; x: 1085; fill: ${SELECTED_COLOR};`
         : `fill: ${selectionBoxColor};`}
     `,
     leftConstraint: css`
@@ -173,7 +173,7 @@ const getStyles = (currentConstraints: Constraint) => (theme: GrafanaTheme2) => 
     `,
     verticalCenterConstraint: css`
       ${currentConstraints.vertical === VerticalConstraint.Center
-        ? `width: 92pt; x: 1077; fill: ${SELECTED_COLOR};`
+        ? `width: 92pt; x: 1085; fill: ${SELECTED_COLOR};`
         : `fill: ${selectionBoxColor};`}
     `,
     box: css`

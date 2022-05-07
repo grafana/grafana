@@ -3,7 +3,7 @@ import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
-import { Field, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
+import { Field, HorizontalGroup, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
 import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/features/canvas';
 import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
 
@@ -77,19 +77,21 @@ export const PlacementEditor: FC<StandardEditorProps<any, CanvasEditorOptions, P
 
   return (
     <div>
-      <VerticalGroup>
+      <HorizontalGroup>
         <ConstraintSelectionBox
           onVerticalConstraintChange={onVerticalConstraintChange}
           onHorizontalConstraintChange={onHorizontalConstraintChange}
           currentConstraints={element.options.constraint ?? {}}
         />
-        <Select options={verticalOptions} onChange={onVerticalConstraintSelect} value={layout?.vertical} />
-        <Select
-          options={horizontalOptions}
-          onChange={onHorizontalConstraintSelect}
-          value={options.constraint?.horizontal}
-        />
-      </VerticalGroup>
+        <VerticalGroup>
+          <Select options={verticalOptions} onChange={onVerticalConstraintSelect} value={layout?.vertical} />
+          <Select
+            options={horizontalOptions}
+            onChange={onHorizontalConstraintSelect}
+            value={options.constraint?.horizontal}
+          />
+        </VerticalGroup>
+      </HorizontalGroup>
       <br />
 
       <Field label="Position">
