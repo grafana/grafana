@@ -137,26 +137,26 @@ export const failedMetric = 'traces_service_graph_request_failed_total';
 export const histogramMetric = 'traces_service_graph_request_server_seconds_bucket';
 
 export const rateMetric = {
-  query: 'topk(5, sum(rate(traces_spanmetrics_calls_total{%%}[$__range] @ end())) by (span_name))',
+  query: 'topk(5, sum(rate(traces_spanmetrics_calls_total{REPLACE_STRING}[$__range] @ end())) by (span_name))',
   instant: true,
 };
 export const rateTrendMetric = {
-  query: 'topk(5, sum(rate(traces_spanmetrics_calls_total{%%}[$__range])) by (span_name))',
+  query: 'topk(5, sum(rate(traces_spanmetrics_calls_total{REPLACE_STRING}[$__range])) by (span_name))',
   instant: false,
 };
 export const errorRateMetric = {
   query:
-    'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",%%}[$__range] @ end())) by (span_name))',
+    'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",REPLACE_STRING}[$__range] @ end())) by (span_name))',
   instant: true,
 };
 export const errorRateTrendMetric = {
   query:
-    'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",%%}[$__range])) by (span_name))',
+    'topk(5, sum(rate(traces_spanmetrics_calls_total{span_status="STATUS_CODE_ERROR",REPLACE_STRING}[$__range])) by (span_name))',
   instant: true,
 };
 export const durationMetric = {
   query:
-    'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",%%}[$__range] @ end())) by (le))',
+    'histogram_quantile(.9, sum(rate(traces_spanmetrics_duration_seconds_bucket{span_status="STATUS_CODE_ERROR",REPLACE_STRING}[$__range] @ end())) by (le))',
   instant: true,
 };
 

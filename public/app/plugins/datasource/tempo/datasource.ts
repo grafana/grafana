@@ -542,15 +542,14 @@ function makeTempoLink(title: string, query: string) {
 }
 
 function buildExpr(metric: string, serviceMapQuery: string | undefined) {
-  var expr = `${metric.replace('%%', '')}`;
   if (serviceMapQuery) {
     // map serviceGraph metric tags to APM metric tags
     serviceMapQuery = serviceMapQuery.replace('client', 'service').replace('server', 'service');
 
     serviceMapQuery = serviceMapQuery.replace('{', '').replace('}', '');
-    expr = `${metric.replace('%%', serviceMapQuery)}`;
+    return `${metric.replace('REPLACE_STRING', serviceMapQuery)}`;
   }
-  return expr;
+  return `${metric.replace('REPLACE_STRING', '')}`;
 }
 
 function addApmMetricsToRequest(
