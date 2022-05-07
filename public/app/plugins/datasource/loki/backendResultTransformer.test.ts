@@ -31,7 +31,7 @@ const inputFrame: DataFrame = {
           json: true,
         },
       },
-      values: new ArrayVector([`[["level", "info"],["code", "41🌙"]]`, `[["level", "error"],["code", "41🌙"]]`]),
+      values: new ArrayVector(['{ "level": "info", "code": "41🌙" }', '{ "level": "error", "code": "41🌙" }']),
     },
     {
       name: 'tsNs',
@@ -62,7 +62,6 @@ describe('loki backendResultTransformer', () => {
         lokiQueryStatKey: 'Summary: total bytes processed',
       },
     };
-    expectedFrame.fields[3].type = FieldType.time;
 
     const expected: DataQueryResponse = { data: [expectedFrame] };
 

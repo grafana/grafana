@@ -22,10 +22,10 @@ import (
 
 var (
 	provisionerPermissions = map[string][]string{
-		m.ActionFoldersCreate:                {},
-		m.ActionFoldersWrite:                 {m.ScopeFoldersAll},
-		accesscontrol.ActionDashboardsCreate: {m.ScopeFoldersAll},
-		accesscontrol.ActionDashboardsWrite:  {m.ScopeFoldersAll},
+		m.ActionFoldersCreate:    {},
+		m.ActionFoldersWrite:     {m.ScopeFoldersAll},
+		m.ActionDashboardsCreate: {m.ScopeFoldersAll},
+		m.ActionDashboardsWrite:  {m.ScopeFoldersAll},
 	}
 )
 
@@ -447,7 +447,7 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 
 func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *m.SaveDashboardDTO, dash *models.Dashboard, provisioned bool) error {
 	inFolder := dash.FolderId > 0
-	if dr.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+	if !accesscontrol.IsDisabled(dr.cfg) {
 		var permissions []accesscontrol.SetResourcePermissionCommand
 		if !provisioned {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{

@@ -67,7 +67,12 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Respons
 		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqOrgAdminOrEditor, evaluator)
 	}
 
-	var canDelete, cannotDelete []string
+	provenances, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.SignedInUser.OrgId, (&ngmodels.AlertRule{}).ResourceType())
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to fetch provenances of alert rules")
+	}
+
+	var deletableRules []string
 	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
 		q := ngmodels.ListAlertRulesQuery{
 			OrgID:         c.SignedInUser.OrgId,
@@ -83,24 +88,52 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Respons
 			return nil
 		}
 
-		canDelete = make([]string, 0, len(q.Result))
-		for _, rule := range q.Result {
-			if authorizeDatasourceAccessForRule(rule, hasAccess) {
-				canDelete = append(canDelete, rule.UID)
-				continue
+		var canDelete []*ngmodels.AlertRule
+		var cannotDelete []string
+
+		// partition will partation the given rules in two, one partition
+		// being the rules that fulfill the predicate the other partation being
+		// the ruleIDs not fulfilling it.
+		partition := func(alerts []*ngmodels.AlertRule, predicate func(rule *ngmodels.AlertRule) bool) ([]*ngmodels.AlertRule, []string) {
+			positive, negative := make([]*ngmodels.AlertRule, 0, len(alerts)), make([]string, 0, len(alerts))
+			for _, rule := range alerts {
+				if predicate(rule) {
+					positive = append(positive, rule)
+					continue
+				}
+				negative = append(negative, rule.UID)
 			}
-			cannotDelete = append(cannotDelete, rule.UID)
+			return positive, negative
 		}
 
+		canDelete, cannotDelete = partition(q.Result, func(rule *ngmodels.AlertRule) bool {
+			return authorizeDatasourceAccessForRule(rule, hasAccess)
+		})
 		if len(canDelete) == 0 {
 			return fmt.Errorf("%w to delete rules because user is not authorized to access data sources used by the rules", ErrAuthorization)
 		}
-
 		if len(cannotDelete) > 0 {
 			logger.Info("user cannot delete one or many alert rules because it does not have access to data sources. Those rules will be skipped", "expected", len(q.Result), "authorized", len(canDelete), "unauthorized", cannotDelete)
 		}
 
-		return srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.OrgId, canDelete...)
+		canDelete, cannotDelete = partition(canDelete, func(rule *ngmodels.AlertRule) bool {
+			provenance, exists := provenances[rule.UID]
+			return (exists && provenance == ngmodels.ProvenanceNone) || !exists
+		})
+
+		if len(canDelete) == 0 {
+			return fmt.Errorf("all rules have been provisioned and cannot be deleted through this api")
+		}
+
+		if len(cannotDelete) > 0 {
+			logger.Info("user cannot delete one or many alert rules because it does have a provenance set. Those rules will be skipped", "expected", len(q.Result), "provenance_none", len(canDelete), "provenance_set", cannotDelete)
+		}
+
+		for _, rule := range canDelete {
+			deletableRules = append(deletableRules, rule.UID)
+		}
+
+		return srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.OrgId, deletableRules...)
 	})
 
 	if err != nil {
@@ -112,7 +145,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext) response.Respons
 
 	logger.Debug("rules have been deleted from the store. updating scheduler")
 
-	for _, uid := range canDelete {
+	for _, uid := range deletableRules {
 		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   uid,
@@ -335,8 +368,9 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 
 // updateAlertRulesInGroup calculates changes (rules to add,update,delete), verifies that the user is authorized to do the calculated changes and updates database.
 // All operations are performed in a single transaction
+//nolint: gocyclo
 func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *models.Folder, groupName string, rules []*ngmodels.AlertRule) response.Response {
-	var authorizedChanges *changes
+	var finalChanges *changes
 	hasAccess := accesscontrol.HasAccess(srv.ac, c)
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
 		logger := srv.log.New("namespace_uid", namespace.Uid, "group", groupName, "org_id", c.OrgId, "user_id", c.UserId)
@@ -347,12 +381,12 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 		}
 
 		if groupChanges.isEmpty() {
-			authorizedChanges = groupChanges
+			finalChanges = groupChanges
 			logger.Info("no changes detected in the request. Do nothing")
 			return nil
 		}
 
-		authorizedChanges, err = authorizeRuleChanges(namespace, groupChanges, func(evaluator accesscontrol.Evaluator) bool {
+		authorizedChanges, err := authorizeRuleChanges(namespace, groupChanges, func(evaluator accesscontrol.Evaluator) bool {
 			return hasAccess(accesscontrol.ReqOrgAdminOrEditor, evaluator)
 		})
 		if err != nil {
@@ -368,19 +402,58 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			logger.Info("user is not authorized to delete one or many rules in the group. those rules will be skipped", "expected", len(groupChanges.Delete), "authorized", len(authorizedChanges.Delete))
 		}
 
-		logger.Debug("updating database with the authorized changes", "add", len(authorizedChanges.New), "update", len(authorizedChanges.New), "delete", len(authorizedChanges.Delete))
+		provenances, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.OrgId, (&ngmodels.AlertRule{}).ResourceType())
+		if err != nil {
+			return err
+		}
 
-		if len(authorizedChanges.Update) > 0 || len(authorizedChanges.New) > 0 {
-			updates := make([]store.UpdateRule, 0, len(authorizedChanges.Update))
-			inserts := make([]ngmodels.AlertRule, 0, len(authorizedChanges.New))
-			for _, update := range authorizedChanges.Update {
+		// New rules don't need to be checked for provenance, just copy the whole slice.
+		finalChanges = &changes{}
+		finalChanges.New = authorizedChanges.New
+		for _, rule := range authorizedChanges.Update {
+			if provenance, exists := provenances[rule.Existing.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
+				finalChanges.Update = append(finalChanges.Update, rule)
+			}
+		}
+		for _, rule := range authorizedChanges.Delete {
+			if provenance, exists := provenances[rule.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
+				finalChanges.Delete = append(finalChanges.Delete, rule)
+			}
+		}
+
+		if finalChanges.isEmpty() {
+			logger.Info("no changes detected that have 'none' provenance in the request. Do nothing",
+				"provenance_invalid_add", len(authorizedChanges.New),
+				"provenance_invalid_update", len(authorizedChanges.Update),
+				"provenance_invalid_delete", len(authorizedChanges.Delete))
+			return nil
+		}
+
+		if len(authorizedChanges.Delete) > len(finalChanges.Delete) {
+			logger.Info("provenance is not 'none' for one or many rules in the group that should be deleted. those rules will be skipped",
+				"expected", len(authorizedChanges.Delete),
+				"allowed", len(authorizedChanges.Delete))
+		}
+
+		if len(authorizedChanges.Update) > len(finalChanges.Update) {
+			logger.Info("provenance is not 'none' for one or many rules in the group that should be updated. those rules will be skipped",
+				"expected", len(authorizedChanges.Update),
+				"allowed", len(authorizedChanges.Update))
+		}
+
+		logger.Debug("updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
+
+		if len(finalChanges.Update) > 0 || len(finalChanges.New) > 0 {
+			updates := make([]store.UpdateRule, 0, len(finalChanges.Update))
+			inserts := make([]ngmodels.AlertRule, 0, len(finalChanges.New))
+			for _, update := range finalChanges.Update {
 				logger.Debug("updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
 				updates = append(updates, store.UpdateRule{
 					Existing: update.Existing,
 					New:      *update.New,
 				})
 			}
-			for _, rule := range authorizedChanges.New {
+			for _, rule := range finalChanges.New {
 				inserts = append(inserts, *rule)
 			}
 			err = srv.store.InsertAlertRules(tranCtx, inserts)
@@ -393,9 +466,9 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			}
 		}
 
-		if len(authorizedChanges.Delete) > 0 {
-			UIDs := make([]string, 0, len(authorizedChanges.Delete))
-			for _, rule := range authorizedChanges.Delete {
+		if len(finalChanges.Delete) > 0 {
+			UIDs := make([]string, 0, len(finalChanges.Delete))
+			for _, rule := range finalChanges.Delete {
 				UIDs = append(UIDs, rule.UID)
 			}
 
@@ -404,7 +477,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			}
 		}
 
-		if len(authorizedChanges.New) > 0 {
+		if len(finalChanges.New) > 0 {
 			limitReached, err := srv.QuotaService.CheckQuotaReached(tranCtx, "alert_rule", &quota.ScopeParameters{
 				OrgId:  c.OrgId,
 				UserId: c.UserId,
@@ -432,21 +505,21 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	for _, rule := range authorizedChanges.Update {
+	for _, rule := range finalChanges.Update {
 		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   rule.Existing.UID,
 		})
 	}
 
-	for _, rule := range authorizedChanges.Delete {
+	for _, rule := range finalChanges.Delete {
 		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgId,
 			UID:   rule.UID,
 		})
 	}
 
-	if authorizedChanges.isEmpty() {
+	if finalChanges.isEmpty() {
 		return response.JSON(http.StatusAccepted, util.DynMap{"message": "no changes detected in the rule group"})
 	}
 

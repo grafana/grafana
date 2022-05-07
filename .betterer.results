@@ -86,13 +86,10 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/ListView/index.test.js:1734982398": [
       [14, 26, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/ReferencesButton.test.js:3807792910": [
-      [14, 19, 13, "RegExp match", "2409514259"]
-    ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBar.test.js:1478502145": [
       [14, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBarRow.test.js:3826510429": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBarRow.test.js:1451240090": [
       [14, 26, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianKeyValues.test.js:2408389970": [
@@ -215,14 +212,8 @@ exports[`no enzyme tests`] = {
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:4164297658": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/explore/LiveLogs.test.tsx:156663779": [
-      [0, 17, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/explore/RichHistory/RichHistoryStarredTab.test.tsx:3933225580": [
       [0, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/SecondaryActions.test.tsx:1177396128": [
-      [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/folders/FolderSettingsPage.test.tsx:1109052730": [
       [0, 19, 13, "RegExp match", "2409514259"]

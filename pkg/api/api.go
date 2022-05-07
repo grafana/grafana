@@ -249,7 +249,19 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// current org without requirement of user to be org admin
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
-			orgRoute.Get("/users/lookup", authorize(reqOrgAdminFolderAdminOrTeamAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)), routing.Wrap(hs.GetOrgUsersForCurrentOrgLookup))
+			lookupEvaluator := func() ac.Evaluator {
+				if hs.Cfg.IsEnterprise {
+					return ac.EvalPermission(ac.ActionOrgUsersRead)
+				}
+				// For oss we allow users with access to update permissions on either folders, teams or dashboards to perform the lookup
+				return ac.EvalAny(
+					ac.EvalPermission(ac.ActionOrgUsersRead),
+					ac.EvalPermission(ac.ActionTeamsPermissionsWrite),
+					ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite),
+					ac.EvalPermission(dashboards.ActionFoldersPermissionsWrite),
+				)
+			}
+			orgRoute.Get("/users/lookup", authorize(reqOrgAdminFolderAdminOrTeamAdmin, lookupEvaluator()), routing.Wrap(hs.GetOrgUsersForCurrentOrgLookup))
 		})
 
 		// create new org
@@ -354,12 +366,12 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
-			dashboardRoute.Get("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))
-			dashboardRoute.Delete("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsDelete)), routing.Wrap(hs.DeleteDashboardByUID))
+			dashboardRoute.Get("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))
+			dashboardRoute.Delete("/uid/:uid", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.DeleteDashboardByUID))
 			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
 				dashUidRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
-					dashboardPermissionRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsPermissionsRead)), routing.Wrap(hs.GetDashboardPermissionList))
-					dashboardPermissionRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsPermissionsWrite)), routing.Wrap(hs.UpdateDashboardPermissions))
+					dashboardPermissionRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsPermissionsRead)), routing.Wrap(hs.GetDashboardPermissionList))
+					dashboardPermissionRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite)), routing.Wrap(hs.UpdateDashboardPermissions))
 				})
 			})
 
@@ -372,22 +384,22 @@ func (hs *HTTPServer) registerRoutes() {
 				}
 			}
 
-			dashboardRoute.Post("/calculate-diff", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(hs.CalculateDashboardDiff))
+			dashboardRoute.Post("/calculate-diff", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.CalculateDashboardDiff))
 			dashboardRoute.Post("/trim", routing.Wrap(hs.TrimDashboard))
 
-			dashboardRoute.Post("/db", authorize(reqSignedIn, ac.EvalAny(ac.EvalPermission(ac.ActionDashboardsCreate), ac.EvalPermission(ac.ActionDashboardsWrite))), routing.Wrap(hs.PostDashboard))
+			dashboardRoute.Post("/db", authorize(reqSignedIn, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionDashboardsWrite))), routing.Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
 			dashboardRoute.Get("/tags", hs.GetDashboardTags)
 
 			// Deprecated: use /uid/:uid API instead.
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
-				dashIdRoute.Get("/versions", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersions))
-				dashIdRoute.Get("/versions/:id", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersion))
-				dashIdRoute.Post("/restore", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsWrite)), routing.Wrap(hs.RestoreDashboardVersion))
+				dashIdRoute.Get("/versions", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersions))
+				dashIdRoute.Get("/versions/:id", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersion))
+				dashIdRoute.Post("/restore", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.RestoreDashboardVersion))
 
 				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
-					dashboardPermissionRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsPermissionsRead)), routing.Wrap(hs.GetDashboardPermissionList))
-					dashboardPermissionRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionDashboardsPermissionsWrite)), routing.Wrap(hs.UpdateDashboardPermissions))
+					dashboardPermissionRoute.Get("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsPermissionsRead)), routing.Wrap(hs.GetDashboardPermissionList))
+					dashboardPermissionRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite)), routing.Wrap(hs.UpdateDashboardPermissions))
 				})
 			})
 		})

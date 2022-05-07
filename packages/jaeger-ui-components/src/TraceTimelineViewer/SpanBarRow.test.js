@@ -15,8 +15,8 @@
 import { mount, shallow } from 'enzyme';
 import React from 'react';
 
-import ReferencesButton from './ReferencesButton';
 import SpanBarRow from './SpanBarRow';
+import { SpanLinksMenu } from './SpanLinks';
 import SpanTreeOffset from './SpanTreeOffset';
 
 jest.mock('./SpanTreeOffset', () => {
@@ -89,7 +89,7 @@ describe('<SpanBarRow>', () => {
     const span = Object.assign(newSpan, {
       references: [
         {
-          refType: 'CHILD_OF',
+          refType: 'FOLLOWS_FROM',
           traceID: 'trace1',
           spanID: 'span0',
           span: {
@@ -97,7 +97,7 @@ describe('<SpanBarRow>', () => {
           },
         },
         {
-          refType: 'CHILD_OF',
+          refType: 'FOLLOWS_FROM',
           traceID: 'otherTrace',
           spanID: 'span1',
           span: {
@@ -107,13 +107,20 @@ describe('<SpanBarRow>', () => {
       ],
     });
 
-    const spanRow = shallow(<SpanBarRow {...props} span={span} />)
+    const spanRow = shallow(
+      <SpanBarRow
+        {...props}
+        span={span}
+        createSpanLink={() => ({
+          traceLinks: [{ href: 'href' }, { href: 'href' }],
+        })}
+      />
+    )
       .dive()
       .dive()
       .dive();
-    const refButton = spanRow.find(ReferencesButton);
-    expect(refButton.length).toEqual(1);
-    expect(refButton.at(0).props().tooltipText).toEqual('Contains multiple references');
+    const menu = spanRow.find(SpanLinksMenu);
+    expect(menu.length).toEqual(1);
   });
 
   it('render referenced to by single span', () => {
@@ -121,7 +128,7 @@ describe('<SpanBarRow>', () => {
       {
         subsidiarilyReferencedBy: [
           {
-            refType: 'CHILD_OF',
+            refType: 'FOLLOWS_FROM',
             traceID: 'trace1',
             spanID: 'span0',
             span: {
@@ -132,13 +139,21 @@ describe('<SpanBarRow>', () => {
       },
       props.span
     );
-    const spanRow = shallow(<SpanBarRow {...props} span={span} />)
+    const spanRow = shallow(
+      <SpanBarRow
+        {...props}
+        span={span}
+        createSpanLink={() => ({
+          traceLinks: [{ content: 'This span is referenced by another span', href: 'href' }],
+        })}
+      />
+    )
       .dive()
       .dive()
       .dive();
-    const refButton = spanRow.find(ReferencesButton);
-    expect(refButton.length).toEqual(1);
-    expect(refButton.at(0).props().tooltipText).toEqual('This span is referenced by another span');
+    const menu = spanRow.find(`a[href="href"]`);
+    expect(menu.length).toEqual(1);
+    expect(menu.at(0).text()).toEqual('This span is referenced by another span');
   });
 
   it('render referenced to by multiple span', () => {
@@ -146,7 +161,7 @@ describe('<SpanBarRow>', () => {
       {
         subsidiarilyReferencedBy: [
           {
-            refType: 'CHILD_OF',
+            refType: 'FOLLOWS_FROM',
             traceID: 'trace1',
             spanID: 'span0',
             span: {
@@ -154,7 +169,7 @@ describe('<SpanBarRow>', () => {
             },
           },
           {
-            refType: 'CHILD_OF',
+            refType: 'FOLLOWS_FROM',
             traceID: 'trace1',
             spanID: 'span1',
             span: {
@@ -165,12 +180,19 @@ describe('<SpanBarRow>', () => {
       },
       props.span
     );
-    const spanRow = shallow(<SpanBarRow {...props} span={span} />)
+    const spanRow = shallow(
+      <SpanBarRow
+        {...props}
+        span={span}
+        createSpanLink={() => ({
+          traceLinks: [{ href: 'href' }, { href: 'href' }],
+        })}
+      />
+    )
       .dive()
       .dive()
       .dive();
-    const refButton = spanRow.find(ReferencesButton);
-    expect(refButton.length).toEqual(1);
-    expect(refButton.at(0).props().tooltipText).toEqual('This span is referenced by multiple other spans');
+    const menu = spanRow.find(SpanLinksMenu);
+    expect(menu.length).toEqual(1);
   });
 });

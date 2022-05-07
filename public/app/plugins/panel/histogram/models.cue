@@ -26,9 +26,9 @@ Panel: {
                     bucketSize?: int
                     bucketOffset: int | *0
                     combine?: bool
-                }
+                } @cuetsy(kind="interface")
 
-                PanelFieldConfig: ui.GraphFieldConfig
+                PanelFieldConfig: ui.GraphFieldConfig & {} @cuetsy(kind="interface")
             }
         ]
     ]
