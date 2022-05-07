@@ -192,7 +192,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
-      subQueries.push(serviceMapQuery(options, this.serviceMap.datasourceUid));
+      subQueries.push(serviceMapQuery(options, this.serviceMap.datasourceUid, this.name));
     }
 
     if (targets.traceId?.length > 0) {
@@ -341,11 +341,12 @@ function queryServiceMapPrometheus(request: DataQueryRequest<PromQuery>, datasou
   );
 }
 
-function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string) {
+function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: string, tempoDatasourceUid: string) {
   const serviceMapRequest = makePromServiceMapRequest(request);
-  const combinedRequest = addApmMetricsToRequest(request, serviceMapRequest);
+  const apmMetricsRequest = makeApmMetricsRequest(request);
+  serviceMapRequest.targets = apmMetricsRequest.concat(serviceMapRequest.targets as any);
 
-  return queryServiceMapPrometheus(combinedRequest, datasourceUid).pipe(
+  return queryServiceMapPrometheus(serviceMapRequest, datasourceUid).pipe(
     // Just collect all the responses first before processing into node graph data
     toArray(),
     map((responses: DataQueryResponse[]) => {
@@ -378,20 +379,21 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
         ],
       };
 
-      const apmTableFrame = getApmTableFrame(responses, request, datasourceUid);
+      const apmTable = getApmTable(responses, request, datasourceUid, tempoDatasourceUid);
 
       return {
-        data: [apmTableFrame, nodes, edges],
+        data: [apmTable, nodes, edges],
         state: LoadingState.Done,
       };
     })
   );
 }
 
-function getApmTableFrame(
+function getApmTable(
   responses: DataQueryResponse[],
   request: DataQueryRequest<TempoQuery>,
-  datasourceUid: string
+  datasourceUid: string,
+  tempoDatasourceUid: string
 ) {
   var df: any = {};
   // filter does not return table results
@@ -520,10 +522,7 @@ function getApmTableFrame(
         type: FieldType.string,
         values: new ArrayVector(linkTitles),
         config: {
-          custom: {
-            instant: true,
-          },
-          links: [makeTempoLink('traces_spanmetrics_calls_total', '')],
+          links: [makeTempoLink('traces_spanmetrics_calls_total', tempoDatasourceUid, '')],
         },
       });
     }
@@ -547,7 +546,7 @@ function makePromLink(title: string, metric: string, datasourceUid: string, inst
   };
 }
 
-function makeTempoLink(title: string, query: string) {
+function makeTempoLink(title: string, tempoDatasourceUid: string, query: string) {
   return {
     url: '',
     title,
@@ -557,7 +556,7 @@ function makeTempoLink(title: string, query: string) {
         serviceName: 'app',
         spanName: 'HTTP Client',
       } as TempoQuery,
-      datasourceUid: 'gdev-tempo-joey',
+      datasourceUid: tempoDatasourceUid,
       datasourceName: 'Tempo',
     },
   };
@@ -574,21 +573,15 @@ function buildExpr(metric: string, serviceMapQuery: string | undefined) {
   return `${metric.replace('REPLACE_STRING', serviceMapQuery)}`;
 }
 
-function addApmMetricsToRequest(
-  options: DataQueryRequest<TempoQuery>,
-  promQuery: DataQueryRequest<PromQuery>
-): DataQueryRequest<PromQuery> {
+function makeApmMetricsRequest(options: DataQueryRequest<TempoQuery>) {
   const metrics = apmMetrics.map((metric) => {
-    const expr = buildExpr(metric.query, options.targets[0].serviceMapQuery);
     return {
       refId: metric.query,
-      expr: expr,
+      expr: buildExpr(metric.query, options.targets[0].serviceMapQuery),
       instant: metric.instant,
     };
   });
-
-  promQuery.targets = metrics.concat(promQuery.targets as any);
-  return promQuery;
+  return metrics;
 }
 
 function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQueryRequest<PromQuery> {
@@ -599,7 +592,7 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
         refId: metric,
         // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
         // service map at the same time anyway
-        expr: `rate(${metric}${options.targets[0].serviceMapQuery || ''}[$__range])`,
+        expr: `delta(${metric}${options.targets[0].serviceMapQuery || ''}[$__range])`,
         instant: true,
       };
     }),

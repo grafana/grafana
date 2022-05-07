@@ -811,9 +811,9 @@ export class PrometheusDatasource
       const seriesLabels: Array<Record<string, string[]>> = await Promise.all(
         options.series.map((series: string) => this.languageProvider.fetchSeriesLabels(series))
       );
-      var concatArrays: string[] = [];
-      seriesLabels.map((value) => (concatArrays = concatArrays.concat(Object.keys(value))));
-      const uniqueLabels = [...new Set(concatArrays)];
+      var allLabels: string[] = [];
+      seriesLabels.map((value) => (allLabels = allLabels.concat(Object.keys(value))));
+      const uniqueLabels = [...new Set(allLabels)];
       return uniqueLabels.map((value: any) => ({ text: value }));
     } else {
       // Get all tags
