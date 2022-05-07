@@ -198,7 +198,7 @@ type dashboardFakePluginClient struct {
 
 // `/dashboards/org/:orgId/uid/:dashboardUid/panels/:panelId/query` endpoints test
 func TestAPIEndpoint_Metrics_QueryMetricsFromDashboard(t *testing.T) {
-	sc := setupHTTPServerWithMockDb(t, false, false, []string{})
+	sc := setupHTTPServerWithMockDb(t, false, featuremgmt.WithFeatures())
 
 	secretsStore := kvstore.SetupTestService(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())

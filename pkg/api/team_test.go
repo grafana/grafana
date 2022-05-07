@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -179,7 +180,7 @@ func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl(t *testing.T) {
 func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl_EditorsCanAdmin(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.EditorsCanAdmin = true
-	sc := setupHTTPServerWithCfg(t, true, false, cfg)
+	sc := setupHTTPServerWithCfg(t, true, cfg, featuremgmt.WithFeatures())
 
 	setInitCtxSignedInEditor(sc.initCtx)
 	input := strings.NewReader(fmt.Sprintf(teamCmd, 1))

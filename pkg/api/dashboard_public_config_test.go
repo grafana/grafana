@@ -49,7 +49,8 @@ func TestApiRetrieveConfig(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			sc := setupHTTPServerWithMockDb(t, false, false, []string{featuremgmt.FlagPublicDashboards})
+
+			sc := setupHTTPServerWithMockDb(t, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
 
 			sc.hs.dashboardService = &dashboards.FakeDashboardService{
 				PublicDashboardConfigResult: test.publicDashboardConfigResult,
@@ -85,35 +86,31 @@ func TestApiPersistsValue(t *testing.T) {
 		dashboardUid         string
 		expectedHttpResponse int
 		saveDashboardError   error
-		isPublicResult       bool
 	}{
 		{
 			name:                 "returns 200 when update persists",
 			dashboardUid:         "1",
 			expectedHttpResponse: http.StatusOK,
 			saveDashboardError:   nil,
-			isPublicResult:       true,
 		},
 		{
 			name:                 "returns 500 when not persisted",
 			expectedHttpResponse: http.StatusInternalServerError,
 			saveDashboardError:   errors.New("backend failed to save"),
-			isPublicResult:       false,
 		},
 		{
 			name:                 "returns 404 when dashboard not found",
 			expectedHttpResponse: http.StatusNotFound,
 			saveDashboardError:   models.ErrDashboardNotFound,
-			isPublicResult:       false,
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			sc := setupHTTPServerWithMockDb(t, false, false, []string{featuremgmt.FlagPublicDashboards})
+			sc := setupHTTPServerWithMockDb(t, false, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards))
 
 			sc.hs.dashboardService = &dashboards.FakeDashboardService{
-				PublicDashboardConfigResult: &models.PublicDashboardConfig{IsPublic: test.isPublicResult},
+				PublicDashboardConfigResult: &models.PublicDashboardConfig{IsPublic: true},
 				PublicDashboardConfigError:  test.saveDashboardError,
 			}
 
@@ -125,13 +122,14 @@ func TestApiPersistsValue(t *testing.T) {
 				strings.NewReader(`{ "isPublic": true }`),
 				t,
 			)
+
 			assert.Equal(t, test.expectedHttpResponse, response.Code)
 
 			// check the result if it's a 200
-			if test.isPublicResult {
+			if response.Code == http.StatusOK {
 				respJSON, _ := simplejson.NewJson(response.Body.Bytes())
 				val, _ := respJSON.Get("isPublic").Bool()
-				assert.Equal(t, test.isPublicResult, val)
+				assert.Equal(t, true, val)
 			}
 
 		})

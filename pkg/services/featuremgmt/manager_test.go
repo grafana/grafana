@@ -74,4 +74,18 @@ func TestFeatureManager(t *testing.T) {
 		require.Equal(t, "second", flag.Description)
 		require.Equal(t, "http://something", flag.DocsURL)
 	})
+
+	t.Run("GetEnabledFlagNames retrieves array of all enabled flag names", func(t *testing.T) {
+		// test all included
+		ft := WithFeatures("a", "b")
+		flagNames := ft.GetEnabledFlagNames()
+		require.Contains(t, flagNames, "a")
+		require.Contains(t, flagNames, "b")
+
+		// test false not included
+		ft = WithFeatures("a", true, "b", false)
+		flagNames = ft.GetEnabledFlagNames()
+		require.Contains(t, flagNames, "a")
+		require.NotContains(t, flagNames, "b")
+	})
 }

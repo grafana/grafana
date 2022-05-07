@@ -377,9 +377,11 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 	// Defining the accesscontrol service has to be done before registering routes
 	if useFakeAccessControl {
 		acmock = accesscontrolmock.New()
-		if !enableAccessControl {
+
+		if !features.IsEnabled("accesscontrol") {
 			acmock = acmock.WithDisabled()
 		}
+
 		hs.AccessControl = acmock
 		teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, acmock, database.ProvideService(db))
 		require.NoError(t, err)

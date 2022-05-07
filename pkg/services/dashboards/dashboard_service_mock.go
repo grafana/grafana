@@ -33,7 +33,7 @@ func (s *FakeDashboardService) GetPublicDashboardConfig(ctx context.Context, org
 }
 
 func (s *FakeDashboardService) SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*models.PublicDashboardConfig, error) {
-	return s.PublicDashboardConfigResult, s.SaveDashboardError
+	return s.PublicDashboardConfigResult, s.PublicDashboardConfigError
 }
 
 func (s *FakeDashboardService) ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error) {

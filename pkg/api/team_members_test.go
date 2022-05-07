@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
@@ -145,7 +146,7 @@ var (
 func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.EditorsCanAdmin = true
-	sc := setupHTTPServerWithCfg(t, true, false, cfg)
+	sc := setupHTTPServerWithCfg(t, true, cfg, featuremgmt.WithFeatures())
 	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db))
 	sc.hs.teamGuardian = guardian
 
@@ -281,7 +282,7 @@ func TestAddTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.EditorsCanAdmin = true
-	sc := setupHTTPServerWithCfg(t, true, false, cfg)
+	sc := setupHTTPServerWithCfg(t, true, cfg, featuremgmt.WithFeatures())
 	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db))
 	sc.hs.teamGuardian = guardian
 
@@ -359,7 +360,7 @@ func TestUpdateTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.EditorsCanAdmin = true
-	sc := setupHTTPServerWithCfg(t, true, false, cfg)
+	sc := setupHTTPServerWithCfg(t, true, cfg, featuremgmt.WithFeatures())
 	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db))
 	sc.hs.teamGuardian = guardian
 
