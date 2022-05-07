@@ -4,9 +4,6 @@ import (
 	"os"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
-
-	// TODO(sh0rez): remove once import cycle resolved
-	_ "github.com/grafana/grafana/pkg/web/hack"
 )
 
 // The following variables cannot be constants, since they can be overridden through the -X link flag

@@ -57,7 +57,7 @@ func (invoke handlerFuncInvoker) Invoke(params []interface{}) ([]reflect.Value, 
 	return nil, nil
 }
 
-//go:linkname hack_wrap github.com/grafana/grafana/pkg/web/hack.Wrap
+//go:linkname hack_wrap github.com/grafana/grafana/pkg/api/response.wrap_handler
 func hack_wrap(Handler) http.HandlerFunc
 
 // validateAndWrapHandler makes sure a handler is a callable function, it panics if not.

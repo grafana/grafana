@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -69,7 +70,7 @@ type ContextHandler struct {
 	GetTime func() time.Time
 }
 
-type reqContextKey struct{}
+type reqContextKey = ctxkey.Key
 
 // FromContext returns the ReqContext value stored in a context.Context, if any.
 func FromContext(c context.Context) *models.ReqContext {
@@ -94,7 +95,7 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 	}
 
 	// Inject ReqContext into a request context and replace the request instance in the macaron context
-	mContext.Req = mContext.Req.WithContext(context.WithValue(mContext.Req.Context(), reqContextKey{}, reqContext))
+	mContext.Req = mContext.Req.WithContext(ctxkey.Set(mContext.Req.Context(), reqContext))
 	mContext.Map(mContext.Req)
 
 	traceID := tracing.TraceIDFromContext(mContext.Req.Context(), false)
