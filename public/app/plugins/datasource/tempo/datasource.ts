@@ -403,7 +403,16 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
         df.fields.shift(); // remove time field
         df.fields[0].name = 'Name';
         df.fields[1].name = 'Rate';
-        df.fields[1].config = getFieldConfig(rateMetric, request, datasourceUid);
+        df.fields[1].config = {
+          links: [
+            makePromLink(
+              rateMetric.query,
+              buildExpr(rateMetric.query, request.targets[0].serviceMapQuery),
+              datasourceUid,
+              rateMetric.instant
+            ),
+          ],
+        };
 
         if (rateTrend.length > 0 && rateTrend[0].fields?.length > 1) {
           df.fields.push({
@@ -426,7 +435,16 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
           df.fields.push({
             ...errorRate[0].fields[2],
             name: 'Error Rate',
-            config: getFieldConfig(errorRateMetric, request, datasourceUid),
+            config: {
+              links: [
+                makePromLink(
+                  errorRateMetric.query,
+                  buildExpr(errorRateMetric.query, request.targets[0].serviceMapQuery),
+                  datasourceUid,
+                  errorRateMetric.instant
+                ),
+              ],
+            },
           });
         }
 
@@ -450,7 +468,16 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
           df.fields.push({
             ...duration[0].fields[1],
             name: 'Duration',
-            config: getFieldConfig(durationMetric, request, datasourceUid),
+            config: {
+              links: [
+                makePromLink(
+                  durationMetric.query,
+                  buildExpr(durationMetric.query, request.targets[0].serviceMapQuery),
+                  datasourceUid,
+                  durationMetric.instant
+                ),
+              ],
+            },
           });
         }
 
@@ -481,19 +508,6 @@ function getRateTrendValues(rateTrend: any) {
     values.push(rateTrend[frame].fields[1].values.toArray());
   }
   return new ArrayVector(values);
-}
-
-function getFieldConfig(metric: any, request: DataQueryRequest<TempoQuery>, datasourceUid: string) {
-  return {
-    links: [
-      makePromLink(
-        metric.query,
-        buildExpr(metric.query, request.targets[0].serviceMapQuery),
-        datasourceUid,
-        metric.instant
-      ),
-    ],
-  };
 }
 
 function makePromLink(title: string, metric: string, datasourceUid: string, instant: boolean) {
