@@ -380,8 +380,8 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
       };
 
       var df: DataFrame;
-      if (responses[0].data.length === 4) {
-        // filter does not return table results
+      // filter does not return table results
+      if (responses[0].data.length <= 4) {
         df = toDataFrame([]);
       } else {
         df = responses[0].data.filter((x) => {
@@ -405,52 +405,54 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
         df.fields[1].name = 'Rate';
         df.fields[1].config = getFieldConfig(rateMetric, request, datasourceUid);
 
-        df.fields.push({
-          ...rateTrend[0].fields[1],
-          values: new ArrayVector([
-            rateTrend[0].fields[1].values.toArray(),
-            rateTrend[1].fields[1].values.toArray(),
-            rateTrend[2].fields[1].values.toArray(),
-            rateTrend[3].fields[1].values.toArray(),
-            rateTrend[4].fields[1].values.toArray(),
-          ]),
-          name: 'Trend (Rate)',
-          labels: null,
-          config: {
-            color: {
-              mode: 'continuous-BlPu',
+        if (rateTrend.length > 0 && rateTrend[0].fields?.length > 1) {
+          df.fields.push({
+            ...rateTrend[0].fields[1],
+            values: getRateTrendValues(rateTrend),
+            name: 'Trend (Rate)',
+            labels: null,
+            config: {
+              color: {
+                mode: 'continuous-BlPu',
+              },
+              custom: {
+                displayMode: 'area-chart',
+              },
             },
-            custom: {
-              displayMode: 'area-chart',
-            },
-          },
-        });
+          });
+        }
 
-        df.fields.push({
-          ...errorRate[0].fields[2],
-          name: 'Error Rate',
-          config: getFieldConfig(apmMetrics[2], request, datasourceUid),
-        });
+        if (errorRate.length > 0 && errorRate[0].fields?.length > 2) {
+          df.fields.push({
+            ...errorRate[0].fields[2],
+            name: 'Error Rate',
+            config: getFieldConfig(errorRateMetric, request, datasourceUid),
+          });
+        }
 
-        df.fields.push({
-          ...errorRateTrend[0].fields[2],
-          name: 'Trend (Error Rate)',
-          labels: null,
-          config: {
-            color: {
-              mode: 'continuous-BlPu',
+        if (errorRateTrend.length > 0 && errorRateTrend[0].fields?.length > 2) {
+          df.fields.push({
+            ...errorRateTrend[0].fields[2],
+            name: 'Trend (Error Rate)',
+            labels: null,
+            config: {
+              color: {
+                mode: 'continuous-BlPu',
+              },
+              custom: {
+                displayMode: 'lcd-gauge',
+              },
             },
-            custom: {
-              displayMode: 'lcd-gauge',
-            },
-          },
-        });
+          });
+        }
 
-        df.fields.push({
-          ...duration[0].fields[1],
-          name: 'Duration',
-          config: getFieldConfig(apmMetrics[4], request, datasourceUid),
-        });
+        if (duration.length > 0 && duration[0].fields?.length > 1) {
+          df.fields.push({
+            ...duration[0].fields[1],
+            name: 'Duration',
+            config: getFieldConfig(durationMetric, request, datasourceUid),
+          });
+        }
 
         df.fields.push({
           name: 'Links',
@@ -471,6 +473,14 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
       };
     })
   );
+}
+
+function getRateTrendValues(rateTrend: any) {
+  var values = [];
+  for (const frame in rateTrend) {
+    values.push(rateTrend[frame].fields[1].values.toArray());
+  }
+  return new ArrayVector(values);
 }
 
 function getFieldConfig(metric: any, request: DataQueryRequest<TempoQuery>, datasourceUid: string) {
