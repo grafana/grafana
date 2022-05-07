@@ -39,7 +39,6 @@ interface Props {
 interface State {
   dataSource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
-  isStreaming?: boolean;
   queries: DataQuery[];
   helpContent: React.ReactNode;
   isLoadingHelp: boolean;
@@ -97,15 +96,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   onPanelDataUpdate(data: PanelData) {
-    const { options } = this.props;
-    const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource);
-    console.log(!!dsSettings?.meta.streaming, 'new state value', dsSettings);
-    this.setState({ isStreaming: !!dsSettings?.meta.streaming });
-
-    if (!this.state.isStreaming) {
-      console.log('onPanelDataUpdate', this.state.dsSettings?.meta.streaming);
-      this.setState({ data });
-    }
+    this.setState({ data });
   }
 
   onChangeDataSource = async (newSettings: DataSourceInstanceSettings) => {
@@ -355,14 +346,6 @@ export class QueryGroup extends PureComponent<Props, State> {
   render() {
     const { isHelpOpen, dsSettings } = this.state;
     const styles = getStyles();
-
-    console.log(
-      'querygroup render',
-      dsSettings,
-      dsSettings?.meta.streaming,
-      'is streaming state',
-      this.state.isStreaming
-    );
 
     return (
       <CustomScrollbar autoHeightMin="100%" scrollRefCallback={this.setScrollRef}>
