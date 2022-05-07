@@ -379,31 +379,53 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
         ],
       };
 
-      var df: DataFrame;
-      // filter does not return table results
-      if (responses[0].data.length <= 4) {
-        df = toDataFrame([]);
-      } else {
-        df = responses[0].data.filter((x) => {
-          return x.refId === rateMetric.query;
-        })[0];
-        const rateTrend = responses[0].data.filter((x) => {
-          return x.refId === rateTrendMetric.query;
-        });
-        const errorRate = responses[0].data.filter((x) => {
-          return x.refId === errorRateMetric.query;
-        });
-        const errorRateTrend = responses[0].data.filter((x) => {
-          return x.refId === errorRateTrendMetric.query;
-        });
-        const duration = responses[0].data.filter((x) => {
-          return x.refId === durationMetric.query;
-        });
+      const apmTableFrame = getApmTableFrame(responses, request, datasourceUid);
 
-        df.fields.shift(); // remove time field
-        df.fields[0].name = 'Name';
-        df.fields[1].name = 'Rate';
-        df.fields[1].config = {
+      return {
+        data: [apmTableFrame, nodes, edges],
+        state: LoadingState.Done,
+      };
+    })
+  );
+}
+
+function getApmTableFrame(
+  responses: DataQueryResponse[],
+  request: DataQueryRequest<TempoQuery>,
+  datasourceUid: string
+) {
+  var df: any = {};
+  // filter does not return table results
+  if (responses[0].data.length <= 4) {
+    df = toDataFrame([]);
+  } else {
+    const rate = responses[0].data.filter((x) => {
+      return x.refId === rateMetric.query;
+    });
+    const rateTrend = responses[0].data.filter((x) => {
+      return x.refId === rateTrendMetric.query;
+    });
+    const errorRate = responses[0].data.filter((x) => {
+      return x.refId === errorRateMetric.query;
+    });
+    const errorRateTrend = responses[0].data.filter((x) => {
+      return x.refId === errorRateTrendMetric.query;
+    });
+    const duration = responses[0].data.filter((x) => {
+      return x.refId === durationMetric.query;
+    });
+
+    df.fields = [];
+    if (rate.length > 0 && rate[0].fields?.length > 2) {
+      df.fields.push({
+        ...rate[0].fields[1],
+        name: 'Name',
+      });
+
+      df.fields.push({
+        ...rate[0].fields[2],
+        name: 'Rate',
+        config: {
           links: [
             makePromLink(
               rateMetric.query,
@@ -412,94 +434,98 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
               rateMetric.instant
             ),
           ],
-        };
+        },
+      });
+    }
 
-        if (rateTrend.length > 0 && rateTrend[0].fields?.length > 1) {
-          df.fields.push({
-            ...rateTrend[0].fields[1],
-            values: getRateTrendValues(rateTrend),
-            name: 'Trend (Rate)',
-            labels: null,
-            config: {
-              color: {
-                mode: 'continuous-BlPu',
-              },
-              custom: {
-                displayMode: 'area-chart',
-              },
-            },
-          });
-        }
-
-        if (errorRate.length > 0 && errorRate[0].fields?.length > 2) {
-          df.fields.push({
-            ...errorRate[0].fields[2],
-            name: 'Error Rate',
-            config: {
-              links: [
-                makePromLink(
-                  errorRateMetric.query,
-                  buildExpr(errorRateMetric.query, request.targets[0].serviceMapQuery),
-                  datasourceUid,
-                  errorRateMetric.instant
-                ),
-              ],
-            },
-          });
-        }
-
-        if (errorRateTrend.length > 0 && errorRateTrend[0].fields?.length > 2) {
-          df.fields.push({
-            ...errorRateTrend[0].fields[2],
-            name: 'Trend (Error Rate)',
-            labels: null,
-            config: {
-              color: {
-                mode: 'continuous-BlPu',
-              },
-              custom: {
-                displayMode: 'lcd-gauge',
-              },
-            },
-          });
-        }
-
-        if (duration.length > 0 && duration[0].fields?.length > 1) {
-          df.fields.push({
-            ...duration[0].fields[1],
-            name: 'Duration',
-            config: {
-              links: [
-                makePromLink(
-                  durationMetric.query,
-                  buildExpr(durationMetric.query, request.targets[0].serviceMapQuery),
-                  datasourceUid,
-                  durationMetric.instant
-                ),
-              ],
-            },
-          });
-        }
-
-        df.fields.push({
-          name: 'Links',
-          type: FieldType.string,
-          values: new ArrayVector(['Tempo', 'Tempo', 'Tempo', 'Tempo', 'Tempo']),
-          config: {
-            custom: {
-              instant: true,
-            },
-            links: [makeTempoLink('traces_spanmetrics_calls_total', '')],
+    if (rateTrend.length > 0 && rateTrend[0].fields?.length > 1) {
+      df.fields.push({
+        ...rateTrend[0].fields[1],
+        values: getRateTrendValues(rateTrend),
+        name: 'Trend (Rate)',
+        labels: null,
+        config: {
+          color: {
+            mode: 'continuous-BlPu',
           },
-        });
+          custom: {
+            displayMode: 'area-chart',
+          },
+        },
+      });
+    }
+
+    if (errorRate.length > 0 && errorRate[0].fields?.length > 2) {
+      df.fields.push({
+        ...errorRate[0].fields[2],
+        name: 'Error Rate',
+        config: {
+          links: [
+            makePromLink(
+              errorRateMetric.query,
+              buildExpr(errorRateMetric.query, request.targets[0].serviceMapQuery),
+              datasourceUid,
+              errorRateMetric.instant
+            ),
+          ],
+        },
+      });
+    }
+
+    if (errorRateTrend.length > 0 && errorRateTrend[0].fields?.length > 2) {
+      df.fields.push({
+        ...errorRateTrend[0].fields[2],
+        name: 'Trend (Error Rate)',
+        labels: null,
+        config: {
+          color: {
+            mode: 'continuous-BlPu',
+          },
+          custom: {
+            displayMode: 'lcd-gauge',
+          },
+        },
+      });
+    }
+
+    if (duration.length > 0 && duration[0].fields?.length > 1) {
+      df.fields.push({
+        ...duration[0].fields[1],
+        name: 'Duration',
+        config: {
+          links: [
+            makePromLink(
+              durationMetric.query,
+              buildExpr(durationMetric.query, request.targets[0].serviceMapQuery),
+              datasourceUid,
+              durationMetric.instant
+            ),
+          ],
+        },
+      });
+    }
+
+    if (df.fields.length > 0 && df.fields[0].values) {
+      var linkTitles = [];
+      for (var i = 0; i < df.fields[0].values.length; i++) {
+        linkTitles.push('Tempo');
       }
 
-      return {
-        data: [df, nodes, edges],
-        state: LoadingState.Done,
-      };
-    })
-  );
+      df.fields.push({
+        name: 'Links',
+        type: FieldType.string,
+        values: new ArrayVector(linkTitles),
+        config: {
+          custom: {
+            instant: true,
+          },
+          links: [makeTempoLink('traces_spanmetrics_calls_total', '')],
+        },
+      });
+    }
+  }
+
+  return df;
 }
 
 function getRateTrendValues(rateTrend: any) {
