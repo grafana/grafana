@@ -48,7 +48,7 @@ export function ServiceGraphSection({
             datasource={{ uid: graphDatasourceUid }}
             filters={filters}
             getTagKeysOptions={{
-              series: ['traces_spanmetrics_calls_total'],
+              series: ['traces_service_graph_request_total', 'traces_spanmetrics_calls_total'],
             }}
             addFilter={(filter: AdHocVariableFilter) => {
               onChange({
