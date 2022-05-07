@@ -530,8 +530,11 @@ function makeTempoLink(title: string, query: string) {
 function buildExpr(metric: string, serviceMapQuery: string | undefined) {
   var expr = `${metric.replace('%%', '')}`;
   if (serviceMapQuery) {
-    const filtered = serviceMapQuery.replace('{', '').replace('}', '');
-    expr = `${metric.replace('%%', filtered)}`;
+    // map serviceGraph metric tags to APM metric tags
+    serviceMapQuery = serviceMapQuery.replace('client', 'service').replace('server', 'service');
+
+    serviceMapQuery = serviceMapQuery.replace('{', '').replace('}', '');
+    expr = `${metric.replace('%%', serviceMapQuery)}`;
   }
   return expr;
 }
