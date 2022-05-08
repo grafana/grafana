@@ -15,11 +15,6 @@ type PermissionFilter struct {
 	filter ResourceFilter
 }
 
-const (
-	documentFieldKind = "_kind"
-	documentFieldId   = "_id"
-)
-
 type entityKind string
 
 const (
@@ -37,7 +32,7 @@ func (r entityKind) supportsAuthzCheck() bool {
 }
 
 var (
-	permissionFilterFields                 = []string{documentFieldId, documentFieldKind}
+	permissionFilterFields                 = []string{documentFieldUID, documentFieldKind}
 	panelIdFieldRegex                      = regexp.MustCompile(`^(.*)#([0-9]{1,4})$`)
 	panelIdFieldDashboardUidSubmatchIndex  = 1
 	panelIdFieldPanelIdSubmatchIndex       = 2
@@ -54,6 +49,10 @@ func newPermissionFilter(resourceFilter ResourceFilter, log log.Logger) *Permiss
 }
 
 func (q *PermissionFilter) logAccessDecision(decision bool, kind interface{}, id string, reason string, ctx ...interface{}) {
+	if true {
+		return // TOO much logging right now
+	}
+
 	ctx = append(ctx, "kind", kind, "id", id, "reason", reason)
 	if decision {
 		q.log.Debug("allowing access", ctx...)
@@ -113,7 +112,7 @@ func (q *PermissionFilter) Searcher(i search.Reader, options search.SearcherOpti
 		err := dvReader.VisitDocumentValues(d.Number, func(field string, term []byte) {
 			if field == documentFieldKind {
 				kind = string(term)
-			} else if field == documentFieldId {
+			} else if field == documentFieldUID {
 				id = string(term)
 			}
 		})

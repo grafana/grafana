@@ -85,16 +85,8 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 	}
 	i.logger.Info("Indexing for main org finished", "mainOrgIndexElapsed", time.Since(started), "numDashboards", len(dashboards))
 
-	// build bluge index
-	go func() {
-		orgID := int64(1)
-		reader, err := initBlugeIndex(ctx, i, orgID)
-		if err != nil {
-			i.logger.Error("error building index", "error", err)
-		} else if reader != nil {
-			i.reader[orgID] = reader // TODO? mutext lock
-		}
-	}()
+	// build bluge index on startup	 (will catch panics)
+	go i.reIndexFromScratchBluge(ctx)
 
 	for {
 		select {
@@ -131,6 +123,60 @@ func (i *dashboardIndex) reIndexFromScratch(ctx context.Context) {
 		i.logger.Info("Re-indexed dashboards for organization", "orgId", orgID, "orgReIndexElapsed", time.Since(started))
 		i.mu.Lock()
 		i.dashboards[orgID] = dashboards
+		i.mu.Unlock()
+	}
+}
+
+// Variation of the above function that builds bluge index from scratch
+// Once the frontend is wired up, we should switch to this one
+func (i *dashboardIndex) reIndexFromScratchBluge(ctx context.Context) {
+	// Catch Panic (just in case)
+	defer func() {
+		recv := recover()
+		if recv != nil {
+			i.logger.Error("panic in search runner", "recv", recv) // REMVOE after we are sure it works!
+		}
+	}()
+
+	i.mu.RLock()
+	orgIDs := make([]int64, 0, len(i.dashboards))
+	for orgID := range i.dashboards {
+		orgIDs = append(orgIDs, orgID)
+	}
+	i.mu.RUnlock()
+	if len(orgIDs) < 1 {
+		orgIDs = append(orgIDs, int64(1)) // make sure we index
+	}
+
+	for _, orgID := range orgIDs {
+		started := time.Now()
+		ctx, cancel := context.WithTimeout(ctx, time.Minute)
+
+		dashboards, err := i.loader.LoadDashboards(ctx, orgID, "")
+		if err != nil {
+			cancel()
+			i.logger.Error("Error re-indexing dashboards for organization", "orgId", orgID, "error", err)
+			continue
+		}
+		orgSearchIndexLoadTime := time.Since(started)
+
+		reader, err := initBlugeIndex(dashboards, i.logger)
+		if err != nil {
+			cancel()
+			i.logger.Error("Error re-indexing dashboards for organization", "orgId", orgID, "error", err)
+			continue
+		}
+		orgSearchIndexTotalTime := time.Since(started)
+		orgSearchIndexBuildTime := orgSearchIndexTotalTime - orgSearchIndexLoadTime
+
+		cancel()
+		i.logger.Info("Re-indexed dashboards for organization (bluge)",
+			"orgId", orgID,
+			"orgSearchIndexLoadTime", orgSearchIndexLoadTime,
+			"orgSearchIndexBuildTime", orgSearchIndexBuildTime,
+			"orgSearchIndexTotalTime", orgSearchIndexTotalTime)
+		i.mu.Lock()
+		i.reader[orgID] = reader
 		i.mu.Unlock()
 	}
 }
