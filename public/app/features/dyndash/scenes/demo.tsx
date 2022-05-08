@@ -3,15 +3,15 @@ import { Scene, ScenePanel, ScenePanelButton } from '../models/scene';
 export function getDemoScene(): Scene {
   const scene = new Scene({
     title: 'Hello',
-    panels: [],
+    children: [],
   });
 
   function addDrilldown() {
     scene.update({
-      panels: [
-        ...scene.state.panels,
+      children: [
+        ...scene.state.children,
         new ScenePanel({
-          id: `${scene.state.panels.length + 4}`,
+          id: `${scene.state.children.length + 4}`,
           title: 'drilldown panel',
           width: 10,
           height: 5,
@@ -22,7 +22,7 @@ export function getDemoScene(): Scene {
 
   setTimeout(() => {
     scene.update({
-      panels: [
+      children: [
         new ScenePanel({
           id: '2',
           title: 'another panel',

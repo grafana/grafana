@@ -34,7 +34,7 @@ interface ElementComponentProps<T> {
 
 interface SceneState {
   title: string;
-  panels: Array<ElementModel<any>>;
+  children: Array<ElementModel<any>>;
 }
 
 export class Scene extends ElementModel<SceneState> {
@@ -42,15 +42,15 @@ export class Scene extends ElementModel<SceneState> {
 }
 
 const SceneRenderer = React.memo<ElementComponentProps<SceneState>>(({ model }) => {
-  const { title, panels } = model.useState();
+  const { title, children } = model.useState();
   console.log('render scene');
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', width: '100%' }}>
       <PageToolbar title={title} />
       <div style={{ padding: 16, width: '100%', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        {panels.map((panel) => (
-          <panel.Component key={panel.state.id} model={panel} />
+        {children.map((child) => (
+          <child.Component key={child.state.id} model={child} />
         ))}
       </div>
     </div>
