@@ -170,15 +170,25 @@ func initBlugeIndex(dashboards []dashboard, logger log.Logger) (*bluge.Reader, e
 func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery) *backend.DataResponse {
 	response := &backend.DataResponse{}
 
-	fmt.Printf("QUERY! %+v\n", q)
-
-	// Find all folders
-	if q.Query == "*root*" {
-		q.Kind = []string{string(entityKindFolder)}
-		q.Query = ""
-		q.Limit = 500
-		q.Facet = nil
-		q.Explain = false
+	// Folder listing structure
+	idx := strings.Index(q.Query, ":")
+	if idx > 0 {
+		key := q.Query[0:idx]
+		val := q.Query[idx+1:]
+		if key == "list" {
+			q.Limit = 1000
+			q.Query = ""
+			q.Location = ""
+			q.Explain = false
+			q.SkipLocation = true
+			q.Facet = nil
+			if val == "root" || val == "" {
+				q.Kind = []string{string(entityKindFolder)}
+			} else {
+				q.Location = val
+				q.Kind = []string{string(entityKindDashboard)}
+			}
+		}
 	}
 
 	hasConstraints := false
@@ -319,7 +329,7 @@ func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.R
 	fTags.Name = "tags"
 	fExplain.Name = "explain"
 
-	frame := data.NewFrame("Query results", fScore, fKind, fUID, fName, fPType, fURL, fTags, fLocation)
+	frame := data.NewFrame("Query results", fScore, fKind, fUID, fName, fPType, fURL, fTags, fDSUIDs, fLocation)
 	if q.Explain {
 		frame.Fields = append(frame.Fields, fExplain)
 	}
@@ -340,6 +350,7 @@ func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.R
 		name := ""
 		url := ""
 		loc := ""
+		var ds_uids []string
 		var tags []string
 
 		err = match.VisitStoredFields(func(field string, value []byte) bool {
@@ -365,6 +376,8 @@ func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.R
 				url = string(value)
 			case documentFieldLocation:
 				loc = string(value)
+			case documentFieldDSUID:
+				ds_uids = append(ds_uids, string(value))
 			case documentFieldTag:
 				tags = append(tags, string(value))
 			}
@@ -385,8 +398,10 @@ func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.R
 		fLocation.Append(loc)
 
 		// set a key for all path parts we return
-		for _, v := range strings.Split(loc, "/") {
-			locationItems[v] = true
+		if !q.SkipLocation {
+			for _, v := range strings.Split(loc, "/") {
+				locationItems[v] = true
+			}
 		}
 
 		if len(tags) > 0 {
@@ -395,6 +410,14 @@ func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.R
 			fTags.Append(&jsb)
 		} else {
 			fTags.Append(nil)
+		}
+
+		if len(ds_uids) > 0 {
+			js, _ := json.Marshal(ds_uids)
+			jsb := json.RawMessage(js)
+			fDSUIDs.Append(&jsb)
+		} else {
+			fDSUIDs.Append(nil)
 		}
 
 		if q.Explain {
@@ -418,7 +441,7 @@ func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.R
 		Count:    aggs.Count(), // Total cound
 		MaxScore: aggs.Metric("max_score"),
 	}
-	if len(locationItems) > 0 {
+	if len(locationItems) > 0 && !q.SkipLocation {
 		header.Locations = getLocationLookupInfo(ctx, reader, locationItems)
 	}
 
@@ -489,6 +512,8 @@ func getLocationLookupInfo(ctx context.Context, reader *bluge.Reader, uids map[s
 				item.Kind = string(value)
 			case documentFieldName:
 				item.Name = string(value)
+			case documentFieldURL:
+				item.URL = string(value)
 			}
 			return true
 		})
@@ -505,6 +530,7 @@ func getLocationLookupInfo(ctx context.Context, reader *bluge.Reader, uids map[s
 type locationItem struct {
 	Name string `json:"name"`
 	Kind string `json:"kind"`
+	URL  string `json:"url"`
 }
 
 type customMeta struct {

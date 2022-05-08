@@ -10,9 +10,9 @@ import {
 } from '@grafana/data';
 import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { InlineField, Select, Alert, Input, InlineFieldRow, CodeEditor } from '@grafana/ui';
+import { SearchQuery } from 'app/features/search/service';
 
 import { GrafanaDatasource } from '../datasource';
-import { emptySearchQuery, SearchQuery } from '../search';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
 
 type Props = QueryEditorProps<GrafanaDatasource, GrafanaQuery>;
@@ -365,6 +365,23 @@ export class QueryEditor extends PureComponent<Props, State> {
 
   renderSearch() {
     let query = (this.props.query ?? {}) as SearchQuery;
+    const emptySearchQuery: SearchQuery = {
+      query: '*',
+      location: '', // general, etc
+      ds_uid: '',
+      sort: 'score desc',
+      tags: [],
+      kind: ['dashboard', 'folder'],
+      uid: [],
+      id: [],
+      explain: true,
+      accessInfo: true,
+      facet: [{ field: 'kind' }, { field: 'tag' }, { field: 'location' }],
+      hasPreview: 'dark',
+      from: 0,
+      limit: 20,
+    };
+
     const json = JSON.stringify(query ?? {}, null, 2);
     for (const [key, val] of Object.entries(emptySearchQuery)) {
       if ((query as any)[key] == null) {
