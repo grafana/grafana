@@ -1,31 +1,30 @@
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { DataFrameView, DataSourceRef, Field } from '@grafana/data';
+import { DataFrameView, Field } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
 import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
 
-import { LocationInfo } from '../../service';
+import { DashboardQueryResult, SearchResultMeta } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
-import { FieldAccess, TableColumn } from './SearchResultsTable';
+import { TableColumn } from './SearchResultsTable';
 
 export const generateColumns = (
-  data: DataFrameView<FieldAccess>,
+  data: DataFrameView<DashboardQueryResult>,
   isDashboardList: boolean,
   availableWidth: number,
   selection: SelectionChecker | undefined,
   selectionToggle: SelectionToggle | undefined,
   styles: { [key: string]: string },
-  tags: string[],
-  onTagFilterChange: (tags: string[]) => void,
+  onTagSelected: (tag: string) => void,
   onDatasourceChange: (datasource?: string) => void
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
-  const uidField = data.fields.uid!;
-  const kindField = data.fields.kind!;
   const access = data.fields;
+  const uidField = access.uid;
+  const kindField = access.kind;
 
   availableWidth -= 8; // ???
   let width = 50;
@@ -78,8 +77,7 @@ export const generateColumns = (
     field: access.name!,
     Header: 'Name',
     accessor: (row: any, i: number) => {
-      const name = access.name!.values.get(i);
-      return name;
+      return access.name.values.get(i);
     },
     width,
   });
@@ -110,16 +108,16 @@ export const generateColumns = (
     });
     availableWidth -= width;
   } else {
-    columns.push(makeTypeColumn(access.kind, access.type, width, styles.typeText, styles.typeIcon));
+    columns.push(makeTypeColumn(access.kind, access.panel_type, width, styles.typeText, styles.typeIcon));
     availableWidth -= width;
   }
 
   // Show datasources if we have any
-  if (access.datasource && hasFieldValue(access.datasource)) {
+  if (access.ds_uid && hasFieldValue(access.ds_uid)) {
     width = DATASOURCE_COLUMN_WIDTH;
     columns.push(
       makeDataSourceColumn(
-        access.datasource,
+        access.ds_uid,
         width,
         styles.typeIcon,
         styles.datasourceItem,
@@ -133,54 +131,63 @@ export const generateColumns = (
   // Show tags if we have any
   if (access.tags && hasFieldValue(access.tags)) {
     width = TAGS_COLUMN_WIDTH;
-    columns.push(makeTagsColumn(access.tags, width, styles.tagList, tags, onTagFilterChange));
+    columns.push(makeTagsColumn(access.tags, width, styles.tagList, onTagSelected));
     availableWidth -= width;
   }
 
   if (isDashboardList) {
-    width = Math.max(availableWidth, INFO_COLUMN_WIDTH);
-    columns.push({
-      Cell: DefaultCell,
-      id: `column-info`,
-      field: access.url!,
-      Header: 'Info',
-      accessor: (row: any, i: number) => {
-        const panelCount = access.panelCount?.values.get(i);
-        return <div className={styles.infoWrap}>{panelCount != null && <span>Panels: {panelCount}</span>}</div>;
-      },
-      width: width,
-    });
+    // width = Math.max(availableWidth, INFO_COLUMN_WIDTH);
+    // columns.push({
+    //   Cell: DefaultCell,
+    //   id: `column-info`,
+    //   field: access.url!,
+    //   Header: 'Info',
+    //   accessor: (row: any, i: number) => {
+    //     const panelCount = access.panelCount?.values.get(i);
+    //     return <div className={styles.infoWrap}>{panelCount != null && <span>Panels: {panelCount}</span>}</div>;
+    //   },
+    //   width: width,
+    // });
   } else {
     width = Math.max(availableWidth, LOCATION_COLUMN_WIDTH);
-    columns.push({
-      Cell: DefaultCell,
-      id: `column-location`,
-      field: access.location ?? access.url,
-      Header: 'Location',
-      accessor: (row: any, i: number) => {
-        const location = access.location?.values.get(i) as LocationInfo[];
-        if (location) {
+    const meta = data.dataFrame.meta?.custom as SearchResultMeta;
+    if (meta?.locationInfo) {
+      columns.push({
+        Cell: DefaultCell,
+        id: `column-location`,
+        field: access.location ?? access.url,
+        Header: 'Location',
+        accessor: (row: any, i: number) => {
+          const parts = (access.location?.values.get(i) ?? '').split('/');
           return (
             <div>
-              {location.map((v, id) => (
-                <span
-                  key={id}
-                  className={styles.locationItem}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert('CLICK: ' + v.name);
-                  }}
-                >
-                  <Icon name={getIconForKind(v.kind)} /> {v.name}
-                </span>
-              ))}
+              {parts.map((p) => {
+                const info = meta.locationInfo[p];
+                return info ? (
+                  <a key={p} href={info.url} className={styles.locationItem}>
+                    <Icon name={getIconForKind(info.kind)} /> {info.name}
+                  </a>
+                ) : (
+                  <span key={p}>{p}</span>
+                );
+              })}
             </div>
           );
-        }
-        return null;
-      },
-      width: width,
-    });
+        },
+        width,
+      });
+    } else {
+      columns.push({
+        Cell: DefaultCell,
+        id: `column-location`,
+        field: access.location ?? access.url,
+        Header: 'Location',
+        accessor: (row: any, i: number) => {
+          return <div>{access.location?.values.get(i)}</div>;
+        },
+        width,
+      });
+    }
   }
 
   return columns;
@@ -207,13 +214,14 @@ function getIconForKind(v: string): IconName {
 }
 
 function makeDataSourceColumn(
-  field: Field<DataSourceRef[]>,
+  field: Field<string[]>,
   width: number,
   iconClass: string,
   datasourceItemClass: string,
   invalidDatasourceItemClass: string,
   onDatasourceChange: (datasource?: string) => void
 ): TableColumn {
+  const srv = getDataSourceSrv();
   return {
     Cell: DefaultCell,
     id: `column-datasource`,
@@ -222,7 +230,6 @@ function makeDataSourceColumn(
     accessor: (row: any, i: number) => {
       const dslist = field.values.get(i);
       if (dslist?.length) {
-        const srv = getDataSourceSrv();
         return (
           <div className={datasourceItemClass}>
             {dslist.map((v, i) => {
@@ -245,7 +252,7 @@ function makeDataSourceColumn(
               }
               return (
                 <span className={invalidDatasourceItemClass} key={i}>
-                  {v.type}
+                  {v}
                 </span>
               );
             })}
@@ -303,7 +310,6 @@ function makeTypeColumn(
             break;
         }
       }
-
       return (
         <div className={typeTextClass}>
           <SVG src={icon} width={14} height={14} title={txt} className={iconClass} />
@@ -319,15 +325,8 @@ function makeTagsColumn(
   field: Field<string[]>,
   width: number,
   tagListClass: string,
-  currentTagFilter: string[],
-  onTagFilterChange: (tags: string[]) => void
+  onTagSelected: (tag: string) => void
 ): TableColumn {
-  const updateTagFilter = (tag: string) => {
-    if (!currentTagFilter.includes(tag)) {
-      onTagFilterChange([...currentTagFilter, tag]);
-    }
-  };
-
   return {
     Cell: DefaultCell,
     id: `column-tags`,
@@ -336,7 +335,7 @@ function makeTagsColumn(
     accessor: (row: any, i: number) => {
       const tags = field.values.get(i);
       if (tags) {
-        return <TagList className={tagListClass} tags={tags} onClick={updateTagFilter} />;
+        return <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />;
       }
       return null;
     },

@@ -3,26 +3,23 @@ import React, { useMemo } from 'react';
 import { useTable, Column, TableOptions, Cell, useAbsoluteLayout } from 'react-table';
 import { FixedSizeList } from 'react-window';
 
-import { DataFrame, DataFrameView, DataSourceRef, Field, GrafanaTheme2 } from '@grafana/data';
+import { DataFrameView, Field, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
 
-import { LocationInfo } from '../../service';
-import { SearchLayout } from '../../types';
+import { DashboardQueryResult } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { generateColumns } from './columns';
 
 type Props = {
-  data: DataFrame;
+  view: DataFrameView<DashboardQueryResult>;
   width: number;
   height: number;
   selection?: SelectionChecker;
   selectionToggle?: SelectionToggle;
-  layout: SearchLayout;
-  tags: string[];
-  onTagFilterChange: (tags: string[]) => void;
+  onTagSelected: (tag: string) => void;
   onDatasourceChange: (datasource?: string) => void;
 };
 
@@ -30,64 +27,43 @@ export type TableColumn = Column & {
   field?: Field;
 };
 
-export interface FieldAccess {
-  uid: string; // the item UID
-  kind: string; // panel, dashboard, folder
-  name: string;
-  description: string;
-  url: string; // link to value (unique)
-  type: string; // graph
-  tags: string[];
-  location: LocationInfo[]; // the folder name
-  score: number;
-
-  // Count info
-  panelCount: number;
-  datasource: DataSourceRef[];
-}
-
-const skipHREF = new Set(['column-checkbox', 'column-datasource']);
+const skipHREF = new Set(['column-checkbox', 'column-datasource', 'column-location']);
 
 export const SearchResultsTable = ({
-  data,
+  view,
   width,
   height,
-  tags,
   selection,
   selectionToggle,
-  layout,
-  onTagFilterChange,
+  onTagSelected,
   onDatasourceChange,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const tableStyles = useStyles2(getTableStyles);
 
   const memoizedData = useMemo(() => {
-    if (!data.fields.length) {
+    if (!view.dataFrame.fields.length) {
       return [];
     }
     // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
     // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
     // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
-    return Array(data.length).fill(0);
-  }, [data]);
+    return Array(view.length).fill(0);
+  }, [view]);
 
   // React-table column definitions
-  const access = useMemo(() => new DataFrameView<FieldAccess>(data), [data]);
   const memoizedColumns = useMemo(() => {
-    const isDashboardList = layout === SearchLayout.Folders;
     return generateColumns(
-      access,
-      isDashboardList,
+      view,
+      false, // is dashboard list
       width,
       selection,
       selectionToggle,
       styles,
-      tags,
-      onTagFilterChange,
+      onTagSelected,
       onDatasourceChange
     );
-  }, [layout, access, width, styles, tags, selection, selectionToggle, onTagFilterChange, onDatasourceChange]);
+  }, [view, width, styles, selection, selectionToggle, onTagSelected, onDatasourceChange]);
 
   const options: TableOptions<{}> = useMemo(
     () => ({
@@ -104,7 +80,7 @@ export const SearchResultsTable = ({
       const row = rows[rowIndex];
       prepareRow(row);
 
-      const url = access.fields.url?.values.get(rowIndex);
+      const url = view.fields.url?.values.get(rowIndex);
 
       return (
         <div {...row.getRowProps({ style })} className={styles.rowContainer}>
@@ -121,7 +97,6 @@ export const SearchResultsTable = ({
             if (skipHREF.has(cell.column.id)) {
               return body;
             }
-
             return (
               <a href={url} key={index} className={styles.cellWrapper}>
                 {body}
@@ -131,8 +106,12 @@ export const SearchResultsTable = ({
         </div>
       );
     },
-    [rows, prepareRow, access.fields.url?.values, styles.rowContainer, styles.cellWrapper, tableStyles]
+    [rows, prepareRow, view.fields.url?.values, styles.rowContainer, styles.cellWrapper, tableStyles]
   );
+
+  if (!rows.length) {
+    return <div className={styles.noData}>No data</div>;
+  }
 
   return (
     <div {...getTableProps()} style={{ width }} aria-label={'Search result table'} role="table">
@@ -156,19 +135,15 @@ export const SearchResultsTable = ({
       </div>
 
       <div {...getTableBodyProps()}>
-        {rows.length > 0 ? (
-          <FixedSizeList
-            height={height}
-            itemCount={rows.length}
-            itemSize={tableStyles.rowHeight}
-            width={'100%'}
-            className={styles.tableBody}
-          >
-            {RenderRow}
-          </FixedSizeList>
-        ) : (
-          <div className={styles.noData}>No data</div>
-        )}
+        <FixedSizeList
+          height={height}
+          itemCount={rows.length}
+          itemSize={tableStyles.rowHeight}
+          width={'100%'}
+          className={styles.tableBody}
+        >
+          {RenderRow}
+        </FixedSizeList>
       </div>
     </div>
   );

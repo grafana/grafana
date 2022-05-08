@@ -1,12 +1,12 @@
 import { lastValueFrom } from 'rxjs';
 
-import { DataFrame, DataFrameView } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { DataFrame, DataFrameView, getDisplayProcessor } from '@grafana/data';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from '.';
+import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
 
 export class BlugeSearcher implements GrafanaSearcher {
   async search(query: SearchQuery): Promise<QueryResponse> {
@@ -28,15 +28,16 @@ export async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> 
   );
 
   const first = (rsp.data?.[0] as DataFrame) ?? { fields: [], length: 0 };
+  for (const field of first.fields) {
+    field.display = getDisplayProcessor({ field, theme: config.theme2 });
+  }
   const view = new DataFrameView<DashboardQueryResult>(first);
-  const meta = first.meta?.custom as SearchResultMeta;
   if (rsp.data.length > 1) {
     for (let i = 1; i < rsp.data.length; i++) {
       const frame = rsp.data[i] as DataFrame;
       if (frame.fields[0]?.name === 'tag') {
         return {
           view,
-          meta,
           tags: getTermCountsFrom(frame),
         };
       }
@@ -45,7 +46,6 @@ export async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> 
 
   return {
     view,
-    meta,
   };
 }
 
