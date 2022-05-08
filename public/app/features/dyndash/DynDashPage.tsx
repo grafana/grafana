@@ -3,7 +3,6 @@ import React, { FC } from 'react';
 
 // Types
 // import { useObservable } from '@grafana/data';
-import { SceneRenderer } from './models/scene';
 import { getDemoScene } from './scenes/demo';
 
 export interface Props {
@@ -19,7 +18,7 @@ export const DynDashPage: FC<Props> = ({ name }) => {
 
   return (
     <div style={{ height: '100%', display: 'flex', width: '100%' }}>
-      {<SceneRenderer scene={scene} />}
+      <scene.Component model={scene} />
     </div>
   );
 };

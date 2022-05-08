@@ -1,49 +1,63 @@
-import { useObservable } from '@grafana/data';
-import { PageToolbar } from '@grafana/ui';
-import { GRID_CELL_HEIGHT } from 'app/core/constants';
 import React from 'react';
 import { ReplaySubject } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
-export abstract class SceneElement<T> {
-  subject = new ReplaySubject<T>();
+import { useObservable } from '@grafana/data';
+import { Button, PageToolbar } from '@grafana/ui';
+import { GRID_CELL_HEIGHT } from 'app/core/constants';
 
-  constructor(public props: T) {
-    this.subject.next(props);
+export abstract class ElementModel<TState> {
+  subject = new ReplaySubject<TState>();
+
+  constructor(public state: TState) {
+    this.subject.next(state);
   }
 
-  update(props: Partial<T>) {
-    this.props = {
-      ...this.props,
-      ...props
+  update(state: Partial<TState>) {
+    this.state = {
+      ...this.state,
+      ...state,
     };
-    this.subject.next(this.props);
+    this.subject.next(this.state);
+  }
+
+  abstract Component(props: ElementComponentProps<TState>): React.ReactElement | null;
+
+  useState() {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useObservable(this.subject, this.state);
   }
 }
 
-interface SceneProps {
-  title: string;
-  panels: ScenePanel[]
-};
-
-export class Scene extends SceneElement<SceneProps> {
-
+interface ElementComponentProps<T> {
+  model: ElementModel<T>;
 }
 
+interface SceneState {
+  title: string;
+  panels: Array<ElementModel<any>>;
+}
 
-export function SceneRenderer({ scene }: { scene: Scene }) {
-  const { title, panels } = useObservable(scene.subject, scene.props)
+export class Scene extends ElementModel<SceneState> {
+  Component = SceneRenderer;
+}
+
+const SceneRenderer = React.memo<ElementComponentProps<SceneState>>(({ model }) => {
+  const { title, panels } = model.useState();
   console.log('render scene');
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', width: '100%' }}>
       <PageToolbar title={title} />
       <div style={{ padding: 16, width: '100%', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        {panels.map(panel => <ScenePanelRenderer key={panel.props.id} panel={panel} />)}
+        {panels.map((panel) => (
+          <panel.Component key={panel.state.id} model={panel} />
+        ))}
       </div>
     </div>
-  )
-}
+  );
+});
+
+SceneRenderer.displayName = 'SceneRenderer';
 
 export interface PanelProps {
   id: string;
@@ -52,18 +66,35 @@ export interface PanelProps {
   height: number;
 }
 
-export class ScenePanel extends SceneElement<PanelProps> { }
+export class ScenePanel extends ElementModel<PanelProps> {
+  Component = ScenePanelRenderer;
+}
 
-export const ScenePanelRenderer = React.memo<{ panel: ScenePanel }>(({ panel }) => {
-  const { title } = useObservable(panel.subject, panel.props);
+const ScenePanelRenderer = React.memo<ElementComponentProps<PanelProps>>(({ model }) => {
+  const state = model.useState();
   console.log('render panel');
 
-  return (
-    <div style={getSceneItemStyles(panel.props)}>
-      {title && <h2>{title}</h2>}
-    </div>
-  );
+  return <div style={getSceneItemStyles(state)}>{state.title && <h2>{state.title}</h2>}</div>;
 });
+
+ScenePanelRenderer.displayName = 'ScenePanelRenderer';
+
+export interface ScenePanelButtonProps extends PanelProps {
+  buttonText: string;
+  onClick: () => void;
+}
+
+export class ScenePanelButton extends ElementModel<ScenePanelButtonProps> {
+  Component = ({ model }: ElementComponentProps<ScenePanelButtonProps>) => {
+    const props = model.useState();
+
+    return (
+      <div style={getSceneItemStyles(props)}>
+        <Button onClick={props.onClick}>{props.buttonText}</Button>
+      </div>
+    );
+  };
+}
 
 export interface ScenePanelSize {
   width: number;
@@ -75,7 +106,5 @@ function getSceneItemStyles(props: PanelProps) {
     width: `${(props.width / 24) * 100}%`,
     height: `${props.height * GRID_CELL_HEIGHT}px`,
     border: '1px solid #DD3344',
-  }
+  };
 }
-
-

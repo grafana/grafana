@@ -1,51 +1,72 @@
-import { Scene, ScenePanel } from "../models/scene";
+import { Scene, ScenePanel, ScenePanelButton } from '../models/scene';
 
 export function getDemoScene(): Scene {
   const scene = new Scene({
     title: 'Hello',
-    panels: []
+    panels: [],
   });
+
+  function addDrilldown() {
+    scene.update({
+      panels: [
+        ...scene.state.panels,
+        new ScenePanel({
+          id: `${scene.state.panels.length + 4}`,
+          title: 'drilldown panel',
+          width: 10,
+          height: 5,
+        }),
+      ],
+    });
+  }
 
   setTimeout(() => {
     scene.update({
       panels: [
-        getDynamicPanel(),
         new ScenePanel({
           id: '2',
           title: 'another panel',
           width: 10,
           height: 5,
-        })
-      ]
-    })
+        }),
+        new ScenePanelButton({
+          id: '3',
+          width: 5,
+          height: 2,
+          buttonText: 'Drilldown',
+          onClick: addDrilldown,
+        }),
+      ],
+    });
   }, 2000);
 
   setTimeout(() => {
     scene.update({
       title: 'New title',
-    })
+    });
   }, 10000);
 
   return scene;
 }
 
-function getDynamicPanel(): ScenePanel {
-  const panel = new ScenePanel({
-    title: 'A panel',
-    id: '1',
-    width: 10,
-    height: 5
-  });
+// function getDynamicPanel(): ScenePanel {
+//   // let counter = 0;
+//   const panel = new ScenePanel({
+//     title: 'A panel',
+//     id: '1',
+//     width: 10,
+//     height: 5
+//   });
 
-  // setInterval(() => {
-  //   counter += 1;
-  //   panel.update({
-  //     title: 'A panel ' + counter,
-  //   })
-  // }, 1000)
+//   setInterval(() => {
+//     panel.update({
+//       title: 'A panel ' + counter,
+//       height: panel.props.height + counter,
+//     })
+//   }, 1000)
 
-  return panel;
-}
+//   return panel;
+// }
 
 // import React from 'react';
 // import { CoreApp, DataQueryRequest, dateMath, LoadingState, PanelData, TimeRange } from '@grafana/data';
@@ -110,7 +131,6 @@ function getDynamicPanel(): ScenePanel {
 //   //     component: () => <Button onClick={onAddNested}>Add nested scene</Button>,
 //   //   })
 //   // );
-
 
 //   // return new Observable<SceneItemList>(observer => {
 //   //   const panels: SceneItem[] = [];
