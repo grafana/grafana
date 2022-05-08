@@ -27,9 +27,9 @@ func newQueryRowResponse() queryRowResponse {
 }
 
 func (q *queryRowResponse) addMetricDataResult(mdr *cloudwatch.MetricDataResult, partialDataSet map[string]*cloudwatch.MetricDataResult) {
-	if metricDataResult, ok := partialDataSet[*mdr.Label]; ok {
-		metricDataResult.Timestamps = append(metricDataResult.Timestamps, mdr.Timestamps...)
-		metricDataResult.Values = append(metricDataResult.Values, mdr.Values...)
+	if partialData, ok := partialDataSet[*mdr.Label]; ok {
+		partialData.Timestamps = append(partialData.Timestamps, mdr.Timestamps...)
+		partialData.Values = append(partialData.Values, mdr.Values...)
 		q.StatusCode = *mdr.StatusCode
 		if *mdr.StatusCode != "PartialData" {
 			delete(partialDataSet, *mdr.Label)
