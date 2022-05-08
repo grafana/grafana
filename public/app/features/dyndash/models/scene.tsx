@@ -5,7 +5,7 @@ import { useObservable } from '@grafana/data';
 import { Button, PageToolbar } from '@grafana/ui';
 import { GRID_CELL_HEIGHT } from 'app/core/constants';
 
-export abstract class ElementModel<TState> {
+export abstract class SceneItem<TState> {
   subject = new ReplaySubject<TState>();
 
   constructor(public state: TState) {
@@ -20,7 +20,7 @@ export abstract class ElementModel<TState> {
     this.subject.next(this.state);
   }
 
-  abstract Component(props: ElementComponentProps<TState>): React.ReactElement | null;
+  abstract Component(props: SceneItemComponentProps<TState>): React.ReactElement | null;
 
   useState() {
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -28,20 +28,20 @@ export abstract class ElementModel<TState> {
   }
 }
 
-interface ElementComponentProps<T> {
-  model: ElementModel<T>;
+interface SceneItemComponentProps<T> {
+  model: SceneItem<T>;
 }
 
 interface SceneState {
   title: string;
-  children: Array<ElementModel<any>>;
+  children: Array<SceneItem<any>>;
 }
 
-export class Scene extends ElementModel<SceneState> {
+export class Scene extends SceneItem<SceneState> {
   Component = SceneRenderer;
 }
 
-const SceneRenderer = React.memo<ElementComponentProps<SceneState>>(({ model }) => {
+const SceneRenderer = React.memo<SceneItemComponentProps<SceneState>>(({ model }) => {
   const { title, children } = model.useState();
   console.log('render scene');
 
@@ -66,11 +66,11 @@ export interface PanelProps {
   height: number;
 }
 
-export class ScenePanel extends ElementModel<PanelProps> {
+export class ScenePanel extends SceneItem<PanelProps> {
   Component = ScenePanelRenderer;
 }
 
-const ScenePanelRenderer = React.memo<ElementComponentProps<PanelProps>>(({ model }) => {
+const ScenePanelRenderer = React.memo<SceneItemComponentProps<PanelProps>>(({ model }) => {
   const state = model.useState();
   console.log('render panel');
 
@@ -84,8 +84,8 @@ export interface ScenePanelButtonProps extends PanelProps {
   onClick: () => void;
 }
 
-export class ScenePanelButton extends ElementModel<ScenePanelButtonProps> {
-  Component = ({ model }: ElementComponentProps<ScenePanelButtonProps>) => {
+export class ScenePanelButton extends SceneItem<ScenePanelButtonProps> {
+  Component = ({ model }: SceneItemComponentProps<ScenePanelButtonProps>) => {
     const props = model.useState();
 
     return (
