@@ -378,9 +378,6 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
           calcs.logmin = currentValue;
         }
 
-        // Below commented method gives approximate result
-        // squareSum += currentValue*currentValue;
-        // Below Welford's method gives more stable result (Check with Code review and remove comments)
         let _oldMean = calcs.mean;
         calcs.mean += (currentValue - _oldMean) / calcs.nonNullCount;
         squareSum += (currentValue - _oldMean) * (currentValue - calcs.mean);
@@ -404,10 +401,6 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
 
   if (calcs.step === Number.MAX_VALUE) {
     calcs.step = null;
-  }
-
-  if (calcs.nonNullCount > 0) {
-    calcs.mean = calcs.sum! / calcs.nonNullCount;
   }
 
   if (calcs.nonNullCount > 0) {
