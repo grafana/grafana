@@ -49,10 +49,19 @@ export interface SearchResultMeta {
 
 export interface QueryResponse {
   view: DataFrameView<DashboardQueryResult>;
-  tags?: TermCount[]; // from facets
+
+  /** Supports lazy loading.  This will mutate the `view` object above, adding rows as needed */
+  loadMoreItems: (startIndex: number, stopIndex: number) => Promise<void>;
+
+  /** Checks if a row in the view needs to be added */
+  isItemLoaded: (index: number) => boolean;
+
+  /** the total query results size */
+  totalRows: number;
 }
 
 export interface GrafanaSearcher {
   search: (query: SearchQuery) => Promise<QueryResponse>;
   list: (location: string) => Promise<QueryResponse>;
+  tags: (query: SearchQuery) => Promise<TermCount[]>;
 }

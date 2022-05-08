@@ -2,19 +2,20 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 import { useTable, Column, TableOptions, Cell, useAbsoluteLayout } from 'react-table';
 import { FixedSizeList } from 'react-window';
+import InfiniteLoader from 'react-window-infinite-loader';
 
-import { DataFrameView, Field, GrafanaTheme2 } from '@grafana/data';
+import { Field, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
 import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
 
-import { DashboardQueryResult } from '../../service';
+import { QueryResponse } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { generateColumns } from './columns';
 
 type Props = {
-  view: DataFrameView<DashboardQueryResult>;
+  response: QueryResponse;
   width: number;
   height: number;
   selection?: SelectionChecker;
@@ -30,7 +31,7 @@ export type TableColumn = Column & {
 const skipHREF = new Set(['column-checkbox', 'column-datasource', 'column-location']);
 
 export const SearchResultsTable = ({
-  view,
+  response,
   width,
   height,
   selection,
@@ -42,19 +43,19 @@ export const SearchResultsTable = ({
   const tableStyles = useStyles2(getTableStyles);
 
   const memoizedData = useMemo(() => {
-    if (!view.dataFrame.fields.length) {
+    if (!response?.view?.dataFrame.fields.length) {
       return [];
     }
     // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
     // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
     // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
-    return Array(view.length).fill(0);
-  }, [view]);
+    return Array(response.totalRows).fill(0);
+  }, [response]);
 
   // React-table column definitions
   const memoizedColumns = useMemo(() => {
     return generateColumns(
-      view,
+      response,
       false, // is dashboard list
       width,
       selection,
@@ -63,7 +64,7 @@ export const SearchResultsTable = ({
       onTagSelected,
       onDatasourceChange
     );
-  }, [view, width, styles, selection, selectionToggle, onTagSelected, onDatasourceChange]);
+  }, [response, width, styles, selection, selectionToggle, onTagSelected, onDatasourceChange]);
 
   const options: TableOptions<{}> = useMemo(
     () => ({
@@ -80,8 +81,7 @@ export const SearchResultsTable = ({
       const row = rows[rowIndex];
       prepareRow(row);
 
-      const url = view.fields.url?.values.get(rowIndex);
-
+      const url = response.view.fields.url?.values.get(rowIndex);
       return (
         <div {...row.getRowProps({ style })} className={styles.rowContainer}>
           {row.cells.map((cell: Cell, index: number) => {
@@ -106,7 +106,7 @@ export const SearchResultsTable = ({
         </div>
       );
     },
-    [rows, prepareRow, view.fields.url?.values, styles.rowContainer, styles.cellWrapper, tableStyles]
+    [rows, prepareRow, response.view.fields.url?.values, styles.rowContainer, styles.cellWrapper, tableStyles]
   );
 
   if (!rows.length) {
@@ -135,15 +135,25 @@ export const SearchResultsTable = ({
       </div>
 
       <div {...getTableBodyProps()}>
-        <FixedSizeList
-          height={height}
+        <InfiniteLoader
+          isItemLoaded={response.isItemLoaded}
           itemCount={rows.length}
-          itemSize={tableStyles.rowHeight}
-          width={'100%'}
-          className={styles.tableBody}
+          loadMoreItems={response.loadMoreItems}
         >
-          {RenderRow}
-        </FixedSizeList>
+          {({ onItemsRendered, ref }) => (
+            <FixedSizeList
+              ref={ref}
+              onItemsRendered={onItemsRendered}
+              height={height}
+              itemCount={rows.length}
+              itemSize={tableStyles.rowHeight}
+              width={'100%'}
+              className={styles.tableBody}
+            >
+              {RenderRow}
+            </FixedSizeList>
+          )}
+        </InfiniteLoader>
       </div>
     </div>
   );

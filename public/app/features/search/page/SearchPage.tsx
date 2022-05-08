@@ -57,10 +57,8 @@ export default function SearchPage() {
       query: (query.query as string) ?? '*',
       tags: query.tag as string[],
       ds_uid: query.datasource as string,
-      limit: 1, // 0 is the same as default on the backend!
-      facet: [{ field: 'tag' }],
     };
-    return (await getGrafanaSearcher().search(q)).tags ?? [];
+    return await getGrafanaSearcher().tags(q);
   };
 
   const onSearchQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,8 +85,7 @@ export default function SearchPage() {
       return <Spinner />;
     }
 
-    const view = results.value?.view;
-    if (!view || !view.length) {
+    if (!results.value?.totalRows) {
       return (
         <div className={styles.noResults}>
           <div>No results found for your query.</div>
@@ -128,6 +125,7 @@ export default function SearchPage() {
               onTagSelected,
             };
 
+            const view = results.value.view;
             const numColumns = Math.ceil(width / 320);
             const cellWidth = width / numColumns;
             const cellHeight = (cellWidth - 64) * 0.75 + 56 + 8;
@@ -177,7 +175,7 @@ export default function SearchPage() {
 
           return (
             <SearchResultsTable
-              view={view}
+              response={results.value}
               selection={showManage ? searchSelection.isSelected : undefined}
               selectionToggle={toggleSelection}
               width={width - 5}

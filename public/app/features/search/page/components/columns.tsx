@@ -1,18 +1,18 @@
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { DataFrameView, Field } from '@grafana/data';
+import { Field } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
 import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
 
-import { DashboardQueryResult, SearchResultMeta } from '../../service';
+import { QueryResponse, SearchResultMeta } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { TableColumn } from './SearchResultsTable';
 
 export const generateColumns = (
-  data: DataFrameView<DashboardQueryResult>,
+  response: QueryResponse,
   isDashboardList: boolean,
   availableWidth: number,
   selection: SelectionChecker | undefined,
@@ -22,7 +22,7 @@ export const generateColumns = (
   onDatasourceChange: (datasource?: string) => void
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
-  const access = data.fields;
+  const access = response.view.fields;
   const uidField = access.uid;
   const kindField = access.kind;
 
@@ -72,13 +72,18 @@ export const generateColumns = (
   // Name column
   width = Math.max(availableWidth * 0.2, 200);
   columns.push({
-    Cell: DefaultCell,
+    Cell: (p) => {
+      const name = access.name.values.get(p.row.index);
+      return (
+        <div {...p.cellProps} className={p.cellStyle}>
+          {name}
+        </div>
+      );
+    },
     id: `column-name`,
     field: access.name!,
     Header: 'Name',
-    accessor: (row: any, i: number) => {
-      return access.name.values.get(i);
-    },
+    accessor: 'name',
     width,
   });
   availableWidth -= width;
@@ -150,17 +155,13 @@ export const generateColumns = (
     // });
   } else {
     width = Math.max(availableWidth, LOCATION_COLUMN_WIDTH);
-    const meta = data.dataFrame.meta?.custom as SearchResultMeta;
+    const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
     if (meta?.locationInfo) {
       columns.push({
-        Cell: DefaultCell,
-        id: `column-location`,
-        field: access.location ?? access.url,
-        Header: 'Location',
-        accessor: (row: any, i: number) => {
-          const parts = (access.location?.values.get(i) ?? '').split('/');
+        Cell: (p) => {
+          const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
           return (
-            <div>
+            <div {...p.cellProps} className={p.cellStyle}>
               {parts.map((p) => {
                 const info = meta.locationInfo[p];
                 return info ? (
@@ -174,6 +175,9 @@ export const generateColumns = (
             </div>
           );
         },
+        id: `column-location`,
+        field: access.location ?? access.url,
+        Header: 'Location',
         width,
       });
     } else {
@@ -328,17 +332,20 @@ function makeTagsColumn(
   onTagSelected: (tag: string) => void
 ): TableColumn {
   return {
-    Cell: DefaultCell,
-    id: `column-tags`,
-    field: field,
-    Header: 'Tags',
-    accessor: (row: any, i: number) => {
-      const tags = field.values.get(i);
+    Cell: (p) => {
+      const tags = field.values.get(p.row.index);
       if (tags) {
-        return <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />;
+        return (
+          <div {...p.cellProps} className={p.cellStyle}>
+            <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />
+          </div>
+        );
       }
       return null;
     },
+    id: `column-tags`,
+    field: field,
+    Header: 'Tags',
     width,
   };
 }
