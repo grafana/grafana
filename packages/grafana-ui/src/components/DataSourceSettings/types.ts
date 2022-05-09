@@ -40,3 +40,17 @@ export interface HttpSettingsProps extends HttpSettingsBaseProps {
   /** If SIGV4 is enabled, provide an editor for SIGV4 connection config  **/
   renderSigV4Editor?: React.ReactNode;
 }
+
+export interface SIGV4DataSourceJsonData {
+  sigV4AuthType?: string;
+  sigV4AssumeRoleArn?: string;
+  sigV4ExternalId?: string;
+  sigV4Profile?: string; // Credentials profile name, as specified in ~/.aws/credentials
+  sigV4Region?: string; // region if it is not defined by your credentials file
+  sigV4Endpoint?: string;
+}
+
+export interface SIGV4DataSourceSecureJsonData {
+  sigV4AccessKey?: string;
+  sigV4SecretKey?: string;
+}

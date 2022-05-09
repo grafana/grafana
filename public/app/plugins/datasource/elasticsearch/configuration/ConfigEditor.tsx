@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 
-import { SigV4ConnectionConfig } from '@grafana/aws-sdk';
+import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { Alert, DataSourceHttpSettings } from '@grafana/ui';
+import { SIGV4DataSourceSecureJsonData } from '@grafana/ui/src/components/DataSourceSettings/types';
 import { config } from 'app/core/config';
 
 import { ElasticsearchOptions } from '../types';
@@ -13,7 +14,7 @@ import { ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';
 import { coerceOptions, isValidOptions } from './utils';
 
-export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions>;
+export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions, SIGV4DataSourceSecureJsonData>;
 
 export const ConfigEditor = (props: Props) => {
   const { options: originalOptions, onOptionsChange } = props;
@@ -42,14 +43,13 @@ export const ConfigEditor = (props: Props) => {
           {`Support for Elasticsearch versions after their end-of-life (currently versions < 7.10) was removed`}
         </Alert>
       )}
-
       <DataSourceHttpSettings
         defaultUrl="http://localhost:9200"
         dataSourceConfig={options}
         showAccessOptions
         onChange={onOptionsChange}
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
-        renderSigV4Editor={<SigV4ConnectionConfig {...props}></SigV4ConnectionConfig>}
+        renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
       />
 
       <ElasticDetails value={options} onChange={onOptionsChange} />

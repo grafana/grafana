@@ -1,8 +1,7 @@
 import React from 'react';
 
-import { SigV4ConnectionConfig } from '@grafana/aws-sdk';
+import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { AlertingSettings, DataSourceHttpSettings, Alert } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { getAllAlertmanagerDataSources } from 'app/features/alerting/unified/utils/alertmanager';
@@ -41,7 +40,7 @@ export const ConfigEditor = (props: Props) => {
         onChange={onOptionsChange}
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
         azureAuthSettings={azureAuthSettings}
-        renderSigV4Editor={<SigV4ConnectionConfig {...props}></SigV4ConnectionConfig>}
+        renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
       />
 
       <AlertingSettings<PromOptions>
