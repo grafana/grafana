@@ -81,11 +81,13 @@ export default function SearchPage() {
   const showPreviews = layout === SearchLayout.Grid && config.featureToggles.dashboardPreviews;
 
   const renderResults = () => {
-    if (results.loading) {
-      return <Spinner />;
-    }
+    const value = results.value;
 
-    if (!results.value?.totalRows) {
+    if (!value || !value.totalRows) {
+      if (results.loading && !value) {
+        return <Spinner />;
+      }
+
       return (
         <div className={styles.noResults}>
           <div>No results found for your query.</div>
@@ -125,7 +127,7 @@ export default function SearchPage() {
               onTagSelected,
             };
 
-            const view = results.value.view;
+            const view = value.view;
             const numColumns = Math.ceil(width / 320);
             const cellWidth = width / numColumns;
             const cellHeight = (cellWidth - 64) * 0.75 + 56 + 8;
@@ -143,6 +145,10 @@ export default function SearchPage() {
               >
                 {({ columnIndex, rowIndex, style }) => {
                   const index = rowIndex * numColumns + columnIndex;
+                  if (index >= view.length) {
+                    return null;
+                  }
+
                   const item = view.get(index);
                   const kind = item.kind ?? 'dashboard';
                   const facade: DashboardSectionItem = {
@@ -175,7 +181,7 @@ export default function SearchPage() {
 
           return (
             <SearchResultsTable
-              response={results.value}
+              response={value}
               selection={showManage ? searchSelection.isSelected : undefined}
               selectionToggle={toggleSelection}
               width={width - 5}
@@ -198,6 +204,7 @@ export default function SearchPage() {
           autoFocus
           spellCheck={false}
           placeholder="Search for dashboards and panels"
+          suffix={results.loading ? <Spinner /> : null}
         />
         <InlineFieldRow>
           <InlineField label="Show manage options">
