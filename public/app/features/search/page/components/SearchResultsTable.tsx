@@ -14,7 +14,7 @@ import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { generateColumns } from './columns';
 
-type Props = {
+export type SearchResultsProps = {
   response: QueryResponse;
   width: number;
   height: number;
@@ -38,7 +38,7 @@ export const SearchResultsTable = ({
   selectionToggle,
   onTagSelected,
   onDatasourceChange,
-}: Props) => {
+}: SearchResultsProps) => {
   const styles = useStyles2(getStyles);
   const tableStyles = useStyles2(getTableStyles);
 

@@ -15,9 +15,10 @@ import { getGrafanaSearcher, SearchQuery } from '../service';
 import { SearchLayout } from '../types';
 
 import { ActionRow, getValidQueryLayout } from './components/ActionRow';
+import { FolderView } from './components/FolderView';
 import { ManageActions } from './components/ManageActions';
 import { SearchResultsGrid } from './components/SearchResultsGrid';
-import { SearchResultsTable } from './components/SearchResultsTable';
+import { SearchResultsTable, SearchResultsProps } from './components/SearchResultsTable';
 import { newSearchSelection, updateSearchSelection } from './selection';
 
 const node: NavModelItem = {
@@ -36,15 +37,22 @@ export default function SearchPage() {
   const [showManage, setShowManage] = useState(false); // grid vs list view
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
+  const layout = getValidQueryLayout(query);
+  const isFolders = layout === SearchLayout.Folders;
 
   const results = useAsync(() => {
+    let qstr = query.query as string;
+    if (!qstr?.length) {
+      qstr = '*';
+    }
     const q: SearchQuery = {
-      query: query.query as string,
+      query: qstr,
       tags: query.tag as string[],
       ds_uid: query.datasource as string,
     };
+    console.log('DO QUERY', q);
     return getGrafanaSearcher().search(q);
-  }, [query]);
+  }, [query, layout]);
 
   if (!config.featureToggles.panelTitleSearch) {
     return <div className={styles.unsupported}>Unsupported</div>;
@@ -76,13 +84,10 @@ export default function SearchPage() {
     setSearchSelection(updateSearchSelection(searchSelection, !current, kind, [uid]));
   };
 
-  const layout = getValidQueryLayout(query);
-  const showPreviews = layout === SearchLayout.Grid && config.featureToggles.dashboardPreviews;
-
   const renderResults = () => {
     const value = results.value;
 
-    if (!value || !value.totalRows) {
+    if ((!value || !value.totalRows) && !isFolders) {
       if (results.loading && !value) {
         return <Spinner />;
       }
@@ -114,35 +119,25 @@ export default function SearchPage() {
     return (
       <AutoSizer style={{ width: '100%', height: '700px' }}>
         {({ width, height }) => {
-          if (showPreviews) {
-            return (
-              <SearchResultsGrid
-                value={value}
-                selection={showManage ? searchSelection.isSelected : undefined}
-                selectionToggle={toggleSelection}
-                width={width - 5}
-                height={height}
-                onTagSelected={onTagSelected}
-                onDatasourceChange={onDatasourceChange}
-              />
-            );
+          const props: SearchResultsProps = {
+            response: value!,
+            selection: showManage ? searchSelection.isSelected : undefined,
+            selectionToggle: toggleSelection,
+            width: width - 5,
+            height: height,
+            onTagSelected: onTagSelected,
+            onDatasourceChange: onDatasourceChange,
+          };
+
+          if (layout === SearchLayout.Grid) {
+            return <SearchResultsGrid {...props} />;
           }
 
           if (layout === SearchLayout.Folders) {
-            return <div>TODO... show nested views</div>;
+            return <FolderView {...props} />;
           }
 
-          return (
-            <SearchResultsTable
-              response={value}
-              selection={showManage ? searchSelection.isSelected : undefined}
-              selectionToggle={toggleSelection}
-              width={width - 5}
-              height={height}
-              onTagSelected={onTagSelected}
-              onDatasourceChange={onDatasourceChange}
-            />
-          );
+          return <SearchResultsTable {...props} />;
         }}
       </AutoSizer>
     );
@@ -187,14 +182,13 @@ export default function SearchPage() {
           />
         )}
 
-        {showPreviews && (
+        {layout === SearchLayout.Grid && (
           <PreviewsSystemRequirements
             bottomSpacing={3}
-            showPreviews={showPreviews}
+            showPreviews={true}
             onRemove={() => onLayoutChange(SearchLayout.List)}
           />
         )}
-
         {renderResults()}
       </Page.Contents>
     </Page>
