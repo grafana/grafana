@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
-import { useAsync } from 'react-use';
+import { useAsync, useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeGrid } from 'react-window';
 
@@ -47,22 +47,26 @@ export default function SearchPage() {
     return getGrafanaSearcher().search(q);
   }, [query]);
 
+  const [inputValue, setInputValue] = useState('');
+  const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    setInputValue(e.currentTarget.value);
+  };
+
+  useDebounce(() => onQueryChange(inputValue), 200, [inputValue]);
+
   if (!config.featureToggles.panelTitleSearch) {
     return <div className={styles.unsupported}>Unsupported</div>;
   }
 
   // This gets the possible tags from within the query results
-  const getTagOptions = async (): Promise<TermCount[]> => {
+  const getTagOptions = (): Promise<TermCount[]> => {
     const q: SearchQuery = {
-      query: (query.query as string) ?? '*',
-      tags: query.tag as string[],
-      ds_uid: query.datasource as string,
+      query: query.query ?? '*',
+      tags: query.tag,
+      ds_uid: query.datasource,
     };
-    return await getGrafanaSearcher().tags(q);
-  };
-
-  const onSearchQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onQueryChange(event.currentTarget.value);
+    return getGrafanaSearcher().tags(q);
   };
 
   const onTagSelected = (tag: string) => {
@@ -200,7 +204,7 @@ export default function SearchPage() {
         `}
       >
         <Input
-          value={query.query}
+          value={inputValue}
           onChange={onSearchQueryChange}
           autoFocus
           spellCheck={false}
