@@ -3,22 +3,16 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2, PanelProps, reduceField, ReducerID, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import {
-  Portal,
-  UPlotChart,
-  useStyles2,
-  useTheme2,
-  VizLayout,
-  VizTooltipContainer,
-  LegendDisplayMode,
-} from '@grafana/ui';
-import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { Portal, UPlotChart, useStyles2, useTheme2, VizLayout, LegendDisplayMode } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { HeatmapData, prepareHeatmapData } from './fields';
+import { ExemplarTab } from './hovertabs/ExemplarTab';
+import { HeatmapTab } from './hovertabs/HeatmapTab';
 import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
+import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
@@ -98,6 +92,22 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
 
+  builder.addHook('draw', (u: uPlot) => {
+    ExemplarsPlugin({
+      u,
+      heatmap: info,
+      config: builder,
+      theme: {
+        ...theme,
+        visualization: {
+          ...theme.visualization,
+          palette: [],
+        },
+      },
+      options,
+    });
+  });
+
   const renderLegend = () => {
     if (options.legend.displayMode === LegendDisplayMode.Hidden || !info.heatmap) {
       return null;
@@ -143,20 +153,27 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
         )}
       </VizLayout>
       <Portal>
-        {hover && options.tooltip.show && (
-          <VizTooltipContainer
-            position={{ x: hover.pageX, y: hover.pageY }}
-            offset={{ x: 10, y: 10 }}
-            allowPointerEvents={isToolTipOpen.current}
-          >
-            {shouldDisplayCloseButton && (
-              <>
-                <CloseButton onClick={onCloseToolTip} />
-                <div className={styles.closeButtonSpacer} />
-              </>
-            )}
-            <HeatmapHoverView data={info} hover={hover} showHistogram={options.tooltip.yHistogram} />
-          </VizTooltipContainer>
+        {hover && (
+          <HeatmapHoverView
+            ttip={{
+              layers: [
+                HeatmapTab({
+                  heatmapData: info,
+                  index: hover.index,
+                  options: { showHistogram: options.tooltip.yHistogram, timeZone },
+                }),
+                ExemplarTab({
+                  heatmapData: info,
+                  index: hover?.index,
+                  options: { timeZone },
+                }),
+              ],
+              hover,
+              point: {},
+            }}
+            isOpen={shouldDisplayCloseButton}
+            onClose={onCloseToolTip}
+          />
         )}
       </Portal>
     </>

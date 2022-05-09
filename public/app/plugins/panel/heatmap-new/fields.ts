@@ -92,7 +92,7 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
   return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), exemplars, theme);
 }
 
-const getHeatmapFields = (dataFrame: DataFrame): Array<Field | undefined> => {
+export const getHeatmapFields = (dataFrame: DataFrame): Array<Field | undefined> => {
   const xField: Field | undefined = dataFrame.fields.find((f) => f.name === 'xMin');
   const yField: Field | undefined = dataFrame.fields.find((f) => f.name === 'yMin');
   const countField: Field | undefined = dataFrame.fields.find((f) => f.name === 'count');
