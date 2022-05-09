@@ -12,7 +12,6 @@ import { ExemplarTab } from './hovertabs/ExemplarTab';
 import { HeatmapTab } from './hovertabs/HeatmapTab';
 import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
-import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
@@ -91,22 +90,6 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev]);
-
-  builder.addHook('draw', (u: uPlot) => {
-    ExemplarsPlugin({
-      u,
-      heatmap: info,
-      config: builder,
-      theme: {
-        ...theme,
-        visualization: {
-          ...theme.visualization,
-          palette: [],
-        },
-      },
-      options,
-    });
-  });
 
   const renderLegend = () => {
     if (options.legend.displayMode === LegendDisplayMode.Hidden || !info.heatmap) {
