@@ -21,17 +21,17 @@ FROM debian:testing-20210111-slim
 
 # Use ARG so as not to persist environment variable in image
 ARG DEBIAN_FRONTEND=noninteractive \
-  GOOGLE_SDK_VERSION=384.0.1 \
-  GOOGLE_SDK_CHECKSUM=437539933ce68aed7147bd03173d53e1c3d69c0694c107bc25e5f8309f29ccb8 \
+  GOOGLE_SDK_VERSION=325.0.0 \
+  GOOGLE_SDK_CHECKSUM=374f960c9f384f88b6fc190b268ceac5dcad777301390107af63782bfb5ecbc7 \
   GCSFUSE_VERSION=0.41.1
 
 # Need procps for pkill utility, which is used by the build pipeline tool to restart the GPG agent
 # Pin pip3 to version 20.0.2 to address https://github.com/pypa/pip/issues/11070
 RUN apt update && apt install -yq curl python3-pip procps && pip3 install -U pip==20.0.2 && pip3 install -U awscli crcmod && \
-    curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz && \
-    echo "${GOOGLE_SDK_CHECKSUM} google-cloud-cli-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz" | sha256sum --check --status && \
-    tar xzf google-cloud-cli-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz -C /opt && \
-    rm google-cloud-cli-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz && \
+    curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz && \
+    echo "${GOOGLE_SDK_CHECKSUM} google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz" | sha256sum --check --status && \
+    tar xzf google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz -C /opt && \
+    rm google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz && \
     apt update && \
     apt install -y createrepo-c expect fuse && \
     apt-get autoremove -y && \
