@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -37,10 +38,9 @@ type ScheduleService interface {
 	overrideCfg(cfg SchedulerCfg)
 }
 
-//go:generate mockery --name AlertSender --structname FakeAlertSender --inpackage --filename alertsender_mock.go --with-expecter
-type AlertSender interface {
-	Notify(key models.AlertRuleKey, states []*state.State) error
-	Expire(key models.AlertRuleKey, states []*state.State) error
+//go:generate mockery --name AlertsSender --structname FakeAlertsSender --inpackage --filename alerts_sender_mock.go --with-expecter
+type AlertsSender interface {
+	Send(key models.AlertRuleKey, alerts definitions.PostableAlerts) error
 }
 
 type schedule struct {
@@ -83,7 +83,7 @@ type schedule struct {
 
 	disabledOrgs    map[int64]struct{}
 	minRuleInterval time.Duration
-	notifier        AlertSender
+	notifier        AlertsSender
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -101,7 +101,7 @@ type SchedulerCfg struct {
 	Metrics         *metrics.Scheduler
 	DisabledOrgs    map[int64]struct{}
 	MinRuleInterval time.Duration
-	AlertSender     AlertSender
+	AlertSender     AlertsSender
 }
 
 // NewScheduler returns a new schedule.
