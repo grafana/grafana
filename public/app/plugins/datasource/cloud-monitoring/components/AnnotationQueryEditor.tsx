@@ -65,8 +65,9 @@ export const AnnotationQueryEditor = (props: Props) => {
         query={metricQuery}
       />
 
-      <QueryEditorRow label="Title">
+      <QueryEditorRow label="Title" htmlFor="annotation-query-title">
         <Input
+          id="annotation-query-title"
           type="text"
           className="gf-form-input width-20"
           value={title}
@@ -74,8 +75,9 @@ export const AnnotationQueryEditor = (props: Props) => {
         />
       </QueryEditorRow>
 
-      <QueryEditorRow label="Text">
+      <QueryEditorRow label="Text" htmlFor="annotation-query-text">
         <Input
+          id="annotation-query-text"
           type="text"
           className="gf-form-input width-20"
           value={text}

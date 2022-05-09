@@ -127,7 +127,7 @@ describe('functions', () => {
       });
 
       it('should return all alignment options except two', () => {
-        expect(result.length).toBe(9);
+        expect(result.length).toBe(10);
         expect(result.map((o: any) => o.value)).toEqual(
           expect.not.arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE'])
         );
@@ -173,7 +173,7 @@ describe('functions', () => {
   describe('getAlignmentPickerData', () => {
     it('should return default data', () => {
       const res = getAlignmentPickerData();
-      expect(res.alignOptions).toHaveLength(9);
+      expect(res.alignOptions).toHaveLength(10);
       expect(res.perSeriesAligner).toEqual(AlignmentTypes.ALIGN_MEAN);
     });
 
@@ -181,12 +181,6 @@ describe('functions', () => {
       const res = getAlignmentPickerData(ValueTypes.BOOL, MetricKind.CUMULATIVE);
       expect(res.alignOptions).toHaveLength(0);
       expect(res.perSeriesAligner).toEqual(AlignmentTypes.ALIGN_MEAN);
-    });
-
-    it('should return an empty list of options and "ALIGN_NONE" as the perSeriesAligner if ALIGN_NONE is passed in', () => {
-      const res = getAlignmentPickerData(undefined, undefined, AlignmentTypes.ALIGN_NONE);
-      expect(res.alignOptions).toHaveLength(0);
-      expect(res.perSeriesAligner).toEqual(AlignmentTypes.ALIGN_NONE);
     });
   });
 
