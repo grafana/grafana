@@ -23,7 +23,10 @@ func TestDashboardService(t *testing.T) {
 	t.Run("Dashboard service tests", func(t *testing.T) {
 		fakeStore := m.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)
+		cfg := setting.NewCfg()
+		cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
 		service := &DashboardServiceImpl{
+			cfg:                cfg,
 			log:                log.New("test.logger"),
 			dashboardStore:     &fakeStore,
 			dashAlertExtractor: &dummyDashAlertExtractor{},
