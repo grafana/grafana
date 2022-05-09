@@ -36,7 +36,7 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, onDeleteItems, isOpen, 
   } else if (folderCount > 0) {
     text += `selected folder${folderEnding} and all ${folderCount === 1 ? 'its' : 'their'} dashboards and alerts?`;
   } else {
-    text += `selected dashboard${dashEnding}?`;
+    text += `${dashCount} selected dashboard${dashEnding}?`;
   }
 
   const deleteItems = () => {
