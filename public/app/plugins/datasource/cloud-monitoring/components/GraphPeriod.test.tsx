@@ -17,7 +17,7 @@ describe('Graph Period', () => {
     expect(screen.getByLabelText('Graph period')).not.toBeDisabled();
   });
 
-  it('should disable graph_period', async () => {
+  it('should disable graph_period when toggled', async () => {
     const onChange = jest.fn();
     render(<GraphPeriod {...props} onChange={onChange} />);
     const s = screen.getByTestId('A-switch-graph-period');
@@ -25,7 +25,7 @@ describe('Graph Period', () => {
     expect(onChange).toHaveBeenCalledWith('disabled');
   });
 
-  it('should set a different value', async () => {
+  it('should set a different value when selected', async () => {
     const onChange = jest.fn();
     render(<GraphPeriod {...props} onChange={onChange} />);
     const selectEl = screen.getByLabelText('Graph period');

@@ -21,6 +21,8 @@ import (
 )
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *backend.QueryDataRequest) string {
+	// GraphPeriod needs to be explicitly disabled.
+	// If not set, the default behavior is to set an automatic value
 	if timeSeriesQuery.GraphPeriod != "disabled" {
 		graphPeriod := timeSeriesQuery.GraphPeriod
 		if graphPeriod == "auto" || graphPeriod == "" {

@@ -126,7 +126,8 @@ export interface MetricQuery extends BaseQuery {
   view?: string;
   query: string;
   preprocessor?: PreprocessorType;
-  graphPeriod?: string;
+  // To disable the graphPeriod, it should explictly be set to 'disabled'
+  graphPeriod?: 'disabled' | string;
 }
 
 export interface SLOQuery extends BaseQuery {
