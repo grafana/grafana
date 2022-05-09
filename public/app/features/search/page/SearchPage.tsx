@@ -111,101 +111,107 @@ export default function SearchPage() {
     }
 
     return (
-      <AutoSizer style={{ width: '100%', height: '700px' }}>
-        {({ width, height }) => {
-          if (showPreviews) {
-            // Hacked to reuse existing SearchCard (and old DashboardSectionItem)
-            const itemProps = {
-              editable: showManage,
-              onToggleChecked: (item: any) => {
-                const d = item as DashboardSectionItem;
-                const t = d.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
-                toggleSelection(t, d.uid!);
-              },
-              onTagSelected,
-            };
+      <div style={{ height: '100%', width: '100%' }}>
+        <AutoSizer>
+          {({ width, height }) => {
+            if (showPreviews) {
+              // Hacked to reuse existing SearchCard (and old DashboardSectionItem)
+              const itemProps = {
+                editable: showManage,
+                onToggleChecked: (item: any) => {
+                  const d = item as DashboardSectionItem;
+                  const t = d.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
+                  toggleSelection(t, d.uid!);
+                },
+                onTagSelected,
+              };
 
-            const view = results.value.view;
-            const numColumns = Math.ceil(width / 320);
-            const cellWidth = width / numColumns;
-            const cellHeight = (cellWidth - 64) * 0.75 + 56 + 8;
-            const numRows = Math.ceil(view.length / numColumns);
+              const view = results.value.view;
+              const numColumns = Math.ceil(width / 320);
+              const cellWidth = width / numColumns;
+              const cellHeight = (cellWidth - 64) * 0.75 + 56 + 8;
+              const numRows = Math.ceil(view.length / numColumns);
+              return (
+                <FixedSizeGrid
+                  columnCount={numColumns}
+                  columnWidth={cellWidth}
+                  rowCount={numRows}
+                  rowHeight={cellHeight}
+                  className={styles.wrapper}
+                  innerElementType="ul"
+                  height={height}
+                  width={width - 2}
+                >
+                  {({ columnIndex, rowIndex, style }) => {
+                    const index = rowIndex * numColumns + columnIndex;
+                    const item = view.get(index);
+                    const kind = item.kind ?? 'dashboard';
+                    const facade: DashboardSectionItem = {
+                      uid: item.uid,
+                      title: item.name,
+                      url: item.url,
+                      uri: item.url,
+                      type: kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
+                      id: 666, // do not use me!
+                      isStarred: false,
+                      tags: item.tags ?? [],
+                      checked: searchSelection.isSelected(kind, item.uid),
+                    };
+
+                    // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
+                    // And without this wrapper there is no room for that margin
+                    return item ? (
+                      <li style={style} className={styles.virtualizedGridItemWrapper}>
+                        <SearchCard key={item.uid} {...itemProps} item={facade} />
+                      </li>
+                    ) : null;
+                  }}
+                </FixedSizeGrid>
+              );
+            }
+
+            if (layout === SearchLayout.Folders) {
+              return <div>TODO... show nested views</div>;
+            }
+
             return (
-              <FixedSizeGrid
-                columnCount={numColumns}
-                columnWidth={cellWidth}
-                rowCount={numRows}
-                rowHeight={cellHeight}
-                className={styles.wrapper}
-                innerElementType="ul"
+              <SearchResultsTable
+                response={results.value}
+                selection={showManage ? searchSelection.isSelected : undefined}
+                selectionToggle={toggleSelection}
+                width={width}
                 height={height}
-                width={width - 2}
-              >
-                {({ columnIndex, rowIndex, style }) => {
-                  const index = rowIndex * numColumns + columnIndex;
-                  const item = view.get(index);
-                  const kind = item.kind ?? 'dashboard';
-                  const facade: DashboardSectionItem = {
-                    uid: item.uid,
-                    title: item.name,
-                    url: item.url,
-                    uri: item.url,
-                    type: kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
-                    id: 666, // do not use me!
-                    isStarred: false,
-                    tags: item.tags ?? [],
-                    checked: searchSelection.isSelected(kind, item.uid),
-                  };
-
-                  // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
-                  // And without this wrapper there is no room for that margin
-                  return item ? (
-                    <li style={style} className={styles.virtualizedGridItemWrapper}>
-                      <SearchCard key={item.uid} {...itemProps} item={facade} />
-                    </li>
-                  ) : null;
-                }}
-              </FixedSizeGrid>
+                onTagSelected={onTagSelected}
+                onDatasourceChange={onDatasourceChange}
+              />
             );
-          }
-
-          if (layout === SearchLayout.Folders) {
-            return <div>TODO... show nested views</div>;
-          }
-
-          return (
-            <SearchResultsTable
-              response={results.value}
-              selection={showManage ? searchSelection.isSelected : undefined}
-              selectionToggle={toggleSelection}
-              width={width - 5}
-              height={height}
-              onTagSelected={onTagSelected}
-              onDatasourceChange={onDatasourceChange}
-            />
-          );
-        }}
-      </AutoSizer>
+          }}
+        </AutoSizer>
+      </div>
     );
   };
 
   return (
     <Page navModel={{ node: node, main: node }}>
-      <Page.Contents>
+      <Page.Contents
+        className={css`
+          display: flex;
+          flex-direction: column;
+        `}
+      >
         <Input
           value={query.query}
           onChange={onSearchQueryChange}
           autoFocus
           spellCheck={false}
           placeholder="Search for dashboards and panels"
+          className={styles.searchInput}
         />
         <InlineFieldRow>
           <InlineField label="Show manage options">
             <InlineSwitch value={showManage} onChange={() => setShowManage(!showManage)} />
           </InlineField>
         </InlineFieldRow>
-        <br />
-        <hr />
 
         {Boolean(searchSelection.items.size > 0) ? (
           <ManageActions items={searchSelection.items} />
@@ -242,6 +248,9 @@ export default function SearchPage() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  searchInput: css`
+    margin-bottom: 6px;
+  `,
   unsupported: css`
     padding: 10px;
     display: flex;
