@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { FixedSizeGrid } from 'react-window';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -11,13 +10,13 @@ import Page from 'app/core/components/Page/Page';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 import { PreviewsSystemRequirements } from '../components/PreviewsSystemRequirements';
-import { SearchCard } from '../components/SearchCard';
 import { useSearchQuery } from '../hooks/useSearchQuery';
 import { getGrafanaSearcher, SearchQuery } from '../service';
-import { DashboardSearchItemType, DashboardSectionItem, SearchLayout } from '../types';
+import { SearchLayout } from '../types';
 
 import { ActionRow, getValidQueryLayout } from './components/ActionRow';
 import { ManageActions } from './components/ManageActions';
+import { SearchResultsGrid } from './components/SearchResultsGrid';
 import { SearchResultsTable } from './components/SearchResultsTable';
 import { newSearchSelection, updateSearchSelection } from './selection';
 
@@ -116,62 +115,16 @@ export default function SearchPage() {
       <AutoSizer style={{ width: '100%', height: '700px' }}>
         {({ width, height }) => {
           if (showPreviews) {
-            // Hacked to reuse existing SearchCard (and old DashboardSectionItem)
-            const itemProps = {
-              editable: showManage,
-              onToggleChecked: (item: any) => {
-                const d = item as DashboardSectionItem;
-                const t = d.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
-                toggleSelection(t, d.uid!);
-              },
-              onTagSelected,
-            };
-
-            const view = value.view;
-            const numColumns = Math.ceil(width / 320);
-            const cellWidth = width / numColumns;
-            const cellHeight = (cellWidth - 64) * 0.75 + 56 + 8;
-            const numRows = Math.ceil(view.length / numColumns);
             return (
-              <FixedSizeGrid
-                columnCount={numColumns}
-                columnWidth={cellWidth}
-                rowCount={numRows}
-                rowHeight={cellHeight}
-                className={styles.wrapper}
-                innerElementType="ul"
+              <SearchResultsGrid
+                value={value}
+                selection={showManage ? searchSelection.isSelected : undefined}
+                selectionToggle={toggleSelection}
+                width={width - 5}
                 height={height}
-                width={width - 2}
-              >
-                {({ columnIndex, rowIndex, style }) => {
-                  const index = rowIndex * numColumns + columnIndex;
-                  if (index >= view.length) {
-                    return null;
-                  }
-
-                  const item = view.get(index);
-                  const kind = item.kind ?? 'dashboard';
-                  const facade: DashboardSectionItem = {
-                    uid: item.uid,
-                    title: item.name,
-                    url: item.url,
-                    uri: item.url,
-                    type: kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
-                    id: 666, // do not use me!
-                    isStarred: false,
-                    tags: item.tags ?? [],
-                    checked: searchSelection.isSelected(kind, item.uid),
-                  };
-
-                  // The wrapper div is needed as the inner SearchItem has margin-bottom spacing
-                  // And without this wrapper there is no room for that margin
-                  return item ? (
-                    <li style={style} className={styles.virtualizedGridItemWrapper}>
-                      <SearchCard key={item.uid} {...itemProps} item={facade} />
-                    </li>
-                  ) : null;
-                }}
-              </FixedSizeGrid>
+                onTagSelected={onTagSelected}
+                onDatasourceChange={onDatasourceChange}
+              />
             );
           }
 
@@ -256,17 +209,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: center;
     height: 100%;
     font-size: 18px;
-  `,
-  virtualizedGridItemWrapper: css`
-    padding: 4px;
-  `,
-  wrapper: css`
-    display: flex;
-    flex-direction: column;
-
-    > ul {
-      list-style: none;
-    }
   `,
   noResults: css`
     padding: ${theme.v1.spacing.md};

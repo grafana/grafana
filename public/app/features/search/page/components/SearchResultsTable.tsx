@@ -54,16 +54,7 @@ export const SearchResultsTable = ({
 
   // React-table column definitions
   const memoizedColumns = useMemo(() => {
-    return generateColumns(
-      response,
-      false, // is dashboard list
-      width,
-      selection,
-      selectionToggle,
-      styles,
-      onTagSelected,
-      onDatasourceChange
-    );
+    return generateColumns(response, width, selection, selectionToggle, styles, onTagSelected, onDatasourceChange);
   }, [response, width, styles, selection, selectionToggle, onTagSelected, onDatasourceChange]);
 
   const options: TableOptions<{}> = useMemo(

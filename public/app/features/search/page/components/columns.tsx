@@ -14,7 +14,6 @@ import { TableColumn } from './SearchResultsTable';
 
 export const generateColumns = (
   response: QueryResponse,
-  isFolderView: boolean,
   availableWidth: number,
   selection: SelectionChecker | undefined,
   selectionToggle: SelectionToggle | undefined,
@@ -94,12 +93,8 @@ export const generateColumns = (
   const TAGS_COLUMN_WIDTH = 200;
 
   width = TYPE_COLUMN_WIDTH;
-  if (isFolderView) {
-    // ?????
-  } else {
-    columns.push(makeTypeColumn(access.kind, access.panel_type, width, styles.typeText, styles.typeIcon));
-    availableWidth -= width;
-  }
+  columns.push(makeTypeColumn(access.kind, access.panel_type, width, styles.typeText, styles.typeIcon));
+  availableWidth -= width;
 
   // Show datasources if we have any
   if (access.ds_uid) {
@@ -124,58 +119,32 @@ export const generateColumns = (
     availableWidth -= width;
   }
 
-  if (isFolderView) {
-    // width = Math.max(availableWidth, INFO_COLUMN_WIDTH);
-    // columns.push({
-    //   Cell: DefaultCell,
-    //   id: `column-info`,
-    //   field: access.url!,
-    //   Header: 'Info',
-    //   accessor: (row: any, i: number) => {
-    //     const panelCount = access.panelCount?.values.get(i);
-    //     return <div className={styles.infoWrap}>{panelCount != null && <span>Panels: {panelCount}</span>}</div>;
-    //   },
-    //   width: width,
-    // });
-  } else {
-    width = Math.max(availableWidth, LOCATION_COLUMN_WIDTH);
-    const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
-    if (meta?.locationInfo) {
-      columns.push({
-        Cell: (p) => {
-          const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
-          return (
-            <div {...p.cellProps} className={p.cellStyle}>
-              {parts.map((p) => {
-                const info = meta.locationInfo[p];
-                return info ? (
-                  <a key={p} href={info.url} className={styles.locationItem}>
-                    <Icon name={getIconForKind(info.kind)} /> {info.name}
-                  </a>
-                ) : (
-                  <span key={p}>{p}</span>
-                );
-              })}
-            </div>
-          );
-        },
-        id: `column-location`,
-        field: access.location ?? access.url,
-        Header: 'Location',
-        width,
-      });
-    } else {
-      columns.push({
-        Cell: DefaultCell,
-        id: `column-location`,
-        field: access.location ?? access.url,
-        Header: 'Location',
-        accessor: (row: any, i: number) => {
-          return <div>{access.location?.values.get(i)}</div>;
-        },
-        width,
-      });
-    }
+  width = Math.max(availableWidth, LOCATION_COLUMN_WIDTH);
+  const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
+  if (meta?.locationInfo) {
+    columns.push({
+      Cell: (p) => {
+        const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
+        return (
+          <div {...p.cellProps} className={p.cellStyle}>
+            {parts.map((p) => {
+              const info = meta.locationInfo[p];
+              return info ? (
+                <a key={p} href={info.url} className={styles.locationItem}>
+                  <Icon name={getIconForKind(info.kind)} /> {info.name}
+                </a>
+              ) : (
+                <span key={p}>{p}</span>
+              );
+            })}
+          </div>
+        );
+      },
+      id: `column-location`,
+      field: access.location ?? access.url,
+      Header: 'Location',
+      width,
+    });
   }
 
   return columns;
