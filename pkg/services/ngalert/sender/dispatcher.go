@@ -3,6 +3,7 @@ package sender
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"sync"
 	"time"
@@ -13,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
@@ -186,28 +186,12 @@ func (d *AlertDispatcher) SyncAndApplyConfigFromDatabase() error {
 	return nil
 }
 
-func (d *AlertDispatcher) Notify(key models.AlertRuleKey, states []*state.State) error {
-	if len(states) == 0 {
-		d.logger.Debug("no alerts to notify about")
-		return nil
-	}
-	firingAlerts := stateToPostableAlerts(states, d.appURL)
-	d.notify(key, firingAlerts)
-	return nil
-}
-
-func (d *AlertDispatcher) Expire(key models.AlertRuleKey, states []*state.State) error {
-	if len(states) == 0 {
-		d.logger.Debug("no alerts to expire")
-		return nil
-	}
-	expiredAlerts := stateToExpiredPostableAlerts(states, d.appURL, d.clock)
-	d.notify(key, expiredAlerts)
-	return nil
-}
-
-func (d *AlertDispatcher) notify(key models.AlertRuleKey, alerts definitions.PostableAlerts) {
+func (d *AlertDispatcher) Send(key models.AlertRuleKey, alerts definitions.PostableAlerts) error {
 	logger := d.logger.New("rule_uid", key.UID, "org", key.OrgID)
+	if len(alerts.PostableAlerts) == 0 {
+		logger.Debug("no alerts to notify about")
+		return nil
+	}
 	// Send alerts to local notifier if they need to be handled internally
 	// or if no external AMs have been discovered yet.
 	var localNotifierExist, externalNotifierExist bool
@@ -242,8 +226,9 @@ func (d *AlertDispatcher) notify(key models.AlertRuleKey, alerts definitions.Pos
 	}
 
 	if !localNotifierExist && !externalNotifierExist {
-		logger.Error("no external or internal notifier - alerts not delivered!", "count", len(alerts.PostableAlerts))
+		return fmt.Errorf("no external or internal notifier - [%d] alerts not delivered", len(alerts.PostableAlerts))
 	}
+	return nil
 }
 
 // AlertmanagersFor returns all the discovered Alertmanager(s) for a particular organization.

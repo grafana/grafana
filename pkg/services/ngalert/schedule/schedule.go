@@ -287,17 +287,11 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 
 	clearState := func() {
 		states := sch.stateManager.GetStatesForRuleUID(key.OrgID, key.UID)
+		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 		sch.stateManager.RemoveByRuleUID(key.OrgID, key.UID)
-		toExpire := make([]*state.State, 0, len(states))
-		for _, s := range states {
-			if s.State == eval.Normal || s.State == eval.Pending {
-				continue
-			}
-			toExpire = append(toExpire, s)
-		}
-		err := sch.notifier.Expire(key, toExpire)
+		err := sch.notifier.Send(key, expiredAlerts)
 		if err != nil {
-			logger.Error("failed to expire firing alerts in the notifier", "err", err)
+			logger.Error("failed to send alerts to notifier", "err", err)
 		}
 	}
 
@@ -337,20 +331,10 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 
 		processedStates := sch.stateManager.ProcessEvalResults(ctx, r, results)
 		sch.saveAlertStates(ctx, processedStates)
-		toNotify := make([]*state.State, 0, len(processedStates))
-		sent := sch.clock.Now()
-		for _, alertState := range processedStates {
-			if !alertState.NeedsSending(sch.stateManager.ResendDelay) {
-				continue
-			}
-			alertState.LastSentAt = sent
-			toNotify = append(toNotify, alertState)
-		}
-		sch.stateManager.Put(toNotify)
-		err = sch.notifier.Notify(key, toNotify)
+		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
+		err = sch.notifier.Send(key, alerts)
 		if err != nil {
-			logger.Error("failed to notify about the firing alerts", "err", err)
-			return nil
+			logger.Error("failed to send alerts to notifier", "err", err)
 		}
 		return nil
 	}

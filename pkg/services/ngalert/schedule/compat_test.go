@@ -1,4 +1,4 @@
-package sender
+package schedule
 
 import (
 	"fmt"
@@ -208,12 +208,15 @@ func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
 
 	expected := make([]models.PostableAlert, 0, len(states))
 	for _, s := range states {
+		if !(s.State == eval.Alerting || s.State == eval.Error || s.State == eval.NoData) {
+			continue
+		}
 		alert := stateToPostableAlert(s, appURL)
 		alert.EndsAt = strfmt.DateTime(clk.Now())
 		expected = append(expected, *alert)
 	}
 
-	result := stateToExpiredPostableAlerts(states, appURL, clk)
+	result := FromAlertsStateToStoppedAlert(states, appURL, clk)
 
 	require.Equal(t, expected, result.PostableAlerts)
 }
