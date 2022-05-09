@@ -2883,7 +2883,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/timeinterval"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2916,9 +2915,9 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object",
-   "x-go-package": "net/url"
+   "x-go-package": "github.com/prometheus/common/config"
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -3115,7 +3114,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3137,7 +3135,9 @@
     "labels",
     "receiver"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "AlertGroup",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "alertGroups": {
    "items": {
@@ -3328,11 +3328,12 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
-   "type": "array"
+   "type": "array",
+   "x-go-name": "GettableAlerts",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "gettableSilence": {
    "description": "GettableSilence gettable silence",
@@ -3390,12 +3391,11 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
-   "type": "array",
-   "x-go-name": "GettableSilences",
-   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+   "type": "array"
   },
   "labelSet": {
    "additionalProperties": {
@@ -3524,7 +3524,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3564,10 +3563,11 @@
     "matchers",
     "startsAt"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "PostableSilence",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -3578,7 +3578,9 @@
    "required": [
     "name"
    ],
-   "type": "object"
+   "type": "object",
+   "x-go-name": "Receiver",
+   "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   },
   "silence": {
    "description": "Silence silence",
@@ -4745,18 +4747,17 @@
     ]
    }
   },
-  "/api/prometheus/{DatasourceID}/api/v1/alerts": {
+  "/api/prometheus/{DatasourceUID}/api/v1/alerts": {
    "get": {
     "description": "gets the current alerts",
     "operationId": "RouteGetAlertStatuses",
     "parameters": [
      {
-      "description": "DatasourceID should be the numeric datasource identifier",
-      "format": "int64",
+      "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasourceID",
+      "name": "DatasourceUID",
       "required": true,
-      "type": "integer"
+      "type": "string"
      }
     ],
     "responses": {
@@ -4772,18 +4773,17 @@
     ]
    }
   },
-  "/api/prometheus/{DatasourceID}/api/v1/rules": {
+  "/api/prometheus/{DatasourceUID}/api/v1/rules": {
    "get": {
     "description": "gets the evaluation statuses of all rules",
     "operationId": "RouteGetRuleStatuses",
     "parameters": [
      {
-      "description": "DatasourceID should be the numeric datasource identifier",
-      "format": "int64",
+      "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
-      "name": "DatasourceID",
+      "name": "DatasourceUID",
       "required": true,
-      "type": "integer"
+      "type": "string"
      }
     ],
     "responses": {
@@ -4850,12 +4850,35 @@
     "tags": [
      "provisioning"
     ]
+   }
+  },
+  "/api/provisioning/contact-points/{ID}": {
+   "delete": {
+    "consumes": [
+     "application/json"
+    ],
+    "operationId": "RouteDeleteContactpoints",
+    "responses": {
+     "202": {
+      "$ref": "#/responses/Accepted"
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     }
+    },
+    "summary": "Delete a contact point.",
+    "tags": [
+     "provisioning"
+    ]
    },
    "put": {
     "consumes": [
      "application/json"
     ],
-    "operationId": "RoutePutContactpoints",
+    "operationId": "RoutePutContactpoint",
     "parameters": [
      {
       "in": "body",
@@ -4877,29 +4900,6 @@
      }
     },
     "summary": "Update an existing contact point.",
-    "tags": [
-     "provisioning"
-    ]
-   }
-  },
-  "/api/provisioning/contact-points/{ID}": {
-   "delete": {
-    "consumes": [
-     "application/json"
-    ],
-    "operationId": "RouteDeleteContactpoints",
-    "responses": {
-     "202": {
-      "$ref": "#/responses/Accepted"
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "Delete a contact point.",
     "tags": [
      "provisioning"
     ]
@@ -4927,11 +4927,11 @@
      "provisioning"
     ]
    },
-   "post": {
+   "put": {
     "consumes": [
      "application/json"
     ],
-    "operationId": "RoutePostPolicyTree",
+    "operationId": "RoutePutPolicyTree",
     "parameters": [
      {
       "in": "body",

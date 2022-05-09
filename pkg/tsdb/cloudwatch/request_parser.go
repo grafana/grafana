@@ -22,7 +22,7 @@ var validMetricDataID = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]*$`)
 func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime time.Time, endTime time.Time) (map[string][]*cloudWatchQuery, error) {
 	requestQueries := make(map[string][]*cloudWatchQuery)
 
-	migratedQueries, err := migrateLegacyQuery(queries, e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels), startTime, endTime)
+	migratedQueries, err := migrateLegacyQuery(queries, e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels))
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery, startTime
 }
 
 // migrateLegacyQuery is also done in the frontend, so this should only ever be needed for alerting queries
-func migrateLegacyQuery(queries []backend.DataQuery, dynamicLabelsEnabled bool, startTime time.Time, endTime time.Time) ([]*backend.DataQuery, error) {
+func migrateLegacyQuery(queries []backend.DataQuery, dynamicLabelsEnabled bool) ([]*backend.DataQuery, error) {
 	migratedQueries := []*backend.DataQuery{}
 	for _, q := range queries {
 		query := q

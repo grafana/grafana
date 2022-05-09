@@ -88,8 +88,8 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
 	// Lotex Prometheus-compatible Paths
-	case http.MethodGet + "/api/prometheus/{DatasourceID}/api/v1/rules":
-		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
+	case http.MethodGet + "/api/prometheus/{DatasourceUID}/api/v1/rules":
+		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
 	// Lotex Rules testing
 	case http.MethodPost + "/api/v1/rule/test/{DatasourceID}":
@@ -140,8 +140,8 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
 	// Prometheus-compatible Paths
-	case http.MethodGet + "/api/prometheus/{DatasourceID}/api/v1/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeProvider.GetResourceScope(ac.Parameter(":DatasourceID")))
+	case http.MethodGet + "/api/prometheus/{DatasourceUID}/api/v1/alerts":
+		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
 	// Notification Policies, Contact Points and Templates
 
@@ -186,9 +186,9 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/provisioning/templates/{name}":
 		return middleware.ReqSignedIn
 
-	case http.MethodPost + "/api/provisioning/policies",
+	case http.MethodPut + "/api/provisioning/policies",
 		http.MethodPost + "/api/provisioning/contact-points",
-		http.MethodPut + "/api/provisioning/contact-points",
+		http.MethodPut + "/api/provisioning/contact-points/{ID}",
 		http.MethodDelete + "/api/provisioning/contact-points/{ID}",
 		http.MethodPut + "/api/provisioning/templates/{name}",
 		http.MethodDelete + "/api/provisioning/templates/{name}":
