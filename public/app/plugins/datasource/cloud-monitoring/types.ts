@@ -106,6 +106,7 @@ export enum AlignmentTypes {
   ALIGN_PERCENTILE_50 = 'ALIGN_PERCENTILE_50',
   ALIGN_PERCENTILE_05 = 'ALIGN_PERCENTILE_05',
   ALIGN_PERCENT_CHANGE = 'ALIGN_PERCENT_CHANGE',
+  ALIGN_NONE = 'ALIGN_NONE',
 }
 
 export interface BaseQuery {
@@ -128,6 +129,8 @@ export interface MetricQuery extends BaseQuery {
   preprocessor?: PreprocessorType;
   // To disable the graphPeriod, it should explictly be set to 'disabled'
   graphPeriod?: 'disabled' | string;
+  title?: string;
+  text?: string;
 }
 
 export interface SLOQuery extends BaseQuery {
@@ -160,7 +163,7 @@ export interface CloudMonitoringSecureJsonData {
   privateKey?: string;
 }
 
-export interface AnnotationTarget {
+export interface LegacyCloudMonitoringAnnotationQuery {
   projectName: string;
   metricType: string;
   refId: string;

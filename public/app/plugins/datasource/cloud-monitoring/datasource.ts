@@ -3,6 +3,7 @@ import { from, lastValueFrom, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
+  AnnotationQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -13,6 +14,7 @@ import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@graf
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
+import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import {
   CloudMonitoringOptions,
   CloudMonitoringQuery,
@@ -22,8 +24,16 @@ import {
   QueryType,
   PostResponse,
   Aggregation,
+  LegacyCloudMonitoringAnnotationQuery,
+  AlignmentTypes,
 } from './types';
 import { CloudMonitoringVariableSupport } from './variables';
+
+export const isLegacyCloudMonitoringAnnotation = (
+  query: unknown
+): query is AnnotationQuery<LegacyCloudMonitoringAnnotationQuery> =>
+  (query as AnnotationQuery<LegacyCloudMonitoringAnnotationQuery>).target?.title !== undefined ||
+  (query as AnnotationQuery<LegacyCloudMonitoringAnnotationQuery>).target?.text !== undefined;
 
 export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   CloudMonitoringQuery,
@@ -41,6 +51,59 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.variables = new CloudMonitoringVariableSupport(this);
     this.intervalMs = 0;
+    this.annotations = {
+      prepareAnnotation: (
+        query: AnnotationQuery<LegacyCloudMonitoringAnnotationQuery> | AnnotationQuery<CloudMonitoringQuery>
+      ): AnnotationQuery<CloudMonitoringQuery> => {
+        if (!isLegacyCloudMonitoringAnnotation(query)) {
+          return query;
+        }
+
+        const { enable, name, iconColor } = query;
+        const { target } = query;
+        const result: AnnotationQuery<CloudMonitoringQuery> = {
+          datasource: query.datasource,
+          enable,
+          name,
+          iconColor,
+          target: {
+            intervalMs: this.intervalMs,
+            refId: target?.refId || 'annotationQuery',
+            type: 'annotationQuery',
+            queryType: QueryType.METRICS,
+            metricQuery: {
+              projectName: target?.projectName || this.getDefaultProject(),
+              editorMode: EditorMode.Visual,
+              metricType: target?.metricType || '',
+              filters: target?.filters || [],
+              query: '',
+              crossSeriesReducer: 'REDUCE_NONE',
+              perSeriesAligner: AlignmentTypes.ALIGN_NONE,
+              title: target?.title || '',
+              text: target?.text || '',
+            },
+          },
+        };
+        return result;
+      },
+      prepareQuery: (anno: AnnotationQuery<CloudMonitoringQuery>) => {
+        if (!anno.target) {
+          return undefined;
+        }
+
+        return {
+          ...anno.target,
+          queryType: QueryType.METRICS,
+          type: 'annotationQuery',
+          metricQuery: {
+            ...anno.target.metricQuery,
+            crossSeriesReducer: 'REDUCE_NONE',
+            perSeriesAligner: AlignmentTypes.ALIGN_NONE,
+          },
+        };
+      },
+      QueryEditor: AnnotationQueryEditor,
+    };
   }
 
   getVariables() {
@@ -55,73 +118,15 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return super.query(request);
   }
 
-  async annotationQuery(options: any) {
-    await this.ensureGCEDefaultProject();
-    const annotation = options.annotation;
-    const queries = [
-      {
-        refId: 'annotationQuery',
-        type: 'annotationQuery',
-        datasource: this.getRef(),
-        view: 'FULL',
-        crossSeriesReducer: 'REDUCE_NONE',
-        perSeriesAligner: 'ALIGN_NONE',
-        metricType: this.templateSrv.replace(annotation.target.metricType, options.scopedVars || {}),
-        title: this.templateSrv.replace(annotation.target.title, options.scopedVars || {}),
-        text: this.templateSrv.replace(annotation.target.text, options.scopedVars || {}),
-        projectName: this.templateSrv.replace(
-          annotation.target.projectName ? annotation.target.projectName : this.getDefaultProject(),
-          options.scopedVars || {}
-        ),
-        filters: this.interpolateFilters(annotation.target.filters || [], options.scopedVars),
-      },
-    ];
-
-    return lastValueFrom(
-      getBackendSrv()
-        .fetch<PostResponse>({
-          url: '/api/ds/query',
-          method: 'POST',
-          data: {
-            from: options.range.from.valueOf().toString(),
-            to: options.range.to.valueOf().toString(),
-            queries,
-          },
-        })
-        .pipe(
-          map(({ data }) => {
-            const dataQueryResponse = toDataQueryResponse({
-              data: data,
-            });
-            const df: any = [];
-            if (dataQueryResponse.data.length !== 0) {
-              for (let i = 0; i < dataQueryResponse.data.length; i++) {
-                for (let j = 0; j < dataQueryResponse.data[i].fields[0]?.values?.length || 0; j++) {
-                  df.push({
-                    annotation: annotation,
-                    time: dataQueryResponse.data[i].fields[0].values.get(j),
-                    title: dataQueryResponse.data[i].fields[1].values.get(j),
-                    tags: [],
-                    text: dataQueryResponse.data[i].fields[3].values.get(j),
-                  });
-                }
-              }
-            }
-            return df;
-          })
-        )
-    );
-  }
-
   applyTemplateVariables(
-    { metricQuery, refId, queryType, sloQuery }: CloudMonitoringQuery,
+    { metricQuery, refId, queryType, sloQuery, type = 'timeSeriesQuery' }: CloudMonitoringQuery,
     scopedVars: ScopedVars
   ): Record<string, any> {
     return {
       datasource: this.getRef(),
       refId,
       intervalMs: this.intervalMs,
-      type: 'timeSeriesQuery',
+      type,
       queryType,
       metricQuery: {
         ...this.interpolateProps(metricQuery, scopedVars),

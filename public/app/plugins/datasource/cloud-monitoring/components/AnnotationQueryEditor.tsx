@@ -1,34 +1,29 @@
 import React from 'react';
 
-import { SelectableValue, toOption } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { QueryEditorProps, toOption } from '@grafana/data';
 import { LegacyForms } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../datasource';
-import { AnnotationTarget, EditorMode, MetricDescriptor, MetricKind } from '../types';
+import {
+  EditorMode,
+  MetricKind,
+  MetricQuery,
+  CloudMonitoringOptions,
+  CloudMonitoringQuery,
+  AlignmentTypes,
+} from '../types';
 
-import { AnnotationsHelp, LabelFilter, Metrics, Project, QueryEditorRow } from './';
+import { MetricQueryEditor } from './MetricQueryEditor';
+
+import { AnnotationsHelp, QueryEditorRow } from './';
 
 const { Input } = LegacyForms;
 
-export interface Props {
-  refId: string;
-  onQueryChange: (target: AnnotationTarget) => void;
-  target: AnnotationTarget;
-  datasource: CloudMonitoringDatasource;
-  templateSrv: TemplateSrv;
-}
+export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
-interface State extends AnnotationTarget {
-  variableOptionGroup: SelectableValue<string>;
-  variableOptions: Array<SelectableValue<string>>;
-  labels: any;
-  [key: string]: any;
-}
-
-const DefaultTarget: State = {
+export const defaultQuery: (datasource: CloudMonitoringDatasource) => MetricQuery = (datasource) => ({
   editorMode: EditorMode.Visual,
-  projectName: '',
+  projectName: datasource.getDefaultProject(),
   projects: [],
   metricType: '',
   filters: [],
@@ -40,112 +35,55 @@ const DefaultTarget: State = {
   labels: {},
   variableOptionGroup: {},
   variableOptions: [],
-};
+  query: '',
+  crossSeriesReducer: 'REDUCE_NONE',
+  perSeriesAligner: AlignmentTypes.ALIGN_NONE,
+});
 
-export class AnnotationQueryEditor extends React.Component<Props, State> {
-  state: State = DefaultTarget;
-
-  async UNSAFE_componentWillMount() {
-    // Unfortunately, migrations like this need to go UNSAFE_componentWillMount. As soon as there's
-    // migration hook for this module.ts, we can do the migrations there instead.
-    const { target, datasource } = this.props;
-    if (!target.projectName) {
-      target.projectName = datasource.getDefaultProject();
-    }
-
-    const variableOptionGroup = {
-      label: 'Template Variables',
-      options: datasource.getVariables().map(toOption),
-    };
-
-    const projects = await datasource.getProjects();
-    this.setState({
-      variableOptionGroup,
-      variableOptions: variableOptionGroup.options,
-      ...target,
-      projects,
-    });
-
-    datasource
-      .getLabels(target.metricType, target.projectName, target.refId)
-      .then((labels) => this.setState({ labels }));
-  }
-
-  onMetricTypeChange = ({ valueType, metricKind, type, unit }: MetricDescriptor) => {
-    const { onQueryChange, datasource } = this.props;
-    this.setState(
-      {
-        metricType: type,
-        unit,
-        valueType,
-        metricKind,
-      },
-      () => {
-        onQueryChange(this.state);
-      }
-    );
-    datasource.getLabels(type, this.state.refId, this.state.projectName).then((labels) => this.setState({ labels }));
+export const AnnotationQueryEditor = (props: Props) => {
+  const { datasource, query, onRunQuery, data } = props;
+  const meta = data?.series.length ? data?.series[0].meta : {};
+  const customMetaData = meta?.custom ?? {};
+  const metricQuery = { ...defaultQuery(datasource), ...query.metricQuery };
+  const { title = '', text = '' } = metricQuery || {};
+  const variableOptionGroup = {
+    label: 'Template Variables',
+    options: datasource.getVariables().map(toOption),
   };
 
-  onChange(prop: string, value: string | string[]) {
-    this.setState({ [prop]: value }, () => {
-      this.props.onQueryChange(this.state);
-    });
-  }
+  return (
+    <>
+      <MetricQueryEditor
+        refId={query.refId}
+        variableOptionGroup={variableOptionGroup}
+        customMetaData={customMetaData}
+        onChange={(metricQuery) => {
+          props.onChange({ ...props.query, metricQuery });
+        }}
+        onRunQuery={onRunQuery}
+        datasource={datasource}
+        query={metricQuery}
+      />
 
-  render() {
-    const { metricType, projectName, filters, title, text, variableOptionGroup, labels, variableOptions } = this.state;
-    const { datasource } = this.props;
-
-    return (
-      <>
-        <Project
-          refId={this.props.refId}
-          templateVariableOptions={variableOptions}
-          datasource={datasource}
-          projectName={projectName || datasource.getDefaultProject()}
-          onChange={(value) => this.onChange('projectName', value)}
+      <QueryEditorRow label="Title">
+        <Input
+          type="text"
+          className="gf-form-input width-20"
+          value={title}
+          onChange={(e) => props.onChange({ ...props.query, metricQuery: { ...metricQuery, title: e.target.value } })}
         />
-        <Metrics
-          refId={this.props.refId}
-          projectName={projectName}
-          metricType={metricType}
-          templateSrv={datasource.templateSrv}
-          datasource={datasource}
-          templateVariableOptions={variableOptions}
-          onChange={(metric) => this.onMetricTypeChange(metric)}
-        >
-          {(metric) => (
-            <>
-              <LabelFilter
-                labels={labels}
-                filters={filters}
-                onChange={(value) => this.onChange('filters', value)}
-                variableOptionGroup={variableOptionGroup}
-              />
-            </>
-          )}
-        </Metrics>
+      </QueryEditorRow>
 
-        <QueryEditorRow label="Title">
-          <Input
-            type="text"
-            className="gf-form-input width-20"
-            value={title}
-            onChange={(e) => this.onChange('title', e.target.value)}
-          />
-        </QueryEditorRow>
-        <QueryEditorRow label="Text">
-          <Input
-            type="text"
-            className="gf-form-input width-20"
-            value={text}
-            onChange={(e) => this.onChange('text', e.target.value)}
-          />
-        </QueryEditorRow>
+      <QueryEditorRow label="Text">
+        <Input
+          type="text"
+          className="gf-form-input width-20"
+          value={text}
+          onChange={(e) => props.onChange({ ...props.query, metricQuery: { ...metricQuery, text: e.target.value } })}
+        />
+      </QueryEditorRow>
 
-        <AnnotationsHelp />
-      </>
-    );
-  }
-}
+      <AnnotationsHelp />
+    </>
+  );
+};
