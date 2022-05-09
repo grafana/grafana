@@ -148,18 +148,14 @@ type AzureMonitorDimensionFilter struct {
 }
 
 func (a AzureMonitorDimensionFilter) ConstructFiltersString() string {
-	if len(a.Filters) == 1 {
-		return fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, a.Filters[0])
+	var filterStrings []string
+	for _, filter := range a.Filters {
+		filterStrings = append(filterStrings, fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter))
+	}
+	if a.Operator == "eq" {
+		return strings.Join(filterStrings, " or ")
 	} else {
-		var filterStrings []string
-		for _, filter := range a.Filters {
-			filterStrings = append(filterStrings, fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter))
-		}
-		if a.Operator == "eq" {
-			return strings.Join(filterStrings, " or ")
-		} else {
-			return strings.Join(filterStrings, " and ")
-		}
+		return strings.Join(filterStrings, " and ")
 	}
 }
 

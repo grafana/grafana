@@ -181,6 +181,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ data, query, dimensio
                 allowCustomValue
               />
             ) : (
+              // The API does not currently allow for multiple starts with clauses to be used.
               <Select
                 menuShouldPortal
                 placeholder="Select value"

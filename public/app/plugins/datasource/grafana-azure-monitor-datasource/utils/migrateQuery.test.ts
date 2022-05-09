@@ -194,24 +194,5 @@ describe('AzureMonitor: migrateQuery', () => {
         })
       );
     });
-    it('correctly merges values', () => {
-      const dimensionFilters: AzureMetricDimension[] = [
-        { dimension: 'TestDimension', operator: 'eq', filter: 'testFilter2', filters: ['testFilter'] },
-      ];
-      const result = migrateQuery({ ...azureMonitorQueryV8, azureMonitor: { dimensionFilters } });
-      expect(result).toMatchObject(
-        expect.objectContaining({
-          azureMonitor: expect.objectContaining({
-            dimensionFilters: [
-              {
-                dimension: dimensionFilters[0].dimension,
-                operator: dimensionFilters[0].operator,
-                filters: ['testFilter', 'testFilter2'],
-              },
-            ],
-          }),
-        })
-      );
-    });
   });
 });
