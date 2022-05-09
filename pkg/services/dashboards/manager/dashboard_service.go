@@ -110,8 +110,17 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	if isParentFolderChanged {
-		guard := guardian.New(ctx, dash.Id, dto.OrgId, dto.User)
-		if canCreate, err := guard.CanCreate(dash.FolderId, dash.IsFolder); err != nil || !canCreate {
+		var err error
+		var canCreate bool
+		if !accesscontrol.IsDisabled(dr.cfg) {
+			// check if we have permission to create a dashboard in new folder when using access control
+			canCreate, err = guardian.New(ctx, dash.Id, dto.OrgId, dto.User).CanCreate(dash.FolderId, dash.IsFolder)
+		} else {
+			// check if we have save permission in destination folder when not using accesscontrol
+			canCreate, err = guardian.New(ctx, dash.FolderId, dto.OrgId, dto.User).CanSave()
+		}
+
+		if err != nil || !canCreate {
 			if err != nil {
 				return nil, err
 			}

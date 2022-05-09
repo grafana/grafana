@@ -88,22 +88,8 @@ func (g *dashboardGuardianImpl) CanDelete() (bool, error) {
 	return g.CanSave()
 }
 
-func (g *dashboardGuardianImpl) CanCreate(folderID int64, isFolder bool) (bool, error) {
-	if isFolder {
-		return g.CanSave()
-	}
-
-	dashId := g.dashId
-	cachedAcl := g.acl
-	// set dash id to folder id that user tries to create dashboard in
-	g.acl = nil
-	g.dashId = folderID
-
-	// reset to dash id and acl after check
-	defer func() {
-		g.acl = cachedAcl
-		g.dashId = dashId
-	}()
+func (g *dashboardGuardianImpl) CanCreate(_ int64, isFolder bool) (bool, error) {
+	// when using dashboard guardian without access control a user can create a dashboard if they can save it
 	return g.CanSave()
 }
 
