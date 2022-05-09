@@ -30,6 +30,7 @@ type ServerConfig struct {
 	ClientKey     string       `toml:"client_key"`
 	BindDN        string       `toml:"bind_dn"`
 	BindPassword  string       `toml:"bind_password"`
+	Timeout       int          `toml:"timeout"`
 	Attr          AttributeMap `toml:"attributes"`
 
 	SearchFilter  string   `toml:"search_filter"`

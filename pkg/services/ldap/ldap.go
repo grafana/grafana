@@ -10,6 +10,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/ldap.v3"
@@ -114,6 +115,9 @@ func (server *Server) Dial() error {
 			return err
 		}
 	}
+
+	timeout := time.Duration(server.Config.Timeout) * time.Second
+
 	for _, host := range strings.Split(server.Config.Host, " ") {
 		// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
 		host = strings.TrimSuffix(strings.TrimPrefix(host, "["), "]")
@@ -128,17 +132,17 @@ func (server *Server) Dial() error {
 				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
 			}
 			if server.Config.StartTLS {
-				server.Connection, err = ldap.Dial("tcp", address)
+				server.Connection, err = DialWithTimeout("tcp", address, timeout)
 				if err == nil {
 					if err = server.Connection.StartTLS(tlsCfg); err == nil {
 						return nil
 					}
 				}
 			} else {
-				server.Connection, err = ldap.DialTLS("tcp", address, tlsCfg)
+				server.Connection, err = DialTLSWithTimeout("tcp", address, tlsCfg, timeout)
 			}
 		} else {
-			server.Connection, err = ldap.Dial("tcp", address)
+			server.Connection, err = DialWithTimeout("tcp", address, timeout)
 		}
 
 		if err == nil {
@@ -146,6 +150,26 @@ func (server *Server) Dial() error {
 		}
 	}
 	return err
+}
+
+func DialWithTimeout(network, addr string, timeout time.Duration) (*ldap.Conn, error) {
+	c, err := net.DialTimeout(network, addr, timeout)
+	if err != nil {
+		return nil, err
+	}
+	conn := ldap.NewConn(c, false)
+	conn.Start()
+	return conn, nil
+}
+
+func DialTLSWithTimeout(network, addr string, config *tls.Config, timeout time.Duration) (*ldap.Conn, error) {
+	c, err := tls.DialWithDialer(&net.Dialer{Timeout: timeout}, network, addr, config)
+	if err != nil {
+		return nil, err
+	}
+	conn := ldap.NewConn(c, true)
+	conn.Start()
+	return conn, nil
 }
 
 // Close closes the LDAP connection
