@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeGrid } from 'react-window';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { DataFrameView, GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Input, useStyles2, Spinner, InlineSwitch, InlineFieldRow, InlineField, Button } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
@@ -13,7 +13,8 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { PreviewsSystemRequirements } from '../components/PreviewsSystemRequirements';
 import { SearchCard } from '../components/SearchCard';
 import { useSearchQuery } from '../hooks/useSearchQuery';
-import { getGrafanaSearcher, SearchQuery } from '../service';
+import { getGrafanaSearcher, QueryFilters, QueryResult } from '../service';
+import { getTermCounts } from '../service/backend';
 import { DashboardSearchItemType, DashboardSectionItem, SearchLayout } from '../types';
 
 import { ActionRow, getValidQueryLayout } from './components/ActionRow';
@@ -39,12 +40,13 @@ export default function SearchPage() {
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
 
   const results = useAsync(() => {
-    const q: SearchQuery = {
-      query: query.query as string,
-      tags: query.tag as string[],
-      ds_uid: query.datasource as string,
+    const { query: searchQuery, tag: tags, datasource } = query;
+
+    const filters: QueryFilters = {
+      tags,
+      datasource,
     };
-    return getGrafanaSearcher().search(q);
+    return getGrafanaSearcher().search(searchQuery, tags.length || datasource ? filters : undefined);
   }, [query]);
 
   if (!config.featureToggles.panelTitleSearch) {
@@ -52,17 +54,21 @@ export default function SearchPage() {
   }
 
   // This gets the possible tags from within the query results
-  const getTagOptions = async (): Promise<TermCount[]> => {
-    const q: SearchQuery = {
-      query: (query.query as string) ?? '*',
-      tags: query.tag as string[],
-      ds_uid: query.datasource as string,
-    };
-    return await getGrafanaSearcher().tags(q);
+  const getTagOptions = (): Promise<TermCount[]> => {
+    const tags = results.value?.body.fields.find((f) => f.name === 'tags');
+
+    if (tags) {
+      return Promise.resolve(getTermCounts(tags));
+    }
+    return Promise.resolve([]);
   };
 
   const onSearchQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onQueryChange(event.currentTarget.value);
+  };
+
+  const onTagChange = (tags: string[]) => {
+    onTagFilterChange(tags);
   };
 
   const onTagSelected = (tag: string) => {
@@ -85,7 +91,8 @@ export default function SearchPage() {
       return <Spinner />;
     }
 
-    if (!results.value?.totalRows) {
+    const df = results.value?.body;
+    if (!df || !df.length) {
       return (
         <div className={styles.noResults}>
           <div>No results found for your query.</div>
@@ -114,6 +121,8 @@ export default function SearchPage() {
       <AutoSizer style={{ width: '100%', height: '700px' }}>
         {({ width, height }) => {
           if (showPreviews) {
+            const view = new DataFrameView<QueryResult>(df);
+
             // Hacked to reuse existing SearchCard (and old DashboardSectionItem)
             const itemProps = {
               editable: showManage,
@@ -125,11 +134,10 @@ export default function SearchPage() {
               onTagSelected,
             };
 
-            const view = results.value.view;
             const numColumns = Math.ceil(width / 320);
             const cellWidth = width / numColumns;
             const cellHeight = (cellWidth - 64) * 0.75 + 56 + 8;
-            const numRows = Math.ceil(view.length / numColumns);
+            const numRows = Math.ceil(df.length / numColumns);
             return (
               <FixedSizeGrid
                 columnCount={numColumns}
@@ -169,20 +177,20 @@ export default function SearchPage() {
             );
           }
 
-          if (layout === SearchLayout.Folders) {
-            return <div>TODO... show nested views</div>;
-          }
-
           return (
-            <SearchResultsTable
-              response={results.value}
-              selection={showManage ? searchSelection.isSelected : undefined}
-              selectionToggle={toggleSelection}
-              width={width - 5}
-              height={height}
-              onTagSelected={onTagSelected}
-              onDatasourceChange={onDatasourceChange}
-            />
+            <>
+              <SearchResultsTable
+                data={df}
+                selection={showManage ? searchSelection.isSelected : undefined}
+                selectionToggle={toggleSelection}
+                layout={layout}
+                width={width - 5}
+                height={height}
+                tags={query.tag}
+                onTagFilterChange={onTagChange}
+                onDatasourceChange={onDatasourceChange}
+              />
+            </>
           );
         }}
       </AutoSizer>

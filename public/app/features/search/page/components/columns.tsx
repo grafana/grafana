@@ -1,30 +1,31 @@
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { Field } from '@grafana/data';
+import { DataFrameView, DataSourceRef, Field } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
 import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
 
-import { QueryResponse, SearchResultMeta } from '../../service';
+import { LocationInfo } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
-import { TableColumn } from './SearchResultsTable';
+import { FieldAccess, TableColumn } from './SearchResultsTable';
 
 export const generateColumns = (
-  response: QueryResponse,
+  data: DataFrameView<FieldAccess>,
   isDashboardList: boolean,
   availableWidth: number,
   selection: SelectionChecker | undefined,
   selectionToggle: SelectionToggle | undefined,
   styles: { [key: string]: string },
-  onTagSelected: (tag: string) => void,
+  tags: string[],
+  onTagFilterChange: (tags: string[]) => void,
   onDatasourceChange: (datasource?: string) => void
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
-  const access = response.view.fields;
-  const uidField = access.uid;
-  const kindField = access.kind;
+  const uidField = data.fields.uid!;
+  const kindField = data.fields.kind!;
+  const access = data.fields;
 
   availableWidth -= 8; // ???
   let width = 50;
@@ -72,18 +73,14 @@ export const generateColumns = (
   // Name column
   width = Math.max(availableWidth * 0.2, 200);
   columns.push({
-    Cell: (p) => {
-      const name = access.name.values.get(p.row.index);
-      return (
-        <div {...p.cellProps} className={p.cellStyle}>
-          {name}
-        </div>
-      );
-    },
+    Cell: DefaultCell,
     id: `column-name`,
     field: access.name!,
     Header: 'Name',
-    accessor: 'name',
+    accessor: (row: any, i: number) => {
+      const name = access.name!.values.get(i);
+      return name;
+    },
     width,
   });
   availableWidth -= width;
@@ -113,16 +110,16 @@ export const generateColumns = (
     });
     availableWidth -= width;
   } else {
-    columns.push(makeTypeColumn(access.kind, access.panel_type, width, styles.typeText, styles.typeIcon));
+    columns.push(makeTypeColumn(access.kind, access.type, width, styles.typeText, styles.typeIcon));
     availableWidth -= width;
   }
 
   // Show datasources if we have any
-  if (access.ds_uid && hasFieldValue(access.ds_uid)) {
+  if (access.datasource && hasFieldValue(access.datasource)) {
     width = DATASOURCE_COLUMN_WIDTH;
     columns.push(
       makeDataSourceColumn(
-        access.ds_uid,
+        access.datasource,
         width,
         styles.typeIcon,
         styles.datasourceItem,
@@ -136,62 +133,54 @@ export const generateColumns = (
   // Show tags if we have any
   if (access.tags && hasFieldValue(access.tags)) {
     width = TAGS_COLUMN_WIDTH;
-    columns.push(makeTagsColumn(access.tags, width, styles.tagList, onTagSelected));
+    columns.push(makeTagsColumn(access.tags, width, styles.tagList, tags, onTagFilterChange));
     availableWidth -= width;
   }
 
   if (isDashboardList) {
-    // width = Math.max(availableWidth, INFO_COLUMN_WIDTH);
-    // columns.push({
-    //   Cell: DefaultCell,
-    //   id: `column-info`,
-    //   field: access.url!,
-    //   Header: 'Info',
-    //   accessor: (row: any, i: number) => {
-    //     const panelCount = access.panelCount?.values.get(i);
-    //     return <div className={styles.infoWrap}>{panelCount != null && <span>Panels: {panelCount}</span>}</div>;
-    //   },
-    //   width: width,
-    // });
+    width = Math.max(availableWidth, INFO_COLUMN_WIDTH);
+    columns.push({
+      Cell: DefaultCell,
+      id: `column-info`,
+      field: access.url!,
+      Header: 'Info',
+      accessor: (row: any, i: number) => {
+        const panelCount = access.panelCount?.values.get(i);
+        return <div className={styles.infoWrap}>{panelCount != null && <span>Panels: {panelCount}</span>}</div>;
+      },
+      width: width,
+    });
   } else {
     width = Math.max(availableWidth, LOCATION_COLUMN_WIDTH);
-    const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
-    if (meta?.locationInfo) {
-      columns.push({
-        Cell: (p) => {
-          const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
+    columns.push({
+      Cell: DefaultCell,
+      id: `column-location`,
+      field: access.location ?? access.url,
+      Header: 'Location',
+      accessor: (row: any, i: number) => {
+        const location = access.location?.values.get(i) as LocationInfo[];
+        if (location) {
           return (
-            <div {...p.cellProps} className={p.cellStyle}>
-              {parts.map((p) => {
-                const info = meta.locationInfo[p];
-                return info ? (
-                  <a key={p} href={info.url} className={styles.locationItem}>
-                    <Icon name={getIconForKind(info.kind)} /> {info.name}
-                  </a>
-                ) : (
-                  <span key={p}>{p}</span>
-                );
-              })}
+            <div>
+              {location.map((v, id) => (
+                <span
+                  key={id}
+                  className={styles.locationItem}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    alert('CLICK: ' + v.name);
+                  }}
+                >
+                  <Icon name={getIconForKind(v.kind)} /> {v.name}
+                </span>
+              ))}
             </div>
           );
-        },
-        id: `column-location`,
-        field: access.location ?? access.url,
-        Header: 'Location',
-        width,
-      });
-    } else {
-      columns.push({
-        Cell: DefaultCell,
-        id: `column-location`,
-        field: access.location ?? access.url,
-        Header: 'Location',
-        accessor: (row: any, i: number) => {
-          return <div>{access.location?.values.get(i)}</div>;
-        },
-        width,
-      });
-    }
+        }
+        return null;
+      },
+      width: width,
+    });
   }
 
   return columns;
@@ -218,14 +207,13 @@ function getIconForKind(v: string): IconName {
 }
 
 function makeDataSourceColumn(
-  field: Field<string[]>,
+  field: Field<DataSourceRef[]>,
   width: number,
   iconClass: string,
   datasourceItemClass: string,
   invalidDatasourceItemClass: string,
   onDatasourceChange: (datasource?: string) => void
 ): TableColumn {
-  const srv = getDataSourceSrv();
   return {
     Cell: DefaultCell,
     id: `column-datasource`,
@@ -234,6 +222,7 @@ function makeDataSourceColumn(
     accessor: (row: any, i: number) => {
       const dslist = field.values.get(i);
       if (dslist?.length) {
+        const srv = getDataSourceSrv();
         return (
           <div className={datasourceItemClass}>
             {dslist.map((v, i) => {
@@ -256,7 +245,7 @@ function makeDataSourceColumn(
               }
               return (
                 <span className={invalidDatasourceItemClass} key={i}>
-                  {v}
+                  {v.type}
                 </span>
               );
             })}
@@ -314,6 +303,7 @@ function makeTypeColumn(
             break;
         }
       }
+
       return (
         <div className={typeTextClass}>
           <SVG src={icon} width={14} height={14} title={txt} className={iconClass} />
@@ -329,23 +319,27 @@ function makeTagsColumn(
   field: Field<string[]>,
   width: number,
   tagListClass: string,
-  onTagSelected: (tag: string) => void
+  currentTagFilter: string[],
+  onTagFilterChange: (tags: string[]) => void
 ): TableColumn {
+  const updateTagFilter = (tag: string) => {
+    if (!currentTagFilter.includes(tag)) {
+      onTagFilterChange([...currentTagFilter, tag]);
+    }
+  };
+
   return {
-    Cell: (p) => {
-      const tags = field.values.get(p.row.index);
-      if (tags) {
-        return (
-          <div {...p.cellProps} className={p.cellStyle}>
-            <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />
-          </div>
-        );
-      }
-      return null;
-    },
+    Cell: DefaultCell,
     id: `column-tags`,
     field: field,
     Header: 'Tags',
+    accessor: (row: any, i: number) => {
+      const tags = field.values.get(i);
+      if (tags) {
+        return <TagList className={tagListClass} tags={tags} onClick={updateTagFilter} />;
+      }
+      return null;
+    },
     width,
   };
 }
