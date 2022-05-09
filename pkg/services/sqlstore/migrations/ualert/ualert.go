@@ -223,7 +223,7 @@ func (m *migration) SQL(dialect migrator.Dialect) string {
 	return "code migration"
 }
 
-//nolint: gocyclo
+// nolint: gocyclo
 func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	m.sess = sess
 	m.mg = mg
@@ -276,6 +276,11 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			}
 		}
 
+		folderHelper := folderHelper{
+			sess: sess,
+			mg:   mg,
+		}
+
 		var folder *dashboard
 		switch {
 		case dash.HasAcl:
@@ -284,21 +289,21 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			if !ok {
 				mg.Logger.Info("create a new folder for alerts that belongs to dashboard because it has custom permissions", "org", dash.OrgId, "dashboard_uid", dash.Uid, "folder", folderName)
 				// create folder and assign the permissions of the dashboard (included default and inherited)
-				f, err = m.createFolder(dash.OrgId, folderName)
+				f, err = folderHelper.createFolder(dash.OrgId, folderName)
 				if err != nil {
 					return MigrationError{
 						Err:     fmt.Errorf("failed to create folder: %w", err),
 						AlertId: da.Id,
 					}
 				}
-				permissions, err := m.getACL(dash.OrgId, dash.Id)
+				permissions, err := folderHelper.getACL(dash.OrgId, dash.Id)
 				if err != nil {
 					return MigrationError{
 						Err:     fmt.Errorf("failed to get dashboard %d under organisation %d permissions: %w", dash.Id, dash.OrgId, err),
 						AlertId: da.Id,
 					}
 				}
-				err = m.setACL(f.OrgId, f.Id, permissions)
+				err = folderHelper.setACL(f.OrgId, f.Id, permissions)
 				if err != nil {
 					return MigrationError{
 						Err:     fmt.Errorf("failed to set folder %d under organisation %d permissions: %w", folder.Id, folder.OrgId, err),
@@ -310,7 +315,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			folder = f
 		case dash.FolderId > 0:
 			// get folder if exists
-			f, err := m.getFolder(dash, da)
+			f, err := folderHelper.getFolder(dash, da)
 			if err != nil {
 				return MigrationError{
 					Err:     err,
@@ -322,7 +327,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			f, ok := folderCache[GENERAL_FOLDER]
 			if !ok {
 				// get or create general folder
-				f, err = m.getOrCreateGeneralFolder(dash.OrgId)
+				f, err = folderHelper.getOrCreateGeneralFolder(dash.OrgId)
 				if err != nil {
 					return MigrationError{
 						Err:     fmt.Errorf("failed to get or create general folder under organisation %d: %w", dash.OrgId, err),
