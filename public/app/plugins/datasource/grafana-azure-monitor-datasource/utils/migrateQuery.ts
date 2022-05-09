@@ -20,9 +20,9 @@ export default function migrateQuery(query: AzureMonitorQuery): AzureMonitorQuer
   workingQuery = migrateTimeGrains(workingQuery);
   workingQuery = migrateLogAnalyticsToFromTimes(workingQuery);
   workingQuery = migrateToDefaultNamespace(workingQuery);
-  workingQuery = migrateMetricsDimensionFilters(workingQuery);
+  workingQuery = migrateDimensionToDimensionFilter(workingQuery);
   workingQuery = migrateResourceUri(workingQuery);
-  workingQuery = migrateDimensionFilters(workingQuery);
+  workingQuery = migrateDimensionFilterToArray(workingQuery);
 
   return workingQuery;
 }
@@ -80,7 +80,7 @@ function migrateToDefaultNamespace(query: AzureMonitorQuery): AzureMonitorQuery 
   return query;
 }
 
-function migrateMetricsDimensionFilters(query: AzureMonitorQuery): AzureMonitorQuery {
+function migrateDimensionToDimensionFilter(query: AzureMonitorQuery): AzureMonitorQuery {
   let workingQuery = query;
 
   const oldDimension = workingQuery.azureMonitor?.dimension;
@@ -120,7 +120,7 @@ function migrateResourceUri(query: AzureMonitorQuery): AzureMonitorQuery {
   };
 }
 
-function migrateDimensionFilters(query: AzureMonitorQuery): AzureMonitorQuery {
+function migrateDimensionFilterToArray(query: AzureMonitorQuery): AzureMonitorQuery {
   const azureMonitorQuery = query.azureMonitor;
 
   if (!azureMonitorQuery) {
@@ -170,9 +170,9 @@ export function datasourceMigrations(query: AzureMonitorQuery): AzureMonitorQuer
   }
 
   if (workingQuery.queryType === AzureQueryType.AzureMonitor && workingQuery.azureMonitor) {
-    workingQuery = migrateMetricsDimensionFilters(workingQuery);
+    workingQuery = migrateDimensionToDimensionFilter(workingQuery);
     workingQuery = migrateResourceUri(workingQuery);
-    workingQuery = migrateDimensionFilters(workingQuery);
+    workingQuery = migrateDimensionFilterToArray(workingQuery);
   }
 
   return workingQuery;
