@@ -337,7 +337,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
-	) (*schedule, *store.FakeRuleStore, *store.FakeInstanceStore, *store.FakeAdminConfigStore, prometheus.Gatherer, *sender.AlertDispatcher) {
+	) (*schedule, *store.FakeRuleStore, *store.FakeInstanceStore, *store.FakeAdminConfigStore, prometheus.Gatherer, *sender.AlertsRouter) {
 		ruleStore := store.NewFakeRuleStore(t)
 		instanceStore := &store.FakeInstanceStore{}
 		adminConfigStore := store.NewFakeAdminConfigStore(t)
@@ -1010,7 +1010,7 @@ func setupSchedulerWithFakeStores(t *testing.T) *schedule {
 	return sch
 }
 
-func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, acs store.AdminConfigurationStore, registry *prometheus.Registry) (*schedule, *clock.Mock, *sender.AlertDispatcher) {
+func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, acs store.AdminConfigurationStore, registry *prometheus.Registry) (*schedule, *clock.Mock, *sender.AlertsRouter) {
 	t.Helper()
 
 	fakeAnnoRepo := store.NewFakeAnnotationsRepo()

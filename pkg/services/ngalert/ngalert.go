@@ -84,7 +84,7 @@ type AlertNG struct {
 
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
-	AlertDispatcher      *sender.AlertDispatcher
+	AlertsRouter         *sender.AlertsRouter
 	accesscontrol        accesscontrol.AccessControl
 }
 
@@ -120,13 +120,13 @@ func (ng *AlertNG) init() error {
 
 	clk := clock.New()
 
-	dispatcher := sender.NewAlertDispatcher(ng.MultiOrgAlertmanager, store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs, ng.Cfg.UnifiedAlerting.AdminConfigPollInterval)
+	alertsRouter := sender.NewAlertDispatcher(ng.MultiOrgAlertmanager, store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs, ng.Cfg.UnifiedAlerting.AdminConfigPollInterval)
 
-	if err := dispatcher.SyncAndApplyConfigFromDatabase(); err != nil {
-		return fmt.Errorf("failed to initialize alerting because alert dispatcher fails to warm up: %w", err)
+	if err := alertsRouter.SyncAndApplyConfigFromDatabase(); err != nil {
+		return fmt.Errorf("failed to initialize alerting because alert alertsRouter fails to warm up: %w", err)
 	}
 
-	ng.AlertDispatcher = dispatcher
+	ng.AlertsRouter = alertsRouter
 
 	schedCfg := schedule.SchedulerCfg{
 		C:               clk,
@@ -140,7 +140,7 @@ func (ng *AlertNG) init() error {
 		Metrics:         ng.Metrics.GetSchedulerMetrics(),
 		DisabledOrgs:    ng.Cfg.UnifiedAlerting.DisabledOrgs,
 		MinRuleInterval: ng.Cfg.UnifiedAlerting.MinInterval,
-		AlertSender:     dispatcher,
+		AlertSender:     alertsRouter,
 	}
 
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.SQLStore)
@@ -175,7 +175,7 @@ func (ng *AlertNG) init() error {
 		Policies:             policyService,
 		ContactPointService:  contactPointService,
 		Templates:            templateService,
-		AlertDispatcher:      dispatcher,
+		AlertsRouter:         alertsRouter,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
@@ -193,7 +193,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		return ng.MultiOrgAlertmanager.Run(subCtx)
 	})
 	children.Go(func() error {
-		return ng.AlertDispatcher.Run(subCtx)
+		return ng.AlertsRouter.Run(subCtx)
 	})
 
 	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {

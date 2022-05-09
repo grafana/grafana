@@ -17,14 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
-// AlertDispatcher handles alerts generated during alert rule evaluation. It
-// converts alerts represented by {models.AlertRuleKey, state.State}
-// into the standard Prometheus Alertmanager format, and then sends
-// the resulting alert to all configured Alertmanagers.
+// AlertsRouter handles alerts generated during alert rule evaluation.
+// Based on rule's orgID and the configuration for that organization,
+// it determines whether an alert needs to be sent to an external Alertmanager and\or internal notifier.Alertmanager
 //
 // After creating a Dispatcher, you must call Run to keep the Dispatcher's
 // state synchronized with the alerting configuration.
-type AlertDispatcher struct {
+type AlertsRouter struct {
 	AdminConfigMtx   sync.RWMutex
 	logger           log.Logger
 	clock            clock.Clock
@@ -41,8 +40,8 @@ type AlertDispatcher struct {
 	adminConfigPollInterval time.Duration
 }
 
-func NewAlertDispatcher(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore, clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration) *AlertDispatcher {
-	d := &AlertDispatcher{
+func NewAlertDispatcher(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore, clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration) *AlertsRouter {
+	d := &AlertsRouter{
 		AdminConfigMtx:   sync.RWMutex{},
 		logger:           log.New("ngalert-notifications-dispatcher"),
 		clock:            clk,
@@ -60,7 +59,7 @@ func NewAlertDispatcher(multiOrgNotifier *notifier.MultiOrgAlertmanager, store s
 	return d
 }
 
-func (d *AlertDispatcher) adminConfigSync(ctx context.Context) error {
+func (d *AlertsRouter) adminConfigSync(ctx context.Context) error {
 	for {
 		select {
 		case <-time.After(d.adminConfigPollInterval):
@@ -83,7 +82,7 @@ func (d *AlertDispatcher) adminConfigSync(ctx context.Context) error {
 
 // SyncAndApplyConfigFromDatabase looks for the admin configuration in the database
 // and adjusts the sender(s) and alert handling mechanism accordingly.
-func (d *AlertDispatcher) SyncAndApplyConfigFromDatabase() error {
+func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 	d.logger.Debug("start of admin configuration sync")
 	cfgs, err := d.adminConfigStore.GetAdminConfigurations()
 	if err != nil {
@@ -186,7 +185,7 @@ func (d *AlertDispatcher) SyncAndApplyConfigFromDatabase() error {
 	return nil
 }
 
-func (d *AlertDispatcher) Send(key models.AlertRuleKey, alerts definitions.PostableAlerts) error {
+func (d *AlertsRouter) Send(key models.AlertRuleKey, alerts definitions.PostableAlerts) error {
 	logger := d.logger.New("rule_uid", key.UID, "org", key.OrgID)
 	if len(alerts.PostableAlerts) == 0 {
 		logger.Debug("no alerts to notify about")
@@ -232,7 +231,7 @@ func (d *AlertDispatcher) Send(key models.AlertRuleKey, alerts definitions.Posta
 }
 
 // AlertmanagersFor returns all the discovered Alertmanager(s) for a particular organization.
-func (d *AlertDispatcher) AlertmanagersFor(orgID int64) []*url.URL {
+func (d *AlertsRouter) AlertmanagersFor(orgID int64) []*url.URL {
 	d.AdminConfigMtx.RLock()
 	defer d.AdminConfigMtx.RUnlock()
 	s, ok := d.Senders[orgID]
@@ -243,7 +242,7 @@ func (d *AlertDispatcher) AlertmanagersFor(orgID int64) []*url.URL {
 }
 
 // DroppedAlertmanagersFor returns all the dropped Alertmanager(s) for a particular organization.
-func (d *AlertDispatcher) DroppedAlertmanagersFor(orgID int64) []*url.URL {
+func (d *AlertsRouter) DroppedAlertmanagersFor(orgID int64) []*url.URL {
 	d.AdminConfigMtx.RLock()
 	defer d.AdminConfigMtx.RUnlock()
 	s, ok := d.Senders[orgID]
@@ -255,7 +254,7 @@ func (d *AlertDispatcher) DroppedAlertmanagersFor(orgID int64) []*url.URL {
 }
 
 // Run starts regular updates of the configuration
-func (d *AlertDispatcher) Run(ctx context.Context) error {
+func (d *AlertsRouter) Run(ctx context.Context) error {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {

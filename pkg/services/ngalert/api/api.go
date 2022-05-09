@@ -81,7 +81,7 @@ type API struct {
 	Policies             *provisioning.NotificationPolicyService
 	ContactPointService  *provisioning.ContactPointService
 	Templates            *provisioning.TemplateService
-	AlertDispatcher      *sender.AlertDispatcher
+	AlertsRouter         *sender.AlertsRouter
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -132,7 +132,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		&AdminSrv{
 			store:                api.AdminConfigStore,
 			log:                  logger,
-			alertmanagerProvider: api.AlertDispatcher,
+			alertmanagerProvider: api.AlertsRouter,
 		},
 	), m)
 
