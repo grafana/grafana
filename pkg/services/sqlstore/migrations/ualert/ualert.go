@@ -758,3 +758,58 @@ func getAlertFolderNameFromDashboard(dash *dashboard) string {
 	}
 	return fmt.Sprintf(DASHBOARD_FOLDER, title, dash.Uid) // include UID to the name to avoid collision
 }
+
+// CreateDefaultFoldersForAlertingMigration creates a folder dedicated for alerting if no folders exist
+func CreateDefaultFoldersForAlertingMigration(mg *migrator.Migrator) {
+	if !mg.Cfg.UnifiedAlerting.IsEnabled() {
+		return
+	}
+	mg.AddMigration("create default alerting folders", &createDefaultFoldersForAlertingMigration{})
+}
+
+type createDefaultFoldersForAlertingMigration struct {
+	migrator.MigrationBase
+}
+
+func (c createDefaultFoldersForAlertingMigration) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+	helper := folderHelper{
+		sess: sess,
+		mg:   migrator,
+	}
+
+	var rows []struct {
+		Id   int64
+		Name string
+	}
+
+	if err := sess.Table("org").Cols("id", "name").Find(&rows); err != nil {
+		return fmt.Errorf("failed to read the list of organizations: %w", err)
+	}
+
+	numberFoldersPerOrg, err := helper.getOrgsThatHaveFolders()
+	if err != nil {
+		return fmt.Errorf("failed to count folders per organization: %w", err)
+	}
+
+	for _, row := range rows {
+		// if there is at least one folder in the organization. Skip adding the default folder
+		if _, ok := numberFoldersPerOrg[row.Id]; ok {
+			migrator.Logger.Debug("Skip adding default alerting folder because organization already has at least one folder", "org_id", row.Id)
+			continue
+		}
+		if _, ok := migrator.Cfg.UnifiedAlerting.DisabledOrgs[row.Id]; ok {
+			migrator.Logger.Debug("Skip adding default alerting folder because alerting is disabled for the organization ", "org_id", row.Id)
+			continue
+		}
+		folder, err := helper.getOrCreateGeneralFolder(row.Id)
+		if err != nil {
+			return fmt.Errorf("failed to create the default alerting folder for organization %s (ID: %d): %w", row.Name, row.Id, err)
+		}
+		migrator.Logger.Info("created the default folder for alerting", "org_id", row.Id, "folder_name", folder.Title, "folder_uid", folder.Uid)
+	}
+	return nil
+}
+
+func (c createDefaultFoldersForAlertingMigration) SQL(dialect migrator.Dialect) string {
+	return "code migration"
+}

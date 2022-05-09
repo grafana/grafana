@@ -287,3 +287,18 @@ func (m *folderHelper) getACL(orgID, dashboardID int64) ([]*dashboardAcl, error)
 	err = m.sess.SQL(rawSQL, orgID, dashboardID).Find(&result)
 	return result, err
 }
+
+// getOrgsThatHaveFolders returns a list of orgID that have at least one folder
+func (m *folderHelper) getOrgsThatHaveFolders() (map[int64]struct{}, error) {
+	// get folder if exists
+	var rows []int64
+	err := m.sess.Table(&dashboard{}).Where("is_folder=1").Distinct("org_id").Find(&rows)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[int64]struct{}, len(rows))
+	for _, s := range rows {
+		result[s] = struct{}{}
+	}
+	return result, nil
+}
