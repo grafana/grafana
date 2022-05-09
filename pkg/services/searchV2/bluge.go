@@ -167,6 +167,7 @@ func initBlugeIndex(dashboards []dashboard, logger log.Logger) (*bluge.Reader, e
 	return reader, err
 }
 
+//nolint: gocyclo
 func doBlugeQuery(ctx context.Context, s *StandardSearchService, reader *bluge.Reader, filter ResourceFilter, q DashboardQuery) *backend.DataResponse {
 	response := &backend.DataResponse{}
 
