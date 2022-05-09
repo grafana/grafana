@@ -820,5 +820,4 @@ func removeFolderPermission(t *testing.T, store *acdb.AccessControlStore, orgID,
 			ResourceAttribute: "uid",
 		}, nil)
 	}
-
 }
