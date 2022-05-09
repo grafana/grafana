@@ -10,7 +10,7 @@ import { getCheckedUids } from '../utils';
 
 interface Props {
   onDeleteItems: OnDeleteItems;
-  results: DashboardSection[];
+  results: Map<string, Set<string>>;
   isOpen: boolean;
   onDismiss: () => void;
 }
@@ -19,8 +19,9 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, onDeleteItems, isOpen, 
   const theme = useTheme();
   const styles = getStyles(theme);
 
-  const uids = getCheckedUids(results);
-  const { folders, dashboards } = uids;
+  const dashboards = Array.from(results.get('dashboard') ?? []);
+  const folders = Array.from(results.get('folders') ?? []);
+
   const folderCount = folders.length;
   const dashCount = dashboards.length;
 

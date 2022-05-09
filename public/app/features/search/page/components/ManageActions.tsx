@@ -31,13 +31,14 @@ export function ManageActions({ items, folder }: Props) {
 
   const canDelete = hasEditPermissionInFolders && !includesGeneralFolder;
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const onMove = () => {
     setIsMoveModalOpen(true);
   };
 
   const onDelete = () => {
-    alert('TODO, delete....');
+    setIsDeleteModalOpen(true);
   };
 
   const onToggleAll = () => {
@@ -67,6 +68,12 @@ export function ManageActions({ items, folder }: Props) {
         </HorizontalGroup>
       </div>
 
+      <ConfirmDeleteModal
+        onDeleteItems={items}
+        results={items}
+        isOpen={isDeleteModalOpen}
+        onDismiss={() => setIsDeleteModalOpen(false)}
+      />
       <MoveToFolderModal
         onMoveItems={items}
         results={items}
