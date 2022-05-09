@@ -110,8 +110,8 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	if isParentFolderChanged {
-		folderGuardian := guardian.New(ctx, dash.FolderId, dto.OrgId, dto.User)
-		if canSave, err := folderGuardian.CanSave(); err != nil || !canSave {
+		guard := guardian.New(ctx, dash.Id, dto.OrgId, dto.User)
+		if canCreate, err := guard.CanCreate(dash.FolderId, dash.IsFolder); err != nil || !canCreate {
 			if err != nil {
 				return nil, err
 			}
