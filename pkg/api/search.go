@@ -4,12 +4,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
@@ -66,8 +67,30 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 		return response.Error(500, "Search failed", err)
 	}
 
-	c.TimeRequest(metrics.MApiDashboardSearch)
-	return response.JSON(http.StatusOK, searchQuery.Result)
+	defer c.TimeRequest(metrics.MApiDashboardSearch)
+
+	if !c.QueryBool("accesscontrol") {
+		return response.JSON(http.StatusOK, searchQuery.Result)
+	}
+
+	// search hit with access control metadata attached
+	type hitWithMeta struct {
+		*models.Hit
+		AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
+	}
+	hitsWithMeta := make([]hitWithMeta, 0, len(searchQuery.Result))
+	for _, hit := range searchQuery.Result {
+		var meta accesscontrol.Metadata
+		if hit.Type == models.DashHitFolder {
+			meta = hs.getAccessControlMetadata(c, searchQuery.OrgId, dashboards.ScopeFoldersPrefix, hit.UID)
+		} else {
+			// TODO: How to account for folder scopes in dashboard actions
+			meta = hs.getAccessControlMetadata(c, searchQuery.OrgId, dashboards.ScopeDashboardsPrefix, hit.UID)
+		}
+		hitsWithMeta = append(hitsWithMeta, hitWithMeta{hit, meta})
+	}
+
+	return response.JSON(http.StatusOK, hitsWithMeta)
 }
 
 func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) response.Response {
