@@ -250,6 +250,7 @@ var wireBasicSet = wire.NewSet(
 	cuectx.ProvideThemaLibrary,
 	grpcserver.ProvideService,
 	grpcserver.ProvideHealthService,
+	grpcserver.ProvideArrowFlightService,
 )
 
 var wireSet = wire.NewSet(

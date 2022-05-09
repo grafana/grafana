@@ -44,6 +44,7 @@ func ProvideBackgroundServiceRegistry(
 	_ *plugindashboardsservice.DashboardUpdater,
 	grpcServerProvider grpcserver.Provider,
 	healthGRPCService *grpcserver.HealthService,
+	arrowFlightGRPCService *grpcserver.ArrowFlightService,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
@@ -69,6 +70,7 @@ func ProvideBackgroundServiceRegistry(
 		thumbnailsService,
 		grpcServerProvider,
 		healthGRPCService,
+		arrowFlightGRPCService,
 	)
 }
 
