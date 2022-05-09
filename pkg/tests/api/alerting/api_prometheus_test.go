@@ -10,13 +10,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
+
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+
+	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
-	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -623,19 +627,19 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		DisableRBAC:           true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	store.Cfg.RBACEnabled = false
-	dashboardsStore := dashboardsstore.ProvideDashboardStore(store)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	userID := createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
 	})
+
+	// access control permissions store
+	permissionsStore := acdb.ProvideService(store)
 
 	// Create the namespace we'll save our alerts to.
 	err = createFolder(t, "folder1", grafanaListedAddr, "grafana", "password")
@@ -720,8 +724,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 
 	// remove permissions from folder2
-	// TODO this too
-	require.NoError(t, dashboardsStore.UpdateDashboardACL(context.Background(), 2, nil))
+	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder2", []string{})
 
 	// make sure that folder2 is not included in the response
 	{
@@ -768,8 +771,8 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 }`, string(b))
 	}
 
-	// remove permissions from _ALL_ folders
-	require.NoError(t, dashboardsStore.UpdateDashboardACL(context.Background(), 1, nil))
+	// remove permissions from folder1
+	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder1", nil)
 
 	// make sure that no folders are included in the response
 	{
@@ -793,4 +796,34 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 }`, string(b))
 	}
+}
+
+func removeFolderPermission(t *testing.T, store *acdb.AccessControlStore, orgID, userID int64, role models.RoleType, uid string, actions []string) {
+	t.Helper()
+	// remove user permissions on folder
+	_, _ = store.SetUserResourcePermission(context.Background(), orgID, accesscontrol.User{ID: userID}, types.SetResourcePermissionCommand{
+		Actions:           actions,
+		Resource:          "folders",
+		ResourceID:        uid,
+		ResourceAttribute: "uid",
+	}, nil)
+
+	// remove org role permissions from folder
+	_, _ = store.SetBuiltInResourcePermission(context.Background(), orgID, string(role), types.SetResourcePermissionCommand{
+		Actions:           actions,
+		Resource:          "folders",
+		ResourceID:        uid,
+		ResourceAttribute: "uid",
+	}, nil)
+
+	// remove org role children permissions from folder
+	for _, c := range role.Children() {
+		_, _ = store.SetBuiltInResourcePermission(context.Background(), orgID, string(c), types.SetResourcePermissionCommand{
+			Actions:           actions,
+			Resource:          "folders",
+			ResourceID:        uid,
+			ResourceAttribute: "uid",
+		}, nil)
+	}
+
 }
