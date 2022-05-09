@@ -182,6 +182,12 @@ describe('functions', () => {
       expect(res.alignOptions).toHaveLength(0);
       expect(res.perSeriesAligner).toEqual(AlignmentTypes.ALIGN_MEAN);
     });
+
+    it('should return an empty list of options and "ALIGN_NONE" as the perSeriesAligner if ALIGN_NONE is passed in', () => {
+      const res = getAlignmentPickerData(undefined, undefined, AlignmentTypes.ALIGN_NONE);
+      expect(res.alignOptions).toHaveLength(0);
+      expect(res.perSeriesAligner).toEqual(AlignmentTypes.ALIGN_NONE);
+    });
   });
 
   describe('labelsToGroupedOptions', () => {

@@ -78,6 +78,9 @@ export const getAlignmentPickerData = (
   perSeriesAligner: string | undefined = AlignmentTypes.ALIGN_MEAN,
   preprocessor?: PreprocessorType
 ) => {
+  if (perSeriesAligner === AlignmentTypes.ALIGN_NONE) {
+    return { alignOptions: [], perSeriesAligner };
+  }
   const alignOptions = getAlignmentOptionsByMetric(valueType!, metricKind!, preprocessor!).map((option) => ({
     ...option,
     label: option.text,
