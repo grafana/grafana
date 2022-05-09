@@ -8,11 +8,15 @@ func MigrateDimensionFilters(filters []types.AzureMonitorDimensionFilter) []type
 	var newFilters []types.AzureMonitorDimensionFilter
 	for _, filter := range filters {
 		newFilter := filter
+		// Ignore the deprecation check as this is a migration
+		// nolint:staticcheck
 		newFilter.Filter = nil
 		// If there is no old field and the new field is specified - append as this is valid
+		// nolint:staticcheck
 		if filter.Filter == nil && filter.Filters != nil {
 			newFilters = append(newFilters, newFilter)
 		} else {
+			// nolint:staticcheck
 			oldFilter := *filter.Filter
 			// If there is an old filter and no new ones then construct the new array and append
 			if filter.Filters == nil && oldFilter != "*" {

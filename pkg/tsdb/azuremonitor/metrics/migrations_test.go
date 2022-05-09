@@ -52,7 +52,6 @@ func TestDimensionFiltersMigration(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			filters := MigrateDimensionFilters(tt.dimensionFilters)
 
 			if diff := cmp.Diff(tt.expectedDimensionFilters, filters, cmpopts.IgnoreUnexported(simplejson.Json{})); diff != "" {
