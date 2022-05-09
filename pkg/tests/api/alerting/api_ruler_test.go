@@ -2,7 +2,6 @@ package alerting
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -16,7 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
-	dashboardsstore "github.com/grafana/grafana/pkg/services/dashboards/database"
+	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -32,15 +31,13 @@ func TestAlertRulePermissions(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		DisableRBAC:           true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	store.Cfg.RBACEnabled = false
-	dashboardsStore := dashboardsstore.ProvideDashboardStore(store)
+	permissionsStore := acdb.ProvideService(store)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
+	userID := createUser(t, store, models.CreateUserCommand{
 		DefaultOrgRole: string(models.ROLE_EDITOR),
 		Password:       "password",
 		Login:          "grafana",
@@ -182,8 +179,7 @@ func TestAlertRulePermissions(t *testing.T) {
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 
 		// remove permissions from folder2
-		// TODO what's the RBAC alternative for this?
-		require.NoError(t, dashboardsStore.UpdateDashboardACL(context.Background(), 2, nil))
+		removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder2")
 
 		// make sure that folder2 is not included in the response
 		// nolint:gosec
@@ -255,8 +251,8 @@ func TestAlertRulePermissions(t *testing.T) {
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 	}
 
-	// Remove permissions from ALL folders.
-	require.NoError(t, dashboardsStore.UpdateDashboardACL(context.Background(), 1, nil))
+	// Remove permissions from folder1.
+	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder1")
 	{
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec

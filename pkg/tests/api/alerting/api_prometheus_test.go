@@ -10,17 +10,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
-
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-
-	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -724,7 +722,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 
 	// remove permissions from folder2
-	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder2", []string{})
+	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder2")
 
 	// make sure that folder2 is not included in the response
 	{
@@ -772,7 +770,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 
 	// remove permissions from folder1
-	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder1", nil)
+	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder1")
 
 	// make sure that no folders are included in the response
 	{
@@ -798,11 +796,10 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 }
 
-func removeFolderPermission(t *testing.T, store *acdb.AccessControlStore, orgID, userID int64, role models.RoleType, uid string, actions []string) {
+func removeFolderPermission(t *testing.T, store *acdb.AccessControlStore, orgID, userID int64, role models.RoleType, uid string) {
 	t.Helper()
 	// remove user permissions on folder
 	_, _ = store.SetUserResourcePermission(context.Background(), orgID, accesscontrol.User{ID: userID}, types.SetResourcePermissionCommand{
-		Actions:           actions,
 		Resource:          "folders",
 		ResourceID:        uid,
 		ResourceAttribute: "uid",
@@ -810,7 +807,6 @@ func removeFolderPermission(t *testing.T, store *acdb.AccessControlStore, orgID,
 
 	// remove org role permissions from folder
 	_, _ = store.SetBuiltInResourcePermission(context.Background(), orgID, string(role), types.SetResourcePermissionCommand{
-		Actions:           actions,
 		Resource:          "folders",
 		ResourceID:        uid,
 		ResourceAttribute: "uid",
@@ -819,7 +815,6 @@ func removeFolderPermission(t *testing.T, store *acdb.AccessControlStore, orgID,
 	// remove org role children permissions from folder
 	for _, c := range role.Children() {
 		_, _ = store.SetBuiltInResourcePermission(context.Background(), orgID, string(c), types.SetResourcePermissionCommand{
-			Actions:           actions,
 			Resource:          "folders",
 			ResourceID:        uid,
 			ResourceAttribute: "uid",

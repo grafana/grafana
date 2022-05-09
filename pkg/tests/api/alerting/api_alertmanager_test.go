@@ -572,7 +572,6 @@ func TestRulerAccess(t *testing.T) {
 		DisableAnonymous:      true,
 		ViewersCanEdit:        true,
 		AppModeProduction:     true,
-		DisableRBAC:           true,
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
@@ -600,34 +599,34 @@ func TestRulerAccess(t *testing.T) {
 
 	// Now, let's test the access policies.
 	testCases := []struct {
-		desc             string
-		url              string
-		expStatus        int
-		expectedResponse string
+		desc            string
+		url             string
+		expStatus       int
+		expectedMessage string
 	}{
 		{
-			desc:             "un-authenticated request should fail",
-			url:              "http://%s/api/ruler/grafana/api/v1/rules/default",
-			expStatus:        http.StatusUnauthorized,
-			expectedResponse: `{"message": "Unauthorized"}`,
+			desc:            "un-authenticated request should fail",
+			url:             "http://%s/api/ruler/grafana/api/v1/rules/default",
+			expStatus:       http.StatusUnauthorized,
+			expectedMessage: `Unauthorized`,
 		},
 		{
-			desc:             "viewer request should fail",
-			url:              "http://viewer:viewer@%s/api/ruler/grafana/api/v1/rules/default",
-			expStatus:        http.StatusForbidden,
-			expectedResponse: `{"message": "Permission denied"}`,
+			desc:            "viewer request should fail",
+			url:             "http://viewer:viewer@%s/api/ruler/grafana/api/v1/rules/default",
+			expStatus:       http.StatusForbidden,
+			expectedMessage: `You'll need additional permissions to perform this action. Permissions needed: any of alert.rules:update, alert.rules:create, alert.rules:delete`,
 		},
 		{
-			desc:             "editor request should succeed",
-			url:              "http://editor:editor@%s/api/ruler/grafana/api/v1/rules/default",
-			expStatus:        http.StatusAccepted,
-			expectedResponse: `{"message":"rule group updated successfully"}`,
+			desc:            "editor request should succeed",
+			url:             "http://editor:editor@%s/api/ruler/grafana/api/v1/rules/default",
+			expStatus:       http.StatusAccepted,
+			expectedMessage: `rule group updated successfully`,
 		},
 		{
-			desc:             "admin request should succeed",
-			url:              "http://admin:admin@%s/api/ruler/grafana/api/v1/rules/default",
-			expStatus:        http.StatusAccepted,
-			expectedResponse: `{"message":"rule group updated successfully"}`,
+			desc:            "admin request should succeed",
+			url:             "http://admin:admin@%s/api/ruler/grafana/api/v1/rules/default",
+			expStatus:       http.StatusAccepted,
+			expectedMessage: `rule group updated successfully`,
 		},
 	}
 
@@ -685,7 +684,10 @@ func TestRulerAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.expStatus, resp.StatusCode)
-			require.JSONEq(t, tc.expectedResponse, string(b))
+			res := &Response{}
+			err = json.Unmarshal(b, &res)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedMessage, res.Message)
 		})
 	}
 }
