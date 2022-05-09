@@ -6,6 +6,8 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
@@ -250,6 +252,12 @@ var wireBasicSet = wire.NewSet(
 	cmreg.ProvideRegistry,
 	cuectx.ProvideCUEContext,
 	cuectx.ProvideThemaLibrary,
+	ossaccesscontrol.ProvideTeamPermissions,
+	wire.Bind(new(accesscontrol.TeamPermissionsService), new(*ossaccesscontrol.TeamPermissionsService)),
+	ossaccesscontrol.ProvideFolderPermissions,
+	wire.Bind(new(accesscontrol.FolderPermissionsService), new(*ossaccesscontrol.FolderPermissionsService)),
+	ossaccesscontrol.ProvideDashboardPermissions,
+	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
 )
 
 var wireSet = wire.NewSet(
