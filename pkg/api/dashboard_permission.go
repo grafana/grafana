@@ -207,10 +207,13 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID in
 		if _, err := hs.folderPermissionsService.SetPermissions(ctx, orgID, uid, commands...); err != nil {
 			return err
 		}
+		return nil
 	}
 
-	_, err := hs.dashboardPermissionsService.SetPermissions(ctx, orgID, uid, commands...)
-	return err
+	if _, err := hs.dashboardPermissionsService.SetPermissions(ctx, orgID, uid, commands...); err != nil {
+		return err
+	}
+	return nil
 }
 
 func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardAclCommand) error {
