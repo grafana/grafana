@@ -180,6 +180,7 @@ func TestAlertRulePermissions(t *testing.T) {
 
 		// remove permissions from folder2
 		removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder2")
+		reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 		// make sure that folder2 is not included in the response
 		// nolint:gosec
@@ -253,6 +254,7 @@ func TestAlertRulePermissions(t *testing.T) {
 
 	// Remove permissions from folder1.
 	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder1")
+	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 	{
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec
