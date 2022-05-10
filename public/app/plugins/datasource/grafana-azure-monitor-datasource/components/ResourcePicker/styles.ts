@@ -67,7 +67,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 
   resourceField: css({
-    width: theme.spacing(36),
+    maxWidth: theme.spacing(36),
+    overflow: 'hidden',
   }),
 
   resourceFieldButton: css({
