@@ -203,12 +203,13 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID in
 		}
 	}
 
-	svc := hs.permissionServices.GetDashboardService()
 	if isFolder {
-		svc = hs.permissionServices.GetFolderService()
+		if _, err := hs.folderPermissionsService.SetPermissions(ctx, orgID, uid, commands...); err != nil {
+			return err
+		}
 	}
 
-	_, err := svc.SetPermissions(ctx, orgID, uid, commands...)
+	_, err := hs.dashboardPermissionsService.SetPermissions(ctx, orgID, uid, commands...)
 	return err
 }
 

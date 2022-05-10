@@ -218,7 +218,7 @@ func ProvideFolderPermissions(
 	return &FolderPermissionsService{srv}, nil
 }
 
-func ProvideDatasourcePermissionsService() accesscontrol.PermissionsService {
+func ProvideDatasourcePermissionsService() *DatasourcePermissionsService {
 	return &DatasourcePermissionsService{}
 }
 

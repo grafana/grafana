@@ -84,7 +84,7 @@ var wireExtsBasicSet = wire.NewSet(
 	usagestatssvcs.ProvideUsageStatsProvidersRegistry,
 	wire.Bind(new(registry.UsageStatsProvidersRegistry), new(*usagestatssvcs.UsageStatsProvidersRegistry)),
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
-	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(ossaccesscontrol.DatasourcePermissionsService)),
+	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
 )
 
 var wireExtsSet = wire.NewSet(
