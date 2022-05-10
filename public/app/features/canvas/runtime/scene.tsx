@@ -6,7 +6,7 @@ import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
 
 import { GrafanaTheme2, PanelData } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
+import { ContextMenu, MenuItem, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import {
@@ -38,11 +38,23 @@ export interface SelectionParams {
   frame?: FrameState;
 }
 
+type AnchorPoint = {
+  x: number;
+  y: number;
+};
+
+interface ContextMenuState {
+  isMenuVisible: Boolean;
+  anchorPoint: AnchorPoint;
+}
+
 export class Scene {
   styles = getStyles(config.theme2);
   readonly selection = new ReplaySubject<ElementState[]>(1);
   readonly moved = new Subject<number>(); // called after resize/drag for editor updates
   readonly byName = new Map<string, ElementState>();
+  readonly showContextMenu = new ReplaySubject<boolean>(1);
+
   root: RootElement;
 
   revId = 0;
@@ -57,9 +69,17 @@ export class Scene {
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   skipNextSelectionBroadcast = false;
+  contextMenu: ContextMenuState;
 
   constructor(cfg: CanvasFrameOptions, enableEditing: boolean, public onSave: (cfg: CanvasFrameOptions) => void) {
     this.root = this.load(cfg, enableEditing);
+    this.contextMenu = {
+      isMenuVisible: false,
+      anchorPoint: {
+        x: 0,
+        y: 0,
+      },
+    };
   }
 
   getNextElementName = (isFrame = false) => {
@@ -292,6 +312,14 @@ export class Scene {
     return targetElements;
   };
 
+  handleMouseEvent = (e: any) => {
+    e.preventDefault();
+    this.contextMenu.anchorPoint = { x: e.pageX, y: e.pageY };
+    this.contextMenu.isMenuVisible = true;
+
+    this.showContextMenu.next(true);
+  };
+
   initMoveable = (destroySelecto = false, allowChanges = true) => {
     const targetElements = this.generateTargetElements(this.root.elements);
 
@@ -379,6 +407,13 @@ export class Scene {
       targets = event.selected;
       this.updateSelection({ targets });
 
+      // @TODO handle for group/frame?
+      // just for one element for now
+      if (targets.length === 1) {
+        const element = targets[0];
+        element.addEventListener('contextmenu', (ev) => this.handleMouseEvent(ev));
+      }
+
       if (event.isDragStart) {
         event.inputEvent.preventDefault();
         setTimeout(() => {
@@ -388,10 +423,87 @@ export class Scene {
     });
   };
 
+  contextMenuAction = (actionType: string) => {
+    this.selection.pipe(first()).subscribe((currentSelectedElements) => {
+      const currentSelectedElement = currentSelectedElements[0];
+      const currentLayer = currentSelectedElement.parent!;
+
+      switch (actionType) {
+        case `${LayerActionID.Delete}`:
+          currentLayer.doAction(LayerActionID.Delete, currentSelectedElement);
+          break;
+        case `${LayerActionID.Duplicate}`:
+          currentLayer.doAction(LayerActionID.Duplicate, currentSelectedElement);
+          break;
+        case 'bringToFront':
+          break;
+        case 'sendToFront':
+          break;
+      }
+    });
+  };
+
+  renderMenuItems = () => {
+    return (
+      <>
+        <MenuItem
+          label="Delete"
+          onClick={(e) => {
+            this.contextMenuAction('delete');
+            this.closeContextMenu();
+          }}
+          className={this.styles.menuItem}
+        />
+        <MenuItem
+          label="Duplicate"
+          onClick={(e) => {
+            this.contextMenuAction('duplicate');
+            this.closeContextMenu();
+          }}
+          className={this.styles.menuItem}
+        />
+        <MenuItem
+          label="Bring to front"
+          onClick={(e) => {
+            this.contextMenuAction('bringToFront');
+            this.closeContextMenu();
+          }}
+          className={this.styles.menuItem}
+        />
+        <MenuItem
+          label="Send to back"
+          onClick={(e) => {
+            this.contextMenuAction('sendToFront');
+            this.closeContextMenu();
+          }}
+          className={this.styles.menuItem}
+        />
+      </>
+    );
+  };
+
+  closeContextMenu = () => {
+    this.contextMenu.isMenuVisible = false;
+    this.showContextMenu.next(false);
+    console.log('on close');
+  };
+
+  renderContextMenu = () => {
+    return (
+      <ContextMenu
+        x={this.contextMenu.anchorPoint.x}
+        y={this.contextMenu.anchorPoint.y}
+        onClose={this.closeContextMenu}
+        renderMenuItems={this.renderMenuItems}
+      />
+    );
+  };
+
   render() {
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
         {this.root.render()}
+        {this.contextMenu.isMenuVisible && this.renderContextMenu()}
       </div>
     );
   }
@@ -401,5 +513,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   wrap: css`
     overflow: hidden;
     position: relative;
+  `,
+  menuItem: css`
+    max-width: 60ch;
+    overflow: hidden;
   `,
 }));
