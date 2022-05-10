@@ -417,7 +417,7 @@ Content-Type: application/json; charset=UTF-8
 
 `DELETE /api/access-control/roles/:uid?force=false`
 
-Delete a role with the given UID, and it's permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless `force` query param is set to `true`, and in that case all assignments will also be deleted.
+Delete a role with the given UID, and it's permissions. If the role is assigned, the deletion operation will fail, unless the `force` query param is set to `true`, and in that case all assignments will also be deleted.
 
 #### Required permissions
 
@@ -468,7 +468,7 @@ Content-Type: application/json; charset=UTF-8
 
 `GET /api/access-control/users/:userId/roles`
 
-Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.
+Lists the roles that have been directly assigned to a given user. The list does not include basic roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.
 
 Query Parameters:
 

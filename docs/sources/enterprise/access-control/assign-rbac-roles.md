@@ -160,7 +160,7 @@ roles:
 
 > **Note:** If you want to remove a fixed role assignment from a team, remove it from the YAML file, save your changes, and reload the configuration file.
 
-## Assign a fixed or custom role to a basic role
+## Change the permissions of a basic role
 
 If you want to extend the permissions of a basic role, you can modify it by adding a fixed role or a basic role to it.
 

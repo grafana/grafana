@@ -19,13 +19,12 @@ By using RBAC you can provide users with permissions that extend the permissions
 - Assign fixed roles to users and teams: for example, grant an engineering team the ability to create data sources
 - Create custom roles: for example, a role that allows users to create and edit dashboards, but not delete them
 
-Basic roles contain multiple fixed roles. Fixed roles in turn contain multiple permissions, each of which has an action and a scope. Here is an example of the hierarchy of Basic roles, fixed roles, permissions, actions, and scopes.
+Fixed roles contain multiple permissions, each of which has an action and a scope. Fixed roles are immutable, you cannot change any of their properties, nor remove them.
 
-- **Basic role:** `Viewer`
-  - **Fixed role:** `fixed:datasources:reader`
-    - **Permission:**
-      - **Action:** `datasources:read`
-      - **Scope:** `datasources:*`
+- **Fixed role:** `fixed:datasources:reader`
+  - **Permission:**
+    - **Action:** `datasources:read`
+    - **Scope:** `datasources:*`
 
 ## Basic roles
 
@@ -38,14 +37,16 @@ Grafana includes the following basic roles:
 - Editor
 - Viewer
 
-Each basic role is comprised of a number of _fixed roles_ that control the permissions a basic role grants. For example, the viewer basic role contains the following fixed roles among others:
+Each basic role is comprised of a number of _permissions_. For example, the viewer basic role contains the following permissions among others:
 
-- `fixed:datasources:id:reader`: Enables the viewer to see the ID of a data source.
-- `fixed:organization:reader`: Enables the viewer to see a list of organizations.
-- `fixed:annotations:reader`: Enables the viewer to see annotations that other users have added to a dashboard.
-- `fixed:annotations.dashboard:writer`: Enables the viewer to add annotations to a dashboard.
+- **Action** `datasources.id:read`, **Scope** `datasources:*`: Enables the viewer to see the ID of a data source.
+- **Action** `orgs:read`: Enables the viewer to see his organization details
+- **Action** `annotations:read`, **Scope** `annotations:*`: Enables the viewer to see annotations that other users have added to a dashboard.
+- **Action** `annotations:create`, **Scope** `annotations:type:dashboard`: Enables the viewer to add annotations to a dashboard.
+- **Action** `annotations:write`, **Scope** `annotations:type:dashboard`: Enables the viewer to modify annotations of a dashboard.
+- **Action** `annotations:delete`, **Scope** `annotations:type:dashboard`: Enables the viewer to remove annotations from a dashboard.
 
-You can use RBAC to modify the fixed roles associated with any basic role, to modify what viewers, editors, or admins can do. For more information about the fixed roles associated with each basic role, refer to [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions#basic-role-assignments" >}}).
+You can use RBAC to modify the permissions associated with any basic role, to modify what viewers, editors, or admins can do. For more information about the permissions associated with each basic role, refer to [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions#basic-role-assignments" >}}).
 
 > **Note:** You must assign each Grafana user a basic role.
 
