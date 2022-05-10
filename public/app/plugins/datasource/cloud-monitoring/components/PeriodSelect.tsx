@@ -3,39 +3,43 @@ import React, { useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { ALIGNMENT_PERIODS } from '../constants';
-import { MetricQuery, SLOQuery } from '../types';
+import { periodOption } from '../constants';
 
-export interface Props<TQuery> {
+export interface Props {
   inputId: string;
-  onChange(query: TQuery): void;
-  query: TQuery;
+  onChange: (period: string) => void;
   templateVariableOptions: Array<SelectableValue<string>>;
+  aligmentPeriods: periodOption[];
   selectWidth?: number;
+  category?: string;
+  disabled?: boolean;
+  current?: string;
 }
 
-export function AlignmentPeriod<TQuery extends MetricQuery | SLOQuery>({
+export function PeriodSelect({
   inputId,
   templateVariableOptions,
   onChange,
-  query,
+  current,
   selectWidth,
-}: Props<TQuery>) {
+  disabled,
+  aligmentPeriods,
+}: Props) {
   const options = useMemo(
     () =>
-      ALIGNMENT_PERIODS.map((ap) => ({
+      aligmentPeriods.map((ap) => ({
         ...ap,
         label: ap.text,
       })),
-    []
+    [aligmentPeriods]
   );
   const visibleOptions = useMemo(() => options.filter((ap) => !ap.hidden), [options]);
 
   return (
     <Select
       width={selectWidth}
-      onChange={({ value }) => onChange({ ...query, alignmentPeriod: value! })}
-      value={[...options, ...templateVariableOptions].find((s) => s.value === query.alignmentPeriod)}
+      onChange={({ value }) => onChange(value!)}
+      value={[...options, ...templateVariableOptions].find((s) => s.value === current)}
       options={[
         {
           label: 'Template Variables',
@@ -47,8 +51,10 @@ export function AlignmentPeriod<TQuery extends MetricQuery | SLOQuery>({
           options: visibleOptions,
         },
       ]}
-      placeholder="Select Alignment"
+      placeholder="Select Period"
       inputId={inputId}
+      disabled={disabled}
+      allowCustomValue
     ></Select>
   );
 }
