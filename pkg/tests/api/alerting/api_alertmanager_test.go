@@ -483,6 +483,7 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	{
 		// Create the namespace we'll save our alerts to.
 		err := createFolder(t, "default", grafanaListedAddr, "grafana", "password")
+		reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 		require.NoError(t, err)
 	}
 
@@ -595,6 +596,7 @@ func TestRulerAccess(t *testing.T) {
 
 	// Create the namespace we'll save our alerts to.
 	err = createFolder(t, "default", grafanaListedAddr, "editor", "editor")
+	reloadCachedPermissions(t, grafanaListedAddr, "editor", "editor")
 	require.NoError(t, err)
 
 	// Now, let's test the access policies.
@@ -721,6 +723,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 	// Create the namespace we'll save our alerts to.
 	namespaceUID := "default"
 	err = createFolder(t, namespaceUID, grafanaListedAddr, "editor", "editor")
+	reloadCachedPermissions(t, grafanaListedAddr, "editor", "editor")
 	require.NoError(t, err)
 
 	createRule(t, grafanaListedAddr, "default", "editor", "editor")
@@ -877,6 +880,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 	// Create the namespace we'll save our alerts to.
 	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
+	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
@@ -2023,6 +2027,7 @@ func TestQuota(t *testing.T) {
 	// Create the namespace we'll save our alerts to.
 	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
+	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)

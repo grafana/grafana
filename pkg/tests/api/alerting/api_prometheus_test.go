@@ -47,6 +47,7 @@ func TestPrometheusRules(t *testing.T) {
 	// Create the namespace we'll save our alerts to.
 	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
+	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)
@@ -343,6 +344,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 	dashboardUID := "default"
 	err = createFolder(t, dashboardUID, grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
+	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)
@@ -647,6 +649,8 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	err = createFolder(t, "folder2", grafanaListedAddr, "grafana", "password")
 	require.NoError(t, err)
 
+	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
+
 	// Create rule under folder1
 	createRule(t, grafanaListedAddr, "folder1", "grafana", "password")
 
@@ -801,7 +805,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 func reloadCachedPermissions(t *testing.T, addr, login, password string) {
 	t.Helper()
 
-	u := fmt.Sprintf("http://%s:%s@%s/api/access-control/user/permissions", login, password, addr)
+	u := fmt.Sprintf("http://%s:%s@%s/api/access-control/user/permissions?reloadcache=true", login, password, addr)
 	// nolint:gosec
 	resp, err := http.Get(u)
 	t.Cleanup(func() {
