@@ -422,9 +422,13 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 				item := readyToRun[i]
 
 				time.AfterFunc(time.Duration(int64(i)*step), func() {
-					success := item.ruleInfo.eval(tick, item.version)
+					success, dropped := item.ruleInfo.eval(tick, item.version)
 					if !success {
 						sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
+						return
+					}
+					if dropped != nil {
+						sch.log.Info("Alert rule evaluation is too slow. Dropped tick", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
 					}
 				})
 			}
@@ -737,16 +741,28 @@ func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
 	return &alertRuleInfo{evalCh: make(chan *evaluation), updateCh: make(chan struct{}), ctx: ctx, stop: cancel}
 }
 
-// eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped
-func (a *alertRuleInfo) eval(t time.Time, version int64) bool {
+// eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped.
+// Before sending a message into the channel, it does non-blocking read to make sure that there is no concurrent send operation.
+// Returns a tuple where first element is
+//   - true when message was sent
+//   - false when the send operation is stopped
+// the second element contains a dropped message that was sent by a concurrent sender.
+func (a *alertRuleInfo) eval(t time.Time, version int64) (bool, *evaluation) {
+	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
+	var droppedMsg *evaluation
+	select {
+	case droppedMsg = <-a.evalCh:
+	default:
+	}
+
 	select {
 	case a.evalCh <- &evaluation{
 		scheduledAt: t,
 		version:     version,
 	}:
-		return true
+		return true, droppedMsg
 	case <-a.ctx.Done():
-		return false
+		return false, droppedMsg
 	}
 }
 
