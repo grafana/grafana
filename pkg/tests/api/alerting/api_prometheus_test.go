@@ -804,6 +804,9 @@ func reloadCachedPermissions(t *testing.T, addr, login, password string) {
 	u := fmt.Sprintf("http://%s:%s@%s/api/access-control/user/permissions", login, password, addr)
 	// nolint:gosec
 	resp, err := http.Get(u)
+	t.Cleanup(func() {
+		require.NoError(t, resp.Body.Close())
+	})
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 }
