@@ -11,9 +11,14 @@ describe('ConfirmModal', () => {
     dashboardsUIDs.add('uid2');
     items.set('dashboard', dashboardsUIDs);
     const isDeleteModalOpen = true;
-
+    const onDeleteItems = jest.fn();
     render(
-      <ConfirmDeleteModal onDeleteItems={items} results={items} isOpen={isDeleteModalOpen} onDismiss={() => {}} />
+      <ConfirmDeleteModal
+        onDeleteItems={onDeleteItems}
+        results={items}
+        isOpen={isDeleteModalOpen}
+        onDismiss={() => {}}
+      />
     );
 
     expect(screen.getByRole('heading', { name: 'Delete' })).toBeInTheDocument();

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { Button, Checkbox, HorizontalGroup, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { FolderDTO } from 'app/types';
+import { FolderDTO, FolderInfo } from 'app/types';
 
 import { GENERAL_FOLDER_UID } from '../../constants';
 
@@ -45,6 +45,20 @@ export function ManageActions({ items, folder }: Props) {
     alert('TODO, toggle all....');
   };
 
+  //Todo: update item lists that were moved
+  const onMoveItems = (selectedDashboards: string[], folder: FolderInfo | null) => {
+    console.log({ selectedDashboards });
+    console.log({ folder });
+    console.log('items were moved in the backend');
+  };
+
+  //Todo: update item lists that were deleted
+  const onDeleteItems = (folders: string[], dashboards: string[]) => {
+    console.log({ folders });
+    console.log({ dashboards });
+    console.log('items were moved in the backend');
+  };
+
   return (
     <div className={styles.actionRow}>
       <div className={styles.rowContainer}>
@@ -69,13 +83,13 @@ export function ManageActions({ items, folder }: Props) {
       </div>
 
       <ConfirmDeleteModal
-        onDeleteItems={items}
+        onDeleteItems={onDeleteItems}
         results={items}
         isOpen={isDeleteModalOpen}
         onDismiss={() => setIsDeleteModalOpen(false)}
       />
       <MoveToFolderModal
-        onMoveItems={items}
+        onMoveItems={onMoveItems}
         results={items}
         isOpen={isMoveModalOpen}
         onDismiss={() => setIsMoveModalOpen(false)}

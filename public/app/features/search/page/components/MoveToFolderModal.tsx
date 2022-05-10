@@ -8,10 +8,10 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { moveDashboards } from 'app/features/manage-dashboards/state/actions';
 import { FolderInfo } from 'app/types';
 
-import { DashboardSection, OnMoveItems } from '../../types';
+import { OnMoveSelectedItems } from '../../types';
 
 interface Props {
-  onMoveItems: OnMoveItems;
+  onMoveItems: OnMoveSelectedItems;
   results: Map<string, Set<string>>;
   isOpen: boolean;
   onDismiss: () => void;
@@ -39,6 +39,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
         if (result.totalCount === result.alreadyInFolderCount) {
           notifyApp.error('Error', `Dashboard already belongs to folder ${folderTitle}`);
         } else {
+          //update the list
           onMoveItems(selectedDashboards, folder);
         }
 

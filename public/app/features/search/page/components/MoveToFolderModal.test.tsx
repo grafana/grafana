@@ -21,10 +21,11 @@ describe('MoveToFolderModal', () => {
     const isMoveModalOpen = true;
     const mockStore = configureMockStore<any, any>();
     const store = mockStore({ dashboard: { panels: [] } });
+    const onMoveItems = jest.fn();
 
     render(
       <Provider store={store}>
-        <MoveToFolderModal onMoveItems={items} results={items} isOpen={isMoveModalOpen} onDismiss={() => {}} />
+        <MoveToFolderModal onMoveItems={onMoveItems} results={items} isOpen={isMoveModalOpen} onDismiss={() => {}} />
       </Provider>
     );
 

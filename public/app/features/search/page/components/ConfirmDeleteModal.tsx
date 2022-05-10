@@ -5,11 +5,10 @@ import { GrafanaTheme } from '@grafana/data';
 import { ConfirmModal, stylesFactory, useTheme } from '@grafana/ui';
 import { deleteFoldersAndDashboards } from 'app/features/manage-dashboards/state/actions';
 
-import { DashboardSection, OnDeleteItems } from '../types';
-import { getCheckedUids } from '../utils';
+import { OnDeleteSelectedItems } from '../../types';
 
 interface Props {
-  onDeleteItems: OnDeleteItems;
+  onDeleteItems: OnDeleteSelectedItems;
   results: Map<string, Set<string>>;
   isOpen: boolean;
   onDismiss: () => void;
