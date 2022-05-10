@@ -1,3 +1,4 @@
+import cx from 'classnames';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
@@ -13,13 +14,11 @@ import { TableColumn } from './SearchResultsTable';
 
 const TYPE_COLUMN_WIDTH = 130;
 const DATASOURCE_COLUMN_WIDTH = 200;
-// const INFO_COLUMN_WIDTH = 100;
 const LOCATION_COLUMN_WIDTH = 200;
 const TAGS_COLUMN_WIDTH = 200;
 
 export const generateColumns = (
   response: QueryResponse,
-  isDashboardList: boolean,
   availableWidth: number,
   selection: SelectionChecker | undefined,
   selectionToggle: SelectionToggle | undefined,
@@ -38,6 +37,7 @@ export const generateColumns = (
     width = 30;
     columns.push({
       id: `column-checkbox`,
+      width,
       Header: () => (
         <div className={styles.checkboxHeader}>
           <Checkbox
@@ -49,7 +49,6 @@ export const generateColumns = (
           />
         </div>
       ),
-      width,
       Cell: (p) => {
         const uid = uidField.values.get(p.row.index);
         const kind = kindField ? kindField.values.get(p.row.index) : 'dashboard'; // HACK for now
@@ -75,7 +74,7 @@ export const generateColumns = (
   }
 
   // Name column
-  width = Math.max(availableWidth * 0.2, 200);
+  width = Math.max(availableWidth * 0.2, 300);
   columns.push({
     Cell: (p) => {
       const name = access.name.values.get(p.row.index);
@@ -88,36 +87,16 @@ export const generateColumns = (
     id: `column-name`,
     field: access.name!,
     Header: 'Name',
-    accessor: 'name',
     width,
   });
   availableWidth -= width;
 
   width = TYPE_COLUMN_WIDTH;
-  if (isDashboardList) {
-    columns.push({
-      Cell: DefaultCell,
-      id: `column-type`,
-      field: access.name!,
-      Header: 'Type',
-      accessor: (row: any, i: number) => {
-        return (
-          <div className={styles.typeText}>
-            <Icon name={'apps'} className={styles.typeIcon} />
-            Dashboard
-          </div>
-        );
-      },
-      width,
-    });
-    availableWidth -= width;
-  } else {
-    columns.push(makeTypeColumn(access.kind, access.panel_type, width, styles.typeText, styles.typeIcon));
-    availableWidth -= width;
-  }
+  columns.push(makeTypeColumn(access.kind, access.panel_type, width, styles.typeText, styles.typeIcon));
+  availableWidth -= width;
 
   // Show datasources if we have any
-  if (access.ds_uid && hasFieldValue(access.ds_uid)) {
+  if (access.ds_uid) {
     width = DATASOURCE_COLUMN_WIDTH;
     columns.push(
       makeDataSourceColumn(
@@ -133,78 +112,42 @@ export const generateColumns = (
   }
 
   // Show tags if we have any
-  if (access.tags && hasFieldValue(access.tags)) {
+  if (access.tags) {
     width = TAGS_COLUMN_WIDTH;
     columns.push(makeTagsColumn(access.tags, width, styles.tagList, onTagSelected));
     availableWidth -= width;
   }
 
-  if (isDashboardList) {
-    // width = Math.max(availableWidth, INFO_COLUMN_WIDTH);
-    // columns.push({
-    //   Cell: DefaultCell,
-    //   id: `column-info`,
-    //   field: access.url!,
-    //   Header: 'Info',
-    //   accessor: (row: any, i: number) => {
-    //     const panelCount = access.panelCount?.values.get(i);
-    //     return <div className={styles.infoWrap}>{panelCount != null && <span>Panels: {panelCount}</span>}</div>;
-    //   },
-    //   width: width,
-    // });
-  } else {
-    width = Math.max(availableWidth, LOCATION_COLUMN_WIDTH);
-    const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
-    if (meta?.locationInfo) {
-      columns.push({
-        Cell: (p) => {
-          const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
-          return (
-            <div {...p.cellProps} className={p.cellStyle}>
-              {parts.map((p) => {
-                const info = meta.locationInfo[p];
-                return info ? (
-                  <a key={p} href={info.url} className={styles.locationItem}>
-                    <Icon name={getIconForKind(info.kind)} /> {info.name}
-                  </a>
-                ) : (
-                  <span key={p}>{p}</span>
-                );
-              })}
-            </div>
-          );
-        },
-        id: `column-location`,
-        field: access.location ?? access.url,
-        Header: 'Location',
-        width,
-      });
-    } else {
-      columns.push({
-        Cell: DefaultCell,
-        id: `column-location`,
-        field: access.location ?? access.url,
-        Header: 'Location',
-        accessor: (row: any, i: number) => {
-          return <div>{access.location?.values.get(i)}</div>;
-        },
-        width,
-      });
-    }
+  width = Math.max(availableWidth, LOCATION_COLUMN_WIDTH);
+  const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
+  if (meta?.locationInfo) {
+    columns.push({
+      Cell: (p) => {
+        const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
+        return (
+          <div {...p.cellProps} className={p.cellStyle}>
+            {parts.map((p) => {
+              const info = meta.locationInfo[p];
+              return info ? (
+                <a key={p} href={info.url} className={styles.locationItem}>
+                  <Icon name={getIconForKind(info.kind)} /> {info.name}
+                </a>
+              ) : (
+                <span key={p}>{p}</span>
+              );
+            })}
+          </div>
+        );
+      },
+      id: `column-location`,
+      field: access.location ?? access.url,
+      Header: 'Location',
+      width,
+    });
   }
 
   return columns;
 };
-
-function hasFieldValue(field: Field): boolean {
-  for (let i = 0; i < field.values.length; i++) {
-    const v = field.values.get(i);
-    if (v && v.length) {
-      return true;
-    }
-  }
-  return false;
-}
 
 function getIconForKind(v: string): IconName {
   if (v === 'dashboard') {
@@ -226,43 +169,42 @@ function makeDataSourceColumn(
 ): TableColumn {
   const srv = getDataSourceSrv();
   return {
-    Cell: DefaultCell,
     id: `column-datasource`,
     field,
     Header: 'Data source',
-    accessor: (row: any, i: number) => {
-      const dslist = field.values.get(i);
-      if (dslist?.length) {
-        return (
-          <div className={datasourceItemClass}>
-            {dslist.map((v, i) => {
-              const settings = srv.getInstanceSettings(v);
-              const icon = settings?.meta?.info?.logos?.small;
-              if (icon) {
-                return (
-                  <span
-                    key={i}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      onDatasourceChange(settings.uid);
-                    }}
-                  >
-                    <img src={icon} width={14} height={14} title={settings.type} className={iconClass} />
-                    {settings.name}
-                  </span>
-                );
-              }
+    Cell: (p) => {
+      const dslist = field.values.get(p.row.index);
+      if (!dslist?.length) {
+        return null;
+      }
+      return (
+        <div {...p.cellProps} className={cx(p.cellStyle, datasourceItemClass)}>
+          {dslist.map((v, i) => {
+            const settings = srv.getInstanceSettings(v);
+            const icon = settings?.meta?.info?.logos?.small;
+            if (icon) {
               return (
-                <span className={invalidDatasourceItemClass} key={i}>
-                  {v}
+                <span
+                  key={i}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    onDatasourceChange(settings.uid);
+                  }}
+                >
+                  <img src={icon} width={14} height={14} title={settings.type} className={iconClass} />
+                  {settings.name}
                 </span>
               );
-            })}
-          </div>
-        );
-      }
-      return null;
+            }
+            return (
+              <span className={invalidDatasourceItemClass} key={i}>
+                {v}
+              </span>
+            );
+          })}
+        </div>
+      );
     },
     width,
   };

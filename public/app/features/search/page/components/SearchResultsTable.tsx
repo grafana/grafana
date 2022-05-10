@@ -14,7 +14,7 @@ import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { generateColumns } from './columns';
 
-type Props = {
+export type SearchResultsProps = {
   response: QueryResponse;
   width: number;
   height: number;
@@ -39,7 +39,7 @@ export const SearchResultsTable = ({
   selectionToggle,
   onTagSelected,
   onDatasourceChange,
-}: Props) => {
+}: SearchResultsProps) => {
   const styles = useStyles2(getStyles);
   const tableStyles = useStyles2(getTableStyles);
 
@@ -55,16 +55,7 @@ export const SearchResultsTable = ({
 
   // React-table column definitions
   const memoizedColumns = useMemo(() => {
-    return generateColumns(
-      response,
-      false, // is dashboard list
-      width,
-      selection,
-      selectionToggle,
-      styles,
-      onTagSelected,
-      onDatasourceChange
-    );
+    return generateColumns(response, width, selection, selectionToggle, styles, onTagSelected, onDatasourceChange);
   }, [response, width, styles, selection, selectionToggle, onTagSelected, onDatasourceChange]);
 
   const options: TableOptions<{}> = useMemo(
