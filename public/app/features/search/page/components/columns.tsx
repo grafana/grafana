@@ -19,7 +19,7 @@ export const generateColumns = (
   selectionToggle: SelectionToggle | undefined,
   styles: { [key: string]: string },
   onTagSelected: (tag: string) => void,
-  onDatasourceChange: (datasource?: string) => void
+  onDatasourceChange?: (datasource?: string) => void
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
   const access = response.view.fields;
@@ -97,7 +97,7 @@ export const generateColumns = (
   availableWidth -= width;
 
   // Show datasources if we have any
-  if (access.ds_uid) {
+  if (access.ds_uid && onDatasourceChange) {
     width = DATASOURCE_COLUMN_WIDTH;
     columns.push(
       makeDataSourceColumn(

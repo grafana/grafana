@@ -126,7 +126,7 @@ export default function SearchPage() {
             width: width - 5,
             height: height,
             onTagSelected: onTagSelected,
-            onDatasourceChange: onDatasourceChange,
+            onDatasourceChange: query.datasource ? onDatasourceChange : undefined,
           };
 
           if (layout === SearchLayout.Grid) {

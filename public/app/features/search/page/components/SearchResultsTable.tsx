@@ -21,7 +21,7 @@ export type SearchResultsProps = {
   selection?: SelectionChecker;
   selectionToggle?: SelectionToggle;
   onTagSelected: (tag: string) => void;
-  onDatasourceChange: (datasource?: string) => void;
+  onDatasourceChange?: (datasource?: string) => void;
 };
 
 export type TableColumn = Column & {
