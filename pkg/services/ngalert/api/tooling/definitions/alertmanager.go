@@ -438,8 +438,6 @@ type BodyAlertingConfig struct {
 	Body PostableUserConfig
 }
 
-// prom routes
-// swagger:parameters RouteGetRuleStatuses RouteGetAlertStatuses
 // testing routes
 // swagger:parameters RouteTestReceiverConfig RouteTestRuleConfig
 type DatasourceIDReference struct {
@@ -450,6 +448,8 @@ type DatasourceIDReference struct {
 
 // alertmanager routes
 // swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig RoutePostTestReceivers
+// prom routes
+// swagger:parameters RouteGetRuleStatuses RouteGetAlertStatuses
 // ruler routes
 // swagger:parameters RouteGetRulesConfig RoutePostNameRulesConfig RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig
 type DatasourceUIDReference struct {

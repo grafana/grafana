@@ -3,12 +3,12 @@ title = "Message templating"
 description = "Message templating"
 keywords = ["grafana", "alerting", "guide", "contact point", "templating"]
 aliases = ["/docs/grafana/latest/alerting/message-templating/", "/docs/grafana/latest/alerting/unified-alerting/message-templating/"]
-weight = 440
+weight = 400
 +++
 
 # Message templating
 
-Notifications sent via [contact points]({{< relref "../contact-points.md" >}}) are built using messaging templates. Grafana's default templates are based on the [Go templating system](https://golang.org/pkg/text/template) where some fields are evaluated as text, while others are evaluated as HTML (which can affect escaping). The default template, defined in [default_template.go](https://github.com/grafana/grafana/blob/main/pkg/services/ngalert/notifier/channels/default_template.go), is a useful reference for custom templates.
+Notifications sent via [contact points]({{< relref "../../contact-points/_index.md" >}}) are built using messaging templates. Grafana's default templates are based on the [Go templating system](https://golang.org/pkg/text/template) where some fields are evaluated as text, while others are evaluated as HTML (which can affect escaping). The default template, defined in [default_template.go](https://github.com/grafana/grafana/blob/main/pkg/services/ngalert/notifier/channels/default_template.go), is a useful reference for custom templates.
 
 Since most of the contact point fields can be templated, you can create reusable custom templates and use them in multiple contact points. The [template data]({{< relref "./template-data.md" >}}) topic lists variables that are available for templating. The default template is defined in [default_template.go](https://github.com/grafana/grafana/blob/main/pkg/services/ngalert/notifier/channels/default_template.go) which can serve as a useful reference or starting point for custom templates.
 
@@ -28,7 +28,7 @@ The following example shows the use of a custom template within one of the conta
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
-1. From [Alertmanager]({{< relref "../contact-points.md/#alertmanager" >}}) drop-down, select an external Alertmanager to create and manage templates for the external data source. Otherwise, keep the default option of Grafana.
+1. From Alertmanager drop-down, select an external Alertmanager to create and manage templates for the external data source. Otherwise, keep the default option of Grafana.
    {{< figure max-width="250px" src="/static/img/docs/alerting/unified/contact-points-select-am-8-0.gif" caption="Select Alertmanager" >}}
 1. Click **Add template**.
 1. In **Name**, add a descriptive name.
