@@ -55,6 +55,7 @@ type Scheduler struct {
 	GetAlertRulesDuration    prometheus.Histogram
 	SchedulePeriodicDuration prometheus.Histogram
 	Ticker                   *legacyMetrics.Ticker
+	DroppedTicksTotal        *prometheus.CounterVec
 }
 
 type MultiOrgAlertmanager struct {
@@ -183,6 +184,15 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 		),
 		Ticker: legacyMetrics.NewTickerMetrics(r),
+		DroppedTicksTotal: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "rule_dropped_evaluations",
+				Help:      "The total number of evaluations dropped for a rule.",
+			},
+			[]string{"org", "rule_uid"},
+		),
 	}
 }
 
