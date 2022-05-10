@@ -5,8 +5,7 @@ import { GrafanaTheme } from '@grafana/data';
 export const getStyles = ({ spacing }: GrafanaTheme) => ({
   formWrapper: css`
     background-color: transparent !important;
-    max-width: 1000px;
-    width: 1000px;
+    width: 100%;
   `,
   navigationPanel: css`
     display: flex;

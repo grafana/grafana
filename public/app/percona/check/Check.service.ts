@@ -9,8 +9,8 @@ import {
   FailedCheckSummary,
   ServiceFailedCheck,
 } from 'app/percona/check/types';
-import { API, ApiParamBody, ApiParams, PaginatedFomattedResponse } from 'app/percona/shared/core';
-import { api, getApiFilterParams } from 'app/percona/shared/helpers/api';
+import { API, PaginatedFomattedResponse } from 'app/percona/shared/core';
+import { api } from 'app/percona/shared/helpers/api';
 
 import { AlertRuleSeverity } from '../integrated-alerting/components/AlertRules/AlertRules.types';
 import { formatLabels } from '../shared/helpers/labels';
@@ -106,13 +106,8 @@ export const CheckService = {
   runDbChecks(token?: CancelToken): Promise<void | {}> {
     return api.post<{}, {}>('/v1/management/SecurityChecks/Start', {}, false, token);
   },
-  async getAllChecks(params: ApiParamBody[], token?: CancelToken): Promise<CheckDetails[]> {
-    const response = await api.post<AllChecks, ApiParams>(
-      '/v1/management/SecurityChecks/List',
-      getApiFilterParams(params),
-      false,
-      token
-    );
+  async getAllChecks(token?: CancelToken): Promise<CheckDetails[]> {
+    const response = await api.post<AllChecks, object>('/v1/management/SecurityChecks/List', {}, false, token);
 
     return response && response.checks ? response.checks.sort((a, b) => a.summary.localeCompare(b.summary)) : [];
   },

@@ -1,50 +1,40 @@
-import {
-  LoaderButton,
-  logger,
-  TextInputField,
-  RadioButtonGroupField,
-  ChipAreaInputField,
-} from '@percona/platform-core';
+import { LoaderButton, logger } from '@percona/platform-core';
 import React, { FC, useEffect, useState, useCallback, useMemo } from 'react';
 import { Column } from 'react-table';
 
 import { AppEvents } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CheckService } from 'app/percona/check/Check.service';
 import { CheckDetails, Interval } from 'app/percona/check/types';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
-import { withFilterTypes } from 'app/percona/shared/components/Elements/FilterSection/withFilterTypes';
-import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
-import { getValuesFromQueryParams } from 'app/percona/shared/helpers/getValuesFromQueryParams';
-import { sameTags } from 'app/percona/shared/helpers/tags';
 
 import { appEvents } from '../../../../core/app_events';
 import { Messages as mainChecksMessages } from '../../CheckPanel.messages';
 
-import { GET_ALL_CHECKS_CANCEL_TOKEN, INTERVAL_OPTIONS, STATUS_OPTIONS } from './AllChecksTab.constants';
+import { GET_ALL_CHECKS_CANCEL_TOKEN } from './AllChecksTab.constants';
 import { Messages } from './AllChecksTab.messages';
 import { getStyles } from './AllChecksTab.styles';
 import { ChangeCheckIntervalModal } from './ChangeCheckIntervalModal';
 import { CheckActions } from './CheckActions/CheckActions';
 import { FetchChecks } from './types';
 
-interface FormValues {
-  categories: string[];
-  name: string;
-  status: string;
-  interval: string;
-  description: string;
-}
+//TODO uncomment for 2.29.0
+// interface FormValues {
+//   categories: string[];
+//   name: string;
+//   status: string;
+//   interval: string;
+//   description: string;
+// }
 
 export const AllChecksTab: FC = () => {
-  const [queryParams, setQueryParams] = useQueryParams();
+  // const [queryParams, setQueryParams] = useQueryParams();
   const [fetchChecksPending, setFetchChecksPending] = useState(false);
   const navModel = usePerconaNavModel('all-checks');
   const [generateToken] = useCancelToken();
@@ -53,18 +43,18 @@ export const AllChecksTab: FC = () => {
   const [selectedCheck, setSelectedCheck] = useState<CheckDetails>();
   const [checks, setChecks] = useState<CheckDetails[]>([]);
   const styles = useStyles2(getStyles);
-  const categories = useMemo<string[]>(
-    () => getValuesFromQueryParams<[string[]]>(queryParams, [{ key: 'category' }])[0],
-    [queryParams]
-  );
+  // const categories = useMemo<string[]>(
+  //   () => getValuesFromQueryParams<[string[]]>(queryParams, [{ key: 'category' }])[0],
+  //   [queryParams]
+  // );
 
-  const Filters = withFilterTypes<FormValues>({
-    categories,
-    name: '*',
-    status: 'all',
-    interval: 'all',
-    description: '*',
-  });
+  // const Filters = withFilterTypes<FormValues>({
+  //   categories,
+  //   name: '*',
+  //   status: 'all',
+  //   interval: 'all',
+  //   description: '*',
+  // });
 
   const handleRunChecksClick = async () => {
     setRunChecksPending(true);
@@ -130,7 +120,7 @@ export const AllChecksTab: FC = () => {
     [handleModalClose]
   );
 
-  const applyFilters = ({ categories }: FormValues) => setQueryParams({ category: categories });
+  // const applyFilters = ({ categories }: FormValues) => setQueryParams({ category: categories });
 
   const columns = useMemo(
     (): Array<Column<CheckDetails>> => [
@@ -142,10 +132,10 @@ export const AllChecksTab: FC = () => {
         Header: Messages.table.columns.description,
         accessor: 'description',
       },
-      {
-        Header: Messages.table.columns.category,
-        accessor: 'category',
-      },
+      // {
+      //   Header: Messages.table.columns.category,
+      //   accessor: 'category',
+      // },
       {
         Header: Messages.table.columns.status,
         accessor: 'disabled',
@@ -178,10 +168,7 @@ export const AllChecksTab: FC = () => {
     const fetchChecks: FetchChecks = async () => {
       setFetchChecksPending(true);
       try {
-        const checks = await CheckService.getAllChecks(
-          [{ category: { stringValues: categories } }],
-          generateToken(GET_ALL_CHECKS_CANCEL_TOKEN)
-        );
+        const checks = await CheckService.getAllChecks(generateToken(GET_ALL_CHECKS_CANCEL_TOKEN));
 
         setChecks(checks);
       } catch (e) {
@@ -194,7 +181,7 @@ export const AllChecksTab: FC = () => {
     };
     fetchChecks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categories]);
+  }, []);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const featureSelector = useCallback(getPerconaSettingFlag('sttEnabled'), []);
@@ -202,13 +189,12 @@ export const AllChecksTab: FC = () => {
   return (
     <Page navModel={navModel} tabsDataTestId="db-check-tabs-bar" data-testid="db-check-panel">
       <Page.Contents dataTestId="db-check-tab-content">
-        <TechnicalPreview />
         <FeatureLoader
           messagedataTestId="db-check-panel-settings-link"
           featureName={mainChecksMessages.advisors}
           featureSelector={featureSelector}
         >
-          <Filters onApply={applyFilters}>
+          {/* <Filters onApply={applyFilters}>
             <ChipAreaInputField
               tooltipText={Messages.tooltips.category}
               name="categories"
@@ -245,7 +231,7 @@ export const AllChecksTab: FC = () => {
               label={Messages.table.columns.description}
               disabled
             />
-          </Filters>
+          </Filters> */}
           <div className={styles.actionButtons} data-testid="db-check-panel-actions">
             <LoaderButton
               type="button"

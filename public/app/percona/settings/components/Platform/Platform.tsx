@@ -8,8 +8,6 @@ import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoa
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 
-import { WithDiagnostics } from '../WithDiagnostics/WithDiagnostics';
-
 import { Connect } from './Connect/Connect';
 import { Connected } from './Connected/Connected';
 
@@ -20,9 +18,7 @@ export const Platform: FC = () => {
   return (
     <Page navModel={navModel} vertical tabsDataTestId="settings-tabs">
       <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
-        <FeatureLoader>
-          <WithDiagnostics>{result?.isConnectedToPortal ? <Connected /> : <Connect />}</WithDiagnostics>
-        </FeatureLoader>
+        <FeatureLoader>{result?.isConnectedToPortal ? <Connected /> : <Connect />}</FeatureLoader>
       </Page.Contents>
     </Page>
   );

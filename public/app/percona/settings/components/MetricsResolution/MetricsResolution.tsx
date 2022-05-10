@@ -20,7 +20,6 @@ import { useAppDispatch } from 'app/store/store';
 
 import { SET_SETTINGS_CANCEL_TOKEN } from '../../Settings.constants';
 import { MAX_DAYS, MIN_DAYS } from '../Advanced/Advanced.constants';
-import { WithDiagnostics } from '../WithDiagnostics/WithDiagnostics';
 
 import { defaultResolutions, resolutionsOptions } from './MetricsResolution.constants';
 import { getStyles } from './MetricsResolution.styles';
@@ -101,67 +100,65 @@ export const MetricsResolution: FC = () => {
     <Page navModel={navModel} vertical tabsDataTestId="settings-tabs">
       <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
-          <WithDiagnostics>
-            <div className={styles.resolutionsWrapper}>
-              <Form
-                onSubmit={applyChanges}
-                initialValues={initialValues}
-                render={({ form, handleSubmit, valid, pristine }) => (
-                  <form
-                    onSubmit={handleSubmit}
-                    onChange={() => updateResolutions(form)}
-                    data-testid="metrics-resolution-form"
-                  >
-                    <div className={settingsStyles.labelWrapper} data-testid="metrics-resolution-label">
-                      <span>{label}</span>
-                      <LinkTooltip tooltipText={tooltip} link={link} linkText={tooltipLinkText} icon="info-circle" />
-                    </div>
-                    <RadioButtonGroupField
-                      name="resolutions"
-                      data-testid="metrics-resolution-radio-button-group"
-                      options={resolutionsOptions}
+          <div className={styles.resolutionsWrapper}>
+            <Form
+              onSubmit={applyChanges}
+              initialValues={initialValues}
+              render={({ form, handleSubmit, valid, pristine }) => (
+                <form
+                  onSubmit={handleSubmit}
+                  onChange={() => updateResolutions(form)}
+                  data-testid="metrics-resolution-form"
+                >
+                  <div className={settingsStyles.labelWrapper} data-testid="metrics-resolution-label">
+                    <span>{label}</span>
+                    <LinkTooltip tooltipText={tooltip} link={link} linkText={tooltipLinkText} icon="info-circle" />
+                  </div>
+                  <RadioButtonGroupField
+                    name="resolutions"
+                    data-testid="metrics-resolution-radio-button-group"
+                    options={resolutionsOptions}
+                  />
+                  <div className={styles.numericFieldWrapper}>
+                    <NumberInputField
+                      label={low}
+                      name={MetricsResolutionIntervals.lr}
+                      disabled={resolution !== MetricsResolutionPresets.custom}
+                      data-testid="metrics-resolution-lr-input"
+                      validators={resolutionValidators}
                     />
-                    <div className={styles.numericFieldWrapper}>
-                      <NumberInputField
-                        label={low}
-                        name={MetricsResolutionIntervals.lr}
-                        disabled={resolution !== MetricsResolutionPresets.custom}
-                        data-testid="metrics-resolution-lr-input"
-                        validators={resolutionValidators}
-                      />
-                    </div>
-                    <div className={styles.numericFieldWrapper}>
-                      <NumberInputField
-                        label={medium}
-                        name={MetricsResolutionIntervals.mr}
-                        disabled={resolution !== MetricsResolutionPresets.custom}
-                        data-testid="metrics-resolution-mr-input"
-                        validators={resolutionValidators}
-                      />
-                    </div>
-                    <div className={styles.numericFieldWrapper}>
-                      <NumberInputField
-                        label={high}
-                        name={MetricsResolutionIntervals.hr}
-                        disabled={resolution !== MetricsResolutionPresets.custom}
-                        data-testid="metrics-resolution-hr-input"
-                        validators={resolutionValidators}
-                      />
-                    </div>
-                    <Button
-                      className={settingsStyles.actionButton}
-                      type="submit"
-                      disabled={!valid || pristine || loading}
-                      data-testid="metrics-resolution-button"
-                    >
-                      {loading && <Spinner />}
-                      {action}
-                    </Button>
-                  </form>
-                )}
-              />
-            </div>
-          </WithDiagnostics>
+                  </div>
+                  <div className={styles.numericFieldWrapper}>
+                    <NumberInputField
+                      label={medium}
+                      name={MetricsResolutionIntervals.mr}
+                      disabled={resolution !== MetricsResolutionPresets.custom}
+                      data-testid="metrics-resolution-mr-input"
+                      validators={resolutionValidators}
+                    />
+                  </div>
+                  <div className={styles.numericFieldWrapper}>
+                    <NumberInputField
+                      label={high}
+                      name={MetricsResolutionIntervals.hr}
+                      disabled={resolution !== MetricsResolutionPresets.custom}
+                      data-testid="metrics-resolution-hr-input"
+                      validators={resolutionValidators}
+                    />
+                  </div>
+                  <Button
+                    className={settingsStyles.actionButton}
+                    type="submit"
+                    disabled={!valid || pristine || loading}
+                    data-testid="metrics-resolution-button"
+                  >
+                    {loading && <Spinner />}
+                    {action}
+                  </Button>
+                </form>
+              )}
+            />
+          </div>
         </FeatureLoader>
       </Page.Contents>
     </Page>

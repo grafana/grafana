@@ -71,14 +71,11 @@ export const DBCluster: FC = () => {
       );
 
       const result = await catchFromAsyncThunkAction(dispatch(fetchDBClustersAction({ kubernetes, tokens })));
+      setLoading(false);
 
       // undefined means request was cancelled
       if (result === undefined) {
         return;
-      }
-
-      if (triggerLoading) {
-        setLoading(false);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

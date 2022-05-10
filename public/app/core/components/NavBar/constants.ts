@@ -5,11 +5,11 @@ export const PMM_STT_PAGE: NavModelItem = {
   id: 'database-checks',
   icon: 'percona-database-checks',
   text: 'Advisor Checks',
-  subTitle: 'Percona Security Checks',
+  subTitle: 'Percona Advisor Checks',
   url: `${config.appSubUrl}/pmm-database-checks`,
   breadcrumbs: [
     {
-      title: 'Security Checks',
+      title: 'Advisor Checks',
       url: `${config.appSubUrl}/pmm-database-checks`,
     },
   ],
