@@ -370,8 +370,11 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		RouteRegister:      routeRegister,
 		SQLStore:           store,
 		searchUsersService: searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
-		dashboardService:   dashboardservice.ProvideDashboardService(cfg, dashboardsStore, nil, features, accesscontrolmock.NewPermissionsServicesMock()),
-		preferenceService:  preftest.NewPreferenceServiceFake(),
+		dashboardService: dashboardservice.ProvideDashboardService(
+			cfg, dashboardsStore, nil, features,
+			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
+		),
+		preferenceService: preftest.NewPreferenceServiceFake(),
 	}
 
 	// Defining the accesscontrol service has to be done before registering routes
