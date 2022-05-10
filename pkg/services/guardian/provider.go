@@ -14,7 +14,6 @@ func ProvideService(
 	store *sqlstore.SQLStore, ac accesscontrol.AccessControl,
 	folderPermissionsService accesscontrol.FolderPermissionsService, dashboardPermissionsService accesscontrol.DashboardPermissionsService,
 ) *Provider {
-
 	if !ac.IsDisabled() {
 		// TODO: Fix this hack, see https://github.com/grafana/grafana-enterprise/issues/2935
 		InitAccessControlGuardian(store, ac, folderPermissionsService, dashboardPermissionsService)

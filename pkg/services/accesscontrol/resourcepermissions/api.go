@@ -74,7 +74,6 @@ func (a *api) registerEndpoints() {
 		if a.service.options.Assignments.BuiltInRoles {
 			r.Post("/:resourceID/builtInRoles/:builtInRole", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setBuiltinRolePermission))
 		}
-
 	})
 }
 
