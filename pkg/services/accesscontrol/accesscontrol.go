@@ -44,6 +44,7 @@ type PermissionsProvider interface {
 }
 
 type TeamPermissionsService interface {
+	GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]ResourcePermission, error)
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
 }
 
