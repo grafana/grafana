@@ -16,7 +16,6 @@ import { Messages } from 'app/percona/settings/Settings.messages';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import { getStyles } from './AlertManager.styles';
 import { AlertManagerChangePayload } from '../../Settings.types';
-import { WithDiagnostics } from '../WithDiagnostics/WithDiagnostics';
 
 export const AlertManager: FC = () => {
   const styles = useStyles2(getStyles);
@@ -76,69 +75,65 @@ export const AlertManager: FC = () => {
     <Page navModel={navModel} vertical tabsDataTestId="settings-tabs">
       <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
-          <WithDiagnostics>
-            <div className={cx(settingsStyles.wrapper, styles.alertManagerWrapper)}>
-              <Form
-                onSubmit={applyChanges}
-                initialValues={initialValues}
-                render={({ handleSubmit, pristine }) => (
-                  <form onSubmit={handleSubmit}>
-                    <div className={settingsStyles.labelWrapper} data-testid="alertmanager-url-label">
-                      <strong className={styles.warning}>
-                        {warningPre}{' '}
-                        <a className={styles.warningLink} href={AM_WARNING_URL}>
-                          {warningLinkContent}
-                        </a>{' '}
-                        {warningPost}
-                      </strong>
-                      <span>{urlLabel}</span>
-                      <LinkTooltip
-                        tooltipText={urlTooltip}
-                        link={urlLink}
-                        linkText={tooltipLinkText}
-                        icon="info-circle"
-                      />
-                    </div>
-                    <Field
-                      name="url"
-                      isEqual={isEqual}
-                      render={({ input }) => (
-                        <Input {...input} className={styles.input} data-testid="alertmanager-url" />
-                      )}
+          <div className={cx(settingsStyles.wrapper, styles.alertManagerWrapper)}>
+            <Form
+              onSubmit={applyChanges}
+              initialValues={initialValues}
+              render={({ handleSubmit, pristine }) => (
+                <form onSubmit={handleSubmit}>
+                  <div className={settingsStyles.labelWrapper} data-testid="alertmanager-url-label">
+                    <strong className={styles.warning}>
+                      {warningPre}{' '}
+                      <a className={styles.warningLink} href={AM_WARNING_URL}>
+                        {warningLinkContent}
+                      </a>{' '}
+                      {warningPost}
+                    </strong>
+                    <span>{urlLabel}</span>
+                    <LinkTooltip
+                      tooltipText={urlTooltip}
+                      link={urlLink}
+                      linkText={tooltipLinkText}
+                      icon="info-circle"
                     />
-                    <div
-                      className={cx(settingsStyles.labelWrapper, styles.rulesLabel)}
-                      data-testid="alertmanager-rules-label"
-                    >
-                      <span>{rulesLabel}</span>
-                      <LinkTooltip
-                        tooltipText={rulesTooltip}
-                        link={rulesLink}
-                        linkText={tooltipLinkText}
-                        icon="info-circle"
-                      />
-                    </div>
-                    <Field
-                      name="rules"
-                      isEqual={isEqual}
-                      render={({ input }) => (
-                        <TextArea {...input} className={styles.textarea} data-testid="alertmanager-rules" />
-                      )}
+                  </div>
+                  <Field
+                    name="url"
+                    isEqual={isEqual}
+                    render={({ input }) => <Input {...input} className={styles.input} data-testid="alertmanager-url" />}
+                  />
+                  <div
+                    className={cx(settingsStyles.labelWrapper, styles.rulesLabel)}
+                    data-testid="alertmanager-rules-label"
+                  >
+                    <span>{rulesLabel}</span>
+                    <LinkTooltip
+                      tooltipText={rulesTooltip}
+                      link={rulesLink}
+                      linkText={tooltipLinkText}
+                      icon="info-circle"
                     />
-                    <Button
-                      className={settingsStyles.actionButton}
-                      type="submit"
-                      disabled={pristine || loading}
-                      data-testid="alertmanager-button"
-                    >
-                      {loading && <Spinner />}
-                      {action}
-                    </Button>
-                  </form>
-                )}
-              />
-            </div>
-          </WithDiagnostics>
+                  </div>
+                  <Field
+                    name="rules"
+                    isEqual={isEqual}
+                    render={({ input }) => (
+                      <TextArea {...input} className={styles.textarea} data-testid="alertmanager-rules" />
+                    )}
+                  />
+                  <Button
+                    className={settingsStyles.actionButton}
+                    type="submit"
+                    disabled={pristine || loading}
+                    data-testid="alertmanager-button"
+                  >
+                    {loading && <Spinner />}
+                    {action}
+                  </Button>
+                </form>
+              )}
+            />
+          </div>
         </FeatureLoader>
       </Page.Contents>
     </Page>

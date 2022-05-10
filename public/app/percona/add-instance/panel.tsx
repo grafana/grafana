@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import React, { useMemo, useState } from 'react';
-import { Button, useStyles } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 import { useSelector } from 'react-redux';
 import { cx } from '@emotion/css';
 import Page from 'app/core/components/Page/Page';
@@ -28,7 +28,7 @@ const availableInstanceTypes: AvailableTypes[] = [
 ];
 
 const AddInstancePanel = () => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const { result: settings } = useSelector(getPerconaSettings);
   const { azureDiscoverEnabled } = settings!;
   const instanceType = '';
@@ -41,16 +41,14 @@ const AddInstancePanel = () => {
     () => () => (
       <>
         {selectedInstance.type !== InstanceTypesExtra.rds && selectedInstance.type !== InstanceTypesExtra.azure && (
-          <div className={styles.content}>
-            <Button
-              variant="secondary"
-              onClick={() => selectInstance({ type: '' })}
-              className={styles.returnButton}
-              icon="arrow-left"
-            >
-              {Messages.form.buttons.toMenu}
-            </Button>
-          </div>
+          <Button
+            variant="secondary"
+            className={styles.returnButton}
+            onClick={() => selectInstance({ type: '' })}
+            icon="arrow-left"
+          >
+            {Messages.form.buttons.toMenu}
+          </Button>
         )}
         {selectedInstance.type === InstanceTypesExtra.rds && <Discovery selectInstance={selectInstance} />}
         {selectedInstance.type === InstanceTypesExtra.azure && <AzureDiscovery selectInstance={selectInstance} />}
@@ -59,7 +57,7 @@ const AddInstancePanel = () => {
         )}
       </>
     ),
-    [selectedInstance, styles.content, styles.returnButton]
+    [selectedInstance, styles.returnButton]
   );
 
   return (

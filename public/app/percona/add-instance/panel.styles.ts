@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = () => ({
+export const getStyles = ({ v1: { spacing } }: GrafanaTheme2) => ({
   content: css`
     display: flex;
     flex-direction: column;
@@ -9,7 +10,7 @@ export const getStyles = () => ({
     width: 100%;
   `,
   returnButton: css`
-    position: absolute;
-    left: 50px;
+    align-self: flex-start;
+    margin-bottom: ${spacing.md};
   `,
 });

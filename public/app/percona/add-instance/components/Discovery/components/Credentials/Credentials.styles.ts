@@ -34,7 +34,6 @@ export const getStyles = ({ breakpoints, spacing }: GrafanaTheme) => {
       width: 48%;
     `,
     credentialsSubmit: css`
-      margin-top: 2px;
       margin-left: ${spacing.md};
       margin-right: ${spacing.sm};
     `,

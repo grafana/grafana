@@ -13,6 +13,12 @@ export interface FooterLink {
 export let getFooterLinks = (): FooterLink[] => {
   return [
     {
+      text: 'PMM Logs',
+      icon: 'download-alt',
+      url: '/logs.zip',
+      target: '_blank',
+    },
+    {
       text: 'Documentation',
       icon: 'document-info',
       url: 'https://www.percona.com/doc/percona-monitoring-and-management/2.x/index.html?utm_source=pmm_footer',

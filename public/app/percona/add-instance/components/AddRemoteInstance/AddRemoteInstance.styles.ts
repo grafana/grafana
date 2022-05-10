@@ -4,8 +4,7 @@ import { css } from '@emotion/css';
 export const getStyles = ({ spacing }: GrafanaTheme) => ({
   formWrapper: css`
     background-color: transparent !important;
-    max-width: 1000px;
-    width: 1000px;
+    width: 100%;
   `,
   navigationPanel: css`
     display: flex;

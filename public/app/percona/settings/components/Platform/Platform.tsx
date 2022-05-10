@@ -8,7 +8,6 @@ import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { Connected } from './Connected/Connected';
 import { Connect } from './Connect/Connect';
-import { WithDiagnostics } from '../WithDiagnostics/WithDiagnostics';
 
 export const Platform: FC = () => {
   const navModel = usePerconaNavModel('settings-percona-platform');
@@ -17,9 +16,7 @@ export const Platform: FC = () => {
   return (
     <Page navModel={navModel} vertical tabsDataTestId="settings-tabs">
       <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
-        <FeatureLoader>
-          <WithDiagnostics>{result?.isConnectedToPortal ? <Connected /> : <Connect />}</WithDiagnostics>
-        </FeatureLoader>
+        <FeatureLoader>{result?.isConnectedToPortal ? <Connected /> : <Connect />}</FeatureLoader>
       </Page.Contents>
     </Page>
   );

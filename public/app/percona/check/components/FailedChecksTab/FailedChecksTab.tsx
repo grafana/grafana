@@ -5,7 +5,6 @@ import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.
 import Page from 'app/core/components/Page/Page';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
-import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { ExtendedTableCellProps, ExtendedTableRowProps, Table } from 'app/percona/integrated-alerting/components/Table';
@@ -88,7 +87,6 @@ export const FailedChecksTab: FC = () => {
   return (
     <Page navModel={navModel} tabsDataTestId="db-check-tabs-bar" data-testid="db-check-panel">
       <Page.Contents dataTestId="db-check-tab-content">
-        <TechnicalPreview />
         <FeatureLoader
           messagedataTestId="db-check-panel-settings-link"
           featureName={mainChecksMessages.advisors}

@@ -16,7 +16,6 @@ import { Email } from './Email/Email';
 import { Slack } from './Slack/Slack';
 import { Messages } from './Communication.messages';
 import { CommunicationService } from './Communication.service';
-import { WithDiagnostics } from '../WithDiagnostics/WithDiagnostics';
 
 export const Communication: FC = () => {
   const settingsStyles = useStyles2(getSettingsStyles);
@@ -71,23 +70,21 @@ export const Communication: FC = () => {
     <Page navModel={navModel} vertical tabsDataTestId="settings-tabs">
       <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
-          <WithDiagnostics>
-            <div className={cx(settingsStyles.wrapper)}>
-              <TabsBar>
-                {tabs.map((tab, index) => (
-                  <Tab
-                    key={index}
-                    label={tab.label}
-                    active={tab.key === activeTab}
-                    onChangeTab={() => setActiveTab(tab.key)}
-                  />
-                ))}
-              </TabsBar>
-              <TabContent className={settingsStyles.tabs}>
-                {tabs.map((tab) => tab.key === activeTab && tab.component)}
-              </TabContent>
-            </div>
-          </WithDiagnostics>
+          <div className={cx(settingsStyles.wrapper)}>
+            <TabsBar>
+              {tabs.map((tab, index) => (
+                <Tab
+                  key={index}
+                  label={tab.label}
+                  active={tab.key === activeTab}
+                  onChangeTab={() => setActiveTab(tab.key)}
+                />
+              ))}
+            </TabsBar>
+            <TabContent className={settingsStyles.tabs}>
+              {tabs.map((tab) => tab.key === activeTab && tab.component)}
+            </TabContent>
+          </div>
         </FeatureLoader>
       </Page.Contents>
     </Page>
