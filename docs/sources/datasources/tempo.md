@@ -43,10 +43,10 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 
 > **Note:** This feature is behind the `traceToMetrics` feature toggle.
 
-This is a configuration for the experimental trace to metrics feature. Select the target Prometheus data source and enter the desired query.
+To configure trace to metrics, select the target Prometheus data source and enter the desired query.
 
 -- **Data source -** Target data source.
--- **Query -** The query which will run when navigating from a trace to the metrics data source.
+-- **Query -** Query that runs when navigating from a trace to the metrics data source.
 
 ### Service Graph
 
