@@ -9,14 +9,14 @@ import (
 
 type SQLBuilder struct {
 	sql    bytes.Buffer
-	params []interface{}
+	Params []interface{}
 }
 
 func (sb *SQLBuilder) Write(sql string, params ...interface{}) {
 	sb.sql.WriteString(sql)
 
 	if len(params) > 0 {
-		sb.params = append(sb.params, params...)
+		sb.Params = append(sb.Params, params...)
 	}
 }
 
@@ -25,11 +25,11 @@ func (sb *SQLBuilder) GetSQLString() string {
 }
 
 func (sb *SQLBuilder) GetParams() []interface{} {
-	return sb.params
+	return sb.Params
 }
 
 func (sb *SQLBuilder) AddParams(params ...interface{}) {
-	sb.params = append(sb.params, params...)
+	sb.Params = append(sb.Params, params...)
 }
 
 func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *models.SignedInUser, permission models.PermissionType) {
@@ -85,9 +85,9 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *models.SignedInUser, 
 		)
 	)`)
 
-	sb.params = append(sb.params, user.OrgId, permission, user.UserId, user.UserId)
-	sb.params = append(sb.params, okRoles...)
+	sb.Params = append(sb.Params, user.OrgId, permission, user.UserId, user.UserId)
+	sb.Params = append(sb.Params, okRoles...)
 
-	sb.params = append(sb.params, user.OrgId, permission, user.UserId)
-	sb.params = append(sb.params, okRoles...)
+	sb.Params = append(sb.Params, user.OrgId, permission, user.UserId)
+	sb.Params = append(sb.Params, okRoles...)
 }

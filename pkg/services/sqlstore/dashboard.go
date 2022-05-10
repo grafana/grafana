@@ -366,7 +366,7 @@ func (ss *SQLStore) HasEditPermissionInFolders(ctx context.Context, query *model
 		}
 
 		resp := make([]*folderCount, 0)
-		if err := dbSession.SQL(builder.GetSQLString(), builder.params...).Find(&resp); err != nil {
+		if err := dbSession.SQL(builder.GetSQLString(), builder.Params...).Find(&resp); err != nil {
 			return err
 		}
 
@@ -392,7 +392,7 @@ func (ss *SQLStore) HasAdminPermissionInFolders(ctx context.Context, query *mode
 		}
 
 		resp := make([]*folderCount, 0)
-		if err := dbSession.SQL(builder.GetSQLString(), builder.params...).Find(&resp); err != nil {
+		if err := dbSession.SQL(builder.GetSQLString(), builder.Params...).Find(&resp); err != nil {
 			return err
 		}
 

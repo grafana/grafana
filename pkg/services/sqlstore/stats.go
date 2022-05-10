@@ -107,7 +107,7 @@ func (ss *SQLStore) GetSystemStats(ctx context.Context, query *models.GetSystemS
 		sb.Write(ss.roleCounterSQL(ctx))
 
 		var stats models.SystemStats
-		_, err := dbSession.SQL(sb.GetSQLString(), sb.params...).Get(&stats)
+		_, err := dbSession.SQL(sb.GetSQLString(), sb.Params...).Get(&stats)
 		if err != nil {
 			return err
 		}
