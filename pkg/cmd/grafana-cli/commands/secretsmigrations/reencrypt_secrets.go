@@ -105,8 +105,13 @@ func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSer
 			}
 
 			encoded := base64.StdEncoding.EncodeToString(encrypted)
-			updateSQL := fmt.Sprintf("UPDATE %s SET %s = ? WHERE id = ?", s.tableName, s.columnName)
-			_, err = sess.Exec(updateSQL, encoded, row.Id)
+			if s.hasUpdatedColumn {
+				updateSQL := fmt.Sprintf("UPDATE %s SET %s = ?, updated = ? WHERE id = ?", s.tableName, s.columnName)
+				_, err = sess.Exec(updateSQL, encoded, nowInUTC(), row.Id)
+			} else {
+				updateSQL := fmt.Sprintf("UPDATE %s SET %s = ? WHERE id = ?", s.tableName, s.columnName)
+				_, err = sess.Exec(updateSQL, encoded, row.Id)
+			}
 
 			if err != nil {
 				logger.Warn("Could not update secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
@@ -271,9 +276,10 @@ func ReEncryptSecrets(_ utils.CommandLine, runner runner.Runner) error {
 		reencrypt(context.Context, *manager.SecretsService, *sqlstore.SQLStore)
 	}{
 		simpleSecret{tableName: "dashboard_snapshot", columnName: "dashboard_encrypted"},
-		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}},
-		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token"}},
-		b64Secret{simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type"}},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_access_token"}},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_refresh_token"}},
+		b64Secret{simpleSecret: simpleSecret{tableName: "user_auth", columnName: "o_auth_token_type"}},
+		b64Secret{simpleSecret: simpleSecret{tableName: "secrets", columnName: "value"}, hasUpdatedColumn: true},
 		jsonSecret{tableName: "data_source"},
 		jsonSecret{tableName: "plugin_setting"},
 		alertingSecret{},

@@ -173,6 +173,7 @@ export class MiniSearcher implements GrafanaSearcher {
     const found = this.index!.search(query);
 
     // frame fields
+    const uid: string[] = [];
     const url: string[] = [];
     const kind: string[] = [];
     const type: string[] = [];
@@ -195,6 +196,7 @@ export class MiniSearcher implements GrafanaSearcher {
         continue;
       }
 
+      uid.push(input.uid?.get(index)!);
       url.push(input.url?.get(index) ?? '?');
       location.push(input.location?.get(index) as any);
       datasource.push(input.datasource?.get(index) as any);
@@ -206,6 +208,7 @@ export class MiniSearcher implements GrafanaSearcher {
       score.push(res.score);
     }
     const fields: Field[] = [
+      { name: 'uid', config: {}, type: FieldType.string, values: new ArrayVector(uid) },
       { name: 'kind', config: {}, type: FieldType.string, values: new ArrayVector(kind) },
       { name: 'name', config: {}, type: FieldType.string, values: new ArrayVector(name) },
       {

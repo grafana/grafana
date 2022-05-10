@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -39,7 +40,7 @@ func (api *ImportDashboardAPI) RegisterAPIEndpoints(routeRegister routing.RouteR
 	routeRegister.Group("/api/dashboards", func(route routing.RouteRegister) {
 		route.Post(
 			"/import",
-			authorize(middleware.ReqSignedIn, accesscontrol.EvalPermission(accesscontrol.ActionDashboardsCreate)),
+			authorize(middleware.ReqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate)),
 			routing.Wrap(api.ImportDashboard),
 		)
 	}, middleware.ReqSignedIn)

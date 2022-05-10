@@ -7,6 +7,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Options struct {
@@ -41,11 +43,21 @@ type PermissionsProvider interface {
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
 }
 
-type PermissionsServices interface {
-	GetTeamService() PermissionsService
-	GetFolderService() PermissionsService
-	GetDashboardService() PermissionsService
-	GetDataSourceService() PermissionsService
+type TeamPermissionsService interface {
+	GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]ResourcePermission, error)
+	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
+}
+
+type FolderPermissionsService interface {
+	PermissionsService
+}
+
+type DashboardPermissionsService interface {
+	PermissionsService
+}
+
+type DatasourcePermissionsService interface {
+	PermissionsService
 }
 
 type PermissionsService interface {
@@ -221,4 +233,8 @@ func extractPrefixes(prefix string) (string, string, bool) {
 	rootPrefix := parts[0] + ":"
 	attributePrefix := rootPrefix + parts[1] + ":"
 	return rootPrefix, attributePrefix, true
+}
+
+func IsDisabled(cfg *setting.Cfg) bool {
+	return !cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol)
 }

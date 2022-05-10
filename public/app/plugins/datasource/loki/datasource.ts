@@ -49,6 +49,7 @@ import { addLabelToQuery } from './add_label_to_query';
 import { transformBackendResult } from './backendResultTransformer';
 import { DEFAULT_RESOLUTION } from './components/LokiOptionFields';
 import LanguageProvider from './language_provider';
+import { escapeLabelValueInSelector } from './language_utils';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
 import { addParsedLabelToQuery, getNormalizedLokiQuery, queryHasPipeParser } from './query_utils';
 import { lokiResultsToTableModel, lokiStreamsToDataFrames, processRangeQueryResponse } from './result_transformer';
@@ -688,44 +689,35 @@ export class LokiDatasource
     };
   };
 
-  testDatasource() {
+  testDatasource(): Promise<{ status: string; message: string }> {
     // Consider only last 10 minutes otherwise request takes too long
-    const startMs = Date.now() - 10 * 60 * 1000;
-    const start = `${startMs}000000`; // API expects nanoseconds
-    return lastValueFrom(
-      this._request(`${LOKI_ENDPOINT}/label`, { start }).pipe(
-        map((res) => {
-          const values: any[] = res?.data?.data || res?.data?.values || [];
-          const testResult =
-            values.length > 0
-              ? { status: 'success', message: 'Data source connected and labels found.' }
-              : {
-                  status: 'error',
-                  message:
-                    'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
-                };
-          return testResult;
-        }),
-        catchError((err: any) => {
-          let message = 'Loki: ';
-          if (err.statusText) {
-            message += err.statusText;
-          } else {
-            message += 'Cannot connect to Loki';
-          }
+    const nowMs = Date.now();
+    const params = {
+      start: (nowMs - 10 * 60 * 1000) * NS_IN_MS,
+      end: nowMs * NS_IN_MS,
+    };
 
-          if (err.status) {
-            message += `. ${err.status}`;
-          }
-
-          if (err.data && err.data.message) {
-            message += `. ${err.data.message}`;
-          } else if (err.data) {
-            message += `. ${err.data}`;
-          }
-          return of({ status: 'error', message: message });
-        })
-      )
+    return this.metadataRequest('labels', params).then(
+      (values) => {
+        return values.length > 0
+          ? { status: 'success', message: 'Data source connected and labels found.' }
+          : {
+              status: 'error',
+              message:
+                'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
+            };
+      },
+      (err) => {
+        // we did a resource-call that failed.
+        // the only info we have, if exists, is err.data.message
+        // (when in development-mode, err.data.error exists too, but not in production-mode)
+        // things like err.status & err.statusText does not help,
+        // because those will only describe how the request between browser<>server failed
+        const info: string = err?.data?.message ?? '';
+        const infoInParentheses = info !== '' ? ` (${info})` : '';
+        const message = `Unable to fetch labels from Loki${infoInParentheses}, please check the server logs for more details`;
+        return { status: 'error', message: message };
+      }
     );
   }
 
@@ -825,10 +817,6 @@ export class LokiDatasource
     expr = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
       const { key, operator } = filter;
       let { value } = filter;
-      if (operator === '=~' || operator === '!~') {
-        value = lokiRegularEscape(value);
-      }
-
       return this.addLabelToQuery(acc, key, value, operator, true);
     }, expr);
 
@@ -843,11 +831,13 @@ export class LokiDatasource
     // Override to make sure that we use label as actual label and not parsed label
     notParsedLabelOverride?: boolean
   ) {
+    let escapedValue = escapeLabelValueInSelector(value.toString(), operator);
+
     if (queryHasPipeParser(queryExpr) && !isMetricsQuery(queryExpr) && !notParsedLabelOverride) {
       // If query has parser, we treat all labels as parsed and use | key="value" syntax
-      return addParsedLabelToQuery(queryExpr, key, value, operator);
+      return addParsedLabelToQuery(queryExpr, key, escapedValue, operator);
     } else {
-      return addLabelToQuery(queryExpr, key, value, operator, true);
+      return addLabelToQuery(queryExpr, key, escapedValue, operator, true);
     }
   }
 

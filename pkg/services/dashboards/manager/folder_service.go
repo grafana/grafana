@@ -23,13 +23,13 @@ type FolderServiceImpl struct {
 	dashboardStore   dashboards.Store
 	searchService    *search.SearchService
 	features         featuremgmt.FeatureToggles
-	permissions      accesscontrol.PermissionsService
+	permissions      accesscontrol.FolderPermissionsService
 	sqlStore         sqlstore.Store
 }
 
 func ProvideFolderService(
 	cfg *setting.Cfg, dashboardService dashboards.DashboardService, dashboardStore dashboards.Store,
-	searchService *search.SearchService, features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
+	searchService *search.SearchService, features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl, sqlStore sqlstore.Store,
 ) *FolderServiceImpl {
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore))
@@ -42,7 +42,7 @@ func ProvideFolderService(
 		dashboardStore:   dashboardStore,
 		searchService:    searchService,
 		features:         features,
-		permissions:      permissionsServices.GetFolderService(),
+		permissions:      folderPermissionsService,
 		sqlStore:         sqlStore,
 	}
 }
@@ -171,7 +171,7 @@ func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *models.Signe
 	}
 
 	var permissionErr error
-	if f.features.IsEnabled(featuremgmt.FlagAccesscontrol) {
+	if !accesscontrol.IsDisabled(f.cfg) {
 		_, permissionErr = f.permissions.SetPermissions(ctx, orgID, folder.Uid, []accesscontrol.SetResourcePermissionCommand{
 			{UserID: userID, Permission: models.PERMISSION_ADMIN.String()},
 			{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},

@@ -95,15 +95,6 @@ func (cmd Command) generateTypescript(c utils.CommandLine) error {
 		Module: "github.com/grafana/grafana",
 	}
 
-	// One-time load of the panel-plugin scuemata family def, for unifying to easily apply cuetsy attributes
-	clcfg.Dir = "cue/scuemata"
-	v := ctx.BuildInstance(cload.Instances(nil, clcfg)[0])
-	if v.Err() != nil {
-		return v.Err()
-	}
-	ppf := v.LookupPath(cue.ParsePath("#PanelSchema"))
-	_ = ppf
-
 	// FIXME hardcoding paths to exclude is not the way to handle this
 	excl := map[string]bool{
 		"cue.mod":      true,
@@ -172,7 +163,6 @@ func (cmd Command) generateTypescript(c utils.CommandLine) error {
 			}
 			bi := insts[0]
 
-			// dumpBuildInst(bi)
 			v := ctx.BuildInstance(bi)
 			if v.Err() != nil {
 				return v.Err()
@@ -202,7 +192,7 @@ func (cmd Command) generateTypescript(c utils.CommandLine) error {
 				}
 
 				// val := v.LookupPath(cue.ParsePath("Panel.lineages[0][0]"))
-				// Extract the latest schema and its version number
+				// Extract the latest schema and its version number. (All of this goes away with Thema, whew)
 				f.V = &tsModver{}
 				lins := v.LookupPath(cue.ParsePath("Panel.lineages"))
 				f.V.Lin, _ = lins.Len().Int64()
@@ -212,8 +202,7 @@ func (cmd Command) generateTypescript(c utils.CommandLine) error {
 				f.V.Sch = f.V.Sch - 1
 				latest := schs.LookupPath(cue.MakePath(cue.Index(int(f.V.Sch))))
 
-				sch := latest.UnifyAccept(ppf, latest)
-				b, err = cuetsy.Generate(sch, cuetsy.Config{})
+				b, err = cuetsy.Generate(latest, cuetsy.Config{})
 			default:
 				b, err = cuetsy.Generate(v, cuetsy.Config{})
 			}
