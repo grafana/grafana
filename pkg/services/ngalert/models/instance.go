@@ -22,13 +22,23 @@ type InstanceStateType string
 
 const (
 	// InstanceStateFiring is for a firing alert.
-	InstanceStateFiring InstanceStateType = "Alerting"
+	InstanceStateFiring       InstanceStateType = "Alerting"
+	InstanceStateFiringNoData InstanceStateType = "Alerting (NoData)"
+	InstanceStateFiringError  InstanceStateType = "Alerting (Error)"
+
 	// InstanceStateNormal is for a normal alert.
-	InstanceStateNormal InstanceStateType = "Normal"
+	InstanceStateNormal       InstanceStateType = "Normal"
+	InstanceStateNormalNoData InstanceStateType = "Normal (NoData)"
+	InstanceStateNormalError  InstanceStateType = "Normal (Error)"
+
 	// InstanceStatePending is for an alert that is firing but has not met the duration
-	InstanceStatePending InstanceStateType = "Pending"
+	InstanceStatePending       InstanceStateType = "Pending"
+	InstanceStatePendingNoData InstanceStateType = "Pending (NoData)"
+	InstanceStatePendingError  InstanceStateType = "Pending (Error)"
+
 	// InstanceStateNoData is for an alert with no data.
 	InstanceStateNoData InstanceStateType = "NoData"
+
 	// InstanceStateError is for a erroring alert.
 	InstanceStateError InstanceStateType = "Error"
 )
@@ -36,11 +46,76 @@ const (
 // IsValid checks that the value of InstanceStateType is a valid
 // string.
 func (i InstanceStateType) IsValid() bool {
-	return i == InstanceStateFiring ||
-		i == InstanceStateNormal ||
+	return i.IsFiring() ||
+		i.IsNormal() ||
+		i.IsPending() ||
 		i == InstanceStateNoData ||
-		i == InstanceStatePending ||
 		i == InstanceStateError
+}
+
+func (i InstanceStateType) IsNormal() bool {
+	return i == InstanceStateNormal ||
+		i == InstanceStateNormalNoData ||
+		i == InstanceStateNormalError
+}
+
+func (i InstanceStateType) IsPending() bool {
+	return i == InstanceStatePending ||
+		i == InstanceStatePendingNoData ||
+		i == InstanceStatePendingError
+}
+
+func (i InstanceStateType) IsFiring() bool {
+	return i == InstanceStateFiring ||
+		i == InstanceStateFiringNoData ||
+		i == InstanceStateFiringError
+}
+
+func (i InstanceStateType) HasNoData() bool {
+	return i == InstanceStateNoData ||
+		i == InstanceStateNormalNoData ||
+		i == InstanceStateFiringNoData ||
+		i == InstanceStatePendingNoData
+}
+
+func (i InstanceStateType) HasError() bool {
+	return i == InstanceStateError ||
+		i == InstanceStateNormalError ||
+		i == InstanceStateFiringError ||
+		i == InstanceStatePendingError
+}
+
+func (i InstanceStateType) ToNormal() InstanceStateType {
+	switch {
+	case i.HasError():
+		return InstanceStateNormalError
+	case i.HasNoData():
+		return InstanceStateNormalNoData
+	default:
+		return InstanceStateNormal
+	}
+}
+
+func (i InstanceStateType) ToAlerting() InstanceStateType {
+	switch {
+	case i.HasError():
+		return InstanceStateFiringError
+	case i.HasNoData():
+		return InstanceStateFiringNoData
+	default:
+		return InstanceStateFiring
+	}
+}
+
+func (i InstanceStateType) ToPending() InstanceStateType {
+	switch {
+	case i.HasError():
+		return InstanceStatePendingError
+	case i.HasNoData():
+		return InstanceStatePendingNoData
+	default:
+		return InstanceStatePending
+	}
 }
 
 // SaveAlertInstanceCommand is the query for saving a new alert instance.

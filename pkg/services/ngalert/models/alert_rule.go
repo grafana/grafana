@@ -104,8 +104,12 @@ type AlertRule struct {
 	DashboardUID    *string `xorm:"dashboard_uid"`
 	PanelID         *int64  `xorm:"panel_id"`
 	RuleGroup       string
-	NoDataState     NoDataState
-	ExecErrState    ExecutionErrorState
+
+	// What state should we set when there is no data when evaluating the rule.
+	NoDataState NoDataState
+
+	// What state should we set on an Error evaluating the alert rule.
+	ExecErrState ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
 	// but this is currently not possible because of circular dependencies
 	For         time.Duration

@@ -43,7 +43,8 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     width: 36px;
   `,
   colState: css`
-    width: 110px;
+    width: 150px;
+    word-break: normal;
   `,
   labelsCell: css`
     padding-top: ${theme.spacing(0.5)} !important;
@@ -67,7 +68,7 @@ const columns: AlertTableColumnProps[] = [
     label: 'State',
     // eslint-disable-next-line react/display-name
     renderCell: ({ data: { state } }) => <AlertStateTag state={state} />,
-    size: '80px',
+    size: '110px',
   },
   {
     id: 'labels',

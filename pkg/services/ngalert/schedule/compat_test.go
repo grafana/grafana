@@ -208,7 +208,9 @@ func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
 
 	expected := make([]models.PostableAlert, 0, len(states))
 	for _, s := range states {
-		if !(s.State == eval.Alerting || s.State == eval.Error || s.State == eval.NoData) {
+		if !(s.State.IsFiring() ||
+			s.State == ngModels.InstanceStateError ||
+			s.State == ngModels.InstanceStateNoData) {
 			continue
 		}
 		alert := stateToPostableAlert(s, appURL)

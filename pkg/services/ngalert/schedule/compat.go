@@ -13,7 +13,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
@@ -50,11 +49,11 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 		urlStr = ""
 	}
 
-	if alertState.State == eval.NoData {
+	if alertState.State == ngModels.InstanceStateNoData {
 		return noDataAlert(nL, nA, alertState, urlStr)
 	}
 
-	if alertState.State == eval.Error {
+	if alertState.State == ngModels.InstanceStateError {
 		return errorAlert(nL, nA, alertState, urlStr)
 	}
 
@@ -133,7 +132,7 @@ func FromAlertsStateToStoppedAlert(firingStates []*state.State, appURL *url.URL,
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 	ts := clock.Now()
 	for _, alertState := range firingStates {
-		if alertState.State == eval.Normal || alertState.State == eval.Pending {
+		if alertState.State.IsNormal() || alertState.State.IsPending() {
 			continue
 		}
 		postableAlert := stateToPostableAlert(alertState, appURL)

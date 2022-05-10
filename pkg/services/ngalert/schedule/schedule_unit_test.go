@@ -352,7 +352,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 	// normal states do not include NoData and Error because currently it is not possible to perform any sensible test
 	normalStates := []eval.State{eval.Normal, eval.Alerting, eval.Pending}
-	allStates := [...]eval.State{eval.Normal, eval.Alerting, eval.Pending, eval.NoData, eval.Error}
+	allStates := []eval.State{eval.Normal, eval.Alerting, eval.Pending, eval.NoData, eval.Error}
 	randomNormalState := func() eval.State {
 		// pick only supported cases
 		return normalStates[rand.Intn(3)]

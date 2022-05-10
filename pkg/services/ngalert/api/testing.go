@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -76,7 +77,7 @@ func (f *fakeAlertInstanceManager) GenerateAlertInstances(orgID int64, alertRule
 				"label":                        "test",
 				"instance_label":               "test",
 			},
-			State: eval.Normal,
+			State: models.InstanceStateNormal,
 			Results: []state.Evaluation{
 				{
 					EvaluationTime:  evaluationTime,

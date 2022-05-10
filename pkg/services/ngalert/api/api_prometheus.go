@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -23,6 +22,7 @@ import (
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
+// PrometheusSrv provides rule and alert status for Grafana-managed alerts with a Prometheus-compatible api.
 type PrometheusSrv struct {
 	log     log.Logger
 	manager state.AlertInstanceManager
@@ -32,6 +32,7 @@ type PrometheusSrv struct {
 
 const queryIncludeInternalLabels = "includeInternalLabels"
 
+// Returns the statuses for Grafana-managed Alerts.
 func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Response {
 	alertResponse := apimodels.AlertResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
@@ -51,14 +52,14 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 		startsAt := alertState.StartsAt
 		valString := ""
 
-		if alertState.State == eval.Alerting || alertState.State == eval.Pending {
+		if alertState.State.IsFiring() || alertState.State.IsPending() {
 			valString = formatValues(alertState)
 		}
 
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
 			Labels:      alertState.GetLabels(labelOptions...),
 			Annotations: alertState.Annotations,
-			State:       alertState.State.String(),
+			State:       string(alertState.State),
 			ActiveAt:    &startsAt,
 			Value:       valString,
 		})
@@ -198,14 +199,14 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		for _, alertState := range srv.manager.GetStatesForRuleUID(c.OrgId, rule.UID) {
 			activeAt := alertState.StartsAt
 			valString := ""
-			if alertState.State == eval.Alerting || alertState.State == eval.Pending {
+			if alertState.State.IsFiring() || alertState.State.IsPending() {
 				valString = formatValues(alertState)
 			}
 
 			alert := &apimodels.Alert{
 				Labels:      alertState.GetLabels(labelOptions...),
 				Annotations: alertState.Annotations,
-				State:       alertState.State.String(),
+				State:       string(alertState.State),
 				ActiveAt:    &activeAt,
 				Value:       valString,
 			}
@@ -216,17 +217,17 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 
 			newRule.EvaluationTime = alertState.EvaluationDuration.Seconds()
 
-			switch alertState.State {
-			case eval.Normal:
-			case eval.Pending:
+			switch s := alertState.State; {
+			case s.IsNormal():
+			case s.IsPending():
 				if alertingRule.State == "inactive" {
 					alertingRule.State = "pending"
 				}
-			case eval.Alerting:
+			case s.IsFiring():
 				alertingRule.State = "firing"
-			case eval.Error:
+			case s.HasError():
 				newRule.Health = "error"
-			case eval.NoData:
+			case s.HasNoData():
 				newRule.Health = "nodata"
 			}
 

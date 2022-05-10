@@ -107,7 +107,7 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
           const isCreating = !!(hasRuler(rulesSource) && rulerRule && !promRule);
           return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} />;
         },
-        size: '165px',
+        size: '190px',
       },
       {
         id: 'name',

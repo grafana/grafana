@@ -11,10 +11,17 @@ export enum PromAlertingRuleState {
   Pending = 'pending',
 }
 
+// Note: These must match exactly with the InstanceStateType strings in pkg/services/ngalert/state
 export enum GrafanaAlertState {
   Normal = 'Normal',
+  NormalNoData = 'Normal (NoData)',
+  NormalError = 'Normal (Error)',
   Alerting = 'Alerting',
+  AlertingNoData = 'Alerting (NoData)',
+  AlertingError = 'Alerting (Error)',
   Pending = 'Pending',
+  PendingNoData = 'Pending (NoData)',
+  PendingError = 'Pending (Error)',
   NoData = 'NoData',
   Error = 'Error',
 }

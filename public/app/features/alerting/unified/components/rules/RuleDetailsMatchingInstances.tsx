@@ -79,7 +79,7 @@ function filterAlerts(
   }
   if (alertInstanceState) {
     filteredAlerts = filteredAlerts.filter((alert) => {
-      return alert.state === alertInstanceState;
+      return alert.state.split(' ')[0] === alertInstanceState;
     });
   }
 

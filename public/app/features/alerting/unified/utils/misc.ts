@@ -114,13 +114,19 @@ export function retryWhile<T, E = Error>(
 
 const alertStateSortScore = {
   [GrafanaAlertState.Alerting]: 1,
+  [GrafanaAlertState.AlertingNoData]: 1,
+  [GrafanaAlertState.AlertingError]: 1,
   [PromAlertingRuleState.Firing]: 1,
   [GrafanaAlertState.Error]: 1,
   [GrafanaAlertState.Pending]: 2,
+  [GrafanaAlertState.PendingNoData]: 2,
+  [GrafanaAlertState.PendingError]: 2,
   [PromAlertingRuleState.Pending]: 2,
   [PromAlertingRuleState.Inactive]: 2,
   [GrafanaAlertState.NoData]: 3,
   [GrafanaAlertState.Normal]: 4,
+  [GrafanaAlertState.NormalNoData]: 4,
+  [GrafanaAlertState.NormalError]: 4,
 };
 
 export function sortAlerts(sortOrder: SortOrder, alerts: Alert[]): Alert[] {

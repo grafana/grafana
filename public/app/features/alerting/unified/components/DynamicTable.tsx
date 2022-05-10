@@ -197,7 +197,6 @@ const getStyles = <T extends unknown>(
     `,
     bodyCell: css`
       overflow: hidden;
-      word-break: break-all;
       ${theme.breakpoints.down('sm')} {
         grid-column-end: right;
         grid-column-start: right;

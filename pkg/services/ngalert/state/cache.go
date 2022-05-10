@@ -169,12 +169,18 @@ func (c *cache) recordMetrics() {
 
 	// Set default values to zero such that gauges are reset
 	// after all values from a single state disappear.
-	ct := map[eval.State]int{
-		eval.Normal:   0,
-		eval.Alerting: 0,
-		eval.Pending:  0,
-		eval.NoData:   0,
-		eval.Error:    0,
+	ct := map[ngModels.InstanceStateType]int{
+		ngModels.InstanceStateNormal:        0,
+		ngModels.InstanceStateNormalNoData:  0,
+		ngModels.InstanceStateNormalError:   0,
+		ngModels.InstanceStatePending:       0,
+		ngModels.InstanceStatePendingNoData: 0,
+		ngModels.InstanceStatePendingError:  0,
+		ngModels.InstanceStateFiring:        0,
+		ngModels.InstanceStateFiringNoData:  0,
+		ngModels.InstanceStateFiringError:   0,
+		ngModels.InstanceStateNoData:        0,
+		ngModels.InstanceStateError:         0,
 	}
 
 	for org, orgMap := range c.states {
@@ -188,7 +194,7 @@ func (c *cache) recordMetrics() {
 	}
 
 	for k, n := range ct {
-		c.metrics.AlertState.WithLabelValues(strings.ToLower(k.String())).Set(float64(n))
+		c.metrics.AlertState.WithLabelValues(strings.ToLower(string(k))).Set(float64(n))
 	}
 }
 
