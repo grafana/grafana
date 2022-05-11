@@ -347,7 +347,7 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 // GetAlertRulesForScheduling returns a short version of all alert rules except those that belong to an excluded list of organizations
 func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		alerts := make([]*ngmodels.AlertRuleShort, 0)
+		alerts := make([]*ngmodels.SchedulableAlertRule, 0)
 		q := sess.Table("alert_rule")
 		if len(query.ExcludeOrgIDs) > 0 {
 			excludeOrgs := make([]interface{}, 0, len(query.ExcludeOrgIDs))

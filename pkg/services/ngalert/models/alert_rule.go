@@ -177,7 +177,7 @@ func (alertRule *AlertRule) GetKey() AlertRuleKey {
 }
 
 // GetKey returns the alert definitions identifier
-func (alertRule *AlertRuleShort) GetKey() AlertRuleKey {
+func (alertRule *SchedulableAlertRule) GetKey() AlertRuleKey {
 	return AlertRuleKey{OrgID: alertRule.OrgID, UID: alertRule.UID}
 }
 
@@ -257,7 +257,7 @@ type ListAlertRulesQuery struct {
 type GetAlertRulesForSchedulingQuery struct {
 	ExcludeOrgIDs []int64
 
-	Result []*AlertRuleShort
+	Result []*SchedulableAlertRule
 }
 
 // ListNamespaceAlertRulesQuery is the query for listing namespace alert rules
