@@ -92,7 +92,7 @@ case "$1" in
 
     # Start Daemon
     cd $GRAFANA_HOME
-    action $"Starting $DESC: ..." su -s /bin/sh -c "nohup ${DAEMON} ${DAEMON_OPTS} >> /dev/null 3>&1 &" $GRAFANA_USER 2> /dev/null
+    action $"Starting $DESC: ..." runuser -s /bin/sh -c "nohup ${DAEMON} ${DAEMON_OPTS} >> /dev/null 3>&1 &" $GRAFANA_USER 2> /dev/null
     return=$?
     if [ $return -eq 0 ]
     then
