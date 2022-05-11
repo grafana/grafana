@@ -120,13 +120,18 @@ export default function SearchPage() {
       );
     }
 
+    const selection = showManage ? searchSelection.isSelected : undefined;
+    if (layout === SearchLayout.Folders) {
+      return <FolderView selection={selection} selectionToggle={toggleSelection} onTagSelected={onTagSelected} />;
+    }
+
     return (
       <div style={{ height: '100%', width: '100%' }}>
         <AutoSizer>
           {({ width, height }) => {
             const props: SearchResultsProps = {
               response: value!,
-              selection: showManage ? searchSelection.isSelected : undefined,
+              selection,
               selectionToggle: toggleSelection,
               width: width,
               height: height,
@@ -136,10 +141,6 @@ export default function SearchPage() {
 
             if (layout === SearchLayout.Grid) {
               return <SearchResultsGrid {...props} />;
-            }
-
-            if (layout === SearchLayout.Folders) {
-              return <FolderView {...props} />;
             }
 
             return <SearchResultsTable {...props} />;

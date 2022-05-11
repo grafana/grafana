@@ -11,7 +11,11 @@ import { SearchResultsProps } from '../components/SearchResultsTable';
 
 import { DashboardSection, FolderSection } from './FolderSection';
 
-export const FolderView = ({ width, height, selection, selectionToggle, onTagSelected }: SearchResultsProps) => {
+export const FolderView = ({
+  selection,
+  selectionToggle,
+  onTagSelected,
+}: Pick<SearchResultsProps, 'selection' | 'selectionToggle' | 'onTagSelected'>) => {
   const styles = useStyles2(getStyles);
 
   const results = useAsync(async () => {
@@ -44,7 +48,7 @@ export const FolderView = ({ width, height, selection, selectionToggle, onTagSel
   }
 
   return (
-    <div className={styles.wrapper} style={{ width, height }}>
+    <div className={styles.wrapper}>
       {results.value.map((section) => {
         return (
           <div data-testid={selectors.components.Search} className={styles.section} key={section.title}>

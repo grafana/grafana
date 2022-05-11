@@ -1,4 +1,4 @@
-import cx from 'classnames';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
@@ -125,7 +125,15 @@ export const generateColumns = (
       Cell: (p) => {
         const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
         return (
-          <div {...p.cellProps} className={p.cellStyle}>
+          <div
+            {...p.cellProps}
+            className={cx(
+              p.cellStyle,
+              css`
+                padding-right: 10px;
+              `
+            )}
+          >
             {parts.map((p) => {
               const info = meta.locationInfo[p];
               return info ? (

@@ -191,6 +191,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       &:hover {
         background-color: ${rowHoverBg};
       }
+
+      &:not(:hover) div[role='cell'] {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
     `,
     typeIcon: css`
       margin-left: 5px;
