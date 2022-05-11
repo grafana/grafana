@@ -786,14 +786,14 @@ func (c createDefaultFoldersForAlertingMigration) Exec(sess *xorm.Session, migra
 		return fmt.Errorf("failed to read the list of organizations: %w", err)
 	}
 
-	numberFoldersPerOrg, err := helper.getOrgsIDThatHaveFolders()
+	orgsWithFolders, err := helper.getOrgsIDThatHaveFolders()
 	if err != nil {
 		return fmt.Errorf("failed to list organizations that have at least one folder: %w", err)
 	}
 
 	for _, row := range rows {
 		// if there is at least one folder in the organization. Skip adding the default folder
-		if _, ok := numberFoldersPerOrg[row.Id]; ok {
+		if _, ok := orgsWithFolders[row.Id]; ok {
 			migrator.Logger.Debug("Skip adding default alerting folder because organization already has at least one folder", "org_id", row.Id)
 			continue
 		}
