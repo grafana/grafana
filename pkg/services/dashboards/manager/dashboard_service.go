@@ -430,6 +430,22 @@ func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *m.Save
 		return nil, err
 	}
 
+	dashAlertInfo := alerting.DashAlertInfo{
+		User:  dto.User,
+		Dash:  dash,
+		OrgID: dto.OrgId,
+	}
+
+	alerts, err := dr.dashAlertExtractor.GetAlerts(ctx, dashAlertInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	err = dr.dashboardStore.SaveAlerts(ctx, dash.Id, alerts)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := dr.setDefaultPermissions(ctx, dto, dash, false); err != nil {
 		dr.log.Error("Could not make user admin", "dashboard", dash.Title, "user", dto.User.UserId, "error", err)
 	}
