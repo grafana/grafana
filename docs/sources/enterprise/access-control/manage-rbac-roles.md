@@ -275,8 +275,9 @@ If the default basic role definitions do not meet your requirements, you can cha
 
    For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
 
-The following example removes the permission to list, grant and revoke roles to teams from the `Grafana Admin` basic role.
-It also adds the permission to read and write grafana folders to the `Grafana Admin` basic role.
+The following example modifies the `Grafana Admin` basic role permissions.
+It removes from it, the permission to list, grant and revoke roles to teams.
+It also adds to it the permission to read and write grafana folders.
 
 ```yaml
 # config file version
