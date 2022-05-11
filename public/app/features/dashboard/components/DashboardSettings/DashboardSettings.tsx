@@ -6,6 +6,7 @@ import React, { useCallback, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, locationUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, CustomScrollbar, Icon, IconName, PageToolbar, stylesFactory, useForceUpdate } from '@grafana/ui';
 import config from 'app/core/config';
@@ -165,6 +166,7 @@ export function DashboardSettings({ dashboard, editview }: Props) {
                 {pages.map((page) => (
                   <Link
                     onClick={() => reportInteraction(`Dashboard settings navigation to ${page.id}`)}
+                    aria-label={selectors.pages.Dashboard.Settings.General.sectionItems(page.title)}
                     to={(loc) => locationUtil.getUrlForPartial(loc, { editview: page.id })}
                     className={cx('dashboard-settings__nav-item', { active: page.id === editview })}
                     key={page.id}
