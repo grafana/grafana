@@ -27,6 +27,7 @@ export interface ThemeColorsBase<TColor> {
   };
 
   background: {
+    fusebit: string;
     /** Dashboard and body background */
     canvas: string;
     /** Primary content pane background (panels etc) */
@@ -133,6 +134,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   background = {
+    fusebit: palette.gray10,
     canvas: palette.gray05,
     primary: palette.gray10,
     secondary: palette.gray15,
@@ -213,6 +215,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   background = {
+    fusebit: palette.lightBlue,
     canvas: palette.gray90,
     primary: palette.white,
     secondary: palette.gray100,

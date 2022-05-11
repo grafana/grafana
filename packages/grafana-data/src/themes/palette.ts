@@ -41,4 +41,7 @@ export const palette = {
   greenLightText: '#0A764E',
   orangeLightMain: '#FAD34A',
   orangeLightText: '#8A6C00',
+
+  //fusebit
+  lightBlue: 'rgba(215, 229, 255, 0.4)',
 };
