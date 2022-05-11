@@ -19,7 +19,7 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, onDeleteItems, isOpen, 
   const styles = getStyles(theme);
 
   const dashboards = Array.from(results.get('dashboard') ?? []);
-  const folders = Array.from(results.get('folders') ?? []);
+  const folders = Array.from(results.get('folder') ?? []);
 
   const folderCount = folders.length;
   const dashCount = dashboards.length;
