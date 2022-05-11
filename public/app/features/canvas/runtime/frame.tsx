@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 import React from 'react';
 
-import { CanvasFrameOptions, canvasElementRegistry } from 'app/features/canvas';
+import { canvasElementRegistry, CanvasFrameOptions } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
@@ -151,10 +151,39 @@ export class FrameState extends ElementState {
         this.scene.save();
         this.reinitializeMoveable();
         break;
+      case LayerActionID.MoveTop:
+        if (element.item.id === 'frame') {
+          return;
+        }
+
+        this.setZIndex(element, LayerActionID.MoveTop);
+        break;
+      case LayerActionID.MoveBottom:
+        if (element.item.id === 'frame') {
+          return;
+        }
+
+        this.setZIndex(element, LayerActionID.MoveBottom);
+        break;
       default:
         console.log('DO action', action, element);
         return;
     }
+  };
+
+  setZIndex = (currentElement: ElementState, action: string) => {
+    const moveTop = action === LayerActionID.MoveTop;
+    this.elements.forEach((element) => {
+      if (element.options.placement) {
+        element.options.placement.zIndex = 1;
+
+        if (element.UID === currentElement.UID) {
+          element.options.placement.zIndex = moveTop ? 2 : 0;
+        }
+      }
+
+      element.applyLayoutStylesToDiv();
+    });
   };
 
   render() {

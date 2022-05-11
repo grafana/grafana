@@ -416,15 +416,17 @@ export class Scene {
       const currentLayer = currentSelectedElement.parent!;
 
       switch (actionType) {
-        case `${LayerActionID.Delete}`:
+        case LayerActionID.Delete:
           currentLayer.doAction(LayerActionID.Delete, currentSelectedElement);
           break;
-        case `${LayerActionID.Duplicate}`:
+        case LayerActionID.Duplicate:
           currentLayer.doAction(LayerActionID.Duplicate, currentSelectedElement);
           break;
-        case 'bringToFront':
+        case LayerActionID.MoveTop:
+          currentLayer.doAction(LayerActionID.MoveTop, currentSelectedElement);
           break;
-        case 'sendToFront':
+        case LayerActionID.MoveBottom:
+          currentLayer.doAction(LayerActionID.MoveBottom, currentSelectedElement);
           break;
       }
     });
@@ -436,7 +438,7 @@ export class Scene {
         <MenuItem
           label="Delete"
           onClick={(e) => {
-            this.contextMenuAction('delete');
+            this.contextMenuAction(LayerActionID.Delete);
             this.closeContextMenu();
           }}
           className={this.styles.menuItem}
@@ -444,7 +446,7 @@ export class Scene {
         <MenuItem
           label="Duplicate"
           onClick={(e) => {
-            this.contextMenuAction('duplicate');
+            this.contextMenuAction(LayerActionID.Duplicate);
             this.closeContextMenu();
           }}
           className={this.styles.menuItem}
@@ -452,7 +454,7 @@ export class Scene {
         <MenuItem
           label="Bring to front"
           onClick={(e) => {
-            this.contextMenuAction('bringToFront');
+            this.contextMenuAction(LayerActionID.MoveTop);
             this.closeContextMenu();
           }}
           className={this.styles.menuItem}
@@ -460,7 +462,7 @@ export class Scene {
         <MenuItem
           label="Send to back"
           onClick={(e) => {
-            this.contextMenuAction('sendToFront');
+            this.contextMenuAction(LayerActionID.MoveBottom);
             this.closeContextMenu();
           }}
           className={this.styles.menuItem}
@@ -472,7 +474,6 @@ export class Scene {
   closeContextMenu = () => {
     this.contextMenu.isMenuVisible = false;
     this.showContextMenu.next(false);
-    console.log('on close');
   };
 
   renderContextMenu = () => {
