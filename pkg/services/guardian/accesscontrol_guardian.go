@@ -22,29 +22,33 @@ var _ DashboardGuardian = new(AccessControlDashboardGuardian)
 
 func NewAccessControlDashboardGuardian(
 	ctx context.Context, dashboardId int64, user *models.SignedInUser,
-	store sqlstore.Store, ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
+	store sqlstore.Store, ac accesscontrol.AccessControl,
+	folderPermissionsService accesscontrol.FolderPermissionsService,
+	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
 ) *AccessControlDashboardGuardian {
 	return &AccessControlDashboardGuardian{
-		ctx:                ctx,
-		log:                log.New("dashboard.permissions"),
-		dashboardID:        dashboardId,
-		user:               user,
-		store:              store,
-		ac:                 ac,
-		permissionServices: permissionsServices,
+		ctx:                         ctx,
+		log:                         log.New("dashboard.permissions"),
+		dashboardID:                 dashboardId,
+		user:                        user,
+		store:                       store,
+		ac:                          ac,
+		folderPermissionsService:    folderPermissionsService,
+		dashboardPermissionsService: dashboardPermissionsService,
 	}
 }
 
 type AccessControlDashboardGuardian struct {
-	ctx                context.Context
-	log                log.Logger
-	dashboardID        int64
-	dashboard          *models.Dashboard
-	parentFolderUID    string
-	user               *models.SignedInUser
-	store              sqlstore.Store
-	ac                 accesscontrol.AccessControl
-	permissionServices accesscontrol.PermissionsServices
+	ctx                         context.Context
+	log                         log.Logger
+	dashboardID                 int64
+	dashboard                   *models.Dashboard
+	parentFolderUID             string
+	user                        *models.SignedInUser
+	store                       sqlstore.Store
+	ac                          accesscontrol.AccessControl
+	folderPermissionsService    accesscontrol.FolderPermissionsService
+	dashboardPermissionsService accesscontrol.DashboardPermissionsService
 }
 
 func (a *AccessControlDashboardGuardian) CanSave() (bool, error) {
@@ -169,9 +173,11 @@ func (a *AccessControlDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO
 		return nil, err
 	}
 
-	svc := a.permissionServices.GetDashboardService()
+	var svc accesscontrol.PermissionsService
 	if a.dashboard.IsFolder {
-		svc = a.permissionServices.GetFolderService()
+		svc = a.folderPermissionsService
+	} else {
+		svc = a.dashboardPermissionsService
 	}
 
 	permissions, err := svc.GetPermissions(a.ctx, a.user, strconv.FormatInt(a.dashboard.Id, 10))

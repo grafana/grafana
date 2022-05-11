@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-undef */
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 import { useTable, Column, TableOptions, Cell, useAbsoluteLayout } from 'react-table';

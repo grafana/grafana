@@ -32,13 +32,14 @@ func TestProvideFolderService(t *testing.T) {
 		cfg := setting.NewCfg()
 		features := featuremgmt.WithFeatures()
 		cfg.IsFeatureToggleEnabled = features.IsEnabled
-		permissionsServices := acmock.NewPermissionsServicesMock()
-		dashboardService := ProvideDashboardService(cfg, store, nil, features, permissionsServices)
+		folderPermissions := acmock.NewMockedPermissionsService()
+		dashboardPermissions := acmock.NewMockedPermissionsService()
+		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions)
 		ac := acmock.New()
 
 		ProvideFolderService(
 			cfg, &dashboards.FakeDashboardService{DashboardService: dashboardService},
-			store, nil, features, permissionsServices, ac, mockstore.NewSQLStoreMock(),
+			store, nil, features, folderPermissions, ac, mockstore.NewSQLStoreMock(),
 		)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
@@ -51,8 +52,9 @@ func TestFolderService(t *testing.T) {
 		cfg := setting.NewCfg()
 		features := featuremgmt.WithFeatures()
 		cfg.IsFeatureToggleEnabled = features.IsEnabled
-		permissionsServices := acmock.NewPermissionsServicesMock()
-		dashboardService := ProvideDashboardService(cfg, store, nil, features, permissionsServices)
+		folderPermissions := acmock.NewMockedPermissionsService()
+		dashboardPermissions := acmock.NewMockedPermissionsService()
+		dashboardService := ProvideDashboardService(cfg, store, nil, features, folderPermissions, dashboardPermissions)
 		mockStore := mockstore.NewSQLStoreMock()
 
 		service := FolderServiceImpl{
@@ -62,7 +64,7 @@ func TestFolderService(t *testing.T) {
 			dashboardStore:   store,
 			searchService:    nil,
 			features:         features,
-			permissions:      permissionsServices.GetFolderService(),
+			permissions:      folderPermissions,
 			sqlStore:         mockStore,
 		}
 
