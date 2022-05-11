@@ -792,7 +792,7 @@ func (c createDefaultFoldersForAlertingMigration) Exec(sess *xorm.Session, migra
 	}
 
 	for _, row := range rows {
-		// if there is at least one folder in the organization. Skip adding the default folder
+		// if there's at least one folder in the org or if alerting is disabled for that org, skip adding the default folder
 		if _, ok := orgsWithFolders[row.Id]; ok {
 			migrator.Logger.Debug("Skip adding default alerting folder because organization already has at least one folder", "org_id", row.Id)
 			continue
