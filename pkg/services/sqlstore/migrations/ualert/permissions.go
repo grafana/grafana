@@ -291,7 +291,7 @@ func (m *folderHelper) getACL(orgID, dashboardID int64) ([]*dashboardAcl, error)
 func (m *folderHelper) getOrgsIDThatHaveFolders() (map[int64]struct{}, error) {
 	// get folder if exists
 	var rows []int64
-	err := m.sess.Table(&dashboard{}).Where("is_folder=1").Distinct("org_id").Find(&rows)
+	err := m.sess.Table(&dashboard{}).Where("is_folder=?", true).Distinct("org_id").Find(&rows)
 	if err != nil {
 		return nil, err
 	}
