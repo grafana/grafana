@@ -700,26 +700,11 @@ func (r *alertRuleRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bool) 
 	return info, ok
 }
 
-func (r *alertRuleRegistry) iter() <-chan models.AlertRuleKey {
-	c := make(chan models.AlertRuleKey)
-
-	f := func() {
-		r.mu.Lock()
-		defer r.mu.Unlock()
-
-		for k := range r.alertRuleInfo {
-			c <- k
-		}
-		close(c)
-	}
-	go f()
-
-	return c
-}
-
 func (r *alertRuleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
-	definitionsIDs := make(map[models.AlertRuleKey]struct{})
-	for k := range r.iter() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	definitionsIDs := make(map[models.AlertRuleKey]struct{}, len(r.alertRuleInfo))
+	for k := range r.alertRuleInfo {
 		definitionsIDs[k] = struct{}{}
 	}
 	return definitionsIDs
