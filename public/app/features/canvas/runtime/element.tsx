@@ -45,7 +45,7 @@ export class ElementState implements LayerElement {
       vertical: VerticalConstraint.Top,
       horizontal: HorizontalConstraint.Left,
     };
-    options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0 };
+    options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0, zIndex: 1 };
     const scene = this.getScene();
     if (!options.name) {
       const newName = scene?.getNextElementName();
@@ -83,6 +83,7 @@ export class ElementState implements LayerElement {
 
     const style: React.CSSProperties = {
       position: 'absolute',
+      zIndex: 1,
     };
 
     const translate = ['0px', '0px'];
@@ -166,6 +167,7 @@ export class ElementState implements LayerElement {
     }
 
     style.transform = `translate(${translate[0]}, ${translate[1]})`;
+    style.zIndex = placement.zIndex ?? 1;
     this.options.placement = placement;
     this.sizeStyle = style;
     if (this.div) {
