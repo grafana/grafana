@@ -290,6 +290,7 @@ roles:
       - name: 'basic:grafana_admin'
         global: true
     permissions:
+      # Permissions to remove
       - action: 'teams.roles:list'
         scope: 'teams:*'
         state: 'absent'
@@ -299,6 +300,7 @@ roles:
       - action: 'teams.roles:add'
         scope: 'permissions:type:delegate'
         state: 'absent'
+      # Permissions to add
       - action: 'folders:read'
         scope: 'folder:*'
       - action: 'folders:write'
