@@ -268,6 +268,7 @@ If the default basic role definitions do not meet your requirements, you can cha
    | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
    | `name`                | The name of the basic role you want to update. You can add a `uid` instead of a role name. The role `name` or the `uid` are required. |
    | `orgId`               | Identifies the organization to which the role belongs. `global` can be used instead to specify it's a global role.                    |
+   | `version`             | Identifies version of the role, to prevent overwritting newer changes.                                                                |
    | `from`                | List of roles to copy permissions from.                                                                                               |
    | `permissions > state` | The state of the permission. You can set it to `absent` to ensure its exclusion from the copy list.                                   |
 
@@ -286,6 +287,7 @@ apiVersion: 2
 roles:
   - name: 'basic:grafana_admin'
     global: true
+    version: 3
     from:
       - name: 'basic:grafana_admin'
         global: true
@@ -306,6 +308,8 @@ roles:
       - action: 'folders:write'
         scope: 'folder:*'
 ```
+
+<!-- TODO update link -->
 
 You can also change basic roles' permissions using the API. Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#remove-a-built-in-role-assignment" >}}) for more details.
 
