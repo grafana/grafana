@@ -1,6 +1,6 @@
 import { DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta } from '@grafana/data';
-import { getDerivedFields } from './getDerivedFields';
 
+import { getDerivedFields } from './getDerivedFields';
 import { makeTableFrames } from './makeTableFrames';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import { DerivedFieldConfig, LokiQuery, LokiQueryType } from './types';
