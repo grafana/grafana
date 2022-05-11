@@ -1,11 +1,13 @@
+import { isArray, isString } from 'lodash';
 import MiniSearch from 'minisearch';
+
 import { ArrayVector, DataFrame, DataSourceRef, Field, FieldType, getDisplayProcessor, Vector } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { GrafanaSearcher, QueryFilters, QueryResponse } from './types';
 import { filterFrame, getRawIndexData, RawIndexData, rawIndexSupplier } from './backend';
+import { GrafanaSearcher, QueryFilters, QueryResponse } from './types';
+
 import { LocationInfo } from '.';
-import { isArray, isString } from 'lodash';
 
 export type SearchResultKind = keyof RawIndexData;
 
@@ -171,6 +173,7 @@ export class MiniSearcher implements GrafanaSearcher {
     const found = this.index!.search(query);
 
     // frame fields
+    const uid: string[] = [];
     const url: string[] = [];
     const kind: string[] = [];
     const type: string[] = [];
@@ -193,6 +196,7 @@ export class MiniSearcher implements GrafanaSearcher {
         continue;
       }
 
+      uid.push(input.uid?.get(index)!);
       url.push(input.url?.get(index) ?? '?');
       location.push(input.location?.get(index) as any);
       datasource.push(input.datasource?.get(index) as any);
@@ -204,6 +208,7 @@ export class MiniSearcher implements GrafanaSearcher {
       score.push(res.score);
     }
     const fields: Field[] = [
+      { name: 'uid', config: {}, type: FieldType.string, values: new ArrayVector(uid) },
       { name: 'kind', config: {}, type: FieldType.string, values: new ArrayVector(kind) },
       { name: 'name', config: {}, type: FieldType.string, values: new ArrayVector(name) },
       {

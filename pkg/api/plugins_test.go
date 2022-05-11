@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -55,7 +57,7 @@ func Test_GetPluginAssets(t *testing.T) {
 				pluginID: p,
 			},
 		}
-		l := &logger{}
+		l := &logtest.Fake{}
 
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
 		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
@@ -64,7 +66,7 @@ func Test_GetPluginAssets(t *testing.T) {
 
 				require.Equal(t, 200, sc.resp.Code)
 				assert.Equal(t, expectedBody, sc.resp.Body.String())
-				assert.Empty(t, l.warnings)
+				assert.Zero(t, l.WarnLogs.Calls)
 			})
 	})
 
@@ -80,7 +82,7 @@ func Test_GetPluginAssets(t *testing.T) {
 				pluginID: p,
 			},
 		}
-		l := &logger{}
+		l := &logtest.Fake{}
 
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, tmpFileInParentDir.Name())
 		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
@@ -103,7 +105,7 @@ func Test_GetPluginAssets(t *testing.T) {
 				pluginID: p,
 			},
 		}
-		l := &logger{}
+		l := &logtest.Fake{}
 
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
 		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
@@ -112,7 +114,7 @@ func Test_GetPluginAssets(t *testing.T) {
 
 				require.Equal(t, 200, sc.resp.Code)
 				assert.Equal(t, expectedBody, sc.resp.Body.String())
-				assert.Empty(t, l.warnings)
+				assert.Zero(t, l.WarnLogs.Calls)
 			})
 	})
 
@@ -128,7 +130,7 @@ func Test_GetPluginAssets(t *testing.T) {
 				pluginID: p,
 			},
 		}
-		l := &logger{}
+		l := &logtest.Fake{}
 
 		requestedFile := "nonExistent"
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
@@ -141,7 +143,7 @@ func Test_GetPluginAssets(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, 404, sc.resp.Code)
 				assert.Equal(t, "Plugin file not found", respJson["message"])
-				assert.Empty(t, l.warnings)
+				assert.Zero(t, l.WarnLogs.Calls)
 			})
 	})
 
@@ -149,7 +151,7 @@ func Test_GetPluginAssets(t *testing.T) {
 		service := &fakePluginStore{
 			plugins: map[string]plugins.PluginDTO{},
 		}
-		l := &logger{}
+		l := &logtest.Fake{}
 
 		requestedFile := "nonExistent"
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
@@ -162,7 +164,7 @@ func Test_GetPluginAssets(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, 404, sc.resp.Code)
 				assert.Equal(t, "Plugin not found", respJson["message"])
-				assert.Empty(t, l.warnings)
+				assert.Zero(t, l.WarnLogs.Calls)
 			})
 	})
 
@@ -174,7 +176,7 @@ func Test_GetPluginAssets(t *testing.T) {
 				},
 			},
 		}
-		l := &logger{}
+		l := &logtest.Fake{}
 
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
 		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
@@ -183,7 +185,7 @@ func Test_GetPluginAssets(t *testing.T) {
 
 				require.Equal(t, 200, sc.resp.Code)
 				assert.Equal(t, expectedBody, sc.resp.Body.String())
-				assert.Empty(t, l.warnings)
+				assert.Zero(t, l.WarnLogs.Calls)
 			})
 	})
 }
@@ -235,23 +237,15 @@ func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern strin
 	})
 }
 
-type logger struct {
-	log.Logger
-
-	warnings []string
-}
-
-func (l *logger) Warn(msg string, ctx ...interface{}) {
-	l.warnings = append(l.warnings, msg)
-}
-
 type fakePluginClient struct {
 	plugins.Client
 
 	req *backend.CallResourceRequest
+
+	backend.QueryDataHandlerFunc
 }
 
-func (c *fakePluginClient) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (c *fakePluginClient) CallResource(_ context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	c.req = req
 	bytes, err := json.Marshal(map[string]interface{}{
 		"message": "hello",
@@ -265,4 +259,12 @@ func (c *fakePluginClient) CallResource(ctx context.Context, req *backend.CallRe
 		Headers: make(map[string][]string),
 		Body:    bytes,
 	})
+}
+
+func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if c.QueryDataHandlerFunc != nil {
+		return c.QueryDataHandlerFunc.QueryData(ctx, req)
+	}
+
+	return backend.NewQueryDataResponse(), nil
 }

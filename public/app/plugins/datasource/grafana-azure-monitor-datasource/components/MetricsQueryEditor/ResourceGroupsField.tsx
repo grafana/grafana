@@ -1,9 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
-import { Select } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
 
-import { Field } from '../Field';
+import { SelectableValue } from '@grafana/data';
+import { Select } from '@grafana/ui';
+
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
+import { Field } from '../Field';
+
 import { setResourceGroup } from './setQueryValue';
 
 interface ResourceGroupsFieldProps extends AzureQueryEditorFieldProps {
@@ -30,7 +32,6 @@ const ResourceGroupsField: React.FC<ResourceGroupsFieldProps> = ({
   return (
     <Field label="Resource group">
       <Select
-        menuShouldPortal
         inputId="azure-monitor-metrics-resource-group-field"
         value={query.azureMonitor?.resourceGroup}
         onChange={handleChange}

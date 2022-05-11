@@ -1,11 +1,13 @@
+import { css } from '@emotion/css';
 import React, { FC, CSSProperties, ComponentType } from 'react';
 import { useMeasure } from 'react-use';
-import { css } from '@emotion/css';
-import { LegendPlacement } from '@grafana/schema';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { getFocusStyles } from '../../themes/mixins';
+import { LegendPlacement } from '@grafana/schema';
+
 import { useStyles2 } from '../../themes/ThemeContext';
+import { getFocusStyles } from '../../themes/mixins';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
 /**
  * @beta

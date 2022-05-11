@@ -1,7 +1,9 @@
 import React from 'react';
+
 import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel } from '@grafana/data';
 import { Button, Tooltip, Icon, LogLabels } from '@grafana/ui';
 import { MAX_CHARACTERS } from '@grafana/ui/src/components/Logs/LogRowMessage';
+
 import { MetaInfoText, MetaItemProps } from './MetaInfoText';
 
 export type Props = {

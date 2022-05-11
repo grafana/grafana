@@ -1,28 +1,40 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import { selectOptionInTest } from '@grafana/ui';
 
-import MetricsQueryEditor from './MetricsQueryEditor';
-import createMockQuery from '../../__mocks__/query';
 import createMockDatasource from '../../__mocks__/datasource';
-import createMockResourcePickerData from '../../__mocks__/resourcePickerData';
+import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';
+import createMockPanelData from '../../__mocks__/panelData';
+import createMockQuery from '../../__mocks__/query';
 import {
   createMockResourceGroupsBySubscription,
   createMockSubscriptions,
   mockResourcesByResourceGroup,
 } from '../../__mocks__/resourcePickerRows';
+import ResourcePickerData from '../../resourcePicker/resourcePickerData';
+
+import MetricsQueryEditor from './MetricsQueryEditor';
 
 const variableOptionGroup = {
   label: 'Template variables',
   options: [],
 };
 
-const resourcePickerData = createMockResourcePickerData({
-  getSubscriptions: jest.fn().mockResolvedValue(createMockSubscriptions()),
-  getResourceGroupsBySubscriptionId: jest.fn().mockResolvedValue(createMockResourceGroupsBySubscription()),
-  getResourcesForResourceGroup: jest.fn().mockResolvedValue(mockResourcesByResourceGroup()),
-});
+export function createMockResourcePickerData() {
+  const mockDatasource = new ResourcePickerData(createMockInstanceSetttings());
+
+  mockDatasource.getSubscriptions = jest.fn().mockResolvedValue(createMockSubscriptions());
+  mockDatasource.getResourceGroupsBySubscriptionId = jest
+    .fn()
+    .mockResolvedValue(createMockResourceGroupsBySubscription());
+  mockDatasource.getResourcesForResourceGroup = jest.fn().mockResolvedValue(mockResourcesByResourceGroup());
+  mockDatasource.getResourceURIFromWorkspace = jest.fn().mockReturnValue('');
+  mockDatasource.getResourceURIDisplayProperties = jest.fn().mockResolvedValue({});
+
+  return mockDatasource;
+}
 
 describe('MetricsQueryEditor', () => {
   const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
@@ -32,12 +44,14 @@ describe('MetricsQueryEditor', () => {
   afterEach(() => {
     window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
   });
+  const mockPanelData = createMockPanelData();
 
   it('should render', async () => {
-    const mockDatasource = createMockDatasource({ resourcePickerData });
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
 
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         query={createMockQuery()}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
@@ -50,13 +64,14 @@ describe('MetricsQueryEditor', () => {
   });
 
   it('should change resource when a resource is selected in the ResourcePicker', async () => {
-    const mockDatasource = createMockDatasource({ resourcePickerData });
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
     const query = createMockQuery();
     delete query?.azureMonitor?.resourceUri;
     const onChange = jest.fn();
 
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         query={query}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
@@ -99,12 +114,13 @@ describe('MetricsQueryEditor', () => {
   });
 
   it('should reset metric namespace, metric name, and aggregation fields after selecting a new resource when a valid query has already been set', async () => {
-    const mockDatasource = createMockDatasource({ resourcePickerData });
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
     const query = createMockQuery();
     const onChange = jest.fn();
 
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         query={query}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
@@ -157,7 +173,7 @@ describe('MetricsQueryEditor', () => {
   });
 
   it('should change the metric name when selected', async () => {
-    const mockDatasource = createMockDatasource({ resourcePickerData });
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
     const onChange = jest.fn();
     const mockQuery = createMockQuery();
     mockDatasource.azureMonitorDatasource.getMetricNames = jest.fn().mockResolvedValue([
@@ -173,6 +189,7 @@ describe('MetricsQueryEditor', () => {
 
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         query={createMockQuery()}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
@@ -197,12 +214,13 @@ describe('MetricsQueryEditor', () => {
   });
 
   it('should change the aggregation type when selected', async () => {
-    const mockDatasource = createMockDatasource({ resourcePickerData });
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
     const onChange = jest.fn();
     const mockQuery = createMockQuery();
 
     render(
       <MetricsQueryEditor
+        data={mockPanelData}
         query={createMockQuery()}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}

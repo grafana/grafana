@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
@@ -15,11 +14,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.Service,
+func ProvideService(features featuremgmt.FeatureToggles,
 	provider accesscontrol.PermissionsProvider, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
 	var errDeclareRoles error
 	s := ProvideOSSAccessControl(features, provider)
-	s.registerUsageMetrics(usageStats)
 	if !s.IsDisabled() {
 		api := api.AccessControlAPI{
 			RouteRegister: routeRegister,
@@ -33,14 +31,13 @@ func ProvideService(features featuremgmt.FeatureToggles, usageStats usagestats.S
 	return s, errDeclareRoles
 }
 
-// ProvideOSSAccessControl creates an oss implementation of access control without usage stats registration
 func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider accesscontrol.PermissionsProvider) *OSSAccessControlService {
 	s := &OSSAccessControlService{
-		features:      features,
-		provider:      provider,
-		log:           log.New("accesscontrol"),
-		scopeResolver: accesscontrol.NewScopeResolver(),
-		roles:         accesscontrol.BuildMacroRoleDefinitions(),
+		features:       features,
+		provider:       provider,
+		log:            log.New("accesscontrol"),
+		scopeResolvers: accesscontrol.NewScopeResolvers(),
+		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 	}
 
 	return s
@@ -48,12 +45,12 @@ func ProvideOSSAccessControl(features featuremgmt.FeatureToggles, provider acces
 
 // OSSAccessControlService is the service implementing role based access control.
 type OSSAccessControlService struct {
-	log           log.Logger
-	features      featuremgmt.FeatureToggles
-	scopeResolver accesscontrol.ScopeResolver
-	provider      accesscontrol.PermissionsProvider
-	registrations accesscontrol.RegistrationList
-	roles         map[string]*accesscontrol.RoleDTO
+	log            log.Logger
+	features       featuremgmt.FeatureToggles
+	scopeResolvers accesscontrol.ScopeResolvers
+	provider       accesscontrol.PermissionsProvider
+	registrations  accesscontrol.RegistrationList
+	roles          map[string]*accesscontrol.RoleDTO
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
@@ -63,12 +60,10 @@ func (ac *OSSAccessControlService) IsDisabled() bool {
 	return !ac.features.IsEnabled(featuremgmt.FlagAccesscontrol)
 }
 
-func (ac *OSSAccessControlService) registerUsageMetrics(usageStats usagestats.Service) {
-	usageStats.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
-		return map[string]interface{}{
-			"stats.oss.accesscontrol.enabled.count": ac.getUsageMetrics(),
-		}, nil
-	})
+func (ac *OSSAccessControlService) GetUsageStats(_ context.Context) map[string]interface{} {
+	return map[string]interface{}{
+		"stats.oss.accesscontrol.enabled.count": ac.getUsageMetrics(),
+	}
 }
 
 func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
@@ -97,7 +92,7 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 		user.Permissions[user.OrgId] = accesscontrol.GroupScopesByAction(permissions)
 	}
 
-	attributeMutator := ac.scopeResolver.GetResolveAttributeScopeMutator(user.OrgId)
+	attributeMutator := ac.scopeResolvers.GetScopeAttributeMutator(user.OrgId)
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, attributeMutator)
 	if err != nil {
 		return false, err
@@ -129,7 +124,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 
 	permissions = append(permissions, dbPermissions...)
 	resolved := make([]*accesscontrol.Permission, 0, len(permissions))
-	keywordMutator := ac.scopeResolver.GetResolveKeywordScopeMutator(user)
+	keywordMutator := ac.scopeResolvers.GetScopeKeywordMutator(user)
 	for _, p := range permissions {
 		// if the permission has a keyword in its scope it will be resolved
 		p.Scope, err = keywordMutator(ctx, p.Scope)
@@ -146,9 +141,9 @@ func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user
 	permissions := make([]*accesscontrol.Permission, 0)
 
 	for _, builtin := range ac.GetUserBuiltInRoles(user) {
-		if macroRole, ok := ac.roles[builtin]; ok {
-			for i := range macroRole.Permissions {
-				permissions = append(permissions, &macroRole.Permissions[i])
+		if basicRole, ok := ac.roles[builtin]; ok {
+			for i := range basicRole.Permissions {
+				permissions = append(permissions, &basicRole.Permissions[i])
 			}
 		}
 	}
@@ -189,8 +184,8 @@ func (ac *OSSAccessControlService) RegisterFixedRoles(ctx context.Context) error
 // RegisterFixedRole saves a fixed role and assigns it to built-in roles
 func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) {
 	for br := range accesscontrol.BuiltInRolesWithParents(builtInRoles) {
-		if macroRole, ok := ac.roles[br]; ok {
-			macroRole.Permissions = append(macroRole.Permissions, role.Permissions...)
+		if basicRole, ok := ac.roles[br]; ok {
+			basicRole.Permissions = append(basicRole.Permissions, role.Permissions...)
 		} else {
 			ac.log.Error("Unknown builtin role", "builtInRole", br)
 		}
@@ -222,8 +217,8 @@ func (ac *OSSAccessControlService) DeclareFixedRoles(registrations ...accesscont
 	return nil
 }
 
-// RegisterAttributeScopeResolver allows the caller to register scope resolvers for a
+// RegisterScopeAttributeResolver allows the caller to register scope resolvers for a
 // specific scope prefix (ex: datasources:name:)
-func (ac *OSSAccessControlService) RegisterAttributeScopeResolver(scopePrefix string, resolver accesscontrol.AttributeScopeResolveFunc) {
-	ac.scopeResolver.AddAttributeResolver(scopePrefix, resolver)
+func (ac *OSSAccessControlService) RegisterScopeAttributeResolver(scopePrefix string, resolver accesscontrol.ScopeAttributeResolver) {
+	ac.scopeResolvers.AddScopeAttributeResolver(scopePrefix, resolver)
 }

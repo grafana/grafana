@@ -1,13 +1,15 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
 
+import { GrafanaTheme } from '@grafana/data';
 import { Button, ModalsController, CollapsableSection, HorizontalGroup, useStyles } from '@grafana/ui';
+
 import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
-import { RevertDashboardModal } from './RevertDashboardModal';
+
 import { DiffGroup } from './DiffGroup';
 import { DiffViewer } from './DiffViewer';
+import { RevertDashboardModal } from './RevertDashboardModal';
 import { jsonDiff } from './utils';
-import { GrafanaTheme } from '@grafana/data';
 
 type DiffViewProps = {
   isNewLatest: boolean;

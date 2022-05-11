@@ -1,6 +1,8 @@
+import React from 'react';
+
 import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
 import { DataSourceHttpSettings, InlineFormLabel, Select } from '@grafana/ui';
-import React from 'react';
+
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
 
 export type Props = DataSourcePluginOptionsEditorProps<AlertManagerDataSourceJsonData>;

@@ -107,7 +107,7 @@ func TestPreferencesService(t *testing.T) {
 			Theme:    "light",
 			Timezone: "UTC",
 		}
-		query := &pref.GetPreferenceWithDefaultsQuery{}
+		query := &pref.GetPreferenceWithDefaultsQuery{OrgID: 1}
 		preference, err := prefService.GetWithDefaults(context.Background(), query)
 		require.NoError(t, err)
 		expected := &pref.Preference{

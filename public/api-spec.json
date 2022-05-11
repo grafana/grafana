@@ -3807,6 +3807,9 @@
           "200": {
             "$ref": "#/responses/queryDataResponse"
           },
+          "207": {
+            "$ref": "#/responses/queryDataResponse"
+          },
           "400": {
             "$ref": "#/responses/badRequestError"
           },
@@ -6668,6 +6671,14 @@
         "operationId": "addTeamGroupApi",
         "parameters": [
           {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TeamID",
+            "name": "teamId",
+            "in": "path",
+            "required": true
+          },
+          {
             "x-go-name": "Body",
             "name": "body",
             "in": "body",
@@ -6675,14 +6686,6 @@
             "schema": {
               "$ref": "#/definitions/TeamGroupMapping"
             }
-          },
-          {
-            "type": "integer",
-            "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
-            "in": "path",
-            "required": true
           }
         ],
         "responses": {
@@ -6716,16 +6719,16 @@
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "GroupID",
-            "name": "groupId",
+            "x-go-name": "TeamID",
+            "name": "teamId",
             "in": "path",
             "required": true
           },
           {
             "type": "integer",
             "format": "int64",
-            "x-go-name": "TeamID",
-            "name": "teamId",
+            "x-go-name": "GroupID",
+            "name": "groupId",
             "in": "path",
             "required": true
           }
@@ -8626,6 +8629,9 @@
     "ApiKeyDTO": {
       "type": "object",
       "properties": {
+        "accessControl": {
+          "$ref": "#/definitions/Metadata"
+        },
         "expiration": {
           "type": "string",
           "format": "date-time",
@@ -8647,7 +8653,7 @@
           "x-go-name": "Role"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "BrandingOptionsDTO": {
       "type": "object",
@@ -8899,6 +8905,11 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "FolderID"
+        },
+        "folderUID": {
+          "description": "UID of the folder where the library element is stored.",
+          "type": "string",
+          "x-go-name": "FolderUID"
         },
         "kind": {
           "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
@@ -10354,6 +10365,10 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
+        },
         "data": {
           "$ref": "#/definitions/Json"
         },
@@ -10482,6 +10497,10 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "FolderID"
+        },
+        "folderUID": {
+          "type": "string",
+          "x-go-name": "FolderUID"
         },
         "id": {
           "type": "integer",
@@ -10643,6 +10662,10 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
+        },
         "panelId": {
           "type": "integer",
           "format": "int64",
@@ -10707,7 +10730,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "x-go-name": "ID"
+          "x-go-name": "Id"
         },
         "target": {
           "type": "string",
@@ -10722,7 +10745,7 @@
           "x-go-name": "Url"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
+      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "NavbarPreference": {
       "type": "object",
@@ -10735,7 +10758,7 @@
           "x-go-name": "SavedItems"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/services/preference"
     },
     "NewApiKeyResult": {
       "type": "object",
@@ -10924,6 +10947,11 @@
           "format": "int64",
           "x-go-name": "FolderID"
         },
+        "folderUID": {
+          "description": "UID of the folder where the library element is stored.",
+          "type": "string",
+          "x-go-name": "FolderUID"
+        },
         "kind": {
           "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
           "type": "integer",
@@ -10963,6 +10991,10 @@
           "format": "int64",
           "default": 0,
           "x-go-name": "HomeDashboardID"
+        },
+        "homeDashboardUID": {
+          "type": "string",
+          "x-go-name": "HomeDashboardUID"
         },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
@@ -11050,6 +11082,10 @@
           "format": "int64",
           "x-go-name": "DashboardId"
         },
+        "dashboardUID": {
+          "type": "string",
+          "x-go-name": "DashboardUID"
+        },
         "data": {
           "$ref": "#/definitions/Json"
         },
@@ -11112,6 +11148,10 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "HomeDashboardID"
+        },
+        "homeDashboardUID": {
+          "type": "string",
+          "x-go-name": "HomeDashboardUID"
         },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
@@ -12294,6 +12334,10 @@
           "format": "int64",
           "default": 0,
           "x-go-name": "HomeDashboardID"
+        },
+        "homeDashboardUID": {
+          "type": "string",
+          "x-go-name": "HomeDashboardUID"
         },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"

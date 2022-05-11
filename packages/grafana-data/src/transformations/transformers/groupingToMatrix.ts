@@ -1,9 +1,10 @@
 import { map } from 'rxjs/operators';
 
-import { DataFrame, DataTransformerInfo, Field, FieldType, Vector } from '../../types';
-import { DataTransformerID } from './ids';
 import { MutableDataFrame } from '../../dataframe';
 import { getFieldDisplayName } from '../../field/fieldState';
+import { DataFrame, DataTransformerInfo, Field, FieldType, Vector } from '../../types';
+
+import { DataTransformerID } from './ids';
 
 export interface GroupingToMatrixTransformerOptions {
   columnField?: string;

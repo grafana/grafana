@@ -1,11 +1,13 @@
-import { SelectableValue } from '@grafana/data';
-import { MultiSelect } from '@grafana/ui';
 import React, { FunctionComponent, useMemo } from 'react';
 
-import { Aggregation, QueryEditorRow } from '.';
+import { SelectableValue } from '@grafana/data';
+import { MultiSelect } from '@grafana/ui';
+
 import { INPUT_WIDTH, SYSTEM_LABELS } from '../constants';
 import { labelsToGroupedOptions } from '../functions';
 import { MetricDescriptor, MetricQuery } from '../types';
+
+import { Aggregation, QueryEditorRow } from '.';
 
 export interface Props {
   refId: string;
@@ -36,7 +38,6 @@ export const GroupBy: FunctionComponent<Props> = ({
       htmlFor={`${refId}-group-by`}
     >
       <MultiSelect
-        menuShouldPortal
         inputId={`${refId}-group-by`}
         width={INPUT_WIDTH}
         placeholder="Choose label"

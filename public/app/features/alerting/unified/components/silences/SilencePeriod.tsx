@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
-import { dateTime, GrafanaTheme } from '@grafana/data';
-import { Field, TimeRangeInput, useStyles } from '@grafana/ui';
 import React from 'react';
 import { useController, useFormContext } from 'react-hook-form';
+
+import { dateTime, GrafanaTheme } from '@grafana/data';
+import { Field, TimeRangeInput, useStyles } from '@grafana/ui';
+
 import { SilenceFormFields } from '../../types/silence-form';
 
 export const SilencePeriod = () => {

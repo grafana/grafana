@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { Icon, Input, FieldValidationMessage, useStyles } from '@grafana/ui';
+import React, { useState } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
+import { Icon, Input, FieldValidationMessage, useStyles } from '@grafana/ui';
 
 export interface LayerNameProps {
   name: string;

@@ -1,13 +1,15 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { PromQueryEditorSelector } from './PromQueryEditorSelector';
-import { PrometheusDatasource } from '../../datasource';
-import { QueryEditorMode } from '../shared/types';
-import { EmptyLanguageProviderMock } from '../../language_provider.mock';
-import PromQlLanguageProvider from '../../language_provider';
 import { cloneDeep, defaultsDeep } from 'lodash';
+import React from 'react';
+
+import { PrometheusDatasource } from '../../datasource';
+import PromQlLanguageProvider from '../../language_provider';
+import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { PromQuery } from '../../types';
+import { QueryEditorMode } from '../shared/types';
+
+import { PromQueryEditorSelector } from './PromQueryEditorSelector';
 
 // We need to mock this because it seems jest has problem importing monaco in tests
 jest.mock('../../components/monaco-query-field/MonacoQueryFieldWrapper', () => {
@@ -15,6 +17,13 @@ jest.mock('../../components/monaco-query-field/MonacoQueryFieldWrapper', () => {
     MonacoQueryFieldWrapper: () => {
       return 'MonacoQueryFieldWrapper';
     },
+  };
+});
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
   };
 });
 
@@ -48,19 +57,6 @@ describe('PromQueryEditorSelector', () => {
   it('shows code editor if expr and nothing else', async () => {
     // We opt for showing code editor for queries created before this feature was added
     render(<PromQueryEditorSelector {...defaultProps} />);
-    expectCodeEditor();
-  });
-
-  it('shows code if new query', async () => {
-    render(
-      <PromQueryEditorSelector
-        {...defaultProps}
-        query={{
-          refId: 'A',
-          expr: '',
-        }}
-      />
-    );
     expectCodeEditor();
   });
 

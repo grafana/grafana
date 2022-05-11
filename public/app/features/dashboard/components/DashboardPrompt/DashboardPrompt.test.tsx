@@ -1,6 +1,7 @@
+import { setContextSrv } from '../../../../core/services/context_srv';
 import { DashboardModel } from '../../state/DashboardModel';
 import { PanelModel } from '../../state/PanelModel';
-import { setContextSrv } from '../../../../core/services/context_srv';
+
 import { hasChanges, ignoreChanges } from './DashboardPrompt';
 
 function getDefaultDashboardModel(): DashboardModel {
