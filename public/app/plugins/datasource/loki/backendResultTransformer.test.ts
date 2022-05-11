@@ -3,7 +3,6 @@ import { cloneDeep } from 'lodash';
 import { ArrayVector, DataFrame, DataQueryResponse, Field, FieldType } from '@grafana/data';
 
 import { transformBackendResult } from './backendResultTransformer';
-import * as GetDerivedFields from './getDerivedFields';
 
 // needed because the derived-fields functionality calls it
 jest.mock('@grafana/runtime', () => ({
