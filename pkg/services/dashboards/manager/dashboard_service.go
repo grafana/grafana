@@ -35,13 +35,14 @@ type DashboardServiceImpl struct {
 	dashboardStore       m.Store
 	dashAlertExtractor   alerting.DashAlertExtractor
 	features             featuremgmt.FeatureToggles
-	folderPermissions    accesscontrol.PermissionsService
-	dashboardPermissions accesscontrol.PermissionsService
+	folderPermissions    accesscontrol.FolderPermissionsService
+	dashboardPermissions accesscontrol.DashboardPermissionsService
 }
 
 func ProvideDashboardService(
 	cfg *setting.Cfg, store m.Store, dashAlertExtractor alerting.DashAlertExtractor,
-	features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
+	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
+	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
 ) *DashboardServiceImpl {
 	return &DashboardServiceImpl{
 		cfg:                  cfg,
@@ -49,8 +50,8 @@ func ProvideDashboardService(
 		dashboardStore:       store,
 		dashAlertExtractor:   dashAlertExtractor,
 		features:             features,
-		folderPermissions:    permissionsServices.GetFolderService(),
-		dashboardPermissions: permissionsServices.GetDashboardService(),
+		folderPermissions:    folderPermissionsService,
+		dashboardPermissions: dashboardPermissionsService,
 	}
 }
 
@@ -110,8 +111,9 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	if isParentFolderChanged {
-		folderGuardian := guardian.New(ctx, dash.FolderId, dto.OrgId, dto.User)
-		if canSave, err := folderGuardian.CanSave(); err != nil || !canSave {
+		// Check that the user is allowed to add a dashboard to the folder
+		guardian := guardian.New(ctx, dash.Id, dto.OrgId, dto.User)
+		if canSave, err := guardian.CanCreate(dash.FolderId, dash.IsFolder); err != nil || !canSave {
 			if err != nil {
 				return nil, err
 			}
