@@ -35,7 +35,7 @@ type Service struct {
 	SecretsService     secrets.Service
 	cfg                *setting.Cfg
 	features           featuremgmt.FeatureToggles
-	permissionsService accesscontrol.PermissionsService
+	permissionsService accesscontrol.DatasourcePermissionsService
 	ac                 accesscontrol.AccessControl
 
 	ptc proxyTransportCache
@@ -53,7 +53,7 @@ type cachedRoundTripper struct {
 
 func ProvideService(
 	store *sqlstore.SQLStore, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, permissionsServices accesscontrol.PermissionsServices,
+	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
 ) *Service {
 	s := &Service{
 		SQLStore:       store,
@@ -64,7 +64,7 @@ func ProvideService(
 		},
 		cfg:                cfg,
 		features:           features,
-		permissionsService: permissionsServices.GetDataSourceService(),
+		permissionsService: datasourcePermissionsService,
 		ac:                 ac,
 	}
 

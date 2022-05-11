@@ -8,10 +8,11 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow, useStyles } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Input, useStyles } from '@grafana/ui';
 
 export interface TraceToMetricsOptions {
   datasourceUid?: string;
+  query: string;
 }
 
 export interface TraceToMetricsData extends DataSourceJsonData {
@@ -49,10 +50,10 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
         </InlineField>
         {options.jsonData.tracesToMetrics?.datasourceUid ? (
           <Button
-            type={'button'}
-            variant={'secondary'}
-            size={'sm'}
-            fill={'text'}
+            type="button"
+            variant="secondary"
+            size="sm"
+            fill="text"
             onClick={() => {
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
                 ...options.jsonData.tracesToMetrics,
@@ -63,6 +64,28 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
             Clear
           </Button>
         ) : null}
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField
+          label="Query"
+          labelWidth={26}
+          tooltip="The Prometheus query that will run when navigating from a trace to metrics"
+          grow
+        >
+          <Input
+            label="Query"
+            type="text"
+            allowFullScreen
+            value={options.jsonData.tracesToMetrics?.query}
+            onChange={(e) => {
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+                ...options.jsonData.tracesToMetrics,
+                query: e.currentTarget.value,
+              });
+            }}
+          />
+        </InlineField>
       </InlineFieldRow>
     </div>
   );

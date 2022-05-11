@@ -559,10 +559,10 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			guardian, _ := setupAccessControlGuardianTest(t, "1", nil)
 
-			mocked := accesscontrolmock.NewPermissionsServicesMock()
-			guardian.permissionServices = mocked
-			mocked.Dashboards.On("MapActions", mock.Anything).Return("View")
-			mocked.Dashboards.On("GetPermissions", mock.Anything, mock.Anything, mock.Anything).Return(tt.permissions, nil)
+			mocked := accesscontrolmock.NewMockedPermissionsService()
+			guardian.dashboardPermissionsService = mocked
+			mocked.On("MapActions", mock.Anything).Return("View")
+			mocked.On("GetPermissions", mock.Anything, mock.Anything, mock.Anything).Return(tt.permissions, nil)
 			cfg := setting.NewCfg()
 			cfg.HiddenUsers = tt.hiddenUsers
 			permissions, err := guardian.GetHiddenACL(cfg)
@@ -595,8 +595,10 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []*acc
 	})
 	require.NoError(t, err)
 	ac := accesscontrolmock.New().WithPermissions(permissions)
-	services, err := ossaccesscontrol.ProvidePermissionsServices(setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store))
+	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store))
+	require.NoError(t, err)
+	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store))
 	require.NoError(t, err)
 
-	return NewAccessControlDashboardGuardian(context.Background(), dash.Id, &models.SignedInUser{OrgId: 1}, store, ac, services), dash
+	return NewAccessControlDashboardGuardian(context.Background(), dash.Id, &models.SignedInUser{OrgId: 1}, store, ac, folderPermissions, dashboardPermissions), dash
 }
