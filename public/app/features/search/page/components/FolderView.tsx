@@ -11,14 +11,7 @@ import { SearchResultsProps } from '../components/SearchResultsTable';
 
 import { DashboardSection, FolderSection } from './FolderSection';
 
-export const FolderView = ({
-  width,
-  height,
-  selection,
-  selectionToggle,
-  onTagSelected,
-  onDatasourceChange,
-}: SearchResultsProps) => {
+export const FolderView = ({ width, height, selection, selectionToggle, onTagSelected }: SearchResultsProps) => {
   const styles = useStyles2(getStyles);
 
   const results = useAsync(async () => {
@@ -50,13 +43,11 @@ export const FolderView = ({
     return <div>?</div>;
   }
 
-  const { sectionV2: sectionLabel } = selectors.components.Search;
-
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} style={{ width, height }}>
       {results.value.map((section) => {
         return (
-          <div data-testid={sectionLabel} className={styles.section} key={section.title}>
+          <div data-testid={selectors.components.Search} className={styles.section} key={section.title}>
             {section.title && (
               <FolderSection
                 selection={selection}

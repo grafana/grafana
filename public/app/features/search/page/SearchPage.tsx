@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
-import { useAsync } from 'react-use';
+import { useAsync, useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
@@ -54,22 +54,26 @@ export default function SearchPage() {
     return getGrafanaSearcher().search(q);
   }, [query, layout]);
 
+  const [inputValue, setInputValue] = useState('');
+  const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    setInputValue(e.currentTarget.value);
+  };
+
+  useDebounce(() => onQueryChange(inputValue), 200, [inputValue]);
+
   if (!config.featureToggles.panelTitleSearch) {
     return <div className={styles.unsupported}>Unsupported</div>;
   }
 
   // This gets the possible tags from within the query results
-  const getTagOptions = async (): Promise<TermCount[]> => {
+  const getTagOptions = (): Promise<TermCount[]> => {
     const q: SearchQuery = {
-      query: (query.query as string) ?? '*',
-      tags: query.tag as string[],
-      ds_uid: query.datasource as string,
+      query: query.query ?? '*',
+      tags: query.tag,
+      ds_uid: query.datasource,
     };
-    return await getGrafanaSearcher().tags(q);
-  };
-
-  const onSearchQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onQueryChange(event.currentTarget.value);
+    return getGrafanaSearcher().tags(q);
   };
 
   const onTagSelected = (tag: string) => {
@@ -117,41 +121,49 @@ export default function SearchPage() {
     }
 
     return (
-      <AutoSizer style={{ width: '100%', height: '700px' }}>
-        {({ width, height }) => {
-          const props: SearchResultsProps = {
-            response: value!,
-            selection: showManage ? searchSelection.isSelected : undefined,
-            selectionToggle: toggleSelection,
-            width: width - 5,
-            height: height,
-            onTagSelected: onTagSelected,
-            onDatasourceChange: query.datasource ? onDatasourceChange : undefined,
-          };
+      <div style={{ height: '100%', width: '100%' }}>
+        <AutoSizer>
+          {({ width, height }) => {
+            const props: SearchResultsProps = {
+              response: value!,
+              selection: showManage ? searchSelection.isSelected : undefined,
+              selectionToggle: toggleSelection,
+              width: width,
+              height: height,
+              onTagSelected: onTagSelected,
+              onDatasourceChange: query.datasource ? onDatasourceChange : undefined,
+            };
 
-          if (layout === SearchLayout.Grid) {
-            return <SearchResultsGrid {...props} />;
-          }
+            if (layout === SearchLayout.Grid) {
+              return <SearchResultsGrid {...props} />;
+            }
 
-          if (layout === SearchLayout.Folders) {
-            return <FolderView {...props} />;
-          }
+            if (layout === SearchLayout.Folders) {
+              return <FolderView {...props} />;
+            }
 
-          return <SearchResultsTable {...props} />;
-        }}
-      </AutoSizer>
+            return <SearchResultsTable {...props} />;
+          }}
+        </AutoSizer>
+      </div>
     );
   };
 
   return (
     <Page navModel={{ node: node, main: node }}>
-      <Page.Contents>
+      <Page.Contents
+        className={css`
+          display: flex;
+          flex-direction: column;
+        `}
+      >
         <Input
-          value={query.query}
+          value={inputValue}
           onChange={onSearchQueryChange}
           autoFocus
           spellCheck={false}
           placeholder="Search for dashboards and panels"
+          className={styles.searchInput}
           suffix={results.loading ? <Spinner /> : null}
         />
         <InlineFieldRow>
@@ -159,8 +171,6 @@ export default function SearchPage() {
             <InlineSwitch value={showManage} onChange={() => setShowManage(!showManage)} />
           </InlineField>
         </InlineFieldRow>
-        <br />
-        <hr />
 
         {Boolean(searchSelection.items.size > 0) ? (
           <ManageActions items={searchSelection.items} />
@@ -196,6 +206,9 @@ export default function SearchPage() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  searchInput: css`
+    margin-bottom: 6px;
+  `,
   unsupported: css`
     padding: 10px;
     display: flex;

@@ -29,6 +29,7 @@ export type TableColumn = Column & {
 };
 
 const skipHREF = new Set(['column-checkbox', 'column-datasource', 'column-location']);
+const HEADER_HEIGHT = 36; // pixels
 
 export const SearchResultsTable = ({
   response,
@@ -105,7 +106,7 @@ export const SearchResultsTable = ({
   }
 
   return (
-    <div {...getTableProps()} style={{ width }} aria-label={'Search result table'} role="table">
+    <div {...getTableProps()} aria-label="Search result table" role="table">
       <div>
         {headerGroups.map((headerGroup) => {
           const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
@@ -135,11 +136,11 @@ export const SearchResultsTable = ({
             <FixedSizeList
               ref={ref}
               onItemsRendered={onItemsRendered}
-              height={height}
+              height={height - HEADER_HEIGHT}
               itemCount={rows.length}
               itemSize={tableStyles.rowHeight}
-              width={'100%'}
-              className={styles.tableBody}
+              width="100%"
+              style={{ overflow: 'hidden auto' }}
             >
               {RenderRow}
             </FixedSizeList>
@@ -164,9 +165,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     table: css`
       width: 100%;
     `,
-    tableBody: css`
-      overflow: 'hidden auto';
-    `,
     cellIcon: css`
       display: flex;
       align-items: center;
@@ -185,7 +183,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     headerRow: css`
       background-color: ${theme.colors.background.secondary};
-      height: 36px;
+      height: ${HEADER_HEIGHT}px;
       align-items: center;
     `,
     rowContainer: css`

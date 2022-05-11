@@ -12,6 +12,11 @@ import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { TableColumn } from './SearchResultsTable';
 
+const TYPE_COLUMN_WIDTH = 130;
+const DATASOURCE_COLUMN_WIDTH = 200;
+const LOCATION_COLUMN_WIDTH = 200;
+const TAGS_COLUMN_WIDTH = 200;
+
 export const generateColumns = (
   response: QueryResponse,
   availableWidth: number,
@@ -26,7 +31,6 @@ export const generateColumns = (
   const uidField = access.uid;
   const kindField = access.kind;
 
-  availableWidth -= 8; // ???
   let width = 50;
 
   if (selection && selectionToggle) {
@@ -86,11 +90,6 @@ export const generateColumns = (
     width,
   });
   availableWidth -= width;
-
-  const TYPE_COLUMN_WIDTH = 130;
-  const DATASOURCE_COLUMN_WIDTH = 200;
-  const LOCATION_COLUMN_WIDTH = 200;
-  const TAGS_COLUMN_WIDTH = 200;
 
   width = TYPE_COLUMN_WIDTH;
   columns.push(makeTypeColumn(access.kind, access.panel_type, width, styles.typeText, styles.typeIcon));
