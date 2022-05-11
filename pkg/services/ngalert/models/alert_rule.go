@@ -113,7 +113,7 @@ type AlertRule struct {
 	Labels      map[string]string
 }
 
-type AlertRuleShort struct {
+type SchedulableAlertRule struct {
 	UID             string `xorm:"uid"`
 	OrgID           int64  `xorm:"org_id"`
 	IntervalSeconds int64
