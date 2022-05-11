@@ -299,9 +299,9 @@ roles:
         scope: 'permissions:type:delegate'
         state: 'absent'
       - action: 'folders:read'
-        scope: folder:*
+        scope: 'folder:*'
       - action: 'folders:write'
-        scope: folder:*
+        scope: 'folder:*'
 ```
 
 You can also change basic roles' permissions using the API. Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#remove-a-built-in-role-assignment" >}}) for more details.
