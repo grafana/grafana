@@ -345,7 +345,7 @@ The following example deletes a custom role:
 apiVersion: 2
 
 roles:
-  - name: custom:reports:editor
+  - name: 'custom:reports:editor'
     orgId: 1
     state: 'absent'
     force: true
