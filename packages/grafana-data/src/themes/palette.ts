@@ -16,7 +16,7 @@ export const palette = {
   darkBorder2: '#64646B',
 
   // Dashboard bg / layer 0 (light theme)
-  gray90: '#FFFFFF',
+  gray90: '#F4F5F5',
   // Card bg / layer 1
   gray100: '#F4F5F5',
   // divider line
@@ -43,5 +43,6 @@ export const palette = {
   orangeLightText: '#8A6C00',
 
   //fusebit
-  lightBlue: 'rgba(215, 229, 255, 0.4)',
+  fusebitLightBlue: 'rgba(215, 229, 255, 0.4)',
+  fusebitWhite: '#FFFFFF',
 };
