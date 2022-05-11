@@ -59,14 +59,13 @@ func (m *folderHelper) getOrCreateGeneralFolder(orgID int64) (*dashboard, error)
 		return nil, err
 	} else if !has {
 		// create folder
-		result, err := m.createFolder(orgID, GENERAL_FOLDER)
-		if err != nil {
-			return nil, err
-		}
-
-		return result, nil
+		return m.createGeneralFolder(orgID)
 	}
 	return &dashboard, nil
+}
+
+func (m *folderHelper) createGeneralFolder(orgID int64) (*dashboard, error) {
+	return m.createFolder(orgID, GENERAL_FOLDER)
 }
 
 // returns the folder of the given dashboard (if exists)
@@ -288,8 +287,8 @@ func (m *folderHelper) getACL(orgID, dashboardID int64) ([]*dashboardAcl, error)
 	return result, err
 }
 
-// getOrgsThatHaveFolders returns a list of orgID that have at least one folder
-func (m *folderHelper) getOrgsThatHaveFolders() (map[int64]struct{}, error) {
+// getOrgsThatHaveFolders returns a unique list of organization ID that have at least one folder
+func (m *folderHelper) getOrgsIDThatHaveFolders() (map[int64]struct{}, error) {
 	// get folder if exists
 	var rows []int64
 	err := m.sess.Table(&dashboard{}).Where("is_folder=1").Distinct("org_id").Find(&rows)

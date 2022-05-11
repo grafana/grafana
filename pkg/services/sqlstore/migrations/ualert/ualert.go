@@ -786,9 +786,9 @@ func (c createDefaultFoldersForAlertingMigration) Exec(sess *xorm.Session, migra
 		return fmt.Errorf("failed to read the list of organizations: %w", err)
 	}
 
-	numberFoldersPerOrg, err := helper.getOrgsThatHaveFolders()
+	numberFoldersPerOrg, err := helper.getOrgsIDThatHaveFolders()
 	if err != nil {
-		return fmt.Errorf("failed to count folders per organization: %w", err)
+		return fmt.Errorf("failed to list organizations that have at least one folder: %w", err)
 	}
 
 	for _, row := range rows {
@@ -801,7 +801,7 @@ func (c createDefaultFoldersForAlertingMigration) Exec(sess *xorm.Session, migra
 			migrator.Logger.Debug("Skip adding default alerting folder because alerting is disabled for the organization ", "org_id", row.Id)
 			continue
 		}
-		folder, err := helper.getOrCreateGeneralFolder(row.Id)
+		folder, err := helper.createGeneralFolder(row.Id)
 		if err != nil {
 			return fmt.Errorf("failed to create the default alerting folder for organization %s (ID: %d): %w", row.Name, row.Id, err)
 		}
@@ -810,6 +810,6 @@ func (c createDefaultFoldersForAlertingMigration) Exec(sess *xorm.Session, migra
 	return nil
 }
 
-func (c createDefaultFoldersForAlertingMigration) SQL(dialect migrator.Dialect) string {
+func (c createDefaultFoldersForAlertingMigration) SQL(migrator.Dialect) string {
 	return "code migration"
 }
