@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
@@ -139,17 +140,23 @@ type AzureMonitorJSONQuery struct {
 // AzureMonitorDimensionFilter is the model for the frontend sent for azureMonitor metric
 // queries like "BlobType", "eq", "*"
 type AzureMonitorDimensionFilter struct {
-	Dimension string `json:"dimension"`
-	Operator  string `json:"operator"`
-	Filter    string `json:"filter"`
+	Dimension string   `json:"dimension"`
+	Operator  string   `json:"operator"`
+	Filters   []string `json:"filters,omitempty"`
+	// Deprecated: To support multiselection, filters are passed in a slice now. Also migrated in frontend.
+	Filter *string `json:"filter,omitempty"`
 }
 
-func (a AzureMonitorDimensionFilter) String() string {
-	filter := "*"
-	if a.Filter != "" {
-		filter = a.Filter
+func (a AzureMonitorDimensionFilter) ConstructFiltersString() string {
+	var filterStrings []string
+	for _, filter := range a.Filters {
+		filterStrings = append(filterStrings, fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter))
 	}
-	return fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter)
+	if a.Operator == "eq" {
+		return strings.Join(filterStrings, " or ")
+	} else {
+		return strings.Join(filterStrings, " and ")
+	}
 }
 
 // LogJSONQuery is the frontend JSON query model for an Azure Log Analytics query.

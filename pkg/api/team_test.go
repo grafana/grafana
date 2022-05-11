@@ -104,7 +104,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		teamName := "team foo"
 
 		addTeamMemberCalled := 0
-		addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService accesscontrol.PermissionsService, userID, orgID, teamID int64,
+		addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService accesscontrol.TeamPermissionsService, userID, orgID, teamID int64,
 			permission string) error {
 			addTeamMemberCalled++
 			return nil

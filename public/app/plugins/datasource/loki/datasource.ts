@@ -180,7 +180,11 @@ export class LokiDatasource
       } else {
         return super
           .query(fixedRequest)
-          .pipe(map((response) => transformBackendResult(response, fixedRequest.targets)));
+          .pipe(
+            map((response) =>
+              transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
+            )
+          );
       }
     }
 
