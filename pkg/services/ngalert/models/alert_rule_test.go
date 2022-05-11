@@ -354,6 +354,13 @@ func TestDiff(t *testing.T) {
 			assert.Equal(t, rule2.For, diff[0].Right.Interface())
 			difCnt++
 		}
+		if rule1.RuleGroupIndex != rule2.RuleGroupIndex {
+			diff := diffs.GetDiffsForField("RuleGroupIndex")
+			assert.Len(t, diff, 1)
+			assert.Equal(t, rule1.RuleGroupIndex, diff[0].Left.Interface())
+			assert.Equal(t, rule2.RuleGroupIndex, diff[0].Right.Interface())
+			difCnt++
+		}
 
 		require.Lenf(t, diffs, difCnt, "Got some unexpected diffs. Either add to ignore or add assert to it")
 

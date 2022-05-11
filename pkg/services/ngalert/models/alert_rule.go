@@ -125,6 +125,7 @@ type AlertRule struct {
 	DashboardUID    *string `xorm:"dashboard_uid"`
 	PanelID         *int64  `xorm:"panel_id"`
 	RuleGroup       string
+	RuleGroupIndex  int `xorm:"rule_group_idx"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
