@@ -150,7 +150,7 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
 
 By default, the Grafana Server Admin is the only user who can create and manage custom roles. If you want your users to do the same, you have two options:
 
-1. Create a basic role assignment and map `fixed:permissions:admin:edit` and `fixed:permissions:admin:read` fixed roles to the `Editor` basic role.
+1. Create a basic role assignment and map `fixed:roles:writer` and `fixed:roles:reader` fixed roles to the `Editor` basic role.
 1. [Create a custom role]({{< ref "./manage-rbac-roles#create-custom-roles" >}}) with `roles.builtin:add` and `roles:write` permissions, then create a basic role assignment for `Editor` organization role.
 
    > **Note:** any user or service account with the ability to modify roles can only create, update or delete roles with permissions they themselves have been granted. For example, a user with the `Editor` role would be able to create and manage roles only with the permissions they have, or with a subset of them.
