@@ -139,6 +139,10 @@ func (ss *SQLStore) Sync() error {
 	return ss.engine.Sync2()
 }
 
+func (ss *SQLStore) GetDialect() migrator.Dialect {
+	return ss.Dialect
+}
+
 // Reset resets database state.
 // If default org and user creation is enabled, it will be ensured they exist in the database.
 func (ss *SQLStore) Reset() error {

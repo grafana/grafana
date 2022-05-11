@@ -7,10 +7,13 @@ import (
 )
 
 type Service interface {
-	UpdateTeam(ctx context.Context, cmd *models.UpdateTeamCommand) error
-	DeleteTeam(ctx context.Context, cmd *models.DeleteTeamCommand) error
-	SearchTeams(ctx context.Context, query *models.SearchTeamsQuery) error
-	GetTeamById(ctx context.Context, query *models.GetTeamByIdQuery) error
+	Create(ctx context.Context, name, email string, orgID int64) (models.Team, error)
+	Update(ctx context.Context, cmd *UpdateTeamCommand) error
+	Delete(ctx context.Context, cmd *DeleteTeamCommand) error
+	List(ctx context.Context, query *SearchTeamsQuery) (*SearchTeamQueryResult, error)
+	ListByUser(ctx context.Context, query *GetTeamsByUserQuery) (*GetTeamsByUserQueryResult, error)
+	GetById(ctx context.Context, query *GetTeamByIdQuery) error
+
 	UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error
 	RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error
 	GetTeamMembers(ctx context.Context, cmd *models.GetTeamMembersQuery) error

@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 type OrgListResponse []struct {
@@ -357,6 +358,10 @@ func (m *SQLStoreMock) GetGlobalQuotaByTarget(ctx context.Context, query *models
 
 func (m *SQLStoreMock) WithTransactionalDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
 	return m.ExpectedError
+}
+
+func (m *SQLStoreMock) GetDialect() migrator.Dialect {
+	return nil
 }
 
 func (m *SQLStoreMock) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
