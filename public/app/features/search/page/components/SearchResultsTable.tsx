@@ -29,7 +29,6 @@ export type TableColumn = Column & {
   field?: Field;
 };
 
-const skipHREF = new Set(['column-checkbox', 'column-datasource', 'column-location']);
 const HEADER_HEIGHT = 36; // pixels
 
 export const SearchResultsTable = ({
@@ -78,28 +77,21 @@ export const SearchResultsTable = ({
       return (
         <div {...row.getRowProps({ style })} className={styles.rowContainer}>
           {row.cells.map((cell: Cell, index: number) => {
-            const body = (
+            return (
               <TableCell
                 key={index}
                 tableStyles={tableStyles}
                 cell={cell}
                 columnIndex={index}
                 columnCount={row.cells.length}
+                userProps={{ href: url }}
               />
-            );
-            if (skipHREF.has(cell.column.id)) {
-              return body;
-            }
-            return (
-              <a href={url} key={index} className={styles.cellWrapper}>
-                {body}
-              </a>
             );
           })}
         </div>
       );
     },
-    [rows, prepareRow, response.view.fields.url?.values, styles.rowContainer, styles.cellWrapper, tableStyles]
+    [rows, prepareRow, response.view.fields.url?.values, styles.rowContainer, tableStyles]
   );
 
   if (!rows.length) {
@@ -171,11 +163,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       align-items: center;
     `,
     cellWrapper: css`
-      div {
-        border-right: none;
-        &:hover {
-          box-shadow: none;
-        }
+      border-right: none;
+      &:hover {
+        box-shadow: none;
       }
     `,
     headerCell: css`

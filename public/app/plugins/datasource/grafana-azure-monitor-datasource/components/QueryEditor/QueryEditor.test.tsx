@@ -108,4 +108,16 @@ describe('Azure Monitor QueryEditor', () => {
 
     config.featureToggles.azureMonitorExperimentalUI = originalConfigValue;
   });
+
+  it('should not render the experimental QueryHeader when feature toggle is disabled', async () => {
+    const mockDatasource = createMockDatasource();
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.AzureMonitor,
+    };
+
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
+
+    await waitFor(() => expect(screen.queryByTestId('azure-monitor-experimental-header')).not.toBeInTheDocument());
+  });
 });
