@@ -311,9 +311,9 @@ Content-Type: application/json; charset=UTF-8
 
 `PUT /api/access-control/roles/:uid`
 
-Update the role with the given UID, and it's permissions with the given UID. The operation is idempotent and all permissions of the role will be replaced with what is in the request. You would need to increment the version of the role with each update, otherwise the request will fail.
+Update the role with the given UID, and its permissions. The operation is idempotent and all permissions of the role will be replaced based on the request content. You need to increment the version of the role with each update, otherwise the request will fail.
 
-You can update `custom` and `basic` roles, `fixed` roles cannot be updated.
+You can update `custom` roles and `basic` roles permissions. However `fixed` roles cannot be updated.
 
 #### Required permissions
 
