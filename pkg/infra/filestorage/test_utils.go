@@ -196,7 +196,7 @@ func handleCommand(t *testing.T, ctx context.Context, cmd interface{}, cmdName s
 }
 
 func runChecks(t *testing.T, stepName string, path string, output interface{}, checks []interface{}) {
-	if checks == nil || len(checks) == 0 {
+	if len(checks) == 0 {
 		return
 	}
 
@@ -284,7 +284,7 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 		resp, err := fs.List(ctx, inputPath, q.input.paging, q.input.options)
 		require.NoError(t, err, "%s: should be able to list files in %s", queryName, inputPath)
 		require.NotNil(t, resp)
-		if q.list != nil && len(q.list) > 0 {
+		if len(q.list) > 0 {
 			runChecks(t, queryName, inputPath, *resp, q.list)
 		} else {
 			require.NotNil(t, resp, "%s %s", queryName, inputPath)

@@ -480,7 +480,6 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, dashboards, 1)
 	assert.Equal(t, dashB.Id, dashboards[0].ID)
-
 }
 
 func insertTestRule(t *testing.T, sqlStore *sqlstore.SQLStore, foderOrgID int64, folderUID string) {
