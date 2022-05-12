@@ -21,7 +21,7 @@ describe('<LogMessageAnsi />', () => {
     expect(screen.getAllByTestId('ansiLogLine')).toHaveLength(1);
     expect(screen.getAllByTestId('ansiLogLine').at(0)).toHaveAttribute('style', expect.stringMatching('color'));
 
-    const { getByText } = within(screen.getAllByTestId('ansiLogLine').at(0));
+    const { getByText } = within(screen.getAllByTestId('ansiLogLine').at(0)!);
     expect(getByText('ipsum')).toBeInTheDocument();
   });
   it('renders string with ANSI codes with correctly converted css classnames', () => {
