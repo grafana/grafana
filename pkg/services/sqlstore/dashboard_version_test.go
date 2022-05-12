@@ -1,4 +1,3 @@
-
 package sqlstore
 
 import (
