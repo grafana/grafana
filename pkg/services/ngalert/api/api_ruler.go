@@ -358,20 +358,13 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 			return nil
 		}
 
-		authorizedChanges := groupChanges // if RBAC is disabled the permission are limited to folder access that is done upstream
+		// if RBAC is disabled the permission are limited to folder access that is done upstream
 		if !srv.ac.IsDisabled() {
-			authorizedChanges, err = authorizeRuleChanges(groupChanges, func(evaluator accesscontrol.Evaluator) bool {
+			err = authorizeRuleChanges(groupChanges, func(evaluator accesscontrol.Evaluator) bool {
 				return hasAccess(accesscontrol.ReqOrgAdminOrEditor, evaluator)
 			})
 			if err != nil {
 				return err
-			}
-			if authorizedChanges.isEmpty() {
-				logger.Info("no authorized changes detected in the request. Do nothing", "not_authorized_add", len(groupChanges.New), "not_authorized_update", len(groupChanges.Update), "not_authorized_delete", len(groupChanges.Delete))
-				return nil
-			}
-			if len(groupChanges.Delete) > len(authorizedChanges.Delete) {
-				logger.Info("user is not authorized to delete one or many rules in the group. those rules will be skipped", "expected", len(groupChanges.Delete), "authorized", len(authorizedChanges.Delete))
 			}
 		}
 
@@ -382,13 +375,13 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 
 		// New rules don't need to be checked for provenance, just copy the whole slice.
 		finalChanges = &changes{}
-		finalChanges.New = authorizedChanges.New
-		for _, rule := range authorizedChanges.Update {
+		finalChanges.New = groupChanges.New
+		for _, rule := range groupChanges.Update {
 			if provenance, exists := provenances[rule.Existing.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
 				finalChanges.Update = append(finalChanges.Update, rule)
 			}
 		}
-		for _, rule := range authorizedChanges.Delete {
+		for _, rule := range groupChanges.Delete {
 			if provenance, exists := provenances[rule.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
 				finalChanges.Delete = append(finalChanges.Delete, rule)
 			}
@@ -396,22 +389,22 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 
 		if finalChanges.isEmpty() {
 			logger.Info("no changes detected that have 'none' provenance in the request. Do nothing",
-				"provenance_invalid_add", len(authorizedChanges.New),
-				"provenance_invalid_update", len(authorizedChanges.Update),
-				"provenance_invalid_delete", len(authorizedChanges.Delete))
+				"provenance_invalid_add", len(groupChanges.New),
+				"provenance_invalid_update", len(groupChanges.Update),
+				"provenance_invalid_delete", len(groupChanges.Delete))
 			return nil
 		}
 
-		if len(authorizedChanges.Delete) > len(finalChanges.Delete) {
+		if len(groupChanges.Delete) > len(finalChanges.Delete) {
 			logger.Info("provenance is not 'none' for one or many rules in the group that should be deleted. those rules will be skipped",
-				"expected", len(authorizedChanges.Delete),
-				"allowed", len(authorizedChanges.Delete))
+				"expected", len(groupChanges.Delete),
+				"allowed", len(groupChanges.Delete))
 		}
 
-		if len(authorizedChanges.Update) > len(finalChanges.Update) {
+		if len(groupChanges.Update) > len(finalChanges.Update) {
 			logger.Info("provenance is not 'none' for one or many rules in the group that should be updated. those rules will be skipped",
-				"expected", len(authorizedChanges.Update),
-				"allowed", len(authorizedChanges.Update))
+				"expected", len(groupChanges.Update),
+				"allowed", len(groupChanges.Update))
 		}
 
 		logger.Debug("updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
