@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { PanelData } from '@grafana/data/src/types';
 import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { InlineFieldRow } from '@grafana/ui';
+import { InlineFieldRow, useStyles2 } from '@grafana/ui';
 
 import type Datasource from '../../datasource';
 import type { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
@@ -37,6 +38,8 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
   onChange,
   setError,
 }) => {
+  const styles = useStyles2(getStyles);
+
   const metricsMetadata = useMetricMetadata(query, datasource, onChange);
   const metricNamespaces = useMetricNamespaces(query, datasource, onChange, setError);
   const metricNames = useMetricNames(query, datasource, onChange, setError);
@@ -141,7 +144,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
   } else {
     return (
       <div data-testid="azure-monitor-metrics-query-editor-with-resource-picker">
-        <InlineFieldRow>
+        <InlineFieldRow className={styles.row}>
           <ResourceField
             query={query}
             datasource={datasource}
@@ -154,7 +157,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
           />
         </InlineFieldRow>
 
-        <InlineFieldRow>
+        <InlineFieldRow className={styles.row}>
           <MetricNamespaceField
             metricNamespaces={metricNamespaces}
             query={query}
@@ -172,7 +175,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
             setError={setError}
           />
         </InlineFieldRow>
-        <InlineFieldRow>
+        <InlineFieldRow className={styles.row}>
           <AggregationField
             query={query}
             datasource={datasource}
@@ -218,5 +221,11 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
     );
   }
 };
+
+const getStyles = () => ({
+  row: css({
+    rowGap: 0,
+  }),
+});
 
 export default MetricsQueryEditor;
