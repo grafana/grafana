@@ -16,7 +16,6 @@ describe('<LogMessageAnsi />', () => {
     const value = 'Lorem \u001B[31mipsum\u001B[0m et dolor';
     render(<LogMessageAnsi value={value} theme={createTheme()} />);
 
-    //expect(wrapper.find('span')).toHaveLength(1);
     expect(screen.queryByTestId('ansiLogLine')).toBeInTheDocument();
     expect(screen.getAllByTestId('ansiLogLine')).toHaveLength(1);
     expect(screen.getAllByTestId('ansiLogLine').at(0)).toHaveAttribute('style', expect.stringMatching('color'));
