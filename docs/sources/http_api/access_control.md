@@ -307,11 +307,13 @@ Content-Type: application/json; charset=UTF-8
 | 403  | Access denied                                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details.               |
 
-### Update a custom role
+### Update a role
 
 `PUT /api/access-control/roles/:uid`
 
 Update the role with the given UID, and it's permissions with the given UID. The operation is idempotent and all permissions of the role will be replaced with what is in the request. You would need to increment the version of the role with each update, otherwise the request will fail.
+
+You can update `custom` and `basic` roles, `fixed` roles cannot be updated.
 
 #### Required permissions
 
