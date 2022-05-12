@@ -309,6 +309,8 @@ roles:
         scope: 'folder:*'
 ```
 
+> **Note**: You can add multiple `fixed`, `basic` or `custom` roles to the `from` section. Their permissions will be copied and added to the basic role.
+
 You can also change basic roles' permissions using the API. Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#update-a-role" >}}) for more details.
 
 ## Delete a custom role using Grafana provisioning
