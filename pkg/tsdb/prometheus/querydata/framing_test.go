@@ -100,7 +100,7 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 		RangeQuery: sq.RangeQuery,
 		Expr:       sq.Expr,
 		Interval:   fmt.Sprintf("%ds", sq.Step),
-		IntervalMS: int64(sq.Step * 1000),
+		IntervalMS: sq.Step * 1000,
 	}
 
 	data, err := json.Marshal(&qm)
