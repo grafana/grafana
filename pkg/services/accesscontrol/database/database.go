@@ -48,6 +48,10 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 			}
 		}
 
+		q += `
+			ORDER BY permission.scope
+		`
+
 		if err := sess.SQL(q, params...).Find(&result); err != nil {
 			return err
 		}
