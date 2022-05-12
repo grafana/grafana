@@ -286,8 +286,6 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
 
-	configs := make(map[string]map[string][]*ngmodels.AlertRule)
-
 	hasAccess := func(evaluator accesscontrol.Evaluator) bool {
 		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqSignedIn, evaluator)
 	}
@@ -297,30 +295,25 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
 
+	configs := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
 	for _, r := range q.Result {
 		if !authorizeDatasourceAccessForRule(r, hasAccess) {
 			continue
 		}
-		namespaceCfgs, ok := configs[r.NamespaceUID]
-		if !ok {
-			namespaceCfgs = make(map[string][]*ngmodels.AlertRule)
-			configs[r.NamespaceUID] = namespaceCfgs
-		}
-		group := namespaceCfgs[r.RuleGroup]
+		groupKey := r.GetGroupKey()
+		group := configs[groupKey]
 		group = append(group, r)
-		namespaceCfgs[r.RuleGroup] = group
+		configs[groupKey] = group
 	}
 
-	for namespaceUID, m := range configs {
-		folder, ok := namespaceMap[namespaceUID]
+	for groupKey, rules := range configs {
+		folder, ok := namespaceMap[groupKey.NamespaceUID]
 		if !ok {
-			srv.log.Error("namespace not visible to the user", "user", c.SignedInUser.UserId, "namespace", namespaceUID)
+			srv.log.Error("namespace not visible to the user", "user", c.SignedInUser.UserId, "namespace", folder)
 			continue
 		}
 		namespace := folder.Title
-		for groupName, groupRules := range m {
-			result[namespace] = append(result[namespace], toGettableRuleGroupConfig(groupName, groupRules, folder.Id, provenanceRecords))
-		}
+		result[namespace] = append(result[namespace], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, folder.Id, provenanceRecords))
 	}
 	return response.JSON(http.StatusOK, result)
 }
