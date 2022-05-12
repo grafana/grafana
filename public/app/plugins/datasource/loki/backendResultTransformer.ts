@@ -1,8 +1,9 @@
 import { DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta } from '@grafana/data';
 
+import { getDerivedFields } from './getDerivedFields';
 import { makeTableFrames } from './makeTableFrames';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
-import { LokiQuery, LokiQueryType } from './types';
+import { DerivedFieldConfig, LokiQuery, LokiQueryType } from './types';
 
 function isMetricFrame(frame: DataFrame): boolean {
   return frame.fields.every((field) => field.type === FieldType.time || field.type === FieldType.number);
@@ -19,9 +20,14 @@ function setFrameMeta(frame: DataFrame, meta: QueryResultMeta): DataFrame {
   };
 }
 
-function processStreamFrame(frame: DataFrame, query: LokiQuery | undefined): DataFrame {
+function processStreamFrame(
+  frame: DataFrame,
+  query: LokiQuery | undefined,
+  derivedFieldConfigs: DerivedFieldConfig[]
+): DataFrame {
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'logs',
+    limit: query?.maxLines,
     searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(formatQuery(query.expr)) : undefined,
     custom: {
       // used by logs_model
@@ -29,13 +35,22 @@ function processStreamFrame(frame: DataFrame, query: LokiQuery | undefined): Dat
     },
   };
 
-  return setFrameMeta(frame, meta);
+  const newFrame = setFrameMeta(frame, meta);
+  const derivedFields = getDerivedFields(newFrame, derivedFieldConfigs);
+  return {
+    ...newFrame,
+    fields: [...newFrame.fields, ...derivedFields],
+  };
 }
 
-function processStreamsFrames(frames: DataFrame[], queryMap: Map<string, LokiQuery>): DataFrame[] {
+function processStreamsFrames(
+  frames: DataFrame[],
+  queryMap: Map<string, LokiQuery>,
+  derivedFieldConfigs: DerivedFieldConfig[]
+): DataFrame[] {
   return frames.map((frame) => {
     const query = frame.refId !== undefined ? queryMap.get(frame.refId) : undefined;
-    return processStreamFrame(frame, query);
+    return processStreamFrame(frame, query, derivedFieldConfigs);
   });
 }
 
@@ -78,7 +93,11 @@ function groupFrames(
   return { streamsFrames, metricInstantFrames, metricRangeFrames };
 }
 
-export function transformBackendResult(response: DataQueryResponse, queries: LokiQuery[]): DataQueryResponse {
+export function transformBackendResult(
+  response: DataQueryResponse,
+  queries: LokiQuery[],
+  derivedFieldConfigs: DerivedFieldConfig[]
+): DataQueryResponse {
   const { data, ...rest } = response;
 
   // in the typescript type, data is an array of basically anything.
@@ -100,7 +119,7 @@ export function transformBackendResult(response: DataQueryResponse, queries: Lok
     data: [
       ...processMetricRangeFrames(metricRangeFrames),
       ...processMetricInstantFrames(metricInstantFrames),
-      ...processStreamsFrames(streamsFrames, queryMap),
+      ...processStreamsFrames(streamsFrames, queryMap, derivedFieldConfigs),
     ],
   };
 }

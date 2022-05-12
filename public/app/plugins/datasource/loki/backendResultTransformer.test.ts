@@ -1,8 +1,21 @@
 import { cloneDeep } from 'lodash';
 
-import { ArrayVector, DataFrame, DataQueryResponse, FieldType } from '@grafana/data';
+import { ArrayVector, DataFrame, DataQueryResponse, Field, FieldType } from '@grafana/data';
 
 import { transformBackendResult } from './backendResultTransformer';
+
+// needed because the derived-fields functionality calls it
+jest.mock('@grafana/runtime', () => ({
+  // @ts-ignore
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: () => {
+        return { name: 'Loki1' };
+      },
+    };
+  },
+}));
 
 const LOKI_EXPR = '{level="info"} |= "thing1"';
 const inputFrame: DataFrame = {
@@ -65,12 +78,83 @@ describe('loki backendResultTransformer', () => {
 
     const expected: DataQueryResponse = { data: [expectedFrame] };
 
-    const result = transformBackendResult(response, [
-      {
-        refId: 'A',
-        expr: LOKI_EXPR,
-      },
-    ]);
+    const result = transformBackendResult(
+      response,
+      [
+        {
+          refId: 'A',
+          expr: LOKI_EXPR,
+        },
+      ],
+      []
+    );
     expect(result).toEqual(expected);
+  });
+
+  it('applies maxLines correctly', () => {
+    const response: DataQueryResponse = { data: [cloneDeep(inputFrame)] };
+
+    const frame1: DataFrame = transformBackendResult(
+      response,
+      [
+        {
+          refId: 'A',
+          expr: LOKI_EXPR,
+        },
+      ],
+      []
+    ).data[0];
+
+    expect(frame1.meta?.limit).toBeUndefined();
+
+    const frame2 = transformBackendResult(
+      response,
+      [
+        {
+          refId: 'A',
+          expr: LOKI_EXPR,
+          maxLines: 42,
+        },
+      ],
+      []
+    ).data[0];
+
+    expect(frame2.meta?.limit).toBe(42);
+  });
+
+  it('processed derived fields correctly', () => {
+    const input: DataFrame = {
+      length: 1,
+      fields: [
+        {
+          name: 'time',
+          config: {},
+          values: new ArrayVector([1]),
+          type: FieldType.time,
+        },
+        {
+          name: 'line',
+          config: {},
+          values: new ArrayVector(['line1']),
+          type: FieldType.string,
+        },
+      ],
+    };
+    const response: DataQueryResponse = { data: [input] };
+    const result = transformBackendResult(
+      response,
+      [{ refId: 'A', expr: '' }],
+      [
+        {
+          matcherRegex: 'trace=(w+)',
+          name: 'derived1',
+          url: 'example.com',
+        },
+      ]
+    );
+
+    expect(
+      result.data[0].fields.filter((field: Field) => field.name === 'derived1' && field.type === 'string').length
+    ).toBe(1);
   });
 });

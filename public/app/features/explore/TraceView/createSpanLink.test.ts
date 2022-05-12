@@ -1,6 +1,7 @@
 import { DataSourceInstanceSettings, MutableDataFrame } from '@grafana/data';
 import { setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { TraceSpan } from '@jaegertracing/jaeger-ui-components';
+import { TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { TraceToLogsOptions } from '../../../core/components/TraceToLogs/TraceToLogsSettings';
@@ -399,7 +400,29 @@ describe('createSpanLinkFactory', () => {
         splitOpenFn,
         traceToMetricsOptions: {
           datasourceUid: 'prom1',
+          query: 'customQuery',
         },
+      });
+      expect(createLink).toBeDefined();
+
+      const links = createLink!(createTraceSpan());
+      const linkDef = links?.metricLinks?.[0];
+
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1","queries":[{"expr":"customQuery","refId":""}],"panelsState":{}}'
+        )}`
+      );
+    });
+
+    it('uses default query if no query specified', () => {
+      const splitOpenFn = jest.fn();
+      const createLink = createSpanLinkFactory({
+        splitOpenFn,
+        traceToMetricsOptions: {
+          datasourceUid: 'prom1',
+        } as TraceToMetricsOptions,
       });
       expect(createLink).toBeDefined();
 
