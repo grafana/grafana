@@ -188,26 +188,24 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 			groupChanges := testCase.changes()
 
-			result, err := authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
+			err := authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
 				response := evaluator.Evaluate(make(map[string][]string))
 				require.False(t, response)
 				executed = true
 				return false
 			})
-			require.Nil(t, result)
 			require.Error(t, err)
 			require.Truef(t, executed, "evaluation function is expected to be called but it was not.")
 
 			permissions := testCase.permissions(groupChanges)
 			executed = false
-			result, err = authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
+			err = authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
 				response := evaluator.Evaluate(permissions)
 				require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", testCase.permissions, evaluator.GoString())
 				executed = true
 				return true
 			})
 			require.NoError(t, err)
-			require.Equal(t, groupChanges, result)
 			require.Truef(t, executed, "evaluation function is expected to be called but it was not.")
 		})
 	}
@@ -356,12 +354,12 @@ func TestAuthorizeRuleDelete(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			groupChanges := testCase.changes()
 			permissions := testCase.permissions(groupChanges)
-			result, err := authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
+			err := authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
 				response := evaluator.Evaluate(permissions)
 				return response
 			})
 
-			testCase.assert(t, groupChanges, result, err)
+			testCase.assert(t, groupChanges, err)
 		})
 	}
 }

@@ -231,29 +231,33 @@ func authorizeAccessToRuleGroup(rules []*ngmodels.AlertRule, evaluator func(eval
 // If the user is not authorized to perform the changes the function returns ErrAuthorization with a description of what action is not authorized.
 // Return changes that the user is authorized to perform or ErrAuthorization
 func authorizeRuleChanges(change *changes, evaluator func(evaluator ac.Evaluator) bool) error {
-	var result = &changes{
-		GroupKey: change.GroupKey,
-		New:      change.New,
-		Update:   change.Update,
-		Delete:   change.Delete,
+	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(change.GroupKey.NamespaceUID)
+
+	affectedGroupsPermissions := make(map[ngmodels.AlertRuleGroupKey]bool, len(change.AffectedGroups))
+	for key, rules := range change.AffectedGroups {
+		hasAccess := true
+		for _, rule := range rules {
+			if !authorizeDatasourceAccessForRule(rule, evaluator) {
+				hasAccess = false
+				break
+			}
+		}
+		if change.GroupKey == key && !hasAccess {
+			return fmt.Errorf("%w to change group %s because it does not have access to one or many rules in this group", ErrAuthorization, key.RuleGroup)
+		}
+		affectedGroupsPermissions[key] = hasAccess
 	}
 
-	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(change.GroupKey.NamespaceUID)
 	if len(change.Delete) > 0 {
-		var allowedToDelete []*ngmodels.AlertRule
+		allowed := evaluator(ac.EvalPermission(ac.ActionAlertingRuleDelete, namespaceScope))
+		if !allowed {
+			return fmt.Errorf("%w to delete alert rules that belong to folder %s", ErrAuthorization, change.GroupKey.NamespaceUID)
+		}
 		for _, rule := range change.Delete {
-			dsAllowed := authorizeDatasourceAccessForRule(rule, evaluator)
-			if dsAllowed {
-				allowedToDelete = append(allowedToDelete, rule)
+			if !authorizeDatasourceAccessForRule(rule, evaluator) {
+				return fmt.Errorf("%w to delete an alert rule '%s' because the user does not have read permissions for one or many datasources the rule uses", ErrAuthorization, rule.UID)
 			}
 		}
-		if len(allowedToDelete) > 0 {
-			allowed := evaluator(ac.EvalPermission(ac.ActionAlertingRuleDelete, namespaceScope))
-			if !allowed {
-				return fmt.Errorf("%w to delete alert rules that belong to folder %s", ErrAuthorization, change.GroupKey.NamespaceUID)
-			}
-		}
-		result.Delete = allowedToDelete
 	}
 
 	var addAuthorized, updateAuthorized bool
@@ -290,13 +294,21 @@ func authorizeRuleChanges(change *changes, evaluator func(evaluator ac.Evaluator
 					return fmt.Errorf("%w to create alert rules in the folder '%s'", ErrAuthorization, change.GroupKey.NamespaceUID)
 				}
 			}
-			continue
-		}
-
-		if !updateAuthorized { // if it is false then the authorization was not checked. If it is true then the user is authorized to update rules
-			updateAuthorized = evaluator(ac.EvalAll(ac.EvalPermission(ac.ActionAlertingRuleUpdate, namespaceScope)))
+		} else if !updateAuthorized { // if it is false then the authorization was not checked. If it is true then the user is authorized to update rules
+			updateAuthorized = evaluator(ac.EvalPermission(ac.ActionAlertingRuleUpdate, namespaceScope))
 			if !updateAuthorized {
 				return fmt.Errorf("%w to update alert rules that belong to folder %s", ErrAuthorization, change.GroupKey.NamespaceUID)
+			}
+		}
+
+		if rule.Existing.NamespaceUID != rule.New.NamespaceUID || rule.Existing.RuleGroup != rule.New.RuleGroup {
+			key := rule.Existing.GetGroupKey()
+			hasAccess, ok := affectedGroupsPermissions[key]
+			if !ok {
+				return fmt.Errorf("%w to update rule %s because unable to check access to group %s from which the rule is moved", ErrAuthorization, rule.Existing.UID, rule.Existing.RuleGroup)
+			}
+			if !hasAccess {
+				return fmt.Errorf("%w to move rule %s between two different groups because user does not have access to the source group %s", ErrAuthorization, rule.Existing.UID, rule.Existing.RuleGroup)
 			}
 		}
 	}
