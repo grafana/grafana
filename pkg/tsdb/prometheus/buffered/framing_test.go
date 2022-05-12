@@ -1,4 +1,4 @@
-package prometheus
+package buffered
 
 import (
 	"bytes"
@@ -15,7 +15,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
@@ -33,9 +35,9 @@ func TestMatrixResponses(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			queryFileName := filepath.Join("testdata", test.filepath+".query.json")
-			responseFileName := filepath.Join("testdata", test.filepath+".result.json")
-			goldenFileName := filepath.Join("testdata", test.filepath+".result.golden.txt")
+			queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
+			responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
+			goldenFileName := filepath.Join("../testdata", test.filepath+".result.golden.txt")
 
 			query, err := loadStoredPrometheusQuery(queryFileName)
 			require.NoError(t, err)
@@ -131,6 +133,20 @@ func runQuery(response []byte, query PrometheusQuery) (*backend.QueryDataRespons
 		return nil, err
 	}
 
-	s := Service{tracer: tracer}
+	s := Buffered{
+		intervalCalculator: intervalv2.NewCalculator(),
+		tracer:             tracer,
+		TimeInterval:       "15s",
+		log:                &fakeLogger{},
+	}
 	return s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
 }
+
+type fakeLogger struct {
+	log.Logger
+}
+
+func (fl *fakeLogger) Debug(testMessage string, ctx ...interface{}) {}
+func (fl *fakeLogger) Info(testMessage string, ctx ...interface{})  {}
+func (fl *fakeLogger) Warn(testMessage string, ctx ...interface{})  {}
+func (fl *fakeLogger) Error(testMessage string, ctx ...interface{}) {}
