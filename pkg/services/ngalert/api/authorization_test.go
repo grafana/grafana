@@ -420,3 +420,50 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 		require.Equal(t, 1, executed)
 	})
 }
+
+func Test_authorizeAccessToRuleGroup(t *testing.T) {
+	t.Run("should return true if user has access to all datasources of all rules in group", func(t *testing.T) {
+		rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen())
+		var scopes []string
+		for _, rule := range rules {
+			for _, query := range rule.Data {
+				scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
+			}
+		}
+		permissions := map[string][]string{
+			datasources.ActionQuery: scopes,
+		}
+
+		result := authorizeAccessToRuleGroup(rules, func(evaluator ac.Evaluator) bool {
+			response, err := evaluator.Evaluate(permissions)
+			require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", permissions, evaluator.GoString())
+			require.NoError(t, err)
+			return true
+		})
+
+		require.True(t, result)
+	})
+	t.Run("should return false if user does not have access to at least one rule in group", func(t *testing.T) {
+		rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen())
+		var scopes []string
+		for _, rule := range rules {
+			for _, query := range rule.Data {
+				scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
+			}
+		}
+		permissions := map[string][]string{
+			datasources.ActionQuery: scopes,
+		}
+
+		rule := models.AlertRuleGen()()
+		rules = append(rules, rule)
+
+		result := authorizeAccessToRuleGroup(rules, func(evaluator ac.Evaluator) bool {
+			response, err := evaluator.Evaluate(permissions)
+			require.NoError(t, err)
+			return response
+		})
+
+		require.False(t, result)
+	})
+}

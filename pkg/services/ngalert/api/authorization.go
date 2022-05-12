@@ -216,6 +216,16 @@ func authorizeDatasourceAccessForRule(rule *ngmodels.AlertRule, evaluator func(e
 	return true
 }
 
+// authorizeAccessToRuleGroup checks all rules against authorizeDatasourceAccessForRule and exits on the first negative result
+func authorizeAccessToRuleGroup(rules []*ngmodels.AlertRule, evaluator func(evaluator ac.Evaluator) bool) bool {
+	for _, rule := range rules {
+		if !authorizeDatasourceAccessForRule(rule, evaluator) {
+			return false
+		}
+	}
+	return true
+}
+
 // authorizeRuleChanges analyzes changes in the rule group, and checks whether the changes are authorized.
 // NOTE: if there are rules for deletion, and the user does not have access to data sources that a rule uses, the rule is removed from the list.
 // If the user is not authorized to perform the changes the function returns ErrAuthorization with a description of what action is not authorized.

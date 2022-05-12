@@ -238,7 +238,7 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *models.ReqContext) response.Resp
 	groupRules := make([]*ngmodels.AlertRule, 0, len(q.Result))
 	for _, r := range q.Result {
 		if !authorizeDatasourceAccessForRule(r, hasAccess) {
-			continue
+			return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to access the group because it does not have access to one or many data sources one or many rules in the group use", ErrAuthorization), "")
 		}
 		groupRules = append(groupRules, r)
 	}
@@ -297,9 +297,6 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 
 	configs := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
 	for _, r := range q.Result {
-		if !authorizeDatasourceAccessForRule(r, hasAccess) {
-			continue
-		}
 		groupKey := r.GetGroupKey()
 		group := configs[groupKey]
 		group = append(group, r)
@@ -310,6 +307,9 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 		folder, ok := namespaceMap[groupKey.NamespaceUID]
 		if !ok {
 			srv.log.Error("namespace not visible to the user", "user", c.SignedInUser.UserId, "namespace", groupKey.NamespaceUID)
+			continue
+		}
+		if !authorizeAccessToRuleGroup(rules, hasAccess) {
 			continue
 		}
 		namespace := folder.Title
