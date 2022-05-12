@@ -22,6 +22,9 @@ const inputFrame: DataFrame = {
   refId: 'A',
   meta: {
     executedQueryString: LOKI_EXPR,
+    custom: {
+      frameType: 'LabeledTimeValues',
+    },
   },
   fields: [
     {
@@ -72,6 +75,7 @@ describe('loki backendResultTransformer', () => {
       preferredVisualisationType: 'logs',
       searchWords: ['thing1'],
       custom: {
+        ...expectedFrame.meta?.custom,
         lokiQueryStatKey: 'Summary: total bytes processed',
       },
     };
