@@ -66,6 +66,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
   }),
 
+  resourceField: css({
+    maxWidth: theme.spacing(36),
+    overflow: 'hidden',
+  }),
+
+  resourceFieldButton: css({
+    padding: '7px',
+    textAlign: 'left',
+  }),
+
   nestedRowCheckbox: css({
     zIndex: 0,
   }),
@@ -82,6 +92,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingTop: theme.spacing(2),
     paddingBottom: theme.spacing(2),
     color: theme.colors.text.secondary,
+  }),
+
+  resultLimit: css({
+    margin: '4px 0',
+    fontStyle: 'italic',
+  }),
+
+  modal: css({
+    width: theme.breakpoints.values.lg,
   }),
 });
 

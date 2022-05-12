@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
+
+	"github.com/blugelabs/bluge"
 )
 
 type dashboardLoader interface {
@@ -32,7 +34,8 @@ type eventStore interface {
 type dashboardIndex struct {
 	mu         sync.RWMutex
 	loader     dashboardLoader
-	dashboards map[int64][]dashboard // orgId -> []dashboards
+	dashboards map[int64][]dashboard   // orgId -> []dashboards
+	reader     map[int64]*bluge.Reader // orgId -> bluge index
 	eventStore eventStore
 	logger     log.Logger
 }
@@ -53,6 +56,7 @@ func newDashboardIndex(dashLoader dashboardLoader, evStore eventStore) *dashboar
 		loader:     dashLoader,
 		eventStore: evStore,
 		dashboards: map[int64][]dashboard{},
+		reader:     map[int64]*bluge.Reader{},
 		logger:     log.New("dashboardIndex"),
 	}
 }
@@ -74,10 +78,15 @@ func (i *dashboardIndex) run(ctx context.Context) error {
 	}
 
 	// Build on start for orgID 1 but keep lazy for others.
-	_, err = i.getDashboards(ctx, 1)
+	started := time.Now()
+	dashboards, err := i.getDashboards(ctx, 1)
 	if err != nil {
 		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
 	}
+	i.logger.Info("Indexing for main org finished", "mainOrgIndexElapsed", time.Since(started), "numDashboards", len(dashboards))
+
+	// build bluge index on startup	 (will catch panics)
+	go i.reIndexFromScratchBluge(ctx)
 
 	for {
 		select {
@@ -114,6 +123,60 @@ func (i *dashboardIndex) reIndexFromScratch(ctx context.Context) {
 		i.logger.Info("Re-indexed dashboards for organization", "orgId", orgID, "orgReIndexElapsed", time.Since(started))
 		i.mu.Lock()
 		i.dashboards[orgID] = dashboards
+		i.mu.Unlock()
+	}
+}
+
+// Variation of the above function that builds bluge index from scratch
+// Once the frontend is wired up, we should switch to this one
+func (i *dashboardIndex) reIndexFromScratchBluge(ctx context.Context) {
+	// Catch Panic (just in case)
+	defer func() {
+		recv := recover()
+		if recv != nil {
+			i.logger.Error("panic in search runner", "recv", recv) // REMVOE after we are sure it works!
+		}
+	}()
+
+	i.mu.RLock()
+	orgIDs := make([]int64, 0, len(i.dashboards))
+	for orgID := range i.dashboards {
+		orgIDs = append(orgIDs, orgID)
+	}
+	i.mu.RUnlock()
+	if len(orgIDs) < 1 {
+		orgIDs = append(orgIDs, int64(1)) // make sure we index
+	}
+
+	for _, orgID := range orgIDs {
+		started := time.Now()
+		ctx, cancel := context.WithTimeout(ctx, time.Minute)
+
+		dashboards, err := i.loader.LoadDashboards(ctx, orgID, "")
+		if err != nil {
+			cancel()
+			i.logger.Error("Error re-indexing dashboards for organization", "orgId", orgID, "error", err)
+			continue
+		}
+		orgSearchIndexLoadTime := time.Since(started)
+
+		reader, err := initBlugeIndex(dashboards, i.logger)
+		if err != nil {
+			cancel()
+			i.logger.Error("Error re-indexing dashboards for organization", "orgId", orgID, "error", err)
+			continue
+		}
+		orgSearchIndexTotalTime := time.Since(started)
+		orgSearchIndexBuildTime := orgSearchIndexTotalTime - orgSearchIndexLoadTime
+
+		cancel()
+		i.logger.Info("Re-indexed dashboards for organization (bluge)",
+			"orgId", orgID,
+			"orgSearchIndexLoadTime", orgSearchIndexLoadTime,
+			"orgSearchIndexBuildTime", orgSearchIndexBuildTime,
+			"orgSearchIndexTotalTime", orgSearchIndexTotalTime)
+		i.mu.Lock()
+		i.reader[orgID] = reader
 		i.mu.Unlock()
 	}
 }
@@ -245,7 +308,12 @@ func (i *dashboardIndex) getDashboards(ctx context.Context, orgId int64) ([]dash
 }
 
 type sqlDashboardLoader struct {
-	sql *sqlstore.SQLStore
+	sql    *sqlstore.SQLStore
+	logger log.Logger
+}
+
+func newSQLDashboardLoader(sql *sqlstore.SQLStore) *sqlDashboardLoader {
+	return &sqlDashboardLoader{sql: sql, logger: log.New("sqlDashboardLoader")}
 }
 
 func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, dashboardUID string) ([]dashboard, error) {
@@ -260,6 +328,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		// Add the root folder ID (does not exist in SQL).
 		dashboards = append(dashboards, dashboard{
 			id:       0,
+			uid:      "",
 			isFolder: true,
 			folderID: 0,
 			slug:     "",
@@ -267,7 +336,6 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 			updated:  time.Now(),
 			info: &extract.DashboardInfo{
 				ID:    0,
-				UID:   "",
 				Title: "General",
 			},
 		})
@@ -308,6 +376,11 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 		}
 
 		for _, row := range rows {
+			info, err := extract.ReadDashboard(bytes.NewReader(row.Data), lookup)
+			if err != nil {
+				l.logger.Warn("Error indexing dashboard data", "error", err, "dashboardId", row.Id, "dashboardSlug", row.Slug)
+				// But append info anyway for now, since we possibly extracted useful information.
+			}
 			dashboards = append(dashboards, dashboard{
 				id:       row.Id,
 				uid:      row.Uid,
@@ -316,7 +389,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 				slug:     row.Slug,
 				created:  row.Created,
 				updated:  row.Updated,
-				info:     extract.ReadDashboard(bytes.NewReader(row.Data), lookup),
+				info:     info,
 			})
 			lastID = row.Id
 		}

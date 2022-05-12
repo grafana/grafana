@@ -4,8 +4,8 @@ menuTitle: 'Manage RBAC roles'
 description: 'Learn how to view permissions associated with roles, create custom roles, and update and delete roles in Grafana.'
 aliases:
   [
-    docs/grafana/latest/enterprise/access-control/manage-role-assignments/,
-    docs/grafana/latest/enterprise/access-control/provisioning/,
+    '/docs/grafana/latest/enterprise/access-control/manage-role-assignments/',
+    '/docs/grafana/latest/enterprise/access-control/provisioning/',
   ]
 weight: 50
 ---
@@ -152,7 +152,7 @@ Create a custom role when basic roles and fixed roles do not meet your permissio
 - [Enable role provisioning]({{< relref "./enable-rbac-and-provisioning#enable-rbac" >}}).
 - Ensure that you have permissions to create a custom role.
   - By default, the Grafana Admin role has permission to create custom roles.
-  - A Grafana Admin can delegate the custom role privilege to another user by creating a custom role with the relevant permissions and adding the `permissions:delegate` scope.
+  - A Grafana Admin can delegate the custom role privilege to another user by creating a custom role with the relevant permissions and adding the `permissions:type:delegate` scope.
 
 ### Create custom roles using provisioning
 
