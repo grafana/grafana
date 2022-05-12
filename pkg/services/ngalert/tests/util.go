@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	databasestore "github.com/grafana/grafana/pkg/services/dashboards/database"
-	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"

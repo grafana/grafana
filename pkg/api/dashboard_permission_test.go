@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/manager"
+	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
