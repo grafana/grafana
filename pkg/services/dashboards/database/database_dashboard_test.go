@@ -1,4 +1,3 @@
-
 package database
 
 import (
@@ -219,7 +218,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 		require.Equal(t, len(query.Result), 0)
 
-		sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		_ = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			var existingRuleID int64
 			exists, err := sess.Table("alert_rule").Where("namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)", savedFolder.Id).Cols("id").Get(&existingRuleID)
 			require.NoError(t, err)
@@ -454,7 +453,6 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	require.Len(t, dashboards, 2)
 	assert.Equal(t, dashB.Id, dashboards[0].ID)
 	assert.Equal(t, dashA.Id, dashboards[1].ID)
-
 }
 
 func TestIntegrationDashboard_Filter(t *testing.T) {
@@ -486,7 +484,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 }
 
 func insertTestRule(t *testing.T, sqlStore *sqlstore.SQLStore, foderOrgID int64, folderUID string) {
-	sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	_ = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		type alertQuery struct {
 			RefID         string
 			DatasourceUID string

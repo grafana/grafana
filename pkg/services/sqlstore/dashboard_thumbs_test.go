@@ -1,4 +1,3 @@
-
 package sqlstore
 
 import (
@@ -13,7 +12,6 @@ var theme = models.ThemeDark
 var kind = models.ThumbnailKindDefault
 
 func TestIntegrationSqlStorage(t *testing.T) {
-
 	var sqlStore *SQLStore
 	var savedFolder *models.Dashboard
 

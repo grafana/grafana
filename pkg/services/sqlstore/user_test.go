@@ -1,4 +1,3 @@
-
 package sqlstore
 
 import (
@@ -12,7 +11,6 @@ import (
 )
 
 func TestIntegrationUserDataAccess(t *testing.T) {
-
 	ss := InitTestDB(t)
 
 	t.Run("Testing DB - creates and loads user", func(t *testing.T) {

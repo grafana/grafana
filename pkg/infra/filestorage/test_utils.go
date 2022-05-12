@@ -1,4 +1,3 @@
-
 package filestorage
 
 import (
@@ -135,7 +134,6 @@ type queryListFiles struct {
 
 type queryListFoldersInput struct {
 	path    string
-	paging  *Paging
 	options *ListOptions
 }
 
@@ -252,7 +250,6 @@ func runChecks(t *testing.T, stepName string, path string, output interface{}, c
 	default:
 		t.Fatalf("unrecognized output %s", interfaceName(output))
 	}
-
 }
 
 func formatPathStructure(files []*File) string {
@@ -275,7 +272,7 @@ func handleQuery(t *testing.T, ctx context.Context, query interface{}, queryName
 		file, err := fs.Get(ctx, inputPath)
 		require.NoError(t, err, "%s: should be able to get file %s", queryName, inputPath)
 
-		if q.checks != nil && len(q.checks) > 0 {
+		if len(q.checks) > 0 {
 			require.NotNil(t, file, "%s %s", queryName, inputPath)
 			require.Equal(t, strings.ToLower(inputPath), strings.ToLower(file.FullPath), "%s %s", queryName, inputPath)
 			runChecks(t, queryName, inputPath, file, q.checks)
@@ -358,5 +355,4 @@ func executeTestStep(t *testing.T, ctx context.Context, step interface{}, stepNu
 	default:
 		t.Fatalf("unrecognized step %s", name)
 	}
-
 }
