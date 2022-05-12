@@ -19,9 +19,9 @@ By using RBAC you can provide users with permissions that extend the permissions
 - Assign fixed roles to users and teams: for example, grant an engineering team the ability to create data sources
 - Create custom roles: for example, a role that allows users to create and edit dashboards, but not delete them
 
-RBAC roles contain multiple permissions, each of which has an action and a scope. Fixed roles are immutable, you cannot change any of their properties, nor remove them.
+RBAC roles contain multiple permissions, each of which has an action and a scope:
 
-- **Fixed role:** `fixed:datasources:reader`
+- **Role:** `fixed:datasources:reader`
   - **Permission:**
     - **Action:** `datasources:read`
     - **Scope:** `datasources:*`
