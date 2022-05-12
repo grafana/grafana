@@ -449,6 +449,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 }
 
 func toGettableRuleGroupConfig(groupName string, rules []*ngmodels.AlertRule, namespaceID int64, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableRuleGroupConfig {
+	ngmodels.RulesGroup(rules).SortByGroupIndex()
 	ruleNodes := make([]apimodels.GettableExtendedRuleNode, 0, len(rules))
 	var interval time.Duration
 	if len(rules) > 0 {
