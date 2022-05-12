@@ -306,7 +306,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 			namespaceCfgs = make(map[string][]*ngmodels.AlertRule)
 			configs[r.NamespaceUID] = namespaceCfgs
 		}
-		group, ok := namespaceCfgs[r.RuleGroup]
+		group := namespaceCfgs[r.RuleGroup]
 		group = append(group, r)
 		namespaceCfgs[r.RuleGroup] = group
 	}
