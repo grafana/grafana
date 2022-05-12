@@ -50,6 +50,14 @@ You can use RBAC to modify the permissions associated with any basic role, to mo
 
 > **Note:** You must assign each Grafana user a basic role.
 
+To interact with the API and view or modify basic roles permissions, refer to the following mapping:
+| Basic role | UID |
+|-----------------|-----------------------|
+| `Viewer` | `basic_viewer` |
+| `Editor` | `basic_editor` |
+| `Admin` | `basic_admin` |
+| `Grafana Admin` | `basic_grafana_admin` |
+
 ## Fixed roles
 
 Grafana Enterprise includes the ability for you to assign discrete fixed roles to users and teams. This gives you finer-grained control over user permissions than you would have with basic roles alone. These roles are called "fixed" because you cannot change or delete fixed roles. You can also create _custom_ roles of your own; see more information in the [custom roles section]({{< relref "#custom-roles" >}}) below.
