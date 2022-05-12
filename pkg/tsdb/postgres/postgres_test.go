@@ -1,4 +1,3 @@
-
 package postgres
 
 import (
@@ -15,11 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
-
-	_ "github.com/lib/pq"
 )
 
 // Test generateConnectionString.

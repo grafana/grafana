@@ -184,7 +184,6 @@ func TestIntegrationDashboardService(t *testing.T) {
 		})
 
 		t.Run("Given non provisioned dashboard", func(t *testing.T) {
-
 			t.Run("DeleteProvisionedDashboard should delete the dashboard", func(t *testing.T) {
 				args := &models.DeleteDashboardCommand{OrgId: 1, Id: 1, ForceDeleteFolderRules: false}
 				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()

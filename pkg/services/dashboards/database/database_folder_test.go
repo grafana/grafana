@@ -1,15 +1,13 @@
-
 package database
 
 import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
