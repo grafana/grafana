@@ -1,6 +1,6 @@
 import { map, Observable, defer, mergeMap } from 'rxjs';
 
-import { DataFrameJSON, DataQueryRequest, DataQueryResponse, LiveChannelScope, LoadingState } from '@grafana/data';
+import { DataFrameJSON, DataQueryResponse, LiveChannelScope, LoadingState, TimeRange } from '@grafana/data';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 
@@ -25,16 +25,11 @@ export async function getLiveStreamKey(query: LokiQuery): Promise<string> {
 export function doLokiChannelStream(
   query: LokiQuery,
   ds: LokiDatasource,
-  options: DataQueryRequest<LokiQuery>
+  range: TimeRange,
+  maxLength: number
 ): Observable<DataQueryResponse> {
   // maximum time to keep values
-  const range = options.range;
   const maxDelta = range.to.valueOf() - range.from.valueOf() + 1000;
-  let maxLength = options.maxDataPoints ?? 1000;
-  if (maxLength > 100) {
-    // for small buffers, keep them small
-    maxLength *= 2;
-  }
 
   let frame: StreamingDataFrame | undefined = undefined;
   const updateFrame = (msg: any) => {

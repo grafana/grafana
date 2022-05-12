@@ -148,11 +148,12 @@ export class LokiDatasource
     if (config.featureToggles.lokiLive && streamQueries.length > 0 && fixedRequest.rangeRaw?.to === 'now') {
       // this is still an in-development feature,
       // we do not support mixing stream-queries with normal-queries for now.
-      const streamRequest = {
-        ...fixedRequest,
-        targets: streamQueries,
-      };
-      return merge(...streamQueries.map((q) => doLokiChannelStream(q, this, streamRequest)));
+      let maxLength = request.maxDataPoints ?? 1000;
+      if (maxLength > 100) {
+        // for small buffers, keep them small
+        maxLength *= 2;
+      }
+      return merge(...streamQueries.map((q) => doLokiChannelStream(q, this, fixedRequest.range, maxLength)));
     }
 
     if (fixedRequest.liveStreaming) {
@@ -181,9 +182,16 @@ export class LokiDatasource
     }
 
     const subQueries = logsQueries.map((query) => {
-      const maxDataPoints = query.maxLines || this.maxLines;
       // FIXME: currently we are running it through the frontend still.
-      return this.runLiveQuery(query, maxDataPoints);
+      return doLokiChannelStream(query, this, request.range, query.maxLines || this.maxLines).pipe(
+        map((response) => {
+          if (response.data.length > 0) {
+            return transformBackendResult(response, [query], this.instanceSettings.jsonData.derivedFields ?? []);
+          } else {
+            return response;
+          }
+        })
+      );
     });
 
     return merge(...subQueries);
