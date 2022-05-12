@@ -954,3 +954,55 @@ Content-Type: application/json; charset=UTF-8
 | 403  | Access denied.                                                       |
 | 404  | Role not found.                                                      |
 | 500  | Unexpected error. Refer to body and/or server logs for more details. |
+
+## Reset basic roles permissions to factory
+
+`POST /api/access-control/roles/factory-reset`
+
+Reset basic roles permissions to factory default.
+
+#### Required permissions
+
+<!-- TODO rephrase double negation might be hard to understand -->
+
+`permissions:type:escalate` scope does not ensure that users don't acquire more permissions with the reset.
+
+| Action      | Scope                     |
+| ----------- | ------------------------- |
+| roles:write | permissions:type:escalate |
+
+#### Example request
+
+```http
+POST /api/access-control/roles/factory-reset
+Accept: application/json
+Content-Type: application/json
+
+{
+    "BasicRoles": true
+}
+```
+
+#### JSON body schema
+
+| Field Name | Data Type | Required | Description                              |
+| ---------- | --------- | -------- | ---------------------------------------- |
+| BasicRoles | boolean   | No       | Option to reset basic roles permissions. |
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+    "message": "Reset performed"
+}
+```
+
+#### Status codes
+
+| Code | Description                 |
+| ---- | --------------------------- |
+| 200  | Reset performed             |
+| 500  | Failed to reset basic roles |

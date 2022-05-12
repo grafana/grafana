@@ -312,10 +312,36 @@ roles:
 ```
 
 > **Note**: You can add multiple `fixed`, `basic` or `custom` roles to the `from` section. Their permissions will be copied and added to the basic role.
-> <br/>
-> **Note**: Make sure to **increment** the role version for the changes to be accounted for.
+> <br/> > **Note**: Make sure to **increment** the role version for the changes to be accounted for.
 
 You can also change basic roles' permissions using the API. Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#update-a-role" >}}) for more details.
+
+## Reset basic roles permissions to factory
+
+This section describes how to reset the basic roles permissions to factory defaults:
+
+1. Open the YAML configuration file and locate the `roles` section.
+
+1. Grant the `action: "roles:write", scope: "permissions:type:escalate` permission to `Grafana Admin`.
+
+   ```yaml
+   apiVersion: 2
+   roles:
+     - name: 'basic:grafana_admin'
+       global: true
+       version: 3
+       from:
+         - name: 'basic:grafana_admin'
+           global: true
+       permissions:
+         # Permission allowing to reset basic roles to factory
+         - action: 'roles:write'
+          scope: 'permissions:type:escalate'
+   ```
+
+   **Note**: This permission has not been granted to any basic roles by default, since it could allow in some cases, privilege escalations.
+
+1. As a `Grafana Admin`, call the API endpoint to reset the basic roles to factory. Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#reset-basic-roles-permissions-to-factory" >}}) for more details.
 
 ## Delete a custom role using Grafana provisioning
 
