@@ -41,7 +41,6 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, onDeleteItems, isOpen, 
   const deleteItems = () => {
     deleteFoldersAndDashboards(folders, dashboards).then(() => {
       onDismiss();
-      onDeleteItems(folders, dashboards);
     });
   };
 

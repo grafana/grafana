@@ -23,11 +23,12 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
   const styles = getStyles(theme);
   const notifyApp = useAppNotification();
   const selectedDashboards = Array.from(results.get('dashboard') ?? []);
+  const [moving, setMoving] = useState(false);
 
   const moveTo = () => {
     if (folder && selectedDashboards.length) {
       const folderTitle = folder.title ?? 'General';
-
+      setMoving(true);
       moveDashboards(selectedDashboards, folder).then((result: any) => {
         if (result.successCount > 0) {
           const ending = result.successCount === 1 ? '' : 's';
@@ -43,6 +44,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
           onMoveItems(selectedDashboards, folder);
         }
 
+        setMoving(false);
         onDismiss();
       });
     }
@@ -66,7 +68,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
         </div>
 
         <HorizontalGroup justify="center">
-          <Button variant="primary" onClick={moveTo}>
+          <Button icon={moving ? 'fa fa-spinner' : undefined} variant="primary" onClick={moveTo}>
             Move
           </Button>
           <Button variant="secondary" onClick={onDismiss}>

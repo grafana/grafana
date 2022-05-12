@@ -19,7 +19,7 @@ import { FolderView } from './components/FolderView';
 import { ManageActions } from './components/ManageActions';
 import { SearchResultsGrid } from './components/SearchResultsGrid';
 import { SearchResultsTable, SearchResultsProps } from './components/SearchResultsTable';
-import { newSearchSelection, updateSearchSelection } from './selection';
+import { newSearchSelection, updateSearchSelection, clearSearchSelection } from './selection';
 
 const node: NavModelItem = {
   id: 'search',
@@ -86,6 +86,14 @@ export default function SearchPage() {
       // ??? also select all children?
     }
     setSearchSelection(updateSearchSelection(searchSelection, !current, kind, [uid]));
+  };
+
+  const onUpdateList = async () => {
+    // clean up search selection
+    setSearchSelection(clearSearchSelection(searchSelection));
+    // trigger again the search to the backend
+    // TODO: the backend is not returning the updated value :(
+    onQueryChange(inputValue);
   };
 
   const renderResults = () => {
@@ -174,7 +182,7 @@ export default function SearchPage() {
         </InlineFieldRow>
 
         {Boolean(searchSelection.items.size > 0) ? (
-          <ManageActions items={searchSelection.items} />
+          <ManageActions items={searchSelection.items} onChange={onUpdateList} />
         ) : (
           <ActionRow
             onLayoutChange={(v) => {
