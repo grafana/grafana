@@ -27,6 +27,7 @@ function processStreamFrame(
 ): DataFrame {
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'logs',
+    limit: query?.maxLines,
     searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(formatQuery(query.expr)) : undefined,
     custom: {
       // used by logs_model
