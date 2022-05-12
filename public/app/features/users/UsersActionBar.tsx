@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 
-import { RadioButtonGroup, LinkButton, FilterInput } from '@grafana/ui';
+import { FilterInput, LinkButton, RadioButtonGroup } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
@@ -40,7 +40,7 @@ export class UsersActionBar extends PureComponent<Props> {
     const canAddToOrg = contextSrv.hasAccess(AccessControlAction.UsersCreate, canInvite);
 
     return (
-      <div className="page-action-bar" data-testid="users-action-bar">
+      <div className="page-action-bar">
         <div className="gf-form gf-form--grow">
           <FilterInput
             value={searchQuery}

@@ -1,4 +1,4 @@
-import { DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta } from '@grafana/data';
+import { DataFrame, DataQueryResponse, FieldType, isDataFrame, QueryResultMeta } from '@grafana/data';
 
 import { getDerivedFields } from './getDerivedFields';
 import { makeTableFrames } from './makeTableFrames';
@@ -27,7 +27,6 @@ function processStreamFrame(
 ): DataFrame {
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'logs',
-    limit: query?.maxLines,
     searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(formatQuery(query.expr)) : undefined,
     custom: {
       // used by logs_model

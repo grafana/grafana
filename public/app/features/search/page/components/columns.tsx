@@ -79,9 +79,9 @@ export const generateColumns = (
     Cell: (p) => {
       const name = access.name.values.get(p.row.index);
       return (
-        <a {...p.cellProps} href={p.userProps.href} className={cx(p.cellStyle, styles.cellWrapper)}>
+        <div {...p.cellProps} className={p.cellStyle}>
           {name}
-        </a>
+        </div>
       );
     },
     id: `column-name`,
@@ -92,7 +92,7 @@ export const generateColumns = (
   availableWidth -= width;
 
   width = TYPE_COLUMN_WIDTH;
-  columns.push(makeTypeColumn(access.kind, access.panel_type, width, styles));
+  columns.push(makeTypeColumn(access.kind, access.panel_type, width, styles.typeText, styles.typeIcon));
   availableWidth -= width;
 
   // Show datasources if we have any
@@ -222,7 +222,8 @@ function makeTypeColumn(
   kindField: Field<string>,
   typeField: Field<string>,
   width: number,
-  styles: Record<string, string>
+  typeTextClass: string,
+  iconClass: string
 ): TableColumn {
   return {
     Cell: DefaultCell,
@@ -263,8 +264,8 @@ function makeTypeColumn(
         }
       }
       return (
-        <div className={styles.typeText}>
-          <SVG src={icon} width={14} height={14} title={txt} className={styles.typeIcon} />
+        <div className={typeTextClass}>
+          <SVG src={icon} width={14} height={14} title={txt} className={iconClass} />
           {txt}
         </div>
       );

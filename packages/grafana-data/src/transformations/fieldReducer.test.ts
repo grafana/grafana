@@ -5,7 +5,7 @@ import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { Field, FieldType } from '../types/index';
 import { ArrayVector } from '../vector/ArrayVector';
 
-import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
+import { fieldReducers, reduceField, ReducerID } from './fieldReducer';
 
 /**
  * Run a reducer and get back the value
@@ -56,26 +56,13 @@ describe('Stats Calculators', () => {
   it('should calculate basic stats', () => {
     const stats = reduceField({
       field: basicTable.fields[0],
-      reducers: [
-        'first',
-        'last',
-        'mean',
-        'count',
-        'Variance (Population)',
-        'Variance (Sample)',
-        'Standard deviation (Population)',
-        'Standard deviation (Sample)',
-      ],
+      reducers: ['first', 'last', 'mean', 'count'],
     });
 
     expect(stats.first).toEqual(10);
     expect(stats.last).toEqual(20);
     expect(stats.mean).toEqual(15);
     expect(stats.count).toEqual(2);
-    expect(stats.variancePopulation).toEqual(25);
-    expect(stats.varianceSample).toEqual(50);
-    expect(stats.stddevPopulation).toEqual(5);
-    expect(stats.stddevSample).toBeCloseTo(7.0710678, 5);
   });
 
   it('should support a single stat also', () => {
