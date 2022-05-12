@@ -146,7 +146,7 @@ teams:
 
 **Note**: The roles don't have to be defined in the provisioning configuration files to be assigned. As long as they exist in the database, they are assignable.
 
-**Remove a role assignment to a team:**
+**Remove a role assignment from a team:**
 
 If you want to remove an assignment from a team, add `state: absent` to the `teams > roles` section, and reload the configuration file.
 
