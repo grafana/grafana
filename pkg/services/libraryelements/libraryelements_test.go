@@ -235,7 +235,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	ac := acmock.New()
 	s := dashboardservice.ProvideFolderService(
 		cfg, d, dashboardStore, nil,
-		features, folderPermissions, ac, nil,
+		features, folderPermissions, ac,
 	)
 	t.Logf("Creating folder with title and UID %q", title)
 	folder, err := s.CreateFolder(context.Background(), &user, user.OrgId, title, title)
@@ -340,7 +340,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			SQLStore: sqlStore,
 			folderService: dashboardservice.ProvideFolderService(
 				cfg, dashboardService, dashboardStore, nil,
-				features, folderPermissions, ac, nil,
+				features, folderPermissions, ac,
 			),
 		}
 

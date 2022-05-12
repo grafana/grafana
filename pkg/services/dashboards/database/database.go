@@ -21,6 +21,9 @@ type DashboardStore struct {
 	log      log.Logger
 }
 
+// DashboardStore implements the Store interface
+var _ dashboards.Store = (*DashboardStore)(nil)
+
 func ProvideDashboardStore(sqlStore *sqlstore.SQLStore) *DashboardStore {
 	return &DashboardStore{sqlStore: sqlStore, log: log.New("dashboard-store")}
 }
@@ -822,4 +825,26 @@ func (d *DashboardStore) deleteAlertDefinition(dashboardId int64, sess *sqlstore
 	}
 
 	return nil
+}
+
+func (d *DashboardStore) GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error {
+	return d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
+			return models.ErrDashboardIdentifierNotSet
+		}
+
+		dashboard := models.Dashboard{Slug: query.Slug, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
+		has, err := sess.Get(&dashboard)
+
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrDashboardNotFound
+		}
+
+		dashboard.SetId(dashboard.Id)
+		dashboard.SetUid(dashboard.Uid)
+		query.Result = &dashboard
+		return nil
+	})
 }

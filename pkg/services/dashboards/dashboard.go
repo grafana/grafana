@@ -14,6 +14,7 @@ type DashboardService interface {
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error)
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardAcl) error
+	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
 }
 
 // PluginService is a service for operating on plugin dashboards.
@@ -51,6 +52,7 @@ type Store interface {
 	UnprovisionDashboard(ctx context.Context, id int64) error
 	// GetDashboardsByPluginID retrieves dashboards identified by plugin.
 	GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error
+	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
 	DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error
 	FolderStore
 }

@@ -13,6 +13,8 @@ type FakeDashboardService struct {
 	SaveDashboardError  error
 	SavedDashboards     []*SaveDashboardDTO
 	ProvisionedDashData *models.DashboardProvisioning
+
+	GetDashboardFn func(ctx context.Context, cmd *models.GetDashboardQuery) error
 }
 
 func (s *FakeDashboardService) SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error) {
@@ -43,5 +45,17 @@ func (s *FakeDashboardService) GetProvisionedDashboardDataByDashboardID(id int64
 	return s.ProvisionedDashData, nil
 }
 func (s *FakeDashboardService) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
+	return nil
+}
+
+func (s *FakeDashboardService) GetDashboard(ctx context.Context, cmd *models.GetDashboardQuery) error {
+	if s.GetDashboardFn != nil {
+		return s.GetDashboardFn(ctx, cmd)
+	}
+	// A minimal result for tests that need a valid result, but don't care what's in it.
+	cmd.Result = &models.Dashboard{
+		Id:  1,
+		Uid: "1",
+	}
 	return nil
 }
