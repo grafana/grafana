@@ -27,6 +27,7 @@ export enum PromApplication {
   Cortex = 'Cortex',
   Mimir = 'Mimir',
   Prometheus = 'Prometheus',
+  Loki = 'Loki',
 }
 
 export interface PromBuildInfoResponse {

@@ -57,8 +57,31 @@ export async function fetchDataSourceBuildInfo(dsSettings: { url: string; name: 
     };
   }
 
-  // if no features are reported but buildinfo was return we're talking to Prometheus
-  const { features } = response.data.data;
+  // if the response looks like "data: { revision: ... }", we're talking to Loki.
+  let { revision, features, data } = response.data as any;
+  if (revision) {
+    const response = {
+      application: PromApplication.Loki,
+      features: {
+        // TODO: Is this the most common case? Loki can be configured either
+        // way, and without the "features" field, we don't know whether this is
+        // true.
+        rulerApiEnabled: true,
+      },
+    };
+
+    if (features) {
+      response.features = {
+        rulerApiEnabled: features?.ruler_config_api === 'true',
+      };
+    }
+
+    return response;
+  }
+
+  // if the response looks like "data: { data: { revision: ... } }" with no
+  // features, we're talking to Prometheus.
+  features = data.features;
   if (!features) {
     return {
       application: PromApplication.Prometheus,
