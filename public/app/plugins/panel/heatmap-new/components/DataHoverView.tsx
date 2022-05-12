@@ -4,12 +4,15 @@ import React from 'react';
 import {
   arrayUtils,
   DataFrame,
+  dateTimeFormat,
   Field,
   FieldConfig,
+  FieldType,
   formattedValueToString,
   getFieldDisplayName,
   GrafanaTheme2,
   LinkModel,
+  systemDateFormats,
 } from '@grafana/data';
 import { SortOrder } from '@grafana/schema';
 import { LinkButton, useStyles2, VerticalGroup, usePanelContext } from '@grafana/ui';
@@ -50,7 +53,15 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder }: Props)
       displayValues.push([getFieldDisplayName(f, data), v, config.custom.render()]);
       continue;
     }
-    const disp = f.display ? f.display(v) : { text: `${v}`, numeric: +v };
+    let disp = f.display ? f.display(v) : { text: `${v}`, numeric: +v };
+    if (f.type === FieldType.time && !f.display) {
+      disp = {
+        text: dateTimeFormat(v, {
+          format: systemDateFormats.fullDate,
+        }),
+        numeric: v,
+      };
+    }
     if (f.config.links?.length) {
       getFieldLinksForExplore({
         field: f,
