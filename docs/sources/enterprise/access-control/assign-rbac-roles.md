@@ -90,7 +90,7 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
    | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
    | `roles`                  | Enter the custom role or custom roles you want to create/update.                                                              |
    | `roles > name`           | Enter the name of the custom role.                                                                                            |
-   | `roles > version`        | Enter the custom role version number. Role assignments are independant of the role version number.                            |
+   | `roles > version`        | Enter the custom role version number. Role assignments are independent of the role version number.                            |
    | `roles > global`         | Enter `true`. You can specify the `orgId` otherwise.                                                                          |
    | `roles > permissions`    | Enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [LINK] |
    | `teams`                  | Enter the team or teams to which you are adding the custom role.                                                              |
