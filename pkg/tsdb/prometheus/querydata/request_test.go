@@ -416,7 +416,7 @@ func setup() *testContext {
 		setting.NewCfg(),
 		&fakeFeatureToggles{enabled: true},
 		tracer,
-		backend.DataSourceInstanceSettings{URL: "http://localhost:9090", JSONData: json.RawMessage(`{}`)},
+		backend.DataSourceInstanceSettings{URL: "http://localhost:9090", JSONData: json.RawMessage(`{"timeInterval": "15s"}`)},
 		&fakeLogger{},
 	)
 

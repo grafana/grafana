@@ -4,6 +4,7 @@
       "schema": {
         "name": "prometheus_http_requests_total{code=\"200\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
         "meta": {
+          "type": "timeseries-many",
           "custom": {
             "resultType": "matrix"
           },
@@ -24,8 +25,7 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64",
-              "nullable": true
+              "frame": "float64"
             },
             "labels": {
               "__name__": "prometheus_http_requests_total",
@@ -58,6 +58,7 @@
       "schema": {
         "name": "prometheus_http_requests_total{code=\"400\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
         "meta": {
+          "type": "timeseries-many",
           "custom": {
             "resultType": "matrix"
           },
@@ -78,8 +79,7 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64",
-              "nullable": true
+              "frame": "float64"
             },
             "labels": {
               "__name__": "prometheus_http_requests_total",

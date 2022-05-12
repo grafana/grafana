@@ -4,6 +4,7 @@
       "schema": {
         "name": "1 / 0",
         "meta": {
+          "type": "timeseries-many",
           "custom": {
             "resultType": "matrix"
           },
@@ -24,8 +25,7 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64",
-              "nullable": true
+              "frame": "float64"
             },
             "labels": {},
             "config": {

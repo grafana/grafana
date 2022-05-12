@@ -4,6 +4,7 @@
       "schema": {
         "name": "go_goroutines{job=\"prometheus\"}",
         "meta": {
+          "type": "timeseries-many",
           "custom": {
             "resultType": "matrix"
           },
@@ -24,8 +25,7 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64",
-              "nullable": true
+              "frame": "float64"
             },
             "labels": {
               "__name__": "go_goroutines",

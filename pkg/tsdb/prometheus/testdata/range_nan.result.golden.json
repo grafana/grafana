@@ -4,6 +4,7 @@
       "schema": {
         "name": "{handler=\"/api/v1/query_range\", job=\"prometheus\"}",
         "meta": {
+          "type": "timeseries-many",
           "custom": {
             "resultType": "matrix"
           },
@@ -24,8 +25,7 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64",
-              "nullable": true
+              "frame": "float64"
             },
             "labels": {
               "handler": "/api/v1/query_range",
@@ -49,6 +49,16 @@
             null,
             null
           ]
+        ],
+        "entities": [
+          null,
+          {
+            "NaN": [
+              0,
+              1,
+              2
+            ]
+          }
         ]
       }
     }
