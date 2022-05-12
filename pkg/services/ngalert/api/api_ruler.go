@@ -557,10 +557,11 @@ type ruleUpdate struct {
 }
 
 type changes struct {
-	GroupKey ngmodels.AlertRuleGroupKey
-	New      []*ngmodels.AlertRule
-	Update   []ruleUpdate
-	Delete   []*ngmodels.AlertRule
+	GroupKey       ngmodels.AlertRuleGroupKey
+	AffectedGroups map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule
+	New            []*ngmodels.AlertRule
+	Update         []ruleUpdate
+	Delete         []*ngmodels.AlertRule
 }
 
 func (c *changes) isEmpty() bool {
@@ -570,6 +571,7 @@ func (c *changes) isEmpty() bool {
 // calculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).
 // returns a list of rules that need to be added, updated and deleted. Deleted considered rules in the database that belong to the group but do not exist in the list of submitted rules.
 func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey ngmodels.AlertRuleGroupKey, submittedRules []*ngmodels.AlertRule) (*changes, error) {
+	affectedGroups := make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
 	q := &ngmodels.ListAlertRulesQuery{
 		OrgID:         groupKey.OrgID,
 		NamespaceUIDs: []string{groupKey.NamespaceUID},
@@ -579,6 +581,9 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey n
 		return nil, fmt.Errorf("failed to query database for rules in the group %s: %w", groupKey, err)
 	}
 	existingGroupRules := q.Result
+	if len(existingGroupRules) > 0 {
+		affectedGroups[groupKey] = existingGroupRules
+	}
 
 	existingGroupRulesUIDs := make(map[string]*ngmodels.AlertRule, len(existingGroupRules))
 	for _, r := range existingGroupRules {
@@ -597,15 +602,19 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey n
 				delete(existingGroupRulesUIDs, r.UID)
 			} else {
 				// Rule can be from other group or namespace
-				q := &ngmodels.GetAlertRuleByUIDQuery{OrgID: groupKey.OrgID, UID: r.UID}
-				if err := ruleStore.GetAlertRuleByUID(ctx, q); err != nil || q.Result == nil {
-					// if rule has UID then it is considered an update. Therefore, fail if there is no rule to update
-					if errors.Is(err, ngmodels.ErrAlertRuleNotFound) || q.Result == nil && err == nil {
-						return nil, fmt.Errorf("failed to update rule with UID %s because %w", r.UID, ngmodels.ErrAlertRuleNotFound)
-					}
-					return nil, fmt.Errorf("failed to query database for an alert rule with UID %s: %w", r.UID, err)
+				q := &ngmodels.GetAlertRulesGroupByRuleUIDQuery{OrgID: groupKey.OrgID, UID: r.UID}
+				if err := ruleStore.GetAlertRulesGroupByRuleUID(ctx, q); err != nil {
+					return nil, fmt.Errorf("failed to query database for a group of alert rules: %w", err)
 				}
-				existing = q.Result
+				for _, rule := range q.Result {
+					if rule.UID == r.UID {
+						existing = rule
+					}
+				}
+				if existing == nil {
+					return nil, fmt.Errorf("failed to update rule with UID %s because %w", r.UID, ngmodels.ErrAlertRuleNotFound)
+				}
+				affectedGroups[existing.GetGroupKey()] = q.Result
 			}
 		}
 
@@ -634,10 +643,11 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey n
 	}
 
 	return &changes{
-		GroupKey: groupKey,
-		New:      toAdd,
-		Delete:   toDelete,
-		Update:   toUpdate,
+		GroupKey:       groupKey,
+		AffectedGroups: affectedGroups,
+		New:            toAdd,
+		Delete:         toDelete,
+		Update:         toUpdate,
 	}, nil
 }
 
