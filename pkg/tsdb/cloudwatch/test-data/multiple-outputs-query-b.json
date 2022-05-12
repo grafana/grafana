@@ -1,0 +1,47 @@
+[
+  {
+    "Messages": null,
+    "MetricDataResults": [
+      {
+        "Id": "b",
+        "Label": "label2",
+        "Messages": null,
+        "StatusCode": "Complete",
+        "Timestamps": [
+          "2021-01-15T19:44:00Z"
+        ],
+        "Values": [
+          0.1333395078879982
+        ]
+      }
+    ],
+    "NextToken": null
+  },
+  {
+    "Messages": [
+      { "Code": "", "Value": null },
+      { "Code": "MaxMetricsExceeded", "Value": null },
+      { "Code": "MaxQueryTimeRangeExceeded", "Value": null },
+      { "Code": "MaxQueryResultsExceeded", "Value": null },
+      { "Code": "MaxMatchingResultsExceeded", "Value": null }
+    ],
+    "MetricDataResults": [
+      {
+        "Id": "b",
+        "Label": "label2",
+        "Messages": [{
+          "Code": "ArithmeticError",
+          "Value": "One or more data-points have been dropped due to non-numeric values (NaN, -Infinite, +Infinite)"
+        }],
+        "StatusCode": "PartialData",
+        "Timestamps": [
+          "2021-01-15T19:44:00Z"
+        ],
+        "Values": [
+          0.1333395078879982
+        ]
+      }
+    ],
+    "NextToken": null
+  }
+]

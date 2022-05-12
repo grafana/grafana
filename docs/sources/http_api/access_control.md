@@ -219,12 +219,12 @@ Creates a new custom role and maps given permissions to that role. Note that rol
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.
 
-| Action      | Scope                |
-| ----------- | -------------------- |
-| roles:write | permissions:delegate |
+| Action      | Scope                     |
+| ----------- | ------------------------- |
+| roles:write | permissions:type:delegate |
 
 #### Example request
 
@@ -245,7 +245,7 @@ Content-Type: application/json
     "permissions": [
         {
             "action": "roles:delete",
-            "scope": "permissions:delegate"
+            "scope": "permissions:type:delegate"
         }
     ]
 }
@@ -290,7 +290,7 @@ Content-Type: application/json; charset=UTF-8
     "permissions": [
         {
             "action": "roles:delete",
-            "scope": "permissions:delegate",
+            "scope": "permissions:type:delegate",
             "updated": "2021-05-13T23:19:46+02:00",
             "created": "2021-05-13T23:19:46+02:00"
         }
@@ -317,12 +317,12 @@ Update the role with the given UID, and it's permissions with the given UID. The
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only update custom roles with the same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only update custom roles with the same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to update a custom role which allows to do that. This is done to prevent escalation of privileges.
 
-| Action      | Scope                |
-| ----------- | -------------------- |
-| roles:write | permissions:delegate |
+| Action      | Scope                     |
+| ----------- | ------------------------- |
+| roles:write | permissions:type:delegate |
 
 #### Example request
 
@@ -342,11 +342,11 @@ Content-Type: application/json
     "permissions": [
         {
             "action": "roles:delete",
-            "scope": "permissions:delegate"
+            "scope": "permissions:type:delegate"
         },
         {
             "action": "roles:write",
-            "scope": "permissions:delegate"
+            "scope": "permissions:type:delegate"
         }
     ]
 }
@@ -388,13 +388,13 @@ Content-Type: application/json; charset=UTF-8
     "permissions":[
         {
             "action":"roles:delete",
-            "scope":"permissions:delegate",
+            "scope":"permissions:type:delegate",
             "updated":"2021-08-06T18:27:40+02:00",
             "created":"2021-08-06T18:27:40+02:00"
         },
         {
             "action":"roles:write",
-            "scope":"permissions:delegate",
+            "scope":"permissions:type:delegate",
             "updated":"2021-08-06T18:27:41+02:00",
             "created":"2021-08-06T18:27:41+02:00"
         }
@@ -423,12 +423,12 @@ Delete a role with the given UID, and it's permissions. If the role is assigned 
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to delete a custom role which allows to do that.
 
-| Action       | Scope                |
-| ------------ | -------------------- |
-| roles:delete | permissions:delegate |
+| Action       | Scope                     |
+| ------------ | ------------------------- |
+| roles:delete | permissions:type:delegate |
 
 #### Example request
 
@@ -574,12 +574,12 @@ For bulk updates consider
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.
 
-| Action          | Scope                |
-| --------------- | -------------------- |
-| users.roles:add | permissions:delegate |
+| Action          | Scope                     |
+| --------------- | ------------------------- |
+| users.roles:add | permissions:type:delegate |
 
 #### Example request
 
@@ -632,12 +632,12 @@ For bulk updates consider
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.
 
-| Action             | Scope                |
-| ------------------ | -------------------- |
-| users.roles:remove | permissions:delegate |
+| Action             | Scope                     |
+| ------------------ | ------------------------- |
+| users.roles:remove | permissions:type:delegate |
 
 #### Query parameters
 
@@ -686,13 +686,13 @@ instead.
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.
 
-| Action             | Scope                |
-| ------------------ | -------------------- |
-| users.roles:add    | permissions:delegate |
-| users.roles:remove | permissions:delegate |
+| Action             | Scope                     |
+| ------------------ | ------------------------- |
+| users.roles:add    | permissions:type:delegate |
+| users.roles:remove | permissions:type:delegate |
 
 #### Example request
 
@@ -802,12 +802,12 @@ For bulk updates consider [Set team role assignments]({{< ref "#set-team-role-as
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have the permissions required to create users, they won't be able to assign a role that contains these permissions. This is done to prevent escalation of privileges.
 
-| Action          | Scope                |
-| --------------- | -------------------- |
-| teams.roles:add | permissions:delegate |
+| Action          | Scope                     |
+| --------------- | ------------------------- |
+| teams.roles:add | permissions:type:delegate |
 
 #### Example request
 
@@ -857,12 +857,12 @@ For bulk updates consider [Set team role assignments]({{< ref "#set-team-role-as
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have the permissions required to create users, they won't be able to assign a role that contains these permissions. This is done to prevent escalation of privileges.```
 
-| Action             | Scope                |
-| ------------------ | -------------------- |
-| teams.roles:remove | permissions:delegate |
+| Action             | Scope                     |
+| ------------------ | ------------------------- |
+| teams.roles:remove | permissions:type:delegate |
 
 #### Example request
 
@@ -905,13 +905,13 @@ instead.
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to assign or unassign a role to a team which will allow to do that. This is done to prevent escalation of privileges.
 
-| Action             | Scope                |
-| ------------------ | -------------------- |
-| teams.roles:add    | permissions:delegate |
-| teams.roles:remove | permissions:delegate |
+| Action             | Scope                     |
+| ------------------ | ------------------------- |
+| teams.roles:add    | permissions:type:delegate |
+| teams.roles:remove | permissions:type:delegate |
 
 #### Example request
 
@@ -1045,12 +1045,12 @@ Creates a new built-in role assignment.
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.
 
-| Action            | Scope                |
-| ----------------- | -------------------- |
-| roles.builtin:add | permissions:delegate |
+| Action            | Scope                     |
+| ----------------- | ------------------------- |
+| roles.builtin:add | permissions:type:delegate |
 
 #### Example request
 
@@ -1103,12 +1103,12 @@ Deletes a built-in role assignment (for one of _Viewer_, _Editor_, _Admin_, or _
 
 #### Required permissions
 
-`permission:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has.
+`permissions:type:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has.
 For example, if a user does not have required permissions for creating users, they won't be able to remove a built-in role assignment which allows to do that.
 
-| Action               | Scope                |
-| -------------------- | -------------------- |
-| roles.builtin:remove | permissions:delegate |
+| Action               | Scope                     |
+| -------------------- | ------------------------- |
+| roles.builtin:remove | permissions:type:delegate |
 
 #### Example request
 

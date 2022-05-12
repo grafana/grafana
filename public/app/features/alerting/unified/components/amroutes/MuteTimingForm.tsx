@@ -12,6 +12,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
+import { useAlertManagersByPermission } from '../../hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { MuteTimingFields } from '../../types/mute-timing-form';
@@ -57,7 +58,8 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
 
 const MuteTimingForm = ({ muteTiming, showError }: Props) => {
   const dispatch = useDispatch();
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
+  const alertManagers = useAlertManagersByPermission('notification');
+  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const styles = useStyles2(getStyles);
 
   const defaultAmCortexConfig = { alertmanager_config: {}, template_files: {} };
@@ -101,7 +103,12 @@ const MuteTimingForm = ({ muteTiming, showError }: Props) => {
 
   return (
     <AlertingPageWrapper pageId="am-routes">
-      <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} disabled />
+      <AlertManagerPicker
+        current={alertManagerSourceName}
+        onChange={setAlertManagerSourceName}
+        disabled
+        dataSources={alertManagers}
+      />
       {result && !loading && (
         <FormProvider {...formApi}>
           <form onSubmit={formApi.handleSubmit(onSubmit)} data-testid="mute-timing-form">

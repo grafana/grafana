@@ -25,7 +25,7 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 		registrations:  accesscontrol.RegistrationList{},
 		scopeResolvers: accesscontrol.NewScopeResolvers(),
 		provider:       database.ProvideService(sqlstore.InitTestDB(t)),
-		roles:          accesscontrol.BuildMacroRoleDefinitions(),
+		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac

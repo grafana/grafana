@@ -94,10 +94,10 @@ func NewAccessControlDashboardPermissionFilter(user *models.SignedInUser, permis
 			folderActions = append(folderActions, accesscontrol.ActionAlertingRuleCreate)
 		}
 	} else {
-		dashboardActions = append(dashboardActions, accesscontrol.ActionDashboardsRead)
+		dashboardActions = append(dashboardActions, dashboards.ActionDashboardsRead)
 		if needEdit {
-			folderActions = append(folderActions, accesscontrol.ActionDashboardsCreate)
-			dashboardActions = append(dashboardActions, accesscontrol.ActionDashboardsWrite)
+			folderActions = append(folderActions, dashboards.ActionDashboardsCreate)
+			dashboardActions = append(dashboardActions, dashboards.ActionDashboardsWrite)
 		}
 	}
 	return AccessControlDashboardPermissionFilter{User: user, folderActions: folderActions, dashboardActions: dashboardActions}

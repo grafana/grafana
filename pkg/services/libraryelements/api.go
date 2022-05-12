@@ -30,9 +30,31 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext) response.Res
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	if cmd.FolderUID != nil {
+		if *cmd.FolderUID == "" {
+			cmd.FolderID = 0
+		} else {
+			folder, err := l.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, *cmd.FolderUID)
+			if err != nil || folder == nil {
+				return response.Error(http.StatusBadRequest, "failed to get folder", err)
+			}
+			cmd.FolderID = folder.Id
+		}
+	}
+
 	element, err := l.createLibraryElement(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to create library element")
+	}
+
+	if element.FolderID != 0 {
+		folder, err := l.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, element.FolderID, c.OrgId)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "failed to get folder", err)
+		}
+		element.FolderUID = folder.Uid
+		element.Meta.FolderUID = folder.Uid
+		element.Meta.FolderName = folder.Title
 	}
 
 	return response.JSON(http.StatusOK, LibraryElementResponse{Result: element})
@@ -88,9 +110,31 @@ func (l *LibraryElementService) patchHandler(c *models.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	if cmd.FolderUID != nil {
+		if *cmd.FolderUID == "" {
+			cmd.FolderID = 0
+		} else {
+			folder, err := l.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, *cmd.FolderUID)
+			if err != nil || folder == nil {
+				return response.Error(http.StatusBadRequest, "failed to get folder", err)
+			}
+			cmd.FolderID = folder.Id
+		}
+	}
+
 	element, err := l.patchLibraryElement(c.Req.Context(), c.SignedInUser, cmd, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to update library element")
+	}
+
+	if element.FolderID != 0 {
+		folder, err := l.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, element.FolderID, c.OrgId)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "failed to get folder", err)
+		}
+		element.FolderUID = folder.Uid
+		element.Meta.FolderUID = folder.Uid
+		element.Meta.FolderName = folder.Title
 	}
 
 	return response.JSON(http.StatusOK, LibraryElementResponse{Result: element})

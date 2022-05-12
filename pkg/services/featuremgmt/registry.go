@@ -236,5 +236,23 @@ var (
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,
 		},
+		{
+			Name:        "datasourceQueryMultiStatus",
+			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:            "azureMonitorExperimentalUI",
+			Description:     "Use grafana-experimental UI in Azure Monitor",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+			FrontendOnly:    true,
+		},
+		{
+			Name:         "traceToMetrics",
+			Description:  "Enable trace to metrics links",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
 	}
 )
