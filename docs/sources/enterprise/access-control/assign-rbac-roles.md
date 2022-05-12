@@ -85,32 +85,37 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
 
 1. Refer to the following table to add attributes and values.
 
-   | Attribute | Description                                                                                                                    |
-   | --------- | ------------------------------------------------------------------------------------------------------------------------------ |
-   | `name`    | Enter the name of the fixed role.                                                                                              |
-   | `global`  | Enter `true`. Because fixed roles are global, you must specify the global attribute. You cannot change fixed role definitions. |
-   | `teams`   | Enter the team or teams to which you are adding the fixed role.                                                                |
-   | `orgId`   | Because teams belong to organizations, you must add the `orgId` value.                                                         |
+   | Attribute                | Description                                                                                                                    |
+   | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+   | `teams`                  | Enter the team or teams to which you are adding the fixed role.                                                                |
+   | `teams > name`           | Enter the name of the team.                                                                                                    |
+   | `teams > orgId`          | Because teams belong to organizations, you must add the `orgId` value.                                                         |
+   | `teams > roles`          | Enter the role or roles that you want to grant to the team.                                                                    |
+   | `teams > roles > name`   | Enter the name of the role.                                                                                                    |
+   | `teams > roles > global` | Enter `true`. Because fixed roles are global, you must specify the global attribute. You cannot change fixed role definitions. |
 
 1. Reload the provisioning configuration file.
 
    For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}).
 
-The following example assigns the `users:writer` fixed role to the `user editors` and `user admins` teams:
+The following example assigns the `users:writer` fixed role to the `user writers` and `user admins` teams:
 
 ```yaml
 # config file version
-apiVersion: 1
+apiVersion: 2
 
-# Roles to insert/update in the database
-roles:
-  - name: fixed:users:writer
-    global: true
-    teams:
-      - name: 'user editors'
-        orgId: 1
-      - name: 'user admins'
-        orgId: 1
+# Assignments to teams
+teams:
+  - name: 'user writers'
+    orgId: 1
+    roles:
+      - name: 'fixed:users:writer'
+        global: true
+  - name: 'user admins'
+    orgId: 1
+    roles:
+      - name: 'fixed:users:writer'
+        global: true
 ```
 
 </br>
@@ -121,14 +126,19 @@ roles:
 
 1. Refer to the following table to add attributes and values.
 
-   | Attribute     | Description                                                                                                                                                                                                                                                  |
-   | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-   | `name`        | Enter the name of the custom role.                                                                                                                                                                                                                           |
-   | `version`     | Enter the custom role version number. Assignments are updated if the version of the role is greater then or equal to the version number stored internally. If you are updating a role assignment, you are not required to increment the role version number. |
-   | `global`      | Enter `true` or `false`                                                                                                                                                                                                                                      |
-   | `permissions` | Enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [LINK]                                                                                                                                |
-   | `teams`       | Enter the team or teams to which you are adding the custom role.                                                                                                                                                                                             |
-   | `orgId`       | Because teams belong to organizations, you must add the `orgId` value.                                                                                                                                                                                       |
+   | Attribute                | Description                                                                                                                   |
+   | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+   | `roles`                  | Enter the role or roles you want to create/update.                                                                            |
+   | `roles > name`           | Enter the name of the custom role.                                                                                            |
+   | `roles > version`        | Enter the custom role version number. Role assignments are independant of the role version number.                            |
+   | `roles > global`         | Enter `true`. You can specify the `orgId` otherwise.                                                                          |
+   | `roles > permissions`    | Enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [LINK] |
+   | `teams`                  | Enter the team or teams to which you are adding the custom role.                                                              |
+   | `teams > orgId`          | Because teams belong to organizations, you must add the `orgId` value.                                                        |
+   | `teams > name`           | Enter the name of the team.                                                                                                   |
+   | `teams > roles`          | Enter the role or roles that you want to grant to the team.                                                                   |
+   | `teams > roles > name`   | Enter the name of the role.                                                                                                   |
+   | `teams > roles > global` | Enter `true`, or specify `orgId` of the role you want to assign to the team                                                   |
 
 1. Reload the provisioning configuration file.
 
@@ -138,11 +148,11 @@ The following example assigns the `custom:users:writer` role to the `user editor
 
 ```yaml
 # config file version
-apiVersion: 1
+apiVersion: 2
 
 # Roles to insert/update in the database
 roles:
-  - name: custom:users:writer
+  - name: 'custom:users:writer'
     description: 'List/update other users in the organization'
     version: 1
     global: true
@@ -151,14 +161,61 @@ roles:
         scope: 'users:*'
       - action: 'org.users:write'
         scope: 'users:*'
-    teams:
-      - name: 'user editors'
-        orgId: 1
-      - name: 'user admins'
-        orgId: 1
+
+# Assignments to teams
+teams:
+  - name: 'user writers'
+    orgId: 1
+    roles:
+      - name: 'custom:users:writer'
+        global: true
+  - name: 'user admins'
+    orgId: 1
+    roles:
+      - name: 'custom:users:writer'
+        global: true
 ```
 
-> **Note:** If you want to remove a fixed role assignment from a team, remove it from the YAML file, save your changes, and reload the configuration file.
+**Remove a role assignment to a team:**
+
+If you want to remove an assignment from a team, add `state: absent` to the `teams > roles` section, and reload the configuration file.
+
+```yaml
+# config file version
+apiVersion: 2
+
+# Roles to insert/update in the database
+roles:
+  - name: 'custom:users:writer'
+    description: 'List/update other users in the organization'
+    version: 1
+    global: true
+    permissions:
+      - action: 'org.users:read'
+        scope: 'users:*'
+      - action: 'org.users:write'
+        scope: 'users:*'
+
+# Assignments to teams
+teams:
+  - name: 'user writers'
+    orgId: 1
+    roles:
+      # Assignments will be removed
+      - name: 'fixed:users:writer'
+        global: true
+        state: 'absent'
+      - name: 'custom:users:writer'
+        global: true
+        state: 'absent'
+  - name: 'user admins'
+    orgId: 1
+    roles:
+      - name: 'fixed:users:writer'
+        global: true
+      - name: 'custom:users:writer'
+        global: true
+```
 
 ## Change the permissions of a basic role
 
