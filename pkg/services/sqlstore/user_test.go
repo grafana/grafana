@@ -9,7 +9,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -337,7 +339,7 @@ func TestUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
-		ss = InitTestDB(t)
+		ss := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
 		createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
 			return &models.CreateUserCommand{
 				Email: fmt.Sprint("user", i, "@test.com"),
@@ -345,20 +347,10 @@ func TestUserDataAccess(t *testing.T) {
 				Login: fmt.Sprint("loginuser", i),
 			}
 		})
-		test := accessControlTestCase{
-			expectedCode: http.StatusOK,
-			url:          "/api/users",
-			method:       http.MethodGet,
-			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionUsersRead, Scope: "users:id:1"}},
-		}
-		testUser := models.SignedInUser{
-			UserId:  1,
-			OrgId:   3,
-			OrgName: "TestOrg",
-			OrgRole: models.ROLE_VIEWER,
-			Login:   "testUser",
-			Name:    "Test User",
-			Email:   "testuser@example.org",
+
+		testUser := &models.SignedInUser{
+			OrgId:       1,
+			Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:id:1", "global.users:id:3"}}},
 		}
 		query := models.SearchUsersQuery{SignedInUser: testUser}
 		err := ss.SearchUsers(context.Background(), &query)
