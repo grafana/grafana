@@ -157,28 +157,41 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqSignedIn, evaluator)
 	}
 
-	groupMap := make(map[string]*apimodels.RuleGroup)
-
+	groupedRules := make(map[string]map[string][]*ngmodels.AlertRule)
 	for _, rule := range alertRuleQuery.Result {
 		if !authorizeDatasourceAccessForRule(rule, hasAccess) {
 			continue
 		}
-		groupKey := rule.RuleGroup + "-" + rule.NamespaceUID
-		newGroup, ok := groupMap[groupKey]
+		groups, ok := groupedRules[rule.NamespaceUID]
 		if !ok {
-			folder := namespaceMap[rule.NamespaceUID]
-			if folder == nil {
-				srv.log.Warn("query returned rules that belong to folder the user does not have access to. The rule will not be added to the response", "folder_uid", rule.NamespaceUID, "rule_uid", rule.UID)
-				continue
-			}
-			newGroup = &apimodels.RuleGroup{
-				Name: rule.RuleGroup,
-				File: folder.Title, // file is what Prometheus uses for provisioning, we replace it with namespace.
-			}
-			groupMap[groupKey] = newGroup
-			ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, newGroup)
+			groups = make(map[string][]*ngmodels.AlertRule)
+			groupedRules[rule.NamespaceUID] = groups
 		}
+		rulesInGroup := groups[rule.RuleGroup]
+		rulesInGroup = append(rulesInGroup, rule)
+		groups[rule.RuleGroup] = rulesInGroup
+	}
 
+	for namespaceUID, groups := range groupedRules {
+		folder := namespaceMap[namespaceUID]
+		if folder == nil {
+			srv.log.Warn("query returned rules that belong to folder the user does not have access to. All rules that belong to that namespace will not be added to the response", "folder_uid", namespaceUID)
+			continue
+		}
+		for groupName, rules := range groups {
+			ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, srv.toRuleGroup(c.OrgId, groupName, folder, rules, labelOptions))
+		}
+	}
+	return response.JSON(http.StatusOK, ruleResponse)
+}
+
+func (srv PrometheusSrv) toRuleGroup(orgID int64, groupName string, folder *models.Folder, rules []*ngmodels.AlertRule, labelOptions []ngmodels.LabelOption) *apimodels.RuleGroup {
+	newGroup := &apimodels.RuleGroup{
+		Name: groupName,
+		File: folder.Title, // file is what Prometheus uses for provisioning, we replace it with namespace.
+	}
+
+	for _, rule := range rules {
 		alertingRule := apimodels.AlertingRule{
 			State:       "inactive",
 			Name:        rule.Title,
@@ -195,7 +208,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			LastEvaluation: time.Time{},
 		}
 
-		for _, alertState := range srv.manager.GetStatesForRuleUID(c.OrgId, rule.UID) {
+		for _, alertState := range srv.manager.GetStatesForRuleUID(orgID, rule.UID) {
 			activeAt := alertState.StartsAt
 			valString := ""
 			if alertState.State == eval.Alerting || alertState.State == eval.Pending {
@@ -241,11 +254,11 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		alertingRule.Rule = newRule
 		newGroup.Rules = append(newGroup.Rules, alertingRule)
 		newGroup.Interval = float64(rule.IntervalSeconds)
+		// TODO yuri. Change that when scheduler will process alerts in groups
 		newGroup.EvaluationTime = newRule.EvaluationTime
 		newGroup.LastEvaluation = newRule.LastEvaluation
 	}
-
-	return response.JSON(http.StatusOK, ruleResponse)
+	return newGroup
 }
 
 // ruleToQuery attempts to extract the datasource queries from the alert query model.
