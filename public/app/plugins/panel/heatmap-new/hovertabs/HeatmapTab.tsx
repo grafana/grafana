@@ -110,8 +110,7 @@ export const HeatmapTab = ({
   options,
 }: HeatmapHoverProps<HeatmapLayerOptions>): HeatmapLayerHover => {
   const [xField, yField, countField] = getHeatmapFields(heatmapData?.heatmap!);
-
-  if (xField && yField && countField && index && heatmapData) {
+  if (xField && yField && countField && typeof index !== 'undefined' && index >= 0 && heatmapData) {
     const yValueIdx = index % heatmapData?.yBucketCount! ?? 0;
 
     const yMinIdx = heatmapData.yLayout === BucketLayout.le ? yValueIdx - 1 : yValueIdx;
@@ -221,13 +220,11 @@ export const HeatmapTab = ({
     return {
       name: 'Heatmap',
       header,
-      data: [],
       footer,
     };
   }
 
   return {
     name: 'Heatmap',
-    data: [],
   };
 };

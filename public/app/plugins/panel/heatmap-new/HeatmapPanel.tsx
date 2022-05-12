@@ -148,7 +148,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
                 ExemplarTab({
                   heatmapData: info,
                   index: hover?.index,
-                  options: { timeZone },
+                  options: { timeZone, timeRange },
                 }),
               ],
               hover,

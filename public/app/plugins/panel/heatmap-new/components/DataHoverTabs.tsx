@@ -16,12 +16,12 @@ export const DataHoverTabs = ({ layers, setActiveTabIndex, activeTabIndex }: Pro
       {layers &&
         layers.map(
           (g, index) =>
-            (g.data.length > 0 || g.header || g.footer) && (
+            ((g.indicies && g.indicies?.length > 0) || g.header || g.footer) && (
               <Tab
                 key={index}
                 label={g.name}
                 active={index === activeTabIndex}
-                counter={g.data.length > 1 ? g.data.length : null}
+                counter={g.indicies && g.indicies.length > 1 ? g.indicies.length : null}
                 onChangeTab={() => {
                   setActiveTabIndex(index);
                 }}

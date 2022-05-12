@@ -1,15 +1,14 @@
 import React from 'react';
 
-import { ArrayVector, DataFrame, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
+import { ArrayVector, DataFrame, dateTimeFormat, systemDateFormats, TimeRange, TimeZone } from '@grafana/data';
 
 import { DataHoverView } from '../components/DataHoverView';
 import { BucketLayout, getHeatmapFields } from '../fields';
 import { HeatmapHoverProps, HeatmapLayerHover } from '../types';
 
-import { resolveMappingToData } from './common';
-
 interface HeatmapLayerOptions {
   timeZone: TimeZone;
+  timeRange: TimeRange;
 }
 
 export const ExemplarTab = ({
@@ -20,14 +19,21 @@ export const ExemplarTab = ({
   if (!heatmapData?.heatmap) {
     return {
       name: 'Exemplar',
-      data: [],
     };
   }
   const [xField, yField, countField] = getHeatmapFields(heatmapData?.heatmap!);
   const mapping: number[] | null = heatmapData.exemplarsMappings?.lookup[index!]!;
   const count: number = mapping?.length ?? 0;
 
-  if (xField && yField && countField && count && count > 0 && index && index >= 0) {
+  if (
+    xField &&
+    yField &&
+    countField &&
+    typeof count === 'number' &&
+    count > 0 &&
+    typeof index !== 'undefined' &&
+    index >= 0
+  ) {
     const yValueIdx = index % heatmapData?.yBucketCount! ?? 0;
 
     const yMinIdx = heatmapData.yLayout === BucketLayout.le ? yValueIdx - 1 : yValueIdx;
@@ -41,7 +47,6 @@ export const ExemplarTab = ({
     if (count === 0) {
       return {
         name: 'Exemplar',
-        data: [],
       };
     }
 
@@ -126,17 +131,15 @@ export const ExemplarTab = ({
       return <DataHoverView data={summaryData} rowIndex={0} />;
     };
 
-    console.log('lookup', index, heatmapData.exemplarsMappings?.lookup[index]);
-
     return {
       name: 'Exemplar',
       header,
-      data: resolveMappingToData(heatmapData.exemplars!, heatmapData.exemplarsMappings?.lookup[index]!),
+      data: heatmapData.exemplars!,
+      indicies: heatmapData.exemplarsMappings?.lookup[index]!,
     };
   }
 
   return {
     name: 'Exemplar',
-    data: [],
   };
 };

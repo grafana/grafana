@@ -12,7 +12,9 @@ import {
   LinkModel,
 } from '@grafana/data';
 import { SortOrder } from '@grafana/schema';
-import { LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
+import { LinkButton, useStyles2, VerticalGroup, usePanelContext } from '@grafana/ui';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
 import { RenderCallback } from '../types';
 
@@ -25,6 +27,7 @@ export interface Props {
 
 export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder }: Props) => {
   const styles = useStyles2(getStyles);
+  const { onSplitOpen } = usePanelContext();
 
   if (!data || rowIndex == null) {
     return null;
@@ -48,9 +51,24 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder }: Props)
       continue;
     }
     const disp = f.display ? f.display(v) : { text: `${v}`, numeric: +v };
+    if (f.config.links?.length) {
+      getFieldLinksForExplore({
+        field: f,
+        rowIndex,
+        splitOpenFn: onSplitOpen,
+        range: getTimeSrv().timeRange(),
+      }).forEach((link) => {
+        const key = `${link.title}/${link.href}`;
+        if (!linkLookup.has(key)) {
+          links.push(link);
+          linkLookup.add(key);
+        }
+      });
+    }
     if (f.getLinks) {
       f.getLinks({ calculatedValue: disp, valueRowIndex: rowIndex }).forEach((link) => {
         const key = `${link.title}/${link.href}`;
+
         if (!linkLookup.has(key)) {
           links.push(link);
           linkLookup.add(key);

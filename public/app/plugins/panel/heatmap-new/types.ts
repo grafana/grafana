@@ -9,7 +9,8 @@ export interface RenderCallback {
 
 export interface HeatmapLayerHover {
   name: string;
-  data: DataFrame[];
+  data?: DataFrame;
+  indicies?: number[];
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
 }

@@ -29,27 +29,29 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
             <div key={layer.name}>
               {layer.header && layer.header()}
               <div>
-                {layer.data.map((dataFrame, idx) => {
-                  const key = dataFrame.refId ?? idx;
-                  const shouldDisplayCollapse = layer.data.length > 1;
+                {layer.indicies &&
+                  layer.data &&
+                  layer.indicies.map((rowIndex, idx) => {
+                    const key = `${layer.data?.refId ?? ''}${idx}`;
+                    const shouldDisplayCollapse = layer.indicies && layer.indicies.length > 1;
 
-                  return shouldDisplayCollapse ? (
-                    <Collapse
-                      key={key}
-                      collapsible
-                      label={dataFrame.name}
-                      isOpen={rowMap.get(key)}
-                      onToggle={() => {
-                        updateRowMap(key, !rowMap.get(key));
-                      }}
-                      className={styles.collapsibleRow}
-                    >
-                      <DataHoverRow data={dataFrame} rowIndex={0} />
-                    </Collapse>
-                  ) : (
-                    <DataHoverRow data={dataFrame} rowIndex={0} />
-                  );
-                })}
+                    return shouldDisplayCollapse ? (
+                      <Collapse
+                        key={key}
+                        collapsible
+                        label={layer.data?.name}
+                        isOpen={rowMap.get(key)}
+                        onToggle={() => {
+                          updateRowMap(key, !rowMap.get(key));
+                        }}
+                        className={styles.collapsibleRow}
+                      >
+                        <DataHoverRow data={layer.data!} rowIndex={rowIndex} />
+                      </Collapse>
+                    ) : (
+                      <DataHoverRow key={key} data={layer.data!} rowIndex={rowIndex} />
+                    );
+                  })}
               </div>
               {layer.footer && layer.footer()}
             </div>
