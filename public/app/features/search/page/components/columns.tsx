@@ -148,11 +148,7 @@ export const generateColumns = (
     availableWidth -= width;
   }
 
-  // Show tags if we have any
-  if (access.tags) {
-    width = availableWidth;
-    columns.push(makeTagsColumn(access.tags, width, styles.tagList, onTagSelected));
-  }
+  columns.push(makeTagsColumn(access.tags, availableWidth, styles.tagList, onTagSelected));
 
   return columns;
 };
@@ -283,14 +279,11 @@ function makeTagsColumn(
   return {
     Cell: (p) => {
       const tags = field.values.get(p.row.index);
-      if (tags) {
-        return (
-          <div {...p.cellProps} className={p.cellStyle}>
-            <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />
-          </div>
-        );
-      }
-      return null;
+      return tags ? (
+        <div {...p.cellProps} className={p.cellStyle}>
+          <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />
+        </div>
+      ) : null;
     },
     id: `column-tags`,
     field: field,
