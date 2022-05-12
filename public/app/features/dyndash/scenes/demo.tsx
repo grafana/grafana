@@ -16,7 +16,7 @@ export function getDemoScene(): Scene {
   // })
 
   function addDrilldown() {
-    scene.update({
+    scene.setState({
       children: [
         ...scene.state.children,
         new ScenePanel({
@@ -30,7 +30,7 @@ export function getDemoScene(): Scene {
   }
 
   setTimeout(() => {
-    scene.update({
+    scene.setState({
       children: [
         new ScenePanel({
           id: '2',
@@ -50,7 +50,7 @@ export function getDemoScene(): Scene {
   }, 2000);
 
   setTimeout(() => {
-    scene.update({
+    scene.setState({
       title: 'New title',
     });
   }, 10000);

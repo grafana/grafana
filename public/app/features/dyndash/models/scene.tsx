@@ -1,7 +1,7 @@
 import React from 'react';
 import { ReplaySubject } from 'rxjs';
 
-import { TimeRange, useObservable } from '@grafana/data';
+import { DataQuery, PanelData, TimeRange, useObservable } from '@grafana/data';
 import { Button, PageToolbar } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { GRID_CELL_HEIGHT } from 'app/core/constants';
@@ -13,7 +13,7 @@ export abstract class SceneItem<TState> {
     this.subject.next(state);
   }
 
-  update(state: Partial<TState>) {
+  setState(state: Partial<TState>) {
     this.state = {
       ...this.state,
       ...state,
@@ -40,14 +40,21 @@ interface SceneState {
   timePicker?: {
     show?: boolean;
   };
+  queryRunner?: SceneQueryRunner;
 }
 
 export class Scene extends SceneItem<SceneState> {
   Component = SceneRenderer;
 
   onTimeRangeChange = (timeRange: TimeRange) => {
-    this.update({ timeRange });
+    this.setState({ timeRange });
   };
+}
+
+export class SceneQueryRunner extends SceneItem<{ data: PanelData; queries: DataQuery[] }> {
+  run() {}
+
+  Component = () => null;
 }
 
 const SceneRenderer = React.memo<SceneComponentProps<Scene>>(({ model }) => {
