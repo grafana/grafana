@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDeleteStaleQueryFromQueryHistory(t *testing.T) {
+func TestIntegrationDeleteStaleQueryFromQueryHistory(t *testing.T) {
 	testScenarioWithQueryInQueryHistory(t, "Stale query history can be deleted",
 		func(t *testing.T, sc scenarioContext) {
 			olderThan := time.Now().Unix() + 60

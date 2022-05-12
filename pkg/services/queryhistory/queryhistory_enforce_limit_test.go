@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestEnforceRowLimitInQueryHistory(t *testing.T) {
+func TestIntegrationEnforceRowLimitInQueryHistory(t *testing.T) {
 	testScenarioWithQueryInQueryHistory(t, "Enforce limit for query_history",
 		func(t *testing.T, sc scenarioContext) {
 			limit := 0

@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func TestAnnotations(t *testing.T) {
+func TestIntegrationAnnotations(t *testing.T) {
 	sql := sqlstore.InitTestDB(t)
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
 
@@ -338,7 +338,7 @@ func TestAnnotations(t *testing.T) {
 	})
 }
 
-func TestAnnotationListingWithRBAC(t *testing.T) {
+func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	sql := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
 	dashboardStore := dashboardstore.ProvideDashboardStore(sql)

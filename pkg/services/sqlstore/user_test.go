@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUserDataAccess(t *testing.T) {
+func TestIntegrationUserDataAccess(t *testing.T) {
 
 	ss := InitTestDB(t)
 

@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPreferencesDataAccess(t *testing.T) {
+func TestIntegrationPreferencesDataAccess(t *testing.T) {
 	ss := sqlstore.InitTestDB(t)
 	prefStore := sqlStore{db: ss}
 	orgNavbarPreferences := pref.NavbarPreference{

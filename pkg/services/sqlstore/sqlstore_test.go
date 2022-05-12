@@ -77,7 +77,7 @@ var sqlStoreTestCases = []sqlStoreTest{
 	},
 }
 
-func TestSQLConnectionString(t *testing.T) {
+func TestIntegrationSQLConnectionString(t *testing.T) {
 	for _, testCase := range sqlStoreTestCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			sqlstore := &SQLStore{}

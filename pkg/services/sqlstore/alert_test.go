@@ -28,7 +28,7 @@ func resetTimeNow() {
 	timeNow = time.Now
 }
 
-func TestAlertingDataAccess(t *testing.T) {
+func TestIntegrationAlertingDataAccess(t *testing.T) {
 	mockTimeNow()
 	defer resetTimeNow()
 
@@ -262,7 +262,7 @@ func TestAlertingDataAccess(t *testing.T) {
 	})
 }
 
-func TestPausingAlerts(t *testing.T) {
+func TestIntegrationPausingAlerts(t *testing.T) {
 	mockTimeNow()
 	defer resetTimeNow()
 

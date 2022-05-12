@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestDashboardDataAccess(t *testing.T) {
+func TestIntegrationDashboardDataAccess(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var savedFolder, savedDash, savedDash2 *models.Dashboard
 	var dashboardStore *DashboardStore
@@ -407,7 +407,7 @@ func TestDashboardDataAccess(t *testing.T) {
 	})
 }
 
-func TestDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
+func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := ProvideDashboardStore(sqlStore)
 	pluginId := "test-app"
@@ -426,7 +426,7 @@ func TestDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
 	require.Equal(t, len(query.Result), 2)
 }
 
-func TestDashboard_SortingOptions(t *testing.T) {
+func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := ProvideDashboardStore(sqlStore)
 
@@ -459,7 +459,7 @@ func TestDashboard_SortingOptions(t *testing.T) {
 
 }
 
-func TestDashboard_Filter(t *testing.T) {
+func TestIntegrationDashboard_Filter(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := ProvideDashboardStore(sqlStore)
 	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)

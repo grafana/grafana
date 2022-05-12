@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-func TestTeamCommandsAndQueries(t *testing.T) {
+func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 	t.Run("Testing Team commands & queries", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
 
@@ -349,7 +349,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 	})
 }
 
-func TestSQLStore_SearchTeams(t *testing.T) {
+func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 	type searchTeamsTestCase struct {
 		desc             string
 		query            *models.SearchTeamsQuery
@@ -422,7 +422,7 @@ func TestSQLStore_SearchTeams(t *testing.T) {
 
 // TestSQLStore_GetTeamMembers_ACFilter tests the accesscontrol filtering of
 // team members based on the signed in user permissions
-func TestSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
+func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 	testOrgID := int64(2)
 	userIds := make([]int64, 4)
 

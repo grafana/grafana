@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestDashboardService(t *testing.T) {
+func TestIntegrationDashboardService(t *testing.T) {
 	t.Run("Dashboard service tests", func(t *testing.T) {
 		fakeStore := m.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)

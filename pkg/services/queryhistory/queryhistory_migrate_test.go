@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMigrateQueriesToQueryHistory(t *testing.T) {
+func TestIntegrationMigrateQueriesToQueryHistory(t *testing.T) {
 	testScenario(t, "When users tries to migrate 1 query in query history it should succeed",
 		func(t *testing.T, sc scenarioContext) {
 			command := MigrateQueriesToQueryHistoryCommand{

@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDashboardAclDataAccess(t *testing.T) {
+func TestIntegrationDashboardAclDataAccess(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var currentUser models.User
 	var savedFolder, childDash *models.Dashboard

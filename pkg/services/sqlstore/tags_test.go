@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSavingTags(t *testing.T) {
+func TestIntegrationSavingTags(t *testing.T) {
 	ss := InitTestDB(t)
 
 	tagPairs := []*models.Tag{

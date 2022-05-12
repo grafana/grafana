@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestEntityEventsService(t *testing.T) {
+func TestIntegrationEntityEventsService(t *testing.T) {
 	var ctx context.Context
 	var service EntityEventsService
 
@@ -136,7 +136,7 @@ func TestEntityEventsService(t *testing.T) {
 	})
 }
 
-func TestCreateDatabaseEntityId(t *testing.T) {
+func TestIntegrationCreateDatabaseEntityId(t *testing.T) {
 	tests := []struct {
 		name       string
 		entityType EntityType

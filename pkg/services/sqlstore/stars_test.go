@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUserStarsDataAccess(t *testing.T) {
+func TestIntegrationUserStarsDataAccess(t *testing.T) {
 	t.Run("Testing User Stars Data Access", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
 

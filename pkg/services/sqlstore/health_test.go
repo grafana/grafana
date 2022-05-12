@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetDBHealthQuery(t *testing.T) {
+func TestIntegrationGetDBHealthQuery(t *testing.T) {
 	store := InitTestDB(t)
 
 	query := models.GetDBHealthQuery{}

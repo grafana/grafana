@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestApiKeyDataAccess(t *testing.T) {
+func TestIntegrationApiKeyDataAccess(t *testing.T) {
 	mockTimeNow()
 	defer resetTimeNow()
 
@@ -124,7 +124,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 	})
 }
 
-func TestApiKeyErrors(t *testing.T) {
+func TestIntegrationApiKeyErrors(t *testing.T) {
 	mockTimeNow()
 	defer resetTimeNow()
 
@@ -160,7 +160,7 @@ type getApiKeysTestCase struct {
 	expectedNumKeys int
 }
 
-func TestSQLStore_GetAPIKeys(t *testing.T) {
+func TestIntegrationSQLStore_GetAPIKeys(t *testing.T) {
 	tests := []getApiKeysTestCase{
 		{
 			desc: "expect all keys for wildcard scope",

@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSQLBuilder(t *testing.T) {
+func TestIntegrationSQLBuilder(t *testing.T) {
 	t.Run("WriteDashboardPermissionFilter", func(t *testing.T) {
 		t.Run("user ACL", func(t *testing.T) {
 			test(t,
