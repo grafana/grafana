@@ -19,7 +19,7 @@ import { FolderView } from './components/FolderView';
 import { ManageActions } from './components/ManageActions';
 import { SearchResultsGrid } from './components/SearchResultsGrid';
 import { SearchResultsTable, SearchResultsProps } from './components/SearchResultsTable';
-import { newSearchSelection, updateSearchSelection, clearSearchSelection } from './selection';
+import { newSearchSelection, updateSearchSelection } from './selection';
 
 const node: NavModelItem = {
   id: 'search',
@@ -88,11 +88,11 @@ export default function SearchPage() {
     setSearchSelection(updateSearchSelection(searchSelection, !current, kind, [uid]));
   };
 
+  // function to update items when dashboards or folders are moved or deleted
   const onUpdateList = async () => {
     // clean up search selection
     setSearchSelection(newSearchSelection());
     // trigger again the search to the backend
-    // TODO: the backend is not returning the updated value :(
     onQueryChange(inputValue);
   };
 

@@ -23,20 +23,6 @@ export function newSearchSelection(): SearchSelection {
   };
 }
 
-export function clearSearchSelection(old: SearchSelection): SearchSelection {
-  const items = old.items;
-  items.clear();
-
-  const isSelected = (kind: string, uid: string) => {
-    return Boolean(items.get(kind)?.has(uid));
-  };
-
-  return {
-    items,
-    isSelected,
-  };
-}
-
 export function updateSearchSelection(
   old: SearchSelection,
   selected: boolean,
