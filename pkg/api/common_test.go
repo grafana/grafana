@@ -377,22 +377,21 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 		// Perform role registration
 	}
 
-	permissionServices, err := ossaccesscontrol.ProvidePermissionsServices(cfg, routeRegister, db, ac, acStore)
-	require.NoError(t, err)
-
 	// Create minimal HTTP Server
 	hs := &HTTPServer{
-		Cfg:                    cfg,
-		Features:               features,
-		Live:                   newTestLive(t, db),
-		QuotaService:           &quota.QuotaService{Cfg: cfg},
-		RouteRegister:          routeRegister,
-		SQLStore:               store,
-		AccessControl:          ac,
-		searchUsersService:     searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
-		dashboardService:       dashboardservice.ProvideDashboardService(cfg, dashboardsStore, nil, features, permissionServices, ac),
-		teamPermissionsService: permissionServices.GetTeamService(),
-		preferenceService:      preftest.NewPreferenceServiceFake(),
+		Cfg:                cfg,
+		Features:           features,
+		Live:               newTestLive(t, db),
+		QuotaService:       &quota.QuotaService{Cfg: cfg},
+		RouteRegister:      routeRegister,
+		SQLStore:           store,
+		searchUsersService: searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
+		dashboardService: dashboardservice.ProvideDashboardService(
+			cfg, dashboardsStore, nil, features,
+			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
+			ac,
+		),
+		preferenceService: preftest.NewPreferenceServiceFake(),
 	}
 
 	require.NoError(t, hs.declareFixedRoles())

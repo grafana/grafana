@@ -21,7 +21,7 @@ type AccessControl interface {
 	// Evaluate evaluates access to the given resources.
 	Evaluate(ctx context.Context, user *models.SignedInUser, evaluator Evaluator) (bool, error)
 
-	// GetUserPermissions returns user permissions.
+	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, user *models.SignedInUser, options Options) ([]*Permission, error)
 
 	// GetUserRoles returns user roles.
@@ -40,14 +40,25 @@ type AccessControl interface {
 }
 
 type PermissionsProvider interface {
+	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
 }
 
-type PermissionsServices interface {
-	GetTeamService() PermissionsService
-	GetFolderService() PermissionsService
-	GetDashboardService() PermissionsService
-	GetDataSourceService() PermissionsService
+type TeamPermissionsService interface {
+	GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]ResourcePermission, error)
+	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
+}
+
+type FolderPermissionsService interface {
+	PermissionsService
+}
+
+type DashboardPermissionsService interface {
+	PermissionsService
+}
+
+type DatasourcePermissionsService interface {
+	PermissionsService
 }
 
 type PermissionsService interface {

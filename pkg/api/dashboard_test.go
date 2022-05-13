@@ -233,7 +233,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			SQLStore:              mockSQLStore,
 			AccessControl:         ac,
 			dashboardService: service.ProvideDashboardService(
-				cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(), ac,
+				cfg, dashboardStore, nil, features,
+				accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(), ac,
 			),
 		}
 		hs.SQLStore = mockSQLStore
@@ -939,7 +940,8 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		ProvisioningService:   provisioningService,
 		AccessControl:         ac,
 		dashboardProvisioningService: service.ProvideDashboardService(
-			cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(), ac,
+			cfg, dashboardStore, nil, features,
+			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(), ac,
 		),
 	}
 

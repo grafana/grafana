@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { openMenu } from 'react-select-event';
 
 import { selectOptionInTest } from '@grafana/ui';
 
@@ -18,17 +19,17 @@ const variableOptionGroup = {
 const user = userEvent.setup();
 
 describe('Azure Monitor QueryEditor', () => {
-  const mockPanelData = createMockPanelData();
   const mockDatasource = createMockDatasource();
 
   it('should render a dimension filter', async () => {
     let mockQuery = createMockQuery();
+    const mockPanelData = createMockPanelData();
     const onQueryChange = jest.fn();
     const dimensionOptions = [
       { label: 'Test Dimension 1', value: 'TestDimension1' },
       { label: 'Test Dimension 2', value: 'TestDimension2' },
     ];
-    render(
+    const { rerender } = render(
       <DimensionFields
         data={mockPanelData}
         subscriptionId="123"
@@ -45,9 +46,12 @@ describe('Azure Monitor QueryEditor', () => {
     mockQuery = appendDimensionFilter(mockQuery);
     expect(onQueryChange).toHaveBeenCalledWith({
       ...mockQuery,
-      azureMonitor: { ...mockQuery.azureMonitor, dimensionFilters: [{ dimension: '', operator: 'eq', filter: '*' }] },
+      azureMonitor: {
+        ...mockQuery.azureMonitor,
+        dimensionFilters: [{ dimension: '', operator: 'eq', filters: [] }],
+      },
     });
-    render(
+    rerender(
       <DimensionFields
         data={mockPanelData}
         subscriptionId="123"
@@ -65,7 +69,7 @@ describe('Azure Monitor QueryEditor', () => {
       ...mockQuery,
       azureMonitor: {
         ...mockQuery.azureMonitor,
-        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '*' }],
+        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filters: [] }],
       },
     });
     expect(screen.queryByText('Test Dimension 1')).toBeInTheDocument();
@@ -74,16 +78,17 @@ describe('Azure Monitor QueryEditor', () => {
 
   it('correctly filters out dimensions when selected', async () => {
     let mockQuery = createMockQuery();
+    const mockPanelData = createMockPanelData();
     mockQuery.azureMonitor = {
       ...mockQuery.azureMonitor,
-      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '*' }],
+      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filters: [] }],
     };
     const onQueryChange = jest.fn();
     const dimensionOptions = [
       { label: 'Test Dimension 1', value: 'TestDimension1' },
       { label: 'Test Dimension 2', value: 'TestDimension2' },
     ];
-    render(
+    const { rerender } = render(
       <DimensionFields
         data={mockPanelData}
         subscriptionId="123"
@@ -98,7 +103,7 @@ describe('Azure Monitor QueryEditor', () => {
     const addDimension = await screen.findByText('Add new dimension');
     await user.click(addDimension);
     mockQuery = appendDimensionFilter(mockQuery);
-    render(
+    rerender(
       <DimensionFields
         data={mockPanelData}
         subscriptionId="123"
@@ -119,9 +124,10 @@ describe('Azure Monitor QueryEditor', () => {
 
   it('correctly displays dimension labels', async () => {
     let mockQuery = createMockQuery();
+    const mockPanelData = createMockPanelData();
     mockQuery.azureMonitor = {
       ...mockQuery.azureMonitor,
-      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '*' }],
+      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filters: [] }],
     };
 
     mockPanelData.series = [
@@ -150,7 +156,7 @@ describe('Azure Monitor QueryEditor', () => {
         dimensionOptions={dimensionOptions}
       />
     );
-    const labelSelect = await screen.findByText('Select value');
+    const labelSelect = await screen.findByText('Select value(s)');
     await user.click(labelSelect);
     const options = await screen.findAllByLabelText('Select option');
     expect(options).toHaveLength(1);
@@ -159,9 +165,10 @@ describe('Azure Monitor QueryEditor', () => {
 
   it('correctly updates dimension labels', async () => {
     let mockQuery = createMockQuery();
+    const mockPanelData = createMockPanelData();
     mockQuery.azureMonitor = {
       ...mockQuery.azureMonitor,
-      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: 'testlabel' }],
+      dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filters: ['testlabel'] }],
     };
 
     mockPanelData.series = [
@@ -178,7 +185,7 @@ describe('Azure Monitor QueryEditor', () => {
     ];
     const onQueryChange = jest.fn();
     const dimensionOptions = [{ label: 'Test Dimension 1', value: 'TestDimension1' }];
-    render(
+    const { rerender } = render(
       <DimensionFields
         data={mockPanelData}
         subscriptionId="123"
@@ -191,14 +198,14 @@ describe('Azure Monitor QueryEditor', () => {
       />
     );
     await screen.findByText('testlabel');
-    const labelClear = await screen.findByLabelText('select-clear-value');
+    const labelClear = await screen.findByLabelText('Remove testlabel');
     await user.click(labelClear);
-    mockQuery = setDimensionFilterValue(mockQuery, 0, 'filter', '');
+    mockQuery = setDimensionFilterValue(mockQuery, 0, 'filters', []);
     expect(onQueryChange).toHaveBeenCalledWith({
       ...mockQuery,
       azureMonitor: {
         ...mockQuery.azureMonitor,
-        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filter: '' }],
+        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filters: [] }],
       },
     });
     mockPanelData.series = [
@@ -214,7 +221,7 @@ describe('Azure Monitor QueryEditor', () => {
         ],
       },
     ];
-    render(
+    rerender(
       <DimensionFields
         data={mockPanelData}
         subscriptionId="123"
@@ -226,11 +233,127 @@ describe('Azure Monitor QueryEditor', () => {
         dimensionOptions={dimensionOptions}
       />
     );
-    const labelSelect = await screen.findByText('Select value');
-    await user.click(labelSelect);
+    const labelSelect = await screen.getByLabelText('dimension-labels-select');
+    await openMenu(labelSelect);
     const options = await screen.findAllByLabelText('Select option');
     expect(options).toHaveLength(2);
     expect(options[0]).toHaveTextContent('testlabel');
     expect(options[1]).toHaveTextContent('testlabel2');
+  });
+
+  it('correctly selects multiple dimension labels', async () => {
+    let mockQuery = createMockQuery();
+    const mockPanelData = createMockPanelData();
+    mockPanelData.series = [
+      {
+        ...mockPanelData.series[0],
+        fields: [
+          {
+            ...mockPanelData.series[0].fields[0],
+            name: 'Test Dimension 1',
+            labels: { testdimension1: 'testlabel' },
+          },
+        ],
+      },
+      {
+        ...mockPanelData.series[0],
+        fields: [
+          {
+            ...mockPanelData.series[0].fields[0],
+            name: 'Test Dimension 1',
+            labels: { testdimension1: 'testlabel2' },
+          },
+        ],
+      },
+    ];
+    const onQueryChange = jest.fn();
+    const dimensionOptions = [{ label: 'Test Dimension 1', value: 'TestDimension1' }];
+    mockQuery = appendDimensionFilter(mockQuery, 'TestDimension1');
+    const { rerender } = render(
+      <DimensionFields
+        data={mockPanelData}
+        subscriptionId="123"
+        query={mockQuery}
+        onQueryChange={onQueryChange}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        setError={() => {}}
+        dimensionOptions={dimensionOptions}
+      />
+    );
+    const labelSelect = await screen.getByLabelText('dimension-labels-select');
+    await user.click(labelSelect);
+    await openMenu(labelSelect);
+    await screen.getByText('testlabel');
+    await screen.getByText('testlabel2');
+    await selectOptionInTest(labelSelect, 'testlabel');
+    mockQuery = setDimensionFilterValue(mockQuery, 0, 'filters', ['testlabel']);
+    expect(onQueryChange).toHaveBeenCalledWith({
+      ...mockQuery,
+      azureMonitor: {
+        ...mockQuery.azureMonitor,
+        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filters: ['testlabel'] }],
+      },
+    });
+    mockPanelData.series = [
+      {
+        ...mockPanelData.series[0],
+        fields: [
+          {
+            ...mockPanelData.series[0].fields[0],
+            name: 'Test Dimension 1',
+            labels: { testdimension1: 'testlabel' },
+          },
+        ],
+      },
+    ];
+    rerender(
+      <DimensionFields
+        data={mockPanelData}
+        subscriptionId="123"
+        query={mockQuery}
+        onQueryChange={onQueryChange}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        setError={() => {}}
+        dimensionOptions={dimensionOptions}
+      />
+    );
+    const labelSelect2 = await screen.getByLabelText('dimension-labels-select');
+    await openMenu(labelSelect2);
+    const refreshedOptions = await screen.findAllByLabelText('Select options menu');
+    expect(refreshedOptions).toHaveLength(1);
+    expect(refreshedOptions[0]).toHaveTextContent('testlabel2');
+    await selectOptionInTest(labelSelect2, 'testlabel2');
+    mockQuery = setDimensionFilterValue(mockQuery, 0, 'filters', ['testlabel', 'testlabel2']);
+    expect(onQueryChange).toHaveBeenCalledWith({
+      ...mockQuery,
+      azureMonitor: {
+        ...mockQuery.azureMonitor,
+        dimensionFilters: [{ dimension: 'TestDimension1', operator: 'eq', filters: ['testlabel', 'testlabel2'] }],
+      },
+    });
+    mockPanelData.series = [
+      {
+        ...mockPanelData.series[0],
+        fields: [
+          {
+            ...mockPanelData.series[0].fields[0],
+            name: 'Test Dimension 1',
+            labels: { testdimension1: 'testlabel' },
+          },
+        ],
+      },
+      {
+        ...mockPanelData.series[0],
+        fields: [
+          {
+            ...mockPanelData.series[0].fields[0],
+            name: 'Test Dimension 1',
+            labels: { testdimension1: 'testlabel2' },
+          },
+        ],
+      },
+    ];
   });
 });
