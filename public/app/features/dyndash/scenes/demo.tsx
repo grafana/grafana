@@ -1,50 +1,73 @@
 import { getDefaultTimeRange } from '@grafana/data';
 
+import { SceneAutoLayout } from '../models/SceneLayoutTiling';
 import { SceneTimeRange } from '../models/SceneTimeRange';
-import { Scene, ScenePanel, ScenePanelButton } from '../models/scene';
+import { Scene, ScenePanel } from '../models/scene';
 
 export function getDemoScene(): Scene {
   const scene = new Scene({
     title: 'Hello',
-    children: [],
+    layout: new SceneAutoLayout({
+      direction: 'column',
+      children: [
+        new ScenePanel({
+          key: 'A',
+          title: 'Panel 1',
+        }),
+        new SceneAutoLayout({
+          key: 'B',
+          direction: 'row',
+          children: [
+            new ScenePanel({
+              key: '2',
+              title: 'Panel 2',
+            }),
+            new ScenePanel({
+              key: '3',
+              title: 'Panel 3',
+            }),
+          ],
+        }),
+      ],
+    }),
     timeRange: new SceneTimeRange({
       timeRange: getDefaultTimeRange(),
     }),
   });
 
-  function addDrilldown() {
-    scene.setState({
-      children: [
-        ...scene.state.children,
-        new ScenePanel({
-          id: `${scene.state.children.length + 4}`,
-          title: 'drilldown panel',
-          width: 10,
-          height: 5,
-        }),
-      ],
-    });
-  }
+  // function addDrilldown() {
+  //   scene.setState({
+  //     children: [
+  //       ...scene.state.children,
+  //       new ScenePanel({
+  //         id: `${scene.state.children.length + 4}`,
+  //         title: 'drilldown panel',
+  //         width: 10,
+  //         height: 5,
+  //       }),
+  //     ],
+  //   });
+  // }
 
-  setTimeout(() => {
-    scene.setState({
-      children: [
-        new ScenePanel({
-          id: '2',
-          title: 'another panel',
-          width: 10,
-          height: 5,
-        }),
-        new ScenePanelButton({
-          id: '3',
-          width: 5,
-          height: 2,
-          buttonText: 'Drilldown',
-          onClick: addDrilldown,
-        }),
-      ],
-    });
-  }, 2000);
+  // setTimeout(() => {
+  //   scene.setState({
+  //     children: [
+  //       new ScenePanel({
+  //         id: '2',
+  //         title: 'another panel',
+  //         width: 10,
+  //         height: 5,
+  //       }),
+  //       new ScenePanelButton({
+  //         id: '3',
+  //         width: 5,
+  //         height: 2,
+  //         buttonText: 'Drilldown',
+  //         onClick: addDrilldown,
+  //       }),
+  //     ],
+  //   });
+  // }, 2000);
 
   setTimeout(() => {
     scene.setState({

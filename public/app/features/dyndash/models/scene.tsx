@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
 import { Button, PageToolbar } from '@grafana/ui';
-import { GRID_CELL_HEIGHT } from 'app/core/constants';
 
-import { SceneComponentProps, SceneItem } from './SceneItem';
+import {
+  SceneLayoutState,
+  SceneComponentProps,
+  SceneItem,
+  SceneLayoutItemChildState,
+  SceneItemSizing,
+} from './SceneItem';
 import { SceneQueryRunner } from './SceneQueryRunner';
 import { SceneTimeRange } from './SceneTimeRange';
 
 interface SceneState {
   title: string;
-  children: Array<SceneItem<any>>;
+  layout: SceneItem<SceneLayoutState>;
   timeRange: SceneTimeRange;
   queryRunner?: SceneQueryRunner;
 }
@@ -19,19 +24,17 @@ export class Scene extends SceneItem<SceneState> {
 }
 
 const SceneRenderer = React.memo<SceneComponentProps<Scene>>(({ model }) => {
-  const { title, children, timeRange } = model.useState();
+  const { title, layout, timeRange } = model.useState();
 
   console.log('render scene');
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', width: '100%' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', flex: '1 1 0', minHeight: 0 }}>
       <PageToolbar title={title}>
         <timeRange.Component model={timeRange} />
       </PageToolbar>
-      <div style={{ padding: 16, width: '100%', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        {children.map((child) => (
-          <child.Component key={child.state.id} model={child} />
-        ))}
+      <div style={{ flexGrow: 1, display: 'flex', padding: '16px' }}>
+        <layout.Component model={layout} />
       </div>
     </div>
   );
@@ -39,51 +42,57 @@ const SceneRenderer = React.memo<SceneComponentProps<Scene>>(({ model }) => {
 
 SceneRenderer.displayName = 'SceneRenderer';
 
-export interface PanelProps {
-  id: string;
+export interface PanelState extends SceneLayoutItemChildState {
   title?: string;
-  width: number;
-  height: number;
 }
 
-export class ScenePanel extends SceneItem<PanelProps> {
+export class ScenePanel extends SceneItem<PanelState> {
   Component = ScenePanelRenderer;
 }
 
 const ScenePanelRenderer = React.memo<SceneComponentProps<ScenePanel>>(({ model }) => {
   const state = model.useState();
 
-  return <div style={getSceneItemStyles(state)}>{state.title && <h2>{state.title}</h2>}</div>;
+  return <div style={getItemStyles(state.size)}>{state.title && <h2>{state.title}</h2>}</div>;
 });
 
 ScenePanelRenderer.displayName = 'ScenePanelRenderer';
 
-export interface ScenePanelButtonProps extends PanelProps {
-  buttonText: string;
-  onClick: () => void;
-}
+// export interface ScenePanelButtonProps extends PanelState {
+//   buttonText: string;
+//   onClick: () => void;
+// }
 
-export class ScenePanelButton extends SceneItem<ScenePanelButtonProps> {
-  Component = ({ model }: SceneComponentProps<ScenePanelButton>) => {
-    const props = model.useState();
+// export class ScenePanelButton extends SceneItem<ScenePanelButtonProps> {
+//   Component = ({ model }: SceneComponentProps<ScenePanelButton>) => {
+//     const props = model.useState();
 
-    return (
-      <div style={getSceneItemStyles(props)}>
-        <Button onClick={props.onClick}>{props.buttonText}</Button>
-      </div>
-    );
+//     return (
+//       <div style={getSceneItemStyles(props)}>
+//         <Button onClick={props.onClick}>{props.buttonText}</Button>
+//       </div>
+//     );
+//   };
+// }
+
+// export interface ScenePanelSize {
+//   width: number;
+//   height: number;
+// }
+
+function getItemStyles(sizing: SceneItemSizing) {
+  const style: CSSProperties = {
+    display: 'flex',
+    border: '1px solid red',
   };
-}
 
-export interface ScenePanelSize {
-  width: number;
-  height: number;
-}
+  style.flexGrow = sizing.hSizing === 'fill' ? 1 : 0;
 
-function getSceneItemStyles(props: PanelProps) {
-  return {
-    width: `${(props.width / 24) * 100}%`,
-    height: `${props.height * GRID_CELL_HEIGHT}px`,
-    border: '1px solid #DD3344',
-  };
+  if (sizing.vSizing === 'fill') {
+    style.alignSelf = 'stretch';
+  } else {
+    style.width = sizing.width;
+  }
+
+  return style;
 }
