@@ -22,7 +22,7 @@ seqs: [
 				// Tags associated with dashboard.
 				tags?: [...string]
 				// Theme of dashboard.
-				style: *"light" | "dark"
+				style: "light" | *"dark"
 				// Timezone of dashboard,
 				timezone?: *"browser" | "utc" | ""
 				// Whether a dashboard is editable or not.
