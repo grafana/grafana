@@ -39,7 +39,7 @@ RUN apt update && apt install -yq curl python3-pip procps && pip3 install -U pip
     ln -s /opt/google-cloud-sdk/bin/gsutil /usr/bin/gsutil && \
     ln -s /opt/google-cloud-sdk/bin/gcloud /usr/bin/gcloud && \
     mkdir -p /deb-repo /rpm-repo && \
-    ln -s /usr/bin/createrepo_c /usr/bin/createrepo \
+    ln -s /usr/bin/createrepo_c /usr/bin/createrepo && \
     curl -L -O https://github.com/GoogleCloudPlatform/gcsfuse/releases/download/v${GCSFUSE_VERSION}/gcsfuse_${GCSFUSE_VERSION}_amd64.deb && \
     dpkg --install gcsfuse_${GCSFUSE_VERSION}_amd64.deb && \
     rm -Rf gcsfuse_${GCSFUSE_VERSION}_amd64.deb
