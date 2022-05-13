@@ -1,10 +1,11 @@
-package prometheus
+package buffered
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,10 +16,14 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
+
+var update = false
 
 func TestMatrixResponses(t *testing.T) {
 	tt := []struct {
@@ -33,9 +38,9 @@ func TestMatrixResponses(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			queryFileName := filepath.Join("testdata", test.filepath+".query.json")
-			responseFileName := filepath.Join("testdata", test.filepath+".result.json")
-			goldenFileName := filepath.Join("testdata", test.filepath+".result.golden.txt")
+			queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
+			responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
+			goldenFileName := filepath.Join("../testdata", test.filepath+".result.golden")
 
 			query, err := loadStoredPrometheusQuery(queryFileName)
 			require.NoError(t, err)
@@ -50,7 +55,20 @@ func TestMatrixResponses(t *testing.T) {
 			dr, found := result.Responses["A"]
 			require.True(t, found)
 
-			require.NoError(t, experimental.CheckGoldenDataResponse(goldenFileName, &dr, true))
+			actual, err := json.MarshalIndent(&dr, "", "  ")
+			require.NoError(t, err)
+
+			// nolint:gosec
+			// We can ignore the gosec G304 because this is a test with static defined paths
+			expected, err := ioutil.ReadFile(goldenFileName + ".json")
+			if err != nil || update {
+				err = os.WriteFile(goldenFileName+".json", actual, 0600)
+				require.NoError(t, err)
+			}
+
+			require.JSONEq(t, string(expected), string(actual))
+
+			require.NoError(t, experimental.CheckGoldenDataResponse(goldenFileName+".txt", &dr, update))
 		})
 	}
 }
@@ -131,6 +149,20 @@ func runQuery(response []byte, query PrometheusQuery) (*backend.QueryDataRespons
 		return nil, err
 	}
 
-	s := Service{tracer: tracer}
+	s := Buffered{
+		intervalCalculator: intervalv2.NewCalculator(),
+		tracer:             tracer,
+		TimeInterval:       "15s",
+		log:                &fakeLogger{},
+	}
 	return s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
 }
+
+type fakeLogger struct {
+	log.Logger
+}
+
+func (fl *fakeLogger) Debug(testMessage string, ctx ...interface{}) {}
+func (fl *fakeLogger) Info(testMessage string, ctx ...interface{})  {}
+func (fl *fakeLogger) Warn(testMessage string, ctx ...interface{})  {}
+func (fl *fakeLogger) Error(testMessage string, ctx ...interface{}) {}

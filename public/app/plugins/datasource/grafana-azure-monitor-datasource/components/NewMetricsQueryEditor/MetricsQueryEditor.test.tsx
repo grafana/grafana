@@ -144,7 +144,7 @@ for (const t of tests) {
         />
       );
 
-      const resourcePickerButton = await screen.findByRole('button', { name: /grafanastaging/ });
+      const resourcePickerButton = await screen.findByRole('button', { name: /grafana/ });
 
       expect(screen.getByText('Microsoft.Compute/virtualMachines')).toBeInTheDocument();
       expect(screen.getByText('Metric A')).toBeInTheDocument();
