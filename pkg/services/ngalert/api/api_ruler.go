@@ -330,19 +330,24 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	return srv.updateAlertRulesInGroup(c, namespace, ruleGroupConfig.Name, rules)
+	groupKey := ngmodels.AlertRuleGroupKey{
+		OrgID:        c.SignedInUser.OrgId,
+		NamespaceUID: namespace.Uid,
+		RuleGroup:    ruleGroupConfig.Name,
+	}
+
+	return srv.updateAlertRulesInGroup(c, namespace, groupKey, rules)
 }
 
 // updateAlertRulesInGroup calculates changes (rules to add,update,delete), verifies that the user is authorized to do the calculated changes and updates database.
 // All operations are performed in a single transaction
-//nolint: gocyclo
-func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *models.Folder, groupName string, rules []*ngmodels.AlertRule) response.Response {
+// nolint: gocyclo
+func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *models.Folder, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRule) response.Response {
 	var finalChanges *changes
 	hasAccess := accesscontrol.HasAccess(srv.ac, c)
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
-		logger := srv.log.New("namespace_uid", namespace.Uid, "group", groupName, "org_id", c.OrgId, "user_id", c.UserId)
-
-		groupChanges, err := calculateChanges(tranCtx, srv.store, c.SignedInUser.OrgId, namespace, groupName, rules)
+		logger := srv.log.New("namespace_uid", groupKey.NamespaceUID, "group", groupKey.RuleGroup, "org_id", groupKey.OrgID, "user_id", c.UserId)
+		groupChanges, err := calculateChanges(tranCtx, srv.store, groupKey, rules)
 		if err != nil {
 			return err
 		}
@@ -569,14 +574,14 @@ func (c *changes) isEmpty() bool {
 
 // calculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).
 // returns a list of rules that need to be added, updated and deleted. Deleted considered rules in the database that belong to the group but do not exist in the list of submitted rules.
-func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int64, namespace *models.Folder, ruleGroupName string, submittedRules []*ngmodels.AlertRule) (*changes, error) {
+func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey ngmodels.AlertRuleGroupKey, submittedRules []*ngmodels.AlertRule) (*changes, error) {
 	q := &ngmodels.ListAlertRulesQuery{
-		OrgID:         orgId,
-		NamespaceUIDs: []string{namespace.Uid},
-		RuleGroup:     ruleGroupName,
+		OrgID:         groupKey.OrgID,
+		NamespaceUIDs: []string{groupKey.NamespaceUID},
+		RuleGroup:     groupKey.RuleGroup,
 	}
 	if err := ruleStore.ListAlertRules(ctx, q); err != nil {
-		return nil, fmt.Errorf("failed to query database for rules in the group %s: %w", ruleGroupName, err)
+		return nil, fmt.Errorf("failed to query database for rules in the group %#v: %w", groupKey, err)
 	}
 	existingGroupRules := q.Result
 
@@ -597,7 +602,7 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, orgId int6
 				delete(existingGroupRulesUIDs, r.UID)
 			} else {
 				// Rule can be from other group or namespace
-				q := &ngmodels.GetAlertRuleByUIDQuery{OrgID: orgId, UID: r.UID}
+				q := &ngmodels.GetAlertRuleByUIDQuery{OrgID: groupKey.OrgID, UID: r.UID}
 				if err := ruleStore.GetAlertRuleByUID(ctx, q); err != nil || q.Result == nil {
 					// if rule has UID then it is considered an update. Therefore, fail if there is no rule to update
 					if errors.Is(err, ngmodels.ErrAlertRuleNotFound) || q.Result == nil && err == nil {
