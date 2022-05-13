@@ -64,7 +64,7 @@ seqs: [
 				panels?: [...(#Panel | #GraphPanel | #HeatmapPanel | #RowPanel)]
 
 				// TODO docs
-				templating?: list: [...{...}]
+				templating?: list: [...#VariableModel]
 
 				// TODO docs
 				// FROM: AnnotationQuery in g-d/src/types/annotations.ts
@@ -95,6 +95,22 @@ seqs: [
 					showIn:    uint8 | *0
 					target?: #Target // TODO currently a generic in AnnotationQuery
 				} @cuetsy(kind="interface")
+
+				// FROM: packages/grafana-data/src/types/templateVars.ts
+				// TODO docs
+				// TODO what about what's in public/app/features/types.ts?
+				// TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
+				#VariableModel: {
+					type: #VariableType
+					name: string
+					label?: string
+					...
+				} @cuetsy(kind="interface")
+
+				// FROM: packages/grafana-data/src/types/templateVars.ts
+				// TODO docs
+				// TODO this implies some wider pattern/discriminated union, probably?
+				#VariableType: "query" | "adhoc" | "constant" | "datasource" | "interval" | "textbox" | "custom" | "system" @cuetsy(kind="type")
 
 				// TODO docs
 				#FieldColorModeId: "thresholds" | "palette-classic" | "palette-saturated" | "continuous-GrYlRd" | "fixed" @cuetsy(kind="enum")
