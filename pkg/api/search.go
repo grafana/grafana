@@ -84,8 +84,9 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 		if hit.Type == models.DashHitFolder {
 			meta = hs.getAccessControlMetadata(c, searchQuery.OrgId, dashboards.ScopeFoldersPrefix, hit.UID)
 		} else {
-			// TODO: How to account for folder scopes in dashboard actions
 			meta = hs.getAccessControlMetadata(c, searchQuery.OrgId, dashboards.ScopeDashboardsPrefix, hit.UID)
+			folderMeta := hs.getAccessControlMetadata(c, searchQuery.OrgId, dashboards.ScopeFoldersPrefix, hit.FolderUID)
+			meta = accesscontrol.MergeMeta("dashboards", meta, folderMeta)
 		}
 		hitsWithMeta = append(hitsWithMeta, hitWithMeta{hit, meta})
 	}
