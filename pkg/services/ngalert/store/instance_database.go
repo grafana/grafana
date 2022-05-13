@@ -2,6 +2,8 @@ package store
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -70,8 +72,14 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 			addToQuery(` AND rule_uid = ?`, cmd.RuleUID)
 		}
 
-		if cmd.State != "" {
-			addToQuery(` AND current_state = ?`, cmd.State)
+		if cmd.State != nil {
+			stateBytes, err := json.Marshal(cmd.State)
+			if err != nil {
+				// TODO: error type?
+				return errors.New("Bad argument")
+			}
+
+			addToQuery(` AND current_state = ?`, string(stateBytes))
 		}
 
 		if err := sess.SQL(s.String(), params...).Find(&alertInstances); err != nil {

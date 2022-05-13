@@ -642,7 +642,7 @@ func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State)
 		}
 		err := sch.instanceStore.SaveAlertInstance(ctx, &cmd)
 		if err != nil {
-			sch.log.Error("failed to save alert state", "uid", s.AlertRuleUID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State, "msg", err.Error())
+			sch.log.Error("failed to save alert state", "uid", s.AlertRuleUID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String(), "msg", err.Error())
 		}
 	}
 }

@@ -49,11 +49,11 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 		urlStr = ""
 	}
 
-	if alertState.State == ngModels.InstanceStateNoData {
+	if alertState.State.Type == ngModels.InstanceStateNoData {
 		return noDataAlert(nL, nA, alertState, urlStr)
 	}
 
-	if alertState.State == ngModels.InstanceStateError {
+	if alertState.State.Type == ngModels.InstanceStateError {
 		return errorAlert(nL, nA, alertState, urlStr)
 	}
 
@@ -132,7 +132,8 @@ func FromAlertsStateToStoppedAlert(firingStates []*state.State, appURL *url.URL,
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 	ts := clock.Now()
 	for _, alertState := range firingStates {
-		if alertState.State.IsNormal() || alertState.State.IsPending() {
+		if alertState.State.Type == ngModels.InstanceStateNormal ||
+			alertState.State.Type == ngModels.InstanceStatePending {
 			continue
 		}
 		postableAlert := stateToPostableAlert(alertState, appURL)

@@ -61,22 +61,28 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float
 
 func (a *State) resultNormal(_ *ngModels.AlertRule, result eval.Result) {
 	a.Error = nil // should be nil since state is not error
-	if !a.State.IsNormal() {
+	if a.State.Type != ngModels.InstanceStateNormal {
 		a.EndsAt = result.EvaluatedAt
 		a.StartsAt = result.EvaluatedAt
 	}
-	a.State = a.State.ToNormal()
+	a.State = ngModels.InstanceState{
+		Type:   ngModels.InstanceStateNormal,
+		Reason: ngModels.InstanceReasonNormal,
+	}
 }
 
 func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result) {
 	a.Error = result.Error // should be nil since the state is not an error
 
-	switch {
-	case a.State.IsFiring():
+	// We're alerting because of a "normal" rule evaluation.
+	a.State.Reason = ngModels.InstanceReasonNormal
+
+	switch a.State.Type {
+	case ngModels.InstanceStateFiring:
 		a.setEndsAt(alertRule, result)
-	case a.State.IsPending():
+	case ngModels.InstanceStatePending:
 		if result.EvaluatedAt.Sub(a.StartsAt) >= alertRule.For {
-			a.State = a.State.ToAlerting()
+			a.State.Type = ngModels.InstanceStateFiring
 			a.StartsAt = result.EvaluatedAt
 			a.setEndsAt(alertRule, result)
 		}
@@ -85,21 +91,22 @@ func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result
 		a.setEndsAt(alertRule, result)
 		if !(alertRule.For > 0) {
 			// If For is 0, immediately set Alerting
-			a.State = a.State.ToAlerting()
+			a.State.Type = ngModels.InstanceStateFiring
 		} else {
-			a.State = a.State.ToPending()
+			a.State.Type = ngModels.InstanceStatePending
 		}
 	}
+
 }
 
 func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 	a.Error = result.Error
+	a.State.Reason = ngModels.InstanceReasonError
 
-	// Derive the next state from alert transformation rules.
-	derivedErrorState := ngModels.InstanceStateError
+	derivedState := ngModels.InstanceStateError
 	switch alertRule.ExecErrState {
 	case ngModels.AlertingErrState:
-		derivedErrorState = ngModels.InstanceStateFiringError
+		derivedState = ngModels.InstanceStateFiring
 	case ngModels.ErrorErrState:
 		// If the evaluation failed because a query returned an error then
 		// update the state with the Datasource UID as a label and the error
@@ -116,21 +123,23 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 			}
 			a.Annotations["Error"] = queryError.Error()
 		}
-		derivedErrorState = ngModels.InstanceStateError
+		derivedState = ngModels.InstanceStateError
 	case ngModels.OkErrState:
-		derivedErrorState = ngModels.InstanceStateNormalError
-		return
+		derivedState = ngModels.InstanceStateNormal
+		if a.State.Type != ngModels.InstanceStateNormal {
+			a.EndsAt = result.EvaluatedAt
+			a.StartsAt = result.EvaluatedAt
+		}
 	default:
 		a.Error = fmt.Errorf("cannot map error to a state because option [%s] is not supported. evaluation error: %w", alertRule.ExecErrState, a.Error)
 	}
 
-	// Transition to a new state based on current state and derived state.
-	switch {
-	case a.State.IsFiring() && derivedErrorState.IsFiring(),
-		a.State == ngModels.InstanceStateError && derivedErrorState == ngModels.InstanceStateError:
+	switch a.State.Type {
+	case ngModels.InstanceStateFiring, ngModels.InstanceStateError:
 		a.setEndsAt(alertRule, result)
-	case a.State.IsPending() && derivedErrorState.IsFiring():
+	case ngModels.InstanceStatePending:
 		if result.EvaluatedAt.Sub(a.StartsAt) >= alertRule.For {
+			a.State.Type = derivedState
 			a.StartsAt = result.EvaluatedAt
 			a.setEndsAt(alertRule, result)
 			a.State = ngModels.InstanceStateFiringError
@@ -140,10 +149,10 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 	default:
 		// For is observed when Alerting is chosen for the alert state
 		// if execution error or timeout.
-		if derivedErrorState.IsFiring() && alertRule.For > 0 {
-			a.State = ngModels.InstanceStatePendingError
+		if derivedState == ngModels.InstanceStateFiring && alertRule.For > 0 {
+			a.State.Type = ngModels.InstanceStatePending
 		} else {
-			a.State = derivedErrorState
+			a.State.Type = derivedState
 		}
 		a.StartsAt = result.EvaluatedAt
 		a.setEndsAt(alertRule, result)
@@ -152,6 +161,7 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 
 func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) {
 	a.Error = result.Error
+	a.State.Reason = ngModels.InstanceReasonNoData
 
 	if a.StartsAt.IsZero() {
 		a.StartsAt = result.EvaluatedAt
@@ -160,16 +170,17 @@ func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) 
 
 	switch alertRule.NoDataState {
 	case ngModels.Alerting:
-		a.State = ngModels.InstanceStateFiringNoData
+		a.State.Type = ngModels.InstanceStateFiring
 	case ngModels.NoData:
-		a.State = ngModels.InstanceStateNoData
+		a.State.Type = ngModels.InstanceStateNoData
 	case ngModels.OK:
-		a.State = ngModels.InstanceStateNormalNoData
+		a.State.Type = ngModels.InstanceStateNormal
 	}
 }
 
 func (a *State) NeedsSending(resendDelay time.Duration) bool {
-	if a.State.IsPending() || a.State.IsNormal() && !a.Resolved {
+	if a.State.Type == ngModels.InstanceStatePending ||
+		a.State.Type == ngModels.InstanceStateNormal && !a.Resolved {
 		return false
 	}
 	// if LastSentAt is before or equal to LastEvaluationTime + resendDelay, send again

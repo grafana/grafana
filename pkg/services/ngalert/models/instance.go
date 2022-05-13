@@ -1,7 +1,9 @@
 package models
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -11,34 +13,116 @@ type AlertInstance struct {
 	RuleUID           string `xorm:"rule_uid"`
 	Labels            InstanceLabels
 	LabelsHash        string
-	CurrentState      InstanceStateType
+	CurrentState      InstanceState
 	CurrentStateSince time.Time
 	CurrentStateEnd   time.Time
 	LastEvalTime      time.Time
 }
 
+func ErrInvalidInstanceState(i *InstanceState) error {
+	return errors.New("The InstanceState %+v is invalid")
+}
+
+// The state's Type is what the instance is doing. Alerting, Pending ...
+// The state's Reason is why the state has the Type. A common case is State
+type InstanceState struct {
+	Type   InstanceStateType  `json:"type"`
+	Reason InstanceReasonType `json:"reason"`
+}
+
+func (i InstanceState) IsValid() bool {
+	return i.Type.IsValid() && i.Reason.IsValid()
+}
+
+func (i InstanceState) Equals(j InstanceState) bool {
+	return i.Type == j.Type && i.Reason == j.Reason
+}
+
+func (i InstanceState) String() string {
+	output := string(i.Type)
+
+	if i.Reason != InstanceReasonNormal {
+
+		// Don't attach the Reason for Error or NoData types - the reason should always be error or nodata.
+		if i.Type != InstanceStateError && i.Type != InstanceStateNoData {
+			output = output + fmt.Sprintf(" (%+v)", i.Reason)
+		}
+	}
+
+	return output
+}
+
+// InstanceStateType implements json.Marshaler and json.Unmarshaler so we can
+// use a simple string representation in the database, as well as the
+// presentation shown in the Grafana UI.
+func (i *InstanceState) MarshalJSON() ([]byte, error) {
+	if !(*i).IsValid() {
+		return nil, ErrInvalidInstanceState(i)
+	}
+
+	return []byte(i.String()), nil
+}
+
+func (i *InstanceState) UnmarshalJSON(b []byte) error {
+	input := string(b)
+	fields := strings.Split(input, " ")
+	if len(fields) == 0 {
+		// TODO: create a type.
+		return errors.New("too few fields")
+	} else if len(fields) > 2 {
+		return errors.New("Too many fields")
+	}
+
+	typ := InstanceStateType(fields[0])
+	switch typ {
+	case InstanceStateFiring:
+	case InstanceStateNormal:
+	case InstanceStatePending:
+	case InstanceStateNoData:
+	case InstanceStateError:
+	default:
+		//TODO create a better error type.
+		return errors.New("Bad Type field")
+	}
+
+	i.Type = typ
+
+	if len(fields) == 2 {
+		reason := InstanceReasonType(strings.Trim(fields[1], "()"))
+		switch reason {
+		case InstanceReasonNormal:
+		case InstanceReasonNoData:
+		case InstanceReasonError:
+		default:
+			// TODO: Better error type
+			return errors.New("Bad reason field")
+		}
+
+		i.Reason = reason
+	}
+
+	// TODO: Should we error on !i.IsValid()? That would prevent unmarshalling
+	// invalid data from db, but we do that already with the other matching here.
+
+	return nil
+}
+
 // InstanceStateType is an enum for instance states.
 type InstanceStateType string
 
+func (i InstanceStateType) String() string {
+	return string(i)
+}
+
 const (
 	// InstanceStateFiring is for a firing alert.
-	InstanceStateFiring       InstanceStateType = "Alerting"
-	InstanceStateFiringNoData InstanceStateType = "Alerting (NoData)"
-	InstanceStateFiringError  InstanceStateType = "Alerting (Error)"
-
+	InstanceStateFiring InstanceStateType = "Alerting"
 	// InstanceStateNormal is for a normal alert.
-	InstanceStateNormal       InstanceStateType = "Normal"
-	InstanceStateNormalNoData InstanceStateType = "Normal (NoData)"
-	InstanceStateNormalError  InstanceStateType = "Normal (Error)"
-
+	InstanceStateNormal InstanceStateType = "Normal"
 	// InstanceStatePending is for an alert that is firing but has not met the duration
-	InstanceStatePending       InstanceStateType = "Pending"
-	InstanceStatePendingNoData InstanceStateType = "Pending (NoData)"
-	InstanceStatePendingError  InstanceStateType = "Pending (Error)"
-
+	InstanceStatePending InstanceStateType = "Pending"
 	// InstanceStateNoData is for an alert with no data.
 	InstanceStateNoData InstanceStateType = "NoData"
-
 	// InstanceStateError is for a erroring alert.
 	InstanceStateError InstanceStateType = "Error"
 )
@@ -46,76 +130,31 @@ const (
 // IsValid checks that the value of InstanceStateType is a valid
 // string.
 func (i InstanceStateType) IsValid() bool {
-	return i.IsFiring() ||
-		i.IsNormal() ||
-		i.IsPending() ||
+	return i == InstanceStateFiring ||
+		i == InstanceStateNormal ||
 		i == InstanceStateNoData ||
+		i == InstanceStatePending ||
 		i == InstanceStateError
 }
 
-func (i InstanceStateType) IsNormal() bool {
-	return i == InstanceStateNormal ||
-		i == InstanceStateNormalNoData ||
-		i == InstanceStateNormalError
-}
+type InstanceReasonType string
 
-func (i InstanceStateType) IsPending() bool {
-	return i == InstanceStatePending ||
-		i == InstanceStatePendingNoData ||
-		i == InstanceStatePendingError
-}
+const (
+	InstanceReasonNormal = "Normal"
+	InstanceReasonNoData = "NoData"
+	InstanceReasonError  = "Error"
+)
 
-func (i InstanceStateType) IsFiring() bool {
-	return i == InstanceStateFiring ||
-		i == InstanceStateFiringNoData ||
-		i == InstanceStateFiringError
-}
-
-func (i InstanceStateType) HasNoData() bool {
-	return i == InstanceStateNoData ||
-		i == InstanceStateNormalNoData ||
-		i == InstanceStateFiringNoData ||
-		i == InstanceStatePendingNoData
-}
-
-func (i InstanceStateType) HasError() bool {
-	return i == InstanceStateError ||
-		i == InstanceStateNormalError ||
-		i == InstanceStateFiringError ||
-		i == InstanceStatePendingError
-}
-
-func (i InstanceStateType) ToNormal() InstanceStateType {
-	switch {
-	case i.HasError():
-		return InstanceStateNormalError
-	case i.HasNoData():
-		return InstanceStateNormalNoData
+func (i InstanceReasonType) IsValid() bool {
+	switch i {
+	case InstanceReasonNormal:
+	case InstanceReasonError:
+	case InstanceReasonNoData:
 	default:
-		return InstanceStateNormal
+		return false
 	}
-}
 
-func (i InstanceStateType) ToAlerting() InstanceStateType {
-	switch {
-	case i.HasError():
-		return InstanceStateFiringError
-	case i.HasNoData():
-		return InstanceStateFiringNoData
-	default:
-		return InstanceStateFiring
-	}
-}
-
-func (i InstanceStateType) ToPending() InstanceStateType {
-	switch {
-	case i.HasError():
-		return InstanceStatePendingError
-	case i.HasNoData():
-		return InstanceStatePendingNoData
-	default:
-		return InstanceStatePending
-	}
+	return true
 }
 
 // SaveAlertInstanceCommand is the query for saving a new alert instance.
@@ -123,7 +162,7 @@ type SaveAlertInstanceCommand struct {
 	RuleOrgID         int64
 	RuleUID           string
 	Labels            InstanceLabels
-	State             InstanceStateType
+	State             InstanceState
 	LastEvalTime      time.Time
 	CurrentStateSince time.Time
 	CurrentStateEnd   time.Time
@@ -143,21 +182,21 @@ type GetAlertInstanceQuery struct {
 type ListAlertInstancesQuery struct {
 	RuleOrgID int64 `json:"-"`
 	RuleUID   string
-	State     InstanceStateType
+	State     *InstanceState
 
 	Result []*ListAlertInstancesQueryResult
 }
 
 // ListAlertInstancesQueryResult represents the result of listAlertInstancesQuery.
 type ListAlertInstancesQueryResult struct {
-	RuleOrgID         int64             `xorm:"rule_org_id" json:"ruleOrgId"`
-	RuleUID           string            `xorm:"rule_uid" json:"ruleUid"`
-	Labels            InstanceLabels    `json:"labels"`
-	LabelsHash        string            `json:"labeHash"`
-	CurrentState      InstanceStateType `json:"currentState"`
-	CurrentStateSince time.Time         `json:"currentStateSince"`
-	CurrentStateEnd   time.Time         `json:"currentStateEnd"`
-	LastEvalTime      time.Time         `json:"lastEvalTime"`
+	RuleOrgID         int64          `xorm:"rule_org_id" json:"ruleOrgId"`
+	RuleUID           string         `xorm:"rule_uid" json:"ruleUid"`
+	Labels            InstanceLabels `json:"labels"`
+	LabelsHash        string         `json:"labeHash"`
+	CurrentState      InstanceState  `json:"currentState"`
+	CurrentStateSince time.Time      `json:"currentStateSince"`
+	CurrentStateEnd   time.Time      `json:"currentStateEnd"`
+	LastEvalTime      time.Time      `json:"lastEvalTime"`
 }
 
 // ValidateAlertInstance validates that the alert instance contains an alert rule id,

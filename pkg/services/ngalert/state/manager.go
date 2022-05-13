@@ -194,10 +194,10 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	// Set Resolved property so the scheduler knows to send a postable alert
 	// to Alertmanager.
-	currentState.Resolved = oldState.IsFiring() && currentState.State.IsNormal()
+	currentState.Resolved = oldState.Type == ngModels.InstanceStateFiring && currentState.State.Type == ngModels.InstanceStateNormal
 
 	st.set(currentState)
-	if oldState != currentState.State {
+	if !oldState.Equals(currentState.State) {
 		go st.annotateState(ctx, alertRule, currentState.Labels, result.EvaluatedAt, currentState.State, oldState)
 	}
 	return currentState
@@ -235,15 +235,11 @@ func (st *Manager) Put(states []*State) {
 	}
 }
 
-func translateInstanceState(state ngModels.InstanceStateType) eval.State {
-	switch state {
-	case ngModels.InstanceStateFiring,
-		ngModels.InstanceStateFiringError,
-		ngModels.InstanceStateFiringNoData:
+func translateInstanceState(state ngModels.InstanceState) eval.State {
+	switch {
+	case state.Type == ngModels.InstanceStateFiring:
 		return eval.Alerting
-	case ngModels.InstanceStateNormal,
-		ngModels.InstanceStateNormalError,
-		ngModels.InstanceStateNormalNoData:
+	case state.Type == ngModels.InstanceStateNormal:
 		return eval.Normal
 	case ngModels.InstanceStatePending,
 		ngModels.InstanceStatePendingError,
@@ -258,8 +254,8 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertRule, labels data.Labels, evaluatedAt time.Time, state, previousState ngModels.InstanceStateType) {
-	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", state, "oldState", previousState)
+func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertRule, labels data.Labels, evaluatedAt time.Time, state, previousState ngModels.InstanceState) {
+	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", state.String(), "oldState", previousState.String())
 
 	labels = removePrivateLabels(labels)
 	annotationText := fmt.Sprintf("%s {%s} - %s", alertRule.Title, labels.String(), state)
@@ -322,8 +318,14 @@ func (st *Manager) staleResultsHandler(ctx context.Context, alertRule *ngModels.
 				st.log.Error("unable to delete stale instance from database", "error", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
 			}
 
-			if s.State.IsFiring() {
-				st.annotateState(ctx, alertRule, s.Labels, time.Now(), ngModels.InstanceStateNormal, s.State)
+			if s.State.Type == ngModels.InstanceStateFiring {
+				st.annotateState(ctx, alertRule, s.Labels, time.Now(),
+					ngModels.InstanceState{
+						Type:   ngModels.InstanceStateNormal,
+						Reason: ngModels.InstanceReasonNormal,
+					},
+					s.State,
+				)
 			}
 		}
 	}

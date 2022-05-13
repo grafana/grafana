@@ -52,14 +52,15 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 		startsAt := alertState.StartsAt
 		valString := ""
 
-		if alertState.State.IsFiring() || alertState.State.IsPending() {
+		if alertState.State.Type == ngmodels.InstanceStateFiring ||
+			alertState.State.Type == ngmodels.InstanceStatePending {
 			valString = formatValues(alertState)
 		}
 
 		alertResponse.Data.Alerts = append(alertResponse.Data.Alerts, &apimodels.Alert{
 			Labels:      alertState.GetLabels(labelOptions...),
 			Annotations: alertState.Annotations,
-			State:       string(alertState.State),
+			State:       alertState.State.Type.String(),
 			ActiveAt:    &startsAt,
 			Value:       valString,
 		})
@@ -199,7 +200,8 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		for _, alertState := range srv.manager.GetStatesForRuleUID(c.OrgId, rule.UID) {
 			activeAt := alertState.StartsAt
 			valString := ""
-			if alertState.State.IsFiring() || alertState.State.IsPending() {
+			if alertState.State.Type == ngmodels.InstanceStateFiring ||
+				alertState.State.Type == ngmodels.InstanceStatePending {
 				valString = formatValues(alertState)
 			}
 
@@ -217,17 +219,17 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 
 			newRule.EvaluationTime = alertState.EvaluationDuration.Seconds()
 
-			switch s := alertState.State; {
-			case s.IsNormal():
-			case s.IsPending():
+			switch alertState.State.Type {
+			case ngmodels.InstanceStateNormal:
+			case ngmodels.InstanceStatePending:
 				if alertingRule.State == "inactive" {
 					alertingRule.State = "pending"
 				}
-			case s.IsFiring():
+			case ngmodels.InstanceStateFiring:
 				alertingRule.State = "firing"
-			case s.HasError():
+			case ngmodels.InstanceStateError:
 				newRule.Health = "error"
-			case s.HasNoData():
+			case ngmodels.InstanceStateNoData:
 				newRule.Health = "nodata"
 			}
 

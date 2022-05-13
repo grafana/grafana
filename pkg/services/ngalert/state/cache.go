@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	prometheusModel "github.com/prometheus/common/model"
 )
@@ -169,26 +170,21 @@ func (c *cache) recordMetrics() {
 
 	// Set default values to zero such that gauges are reset
 	// after all values from a single state disappear.
-	ct := map[ngModels.InstanceStateType]int{
-		ngModels.InstanceStateNormal:        0,
-		ngModels.InstanceStateNormalNoData:  0,
-		ngModels.InstanceStateNormalError:   0,
-		ngModels.InstanceStatePending:       0,
-		ngModels.InstanceStatePendingNoData: 0,
-		ngModels.InstanceStatePendingError:  0,
-		ngModels.InstanceStateFiring:        0,
-		ngModels.InstanceStateFiringNoData:  0,
-		ngModels.InstanceStateFiringError:   0,
-		ngModels.InstanceStateNoData:        0,
-		ngModels.InstanceStateError:         0,
+	ct := map[models.InstanceStateType]int{
+		// TODO: This changes the metric labels. Are we cool with that? If not, can write a translator.
+		models.InstanceStateNormal:  0,
+		models.InstanceStateFiring:  0,
+		models.InstanceStatePending: 0,
+		models.InstanceStateError:   0,
+		models.InstanceStateNoData:  0,
 	}
 
 	for org, orgMap := range c.states {
 		c.metrics.GroupRules.WithLabelValues(fmt.Sprint(org)).Set(float64(len(orgMap)))
 		for _, rule := range orgMap {
 			for _, state := range rule {
-				n := ct[state.State]
-				ct[state.State] = n + 1
+				n := ct[state.State.Type]
+				ct[state.State.Type] = n + 1
 			}
 		}
 	}

@@ -77,7 +77,10 @@ func (f *fakeAlertInstanceManager) GenerateAlertInstances(orgID int64, alertRule
 				"label":                        "test",
 				"instance_label":               "test",
 			},
-			State: models.InstanceStateNormal,
+			State: models.InstanceState{
+				Type:   models.InstanceStateNormal,
+				Reason: models.InstanceReasonNormal,
+			},
 			Results: []state.Evaluation{
 				{
 					EvaluationTime:  evaluationTime,
