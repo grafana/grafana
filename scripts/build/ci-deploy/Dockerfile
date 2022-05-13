@@ -21,8 +21,8 @@ FROM debian:testing-20210111-slim
 
 # Use ARG so as not to persist environment variable in image
 ARG DEBIAN_FRONTEND=noninteractive \
-  GOOGLE_SDK_VERSION=325.0.0 \
-  GOOGLE_SDK_CHECKSUM=374f960c9f384f88b6fc190b268ceac5dcad777301390107af63782bfb5ecbc7 \
+  GOOGLE_SDK_VERSION=385.0.0 \
+  GOOGLE_SDK_CHECKSUM=cd1839e9343e32f64645f2d3c269340a9c50d0c77d85c9a0a44cd9de2103879e \
   GCSFUSE_VERSION=0.41.1
 
 # Need procps for pkill utility, which is used by the build pipeline tool to restart the GPG agent
