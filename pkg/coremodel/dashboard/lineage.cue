@@ -61,22 +61,23 @@ seqs: [
 				refresh?: string | false
 				// Version of the JSON schema, incremented each time a Grafana update brings
 				// changes to said schema.
-				// TODO this is the old schema numbering system, and will be replaced by Thema's themaVersion
+				// TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion
 				schemaVersion: uint16 | *36
 				// Version of the dashboard, incremented each time the dashboard is updated.
 				version?: uint32
 				panels?: [...(#Panel | #GraphPanel | #HeatmapPanel | #RowPanel)]
-
 				// TODO docs
 				templating?: list: [...#VariableModel]
-
 				// TODO docs
-				// FROM: AnnotationQuery in g-d/src/types/annotations.ts
 				annotations?: list: [...#AnnotationQuery]
+				// TODO docs
+				links?: [...#DashboardLink]
 
 				///////////////////////////////////////
 				// Definitions (referenced above) are declared below
 
+				// TODO docs
+				// FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 				#AnnotationQuery: {
 					// Datasource to use for annotation.
 					datasource: {
@@ -110,6 +111,24 @@ seqs: [
 					label?: string
 					...
 				} @cuetsy(kind="interface")
+
+				// FROM public/app/features/dashboard/state/DashboardModels.ts - ish
+				// TODO docs
+				#DashboardLink: {
+					title: string
+					type: #DashboardLinkType
+					icon?: string
+					tooltip?: string
+					url?: string
+					tags: [...string]
+					asDropdown: bool | *false
+					targetBlank: bool | *false
+					includeVars: bool | *false
+					keepTime: bool | *false
+				}
+
+				// TODO docs
+				#DashboardLinkType: "link" | "dashboards" @cuetsy(kind="type")
 
 				// FROM: packages/grafana-data/src/types/templateVars.ts
 				// TODO docs
@@ -230,12 +249,8 @@ seqs: [
 						static?: bool
 					}
 					// Panel links.
-					// FIXME this is temporarily specified as a closed list so
-					// that validation will pass when no links are present, but
-					// to force a failure as soon as it's checked against there
-					// being anything in the list so it can be fixed in
-					// accordance with that object
-					links?: []
+					// TODO fill this out - seems there are a couple variants?
+					links?: [...#DashboardLink]
 
 					// Name of template variable to repeat for.
 					repeat?: string
