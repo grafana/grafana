@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 
 import { Button, Checkbox, HorizontalGroup, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { FolderDTO, FolderInfo } from 'app/types';
+import { FolderDTO } from 'app/types';
 
 import { GENERAL_FOLDER_UID } from '../../constants';
+import { OnMoveOrDeleleSelectedItems } from '../../types';
 
 import { getStyles } from './ActionRow';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
@@ -13,9 +14,10 @@ import { MoveToFolderModal } from './MoveToFolderModal';
 type Props = {
   items: Map<string, Set<string>>;
   folder?: FolderDTO; // when we are loading in folder page
+  onChange: OnMoveOrDeleleSelectedItems;
 };
 
-export function ManageActions({ items, folder }: Props) {
+export function ManageActions({ items, folder, onChange }: Props) {
   const styles = useStyles2(getStyles);
 
   const canSave = folder?.canSave;
@@ -45,20 +47,6 @@ export function ManageActions({ items, folder }: Props) {
     alert('TODO, toggle all....');
   };
 
-  //Todo: update item lists that were moved
-  const onMoveItems = (selectedDashboards: string[], folder: FolderInfo | null) => {
-    console.log({ selectedDashboards });
-    console.log({ folder });
-    console.log('items were moved in the backend');
-  };
-
-  //Todo: update item lists that were deleted
-  const onDeleteItems = (folders: string[], dashboards: string[]) => {
-    console.log({ folders });
-    console.log({ dashboards });
-    console.log('items were moved in the backend');
-  };
-
   return (
     <div className={styles.actionRow}>
       <div className={styles.rowContainer}>
@@ -83,13 +71,13 @@ export function ManageActions({ items, folder }: Props) {
       </div>
 
       <ConfirmDeleteModal
-        onDeleteItems={onDeleteItems}
+        onDeleteItems={onChange}
         results={items}
         isOpen={isDeleteModalOpen}
         onDismiss={() => setIsDeleteModalOpen(false)}
       />
       <MoveToFolderModal
-        onMoveItems={onMoveItems}
+        onMoveItems={onChange}
         results={items}
         isOpen={isMoveModalOpen}
         onDismiss={() => setIsMoveModalOpen(false)}

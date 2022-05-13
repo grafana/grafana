@@ -88,6 +88,14 @@ export default function SearchPage() {
     setSearchSelection(updateSearchSelection(searchSelection, !current, kind, [uid]));
   };
 
+  // function to update items when dashboards or folders are moved or deleted
+  const onChangeItemsList = async () => {
+    // clean up search selection
+    setSearchSelection(newSearchSelection());
+    // trigger again the search to the backend
+    onQueryChange(inputValue);
+  };
+
   const renderResults = () => {
     const value = results.value;
 
@@ -174,7 +182,7 @@ export default function SearchPage() {
         </InlineFieldRow>
 
         {Boolean(searchSelection.items.size > 0) ? (
-          <ManageActions items={searchSelection.items} />
+          <ManageActions items={searchSelection.items} onChange={onChangeItemsList} />
         ) : (
           <ActionRow
             onLayoutChange={(v) => {
