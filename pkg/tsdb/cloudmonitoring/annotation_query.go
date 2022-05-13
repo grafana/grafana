@@ -32,8 +32,10 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	}
 
 	mq := struct {
-		Title string `json:"title"`
-		Text  string `json:"text"`
+		MetricQuery struct {
+			Title string `json:"title"`
+			Text  string `json:"text"`
+		} `json:"metricQuery"`
 	}{}
 
 	firstQuery := req.Queries[0]
@@ -41,7 +43,7 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	if err != nil {
 		return resp, nil
 	}
-	err = queries[0].parseToAnnotations(queryRes, dr, mq.Title, mq.Text)
+	err = queries[0].parseToAnnotations(queryRes, dr, mq.MetricQuery.Title, mq.MetricQuery.Text)
 	resp.Responses[firstQuery.RefID] = *queryRes
 
 	return resp, err
