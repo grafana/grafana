@@ -600,5 +600,5 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []*acc
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store))
 	require.NoError(t, err)
 
-	return NewAccessControlDashboardGuardian(context.Background(), dash.Id, &models.SignedInUser{OrgId: 1}, store, ac, folderPermissions, dashboardPermissions), dash
+	return NewAccessControlDashboardGuardian(context.Background(), dash.Id, &models.SignedInUser{OrgId: 1}, store, ac, folderPermissions, dashboardPermissions, &dashboards.FakeDashboardService{}), dash
 }
