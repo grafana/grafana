@@ -97,6 +97,7 @@ export type OnMoveItems = (selectedDashboards: DashboardSectionItem[], folder: F
 export enum SearchLayout {
   List = 'list',
   Folders = 'folders',
+  Grid = 'grid', // preview
 }
 
 export interface SearchQueryParams {
@@ -107,3 +108,7 @@ export interface SearchQueryParams {
   layout?: SearchLayout | null;
   folder?: string | null;
 }
+
+// new Search Types
+export type OnDeleteSelectedItems = (folders: string[], dashboards: string[]) => void;
+export type OnMoveSelectedItems = (selectedDashboards: string[], folder: FolderInfo | null) => void;

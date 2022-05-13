@@ -364,9 +364,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
           series,
           timeField,
           labelsField,
-          timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
-            ? fieldCache.getFieldByName('tsNs')
-            : undefined,
+          timeNanosecondField: fieldCache.getFieldByName('tsNs'),
           stringField,
           logLevelField: fieldCache.getFieldByName('level'),
           idField: getIdField(fieldCache),

@@ -5,6 +5,7 @@ import { ArrayVector, DataFrame, dataFrameToJSON, dateTime, Field, MutableDataFr
 import { setDataSourceSrv } from '@grafana/runtime';
 
 import {
+  dimensionVariable,
   labelsVariable,
   limitVariable,
   metricVariable,
@@ -395,6 +396,19 @@ describe('datasource', () => {
           }),
         })
       );
+    });
+  });
+
+  describe('convertMultiFiltersFormat', () => {
+    const ds = setupMockedDataSource({ variables: [labelsVariable, dimensionVariable], mockGetVariableName: false });
+    it('converts keys and values correctly', () => {
+      // the json in this line doesn't matter, but it makes sure that old queries will be parsed
+      const filters = { $dimension: ['b'], a: ['${labels:json}', 'bar'] };
+      const result = ds.datasource.convertMultiFilterFormat(filters);
+      expect(result).toStrictEqual({
+        env: ['b'],
+        a: ['InstanceId', 'InstanceType', 'bar'],
+      });
     });
   });
 

@@ -123,7 +123,6 @@ export function registerAngularDirectives() {
     ['datasource', { watchDepth: 'reference' }],
     ['templateSrv', { watchDepth: 'reference' }],
   ]);
-
   react2AngularDirective('secretFormField', SecretFormField, [
     'value',
     'isConfigured',
