@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { Alert, DataSourceHttpSettings } from '@grafana/ui';
-import { SIGV4DataSourceSecureJsonData } from '@grafana/ui/src/components/DataSourceSettings/types';
 import { config } from 'app/core/config';
 
 import { ElasticsearchOptions } from '../types';
@@ -14,7 +13,7 @@ import { ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';
 import { coerceOptions, isValidOptions } from './utils';
 
-export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions, SIGV4DataSourceSecureJsonData>;
+export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions>;
 
 export const ConfigEditor = (props: Props) => {
   const { options: originalOptions, onOptionsChange } = props;
