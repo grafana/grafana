@@ -27,10 +27,7 @@ seqs: [
 				timezone?: *"browser" | "utc" | ""
 				// Whether a dashboard is editable or not.
 				editable: bool | *true
-				// 0 for no shared crosshair or tooltip (default).
-				// 1 for shared crosshair.
-				// 2 for shared crosshair AND shared tooltip.
-				graphTooltip: uint8 & >=0 & <=2 | *0
+				graphTooltip: #DashboardCursorSync
 				// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
 				time?: {
 					from: string | *"now-6h"
@@ -124,6 +121,11 @@ seqs: [
 					id: string
 					options: {...}
 				}
+
+				// 0 for no shared crosshair or tooltip (default).
+				// 1 for shared crosshair.
+				// 2 for shared crosshair AND shared tooltip.
+				#DashboardCursorSync: *0 | 1 | 2 @cuetsy(kind="enum")
 
 				// Schema for panel targets is specified by datasource
 				// plugins. We use a placeholder definition, which the Go
