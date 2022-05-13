@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/promclient"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered/promclient"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"

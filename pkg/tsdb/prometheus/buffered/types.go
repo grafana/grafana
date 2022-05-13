@@ -1,18 +1,10 @@
-package prometheus
+package buffered
 
 import (
 	"time"
 
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
-
-type DatasourceInfo struct {
-	ID           int64
-	URL          string
-	TimeInterval string
-
-	getClient clientGetter
-}
 
 type clientGetter func(map[string]string) (apiv1.API, error)
 
@@ -47,3 +39,11 @@ type QueryModel struct {
 	IntervalFactor int64  `json:"intervalFactor"`
 	UtcOffsetSec   int64  `json:"utcOffsetSec"`
 }
+
+type TimeSeriesQueryType string
+
+const (
+	RangeQueryType    TimeSeriesQueryType = "range"
+	InstantQueryType  TimeSeriesQueryType = "instant"
+	ExemplarQueryType TimeSeriesQueryType = "exemplar"
+)

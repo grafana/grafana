@@ -91,6 +91,37 @@ describe('loki backendResultTransformer', () => {
     expect(result).toEqual(expected);
   });
 
+  it('applies maxLines correctly', () => {
+    const response: DataQueryResponse = { data: [cloneDeep(inputFrame)] };
+
+    const frame1: DataFrame = transformBackendResult(
+      response,
+      [
+        {
+          refId: 'A',
+          expr: LOKI_EXPR,
+        },
+      ],
+      []
+    ).data[0];
+
+    expect(frame1.meta?.limit).toBeUndefined();
+
+    const frame2 = transformBackendResult(
+      response,
+      [
+        {
+          refId: 'A',
+          expr: LOKI_EXPR,
+          maxLines: 42,
+        },
+      ],
+      []
+    ).data[0];
+
+    expect(frame2.meta?.limit).toBe(42);
+  });
+
   it('processed derived fields correctly', () => {
     const input: DataFrame = {
       length: 1,
