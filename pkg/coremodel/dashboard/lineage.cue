@@ -210,17 +210,6 @@ seqs: [
 					// TODO docs
 					tags?: [...string]
 
-					// Internal - the exact major and minor versions of the panel plugin
-					// schema. Hidden and therefore not a part of the data model, but
-					// expected to be filled with panel plugin schema versions so that it's
-					// possible to figure out which schema version matched on a successful
-					// unification.
-					// _pv: { maj: int, min: int }
-					// The major and minor versions of the panel plugin for this schema.
-					// TODO 2-tuple list instead of struct?
-					// panelSchema?: { maj: number, min: number }
-					panelSchema?: [number, number]
-
 					// TODO docs
 					targets?: [...#Target]
 
