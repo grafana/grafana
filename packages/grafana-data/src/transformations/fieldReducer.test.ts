@@ -27,9 +27,10 @@ function createField<T>(name: string, values?: T[], type?: FieldType): Field<T> 
 describe('Stats Calculators', () => {
   const basicTable = new MutableDataFrame({
     fields: [
-      { name: 'a', values: [10, 20] },
-      { name: 'b', values: [20, 30] },
-      { name: 'c', values: [30, 40] },
+      { name: 'a', values: [10, 10, 10, 40, 50, 60, 70, 60, 90, 11, 12, 13, 14, 15, 16] },
+      { name: 'b', values: [20, 30, 40, 50, 60, 70, 80, 90, 11, 12, 13, 14, 15, 16, 17] },
+      { name: 'c', values: [30, 40, 50, 60, 70, 80, 90, 11, 12, 13, 14, 15, 16, 17, 18] },
+      { name: 'd', values: [31, 92, 10, 56, 19, 41, 17, 30, 64, 14, 89, 2, 63, 64, 54] },
     ],
   });
 
@@ -55,7 +56,7 @@ describe('Stats Calculators', () => {
 
   it('should calculate basic stats', () => {
     const stats = reduceField({
-      field: basicTable.fields[0],
+      field: basicTable.fields[3],
       reducers: [
         'first',
         'last',
@@ -68,14 +69,14 @@ describe('Stats Calculators', () => {
       ],
     });
 
-    expect(stats.first).toEqual(10);
-    expect(stats.last).toEqual(20);
-    expect(stats.mean).toEqual(15);
-    expect(stats.count).toEqual(2);
-    expect(stats.variancePopulation).toEqual(25);
-    expect(stats.varianceSample).toEqual(50);
-    expect(stats.stddevPopulation).toEqual(5);
-    expect(stats.stddevSample).toBeCloseTo(7.0710678, 5);
+    expect(stats.first).toEqual(31);
+    expect(stats.last).toEqual(54);
+    expect(stats.mean).toBeCloseTo(43.06666667, 5);
+    expect(stats.count).toEqual(15);
+    expect(stats.variancePopulation).toBeCloseTo(751.262222, 5);
+    expect(stats.varianceSample).toBeCloseTo(804.923809, 5);
+    expect(stats.stddevPopulation).toBeCloseTo(27.409163, 5);
+    expect(stats.stddevSample).toBeCloseTo(28.371179, 5);
   });
 
   it('should support a single stat also', () => {
@@ -96,8 +97,8 @@ describe('Stats Calculators', () => {
       reducers: [ReducerID.distinctCount, ReducerID.changeCount],
     });
 
-    expect(stats.distinctCount).toEqual(2);
-    expect(stats.changeCount).toEqual(1);
+    expect(stats.distinctCount).toEqual(12);
+    expect(stats.changeCount).toEqual(12);
   });
 
   it('should calculate step', () => {

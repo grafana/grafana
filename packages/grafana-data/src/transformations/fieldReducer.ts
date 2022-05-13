@@ -378,9 +378,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
           calcs.logmin = currentValue;
         }
 
-        let _oldMean = calcs.mean;
-        calcs.mean += (currentValue - _oldMean) / calcs.nonNullCount;
-        squareSum += (currentValue - _oldMean) * (currentValue - calcs.mean);
+        squareSum += currentValue ** 2;
       }
 
       if (currentValue !== 0) {
@@ -404,18 +402,10 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   }
 
   if (calcs.nonNullCount > 0) {
-    calcs.variancePopulation = squareSum / calcs.nonNullCount;
-  }
-
-  if (calcs.nonNullCount > 0) {
+    calcs.mean = calcs.sum / calcs.nonNullCount;
+    calcs.variancePopulation = squareSum / calcs.nonNullCount - calcs.mean ** 2;
     calcs.stddevPopulation = Math.sqrt(calcs.variancePopulation);
-  }
-
-  if (calcs.nonNullCount > 0) {
-    calcs.varianceSample = squareSum / (calcs.nonNullCount - 1);
-  }
-
-  if (calcs.nonNullCount > 0) {
+    calcs.varianceSample = (calcs.nonNullCount * calcs.variancePopulation) / (calcs.nonNullCount - 1);
     calcs.stddevSample = Math.sqrt(calcs.varianceSample);
   }
 
