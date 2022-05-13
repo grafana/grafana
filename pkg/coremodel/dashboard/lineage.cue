@@ -54,37 +54,47 @@ seqs: [
 				weekStart?: string
 
 				// TODO docs
+				refresh?: string | false
+				// Version of the JSON schema, incremented each time a Grafana update brings
+				// changes to said schema.
+				// TODO this is the old schema numbering system, and will be replaced by Thema's themaVersion
+				schemaVersion: uint16 | *36
+				// Version of the dashboard, incremented each time the dashboard is updated.
+				version?: uint32
+				panels?: [...(#Panel | #GraphPanel | #HeatmapPanel | #RowPanel)]
+
+				// TODO docs
 				templating?: list: [...{...}]
-				// Annotations.
-				annotations?: list: [...{
-					builtIn: uint8 | *0
+
+				// TODO docs
+				// FROM: AnnotationQuery in g-d/src/types/annotations.ts
+				annotations?: list: [...#AnnotationQuery]
+
+				///////////////////////////////////////
+				// Definitions (referenced above) are declared below
+
+				#AnnotationQuery: {
 					// Datasource to use for annotation.
 					datasource: {
 						type?: string
 						uid?:  string
 					}
+
 					// Whether annotation is enabled.
 					enable: bool | *true
+					// Name of annotation.
+					name?: string
+					builtIn: uint8 | *0 // TODO should this be persisted at all?
 					// Whether to hide annotation.
 					hide?: bool | *false
 					// Annotation icon color.
 					iconColor?: string
-					// Name of annotation.
-					name?: string
 					type:  string | *"dashboard"
 					// Query for annotation data.
 					rawQuery?: string
 					showIn:    uint8 | *0
-				}]
-				// Auto-refresh interval.
-				refresh?: string | false
-				// Version of the JSON schema, incremented each time a Grafana update brings
-				// changes to said schema.
-				// FIXME this is the old schema numbering system, and will be replaced by Thema's themaVersion
-				schemaVersion: uint16 | *33
-				// Version of the dashboard, incremented each time the dashboard is updated.
-				version?: uint32
-				panels?: [...(#Panel | #GraphPanel | #HeatmapPanel | #RowPanel)]
+					target?: #Target // TODO currently a generic in AnnotationQuery
+				} @cuetsy(kind="interface")
 
 				// TODO docs
 				#FieldColorModeId: "thresholds" | "palette-classic" | "palette-saturated" | "continuous-GrYlRd" | "fixed" @cuetsy(kind="enum")
