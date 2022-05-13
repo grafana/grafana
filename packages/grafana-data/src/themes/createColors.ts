@@ -215,8 +215,8 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   background = {
-    fusebit: palette.fusebitLightBlue,
-    canvas: palette.fusebitWhite,
+    fusebit: palette.fusebit.lightBlue,
+    canvas: palette.fusebit.white,
     primary: palette.white,
     secondary: palette.gray100,
   };
