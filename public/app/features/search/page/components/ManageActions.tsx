@@ -5,6 +5,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { FolderDTO } from 'app/types';
 
 import { GENERAL_FOLDER_UID } from '../../constants';
+import { OnMoveOrDeleleSelectedItems } from '../../types';
 
 import { getStyles } from './ActionRow';
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';
@@ -13,7 +14,7 @@ import { MoveToFolderModal } from './MoveToFolderModal';
 type Props = {
   items: Map<string, Set<string>>;
   folder?: FolderDTO; // when we are loading in folder page
-  onChange: (selectedDashboars: string[]) => void;
+  onChange: OnMoveOrDeleleSelectedItems;
 };
 
 export function ManageActions({ items, folder, onChange }: Props) {

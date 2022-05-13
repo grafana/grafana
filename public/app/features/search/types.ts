@@ -110,5 +110,4 @@ export interface SearchQueryParams {
 }
 
 // new Search Types
-export type OnDeleteSelectedItems = (folders: string[], dashboards: string[]) => void;
-export type OnMoveSelectedItems = (selectedDashboards: string[]) => void;
+export type OnMoveOrDeleleSelectedItems = () => void;
