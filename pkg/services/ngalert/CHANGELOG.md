@@ -49,6 +49,7 @@ Scopes must have an order to ensure consistency and ease of search, this helps u
   - `grafana_alerting_ticker_last_consumed_tick_timestamp_seconds`
   - `grafana_alerting_ticker_next_tick_timestamp_seconds`
   - `grafana_alerting_ticker_interval_seconds`
+- [ENHANCEMENT] Create folder 'General Alerting' when Grafana starts from the scratch #48866
 - [FEATURE] Indicate whether routes are provisioned when GETting Alertmanager configuration #47857
 - [FEATURE] Indicate whether contact point is provisioned when GETting Alertmanager configuration #48323
 - [FEATURE] Indicate whether alert rule is provisioned when GETting the rule #48458
