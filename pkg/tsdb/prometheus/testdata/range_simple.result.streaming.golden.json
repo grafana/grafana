@@ -25,8 +25,7 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64",
-              "nullable": true
+              "frame": "float64"
             },
             "labels": {
               "__name__": "prometheus_http_requests_total",
@@ -80,8 +79,7 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64",
-              "nullable": true
+              "frame": "float64"
             },
             "labels": {
               "__name__": "prometheus_http_requests_total",

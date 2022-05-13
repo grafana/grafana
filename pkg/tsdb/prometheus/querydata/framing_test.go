@@ -37,7 +37,7 @@ func TestMatrixResponses(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
 			responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
-			goldenFileName := filepath.Join("../testdata", test.filepath+".result.golden")
+			goldenFileName := filepath.Join("../testdata", test.filepath+".result.streaming.golden")
 
 			query, err := loadStoredQuery(queryFileName)
 			require.NoError(t, err)

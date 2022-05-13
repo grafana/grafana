@@ -2,13 +2,13 @@
   "frames": [
     {
       "schema": {
-        "name": "{handler=\"/api/v1/query_range\", job=\"prometheus\"}",
+        "name": "1 / 0",
         "meta": {
           "type": "timeseries-many",
           "custom": {
             "resultType": "matrix"
           },
-          "executedQueryString": "Expr: \nStep: 1s"
+          "executedQueryString": "Expr: 1 / 0\nStep: 1s"
         },
         "fields": [
           {
@@ -25,15 +25,11 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64",
-              "nullable": true
+              "frame": "float64"
             },
-            "labels": {
-              "handler": "/api/v1/query_range",
-              "job": "prometheus"
-            },
+            "labels": {},
             "config": {
-              "displayNameFromDS": "{handler=\"/api/v1/query_range\", job=\"prometheus\"}"
+              "displayNameFromDS": "1 / 0"
             }
           }
         ]
@@ -50,6 +46,16 @@
             null,
             null
           ]
+        ],
+        "entities": [
+          null,
+          {
+            "Inf": [
+              0,
+              1,
+              2
+            ]
+          }
         ]
       }
     }

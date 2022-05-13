@@ -2,13 +2,13 @@
   "frames": [
     {
       "schema": {
-        "name": "{handler=\"/api/v1/query_range\", job=\"prometheus\"}",
+        "name": "go_goroutines{job=\"prometheus\"}",
         "meta": {
           "type": "timeseries-many",
           "custom": {
             "resultType": "matrix"
           },
-          "executedQueryString": "Expr: \nStep: 1s"
+          "executedQueryString": "Expr: test1\nStep: 1s"
         },
         "fields": [
           {
@@ -25,15 +25,14 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64",
-              "nullable": true
+              "frame": "float64"
             },
             "labels": {
-              "handler": "/api/v1/query_range",
+              "__name__": "go_goroutines",
               "job": "prometheus"
             },
             "config": {
-              "displayNameFromDS": "{handler=\"/api/v1/query_range\", job=\"prometheus\"}"
+              "displayNameFromDS": "go_goroutines{job=\"prometheus\"}"
             }
           }
         ]
@@ -41,14 +40,14 @@
       "data": {
         "values": [
           [
-            1641889530000,
-            1641889531000,
-            1641889532000
+            1641889533000,
+            1641889534000,
+            1641889537000
           ],
           [
-            null,
-            null,
-            null
+            21,
+            32,
+            43
           ]
         ]
       }

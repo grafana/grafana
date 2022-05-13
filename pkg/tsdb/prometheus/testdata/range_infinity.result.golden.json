@@ -25,7 +25,8 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64"
+              "frame": "float64",
+              "nullable": true
             },
             "labels": {},
             "config": {
