@@ -204,7 +204,7 @@ func readArrayData(iter *jsoniter.Iterator) *backend.DataResponse {
 		}
 	}
 
-	if rsp.Frames == nil || stringField.Len() > 0 {
+	if stringField.Len() > 0 {
 		rsp.Frames = append(rsp.Frames, data.NewFrame("", stringField))
 	}
 
@@ -232,9 +232,9 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 		case "exemplars":
 			lookup := make(map[string]*data.Field)
 			timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
+			timeField.Name = data.TimeSeriesTimeFieldName
 			valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
-			valueField.Name = labels["__name__"]
-			delete(labels, "__name__")
+			valueField.Name = data.TimeSeriesValueFieldName
 			valueField.Labels = labels
 			frame = data.NewFrame("", timeField, valueField)
 			frame.Meta = &data.FrameMeta{
