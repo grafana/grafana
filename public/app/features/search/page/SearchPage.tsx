@@ -90,7 +90,7 @@ export default function SearchPage() {
 
   const onUpdateList = async () => {
     // clean up search selection
-    setSearchSelection(clearSearchSelection(searchSelection));
+    setSearchSelection(newSearchSelection());
     // trigger again the search to the backend
     // TODO: the backend is not returning the updated value :(
     onQueryChange(inputValue);
