@@ -18,12 +18,6 @@ const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
 ];
 
 const esVersions: SelectableValue[] = [
-  { label: '2.x', value: '2.0.0' },
-  { label: '5.x', value: '5.0.0' },
-  { label: '5.6+', value: '5.6.0' },
-  { label: '6.0+', value: '6.0.0' },
-  { label: '7.0+', value: '7.0.0' },
-  { label: '7.7+', value: '7.7.0' },
   { label: '7.10+', value: '7.10.0' },
   {
     label: '8.0+',

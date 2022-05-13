@@ -3,7 +3,10 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many"
+          "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          }
         },
         "fields": [
           {
@@ -14,14 +17,15 @@
             }
           },
           {
-            "name": "up",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
             },
             "labels": {
-              "job": "prometheus",
-              "instance": "localhost:9090"
+              "__name__": "up",
+              "instance": "localhost:9090",
+              "job": "prometheus"
             }
           }
         ]
@@ -40,7 +44,10 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many"
+          "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          }
         },
         "fields": [
           {
@@ -51,14 +58,15 @@
             }
           },
           {
-            "name": "up",
+            "name": "Value",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
             },
             "labels": {
-              "job": "node",
-              "instance": "localhost:9100"
+              "__name__": "up",
+              "instance": "localhost:9100",
+              "job": "node"
             }
           }
         ]
@@ -77,7 +85,10 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many"
+          "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          }
         },
         "fields": [
           {
@@ -122,7 +133,10 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many"
+          "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          }
         },
         "fields": [
           {
@@ -167,7 +181,10 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many"
+          "type": "timeseries-many",
+          "custom": {
+            "resultType": "vector"
+          }
         },
         "fields": [
           {

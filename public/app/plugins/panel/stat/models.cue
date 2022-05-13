@@ -26,7 +26,7 @@ Panel: {
                     colorMode: ui.BigValueColorMode
                     justifyMode: ui.BigValueJustifyMode
                     textMode: ui.BigValueTextMode
-                }
+                } @cuetsy(kind="interface")
             }
         ]
     ]

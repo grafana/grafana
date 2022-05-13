@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"regexp"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -15,34 +14,28 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/promclient"
-	"github.com/grafana/grafana/pkg/util/maputil"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
-var (
-	plog         = log.New("tsdb.prometheus")
-	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
-	safeRes      = 11000
-)
+var plog = log.New("tsdb.prometheus")
 
 type Service struct {
-	intervalCalculator intervalv2.Calculator
-	im                 instancemgmt.InstanceManager
-	tracer             tracing.Tracer
+	im instancemgmt.InstanceManager
+}
+
+type instance struct {
+	Buffered *buffered.Buffered
 }
 
 func ProvideService(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
 	plog.Debug("initializing")
 	return &Service{
-		intervalCalculator: intervalv2.NewCalculator(),
-		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, cfg, features)),
-		tracer:             tracer,
+		im: datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, cfg, features, tracer)),
 	}
 }
 
-func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		var jsonData map[string]interface{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -50,25 +43,14 @@ func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cf
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		p := promclient.NewProvider(settings, jsonData, httpClientProvider, cfg, features, plog)
-		pc, err := promclient.NewProviderCache(p)
+		buf, err := buffered.New(httpClientProvider, cfg, features, tracer, settings, plog)
 		if err != nil {
 			return nil, err
 		}
 
-		timeInterval, err := maputil.GetStringOptional(jsonData, "timeInterval")
-		if err != nil {
-			return nil, err
-		}
-
-		mdl := DatasourceInfo{
-			ID:           settings.ID,
-			URL:          settings.URL,
-			TimeInterval: timeInterval,
-			getClient:    pc.GetClient,
-		}
-
-		return mdl, nil
+		return instance{
+			Buffered: buf,
+		}, nil
 	}
 }
 
@@ -77,32 +59,21 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	q := req.Queries[0]
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	i, err := s.getInstance(req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
 
-	var result *backend.QueryDataResponse
-	switch q.QueryType {
-	case "timeSeriesQuery":
-		fallthrough
-	default:
-		result, err = s.executeTimeSeriesQuery(ctx, req, dsInfo)
-	}
-
-	return result, err
+	return i.Buffered.ExecuteTimeSeriesQuery(ctx, req)
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*DatasourceInfo, error) {
+func (s *Service) getInstance(pluginCtx backend.PluginContext) (*instance, error) {
 	i, err := s.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
-
-	instance := i.(DatasourceInfo)
-
-	return &instance, nil
+	in := i.(instance)
+	return &in, nil
 }
 
 // IsAPIError returns whether err is or wraps a Prometheus error.

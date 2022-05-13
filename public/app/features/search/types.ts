@@ -108,3 +108,6 @@ export interface SearchQueryParams {
   layout?: SearchLayout | null;
   folder?: string | null;
 }
+
+// new Search Types
+export type OnMoveOrDeleleSelectedItems = () => void;

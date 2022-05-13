@@ -212,6 +212,7 @@ export function getNewDashboardModelData(urlFolderId?: string | null): any {
     meta: {
       canStar: false,
       canShare: false,
+      canDelete: false,
       isNew: true,
       folderId: 0,
     },

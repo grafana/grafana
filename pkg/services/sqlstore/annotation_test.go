@@ -339,10 +339,7 @@ func TestAnnotations(t *testing.T) {
 }
 
 func TestAnnotationListingWithRBAC(t *testing.T) {
-	sql := sqlstore.InitTestDB(t)
-	sql.Cfg.IsFeatureToggleEnabled = func(key string) bool {
-		return key == featuremgmt.FlagAccesscontrol
-	}
+	sql := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
 	dashboardStore := dashboardstore.ProvideDashboardStore(sql)
 
