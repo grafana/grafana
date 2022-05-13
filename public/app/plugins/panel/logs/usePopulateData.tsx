@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { cloneDeep } from 'lodash';
 import { DEFAULT_ID, DEFAULT_TS_NS, DEFAULT_LINE, DEFAULT_TS, DEFAULT_TRACEID, DEFAULT_SPANID } from './constants';
-import { calculateAndPostLogsNewHeight } from './utils';
 
 interface Props {
   data: any;
@@ -75,7 +74,6 @@ const usePopulateData = ({ data }: Props) => {
       const clonedData = cloneDeep(newData);
       const updatedData = addMessageToData(clonedData, newLog);
       setNewData(updatedData);
-      calculateAndPostLogsNewHeight();
     };
 
     window.addEventListener('message', postMessage);
