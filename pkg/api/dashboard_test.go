@@ -227,12 +227,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		}
 
 		mockSQLStore := mockstore.NewSQLStoreMock()
-		mockSQLStore.ExpectedDashboard = fakeDash
-
 		cfg := setting.NewCfg()
-		//features := featuremgmt.WithFeatures()
 		sql := sqlstore.InitTestDB(t)
-		//dashboardStore := database.ProvideDashboardStore(sql)
 
 		hs := &HTTPServer{
 			Cfg:                   cfg,
@@ -849,7 +845,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			Version: 1,
 		}
 		mockSQLStore := mockstore.NewSQLStoreMock()
-		mockSQLStore.ExpectedDashboard = fakeDash
 		mockSQLStore.ExpectedDashboardVersions = []*models.DashboardVersion{
 			{
 				DashboardId: 2,

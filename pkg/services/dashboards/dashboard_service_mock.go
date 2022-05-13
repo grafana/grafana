@@ -53,9 +53,9 @@ func (s *FakeDashboardService) GetDashboard(ctx context.Context, cmd *models.Get
 		return s.GetDashboardFn(ctx, cmd)
 	}
 	// A minimal result for tests that need a valid result, but don't care what's in it.
-	cmd.Result = &models.Dashboard{
-		Id:  1,
-		Uid: "1",
-	}
+	d := models.NewDashboard("mocked")
+	d.Id = 1
+	d.Uid = "1"
+	cmd.Result = d
 	return nil
 }

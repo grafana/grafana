@@ -595,9 +595,11 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []*acc
 	})
 	require.NoError(t, err)
 	ac := accesscontrolmock.New().WithPermissions(permissions)
-	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store))
+	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
+		setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store), &dashboards.FakeDashboardStore{})
 	require.NoError(t, err)
-	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store))
+	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
+		setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store), &dashboards.FakeDashboardStore{})
 	require.NoError(t, err)
 
 	return NewAccessControlDashboardGuardian(context.Background(), dash.Id, &models.SignedInUser{OrgId: 1}, store, ac, folderPermissions, dashboardPermissions, &dashboards.FakeDashboardService{}), dash

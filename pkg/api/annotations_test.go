@@ -222,10 +222,6 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 			role := models.ROLE_ADMIN
 
 			mock := mockstore.NewSQLStoreMock()
-			mock.ExpectedDashboard = &models.Dashboard{
-				Id:  1,
-				Uid: "home",
-			}
 
 			t.Run("Should be able to do anything", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, func(sc *scenarioContext) {
