@@ -101,7 +101,7 @@ func newTestLive(t *testing.T, store *sqlstore.SQLStore) *live.GrafanaLive {
 		nil,
 		&usagestats.UsageStatsMock{T: t},
 		nil,
-		features, accesscontrolmock.New())
+		features, accesscontrolmock.New(), &dashboards.FakeDashboardService{})
 	require.NoError(t, err)
 	return gLive
 }
