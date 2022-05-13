@@ -89,7 +89,7 @@ export default function SearchPage() {
   };
 
   // function to update items when dashboards or folders are moved or deleted
-  const onUpdateList = async () => {
+  const onChangeItemsList = async () => {
     // clean up search selection
     setSearchSelection(newSearchSelection());
     // trigger again the search to the backend
@@ -182,7 +182,7 @@ export default function SearchPage() {
         </InlineFieldRow>
 
         {Boolean(searchSelection.items.size > 0) ? (
-          <ManageActions items={searchSelection.items} onChange={onUpdateList} />
+          <ManageActions items={searchSelection.items} onChange={onChangeItemsList} />
         ) : (
           <ActionRow
             onLayoutChange={(v) => {
