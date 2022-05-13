@@ -1,6 +1,10 @@
 package dashboard
 
-import "github.com/grafana/thema"
+import (
+	"strings"
+
+	"github.com/grafana/thema"
+)
 
 thema.#Lineage
 name: "dashboard"
@@ -175,8 +179,8 @@ seqs: [
 				// because they share a version timeline with the dashboard
 				// schema; they do not evolve independently.
 				#Panel: {
-					// The panel plugin type id.
-					type: !=""
+					// The panel plugin type id. May not be empty.
+					type: string & strings.MinRunes(1)
 
 					// TODO docs
 					id?: uint32
