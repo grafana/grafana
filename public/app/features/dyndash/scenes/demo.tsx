@@ -1,19 +1,16 @@
 import { getDefaultTimeRange } from '@grafana/data';
 
+import { SceneTimeRange } from '../models/SceneTimeRange';
 import { Scene, ScenePanel, ScenePanelButton } from '../models/scene';
 
 export function getDemoScene(): Scene {
   const scene = new Scene({
     title: 'Hello',
     children: [],
-    timeRange: getDefaultTimeRange(),
-    timePicker: {
-      show: true,
-    },
+    timeRange: new SceneTimeRange({
+      timeRange: getDefaultTimeRange(),
+    }),
   });
-
-  // scene.onData((data) => {
-  // })
 
   function addDrilldown() {
     scene.setState({
