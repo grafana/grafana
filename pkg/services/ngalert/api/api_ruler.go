@@ -336,13 +336,13 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		RuleGroup:    ruleGroupConfig.Name,
 	}
 
-	return srv.updateAlertRulesInGroup(c, namespace, groupKey, rules)
+	return srv.updateAlertRulesInGroup(c, groupKey, rules)
 }
 
 // updateAlertRulesInGroup calculates changes (rules to add,update,delete), verifies that the user is authorized to do the calculated changes and updates database.
 // All operations are performed in a single transaction
 // nolint: gocyclo
-func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *models.Folder, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRule) response.Response {
+func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRule) response.Response {
 	var finalChanges *changes
 	hasAccess := accesscontrol.HasAccess(srv.ac, c)
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
@@ -358,7 +358,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, namespace *mod
 			return nil
 		}
 
-		authorizedChanges, err := authorizeRuleChanges(namespace, groupChanges, func(evaluator accesscontrol.Evaluator) bool {
+		authorizedChanges, err := authorizeRuleChanges(groupChanges, func(evaluator accesscontrol.Evaluator) bool {
 			return hasAccess(accesscontrol.ReqOrgAdminOrEditor, evaluator)
 		})
 		if err != nil {
@@ -563,9 +563,10 @@ type ruleUpdate struct {
 }
 
 type changes struct {
-	New    []*ngmodels.AlertRule
-	Update []ruleUpdate
-	Delete []*ngmodels.AlertRule
+	GroupKey ngmodels.AlertRuleGroupKey
+	New      []*ngmodels.AlertRule
+	Update   []ruleUpdate
+	Delete   []*ngmodels.AlertRule
 }
 
 func (c *changes) isEmpty() bool {
@@ -639,9 +640,10 @@ func calculateChanges(ctx context.Context, ruleStore store.RuleStore, groupKey n
 	}
 
 	return &changes{
-		New:    toAdd,
-		Delete: toDelete,
-		Update: toUpdate,
+		GroupKey: groupKey,
+		New:      toAdd,
+		Delete:   toDelete,
+		Update:   toUpdate,
 	}, nil
 }
 
