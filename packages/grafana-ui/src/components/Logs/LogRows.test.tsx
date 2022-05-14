@@ -4,7 +4,6 @@ import React from 'react';
 
 import { LogLevel, LogRowModel, LogsDedupStrategy, MutableDataFrame, LogsSortOrder } from '@grafana/data';
 
-import { LogRow } from './LogRow';
 import { LogRows, PREVIEW_LIMIT } from './LogRows';
 
 describe('LogRows', () => {
