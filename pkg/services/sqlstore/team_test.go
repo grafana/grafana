@@ -220,6 +220,29 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, query.Result[0].Email, "test2@test.com")
 			})
 
+			t.Run("Should be able to exclude service accounts from teamembers", func(t *testing.T) {
+				sqlStore = InitTestDB(t)
+				setup()
+				groupId := team2.Id
+
+				userCmd = models.CreateUserCommand{
+					Email:            fmt.Sprint("sa", 1, "@test.com"),
+					Name:             fmt.Sprint("sa", 1),
+					Login:            fmt.Sprint("login-sa", 1),
+					IsServiceAccount: 1,
+				}
+				serviceAccount, err = sqlStore.CreateUser(context.Background(), userCmd)
+				require.NoError(t, err)
+				err := sqlStore.AddTeamMember(serviceAccount.id, testOrgID, groupId, false, 0)
+				require.NoError(t, err)
+
+				query := &models.GetTeamMembersQuery{OrgId: testOrgID, UserId: userIds[0], IsServiceAccount: 0}
+				err = sqlStore.GetTeamMembers(context.Background(), query)
+				require.NoError(t, err)
+				require.Equal(t, len(query.Result), 1)
+				require.Equal(t, query.Result[0].Email, "test2@test.com")
+			})
+
 			t.Run("Should be able to remove users from a group", func(t *testing.T) {
 				err = sqlStore.AddTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
 				require.NoError(t, err)
