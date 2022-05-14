@@ -28,7 +28,8 @@ func BenchmarkJson(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_, _ = s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
+		_, err := s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
+		require.NoError(b, err)
 	}
 }
 

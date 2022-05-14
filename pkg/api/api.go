@@ -176,8 +176,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Group("/users", func(usersRoute routing.RouteRegister) {
 			userIDScope := ac.Scope("global.users", "id", ac.Parameter(":id"))
-			usersRoute.Get("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.searchUsersService.SearchUsers))
-			usersRoute.Get("/search", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.searchUsersService.SearchUsersWithPaging))
+			usersRoute.Get("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead)), routing.Wrap(hs.searchUsersService.SearchUsers))
+			usersRoute.Get("/search", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead)), routing.Wrap(hs.searchUsersService.SearchUsersWithPaging))
 			usersRoute.Get("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(hs.GetUserByID))
 			usersRoute.Get("/:id/teams", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersTeamRead, userIDScope)), routing.Wrap(hs.GetUserTeams))
 			usersRoute.Get("/:id/orgs", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(hs.GetUserOrgList))
@@ -277,7 +277,7 @@ func (hs *HTTPServer) registerRoutes() {
 			orgsRoute.Put("/", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsWrite)), routing.Wrap(hs.UpdateOrg))
 			orgsRoute.Put("/address", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsWrite)), routing.Wrap(hs.UpdateOrgAddress))
 			orgsRoute.Delete("/", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsDelete)), routing.Wrap(hs.DeleteOrgByID))
-			orgsRoute.Get("/users", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersRead, ac.ScopeUsersAll)), routing.Wrap(hs.GetOrgUsers))
+			orgsRoute.Get("/users", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersRead)), routing.Wrap(hs.GetOrgUsers))
 			orgsRoute.Post("/users", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersAdd, ac.ScopeUsersAll)), routing.Wrap(hs.AddOrgUser))
 			orgsRoute.Patch("/users/:userId", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersRoleUpdate, userIDScope)), routing.Wrap(hs.UpdateOrgUser))
 			orgsRoute.Delete("/users/:userId", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersRemove, userIDScope)), routing.Wrap(hs.RemoveOrgUser))
