@@ -50,3 +50,17 @@ func BackendUserFromSignedInUser(su *models.SignedInUser) *backend.User {
 		Role:  string(su.OrgRole),
 	}
 }
+
+// SignedInUserFromBackendUser converts the backend plugin's model
+// to Grafana's SignedInUser model
+func SignedInUserFromBackendUser(bu *backend.User) *models.SignedInUser {
+	if bu == nil {
+		return nil
+	}
+	return &models.SignedInUser{
+		Login:   bu.Login,
+		Name:    bu.Name,
+		Email:   bu.Email,
+		OrgRole: models.RoleType(bu.Role),
+	}
+}
