@@ -48,6 +48,10 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		if err != nil {
 			return err
 		}
+		err = service.ruleStore.UpdateRuleGroup(ctx, rule.OrgID, rule.RuleGroup, rule.IntervalSeconds)
+		if err != nil {
+			return err
+		}
 		return service.provenanceStore.SetProvenance(ctx, &rule, rule.OrgID, provenance)
 	})
 }
@@ -72,6 +76,10 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 				New:      rule,
 			},
 		})
+		if err != nil {
+			return err
+		}
+		err = service.ruleStore.UpdateRuleGroup(ctx, rule.OrgID, rule.RuleGroup, rule.IntervalSeconds)
 		if err != nil {
 			return err
 		}
