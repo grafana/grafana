@@ -36,6 +36,12 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 		Name:             name,
 		IsServiceAccount: true,
 	}
+	if role != nil {
+		// TODO: need to change to empty builtin Role
+		cmd.DefaultOrgRole = string(*role)
+	} else {
+		cmd.DefaultOrgRole = string(models.ROLE_VIEWER)
+	}
 
 	newuser, err := s.sqlStore.CreateUser(ctx, cmd)
 	if err != nil {
