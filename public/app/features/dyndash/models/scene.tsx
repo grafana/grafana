@@ -2,15 +2,16 @@ import React, { CSSProperties } from 'react';
 
 import { PageToolbar } from '@grafana/ui';
 
-import { SceneComponentProps, SceneItemBase, SceneLayoutItemChildState } from './SceneItem';
+import { SceneComponentProps, SceneItemBase, SceneItem, SceneLayoutItemChildState } from './SceneItem';
 import { SceneQueryRunner } from './SceneQueryRunner';
 import { SceneTimeRange } from './SceneTimeRange';
 
 interface SceneState {
   title: string;
-  layout: SceneItemBase<any>;
+  layout: SceneItem<any>;
   timeRange: SceneTimeRange;
   queryRunner?: SceneQueryRunner;
+  actions?: Array<SceneItem<any>>;
 }
 
 export class Scene extends SceneItemBase<SceneState> {
@@ -18,13 +19,17 @@ export class Scene extends SceneItemBase<SceneState> {
 }
 
 const SceneRenderer = React.memo<SceneComponentProps<Scene>>(({ model }) => {
-  const { title, layout, timeRange } = model.useState();
+  const { title, layout, timeRange, actions = [] } = model.useState();
 
   console.log('render scene');
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', flex: '1 1 0', minHeight: 0 }}>
+      {' '}
       <PageToolbar title={title}>
+        {actions.map((action) => (
+          <action.Component key={action.state.key} model={action} />
+        ))}
         <timeRange.Component model={timeRange} />
       </PageToolbar>
       <div style={{ flexGrow: 1, display: 'flex', padding: '16px' }}>
@@ -51,28 +56,6 @@ const ScenePanelRenderer = React.memo<SceneComponentProps<ScenePanel>>(({ model 
 });
 
 ScenePanelRenderer.displayName = 'ScenePanelRenderer';
-
-// export interface ScenePanelButtonProps extends PanelState {
-//   buttonText: string;
-//   onClick: () => void;
-// }
-
-// export class ScenePanelButton extends SceneItem<ScenePanelButtonProps> {
-//   Component = ({ model }: SceneComponentProps<ScenePanelButton>) => {
-//     const props = model.useState();
-
-//     return (
-//       <div style={getSceneItemStyles(props)}>
-//         <Button onClick={props.onClick}>{props.buttonText}</Button>
-//       </div>
-//     );
-//   };
-// }
-
-// export interface ScenePanelSize {
-//   width: number;
-//   height: number;
-// }
 
 function getItemStyles() {
   const style: CSSProperties = {

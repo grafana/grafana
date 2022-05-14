@@ -2,6 +2,7 @@ import { getDefaultTimeRange } from '@grafana/data';
 
 import { SceneFlexLayout } from '../models/SceneFlexLayout';
 import { SceneTimeRange } from '../models/SceneTimeRange';
+import { SceneToolbarButton } from '../models/SceneToolbarButton';
 import { Scene, ScenePanel } from '../models/scene';
 
 export function getDemoScene(): Scene {
@@ -13,7 +14,8 @@ export function getDemoScene(): Scene {
       children: [
         new ScenePanel({
           key: 'A',
-          size: { vSizing: 'fixed', width: 200 },
+          size: {},
+          // size: { vSizing: 'fixed', width: 200 },
           title: 'Panel 1',
         }),
         new SceneFlexLayout({
@@ -38,6 +40,16 @@ export function getDemoScene(): Scene {
     timeRange: new SceneTimeRange({
       timeRange: getDefaultTimeRange(),
     }),
+    actions: [
+      new SceneToolbarButton({
+        icon: 'columns',
+        onClick: () => {
+          scene.state.layout.setState({
+            direction: scene.state.layout.state.direction === 'row' ? 'column' : 'row',
+          });
+        },
+      }),
+    ],
   });
 
   // function addDrilldown() {
