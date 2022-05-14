@@ -1,8 +1,8 @@
 import { DataQuery, PanelData } from '@grafana/data';
 
-import { SceneItem } from './SceneItem';
+import { SceneItemBase } from './SceneItem';
 
-export class SceneQueryRunner extends SceneItem<{ data: PanelData; queries: DataQuery[] }> {
+export class SceneQueryRunner extends SceneItemBase<{ data: PanelData; queries: DataQuery[] }> {
   run() {}
 
   Component = () => null;

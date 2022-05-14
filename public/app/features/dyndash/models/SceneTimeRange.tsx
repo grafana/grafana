@@ -3,14 +3,14 @@ import React from 'react';
 import { TimeRange } from '@grafana/data';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 
-import { SceneItem } from './SceneItem';
+import { SceneItemBase } from './SceneItem';
 
 interface TimeRangeState {
   timeRange: TimeRange;
   hidePicker?: boolean;
 }
 
-export class SceneTimeRange extends SceneItem<TimeRangeState> {
+export class SceneTimeRange extends SceneItemBase<TimeRangeState> {
   Component = SceneTimeRangeRenderer;
 
   onTimeRangeChange = (timeRange: TimeRange) => {

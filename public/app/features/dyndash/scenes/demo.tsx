@@ -1,29 +1,34 @@
 import { getDefaultTimeRange } from '@grafana/data';
 
-import { SceneAutoLayout } from '../models/SceneLayoutTiling';
+import { SceneFlexLayout } from '../models/SceneFlexLayout';
 import { SceneTimeRange } from '../models/SceneTimeRange';
 import { Scene, ScenePanel } from '../models/scene';
 
 export function getDemoScene(): Scene {
   const scene = new Scene({
     title: 'Hello',
-    layout: new SceneAutoLayout({
-      direction: 'column',
+    layout: new SceneFlexLayout({
+      direction: 'row',
+      size: {},
       children: [
         new ScenePanel({
           key: 'A',
+          size: { vSizing: 'fixed', width: 200 },
           title: 'Panel 1',
         }),
-        new SceneAutoLayout({
+        new SceneFlexLayout({
           key: 'B',
-          direction: 'row',
+          size: {},
+          direction: 'column',
           children: [
             new ScenePanel({
               key: '2',
+              size: { hSizing: 'fixed', height: 200 },
               title: 'Panel 2',
             }),
             new ScenePanel({
               key: '3',
+              size: {},
               title: 'Panel 3',
             }),
           ],

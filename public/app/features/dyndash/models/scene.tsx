@@ -1,25 +1,19 @@
 import React, { CSSProperties } from 'react';
 
-import { Button, PageToolbar } from '@grafana/ui';
+import { PageToolbar } from '@grafana/ui';
 
-import {
-  SceneLayoutState,
-  SceneComponentProps,
-  SceneItem,
-  SceneLayoutItemChildState,
-  SceneItemSizing,
-} from './SceneItem';
+import { SceneComponentProps, SceneItemBase, SceneLayoutItemChildState } from './SceneItem';
 import { SceneQueryRunner } from './SceneQueryRunner';
 import { SceneTimeRange } from './SceneTimeRange';
 
 interface SceneState {
   title: string;
-  layout: SceneItem<SceneLayoutState>;
+  layout: SceneItemBase<any>;
   timeRange: SceneTimeRange;
   queryRunner?: SceneQueryRunner;
 }
 
-export class Scene extends SceneItem<SceneState> {
+export class Scene extends SceneItemBase<SceneState> {
   Component = SceneRenderer;
 }
 
@@ -46,14 +40,14 @@ export interface PanelState extends SceneLayoutItemChildState {
   title?: string;
 }
 
-export class ScenePanel extends SceneItem<PanelState> {
+export class ScenePanel extends SceneItemBase<PanelState> {
   Component = ScenePanelRenderer;
 }
 
 const ScenePanelRenderer = React.memo<SceneComponentProps<ScenePanel>>(({ model }) => {
   const state = model.useState();
 
-  return <div style={getItemStyles(state.size)}>{state.title && <h2>{state.title}</h2>}</div>;
+  return <div style={getItemStyles()}>{state.title && <h2>{state.title}</h2>}</div>;
 });
 
 ScenePanelRenderer.displayName = 'ScenePanelRenderer';
@@ -80,19 +74,13 @@ ScenePanelRenderer.displayName = 'ScenePanelRenderer';
 //   height: number;
 // }
 
-function getItemStyles(sizing: SceneItemSizing) {
+function getItemStyles() {
   const style: CSSProperties = {
     display: 'flex',
     border: '1px solid red',
+    height: '100%',
+    width: '100%',
   };
-
-  style.flexGrow = sizing.hSizing === 'fill' ? 1 : 0;
-
-  if (sizing.vSizing === 'fill') {
-    style.alignSelf = 'stretch';
-  } else {
-    style.width = sizing.width;
-  }
 
   return style;
 }

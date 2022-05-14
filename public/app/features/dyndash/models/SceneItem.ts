@@ -2,7 +2,7 @@ import { ReplaySubject } from 'rxjs';
 
 import { useObservable } from '@grafana/data';
 
-export abstract class SceneItem<TState> {
+export abstract class SceneItemBase<TState> implements SceneItem<TState> {
   subject = new ReplaySubject<TState>();
   state: TState;
 
@@ -27,6 +27,14 @@ export abstract class SceneItem<TState> {
   }
 }
 
+export interface SceneItem<TState> {
+  state: TState;
+
+  Component(props: SceneComponentProps<SceneItem<TState>>): React.ReactElement | null;
+  useState(): TState;
+  setState(state: TState): void;
+}
+
 export interface SceneLayoutItemChildState {
   key?: string;
   size: SceneItemSizing;
@@ -37,14 +45,10 @@ export interface SceneItemSizing {
   height?: number | string;
   x?: number;
   y?: number;
-  hSizing: 'fill' | 'fixed';
-  vSizing: 'fill' | 'fixed';
+  hSizing?: 'fill' | 'fixed';
+  vSizing?: 'fill' | 'fixed';
 }
 
 export interface SceneComponentProps<T> {
   model: T;
-}
-
-export interface SceneLayoutState {
-  children: Array<SceneItem<SceneLayoutItemChildState>>;
 }
