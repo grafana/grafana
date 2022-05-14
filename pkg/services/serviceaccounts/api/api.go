@@ -82,14 +82,15 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints(
 // POST /api/serviceaccounts
 func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) response.Response {
 	type createServiceAccountForm struct {
-		Name string `json:"name" binding:"Required"`
+		Name string           `json:"name" binding:"Required"`
+		Role *models.RoleType `json:"role"`
 	}
 	cmd := createServiceAccountForm{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
-	serviceAccount, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgId, cmd.Name)
+	serviceAccount, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgId, cmd.Name, cmd.Role)
 	switch {
 	case errors.Is(err, &database.ErrSAInvalidName{}):
 		return response.Error(http.StatusBadRequest, "Failed due to %s", err)

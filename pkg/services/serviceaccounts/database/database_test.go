@@ -18,7 +18,7 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		serviceAccountName := "new Service Account"
 		serviceAccountOrgId := int64(1)
 
-		saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, serviceAccountName)
+		saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, serviceAccountName, nil)
 		require.NoError(t, err)
 		assert.Equal(t, "sa-new-service-account", saDTO.Login)
 		assert.Equal(t, serviceAccountName, saDTO.Name)

@@ -27,7 +27,7 @@ func NewServiceAccountsStore(store *sqlstore.SQLStore) *ServiceAccountsStoreImpl
 	}
 }
 
-func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgID int64, name string) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
+func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, orgID int64, name string, role *models.RoleType) (saDTO *serviceaccounts.ServiceAccountDTO, err error) {
 	generatedLogin := "sa-" + strings.ToLower(name)
 	generatedLogin = strings.ReplaceAll(generatedLogin, " ", "-")
 	cmd := models.CreateUserCommand{
