@@ -1,4 +1,7 @@
 import { css } from '@emotion/css';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useObservable } from 'react-use';
+
 import { GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
 import {
   Alert,
@@ -11,9 +14,9 @@ import {
   withErrorBoundary,
 } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useObservable } from 'react-use';
+
 import { AlertQuery } from '../../../types/unified-alerting-dto';
+
 import { AlertLabels } from './components/AlertLabels';
 import { DetailsField } from './components/DetailsField';
 import { RuleViewerLayout, RuleViewerLayoutContent } from './components/rule-viewer/RuleViewerLayout';

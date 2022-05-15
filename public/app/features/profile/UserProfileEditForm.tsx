@@ -1,9 +1,11 @@
-import React, { FC } from 'react';
 import { Trans, t } from '@lingui/macro';
-import { Button, Field, FieldSet, Form, Icon, Input, Tooltip } from '@grafana/ui';
+import React, { FC } from 'react';
+
 import { selectors } from '@grafana/e2e-selectors';
-import { UserDTO } from 'app/types';
+import { Button, Field, FieldSet, Form, Icon, Input, Tooltip } from '@grafana/ui';
 import config from 'app/core/config';
+import { UserDTO } from 'app/types';
+
 import { ProfileUpdateFields } from './types';
 
 export interface Props {
@@ -72,6 +74,7 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
                 variant="primary"
                 disabled={isSavingUser}
                 data-testid={selectors.components.UserProfile.profileSaveButton}
+                type="submit"
               >
                 <Trans id="common.save">Save</Trans>
               </Button>

@@ -18,13 +18,13 @@ These features are included in the Grafana open source edition.
 
 ### Grafana v8.0 alerts
 
-The new alerts in Grafana 8.0 are an opt-in feature that centralizes alerting information for Grafana managed alerts and alerts from Prometheus-compatible data sources in one UI and API. You can create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts as well as see alerting information from prometheus-compatible data sources in a single, searchable view. For more information, on how to create and edit alerts and notifications, refer to [Overview of Grafana 8.0 alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}).
+The new alerts in Grafana 8.0 are an opt-in feature that centralizes alerting information for Grafana managed alerts and alerts from Prometheus-compatible data sources in one UI and API. You can create and edit alerting rules for Grafana managed alerts, Mimir alerts, and Loki alerts as well as see alerting information from prometheus-compatible data sources in a single, searchable view. For more information, on how to create and edit alerts and notifications, refer to [Grafana alerting]({{< relref "../alerting/_index.md" >}}).
 
 As part of the new alert changes, we have introduced a new data source, Alertmanager, which includes built-in support for Prometheus Alertmanager. It is presently in alpha and it not accessible unless alpha plugins are enabled in Grafana settings. For more information, refer to [Alertmanager data source]({{< relref "../datasources/alertmanager.md" >}}).
 
 > **Note:** Out of the box, Grafana still supports old Grafana alerts. They are legacy alerts at this time, and will be deprecated in a future release.
 
-To learn more about the differences between new alerts and the legacy alerts, refer to [What's New with Grafana 8 Alerts]({{< relref "../alerting/unified-alerting/difference-old-new.md" >}}).
+To learn more about the differences between new alerts and the legacy alerts, refer to [What's New with Grafana 8 Alerts](https://grafana.com/docs/grafana/latest/alerting/unified-alerting/difference-old-new/).
 
 ### Library panels
 
@@ -283,11 +283,11 @@ Grafana has updated its license from Apache 2.0 to the GNU Affero General Public
 
 These features are included in the Grafana Enterprise edition.
 
-### Fine-grained access control
+### Role-based access control
 
 You can now add or remove detailed permissions from Viewer, Editor, and Admin org roles, to grant users just the right amount of access within Grafana. Available permissions include the ability to view and manage Users, Reports, and the Access Control API itself. Grafana will support more and more permissions over the coming months.
 
-[Fine-grained access control docs]({{< relref "../enterprise/access-control/_index.md" >}}) were added as a result of this feature.
+[Role-based access control docs]({{< relref "../enterprise/access-control/_index.md" >}}) were added as a result of this feature.
 
 ### Data source query caching
 

@@ -272,8 +272,8 @@ const (
 	GlobalOrgID        = 0
 	FixedRolePrefix    = "fixed:"
 	ManagedRolePrefix  = "managed:"
-	BasicRolePrefix    = "grafana:builtins:"
-	BasicRoleUIDPrefix = "grafana_builtins_"
+	BasicRolePrefix    = "basic:"
+	BasicRoleUIDPrefix = "basic_"
 	RoleGrafanaAdmin   = "Grafana Admin"
 
 	GeneralFolderUID = "general"
@@ -358,17 +358,6 @@ const (
 	ActionAnnotationsDelete = "annotations:delete"
 	ActionAnnotationsRead   = "annotations:read"
 	ActionAnnotationsWrite  = "annotations:write"
-
-	// Dashboard actions
-	ActionDashboardsCreate           = "dashboards:create"
-	ActionDashboardsRead             = "dashboards:read"
-	ActionDashboardsWrite            = "dashboards:write"
-	ActionDashboardsDelete           = "dashboards:delete"
-	ActionDashboardsPermissionsRead  = "dashboards.permissions:read"
-	ActionDashboardsPermissionsWrite = "dashboards.permissions:write"
-
-	// Dashboard scopes
-	ScopeDashboardsAll = "dashboards:*"
 
 	// Alert scopes are divided into two groups. The internal (to Grafana) and the external ones.
 	// For the Grafana ones, given we have ACID control we're able to provide better granularity by defining CRUD options.

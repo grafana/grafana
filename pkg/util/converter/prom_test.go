@@ -22,7 +22,11 @@ func TestReadPromFrames(t *testing.T) {
 		"prom-matrix-histogram-partitioned",
 		"prom-vector",
 		"prom-vector-histogram-no-labels",
+		"prom-string",
+		"prom-scalar",
 		"prom-series",
+		"prom-warnings",
+		"prom-error",
 		"prom-exemplars",
 		"loki-streams-a",
 		"loki-streams-b",
@@ -60,6 +64,11 @@ func TestReadPromFrames(t *testing.T) {
 			if save {
 				err = os.WriteFile(fpath, out, 0600)
 				require.NoError(t, err)
+			}
+
+			// skip checking golden file for error response. it's not currently supported
+			if name == "prom-error" {
+				return
 			}
 
 			fpath = path.Join("testdata", name+"-golden.txt")

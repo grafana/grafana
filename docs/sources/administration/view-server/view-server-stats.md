@@ -7,7 +7,7 @@ weight = 400
 
 # View Grafana server stats
 
-> Refer to [Fine-grained access control]({{< relref "../../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how you can control access with fine-grained permissions.
+> Refer to [Role-based access control]({{< relref "../../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how you can control access with RBAC permissions.
 
 If you are a Grafana server admin, then you can view useful statistics about your Grafana server in the Stats & Licensing tab.
 

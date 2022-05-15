@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
+import React, { FC } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { HorizontalGroup, InlineField, InlineLabel, PopoverContent, Select } from '@grafana/ui';
-import React, { FC } from 'react';
 
 import { INNER_LABEL_WIDTH, LABEL_WIDTH } from '../constants';
 
@@ -23,7 +24,6 @@ export const VariableQueryField: FC<VariableQueryFieldProps> = ({
   return (
     <InlineField label={label} labelWidth={20}>
       <Select
-        menuShouldPortal
         width={25}
         allowCustomValue={allowCustomValue}
         value={value}

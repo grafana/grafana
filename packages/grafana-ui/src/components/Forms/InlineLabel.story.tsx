@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { InlineLabel } from './InlineLabel';
 import mdx from './InlineLabel.mdx';
 

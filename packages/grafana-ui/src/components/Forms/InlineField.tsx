@@ -1,12 +1,15 @@
-import React, { FC } from 'react';
 import { cx, css } from '@emotion/css';
+import React, { FC } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
 import { useTheme2 } from '../../themes';
-import { InlineLabel } from './InlineLabel';
-import { PopoverContent } from '../Tooltip';
-import { FieldProps } from './Field';
 import { getChildId } from '../../utils/reactUtils';
+import { PopoverContent } from '../Tooltip';
+
+import { FieldProps } from './Field';
 import { FieldValidationMessage } from './FieldValidationMessage';
+import { InlineLabel } from './InlineLabel';
 
 export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'description' | 'error'> {
   /** Content for the label's tooltip */
@@ -20,6 +23,8 @@ export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'descript
   /** Error message to display */
   error?: string | null;
   htmlFor?: string;
+  /** Make tooltip interactive */
+  interactive?: boolean;
 }
 
 export const InlineField: FC<Props> = ({
@@ -35,6 +40,7 @@ export const InlineField: FC<Props> = ({
   grow,
   error,
   transparent,
+  interactive,
   ...htmlProps
 }) => {
   const theme = useTheme2();
@@ -43,7 +49,13 @@ export const InlineField: FC<Props> = ({
 
   const labelElement =
     typeof label === 'string' ? (
-      <InlineLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId} transparent={transparent}>
+      <InlineLabel
+        interactive={interactive}
+        width={labelWidth}
+        tooltip={tooltip}
+        htmlFor={inputId}
+        transparent={transparent}
+      >
         {label}
       </InlineLabel>
     ) : (

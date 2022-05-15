@@ -1,11 +1,13 @@
 import React, { FC } from 'react';
-import Page from 'app/core/components/Page/Page';
-import { config } from '@grafana/runtime';
-import { StoreState, UserOrg } from 'app/types';
-import { useEffectOnce } from 'react-use';
-import { Button, HorizontalGroup } from '@grafana/ui';
-import { getUserOrganizations, setUserOrganization } from './state/actions';
 import { connect, ConnectedProps } from 'react-redux';
+import { useEffectOnce } from 'react-use';
+
+import { config } from '@grafana/runtime';
+import { Button, HorizontalGroup } from '@grafana/ui';
+import Page from 'app/core/components/Page/Page';
+import { StoreState, UserOrg } from 'app/types';
+
+import { getUserOrganizations, setUserOrganization } from './state/actions';
 
 const navModel = {
   main: {

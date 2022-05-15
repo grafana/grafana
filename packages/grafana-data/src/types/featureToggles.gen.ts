@@ -22,7 +22,6 @@ export interface FeatureToggles {
   serviceAccounts?: boolean;
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
-  dashboardPreviewsScheduler?: boolean;
   dashboardPreviewsAdmin?: boolean;
   ['live-config']?: boolean;
   ['live-pipeline']?: boolean;
@@ -48,11 +47,19 @@ export interface FeatureToggles {
   dashboardComments?: boolean;
   annotationComments?: boolean;
   migrationLocking?: boolean;
-  saveDashboardDrawer?: boolean;
   storage?: boolean;
   alertProvisioning?: boolean;
+  export?: boolean;
   storageLocalUpload?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
   explore2Dashboard?: boolean;
+  tracing?: boolean;
   persistNotifications?: boolean;
+  commandPalette?: boolean;
+  savedItems?: boolean;
+  cloudWatchDynamicLabels?: boolean;
+  datasourceQueryMultiStatus?: boolean;
+  azureMonitorExperimentalUI?: boolean;
+  traceToMetrics?: boolean;
+  prometheusStreamingJSONParser?: boolean;
 }

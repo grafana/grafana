@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -39,6 +40,8 @@ func (s *QueryHistoryService) createHandler(c *models.ReqContext) response.Respo
 }
 
 func (s *QueryHistoryService) searchHandler(c *models.ReqContext) response.Response {
+	timeRange := legacydata.NewDataTimeRange(c.Query("from"), c.Query("to"))
+
 	query := SearchInQueryHistoryQuery{
 		DatasourceUIDs: c.QueryStrings("datasourceUid"),
 		SearchString:   c.Query("searchString"),
@@ -46,6 +49,8 @@ func (s *QueryHistoryService) searchHandler(c *models.ReqContext) response.Respo
 		Sort:           c.Query("sort"),
 		Page:           c.QueryInt("page"),
 		Limit:          c.QueryInt("limit"),
+		From:           timeRange.GetFromAsSecondsEpoch(),
+		To:             timeRange.GetToAsSecondsEpoch(),
 	}
 
 	result, err := s.SearchInQueryHistory(c.Req.Context(), c.SignedInUser, query)

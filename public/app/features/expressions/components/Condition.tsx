@@ -1,7 +1,9 @@
-import React, { FC, FormEvent } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FC, FormEvent } from 'react';
+
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles } from '@grafana/ui';
+
 import alertDef, { EvalFunction } from '../../alerting/state/alertDef';
 import { ClassicCondition, ReducerType } from '../types';
 
@@ -79,7 +81,6 @@ export const Condition: FC<Props> = ({ condition, index, onChange, onRemoveCondi
         />
       )}
       <Select
-        menuShouldPortal
         options={reducerFunctions}
         onChange={onReducerFunctionChange}
         width={20}
@@ -87,7 +88,6 @@ export const Condition: FC<Props> = ({ condition, index, onChange, onRemoveCondi
       />
       <div className={styles.button}>OF</div>
       <Select
-        menuShouldPortal
         onChange={onRefIdChange}
         options={refIds}
         width={15}
