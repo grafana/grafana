@@ -74,7 +74,6 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
           id: 666, // do not use me!
           isStarred: false,
           tags: item.tags ?? [],
-          checked: selection ? selection(item.kind, item.uid) : false,
         } as DashboardSectionItem)
     );
     return v;
@@ -87,8 +86,15 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
   const onToggleFolder = (evt: React.FormEvent) => {
     evt.preventDefault();
     evt.stopPropagation();
-    if (selectionToggle) {
+    if (selectionToggle && selection) {
+      const checked = !selection(section.kind, section.uid);
       selectionToggle(section.kind, section.uid);
+      const sub = results.value ?? [];
+      for (const item of sub) {
+        if (selection('dashboard', item.uid!) !== checked) {
+          selectionToggle('dashboard', item.uid!);
+        }
+      }
     }
   };
 
