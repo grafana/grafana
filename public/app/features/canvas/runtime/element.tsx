@@ -80,7 +80,6 @@ export class ElementState implements LayerElement {
 
     const style: React.CSSProperties = {
       position: 'absolute',
-      zIndex: 1,
     };
 
     const translate = ['0px', '0px'];
