@@ -50,7 +50,11 @@ func initIndex(dashboards []dashboard, logger log.Logger) (*bluge.Reader, *bluge
 		}
 		doc := getFolderDashboardDoc(dash)
 		batch.Insert(doc)
-		folderIdLookup[dash.id] = dash.uid
+		uid := dash.uid
+		if uid == "" {
+			uid = "general"
+		}
+		folderIdLookup[dash.id] = uid
 	}
 
 	// Then each dashboard.

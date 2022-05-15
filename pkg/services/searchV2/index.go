@@ -272,6 +272,7 @@ func (i *dashboardIndex) removeDashboard(writer *bluge.Writer, reader *bluge.Rea
 	for _, panelID := range panelIDs {
 		batch.Delete(bluge.NewDocument(panelID).ID())
 	}
+
 	return writer.Batch(batch)
 }
 
@@ -292,29 +293,30 @@ func (i *dashboardIndex) updateDashboard(writer *bluge.Writer, reader *bluge.Rea
 	if dash.isFolder {
 		doc = getFolderDashboardDoc(dash)
 	} else {
-		doc = getNonFolderDashboardDoc(dash, "?")
-	}
-	batch.Update(doc.ID(), doc)
+		doc = getNonFolderDashboardDoc(dash, location)
 
-	var actualPanelIDs []string
+		var actualPanelIDs []string
 
-	location += "/" + dash.uid
-	panelDocs := getDashboardPanelDocs(dash, location)
-	for _, panelDoc := range panelDocs {
-		actualPanelIDs = append(actualPanelIDs, string(panelDoc.ID().Term()))
-		batch.Update(panelDoc.ID(), panelDoc)
-	}
+		location += "/" + dash.uid
+		panelDocs := getDashboardPanelDocs(dash, location)
+		for _, panelDoc := range panelDocs {
+			actualPanelIDs = append(actualPanelIDs, string(panelDoc.ID().Term()))
+			batch.Update(panelDoc.ID(), panelDoc)
+		}
 
-	indexedPanelIDs, err := getDashboardPanelIDs(reader, dash.uid)
-	if err != nil {
-		return err
-	}
+		indexedPanelIDs, err := getDashboardPanelIDs(reader, dash.uid)
+		if err != nil {
+			return err
+		}
 
-	for _, panelID := range indexedPanelIDs {
-		if !stringInSlice(panelID, actualPanelIDs) {
-			batch.Delete(bluge.NewDocument(panelID).ID())
+		for _, panelID := range indexedPanelIDs {
+			if !stringInSlice(panelID, actualPanelIDs) {
+				batch.Delete(bluge.NewDocument(panelID).ID())
+			}
 		}
 	}
+
+	batch.Update(doc.ID(), doc)
 
 	return writer.Batch(batch)
 }
