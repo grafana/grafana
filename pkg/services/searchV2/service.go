@@ -125,14 +125,3 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 
 	return doSearchQuery(ctx, s, reader, filter, q)
 }
-
-func (s *StandardSearchService) applyAuthFilter(filter ResourceFilter, dashboards []dashboard) []dashboard {
-	// create a list of all viewable dashboards for this user.
-	res := make([]dashboard, 0, len(dashboards))
-	for _, dash := range dashboards {
-		if filter(dash.uid) || (dash.isFolder && dash.uid == "") { // include the "General" folder
-			res = append(res, dash)
-		}
-	}
-	return res
-}
