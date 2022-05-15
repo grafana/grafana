@@ -1,14 +1,19 @@
-package buffered
+package querydata_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,19 +21,16 @@ import (
 // - go test -benchmem -run=^$ -benchtime 1x -memprofile memprofile.out -memprofilerate 1 -bench ^BenchmarkJson$ github.com/grafana/grafana/pkg/tsdb/prometheus
 // - go tool pprof -http=localhost:6061 memprofile.out
 func BenchmarkJson(b *testing.B) {
-	resp, query := createJsonTestData(1642000000, 1, 300, 400)
-
-	api, err := makeMockedApi(resp)
-	require.NoError(b, err)
-
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(b, err)
-
-	s := Buffered{tracer: tracer, log: &fakeLogger{}}
-
+	body, q := createJsonTestData(1642000000, 1, 300, 400)
+	tCtx := setup()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_, err := s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
+		res := http.Response{
+			StatusCode: 200,
+			Body:       ioutil.NopCloser(bytes.NewReader(body)),
+		}
+		tCtx.httpProvider.setResponse(&res)
+		_, err := tCtx.queryData.Execute(context.Background(), q)
 		require.NoError(b, err)
 	}
 }
@@ -60,7 +62,7 @@ func makeJsonTestSeries(start int64, step int64, timestampCount int, r *rand.Ran
 	return fmt.Sprintf(`{"metric":%v,"values":[%v]}`, makeJsonTestMetric(seriesIndex), strings.Join(values, ","))
 }
 
-func createJsonTestData(start int64, step int64, timestampCount int, seriesCount int) ([]byte, PrometheusQuery) {
+func createJsonTestData(start int64, step int64, timestampCount int, seriesCount int) ([]byte, *backend.QueryDataRequest) {
 	// we use random numbers as values, but they have to be the same numbers
 	// every time we call this, so we create a random source.
 	r := rand.New(rand.NewSource(42))
@@ -68,16 +70,31 @@ func createJsonTestData(start int64, step int64, timestampCount int, seriesCount
 	for i := 0; i < seriesCount; i++ {
 		allSeries = append(allSeries, makeJsonTestSeries(start, step, timestampCount, r, i))
 	}
-	bytes := []byte(fmt.Sprintf(`{"data":{"resultType":"matrix","result":[%v]},"status":"success"}`, strings.Join(allSeries, ",")))
+	bytes := []byte(fmt.Sprintf(`{"status":"success","data":{"resultType":"matrix","result":[%v]}}`, strings.Join(allSeries, ",")))
 
-	query := PrometheusQuery{
-		RefId:      "A",
+	qm := models.QueryModel{
 		RangeQuery: true,
-		Start:      time.Unix(start, 0),
-		End:        time.Unix(start+((int64(timestampCount)-1)*step), 0),
-		Step:       time.Second * time.Duration(step),
 		Expr:       "test",
 	}
 
-	return bytes, query
+	data, err := json.Marshal(&qm)
+	if err != nil {
+		panic(err)
+	}
+
+	res := backend.QueryDataRequest{
+		Queries: []backend.DataQuery{
+			{
+				RefID: "A",
+				TimeRange: backend.TimeRange{
+					From: time.Unix(start, 0),
+					To:   time.Unix(start+((int64(timestampCount)-1)*step), 0),
+				},
+				Interval: time.Second * time.Duration(step),
+				JSON:     data,
+			},
+		},
+	}
+
+	return bytes, &res
 }

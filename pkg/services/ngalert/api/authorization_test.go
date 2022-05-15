@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"testing"
 
 	"github.com/go-openapi/loads"
@@ -71,7 +70,7 @@ func TestAuthorize(t *testing.T) {
 
 func TestAuthorizeRuleChanges(t *testing.T) {
 	namespace := randFolder()
-	namespaceIdScope := dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(namespace.Id, 10))
+	namespaceIdScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(namespace.Uid)
 
 	testCases := []struct {
 		name        string
@@ -215,7 +214,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 func TestAuthorizeRuleDelete(t *testing.T) {
 	namespace := randFolder()
-	namespaceIdScope := dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(namespace.Id, 10))
+	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(namespace.Uid)
 
 	getScopes := func(rules []*models.AlertRule) []string {
 		var scopes []string
@@ -245,7 +244,7 @@ func TestAuthorizeRuleDelete(t *testing.T) {
 			permissions: func(c *changes) map[string][]string {
 				return map[string][]string{
 					ac.ActionAlertingRuleDelete: {
-						namespaceIdScope,
+						namespaceScope,
 					},
 					datasources.ActionQuery: getScopes(c.Delete),
 				}
@@ -267,7 +266,7 @@ func TestAuthorizeRuleDelete(t *testing.T) {
 			permissions: func(c *changes) map[string][]string {
 				return map[string][]string{
 					ac.ActionAlertingRuleDelete: {
-						namespaceIdScope,
+						namespaceScope,
 					},
 					datasources.ActionQuery: {
 						getScopes(c.Delete[:1])[0],
@@ -291,7 +290,7 @@ func TestAuthorizeRuleDelete(t *testing.T) {
 			permissions: func(c *changes) map[string][]string {
 				return map[string][]string{
 					ac.ActionAlertingRuleDelete: {
-						namespaceIdScope,
+						namespaceScope,
 					},
 				}
 			},
@@ -313,10 +312,10 @@ func TestAuthorizeRuleDelete(t *testing.T) {
 			permissions: func(c *changes) map[string][]string {
 				return map[string][]string{
 					ac.ActionAlertingRuleDelete: {
-						namespaceIdScope,
+						namespaceScope,
 					},
 					ac.ActionAlertingRuleCreate: {
-						namespaceIdScope,
+						namespaceScope,
 					},
 					datasources.ActionQuery: getScopes(c.New),
 				}
