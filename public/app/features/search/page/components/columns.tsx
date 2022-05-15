@@ -5,7 +5,6 @@ import SVG from 'react-inlinesvg';
 import { Field } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
-import { DefaultCell } from '@grafana/ui/src/components/Table/DefaultCell';
 
 import { QueryResponse, SearchResultMeta } from '../../service';
 import { SelectionChecker, SelectionToggle } from '../selection';
@@ -225,11 +224,11 @@ function makeTypeColumn(
   styles: Record<string, string>
 ): TableColumn {
   return {
-    Cell: DefaultCell,
     id: `column-type`,
     field: kindField ?? typeField,
     Header: 'Type',
-    accessor: (row: any, i: number) => {
+    Cell: (p) => {
+      const i = p.row.index;
       const kind = kindField?.values.get(i) ?? 'dashboard';
       let icon = 'public/img/icons/unicons/apps.svg';
       let txt = 'Dashboard';
@@ -257,13 +256,15 @@ function makeTypeColumn(
                   icon = v;
                 }
                 txt = info.name;
+              } else {
+                icon = `public/img/icons/unicons/question.svg`; // plugin not found
               }
             }
             break;
         }
       }
       return (
-        <div className={styles.typeText}>
+        <div {...p.cellProps} className={styles.typeText}>
           <SVG src={icon} width={14} height={14} title={txt} className={styles.typeIcon} />
           {txt}
         </div>
