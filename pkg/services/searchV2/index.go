@@ -178,6 +178,9 @@ func (i *dashboardIndex) reIndexFromScratchBluge(ctx context.Context) {
 		i.mu.Lock()
 		i.reader[orgID] = reader
 		i.mu.Unlock()
+
+		// Update the stats for this reader
+		go updateUsageStats(context.Background(), reader, orgID, i.logger)
 	}
 }
 
