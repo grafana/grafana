@@ -186,4 +186,8 @@ const (
 	// FlagTraceToMetrics
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
+
+	// FlagPrometheusStreamingJSONParser
+	// Enable streaming JSON parser for Prometheus datasource
+	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
 )

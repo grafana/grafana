@@ -1,15 +1,14 @@
-package promclient_test
+package client_test
 
 import (
-	"context"
 	"errors"
+	"io/ioutil"
+	"net/http"
 	"sort"
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/promclient"
-
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 
 	"github.com/stretchr/testify/require"
 )
@@ -74,13 +73,13 @@ func TestCache_GetClient(t *testing.T) {
 }
 
 type cacheTestContext struct {
-	providerCache  *promclient.ProviderCache
-	clientProvider *fakePromClientProvider
+	providerCache  *client.ProviderCache
+	clientProvider *fakeClientProvider
 }
 
 func setupCacheContext() *cacheTestContext {
 	fp := newFakePromClientProvider()
-	p, err := promclient.NewProviderCache(fp)
+	p, err := client.NewProviderCache(fp)
 	if err != nil {
 		panic(err)
 	}
@@ -91,19 +90,19 @@ func setupCacheContext() *cacheTestContext {
 	}
 }
 
-func newFakePromClientProvider() *fakePromClientProvider {
-	return &fakePromClientProvider{
+func newFakePromClientProvider() *fakeClientProvider {
+	return &fakeClientProvider{
 		errors: make(chan error, 1),
 	}
 }
 
-type fakePromClientProvider struct {
+type fakeClientProvider struct {
 	headers  map[string]string
 	numCalls int
 	errors   chan error
 }
 
-func (p *fakePromClientProvider) GetClient(h map[string]string) (apiv1.API, error) {
+func (p *fakeClientProvider) GetClient(h map[string]string) (*client.Client, error) {
 	p.headers = h
 	p.numCalls++
 
@@ -118,14 +117,19 @@ func (p *fakePromClientProvider) GetClient(h map[string]string) (apiv1.API, erro
 		config = append(config, v)
 	}
 	sort.Strings(config) //because map
-	return &fakePromClient{config: strings.Join(config, "")}, err
+	res := &http.Response{
+		StatusCode: 200,
+		Header:     http.Header{},
+		Body:       ioutil.NopCloser(strings.NewReader(strings.Join(config, ","))),
+	}
+	c := &fakeClient{res: res}
+	return client.NewClient(c, "GET", "http://localhost:9090/"), err
 }
 
-type fakePromClient struct {
-	apiv1.API
-	config string
+type fakeClient struct {
+	res *http.Response
 }
 
-func (c *fakePromClient) Config(ctx context.Context) (apiv1.ConfigResult, error) {
-	return apiv1.ConfigResult{YAML: c.config}, nil
+func (c *fakeClient) Do(req *http.Request) (*http.Response, error) {
+	return c.res, nil
 }
