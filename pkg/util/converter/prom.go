@@ -386,14 +386,20 @@ func readMatrixOrVector(iter *jsoniter.Iterator, resultType string) *backend.Dat
 				if histogram == nil {
 					histogram = newHistogramInfo()
 				}
-				readHistogram(iter, histogram)
+				err := readHistogram(iter, histogram)
+				if err != nil {
+					rsp.Error = err
+				}
 
 			case "histograms":
 				if histogram == nil {
 					histogram = newHistogramInfo()
 				}
 				for iter.ReadArray() {
-					readHistogram(iter, histogram)
+					err := readHistogram(iter, histogram)
+					if err != nil {
+						rsp.Error = err
+					}
 				}
 
 			default:
