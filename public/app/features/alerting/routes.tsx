@@ -1,11 +1,13 @@
+import { uniq } from 'lodash';
+import React from 'react';
+import { Redirect } from 'react-router-dom';
+
 import { OrgRole } from '@grafana/data';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types';
-import { uniq } from 'lodash';
-import React from 'react';
-import { Redirect } from 'react-router-dom';
+
 import { evaluateAccess } from './unified/utils/access-control';
 
 const commonRoutes: RouteDescriptor[] = [
@@ -130,7 +132,10 @@ const unifiedRoutes: RouteDescriptor[] = [
   },
   {
     path: '/alerting/silences',
-    roles: evaluateAccess([AccessControlAction.AlertingInstanceRead], ['Editor', 'Admin']),
+    roles: evaluateAccess(
+      [AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingInstancesExternalRead],
+      ['Editor', 'Admin']
+    ),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
     ),

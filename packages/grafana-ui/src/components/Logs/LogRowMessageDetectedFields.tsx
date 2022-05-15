@@ -1,9 +1,10 @@
-import React, { PureComponent } from 'react';
 import { cx, css } from '@emotion/css';
+import React, { PureComponent } from 'react';
+
 import { LogRowModel, Field, LinkModel } from '@grafana/data';
 
-import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
+import { Themeable } from '../../types/theme';
 
 import { getAllFields } from './logParser';
 

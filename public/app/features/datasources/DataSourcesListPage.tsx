@@ -1,27 +1,23 @@
-// Libraries
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-// Services & Utils
-import { contextSrv } from 'app/core/core';
-// Components
+
+import { IconName } from '@grafana/ui';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import Page from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import DataSourcesList from './DataSourcesList';
-// Types
-import { IconName } from '@grafana/ui';
-import { StoreState, AccessControlAction } from 'app/types';
-// Actions
-import { loadDataSources } from './state/actions';
+import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { StoreState, AccessControlAction } from 'app/types';
 
+import DataSourcesList from './DataSourcesList';
+import { loadDataSources } from './state/actions';
+import { setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/reducers';
 import {
   getDataSources,
   getDataSourcesCount,
   getDataSourcesLayoutMode,
   getDataSourcesSearchQuery,
 } from './state/selectors';
-import { setDataSourcesLayoutMode, setDataSourcesSearchQuery } from './state/reducers';
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -64,9 +60,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
     const { dataSources, dataSourcesCount, navModel, layoutMode, searchQuery, setDataSourcesSearchQuery, hasFetched } =
       this.props;
 
-    const canCreateDataSource =
-      contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) &&
-      contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+    const canCreateDataSource = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
 
     const linkButton = {
       href: 'datasources/new',

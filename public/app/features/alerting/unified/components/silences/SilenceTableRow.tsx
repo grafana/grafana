@@ -1,18 +1,22 @@
-import React, { FC, Fragment, useState } from 'react';
-import { dateMath, GrafanaTheme, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { css, cx } from '@emotion/css';
+import React, { FC, Fragment, useState } from 'react';
+import { useDispatch } from 'react-redux';
+
+import { dateMath, GrafanaTheme, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { useStyles, Link } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import { Silence, AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
+
+import { expireSilenceAction } from '../../state/actions';
+import { makeAMLink } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';
 import { ActionButton } from '../rules/ActionButton';
 import { ActionIcon } from '../rules/ActionIcon';
-import { useStyles, Link } from '@grafana/ui';
-import SilencedAlertsTable from './SilencedAlertsTable';
-import { expireSilenceAction } from '../../state/actions';
-import { useDispatch } from 'react-redux';
+
 import { Matchers } from './Matchers';
 import { SilenceStateTag } from './SilenceStateTag';
-import { makeAMLink } from '../../utils/misc';
-import { contextSrv } from 'app/core/services/context_srv';
+import SilencedAlertsTable from './SilencedAlertsTable';
+
 interface Props {
   className?: string;
   silence: Silence;

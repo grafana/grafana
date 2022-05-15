@@ -9,7 +9,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -80,7 +82,7 @@ func TestUserDataAccess(t *testing.T) {
 		}()
 
 		orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
-		err := CreateOrg(context.Background(), orgCmd)
+		err := ss.CreateOrg(context.Background(), orgCmd)
 		require.Nil(t, err)
 
 		cmd := models.CreateUserCommand{
@@ -245,11 +247,6 @@ func TestUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{
-			UserId: users[1].Id, OrgId: users[0].OrgId, HomeDashboardId: 1, Theme: "dark",
-		})
-		require.Nil(t, err)
-
 		// When the user is deleted
 		err = ss.DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].Id})
 		require.Nil(t, err)
@@ -265,13 +262,6 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)
-
-		prefsQuery := &models.GetPreferencesQuery{OrgId: users[0].OrgId, UserId: users[1].Id}
-		err = ss.GetPreferences(context.Background(), prefsQuery)
-		require.Nil(t, err)
-
-		require.EqualValues(t, prefsQuery.Result.OrgId, 0)
-		require.EqualValues(t, prefsQuery.Result.UserId, 0)
 
 		// A user is an org member and has been assigned permissions
 		// Re-init DB
@@ -293,11 +283,6 @@ func TestUserDataAccess(t *testing.T) {
 		err = updateDashboardAcl(t, ss, 1, &models.DashboardAcl{
 			DashboardID: 1, OrgID: users[0].OrgId, UserID: users[1].Id,
 			Permission: models.PERMISSION_EDIT,
-		})
-		require.Nil(t, err)
-
-		err = ss.SavePreferences(context.Background(), &models.SavePreferencesCommand{
-			UserId: users[1].Id, OrgId: users[0].OrgId, HomeDashboardId: 1, Theme: "dark",
 		})
 		require.Nil(t, err)
 
@@ -351,13 +336,26 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)
+	})
 
-		prefsQuery = &models.GetPreferencesQuery{OrgId: users[0].OrgId, UserId: users[1].Id}
-		err = ss.GetPreferences(context.Background(), prefsQuery)
-		require.Nil(t, err)
+	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
+		ss := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
+		createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
+			return &models.CreateUserCommand{
+				Email: fmt.Sprint("user", i, "@test.com"),
+				Name:  fmt.Sprint("user", i),
+				Login: fmt.Sprint("loginuser", i),
+			}
+		})
 
-		require.EqualValues(t, prefsQuery.Result.OrgId, 0)
-		require.EqualValues(t, prefsQuery.Result.UserId, 0)
+		testUser := &models.SignedInUser{
+			OrgId:       1,
+			Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:id:1", "global.users:id:3"}}},
+		}
+		query := models.SearchUsersQuery{SignedInUser: testUser}
+		err := ss.SearchUsers(context.Background(), &query)
+		assert.Nil(t, err)
+		assert.Len(t, query.Result.Users, 2)
 	})
 
 	ss = InitTestDB(t)

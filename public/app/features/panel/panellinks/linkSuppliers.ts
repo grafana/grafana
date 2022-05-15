@@ -1,4 +1,3 @@
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
   DataLink,
   DisplayValue,
@@ -12,6 +11,8 @@ import {
   ScopedVar,
   ScopedVars,
 } from '@grafana/data';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+
 import { getLinkSrv } from './link_srv';
 
 interface SeriesVars {

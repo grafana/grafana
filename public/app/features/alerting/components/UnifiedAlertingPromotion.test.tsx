@@ -1,7 +1,7 @@
-import React from 'react';
-
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import { UnifiedAlertingPromotion, LOCAL_STORAGE_KEY } from './UnifiedAlertingPromotion';
 
 describe('Unified Alerting promotion', () => {
@@ -14,12 +14,12 @@ describe('Unified Alerting promotion', () => {
     expect(screen.queryByText('Try out the Grafana 8 alerting!')).toBeInTheDocument();
   });
 
-  it('should be hidden if dismissed', () => {
+  it('should be hidden if dismissed', async () => {
     const promotion = render(<UnifiedAlertingPromotion />);
     expect(window.localStorage.getItem(LOCAL_STORAGE_KEY)).toBe('true');
 
     const dismissButton = promotion.getByRole('button');
-    userEvent.click(dismissButton);
+    await userEvent.click(dismissButton);
 
     expect(screen.queryByText('Try out the Grafana 8 alerting!')).not.toBeInTheDocument();
     expect(window.localStorage.getItem(LOCAL_STORAGE_KEY)).toBe('false');

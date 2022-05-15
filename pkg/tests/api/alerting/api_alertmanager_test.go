@@ -27,6 +27,11 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
+type Response struct {
+	Message string `json:"message"`
+	TraceID string `json:"traceID"`
+}
+
 func TestAMConfigAccess(t *testing.T) {
 	_, err := tracing.InitializeTracerForTest()
 	require.NoError(t, err)
@@ -880,11 +885,11 @@ func TestAlertRuleCRUD(t *testing.T) {
 	// Now, let's try to create some invalid alert rules.
 	{
 		testCases := []struct {
-			desc             string
-			rulegroup        string
-			interval         model.Duration
-			rule             apimodels.PostableExtendedRuleNode
-			expectedResponse string
+			desc            string
+			rulegroup       string
+			interval        model.Duration
+			rule            apimodels.PostableExtendedRuleNode
+			expectedMessage string
 		}{
 			{
 				desc:      "alert rule without queries and expressions",
@@ -900,7 +905,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						Data:  []ngmodels.AlertQuery{},
 					},
 				},
-				expectedResponse: `{"message": "invalid rule specification at index [0]: invalid alert rule: no queries or expressions are found", "traceID":"00000000000000000000000000000000"}`,
+				expectedMessage: "invalid rule specification at index [0]: invalid alert rule: no queries or expressions are found",
 			},
 			{
 				desc:      "alert rule with empty title",
@@ -930,7 +935,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message": "invalid rule specification at index [0]: alert rule title cannot be empty", "traceID":"00000000000000000000000000000000"}`,
+				expectedMessage: "invalid rule specification at index [0]: alert rule title cannot be empty",
 			},
 			{
 				desc:      "alert rule with too long name",
@@ -960,7 +965,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message": "invalid rule specification at index [0]: alert rule title is too long. Max length is 190", "traceID":"00000000000000000000000000000000"}`,
+				expectedMessage: "invalid rule specification at index [0]: alert rule title is too long. Max length is 190",
 			},
 			{
 				desc:      "alert rule with too long rulegroup",
@@ -990,7 +995,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message": "rule group name is too long. Max length is 190", "traceID":"00000000000000000000000000000000"}`,
+				expectedMessage: "rule group name is too long. Max length is 190",
 			},
 			{
 				desc:      "alert rule with invalid interval",
@@ -1021,8 +1026,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message": "rule evaluation interval (1 second) should be positive ` +
-					`number that is multiple of the base interval of 10 seconds", "traceID":"00000000000000000000000000000000"}`,
+				expectedMessage: "rule evaluation interval (1 second) should be positive number that is multiple of the base interval of 10 seconds",
 			},
 			{
 				desc:      "alert rule with unknown datasource",
@@ -1052,8 +1056,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message": "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring:` +
-					` invalid query A: data source not found: unknown", "traceID":"00000000000000000000000000000000"}`,
+				expectedMessage: "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring: invalid query A: data source not found: unknown",
 			},
 			{
 				desc:      "alert rule with invalid condition",
@@ -1083,8 +1086,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"message": "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring: ` +
-					`condition B not found in any query or expression: it should be one of: [A]", "traceID":"00000000000000000000000000000000"}`,
+				expectedMessage: "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring: condition B not found in any query or expression: it should be one of: [A]",
 			},
 		}
 
@@ -1113,8 +1115,14 @@ func TestAlertRuleCRUD(t *testing.T) {
 				b, err := ioutil.ReadAll(resp.Body)
 				require.NoError(t, err)
 
+				res := &Response{}
+				err = json.Unmarshal(b, &res)
+				require.NoError(t, err)
+
+				assert.Equal(t, res.Message, tc.expectedMessage)
+				assert.NotEmpty(t, res.TraceID)
+
 				assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
-				require.JSONEq(t, tc.expectedResponse, string(b))
 			})
 		}
 	}
@@ -2266,6 +2274,7 @@ func TestEval(t *testing.T) {
 		payload            string
 		expectedStatusCode int
 		expectedResponse   string
+		expectedMessage    string
 	}{
 		{
 			desc: "alerting condition",
@@ -2414,8 +2423,7 @@ func TestEval(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse: `{"message": "invalid condition: condition B not found in any query or expression: it should be one of: [A]",` +
-				`"traceID": "00000000000000000000000000000000"}`,
+			expectedMessage:    "invalid condition: condition B not found in any query or expression: it should be one of: [A]",
 		},
 		{
 			desc: "unknown query datasource",
@@ -2440,7 +2448,7 @@ func TestEval(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"message": "invalid condition: invalid query A: data source not found: unknown", "traceID": "00000000000000000000000000000000"}`,
+			expectedMessage:    "invalid condition: invalid query A: data source not found: unknown",
 		},
 	}
 
@@ -2457,9 +2465,18 @@ func TestEval(t *testing.T) {
 			})
 			b, err := ioutil.ReadAll(resp.Body)
 			require.NoError(t, err)
+			res := Response{}
+			err = json.Unmarshal(b, &res)
+			require.NoError(t, err)
 
 			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
-			require.JSONEq(t, tc.expectedResponse, string(b))
+			if tc.expectedResponse != "" {
+				require.JSONEq(t, tc.expectedResponse, string(b))
+			}
+			if tc.expectedMessage != "" {
+				assert.Equal(t, tc.expectedMessage, res.Message)
+				assert.NotEmpty(t, res.TraceID)
+			}
 		})
 	}
 
@@ -2469,6 +2486,7 @@ func TestEval(t *testing.T) {
 		payload            string
 		expectedStatusCode int
 		expectedResponse   string
+		expectedMessage    string
 	}{
 		{
 			desc: "alerting condition",
@@ -2596,8 +2614,7 @@ func TestEval(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse: `{"message": "invalid queries or expressions: invalid query A: data source not found: unknown",` +
-				`"traceID": "00000000000000000000000000000000"}`,
+			expectedMessage:    "invalid queries or expressions: invalid query A: data source not found: unknown",
 		},
 	}
 
@@ -2614,9 +2631,19 @@ func TestEval(t *testing.T) {
 			})
 			b, err := ioutil.ReadAll(resp.Body)
 			require.NoError(t, err)
+			res := Response{}
+			err = json.Unmarshal(b, &res)
+			require.NoError(t, err)
 
 			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
-			require.JSONEq(t, tc.expectedResponse, string(b))
+			if tc.expectedResponse != "" {
+				require.JSONEq(t, tc.expectedResponse, string(b))
+			}
+
+			if tc.expectedMessage != "" {
+				require.Equal(t, tc.expectedMessage, res.Message)
+				require.NotEmpty(t, res.TraceID)
+			}
 		})
 	}
 }

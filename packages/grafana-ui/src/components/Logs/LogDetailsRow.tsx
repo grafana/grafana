@@ -1,15 +1,17 @@
-import React, { PureComponent } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { PureComponent } from 'react';
+
 import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme2 } from '@grafana/data';
 
-import { Themeable2 } from '../../types/theme';
 import { withTheme2 } from '../../themes/index';
+import { Themeable2 } from '../../types/theme';
+import { DataLinkButton } from '../DataLinks/DataLinkButton';
+import { IconButton } from '../IconButton/IconButton';
+
+import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
 
 //Components
-import { LogLabelStats } from './LogLabelStats';
-import { IconButton } from '../IconButton/IconButton';
-import { DataLinkButton } from '../DataLinks/DataLinkButton';
 
 export interface Props extends Themeable2 {
   parsedValue: string;

@@ -1,7 +1,5 @@
 import { Observable } from 'rxjs';
-import { QueryRunnerOptions } from 'app/features/query/state/PanelQueryRunner';
-import { DashboardQuery, SHARED_DASHBOARD_QUERY } from './types';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+
 import {
   DataQuery,
   DataQueryRequest,
@@ -11,6 +9,10 @@ import {
   LoadingState,
   PanelData,
 } from '@grafana/data';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { QueryRunnerOptions } from 'app/features/query/state/PanelQueryRunner';
+
+import { DashboardQuery, SHARED_DASHBOARD_QUERY } from './types';
 
 export function isSharedDashboardQuery(datasource: string | DataSourceRef | DataSourceApi | null) {
   if (!datasource) {

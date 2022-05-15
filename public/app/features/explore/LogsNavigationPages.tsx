@@ -1,7 +1,9 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
+
 import { dateTimeFormat, systemDateFormats, TimeZone, AbsoluteTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { CustomScrollbar, Spinner, useTheme2 } from '@grafana/ui';
+
 import { LogsPage } from './LogsNavigation';
 
 type Props = {

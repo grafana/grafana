@@ -28,6 +28,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/live"
+	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -43,11 +45,13 @@ func TestGetHomeDashboard(t *testing.T) {
 	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
+	prefService := preftest.NewPreferenceServiceFake()
 
 	hs := &HTTPServer{
-		Cfg:         cfg,
-		pluginStore: &fakePluginStore{},
-		SQLStore:    mockstore.NewSQLStoreMock(),
+		Cfg:               cfg,
+		pluginStore:       &fakePluginStore{},
+		SQLStore:          mockstore.NewSQLStoreMock(),
+		preferenceService: prefService,
 	}
 
 	tests := []struct {
@@ -70,6 +74,8 @@ func TestGetHomeDashboard(t *testing.T) {
 			hs.Cfg.DefaultHomeDashboardPath = tc.defaultSetting
 			bytes, err := simplejson.NewJson(homeDashJSON)
 			require.NoError(t, err, "must be able to encode file as JSON")
+
+			prefService.ExpectedPreference = &pref.Preference{}
 
 			dash.Dashboard = bytes
 
@@ -226,7 +232,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			SQLStore:              mockSQLStore,
 			AccessControl:         accesscontrolmock.New(),
 			dashboardService: service.ProvideDashboardService(
-				cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
+				cfg, dashboardStore, nil, features,
+				accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
 			),
 		}
 		hs.SQLStore = mockSQLStore
@@ -931,7 +938,8 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		ProvisioningService:   provisioningService,
 		AccessControl:         accesscontrolmock.New(),
 		dashboardProvisioningService: service.ProvideDashboardService(
-			cfg, dashboardStore, nil, features, accesscontrolmock.NewPermissionsServicesMock(),
+			cfg, dashboardStore, nil, features,
+			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
 		),
 	}
 

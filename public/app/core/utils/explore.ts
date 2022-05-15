@@ -1,7 +1,7 @@
-// Libraries
 import { flatten, omit, uniq } from 'lodash';
 import { Unsubscribable } from 'rxjs';
-// Services & Utils
+import { v4 as uuidv4 } from 'uuid';
+
 import {
   CoreApp,
   DataQuery,
@@ -24,16 +24,16 @@ import {
   toUtc,
   urlUtil,
 } from '@grafana/data';
-import store from 'app/core/store';
-import { v4 as uuidv4 } from 'uuid';
-import { getNextRefIdChar } from './query';
-// Types
-import { RefreshPicker } from '@grafana/ui';
-import { EXPLORE_GRAPH_STYLES, ExploreGraphStyle, ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
-import { config } from '../config';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataSourceSrv } from '@grafana/runtime';
+import { RefreshPicker } from '@grafana/ui';
+import store from 'app/core/store';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
+import { EXPLORE_GRAPH_STYLES, ExploreGraphStyle, ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
+
+import { config } from '../config';
+
+import { getNextRefIdChar } from './query';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',

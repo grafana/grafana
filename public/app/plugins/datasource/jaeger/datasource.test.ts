@@ -1,4 +1,6 @@
 import { lastValueFrom, of, throwError } from 'rxjs';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
+
 import {
   DataQueryRequest,
   DataSourceInstanceSettings,
@@ -7,9 +9,8 @@ import {
   PluginType,
   ScopedVars,
 } from '@grafana/data';
-
 import { backendSrv } from 'app/core/services/backend_srv';
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
+
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { JaegerDatasource, JaegerJsonData } from './datasource';
 import mockJson from './mockJsonResponse.json';

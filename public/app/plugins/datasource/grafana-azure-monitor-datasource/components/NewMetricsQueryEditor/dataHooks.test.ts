@@ -4,6 +4,7 @@ import createMockDatasource from '../../__mocks__/datasource';
 import Datasource from '../../datasource';
 import { AzureMetricQuery, AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
 import { DataHook } from '../MetricsQueryEditor/dataHooks';
+
 import { useMetricNames, useMetricNamespaces } from './dataHooks';
 
 const WAIT_OPTIONS = {
@@ -130,11 +131,11 @@ describe('AzureMonitor: metrics dataHooks', () => {
       .fn()
       .mockResolvedValue([opt('Web server', 'web-server'), opt('Job server', 'job-server')]);
 
-    datasource.azureMonitorDatasource.newGetMetricNames = jest
+    datasource.azureMonitorDatasource.getMetricNames = jest
       .fn()
       .mockResolvedValue([opt('Percentage CPU', 'percentage-cpu'), opt('Free memory', 'free-memory')]);
 
-    datasource.azureMonitorDatasource.newGetMetricNamespaces = jest
+    datasource.azureMonitorDatasource.getMetricNamespaces = jest
       .fn()
       .mockResolvedValue([opt('Compute Virtual Machine', 'azure/vmc'), opt('Database NS', 'azure/dbns')]);
   });

@@ -1,10 +1,9 @@
 const loaderUtils = require('loader-utils');
-
-const WebWorkerTemplatePlugin = require('webpack/lib/webworker/WebWorkerTemplatePlugin');
 const ExternalsPlugin = require('webpack/lib/ExternalsPlugin');
-const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin');
 const LoaderTargetPlugin = require('webpack/lib/LoaderTargetPlugin');
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin');
+const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin');
+const WebWorkerTemplatePlugin = require('webpack/lib/webworker/WebWorkerTemplatePlugin');
 
 const COMPILATION_METADATA = Symbol('COMPILATION_METADATA');
 

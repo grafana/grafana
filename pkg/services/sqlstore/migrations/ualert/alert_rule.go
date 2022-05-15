@@ -160,6 +160,8 @@ func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
 		if err != nil {
 			return nil, err
 		}
+		// remove hidden tag from the query (if exists)
+		delete(fixedData, "hide")
 		fixedData = fixGraphiteReferencedSubQueries(fixedData)
 		updatedModel, err := json.Marshal(fixedData)
 		if err != nil {

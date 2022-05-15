@@ -1,4 +1,8 @@
 import { css, cx } from '@emotion/css';
+import { identity } from 'lodash';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { usePrevious } from 'react-use';
+
 import {
   AbsoluteTimeRange,
   applyFieldOverrides,
@@ -28,12 +32,11 @@ import {
 import appEvents from 'app/core/app_events';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { TimeSeriesOptions } from 'app/plugins/panel/timeseries/types';
-import { identity } from 'lodash';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { usePrevious } from 'react-use';
-import { seriesVisibilityConfigFactory } from '../dashboard/dashgrid/SeriesVisibilityConfigFactory';
-import { applyGraphStyle } from './exploreGraphStyleUtils';
+
 import { ExploreGraphStyle } from '../../types';
+import { seriesVisibilityConfigFactory } from '../dashboard/dashgrid/SeriesVisibilityConfigFactory';
+
+import { applyGraphStyle } from './exploreGraphStyleUtils';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 

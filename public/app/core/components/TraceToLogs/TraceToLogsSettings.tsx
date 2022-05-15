@@ -1,4 +1,6 @@
 import { css } from '@emotion/css';
+import React from 'react';
+
 import {
   DataSourceJsonData,
   DataSourceInstanceSettings,
@@ -9,7 +11,7 @@ import {
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, TagsInput, useStyles, InlineSwitch } from '@grafana/ui';
-import React from 'react';
+
 import KeyValueInput from './KeyValueInput';
 
 export interface TraceToLogsOptions {
@@ -38,14 +40,17 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
       <h3 className="page-heading">Trace to logs</h3>
 
       <div className={styles.infoText}>
-        Trace to logs lets you navigate from a trace span to the selected data source&apos;s log.
+        Trace to logs lets you navigate from a trace span to the selected data source&apos;s logs.
       </div>
 
       <InlineFieldRow>
         <InlineField tooltip="The data source the trace is going to navigate to" label="Data source" labelWidth={26}>
           <DataSourcePicker
             inputId="trace-to-logs-data-source-picker"
-            logs
+            filter={(ds) => {
+              // Trace to logs only supports loki and splunk at the moment
+              return ds.type === 'loki' || ds.type === 'grafana-splunk-datasource';
+            }}
             current={options.jsonData.tracesToLogs?.datasourceUid}
             noDefault={true}
             width={40}

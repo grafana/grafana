@@ -51,15 +51,16 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures()
-	permissionsServices := acmock.NewPermissionsServicesMock()
+	folderPermissions := acmock.NewMockedPermissionsService()
+	dashboardPermissions := acmock.NewMockedPermissionsService()
 
 	dashboardService := dashboardservice.ProvideDashboardService(
 		cfg, dashboardStore, nil,
-		features, permissionsServices,
+		features, folderPermissions, dashboardPermissions,
 	)
 	folderService := dashboardservice.ProvideFolderService(
 		cfg, dashboardService, dashboardStore, nil,
-		features, permissionsServices, ac, nil,
+		features, folderPermissions, ac, nil,
 	)
 
 	ng, err := ngalert.ProvideService(
@@ -113,12 +114,12 @@ func CreateTestAlertRuleWithLabels(t *testing.T, ctx context.Context, dbstore *s
 	})
 	require.NoError(t, err)
 
-	q := models.GetAlertRulesQuery{
-		OrgID:        orgID,
-		NamespaceUID: "namespace",
-		RuleGroup:    &ruleGroup,
+	q := models.ListAlertRulesQuery{
+		OrgID:         orgID,
+		NamespaceUIDs: []string{"namespace"},
+		RuleGroup:     ruleGroup,
 	}
-	err = dbstore.GetAlertRules(ctx, &q)
+	err = dbstore.ListAlertRules(ctx, &q)
 	require.NoError(t, err)
 	require.NotEmpty(t, q.Result)
 

@@ -1,14 +1,17 @@
 import React from 'react';
-import { Container } from '@grafana/ui';
-import { StandardEditorProps } from '@grafana/data';
 import { DropResult } from 'react-beautiful-dnd';
 
-import { GeomapPanelOptions, MapLayerState } from '../types';
-import { GeomapInstanceState } from '../GeomapPanel';
-import { geomapLayerRegistry } from '../layers/registry';
-import { dataLayerFilter } from './layerEditor';
+import { StandardEditorProps } from '@grafana/data';
+import { Container } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
+import { FrameState } from 'app/features/canvas/runtime/frame';
+
+import { GeomapInstanceState } from '../GeomapPanel';
+import { geomapLayerRegistry } from '../layers/registry';
+import { GeomapPanelOptions, MapLayerState } from '../types';
+
+import { dataLayerFilter } from './layerEditor';
 
 type LayersEditorProps = StandardEditorProps<any, any, GeomapPanelOptions, GeomapInstanceState>;
 
@@ -52,6 +55,10 @@ export const LayersEditor = (props: LayersEditorProps) => {
     element.onChange({ ...element.options, name });
   };
 
+  const isFrame = (element: MapLayerState<any>) => {
+    return element instanceof FrameState;
+  };
+
   const selection = selected ? [layers[selected]?.getName()] : [];
 
   return (
@@ -72,6 +79,7 @@ export const LayersEditor = (props: LayersEditorProps) => {
         onSelect={onSelect}
         onDelete={onDelete}
         selection={selection}
+        isFrame={isFrame}
         excludeBaseLayer
         onNameChange={onNameChange}
         verifyLayerNameUniqueness={actions.canRename}

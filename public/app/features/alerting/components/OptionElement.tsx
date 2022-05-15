@@ -1,5 +1,7 @@
 import React, { FC } from 'react';
+
 import { FormAPI, Input, InputControl, Select, TextArea } from '@grafana/ui';
+
 import { NotificationChannelOption } from '../../../types';
 
 interface Props extends Pick<FormAPI<any>, 'register' | 'control'> {
@@ -29,7 +31,7 @@ export const OptionElement: FC<Props> = ({ control, option, register, invalid })
           control={control}
           name={`${modelValue}`}
           render={({ field: { ref, ...field } }) => (
-            <Select menuShouldPortal {...field} options={option.selectOptions ?? undefined} invalid={invalid} />
+            <Select {...field} options={option.selectOptions ?? undefined} invalid={invalid} />
           )}
         />
       );

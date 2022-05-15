@@ -1,7 +1,8 @@
 import React from 'react';
-import { loadComponentHandler } from './SafeDynamicImport';
+
 import { ErrorLoadingChunk } from './ErrorLoadingChunk';
 import { LoadingChunkPlaceHolder } from './LoadingChunkPlaceHolder';
+import { loadComponentHandler } from './SafeDynamicImport';
 
 describe('loadComponentHandler', () => {
   describe('when there is no error and pastDelay is false', () => {

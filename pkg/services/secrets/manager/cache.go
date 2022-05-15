@@ -1,8 +1,11 @@
 package manager
 
 import (
+	"strconv"
 	"sync"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -36,6 +39,11 @@ func (c *dataKeyCache) get(id string) ([]byte, bool) {
 	defer c.RUnlock()
 
 	entry, exists := c.entries[id]
+
+	cacheReadsCounter.With(prometheus.Labels{
+		"hit": strconv.FormatBool(exists),
+	}).Inc()
+
 	if !exists || entry.expired() {
 		return nil, false
 	}
