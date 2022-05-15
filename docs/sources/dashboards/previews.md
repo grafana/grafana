@@ -86,7 +86,7 @@ Please consider using the new [contextPerRenderKey]({{< relref "../image-renderi
 
 ### Saving previews
 
-The crawler saves previews and their metadata in Grafana's DB. Preview's metadata contains, among others, the [dashboard version]({{< relref "./dashboard_history" >}}) from the time of taking the screenshot. During subsequent runs, the crawler will use the saved version to find stale dashboard previews.
+The crawler saves previews and their metadata in Grafana's DB. Preview's metadata contains, among other things, the [dashboard version]({{< relref "./dashboard_history" >}}) from the time of taking the screenshot. During subsequent runs, the crawler uses the saved version to find stale dashboard previews.
 
 ## Permissions
 
