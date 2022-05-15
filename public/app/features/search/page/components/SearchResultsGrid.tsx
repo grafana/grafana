@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { FixedSizeGrid, GridOnItemsRenderedProps } from 'react-window';
+import { FixedSizeGrid } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2 } from '@grafana/data';
