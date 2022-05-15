@@ -30,7 +30,6 @@ describe('createTextBoxVariableAdapter', () => {
           current: { selected: false, text: 'original', value: 'original' },
           options: [{ selected: false, text: 'original', value: 'original' }],
           type: 'textbox',
-          label: null,
           hide: VariableHide.dontHide,
           skipUrlSync: false,
           error: null,
