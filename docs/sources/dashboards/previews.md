@@ -5,7 +5,7 @@ aliases = ["/docs/grafana/latest/reference/previews/"]
 weight = 9
 +++
 
-# Previews
+# Dashboad previews
 
 {{< figure  max-width="950px" src="/static/img/docs/dashboards/previews.jpg" animated-gif="/static/img/docs/dashboards/previews.gif" >}}
 
