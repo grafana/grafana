@@ -19,6 +19,7 @@ func TestReadPromFrames(t *testing.T) {
 		"prom-matrix",
 		"prom-matrix-with-nans",
 		"prom-vector",
+		"prom-string",
 		"prom-scalar",
 		"prom-series",
 		"prom-warnings",

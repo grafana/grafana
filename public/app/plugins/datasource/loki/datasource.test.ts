@@ -534,74 +534,56 @@ describe('LokiDatasource', () => {
   });
 
   describe('when performing testDataSource', () => {
-    describe('and call succeeds', () => {
-      it('should return successfully', async () => {
-        fetchMock.mockImplementation(() => of(createFetchResponse({ values: ['avalue'] })));
-        const ds = createLokiDSForTests({} as TemplateSrv);
+    it('should return successfully when call succeeds with labels', async () => {
+      const ds = createLokiDSForTests({} as TemplateSrv);
+      ds.metadataRequest = () => Promise.resolve(['avalue']);
 
-        const result = await ds.testDatasource();
+      const result = await ds.testDatasource();
 
-        expect(result.status).toBe('success');
+      expect(result).toStrictEqual({
+        status: 'success',
+        message: 'Data source connected and labels found.',
       });
     });
 
-    describe('and call fails with 401 error', () => {
-      it('should return error status and a detailed error message', async () => {
-        fetchMock.mockImplementation(() =>
-          throwError({
-            statusText: 'Unauthorized',
-            status: 401,
-            data: {
-              message: 'Unauthorized',
-            },
-          })
-        );
-        const ds = createLokiDSForTests({} as TemplateSrv);
+    it('should return error when call succeeds without labels', async () => {
+      const ds = createLokiDSForTests({} as TemplateSrv);
+      ds.metadataRequest = () => Promise.resolve([]);
 
-        const result = await ds.testDatasource();
+      const result = await ds.testDatasource();
 
-        expect(result.status).toEqual('error');
-        expect(result.message).toBe('Loki: Unauthorized. 401. Unauthorized');
+      expect(result).toStrictEqual({
+        status: 'error',
+        message: 'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
       });
     });
 
-    describe('and call fails with 404 error', () => {
-      it('should return error status and a detailed error message', async () => {
-        fetchMock.mockImplementation(() =>
-          throwError({
-            statusText: 'Not found',
-            status: 404,
-            data: {
-              message: '404 page not found',
-            },
-          })
-        );
+    it('should return error status with no details when call fails with no details', async () => {
+      const ds = createLokiDSForTests({} as TemplateSrv);
+      ds.metadataRequest = () => Promise.reject({});
 
-        const ds = createLokiDSForTests({} as TemplateSrv);
+      const result = await ds.testDatasource();
 
-        const result = await ds.testDatasource();
-
-        expect(result.status).toEqual('error');
-        expect(result.message).toBe('Loki: Not found. 404. 404 page not found');
+      expect(result).toStrictEqual({
+        status: 'error',
+        message: 'Unable to fetch labels from Loki, please check the server logs for more details',
       });
     });
 
-    describe('and call fails with 502 error', () => {
-      it('should return error status and a detailed error message', async () => {
-        fetchMock.mockImplementation(() =>
-          throwError({
-            statusText: 'Bad Gateway',
-            status: 502,
-            data: '',
-          })
-        );
+    it('should return error status with details when call fails with details', async () => {
+      const ds = createLokiDSForTests({} as TemplateSrv);
+      ds.metadataRequest = () =>
+        Promise.reject({
+          data: {
+            message: 'error42',
+          },
+        });
 
-        const ds = createLokiDSForTests({} as TemplateSrv);
+      const result = await ds.testDatasource();
 
-        const result = await ds.testDatasource();
-
-        expect(result.status).toEqual('error');
-        expect(result.message).toBe('Loki: Bad Gateway. 502');
+      expect(result).toStrictEqual({
+        status: 'error',
+        message: 'Unable to fetch labels from Loki (error42), please check the server logs for more details',
       });
     });
   });

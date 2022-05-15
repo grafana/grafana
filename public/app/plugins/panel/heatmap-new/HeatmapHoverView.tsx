@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-import { Field, FieldType, formattedValueToString, getFieldDisplayName, LinkModel } from '@grafana/data';
+import { DataFrameView, Field, FieldType, formattedValueToString, getFieldDisplayName, LinkModel } from '@grafana/data';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -153,6 +153,30 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
     [hover.index]
   );
 
+  const renderExemplars = () => {
+    const exemplarIndex = data.exemplarsMappings?.lookup; //?.[hover.index];
+    if (!exemplarIndex || !data.exemplars) {
+      return null;
+    }
+
+    const ids = exemplarIndex[hover.index];
+    if (ids) {
+      const view = new DataFrameView(data.exemplars);
+      return (
+        <ul>
+          {ids.map((id) => (
+            <li key={id}>
+              <pre>{JSON.stringify(view.get(id), null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      );
+    }
+
+    // should not show anything... but for debugging
+    return <div>EXEMPLARS: {JSON.stringify(exemplarIndex)}</div>;
+  };
+
   return (
     <>
       <div>
@@ -175,6 +199,7 @@ export const HeatmapHoverView = ({ data, hover, showHistogram }: Props) => {
           {getFieldDisplayName(countField!, data.heatmap)}: {count}
         </div>
       </div>
+      {renderExemplars()}
       {links.length > 0 && (
         <VerticalGroup>
           {links.map((link, i) => (

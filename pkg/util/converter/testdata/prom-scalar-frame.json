@@ -3,7 +3,10 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-many"
+          "type": "timeseries-many",
+          "custom": {
+            "resultType": "scalar"
+          }
         },
         "fields": [
           {

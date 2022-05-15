@@ -248,5 +248,16 @@ var (
 			RequiresDevMode: true,
 			FrontendOnly:    true,
 		},
+		{
+			Name:         "traceToMetrics",
+			Description:  "Enable trace to metrics links",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "prometheusStreamingJSONParser",
+			Description: "Enable streaming JSON parser for Prometheus datasource",
+			State:       FeatureStateAlpha,
+		},
 	}
 )

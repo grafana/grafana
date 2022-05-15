@@ -96,8 +96,8 @@ func TestProvisioning(t *testing.T) {
 			require.Equal(t, 200, resp.StatusCode)
 		})
 
-		t.Run("un-authenticated POST should 401", func(t *testing.T) {
-			req := createTestRequest("POST", url, "", body)
+		t.Run("un-authenticated PUT should 401", func(t *testing.T) {
+			req := createTestRequest("PUT", url, "", body)
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
@@ -106,8 +106,8 @@ func TestProvisioning(t *testing.T) {
 			require.Equal(t, 401, resp.StatusCode)
 		})
 
-		t.Run("viewer POST should 403", func(t *testing.T) {
-			req := createTestRequest("POST", url, "viewer", body)
+		t.Run("viewer PUT should 403", func(t *testing.T) {
+			req := createTestRequest("PUT", url, "viewer", body)
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
@@ -116,8 +116,8 @@ func TestProvisioning(t *testing.T) {
 			require.Equal(t, 403, resp.StatusCode)
 		})
 
-		t.Run("editor POST should succeed", func(t *testing.T) {
-			req := createTestRequest("POST", url, "editor", body)
+		t.Run("editor PUT should succeed", func(t *testing.T) {
+			req := createTestRequest("PUT", url, "editor", body)
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
@@ -126,8 +126,8 @@ func TestProvisioning(t *testing.T) {
 			require.Equal(t, 202, resp.StatusCode)
 		})
 
-		t.Run("admin POST should succeed", func(t *testing.T) {
-			req := createTestRequest("POST", url, "admin", body)
+		t.Run("admin PUT should succeed", func(t *testing.T) {
+			req := createTestRequest("PUT", url, "admin", body)
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)

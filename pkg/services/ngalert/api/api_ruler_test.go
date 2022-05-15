@@ -376,6 +376,32 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 			assertRulesDeleted(t, rulesInFolderInGroup, ruleStore, scheduler)
 		})
+		t.Run("editor shouldn't be able to delete provisioned rules", func(t *testing.T) {
+			ruleStore := store.NewFakeRuleStore(t)
+			orgID := rand.Int63()
+			folder := randFolder()
+			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+			rulesInFolder := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
+			ruleStore.PutRule(context.Background(), rulesInFolder...)
+			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID)))...)
+
+			scheduler := &schedule.FakeScheduleService{}
+			scheduler.On("DeleteAlertRule", mock.Anything)
+
+			ac := acMock.New().WithDisabled()
+
+			svc := createService(ac, ruleStore, scheduler)
+
+			err := svc.provenanceStore.SetProvenance(context.Background(), rulesInFolder[0], orgID, models.ProvenanceAPI)
+			require.NoError(t, err)
+
+			request := createRequestContext(orgID, models2.ROLE_EDITOR, map[string]string{
+				":Namespace": folder.Title,
+			})
+			response := svc.RouteDeleteAlertRules(request)
+			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
+			assertRulesDeleted(t, rulesInFolder[1:], ruleStore, scheduler)
+		})
 	})
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
 		t.Run("and user does not have access to any of data sources used by alert rules", func(t *testing.T) {
@@ -420,6 +446,32 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				response := createService(ac, ruleStore, scheduler).RouteDeleteAlertRules(request)
 				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 				assertRulesDeleted(t, rulesInFolder, ruleStore, scheduler)
+			})
+			t.Run("shouldn't be able to delete provisioned rules", func(t *testing.T) {
+				ruleStore := store.NewFakeRuleStore(t)
+				orgID := rand.Int63()
+				folder := randFolder()
+				ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+				rulesInFolder := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
+				ruleStore.PutRule(context.Background(), rulesInFolder...)
+				ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID)))...)
+
+				scheduler := &schedule.FakeScheduleService{}
+				scheduler.On("DeleteAlertRule", mock.Anything)
+
+				ac := acMock.New().WithPermissions(createPermissionsForRules(rulesInFolder))
+				svc := createService(ac, ruleStore, scheduler)
+
+				err := svc.provenanceStore.SetProvenance(context.Background(), rulesInFolder[0], orgID, models.ProvenanceAPI)
+				require.NoError(t, err)
+
+				request := createRequestContext(orgID, "None", map[string]string{
+					":Namespace": folder.Title,
+				})
+
+				response := svc.RouteDeleteAlertRules(request)
+				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
+				assertRulesDeleted(t, rulesInFolder[1:], ruleStore, scheduler)
 			})
 		})
 		t.Run("and user has access to data sources of some of alert rules", func(t *testing.T) {

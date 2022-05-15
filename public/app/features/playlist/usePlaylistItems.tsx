@@ -15,7 +15,7 @@ export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
 
       const newItem: PlaylistItem = {
         id: dashboard.id,
-        title: dashboard.label,
+        title: dashboard.label as string,
         type: 'dashboard_by_id',
         value: dashboard.id.toString(10),
         order: items.length + 1,

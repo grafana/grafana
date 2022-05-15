@@ -30,14 +30,20 @@ interface Props {
   hideLayout?: boolean;
 }
 
-function getValidQueryLayout(q: DashboardQuery): SearchLayout {
+export function getValidQueryLayout(q: DashboardQuery): SearchLayout {
+  const layout = q.layout ?? SearchLayout.Folders;
+
   // Folders is not valid when a query exists
-  if (q.layout === SearchLayout.Folders) {
+  if (layout === SearchLayout.Folders) {
     if (q.query || q.sort) {
       return SearchLayout.List;
     }
   }
-  return q.layout;
+
+  if (layout === SearchLayout.Grid && !config.featureToggles.dashboardPreviews) {
+    return SearchLayout.List;
+  }
+  return layout;
 }
 
 export const ActionRow: FC<Props> = ({
@@ -82,7 +88,7 @@ export const ActionRow: FC<Props> = ({
 
 ActionRow.displayName = 'ActionRow';
 
-const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     actionRow: css`
       display: none;

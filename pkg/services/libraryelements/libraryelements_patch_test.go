@@ -63,6 +63,8 @@ func TestPatchLibraryElement(t *testing.T) {
 					},
 					Version: 2,
 					Meta: LibraryElementDTOMeta{
+						FolderName:          "NewFolder",
+						FolderUID:           "NewFolder",
 						ConnectedDashboards: 0,
 						Created:             sc.initialResult.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
@@ -102,6 +104,8 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
 			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
+			sc.initialResult.Result.Meta.FolderName = "NewFolder"
+			sc.initialResult.Result.Meta.FolderUID = "NewFolder"
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
