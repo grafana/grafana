@@ -74,6 +74,18 @@ export class FrameState extends ElementState {
     this.reinitializeMoveable();
   }
 
+  doMove(child: ElementState, action: LayerActionID) {
+    const vals = this.elements.filter((v) => v !== child);
+    if (action === LayerActionID.MoveBottom) {
+      vals.unshift(child);
+    } else {
+      vals.push(child);
+    }
+    this.elements = vals;
+    this.scene.save(false);
+    this.reinitializeMoveable();
+  }
+
   reinitializeMoveable() {
     // Need to first clear current selection and then re-init moveable with slight delay
     this.scene.clearCurrentSelection();
@@ -152,38 +164,14 @@ export class FrameState extends ElementState {
         this.reinitializeMoveable();
         break;
       case LayerActionID.MoveTop:
-        if (element.item.id === 'frame') {
-          return;
-        }
-
-        this.setZIndex(element, LayerActionID.MoveTop);
-        break;
       case LayerActionID.MoveBottom:
-        if (element.item.id === 'frame') {
-          return;
-        }
-
-        this.setZIndex(element, LayerActionID.MoveBottom);
+        element.parent?.doMove(element, action);
         break;
+
       default:
         console.log('DO action', action, element);
         return;
     }
-  };
-
-  setZIndex = (currentElement: ElementState, action: string) => {
-    const moveTop = action === LayerActionID.MoveTop;
-    this.elements.forEach((element) => {
-      if (element.options.placement) {
-        element.options.placement.zIndex = 1;
-
-        if (element.UID === currentElement.UID) {
-          element.options.placement.zIndex = moveTop ? 2 : 0;
-        }
-      }
-
-      element.applyLayoutStylesToDiv();
-    });
   };
 
   render() {

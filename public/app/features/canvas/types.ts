@@ -8,8 +8,6 @@ export interface Placement {
 
   width?: number;
   height?: number;
-
-  zIndex?: number;
 }
 
 export interface Constraint {
