@@ -84,6 +84,20 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
     setSectionExpanded(!sectionExpanded);
   };
 
+  const onToggleFolder = (evt: React.FormEvent) => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    if (selectionToggle) {
+      selectionToggle(section.kind, section.uid);
+    }
+  };
+
+  const onToggleChecked = (item: DashboardSectionItem) => {
+    if (selectionToggle) {
+      selectionToggle('dashboard', item.uid!);
+    }
+  };
+
   const id = useUniqueId();
   const labelId = `section-header-label-${id}`;
 
@@ -103,7 +117,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
       label={
         <>
           {selectionToggle && selection && (
-            <div onClick={(v) => console.log(v)} className={styles.checkbox}>
+            <div className={styles.checkbox} onClick={onToggleFolder}>
               <Checkbox value={selection(section.kind, section.uid)} aria-label="Select folder" />
             </div>
           )}
@@ -124,10 +138,25 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
       }
     >
       {results.value && (
-        <ul>
-          {results.value.map((v) => (
-            <SearchItem key={v.uid} item={v} onTagSelected={onTagSelected} />
-          ))}
+        <ul className={styles.sectionItems}>
+          {results.value.map((v) => {
+            if (selection && selectionToggle) {
+              const type = v.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
+              v = {
+                ...v,
+                checked: selection(type, v.uid!),
+              };
+            }
+            return (
+              <SearchItem
+                key={v.uid}
+                item={v}
+                onTagSelected={onTagSelected}
+                onToggleChecked={onToggleChecked as any}
+                editable={Boolean(selection != null)}
+              />
+            );
+          })}
         </ul>
       )}
     </CollapsableSection>
@@ -162,6 +191,9 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
       'pointer',
       { selected }
     ),
+    sectionItems: css`
+      margin: 0 24px 0 32px;
+    `,
     checkbox: css`
       padding: 0 ${sm} 0 0;
     `,
