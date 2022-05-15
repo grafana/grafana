@@ -21,7 +21,7 @@ Grafana users are not forced to use previews. Each user can choose to disable th
 
 ## Enable dashboard previews
 
-1. Install the Image Renderer plugin or set up a remote rendering service. `3.4.0` is the minimum version of Image Renderer required for the dashboard preview feature. Refer to [Image rendering]({{< relref "../image-rendering/" >}}) for more information.
+1. Install the Image Renderer plugin or set up a remote rendering service. The minimum version of Image Renderer required for the dashboard preview feature `3.4.0`. Refer to [Image rendering]({{< relref "../image-rendering/" >}}) for more information.
 2. Modify the [configuration file]({{< relref "../administration/configuration.md#configuration-file-location" >}}) to enable the `dashboardPreviews` [feature toggle]({{< relref "../administration/configuration.md#feature_toggles" >}}).
 
 ```
