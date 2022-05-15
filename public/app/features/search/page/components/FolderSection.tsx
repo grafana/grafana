@@ -3,12 +3,14 @@ import React, { FC } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
 
 import { GrafanaTheme } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 import { Checkbox, CollapsableSection, Icon, stylesFactory, useTheme } from '@grafana/ui';
+import impressionSrv from 'app/core/services/impression_srv';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
 import { SearchItem } from '../..';
-import { getGrafanaSearcher } from '../../service';
+import { getGrafanaSearcher, SearchQuery } from '../../service';
 import { DashboardSearchItemType, DashboardSectionItem } from '../../types';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
@@ -38,15 +40,27 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
     if (!sectionExpanded) {
       return Promise.resolve([] as DashboardSectionItem[]);
     }
-    let query = {
+    let query: SearchQuery = {
       query: '*',
       kind: ['dashboard'],
       location: section.uid,
     };
     if (section.title === 'Starred') {
-      // TODO
+      const stars = await getBackendSrv().get('api/user/stars');
+      if (stars.length > 0) {
+        query = {
+          uid: stars, // array of UIDs
+        };
+      } else {
+        // ??
+      }
     } else if (section.title === 'Recent') {
-      // TODO
+      const ids = impressionSrv.getDashboardOpened();
+      if (ids.length) {
+        query = {
+          id: ids.slice(0, 30), // first 30 values in the array
+        };
+      }
     }
     const raw = await getGrafanaSearcher().search(query);
     const v = raw.view.map(
@@ -63,13 +77,11 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
           checked: selection ? selection(item.kind, item.uid) : false,
         } as DashboardSectionItem)
     );
-    console.log('HERE!');
     return v;
   }, [sectionExpanded, section]);
 
   const onSectionExpand = () => {
     setSectionExpanded(!sectionExpanded);
-    console.log('TODO!! section', section.title, section);
   };
 
   const id = useUniqueId();
