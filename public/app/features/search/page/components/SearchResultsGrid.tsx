@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { FixedSizeGrid } from 'react-window';
+import { FixedSizeGrid, GridOnItemsRenderedProps } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -43,10 +43,20 @@ export const SearchResultsGrid = ({
   const cellWidth = width / numColumns;
   const cellHeight = (cellWidth - 64) * 0.75 + 56 + 8;
   const numRows = Math.ceil(itemCount / numColumns);
+
   return (
     <InfiniteLoader isItemLoaded={response.isItemLoaded} itemCount={itemCount} loadMoreItems={response.loadMoreItems}>
       {({ onItemsRendered, ref }) => (
         <FixedSizeGrid
+          ref={ref}
+          onItemsRendered={(v) => {
+            onItemsRendered({
+              visibleStartIndex: v.visibleRowStartIndex * numColumns,
+              visibleStopIndex: v.visibleRowStopIndex * numColumns,
+              overscanStartIndex: v.overscanRowStartIndex * numColumns,
+              overscanStopIndex: v.overscanColumnStopIndex * numColumns,
+            });
+          }}
           columnCount={numColumns}
           columnWidth={cellWidth}
           rowCount={numRows}
