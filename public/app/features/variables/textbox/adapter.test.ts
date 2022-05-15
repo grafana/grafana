@@ -60,7 +60,6 @@ describe('createTextBoxVariableAdapter', () => {
           current: { selected: true, text: 'query', value: 'query' },
           options: [{ selected: false, text: 'query', value: 'query' }],
           type: 'textbox',
-          label: null,
           hide: VariableHide.dontHide,
           skipUrlSync: false,
           error: null,
