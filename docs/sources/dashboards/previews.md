@@ -95,7 +95,7 @@ The crawler saves previews and their metadata in Grafana's DB. Preview's metadat
 The crawler is set up with the required permissions to display all dashboards and query all data sources. The way the permissions are set up depends on the version of Grafana.
 
 In OSS and Enterprise Grafana instances without RBAC enabled, the crawler uses a special user with an `Admin` role.
-In Enterprise with RBAC enabled, the crawler uses [service accounts]({{< relref "../administration/service-accounts" >}}) with three fixed roles:
+In an Enterprise Grafana instance with RBAC enabled, the crawler uses [service accounts]({{< relref "../administration/service-accounts" >}}) with three fixed roles:
 
 - `fixed:dashboards:reader`
 - `fixed:datasources:reader`
