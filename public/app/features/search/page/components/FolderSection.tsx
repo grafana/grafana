@@ -40,6 +40,8 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
     if (!sectionExpanded) {
       return Promise.resolve([] as DashboardSectionItem[]);
     }
+    let folderUid: string | undefined = section.uid;
+    let folderTitle: string | undefined = section.title;
     let query: SearchQuery = {
       query: '*',
       kind: ['dashboard'],
@@ -54,6 +56,8 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
       } else {
         // ??
       }
+      folderUid = undefined;
+      folderTitle = undefined;
     } else if (section.title === 'Recent') {
       const ids = impressionSrv.getDashboardOpened();
       if (ids.length) {
@@ -61,6 +65,8 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
           id: ids.slice(0, 30), // first 30 values in the array
         };
       }
+      folderUid = undefined;
+      folderTitle = undefined;
     }
     const raw = await getGrafanaSearcher().search(query);
     const v = raw.view.map(
@@ -74,6 +80,8 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
           id: 666, // do not use me!
           isStarred: false,
           tags: item.tags ?? [],
+          folderUid,
+          folderTitle,
         } as DashboardSectionItem)
     );
     return v;
