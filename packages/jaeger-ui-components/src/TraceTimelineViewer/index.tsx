@@ -27,7 +27,7 @@ import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanRefe
 import ExternalLinkContext from '../url/externalLinkContext';
 
 import TimelineHeaderRow from './TimelineHeaderRow';
-import VirtualizedTraceView from './VirtualizedTraceView';
+import VirtualizedTraceView, { TopOfViewRefType } from './VirtualizedTraceView';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
 
 type TExtractUiFindFromStateReturn = {
@@ -109,7 +109,8 @@ type TProps = TExtractUiFindFromStateReturn & {
   focusedSpanId?: string;
   focusedSpanIdForSearch: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
-  topOfExploreViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRef?: RefObject<HTMLDivElement>;
+  topOfViewRefType?: TopOfViewRefType;
 };
 
 type State = {
@@ -165,7 +166,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
       createLinkToExternalSpan,
       traceTimeline,
       theme,
-      topOfExploreViewRef,
+      topOfViewRef,
       focusedSpanIdForSearch,
       ...rest
     } = this.props;
@@ -197,7 +198,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
             {...traceTimeline}
             setSpanNameColumnWidth={setSpanNameColumnWidth}
             currentViewRangeTime={viewRange.time.current}
-            topOfExploreViewRef={topOfExploreViewRef}
+            topOfViewRef={topOfViewRef}
             focusedSpanIdForSearch={focusedSpanIdForSearch}
           />
         </div>

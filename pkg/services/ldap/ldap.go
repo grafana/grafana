@@ -333,7 +333,7 @@ func (server *Server) users(logins []string) (
 // If there are no ldap group mappings access is true
 // otherwise a single group must match
 func (server *Server) validateGrafanaUser(user *models.ExternalUserInfo) error {
-	if len(server.Config.Groups) > 0 && len(user.OrgRoles) < 1 {
+	if len(server.Config.Groups) > 0 && (len(user.OrgRoles) == 0 && (user.IsGrafanaAdmin == nil || !*user.IsGrafanaAdmin)) {
 		server.log.Error(
 			"User does not belong in any of the specified LDAP groups",
 			"username", user.Login,
@@ -423,7 +423,10 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 		}
 
 		if IsMemberOf(memberOf, group.GroupDN) {
-			extUser.OrgRoles[group.OrgId] = group.OrgRole
+			if group.OrgRole != "" {
+				extUser.OrgRoles[group.OrgId] = group.OrgRole
+			}
+
 			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
 				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
 			}
@@ -432,7 +435,7 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 
 	// If there are group org mappings configured, but no matching mappings,
 	// the user will not be able to login and will be disabled
-	if len(server.Config.Groups) > 0 && len(extUser.OrgRoles) == 0 {
+	if len(server.Config.Groups) > 0 && (len(extUser.OrgRoles) == 0 && (extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin)) {
 		extUser.IsDisabled = true
 	}
 

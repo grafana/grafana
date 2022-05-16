@@ -1,7 +1,9 @@
 package tracing
 
 func InitializeTracerForTest() (Tracer, error) {
-	ots := &Opentelemetry{}
+	ots := &Opentelemetry{
+		enabled: "jaeger",
+	}
 	err := ots.initOpentelemetryTracer()
 	if err != nil {
 		return ots, err
@@ -10,7 +12,9 @@ func InitializeTracerForTest() (Tracer, error) {
 }
 
 func InitializeForBus() Tracer {
-	ots := &Opentelemetry{}
+	ots := &Opentelemetry{
+		enabled: "jaeger",
+	}
 	_ = ots.initOpentelemetryTracer()
 	return ots
 }

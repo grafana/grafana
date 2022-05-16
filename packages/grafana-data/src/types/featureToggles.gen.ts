@@ -32,7 +32,6 @@ export interface FeatureToggles {
   tempoBackendSearch?: boolean;
   tempoServiceGraph?: boolean;
   lokiBackendMode?: boolean;
-  accesscontrol?: boolean;
   ['accesscontrol-builtins']?: boolean;
   prometheus_azure_auth?: boolean;
   influxdbBackendMigration?: boolean;
@@ -47,7 +46,6 @@ export interface FeatureToggles {
   dashboardComments?: boolean;
   annotationComments?: boolean;
   migrationLocking?: boolean;
-  saveDashboardDrawer?: boolean;
   storage?: boolean;
   alertProvisioning?: boolean;
   export?: boolean;
@@ -58,4 +56,9 @@ export interface FeatureToggles {
   persistNotifications?: boolean;
   commandPalette?: boolean;
   savedItems?: boolean;
+  cloudWatchDynamicLabels?: boolean;
+  datasourceQueryMultiStatus?: boolean;
+  azureMonitorExperimentalUI?: boolean;
+  traceToMetrics?: boolean;
+  prometheusStreamingJSONParser?: boolean;
 }

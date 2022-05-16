@@ -71,10 +71,6 @@ const (
 	// Loki datasource works as backend datasource
 	FlagLokiBackendMode = "lokiBackendMode"
 
-	// FlagAccesscontrol
-	// Support robust access control
-	FlagAccesscontrol = "accesscontrol"
-
 	// FlagAccesscontrolBuiltins
 	// Simplify access control builtin roles
 	FlagAccesscontrolBuiltins = "accesscontrol-builtins"
@@ -131,10 +127,6 @@ const (
 	// Lock database during migrations
 	FlagMigrationLocking = "migrationLocking"
 
-	// FlagSaveDashboardDrawer
-	// Use a drawer to show save dashboard dialog
-	FlagSaveDashboardDrawer = "saveDashboardDrawer"
-
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
@@ -174,4 +166,24 @@ const (
 	// FlagSavedItems
 	// Enable Saved Items in the navbar.
 	FlagSavedItems = "savedItems"
+
+	// FlagCloudWatchDynamicLabels
+	// Use dynamic labels instead of alias patterns in CloudWatch datasource
+	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
+
+	// FlagDatasourceQueryMultiStatus
+	// Introduce HTTP 207 Multi Status for api/ds/query
+	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
+
+	// FlagAzureMonitorExperimentalUI
+	// Use grafana-experimental UI in Azure Monitor
+	FlagAzureMonitorExperimentalUI = "azureMonitorExperimentalUI"
+
+	// FlagTraceToMetrics
+	// Enable trace to metrics links
+	FlagTraceToMetrics = "traceToMetrics"
+
+	// FlagPrometheusStreamingJSONParser
+	// Enable streaming JSON parser for Prometheus datasource
+	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
 )

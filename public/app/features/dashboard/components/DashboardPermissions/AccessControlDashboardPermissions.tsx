@@ -11,15 +11,7 @@ interface Props {
 }
 
 export const AccessControlDashboardPermissions = ({ dashboard }: Props) => {
-  const canListUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
   const canSetPermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsWrite);
 
-  return (
-    <Permissions
-      resource={'dashboards'}
-      resourceId={dashboard.uid}
-      canListUsers={canListUsers}
-      canSetPermissions={canSetPermissions}
-    />
-  );
+  return <Permissions resource={'dashboards'} resourceId={dashboard.uid} canSetPermissions={canSetPermissions} />;
 };

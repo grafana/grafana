@@ -11,7 +11,6 @@ describe('useCreatableSelectPersistedBehaviour', () => {
     const MyComp = (_: { force?: boolean }) => (
       <InlineField label="label">
         <Select
-          menuShouldPortal
           inputId="select"
           {...useCreatableSelectPersistedBehaviour({
             options: [{ label: 'Option 1', value: 'Option 1' }],
@@ -34,7 +33,7 @@ describe('useCreatableSelectPersistedBehaviour', () => {
     // we type in the input 'Option 2', which should prompt an option creation
     await userEvent.type(input, 'Option 2');
     const creatableOption = screen.getByLabelText('Select option');
-    expect(creatableOption).toHaveTextContent('Create: Option 2');
+    expect(creatableOption).toHaveTextContent('Option 2');
 
     // we click on the creatable option to trigger its creation
     await userEvent.click(creatableOption);
@@ -53,7 +52,6 @@ describe('useCreatableSelectPersistedBehaviour', () => {
     const MyComp = () => (
       <InlineField label="label">
         <Select
-          menuShouldPortal
           inputId="select"
           {...useCreatableSelectPersistedBehaviour({
             options: [{ label: 'Option 1', value: 'Option 1' }],
@@ -94,7 +92,6 @@ describe('useCreatableSelectPersistedBehaviour', () => {
     const MyComp = (_: { force?: boolean }) => (
       <InlineField label="label">
         <Select
-          menuShouldPortal
           inputId="select"
           {...useCreatableSelectPersistedBehaviour({
             options: [{ label: 'Option 1', value: 'Option 1' }],
