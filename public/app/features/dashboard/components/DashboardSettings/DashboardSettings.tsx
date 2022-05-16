@@ -117,7 +117,7 @@ export function DashboardSettings({ dashboard, editview }: Props) {
     }
 
     if (dashboard.id && dashboard.meta.canAdmin) {
-      if (!config.featureToggles['accesscontrol']) {
+      if (!config.rbacEnabled) {
         pages.push({
           title: 'Permissions',
           id: 'permissions',
