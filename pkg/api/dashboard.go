@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -726,4 +727,25 @@ func (hs *HTTPServer) GetDashboardTags(c *models.ReqContext) {
 	}
 
 	c.JSON(http.StatusOK, query.Result)
+}
+
+// GetDashboardUIDs converts internal ids to UIDs
+func (hs *HTTPServer) GetDashboardUIDs(c *models.ReqContext) {
+	ids := strings.Split(web.Params(c.Req)[":ids"], ",")
+	uids := make([]string, 0, len(ids))
+
+	q := &models.GetDashboardRefByIdQuery{}
+	for _, idstr := range ids {
+		id, err := strconv.ParseInt(idstr, 10, 64)
+		if err != nil {
+			continue
+		}
+		q.Id = id
+		err = hs.SQLStore.GetDashboardUIDById(c.Req.Context(), q)
+		if err != nil {
+			continue
+		}
+		uids = append(uids, q.Result.Uid)
+	}
+	c.JSON(http.StatusOK, uids)
 }
