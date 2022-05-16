@@ -390,9 +390,9 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 	fTags.Name = "tags"
 	fExplain.Name = "explain"
 
-	frame := data.NewFrame("Query results", fScore, fKind, fUID, fName, fPType, fURL, fTags, fDSUIDs, fLocation)
+	frame := data.NewFrame("Query results", fKind, fUID, fName, fPType, fURL, fTags, fDSUIDs, fLocation)
 	if q.Explain {
-		frame.Fields = append(frame.Fields, fExplain)
+		frame.Fields = append(frame.Fields, fScore, fExplain)
 	}
 
 	locationItems := make(map[string]bool, 50)
@@ -450,7 +450,6 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 			return response
 		}
 
-		fScore.Append(match.Score)
 		fKind.Append(kind)
 		fUID.Append(uid)
 		fPType.Append(ptype)
@@ -482,6 +481,7 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 		}
 
 		if q.Explain {
+			fScore.Append(match.Score)
 			if match.Explanation != nil {
 				js, _ := json.Marshal(&match.Explanation)
 				jsb := json.RawMessage(js)
@@ -499,9 +499,12 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 	aggs := documentMatchIterator.Aggregations()
 
 	header := &customMeta{
-		Count:    aggs.Count(), // Total cound
-		MaxScore: aggs.Metric("max_score"),
+		Count: aggs.Count(), // Total cound
 	}
+	if q.Explain {
+		header.MaxScore = aggs.Metric("max_score")
+	}
+
 	if len(locationItems) > 0 && !q.SkipLocation {
 		header.Locations = getLocationLookupInfo(ctx, reader, locationItems)
 	}

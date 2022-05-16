@@ -33,7 +33,7 @@ var testDisallowAllFilter = func(uid string) bool {
 	return false
 }
 
-var update = flag.Bool("update", false, "update golden files")
+var update = flag.Bool("update", true, "update golden files")
 
 func initTestIndexFromDashes(t *testing.T, dashboards []dashboard) (*dashboardIndex, *bluge.Reader, *bluge.Writer) {
 	t.Helper()
