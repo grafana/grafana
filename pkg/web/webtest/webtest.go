@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -33,6 +34,9 @@ func NewServer(t testing.TB, routeRegister routing.RouteRegister) *Server {
 		initCtx.Context = c
 		initCtx.Logger = log.New("api-test")
 		c.Map(initCtx)
+
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), initCtx))
+		c.Map(c.Req)
 	})
 
 	m.Use(requestContextMiddleware())
