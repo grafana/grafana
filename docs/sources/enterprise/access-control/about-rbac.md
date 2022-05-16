@@ -40,7 +40,7 @@ Grafana includes the following basic roles:
 Each basic role is comprised of a number of _permissions_. For example, the viewer basic role contains the following permissions among others:
 
 - `Action: datasources.id:read, Scope: datasources:*`: Enables the viewer to see the ID of a data source.
-- `Action: orgs:read`: Enables the viewer to see his organization details
+- `Action: orgs:read`: Enables the viewer to see their organization details
 - `Action: annotations:read, Scope: annotations:*`: Enables the viewer to see annotations that other users have added to a dashboard.
 - `Action: annotations:create, Scope: annotations:type:dashboard`: Enables the viewer to add annotations to a dashboard.
 - `Action: annotations:write, Scope: annotations:type:dashboard`: Enables the viewer to modify annotations of a dashboard.
