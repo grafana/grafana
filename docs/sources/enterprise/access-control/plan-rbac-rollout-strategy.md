@@ -201,7 +201,7 @@ roles:
 
 - Or add the following permissions to the `basic:viewer` role, using provisioning or the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#update-a-role" >}}):
 
-| action                 | scope                           |
+| Action                 | Scope                           |
 | ---------------------- | ------------------------------- |
 | `reports.admin:create` | n/a                             |
 | `reports.admin:write`  | `reports:*` <br> `reports:id:*` |
