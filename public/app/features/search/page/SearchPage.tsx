@@ -79,7 +79,7 @@ export default function SearchPage() {
   // This gets the possible tags from within the query results
   const getTagOptions = (): Promise<TermCount[]> => {
     const q: SearchQuery = {
-      query: query.query ?? '*',
+      query: query.query?.length ? query.query : '*',
       tags: query.tag,
       ds_uid: query.datasource,
     };

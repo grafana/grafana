@@ -3,12 +3,14 @@ import React, { FC } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
 
 import { GrafanaTheme } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 import { Checkbox, CollapsableSection, Icon, stylesFactory, useTheme } from '@grafana/ui';
+import impressionSrv from 'app/core/services/impression_srv';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
 import { SearchItem } from '../..';
-import { getGrafanaSearcher } from '../../service';
+import { getGrafanaSearcher, SearchQuery } from '../../service';
 import { DashboardSearchItemType, DashboardSectionItem } from '../../types';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
@@ -38,15 +40,32 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
     if (!sectionExpanded) {
       return Promise.resolve([] as DashboardSectionItem[]);
     }
-    let query = {
+    let folderUid: string | undefined = section.uid;
+    let folderTitle: string | undefined = section.title;
+    let query: SearchQuery = {
       query: '*',
       kind: ['dashboard'],
       location: section.uid,
     };
     if (section.title === 'Starred') {
-      // TODO
+      const stars = await getBackendSrv().get('api/user/stars');
+      if (stars.length > 0) {
+        query = {
+          uid: stars, // array of UIDs
+        };
+      }
+      folderUid = undefined;
+      folderTitle = undefined;
     } else if (section.title === 'Recent') {
-      // TODO
+      const ids = impressionSrv.getDashboardOpened();
+      const uids = await getBackendSrv().get(`/api/dashboards/ids/${ids.slice(0, 30).join(',')}`);
+      if (uids?.length) {
+        query = {
+          uid: uids,
+        };
+      }
+      folderUid = undefined;
+      folderTitle = undefined;
     }
     const raw = await getGrafanaSearcher().search(query);
     const v = raw.view.map(
@@ -60,16 +79,36 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
           id: 666, // do not use me!
           isStarred: false,
           tags: item.tags ?? [],
-          checked: selection ? selection(item.kind, item.uid) : false,
+          folderUid,
+          folderTitle,
         } as DashboardSectionItem)
     );
-    console.log('HERE!');
     return v;
   }, [sectionExpanded, section]);
 
   const onSectionExpand = () => {
     setSectionExpanded(!sectionExpanded);
-    console.log('TODO!! section', section.title, section);
+  };
+
+  const onToggleFolder = (evt: React.FormEvent) => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    if (selectionToggle && selection) {
+      const checked = !selection(section.kind, section.uid);
+      selectionToggle(section.kind, section.uid);
+      const sub = results.value ?? [];
+      for (const item of sub) {
+        if (selection('dashboard', item.uid!) !== checked) {
+          selectionToggle('dashboard', item.uid!);
+        }
+      }
+    }
+  };
+
+  const onToggleChecked = (item: DashboardSectionItem) => {
+    if (selectionToggle) {
+      selectionToggle('dashboard', item.uid!);
+    }
   };
 
   const id = useUniqueId();
@@ -79,6 +118,31 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
   if (!icon) {
     icon = sectionExpanded ? 'folder-open' : 'folder';
   }
+
+  const renderResults = () => {
+    if (!results.value?.length) {
+      return <div>No items found</div>;
+    }
+
+    return results.value.map((v) => {
+      if (selection && selectionToggle) {
+        const type = v.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
+        v = {
+          ...v,
+          checked: selection(type, v.uid!),
+        };
+      }
+      return (
+        <SearchItem
+          key={v.uid}
+          item={v}
+          onTagSelected={onTagSelected}
+          onToggleChecked={onToggleChecked as any}
+          editable={Boolean(selection != null)}
+        />
+      );
+    });
+  };
 
   return (
     <CollapsableSection
@@ -91,7 +155,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
       label={
         <>
           {selectionToggle && selection && (
-            <div onClick={(v) => console.log(v)} className={styles.checkbox}>
+            <div className={styles.checkbox} onClick={onToggleFolder}>
               <Checkbox value={selection(section.kind, section.uid)} aria-label="Select folder" />
             </div>
           )}
@@ -111,13 +175,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
         </>
       }
     >
-      {results.value && (
-        <ul>
-          {results.value.map((v) => (
-            <SearchItem key={v.uid} item={v} onTagSelected={onTagSelected} />
-          ))}
-        </ul>
-      )}
+      {results.value && <ul className={styles.sectionItems}>{renderResults()}</ul>}
     </CollapsableSection>
   );
 };
@@ -150,6 +208,9 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
       'pointer',
       { selected }
     ),
+    sectionItems: css`
+      margin: 0 24px 0 32px;
+    `,
     checkbox: css`
       padding: 0 ${sm} 0 0;
     `,
