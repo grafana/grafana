@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
-	"os"
-	"path/filepath"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
@@ -52,7 +50,6 @@ type Response struct {
 }
 
 func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cfg *setting.Cfg) StorageService {
-
 	globalRoots := []storageRuntime{
 		newDiskStorage(RootPublicStatic, "Public static files", &StorageLocalDiskConfig{
 			Path: cfg.StaticRootPath,
@@ -67,20 +64,11 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		}).setReadOnly(true).setBuiltin(true),
 	}
 
-	storage := filepath.Join(cfg.DataPath, "storage")
-	_ = os.MkdirAll(storage, 0700)
-
 	initializeOrgStorages := func(orgId int64) []storageRuntime {
 		storages := make([]storageRuntime, 0)
 		if features.IsEnabled(featuremgmt.FlagStorageLocalUpload) {
-			upload := filepath.Join(storage, "upload", fmt.Sprintf("%d", orgId))
-			_ = os.MkdirAll(upload, 0700)
-			storages = append(storages, newDiskStorage("upload", "Local file upload", &StorageLocalDiskConfig{
-				Path: upload,
-				Roots: []string{
-					"/",
-				},
-			}).setBuiltin(true))
+			config := &StorageSQLConfig{orgId: orgId}
+			storages = append(storages, newSQLStorage("upload", "Local file upload", config, sql).setBuiltin(true))
 		}
 		return storages
 	}
