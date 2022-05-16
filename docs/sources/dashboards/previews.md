@@ -37,7 +37,7 @@ Verify that your setup was successful in the dashboard search page. You should s
 {{< figure src="/static/img/docs/dashboards/previews-successful-setup.jpg"
 max-width="950px" animated-gif="/static/img/docs/dashboards/previews-successful-setup.gif" >}}
 
-Please check [Grafana server logs]({{< relref "../administration/configuration.md#log" >}}) in case you see any warnings after clicking on the toggle - errors logs produced by `dashboard_service` should provide more context.
+In case you see any warnings after clicking on the toggle, check [Grafana server logs]({{< relref "../administration/configuration.md#log" >}}) for more context. The logger used by the Previews Service is named `previews_service`.
 
 {{< figure src="/static/img/docs/dashboards/previews-unsuccessful-setup.png" max-width="950px" >}}
 
