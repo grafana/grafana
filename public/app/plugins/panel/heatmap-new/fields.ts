@@ -84,8 +84,16 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     };
   }
 
+  let first = frames[0];
+  if (first.meta?.type === DataFrameType.HeatmapSparse) {
+    return getSparseHeatmapData(first, exemplars, theme);
+  }
+
   if (source === HeatmapSourceMode.Data) {
-    return getHeatmapData(bucketsToScanlines(frames[0]), exemplars, theme);
+    if (first.meta?.type !== DataFrameType.HeatmapScanlines) {
+      first = bucketsToScanlines(frames[0]);
+    }
+    return getHeatmapData(first, exemplars, theme);
   }
 
   // TODO, check for error etc
@@ -150,6 +158,26 @@ export const getExemplarsMapping = (heatmapData: HeatmapData, rawData: DataFrame
     mapping.lookup[index]?.push(i);
   });
   return mapping;
+};
+
+const getSparseHeatmapData = (
+  frame: DataFrame,
+  exemplars: DataFrame | undefined,
+  theme: GrafanaTheme2
+): HeatmapData => {
+  if (frame.meta?.type !== DataFrameType.HeatmapSparse) {
+    return {
+      warning: 'Expected sparse heatmap format',
+      heatmap: frame,
+    };
+  }
+
+  const disp = frame.fields[3].display ?? getValueFormat('short');
+  return {
+    heatmap: frame,
+    exemplars,
+    display: (v) => formattedValueToString(disp(v)),
+  };
 };
 
 const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, theme: GrafanaTheme2): HeatmapData => {
