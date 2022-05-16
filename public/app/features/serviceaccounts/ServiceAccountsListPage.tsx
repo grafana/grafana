@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
@@ -46,7 +46,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-const ServiceAccountsListPage: FC<Props> = ({
+const ServiceAccountsListPage = ({
   fetchServiceAccounts,
   removeServiceAccount,
   fetchACOptions,
@@ -62,7 +62,7 @@ const ServiceAccountsListPage: FC<Props> = ({
   query,
   filters,
   serviceAccountToRemove,
-}) => {
+}: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
