@@ -9,7 +9,6 @@ export type ThemeColorsMode = 'light' | 'dark';
 /** @internal */
 export interface ThemeColorsBase<TColor> {
   mode: ThemeColorsMode;
-
   primary: TColor;
   secondary: TColor;
   info: TColor;

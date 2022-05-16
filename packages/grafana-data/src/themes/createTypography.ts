@@ -8,7 +8,6 @@ import { ThemeColors } from './createColors';
 export interface ThemeTypography {
   fontFamily: string;
   fontFamilyMonospace: string;
-  fontFamilyMonospaceFusebit: string;
   fontSize: number;
   fontWeightLight: number;
   fontWeightRegular: number;
@@ -66,14 +65,12 @@ export interface ThemeTypographyInput {
 }
 
 const defaultFontFamily = '"Roboto", "Helvetica", "Arial", sans-serif';
-const defaultFontFamilyMonospace = "'Roboto Mono', monospace";
-const defaultFontFamilyMonospaceFusebit = "'Courier Prime', monospace";
+const defaultFontFamilyMonospace = "'Courier Prime', monospace";
 
 export function createTypography(colors: ThemeColors, typographyInput: ThemeTypographyInput = {}): ThemeTypography {
   const {
     fontFamily = defaultFontFamily,
     fontFamilyMonospace = defaultFontFamilyMonospace,
-    fontFamilyMonospaceFusebit = defaultFontFamilyMonospaceFusebit,
     // The default font size of the Material Specification.
     fontSize = 14, // px
     fontWeightLight = 300,
@@ -136,7 +133,6 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
     pxToRem,
     fontFamily,
     fontFamilyMonospace,
-    fontFamilyMonospaceFusebit,
     fontSize,
     fontWeightLight,
     fontWeightRegular,
