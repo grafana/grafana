@@ -3,6 +3,7 @@ package filestorage
 import (
 	"context"
 	"errors"
+	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -51,8 +52,10 @@ type Paging struct {
 }
 
 type UpsertFileCommand struct {
-	Path     string
-	MimeType string
+	Path               string
+	MimeType           string
+	CacheControl       string
+	ContentDisposition string
 
 	// Contents of an existing file won't be modified if cmd.Contents is nil
 	Contents []byte
@@ -75,6 +78,29 @@ type ListResponse struct {
 	Files    []*File
 	HasMore  bool
 	LastPath string
+}
+
+func (r *ListResponse) String() string {
+	if r == nil {
+		return "Nil ListResponse"
+	}
+
+	if r.Files == nil {
+		return "ListResponse with Nil files slice"
+	}
+
+	if len(r.Files) == 0 {
+		return "Empty ListResponse"
+	}
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("ListResponse with %d files\n", len(r.Files)))
+	for i := range r.Files {
+		sb.WriteString(fmt.Sprintf("  - %s, contentsLength: %d\n", r.Files[i].FullPath, len(r.Files[i].Contents)))
+	}
+
+	sb.WriteString(fmt.Sprintf("Last path: %s, has more: %t\n", r.LastPath, r.HasMore))
+	return sb.String()
 }
 
 type ListOptions struct {
