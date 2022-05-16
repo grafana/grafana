@@ -14,13 +14,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func setupTestEnv(t testing.TB) *OSSAccessControlService {
 	t.Helper()
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = true
 
 	ac := &OSSAccessControlService{
-		features:       featuremgmt.WithFeatures(featuremgmt.FlagAccesscontrol),
+		cfg:            cfg,
+		features:       featuremgmt.WithFeatures(),
 		log:            log.New("accesscontrol"),
 		registrations:  accesscontrol.RegistrationList{},
 		scopeResolvers: accesscontrol.NewScopeResolvers(),
@@ -133,8 +137,13 @@ func TestUsageMetrics(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			if tt.enabled {
+				cfg.RBACEnabled = true
+			}
 			s, errInitAc := ProvideService(
-				featuremgmt.WithFeatures("accesscontrol", tt.enabled),
+				featuremgmt.WithFeatures(),
+				cfg,
 				database.ProvideService(sqlstore.InitTestDB(t)),
 				routing.NewRouteRegister(),
 			)

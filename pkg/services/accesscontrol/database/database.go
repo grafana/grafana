@@ -26,13 +26,9 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 		filter, params := userRolesFilter(query.OrgID, query.UserID, query.Roles)
 
 		// TODO: optimize this
-		q := `SELECT
-			permission.id,
-			permission.role_id,
+		q := `SELECT DISTINCT
 			permission.action,
-			permission.scope,
-			permission.updated,
-			permission.created
+			permission.scope
 			FROM permission
 			INNER JOIN role ON role.id = permission.role_id
 		` + filter
