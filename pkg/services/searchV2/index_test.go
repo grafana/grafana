@@ -35,7 +35,7 @@ var testDisallowAllFilter = func(uid string) bool {
 
 var update = flag.Bool("update", false, "update golden files")
 
-func initTestIndexFromDashes(t *testing.T, dashboards []dashboard) *bluge.Reader {
+func initTestIndexFromDashes(t *testing.T, dashboards []dashboard) (*dashboardIndex, *bluge.Reader, *bluge.Writer) {
 	t.Helper()
 	dashboardLoader := &testDashboardLoader{
 		dashboards: dashboards,
@@ -47,7 +47,9 @@ func initTestIndexFromDashes(t *testing.T, dashboards []dashboard) *bluge.Reader
 	require.Equal(t, len(dashboardLoader.dashboards), numDashboards)
 	reader, ok := index.getOrgReader(1)
 	require.True(t, ok)
-	return reader
+	writer, ok := index.getOrgWriter(1)
+	require.True(t, ok)
+	return index, reader, writer
 }
 
 func checkSearchResponse(t *testing.T, fileName string, reader *bluge.Reader, filter ResourceFilter, query DashboardQuery) {
@@ -77,16 +79,63 @@ var testDashboards = []dashboard{
 
 func TestDashboardIndex(t *testing.T) {
 	t.Run("basic-search", func(t *testing.T) {
-		reader := initTestIndexFromDashes(t, testDashboards)
+		_, reader, _ := initTestIndexFromDashes(t, testDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testAllowAllFilter,
 			DashboardQuery{Query: "boom"},
 		)
 	})
 
 	t.Run("basic-filter", func(t *testing.T) {
-		reader := initTestIndexFromDashes(t, testDashboards)
+		_, reader, _ := initTestIndexFromDashes(t, testDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name())+".txt", reader, testDisallowAllFilter,
 			DashboardQuery{Query: "boom"},
+		)
+	})
+}
+
+func TestDashboardIndexUpdates(t *testing.T) {
+	t.Run("dashboard-delete", func(t *testing.T) {
+		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
+
+		newReader, err := index.removeDashboard(writer, reader, "2")
+		require.NoError(t, err)
+
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
+			DashboardQuery{Query: "boom"},
+		)
+	})
+
+	t.Run("dashboard-create", func(t *testing.T) {
+		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
+
+		newReader, err := index.updateDashboard(writer, reader, dashboard{
+			id:  3,
+			uid: "3",
+			info: &extract.DashboardInfo{
+				Title: "created",
+			},
+		})
+		require.NoError(t, err)
+
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
+			DashboardQuery{Query: "created"},
+		)
+	})
+
+	t.Run("dashboard-update", func(t *testing.T) {
+		index, reader, writer := initTestIndexFromDashes(t, testDashboards)
+
+		newReader, err := index.updateDashboard(writer, reader, dashboard{
+			id:  2,
+			uid: "2",
+			info: &extract.DashboardInfo{
+				Title: "nginx",
+			},
+		})
+		require.NoError(t, err)
+
+		checkSearchResponse(t, filepath.Base(t.Name())+".txt", newReader, testAllowAllFilter,
+			DashboardQuery{Query: "nginx"},
 		)
 	})
 }

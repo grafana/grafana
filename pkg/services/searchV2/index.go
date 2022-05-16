@@ -151,6 +151,13 @@ func (i *dashboardIndex) getOrgReader(orgID int64) (*bluge.Reader, bool) {
 	return r, ok
 }
 
+func (i *dashboardIndex) getOrgWriter(orgID int64) (*bluge.Writer, bool) {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
+	w, ok := i.perOrgWriter[orgID]
+	return w, ok
+}
+
 func (i *dashboardIndex) reIndexFromScratch(ctx context.Context) {
 	i.mu.RLock()
 	orgIDs := make([]int64, 0, len(i.perOrgWriter))
@@ -245,26 +252,26 @@ func (i *dashboardIndex) applyDashboardEvent(ctx context.Context, orgID int64, d
 		return nil
 	}
 
+	var newReader *bluge.Reader
+
 	// In the future we can rely on operation types to reduce work here.
 	if len(dbDashboards) == 0 {
-		_ = i.removeDashboard(writer, reader, dashboardUID)
+		newReader, err = i.removeDashboard(writer, reader, dashboardUID)
 	} else {
-		_ = i.updateDashboard(writer, reader, dbDashboards[0])
+		newReader, err = i.updateDashboard(writer, reader, dbDashboards[0])
 	}
-
-	reader, err = writer.Reader()
 	if err != nil {
 		return err
 	}
-	i.perOrgReader[orgID] = reader
+	i.perOrgReader[orgID] = newReader
 	return nil
 }
 
-func (i *dashboardIndex) removeDashboard(writer *bluge.Writer, reader *bluge.Reader, dashboardUID string) error {
+func (i *dashboardIndex) removeDashboard(writer *bluge.Writer, reader *bluge.Reader, dashboardUID string) (*bluge.Reader, error) {
 	// Find all panel docs to remove with dashboard.
 	panelIDs, err := getDashboardPanelIDs(reader, dashboardUID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	batch := bluge.NewBatch()
@@ -273,7 +280,12 @@ func (i *dashboardIndex) removeDashboard(writer *bluge.Writer, reader *bluge.Rea
 		batch.Delete(bluge.NewDocument(panelID).ID())
 	}
 
-	return writer.Batch(batch)
+	err = writer.Batch(batch)
+	if err != nil {
+		return nil, err
+	}
+
+	return writer.Reader()
 }
 
 func stringInSlice(str string, slice []string) bool {
@@ -285,7 +297,7 @@ func stringInSlice(str string, slice []string) bool {
 	return false
 }
 
-func (i *dashboardIndex) updateDashboard(writer *bluge.Writer, reader *bluge.Reader, dash dashboard) error {
+func (i *dashboardIndex) updateDashboard(writer *bluge.Writer, reader *bluge.Reader, dash dashboard) (*bluge.Reader, error) {
 	batch := bluge.NewBatch()
 
 	var doc *bluge.Document
@@ -299,7 +311,7 @@ func (i *dashboardIndex) updateDashboard(writer *bluge.Writer, reader *bluge.Rea
 			var err error
 			folderUID, err = getDashboardFolderUID(reader, dash.folderID)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 
@@ -317,7 +329,7 @@ func (i *dashboardIndex) updateDashboard(writer *bluge.Writer, reader *bluge.Rea
 
 		indexedPanelIDs, err := getDashboardPanelIDs(reader, dash.uid)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		for _, panelID := range indexedPanelIDs {
@@ -329,7 +341,12 @@ func (i *dashboardIndex) updateDashboard(writer *bluge.Writer, reader *bluge.Rea
 
 	batch.Update(doc.ID(), doc)
 
-	return writer.Batch(batch)
+	err := writer.Batch(batch)
+	if err != nil {
+		return nil, err
+	}
+
+	return writer.Reader()
 }
 
 type sqlDashboardLoader struct {
