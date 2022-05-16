@@ -246,7 +246,7 @@ curl --location --request POST '<grafana_url>/api/access-control/roles/' \
 
 Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#create-a-new-custom-role" >}}) for more details.
 
-## Update a basic role permissions
+## Update basic role permissions
 
 If the default basic role definitions do not meet your requirements, you can change their permissions.
 
