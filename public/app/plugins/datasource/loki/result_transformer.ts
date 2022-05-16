@@ -25,6 +25,7 @@ import TableModel from 'app/core/table_model';
 import { renderLegendFormat } from '../prometheus/legend';
 
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
+import { dataFrameHasLokiError } from './responseUtils';
 import {
   LokiRangeQueryRequest,
   LokiResponse,
@@ -346,7 +347,7 @@ export function lokiStreamsToDataFrames(
   const dataFrame = lokiStreamsToRawDataFrame(data, target.refId);
   enhanceDataFrame(dataFrame, config);
 
-  if (meta.custom && dataFrame.fields.some((f) => f.labels && Object.keys(f.labels).some((l) => l === '__error__'))) {
+  if (meta.custom && dataFrameHasLokiError(dataFrame)) {
     meta.custom.error = 'Error when parsing some of the logs';
   }
 

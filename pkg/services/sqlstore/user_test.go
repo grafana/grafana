@@ -9,7 +9,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -334,6 +336,26 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Len(t, permQuery.Result, 0)
+	})
+
+	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
+		ss := InitTestDB(t, InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
+		createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
+			return &models.CreateUserCommand{
+				Email: fmt.Sprint("user", i, "@test.com"),
+				Name:  fmt.Sprint("user", i),
+				Login: fmt.Sprint("loginuser", i),
+			}
+		})
+
+		testUser := &models.SignedInUser{
+			OrgId:       1,
+			Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:id:1", "global.users:id:3"}}},
+		}
+		query := models.SearchUsersQuery{SignedInUser: testUser}
+		err := ss.SearchUsers(context.Background(), &query)
+		assert.Nil(t, err)
+		assert.Len(t, query.Result.Users, 2)
 	})
 
 	ss = InitTestDB(t)
