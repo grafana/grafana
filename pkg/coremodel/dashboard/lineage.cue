@@ -125,7 +125,7 @@ seqs: [
 					targetBlank: bool | *false
 					includeVars: bool | *false
 					keepTime: bool | *false
-				}
+				} @cuetsy(kind="interface")
 
 				// TODO docs
 				#DashboardLinkType: "link" | "dashboards" @cuetsy(kind="type")
@@ -178,7 +178,7 @@ seqs: [
 				#Transformation: {
 					id: string
 					options: {...}
-				}
+				} @cuetsy(kind="interface")
 
 				// 0 for no shared crosshair or tooltip (default).
 				// 1 for shared crosshair.
@@ -349,7 +349,7 @@ seqs: [
 							}]
 						}]
 					}
-				}
+				} @cuetsy(kind="interface")
 
 				// Row panel
 				#RowPanel: {
