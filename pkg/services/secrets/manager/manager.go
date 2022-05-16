@@ -31,9 +31,9 @@ type SecretsService struct {
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
 
-	mtx               sync.Mutex
-	currentDataKey    *secrets.DataKey
-	currentProviderID secrets.ProviderID
+	mtx                   sync.Mutex
+	currentProviderID     secrets.ProviderID
+	currentDataKeyPerName map[string]*secrets.DataKey
 
 	providers    map[secrets.ProviderID]secrets.Provider
 	dataKeyCache *dataKeyCache
@@ -73,15 +73,16 @@ func ProvideSecretsService(
 	cache := newDataKeyCache(ttl)
 
 	s := &SecretsService{
-		store:             store,
-		enc:               enc,
-		settings:          settings,
-		usageStats:        usageStats,
-		providers:         providers,
-		currentProviderID: currentProviderID,
-		dataKeyCache:      cache,
-		features:          features,
-		log:               logger,
+		store:                 store,
+		enc:                   enc,
+		settings:              settings,
+		usageStats:            usageStats,
+		providers:             providers,
+		currentProviderID:     currentProviderID,
+		currentDataKeyPerName: map[string]*secrets.DataKey{},
+		dataKeyCache:          cache,
+		features:              features,
+		log:                   logger,
 	}
 
 	s.registerUsageMetrics()
@@ -149,14 +150,14 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 	scope := opt()
 	keyName := secrets.KeyName(scope, s.currentProviderID)
 
-	var dataKey *secrets.DataKey
-
 	s.mtx.Lock()
-	if s.currentDataKey == nil {
-		s.currentDataKey, err = s.getCurrentDataKey(ctx, keyName)
+	fmt.Println(s.currentDataKeyPerName)
+	dataKey, ok := s.currentDataKeyPerName[keyName]
+	if !ok || dataKey == nil {
+		s.currentDataKeyPerName[keyName], err = s.getCurrentDataKey(ctx, keyName)
 		if err != nil {
 			if errors.Is(err, secrets.ErrDataKeyNotFound) {
-				s.currentDataKey, err = s.newDataKey(ctx, keyName, scope, sess)
+				s.currentDataKeyPerName[keyName], err = s.newDataKey(ctx, keyName, scope, sess)
 				if err != nil {
 					s.mtx.Unlock()
 					s.log.Error("Failed to generate new data key", "error", err, "name", keyName)
@@ -169,7 +170,7 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 			}
 		}
 	}
-	dataKey = s.currentDataKey
+	dataKey = s.currentDataKeyPerName[keyName]
 	s.mtx.Unlock()
 
 	var encrypted []byte
@@ -399,18 +400,16 @@ func (s *SecretsService) GetProviders() map[secrets.ProviderID]secrets.Provider 
 }
 
 func (s *SecretsService) RotateDataKeys(ctx context.Context) error {
-	// Currently, for a specific instance of time, there's only a single active
-	// data key. However, in the future, we may have more than one (i.e. scopes).
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
 	err := s.store.DisableDataKeys(ctx)
 	if err != nil {
-		s.log.Error("Failed to disable active data keys while rotating data key", "error", err)
+		s.log.Error("Failed to disable active data keys", "error", err)
 		return err
 	}
 
-	s.currentDataKey = nil
+	s.currentDataKeyPerName = map[string]*secrets.DataKey{}
 
 	return nil
 }
