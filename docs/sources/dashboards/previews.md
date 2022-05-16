@@ -32,7 +32,7 @@ enable = dashboardPreviews
 
 3. Save your changes. Grafana should reload automatically; we recommend restarting the Grafana server in case of any issues.
 
-Visit the dashboard search page to verify that the setup was successful. You should be able to see dashboard preview placeholders for all your existing dashboards after clicking on the _Show previews_ toggle at the top of page.
+Verify that your setup was successful in the dashboard search page. You should see dashboard preview placeholders for all your existing dashboards after clicking on the _Show previews_ toggle at the top of the page.
 
 {{< figure src="/static/img/docs/dashboards/previews-successful-setup.jpg"
 max-width="950px" animated-gif="/static/img/docs/dashboards/previews-successful-setup.gif" >}}
