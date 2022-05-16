@@ -107,6 +107,11 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
 
 The following example creates the `custom:users:writer` role and assigns it to the `user writers` and `user admins` teams along with the `fixed:users:writer` role:
 
+The following example:
+
+- Creates the `custom:users:writer` role.
+- Assigns the `custom:users:writer` role and the `fixed:users:writer` role to the `user admins` and `user writers` teams.
+
 ```yaml
 # config file version
 apiVersion: 2
@@ -149,7 +154,11 @@ teams:
 
 If you want to remove an assignment from a team, add `state: absent` to the `teams > roles` section, and reload the configuration file.
 
-The following example creates the `custom:users:writer` role and assigns it to the `user admins` team along with the `fixed:users:writer` role, but ensures the `user writers` team does not have them:
+The following example:
+
+- Creates the `custom:users:writer` role
+- Assigns the `custom:users:writer` role and the `fixed:users:writer` role to the `user admins` team
+- Removes the `custom:users:writer` and the `fixed:users:writer` assignments from the `user writers` team, if those assignments exist.
 
 ```yaml
 # config file version
