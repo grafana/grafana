@@ -646,6 +646,7 @@ const clickSelectOption = async (selectElement: HTMLElement, optionText: string)
 const updateTiming = async (selectElement: HTMLElement, value: string, timeUnit: string): Promise<void> => {
   const input = byRole('textbox').get(selectElement);
   const select = byRole('combobox').get(selectElement);
+  userEvent.clear(input);
   userEvent.type(input, value);
   userEvent.click(select);
   await selectOptionInTest(selectElement, timeUnit);
