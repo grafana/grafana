@@ -143,11 +143,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: 5px 10px 0;
 
     i {
-      width: 18px;
-      height: 18px;
+      width: 15px;
+      height: 15px;
       float: left;
       margin-right: 8px;
       opacity: 0.7;
+      border-radius: 50%;
     }
   `,
   legendItem: css`
