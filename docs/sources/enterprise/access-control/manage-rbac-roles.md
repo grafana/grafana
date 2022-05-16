@@ -318,7 +318,7 @@ You can also change basic roles' permissions using the API. Refer to the [RBAC H
 
 ## Reset basic roles permissions
 
-This section describes how to reset the basic roles permissions to factory defaults:
+This section describes how to reset the basic roles permissions to defaults:
 
 1. Open the YAML configuration file and locate the `roles` section.
 
