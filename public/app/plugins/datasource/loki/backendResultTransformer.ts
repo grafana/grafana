@@ -3,6 +3,7 @@ import { DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta }
 import { getDerivedFields } from './getDerivedFields';
 import { makeTableFrames } from './makeTableFrames';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
+import { dataFrameHasLokiError } from './responseUtils';
 import { DerivedFieldConfig, LokiQuery, LokiQueryType } from './types';
 
 function isMetricFrame(frame: DataFrame): boolean {
@@ -25,14 +26,20 @@ function processStreamFrame(
   query: LokiQuery | undefined,
   derivedFieldConfigs: DerivedFieldConfig[]
 ): DataFrame {
+  const custom: Record<string, string> = {
+    // used by logs_model
+    lokiQueryStatKey: 'Summary: total bytes processed',
+  };
+
+  if (dataFrameHasLokiError(frame)) {
+    custom.error = 'Error when parsing some of the logs';
+  }
+
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'logs',
     limit: query?.maxLines,
     searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(formatQuery(query.expr)) : undefined,
-    custom: {
-      // used by logs_model
-      lokiQueryStatKey: 'Summary: total bytes processed',
-    },
+    custom,
   };
 
   const newFrame = setFrameMeta(frame, meta);
