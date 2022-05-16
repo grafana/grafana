@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
+import { GrafanaTheme } from '@grafana/data';
+import { useStyles } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
+import { OrgRolePicker } from 'app/features/admin/OrgRolePicker';
 import { AccessControlAction, OrgRole, Role, ServiceAccountDTO } from 'app/types';
-
-import { OrgRolePicker } from '../admin/OrgRolePicker';
 
 interface Props {
   label: string;
@@ -15,26 +16,21 @@ interface Props {
   builtInRoles: Record<string, Role[]>;
 }
 
-export const ServiceAccountRoleRow: FC<Props> = ({
+export const ServiceAccountRoleRow = ({
   label,
   serviceAccount,
   roleOptions,
   builtInRoles,
   onRoleChange,
-}) => {
+}: Props): JSX.Element => {
+  const inputId = `${label}-input`;
+  const styles = useStyles(getStyles);
   const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
   const rolePickerDisabled = !canUpdateRole;
-  const labelClass = cx(
-    'width-16',
-    css`
-      font-weight: 500;
-    `
-  );
-  const inputId = `${label}-input`;
 
   return (
     <tr>
-      <td className={labelClass}>
+      <td className={styles.label}>
         <label htmlFor={inputId}>{label}</label>
       </td>
       <td className="width-25" colSpan={2}>
@@ -54,9 +50,20 @@ export const ServiceAccountRoleRow: FC<Props> = ({
             value={serviceAccount.role}
             disabled={!canUpdateRole}
             onChange={onRoleChange}
+            // TODO: check if we actually need it since <UserRolePicker /> cannot be activated with htmlFor
+            inputId={inputId}
           />
         )}
       </td>
     </tr>
   );
 };
+
+const getStyles = (theme: GrafanaTheme) => ({
+  label: cx(
+    'width-16',
+    css`
+      font-weight: 500;
+    `
+  ),
+});
