@@ -391,6 +391,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
 			ac,
 		),
+		AccessControl:     ac,
 		preferenceService: preftest.NewPreferenceServiceFake(),
 	}
 
