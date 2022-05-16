@@ -153,3 +153,11 @@ func (srv *ProvisioningSrv) RouteDeleteTemplate(c *models.ReqContext) response.R
 	}
 	return response.JSON(http.StatusNoContent, nil)
 }
+
+func (srv *ProvisioningSrv) RouteGetMuteTiming(c *models.ReqContext) response.Response {
+
+}
+
+func (srv *ProvisioningSrv) RouteGetMuteTimings(c *models.ReqContext) response.Response {
+
+}
