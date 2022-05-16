@@ -229,14 +229,14 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 					Email:            fmt.Sprint("sa", 1, "@test.com"),
 					Name:             fmt.Sprint("sa", 1),
 					Login:            fmt.Sprint("login-sa", 1),
-					IsServiceAccount: 1,
+					IsServiceAccount: true,
 				}
-				serviceAccount, err = sqlStore.CreateUser(context.Background(), userCmd)
+				serviceAccount, err := sqlStore.CreateUser(context.Background(), userCmd)
 				require.NoError(t, err)
 				err := sqlStore.AddTeamMember(serviceAccount.id, testOrgID, groupId, false, 0)
 				require.NoError(t, err)
 
-				query := &models.GetTeamMembersQuery{OrgId: testOrgID, UserId: userIds[0], IsServiceAccount: 0}
+				query := &models.GetTeamMembersQuery{OrgId: testOrgID, UserId: userIds[0], IsServiceAccount: false}
 				err = sqlStore.GetTeamMembers(context.Background(), query)
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 1)
