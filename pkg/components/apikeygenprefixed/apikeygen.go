@@ -81,7 +81,7 @@ func Decode(keyString string) (*PrefixedKey, error) {
 		return nil, &ErrInvalidApiKey{}
 	}
 
-	key.ServiceID = strings.TrimPrefix(parts[0], "gl")
+	key.ServiceID = strings.TrimPrefix(parts[0], GrafanaPrefix)
 	key.Secret = parts[1]
 	key.Checksum = parts[2]
 
