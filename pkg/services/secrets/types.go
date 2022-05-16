@@ -14,6 +14,7 @@ type DataKey struct {
 	Scope         string
 	Provider      ProviderID
 	EncryptedData []byte
+	DecryptedData []byte `xorm:"-"`
 	Created       time.Time
 	Updated       time.Time
 }

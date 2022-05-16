@@ -22,7 +22,7 @@ func (e dataKeyCacheEntry) expired() bool {
 }
 
 type dataKeyCache struct {
-	sync.RWMutex
+	mtx      sync.RWMutex
 	entries  map[string]dataKeyCacheEntry
 	cacheTTL time.Duration
 }
@@ -35,8 +35,8 @@ func newDataKeyCache(ttl time.Duration) *dataKeyCache {
 }
 
 func (c *dataKeyCache) get(id string) ([]byte, bool) {
-	c.RLock()
-	defer c.RUnlock()
+	c.mtx.RLock()
+	defer c.mtx.RUnlock()
 
 	entry, exists := c.entries[id]
 
@@ -52,8 +52,8 @@ func (c *dataKeyCache) get(id string) ([]byte, bool) {
 }
 
 func (c *dataKeyCache) add(id string, dataKey []byte) {
-	c.Lock()
-	defer c.Unlock()
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 
 	c.entries[id] = dataKeyCacheEntry{
 		dataKey:    dataKey,
@@ -62,8 +62,8 @@ func (c *dataKeyCache) add(id string, dataKey []byte) {
 }
 
 func (c *dataKeyCache) removeExpired() {
-	c.Lock()
-	defer c.Unlock()
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 
 	for id, entry := range c.entries {
 		if entry.expired() {
@@ -73,7 +73,7 @@ func (c *dataKeyCache) removeExpired() {
 }
 
 func (c *dataKeyCache) flush() {
-	c.Lock()
+	c.mtx.Lock()
 	c.entries = make(map[string]dataKeyCacheEntry)
-	c.Unlock()
+	c.mtx.Unlock()
 }

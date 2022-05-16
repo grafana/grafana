@@ -97,7 +97,7 @@ func TestSecretsService_DataKeys(t *testing.T) {
 	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
 	ctx := context.Background()
 
-	dataKey := secrets.DataKey{
+	dataKey := &secrets.DataKey{
 		Active:        true,
 		Name:          "test1",
 		Provider:      "test",
@@ -123,7 +123,7 @@ func TestSecretsService_DataKeys(t *testing.T) {
 	})
 
 	t.Run("creating an inactive DEK", func(t *testing.T) {
-		k := secrets.DataKey{
+		k := &secrets.DataKey{
 			Active:        false,
 			Name:          "test2",
 			Provider:      "test",

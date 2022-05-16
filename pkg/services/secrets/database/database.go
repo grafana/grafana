@@ -26,7 +26,31 @@ func ProvideSecretsStore(sqlStore *sqlstore.SQLStore) *SecretsStoreImpl {
 	}
 }
 
-func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, name string) (*secrets.DataKey, error) {
+func (ss *SecretsStoreImpl) GetDataKey(ctx context.Context, id string) (*secrets.DataKey, error) {
+	dataKey := &secrets.DataKey{}
+	var exists bool
+
+	err := ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var err error
+		exists, err = sess.Table(dataKeysTable).
+			Where("id = ?", id).
+			Get(dataKey)
+		return err
+	})
+
+	if !exists {
+		return nil, secrets.ErrDataKeyNotFound
+	}
+
+	if err != nil {
+		ss.log.Error("Failed to get data key", "err", err, "id", id)
+		return nil, fmt.Errorf("failed getting data key: %w", err)
+	}
+
+	return dataKey, nil
+}
+
+func (ss *SecretsStoreImpl) GetCurrentDataKey(ctx context.Context, name string) (*secrets.DataKey, error) {
 	dataKey := &secrets.DataKey{}
 	var exists bool
 
@@ -59,13 +83,13 @@ func (ss *SecretsStoreImpl) GetAllDataKeys(ctx context.Context) ([]*secrets.Data
 	return result, err
 }
 
-func (ss *SecretsStoreImpl) CreateDataKey(ctx context.Context, dataKey secrets.DataKey) error {
+func (ss *SecretsStoreImpl) CreateDataKey(ctx context.Context, dataKey *secrets.DataKey) error {
 	return ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		return ss.CreateDataKeyWithDBSession(ctx, dataKey, sess.Session)
 	})
 }
 
-func (ss *SecretsStoreImpl) CreateDataKeyWithDBSession(_ context.Context, dataKey secrets.DataKey, sess *xorm.Session) error {
+func (ss *SecretsStoreImpl) CreateDataKeyWithDBSession(_ context.Context, dataKey *secrets.DataKey, sess *xorm.Session) error {
 	if !dataKey.Active {
 		return fmt.Errorf("cannot insert deactivated data keys")
 	}
@@ -73,17 +97,27 @@ func (ss *SecretsStoreImpl) CreateDataKeyWithDBSession(_ context.Context, dataKe
 	dataKey.Created = time.Now()
 	dataKey.Updated = dataKey.Created
 
-	_, err := sess.Table(dataKeysTable).Insert(&dataKey)
+	_, err := sess.Table(dataKeysTable).Insert(dataKey)
 	return err
 }
 
-func (ss *SecretsStoreImpl) DeleteDataKey(ctx context.Context, name string) error {
-	if len(name) == 0 {
-		return fmt.Errorf("data key name is missing")
+func (ss *SecretsStoreImpl) DisableDataKeysByName(ctx context.Context, name string) error {
+	return ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.Table(dataKeysTable).
+			Where("name = ?", name).
+			UseBool("active").Update(&secrets.DataKey{Active: false})
+
+		return err
+	})
+}
+
+func (ss *SecretsStoreImpl) DeleteDataKey(ctx context.Context, id string) error {
+	if len(id) == 0 {
+		return fmt.Errorf("data key id is missing")
 	}
 
 	return ss.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Table(dataKeysTable).Delete(&secrets.DataKey{Name: name})
+		_, err := sess.Table(dataKeysTable).Delete(&secrets.DataKey{Id: id})
 
 		return err
 	})
@@ -125,6 +159,7 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 			// Updating current data key by re-encrypting it with current provider.
 			// Accessing the current provider within providers map should be safe.
 			k.Provider = currProvider
+			k.Name = secrets.KeyName(k.Scope, currProvider)
 			k.Updated = time.Now()
 			k.EncryptedData, err = providers[currProvider].Encrypt(ctx, decrypted)
 			if err != nil {
