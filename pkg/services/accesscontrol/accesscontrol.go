@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -21,7 +20,7 @@ type AccessControl interface {
 	// Evaluate evaluates access to the given resources.
 	Evaluate(ctx context.Context, user *models.SignedInUser, evaluator Evaluator) (bool, error)
 
-	// GetUserPermissions returns user permissions.
+	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, user *models.SignedInUser, options Options) ([]*Permission, error)
 
 	// GetUserRoles returns user roles.
@@ -40,6 +39,7 @@ type AccessControl interface {
 }
 
 type PermissionsProvider interface {
+	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
 }
 
@@ -236,5 +236,5 @@ func extractPrefixes(prefix string) (string, string, bool) {
 }
 
 func IsDisabled(cfg *setting.Cfg) bool {
-	return !cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol)
+	return !cfg.RBACEnabled
 }

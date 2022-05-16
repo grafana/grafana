@@ -175,6 +175,17 @@ export class LokiDatasource
         targets: request.targets.map(getNormalizedLokiQuery),
       };
 
+      const streamQueries = fixedRequest.targets.filter((q) => q.queryType === LokiQueryType.Stream);
+      if (config.featureToggles.lokiLive && streamQueries.length > 0 && fixedRequest.rangeRaw?.to === 'now') {
+        // this is still an in-development feature,
+        // we do not support mixing stream-queries with normal-queries for now.
+        const streamRequest = {
+          ...fixedRequest,
+          targets: streamQueries,
+        };
+        return merge(...streamQueries.map((q) => doLokiChannelStream(q, this, streamRequest)));
+      }
+
       if (fixedRequest.liveStreaming) {
         return this.runLiveQueryThroughBackend(fixedRequest);
       } else {
