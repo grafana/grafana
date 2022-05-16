@@ -188,4 +188,4 @@ teams:
         global: true
 ```
 
-**Note**: The roles don't have to be defined in the provisioning configuration files to be revoked. As long as they exist in the database, they are revokable.
+> **Note**: The roles don't have to be defined in the provisioning configuration files to be revoked. If roles exist in the database, they can be revoked.
