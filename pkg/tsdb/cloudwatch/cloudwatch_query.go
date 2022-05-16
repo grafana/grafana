@@ -9,23 +9,24 @@ import (
 )
 
 type cloudWatchQuery struct {
-	RefId            string
-	Region           string
-	Id               string
-	Namespace        string
-	MetricName       string
-	Statistic        string
-	Expression       string
-	SqlExpression    string
-	ReturnData       bool
-	Dimensions       map[string][]string
-	Period           int
-	Alias            string
-	Label            string
-	MatchExact       bool
-	UsedExpression   string
-	MetricQueryType  metricQueryType
-	MetricEditorMode metricEditorMode
+	RefId             string
+	Region            string
+	Id                string
+	Namespace         string
+	MetricName        string
+	Statistic         string
+	Expression        string
+	SqlExpression     string
+	ReturnData        bool
+	Dimensions        map[string][]string
+	Period            int
+	Alias             string
+	Label             string
+	MatchExact        bool
+	UsedExpression    string
+	TimezoneUTCOffset string
+	MetricQueryType   metricQueryType
+	MetricEditorMode  metricEditorMode
 }
 
 func (q *cloudWatchQuery) getGMDAPIMode() gmdApiMode {
