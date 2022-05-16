@@ -100,7 +100,7 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
    | `teams > roles > name`   | Enter the name of the role.                                                                                                   |
    | `teams > roles > global` | Enter `true`, or specify `orgId` of the role you want to assign to the team. Fixed roles are global.                          |
 
-   For more information about managing custom roles refer to [Create custom roles using provisioning]({{< relref "./manage-rbac-roles/#create-custom-roles-using-provisioning" >}}).
+   For more information about managing custom roles, refer to [Create custom roles using provisioning]({{< relref "./manage-rbac-roles/#create-custom-roles-using-provisioning" >}}).
 
 1. Reload the provisioning configuration file.
 
