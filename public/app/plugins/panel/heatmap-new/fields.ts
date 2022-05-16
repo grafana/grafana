@@ -68,6 +68,11 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
     return getHeatmapData(calculateHeatmapFromData(frames, options.heatmap ?? {}), exemplars, theme);
   }
 
+  let sparseCellsHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapSparse);
+  if (sparseCellsHeatmap) {
+    return getHeatmapSparse(sparseCellsHeatmap, theme);
+  }
+
   // Find a well defined heatmap
   let scanlinesHeatmap = frames.find((f) => f.meta?.type === DataFrameType.HeatmapScanlines);
   if (scanlinesHeatmap) {
@@ -237,4 +242,21 @@ const getHeatmapData = (frame: DataFrame, exemplars: DataFrame | undefined, them
   }
 
   return data;
+};
+
+// assumes it's prepared
+const getHeatmapSparse = (frame: DataFrame, theme: GrafanaTheme2): HeatmapData => {
+  if (frame.meta?.type !== DataFrameType.HeatmapSparse) {
+    return {
+      warning: 'Expected heatmap sparse format',
+      heatmap: frame,
+    };
+  }
+
+  // The "count" field
+  const disp = frame.fields[3].display ?? getValueFormat('short');
+  return {
+    heatmap: frame,
+    display: (v) => formattedValueToString(disp(v)),
+  };
 };
