@@ -513,6 +513,24 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			want: http.StatusForbidden,
 		},
 		{
+			name: "AccessControl getting annotation by ID with correct permissions is allowed",
+			args: args{
+				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll}},
+				url:         "/api/annotations/1",
+				method:      http.MethodGet,
+			},
+			want: http.StatusOK,
+		},
+		{
+			name: "AccessControl getting annotation by ID without permissions is forbidden",
+			args: args{
+				permissions: []*accesscontrol.Permission{},
+				url:         "/api/annotations",
+				method:      http.MethodGet,
+			},
+			want: http.StatusForbidden,
+		},
+		{
 			name: "AccessControl getting tags for annotations with correct permissions is allowed",
 			args: args{
 				permissions: []*accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead}},
