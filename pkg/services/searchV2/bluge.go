@@ -275,19 +275,12 @@ func doSearchQuery(ctx context.Context, logger log.Logger, reader *bluge.Reader,
 
 	// Explicit UID lookup (stars etc)
 	if len(q.UIDs) > 0 {
+		count := len(q.UIDs) + 3
 		bq := bluge.NewBooleanQuery()
-		for _, v := range q.UIDs {
-			bq.AddShould(bluge.NewTermQuery(v).SetField(documentFieldUID))
-		}
-		fullQuery.AddMust(bq)
-		hasConstraints = true
-	}
-
-	// Legacy lookup by internal ID
-	if len(q.IDs) > 0 {
-		bq := bluge.NewBooleanQuery()
-		for _, v := range q.IDs {
-			bq.AddShould(bluge.NewTermQuery(fmt.Sprintf("%d", v)).SetField(documentFieldInternalID))
+		for i, v := range q.UIDs {
+			bq.AddShould(bluge.NewTermQuery(v).
+				SetField(documentFieldUID).
+				SetBoost(float64(count - i)))
 		}
 		fullQuery.AddMust(bq)
 		hasConstraints = true
