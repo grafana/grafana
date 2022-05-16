@@ -340,7 +340,7 @@ This section describes how to reset the basic roles to their default:
           scope: 'permissions:type:escalate'
    ```
 
-   **Note**: This permission has not been granted to any basic roles by default, since it could allow in some cases, privilege escalations.
+> **Note**: This permission has not been granted to any basic roles by default, because users could acquire more permissions than they previously had through the basic role permissions reset.
 
 1. As a `Grafana Admin`, call the API endpoint to reset the basic roles to their default. Refer to the [RBAC HTTP API]({{< relref "../../http_api/access_control.md#reset-basic-roles-to-their-default" >}}) for more details.
 
