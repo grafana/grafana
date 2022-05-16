@@ -72,8 +72,12 @@ scheduler_interval =
 
 ### Preparing the dashboard list
 
-During the initial crawler run, the list will contain all dashboards across all organizations.
-The list will have fewer elements during subsequent runs - it will contain only dashboards which have changed since taking the last preview and those which are brand-new.
+During the initial crawler run, the list contains all dashboards across all organizations.
+During subsequent runs, the list will have fewer elements. It will only contain dashboards that:
+
+- are brand-new
+- have changed since taking their last preview
+- haven't changed, but the crawler failed to take their preview during the initial run
 
 Modifying a dashboard is the only way of refreshing that dashboard's preview; previews do not have a set timeout after which they expire.
 
