@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useDebounce } from 'react-use';
 
 import { QueryEditorProps, toOption } from '@grafana/data';
-import { LegacyForms } from '@grafana/ui';
+import { Input } from '@grafana/ui';
 
+import { INPUT_WIDTH } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
 import {
   EditorMode,
@@ -16,8 +18,6 @@ import {
 import { MetricQueryEditor } from './MetricQueryEditor';
 
 import { AnnotationsHelp, QueryEditorRow } from './';
-
-const { Input } = LegacyForms;
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
@@ -41,15 +41,40 @@ export const defaultQuery: (datasource: CloudMonitoringDatasource) => MetricQuer
 });
 
 export const AnnotationQueryEditor = (props: Props) => {
-  const { datasource, query, onRunQuery, data } = props;
+  const { datasource, query, onRunQuery, data, onChange } = props;
   const meta = data?.series.length ? data?.series[0].meta : {};
   const customMetaData = meta?.custom ?? {};
   const metricQuery = { ...defaultQuery(datasource), ...query.metricQuery };
-  const { title = '', text = '' } = metricQuery || {};
+  const [title, setTitle] = useState(metricQuery.title || '');
+  const [text, setText] = useState(metricQuery.text || '');
   const variableOptionGroup = {
     label: 'Template Variables',
     options: datasource.getVariables().map(toOption),
   };
+
+  const handleQueryChange = (metricQuery: MetricQuery) => onChange({ ...query, metricQuery });
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
+  };
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setText(e.target.value);
+  };
+
+  useDebounce(
+    () => {
+      onChange({ ...query, metricQuery: { ...metricQuery, title } });
+    },
+    1000,
+    [title, onChange]
+  );
+  useDebounce(
+    () => {
+      onChange({ ...query, metricQuery: { ...metricQuery, text } });
+    },
+    1000,
+    [text, onChange]
+  );
+  // console.log('title ==== ', title);
 
   return (
     <>
@@ -57,32 +82,18 @@ export const AnnotationQueryEditor = (props: Props) => {
         refId={query.refId}
         variableOptionGroup={variableOptionGroup}
         customMetaData={customMetaData}
-        onChange={(metricQuery) => {
-          props.onChange({ ...props.query, metricQuery });
-        }}
+        onChange={handleQueryChange}
         onRunQuery={onRunQuery}
         datasource={datasource}
         query={metricQuery}
       />
 
       <QueryEditorRow label="Title" htmlFor="annotation-query-title">
-        <Input
-          id="annotation-query-title"
-          type="text"
-          className="gf-form-input width-20"
-          value={title}
-          onChange={(e) => props.onChange({ ...props.query, metricQuery: { ...metricQuery, title: e.target.value } })}
-        />
+        <Input id="annotation-query-title" value={title} width={INPUT_WIDTH} onChange={handleTitleChange} />
       </QueryEditorRow>
 
       <QueryEditorRow label="Text" htmlFor="annotation-query-text">
-        <Input
-          id="annotation-query-text"
-          type="text"
-          className="gf-form-input width-20"
-          value={text}
-          onChange={(e) => props.onChange({ ...props.query, metricQuery: { ...metricQuery, text: e.target.value } })}
-        />
+        <Input id="annotation-query-text" value={text} width={INPUT_WIDTH} onChange={handleTextChange} />
       </QueryEditorRow>
 
       <AnnotationsHelp />

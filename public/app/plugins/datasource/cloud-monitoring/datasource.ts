@@ -14,7 +14,7 @@ import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@graf
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
-import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
+import { CloudMonitoringAnnotationSupport } from './annotationSupport';
 import {
   CloudMonitoringOptions,
   CloudMonitoringQuery,
@@ -25,7 +25,6 @@ import {
   PostResponse,
   Aggregation,
   LegacyCloudMonitoringAnnotationQuery,
-  AlignmentTypes,
 } from './types';
 import { CloudMonitoringVariableSupport } from './variables';
 
@@ -51,59 +50,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.variables = new CloudMonitoringVariableSupport(this);
     this.intervalMs = 0;
-    this.annotations = {
-      prepareAnnotation: (
-        query: AnnotationQuery<LegacyCloudMonitoringAnnotationQuery> | AnnotationQuery<CloudMonitoringQuery>
-      ): AnnotationQuery<CloudMonitoringQuery> => {
-        if (!isLegacyCloudMonitoringAnnotation(query)) {
-          return query;
-        }
-
-        const { enable, name, iconColor } = query;
-        const { target } = query;
-        const result: AnnotationQuery<CloudMonitoringQuery> = {
-          datasource: query.datasource,
-          enable,
-          name,
-          iconColor,
-          target: {
-            intervalMs: this.intervalMs,
-            refId: target?.refId || 'annotationQuery',
-            type: 'annotationQuery',
-            queryType: QueryType.METRICS,
-            metricQuery: {
-              projectName: target?.projectName || this.getDefaultProject(),
-              editorMode: EditorMode.Visual,
-              metricType: target?.metricType || '',
-              filters: target?.filters || [],
-              query: '',
-              crossSeriesReducer: 'REDUCE_NONE',
-              perSeriesAligner: AlignmentTypes.ALIGN_NONE,
-              title: target?.title || '',
-              text: target?.text || '',
-            },
-          },
-        };
-        return result;
-      },
-      prepareQuery: (anno: AnnotationQuery<CloudMonitoringQuery>) => {
-        if (!anno.target) {
-          return undefined;
-        }
-
-        return {
-          ...anno.target,
-          queryType: QueryType.METRICS,
-          type: 'annotationQuery',
-          metricQuery: {
-            ...anno.target.metricQuery,
-            crossSeriesReducer: 'REDUCE_NONE',
-            perSeriesAligner: AlignmentTypes.ALIGN_NONE,
-          },
-        };
-      },
-      QueryEditor: AnnotationQueryEditor,
-    };
+    this.annotations = CloudMonitoringAnnotationSupport(this);
   }
 
   getVariables() {

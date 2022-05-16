@@ -2,6 +2,7 @@ import Datasource from '../datasource';
 
 export const createMockDatasource = () => {
   const datasource: Partial<Datasource> = {
+    intervalMs: 0,
     getVariables: jest.fn().mockReturnValue([]),
     getMetricTypes: jest.fn().mockResolvedValue([]),
     getProjects: jest.fn().mockResolvedValue([]),

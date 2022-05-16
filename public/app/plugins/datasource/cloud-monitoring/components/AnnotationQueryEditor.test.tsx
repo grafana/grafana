@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { createMockDatasource } from '../__mocks__/datasource';
@@ -7,7 +8,7 @@ import { createMockQuery } from '../__mocks__/query';
 import { AnnotationQueryEditor } from './AnnotationQueryEditor';
 
 describe('AnnotationQueryEditor', () => {
-  it('renders', async () => {
+  it('renders correctly', async () => {
     const onChange = jest.fn();
     const onRunQuery = jest.fn();
     const datasource = createMockDatasource();
@@ -25,5 +26,29 @@ describe('AnnotationQueryEditor', () => {
     expect(await screen.findByLabelText('Title')).toBeInTheDocument();
     expect(await screen.findByLabelText('Text')).toBeInTheDocument();
     expect(await screen.findByText('Annotation Query Format')).toBeInTheDocument();
+  });
+
+  it('can set the title', async () => {
+    const onChange = jest.fn();
+    const onRunQuery = jest.fn();
+    const datasource = createMockDatasource();
+    const query = createMockQuery();
+    render(<AnnotationQueryEditor onChange={onChange} onRunQuery={onRunQuery} query={query} datasource={datasource} />);
+
+    const title = 'user-title';
+    await userEvent.type(screen.getByLabelText('Title'), title);
+    expect(await screen.findByDisplayValue(title)).toBeInTheDocument();
+  });
+
+  it('can set the text', async () => {
+    const onChange = jest.fn();
+    const onRunQuery = jest.fn();
+    const datasource = createMockDatasource();
+    const query = createMockQuery();
+    render(<AnnotationQueryEditor onChange={onChange} onRunQuery={onRunQuery} query={query} datasource={datasource} />);
+
+    const text = 'user-text';
+    await userEvent.type(screen.getByLabelText('Text'), text);
+    expect(await screen.findByDisplayValue(text)).toBeInTheDocument();
   });
 });
