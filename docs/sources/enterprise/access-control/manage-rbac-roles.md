@@ -271,7 +271,7 @@ If the default basic role definitions do not meet your requirements, you can cha
    | `name`                | The name of the basic role you want to update. You can specify a `uid` instead of a role name. The role `name` or the `uid` are required. |
    | `orgId`               | Identifies the organization to which the role belongs. `global` can be used instead to specify it's a global role.                        |
    | `version`             | Identifies the version of the role, which prevents overwriting newer changes.                                                                     |
-   | `from`                | List of roles to copy permissions from.                                                                                                   |
+   | `from`                | List of roles from which to copy permissions.                                                                                                   |
    | `permissions > state` | The state of the permission. You can set it to `absent` to ensure its exclusion from the copy list.                                       |
 
 1. Reload the provisioning configuration file.
