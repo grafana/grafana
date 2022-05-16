@@ -19,7 +19,7 @@ import RuleEditor from './RuleEditor';
 import { fetchBuildInfo } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { mockDataSource, MockDataSourceSrv } from './mocks';
+import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
 import { getAllDataSources } from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getDefaultQueries } from './utils/rule-form';
@@ -99,6 +99,8 @@ describe('RuleEditor', () => {
     jest.resetAllMocks();
     contextSrv.isEditor = true;
   });
+
+  disableRBAC();
 
   it('can create a new cloud alert', async () => {
     const dataSources = {

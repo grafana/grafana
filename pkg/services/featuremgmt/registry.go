@@ -95,11 +95,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "accesscontrol",
-			Description: "Support robust access control",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:            "accesscontrol-builtins",
 			Description:     "Simplify access control builtin roles",
 			State:           FeatureStateAlpha,
