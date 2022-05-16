@@ -166,7 +166,7 @@ roles:
 ```
 
 The following example creates a global role based on other fixed roles. The `from` option contains the roles from which we want to
-copy permissions from. The permission `state: absent` option allows to specify permissions to exclude from the copy.
+copy permissions. The permission `state: absent` option can be used to specify permissions to exclude from the copy.
 
 ```yaml
 # config file version
