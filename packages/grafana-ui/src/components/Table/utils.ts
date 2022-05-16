@@ -11,7 +11,6 @@ import {
   SelectableValue,
 } from '@grafana/data';
 
-import { AreaChartCell } from './AreaChartCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { DefaultCell } from './DefaultCell';
 import { getFooterValue } from './FooterRow';
@@ -133,8 +132,6 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return BarGaugeCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
-    case TableCellDisplayMode.AreaChart:
-      return AreaChartCell;
   }
 
   if (field.type === FieldType.geo) {

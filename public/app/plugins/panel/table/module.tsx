@@ -71,7 +71,6 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
               { value: TableCellDisplayMode.GradientGauge, label: 'Gradient gauge' },
               { value: TableCellDisplayMode.LcdGauge, label: 'LCD gauge' },
               { value: TableCellDisplayMode.BasicGauge, label: 'Basic gauge' },
-              { value: TableCellDisplayMode.AreaChart, label: 'Area chart' },
               { value: TableCellDisplayMode.JSONView, label: 'JSON View' },
               { value: TableCellDisplayMode.Image, label: 'Image' },
             ],
