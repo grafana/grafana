@@ -46,14 +46,14 @@ const annotationQuery: AnnotationQuery<CloudMonitoringQuery> = {
   name: 'Anno',
   enable: false,
   iconColor: '',
-  target: query!,
+  target: query,
 };
 
 const legacyAnnotationQuery: AnnotationQuery<LegacyCloudMonitoringAnnotationQuery> = {
   name: 'Anno',
   enable: false,
   iconColor: '',
-  target: legacyQuery!,
+  target: legacyQuery,
 };
 
 const ds = createMockDatasource();
