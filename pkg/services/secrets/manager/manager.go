@@ -396,7 +396,9 @@ func (s *SecretsService) GetProviders() map[secrets.ProviderID]secrets.Provider 
 	return s.providers
 }
 
-func (s *SecretsService) RotateDataKey(ctx context.Context) error {
+func (s *SecretsService) RotateDataKeys(ctx context.Context) error {
+	// Currently, for a specific instance of time, there's only a single active
+	// data key. However, in the future, we may have more than one (i.e. scopes).
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 

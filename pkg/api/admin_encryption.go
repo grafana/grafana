@@ -7,8 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func (hs *HTTPServer) AdminRotateDEK(c *models.ReqContext) response.Response {
-	if err := hs.SecretsService.RotateDataKey(c.Req.Context()); err != nil {
+func (hs *HTTPServer) AdminRotateDataEncryptionKeys(c *models.ReqContext) response.Response {
+	if err := hs.SecretsService.RotateDataKeys(c.Req.Context()); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to rotate data key", err)
 	}
 

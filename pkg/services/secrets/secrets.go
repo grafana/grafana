@@ -26,7 +26,7 @@ type Service interface {
 
 	GetDecryptedValue(ctx context.Context, sjd map[string][]byte, key, fallback string) string
 
-	RotateDataKey(ctx context.Context) error
+	RotateDataKeys(ctx context.Context) error
 	ReEncryptDataKeys(ctx context.Context) error
 }
 
