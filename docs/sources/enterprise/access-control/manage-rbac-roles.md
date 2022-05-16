@@ -280,7 +280,7 @@ If the default basic role definitions do not meet your requirements, you can cha
 
 The following example modifies the `Grafana Admin` basic role permissions.
 - Permissions to list, grant, and revoke roles to teams are removed.
-It also adds to it the permission to read and write grafana folders.
+- Permission to read and write Grafana folders is added.
 
 ```yaml
 # config file version
