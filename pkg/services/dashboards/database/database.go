@@ -367,10 +367,6 @@ func getExistingDashboardByIdOrUidForUpdate(sess *sqlstore.DBSession, dash *mode
 		dash.SetId(existingByUid.Id)
 		dash.SetUid(existingByUid.Uid)
 		existing = existingByUid
-
-		if !dash.IsFolder {
-			isParentFolderChanged = true
-		}
 	}
 
 	if (existing.IsFolder && !dash.IsFolder) ||

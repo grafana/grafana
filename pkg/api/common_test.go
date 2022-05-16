@@ -38,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -348,15 +347,7 @@ func setupHTTPServerWithMockDb(t *testing.T, useFakeAccessControl bool, features
 }
 
 func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl bool, cfg *setting.Cfg, features *featuremgmt.FeatureManager) accessControlScenarioContext {
-	var db *sqlstore.SQLStore
-
-	fmt.Println(features.GetEnabledFlagNames())
-
-	if useFakeAccessControl && features.IsEnabled(featuremgmt.FlagAccesscontrol) {
-		db = sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagAccesscontrol}})
-	} else {
-		db = sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
-	}
+  db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
 	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, cfg, db, db, features)
 }
 
@@ -364,6 +355,15 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *sett
 	t.Helper()
 
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
+
+	if enableAccessControl {
+		cfg.RBACEnabled = true
+		db.Cfg.RBACEnabled = true
+	} else {
+		cfg.RBACEnabled = false
+		db.Cfg.RBACEnabled = false
+	}
+	features := featuremgmt.WithFeatures()
 
 	var acmock *accesscontrolmock.Mock
 
@@ -380,8 +380,11 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *sett
 		RouteRegister:      routeRegister,
 		SQLStore:           store,
 		searchUsersService: searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
-		dashboardService:   dashboardservice.ProvideDashboardService(cfg, dashboardsStore, nil, features, accesscontrolmock.NewPermissionsServicesMock()),
-		preferenceService:  preftest.NewPreferenceServiceFake(),
+		dashboardService: dashboardservice.ProvideDashboardService(
+			cfg, dashboardsStore, nil, features,
+			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
+		),
+		preferenceService: preftest.NewPreferenceServiceFake(),
 	}
 
 	// Defining the accesscontrol service has to be done before registering routes
@@ -397,7 +400,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *sett
 		require.NoError(t, err)
 		hs.teamPermissionsService = teamPermissionService
 	} else {
-		ac, errInitAc := ossaccesscontrol.ProvideService(hs.Features, database.ProvideService(db), routing.NewRouteRegister())
+		ac, errInitAc := ossaccesscontrol.ProvideService(hs.Features, hs.Cfg, database.ProvideService(db), routing.NewRouteRegister())
 		require.NoError(t, errInitAc)
 		hs.AccessControl = ac
 		// Perform role registration

@@ -176,8 +176,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Group("/users", func(usersRoute routing.RouteRegister) {
 			userIDScope := ac.Scope("global.users", "id", ac.Parameter(":id"))
-			usersRoute.Get("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.searchUsersService.SearchUsers))
-			usersRoute.Get("/search", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.searchUsersService.SearchUsersWithPaging))
+			usersRoute.Get("/", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead)), routing.Wrap(hs.searchUsersService.SearchUsers))
+			usersRoute.Get("/search", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead)), routing.Wrap(hs.searchUsersService.SearchUsersWithPaging))
 			usersRoute.Get("/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(hs.GetUserByID))
 			usersRoute.Get("/:id/teams", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersTeamRead, userIDScope)), routing.Wrap(hs.GetUserTeams))
 			usersRoute.Get("/:id/orgs", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(hs.GetUserOrgList))
@@ -277,7 +277,7 @@ func (hs *HTTPServer) registerRoutes() {
 			orgsRoute.Put("/", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsWrite)), routing.Wrap(hs.UpdateOrg))
 			orgsRoute.Put("/address", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsWrite)), routing.Wrap(hs.UpdateOrgAddress))
 			orgsRoute.Delete("/", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ActionOrgsDelete)), routing.Wrap(hs.DeleteOrgByID))
-			orgsRoute.Get("/users", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersRead, ac.ScopeUsersAll)), routing.Wrap(hs.GetOrgUsers))
+			orgsRoute.Get("/users", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersRead)), routing.Wrap(hs.GetOrgUsers))
 			orgsRoute.Post("/users", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersAdd, ac.ScopeUsersAll)), routing.Wrap(hs.AddOrgUser))
 			orgsRoute.Patch("/users/:userId", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersRoleUpdate, userIDScope)), routing.Wrap(hs.UpdateOrgUser))
 			orgsRoute.Delete("/users/:userId", authorizeInOrg(reqGrafanaAdmin, ac.UseOrgFromContextParams, ac.EvalPermission(ac.ActionOrgUsersRemove, userIDScope)), routing.Wrap(hs.RemoveOrgUser))
@@ -397,6 +397,9 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
 			dashboardRoute.Get("/tags", hs.GetDashboardTags)
 
+			// Deprecated: used to convert internal IDs to UIDs
+			dashboardRoute.Get("/ids/:ids", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsRead)), hs.GetDashboardUIDs)
+
 			// Deprecated: use /uid/:uid API instead.
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
 				dashIdRoute.Get("/versions", authorize(reqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersions))
@@ -436,9 +439,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// DataSource w/ expressions
 		apiRoute.Post("/ds/query", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.QueryMetricsV2))
-
-		// Validated query
-		apiRoute.Post("/dashboards/org/:orgId/uid/:dashboardUid/panels/:panelId/query", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.QueryMetricsFromDashboard))
 
 		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
 			alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))
@@ -481,6 +481,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Group("/annotations", func(annotationsRoute routing.RouteRegister) {
 			annotationsRoute.Post("/", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsCreate)), routing.Wrap(hs.PostAnnotation))
+			annotationsRoute.Get("/:annotationId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsRead, ac.ScopeAnnotationsID)), routing.Wrap(hs.GetAnnotationByID))
 			annotationsRoute.Delete("/:annotationId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsDelete, ac.ScopeAnnotationsID)), routing.Wrap(hs.DeleteAnnotationByID))
 			annotationsRoute.Put("/:annotationId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsWrite, ac.ScopeAnnotationsID)), routing.Wrap(hs.UpdateAnnotation))
 			annotationsRoute.Patch("/:annotationId", authorize(reqSignedIn, ac.EvalPermission(ac.ActionAnnotationsWrite, ac.ScopeAnnotationsID)), routing.Wrap(hs.PatchAnnotation))

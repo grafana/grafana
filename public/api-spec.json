@@ -38,7 +38,7 @@
         }
       },
       "post": {
-        "description": "You need to have a permission with action `roles.builtin:add` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "You need to have a permission with action `roles.builtin:add` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only create built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to create a built-in role assignment which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Create a built-in role assignment.",
         "operationId": "addBuiltinRole",
@@ -71,7 +71,7 @@
     },
     "/access-control/builtin-roles/{builtinRole}/roles/{roleUID}": {
       "delete": {
-        "description": "Deletes a built-in role assignment (for one of Viewer, Editor, Admin, or Grafana Admin) to the role with the provided UID.\n\nYou need to have a permission with action `roles.builtin:remove` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to remove a built-in role assignment which allows to do that.",
+        "description": "Deletes a built-in role assignment (for one of Viewer, Editor, Admin, or Grafana Admin) to the role with the provided UID.\n\nYou need to have a permission with action `roles.builtin:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only remove built-in role assignments with the roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to remove a built-in role assignment which allows to do that.",
         "tags": ["access_control", "enterprise"],
         "summary": "Remove a built-in role assignment.",
         "operationId": "removeBuiltinRole",
@@ -136,7 +136,7 @@
         }
       },
       "post": {
-        "description": "Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as Fixed Roles can’t be created.\n\nYou need to have a permission with action `roles:write` and scope `permissions:delegate`. `permission:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.\nFor example, if a user does not have required permissions for creating users, they won’t be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.",
+        "description": "Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as Fixed Roles can’t be created.\n\nYou need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.\nFor example, if a user does not have required permissions for creating users, they won’t be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Create a new custom role.",
         "operationId": "createRoleWithPermissions",
@@ -195,7 +195,7 @@
         }
       },
       "put": {
-        "description": "You need to have a permission with action `roles:write` and scope `permissions:delegate`. `permission:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.",
+        "description": "You need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate`` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.",
         "tags": ["access_control", "enterprise"],
         "summary": "Update a custom role.",
         "operationId": "updateRoleWithPermissions",
@@ -236,7 +236,7 @@
         }
       },
       "delete": {
-        "description": "Delete a role with the given UID, and it’s permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless force query param is set to true, and in that case all assignments will also be deleted.\n\nYou need to have a permission with action `roles:delete` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to delete a custom role which allows to do that.",
+        "description": "Delete a role with the given UID, and it’s permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless force query param is set to true, and in that case all assignments will also be deleted.\n\nYou need to have a permission with action `roles:delete` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to delete a custom role which allows to do that.",
         "tags": ["access_control", "enterprise"],
         "summary": "Delete a custom role.",
         "operationId": "deleteCustomRole",
@@ -319,7 +319,7 @@
         }
       },
       "put": {
-        "description": "You need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:delegate` for each.",
+        "description": "You need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:type:delegate` for each.",
         "tags": ["access_control", "enterprise"],
         "summary": "Update team role.",
         "operationId": "setTeamRoles",
@@ -352,7 +352,7 @@
         }
       },
       "post": {
-        "description": "You need to have a permission with action `teams.roles:add` and scope `permissions:delegate`.",
+        "description": "You need to have a permission with action `teams.roles:add` and scope `permissions:type:delegate`.",
         "tags": ["access_control", "enterprise"],
         "summary": "Add team role.",
         "operationId": "addTeamRole",
@@ -396,7 +396,7 @@
     },
     "/access-control/teams/{teamId}/roles/{roleUID}": {
       "delete": {
-        "description": "You need to have a permission with action `teams.roles:remove` and scope `permissions:delegate`.",
+        "description": "You need to have a permission with action `teams.roles:remove` and scope `permissions:type:delegate`.",
         "tags": ["access_control", "enterprise"],
         "summary": "Remove team role.",
         "operationId": "removeTeamRole",
@@ -468,7 +468,7 @@
         }
       },
       "put": {
-        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:delegate` for each. `permission:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Set user role assignments.",
         "operationId": "setUserRoles",
@@ -501,7 +501,7 @@
         }
       },
       "post": {
-        "description": "Assign a role to a specific user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:add` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Assign a role to a specific user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:add` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Add a user role assignment.",
         "operationId": "addUserRole",
@@ -542,7 +542,7 @@
     },
     "/access-control/users/{user_id}/roles/{roleUID}": {
       "delete": {
-        "description": "Revoke a role from a user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:remove` and scope `permissions:delegate`. `permission:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "description": "Revoke a role from a user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
         "tags": ["access_control", "enterprise"],
         "summary": "Remove a user role assignment.",
         "operationId": "removeUserRole",

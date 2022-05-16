@@ -23,13 +23,13 @@ type FolderServiceImpl struct {
 	dashboardStore   dashboards.Store
 	searchService    *search.SearchService
 	features         featuremgmt.FeatureToggles
-	permissions      accesscontrol.PermissionsService
+	permissions      accesscontrol.FolderPermissionsService
 	sqlStore         sqlstore.Store
 }
 
 func ProvideFolderService(
 	cfg *setting.Cfg, dashboardService dashboards.DashboardService, dashboardStore dashboards.Store,
-	searchService *search.SearchService, features featuremgmt.FeatureToggles, permissionsServices accesscontrol.PermissionsServices,
+	searchService *search.SearchService, features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl, sqlStore sqlstore.Store,
 ) *FolderServiceImpl {
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore))
@@ -42,7 +42,7 @@ func ProvideFolderService(
 		dashboardStore:   dashboardStore,
 		searchService:    searchService,
 		features:         features,
-		permissions:      permissionsServices.GetFolderService(),
+		permissions:      folderPermissionsService,
 		sqlStore:         sqlStore,
 	}
 }
