@@ -23,7 +23,6 @@ import (
 
 	"context"
 	"net/http"
-	"reflect"
 	"strings"
 )
 
@@ -48,14 +47,6 @@ func Version() string {
 // Macaron attempts to inject services into the handler's argument list,
 // and panics if an argument could not be fulfilled via dependency injection.
 type Handler interface{}
-
-// handlerFuncInvoker is an inject.FastInvoker wrapper of func(http.ResponseWriter, *http.Request).
-type handlerFuncInvoker func(http.ResponseWriter, *http.Request)
-
-func (invoke handlerFuncInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
-	invoke(params[0].(http.ResponseWriter), params[1].(*http.Request))
-	return nil, nil
-}
 
 //go:linkname hack_wrap github.com/grafana/grafana/pkg/api/response.wrap_handler
 func hack_wrap(Handler) http.HandlerFunc

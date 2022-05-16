@@ -1,3 +1,4 @@
+//nolint:unused,deadcode
 package response
 
 //NOTE: This file belongs into pkg/web, but due to cyclic imports that are hard to resolve at the current time, it temporarily lives here.
