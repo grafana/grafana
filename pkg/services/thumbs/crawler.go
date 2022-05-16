@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -19,8 +20,10 @@ import (
 )
 
 type simpleCrawler struct {
-	renderService rendering.Service
-	threadCount   int
+	renderService    rendering.Service
+	threadCount      int
+	concurrentLimit  int
+	renderingTimeout time.Duration
 
 	glive                   *live.GrafanaLive
 	thumbnailRepo           thumbnailRepo
@@ -36,13 +39,17 @@ type simpleCrawler struct {
 	renderingSessionByOrgId map[int64]rendering.Session
 }
 
-func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo) dashRenderer {
+func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo, cfg *setting.Cfg, settings setting.DashboardPreviewsSettings) dashRenderer {
+	threadCount := int(settings.CrawlThreadCount)
 	c := &simpleCrawler{
-		renderService: renderService,
-		threadCount:   6,
-		glive:         gl,
-		thumbnailRepo: repo,
-		log:           log.New("thumbnails_crawler"),
+		// temporarily increases the concurrentLimit from the 'cfg.RendererConcurrentRequestLimit' to 'cfg.RendererConcurrentRequestLimit + crawlerThreadCount'
+		concurrentLimit:  cfg.RendererConcurrentRequestLimit + threadCount,
+		renderingTimeout: settings.RenderingTimeout,
+		renderService:    renderService,
+		threadCount:      threadCount,
+		glive:            gl,
+		thumbnailRepo:    repo,
+		log:              log.New("thumbnails_crawler"),
 		status: crawlStatus{
 			State:    initializing,
 			Complete: 0,
@@ -154,11 +161,11 @@ func (r *simpleCrawler) Run(ctx context.Context, auth CrawlerAuth, mode CrawlerM
 	r.auth = auth
 	r.opts = rendering.Opts{
 		TimeoutOpts: rendering.TimeoutOpts{
-			Timeout:                  20 * time.Second,
+			Timeout:                  r.renderingTimeout,
 			RequestTimeoutMultiplier: 3,
 		},
 		Theme:           theme,
-		ConcurrentLimit: 10,
+		ConcurrentLimit: r.concurrentLimit,
 	}
 
 	r.renderingSessionByOrgId = make(map[int64]rendering.Session)

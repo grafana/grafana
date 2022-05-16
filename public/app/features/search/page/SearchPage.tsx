@@ -1,105 +1,221 @@
 import { css } from '@emotion/css';
-import React from 'react';
-import { useAsync } from 'react-use';
+import React, { useCallback, useState } from 'react';
+import { useAsync, useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Input, useStyles2, Spinner, Button } from '@grafana/ui';
+import { Input, useStyles2, Spinner, InlineSwitch, InlineFieldRow, InlineField, Button } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
+import { PreviewsSystemRequirements } from '../components/PreviewsSystemRequirements';
 import { useSearchQuery } from '../hooks/useSearchQuery';
-import { getGrafanaSearcher, QueryFilters } from '../service';
-import { getTermCounts } from '../service/backend';
+import { getGrafanaSearcher, SearchQuery } from '../service';
+import { SearchLayout } from '../types';
 
-import { Table } from './table/Table';
+import { ActionRow, getValidQueryLayout } from './components/ActionRow';
+import { FolderView } from './components/FolderView';
+import { ManageActions } from './components/ManageActions';
+import { SearchResultsGrid } from './components/SearchResultsGrid';
+import { SearchResultsTable, SearchResultsProps } from './components/SearchResultsTable';
+import { newSearchSelection, updateSearchSelection } from './selection';
 
 const node: NavModelItem = {
   id: 'search',
-  text: 'Search',
+  text: 'Search playground',
+  subTitle: 'The body below will eventually live inside existing UI layouts',
   icon: 'dashboard',
   url: 'search',
 };
 
 export default function SearchPage() {
   const styles = useStyles2(getStyles);
-  const { query, onQueryChange, onTagFilterChange, onDatasourceChange } = useSearchQuery({});
+  const { query, onQueryChange, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } =
+    useSearchQuery({});
+  const [showManage, setShowManage] = useState(false); // grid vs list view
+
+  const [searchSelection, setSearchSelection] = useState(newSearchSelection());
+  const layout = getValidQueryLayout(query);
+  const isFolders = layout === SearchLayout.Folders;
 
   const results = useAsync(() => {
-    const { query: searchQuery, tag: tags, datasource } = query;
-
-    const filters: QueryFilters = {
-      tags,
-      datasource,
+    let qstr = query.query as string;
+    if (!qstr?.length) {
+      qstr = '*';
+    }
+    const q: SearchQuery = {
+      query: qstr,
+      tags: query.tag as string[],
+      ds_uid: query.datasource as string,
     };
-    return getGrafanaSearcher().search(searchQuery, tags.length || datasource ? filters : undefined);
-  }, [query]);
+    console.log('DO QUERY', q);
+    return getGrafanaSearcher().search(q);
+  }, [query, layout]);
+
+  const [inputValue, setInputValue] = useState('');
+  const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    setInputValue(e.currentTarget.value);
+  };
+
+  useDebounce(() => onQueryChange(inputValue), 200, [inputValue]);
+
+  const toggleSelection = useCallback(
+    (kind: string, uid: string) => {
+      const current = searchSelection.isSelected(kind, uid);
+      if (kind === 'folder') {
+        // ??? also select all children?
+      }
+      setSearchSelection(updateSearchSelection(searchSelection, !current, kind, [uid]));
+    },
+    [searchSelection]
+  );
 
   if (!config.featureToggles.panelTitleSearch) {
     return <div className={styles.unsupported}>Unsupported</div>;
   }
 
+  // This gets the possible tags from within the query results
   const getTagOptions = (): Promise<TermCount[]> => {
-    const tags = results.value?.body.fields.find((f) => f.name === 'tags');
+    const q: SearchQuery = {
+      query: query.query ?? '*',
+      tags: query.tag,
+      ds_uid: query.datasource,
+    };
+    return getGrafanaSearcher().tags(q);
+  };
 
-    if (tags) {
-      return Promise.resolve(getTermCounts(tags));
+  // function to update items when dashboards or folders are moved or deleted
+  const onChangeItemsList = async () => {
+    // clean up search selection
+    setSearchSelection(newSearchSelection());
+    // trigger again the search to the backend
+    onQueryChange(inputValue);
+  };
+
+  const renderResults = () => {
+    const value = results.value;
+
+    if ((!value || !value.totalRows) && !isFolders) {
+      if (results.loading && !value) {
+        return <Spinner />;
+      }
+
+      return (
+        <div className={styles.noResults}>
+          <div>No results found for your query.</div>
+          <br />
+          <Button
+            variant="secondary"
+            onClick={() => {
+              if (query.query) {
+                onQueryChange('');
+              }
+              if (query.tag?.length) {
+                onTagFilterChange([]);
+              }
+              if (query.datasource) {
+                onDatasourceChange(undefined);
+              }
+            }}
+          >
+            Remove search constraints
+          </Button>
+        </div>
+      );
     }
-    return Promise.resolve([]);
-  };
 
-  const onSearchQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onQueryChange(event.currentTarget.value);
-  };
+    const selection = showManage ? searchSelection.isSelected : undefined;
+    if (layout === SearchLayout.Folders) {
+      return <FolderView selection={selection} selectionToggle={toggleSelection} onTagSelected={onTagAdd} />;
+    }
 
-  const onTagChange = (tags: string[]) => {
-    onTagFilterChange(tags);
+    return (
+      <div style={{ height: '100%', width: '100%' }}>
+        <AutoSizer>
+          {({ width, height }) => {
+            const props: SearchResultsProps = {
+              response: value!,
+              selection,
+              selectionToggle: toggleSelection,
+              width: width,
+              height: height,
+              onTagSelected: onTagAdd,
+              onDatasourceChange: query.datasource ? onDatasourceChange : undefined,
+            };
+
+            if (layout === SearchLayout.Grid) {
+              return <SearchResultsGrid {...props} />;
+            }
+
+            return <SearchResultsTable {...props} />;
+          }}
+        </AutoSizer>
+      </div>
+    );
   };
 
   return (
     <Page navModel={{ node: node, main: node }}>
-      <Page.Contents>
-        <Input value={query.query} onChange={onSearchQueryChange} autoFocus spellCheck={false} />
-        <br />
-        {results.loading && <Spinner />}
-        {results.value?.body && (
-          <div>
-            <TagFilter isClearable tags={query.tag} tagOptions={getTagOptions} onChange={onTagChange} />
-            <br />
-            {query.datasource && (
-              <Button
-                icon="times"
-                variant="secondary"
-                onClick={() => onDatasourceChange(undefined)}
-                className={styles.clearClick}
-              >
-                Datasource: {query.datasource}
-              </Button>
-            )}
-            <AutoSizer style={{ width: '100%', height: '2000px' }}>
-              {({ width }) => {
-                return (
-                  <>
-                    <Table
-                      data={results.value!.body}
-                      width={width}
-                      tags={query.tag}
-                      onTagFilterChange={onTagChange}
-                      onDatasourceChange={onDatasourceChange}
-                    />
-                  </>
-                );
-              }}
-            </AutoSizer>
-          </div>
+      <Page.Contents
+        className={css`
+          display: flex;
+          flex-direction: column;
+        `}
+      >
+        <Input
+          value={inputValue}
+          onChange={onSearchQueryChange}
+          autoFocus
+          spellCheck={false}
+          placeholder="Search for dashboards and panels"
+          className={styles.searchInput}
+          suffix={results.loading ? <Spinner /> : null}
+        />
+        <InlineFieldRow>
+          <InlineField label="Show manage options">
+            <InlineSwitch value={showManage} onChange={() => setShowManage(!showManage)} />
+          </InlineField>
+        </InlineFieldRow>
+
+        {Boolean(searchSelection.items.size > 0) ? (
+          <ManageActions items={searchSelection.items} onChange={onChangeItemsList} />
+        ) : (
+          <ActionRow
+            onLayoutChange={(v) => {
+              if (v === SearchLayout.Folders) {
+                if (query.query) {
+                  onQueryChange(''); // parent will clear the sort
+                }
+              }
+              onLayoutChange(v);
+            }}
+            onSortChange={onSortChange}
+            onTagFilterChange={onTagFilterChange}
+            getTagOptions={getTagOptions}
+            onDatasourceChange={onDatasourceChange}
+            query={query}
+          />
         )}
+
+        {layout === SearchLayout.Grid && (
+          <PreviewsSystemRequirements
+            bottomSpacing={3}
+            showPreviews={true}
+            onRemove={() => onLayoutChange(SearchLayout.List)}
+          />
+        )}
+        {renderResults()}
       </Page.Contents>
     </Page>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  searchInput: css`
+    margin-bottom: 6px;
+  `,
   unsupported: css`
     padding: 10px;
     display: flex;
@@ -108,11 +224,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: 100%;
     font-size: 18px;
   `,
-
-  clearClick: css`
-    &:hover {
-      text-decoration: line-through;
-    }
-    margin-bottom: 20px;
+  noResults: css`
+    padding: ${theme.v1.spacing.md};
+    background: ${theme.v1.colors.bg2};
+    font-style: italic;
+    margin-top: ${theme.v1.spacing.md};
   `,
 });

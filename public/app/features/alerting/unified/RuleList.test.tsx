@@ -8,20 +8,24 @@ import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector'
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
+import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
 import RuleList from './RuleList';
 import { fetchBuildInfo } from './api/buildInfo';
 import { fetchRules } from './api/prometheus';
-import { fetchRulerRules, deleteRulerRulesGroup, deleteNamespace, setRulerRuleGroup } from './api/ruler';
+import { deleteNamespace, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from './api/ruler';
 import {
+  disableRBAC,
+  enableRBAC,
+  grantUserPermissions,
   mockDataSource,
+  MockDataSourceSrv,
   mockPromAlert,
   mockPromAlertingRule,
   mockPromRecordingRule,
   mockPromRuleGroup,
   mockPromRuleNamespace,
-  MockDataSourceSrv,
   somePromRules,
   someRulerRules,
 } from './mocks';
@@ -101,6 +105,8 @@ const ui = {
   moreErrorsButton: byRole('button', { name: /more errors/ }),
   editCloudGroupIcon: byTestId('edit-group'),
 
+  newRuleButton: byRole('link', { name: 'New alert rule' }),
+
   editGroupModal: {
     namespaceInput: byLabelText('Namespace'),
     ruleGroupInput: byLabelText('Rule group'),
@@ -116,6 +122,7 @@ describe('RuleList', () => {
   });
 
   it('load & show rule groups from multiple cloud data sources', async () => {
+    disableRBAC();
     mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
 
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
@@ -629,6 +636,107 @@ describe('RuleList', () => {
           interval: '5m',
         }
       );
+    });
+  });
+
+  describe('RBAC Enabled', () => {
+    describe('Grafana Managed Alerts', () => {
+      it('New alert button should be visible when the user has alert rule create and folder read permissions and no rules exists', async () => {
+        enableRBAC();
+
+        grantUserPermissions([
+          AccessControlAction.FoldersRead,
+          AccessControlAction.AlertingRuleCreate,
+          AccessControlAction.AlertingRuleRead,
+        ]);
+
+        mocks.getAllDataSourcesMock.mockReturnValue([]);
+        setDataSourceSrv(new MockDataSourceSrv({}));
+        mocks.api.fetchRules.mockResolvedValue([]);
+        mocks.api.fetchRulerRules.mockResolvedValue({});
+
+        renderRuleList();
+
+        await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
+        expect(ui.newRuleButton.get()).toBeInTheDocument();
+      });
+
+      it('New alert button should be visible when the user has alert rule create and folder read permissions and rules already exists', async () => {
+        enableRBAC();
+
+        grantUserPermissions([
+          AccessControlAction.FoldersRead,
+          AccessControlAction.AlertingRuleCreate,
+          AccessControlAction.AlertingRuleRead,
+        ]);
+
+        mocks.getAllDataSourcesMock.mockReturnValue([]);
+        setDataSourceSrv(new MockDataSourceSrv({}));
+        mocks.api.fetchRules.mockResolvedValue(somePromRules('grafana'));
+        mocks.api.fetchRulerRules.mockResolvedValue(someRulerRules);
+
+        renderRuleList();
+
+        await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
+        expect(ui.newRuleButton.get()).toBeInTheDocument();
+      });
+    });
+
+    describe('Cloud Alerts', () => {
+      it('New alert button should be visible when the user has the alert rule external write and datasource read permissions and no rules exists', async () => {
+        enableRBAC();
+
+        grantUserPermissions([
+          // AccessControlAction.AlertingRuleRead,
+          AccessControlAction.DataSourcesRead,
+          AccessControlAction.AlertingRuleExternalRead,
+          AccessControlAction.AlertingRuleExternalWrite,
+        ]);
+
+        mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
+        setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
+        mocks.api.fetchBuildInfo.mockResolvedValue({
+          application: PromApplication.Cortex,
+          features: {
+            rulerApiEnabled: true,
+          },
+        });
+
+        mocks.api.fetchRules.mockResolvedValue([]);
+        mocks.api.fetchRulerRules.mockResolvedValue({});
+
+        renderRuleList();
+
+        await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
+        expect(ui.newRuleButton.get()).toBeInTheDocument();
+      });
+
+      it('New alert button should be visible when the user has the alert rule external write and data source read permissions and rules already exists', async () => {
+        enableRBAC();
+
+        grantUserPermissions([
+          AccessControlAction.DataSourcesRead,
+          AccessControlAction.AlertingRuleExternalRead,
+          AccessControlAction.AlertingRuleExternalWrite,
+        ]);
+
+        mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
+        setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
+        mocks.api.fetchBuildInfo.mockResolvedValue({
+          application: PromApplication.Cortex,
+          features: {
+            rulerApiEnabled: true,
+          },
+        });
+
+        mocks.api.fetchRules.mockResolvedValue(somePromRules('Cortex'));
+        mocks.api.fetchRulerRules.mockResolvedValue(someRulerRules);
+
+        renderRuleList();
+
+        await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
+        expect(ui.newRuleButton.get()).toBeInTheDocument();
+      });
     });
   });
 });

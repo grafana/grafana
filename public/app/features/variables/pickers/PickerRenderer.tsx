@@ -34,13 +34,14 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
     return null;
   }
 
+  const elementId = `var-${variable.id}`;
   if (variable.description) {
     return (
       <Tooltip content={variable.description} placement={'bottom'}>
         <label
           className="gf-form-label gf-form-label--variable"
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
-          htmlFor={variable.id}
+          htmlFor={elementId}
         >
           {labelOrName}
         </label>
@@ -52,7 +53,7 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
     <label
       className="gf-form-label gf-form-label--variable"
       data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
-      htmlFor={variable.id}
+      htmlFor={elementId}
     >
       {labelOrName}
     </label>

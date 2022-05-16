@@ -11,7 +11,6 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { AppNotificationSeverity } from 'app/types';
 
 import { Loader } from '../components/Loader';
-import { Page as PluginPage } from '../components/Page';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
 import { PluginDetailsHeader } from '../components/PluginDetailsHeader';
@@ -75,9 +74,8 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
 
   return (
     <Page>
-      <PluginPage>
-        <PluginDetailsHeader currentUrl={`${url}?page=${pageId}`} parentUrl={parentUrl} plugin={plugin} />
-
+      <PluginDetailsHeader currentUrl={`${url}?page=${pageId}`} parentUrl={parentUrl} plugin={plugin} />
+      <Page.Contents>
         {/* Tab navigation */}
         <TabsBar>
           {tabs.map((tab: PluginDetailsTab) => {
@@ -99,7 +97,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
           <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
           <PluginDetailsBody queryParams={queryParams} plugin={plugin} pageId={pageId} />
         </TabContent>
-      </PluginPage>
+      </Page.Contents>
     </Page>
   );
 }

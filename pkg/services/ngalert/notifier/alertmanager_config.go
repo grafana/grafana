@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -81,6 +82,13 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 		result.AlertmanagerConfig.Receivers = append(result.AlertmanagerConfig.Receivers, &gettableApiReceiver)
 	}
 
+	if moa.settings.IsFeatureToggleEnabled(featuremgmt.FlagAlertProvisioning) {
+		result.AlertmanagerConfig, err = moa.mergeProvenance(ctx, result.AlertmanagerConfig, org)
+		if err != nil {
+			return definitions.GettableUserConfig{}, err
+		}
+	}
+
 	return result, nil
 }
 
@@ -116,4 +124,27 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 	}
 
 	return nil
+}
+
+func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config definitions.GettableApiAlertingConfig, org int64) (definitions.GettableApiAlertingConfig, error) {
+	if config.Route != nil {
+		provenance, err := moa.ProvStore.GetProvenance(ctx, config.Route, org)
+		if err != nil {
+			return definitions.GettableApiAlertingConfig{}, err
+		}
+		config.Route.Provenance = provenance
+	}
+	cp := definitions.EmbeddedContactPoint{}
+	cpProvs, err := moa.ProvStore.GetProvenances(ctx, org, cp.ResourceType())
+	if err != nil {
+		return definitions.GettableApiAlertingConfig{}, err
+	}
+	for _, receiver := range config.Receivers {
+		for _, contactPoint := range receiver.GrafanaManagedReceivers {
+			if provenance, exists := cpProvs[contactPoint.UID]; exists {
+				contactPoint.Provenance = provenance
+			}
+		}
+	}
+	return config, nil
 }

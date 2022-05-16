@@ -33,6 +33,7 @@ const selectors = editorSelectors.components.DataSource.TestData.QueryTab;
 export interface EditorProps {
   onChange: (value: any) => void;
   query: TestDataQuery;
+  ds: TestDataDataSource;
 }
 
 export type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
@@ -181,7 +182,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         <InlineField labelWidth={14} label="Scenario">
           <Select
             inputId={`test-data-scenario-select-${query.refId}`}
-            menuShouldPortal
             options={options}
             value={options.find((item) => item.value === query.scenarioId)}
             onChange={onScenarioChange}
@@ -243,13 +243,15 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         )}
       </InlineFieldRow>
 
-      {scenarioId === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
-      {scenarioId === 'streaming_client' && <StreamingClientEditor onChange={onStreamClientChange} query={query} />}
-      {scenarioId === 'live' && <GrafanaLiveEditor onChange={onUpdate} query={query} />}
-      {scenarioId === 'simulation' && <SimulationQueryEditor onChange={onUpdate} query={query} />}
-      {scenarioId === 'raw_frame' && <RawFrameEditor onChange={onUpdate} query={query} />}
-      {scenarioId === 'csv_file' && <CSVFileEditor onChange={onUpdate} query={query} />}
-      {scenarioId === 'csv_content' && <CSVContentEditor onChange={onUpdate} query={query} />}
+      {scenarioId === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} ds={datasource} />}
+      {scenarioId === 'streaming_client' && (
+        <StreamingClientEditor onChange={onStreamClientChange} query={query} ds={datasource} />
+      )}
+      {scenarioId === 'live' && <GrafanaLiveEditor onChange={onUpdate} query={query} ds={datasource} />}
+      {scenarioId === 'simulation' && <SimulationQueryEditor onChange={onUpdate} query={query} ds={datasource} />}
+      {scenarioId === 'raw_frame' && <RawFrameEditor onChange={onUpdate} query={query} ds={datasource} />}
+      {scenarioId === 'csv_file' && <CSVFileEditor onChange={onUpdate} query={query} ds={datasource} />}
+      {scenarioId === 'csv_content' && <CSVContentEditor onChange={onUpdate} query={query} ds={datasource} />}
       {scenarioId === 'logs' && (
         <InlineFieldRow>
           <InlineField label="Lines" labelWidth={14}>
@@ -272,7 +274,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       {scenarioId === 'grafana_api' && (
         <InlineField labelWidth={14} label="Endpoint">
           <Select
-            menuShouldPortal
             options={endpoints}
             onChange={onEndPointChange}
             width={32}
@@ -293,12 +294,14 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         </InlineField>
       )}
 
-      {scenarioId === 'predictable_pulse' && <PredictablePulseEditor onChange={onPulseWaveChange} query={query} />}
+      {scenarioId === 'predictable_pulse' && (
+        <PredictablePulseEditor onChange={onPulseWaveChange} query={query} ds={datasource} />
+      )}
       {scenarioId === 'predictable_csv_wave' && <CSVWavesEditor onChange={onCSVWaveChange} waves={query.csvWave} />}
       {scenarioId === 'node_graph' && (
         <NodeGraphEditor onChange={(val: NodesQuery) => onChange({ ...query, nodes: val })} query={query} />
       )}
-      {scenarioId === 'server_error_500' && <ErrorEditor onChange={onUpdate} query={query} />}
+      {scenarioId === 'server_error_500' && <ErrorEditor onChange={onUpdate} query={query} ds={datasource} />}
 
       {description && <p>{description}</p>}
     </>

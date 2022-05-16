@@ -113,6 +113,13 @@ type AlertRule struct {
 	Labels      map[string]string
 }
 
+type SchedulableAlertRule struct {
+	UID             string `xorm:"uid"`
+	OrgID           int64  `xorm:"org_id"`
+	IntervalSeconds int64
+	Version         int64
+}
+
 type LabelOption func(map[string]string)
 
 func WithoutInternalLabels() LabelOption {
@@ -166,6 +173,11 @@ func (k AlertRuleKey) String() string {
 
 // GetKey returns the alert definitions identifier
 func (alertRule *AlertRule) GetKey() AlertRuleKey {
+	return AlertRuleKey{OrgID: alertRule.OrgID, UID: alertRule.UID}
+}
+
+// GetKey returns the alert definitions identifier
+func (alertRule *SchedulableAlertRule) GetKey() AlertRuleKey {
 	return AlertRuleKey{OrgID: alertRule.OrgID, UID: alertRule.UID}
 }
 
@@ -232,6 +244,7 @@ type ListAlertRulesQuery struct {
 	OrgID         int64
 	NamespaceUIDs []string
 	ExcludeOrgs   []int64
+	RuleGroup     string
 
 	// DashboardUID and PanelID are optional and allow filtering rules
 	// to return just those for a dashboard and panel.
@@ -239,6 +252,12 @@ type ListAlertRulesQuery struct {
 	PanelID      int64
 
 	Result []*AlertRule
+}
+
+type GetAlertRulesForSchedulingQuery struct {
+	ExcludeOrgIDs []int64
+
+	Result []*SchedulableAlertRule
 }
 
 // ListNamespaceAlertRulesQuery is the query for listing namespace alert rules
@@ -246,21 +265,6 @@ type ListNamespaceAlertRulesQuery struct {
 	OrgID int64
 	// Namespace is the folder slug
 	NamespaceUID string
-
-	Result []*AlertRule
-}
-
-// GetAlertRulesQuery is the query for listing rule group alert rules
-type GetAlertRulesQuery struct {
-	OrgID int64
-	// Namespace is the folder slug
-	NamespaceUID string
-	RuleGroup    *string
-
-	// DashboardUID and PanelID are optional and allow filtering rules
-	// to return just those for a dashboard and panel.
-	DashboardUID string
-	PanelID      int64
 
 	Result []*AlertRule
 }

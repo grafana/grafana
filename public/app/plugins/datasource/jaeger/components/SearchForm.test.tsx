@@ -20,12 +20,6 @@ describe('SearchForm', () => {
     const handleOnChange = jest.fn(() => promise);
     const query = {
       ...defaultQuery,
-      targets: [
-        {
-          query: 'a/b',
-          refId: '1',
-        },
-      ],
       refId: '121314',
     };
     const ds = {
@@ -53,12 +47,6 @@ describe('SearchForm', () => {
     const handleOnChange = jest.fn(() => promise);
     const query2 = {
       ...defaultQuery,
-      targets: [
-        {
-          query: 'a/b',
-          refId: '1',
-        },
-      ],
       refId: '121314',
       service: 'jaeger-query',
     };
@@ -73,35 +61,23 @@ describe('SearchForm', () => {
 
 describe('SearchForm', () => {
   let user: UserEvent;
+  let query: JaegerQuery;
+  let ds: JaegerDatasource;
 
   beforeEach(() => {
     jest.useFakeTimers();
     // Need to use delay: null here to work with fakeTimers
     // see https://github.com/testing-library/user-event/issues/833
     user = userEvent.setup({ delay: null });
-  });
 
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('should show loader if there is a delay fetching options', async () => {
-    const handleOnChange = jest.fn();
-    const query = {
+    query = {
       ...defaultQuery,
-      targets: [
-        {
-          query: 'a/b',
-          refId: '1',
-        },
-      ],
       refId: '121314',
       service: 'jaeger-query',
     };
-    const ds = new JaegerDatasource(defaultSettings);
-    setupFetchMock({ data: [testResponse] });
 
-    render(<SearchForm datasource={ds} query={query} onChange={handleOnChange} />);
+    ds = new JaegerDatasource(defaultSettings);
+    setupFetchMock({ data: [testResponse] });
 
     jest.spyOn(ds, 'metadataRequest').mockImplementation(() => {
       return new Promise((resolve) => {
@@ -110,12 +86,41 @@ describe('SearchForm', () => {
         }, 3000);
       });
     });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('should show loader if there is a delay fetching options', async () => {
+    const handleOnChange = jest.fn();
+    render(<SearchForm datasource={ds} query={query} onChange={handleOnChange} />);
+
     const asyncServiceSelect = screen.getByRole('combobox', { name: 'select-service-name' });
     await user.click(asyncServiceSelect);
     expect(screen.getByText('Loading options...')).toBeInTheDocument();
 
     jest.advanceTimersByTime(3000);
     await waitFor(() => expect(screen.queryByText('Loading options...')).not.toBeInTheDocument());
+  });
+
+  it('should filter the span dropdown when user types a search value', async () => {
+    render(<SearchForm datasource={ds} query={query} onChange={() => {}} />);
+
+    const asyncServiceSelect = screen.getByRole('combobox', { name: 'select-service-name' });
+    await user.click(asyncServiceSelect);
+    jest.advanceTimersByTime(3000);
+    expect(asyncServiceSelect).toBeInTheDocument();
+
+    await user.type(asyncServiceSelect, 'j');
+    jest.advanceTimersByTime(3000);
+    var option = await screen.findByText('jaeger-query');
+    expect(option).toBeDefined();
+
+    await user.type(asyncServiceSelect, 'c');
+    jest.advanceTimersByTime(3000);
+    option = await screen.findByText('No options found');
+    expect(option).toBeDefined();
   });
 });
 

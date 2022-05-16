@@ -236,8 +236,8 @@ export function transformMetadataToKustoSchema(
         {
           name: 'timeColumn',
           type: 'System.String',
-          defaultValue: 'TimeGenerated',
-          cslDefaultValue: 'TimeGenerated',
+          defaultValue: '""',
+          cslDefaultValue: '""',
         },
       ],
     },
@@ -289,15 +289,6 @@ export function transformMetadataToKustoSchema(
       name: `$${v.name}`,
       type: 'dynamic',
     };
-  });
-
-  // It's not possible to define optional paramaters in Kusto
-  // and it's not possible to define the same function twice so
-  // we are defining $__timeFilter also as a parameter when used
-  // with no arguments as a workaround
-  globalParameters.push({
-    name: `$__timeFilter`,
-    type: 'boolean',
   });
 
   return {

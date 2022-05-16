@@ -11,9 +11,6 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/ColorPicker/NamedColorsPalette.test.tsx:3311646309": [
       [0, 31, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/FileUpload/FileUpload.test.tsx:4145620610": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "packages/grafana-ui/src/components/FormField/FormField.test.tsx:3429087660": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -29,15 +26,6 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/Graph/GraphTooltip/MultiModeGraphTooltip.test.tsx:1865444105": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/List/AbstractList.test.tsx:2972876749": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/Logs/LogLabels.test.tsx:1029448019": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/Logs/LogMessageAnsi.test.tsx:1630730648": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "packages/grafana-ui/src/components/Logs/LogRowContextProvider.test.tsx:2719724375": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
@@ -47,16 +35,10 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:375894800": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/Slider/Slider.test.tsx:751112695": [
-      [0, 17, 13, "RegExp match", "2409514259"]
-    ],
     "packages/grafana-ui/src/components/Typeahead/PartialHighlighter.test.tsx:1751923376": [
       [0, 31, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/components/Typeahead/Typeahead.test.tsx:972524250": [
-      [0, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/Typeahead/TypeaheadInfo.test.tsx:3512289373": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/slate-plugins/braces.test.tsx:1440546721": [
@@ -92,19 +74,16 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TracePageHeader/TracePageHeader.test.js:3242042907": [
       [14, 26, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar.test.js:2807329716": [
+    "packages/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar.test.js:1062402339": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/ListView/index.test.js:1734982398": [
       [14, 26, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/ReferencesButton.test.js:3807792910": [
-      [14, 19, 13, "RegExp match", "2409514259"]
-    ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBar.test.js:1478502145": [
       [14, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBarRow.test.js:3826510429": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanBarRow.test.js:1451240090": [
       [14, 26, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/AccordianKeyValues.test.js:2408389970": [
@@ -125,7 +104,7 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/TextList.test.js:3006381933": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/index.test.js:3097530078": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetail/index.test.js:2816619357": [
       [16, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanDetailRow.test.js:2623922632": [
@@ -149,7 +128,7 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.test.js:1423129438": [
       [15, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.test.js:2326471104": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.test.js:551014442": [
       [13, 26, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/index.test.js:381298544": [
@@ -227,19 +206,7 @@ exports[`no enzyme tests`] = {
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:4164297658": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/explore/LiveLogs.test.tsx:156663779": [
-      [0, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/RichHistory/RichHistoryStarredTab.test.tsx:3328200031": [
-      [0, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/RunButton.test.tsx:4267530266": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/SecondaryActions.test.tsx:1177396128": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/explore/TimeSyncButton.test.tsx:853739820": [
+    "public/app/features/explore/RichHistory/RichHistoryStarredTab.test.tsx:3933225580": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/folders/FolderSettingsPage.test.tsx:1109052730": [
@@ -275,9 +242,6 @@ exports[`no enzyme tests`] = {
     "public/app/features/teams/TeamSettings.test.tsx:2043271249": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/users/UsersActionBar.test.tsx:3740177621": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/users/UsersListPage.test.tsx:3908145117": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -298,9 +262,6 @@ exports[`no enzyme tests`] = {
     ],
     "public/app/plugins/datasource/elasticsearch/configuration/DataLinks.test.tsx:248699332": [
       [0, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/plugins/datasource/grafana-azure-monitor-datasource/components/deprecated/components/InsightsConfig.test.tsx:1107283234": [
-      [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/influxdb/components/ConfigEditor.test.tsx:3456478975": [
       [0, 19, 13, "RegExp match", "2409514259"]
