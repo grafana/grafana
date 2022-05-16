@@ -3,37 +3,40 @@ package starimpl
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/star"
 )
 
-type serviceImpl struct {
-	starStore store
+type Service struct {
+	store store
 }
 
-func ProvideService(sqlstore sqlstore.Store) star.Service {
-	s := &serviceImpl{starStore: newStarStore(sqlstore)}
-	return s
+func ProvideService(db db.DB) *Service {
+	return &Service{
+		store: &sqlStore{
+			db: db,
+		},
+	}
 }
 
-func (s *serviceImpl) Add(ctx context.Context, cmd *star.StarDashboardCommand) error {
+func (s *Service) Add(ctx context.Context, cmd *star.StarDashboardCommand) error {
 	if err := cmd.Validate(); err != nil {
 		return err
 	}
-	return s.starStore.create(ctx, cmd)
+	return s.store.Insert(ctx, cmd)
 }
 
-func (s *serviceImpl) Delete(ctx context.Context, cmd *star.UnstarDashboardCommand) error {
+func (s *Service) Delete(ctx context.Context, cmd *star.UnstarDashboardCommand) error {
 	if err := cmd.Validate(); err != nil {
 		return err
 	}
-	return s.starStore.delete(ctx, cmd)
+	return s.store.Delete(ctx, cmd)
 }
 
-func (s *serviceImpl) IsStarredByUser(ctx context.Context, query *star.IsStarredByUserQuery) (bool, error) {
-	return s.starStore.get(ctx, query)
+func (s *Service) IsStarredByUser(ctx context.Context, query *star.IsStarredByUserQuery) (bool, error) {
+	return s.store.Get(ctx, query)
 }
 
-func (s *serviceImpl) GetByUser(ctx context.Context, cmd *star.GetUserStarsQuery) (star.GetUserStarsResult, error) {
-	return s.starStore.list(ctx, cmd)
+func (s *Service) GetByUser(ctx context.Context, cmd *star.GetUserStarsQuery) (*star.GetUserStarsResult, error) {
+	return s.store.List(ctx, cmd)
 }

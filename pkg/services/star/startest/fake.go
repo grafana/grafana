@@ -9,7 +9,7 @@ import (
 type FakeStarService struct {
 	ExpectedStars     *star.Star
 	ExpectedError     error
-	ExpectedUserStars star.GetUserStarsResult
+	ExpectedUserStars *star.GetUserStarsResult
 }
 
 func NewStarServiceFake() *FakeStarService {
@@ -28,16 +28,6 @@ func (f *FakeStarService) Delete(ctx context.Context, cmd *star.UnstarDashboardC
 	return f.ExpectedError
 }
 
-func (f *FakeStarService) GetByUser(ctx context.Context, query *star.GetUserStarsQuery) (star.GetUserStarsResult, error) {
+func (f *FakeStarService) GetByUser(ctx context.Context, query *star.GetUserStarsQuery) (*star.GetUserStarsResult, error) {
 	return f.ExpectedUserStars, f.ExpectedError
-}
-
-type FakeStarStore struct {
-	ExpectedStars     *star.Star
-	ExpectedListStars []*star.Star
-	ExpectedError     error
-}
-
-func NewStarStoreFake() *FakeStarStore {
-	return &FakeStarStore{}
 }
