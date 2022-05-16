@@ -26,12 +26,6 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/Graph/GraphTooltip/MultiModeGraphTooltip.test.tsx:1865444105": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/Logs/LogLabels.test.tsx:1029448019": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/components/Logs/LogMessageAnsi.test.tsx:1630730648": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "packages/grafana-ui/src/components/Logs/LogRowContextProvider.test.tsx:2719724375": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
@@ -246,9 +240,6 @@ exports[`no enzyme tests`] = {
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/teams/TeamSettings.test.tsx:2043271249": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/users/UsersActionBar.test.tsx:3740177621": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/features/users/UsersListPage.test.tsx:3908145117": [
