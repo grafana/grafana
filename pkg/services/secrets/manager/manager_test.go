@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -98,6 +99,7 @@ func TestSecretsService_DataKeys(t *testing.T) {
 	ctx := context.Background()
 
 	dataKey := &secrets.DataKey{
+		Id:            util.GenerateShortUID(),
 		Active:        true,
 		Name:          "test1",
 		Provider:      "test",
@@ -105,7 +107,7 @@ func TestSecretsService_DataKeys(t *testing.T) {
 	}
 
 	t.Run("querying for a DEK that does not exist", func(t *testing.T) {
-		res, err := store.GetDataKey(ctx, dataKey.Name)
+		res, err := store.GetDataKey(ctx, dataKey.Id)
 		assert.ErrorIs(t, secrets.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
@@ -114,16 +116,26 @@ func TestSecretsService_DataKeys(t *testing.T) {
 		err := store.CreateDataKey(ctx, dataKey)
 		require.NoError(t, err)
 
-		res, err := store.GetDataKey(ctx, dataKey.Name)
+		res, err := store.GetDataKey(ctx, dataKey.Id)
 		require.NoError(t, err)
 		assert.Equal(t, dataKey.EncryptedData, res.EncryptedData)
 		assert.Equal(t, dataKey.Provider, res.Provider)
 		assert.Equal(t, dataKey.Name, res.Name)
+		assert.Equal(t, dataKey.Id, res.Id)
 		assert.True(t, dataKey.Active)
+
+		current, err := store.GetCurrentDataKey(ctx, dataKey.Name)
+		require.NoError(t, err)
+		assert.Equal(t, dataKey.EncryptedData, current.EncryptedData)
+		assert.Equal(t, dataKey.Provider, current.Provider)
+		assert.Equal(t, dataKey.Name, current.Name)
+		assert.Equal(t, dataKey.Id, current.Id)
+		assert.True(t, current.Active)
 	})
 
 	t.Run("creating an inactive DEK", func(t *testing.T) {
 		k := &secrets.DataKey{
+			Id:            util.GenerateShortUID(),
 			Active:        false,
 			Name:          "test2",
 			Provider:      "test",
@@ -138,7 +150,7 @@ func TestSecretsService_DataKeys(t *testing.T) {
 		assert.Nil(t, res)
 	})
 
-	t.Run("deleting DEK when no name provided must fail", func(t *testing.T) {
+	t.Run("deleting DEK when no id provided must fail", func(t *testing.T) {
 		beforeDelete, err := store.GetAllDataKeys(ctx)
 		require.NoError(t, err)
 		err = store.DeleteDataKey(ctx, "")
@@ -150,10 +162,10 @@ func TestSecretsService_DataKeys(t *testing.T) {
 	})
 
 	t.Run("deleting a DEK", func(t *testing.T) {
-		err := store.DeleteDataKey(ctx, dataKey.Name)
+		err := store.DeleteDataKey(ctx, dataKey.Id)
 		require.NoError(t, err)
 
-		res, err := store.GetDataKey(ctx, dataKey.Name)
+		res, err := store.GetDataKey(ctx, dataKey.Id)
 		assert.Equal(t, secrets.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
