@@ -141,6 +141,7 @@ func (ng *AlertNG) init() error {
 	policyService := provisioning.NewNotificationPolicyService(store, store, store, ng.Log)
 	contactPointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
 	templateService := provisioning.NewTemplateService(store, store, store, ng.Log)
+	muteTimingService := provisioning.NewMuteTimingService(store, store, store, ng.Log)
 
 	api := api.API{
 		Cfg:                  ng.Cfg,
@@ -163,6 +164,7 @@ func (ng *AlertNG) init() error {
 		Policies:             policyService,
 		ContactPointService:  contactPointService,
 		Templates:            templateService,
+		MuteTimings:          muteTimingService,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
