@@ -289,10 +289,21 @@ func (i *dashboardIndex) updateDashboard(writer *bluge.Writer, reader *bluge.Rea
 	batch := bluge.NewBatch()
 
 	var doc *bluge.Document
-	location := "?" // TODO: fix location.
 	if dash.isFolder {
 		doc = getFolderDashboardDoc(dash)
 	} else {
+		var folderUID string
+		if dash.folderID == 0 {
+			folderUID = "general"
+		} else {
+			var err error
+			folderUID, err = getDashboardFolderUID(reader, dash.folderID)
+			if err != nil {
+				return err
+			}
+		}
+
+		location := folderUID
 		doc = getNonFolderDashboardDoc(dash, location)
 
 		var actualPanelIDs []string
