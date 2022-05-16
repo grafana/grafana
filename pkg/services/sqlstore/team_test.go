@@ -233,7 +233,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				}
 				serviceAccount, err := sqlStore.CreateUser(context.Background(), userCmd)
 				require.NoError(t, err)
-				err := sqlStore.AddTeamMember(serviceAccount.id, testOrgID, groupId, false, 0)
+				err = sqlStore.AddTeamMember(serviceAccount.Id, testOrgID, groupId, false, 0)
 				require.NoError(t, err)
 
 				query := &models.GetTeamMembersQuery{OrgId: testOrgID, UserId: userIds[0], IsServiceAccount: false}
