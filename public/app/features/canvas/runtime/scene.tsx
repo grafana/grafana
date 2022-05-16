@@ -336,6 +336,7 @@ export class Scene {
       draggable: allowChanges,
       resizable: allowChanges,
       origin: false,
+      className: this.styles.selected,
     })
       .on('clickGroup', (event) => {
         this.selecto!.clickTarget(event.inputEvent, event.inputTarget);
@@ -505,5 +506,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   menuItem: css`
     max-width: 60ch;
     overflow: hidden;
+  `,
+  selected: css`
+    z-index: 999 !important;
   `,
 }));
