@@ -36,6 +36,7 @@ export const RadioButtonDot = ({ id, name, label, checked, disabled, description
 
 const getStyles = (theme: GrafanaTheme2) => ({
   input: css`
+    position: relative;
     appearance: none;
     outline: none;
     background-color: ${theme.colors.background.canvas};
@@ -49,6 +50,27 @@ const getStyles = (theme: GrafanaTheme2) => ({
     :checked {
       background-color: ${theme.colors.secondary.contrastText};
       border: 5px solid ${theme.colors.primary.main};
+    }
+
+    :disabled {
+      background-color: ${theme.colors.action.disabledBackground} !important;
+      border-color: ${theme.colors.border.weak};
+    }
+
+    :disabled:checked {
+      border: 1px solid ${theme.colors.border.weak};
+    }
+
+    :disabled:checked::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background-color: ${theme.colors.text.disabled};
+      border-radius: 50%;
+      display: inline-block;
+      position: absolute;
+      top: 4px;
+      left: 4px;
     }
 
     :focus {
