@@ -17,6 +17,8 @@ On the Installation tab, in the **For** field, click the name of the Grafana ins
 
 Grafana Cloud handles the plugin installation automatically.
 
+If you are logged in to Grafana Cloud when you add a plugin, log out and back in again to use the new plugin.
+
 ## Install plugin on local Grafana
 
 Follow the instructions on the Install tab. You can either install the plugin with a Grafana CLI command or by downloading and uncompress a .zip file into the Grafana plugins directory. We recommend using Grafana CLI in most instances. The .zip option is available if your Grafana server does not have access to the internet.

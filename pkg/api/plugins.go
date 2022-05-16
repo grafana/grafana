@@ -13,6 +13,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -32,8 +35,10 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	embeddedFilter := c.Query("embedded")
 	coreFilter := c.Query("core")
 
-	// For users with viewer role we only return core plugins
-	if !c.HasRole(models.ROLE_ADMIN) {
+	// When using access control anyone that can create a data source should be able to list all data sources installed
+	// Fallback to only letting admins list non-core plugins
+	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
+	if !hasAccess(accesscontrol.ReqOrgAdmin, accesscontrol.EvalPermission(datasources.ActionCreate)) && !c.HasRole(models.ROLE_ADMIN) {
 		coreFilter = "1"
 	}
 

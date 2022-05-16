@@ -620,6 +620,16 @@ func (ss *SQLStore) SearchUsers(ctx context.Context, query *models.SearchUsersQu
 			whereParams = append(whereParams, query.OrgId)
 		}
 
+		// user only sees the users for which it has read permissions
+		if !ac.IsDisabled(ss.Cfg) {
+			acFilter, err := ac.Filter(query.SignedInUser, "u.id", "global.users:id:", ac.ActionUsersRead)
+			if err != nil {
+				return err
+			}
+			whereConditions = append(whereConditions, acFilter.Where)
+			whereParams = append(whereParams, acFilter.Args...)
+		}
+
 		if query.Query != "" {
 			whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
 			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
