@@ -53,16 +53,15 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
         query = {
           uid: stars, // array of UIDs
         };
-      } else {
-        // ??
       }
       folderUid = undefined;
       folderTitle = undefined;
     } else if (section.title === 'Recent') {
       const ids = impressionSrv.getDashboardOpened();
-      if (ids.length) {
+      const uids = await getBackendSrv().get(`/api/dashboards/ids/${ids.slice(0, 30).join(',')}`);
+      if (uids?.length) {
         query = {
-          id: ids.slice(0, 30), // first 30 values in the array
+          uid: uids,
         };
       }
       folderUid = undefined;
@@ -120,6 +119,31 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
     icon = sectionExpanded ? 'folder-open' : 'folder';
   }
 
+  const renderResults = () => {
+    if (!results.value?.length) {
+      return <div>No items found</div>;
+    }
+
+    return results.value.map((v) => {
+      if (selection && selectionToggle) {
+        const type = v.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
+        v = {
+          ...v,
+          checked: selection(type, v.uid!),
+        };
+      }
+      return (
+        <SearchItem
+          key={v.uid}
+          item={v}
+          onTagSelected={onTagSelected}
+          onToggleChecked={onToggleChecked as any}
+          editable={Boolean(selection != null)}
+        />
+      );
+    });
+  };
+
   return (
     <CollapsableSection
       isOpen={sectionExpanded ?? false}
@@ -151,28 +175,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({ section, selectionToggle
         </>
       }
     >
-      {results.value && (
-        <ul className={styles.sectionItems}>
-          {results.value.map((v) => {
-            if (selection && selectionToggle) {
-              const type = v.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
-              v = {
-                ...v,
-                checked: selection(type, v.uid!),
-              };
-            }
-            return (
-              <SearchItem
-                key={v.uid}
-                item={v}
-                onTagSelected={onTagSelected}
-                onToggleChecked={onToggleChecked as any}
-                editable={Boolean(selection != null)}
-              />
-            );
-          })}
-        </ul>
-      )}
+      {results.value && <ul className={styles.sectionItems}>{renderResults()}</ul>}
     </CollapsableSection>
   );
 };
