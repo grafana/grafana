@@ -108,7 +108,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
   return (
     <CustomScrollbar autoHide>
-      <div className={style.container} onClick={handleClick}>
+      <div className={style.container}>
         {showCommonLabels && !isAscending && renderCommonLabels()}
         <LogRows
           logRows={logRows}

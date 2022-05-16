@@ -45,7 +45,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme2, logLevel?: L
     `,
     logsRowsTable: css`
       label: logs-rows;
-      font-family: ${theme.typography.fontFamilyMonospaceFusebit};
+      font-family: ${theme.typography.fontFamilyMonospace};
       font-size: ${theme.typography.bodySmall.fontSize};
       width: 100%;
     `,
