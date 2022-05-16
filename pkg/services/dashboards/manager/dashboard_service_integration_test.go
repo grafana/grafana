@@ -862,7 +862,9 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
-		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(),
+		featuremgmt.WithFeatures(),
+		accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.NewMockedPermissionsService(),
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
@@ -877,7 +879,9 @@ func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLSt
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
-		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(),
+		featuremgmt.WithFeatures(),
+		accesscontrolmock.NewMockedPermissionsService(),
+		accesscontrolmock.NewMockedPermissionsService(),
 	)
 	_, err := service.SaveDashboard(context.Background(), &dto, false)
 	return err
@@ -910,7 +914,8 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
-		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(),
+		featuremgmt.WithFeatures(),
+		accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)
@@ -944,7 +949,8 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := ProvideDashboardService(
 		cfg, dashboardStore, &dummyDashAlertExtractor{},
-		featuremgmt.WithFeatures(), accesscontrolmock.NewPermissionsServicesMock(),
+		featuremgmt.WithFeatures(),
+		accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(),
 	)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
 	require.NoError(t, err)

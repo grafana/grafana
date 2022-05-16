@@ -94,6 +94,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addEntityEventsTableMigration(mg)
 
 	addPublicDashboardMigration(mg)
+	ualert.CreateDefaultFoldersForAlertingMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

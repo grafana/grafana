@@ -39,6 +39,15 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 
 {{< figure src="/static/img/docs/explore/traces-to-logs-settings-8-2.png" class="docs-image--no-shadow" caption="Screenshot of the trace to logs settings" >}}
 
+### Trace to metrics
+
+> **Note:** This feature is behind the `traceToMetrics` feature toggle.
+
+To configure trace to metrics, select the target Prometheus data source and enter the desired query.
+
+-- **Data source -** Target data source.
+-- **Query -** Query that runs when navigating from a trace to the metrics data source.
+
 ### Service Graph
 
 This is a configuration for the Service Graph feature.

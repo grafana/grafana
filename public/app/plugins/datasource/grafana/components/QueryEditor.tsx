@@ -9,7 +9,8 @@ import {
   DataFrame,
 } from '@grafana/data';
 import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { InlineField, Select, Alert, Input, InlineFieldRow } from '@grafana/ui';
+import { InlineField, Select, Alert, Input, InlineFieldRow, CodeEditor } from '@grafana/ui';
+import { SearchQuery } from 'app/features/search/service';
 
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
@@ -351,20 +352,69 @@ export class QueryEditor extends PureComponent<Props, State> {
     this.checkAndUpdateValue('query', e.target.value);
   };
 
+  onSaveSearchJSON = (rawSearchJSON: string) => {
+    try {
+      const json = JSON.parse(rawSearchJSON) as GrafanaQuery;
+      json.queryType = GrafanaQueryType.Search;
+      this.props.onChange(json);
+      this.props.onRunQuery();
+    } catch (ex) {
+      console.log('UNABLE TO parse search', rawSearchJSON, ex);
+    }
+  };
+
   renderSearch() {
-    let { query } = this.props.query;
+    let query = (this.props.query ?? {}) as SearchQuery;
+    const emptySearchQuery: SearchQuery = {
+      query: '*',
+      location: '', // general, etc
+      ds_uid: '',
+      sort: 'score desc',
+      tags: [],
+      kind: ['dashboard', 'folder'],
+      uid: [],
+      id: [],
+      explain: true,
+      accessInfo: true,
+      facet: [{ field: 'kind' }, { field: 'tag' }, { field: 'location' }],
+      hasPreview: 'dark',
+      from: 0,
+      limit: 20,
+    };
+
+    const json = JSON.stringify(query ?? {}, null, 2);
+    for (const [key, val] of Object.entries(emptySearchQuery)) {
+      if ((query as any)[key] == null) {
+        (query as any)[key] = val;
+      }
+    }
+
     return (
-      <InlineFieldRow>
-        <InlineField label="Query" grow={true} labelWidth={labelWidth}>
-          <Input
-            placeholder="Everything"
-            defaultValue={query ?? ''}
-            onKeyDown={this.handleSearchEnterKey}
-            onBlur={this.handleSearchBlur}
-            spellCheck={false}
-          />
-        </InlineField>
-      </InlineFieldRow>
+      <>
+        <Alert title="Grafana Search" severity="info">
+          This interface to the grafana search API is experimental, and subject to change at any time without notice
+        </Alert>
+        <InlineFieldRow>
+          <InlineField label="Query" grow={true} labelWidth={labelWidth}>
+            <Input
+              placeholder="Everything"
+              defaultValue={query.query ?? ''}
+              onKeyDown={this.handleSearchEnterKey}
+              onBlur={this.handleSearchBlur}
+              spellCheck={false}
+            />
+          </InlineField>
+        </InlineFieldRow>
+        <CodeEditor
+          height={300}
+          language="json"
+          value={json}
+          onBlur={this.onSaveSearchJSON}
+          onSave={this.onSaveSearchJSON}
+          showMiniMap={true}
+          showLineNumbers={true}
+        />
+      </>
     );
   }
 

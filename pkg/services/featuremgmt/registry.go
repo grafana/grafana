@@ -249,5 +249,10 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
+		{
+			Name:        "prometheusStreamingJSONParser",
+			Description: "Enable streaming JSON parser for Prometheus datasource",
+			State:       FeatureStateAlpha,
+		},
 	}
 )

@@ -60,4 +60,5 @@ export interface FeatureToggles {
   datasourceQueryMultiStatus?: boolean;
   azureMonitorExperimentalUI?: boolean;
   traceToMetrics?: boolean;
+  prometheusStreamingJSONParser?: boolean;
 }
