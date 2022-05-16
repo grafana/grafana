@@ -95,11 +95,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "accesscontrol",
-			Description: "Support robust access control",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:            "accesscontrol-builtins",
 			Description:     "Simplify access control builtin roles",
 			State:           FeatureStateAlpha,
@@ -241,6 +236,17 @@ var (
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 			FrontendOnly:    true,
+		},
+		{
+			Name:         "traceToMetrics",
+			Description:  "Enable trace to metrics links",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "prometheusStreamingJSONParser",
+			Description: "Enable streaming JSON parser for Prometheus datasource",
+			State:       FeatureStateAlpha,
 		},
 	}
 )

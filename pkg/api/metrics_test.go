@@ -196,6 +196,7 @@ type dashboardFakePluginClient struct {
 	req *backend.QueryDataRequest
 }
 
+
 // `/ds/query` endpoint test
 func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	qds := query.ProvideService(

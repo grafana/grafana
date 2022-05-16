@@ -175,12 +175,27 @@ export class LokiDatasource
         targets: request.targets.map(getNormalizedLokiQuery),
       };
 
+      const streamQueries = fixedRequest.targets.filter((q) => q.queryType === LokiQueryType.Stream);
+      if (config.featureToggles.lokiLive && streamQueries.length > 0 && fixedRequest.rangeRaw?.to === 'now') {
+        // this is still an in-development feature,
+        // we do not support mixing stream-queries with normal-queries for now.
+        const streamRequest = {
+          ...fixedRequest,
+          targets: streamQueries,
+        };
+        return merge(...streamQueries.map((q) => doLokiChannelStream(q, this, streamRequest)));
+      }
+
       if (fixedRequest.liveStreaming) {
         return this.runLiveQueryThroughBackend(fixedRequest);
       } else {
         return super
           .query(fixedRequest)
-          .pipe(map((response) => transformBackendResult(response, fixedRequest.targets)));
+          .pipe(
+            map((response) =>
+              transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
+            )
+          );
       }
     }
 
@@ -689,44 +704,35 @@ export class LokiDatasource
     };
   };
 
-  testDatasource() {
+  testDatasource(): Promise<{ status: string; message: string }> {
     // Consider only last 10 minutes otherwise request takes too long
-    const startMs = Date.now() - 10 * 60 * 1000;
-    const start = `${startMs}000000`; // API expects nanoseconds
-    return lastValueFrom(
-      this._request(`${LOKI_ENDPOINT}/label`, { start }).pipe(
-        map((res) => {
-          const values: any[] = res?.data?.data || res?.data?.values || [];
-          const testResult =
-            values.length > 0
-              ? { status: 'success', message: 'Data source connected and labels found.' }
-              : {
-                  status: 'error',
-                  message:
-                    'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
-                };
-          return testResult;
-        }),
-        catchError((err: any) => {
-          let message = 'Loki: ';
-          if (err.statusText) {
-            message += err.statusText;
-          } else {
-            message += 'Cannot connect to Loki';
-          }
+    const nowMs = Date.now();
+    const params = {
+      start: (nowMs - 10 * 60 * 1000) * NS_IN_MS,
+      end: nowMs * NS_IN_MS,
+    };
 
-          if (err.status) {
-            message += `. ${err.status}`;
-          }
-
-          if (err.data && err.data.message) {
-            message += `. ${err.data.message}`;
-          } else if (err.data) {
-            message += `. ${err.data}`;
-          }
-          return of({ status: 'error', message: message });
-        })
-      )
+    return this.metadataRequest('labels', params).then(
+      (values) => {
+        return values.length > 0
+          ? { status: 'success', message: 'Data source connected and labels found.' }
+          : {
+              status: 'error',
+              message:
+                'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
+            };
+      },
+      (err) => {
+        // we did a resource-call that failed.
+        // the only info we have, if exists, is err.data.message
+        // (when in development-mode, err.data.error exists too, but not in production-mode)
+        // things like err.status & err.statusText does not help,
+        // because those will only describe how the request between browser<>server failed
+        const info: string = err?.data?.message ?? '';
+        const infoInParentheses = info !== '' ? ` (${info})` : '';
+        const message = `Unable to fetch labels from Loki${infoInParentheses}, please check the server logs for more details`;
+        return { status: 'error', message: message };
+      }
     );
   }
 

@@ -35,7 +35,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: plugins.NewCfg(),
-			log: &fakeLogger{},
+			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -65,7 +65,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: plugins.NewCfg(),
-			log: fakeLogger{},
+			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -88,7 +88,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: &plugins.Cfg{},
-			log: fakeLogger{},
+			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -126,7 +126,7 @@ func TestInitializer_envVars(t *testing.T) {
 				},
 			},
 			license: licensing,
-			log:     fakeLogger{},
+			log:     log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -209,18 +209,6 @@ func (*testLicensingService) EnabledFeatures() map[string]bool {
 
 func (*testLicensingService) FeatureEnabled(feature string) bool {
 	return false
-}
-
-type fakeLogger struct {
-	*log.ConcreteLogger
-}
-
-func (f fakeLogger) New(_ ...interface{}) *log.ConcreteLogger {
-	return &log.ConcreteLogger{}
-}
-
-func (f fakeLogger) Warn(_ string, _ ...interface{}) {
-
 }
 
 type fakeBackendProvider struct {
