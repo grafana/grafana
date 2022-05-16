@@ -2,10 +2,10 @@ import { debounce } from 'lodash';
 
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { contextSrv } from 'app/core/services/context_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { AccessControlAction, ServiceAccountDTO, ServiceAccountFilter, ThunkResult } from 'app/types';
 
-import { contextSrv } from '../../../core/services/context_srv';
-import { ServiceAccountDTO, ThunkResult, ServiceAccountFilter, AccessControlAction } from '../../../types';
 import { ServiceAccountToken } from '../CreateServiceAccountTokenModal';
 
 import {
@@ -16,8 +16,8 @@ import {
   queryChanged,
   serviceAccountLoaded,
   serviceAccountsFetchBegin,
-  serviceAccountsFetchEnd,
   serviceAccountsFetched,
+  serviceAccountsFetchEnd,
   serviceAccountTokensLoaded,
   serviceAccountToRemoveLoaded,
 } from './reducers';

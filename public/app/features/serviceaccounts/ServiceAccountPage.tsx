@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, ConnectedProps, useDispatch } from 'react-redux';
 
 import { getTimeZone, NavModel } from '@grafana/data';
 import { Button } from '@grafana/ui';
@@ -7,19 +7,17 @@ import Page from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState, ServiceAccountDTO, ApiKey, Role, AccessControlAction } from 'app/types';
+import { AccessControlAction, ApiKey, Role, ServiceAccountDTO, StoreState } from 'app/types';
 
 import { CreateTokenModal, ServiceAccountToken } from './CreateServiceAccountTokenModal';
 import { ServiceAccountProfile } from './ServiceAccountProfile';
 import { ServiceAccountTokensTable } from './ServiceAccountTokensTable';
 import {
+  createServiceAccountToken,
   deleteServiceAccountToken,
+  fetchACOptions,
   loadServiceAccount,
   loadServiceAccountTokens,
-  createServiceAccountToken,
-  fetchACOptions,
-  updateServiceAccount,
-  deleteServiceAccount,
 } from './state/actions';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
@@ -42,17 +40,8 @@ function mapStateToProps(state: StoreState) {
     timezone: getTimeZone(state.user),
   };
 }
-const mapDispatchToProps = {
-  loadServiceAccount,
-  loadServiceAccountTokens,
-  createServiceAccountToken,
-  deleteServiceAccountToken,
-  deleteServiceAccount,
-  updateServiceAccount,
-  fetchACOptions,
-};
 
-const connector = connect(mapStateToProps, mapDispatchToProps);
+const connector = connect(mapStateToProps);
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 const ServiceAccountPageUnconnected = ({
@@ -64,32 +53,26 @@ const ServiceAccountPageUnconnected = ({
   isLoading,
   roleOptions,
   builtInRoles,
-  loadServiceAccount,
-  loadServiceAccountTokens,
-  createServiceAccountToken,
-  deleteServiceAccountToken,
-  deleteServiceAccount,
-  updateServiceAccount,
-  fetchACOptions,
-}: Props) => {
+}: Props): JSX.Element => {
+  const dispatch = useDispatch();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newToken, setNewToken] = useState('');
+  const serviceAccountId = parseInt(match.params.id, 10);
 
   useEffect(() => {
-    const serviceAccountId = parseInt(match.params.id, 10);
-    loadServiceAccount(serviceAccountId);
-    loadServiceAccountTokens(serviceAccountId);
+    dispatch(loadServiceAccount(serviceAccountId));
+    dispatch(loadServiceAccountTokens(serviceAccountId));
     if (contextSrv.licensedAccessControlEnabled()) {
-      fetchACOptions();
+      dispatch(fetchACOptions());
     }
-  }, [match, loadServiceAccount, loadServiceAccountTokens, fetchACOptions]);
+  }, [match, dispatch, serviceAccountId]);
 
   const onDeleteServiceAccountToken = (key: ApiKey) => {
-    deleteServiceAccountToken(parseInt(match.params.id, 10), key.id!);
+    dispatch(deleteServiceAccountToken(serviceAccount?.id, key.id!));
   };
 
   const onCreateToken = (token: ServiceAccountToken) => {
-    createServiceAccountToken(serviceAccount.id, token, setNewToken);
+    dispatch(createServiceAccountToken(serviceAccount?.id, token, setNewToken));
   };
 
   const onModalClose = () => {
@@ -107,8 +90,6 @@ const ServiceAccountPageUnconnected = ({
               timeZone={timezone}
               roleOptions={roleOptions}
               builtInRoles={builtInRoles}
-              updateServiceAccount={updateServiceAccount}
-              deleteServiceAccount={deleteServiceAccount}
             />
           </>
         )}

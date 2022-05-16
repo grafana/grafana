@@ -1,12 +1,14 @@
 import { css, cx } from '@emotion/css';
 import React, { PureComponent, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
 
 import { dateTimeFormat, GrafanaTheme2, OrgRole, TimeZone } from '@grafana/data';
 import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { Role, ServiceAccountDTO, AccessControlAction } from 'app/types';
+import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
 
 import { ServiceAccountRoleRow } from './ServiceAccountRoleRow';
+import { deleteServiceAccount, updateServiceAccount } from './state/actions';
 
 interface Props {
   serviceAccount: ServiceAccountDTO;
@@ -14,18 +16,10 @@ interface Props {
 
   roleOptions: Role[];
   builtInRoles: Record<string, Role[]>;
-  deleteServiceAccount: (serviceAccountId: number) => void;
-  updateServiceAccount: (serviceAccount: ServiceAccountDTO) => void;
 }
 
-export function ServiceAccountProfile({
-  serviceAccount,
-  timeZone,
-  roleOptions,
-  builtInRoles,
-  deleteServiceAccount,
-  updateServiceAccount,
-}: Props) {
+export function ServiceAccountProfile({ serviceAccount, timeZone, roleOptions, builtInRoles }: Props): JSX.Element {
+  const dispatch = useDispatch();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDisableModal, setShowDisableModal] = useState(false);
 
@@ -48,23 +42,23 @@ export function ServiceAccountProfile({
   };
 
   const handleServiceAccountDelete = () => {
-    deleteServiceAccount(serviceAccount.id);
+    dispatch(deleteServiceAccount(serviceAccount.id));
   };
   const handleServiceAccountDisable = () => {
-    updateServiceAccount({ ...serviceAccount, isDisabled: true });
+    dispatch(updateServiceAccount({ ...serviceAccount, isDisabled: true }));
     setShowDisableModal(false);
   };
 
   const handleServiceAccountEnable = () => {
-    updateServiceAccount({ ...serviceAccount, isDisabled: false });
+    dispatch(updateServiceAccount({ ...serviceAccount, isDisabled: false }));
   };
 
   const handleServiceAccountRoleChange = (role: OrgRole) => {
-    updateServiceAccount({ ...serviceAccount, role: role });
+    dispatch(updateServiceAccount({ ...serviceAccount, role: role }));
   };
 
   const onServiceAccountNameChange = (newValue: string) => {
-    updateServiceAccount({ ...serviceAccount, name: newValue });
+    dispatch(updateServiceAccount({ ...serviceAccount, name: newValue }));
   };
 
   const styles = useStyles2(getStyles);
