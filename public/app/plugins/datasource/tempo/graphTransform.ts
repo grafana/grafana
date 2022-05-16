@@ -142,7 +142,7 @@ export const rateMetric = {
 };
 export const rateTrendMetric = {
   query: 'topk(5, sum(rate(traces_spanmetrics_calls_total{REPLACE_STRING}[$__range])) by (span_name))',
-  instant: false,
+  instant: true,
 };
 export const errorRateMetric = {
   query:

@@ -491,14 +491,8 @@ function getApmTable(
     }
 
     if (rateTrend.length > 0 && rateTrend[0].fields?.length > 1) {
-      var values = [];
-      for (const frame in rateTrend) {
-        values.push(rateTrend[frame].fields[1].values.toArray());
-      }
-
       df.fields.push({
-        ...rateTrend[0].fields[1],
-        values: new ArrayVector(values),
+        ...rateTrend[0].fields[2],
         name: 'Trend (Rate)',
         labels: null,
         config: {
@@ -506,7 +500,7 @@ function getApmTable(
             mode: 'continuous-BlPu',
           },
           custom: {
-            displayMode: 'area-chart',
+            displayMode: 'lcd-gauge',
           },
         },
       });
