@@ -3,7 +3,6 @@ import { from, lastValueFrom, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
-  AnnotationQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -24,15 +23,8 @@ import {
   QueryType,
   PostResponse,
   Aggregation,
-  LegacyCloudMonitoringAnnotationQuery,
 } from './types';
 import { CloudMonitoringVariableSupport } from './variables';
-
-export const isLegacyCloudMonitoringAnnotation = (
-  query: unknown
-): query is AnnotationQuery<LegacyCloudMonitoringAnnotationQuery> =>
-  (query as AnnotationQuery<LegacyCloudMonitoringAnnotationQuery>).target?.title !== undefined ||
-  (query as AnnotationQuery<LegacyCloudMonitoringAnnotationQuery>).target?.text !== undefined;
 
 export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   CloudMonitoringQuery,
